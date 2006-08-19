@@ -32,7 +32,7 @@ import java.util.Map;
  * constructor, which knows how to create events from a file, using json
  */
 public class MockRepositoryEventList {
-  List<MockRepositoryEvent> eventList;
+  List eventList;
 
   /**
    * Looks for the supplied filename on the classpath, and if it can find it, 
@@ -40,7 +40,7 @@ public class MockRepositoryEventList {
    * @param filename
    */
   public MockRepositoryEventList(String filename) {
-    eventList = new LinkedList<MockRepositoryEvent>();
+    eventList = new LinkedList();
     InputStream s = this.getClass().getResourceAsStream(filename);
     InputStreamReader isr = new InputStreamReader(s);
     BufferedReader br = new BufferedReader(isr);
@@ -58,7 +58,7 @@ public class MockRepositoryEventList {
           throw new RuntimeException(e);
         }
         Iterator keys = jo.keys();
-        Map<String, String> properties = new HashMap<String, String>();
+        Map properties = new HashMap();
         while (keys.hasNext()) {
           String k = (String) keys.next();
           try {
@@ -75,7 +75,7 @@ public class MockRepositoryEventList {
     }
   }
 
-  public List<MockRepositoryEvent> getEventList() {
+  public List getEventList() {
     return eventList;
   }
   

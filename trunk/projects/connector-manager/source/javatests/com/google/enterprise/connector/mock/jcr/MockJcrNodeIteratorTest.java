@@ -21,6 +21,7 @@ import com.google.enterprise.connector.mock.MockRepositoryPropertyTest;
 
 import junit.framework.TestCase;
 
+import java.util.Iterator;
 import java.util.logging.Logger;
 
 import javax.jcr.Node;
@@ -44,12 +45,13 @@ public class MockJcrNodeIteratorTest extends TestCase {
     MockRepositoryDocumentStore mrd = new MockRepositoryDocumentStore();
     MockRepositoryEventList mrel = 
       new MockRepositoryEventList("MockRepositoryEventLog1.txt");
-    for (MockRepositoryEvent e: mrel.getEventList()) {
+    for (Iterator iter = mrel.getEventList().iterator(); iter.hasNext(); ) {
+    	MockRepositoryEvent e = (MockRepositoryEvent) iter.next();
       mrd.applyEvent(e);
     }
 
     // create an node iterator over the entire store
-    NodeIterator ni = new MockJcrNodeIterator(mrd);
+    NodeIterator ni = new MockJcrNodeIterator(mrd.iterator());
     
     Node n;
     while (ni.hasNext()) {

@@ -14,7 +14,7 @@
 
 package com.google.enterprise.connector.mock.jcr;
 
-import com.google.enterprise.connector.mock.MockRepositoryDocument;
+import java.util.List;
 
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
@@ -39,14 +39,14 @@ import javax.jcr.query.RowIterator;
  */
 public class MockJcrQueryResult implements QueryResult {
 
-  Iterable<MockRepositoryDocument> result;
+  List result;
 
   /**
    * Creates a MockJcrQueryResult from an Iterable<MockRepositoryDocument> 
    * (a MockRepository result)
    * @param result
    */
-  public MockJcrQueryResult(Iterable<MockRepositoryDocument> result) {
+  public MockJcrQueryResult(List result) {
     this.result = result;
   }
 
@@ -55,7 +55,7 @@ public class MockJcrQueryResult implements QueryResult {
    * supported operation.
    */
   public NodeIterator getNodes() throws RepositoryException {
-    return new MockJcrNodeIterator(result);
+    return new MockJcrNodeIterator(result.iterator());
   }
 
   // The following methods may be needed later but are temporarily

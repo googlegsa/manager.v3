@@ -14,9 +14,7 @@
 
 package com.google.enterprise.connector.mock.jcr;
 
-import com.google.enterprise.connector.mock.MockRepositoryDateTime;
-import com.google.enterprise.connector.mock.MockRepositoryDocument;
-import com.google.enterprise.connector.mock.MockRepositoryDocumentStore;
+import java.util.List;
 
 import javax.jcr.ItemExistsException;
 import javax.jcr.ItemNotFoundException;
@@ -29,6 +27,9 @@ import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
 import javax.jcr.version.VersionException;
+
+import com.google.enterprise.connector.mock.MockRepositoryDateTime;
+import com.google.enterprise.connector.mock.MockRepositoryDocumentStore;
 
 /**
  * MockJcrQuery implements the corresponding JCR interface.  This implementation
@@ -45,7 +46,7 @@ public class MockJcrQuery implements Query {
   MockRepositoryDocumentStore store;
   String statement = null;
 
-  Iterable<MockRepositoryDocument> internalQuery;
+  List internalQuery;
 
   /**
    * Creates a MockJcrQuery object from a date range.  This is intended to be 

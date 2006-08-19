@@ -14,10 +14,15 @@
 
 package com.google.enterprise.connector.mock;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import com.google.enterprise.connector.mock.MockRepositoryProperty.PropertyType;
 
 /**
  * Mock event object.
@@ -29,30 +34,49 @@ public class MockRepositoryEvent {
    * Enumeration for event types.
    * @author ziff@google.com (Donald "Max" Ziff)
    */
-  public enum EventType {
-    SAVE("save"), 
-    DELETE("delete"), 
-    METADATA_ONLY_SAVE("metadata_only_save"),
-    ERROR("error");
+  public static class EventType implements Comparable {
+	  private static int nextOrdinal = 0;
+	  private final int ordinal = nextOrdinal++;
 
-    private String message;
+	    public static final EventType SAVE = 
+	    	new EventType("save");
+	    public static final EventType DELETE = 
+	    	new EventType("delete");
+	    public static final EventType METADATA_ONLY_SAVE = 
+	    	new EventType("metadata_only_save");
+	    public static final EventType ERROR = 
+	    	new EventType("error");
+
+		private static final EventType[] PRIVATE_VALUES =
+		  {SAVE, DELETE, METADATA_ONLY_SAVE, ERROR};
+		public static final List Values = 
+			Collections.unmodifiableList(Arrays.asList(PRIVATE_VALUES));
+
+		private String tag;
 
     EventType(String m) {
-      message = m;
+    	tag = m;
     }
 
     public String toString() {
-      return message;
+      return tag;
     }
     
     public static EventType findEventType(String tag) {
-      for (EventType et : EventType.values()) {
-        if (et.message.equals(tag)) {
-          return et;
+        if (tag == null) {
+          return ERROR;
         }
+        for (int i =0; i<PRIVATE_VALUES.length; i++) {
+          if (PRIVATE_VALUES[i].tag.equals(tag)) {
+            return PRIVATE_VALUES[i];
+          }
+        }
+        return ERROR;
       }
-      return ERROR;
-    }
+
+  	public int compareTo(Object o) {
+  		return ordinal - ((EventType)o).ordinal;
+  	}
   }
 
   private EventType type;
@@ -80,15 +104,16 @@ public class MockRepositoryEvent {
     this.timeStamp = timeStamp;
   }
 
-  public MockRepositoryEvent(Map<String,String> params) {
+  public MockRepositoryEvent(Map params) {
     String docid = null;
     String tempContent = null;
     String eventTypeTag = null;
     String timeStampStr = null;
-    Map<String,String> propBag = new HashMap<String, String>();
-    for (Map.Entry<String,String> entry: params.entrySet()) {
-      String key = entry.getKey();
-      String value = entry.getValue();
+    Map propBag = new HashMap();
+    for (Iterator iter = params.entrySet().iterator(); iter.hasNext(); ) {
+    	Map.Entry entry = (Map.Entry) iter.next();
+      String key = (String) entry.getKey();
+      String value = (String) entry.getValue();
       if ("docid".equals(key)) {
         docid = value;
       } else if ("content".equals(key)) {
@@ -117,10 +142,11 @@ public class MockRepositoryEvent {
       throw new RuntimeException("Event parameters must " +
         "specify a non-zero time stamp");      
     }
-    List<MockRepositoryProperty> l = new LinkedList<MockRepositoryProperty>();
-    for (Map.Entry<String,String> entry: propBag.entrySet()) {
-      String key = entry.getKey();
-      String value = entry.getValue();
+    List l = new LinkedList();
+    for (Iterator iter = params.entrySet().iterator(); iter.hasNext(); ) {
+    	Map.Entry entry = (Map.Entry) iter.next();
+      String key = (String) entry.getKey();
+      String value = (String) entry.getValue();
       l.add(new MockRepositoryProperty(key, value));
     }
     this.type = t;

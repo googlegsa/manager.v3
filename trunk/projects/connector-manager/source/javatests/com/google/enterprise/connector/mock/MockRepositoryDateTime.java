@@ -39,7 +39,6 @@ public class MockRepositoryDateTime implements Comparable {
     return this.getTicks() - t.getTicks();
   }
 
-  @Override
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
@@ -50,7 +49,6 @@ public class MockRepositoryDateTime implements Comparable {
     return (compareTo(obj) == 0);
   }
 
-  @Override
   public int hashCode() {
     long lticks = ticks;
     return (int)(lticks ^ (lticks >>> 32));  // See Bloch, EJ, p. 38

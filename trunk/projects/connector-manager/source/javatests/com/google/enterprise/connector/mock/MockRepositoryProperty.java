@@ -18,6 +18,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -31,13 +34,25 @@ import java.util.List;
 public class MockRepositoryProperty {
   /**
    * Enumeration for property carrier types
-   * @author ziff@google.com (Donald "Max" Ziff)
    */
-  public enum PropertyType {
-    STRING("string"), 
-    DATE("date"), 
-    INTEGER("integer"),
-    UNDEFINED("undefined");
+  public static class PropertyType implements Comparable {
+	  private static int nextOrdinal = 0;
+	  private final int ordinal = nextOrdinal++;
+	  
+	    public static final PropertyType STRING = 
+	    	new PropertyType("string");
+	    public static final PropertyType DATE = 
+	    	new PropertyType("date");
+	    public static final PropertyType INTEGER = 
+	    	new PropertyType("integer");
+	    public static final PropertyType UNDEFINED = 
+	    	new PropertyType("undefined");
+	    
+		private static final PropertyType[] PRIVATE_VALUES =
+		  {STRING, DATE, INTEGER, UNDEFINED};
+		public static final List Values = 
+			Collections.unmodifiableList(Arrays.asList(PRIVATE_VALUES));
+
 
     private String tag;
 
@@ -53,19 +68,23 @@ public class MockRepositoryProperty {
       if (tag == null) {
         return UNDEFINED;
       }
-      for (PropertyType p: PropertyType.values()) {
-        if (tag.equals(p.tag)) {
-          return p;
+      for (int i =0; i<PRIVATE_VALUES.length; i++) {
+        if (PRIVATE_VALUES[i].tag.equals(tag)) {
+          return PRIVATE_VALUES[i];
         }
       }
       return UNDEFINED;
     }
+
+	public int compareTo(Object o) {
+		return ordinal - ((PropertyType)o).ordinal;
+	}
   }
   
   private String name;
   private PropertyType type;
   private String value;
-  private List<String> multivalues;
+  private List multivalues;
   private boolean repeating;
 
   public MockRepositoryProperty(String name, PropertyType type, String value) {
@@ -116,7 +135,7 @@ public class MockRepositoryProperty {
       this.name = name;
       this.type = type;
       this.repeating = true;
-      this.multivalues = new ArrayList<String>(ja.length());
+      this.multivalues = new ArrayList(ja.length());
       for (int i=0; i<ja.length(); i++) {
         this.multivalues.add(ja.optString(i));
       }
@@ -134,7 +153,9 @@ public class MockRepositoryProperty {
       StringBuffer buf = new StringBuffer(1024);
       buf.append('[');
       String separator = "";
-      for (String v: multivalues) {
+      
+      for (Iterator iter = multivalues.iterator(); iter.hasNext(); ) {
+    	String v = (String) iter.next();
         buf.append(separator);
         buf.append(v);
         separator = ", ";
@@ -164,7 +185,7 @@ public class MockRepositoryProperty {
     if (multivalues == null || multivalues.size() < 1) {
       return "";
     }
-    return multivalues.get(0);
+    return (String) multivalues.get(0);
   }
 
   private final static String[] EMPTY_STRING_ARRAY = new String[0];
@@ -173,7 +194,7 @@ public class MockRepositoryProperty {
     if (!repeating) {
       return new String[] {value};
     } else {
-      return multivalues.toArray(EMPTY_STRING_ARRAY);
+      return (String[]) multivalues.toArray(EMPTY_STRING_ARRAY);
     }
   }
 
