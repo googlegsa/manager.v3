@@ -66,7 +66,12 @@ public class MockJcrRepository implements Repository {
 
   /**
    * Creates a session - at present, no credential checking is done
+   * @param arg0 
+   * @param arg1 
    * @return a new Session
+   * @throws LoginException 
+   * @throws NoSuchWorkspaceException 
+   * @throws RepositoryException 
    */
   public Session login(Credentials arg0, String arg1) throws LoginException,
       NoSuchWorkspaceException, RepositoryException {
@@ -75,7 +80,10 @@ public class MockJcrRepository implements Repository {
 
   /**
    * Creates a session - at present, no credential checking is done
+   * @param arg0 
    * @return a new Session
+   * @throws LoginException 
+   * @throws RepositoryException 
    */
   public Session login(Credentials arg0) throws LoginException,
       RepositoryException {
@@ -84,7 +92,11 @@ public class MockJcrRepository implements Repository {
 
   /**
    * Creates a session - at present, no credential checking is done
+   * @param arg0 
    * @return a new Session
+   * @throws LoginException 
+   * @throws NoSuchWorkspaceException 
+   * @throws RepositoryException 
    */
   public Session login(String arg0) throws LoginException,
       NoSuchWorkspaceException, RepositoryException {
@@ -94,6 +106,8 @@ public class MockJcrRepository implements Repository {
   /**
    * Creates a session - at present, no credential checking is done
    * @return a new Session
+   * @throws LoginException 
+   * @throws RepositoryException 
    */
   public Session login() throws LoginException, RepositoryException {
     return new MockJcrSession(this);
@@ -105,6 +119,7 @@ public class MockJcrRepository implements Repository {
 
   /**
    * Throws UnsupportedOperationException
+   * @return nothing
    */
   public String[] getDescriptorKeys() {
     throw new UnsupportedOperationException();
@@ -112,6 +127,8 @@ public class MockJcrRepository implements Repository {
 
   /**
    * Throws UnsupportedOperationException
+   * @param arg0 
+   * @return nothing
    */
   public String getDescriptor(String arg0) {
     throw new UnsupportedOperationException();

@@ -17,7 +17,6 @@ package com.google.enterprise.connector.mock.jcr;
 import com.google.enterprise.connector.mock.MockRepositoryDocument;
 
 import java.util.Iterator;
-import java.util.List;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;

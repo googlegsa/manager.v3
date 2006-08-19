@@ -22,8 +22,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import com.google.enterprise.connector.mock.MockRepositoryProperty.PropertyType;
-
 /**
  * Mock event object.
  * <p>

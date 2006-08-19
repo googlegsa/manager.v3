@@ -180,6 +180,7 @@ public class MockRepositoryDocumentStore {
 
   /**
    * Returns an iterator over all documents in the store
+   * @return Iterator
    */
   public Iterator iterator() {
     List l = 

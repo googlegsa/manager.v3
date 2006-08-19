@@ -93,7 +93,6 @@ public class MockRepositoryPropertyListTest extends TestCase {
   
   /**
    * Test the JSON constructor
-   * @throws RepositoryException
    */
   public void testJsonConstructor() {
     String input = "{\"foo\"      : \"bar\"," +
