@@ -17,9 +17,9 @@ package com.google.enterprise.connector.spi;
 import java.util.Iterator;
 
 /**
- * A handle to a query.
+ * A handle to a query result set.
  */
-public interface Query {
+public interface ResultSet {
 
   /**
    * Produces an iterator through which query results can be explored. Each
@@ -28,6 +28,6 @@ public interface Query {
    * @throws RepositoryException if something is wrong with the repository, 
    * such as no connectivity
    */
-  public Iterator execute() throws RepositoryException;
+  public Iterator iterator() throws RepositoryException;
 
 }

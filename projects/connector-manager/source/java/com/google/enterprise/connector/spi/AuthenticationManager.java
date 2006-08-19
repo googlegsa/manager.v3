@@ -15,27 +15,24 @@
 package com.google.enterprise.connector.spi;
 
 /**
- * The root of the SPI. We do not specify how an object
- * implementing this interface will be obtained. This is left up to
- * implementors, who will probably provide their own constructors or factories,
- * that get injected by Spring or another mechanism.
- * <p>
- * A repository object is used as something against which to authenticate, via
- * the login method.
+ * Authentication Manager. All calls for end-user query authentication pass
+ * through this interface.
  */
-public interface Repository {
+public interface AuthenticationManager {
 
   /**
-   * Authenticates against the repository and returns a session belonging to
-   * the named user. If an exception is thrown, the
+   * Authenticates against the repository and returns true or false depending on
+   * whether authentication was successful. If an exception is thrown, the
    * implementor should provide an explanatory message.
+   * 
    * @param username A String, the user's name
    * @param password A String, the user's password
-   * @return An object implementing the {@link Session} interface
-   * @throws LoginException if there is a credentials-related problem
+   * @return True means that authentication succeeded, false indicates failure
+   * @throws LoginException if there is a credentials-related problem that
+   *           prohibits authentication
    * @throws RepositoryException if there is a more general problem, such as the
    *           system is unreachable or down
    */
-  public Session login(String username, String password) throws LoginException,
-      RepositoryException;
+  public boolean authenticate(String username, String password)
+      throws LoginException, RepositoryException;
 }
