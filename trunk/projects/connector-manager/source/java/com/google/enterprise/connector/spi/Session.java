@@ -23,10 +23,42 @@ package com.google.enterprise.connector.spi;
 public interface Session {
   
   /**
-   * Gets a QueryTraversalManager to implement query-based traversal
-   * @return    a QueryTraversalManager
+   * Gets a QueryTraversalManager to implement query-based traversal.  
+   * @return    a QueryTraversalManager - should not be null
    * @throws RepositoryException
    */
   public QueryTraversalManager getQueryTraversalManager() 
       throws RepositoryException;
+  
+  /**
+   * Gets an AuthenticationManager.  It is permissible to return null.  
+   * A null return means that this implementation does not support an
+   * Authentication Manager.  This may be for one of these reasons:
+   * <ul>
+   * <li> Authentication is not needed for this data source
+   * <li> Authentication is handled through another GSA-supported mechanism,
+   * such as LDAP
+   * </ul>
+   * @return    a AuthenticationManager - may be null
+   * @throws RepositoryException
+   */
+  public AuthenticationManager getAuthenticationManager() 
+      throws RepositoryException;
+  
+  /**
+   * Gets an AuthorizationManager.  It is permissible to return null.  
+   * A null return means that this implementation does not support an
+   * Authorization Manager.  This may be for one of these reasons:
+   * <ul>
+   * <li> Authorization is not needed for this data source - all documents are
+   * public
+   * <li> Authorization is handled through another GSA-supported mechanism,
+   * such as NTLM or Basic Auth
+   * </ul>
+   * @return    a AuthorizationManager - may be null
+   * @throws RepositoryException
+   */
+  public AuthorizationManager getAuthorizationManager() 
+      throws RepositoryException;
+  
 }

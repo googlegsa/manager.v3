@@ -72,9 +72,9 @@ public class SpiConstants {
    * view a document of this class. This may be implemented by a textual pointer
    * to an ACL.
    * <p>
-   * Value: google:securityclass
+   * Value: google:securitytoken
    */
-  public static final String PROPNAME_SECURITYCLASS = "google:securityclass";
+  public static final String PROPNAME_SECURITYTOKEN = "google:securitytoken";
 
   /**
    * Identifies an optional, single-valued property that gives a URL that should
@@ -86,5 +86,13 @@ public class SpiConstants {
    * Value: google:displayurl
    */
   public static final String PROPNAME_DISPLAYURL = "google:displayurl";
+
+  /**
+   * Identifies a property used in authorization results that indicates
+   * whether this user can see this document.
+   * <p>
+   * Value: google:authviewpermit
+   */
+  public static final String PROPNAME_AUTH_VIEWPERMIT = "google:authviewpermit";
 
 }
