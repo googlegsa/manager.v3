@@ -123,18 +123,18 @@ package com.google.enterprise.connector.spi;
  * The property maps returned by the queries defined here represent documents.
  * They must contain special properties according to the following rules:
  * <ul>
- * <li> {@link SpiConstants.PROPNAME_DOCID} This property must be present.
- * <li> {@link SpiConstants.PROPNAME_CONTENTURL} If present, the GSA will pull
+ * <li> {@link SpiConstants}.PROPNAME_DOCID This property must be present.
+ * <li> {@link SpiConstants}.PROPNAME_CONTENTURL If present, the GSA will pull
  * content using the value of this property. If not present, then the
- * {@link SpiConstants.PROPNAME_CONTENT} property should be present.
- * <li> {@link SpiConstants.PROPNAME_CONTENT} Will not be used if the
- * {@link SpiConstants.PROPNAME_CONTENTURL} is present. If present, the
+ * {@link SpiConstants}.PROPNAME_CONTENT property should be present.
+ * <li> {@link SpiConstants}.PROPNAME_CONTENT Will not be used if the
+ * {@link SpiConstants}.PROPNAME_CONTENTURL is present. If present, the
  * connector framework will base-64 encode the value and present it to the GSA
  * as the primary content to be indexed.
- * <li> {@link SpiConstants.PROPNAME_SECURITYCLASS} If present, this will be
+ * <li> {@link SpiConstants}.PROPNAME_SECURITYCLASS If present, this will be
  * persisted in the index and used at serve-time to determine whether a given
  * user is authorized to view this document.
- * <li> {@link SpiConstants.PROPNAME_DISPLAYURL} If present, this will be used
+ * <li> {@link SpiConstants}.PROPNAME_DISPLAYURL If present, this will be used
  * as the primary link on a results page
  * </ul>
  */

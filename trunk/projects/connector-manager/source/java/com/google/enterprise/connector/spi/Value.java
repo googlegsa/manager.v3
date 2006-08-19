@@ -52,10 +52,11 @@ public interface Value {
    * other types.
    * @return The value as a Stream
    * @throws IllegalArgumentException If conversion is impossible
+   * @throws IllegalStateException If getStream has already been called
    * @throws RepositoryException
    */
-  public InputStream getStream() throws IllegalStateException,
-      RepositoryException;
+  public InputStream getStream() throws IllegalArgumentException,
+    IllegalStateException, RepositoryException;
 
   /**
    * Get the value as a long.  If the type is not ValueType.LONG, 
@@ -64,7 +65,7 @@ public interface Value {
    * @throws IllegalArgumentException If conversion is impossible
    * @throws RepositoryException
    */
-  public long getLong() throws IllegalArgumentException, IllegalStateException,
+  public long getLong() throws IllegalArgumentException,
       RepositoryException;
 
   /**
@@ -75,7 +76,7 @@ public interface Value {
    * @throws RepositoryException
    */
   public double getDouble() throws IllegalArgumentException,
-      IllegalStateException, RepositoryException;
+      RepositoryException;
 
   /**
    * Get the value as a Calendar.  If the type is not ValueType.DATE, 
@@ -85,7 +86,7 @@ public interface Value {
    * @throws RepositoryException
    */
   public Calendar getDate() throws IllegalArgumentException,
-      IllegalStateException, RepositoryException;
+      RepositoryException;
 
   /**
    * Get the value as a boolean.  If the type is not ValueType.BOOLEAN, 
@@ -95,7 +96,7 @@ public interface Value {
    * @throws RepositoryException
    */
   public boolean getBoolean() throws IllegalArgumentException,
-      IllegalStateException, RepositoryException;
+      RepositoryException;
 
   /**
    * Gets the property's type
