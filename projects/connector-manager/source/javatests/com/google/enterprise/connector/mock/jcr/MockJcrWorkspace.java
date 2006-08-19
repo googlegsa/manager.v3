@@ -71,6 +71,7 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Returns the Session with which this was created
+   * @return Session
    */
   public Session getSession() {
     return session;
@@ -78,6 +79,7 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Returns a name for this Workspace
+   * @return The constant "MockJcrWorkspace"
    */
   public String getName() {
     return "MockJcrWorkspace";
@@ -85,6 +87,8 @@ public class MockJcrWorkspace implements Workspace {
   
   /**
    * Gets a QueryManager for this Workspace
+   * @return MockJcrQueryManager
+   * @throws RepositoryException 
    */
   public QueryManager getQueryManager() throws RepositoryException {
     return new MockJcrQueryManager(repo.getRepo().getStore());
@@ -92,6 +96,9 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
+   * @return nothing
+   * @throws UnsupportedRepositoryOperationException 
+   * @throws RepositoryException 
    */
   public ObservationManager getObservationManager()
       throws UnsupportedRepositoryOperationException, RepositoryException {
@@ -105,6 +112,8 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
+   * @return nothing
+   * @throws RepositoryException 
    */
   public NamespaceRegistry getNamespaceRegistry() throws RepositoryException {
     throw new UnsupportedOperationException();
@@ -112,6 +121,8 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
+   * @return nothing
+   * @throws RepositoryException 
    */
   public NodeTypeManager getNodeTypeManager() throws RepositoryException {
     throw new UnsupportedOperationException();
@@ -119,6 +130,8 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
+   * @return nothing
+   * @throws RepositoryException 
    */
   public String[] getAccessibleWorkspaceNames() throws RepositoryException {
     throw new UnsupportedOperationException();
@@ -129,6 +142,15 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
+   * @param arg0 
+   * @param arg1 
+   * @throws ConstraintViolationException 
+   * @throws VersionException 
+   * @throws AccessDeniedException 
+   * @throws PathNotFoundException 
+   * @throws ItemExistsException 
+   * @throws LockException 
+   * @throws RepositoryException 
    */
   public void copy(String arg0, String arg1)
       throws ConstraintViolationException, VersionException,
@@ -139,6 +161,17 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
+   * @param arg0 
+   * @param arg1 
+   * @param arg2 
+   * @throws NoSuchWorkspaceException 
+   * @throws ConstraintViolationException 
+   * @throws VersionException 
+   * @throws AccessDeniedException 
+   * @throws PathNotFoundException 
+   * @throws ItemExistsException 
+   * @throws LockException 
+   * @throws RepositoryException 
    */
   public void copy(String arg0, String arg1, String arg2)
       throws NoSuchWorkspaceException, ConstraintViolationException,
@@ -149,6 +182,18 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
+   * @param arg0 
+   * @param arg1 
+   * @param arg2 
+   * @param arg3 
+   * @throws NoSuchWorkspaceException 
+   * @throws ConstraintViolationException 
+   * @throws VersionException 
+   * @throws AccessDeniedException 
+   * @throws PathNotFoundException 
+   * @throws ItemExistsException 
+   * @throws LockException 
+   * @throws RepositoryException 
    */
   public void clone(String arg0, String arg1, String arg2, boolean arg3)
       throws NoSuchWorkspaceException, ConstraintViolationException,
@@ -159,6 +204,15 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
+   * @param arg0 
+   * @param arg1 
+   * @throws ConstraintViolationException 
+   * @throws VersionException 
+   * @throws AccessDeniedException 
+   * @throws PathNotFoundException 
+   * @throws ItemExistsException 
+   * @throws LockException 
+   * @throws RepositoryException 
    */
   public void move(String arg0, String arg1)
       throws ConstraintViolationException, VersionException,
@@ -169,6 +223,14 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
+   * @param arg0 
+   * @param arg1 
+   * @throws ItemExistsException 
+   * @throws UnsupportedRepositoryOperationException 
+   * @throws VersionException 
+   * @throws LockException 
+   * @throws InvalidItemStateException 
+   * @throws RepositoryException 
    */
   public void restore(Version[] arg0, boolean arg1) throws ItemExistsException,
       UnsupportedRepositoryOperationException, VersionException, LockException,
@@ -178,6 +240,15 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
+   * @param arg0 
+   * @param arg1 
+   * @return nothing
+   * @throws PathNotFoundException 
+   * @throws ConstraintViolationException 
+   * @throws VersionException 
+   * @throws LockException 
+   * @throws AccessDeniedException 
+   * @throws RepositoryException 
    */
   public ContentHandler getImportContentHandler(String arg0, int arg1)
       throws PathNotFoundException, ConstraintViolationException,
@@ -188,6 +259,17 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
+   * @param arg0 
+   * @param arg1 
+   * @param arg2 
+   * @throws IOException 
+   * @throws PathNotFoundException 
+   * @throws ItemExistsException 
+   * @throws ConstraintViolationException 
+   * @throws InvalidSerializedDataException 
+   * @throws LockException 
+   * @throws AccessDeniedException 
+   * @throws RepositoryException 
    */
   public void importXML(String arg0, InputStream arg1, int arg2)
       throws IOException, PathNotFoundException, ItemExistsException,

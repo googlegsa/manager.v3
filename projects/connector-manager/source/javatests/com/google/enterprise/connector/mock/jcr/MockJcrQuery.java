@@ -73,6 +73,8 @@ public class MockJcrQuery implements Query {
   /**
    * Returns the result list from executing the query. Clients may consume as
    * much or little of the result as they need.
+   * @return MockJcrQueryResult
+   * @throws RepositoryException 
    */
   public QueryResult execute() throws RepositoryException {
     return new MockJcrQueryResult(store.dateRange(from, to));
@@ -81,6 +83,7 @@ public class MockJcrQuery implements Query {
   /**
    * Returns the query statement.  In this implementation, this is 
    * just for debugging - it's not an actual query string in a query language.
+   * @return the stored statement
    */
   public String getStatement() {
     return statement;
@@ -88,6 +91,7 @@ public class MockJcrQuery implements Query {
   /**
    * Returns the query language.  TBD(ziff): consider whether this is really 
    * needed.
+   * @return null
    */
   public String getLanguage() {
     return null;
@@ -97,6 +101,9 @@ public class MockJcrQuery implements Query {
 
   /**
    * Throws UnsupportedOperationException
+   * @return nothing
+   * @throws ItemNotFoundException 
+   * @throws RepositoryException 
    */
   public String getStoredQueryPath() throws ItemNotFoundException,
       RepositoryException {
@@ -107,6 +114,15 @@ public class MockJcrQuery implements Query {
 
   /**
    * Throws UnsupportedOperationException
+   * @param arg0 
+   * @return nothing
+   * @throws ItemExistsException 
+   * @throws PathNotFoundException 
+   * @throws VersionException 
+   * @throws ConstraintViolationException 
+   * @throws LockException 
+   * @throws UnsupportedRepositoryOperationException 
+   * @throws RepositoryException 
    */
   public Node storeAsNode(String arg0) throws ItemExistsException,
       PathNotFoundException, VersionException, ConstraintViolationException,

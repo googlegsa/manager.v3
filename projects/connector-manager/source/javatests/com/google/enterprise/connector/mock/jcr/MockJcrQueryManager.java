@@ -52,6 +52,11 @@ public class MockJcrQueryManager implements QueryManager {
    * only the pseudo-query-language "mockQueryLanguage" is supported.  
    * TODO(ziff): change this to use XPath - the real JCR query language - even
    * if only a small subset of XPath is supported
+   * @param statement 
+   * @param language 
+   * @return MockJcrQuery
+   * @throws InvalidQueryException 
+   * @throws RepositoryException 
    */
   public Query createQuery(String statement, String language)
       throws InvalidQueryException, RepositoryException {
@@ -86,6 +91,8 @@ public class MockJcrQueryManager implements QueryManager {
   /**
    * Returns the query languages supported - in this case, only the mock 
    * query language "mockQueryLanguage".
+   * @return {"mockQueryLanguage"}
+   * @throws RepositoryException 
    */
   public String[] getSupportedQueryLanguages() throws RepositoryException {
     return SUPPORTED_LANGUAGES;
@@ -95,6 +102,10 @@ public class MockJcrQueryManager implements QueryManager {
 
   /**
    * Throws UnsupportedOperationException
+   * @param arg0 
+   * @return nothing 
+   * @throws InvalidQueryException 
+   * @throws RepositoryException 
    */
   public Query getQuery(Node arg0) throws InvalidQueryException,
       RepositoryException {

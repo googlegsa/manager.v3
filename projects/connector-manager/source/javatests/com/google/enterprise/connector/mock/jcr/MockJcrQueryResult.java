@@ -53,6 +53,8 @@ public class MockJcrQueryResult implements QueryResult {
   /**
    * Returns the result as a NodeIterator.  At present, this is the only 
    * supported operation.
+   * @return MockJcrNodeIterator
+   * @throws RepositoryException 
    */
   public NodeIterator getNodes() throws RepositoryException {
     return new MockJcrNodeIterator(result.iterator());
@@ -63,6 +65,8 @@ public class MockJcrQueryResult implements QueryResult {
 
   /**
    * Throws UnsupportedOperationException
+   * @return nothing
+   * @throws RepositoryException 
    */
   public String[] getColumnNames() throws RepositoryException {
     throw new UnsupportedOperationException();
@@ -70,6 +74,8 @@ public class MockJcrQueryResult implements QueryResult {
 
   /**
    * Throws UnsupportedOperationException
+   * @return nothing
+   * @throws RepositoryException 
    */
   public RowIterator getRows() throws RepositoryException {
     throw new UnsupportedOperationException();
