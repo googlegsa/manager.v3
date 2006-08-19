@@ -17,6 +17,7 @@ package com.google.enterprise.connector.mock.jcr;
 import com.google.enterprise.connector.mock.MockRepositoryDocument;
 
 import java.util.Iterator;
+import java.util.List;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -39,19 +40,19 @@ import javax.jcr.NodeIterator;
  */
 public class MockJcrNodeIterator implements NodeIterator {
 
-  Iterator<Node> iter;
-  Iterator<MockRepositoryDocument> internalIterator;
+  Iterator iter;
+  Iterator internalIterator;
   
-  MockJcrNodeIterator(Iterable<MockRepositoryDocument> iterable) {
-    internalIterator = iterable.iterator();
-    this.iter = new Iterator<Node> () {
+  MockJcrNodeIterator(Iterator iter) {
+    internalIterator = iter;
+    this.iter = new Iterator() {
 
       public boolean hasNext() {
         return internalIterator.hasNext();
       }
 
-      public Node next() {
-        return new MockJcrNode(internalIterator.next());
+      public Object next() {
+        return new MockJcrNode((MockRepositoryDocument) internalIterator.next());
       }
 
       public void remove() {
@@ -62,7 +63,7 @@ public class MockJcrNodeIterator implements NodeIterator {
   }
 
   public Node nextNode() {
-    return iter.next();
+    return (Node) iter.next();
   }
 
   public boolean hasNext() {

@@ -19,6 +19,7 @@ import com.google.enterprise.connector.mock.MockRepositoryEvent.EventType;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import java.util.Iterator;
 import java.util.logging.Logger;
 
 /**
@@ -162,7 +163,8 @@ public class MockRepositoryDocumentStoreTest extends TestCase {
     int count = 0;
     boolean allMatch = true;
     boolean overflow = false;
-    for (MockRepositoryDocument d : s.dateRange(from, to)) {
+    for (Iterator iter = s.dateRange(from, to).iterator(); iter.hasNext(); ) {
+    	MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
       if (count < expectedResults.length) {
         if (!d.getDocID().equals(expectedResults[count])) {
           logger.info("Query result " + count + " docid " + d.getDocID()

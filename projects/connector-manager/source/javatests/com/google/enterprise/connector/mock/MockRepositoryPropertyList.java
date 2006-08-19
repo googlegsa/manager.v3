@@ -29,20 +29,20 @@ import java.util.Map;
  * <p>
  * This models the metadata-list for a document.
  */
-public class MockRepositoryPropertyList 
-    implements Iterable<MockRepositoryProperty> { 
-  private Map<String, MockRepositoryProperty> proplist;
+public class MockRepositoryPropertyList { 
+  private Map proplist;
   
   public String toString() {
     return proplist.toString();
   }
 
-  private void init(List<MockRepositoryProperty> l) {
-    proplist = new HashMap<String, MockRepositoryProperty>();
+  private void init(List l) {
+    proplist = new HashMap();
     if (l == null) {
       return;
     }
-    for (MockRepositoryProperty p : l) {
+    for (Iterator iter = l.iterator(); iter.hasNext(); ) {
+    	MockRepositoryProperty p = (MockRepositoryProperty) iter.next();
       proplist.put(p.getName(), p);
     }   
   }
@@ -55,12 +55,12 @@ public class MockRepositoryPropertyList
     init(Arrays.asList(l));
   }
 
-  public MockRepositoryPropertyList(List<MockRepositoryProperty> l) {
+  public MockRepositoryPropertyList(List l) {
     init(l);
   }
   
   public MockRepositoryPropertyList(JSONObject jo) {
-    List<MockRepositoryProperty> l = new LinkedList<MockRepositoryProperty>();
+    List l = new LinkedList();
     for (Iterator keys = jo.keys(); keys.hasNext(); ) {
       String name = (String) keys.next();
       Object value;
@@ -89,18 +89,18 @@ public class MockRepositoryPropertyList
   }
 
   public String lookupStringValue(String name) {
-    MockRepositoryProperty p = proplist.get(name);
+    MockRepositoryProperty p = (MockRepositoryProperty) proplist.get(name);
     if (p == null) {
       return null;
     }
     return p.getValue();
   }
 
-  public Iterator<MockRepositoryProperty> iterator() {
+  public Iterator iterator() {
     return proplist.values().iterator();
   }
 
   public MockRepositoryProperty getProperty(String name) {
-    return proplist.get(name);
+    return (MockRepositoryProperty) proplist.get(name);
   }
 }

@@ -101,20 +101,14 @@ public class MockJcrValue implements Value {
   protected static int MockRepositoryTypeToJCRType(PropertyType t) {
     // TODO(ziff): maintain this along with MockRepositoryProperty.PropertyType
     int result = javax.jcr.PropertyType.UNDEFINED;
-    switch (t) {
-      case STRING:
+    if (t == PropertyType.STRING) {
         result = javax.jcr.PropertyType.STRING;
-        break;
-      case DATE:
+    }
+    else if (t == PropertyType.DATE) {
         result = javax.jcr.PropertyType.DATE;
-        break;
-      case INTEGER:
+    }
+    else if (t == PropertyType.INTEGER) {
         result = javax.jcr.PropertyType.LONG;
-        break;
-      case UNDEFINED:
-      default:
-        result = javax.jcr.PropertyType.UNDEFINED;
-        break;
     }
     return result;
   }

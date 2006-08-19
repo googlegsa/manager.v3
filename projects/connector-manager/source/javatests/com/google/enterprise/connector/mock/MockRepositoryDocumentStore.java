@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import com.google.enterprise.connector.mock.MockRepositoryEvent.EventType;
+
 /**
  * Mock Document Store for Unit tests.
  * 
@@ -70,11 +72,10 @@ import java.util.logging.Logger;
  * <li>add textual dump/load so bigger test cases can be built easily
  * </ul>
  */
-public class MockRepositoryDocumentStore implements
-    Iterable<MockRepositoryDocument> {
+public class MockRepositoryDocumentStore {
   private static final Logger logger = 
     Logger.getLogger(MockRepositoryDocumentStore.class.getName());
-  Map<String, MockRepositoryDocument> store = null;
+  Map store = null;
 
   /**
    * Makes an empty store
@@ -87,7 +88,7 @@ public class MockRepositoryDocumentStore implements
    * Returns a store to the empty state
    */
   public void reinit() {
-    store = new HashMap<String, MockRepositoryDocument>();
+    store = new HashMap();
     if (!checkIntegrity()) {
       throw new RuntimeException("MockRepositoryStore integrity check failed");
     }
@@ -102,20 +103,20 @@ public class MockRepositoryDocumentStore implements
    * @param event
    */
   public void applyEvent(MockRepositoryEvent event) {
-    switch (event.getType()) {
-      case SAVE:
+	  if (event.getType() == EventType.SAVE) {
         doSave(event);
-        break;
-      case DELETE:
+	  }
+	  else if (event.getType() == EventType.DELETE) {
         doDelete(event);
-        break;
-      case METADATA_ONLY_SAVE:
+	  } 
+	  else if (event.getType() == EventType.METADATA_ONLY_SAVE) {
         doSave(event);
-        break;
-      default:
+	  }
+	  else {
         throw new IllegalArgumentException("Unknown event type");
     }
-    assert checkIntegrity();
+  
+    // TODO:ziff assert checkIntegrity();
   }
 
   /**
@@ -174,15 +175,15 @@ public class MockRepositoryDocumentStore implements
    * @return If found, the document; otherwise, null
    */
   public MockRepositoryDocument getDocByID(String docid) {
-    return store.get(docid);
+    return (MockRepositoryDocument)store.get(docid);
   }
 
   /**
    * Returns an iterator over all documents in the store
    */
-  public Iterator<MockRepositoryDocument> iterator() {
-    List<MockRepositoryDocument> l = 
-      new LinkedList<MockRepositoryDocument>(store.values());
+  public Iterator iterator() {
+    List l = 
+      new LinkedList(store.values());
     sortDocuments(l);
     return l.listIterator();
   }
@@ -199,11 +200,11 @@ public class MockRepositoryDocumentStore implements
    * @param to
    * @return An Iterable over these results
    */
-  public Iterable<MockRepositoryDocument> dateRange(
+  public List dateRange(
       final MockRepositoryDateTime from, final MockRepositoryDateTime to) {
-    List<MockRepositoryDocument> l = 
-      new ArrayList<MockRepositoryDocument>();
-    for (MockRepositoryDocument d: store.values()) {
+    List l = new ArrayList();
+    for (Iterator iter = store.values().iterator(); iter.hasNext(); ) {
+    	MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
       int c1 = from.compareTo(d.getTimeStamp());
       int c2 = d.getTimeStamp().compareTo(to);
       if (c1 <= 0  && c2 < 0) {
@@ -214,9 +215,11 @@ public class MockRepositoryDocumentStore implements
     return l;
   }
 
-  private void sortDocuments(List<MockRepositoryDocument> l) {
-    Collections.sort(l, new Comparator<MockRepositoryDocument>() {
-      public int compare(MockRepositoryDocument d1, MockRepositoryDocument d2) {
+  private void sortDocuments(List l) {
+    Collections.sort(l, new Comparator() {
+      public int compare(Object o1, Object o2) {
+    	  MockRepositoryDocument d1 = (MockRepositoryDocument) o1;
+    	  MockRepositoryDocument d2 = (MockRepositoryDocument) o2;
         return d1.getTimeStamp().compareTo(d2.getTimeStamp());
       }
     });
@@ -230,7 +233,8 @@ public class MockRepositoryDocumentStore implements
   private boolean checkDateOrderIntegrity() {
     boolean result = true;
     int lastStamp = -1;
-    for (MockRepositoryDocument d : this) {
+    for (Iterator iter = this.iterator(); iter.hasNext(); ) {
+    	MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
       int thisStamp = d.getTimeStamp().getTicks();
       if (lastStamp > thisStamp) {
         result = false;
@@ -250,8 +254,9 @@ public class MockRepositoryDocumentStore implements
 
   private boolean checkDocidUniquenessIntegrity() {
     boolean result = true;
-    Set<String> m = new HashSet<String>();
-    for (MockRepositoryDocument d : this) {
+    Set m = new HashSet();
+    for (Iterator iter = this.iterator(); iter.hasNext(); ) {
+    	MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
       if (!m.add(d.getDocID())) {
         // this docid appears more than once
         result = false;

@@ -19,6 +19,7 @@ import com.google.enterprise.connector.mock.MockRepositoryProperty;
 
 import java.io.InputStream;
 import java.util.Calendar;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -70,10 +71,11 @@ import javax.jcr.version.VersionHistory;
 public class MockJcrNode implements Node {
 
   MockRepositoryDocument doc;
-  List<Property> propList = null;
+  List propList = null;
 
   private Property findProperty(String name) throws RepositoryException {
-    for (Property p : propList) {
+    for (Iterator iter = propList.iterator(); iter.hasNext(); ) {
+    	Property p = (Property) iter.next();
       if (p.getName().equals(name)) {
         return p;
       }
@@ -82,7 +84,7 @@ public class MockJcrNode implements Node {
   }
 
   private void init() {
-    propList = new LinkedList<Property>();
+    propList = new LinkedList();
     // Convert the special MockRepositoryDocument schema to a JCR property list
     MockRepositoryProperty p;
     // content
@@ -100,7 +102,8 @@ public class MockJcrNode implements Node {
     propList.add(new MockJcrProperty(p));
 
     // Now push all the other properties onto the list
-    for (MockRepositoryProperty prop : doc.getProplist()) {
+    for (Iterator iter = doc.getProplist().iterator(); iter.hasNext(); ) {
+    	MockRepositoryProperty prop = (MockRepositoryProperty) iter.next();
       propList.add(new MockJcrProperty(prop));
     }
   }
