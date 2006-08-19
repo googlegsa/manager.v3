@@ -25,12 +25,14 @@ public interface PropertyMap {
    * Finds a property by name
    * @param name The property's name
    * @return The property with that name, or null if there is none
+   * @throws RepositoryException 
    */
   public Property getProperty(String name) throws RepositoryException;
 
   /**
    * Gets all properties
    * @return An Iterator of {@link Property} objects
+   * @throws RepositoryException 
    */
   public Iterator getProperties() throws RepositoryException;
   

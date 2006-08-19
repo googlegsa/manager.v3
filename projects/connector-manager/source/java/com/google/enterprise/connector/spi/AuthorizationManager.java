@@ -28,8 +28,8 @@ public interface AuthorizationManager {
    *                   the docid for each document
    * @param username   The username as a string
    * @return   A ResultSet where each property map has a String property 
-   *    {@link SpiConstants.PROPNAME_DOCID} with a document ID from the list,
-   *    and a boolean property {@link SpiConstants.PROPNAME_AUTH_VIEWPERMIT}
+   *    {@link SpiConstants}.PROPNAME_DOCID with a document ID from the list,
+   *    and a boolean property {@link SpiConstants}.PROPNAME_AUTH_VIEWPERMIT
    *    that indicates whether this user can view this document.  This result
    *    set should contain an element for each document id supplied, but 
    *    does not need to be in the same order as the docidList.
@@ -44,9 +44,9 @@ public interface AuthorizationManager {
    *                   the security token for a class of documents
    * @param username   The username as a string
    * @return   A ResultSet where each property map has a String property 
-   *    {@link SpiConstants.PROPNAME_SECURITYTOKEN} with a security token
+   *    {@link SpiConstants}.PROPNAME_SECURITYTOKEN with a security token
    *    from the list,
-   *    and a boolean property {@link SpiConstants.PROPNAME_AUTH_VIEWPERMIT}
+   *    and a boolean property {@link SpiConstants}.PROPNAME_AUTH_VIEWPERMIT
    *    that indicates whether this user can view documents
    *    associated with this token.  This result
    *    set should contain an element for each security token supplied, but 
