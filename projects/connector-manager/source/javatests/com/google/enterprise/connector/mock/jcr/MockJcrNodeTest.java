@@ -37,7 +37,7 @@ import javax.jcr.RepositoryException;
  */
 public class MockJcrNodeTest extends TestCase {
   private static final Logger logger = Logger
-    .getLogger(MockRepositoryPropertyTest.class.getName());
+      .getLogger(MockRepositoryPropertyTest.class.getName());
 
   /**
    * Sanity test
@@ -45,8 +45,8 @@ public class MockJcrNodeTest extends TestCase {
    */
   public void testSimpleDoc() throws RepositoryException {
     MockRepositoryDocument mrd = new MockRepositoryDocument(
-      new MockRepositoryDateTime(50000), "docid2", "now is the time",
-      new MockRepositoryPropertyList());
+        new MockRepositoryDateTime(50000), "docid2", "now is the time",
+        new MockRepositoryPropertyList());
     Node n = new MockJcrNode(mrd);
     Property p = n.getProperty("jcr:content");
     Assert.assertNotNull(p);
@@ -58,7 +58,7 @@ public class MockJcrNodeTest extends TestCase {
     String uuid = p.getString();
     logger.info("uuid is \"" + uuid + "\"");
 
-    p = n.getProperty("jcr:modified");
+    p = n.getProperty("jcr:lastModified");
     Assert.assertNotNull(p);
     Calendar modifyDate = p.getDate();
     logger.info("modify date is \"" + modifyDate.getTime() + "\"");
@@ -70,7 +70,7 @@ public class MockJcrNodeTest extends TestCase {
    */
   public void testJsonDoc() throws RepositoryException {
     String in = "{timestamp:10, docid:xyzzy, "
-      + "content:\"Now is the time\", name:John}";
+        + "content:\"Now is the time\", name:John}";
     JSONObject jo;
     try {
       jo = new JSONObject(in);
@@ -79,28 +79,28 @@ public class MockJcrNodeTest extends TestCase {
     }
     MockRepositoryDocument document = new MockRepositoryDocument(jo);
     MockJcrNode node = new MockJcrNode(document);
-    
+
     {
       Property p = node.getProperty("jcr:content");
       Assert.assertNotNull(p);
       String value = p.getString();
       Assert.assertEquals(value, "Now is the time");
     }
-    
+
     {
       Property p = node.getProperty("jcr:uuid");
       Assert.assertNotNull(p);
       String value = p.getString();
       Assert.assertEquals(value, "xyzzy");
     }
-    
+
     {
       Property p = node.getProperty("name");
       Assert.assertNotNull(p);
       String value = p.getString();
       Assert.assertEquals(value, "John");
     }
-    
+
   }
 
 }

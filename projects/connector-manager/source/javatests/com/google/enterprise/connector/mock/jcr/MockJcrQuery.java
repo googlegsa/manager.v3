@@ -58,16 +58,30 @@ public class MockJcrQuery implements Query {
    * @param store   MockRepositoryDocumentStore from which documents are 
    * returned
    */
-  public MockJcrQuery(
-      MockRepositoryDateTime from,
-      MockRepositoryDateTime to,
+  public MockJcrQuery(MockRepositoryDateTime from, MockRepositoryDateTime to,
       MockRepositoryDocumentStore store) {
     this.from = from;
     this.to = to;
     this.store = store;
     this.statement = "Query for documents between " + from.toString() + " and "
-      + to.toString();
-    this.internalQuery = null;
+        + to.toString();
+    this.internalQuery = store.dateRange(from, to);
+  }
+
+  /**
+   * Creates a MockJcrQuery object from a single date.  This is intended to be 
+   * used for query traversal.  
+   * @param from    Beginning point of range
+   * @param store   MockRepositoryDocumentStore from which documents are 
+   * returned
+   */
+  public MockJcrQuery(MockRepositoryDateTime from,
+      MockRepositoryDocumentStore store) {
+    this.from = from;
+    this.to = null;
+    this.store = store;
+    this.statement = "Query for documents from " + from.toString();
+    this.internalQuery = store.dateRange(from);
   }
 
   /**
@@ -77,9 +91,9 @@ public class MockJcrQuery implements Query {
    * @throws RepositoryException 
    */
   public QueryResult execute() throws RepositoryException {
-    return new MockJcrQueryResult(store.dateRange(from, to));
+    return new MockJcrQueryResult(this.internalQuery);
   }
-  
+
   /**
    * Returns the query statement.  In this implementation, this is 
    * just for debugging - it's not an actual query string in a query language.
@@ -88,6 +102,7 @@ public class MockJcrQuery implements Query {
   public String getStatement() {
     return statement;
   }
+
   /**
    * Returns the query language.  TBD(ziff): consider whether this is really 
    * needed.
@@ -97,7 +112,7 @@ public class MockJcrQuery implements Query {
     return null;
   }
 
-//The following methods are JCR level 1 - but we do not anticipate using them
+  //The following methods are JCR level 1 - but we do not anticipate using them
 
   /**
    * Throws UnsupportedOperationException
@@ -110,7 +125,7 @@ public class MockJcrQuery implements Query {
     throw new UnsupportedOperationException();
   }
 
-//The following methods are JCR level 2 - these would never be needed
+  //The following methods are JCR level 2 - these would never be needed
 
   /**
    * Throws UnsupportedOperationException

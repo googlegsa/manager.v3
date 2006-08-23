@@ -18,6 +18,7 @@ import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.MockRepositoryPropertyTest;
 
+import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.util.logging.Logger;
@@ -35,33 +36,34 @@ import javax.jcr.query.QueryResult;
  * Unit tests for Mock JCR repository.  
  */
 public class MockJcrQueryManagerTest extends TestCase {
-  private static final Logger logger = 
-    Logger.getLogger(MockRepositoryPropertyTest.class.getName());
+  private static final Logger logger = Logger
+      .getLogger(MockRepositoryPropertyTest.class.getName());
+
   /**
    * Simple query test
    * @throws RepositoryException
-   */  
+   */
   public void testSimpleQuery() throws RepositoryException {
-    MockRepositoryEventList mrel = 
-      new MockRepositoryEventList("MockRepositoryEventLog1.txt");
+    MockRepositoryEventList mrel = new MockRepositoryEventList(
+        "MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
 
     QueryManager qm = new MockJcrQueryManager(r.getStore());
-    
+
     String statement = "{from:10, to:21}";
     String language = "mockQueryLanguage";
-    
+
     Query query = qm.createQuery(statement, language);
-    
+
     QueryResult qr = query.execute();
-    
+
     NodeIterator ni = qr.getNodes();
-    
+
     Node n;
     while (ni.hasNext()) {
       n = ni.nextNode();
       logger.info("docid " + n.getProperty("jcr:uuid").getString());
-      
+
       Property p;
       PropertyIterator pi = n.getProperties();
       String indent = "  ";
@@ -70,6 +72,38 @@ public class MockJcrQueryManagerTest extends TestCase {
         logger.info(indent + p.getName() + " " + p.getString());
       }
     }
+  }
+
+  public void testXpathQuery() throws RepositoryException {
+    MockRepositoryEventList mrel = new MockRepositoryEventList(
+        "MockRepositoryEventLog1.txt");
+    MockRepository r = new MockRepository(mrel);
+
+    QueryManager qm = new MockJcrQueryManager(r.getStore());
+
+    String queryPrefix = 
+      "//element(*, nt:resource)[@jcr:lastModified >= xs:dateTime(\"";
+    String queryPostfix = "\")] order by jcr:lastModified, jcr:uuid";
+
+    String time = "1970-01-01T00:00:50Z";
+
+    String statement = queryPrefix + time + queryPostfix;
+    String language = Query.XPATH;
+
+    Query query = qm.createQuery(statement, language);
+
+    QueryResult qr = query.execute();
+
+    NodeIterator ni = qr.getNodes();
+
+    Node n;
+
+    int count = 0;
+    while (ni.hasNext()) {
+      n = ni.nextNode();
+      count++;
+    }
+    Assert.assertEquals(2, count);
   }
 
 }

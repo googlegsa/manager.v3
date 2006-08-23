@@ -25,6 +25,7 @@ import org.json.JSONObject;
 
 import java.util.Calendar;
 
+import javax.jcr.Property;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
@@ -36,9 +37,9 @@ import javax.jcr.ValueFormatException;
 public class MockJcrPropertyTest extends TestCase {
   public void testSimple() throws ValueFormatException, RepositoryException {
     String input = "{" + "baz: 42, " + "xyzzy: {type:string, value:skeedle}, "
-      + "abc: {type:integer, value:[2, 3, 5, 7, 11]}, "
-      + "def: {type:date, value:[10, 20, 30]}, "
-      + "ghi: {type:integer, value:[]}, " + "}";
+        + "abc: {type:integer, value:[2, 3, 5, 7, 11]}, "
+        + "def: {type:date, value:[10, 20, 30]}, "
+        + "ghi: {type:integer, value:[]}, " + "}";
     JSONObject jo;
     try {
       jo = new JSONObject(input);
@@ -49,22 +50,29 @@ public class MockJcrPropertyTest extends TestCase {
 
     {
       MockRepositoryProperty testProp = pl.getProperty("xyzzy");
-      MockJcrProperty testJCRProp = new MockJcrProperty(testProp);
+      Property testJCRProp = new MockJcrProperty(testProp);
       Assert.assertEquals("skeedle", testJCRProp.getString());
       Assert.assertEquals(PropertyType.STRING, testJCRProp.getType());
     }
 
     {
       MockRepositoryProperty testProp = pl.getProperty("baz");
-      MockJcrProperty testJCRProp = new MockJcrProperty(testProp);
+      Property testJCRProp = new MockJcrProperty(testProp);
       Assert.assertEquals(42, testJCRProp.getLong());
       Assert.assertEquals(PropertyType.LONG, testJCRProp.getType());
     }
 
     {
       MockRepositoryProperty testProp = pl.getProperty("abc");
-      MockJcrProperty testJCRProp = new MockJcrProperty(testProp);
-      Assert.assertEquals(2, testJCRProp.getLong());
+      Property testJCRProp = new MockJcrProperty(testProp);
+      try {
+        long l = testJCRProp.getLong();
+        // shouldn't get here - previous line should throw exception
+        Assert.assertFalse(true);
+      } catch (Exception e) {
+        // Specifically, ValueFormatException should be thrown
+        Assert.assertTrue(e instanceof ValueFormatException);
+      }
       Value[] vs = testJCRProp.getValues();
       Assert.assertEquals(PropertyType.LONG, testJCRProp.getType());
       Assert.assertEquals(5, vs.length);
@@ -78,11 +86,11 @@ public class MockJcrPropertyTest extends TestCase {
 
     {
       MockRepositoryProperty testProp = pl.getProperty("def");
-      MockJcrProperty testJCRProp = new MockJcrProperty(testProp);
+      Property testJCRProp = new MockJcrProperty(testProp);
       Value[] vs = testJCRProp.getValues();
       Assert.assertEquals(PropertyType.DATE, testJCRProp.getType());
       Assert.assertEquals(3, vs.length);
-      Calendar date = testJCRProp.getDate();
+      Calendar date = vs[0].getDate();
       Calendar expected = Calendar.getInstance();
       expected.setTimeInMillis(10 * 1000);
       Assert.assertTrue(date.equals(expected));
@@ -90,7 +98,7 @@ public class MockJcrPropertyTest extends TestCase {
 
     {
       MockRepositoryProperty testProp = pl.getProperty("ghi");
-      MockJcrProperty testJCRProp = new MockJcrProperty(testProp);
+      Property testJCRProp = new MockJcrProperty(testProp);
       Value[] vs = testJCRProp.getValues();
       Assert.assertEquals(PropertyType.LONG, testJCRProp.getType());
       Assert.assertEquals(0, vs.length);
