@@ -68,6 +68,10 @@ public class MockJcrProperty implements Property {
   }
 
   public Value getValue() throws ValueFormatException, RepositoryException {
+    if (p.isRepeating()) {
+      throw new ValueFormatException("Can't call single-valued accessor "
+          + "on repeating-valued property");
+    }
     return new MockJcrValue(p);
   }
 
@@ -76,22 +80,22 @@ public class MockJcrProperty implements Property {
   }
 
   public long getLong() throws ValueFormatException, RepositoryException {
-    MockJcrValue v = new MockJcrValue(p);
+    Value v = this.getValue();
     return v.getLong();
   }
 
   public double getDouble() throws ValueFormatException, RepositoryException {
-    MockJcrValue v = new MockJcrValue(p);
+    Value v = this.getValue();
     return v.getDouble();
   }
 
   public Calendar getDate() throws ValueFormatException, RepositoryException {
-    MockJcrValue v = new MockJcrValue(p);
+    Value v = this.getValue();
     return v.getDate();
   }
 
   public boolean getBoolean() throws ValueFormatException, RepositoryException {
-    MockJcrValue v = new MockJcrValue(p);
+    Value v = this.getValue();
     return v.getBoolean();
   }
 
@@ -103,7 +107,7 @@ public class MockJcrProperty implements Property {
 
   public InputStream getStream() throws ValueFormatException,
       RepositoryException {
-    MockJcrValue v = new MockJcrValue(p);
+    Value v = this.getValue();
     return v.getStream();
   }
 
@@ -252,7 +256,7 @@ public class MockJcrProperty implements Property {
 
   public void remove() throws VersionException, LockException,
       ConstraintViolationException, RepositoryException {
-     throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException();
   }
 
   private Value[] makeValueArray(PropertyType type, String[] values) {

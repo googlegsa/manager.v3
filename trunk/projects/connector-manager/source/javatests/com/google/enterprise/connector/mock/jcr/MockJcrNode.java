@@ -74,8 +74,8 @@ public class MockJcrNode implements Node {
   List propList = null;
 
   private Property findProperty(String name) throws RepositoryException {
-    for (Iterator iter = propList.iterator(); iter.hasNext(); ) {
-    	Property p = (Property) iter.next();
+    for (Iterator iter = propList.iterator(); iter.hasNext();) {
+      Property p = (Property) iter.next();
       if (p.getName().equals(name)) {
         return p;
       }
@@ -93,17 +93,17 @@ public class MockJcrNode implements Node {
       propList.add(new MockJcrProperty(p));
     }
     // modified date
-    p = new MockRepositoryProperty("jcr:modified",
-      MockRepositoryProperty.PropertyType.DATE, Integer.toString(doc
-        .getTimeStamp().getTicks()));
+    p = new MockRepositoryProperty("jcr:lastModified",
+        MockRepositoryProperty.PropertyType.DATE, Integer.toString(doc
+            .getTimeStamp().getTicks()));
     propList.add(new MockJcrProperty(p));
     // docid
     p = new MockRepositoryProperty("jcr:uuid", doc.getDocID());
     propList.add(new MockJcrProperty(p));
 
     // Now push all the other properties onto the list
-    for (Iterator iter = doc.getProplist().iterator(); iter.hasNext(); ) {
-    	MockRepositoryProperty prop = (MockRepositoryProperty) iter.next();
+    for (Iterator iter = doc.getProplist().iterator(); iter.hasNext();) {
+      MockRepositoryProperty prop = (MockRepositoryProperty) iter.next();
       propList.add(new MockJcrProperty(prop));
     }
   }
@@ -120,6 +120,15 @@ public class MockJcrNode implements Node {
 
   public PropertyIterator getProperties() throws RepositoryException {
     return new MockJcrPropertyIterator(propList);
+  }
+
+  public String getUUID() throws UnsupportedRepositoryOperationException,
+      RepositoryException {
+    Property p = this.getProperty("jcr:uuid");
+    if (p == null) {
+      throw new IllegalArgumentException();
+    }
+    return p.getString();
   }
 
   // The following methods may be needed later but are temporarily
@@ -148,11 +157,6 @@ public class MockJcrNode implements Node {
   }
 
   public Item getPrimaryItem() throws ItemNotFoundException,
-      RepositoryException {
-    throw new UnsupportedOperationException();
-  }
-
-  public String getUUID() throws UnsupportedRepositoryOperationException,
       RepositoryException {
     throw new UnsupportedOperationException();
   }
