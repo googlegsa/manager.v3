@@ -66,15 +66,15 @@ import com.google.enterprise.connector.mock.MockRepositoryEvent.EventType;
  * documents in timestamp order
  * </ul>
  * <p>
- * TODO(ziff): 
+ * TODO(ziff):
  * <ul>
  * <li>add event call-back
  * <li>add textual dump/load so bigger test cases can be built easily
  * </ul>
  */
 public class MockRepositoryDocumentStore {
-  private static final Logger logger = 
-    Logger.getLogger(MockRepositoryDocumentStore.class.getName());
+  private static final Logger logger = Logger
+      .getLogger(MockRepositoryDocumentStore.class.getName());
   Map store = null;
 
   /**
@@ -100,28 +100,29 @@ public class MockRepositoryDocumentStore {
    * event becomes the timestanmp of the created or changed document. The
    * implementation does NOT enforce that events are supplied in increasing
    * timestamp order. Perhaps it would be a good idea to add this later.
+   * 
    * @param event
    */
   public void applyEvent(MockRepositoryEvent event) {
-	  if (event.getType() == EventType.SAVE) {
-        doSave(event);
-	  }
-	  else if (event.getType() == EventType.DELETE) {
-        doDelete(event);
-	  } 
-	  else if (event.getType() == EventType.METADATA_ONLY_SAVE) {
-        doSave(event);
-	  }
-	  else {
-        throw new IllegalArgumentException("Unknown event type");
+    if (event.getType() == EventType.SAVE) {
+      doSave(event);
+    } else if (event.getType() == EventType.DELETE) {
+      doDelete(event);
+    } else if (event.getType() == EventType.METADATA_ONLY_SAVE) {
+      doSave(event);
+    } else {
+      throw new IllegalArgumentException("Unknown event type");
     }
-  
-    // TODO:ziff assert checkIntegrity();
+
+    if (!checkIntegrity()) {
+      throw new RuntimeException("Integrity check failed");
+    }
   }
 
   /**
    * Performs the DELETE action. Deletes are keyed by docID. The other fields of
    * the event are ignored.
+   * 
    * @param event Must be a DELETE event
    */
   private void doDelete(MockRepositoryEvent event) {
@@ -137,6 +138,7 @@ public class MockRepositoryDocumentStore {
    * Performs the SAVE and METADATA_ONLY_SAVE actions. Looks up the document by
    * ID - if not present, it creates it. If present, it applies the changes
    * specified in the event.
+   * 
    * @param event Must be a SAVE or METADATA_ONLY_SAVE event
    */
   private void doSave(MockRepositoryEvent event) {
@@ -147,23 +149,18 @@ public class MockRepositoryDocumentStore {
     MockRepositoryDocument d = getDocByID(docid);
     if (d == null) {
       // this is a new document
-      d = new MockRepositoryDocument(event.getTimeStamp(), 
-                                     docid, 
-                                     event.getContent(), 
-                                     event.getPropertyList());
+      d = new MockRepositoryDocument(event.getTimeStamp(), docid, event
+          .getContent(), event.getPropertyList());
       store.put(docid, d);
     } else {
       // this is a change to an old document
       if (event.getPropertyList() != null) {
         d.getProplist().merge(event.getPropertyList());
       }
-      String newContent = 
-        ((event.getContent() != null) ? event.getContent() : d.getContent());
-      MockRepositoryDocument modifiedDoc = 
-        new MockRepositoryDocument(event.getTimeStamp(), 
-                                   docid, 
-                                   newContent, 
-                                   d.getProplist());
+      String newContent = ((event.getContent() != null) ? event.getContent()
+          : d.getContent());
+      MockRepositoryDocument modifiedDoc = new MockRepositoryDocument(event
+          .getTimeStamp(), docid, newContent, d.getProplist());
       store.remove(docid);
       store.put(docid, modifiedDoc);
     }
@@ -171,20 +168,21 @@ public class MockRepositoryDocumentStore {
 
   /**
    * Looks up a document in the store by ID
+   * 
    * @param docid The ID to look for
    * @return If found, the document; otherwise, null
    */
   public MockRepositoryDocument getDocByID(String docid) {
-    return (MockRepositoryDocument)store.get(docid);
+    return (MockRepositoryDocument) store.get(docid);
   }
 
   /**
    * Returns an iterator over all documents in the store
+   * 
    * @return Iterator
    */
   public Iterator iterator() {
-    List l = 
-      new LinkedList(store.values());
+    List l = new LinkedList(store.values());
     sortDocuments(l);
     return l.listIterator();
   }
@@ -194,21 +192,41 @@ public class MockRepositoryDocumentStore {
   }
 
   /**
-   * Returns all documents last modified between the two dates: 
-   * specifically, all documents modified at a time greater than or equal
-   * to the from parameter and strictly less than the to parameter
+   * Returns all documents last modified between the two dates: specifically,
+   * all documents modified at a time greater than or equal to the from
+   * parameter and strictly less than the to parameter
+   * 
    * @param from
    * @param to
-   * @return An Iterable over these results
+   * @return A List of these results
    */
-  public List dateRange(
-      final MockRepositoryDateTime from, final MockRepositoryDateTime to) {
+  public List dateRange(final MockRepositoryDateTime from,
+      final MockRepositoryDateTime to) {
     List l = new ArrayList();
-    for (Iterator iter = store.values().iterator(); iter.hasNext(); ) {
-    	MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
+    for (Iterator iter = store.values().iterator(); iter.hasNext();) {
+      MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
       int c1 = from.compareTo(d.getTimeStamp());
       int c2 = d.getTimeStamp().compareTo(to);
-      if (c1 <= 0  && c2 < 0) {
+      if (c1 <= 0 && c2 < 0) {
+        l.add(d);
+      }
+    }
+    sortDocuments(l);
+    return l;
+  }
+
+  /**
+   * Returns all documents last modified on or after a given date.
+   * 
+   * @param from
+   * @return A list of these results
+   */
+  public List dateRange(final MockRepositoryDateTime from) {
+    List l = new ArrayList();
+    for (Iterator iter = store.values().iterator(); iter.hasNext();) {
+      MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
+      int c1 = from.compareTo(d.getTimeStamp());
+      if (c1 <= 0) {
         l.add(d);
       }
     }
@@ -219,9 +237,13 @@ public class MockRepositoryDocumentStore {
   private void sortDocuments(List l) {
     Collections.sort(l, new Comparator() {
       public int compare(Object o1, Object o2) {
-    	  MockRepositoryDocument d1 = (MockRepositoryDocument) o1;
-    	  MockRepositoryDocument d2 = (MockRepositoryDocument) o2;
-        return d1.getTimeStamp().compareTo(d2.getTimeStamp());
+        MockRepositoryDocument d1 = (MockRepositoryDocument) o1;
+        MockRepositoryDocument d2 = (MockRepositoryDocument) o2;
+        int c = d1.getTimeStamp().compareTo(d2.getTimeStamp());
+        if (c != 0) {
+          return c;
+        }
+        return d1.getDocID().compareTo(d2.getDocID());
       }
     });
   }
@@ -229,13 +251,14 @@ public class MockRepositoryDocumentStore {
   /**
    * Checks the date-order integrity constraint: iterates through the documents
    * and makes sure the timnestamps are in ascending order.
+   * 
    * @return True or false, depending on whether the test passes
    */
   private boolean checkDateOrderIntegrity() {
     boolean result = true;
     int lastStamp = -1;
-    for (Iterator iter = this.iterator(); iter.hasNext(); ) {
-    	MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
+    for (Iterator iter = this.iterator(); iter.hasNext();) {
+      MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
       int thisStamp = d.getTimeStamp().getTicks();
       if (lastStamp > thisStamp) {
         result = false;
@@ -250,14 +273,15 @@ public class MockRepositoryDocumentStore {
   /**
    * Checks the docid uniqueness constraint: iterates through the documents and
    * checks to see whether the ids have ever been seen before
+   * 
    * @return True or false, depending on whether the test passes
    */
 
   private boolean checkDocidUniquenessIntegrity() {
     boolean result = true;
     Set m = new HashSet();
-    for (Iterator iter = this.iterator(); iter.hasNext(); ) {
-    	MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
+    for (Iterator iter = this.iterator(); iter.hasNext();) {
+      MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
       if (!m.add(d.getDocID())) {
         // this docid appears more than once
         result = false;
@@ -269,6 +293,7 @@ public class MockRepositoryDocumentStore {
 
   /**
    * Runs all integrity checks
+   * 
    * @return true or false, depending on whether ALL tests pass
    */
   private boolean checkIntegrity() {
