@@ -26,20 +26,20 @@ public class TimeUtils {
     // prevents instantiation
   }
 
-  private static TimeZone timeZoneGmt = TimeZone.getTimeZone("GMT+0");
-  private static Calendar gmtCalendar = Calendar.getInstance(timeZoneGmt);
-  private static SimpleDateFormat iso8601DateFormatMillis = 
-    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-  private static SimpleDateFormat iso8601DateFormatSecs = 
-    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-  
+  private static final TimeZone timeZoneGmt = TimeZone.getTimeZone("GMT+0");
+  private static final Calendar gmtCalendar = Calendar.getInstance(timeZoneGmt);
+  private static final SimpleDateFormat iso8601DateFormatMillis =
+      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+  private static final SimpleDateFormat iso8601DateFormatSecs =
+      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
   static {
     iso8601DateFormatMillis.setCalendar(gmtCalendar);
     iso8601DateFormatMillis.setLenient(true);
     iso8601DateFormatSecs.setCalendar(gmtCalendar);
     iso8601DateFormatSecs.setLenient(true);
   }
-  
+
   public static String calendarToIso8601(Calendar c) {
     Date d = c.getTime();
     String isoString = iso8601DateFormatMillis.format(d);
@@ -54,11 +54,11 @@ public class TimeUtils {
     } catch (ParseException e) {
       // this is just here so we can try another format
     }
-      d = iso8601DateFormatSecs.parse(s);
-   return d;
+    d = iso8601DateFormatSecs.parse(s);
+    return d;
   }
-  
-  public static Calendar iso8601ToCalendar(String s) throws ParseException { 
+
+  public static Calendar iso8601ToCalendar(String s) throws ParseException {
     Date d = iso8601ToDate(s);
     Calendar c = Calendar.getInstance();
     c.setTime(d);

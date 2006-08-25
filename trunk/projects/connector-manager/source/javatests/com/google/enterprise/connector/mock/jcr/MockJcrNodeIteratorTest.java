@@ -36,8 +36,10 @@ import javax.jcr.RepositoryException;
  * Unit tests for MockJcrNodeIterator
  */
 public class MockJcrNodeIteratorTest extends TestCase {
-  private static final Logger logger = Logger
-      .getLogger(MockRepositoryPropertyTest.class.getName());
+  private static final String JCR_LAST_MODIFIED = "jcr:lastModified";
+  private static final String JCR_UUID = "jcr:uuid";
+  private static final Logger logger =
+      Logger.getLogger(MockRepositoryPropertyTest.class.getName());
 
   /**
    * Sanity test
@@ -45,8 +47,8 @@ public class MockJcrNodeIteratorTest extends TestCase {
    */
   public void testSimpleIterator() throws RepositoryException {
     MockRepositoryDocumentStore mrd = new MockRepositoryDocumentStore();
-    MockRepositoryEventList mrel = new MockRepositoryEventList(
-        "MockRepositoryEventLog1.txt");
+    MockRepositoryEventList mrel =
+        new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     for (Iterator iter = mrel.getEventList().iterator(); iter.hasNext();) {
       MockRepositoryEvent e = (MockRepositoryEvent) iter.next();
       mrd.applyEvent(e);
@@ -58,13 +60,13 @@ public class MockJcrNodeIteratorTest extends TestCase {
     Node n;
     while (ni.hasNext()) {
       n = ni.nextNode();
-      logger.info("jcr:uuid " + n.getProperty("jcr:uuid").getString());
+      logger.info(JCR_UUID + " " + n.getProperty(JCR_UUID).getString());
 
-      Property lastModifiedProperty = n.getProperty("jcr:lastModified");
+      Property lastModifiedProperty = n.getProperty(JCR_LAST_MODIFIED);
       Calendar lastModifiedCalendar = lastModifiedProperty.getDate();
-      String lastModifiedDateISO8601 = TimeUtils
-          .calendarToIso8601(lastModifiedCalendar);
-      logger.info("jcr:lastModified " + lastModifiedDateISO8601);
+      String lastModifiedDateISO8601 =
+          TimeUtils.calendarToIso8601(lastModifiedCalendar);
+      logger.info(JCR_LAST_MODIFIED + " " + lastModifiedDateISO8601);
 
       Property p;
       PropertyIterator pi = n.getProperties();
@@ -72,7 +74,7 @@ public class MockJcrNodeIteratorTest extends TestCase {
       while (pi.hasNext()) {
         p = pi.nextProperty();
         String name = p.getName();
-        if ("jcr:uuid".equals(name) || "jcr:lastModified".equals(name)) {
+        if (JCR_UUID.equals(name) || JCR_LAST_MODIFIED.equals(name)) {
           continue;
         }
         logger.info(indent + p.getName() + " " + p.getString());
