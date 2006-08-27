@@ -24,6 +24,5 @@ public class MockJcrAdaptedToSpiTraversalTest extends TestCase {
     QueryTraversalManager qtm = session.getQueryTraversalManager();
     QueryTraversalTest.runTraversal(qtm, 2);
   }
-
-
+  
 }
