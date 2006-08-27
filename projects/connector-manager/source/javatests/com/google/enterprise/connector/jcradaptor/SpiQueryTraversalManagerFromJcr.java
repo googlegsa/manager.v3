@@ -19,8 +19,8 @@ import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.QueryTraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.ResultSet;
+import com.google.enterprise.connector.spi.SimpleValue;
 import com.google.enterprise.connector.spi.Value;
-import com.google.enterprise.connector.test.TimeUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,7 +49,7 @@ public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
     String uuid = fetchAndVerifyValueForCheckpoint(pm, "jcr:uuid").getString();
     Calendar c = fetchAndVerifyValueForCheckpoint(pm, "jcr:lastModified")
         .getDate();
-    String dateString = TimeUtils.calendarToIso8601(c);
+    String dateString = SimpleValue.calendarToIso8601(c);
     String result = null;
     try {
       JSONObject jo = new JSONObject();
@@ -148,7 +148,7 @@ public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
     String queryPrefix = "//element(*, nt:resource)[@jcr:lastModified >= xs:dateTime(\"";
     String queryPostfix = "\")] order by jcr:lastModified, jcr:uuid";
 
-    String time = TimeUtils.calendarToIso8601(c);
+    String time = SimpleValue.calendarToIso8601(c);
 
     String statement = queryPrefix + time + queryPostfix;
 
@@ -176,7 +176,7 @@ public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
     }
     Calendar c = null;
     try {
-      c = TimeUtils.iso8601ToCalendar(dateString);
+      c = SimpleValue.iso8601ToCalendar(dateString);
     } catch (ParseException e) {
       throw new IllegalArgumentException(
           "could not parse date string from checkPoint string: " + dateString);
