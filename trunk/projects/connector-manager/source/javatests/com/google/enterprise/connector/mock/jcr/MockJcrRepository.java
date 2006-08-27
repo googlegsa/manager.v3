@@ -15,6 +15,8 @@
 package com.google.enterprise.connector.mock.jcr;
 
 import com.google.enterprise.connector.mock.MockRepository;
+import com.google.enterprise.connector.mock.MockRepositoryDocument;
+import com.google.enterprise.connector.mock.MockRepositoryProperty;
 
 import javax.jcr.Credentials;
 import javax.jcr.LoginException;
@@ -22,6 +24,7 @@ import javax.jcr.NoSuchWorkspaceException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.SimpleCredentials;
 
 /**
  * MockJcrRepository is the parent of a set of classes that wrap the simple
@@ -46,6 +49,7 @@ public class MockJcrRepository implements Repository {
 
   /**
    * Creates a MockJcrRepository from a MockRepository.
+   * 
    * @param repo
    */
   public MockJcrRepository(MockRepository repo) {
@@ -55,91 +59,82 @@ public class MockJcrRepository implements Repository {
 
   /**
    * Gets this MockJcrRepository's MockRepository - only for testing.
+   * 
    * @return the MockRepository
    */
   public MockRepository getRepo() {
     return repo;
   }
 
-  //  We will probably not need all the flavors of login
-  //  TODO(ziff): decide which ones we really need
+  public Session login(Credentials creds) throws LoginException,
+      RepositoryException {
+    return makeSession(creds);
+  }
 
-  /**
-   * Creates a session - at present, no credential checking is done
-   * @param arg0 
-   * @param arg1 
-   * @return a new Session
-   * @throws LoginException 
-   * @throws NoSuchWorkspaceException 
-   * @throws RepositoryException 
-   */
+//
+// The following methods are JCR level 1 - but we do not anticipate using them
+//
+
   public Session login(Credentials arg0, String arg1) throws LoginException,
       NoSuchWorkspaceException, RepositoryException {
-    return makeSession(arg0);
+    throw new UnsupportedOperationException();
   }
 
-  /**
-   * Creates a session - at present, no credential checking is done
-   * @param arg0 
-   * @return a new Session
-   * @throws LoginException 
-   * @throws RepositoryException 
-   */
-  public Session login(Credentials arg0) throws LoginException,
-      RepositoryException {
-    return makeSession(arg0);
-  }
-
-  /**
-   * Creates a session - at present, no credential checking is done
-   * @param arg0 
-   * @return a new Session
-   * @throws LoginException 
-   * @throws NoSuchWorkspaceException 
-   * @throws RepositoryException 
-   */
   public Session login(String arg0) throws LoginException,
       NoSuchWorkspaceException, RepositoryException {
-    throw new RuntimeException("Unimplemented interface");
+    throw new UnsupportedOperationException();
   }
 
-  /**
-   * Creates a session - at present, no credential checking is done
-   * @return a new Session
-   * @throws LoginException 
-   * @throws RepositoryException 
-   */
   public Session login() throws LoginException, RepositoryException {
-    return new MockJcrSession(this);
+    throw new UnsupportedOperationException();
   }
 
-  /**
-   * The following methods are JCR level 1 - but we do not anticipate using them
-   */
-
-  /**
-   * Throws UnsupportedOperationException
-   * @return nothing
-   */
   public String[] getDescriptorKeys() {
     throw new UnsupportedOperationException();
   }
 
-  /**
-   * Throws UnsupportedOperationException
-   * @param arg0 
-   * @return nothing
-   */
   public String getDescriptor(String arg0) {
     throw new UnsupportedOperationException();
   }
 
-  /**
-   * Throws UnsupportedOperationException
-   */
-  private Session makeSession(Credentials arg0) {
+  private Session makeSession(Credentials creds) {
+    if (!(creds instanceof SimpleCredentials)) {
+      throw new IllegalArgumentException();
+    }
+    SimpleCredentials simpleCreds = (SimpleCredentials) creds;
+    if (!authenticate(simpleCreds)) {
+      return null;
+    }
     MockJcrSession session = new MockJcrSession(this);
-    session.setCreds(arg0);
+    session.setCreds(simpleCreds);
     return session;
+  }
+
+  private boolean authenticate(SimpleCredentials creds) {
+    String userID = creds.getUserID();
+    String password = new String (creds.getPassword());
+    if (userID == null || userID.length() < 1) {
+      return true;
+    }
+    MockRepositoryDocument doc = repo.getStore().getDocByID("users");
+    if (doc == null) {
+      return true;
+    }
+    MockRepositoryProperty property = doc.getProplist().getProperty("acl");
+    if (property == null) {
+      return true; 
+    }
+    String[] values = property.getValues();
+    for (int i=0; i<values.length; i++) {
+      if (values[i].equals(userID)) {
+        if (userID.equals(password)) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+
+    return false;
   }
 }

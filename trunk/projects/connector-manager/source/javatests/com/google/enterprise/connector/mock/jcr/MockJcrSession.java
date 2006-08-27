@@ -14,6 +14,9 @@
 
 package com.google.enterprise.connector.mock.jcr;
 
+import com.google.enterprise.connector.mock.MockRepositoryDocument;
+import com.google.enterprise.connector.mock.MockRepositoryProperty;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -66,7 +69,7 @@ import org.xml.sax.SAXException;
 public class MockJcrSession implements Session {
 
   MockJcrRepository repo = null;
-  Credentials creds = null;
+  SimpleCredentials creds = null;
   MockJcrWorkspace workspace = null;
 
   public MockJcrSession(MockJcrRepository repo) {
@@ -78,7 +81,7 @@ public class MockJcrSession implements Session {
    * Set the credentials used by this session - not yet used by the framework
    * @param creds   a Credentials object
    */
-  public void setCreds(Credentials creds) {
+  public void setCreds(SimpleCredentials creds) {
     this.creds = creds;
   }
 
@@ -100,12 +103,9 @@ public class MockJcrSession implements Session {
    */
   public String getUserID() {
     if (creds != null) {
-      if (creds instanceof SimpleCredentials) {
-        SimpleCredentials c = (SimpleCredentials) creds;
-        return c.getUserID();
+        return creds.getUserID();
       }
-    }
-    return "anonymous";
+    return "admin";
   }
 
   /**
@@ -117,21 +117,50 @@ public class MockJcrSession implements Session {
     return new MockJcrWorkspace(repo, this);
   }
 
+  public Session impersonate(Credentials creds) throws LoginException,
+      RepositoryException {
+    if (!(creds instanceof SimpleCredentials)) {
+      throw new IllegalArgumentException();
+    }
+    SimpleCredentials simpleCreds = (SimpleCredentials) creds;
+    MockJcrSession result = new MockJcrSession(this.repo);
+    result.setCreds(simpleCreds);
+    return result;
+  }
+
+  public Node getNodeByUUID(String uuid) throws ItemNotFoundException,
+      RepositoryException {
+    MockRepositoryDocument doc = repo.getRepo().getStore().getDocByID(uuid);
+    if (doc == null) {
+      throw new ItemNotFoundException();
+    }
+    Node result = new MockJcrNode(doc);
+    String userID = getUserID();
+    if (userID == null) {
+      return result;
+    }
+    if ("admin".equals(userID)) {
+      return result;
+    }
+    MockRepositoryProperty property = doc.getProplist().getProperty("acl");
+    if (property == null) {
+      return result; 
+    }
+    String[] values = property.getValues();
+    for (int i=0; i<values.length; i++) {
+      if (values[i].equals(userID)) {
+        return result;
+      }
+    }
+    throw new ItemNotFoundException();
+  }
+
+  public void logout() {
+    ;
+  }
+
   // The following methods may be needed later but are temporarily
   // unimplemented
-
-  /**
-   * Throws UnsupportedOperationException
-   * @param arg0 
-   * @return nothing
-   * @throws LoginException 
-   * @throws RepositoryException 
-   */
-  public Session impersonate(Credentials arg0) throws LoginException,
-      RepositoryException {
-    // TODO(ziff): we may need this later for security
-    throw new UnsupportedOperationException();
-  }
 
   /**
    * Throws UnsupportedOperationException
@@ -139,19 +168,6 @@ public class MockJcrSession implements Session {
    * @throws RepositoryException 
    */
   public Node getRootNode() throws RepositoryException {
-    // TODO(ziff): we may need this later for tree traversal
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Throws UnsupportedOperationException
-   * @param arg0 
-   * @return nothing
-   * @throws ItemNotFoundException 
-   * @throws RepositoryException 
-   */
-  public Node getNodeByUUID(String arg0) throws ItemNotFoundException,
-      RepositoryException {
     // TODO(ziff): we may need this later for tree traversal
     throw new UnsupportedOperationException();
   }
@@ -189,14 +205,6 @@ public class MockJcrSession implements Session {
    */
   public void checkPermission(String arg0, String arg1)
       throws AccessControlException, RepositoryException {
-    // TODO(ziff): we may need this later for security
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Throws UnsupportedOperationException
-   */
-  public void logout() {
     // TODO(ziff): we may need this later for security
     throw new UnsupportedOperationException();
   }

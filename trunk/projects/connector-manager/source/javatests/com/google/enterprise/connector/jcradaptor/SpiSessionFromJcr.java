@@ -48,12 +48,12 @@ public class SpiSessionFromJcr implements Session {
 
   public AuthenticationManager getAuthenticationManager()
       throws RepositoryException {
-    throw new UnsupportedOperationException();
+    return new SpiAuthenticationManagerFromJcr(session);
   }
 
   public AuthorizationManager getAuthorizationManager()
       throws RepositoryException {
-    throw new UnsupportedOperationException();
+    return new SpiAuthorizationManagerFromJcr(session);
   }
 
 }
