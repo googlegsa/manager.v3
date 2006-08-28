@@ -12,26 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.persist;
+package com.google.enterprise.connector.pusher;
+
+import com.google.enterprise.connector.spi.PropertyMap;
 
 /**
- * Interface describing the persistence needs of a TraversalMethod
+ * Interface for a pusher - something that takes spi documents
+ * and sends them along on their way
  */
-public interface ConnectorStateStore {
-
+public interface Pusher {
+  
   /**
-   * Gets the stored state of a named connector.
-   * 
-   * @param connectorName
-   * @return the state, or null if no state has been stored for this connector
+   * Takes an spi document and pushes it along, presumably to the GSA
+   * @param pm A property map the represent a document.
    */
-  public String getConnectorState(String connectorName);
-
-  /**
-   * Sets the stored state of a named connector.
-   * @param connectorName
-   * @param connectorState String to store
-   */
-  public void storeConnectorState(String connectorName, String connectorState);
+  public void take(PropertyMap pm);
 
 }
