@@ -15,7 +15,7 @@
 package com.google.enterprise.connector.traversal;
 
 /**
- * Interface presented by a Traverser.  Used by the controller.
+ * Interface presented by a Traverser.  Used by the Scheduler.
  */
 public interface Traverser {
 
@@ -26,7 +26,7 @@ public interface Traverser {
    * InterruptedException, then decide whether it wants to stop of itself, for
    * scheduling reasons, or for a clean shutdown. It could then re-adjust the
    * batch hint if desired, then repeat.
-   * 
+   *
    * @param batchHint Must be a positive integer. IllegalArgumentException is
    *        thrown for non-positive parameters. This requests that the traversal
    *        method process no more than that number of documents in this batch.
