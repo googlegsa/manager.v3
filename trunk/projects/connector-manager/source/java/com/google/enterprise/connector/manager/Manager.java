@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.manager;
 
-import com.google.enterprise.connector.spi.ResultSet;
-
 import org.w3c.dom.Document;
 
 import java.util.List;
@@ -104,7 +102,7 @@ public interface Manager {
    *         in the corresponding position indicates whether that user can see
    *         that document.
    */
-  public ResultSet authorizeTokens(String connectorInstanceName,
+  public List authorizeTokens(String connectorInstanceName,
       List tokenList, String username);
 
 }

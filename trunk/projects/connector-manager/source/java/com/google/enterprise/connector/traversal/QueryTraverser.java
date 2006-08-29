@@ -26,14 +26,14 @@ import java.util.Iterator;
 /**
  * Traverser for a repository implemented using a QueryTraversalManager
  */
-public class QueryTraversal implements TraversalMethod {
+public class QueryTraverser implements Traverser {
 
   private Pusher pusher;
   private QueryTraversalManager queryTraversalManager;
   private ConnectorStateStore connectorStateStore;
   private String connectorName;
 
-  public QueryTraversal(Pusher p, QueryTraversalManager q,
+  public QueryTraverser(Pusher p, QueryTraversalManager q,
       ConnectorStateStore c, String n) {
     this.pusher = p;
     this.queryTraversalManager = q;
@@ -44,7 +44,7 @@ public class QueryTraversal implements TraversalMethod {
   /*
    * (non-Javadoc)
    * 
-   * @see com.google.enterprise.connector.traversal.TraversalMethod#runBatch(int)
+   * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
    */
   public int runBatch(int batchHint) throws InterruptedException {
     int counter = 0;
