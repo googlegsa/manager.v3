@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <project name="Connector Manager" default="ConnectorManager" basedir=".">
+     <!-- ========================= PROPERTIES ============================= -->
+  	 <property name="version" value="1.0"/>
+   	 <property name="build" value="build"/>
+  	 <property name="dist" value="dist"/>
+   	 <property name="src" value="source"/>
+  	 <property name="classes" location="${build}/classes"/>
+     <property name="junit" location="${JUNIT_HOME}"/>
+
+  	
+     <!-- =========================== TASKS =============================== -->
+  	 <target name="ConnectorManager" depends="Connector_SPI,Connector_SPI_test">
+  	 </target>
+     <target name="Connector_SPI" depends="init,compile,jar">
+     </target>
+ 	 <target name="Connector_SPI_test" depends="Connector_SPI">
+   	   <jar jarfile="${dist}/Connector_SPI_test.jar">
+   	     <fileset dir="${classes}" includes="**/*.class"  excludes="**/spi/**"/>
+   	   </jar>
+ 	 </target>
+
+ 	 <target name="init">
+       <delete dir="${build}"/>
+       <delete dir="${dist}"/>
+       <mkdir dir="${build}"/>
+       <mkdir dir="${dist}"/>
+ 	 </target>
+
+     <target name="compile" depends="init" >
+       <mkdir dir="${classes}"/>
+       <!-- compile java source files -->
+       <javac srcdir="${src}/java" destdir="${classes}" debug="${COMPILE_DEBUG_FLAG}">
+       </javac>
+       <!-- compile java source files for tests -->
+       <javac srcdir="${src}/javatests" destdir="${classes}" debug="${COMPILE_DEBUG_FLAG}">
+		 <classpath>
+           <pathelement location="./../third_party/lib"/>
+           <fileset dir="./../third_party/lib" >
+             <include name="**/*.jar"/>
+  		   </fileset>
+   		 </classpath>
+        </javac>
+   	 </target>
+   	 <target name="jar" description="Create a jar for the Connector SPI project">
+   	    <jar jarfile="${dist}/Connector_SPI.jar">
+   	      <fileset dir="${classes}" includes="**/spi/**"  excludes="**/javatests/**"/>
+   	    </jar>
+   	 </target>
+
+  	 <target name="clean" description="Deletes all build files.">
+       <delete dir="${build}"/>
+       <delete dir="${dist}"/>
+  	 </target>
+
+</project>
