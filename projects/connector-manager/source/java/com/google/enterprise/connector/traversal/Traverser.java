@@ -15,9 +15,9 @@
 package com.google.enterprise.connector.traversal;
 
 /**
- * Interface presented by a TraversalMethod.  Used by the controller.
+ * Interface presented by a Traverser.  Used by the controller.
  */
-public interface TraversalMethod {
+public interface Traverser {
 
   /**
    * Runs a batch of documents. The Traversal method may be hard (impossible?)

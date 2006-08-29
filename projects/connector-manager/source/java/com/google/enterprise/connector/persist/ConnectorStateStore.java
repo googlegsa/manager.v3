@@ -15,7 +15,7 @@
 package com.google.enterprise.connector.persist;
 
 /**
- * Interface describing the persistence needs of a TraversalMethod
+ * Interface describing the persistence needs of a Traverser
  */
 public interface ConnectorStateStore {
 

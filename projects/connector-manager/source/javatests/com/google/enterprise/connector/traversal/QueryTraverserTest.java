@@ -32,11 +32,11 @@ import javax.jcr.query.QueryManager;
  * @author ziff@google.com (Your Name Here)
  * 
  */
-public class QueryTraversalTest extends TestCase {
+public class QueryTraverserTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.enterprise.connector.traversal.QueryTraversal
+   * {@link com.google.enterprise.connector.traversal.QueryTraverser
    * #runBatch(int)}.
    * @throws InterruptedException 
    */
@@ -61,8 +61,8 @@ public class QueryTraversalTest extends TestCase {
     MockPusher pusher = new MockPusher(System.out);
     ConnectorStateStore connectorStateStore = new MockConnectorStateStore();
 
-    TraversalMethod traversalMethod =
-        new QueryTraversal(pusher, qtm, connectorStateStore, connectorName);
+    Traverser traverser =
+        new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
 
     System.out.println();
     System.out.println("Running batch test batchsize " + batchSize);
@@ -71,7 +71,7 @@ public class QueryTraversalTest extends TestCase {
     int totalDocsProcessed = 0;
     int batchNumber = 0;
     while (docsProcessed != 0) {
-      docsProcessed = traversalMethod.runBatch(batchSize);
+      docsProcessed = traverser.runBatch(batchSize);
       totalDocsProcessed += docsProcessed;
       System.out.println("Batch# " + batchNumber + " docs " + docsProcessed +
           " checkpoint " + connectorStateStore.getConnectorState(connectorName));
