@@ -1,56 +1,132 @@
 <?xml version="1.0" encoding="UTF-8"?>
-  <project name="Connector Manager" default="ConnectorManager" basedir=".">
-     <!-- ========================= PROPERTIES ============================= -->
-  	 <property name="version" value="1.0"/>
-   	 <property name="build" value="build"/>
-  	 <property name="dist" value="dist"/>
-   	 <property name="src" value="source"/>
-  	 <property name="classes" location="${build}/classes"/>
-     <property name="junit" location="${JUNIT_HOME}"/>
 
-  	
-     <!-- =========================== TASKS =============================== -->
-  	 <target name="ConnectorManager" depends="Connector_SPI,Connector_SPI_test">
-  	 </target>
-     <target name="Connector_SPI" depends="init,compile,jar">
-     </target>
- 	 <target name="Connector_SPI_test" depends="Connector_SPI">
-   	   <jar jarfile="${dist}/Connector_SPI_test.jar">
-   	     <fileset dir="${classes}" includes="**/*.class"  excludes="**/spi/**"/>
-   	   </jar>
- 	 </target>
+<project name="ConnectorManager" default="ConnectorManager" basedir=".">
 
- 	 <target name="init">
-       <delete dir="${build}"/>
-       <delete dir="${dist}"/>
-       <mkdir dir="${build}"/>
-       <mkdir dir="${dist}"/>
- 	 </target>
+	<!-- ========================= PROPERTIES ============================= -->
+	<property name="version" value="1.0" />
 
-     <target name="compile" depends="init" >
-       <mkdir dir="${classes}"/>
-       <!-- compile java source files -->
-       <javac srcdir="${src}/java" destdir="${classes}" debug="${COMPILE_DEBUG_FLAG}">
-       </javac>
-       <!-- compile java source files for tests -->
-       <javac srcdir="${src}/javatests" destdir="${classes}" debug="${COMPILE_DEBUG_FLAG}">
-		 <classpath>
-           <pathelement location="./../third_party/lib"/>
-           <fileset dir="./../third_party/lib" >
-             <include name="**/*.jar"/>
-  		   </fileset>
-   		 </classpath>
-        </javac>
-   	 </target>
-   	 <target name="jar" description="Create a jar for the Connector SPI project">
-   	    <jar jarfile="${dist}/Connector_SPI.jar">
-   	      <fileset dir="${classes}" includes="**/spi/**"  excludes="**/javatests/**"/>
-   	    </jar>
-   	 </target>
+	<!-- Define Directories. -->
+	<property name="build" value="build" />
+	<property name="dist" value="dist" />
+	<property name="src" value="source/java" />
+	<property name="classes" value="${build}/classes" />
+	<property name="webdocs" value="source/webdocs" />
 
-  	 <target name="clean" description="Deletes all build files.">
-       <delete dir="${build}"/>
-       <delete dir="${dist}"/>
-  	 </target>
+	<property name="tests.src" value="source/javatests" />
+	<property name="tests.build" value="build/tests" />
+	<property name="tests.classes" value="${tests.build}/classes" />
+
+	<property name="jar.dir"  value="${dist}/jarfile" />
+	<property name="spi.jarfile"  value="${jar.dir}/connector_spi.jar" />
+	<property name="connector.jarfile"  value="${jar.dir}/connector.jar" />
+	<property name="tests.jarfile"  value="${jar.dir}/connector_tests.jar" />
+
+	<!-- The directory where all war-files are collected -->
+	<property name="war.dir" value="${dist}/${ant.project.name}" />
+
+
+	<!-- =========================== TASKS =============================== -->
+	<target name="ConnectorManager" depends="Connector_SPI,Connector_SPI_test,installinit,war">
+	</target>
+
+	<target name="Connector_SPI" depends="init,compile,jar">
+	</target>
+
+	<target name="Connector" depends="init,compile,jar">
+		<jar jarfile="${connector.jarfile}">
+			<fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**" />
+		</jar>
+	</target>
+
+	<target name="Connector_SPI_test" depends="Connector_SPI,compile_tests">
+		<jar jarfile="${tests.jarfile}">
+			<fileset dir="${tests.classes}" includes="**/*.class" excludes="**/spi/**" />
+		</jar>
+	</target>
+
+	<target name="init">
+		<delete dir="${build}" />
+		<delete dir="${dist}" />
+		<mkdir dir="${build}" />
+		<mkdir dir="${dist}" />
+		<mkdir dir="${classes}" />
+		<mkdir dir="${tests.build}" />
+		<mkdir dir="${tests.classes}" />
+		<mkdir dir="${jar.dir}" />
+	</target>
+
+	<target name="compile" depends="init">
+		<!-- compile java source files -->
+		<javac srcdir="${src}" destdir="${classes}" debug="${COMPILE_DEBUG_FLAG}">
+			<classpath>
+				<pathelement location="./../third_party/lib" />
+				<fileset dir="./../third_party/lib">
+					<include name="**/*.jar" />
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="compile_tests" depends="init">
+		<!-- compile java source files for tests -->
+		<javac srcdir="${tests.src}" destdir="${tests.classes}" debug="${COMPILE_DEBUG_FLAG}">
+			<classpath>
+				<fileset dir="${jar.dir}">
+					<include name="**/*.jar" />
+				</fileset>
+				<pathelement location="./../third_party/lib" />
+				<fileset dir="./../third_party/lib">
+					<include name="**/*.jar" />
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="jar" description="Create a jar for the Connector SPI project">
+		<jar jarfile="${spi.jarfile}">
+			<fileset dir="${classes}" includes="**/spi/**" excludes="**/javatests/**" />
+		</jar>
+		<jar jarfile="${connector.jarfile}">
+			<fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**" />
+		</jar>
+	</target>
+
+	<target name="clean" description="Deletes all build files.">
+		<delete dir="${build}" />
+		<delete dir="${dist}" />
+	</target>
+
+
+
+	<!-- ======================Installation targets====================== -->
+
+	<target name="installinit">
+		<mkdir dir="${war.dir}" />
+	</target>
+
+
+	<!--  Builds a Web Archive - basically a JAR file which
+		also contains all and can be deployed as-is. 
+	 -->
+
+	<target name="war" depends="Connector_SPI,installinit" description="Builds the WAR file for installation.">
+		<echo> The war file dir is located at ${war.dir}</echo>
+
+		<war warfile="${war.dir}/${ant.project.name}.war" webxml="${webdocs}/WEB-INF/web.xml">
+			<lib dir="${dist}" includes="*.jar" />
+			<classes dir="${classes}" includes="**/*.class" />
+			<fileset dir="${webdocs}" includes="**" />
+			<webinf dir="etc" includes="**" />
+		</war>
+
+		<war warfile="${war.dir}/${ant.project.name}_debug.war" webxml="${webdocs}/WEB-INF/web.xml">
+			<lib dir="${dist}" includes="*.jar" />
+			<classes dir="${classes}" includes="**/*.class" />
+			<classes dir="${tests.classes}" includes="**/*.class" />
+			<fileset dir="${webdocs}" includes="**" />
+			<webinf dir="etc" includes="**" />
+		</war>
+
+	</target>
 
 </project>
