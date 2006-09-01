@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+Node <gsa> describes a signle Google Search Appliance. 
+Node <server> describes a SPS server, or a single Windows Sharepoint Services "Virtual Server". It's equivelent 
+to "web site" in IIS. They are presumably extended by Sharepoint.
+Multiple GSA can be listed here with <gsa> node. Different Sharepoint servers' content can be fed into
+different GSA. The node <gsa> inside <server> node defines the reference.
+
+<gsa>:
+The "name" is a descriptive title, usually the host name. The <url> is the actual address.
+GSA can be put behind a proxy server.
+
+<servers> node describes attibutes that are common to the Sharepoint servers, or behavior of this connector.
+"single_thread" is useful when trying to analyze the feeding results for debugging purpose. Default value
+is "false". "save-feed" will tell connector to save the xml content fed to the GSA in the logs directory.
+<security> node under "servers" contains the username and password shared by multiple Sharepoint servers. The account information
+can be overriden by putting the <security> node under <server>. If it's a domain account (using NTLM, 
+for example), use the format domain\username. If a local account is to be used for NTLM authentication,
+the "domain" should be the host name.
+
+Sharepoint keeps track of last modified time for the content. The connector
+uses that information and only retrieve the changes since last crawl. To make sure
+that we don't miss any content, the access time is tracked for each list in this file's
+<lists> node. That's why you will see the list group as more lists are created by Sharepoint
+users and discovered by the connector. To force a feed of all content, all you have to do
+is to remove the content from <lists> section.
+
+-->
+<gsc-definition>
+
+	<gsa> 
+		<url proxy_port="3128" proxy_server="cache.corp.google.com">
+			http://entca32</url>
+	</gsa>
+
+	<servers save_feed="true">
+		<metadata exclude="SelectedFlag,NameOrTitle,ImageCreateDate,ImageSize,ImageHeight,SelectedFlag,EncodedAbsWebImgUrl,ImageWidth,Preview,EncodedAbsThumbnailUrl,RequiredField,Thumbnail" tags="FileType,Title,Keywords,Created,Description"/>
+		<server name="sharepoint_server">
+			<url proxy_port="3128" proxy_server="">
+				http://soto/
+			</url> 
+			<security auth_type="ntlm" password="t3stth@t" username="ent-sales-d2\sales-admin"/> <!-- basic or ntlm -->
+		</server> 
+	</servers>
+</gsc-definition>
