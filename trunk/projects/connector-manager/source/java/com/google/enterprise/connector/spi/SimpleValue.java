@@ -30,17 +30,19 @@ import java.util.TimeZone;
  */
 public class SimpleValue implements Value {
 
-  private ValueType type;
-  private String stringValue = "";
-  private byte [] byteArrayValue = new byte[] {}; 
+  private final ValueType type;
+  private final String stringValue;
+  private final byte [] byteArrayValue; 
 
   public SimpleValue(ValueType t, String v) {
-    this.type = t;
+    this.type = t;   
     this.stringValue = v;
+    this.byteArrayValue = new byte[] {};
   }
 
   public SimpleValue(ValueType t, byte [] v) {
     this.type = t;
+    this.stringValue = null;
     this.byteArrayValue = v;
   }
 
