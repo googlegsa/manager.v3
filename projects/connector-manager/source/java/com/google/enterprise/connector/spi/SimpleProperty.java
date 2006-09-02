@@ -25,10 +25,10 @@ import java.util.List;
  */
 public class SimpleProperty implements Property {
 
-  private String name;
-  private boolean repeating;
-  private Value value;
-  private List valueList;
+  private final String name;
+  private final boolean repeating;
+  private final Value value;
+  private final List valueList;
 
   public SimpleProperty(String name, Value value) {
     this.name = name;
@@ -71,8 +71,6 @@ public class SimpleProperty implements Property {
     this.repeating = false;
     this.valueList = null;
   }
-
-
 
   /*
    * (non-Javadoc)

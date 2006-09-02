@@ -14,12 +14,11 @@
 
 package com.google.enterprise.connector.spi;
 
+
 import java.util.Map;
 
 /**
  * Configuration interface for an SPI implementation.
- * 
- * @author ziff@google.com (Your Name Here)
  * 
  */
 public interface Configurer {
@@ -30,57 +29,24 @@ public interface Configurer {
    * @param language A locale string, such as "en" or "fr_CA" which the
    *        implementation may use to produce appropriate descriptions and
    *        messages
-   * @return a ConfigurerResponse object. The status will be ignored.
+   * @return a ConfigureResponse object.
    */
-  public ConfigurerResponse getConfigForm(String language);
+  public ConfigureResponse getConfigForm(String language);
 
   /**
-   * Get configuration data in form snippet to edit. This is different from
-   * getConfigForm that this is to change configuration of a running Connector
-   * instance, not to configurate a new Connector instance. If this data is
-   * handled by ConnectorManager, we may not need this in Connector SPI.
+   * Validates config data and returns a new form snippet and error message if
+   * needed.
    * 
-   * @param connectorName The connector to update
-   * @param language A locale string, such as "en" or "fr_CA" which the
-   *        implementation may use to produce appropriate descriptions and
-   *        messages
-   * @return a ConfigurerResponse object. The status should be:
-   *         <ul>
-   *         <li> STATUS_OK: if all is well. As above, the message and form may
-   *         be null or empty. If the form is null or empty, then the caller
-   *         will use a default form.
-   *         <li> STATUS_CONNECTOR_NOT_FOUND: if no such connector is found. In
-   *         this case, the rest of the result is the same as if the generic
-   *         getConfigForm() had been called.
-   *         </ul>
-   *         Note: It is an error to return STATUS_TRY_AGAIN from this call.
-   */
-  public ConfigurerResponse getConfigFormForConnector(String connectorName,
-      String language);
-
-  /**
-   * Set config data for a new Connector or update config data for a running
-   * Connector instance
-   * 
-   * @param connectorName The connector to update
    * @param configData A map of name, value pairs (String, String) of
-   *        configuration data to submit
+   *        configuration data
    * @param language A locale string, such as "en" or "fr_CA" which the
    *        implementation may use to produce appropriate descriptions and
    *        messages
-   * @return a ConfigurerResponse object. The status should be:
-   *         <ul>
-   *         <li> STATUS_OK: if all is well and the configuration has been
-   *         successfully stored. In this case, the message and form snippet are
-   *         expected to be null, and will be ignored.
-   *         <li> STATUS_TRY_AGAIN: if the connector requires more
-   *         configuration. In this case, it is an error to return a null or
-   *         empty form snippet.
-   *         </ul>
-   *         Note: It is an error to return STATUS_CONNECTOR_NOT_FOUND from this
-   *         call.
+   * @return a ConfigureResponse object. If the returned object is null, this
+   *         means that the configuration is acceptable. If the return is
+   *         non-null, then the response contains a new form snippet (and
+   *         message, as appropriate)
    */
-  public ConfigurerResponse setConfig(String connectorName, Map configData,
-      String language);
+  public ConfigureResponse validateConfig(Map configData, String language);
 
 }

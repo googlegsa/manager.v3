@@ -18,31 +18,13 @@ package com.google.enterprise.connector.spi;
  * The response for most configuration commands.
  * 
  */
-public class ConfigurerResponse {
+public class ConfigureResponse {
 
-  private String message = null;
-  private String formSnippet = null;
-  private int status;
-
-  /**
-   * Status code indicating that all is well.
-   */
-  public static final int STATUS_OK = 0;
+  private final String message;
+  private final String formSnippet;
 
   /**
-   * Status code indicating that a named connector was not found.
-   */
-  public static final int STATUS_CONNECTOR_NOT_FOUND = 1;
-
-  /**
-   * Status code indicating that the caller should try again.
-   */
-  public static final int STATUS_TRY_AGAIN = 2;
-
-  /**
-   * The primary constructor. The common semantics of the field is described
-   * below, but there may be special semantics depending on the call that
-   * produces this type. See the Configurer interface methods for more details.
+   * The primary constructor. 
    * 
    * @param message A message to be included to the user along with the form.
    *        This message may be null or empty - no distinction is made between
@@ -51,16 +33,12 @@ public class ConfigurerResponse {
    * @param formSnippet A sequence of &lt;tr&gt; elements, each of which
    *        contains two &lt;td&gt; fields, first is the description of
    *        configuration element, second is an HTML input field. The snippet
-   *        may be null or empty.
-   * @param status An integer status that should be one of the status constants
-   *        defined here. The exact meanings and possible returns depend on the
-   *        method call that produces the object.
+   *        may be null or empty.  Again, there may be no script elements.
    */
-  public ConfigurerResponse(String message, String formSnippet, int status) {
+  public ConfigureResponse(String message, String formSnippet) {
     super();
     this.message = message;
     this.formSnippet = formSnippet;
-    this.status = status;
   }
 
   /**
@@ -79,17 +57,6 @@ public class ConfigurerResponse {
    */
   public String getFormSnippet() {
     return formSnippet;
-  }
-
-  /**
-   * Gets the status.
-   * 
-   * @return the status - STATUS_OK indicates complete success. See the
-   *         documentation for the methods that return this type for more
-   *         details.
-   */
-  public int getStatus() {
-    return status;
   }
 
 }
