@@ -23,8 +23,20 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * Simple "Hello world" servlet.
+ *
+ */
 public class HelloClientFromGSA extends HttpServlet
 {
+    /**
+     * Generates a "Hello world" rsponse.
+     * @param req 
+     * @param res 
+     * @throws ServletException 
+     * @throws IOException 
+     * 
+     */
     protected void doGet(HttpServletRequest req,
                          HttpServletResponse res)
               throws ServletException, IOException
@@ -35,9 +47,14 @@ public class HelloClientFromGSA extends HttpServlet
                   "</HEAD><BODY>Hello Client From GSA!</BODY></HTML>");
       out.close();
     }
-
+    
+    /**
+     * Returns servlet info.
+     * @return informational message
+     * 
+     */
     public String getServletInfo()
     {
-      return "HelloClientServlet 1.0 by Grace Hu";
+      return "HelloClientServlet 1.0";
     }
 }

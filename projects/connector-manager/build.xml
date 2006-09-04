@@ -109,7 +109,7 @@
 		also contains all and can be deployed as-is. 
 	 -->
 
-	<target name="war" depends="Connector_SPI,installinit" description="Builds the WAR file for installation.">
+	<target name="war" depends="installinit" description="Builds the WAR file for installation.">
 		<echo> The war file dir is located at ${war.dir}</echo>
 
 		<war warfile="${war.dir}/${ant.project.name}.war" webxml="${webdocs}/WEB-INF/web.xml">

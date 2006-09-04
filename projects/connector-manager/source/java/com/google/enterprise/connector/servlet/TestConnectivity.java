@@ -17,18 +17,33 @@ package com.google.enterprise.connector.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-
+/**
+ * Admin servlet to test connectivity.
+ * 
+ */
 public class TestConnectivity extends HttpServlet {
+  private static final Logger logger = 
+    Logger.getLogger(TestConnectivity.class.getName());
+  /**
+   * Returns a simple acknowledgement.
+   * @param req 
+   * @param res 
+   * @throws ServletException 
+   * @throws IOException 
+   * 
+   */
     protected void doGet(HttpServletRequest req,
             HttpServletResponse res)
     	throws ServletException, IOException
    	{
+        logger.info("Hello from the TestConnectivity servlet!");
     	res.setContentType("text/xml");
     	PrintWriter out = res.getWriter();
         out.println("<CmResponse>" +
@@ -37,6 +52,14 @@ public class TestConnectivity extends HttpServlet {
         out.close();
     }
 
+    /**
+     * Returns a simple acknowledgement.
+     * @param req 
+     * @param res 
+     * @throws ServletException 
+     * @throws IOException 
+     * 
+     */
     protected void doPost(HttpServletRequest req,
             HttpServletResponse res)
     	throws ServletException, IOException
