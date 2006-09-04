@@ -33,8 +33,19 @@
         <servlet-class>com.google.enterprise.connector.servlet.HelloClientFromGSA</servlet-class>
     </servlet>
 
+    <servlet>
+        <servlet-name>TestConnectivity</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.TestConnectivity</servlet-class>
+    </servlet>
+
     <servlet-mapping>
         <servlet-name>HelloClientFromGSA</servlet-name>
         <url-pattern>/HelloClientFromGSA</url-pattern>
     </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>TestConnectivity</servlet-name>
+        <url-pattern>/TestConnectivity</url-pattern>
+    </servlet-mapping>
+    
 </web-app>
