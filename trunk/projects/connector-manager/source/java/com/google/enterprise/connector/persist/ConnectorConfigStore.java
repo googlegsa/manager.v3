@@ -14,9 +14,8 @@
 
 package com.google.enterprise.connector.persist;
 
-import org.w3c.dom.Document;
-
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Interface describing the persistence needs of the Instantiator
@@ -24,9 +23,18 @@ import java.util.Iterator;
 public interface ConnectorConfigStore {
 
   /**
+   * Gets the names of all known connector types in this store. Note: at present
+   * there is no programmatic way of adding connector types. They come from
+   * external configuration only.
+   * 
+   * @return an iteration of String connector type names
+   */
+  public Iterator getConnectorTypeNames();
+
+  /**
    * Gets the names of all known connectors in this store
    * 
-   * @return an iterations of String connector names
+   * @return an iteration of String connector names
    */
   public Iterator getConnectorNames();
 
@@ -34,11 +42,10 @@ public interface ConnectorConfigStore {
    * Gets the configuration for a named connector
    * 
    * @param connectorName
-   * @return a DOM-tree (org.w3c.document) for a named connector. Note: a null
-   *         return means that this is an unknown connectorName; an empty
-   *         document means that this is a known connector name, but it has no
-   *         configuration at this time.
+   * @return a Map (<String>, <String>) of connector configuration data.
+   * @throws ConnectorNotFoundException
    */
-  public Document getConnectorConfig(String connectorName);
+  public Map getConnectorConfig(String connectorName)
+      throws ConnectorNotFoundException;
 
 }

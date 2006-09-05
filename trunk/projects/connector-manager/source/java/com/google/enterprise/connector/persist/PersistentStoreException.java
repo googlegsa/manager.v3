@@ -17,7 +17,6 @@ package com.google.enterprise.connector.persist;
 import com.google.enterprise.connector.manager.ConnectorManagerException;
 
 /**
- * @author ziff@google.com (Your Name Here)
  *
  */
 public class PersistentStoreException extends ConnectorManagerException {
