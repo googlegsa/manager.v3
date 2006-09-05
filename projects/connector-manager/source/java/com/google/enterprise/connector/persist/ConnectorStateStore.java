@@ -29,6 +29,7 @@ public interface ConnectorStateStore {
 
   /**
    * Sets the stored state of a named connector.
+   * 
    * @param connectorName
    * @param connectorState String to store
    */
