@@ -15,7 +15,8 @@
 package com.google.enterprise.connector.manager;
 
 /**
- * Thrown for general repository errors, such as connectivity problems.
+ * This is the top-level Exception class for all exceptions that can come up
+ * through the manager interface.
  */
 public class ConnectorManagerException extends Exception {
   /**
@@ -24,25 +25,29 @@ public class ConnectorManagerException extends Exception {
   protected Throwable rootCause;
 
   /**
-   * Constructs a new RepositoryException with no message and no root cause.
+   * Constructs a new ConnectorManagerException with no message and no root
+   * cause.
    */
   public ConnectorManagerException() {
     super();
   }
 
   /**
-   * Constructs a RepositoryException with a supplied message but no root cause.
+   * Constructs a ConnectorManagerException with a supplied message but no root
+   * cause.
+   * 
    * @param message the message. Can be retrieved by the {@link #getMessage()}
-   *          method.
+   *        method.
    */
   public ConnectorManagerException(String message) {
     super(message);
   }
 
   /**
-   * Constructs a RepositoryException with message and root cause.
+   * Constructs a ConnectorManagerException with message and root cause.
+   * 
    * @param message the message. Can be retrieved by the {@link #getMessage()}
-   *          method.
+   *        method.
    * @param rootCause root failure cause
    */
   public ConnectorManagerException(String message, Throwable rootCause) {
@@ -51,7 +56,8 @@ public class ConnectorManagerException extends Exception {
   }
 
   /**
-   * Constructs a RepositoryException with the specified root cause.
+   * Constructs a ConnectorManagerException with the specified root cause.
+   * 
    * @param rootCause root failure cause
    */
   public ConnectorManagerException(Throwable rootCause) {
@@ -60,8 +66,9 @@ public class ConnectorManagerException extends Exception {
   }
 
   /**
-   * Returns the detail message, including messages from nested exceptions 
-   * if any.
+   * Returns the detail message, including messages from nested exceptions if
+   * any.
+   * 
    * @return the message
    */
   public String getMessage() {
@@ -76,7 +83,8 @@ public class ConnectorManagerException extends Exception {
 
   /**
    * Returns the embedded cause (throwable) which may be null.
-   * @return the cause 
+   * 
+   * @return the cause
    */
   public Throwable getCause() {
     return rootCause;
