@@ -18,6 +18,7 @@ import java.util.Map;
 
 /**
  * Monitors variables and responds to requests from the Manager for them.
+ * Whether or not this is synchronized is left as an implementation detail.
  */
 public interface Monitor {
   

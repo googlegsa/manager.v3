@@ -42,5 +42,15 @@ public class MonitorTest extends TestCase {
       1, temp.size());
     assertTrue("Key should be in variables.", temp.containsKey(key));
     assertTrue("Value should be in variables.", temp.containsValue(value));
+    
+    boolean exceptionCaught = false;
+    try {
+      temp.put(key, value);
+    } catch (UnsupportedOperationException uoe) {
+      exceptionCaught = true;
+    } finally {
+      assertTrue("Should not be allowed to modify the returned Map.", 
+        exceptionCaught);
+    }
   }
 }

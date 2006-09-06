@@ -14,13 +14,15 @@
 
 package com.google.enterprise.connector.monitor;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Implements the Monitor interface using a Properties object.
+ * Implements the Monitor interface using a Properties object.  This class is 
+ * thread-safe.
  */
 public class HashMapMonitor implements Monitor {
 
@@ -32,25 +34,30 @@ public class HashMapMonitor implements Monitor {
   
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.monitor.Monitor#getVariables()
+   * @return a read-only Map of the variables
    */
   public Map getVariables() {
-    return vars;
+    synchronized (vars) {
+      return Collections.unmodifiableMap(vars);
+    }
   }
 
   /* (non-Javadoc)
-   * @see com.google.enterprise.connector.monitor.Monitor#setVariables(java.util.Properties)
+   * @see com.google.enterprise.connector.monitor.Monitor#setVariables(java.util.Map)
    */
   public void setVariables(Map props) {
     Set entrySet = props.entrySet();
     Iterator iter = entrySet.iterator();
-    while (iter.hasNext()) {
-      Map.Entry entry = (Map.Entry) iter.next();
-      String key = (String) entry.getKey();
-      Object value = entry.getValue();
-      if (null == value) {
-        vars.remove(key);
-      } else {
-        vars.put(key, value);
+    synchronized (vars) {
+      while (iter.hasNext()) {
+        Map.Entry entry = (Map.Entry) iter.next();
+        String key = (String) entry.getKey();
+        Object value = entry.getValue();
+        if (null == value) {
+          vars.remove(key);
+        } else {
+          vars.put(key, value);
+        }
       }
     }
   }
