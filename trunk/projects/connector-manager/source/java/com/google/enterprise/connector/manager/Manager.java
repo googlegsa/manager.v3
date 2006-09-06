@@ -39,7 +39,7 @@ public interface Manager {
    * @throws PersistentStoreException If there was a problem storing the
    *         configuration
    */
-  public void storeConfig(boolean certAuth, String feederGateHost,
+  public void setConnectorManagerConfig(boolean certAuth, String feederGateHost,
       int feederGatePort, int maxFeedRate) throws PersistentStoreException;
 
   /**
@@ -121,7 +121,7 @@ public interface Manager {
    * @throws PersistentStoreException If there was a problem storing the
    *         configuration
    */
-  public ConfigureResponse setConfig(String connectorName, Map configData,
+  public ConfigureResponse setConnectorConfig(String connectorName, Map configData,
       String language) throws ConnectorNotFoundException,
       PersistentStoreException;
 
