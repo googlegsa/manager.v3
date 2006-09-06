@@ -15,37 +15,54 @@
 package com.google.enterprise.connector.persist;
 
 /**
- *
+ * This Exception is thrown to indicate that a specified Connector Type was not
+ * found.
  */
 public class ConnectorTypeNotFoundException extends PersistentStoreException {
+  /**
+   * Root failure cause
+   */
+  protected Throwable rootCause;
 
   /**
-   * 
+   * Constructs a new ConnectorTypeNotFoundException with no message and no root
+   * cause.
    */
   public ConnectorTypeNotFoundException() {
     super();
   }
 
   /**
-   * @param message
+   * Constructs a ConnectorTypeNotFoundException with a supplied message but no
+   * root cause.
+   * 
+   * @param message the message. Can be retrieved by the {@link #getMessage()}
+   *        method.
    */
   public ConnectorTypeNotFoundException(String message) {
     super(message);
   }
 
   /**
-   * @param message
-   * @param rootCause
+   * Constructs a ConnectorTypeNotFoundException with message and root cause.
+   * 
+   * @param message the message. Can be retrieved by the {@link #getMessage()}
+   *        method.
+   * @param rootCause root failure cause
    */
   public ConnectorTypeNotFoundException(String message, Throwable rootCause) {
-    super(message, rootCause);
+    super(message);
+    this.rootCause = rootCause;
   }
 
   /**
-   * @param rootCause
+   * Constructs a ConnectorTypeNotFoundException with the specified root cause.
+   * 
+   * @param rootCause root failure cause
    */
   public ConnectorTypeNotFoundException(Throwable rootCause) {
-    super(rootCause);
+    super();
+    this.rootCause = rootCause;
   }
 
 }

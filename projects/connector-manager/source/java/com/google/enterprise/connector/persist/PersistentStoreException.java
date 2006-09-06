@@ -20,34 +20,45 @@ import com.google.enterprise.connector.manager.ConnectorManagerException;
  *
  */
 public class PersistentStoreException extends ConnectorManagerException {
-
   /**
-   * 
+   * Constructs a new PersistentStoreException with no message and no root
+   * cause.
    */
   public PersistentStoreException() {
     super();
   }
 
   /**
-   * @param message
+   * Constructs a PersistentStoreException with a supplied message but no root
+   * cause.
+   * 
+   * @param message the message. Can be retrieved by the {@link #getMessage()}
+   *        method.
    */
   public PersistentStoreException(String message) {
     super(message);
   }
 
   /**
-   * @param message
-   * @param rootCause
+   * Constructs a PersistentStoreException with message and root cause.
+   * 
+   * @param message the message. Can be retrieved by the {@link #getMessage()}
+   *        method.
+   * @param rootCause root failure cause
    */
   public PersistentStoreException(String message, Throwable rootCause) {
-    super(message, rootCause);
+    super(message);
+    this.rootCause = rootCause;
   }
 
   /**
-   * @param rootCause
+   * Constructs a PersistentStoreException with the specified root cause.
+   * 
+   * @param rootCause root failure cause
    */
   public PersistentStoreException(Throwable rootCause) {
-    super(rootCause);
+    super();
+    this.rootCause = rootCause;
   }
 
 }
