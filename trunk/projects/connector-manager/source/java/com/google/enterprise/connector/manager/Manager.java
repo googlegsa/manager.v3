@@ -38,38 +38,32 @@ public interface Manager {
    * @param maxFeedRate The maximum feed rate expressed in documents/second
    * @throws PersistentStoreException If there was a problem storing the
    *         configuration
-   * @throws ConnectorManagerException If some other bad thing happens
    */
   public void storeConfig(boolean certAuth, String feederGateHost,
-      int feederGatePort, int maxFeedRate) throws PersistentStoreException,
-      ConnectorManagerException;
+      int feederGatePort, int maxFeedRate) throws PersistentStoreException;
 
   /**
    * Returns a list of connector types that this manager knows about.
    * 
    * @return A list of Strings - the name of each connector implementation.
-   * @throws ConnectorManagerException If something bad happens
    */
-  public List getConnectorTypes() throws ConnectorManagerException;
+  public List getConnectorTypes();
 
   /**
    * Returns a list of ConnectorStatus objects for each connector that this
    * manager knows about.
    * 
    * @return A list of ConnectorStatus objects.
-   * @throws ConnectorManagerException If something bad happens
    */
-  public List getConnectorStatuses() throws ConnectorManagerException;
+  public List getConnectorStatuses();
 
   /**
    * Returns the status of a particular connector.
    * 
    * @param connectorInstanceName
    * @return Document containing XML configuration - DTD TBD.
-   * @throws ConnectorManagerException If something bad happens
    */
-  public ConnectorStatus getConnectorStatus(String connectorInstanceName)
-      throws ConnectorManagerException;
+  public ConnectorStatus getConnectorStatus(String connectorInstanceName);
 
   /**
    * Get initial configuration form snippet for a connector type.
@@ -85,10 +79,9 @@ public interface Manager {
    *         default form.
    * @throws ConnectorTypeNotFoundException If the named connector type is not
    *         known to this manager.
-   * @throws ConnectorManagerException If something bad happens
    */
   public ConfigureResponse getConfigForm(String ConnectorType, String language)
-      throws ConnectorTypeNotFoundException, ConnectorManagerException;
+      throws ConnectorTypeNotFoundException;
 
   /**
    * Get configuration data as a form snippet for an existing connnector. This
@@ -105,11 +98,9 @@ public interface Manager {
    *         a default form.
    * @throws ConnectorNotFoundException If the named connector is not known to
    *         this manager.
-   * @throws ConnectorManagerException If something bad happens
    */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
-      String language) throws ConnectorNotFoundException,
-      ConnectorManagerException;
+      String language) throws ConnectorNotFoundException;
 
   /**
    * Set config data for a new Connector or update config data for a running
@@ -127,11 +118,12 @@ public interface Manager {
    *         again.
    * @throws ConnectorNotFoundException If the named connector is not known to
    *         this manager.
-   * @throws ConnectorManagerException If something bad happens
+   * @throws PersistentStoreException If there was a problem storing the
+   *         configuration
    */
   public ConfigureResponse setConfig(String connectorName, Map configData,
       String language) throws ConnectorNotFoundException,
-      ConnectorManagerException;
+      PersistentStoreException;
 
   /**
    * Authenticates a user against a named connector.
@@ -140,10 +132,9 @@ public interface Manager {
    * @param username
    * @param password
    * @return true for success.
-   * @throws ConnectorManagerException If something bad happens
    */
   public boolean authenticate(String connectorInstanceName, String username,
-      String password) throws ConnectorManagerException;
+      String password);
 
   /**
    * Gets authorization from a named connector for a set of documents by ID.
@@ -155,10 +146,9 @@ public interface Manager {
    * @return A List of booleans parallel to the input list of IDs: the boolean
    *         in the corresponding position indicates whether that user can see
    *         that document.
-   * @throws ConnectorManagerException If something bad happens
    */
   public List authorizeDocids(String connectorInstanceName, List docidList,
-      String username) throws ConnectorManagerException;
+      String username);
 
   /**
    * Gets authorization from a named connector for a set of documents by token.
@@ -170,9 +160,8 @@ public interface Manager {
    * @return A List of booleans parallel to the input list of IDs: the boolean
    *         in the corresponding position indicates whether that user can see
    *         that document.
-   * @throws ConnectorManagerException If something bad happens
    */
   public List authorizeTokens(String connectorInstanceName, List tokenList,
-      String username) throws ConnectorManagerException;
+      String username);
 
 }
