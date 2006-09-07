@@ -121,8 +121,8 @@ public interface Manager {
    * @throws PersistentStoreException If there was a problem storing the
    *         configuration
    */
-  public ConfigureResponse setConnectorConfig(String connectorName, Map configData,
-      String language) throws ConnectorNotFoundException,
+  public ConfigureResponse setConnectorConfig(String connectorName, 
+      Map configData, String language) throws ConnectorNotFoundException,
       PersistentStoreException;
 
   /**
