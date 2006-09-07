@@ -17,7 +17,8 @@ package com.google.enterprise.connector.persist;
 import com.google.enterprise.connector.manager.ConnectorManagerException;
 
 /**
- *
+ * This is the top-level Exception class for all exceptions that can come up
+ * from the Persistent Store.
  */
 public class PersistentStoreException extends ConnectorManagerException {
   /**
