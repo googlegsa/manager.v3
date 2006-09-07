@@ -40,10 +40,28 @@ public class WorkQueueTest extends TestCase {
   
   public void testAddWork() {
     WorkQueue queue = new WorkQueue(2);
+    queue.init();
     for (int i = 0; i < 10; i++) {
       queue.addWork(new PrintRunnable("work started: " + i));
     }
     
     waitForEmptyQueue(queue);
+    queue.shutdown();
+  }
+  
+  public void testInitShutdown() {
+    WorkQueue queue = new WorkQueue(2);
+    queue.init();
+    for (int i = 0; i < 10; i++) {
+      queue.addWork(new PrintRunnable("work started: " + i));
+    }
+    queue.shutdown();
+    queue.init();
+    for (int i = 0; i < 10; i++) {
+      queue.addWork(new PrintRunnable("work started again: " + i));
+    }
+    
+    waitForEmptyQueue(queue);
+    queue.shutdown();
   }
 }
