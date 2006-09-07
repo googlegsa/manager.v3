@@ -21,31 +21,128 @@
 
 <web-app>
 
-    <display-name>Connector Servlet</display-name>
+    <display-name>Connector Servlets</display-name>
     <description>
-      Connector Servlet Examples.
+      Connector Servlets.
     </description>
 
-    <!-- Define servlets that are included in the example application -->
+    <!-- Define servlets that are included in the Connector application -->
 
+    <servlet>
+        <servlet-name>SetManagerConfig</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.SetManagerConfig</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>TestConnectivity</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.TestConnectivity</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>GetConnectorList</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.GetConnectorList</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>SetConnectorConfig</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.SetConnectorConfig</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>GetConfigForm</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.GetConfigForm</servlet-class>
+    </servlet>
+<!--
+    <servlet>
+        <servlet-name>GetSchema</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.GetSchema</servlet-class>
+    </servlet>
+-->
+    <servlet>
+        <servlet-name>GetConnectorStatus</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.GetConnectorStatus</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>GetConnectorServingStatus</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.GetConnectorServingStatus</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>UpdateConnector</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.UpdateConnector</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>SetSchedule</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.SetSchedule</servlet-class>
+    </servlet>
+<!--
+    <servlet>
+        <servlet-name>AuthnCheck</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.AuthnCheck</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>AuthzCheck</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.AuthzCheck</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name></servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.</servlet-class>
+    </servlet>
+-->
     <servlet>
         <servlet-name>HelloClientFromGSA</servlet-name>
         <servlet-class>com.google.enterprise.connector.servlet.HelloClientFromGSA</servlet-class>
     </servlet>
 
-    <servlet>
+    <servlet-mapping>
+        <servlet-name>SetManagerConfig</servlet-name>
+	<url-pattern>/setManagerConfig</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
         <servlet-name>TestConnectivity</servlet-name>
-        <servlet-class>com.google.enterprise.connector.servlet.TestConnectivity</servlet-class>
-    </servlet>
-
+	<url-pattern>/testConnectivity</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+	<servlet-name>GetConnectorList</servlet-name>
+	<url-pattern>/getConnectorList</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>SetConnectorConfig</servlet-name>
+	<url-pattern>/setConnectorConfig</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetConfigForm</servlet-name>
+	<url-pattern>/getConfigForm</url-pattern>
+    </servlet-mapping>
+<!--
+    <servlet-mapping>
+        <servlet-name>GetSchema</servlet-name>
+	<url-pattern>/getSchema</url-pattern>
+    </servlet-mapping>
+-->
+    <servlet-mapping>
+        <servlet-name>GetConnectorStatus</servlet-name>
+	<url-pattern>/getConnectorStatus</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetConnectorServingStatus</servlet-name>
+	<url-pattern>/getConnectorServingStatus</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>UpdateConnector</servlet-name>
+	<url-pattern>/updateConnector</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>SetSchedule</servlet-name>
+        <url-pattern>/setSchedule</url-pattern>
+    </servlet-mapping>
+<!--
+    <servlet-mapping>
+        <servlet-name>AuthnCheck</servlet-name>
+	<url-pattern>/authnCheck</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AuthzCheck</servlet-name>
+	<url-pattern>/authzCheck</url-pattern>
+    </servlet-mapping>
+-->
     <servlet-mapping>
         <servlet-name>HelloClientFromGSA</servlet-name>
         <url-pattern>/HelloClientFromGSA</url-pattern>
     </servlet-mapping>
-    
-    <servlet-mapping>
-        <servlet-name>TestConnectivity</servlet-name>
-        <url-pattern>/TestConnectivity</url-pattern>
-    </servlet-mapping>
-    
 </web-app>
