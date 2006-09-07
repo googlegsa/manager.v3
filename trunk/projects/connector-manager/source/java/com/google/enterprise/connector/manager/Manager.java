@@ -153,7 +153,7 @@ public interface Manager {
   /**
    * Gets authorization from a named connector for a set of documents by token.
    * 
-   * @param connectorInstanceName
+   * @param connectorName
    * @param tokenList The document set represented as a list of Strings: the
    *        security token for a class of documents
    * @param username The username as a string
