@@ -19,7 +19,7 @@ import java.util.logging.Logger;
 
 /**
  * The WorkQueue provides a way for callers to issue non-blocking work
- * requests.
+ * requests.  This class is multi-thread safe.
  */
 public class WorkQueue {
   private static final Logger logger = 
@@ -30,6 +30,7 @@ public class WorkQueue {
   
   private int numThreads;
   private Thread[] threads;
+  private boolean isInitialized;
   
   /**
    * Creates a WorkQueue with a given number of worker threads.
@@ -43,30 +44,54 @@ public class WorkQueue {
     this.workQueue = new LinkedList();
     this.numThreads = numThreads;
     this.threads = new Thread[this.numThreads];
-    for (int i = 0 ; i < this.numThreads; i++) {
+    isInitialized = false;
+  }
+  
+  /**
+   * Initialize work queue by starting worker threads.
+   */
+  public synchronized void init() {
+    if (isInitialized) {
+      return;
+    }
+    for (int i = 0; i < numThreads; i++) {
       threads[i] = new WorkQueueThread();
       threads[i].start();
     }
+    isInitialized = true;
+  }
+  
+  /**
+   * Shutdown the work queue by interrupting any work in progress.  All work
+   * that was added is discarded.
+   */
+  public synchronized void shutdown() {
+    if (isInitialized) {
+      // TODO: instead of just calling Thread.interrupt, call a work specific
+      // interrupt/cancellation.
+      for (int i = 0; i < numThreads; i++) {
+        threads[i].interrupt();
+      }
+    }
+    workQueue.clear();
+    isInitialized = false;
   }
   
   /**
    * Add a piece of work that will be executed.
    * @param work one piece of work
    */
-  public void addWork(Runnable work) {
-    synchronized (workQueue) {
-      workQueue.addLast(work);
-      workQueue.notifyAll();
-    }
+  public synchronized void addWork(Runnable work) {
+    workQueue.addLast(work);
+    notifyAll();
   }
   
   /**
    * Determine the number of pieces of work that are in the queue.
+   * @return the number of pieces of work in the queue.
    */
-  public int getWorkCount() {
-    synchronized (workQueue) {
-      return workQueue.size();
-    }
+  public synchronized int getWorkCount() {
+    return workQueue.size();
   }
   
   /**
@@ -76,14 +101,14 @@ public class WorkQueue {
   private class WorkQueueThread extends Thread {
     public void run() {
       while (true) {
-        synchronized (workQueue) {
+        synchronized (WorkQueue.this) {
           while (workQueue.isEmpty()) {
             try {
-              workQueue.wait();
+              WorkQueue.this.wait();
             } catch (InterruptedException ie) {
               logger.warning("WorkQueueThread was interrupted: " 
                 + ie.getMessage());
-              continue;
+              return;
             }
           }
           
