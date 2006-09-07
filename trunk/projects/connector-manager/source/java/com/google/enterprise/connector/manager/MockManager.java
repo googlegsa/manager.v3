@@ -14,15 +14,15 @@
 
 package com.google.enterprise.connector.manager;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A mock implementation for the Manager interface. This implementation
@@ -48,7 +48,7 @@ public class MockManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#authorizeTokens(java.lang.String,
    *      java.util.List, java.lang.String)
    */
-  public List authorizeTokens(String connectorInstanceName, List tokenList,
+  public List authorizeTokens(String connectorName, List tokenList,
       String username) {
     List tokenAuthList = new ArrayList();
     for (int i = 0; i < tokenList.size(); i++) {
@@ -63,7 +63,7 @@ public class MockManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#authenticate(java.lang.String,
    *      java.lang.String, java.lang.String)
    */
-  public boolean authenticate(String connectorInstanceName, String username,
+  public boolean authenticate(String connectorName, String username,
       String password) {
     return true;
   }
@@ -74,7 +74,7 @@ public class MockManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#authorizeDocids(java.lang.String,
    *      java.util.List, java.lang.String)
    */
-  public List authorizeDocids(String connectorInstanceName, List docidList,
+  public List authorizeDocids(String connectorName, List docidList,
       String username) {
     List docidAuthList = new ArrayList();
     for (int i = 0; i < docidList.size(); i++) {
@@ -102,7 +102,7 @@ public class MockManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#getConfigForm(java.lang.String,
    *      java.lang.String)
    */
-  public ConfigureResponse getConfigForm(String ConnectorType, String language)
+  public ConfigureResponse getConfigForm(String connectorTypeName, String language)
       throws ConnectorTypeNotFoundException {
     // have caller use default form by returning null
     return null;
@@ -125,8 +125,8 @@ public class MockManager implements Manager {
    * 
    * @see com.google.enterprise.connector.manager.Manager#getConnectorStatus(java.lang.String)
    */
-  public ConnectorStatus getConnectorStatus(String connectorInstanceName) {
-    String name = connectorInstanceName;
+  public ConnectorStatus getConnectorStatus(String connectorName) {
+    String name = connectorName;
     String type = "Documentum";
     int status = 0;
     return new ConnectorStatus(name, type, status);

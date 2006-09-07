@@ -60,17 +60,17 @@ public interface Manager {
   /**
    * Returns the status of a particular connector.
    * 
-   * @param connectorInstanceName
+   * @param connectorName the name of the connector instance
    * @return Document containing XML configuration - DTD TBD.
    */
-  public ConnectorStatus getConnectorStatus(String connectorInstanceName);
+  public ConnectorStatus getConnectorStatus(String connectorName);
 
   /**
    * Get initial configuration form snippet for a connector type.
    * 
-   * @param ConnectorType The name of a connector implementation - it should be
-   *        one that this manager knows about (one that would be returned by a
-   *        call to getConnectorTypes()).
+   * @param connectorTypeName The name of a connector implementation - it should
+   *        be one that this manager knows about (one that would be returned by
+   *        a call to getConnectorTypes()).
    * @param language A locale string, such as "en" or "fr_CA" which the
    *        implementation may use to produce appropriate descriptions and
    *        messages
@@ -80,7 +80,7 @@ public interface Manager {
    * @throws ConnectorTypeNotFoundException If the named connector type is not
    *         known to this manager.
    */
-  public ConfigureResponse getConfigForm(String ConnectorType, String language)
+  public ConfigureResponse getConfigForm(String connectorTypeName, String language)
       throws ConnectorTypeNotFoundException;
 
   /**
@@ -128,18 +128,18 @@ public interface Manager {
   /**
    * Authenticates a user against a named connector.
    * 
-   * @param connectorInstanceName
+   * @param connectorName
    * @param username
    * @param password
    * @return true for success.
    */
-  public boolean authenticate(String connectorInstanceName, String username,
+  public boolean authenticate(String connectorName, String username,
       String password);
 
   /**
    * Gets authorization from a named connector for a set of documents by ID.
    * 
-   * @param connectorInstanceName
+   * @param connectorName
    * @param docidList The document set represented as a list of Strings: the
    *        docid for each document
    * @param username The username as a string
@@ -147,7 +147,7 @@ public interface Manager {
    *         in the corresponding position indicates whether that user can see
    *         that document.
    */
-  public List authorizeDocids(String connectorInstanceName, List docidList,
+  public List authorizeDocids(String connectorName, List docidList,
       String username);
 
   /**
@@ -161,7 +161,7 @@ public interface Manager {
    *         in the corresponding position indicates whether that user can see
    *         that document.
    */
-  public List authorizeTokens(String connectorInstanceName, List tokenList,
+  public List authorizeTokens(String connectorName, List tokenList,
       String username);
 
 }
