@@ -24,22 +24,35 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 
+ * Wraps a JSONObject as an unmodifiable Map, so it can be easily passed in to
+ * things that want maps. This implementation could be enhanced to be
+ * modifiable, but we don't need it for our testing.
  */
 public class JsonObjectAsMap extends AbstractMap {
 
-  JSONObject jobj;
+  final JSONObject jobj;
 
-
+  /**
+   * 
+   * 
+   */
   public JsonObjectAsMap() {
     jobj = new JSONObject();
   }
-  
+
+  /**
+   * The javadoc for AbstractMap specifies that you should provide a constructor
+   * that takes a map. But one isn't needed here - as far as we know. This
+   * implementation is here to let us know otherwise very loudly.
+   * 
+   * @param m a Map
+   */
   public JsonObjectAsMap(Map m) {
     throw new IllegalArgumentException();
   }
-  
+
   /**
+   * The primary constructor for this class
    * @param jobj
    * 
    */
@@ -94,6 +107,8 @@ public class JsonObjectAsMap extends AbstractMap {
             }
           }
 
+          // no implementation needed here because we're only implementing 
+          // unmodifiable maps
           public void remove() {
             throw new UnsupportedOperationException();
           }
@@ -102,8 +117,7 @@ public class JsonObjectAsMap extends AbstractMap {
       }
 
       public int size() {
-        // TODO Auto-generated method stub
-        return 0;
+        return jobj.length();
       }
 
     };
