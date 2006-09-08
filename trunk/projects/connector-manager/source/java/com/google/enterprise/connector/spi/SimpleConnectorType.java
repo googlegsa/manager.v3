@@ -23,17 +23,17 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Simple implementation of the Configurer interface. Implementors may use this
+ * Simple implementation of the ConnectorType interface. Implementors may use this
  * directly or for reference. This implementation has no I18N - it just uses a
  * list of configuration keys for both validation and display.
  */
-public class SimpleConfigurer implements Configurer {
+public class SimpleConnectorType implements ConnectorType {
 
   private List keys = null;
   private Set keySet = null;
   private String initialConfigForm = null;
 
-  public SimpleConfigurer() {
+  public SimpleConnectorType() {
     //
   }
 
@@ -176,7 +176,7 @@ public class SimpleConfigurer implements Configurer {
    * @param language
    * @return another Configurer, which may be null
    */
-  Configurer getEmbeddedConfigurer(Map configData, String language) {
+  ConnectorType getEmbeddedConfigurer(Map configData, String language) {
     return null;
   }
 
@@ -203,7 +203,7 @@ public class SimpleConfigurer implements Configurer {
     if (message != null && message.length() > 0) {
       return result;
     }
-    Configurer embeddedConfigurer = getEmbeddedConfigurer(configData, language);
+    ConnectorType embeddedConfigurer = getEmbeddedConfigurer(configData, language);
     if (embeddedConfigurer == null) {
       return result;
     }

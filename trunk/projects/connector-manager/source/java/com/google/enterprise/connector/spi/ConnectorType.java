@@ -21,7 +21,7 @@ import java.util.Map;
  * Configuration interface for an SPI implementation.
  * 
  */
-public interface Configurer {
+public interface ConnectorType {
 
   /**
    * Get initial configuration form snippet.

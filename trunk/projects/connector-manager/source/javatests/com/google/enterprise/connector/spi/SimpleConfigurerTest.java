@@ -30,12 +30,12 @@ import java.util.Map;
 public class SimpleConfigurerTest extends TestCase {
 
   /**
-   * Test method for {@link com.google.enterprise.connector.spi.SimpleConfigurer
+   * Test method for {@link com.google.enterprise.connector.spi.SimpleConnectorType
    * #getConfigForm(java.lang.String)}.
    */
   public final void testGetConfigForm() {
     {
-      SimpleConfigurer simpleConfigurer = new SimpleConfigurer();
+      SimpleConnectorType simpleConfigurer = new SimpleConnectorType();
       simpleConfigurer.setConfigKeys(new String[] {"foo", "bar"});
       ConfigureResponse configureResponse =
           simpleConfigurer.getConfigForm(null);
@@ -48,7 +48,7 @@ public class SimpleConfigurerTest extends TestCase {
       Assert.assertEquals(expectedResult, initialConfigForm);
     }
     {
-      SimpleConfigurer simpleConfigurer = new SimpleConfigurer();
+      SimpleConnectorType simpleConfigurer = new SimpleConnectorType();
       simpleConfigurer.setConfigKeys(new String[] {"user", "password"});
       ConfigureResponse configureResponse =
           simpleConfigurer.getConfigForm(null);
@@ -65,13 +65,13 @@ public class SimpleConfigurerTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.enterprise.connector.spi.SimpleConfigurer#validateConfig(java.util.Map, java.lang.String)}.
+   * {@link com.google.enterprise.connector.spi.SimpleConnectorType#validateConfig(java.util.Map, java.lang.String)}.
    * 
    * @throws JSONException
    */
   public final void testValidateConfig() throws JSONException {
     {
-      SimpleConfigurer simpleConfigurer = new SimpleConfigurer();
+      SimpleConnectorType simpleConfigurer = new SimpleConnectorType();
       simpleConfigurer.setConfigKeys(new String[] {"user", "password"});
       JSONObject jo = 
         new JSONObject("{user:max, dog:snickers, destination:heaven}");
@@ -96,7 +96,7 @@ public class SimpleConfigurerTest extends TestCase {
     }
     
     {
-      SimpleConfigurer simpleConfigurer = new SimpleConfigurer();
+      SimpleConnectorType simpleConfigurer = new SimpleConnectorType();
       simpleConfigurer.setConfigKeys(new String[] {"user", "password"});
       JSONObject jo = 
         new JSONObject("{user:max, password:xyzzy, dog:snickers}");
