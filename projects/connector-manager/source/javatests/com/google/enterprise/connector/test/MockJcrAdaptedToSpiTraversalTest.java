@@ -6,7 +6,7 @@ import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
 import com.google.enterprise.connector.spi.LoginException;
 import com.google.enterprise.connector.spi.QueryTraversalManager;
-import com.google.enterprise.connector.spi.Repository;
+import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
 
@@ -19,7 +19,7 @@ public class MockJcrAdaptedToSpiTraversalTest extends TestCase {
       new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
     javax.jcr.Repository jcrRepo = new MockJcrRepository(r);
-    Repository repo = new SpiRepositoryFromJcr(jcrRepo);
+    Connector repo = new SpiRepositoryFromJcr(jcrRepo);
     Session session = repo.login("admin", "admin");
     QueryTraversalManager qtm = session.getQueryTraversalManager();
     QueryTraversalTest.runTraversal(qtm, 2);

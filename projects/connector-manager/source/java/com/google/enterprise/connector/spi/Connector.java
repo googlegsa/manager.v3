@@ -23,7 +23,7 @@ package com.google.enterprise.connector.spi;
  * A repository object is used as something against which to authenticate, via
  * the login method.
  */
-public interface Repository {
+public interface Connector {
 
   /**
    * Authenticates against the repository and returns a session belonging to

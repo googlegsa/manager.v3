@@ -15,7 +15,7 @@
 package com.google.enterprise.connector.jcradaptor;
 
 import com.google.enterprise.connector.spi.LoginException;
-import com.google.enterprise.connector.spi.Repository;
+import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
 
@@ -28,7 +28,7 @@ import javax.jcr.SimpleCredentials;
  * credentials must be supplied externally (to the SPIRepository constructor and
  * login method). All other JCR objects are produced from these.
  */
-public class SpiRepositoryFromJcr implements Repository {
+public class SpiRepositoryFromJcr implements Connector {
 
   javax.jcr.Repository repo;
 

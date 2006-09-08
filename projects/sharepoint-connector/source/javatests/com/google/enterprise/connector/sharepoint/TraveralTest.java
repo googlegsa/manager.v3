@@ -1,12 +1,12 @@
 package com.google.enterprise.connector.sharepoint;
 
+import java.util.Iterator;
+
+import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.QueryTraversalManager;
-import com.google.enterprise.connector.spi.Repository;
 import com.google.enterprise.connector.spi.ResultSet;
 import com.google.enterprise.connector.spi.Session;
-
-import java.util.Iterator;
 
 public class TraveralTest {
 
@@ -15,7 +15,7 @@ public class TraveralTest {
    */
   public static void main(String[] args) throws Exception {
     // TODO Auto-generated method stub
-    Repository repo = new SharepointRepo();
+    Connector repo = new SharepointRepo();
     Session sess = repo.login("ent-sales-d2\\sales-admin", "t3stth@t");
     QueryTraversalManager mgr = sess.getQueryTraversalManager();
     ResultSet rs = mgr.startTraversal();

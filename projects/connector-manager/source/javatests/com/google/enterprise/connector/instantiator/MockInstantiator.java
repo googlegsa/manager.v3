@@ -23,7 +23,7 @@ import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
-import com.google.enterprise.connector.spi.Configurer;
+import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.QueryTraversalManager;
 import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.Traverser;
@@ -35,7 +35,7 @@ import javax.jcr.query.QueryManager;
  */
 public class MockInstantiator implements Instantiator {
 
-  private static final Configurer CONFIGURER;
+  private static final ConnectorType CONFIGURER;
   private static final Traverser TRAVERSER;
 
   static {
@@ -61,7 +61,7 @@ public class MockInstantiator implements Instantiator {
    * @see com.google.enterprise.connector.instantiator.Instantiator
    *      #getConfigurer(java.lang.String)
    */
-  public Configurer getConfigurer(String connectorTypeName)
+  public ConnectorType getConfigurer(String connectorTypeName)
       throws ConnectorTypeNotFoundException{
     return CONFIGURER;
   }

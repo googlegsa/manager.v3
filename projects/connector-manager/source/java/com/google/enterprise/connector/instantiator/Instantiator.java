@@ -16,7 +16,7 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
-import com.google.enterprise.connector.spi.Configurer;
+import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.traversal.Traverser;
 
 /**
@@ -27,7 +27,7 @@ public interface Instantiator {
   public Traverser getTraverser(String connectorName)
       throws ConnectorNotFoundException;
 
-  public Configurer getConfigurer(String connectorTypeName)
+  public ConnectorType getConfigurer(String connectorTypeName)
       throws ConnectorTypeNotFoundException;
 
 }

@@ -1,18 +1,18 @@
 package com.google.enterprise.connector.sharepoint;
 
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.LoginException;
-import com.google.enterprise.connector.spi.Repository;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
 
 import connector.ClientContext;
 import connector.ConnectorConstants;
 
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-public class SharepointRepo implements Repository {
+public class SharepointRepo implements Connector {
 
   private static Log logger = LogFactory.getLog(SharepointRepo.class);
   static {
