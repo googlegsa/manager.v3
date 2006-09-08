@@ -23,7 +23,9 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * 
+ * Simple implementation of the Configurer interface. Implementors may use this
+ * directly or for reference. This implementation has no I18N - it just uses a
+ * list of configuration keys for both validation and display.
  */
 public class SimpleConfigurer implements Configurer {
 
@@ -35,6 +37,12 @@ public class SimpleConfigurer implements Configurer {
     //
   }
 
+  /**
+   * Set the keys that are required for configuration. One of the overloadings
+   * of this method must be called exactly once before the SPI methods are used.
+   * 
+   * @param keys A list of String keys
+   */
   public void setConfigKeys(List keys) {
     if (this.keys != null) {
       throw new IllegalStateException();
@@ -43,14 +51,22 @@ public class SimpleConfigurer implements Configurer {
     this.keySet = new HashSet(this.keys);
   }
 
+  /**
+   * Set the keys that are required for configuration. One of the overloadings
+   * of this method must be called exactly once before the SPI methods are used.
+   * 
+   * @param keys An array of String keys
+   */
   public void setConfigKeys(String[] keys) {
-    if (this.keys != null) {
-      throw new IllegalStateException();
-    }
-    this.keys = Arrays.asList(keys);
-    this.keySet = new HashSet(this.keys);
+    setConfigKeys(Arrays.asList(keys));
   }
 
+  /**
+   * Sets the form to be used by this configurer. This is optional. If this
+   * method is used, it must be called before the SPI methods are used.
+   * 
+   * @param formSnippet A String snippet of html - see the COnfigurer interface
+   */
   public void setInitialConfigForm(String formSnippet) {
     if (this.initialConfigForm != null) {
       throw new IllegalStateException();
