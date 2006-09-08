@@ -19,6 +19,8 @@ import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
 
+import java.util.Map;
+
 import javax.jcr.Credentials;
 import javax.jcr.SimpleCredentials;
 
@@ -41,6 +43,10 @@ public class SpiRepositoryFromJcr implements Connector {
     this.repo = repo;
   }
 
+  public void setConfig(Map configData) throws RepositoryException {
+    ;  
+  }
+
   public Session login(String username, String password) throws LoginException,
       RepositoryException {
     try {
@@ -54,4 +60,5 @@ public class SpiRepositoryFromJcr implements Connector {
       throw new RepositoryException(e);
     }
   }
+
 }

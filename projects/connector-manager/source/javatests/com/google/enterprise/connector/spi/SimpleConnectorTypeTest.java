@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * 
  */
-public class SimpleConfigurerTest extends TestCase {
+public class SimpleConnectorTypeTest extends TestCase {
 
   /**
    * Test method for {@link com.google.enterprise.connector.spi.SimpleConnectorType
@@ -35,10 +35,10 @@ public class SimpleConfigurerTest extends TestCase {
    */
   public final void testGetConfigForm() {
     {
-      SimpleConnectorType simpleConfigurer = new SimpleConnectorType();
-      simpleConfigurer.setConfigKeys(new String[] {"foo", "bar"});
+      SimpleConnectorType simpleConnectorType = new SimpleConnectorType();
+      simpleConnectorType.setConfigKeys(new String[] {"foo", "bar"});
       ConfigureResponse configureResponse =
-          simpleConfigurer.getConfigForm(null);
+          simpleConnectorType.getConfigForm(null);
       String initialConfigForm = configureResponse.getFormSnippet();
       String expectedResult =
           "<tr>\r\n" + "<td>foo</td>\r\n"
@@ -48,10 +48,10 @@ public class SimpleConfigurerTest extends TestCase {
       Assert.assertEquals(expectedResult, initialConfigForm);
     }
     {
-      SimpleConnectorType simpleConfigurer = new SimpleConnectorType();
-      simpleConfigurer.setConfigKeys(new String[] {"user", "password"});
+      SimpleConnectorType simpleConnectorType = new SimpleConnectorType();
+      simpleConnectorType.setConfigKeys(new String[] {"user", "password"});
       ConfigureResponse configureResponse =
-          simpleConfigurer.getConfigForm(null);
+          simpleConnectorType.getConfigForm(null);
       String initialConfigForm = configureResponse.getFormSnippet();
       String expectedResult =
           "<tr>\r\n" + "<td>user</td>\r\n"
@@ -59,6 +59,7 @@ public class SimpleConfigurerTest extends TestCase {
               + "</tr>\r\n" + "<tr>\r\n" + "<td>password</td>\r\n"
               + "<td><input type=\"password\" name=\"password\"></td>\r\n"
               + "</tr>\r\n";
+      System.out.println(initialConfigForm);
       Assert.assertEquals(expectedResult, initialConfigForm);
     }
   }
@@ -71,13 +72,13 @@ public class SimpleConfigurerTest extends TestCase {
    */
   public final void testValidateConfig() throws JSONException {
     {
-      SimpleConnectorType simpleConfigurer = new SimpleConnectorType();
-      simpleConfigurer.setConfigKeys(new String[] {"user", "password"});
+      SimpleConnectorType simpleConnectorType = new SimpleConnectorType();
+      simpleConnectorType.setConfigKeys(new String[] {"user", "password"});
       JSONObject jo = 
         new JSONObject("{user:max, dog:snickers, destination:heaven}");
       Map map = new JsonObjectAsMap(jo);
       ConfigureResponse configureResponse = 
-        simpleConfigurer.validateConfig(map, null);
+        simpleConnectorType.validateConfig(map, null);
       String configForm = configureResponse.getFormSnippet();
       String expectedResult = "<tr>\r\n" + 
             "<td>user</td>\r\n" + 
@@ -96,13 +97,13 @@ public class SimpleConfigurerTest extends TestCase {
     }
     
     {
-      SimpleConnectorType simpleConfigurer = new SimpleConnectorType();
-      simpleConfigurer.setConfigKeys(new String[] {"user", "password"});
+      SimpleConnectorType simpleConnectorType = new SimpleConnectorType();
+      simpleConnectorType.setConfigKeys(new String[] {"user", "password"});
       JSONObject jo = 
         new JSONObject("{user:max, password:xyzzy, dog:snickers}");
       Map map = new JsonObjectAsMap(jo);
       ConfigureResponse configureResponse = 
-        simpleConfigurer.validateConfig(map, null);
+        simpleConnectorType.validateConfig(map, null);
       String configForm = configureResponse.getFormSnippet();
       Assert.assertEquals(null, configForm);
       String message = configureResponse.getMessage();

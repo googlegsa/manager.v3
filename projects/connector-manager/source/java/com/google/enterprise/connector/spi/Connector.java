@@ -14,11 +14,13 @@
 
 package com.google.enterprise.connector.spi;
 
+import java.util.Map;
+
 /**
- * The root of the SPI. We do not specify how an object
- * implementing this interface will be obtained. This is left up to
- * implementors, who will probably provide their own constructors or factories,
- * that get injected by Spring or another mechanism.
+ * The root of the SPI. We do not specify how an object implementing this
+ * interface will be obtained. This is left up to implementors, who will
+ * probably provide their own constructors or factories, that get injected by
+ * Spring or another mechanism.
  * <p>
  * A repository object is used as something against which to authenticate, via
  * the login method.
@@ -26,15 +28,26 @@ package com.google.enterprise.connector.spi;
 public interface Connector {
 
   /**
-   * Authenticates against the repository and returns a session belonging to
-   * the named user. If an exception is thrown, the
-   * implementor should provide an explanatory message.
+   * Sets the configuration for this Connector instance. The configuration is
+   * passed as a Map of Strings to Strings. The map passed in was validated by
+   * this Connector's associated ConnectorType.
+   * 
+   * @param configData
+   * @throws RepositoryException
+   */
+  public void setConfig(Map configData) throws RepositoryException;
+
+  /**
+   * Authenticates against the repository and returns a session belonging to the
+   * named user. If an exception is thrown, the implementor should provide an
+   * explanatory message.
+   * 
    * @param username A String, the user's name
    * @param password A String, the user's password
    * @return An object implementing the {@link Session} interface
    * @throws LoginException if there is a credentials-related problem
    * @throws RepositoryException if there is a more general problem, such as the
-   *           system is unreachable or down
+   *         system is unreachable or down
    */
   public Session login(String username, String password) throws LoginException,
       RepositoryException;
