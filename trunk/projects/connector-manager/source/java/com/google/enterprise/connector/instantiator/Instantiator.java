@@ -27,7 +27,7 @@ public interface Instantiator {
   public Traverser getTraverser(String connectorName)
       throws ConnectorNotFoundException;
 
-  public ConnectorType getConfigurer(String connectorTypeName)
+  public ConnectorType getConnectorType(String connectorTypeName)
       throws ConnectorTypeNotFoundException;
 
 }

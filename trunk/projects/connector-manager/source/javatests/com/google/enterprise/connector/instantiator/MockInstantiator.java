@@ -35,11 +35,11 @@ import javax.jcr.query.QueryManager;
  */
 public class MockInstantiator implements Instantiator {
 
-  private static final ConnectorType CONFIGURER;
+  private static final ConnectorType CONNECTOR_TYPE;
   private static final Traverser TRAVERSER;
 
   static {
-    CONFIGURER = null;
+    CONNECTOR_TYPE = null;
     
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
@@ -61,9 +61,9 @@ public class MockInstantiator implements Instantiator {
    * @see com.google.enterprise.connector.instantiator.Instantiator
    *      #getConfigurer(java.lang.String)
    */
-  public ConnectorType getConfigurer(String connectorTypeName)
+  public ConnectorType getConnectorType(String connectorTypeName)
       throws ConnectorTypeNotFoundException{
-    return CONFIGURER;
+    return CONNECTOR_TYPE;
   }
 
   /*
