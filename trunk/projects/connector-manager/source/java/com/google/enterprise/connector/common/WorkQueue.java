@@ -82,6 +82,10 @@ public class WorkQueue {
    * @param work one piece of work
    */
   public synchronized void addWork(Runnable work) {
+    if (!isInitialized) {
+      throw new IllegalStateException(
+        "Must init() WorkQueue object before adding work.");
+    }
     workQueue.addLast(work);
     notifyAll();
   }
@@ -91,6 +95,10 @@ public class WorkQueue {
    * @return the number of pieces of work in the queue.
    */
   public synchronized int getWorkCount() {
+    if (!isInitialized) {
+      throw new IllegalStateException(
+        "Must init() WorkQueue object before getWorkCount().");
+    }
     return workQueue.size();
   }
   
