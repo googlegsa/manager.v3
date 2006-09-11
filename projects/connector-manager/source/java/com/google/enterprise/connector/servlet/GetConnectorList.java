@@ -48,34 +48,11 @@ public class GetConnectorList extends HttpServlet {
   protected void doGet(HttpServletRequest req,
                        HttpServletResponse res)
       throws ServletException, IOException {
-    res.setContentType(ServletUtil.MimeTypeXML);
+    res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
-
-    ServletUtil.AddXMLTag(out, 0, ServletUtil.XMLTagResponseRoot, false);
-    ServletUtil.WriteElement(out, 1, ServletUtil.XMLTagStatusId, "0");
-
     MockManager mockManager = MockManager.getInstance();
-    List connectorType = mockManager.getConnectorTypes();
-    if (connectorType == null || connectorType.size() == 0) {
-      logger.info("Connector manager returns null.");
-      ServletUtil.AddXMLTag(
-          out, 0, ServletUtil.XMLTagResponseRoot, true);
-      ServletUtil.WriteElement(
-          out, 1, ServletUtil.XMLTagConnectorTypes, "null");
-      return;
-    }
-
-    ServletUtil.AddXMLTag(
-            out, 1, ServletUtil.XMLTagConnectorTypes, false);
-
-    for (Iterator iter = connectorType.iterator(); iter.hasNext(); ) {
-      ServletUtil.WriteElement(
-                out, 2, ServletUtil.XMLTagConnectorType, (String) iter.next());
-    }
-
-    ServletUtil.AddXMLTag(
-            out, 1, ServletUtil.XMLTagConnectorTypes, true);
-    ServletUtil.AddXMLTag(out, 0, ServletUtil.XMLTagResponseRoot, true);
+    List connectorTypes = mockManager.getConnectorTypes();
+    handleDoGet(out, connectorTypes);
     out.close();
   }
 
@@ -91,5 +68,33 @@ public class GetConnectorList extends HttpServlet {
                         HttpServletResponse res)
       throws ServletException, IOException {
     doGet(req, res);
+  }
+
+  /**
+   * Handler for doGet in order to do unit tests.
+   * @param out
+   * @param connectorTypes
+   */
+  public static void handleDoGet(PrintWriter out, List connectorTypes) {
+    ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);
+    ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, "0");
+
+    if (connectorTypes == null || connectorTypes.size() == 0) {
+      logger.info("Connector manager returns null.");
+      ServletUtil.writeXMLElement(out, 1,
+                                  ServletUtil.XMLTAG_CONNECTOR_TYPES, "null");
+      ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
+      return;
+    }
+
+    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_TYPES, false);
+
+    for (Iterator iter = connectorTypes.iterator(); iter.hasNext();) {
+      ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_CONNECTOR_TYPE,
+                                  (String) iter.next());
+    }
+
+    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_TYPES, true);
+    ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
   }
 }
