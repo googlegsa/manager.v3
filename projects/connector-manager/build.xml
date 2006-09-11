@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project name="ConnectorManager" default="ConnectorManager" basedir=".">
-
+	
 	<!-- ========================= PROPERTIES ============================= -->
 	<property name="version" value="1.0" />
 
@@ -15,11 +15,14 @@
 	<property name="tests.src" value="source/javatests" />
 	<property name="tests.build" value="build/tests" />
 	<property name="tests.classes" value="${tests.build}/classes" />
-
+	<property name="tests.testdatadir" value="${tests.src}/com/google/enterprise/connector/testdata" />
+	
 	<property name="jar.dir"  value="${dist}/jarfile" />
 	<property name="spi.jarfile"  value="${jar.dir}/connector_spi.jar" />
 	<property name="connector.jarfile"  value="${jar.dir}/connector.jar" />
 	<property name="tests.jarfile"  value="${jar.dir}/connector_tests.jar" />
+	<property name="thirdparty.jar.dir" value="../third_party/lib" />
+	<property name="junit.jarfile" value="${thirdparty.jar.dir}/junit.jar" />
 
 	<!-- The directory where all war-files are collected -->
 	<property name="war.dir" value="${dist}/${ant.project.name}" />
@@ -45,8 +48,6 @@
 	</target>
 
 	<target name="init">
-		<delete dir="${build}" />
-		<delete dir="${dist}" />
 		<mkdir dir="${build}" />
 		<mkdir dir="${dist}" />
 		<mkdir dir="${classes}" />
@@ -59,30 +60,51 @@
 		<!-- compile java source files -->
 		<javac srcdir="${src}" destdir="${classes}" debug="${COMPILE_DEBUG_FLAG}">
 			<classpath>
-				<pathelement location="./../third_party/lib" />
-				<fileset dir="./../third_party/lib">
+				<pathelement location="${thirdparty.jar.dir}" />
+				<fileset dir="${thirdparty.jar.dir}">
 					<include name="**/*.jar" />
 				</fileset>
 			</classpath>
 		</javac>
 	</target>
 
-	<target name="compile_tests" depends="init">
+	<target name="compile_tests" depends="init,jar">
 		<!-- compile java source files for tests -->
 		<javac srcdir="${tests.src}" destdir="${tests.classes}" debug="${COMPILE_DEBUG_FLAG}">
 			<classpath>
 				<fileset dir="${jar.dir}">
 					<include name="**/*.jar" />
 				</fileset>
-				<pathelement location="./../third_party/lib" />
-				<fileset dir="./../third_party/lib">
+				<pathelement location="${thirdparty.jar.dir}" />
+				<fileset dir="${thirdparty.jar.dir}">
 					<include name="**/*.jar" />
 				</fileset>
 			</classpath>
 		</javac>
 	</target>
 
-	<target name="jar" description="Create a jar for the Connector SPI project">
+	<target name="run_tests" depends="compile_tests,jar">
+		<junit>
+			<classpath>
+				<pathelement location="${connector.jarfile}"/>	
+				<pathelement location="${spi.jarfile}"/>	
+				<fileset dir="${thirdparty.jar.dir}">
+					<include name="**/*.jar" />
+				</fileset>
+				<pathelement location="${tests.classes}"/>
+				<pathelement location="${tests.src}"/>
+				<pathelement path="${java.class.path}"/>
+			</classpath>
+			<formatter type="plain"/>
+			<batchtest fork="yes">
+				<fileset dir="${tests.src}">
+					<include name="**/*Test.java"/>			
+				</fileset>
+			</batchtest> 
+		</junit>
+	</target>
+	
+	<target name="jar" depends="compile" description="Create a jar for the Connector SPI project">
 		<jar jarfile="${spi.jarfile}">
 			<fileset dir="${classes}" includes="**/spi/**" excludes="**/javatests/**" />
 		</jar>
