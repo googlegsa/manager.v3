@@ -16,20 +16,23 @@
 package com.google.enterprise.connector.servlet;
 
 import java.io.PrintWriter;
-import java.util.logging.Logger;
 
-import javax.xml.parsers.DocumentBuilderFactory;
 
 public class ServletUtil {
-  public static final String MimeTypeXML = "text/xml";
+  public static final String MIMETYPE_XML = "text/xml";
+  public static final String MIMETYPE_HTML = "text/html";
 
-  public static final String XMLTagResponseRoot = "CmResponse";
-  public static final String XMLTagStatusId = "StatusId";
-  public static final String XMLTagConnectorTypes = "ConnectorTypes";
-  public static final String XMLTagConnectorType = "ConnectorType";
+  public static final String XMLTAG_RESPONSE_ROOT = "CmResponse";
+  public static final String XMLTAG_STATUSID = "StatusId";
+  public static final String XMLTAG_CONNECTOR_TYPES = "ConnectorTypes";
+  public static final String XMLTAG_CONNECTOR_TYPE = "ConnectorType";
+  public static final String XMLTAG_CONNECTOT_STATUS = "ConnectorStatus";
+  public static final String XMLTAG_CONNECTOR_NAME = "ConnectorName";
+  public static final String XMLTAG_STATUS = "Status";
 
-  private static Logger LOG =
-    Logger.getLogger(ServletUtil.class.getName());
+  public static final int HTML_NORMAL = 0;
+  public static final int HTML_HEADING = 1;
+  public static final int HTML_LINE = 2;
 
   private static final String[] XMLIndent = { "",
       "  ",
@@ -52,21 +55,21 @@ public class ServletUtil {
    * @param elemName element name
    * @param elemValue element value
    */
-  public static void WriteElement(PrintWriter out, int indentLevel,
+  public static void writeXMLElement(PrintWriter out, int indentLevel,
                                   String elemName, String elemValue) {
     out.println(IndentStr(indentLevel) +
                 "<" + elemName + ">" + elemValue +
                 "</" + elemName + ">");
   }
 
-  /** Append an XML tag to a StringBuffer
+  /** Write an XML tag to a PrintWriter
    *
    * @param out where PrintWriter to be written to
    * @param indentLevel the depth of indentation
    * @param tagName name of the XML tag to be added
    * @param endingTag add a beginning tag if true, an ending tag if false
    */
-  public static void AddXMLTag(PrintWriter out, int indentLevel,
+  public static void writeXMLTag(PrintWriter out, int indentLevel,
                           String tagName, boolean endingTag) {
     out.println(IndentStr(indentLevel) +
                 (endingTag ? "</" : "<") +
@@ -83,4 +86,32 @@ public class ServletUtil {
     }
   }
 
+  public static void htmlHeadWithTitle(PrintWriter out, String title) {
+    out.println("<HTML>");
+    out.println("<HEAD><TITLE>" + title + "</TITLE></HEAD><BODY>");
+  }
+
+  public static void htmlBody(
+      PrintWriter out, int style, String text, boolean linebreak) {
+    switch(style) {
+      case HTML_NORMAL:
+        out.println(text);
+        break;        
+      case HTML_HEADING:
+        out.println("<H1>" + text + "</H1>");
+        break;
+      case HTML_LINE:
+        out.println("<HR>");
+        break;
+      default:
+        break;
+    }
+    if (linebreak) {
+      out.println("<BR>");
+    }
+  }
+
+  public static void htmlPage(PrintWriter out) {
+    out.println("</BODY></HTML>");
+  }
 }
