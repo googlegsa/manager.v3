@@ -35,24 +35,44 @@ import javax.jcr.query.QueryManager;
  */
 public class MockInstantiator implements Instantiator {
 
+  public static final String TRAVERSER_NAME1 = "foo";
+  public static final String TRAVERSER_NAME2 = "bar";
+  
   private static final ConnectorType CONNECTOR_TYPE;
-  private static final Traverser TRAVERSER;
+  private static final Traverser TRAVERSER1;
+  private static final Traverser TRAVERSER2;
 
   static {
     CONNECTOR_TYPE = null;
-    
+
+    // init TRAVERSER1
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
 
-    String connectorName = "foo";
+    String connectorName = TRAVERSER_NAME1;
     QueryTraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
     MockPusher pusher = new MockPusher(System.out);
     ConnectorStateStore connectorStateStore = new MockConnectorStateStore();
 
-    TRAVERSER =
-        new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
+    TRAVERSER1 =
+      new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
+
+    // init TRAVERSER2
+    mrel =
+      new MockRepositoryEventList("MockRepositoryEventLog1.txt");
+    r = new MockRepository(mrel);
+    qm = new MockJcrQueryManager(r.getStore());
+
+    connectorName = TRAVERSER_NAME2;
+    qtm = new SpiQueryTraversalManagerFromJcr(qm);
+    pusher = new MockPusher(System.out);
+    connectorStateStore = new MockConnectorStateStore();
+
+    TRAVERSER2 =
+      new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
+
   }
 
   /*
@@ -74,7 +94,14 @@ public class MockInstantiator implements Instantiator {
    */
   public Traverser getTraverser(String connectorName)
       throws ConnectorNotFoundException {
-    return TRAVERSER;
+    if (TRAVERSER_NAME1.equals(connectorName)) {
+      return TRAVERSER1;
+    } else if (TRAVERSER_NAME2.equals(connectorName)) {
+      return TRAVERSER2;
+    } else {
+      throw new ConnectorNotFoundException("Connector not found: "
+        + connectorName);
+    }
   }
 
 }
