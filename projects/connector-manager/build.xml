@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="ConnectorManager" default="ConnectorManager" basedir=".">
-	
+
+<project name="connector-manager" default="ConnectorManager" basedir=".">
+
 	<!-- ========================= PROPERTIES ============================= -->
 	<property name="version" value="1.0" />
 
@@ -18,7 +19,7 @@
 	<property name="tests.build" value="build/tests" />
 	<property name="tests.classes" value="${tests.build}/classes" />
 	<property name="tests.testdatadir" value="${tests.src}/com/google/enterprise/connector/testdata" />
-	
+	<property name="tests.todir" value="tests_outdir" />
 	<property name="jar.dir"  value="${dist}/jarfile" />
 	<property name="spi.jarfile"  value="${jar.dir}/connector_spi.jar" />
 	<property name="connector.jarfile"  value="${jar.dir}/connector.jar" />
@@ -62,6 +63,7 @@
 		<mkdir dir="${classes}" />
 		<mkdir dir="${tests.build}" />
 		<mkdir dir="${tests.classes}" />
+		<mkdir dir="${tests.todir}" />
 		<mkdir dir="${jar.dir}" />
 	</target>
 
@@ -107,7 +109,7 @@
 				<pathelement path="${java.class.path}"/>
 			</classpath>
 			<formatter type="plain"/>
-			<batchtest fork="yes">
+			<batchtest fork="yes" todir="${tests.todir}">
 				<fileset dir="${tests.src}">
 					<include name="**/*Test.java"/>			
 				</fileset>
