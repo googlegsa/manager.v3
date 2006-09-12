@@ -16,6 +16,7 @@ package com.google.enterprise.connector.scheduler;
 
 import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.instantiator.Instantiator;
+import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.monitor.Monitor;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.traversal.Traverser;
@@ -82,8 +83,12 @@ public class MockScheduler implements Scheduler {
     intervals.add(new ScheduleTimeInterval(
       new ScheduleTime(0),
       new ScheduleTime(0)));
-    Schedule schedule = new Schedule("schedule1", intervals);
-    schedules.add(schedule);
+    Schedule schedule1 = 
+      new Schedule(MockInstantiator.TRAVERSER_NAME1, intervals);
+    Schedule schedule2 =
+      new Schedule(MockInstantiator.TRAVERSER_NAME2, intervals);
+    schedules.add(schedule1);
+    schedules.add(schedule2);
     return schedules;
   }
 
