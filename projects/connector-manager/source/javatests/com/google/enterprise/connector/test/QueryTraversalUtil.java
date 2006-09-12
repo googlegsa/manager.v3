@@ -32,7 +32,7 @@ import java.util.Iterator;
  * self-contained class. See the comments to understand how the connector
  * manager differs from this simple test.
  */
-public class QueryTraversalTest {
+public class QueryTraversalUtil {
 
   public static void runTraversal(QueryTraversalManager queryTraversalManager,
       int batchHint) throws RepositoryException {
