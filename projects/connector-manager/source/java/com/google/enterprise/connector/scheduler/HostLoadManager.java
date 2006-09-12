@@ -28,6 +28,12 @@ public class HostLoadManager {
   private static final long MINUTE_IN_MILLIS = 60 * 1000;
   private long startTimeInMillis;
   private Map connectorNameToNumDocsTraversed;
+  /**
+   * Number of milliseconds before we ignore previously fed documents.  In
+   * particular, we limit our feed rate during the duration
+   * [startTimeInMillis, startTimeInMillis + periodInMillis].
+   */
+  private long periodInMillis;
   
   /* 
    * docs per second (TODO: we want to remove this and replace with 
@@ -39,9 +45,22 @@ public class HostLoadManager {
   /**
    * TODO: constructor should take a configuration store object which will tell
    * us what the real maxFeedRate values are for each connector.
+   * By default, the HostLoadManager will use a one minute period for
+   * calculating the batchHint.
    * @param maxFeedRate
    */
   public HostLoadManager(int maxFeedRate) {
+    this(MINUTE_IN_MILLIS, maxFeedRate);
+  }
+  
+  /**
+   * TODO: constructor should take a configuration store object which will tell
+   * us what the real maxFeedRate values are for each connector.
+   * @param periodInMillis time period in which we enforce the maxFeedRate
+   * @param maxFeedRate
+   */
+  public HostLoadManager(long periodInMillis, int maxFeedRate) {
+    this.periodInMillis = periodInMillis;
     this.maxFeedRate = maxFeedRate;
     
     startTimeInMillis = System.currentTimeMillis();
@@ -58,7 +77,7 @@ public class HostLoadManager {
    */
   private void updateNumDocsTraversedData() {
     long now = System.currentTimeMillis();
-    if (now > startTimeInMillis + MINUTE_IN_MILLIS) {
+    if (now > startTimeInMillis + periodInMillis) {
       startTimeInMillis = now;
       connectorNameToNumDocsTraversed.clear();
     }
@@ -69,7 +88,7 @@ public class HostLoadManager {
    * @param connectorName name of the connector instance
    * @return number of documents traversed
    */
-  private int getNumDocsTraversedThisMinute(String connectorName) {
+  private int getNumDocsTraversedThisPeriod(String connectorName) {
     updateNumDocsTraversedData();
     if (connectorNameToNumDocsTraversed.containsKey(connectorName)) {
       Integer numDocs = 
@@ -107,9 +126,10 @@ public class HostLoadManager {
    * @return hint to the number of documents traverser should traverse
    */
   public int determineBatchHint(String connectorName) {
-    int maxDocsPerMinute = 60 * getMaxFeedRate(connectorName);
-    int docsTraversed = getNumDocsTraversedThisMinute(connectorName);
-    int remainingDocsToTraverse = maxDocsPerMinute - docsTraversed;
+    int maxDocsPerPeriod = 
+      (int) ((periodInMillis / 1000f) * getMaxFeedRate(connectorName));
+    int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
+    int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
     if (remainingDocsToTraverse > BATCH_SIZE) {
       remainingDocsToTraverse = BATCH_SIZE;
     }

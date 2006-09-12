@@ -51,15 +51,17 @@ public class HostLoadManagerTest extends TestCase {
     Assert.assertEquals(10, hostLoadManager.determineBatchHint(connectorName2));
   }
   
-  public void testMinuteWait() {
-    final int maxFeedRate = 1;  // 1 dps == 60 dpm
+  public void testPeriod() {
+    final long periodInMillis = 1000;
+    final int maxFeedRate = 60;  // 60 dps
     final String connectorName = "cn1";
-    HostLoadManager hostLoadManager = new HostLoadManager(maxFeedRate);
+    HostLoadManager hostLoadManager = 
+      new HostLoadManager(periodInMillis, maxFeedRate);
     hostLoadManager.updateNumDocsTraversed(connectorName, 55);
     Assert.assertEquals(5, hostLoadManager.determineBatchHint(connectorName));
     // sleep a minute so that batchHint is reset 
     try {
-      Thread.sleep(60 * 1000);
+      Thread.sleep(periodInMillis);
     } catch (InterruptedException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
