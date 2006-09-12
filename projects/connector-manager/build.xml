@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 
-<project name="connector-manager" default="ConnectorManager" basedir=".">
+<project name="connector-manager" default="connector_manager" basedir=".">
 
   <!-- ========================= PROPERTIES ============================= -->
   <property name="version" value="1.0" />
@@ -32,24 +32,24 @@
 
 
   <!-- =========================== TASKS =============================== -->
-  <target name="TestConnectorJars" >
+  <target name="test_connector_jars" >
     <ant inheritAll="false" antfile="${projects.dir}/test-connector1/build.xml"/>
     <ant inheritAll="false" antfile="${projects.dir}/test-connector2/build.xml"/>
   </target>
 
-  <target name="ConnectorManager" depends="Connector_SPI,Connector_SPI_test,installinit,war">
+  <target name="connector_manager" depends="connector_spi,connector_spi_test,install_init,war">
   </target>
 
-  <target name="Connector_SPI" depends="init,compile,jar">
+  <target name="connector_spi" depends="init,compile,jar">
   </target>
 
-  <target name="Connector" depends="init,compile,jar">
+  <target name="connector" depends="init,compile,jar">
     <jar jarfile="${connector.jarfile}">
       <fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**" />
     </jar>
   </target>
 
-  <target name="Connector_SPI_test" depends="Connector_SPI,compile_tests">
+  <target name="connector_spi_test" depends="connector_spi,compile_tests">
     <jar jarfile="${tests.jarfile}">
       <fileset dir="${tests.classes}" includes="**/*.class" excludes="**/spi/**" />
     </jar>
@@ -92,7 +92,7 @@
     </javac>
   </target>
 
-  <target name="run_tests" depends="compile_tests,jar,TestConnectorJars">
+  <target name="run_tests" depends="compile_tests,jar,test_connector_jars">
     <junit>
       <classpath>
         <pathelement location="${connector.jarfile}"/>
@@ -133,7 +133,7 @@
 
   <!-- ======================Installation targets====================== -->
 
-  <target name="installinit">
+  <target name="install_init">
     <mkdir dir="${war.dir}" />
   </target>
 
@@ -142,7 +142,7 @@
     also contains all and can be deployed as-is. 
    -->
 
-  <target name="war" depends="installinit" description="Builds the WAR file for installation.">
+  <target name="war" depends="install_init" description="Builds the WAR file for installation.">
     <echo> The war file dir is located at ${war.dir}</echo>
 
     <war warfile="${war.dir}/${ant.project.name}.war" webxml="${webdocs}/WEB-INF/web.xml">
