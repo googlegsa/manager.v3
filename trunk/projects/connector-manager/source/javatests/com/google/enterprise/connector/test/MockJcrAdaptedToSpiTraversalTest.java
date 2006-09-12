@@ -22,7 +22,7 @@ public class MockJcrAdaptedToSpiTraversalTest extends TestCase {
     Connector repo = new SpiRepositoryFromJcr(jcrRepo);
     Session session = repo.login("admin", "admin");
     QueryTraversalManager qtm = session.getQueryTraversalManager();
-    QueryTraversalTest.runTraversal(qtm, 2);
+    QueryTraversalUtil.runTraversal(qtm, 2);
   }
   
 }
