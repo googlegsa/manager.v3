@@ -114,8 +114,7 @@ public class WorkQueue {
             try {
               WorkQueue.this.wait();
             } catch (InterruptedException ie) {
-              logger.warning("WorkQueueThread was interrupted: " 
-                + ie.getMessage());
+              // thread exits when shutdown of WorkQueue occurs
               return;
             }
           }
