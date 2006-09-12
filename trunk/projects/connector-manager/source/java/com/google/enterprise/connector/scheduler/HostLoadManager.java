@@ -66,10 +66,8 @@ public class HostLoadManager {
   
   /**
    * Determine the number of documents traversed since a given time.
-   * @param connectorName
-   * @param timeMillis the time in millis after which we want to determine 
-   * number of docs traversed
-   * @return
+   * @param connectorName name of the connector instance
+   * @return number of documents traversed
    */
   private int getNumDocsTraversedThisMinute(String connectorName) {
     updateNumDocsTraversedData();
