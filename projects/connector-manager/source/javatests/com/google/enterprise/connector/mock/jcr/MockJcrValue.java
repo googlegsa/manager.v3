@@ -81,7 +81,7 @@ public class MockJcrValue implements Value {
   }
 
   public int getType() {
-    return MockRepositoryTypeToJCRType(type);
+    return mockRepositoryTypeToJCRType(type);
   }
 
   // The mapping below will need to be maintained as we add new 
@@ -98,7 +98,7 @@ public class MockJcrValue implements Value {
   // public static final int REFERENCE = 9;
   // public static final int UNDEFINED = 0;
 
-  protected static int MockRepositoryTypeToJCRType(PropertyType t) {
+  protected static int mockRepositoryTypeToJCRType(PropertyType t) {
     // TODO(ziff): maintain this along with MockRepositoryProperty.PropertyType
     int result = javax.jcr.PropertyType.UNDEFINED;
     if (t == PropertyType.STRING) {
