@@ -49,6 +49,7 @@ public class ConnectorTestUtils {
     BufferedReader br = new BufferedReader(isr);
     return streamToString(br);
   }
+  
   /**
    * Read a buffered reader and return the entire contents as a String, skipping
    * comment lines (lines that begin with #) and end-line comments 
@@ -79,6 +80,11 @@ public class ConnectorTestUtils {
     return new String(b);
   }
   
+  /**
+   * Read an entire InputStream and return its contents as a String
+   * @param is InputStream to read
+   * @return contents as a String
+   */
   public static String streamToString(InputStream is) {
     byte buf[] = new byte[2048];
     int bytesRead;
@@ -91,4 +97,13 @@ public class ConnectorTestUtils {
     return res;
   }
   
+  /**
+   * Normalizes strings with \r\n newlines to just \n
+   * @param input String to normalize
+   * @return the normalized result
+   */
+  public static String normalizeNewlines(String input) {
+    String result = input.replaceAll("\r\n", "\n");
+    return result;
+  }
 }
