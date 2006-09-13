@@ -17,7 +17,11 @@ package com.google.enterprise.connector.servlet;
 
 import java.io.PrintWriter;
 
-
+/**
+ * 
+ * Servlet utility class.
+ *
+ */
 public class ServletUtil {
   public static final String MIMETYPE_XML = "text/xml";
   public static final String MIMETYPE_HTML = "text/html";
@@ -29,6 +33,10 @@ public class ServletUtil {
   public static final String XMLTAG_CONNECTOT_STATUS = "ConnectorStatus";
   public static final String XMLTAG_CONNECTOR_NAME = "ConnectorName";
   public static final String XMLTAG_STATUS = "Status";
+  public static final String XMLTAG_CONFIG_FORM = "ConfigForm";
+  public static final String XMLTAG_CONFIGURE_RESPONSE = "ConfigureResponse";
+  public static final String XMLTAG_MESSAGE = "message";
+  public static final String XMLTAG_FORM_SNIPPET = "FormSnippet";
 
   public static final int HTML_NORMAL = 0;
   public static final int HTML_HEADING = 1;
