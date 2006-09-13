@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.test.ConnectorTestUtils;
+
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
@@ -83,6 +85,7 @@ public class GetConnectorListTest extends TestCase {
     StringBuffer result = writer.getBuffer();
     logger.info(result.toString());
     logger.info(expectedResult);
-    Assert.assertEquals(expectedResult, result.toString());
+    Assert.assertEquals(ConnectorTestUtils.normalizeNewlines(expectedResult), 
+        ConnectorTestUtils.normalizeNewlines(result.toString()));
   }
 }
