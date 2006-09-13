@@ -15,37 +15,41 @@
 package com.google.enterprise.connector.persist;
 
 import java.util.Iterator;
-import java.util.Map;
 
 /**
- * Interface describing the persistence needs of the Instantiator
+ * Config storage needs of the instantiator
+ * 
  */
 public interface ConnectorConfigStore {
 
   /**
-   * Gets the names of all known connector types in this store. Note: at present
-   * there is no programmatic way of adding connector types. They come from
-   * external configuration only.
+   * Get the names of all known connectors
    * 
-   * @return an iteration of String connector type names
-   */
-  public Iterator getConnectorTypeNames();
-
-  /**
-   * Gets the names of all known connectors in this store
-   * 
-   * @return an iteration of String connector names
+   * @return an Iterator of String names
    */
   public Iterator getConnectorNames();
 
   /**
-   * Gets the configuration for a named connector
+   * Get the type for a known connector
    * 
-   * @param connectorName
-   * @return a Map (<String>, <String>) of connector configuration data.
-   * @throws ConnectorNotFoundException
+   * @param connectorName the connector to look up
+   * @return its type, as a String
+   * @throws ConnectorNotFoundException if the named connector is not found
    */
-  public Map getConnectorConfig(String connectorName)
+  public String getConnectorType(String connectorName)
       throws ConnectorNotFoundException;
+
+  /**
+   * Get the resource string for a named connector. A resource string is loosely
+   * defined for the moment - in practice, its a filename, for now. TODO:
+   * specify whether this is relative or absolute or what.
+   * 
+   * @param connectorName the connector to look up
+   * @return the resource String
+   * @throws ConnectorNotFoundException if the named connector is not found
+   * @throws PersistentStoreException if something unrecoverable happens
+   */
+  public String getConnectorResourceString(String connectorName)
+      throws ConnectorNotFoundException, PersistentStoreException;
 
 }

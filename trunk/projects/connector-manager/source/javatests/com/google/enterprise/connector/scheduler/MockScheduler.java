@@ -16,6 +16,7 @@ package com.google.enterprise.connector.scheduler;
 
 import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.instantiator.Instantiator;
+import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.monitor.Monitor;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
@@ -98,6 +99,9 @@ public class MockScheduler implements Scheduler {
       traverser = instantiator.getTraverser(connectorName); 
     } catch (ConnectorNotFoundException cnfe) {
       cnfe.printStackTrace();
+    } catch (InstantiatorException ie) {
+      // TODO(danny): please evaluate whether this is the right thing to do
+      ie.printStackTrace();
     }
     return traverser;
   }

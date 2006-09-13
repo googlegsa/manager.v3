@@ -25,7 +25,7 @@ import com.google.enterprise.connector.traversal.Traverser;
 public interface Instantiator {
 
   public Traverser getTraverser(String connectorName)
-      throws ConnectorNotFoundException;
+      throws ConnectorNotFoundException, InstantiatorException;
 
   public ConnectorType getConnectorType(String connectorTypeName)
       throws ConnectorTypeNotFoundException;

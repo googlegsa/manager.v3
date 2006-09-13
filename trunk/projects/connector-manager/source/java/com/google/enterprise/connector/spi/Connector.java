@@ -14,28 +14,16 @@
 
 package com.google.enterprise.connector.spi;
 
-import java.util.Map;
-
 /**
  * The root of the SPI. We do not specify how an object implementing this
  * interface will be obtained. This is left up to implementors, who will
  * probably provide their own constructors or factories, that get injected by
  * Spring or another mechanism.
  * <p>
- * A repository object is used as something against which to authenticate, via
+ * A Connector object is used as something against which to authenticate, via
  * the login method.
  */
 public interface Connector {
-
-  /**
-   * Sets the configuration for this Connector instance. The configuration is
-   * passed as a Map of Strings to Strings. The map passed in was validated by
-   * this Connector's associated ConnectorType.
-   * 
-   * @param configData
-   * @throws RepositoryException
-   */
-  public void setConfig(Map configData) throws RepositoryException;
 
   /**
    * Authenticates against the repository and returns a session belonging to the

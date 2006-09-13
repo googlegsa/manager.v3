@@ -52,7 +52,7 @@ public class MockManager implements Manager {
       String username) {
     List tokenAuthList = new ArrayList();
     for (int i = 0; i < tokenList.size(); i++) {
-      tokenAuthList.add(new Boolean(true));
+      tokenAuthList.add(Boolean.valueOf(true));
     }
     return tokenAuthList;
   }
@@ -78,7 +78,7 @@ public class MockManager implements Manager {
       String username) {
     List docidAuthList = new ArrayList();
     for (int i = 0; i < docidList.size(); i++) {
-      docidAuthList.add(new Boolean(true));
+      docidAuthList.add(Boolean.valueOf(true));
     }
     return docidAuthList;
   }

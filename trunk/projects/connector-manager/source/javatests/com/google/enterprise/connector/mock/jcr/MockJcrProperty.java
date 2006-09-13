@@ -132,7 +132,7 @@ public class MockJcrProperty implements Property {
   }
 
   public int getType() throws RepositoryException {
-    return MockJcrValue.MockRepositoryTypeToJCRType(p.getType());
+    return MockJcrValue.mockRepositoryTypeToJCRType(p.getType());
   }
 
   public String getPath() throws RepositoryException {
