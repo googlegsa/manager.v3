@@ -19,15 +19,70 @@ import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.traversal.Traverser;
 
+import java.util.Iterator;
+import java.util.Map;
+
 /**
  * Interface for instantiator component.
  */
-public interface Instantiator {
+public interface Instantiator  {
 
+  /**
+   * Finds a named connector.
+   * 
+   * @param connectorName
+   * @return the Connector, fully instantiated
+   * @throws ConnectorNotFoundException
+   * @throws InstantiatorException
+   */
   public Traverser getTraverser(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException;
 
+  /**
+   * Drops a named connector.
+   * 
+   * @param connectorName
+   * @throws InstantiatorException
+   */
+  public void dropConnector(String connectorName) throws InstantiatorException;
+
+  /**
+   * Finds a named connector type.
+   * 
+   * @param connectorTypeName The connector type to find
+   * @return the ConnectorType, fully instantiated
+   * @throws ConnectorTypeNotFoundException if the connector type is not found
+   */
   public ConnectorType getConnectorType(String connectorTypeName)
       throws ConnectorTypeNotFoundException;
 
+  /**
+   * Gets all the known connector type names
+   * 
+   * @return an iterator of String names
+   */
+  public Iterator getConnectorTypeNames();
+
+  /**
+   * Gets the prototype definition for instances of this type
+   * @param connectorTypeName The connector type for which to get the prototype
+   * @return prototype String
+   * @throws ConnectorTypeNotFoundException if the connector type is not found
+   */
+  public String getConnectorInstancePrototype(String connectorTypeName)
+      throws ConnectorTypeNotFoundException;
+
+  /**
+   * Sets the configuration for a new connector.  This connector should not exist.  
+   * @param connectorName The connector to create
+   * @param connectorTypeName The type for this connector
+   * @param configKeys A configuration map for this connector
+   * @throws ConnectorNotFoundException
+   * @throws ConnectorTypeNotFoundException
+   * @throws InstantiatorException
+   */
+  public void setConnectorConfig(String connectorName,
+      String connectorTypeName, Map configKeys)
+      throws ConnectorNotFoundException, ConnectorTypeNotFoundException,
+      InstantiatorException;
 }

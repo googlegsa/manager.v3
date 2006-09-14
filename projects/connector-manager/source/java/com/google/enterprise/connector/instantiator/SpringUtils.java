@@ -114,6 +114,27 @@ public class SpringUtils {
     return connectorBeanProto.substring(start, finish);
   }
 
+  /**
+   * Remove a named bean definition from a string
+   * 
+   * @param connectorBeanProto
+   * @param beanName
+   * @return the same string with that bean removed
+   */
+  public static String removeNamedBean(String connectorBeanProto,
+      String beanName) {
+    int start = connectorBeanProto.indexOf("<bean id=\"" + beanName + "\"");
+    if (start < 0) {
+      return connectorBeanProto;    // no such bean to remove
+    }
+    int finish = connectorBeanProto.indexOf("</bean>");
+    if (finish <= start) {
+      throw new IllegalArgumentException();
+    }
+    return connectorBeanProto.substring(0, start)
+        + connectorBeanProto.substring(finish + 7);  // length of "</bean>"
+  }
+
   public static String setBeanID(String connectorBeanProto, String newID) {
     String foo = "<bean id=\"";
     int start = connectorBeanProto.indexOf("<bean");
@@ -131,5 +152,32 @@ public class SpringUtils {
     }
     return connectorBeanProto.substring(0, start) + newID
         + connectorBeanProto.substring(finish);
+  }
+
+  private static final String SPRING_XML_START =
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+          + "<!DOCTYPE beans PUBLIC \"-//SPRING//DTD BEAN//EN\" \"http://www.springframework.org/dtd/spring-beans.dtd\">\n"
+          + "<beans>\n"
+          + "   <bean id=\"ConnectorConfigMap\" class=\"java.util.HashMap\">\n"
+          + "       <constructor-arg>\n";
+
+  private static final String SPRING_XML_MIDDLE =
+      "       </constructor-arg>\n" + "   </bean>\n";
+
+  private static final String SPRING_XML_END = "</beans>\n";
+
+  public static String makeConnectorInstanceXml(String connectorInstanceName,
+      String prototypeInstance, Map configKeys) {
+    StringBuffer buf = new StringBuffer(8192);
+    buf.append(SPRING_XML_START);
+    buf.append(mapToSpring(configKeys, 3));
+    buf.append(SPRING_XML_MIDDLE);
+    String newInstanceBean = stripBeansElement(prototypeInstance);
+    String cleansedBean = removeNamedBean(newInstanceBean,"ConnectorConfigMap");
+    String renamedInstanceBean =
+        setBeanID(cleansedBean, connectorInstanceName);
+    buf.append(renamedInstanceBean);
+    buf.append(SPRING_XML_END);
+    return new String(buf);
   }
 }

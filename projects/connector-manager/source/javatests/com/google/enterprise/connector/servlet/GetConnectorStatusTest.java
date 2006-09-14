@@ -22,8 +22,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.logging.Logger;
 
+import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.ConnectorStatus;
-import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 
 /**
@@ -104,7 +104,7 @@ public class GetConnectorStatusTest extends TestCase {
     StringBuffer result = writer.getBuffer();
     logger.info(result.toString());
     logger.info(expectedResult);
-    Assert.assertEquals (ConnectorTestUtils.normalizeNewlines(expectedResult), 
-        ConnectorTestUtils.normalizeNewlines(result.toString()));
+    Assert.assertEquals (StringUtils.normalizeNewlines(expectedResult), 
+        StringUtils.normalizeNewlines(result.toString()));
   }
 }

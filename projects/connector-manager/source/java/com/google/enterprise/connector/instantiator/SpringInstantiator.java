@@ -19,24 +19,27 @@ import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.traversal.Traverser;
 
+import java.util.Iterator;
+import java.util.Map;
+
 /**
  * 
  */
 public class SpringInstantiator implements Instantiator {
 
   // dependencies
-  SpringConnectorTypeInstantiator springConnectorTypeInstantiator;
-  SpringConnectorInstantiator springConnectorInstantiator;
+  ConnectorTypeInstantiator connectorTypeInstantiator;
+  ConnectorInstantiator connectorInstantiator;
 
   /**
-   * @param springConnectorTypeInstantiator
-   * @param springConnectorInstantiator
+   * @param connectorTypeInstantiator
+   * @param connectorInstantiator
    */
   public SpringInstantiator(
-      SpringConnectorTypeInstantiator springConnectorTypeInstantiator,
-      SpringConnectorInstantiator springConnectorInstantiator) {
-    this.springConnectorTypeInstantiator = springConnectorTypeInstantiator;
-    this.springConnectorInstantiator = springConnectorInstantiator;
+      ConnectorTypeInstantiator connectorTypeInstantiator,
+      ConnectorInstantiator connectorInstantiator) {
+    this.connectorTypeInstantiator = connectorTypeInstantiator;
+    this.connectorInstantiator = connectorInstantiator;
   }
 
   /*
@@ -46,7 +49,7 @@ public class SpringInstantiator implements Instantiator {
    */
   public ConnectorType getConnectorType(String connectorTypeName)
       throws ConnectorTypeNotFoundException {
-    return springConnectorTypeInstantiator.getConnectorType(connectorTypeName);
+    return connectorTypeInstantiator.getConnectorType(connectorTypeName);
   }
 
   /*
@@ -56,7 +59,39 @@ public class SpringInstantiator implements Instantiator {
    */
   public Traverser getTraverser(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
-    return springConnectorInstantiator.getTraverser(connectorName);
+    return connectorInstantiator.getTraverser(connectorName);
+  }
+
+  public String getConnectorInstancePrototype(String connectorTypeName)
+      throws ConnectorTypeNotFoundException {
+    return connectorTypeInstantiator
+        .getConnectorInstancePrototype(connectorTypeName);
+  }
+
+  public Iterator getConnectorTypeNames() {
+    return connectorTypeInstantiator.getConnectorTypeNames();
+  }
+
+
+  public void dropConnector(String connectorName) throws InstantiatorException {
+    connectorInstantiator.dropConnector(connectorName);
+  }
+
+  public void setConnectorConfig(String connectorName,
+      String connectorTypeName, Map configKeys)
+      throws ConnectorNotFoundException, ConnectorTypeNotFoundException,
+      InstantiatorException {
+    // get the protype string - this also validates by throwing a
+    // ConnectorTypeNotFoundException if the connectorTypeName doesn't exist
+    String prototypeString = getConnectorInstancePrototype(connectorTypeName);
+    // then dispatch to the connector instantiator
+    setConnectorConfig(connectorName, connectorTypeName,
+        configKeys, prototypeString);
+  }
+
+  private void setConnectorConfig(String connectorName, String connectorTypeName, Map configKeys, String prototypeString) throws ConnectorNotFoundException, ConnectorTypeNotFoundException, InstantiatorException {
+    connectorInstantiator.setConnectorConfig(connectorName, connectorTypeName,
+        configKeys, prototypeString);
   }
 
 }

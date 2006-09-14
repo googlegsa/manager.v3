@@ -52,4 +52,22 @@ public interface ConnectorConfigStore {
   public String getConnectorResourceString(String connectorName)
       throws ConnectorNotFoundException, PersistentStoreException;
 
+  /**
+   * Drops the connector resource for the named connector.
+   * 
+   * @param connectorName
+   */
+  public void dropConnector(String connectorName);
+
+  /**
+   * Creates a new connector config for the named connector of the named type.
+   * 
+   * @param connectorName
+   * @param connectorTypeName
+   * @param newConfig
+   * @throws PersistentStoreException 
+   */
+  public void setConnectorConfig(String connectorName,
+      String connectorTypeName, String newConfig) throws PersistentStoreException;
+
 }
