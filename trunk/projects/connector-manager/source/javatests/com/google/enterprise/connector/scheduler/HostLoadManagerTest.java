@@ -59,9 +59,11 @@ public class HostLoadManagerTest extends TestCase {
       new HostLoadManager(periodInMillis, maxFeedRate);
     hostLoadManager.updateNumDocsTraversed(connectorName, 55);
     Assert.assertEquals(5, hostLoadManager.determineBatchHint(connectorName));
-    // sleep a minute so that batchHint is reset 
+    // sleep a period (and then some) so that batchHint is reset 
     try {
-      Thread.sleep(periodInMillis);
+      // extra time in ms in case sleeping the period is not long enough
+      final long extraTime = 200;  
+      Thread.sleep(periodInMillis + extraTime);
     } catch (InterruptedException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
