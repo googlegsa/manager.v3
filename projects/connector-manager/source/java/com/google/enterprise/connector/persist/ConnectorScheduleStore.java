@@ -25,7 +25,8 @@ public interface ConnectorScheduleStore {
    * @param connectorName
    * @return the schedule String, or null if no schedule has been stored for this connector
    */
-  public String getConnectorSchedule(String connectorName);
+  public String getConnectorSchedule(String connectorName) throws 
+      PersistentStoreException;
 
   /**
    * Sets the stored schedule of a named connector.
@@ -33,6 +34,7 @@ public interface ConnectorScheduleStore {
    * @param connectorName
    * @param connectorSchedule String to store
    */
-  public void storeConnectorSchedule(String connectorName, String connectorSchedule);
+  public void storeConnectorSchedule(String connectorName, 
+      String connectorSchedule) throws PersistentStoreException;
   
 }
