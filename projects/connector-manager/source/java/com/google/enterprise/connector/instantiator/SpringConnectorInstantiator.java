@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.mock.MockRepositoryDocumentStore;
 import com.google.enterprise.connector.persist.ConnectorConfigStore;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
@@ -53,7 +52,7 @@ public class SpringConnectorInstantiator implements ConnectorInstantiator {
       "SpringConnectorInstantiator requires non-null store";
 
   private static final Logger LOGGER =
-      Logger.getLogger(MockRepositoryDocumentStore.class.getName());
+      Logger.getLogger(SpringConnectorInstantiator.class.getName());
 
   // dependencies
   private Pusher pusher = null;

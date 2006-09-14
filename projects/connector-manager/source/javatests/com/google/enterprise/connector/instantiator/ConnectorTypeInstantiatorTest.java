@@ -38,7 +38,7 @@ public class ConnectorTypeInstantiatorTest extends TestCase {
    */
   public final void testGetConnectorType() {
     ConnectorTypeInstantiator connectorTypeInstantiator =
-        new ConnectorTypeInstantiator();
+        new SpringConnectorTypeInstantiator();
     verifyConnectorTypeFound(connectorTypeInstantiator, "TestConnector1");
     verifyConnectorTypeFound(connectorTypeInstantiator, "TestConnector2");
     verifyConnectorTypeNotFound(connectorTypeInstantiator, "NoConnector");
@@ -81,7 +81,7 @@ public class ConnectorTypeInstantiatorTest extends TestCase {
     Set expectedNamesSet =
         new HashSet(Arrays.asList(expectedConnectorTypeNames));
     ConnectorTypeInstantiator connectorTypeInstantiator =
-        new ConnectorTypeInstantiator();
+        new SpringConnectorTypeInstantiator();
     Set actualNames = new HashSet();
     int counter = 0;
     for (Iterator i = connectorTypeInstantiator.getConnectorTypeNames(); i
