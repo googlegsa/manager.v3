@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.test;
 
+import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.mock.MockRepositoryPropertyTest;
 
 import junit.framework.Assert;
@@ -37,7 +38,7 @@ public class ConnectorTestUtilsTest extends TestCase {
     // System.out.println(testString);
     StringReader sr = new StringReader(testString);
     BufferedReader br = new BufferedReader(sr);
-    String contents = ConnectorTestUtils.streamToString(br);
+    String contents = StringUtils.streamToString(br);
     // System.out.println(contents);
     // System.out.println("length of contents " + contents.length());
     // System.out.println(expectedContents);
@@ -47,7 +48,7 @@ public class ConnectorTestUtilsTest extends TestCase {
   }
 
   public void testStreamToStringFromFile() {
-    String contents = ConnectorTestUtils.
+    String contents = StringUtils.
       streamToString("/com/google/enterprise/connector/testdata/testFile1.txt");
     logger.info(contents);
     logger.info("length of contents " + contents.length());

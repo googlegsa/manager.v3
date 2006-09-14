@@ -18,6 +18,7 @@ import com.google.enterprise.connector.mock.MockRepositoryDocumentStore;
 import com.google.enterprise.connector.persist.ConnectorConfigStore;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
+import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.Connector;
@@ -32,6 +33,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.logging.Logger;
@@ -39,7 +41,7 @@ import java.util.logging.Logger;
 /**
  * Instantiator for Connector objects. Uses Spring and the classpath.
  */
-public class SpringConnectorInstantiator {
+public class SpringConnectorInstantiator implements ConnectorInstantiator {
 
   private static final String NULL_CONNECTOR_STATE_STORE_MESSAGE =
       "SpringConnectorInstantiator requires non-null connectorStateStore";
@@ -78,7 +80,7 @@ public class SpringConnectorInstantiator {
    */
   public void setStore(ConnectorConfigStore store) {
     if (store == null) {
-      throw new IllegalArgumentException(NULL_STORE_MESSAGE);     
+      throw new IllegalArgumentException(NULL_STORE_MESSAGE);
     }
     this.store = store;
   }
@@ -88,7 +90,7 @@ public class SpringConnectorInstantiator {
    */
   public void setConnectorStateStore(ConnectorStateStore connectorStateStore) {
     if (connectorStateStore == null) {
-      throw new IllegalArgumentException(NULL_CONNECTOR_STATE_STORE_MESSAGE);     
+      throw new IllegalArgumentException(NULL_CONNECTOR_STATE_STORE_MESSAGE);
     }
     this.connectorStateStore = connectorStateStore;
   }
@@ -174,13 +176,10 @@ public class SpringConnectorInstantiator {
     return c;
   }
 
-  /**
-   * Finds a named connector.
+  /*
+   * (non-Javadoc)
    * 
-   * @param connectorName
-   * @return the Connector, fully instantiated
-   * @throws ConnectorNotFoundException
-   * @throws InstantiatorException
+   * @see com.google.enterprise.connector.instantiator.ConnectorInstantiator#getTraverser(java.lang.String)
    */
   public Traverser getTraverser(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
@@ -226,4 +225,43 @@ public class SpringConnectorInstantiator {
     return t;
   }
 
+  public void setConnectorConfig(String connectorName,
+      String connectorTypeName, Map configKeys, String prototypeString)
+      throws ConnectorNotFoundException, ConnectorTypeNotFoundException,
+      InstantiatorException {
+    // Find out if this is an existing connector
+    if (connectorMap.containsKey(connectorName)) {
+      throw new IllegalArgumentException(
+          "Can't set an existing connector - first drop then add");
+    }
+    String newConfig =
+        SpringUtils.makeConnectorInstanceXml(connectorName, prototypeString,
+            configKeys);
+    // store it away
+    try {
+      store.setConnectorConfig(connectorName, connectorTypeName, newConfig);
+    } catch (PersistentStoreException e) {
+      throw new InstantiatorException(e);
+    }
+    String resourceString = null;
+    try {
+      resourceString = store.getConnectorResourceString(connectorName);
+    } catch (PersistentStoreException e) {
+      throw new InstantiatorException("Config store malfunction");
+    }
+    Connector c =
+        instantiateSingleConnectorFromResource(connectorName, resourceString);
+    connectorMap.put(connectorName, c);
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.google.enterprise.connector.instantiator.ConnectorInstantiator#dropConnector(java.lang.String)
+   */
+  public void dropConnector(String connectorName) throws InstantiatorException {
+    store.dropConnector(connectorName);
+    connectorMap.remove(connectorName);
+    traverserMap.remove(connectorName);
+  }
 }

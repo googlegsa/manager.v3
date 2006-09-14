@@ -28,6 +28,12 @@ import com.google.enterprise.connector.spi.QueryTraversalManager;
 import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.Traverser;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import javax.jcr.query.QueryManager;
 
 /**
@@ -37,10 +43,12 @@ public class MockInstantiator implements Instantiator {
 
   public static final String TRAVERSER_NAME1 = "foo";
   public static final String TRAVERSER_NAME2 = "bar";
-  
+
   private static final ConnectorType CONNECTOR_TYPE;
   private static final Traverser TRAVERSER1;
   private static final Traverser TRAVERSER2;
+
+  private static final List CONNECTOR_NAME_LIST;
 
   static {
     CONNECTOR_TYPE = null;
@@ -57,11 +65,10 @@ public class MockInstantiator implements Instantiator {
     ConnectorStateStore connectorStateStore = new MockConnectorStateStore();
 
     TRAVERSER1 =
-      new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
+        new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
 
     // init TRAVERSER2
-    mrel =
-      new MockRepositoryEventList("MockRepositoryEventLog1.txt");
+    mrel = new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     r = new MockRepository(mrel);
     qm = new MockJcrQueryManager(r.getStore());
 
@@ -71,8 +78,10 @@ public class MockInstantiator implements Instantiator {
     connectorStateStore = new MockConnectorStateStore();
 
     TRAVERSER2 =
-      new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
+        new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
 
+    CONNECTOR_NAME_LIST =
+        new ArrayList(Arrays.asList(new String[] {"foo", "bar"}));
   }
 
   /*
@@ -82,7 +91,7 @@ public class MockInstantiator implements Instantiator {
    *      #getConfigurer(java.lang.String)
    */
   public ConnectorType getConnectorType(String connectorTypeName)
-      throws ConnectorTypeNotFoundException{
+      throws ConnectorTypeNotFoundException {
     return CONNECTOR_TYPE;
   }
 
@@ -100,8 +109,25 @@ public class MockInstantiator implements Instantiator {
       return TRAVERSER2;
     } else {
       throw new ConnectorNotFoundException("Connector not found: "
-        + connectorName);
+          + connectorName);
     }
   }
 
+  public String getConnectorInstancePrototype(String connectorTypeName)
+      throws ConnectorTypeNotFoundException {
+    return "";
+  }
+
+  public Iterator getConnectorTypeNames() {
+    return CONNECTOR_NAME_LIST.iterator();
+  }
+
+  public void setConnectorConfig(String connectorName,
+      String connectorTypeName, Map configKeys)
+      throws ConnectorNotFoundException, ConnectorTypeNotFoundException,
+      InstantiatorException {
+  }
+
+  public void dropConnector(String connectorName) throws InstantiatorException {
+  }
 }

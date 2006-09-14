@@ -14,7 +14,7 @@
 
 package com.google.enterprise.connector.spi;
 
-import com.google.enterprise.connector.test.ConnectorTestUtils;
+import com.google.enterprise.connector.common.StringUtils;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -119,7 +119,7 @@ public class SimpleValueTest extends TestCase {
       SimpleValue simpleValue =
           new SimpleValue(ValueType.BINARY, testString.getBytes());
       String resultString =
-          ConnectorTestUtils.streamToString(simpleValue.getStream());
+          StringUtils.streamToString(simpleValue.getStream());
       Assert.assertEquals(testString, resultString);
     }
     {
@@ -127,7 +127,7 @@ public class SimpleValueTest extends TestCase {
       SimpleValue simpleValue =
           new SimpleValue(ValueType.BINARY, testString.getBytes());
       String resultString =
-          ConnectorTestUtils.streamToString(simpleValue.getStream());
+          StringUtils.streamToString(simpleValue.getStream());
       Assert.assertEquals(testString, resultString);
     }
   }

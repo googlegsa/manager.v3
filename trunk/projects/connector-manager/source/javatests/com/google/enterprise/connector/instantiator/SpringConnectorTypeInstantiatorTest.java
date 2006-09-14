@@ -26,8 +26,9 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * Tests for SpringConnectorTypeInstantiator. These tests rely on setup: the jars for
- * TestConnector1 and TestConnector2 should be installed on the classpath
+ * Tests for SpringConnectorTypeInstantiator. These tests rely on setup: the
+ * jars for TestConnector1 and TestConnector2 should be installed on the
+ * classpath
  */
 public class SpringConnectorTypeInstantiatorTest extends TestCase {
 
@@ -37,7 +38,7 @@ public class SpringConnectorTypeInstantiatorTest extends TestCase {
    * #getConnectorType(java.lang.String)}.
    */
   public final void testGetConnectorType() {
-    SpringConnectorTypeInstantiator springConnectorTypeInstantiator =
+    ConnectorTypeInstantiator springConnectorTypeInstantiator =
         new SpringConnectorTypeInstantiator();
     verifyConnectorTypeFound(springConnectorTypeInstantiator, "TestConnector1");
     verifyConnectorTypeFound(springConnectorTypeInstantiator, "TestConnector2");
@@ -45,20 +46,27 @@ public class SpringConnectorTypeInstantiatorTest extends TestCase {
   }
 
   private void verifyConnectorTypeFound(
-      SpringConnectorTypeInstantiator springConnectorTypeInstantiator,
+      ConnectorTypeInstantiator inst,
       String connectorTypeName) {
     ConnectorType connectorType = null;
     try {
-      connectorType =
-          springConnectorTypeInstantiator.getConnectorType(connectorTypeName);
+      connectorType = inst.getConnectorType(connectorTypeName);
     } catch (ConnectorTypeNotFoundException e) {
       fail("Should find connector type " + connectorTypeName);
     }
     Assert.assertNotNull(connectorType);
+    // also look for the prototype
+    String prototypeString = null;
+    try {
+      prototypeString =
+          inst.getConnectorInstancePrototype(connectorTypeName);
+    } catch (ConnectorTypeNotFoundException e) {
+      fail("Should find prototype string for type " + connectorTypeName);
+    }
   }
 
   private void verifyConnectorTypeNotFound(
-      SpringConnectorTypeInstantiator springConnectorTypeInstantiator,
+      ConnectorTypeInstantiator springConnectorTypeInstantiator,
       String connectorTypeName) {
     ConnectorType connectorType = null;
     try {
@@ -80,14 +88,15 @@ public class SpringConnectorTypeInstantiatorTest extends TestCase {
         new String[] {"TestConnector1", "TestConnector2"};
     Set expectedNamesSet =
         new HashSet(Arrays.asList(expectedConnectorTypeNames));
-    SpringConnectorTypeInstantiator springConnectorTypeInstantiator =
+    ConnectorTypeInstantiator springConnectorTypeInstantiator =
         new SpringConnectorTypeInstantiator();
     Set actualNames = new HashSet();
     int counter = 0;
     for (Iterator i = springConnectorTypeInstantiator.getConnectorTypeNames(); i
         .hasNext(); counter++) {
       String connectorTypeName = (String) i.next();
-      verifyConnectorTypeFound(springConnectorTypeInstantiator, connectorTypeName);
+      verifyConnectorTypeFound(springConnectorTypeInstantiator,
+          connectorTypeName);
       actualNames.add(connectorTypeName);
     }
     Assert.assertTrue(actualNames.containsAll(expectedNamesSet));

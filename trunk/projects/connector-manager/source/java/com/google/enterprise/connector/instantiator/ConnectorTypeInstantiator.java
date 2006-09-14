@@ -17,71 +17,13 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.spi.ConnectorType;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 /**
- * Instantiator for ConnectorType objects. Uses Spring and the classpath.
+ * Instantiator methods for manipulating connector types
+ *
  */
-public class ConnectorTypeInstantiator {
-
-  private SortedMap connectorTypeMap = null;;
-  private String classpathPattern = "classpath*:conf/connectorType.xml";
-
-  /**
-   * Gets the classpathPattern
-   * 
-   * @return the classpathPattern
-   */
-  public String getClasspathPattern() {
-    return classpathPattern;
-  }
-
-  /**
-   * Sets the classpathPattern
-   * 
-   * @param classpathPattern the classpathPattern to set
-   */
-  public void setClasspathPattern(String classpathPattern) {
-    this.classpathPattern = classpathPattern;
-  }
-
-  private ApplicationContext makeApplicationContext() {
-    ApplicationContext ac =
-        new ClassPathXmlApplicationContext(classpathPattern);
-    return ac;
-  }
-
-  private void instantiateAllConnectorTypes() {
-    ApplicationContext ac = makeApplicationContext();
-    connectorTypeMap = new TreeMap();
-    String[] beanList = ac.getBeanNamesForType(ConnectorType.class);
-    for (int i = 0; i < beanList.length; i++) {
-      ConnectorType c = (ConnectorType) ac.getBean(beanList[i]);
-      connectorTypeMap.put(beanList[i], c);
-    }
-  }
-
-  private void initialize() {
-    if (connectorTypeMap == null) {
-      instantiateAllConnectorTypes();
-    }
-    if (connectorTypeMap == null) {
-      throw new IllegalStateException();
-    }
-  }
-
-  /**
-   * Default, no-argument constructor
-   * 
-   */
-  public ConnectorTypeInstantiator() {
-  }
+public interface ConnectorTypeInstantiator {
 
   /**
    * Finds a named connector type.
@@ -91,27 +33,21 @@ public class ConnectorTypeInstantiator {
    * @throws ConnectorTypeNotFoundException if the connector type is not found
    */
   public ConnectorType getConnectorType(String connectorTypeName)
-      throws ConnectorTypeNotFoundException {
-    if (connectorTypeName == null || connectorTypeName.length() < 1) {
-      throw new IllegalArgumentException();
-    }
-    initialize();
-    ConnectorType result =
-        (ConnectorType) connectorTypeMap.get(connectorTypeName);
-    if (result == null) {
-      throw new ConnectorTypeNotFoundException(connectorTypeName);
-    }
-    return result;
-  }
-
+      throws ConnectorTypeNotFoundException;
 
   /**
    * Gets all the known connector type names
+   * 
    * @return an iterator of String names
    */
-  public Iterator getConnectorTypeNames() {
-    initialize();
-    return Collections.unmodifiableSet(connectorTypeMap.keySet()).iterator();
-  }
+  public Iterator getConnectorTypeNames();
 
+  /**
+   * Gets the prototype definition for instances of this type
+   * @param connectorTypeName The connector type for which to get the prototype
+   * @return prototype String
+   * @throws ConnectorTypeNotFoundException if the connector type is not found
+   */
+  public String getConnectorInstancePrototype(String connectorTypeName)
+      throws ConnectorTypeNotFoundException;
 }

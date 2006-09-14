@@ -14,46 +14,61 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.spi.ConnectorType;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.core.io.Resource;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 
 /**
  * Instantiator for ConnectorType objects. Uses Spring and the classpath.
  */
-public class SpringConnectorTypeInstantiator {
+public class SpringConnectorTypeInstantiator implements ConnectorTypeInstantiator {
+
+  private static final Logger LOGGER =
+      Logger.getLogger(SpringConnectorTypeInstantiator.class.getName());
 
   private SortedMap connectorTypeMap = null;
-  private String classpathPattern = "classpath*:conf/connectorType.xml";
+  private SortedMap connectorInstancePrototypeMap = null;
+  private String classpathTypePattern = "classpath*:conf/connectorType.xml";
+  private String classpathInstancePrototypePattern =
+      "classpath*:conf/connectorInstance.xml";
+  private boolean initialized = false;
 
   /**
-   * Gets the classpathPattern
-   * 
-   * @return the classpathPattern
+   * @param classpathInstancePrototypePattern the
+   *        classpathInstancePrototypePattern to set
    */
-  public String getClasspathPattern() {
-    return classpathPattern;
+  public void setClasspathInstancePrototypePattern(
+      String classpathInstancePrototypePattern) {
+    this.classpathInstancePrototypePattern = classpathInstancePrototypePattern;
   }
 
   /**
-   * Sets the classpathPattern
+   * Sets the classpathTypePattern
    * 
-   * @param classpathPattern the classpathPattern to set
+   * @param classpathTypePattern the classpathTypePattern to set
    */
-  public void setClasspathPattern(String classpathPattern) {
-    this.classpathPattern = classpathPattern;
+  public void setClasspathPattern(String classpathTypePattern) {
+    this.classpathTypePattern = classpathTypePattern;
   }
 
   private ApplicationContext makeApplicationContext() {
     ApplicationContext ac =
-        new ClassPathXmlApplicationContext(classpathPattern);
+        new ClassPathXmlApplicationContext(classpathTypePattern);
     return ac;
   }
 
@@ -65,15 +80,81 @@ public class SpringConnectorTypeInstantiator {
       ConnectorType c = (ConnectorType) ac.getBean(beanList[i]);
       connectorTypeMap.put(beanList[i], c);
     }
+    // now initialize the prototypes
+    findConnectorPrototypes(ac);
   }
 
   private void initialize() {
+    if (initialized) {
+      return;
+    }
     if (connectorTypeMap == null) {
       instantiateAllConnectorTypes();
     }
     if (connectorTypeMap == null) {
       throw new IllegalStateException();
     }
+    initialized = true;
+  }
+
+  private void findConnectorPrototypes(ApplicationContext ac) {
+    List resources = findPrototypeResources(ac);
+    List prototypeStrings = getPrototypeString(resources);
+    connectorInstancePrototypeMap = new TreeMap();
+    mapPrototypesToConnectorNames(prototypeStrings);
+  }
+
+  private void mapPrototypesToConnectorNames(List prototypeStrings) {
+    // loop through the instantiated connectors and find the right resource for
+    // each one
+    for (Iterator connectorTypeIter = getConnectorTypeNames(); connectorTypeIter
+        .hasNext();) {
+      String connectorTypeName = (String) connectorTypeIter.next();
+      String pattern = "<bean id=\"" + connectorTypeName + "Instance";
+      boolean found = false;
+      for (Iterator prototypeIter = prototypeStrings.iterator(); prototypeIter
+          .hasNext();) {
+        String prototypeString = (String) prototypeIter.next();
+        if (prototypeString.indexOf(pattern) >= 0) {
+          connectorInstancePrototypeMap.put(connectorTypeName, prototypeString);
+          prototypeIter.remove();
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        LOGGER.warning("Connector type " + connectorTypeName
+            + " has no instance prototype");
+      }
+    }
+  }
+
+  private List getPrototypeString(List resources) {
+    List result = new LinkedList();
+    for (Iterator i = resources.iterator(); i.hasNext();) {
+      Resource r = (Resource) i.next();
+      InputStream is = null;
+      try {
+        is = r.getInputStream();
+      } catch (IOException e) {
+        LOGGER.warning("IOException during connector type initialization");
+        // TODO(ziff): dump stack trace, cause
+      }
+      String prototypeString = StringUtils.streamToString(is);
+      result.add(prototypeString);
+    }
+    return result;
+  }
+
+  private List findPrototypeResources(ApplicationContext ac) {
+    Resource[] resourceArray = new Resource[] {};
+    try {
+      resourceArray = ac.getResources(classpathInstancePrototypePattern);
+    } catch (IOException e1) {
+      throw new IllegalArgumentException();
+    }
+    List resources = new LinkedList(Arrays.asList(resourceArray));
+    return resources;
   }
 
   /**
@@ -83,12 +164,25 @@ public class SpringConnectorTypeInstantiator {
   public SpringConnectorTypeInstantiator() {
   }
 
-  /**
-   * Finds a named connector type.
-   * 
-   * @param connectorTypeName The connector type to find
-   * @return the ConnectorType, fully instantiated
-   * @throws ConnectorTypeNotFoundException if the connector type is not found
+  /* (non-Javadoc)
+   * @see com.google.enterprise.connector.instantiator.ConnectorTypeInstantiator#getConnectorInstancePrototype(java.lang.String)
+   */
+  public String getConnectorInstancePrototype(String connectorTypeName)
+      throws ConnectorTypeNotFoundException {
+    if (connectorTypeName == null || connectorTypeName.length() < 1) {
+      throw new IllegalArgumentException();
+    }
+    initialize();
+    String result =
+        (String) connectorInstancePrototypeMap.get(connectorTypeName);
+    if (result == null) {
+      throw new ConnectorTypeNotFoundException(connectorTypeName);
+    }
+    return result;
+  }
+
+  /* (non-Javadoc)
+   * @see com.google.enterprise.connector.instantiator.ConnectorTypeInstantiator#getConnectorType(java.lang.String)
    */
   public ConnectorType getConnectorType(String connectorTypeName)
       throws ConnectorTypeNotFoundException {
@@ -104,10 +198,8 @@ public class SpringConnectorTypeInstantiator {
     return result;
   }
 
-
-  /**
-   * Gets all the known connector type names
-   * @return an iterator of String names
+  /* (non-Javadoc)
+   * @see com.google.enterprise.connector.instantiator.ConnectorTypeInstantiator#getConnectorTypeNames()
    */
   public Iterator getConnectorTypeNames() {
     initialize();

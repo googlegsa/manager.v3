@@ -72,7 +72,7 @@ public class SpringConnectorInstantiatorTest extends TestCase {
   }
 
   private void verifyTraverser(String connectorName,
-      SpringConnectorInstantiator inst) throws ConnectorNotFoundException,
+      ConnectorInstantiator inst) throws ConnectorNotFoundException,
       InstantiatorException {
     Traverser t = inst.getTraverser(connectorName);
     if (t == null) {

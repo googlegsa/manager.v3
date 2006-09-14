@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.jcradaptor;
 
+import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.mock.MockRepositoryProperty;
 import com.google.enterprise.connector.mock.MockRepositoryPropertyList;
 import com.google.enterprise.connector.mock.jcr.MockJcrProperty;
@@ -21,7 +22,6 @@ import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.ValueType;
-import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -58,7 +58,7 @@ public class SpiValueFromJcrTest extends TestCase {
       Assert.assertEquals(expectedContents, v.getString());
       Assert.assertEquals(ValueType.STRING, v.getType());
       InputStream stream = v.getStream();
-      String streamContents = ConnectorTestUtils.streamToString(stream);
+      String streamContents = StringUtils.streamToString(stream);
       Assert.assertEquals(expectedContents, streamContents);
     }
 
