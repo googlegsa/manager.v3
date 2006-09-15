@@ -20,12 +20,12 @@ import junit.framework.TestCase;
  * Test for WorkQueue class.
  */
 public class WorkQueueTest extends TestCase {
-  private static class PrintRunnable implements Runnable {
+  private static class PrintRunnable extends WorkQueueItem {
     private String str;
     public PrintRunnable(String str) {
       this.str = str;
     }
-    public void run() {
+    public void doWork() {
       System.out.println(str);
     }
   }
@@ -46,7 +46,7 @@ public class WorkQueueTest extends TestCase {
     }
     
     waitForEmptyQueue(queue);
-    queue.shutdown();
+    queue.shutdown(false);
   }
   
   public void testInitShutdown() {
@@ -55,13 +55,13 @@ public class WorkQueueTest extends TestCase {
     for (int i = 0; i < 10; i++) {
       queue.addWork(new PrintRunnable("work started: " + i));
     }
-    queue.shutdown();
+    queue.shutdown(false);
     queue.init();
     for (int i = 0; i < 10; i++) {
       queue.addWork(new PrintRunnable("work started again: " + i));
     }
     
     waitForEmptyQueue(queue);
-    queue.shutdown();
+    queue.shutdown(false);
   }
 }
