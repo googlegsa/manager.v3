@@ -228,6 +228,7 @@ public class SpringConnectorInstantiator implements ConnectorInstantiator {
       String connectorTypeName, Map configKeys, String prototypeString)
       throws ConnectorNotFoundException, ConnectorTypeNotFoundException,
       InstantiatorException {
+    initialize();
     // Find out if this is an existing connector
     if (connectorMap.containsKey(connectorName)) {
       throw new IllegalArgumentException(
@@ -259,6 +260,7 @@ public class SpringConnectorInstantiator implements ConnectorInstantiator {
    * @see com.google.enterprise.connector.instantiator.ConnectorInstantiator#dropConnector(java.lang.String)
    */
   public void dropConnector(String connectorName) throws InstantiatorException {
+    initialize();
     store.dropConnector(connectorName);
     connectorMap.remove(connectorName);
     traverserMap.remove(connectorName);

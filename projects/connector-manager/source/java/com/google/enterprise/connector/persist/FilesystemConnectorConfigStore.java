@@ -120,6 +120,7 @@ public class FilesystemConnectorConfigStore implements ConnectorConfigStore {
       File connectorTypeDir = (File) e.getValue();
       discoverExistingConnectors(connectorTypeName, connectorTypeDir);
     }
+    initialized = true;
   }
 
   /*
@@ -211,6 +212,9 @@ public class FilesystemConnectorConfigStore implements ConnectorConfigStore {
         throw new PersistentStoreException(e);
       }
     }
+    ConnectorConfigInfo info =
+      new ConnectorConfigInfo(connectorTypeName, connectorName, connectorConfig);
+    connectorConfigMap.put(connectorName, info);
   }
 
   class ConnectorConfigInfo {
