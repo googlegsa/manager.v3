@@ -19,12 +19,12 @@ import junit.framework.TestCase;
 /**
  * Class to test ScheduleStore.
  */
-public class ScheduleStoreTest extends TestCase {
+public class PrefsStoreTest extends TestCase {
 
   // Tests getting and setting for a valid connector name and schedule.
   
-  public void testGetandSetConnectorSchedule() throws PersistentStoreException {
-    ScheduleStore store = new ScheduleStore();
+  public void testGetandSetConnectorSchedule() {
+    PrefsStore store = new PrefsStore();
     String expectedSchedule = "schedule of connectorA";
     String connectorName = "connectorA";
     store.storeConnectorSchedule(connectorName, expectedSchedule);
@@ -33,21 +33,50 @@ public class ScheduleStoreTest extends TestCase {
   }
   
   // Tests getting schedule for an unknown connector
-  public void testGetConnectorSchedule1() throws PersistentStoreException {
-    ScheduleStore store = new ScheduleStore();
+  public void testGetConnectorSchedule1() {
+    PrefsStore store = new PrefsStore();
     String schedule = store.getConnectorSchedule("some wierd connector name");
     Assert.assertNull(schedule);
   }
   
   // Tests if the exception is thrown correctly when the connector name is null. 
   public void testGetConnectorSchedule2() {
-    ScheduleStore store = new ScheduleStore();
+    PrefsStore store = new PrefsStore();
     boolean exceptionCaught = false;
     try {
       String schedule = store.getConnectorSchedule(null);
-    } catch (PersistentStoreException e) {
+    } catch (NullPointerException e) {
         exceptionCaught = true;
     }
     Assert.assertTrue(exceptionCaught);
   }
+
+  //Tests getting and setting for a valid connector name and state.  
+  public void testGetandSetConnectorState() {
+    PrefsStore store = new PrefsStore();
+    String expectedState = "state of connectorA";
+    String connectorName = "connectorA";
+    store.storeConnectorState(connectorName, expectedState);
+    String resultState = store.getConnectorState(connectorName);
+    Assert.assertTrue(resultState.equals(expectedState));
+  }
+  
+  //Tests getting state for an unknown connector.
+  public void testGetConnectorState1() {
+    PrefsStore store = new PrefsStore();
+    String state = store.getConnectorState("some wierd connector name");
+    Assert.assertNull(state);
+  }
+  
+  // Tests if the exception is thrown correctly when the connector name is null. 
+  public void testGetConnectorState2() {
+    PrefsStore store = new PrefsStore();
+    boolean exceptionCaught = false;
+    try {
+      String state = store.getConnectorState(null);
+    } catch (NullPointerException e) {
+        exceptionCaught = true;
+    }
+    Assert.assertTrue(exceptionCaught);
+  }  
 }
