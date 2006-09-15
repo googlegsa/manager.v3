@@ -139,7 +139,7 @@
 
 
   <!--  Builds a Web Archive - basically a JAR file which
-    also contains all and can be deployed as-is. 
+    also contains all and can be deployed as-is.
    -->
 
   <target name="war" depends="install_init" description="Builds the WAR file for installation.">
