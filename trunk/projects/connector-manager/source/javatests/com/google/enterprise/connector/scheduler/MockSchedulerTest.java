@@ -21,25 +21,78 @@ import com.google.enterprise.connector.monitor.HashMapMonitor;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Tests the Scheduler.
  *
  */
 public class MockSchedulerTest extends TestCase {
-  public void testRun() {
-    WorkQueue workQueue = new WorkQueue(2);
+  private void runWithSchedules(List schedules) {
+    WorkQueue workQueue = new WorkQueue(2, 5000);
     MockScheduler scheduler = 
       new MockScheduler(new MockInstantiator(), new HashMapMonitor(),
-        workQueue);
+        workQueue, schedules);
     scheduler.init();
     Thread thread = new Thread(scheduler);
     thread.start();
+    // sleep to give it a chance to schedule something
     try {  
-      Thread.sleep(5 * 1000);  // sleep 5 seconds
+      Thread.sleep(200);
     } catch (InterruptedException ie) {
       ie.printStackTrace();
       Assert.fail(ie.toString());
     }
-    scheduler.shutdown();
+    scheduler.shutdown(false);
   }
+  
+  /**
+   * Retrieve a schedule that will always run the particular traverser.
+   * @param traverserName name of the traverser
+   * @return a List of Schedule objects
+   */
+  private List getSchedules(String traverserName) {
+    List schedules = new ArrayList();
+    List intervals = new ArrayList();
+    intervals.add(new ScheduleTimeInterval(
+      new ScheduleTime(0),
+      new ScheduleTime(0)));
+    Schedule schedule = new Schedule(traverserName, intervals);
+    schedules.add(schedule);
+    
+    return schedules;
+  }
+  
+  public void testNoopTraverser() {
+    List schedules = getSchedules(MockInstantiator.TRAVERSER_NAME_NOOP);
+    runWithSchedules(schedules);  
+  }
+  
+  /**
+   * Test a long running traverser and show that it can properly get 
+   * interrupted.
+   */
+  public void testLongRunningTraverser() {
+    List schedules = getSchedules(MockInstantiator.TRAVERSER_NAME_LONG_RUNNING);
+    runWithSchedules(schedules);
+  }
+
+  /**
+   * Test a traverser that doesn't get interrupted.  We ignore the thread
+   * eventually.
+   */
+  public void testNeverEndingTraverser() {
+    List schedules = getSchedules(MockInstantiator.TRAVERSER_NAME_NEVER_ENDING);
+    runWithSchedules(schedules);
+  }
+  
+  /**
+   * Test that tests to mock Traverser objects.
+   */
+  public void testTwoTraversers() {
+    List schedules = getSchedules(MockInstantiator.TRAVERSER_NAME1);
+    schedules.addAll(getSchedules(MockInstantiator.TRAVERSER_NAME2));
+    runWithSchedules(schedules);
+  }  
 }

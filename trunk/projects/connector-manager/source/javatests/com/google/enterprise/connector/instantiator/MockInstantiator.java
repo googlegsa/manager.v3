@@ -25,13 +25,14 @@ import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.QueryTraversalManager;
+import com.google.enterprise.connector.traversal.LongRunningQueryTraverser;
+import com.google.enterprise.connector.traversal.NeverEndingQueryTraverser;
+import com.google.enterprise.connector.traversal.NoopQueryTraverser;
 import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.Traverser;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import javax.jcr.query.QueryManager;
@@ -40,20 +41,19 @@ import javax.jcr.query.QueryManager;
  * 
  */
 public class MockInstantiator implements Instantiator {
-
   public static final String TRAVERSER_NAME1 = "foo";
   public static final String TRAVERSER_NAME2 = "bar";
-
+  public static final String TRAVERSER_NAME_NOOP = "noop";
+  public static final String TRAVERSER_NAME_LONG_RUNNING = "longrunning";
+  public static final String TRAVERSER_NAME_NEVER_ENDING = "neverending";
+  
   private static final ConnectorType CONNECTOR_TYPE;
-  private static final Traverser TRAVERSER1;
-  private static final Traverser TRAVERSER2;
-
-  private static final List CONNECTOR_NAME_LIST;
+  private static Map traverserMap;
 
   static {
     CONNECTOR_TYPE = null;
-
-    // init TRAVERSER1
+    traverserMap = new HashMap();
+    
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
@@ -64,10 +64,9 @@ public class MockInstantiator implements Instantiator {
     MockPusher pusher = new MockPusher(System.out);
     ConnectorStateStore connectorStateStore = new MockConnectorStateStore();
 
-    TRAVERSER1 =
-        new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
+    traverserMap.put(TRAVERSER_NAME1, 
+      new QueryTraverser(pusher, qtm, connectorStateStore, connectorName));
 
-    // init TRAVERSER2
     mrel = new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     r = new MockRepository(mrel);
     qm = new MockJcrQueryManager(r.getStore());
@@ -77,11 +76,17 @@ public class MockInstantiator implements Instantiator {
     pusher = new MockPusher(System.out);
     connectorStateStore = new MockConnectorStateStore();
 
-    TRAVERSER2 =
-        new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
+    traverserMap.put(TRAVERSER_NAME2, 
+      new QueryTraverser(pusher, qtm, connectorStateStore, connectorName));
 
-    CONNECTOR_NAME_LIST =
-        new ArrayList(Arrays.asList(new String[] {"foo", "bar"}));
+    traverserMap.put(TRAVERSER_NAME_NOOP, 
+      new NoopQueryTraverser());
+    
+    traverserMap.put(TRAVERSER_NAME_LONG_RUNNING, 
+      new LongRunningQueryTraverser());
+    
+    traverserMap.put(TRAVERSER_NAME_NEVER_ENDING, 
+      new NeverEndingQueryTraverser());
   }
 
   /*
@@ -103,10 +108,8 @@ public class MockInstantiator implements Instantiator {
    */
   public Traverser getTraverser(String connectorName)
       throws ConnectorNotFoundException {
-    if (TRAVERSER_NAME1.equals(connectorName)) {
-      return TRAVERSER1;
-    } else if (TRAVERSER_NAME2.equals(connectorName)) {
-      return TRAVERSER2;
+    if (traverserMap.containsKey(connectorName)) {
+      return (Traverser) traverserMap.get(connectorName);
     } else {
       throw new ConnectorNotFoundException("Connector not found: "
           + connectorName);
@@ -119,7 +122,7 @@ public class MockInstantiator implements Instantiator {
   }
 
   public Iterator getConnectorTypeNames() {
-    return CONNECTOR_NAME_LIST.iterator();
+    return traverserMap.keySet().iterator();
   }
 
   public void setConnectorConfig(String connectorName,
