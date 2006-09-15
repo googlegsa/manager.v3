@@ -30,10 +30,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Simple MockScheduler class.  This class is thread safe.  Must initialize
- * object before running it.
+ * Scheduler that schedules connector traversal.  This class is thread safe.  
+ * Must initialize TraversalScheduler before running it.
  */
-public class MockScheduler implements Scheduler {
+public class TraversalScheduler implements Scheduler {
   public static final String SCHEDULER_CURRENT_TIME = "scheduler/currentTime";
   
   private Instantiator instantiator;
@@ -46,7 +46,16 @@ public class MockScheduler implements Scheduler {
   private boolean isInitialized;
   private boolean isShutdown;
   
-  public MockScheduler(Instantiator instantiator, Monitor monitor, 
+  // TODO: point this to the ScheduleStore
+  /**
+   * Create a Scheduler object.   
+   *
+   * @param instantiator
+   * @param monitor
+   * @param workQueue
+   * @param schedules
+   */
+  public TraversalScheduler(Instantiator instantiator, Monitor monitor, 
       WorkQueue workQueue, List schedules) {
     this.instantiator = instantiator;
     this.monitor = monitor;
@@ -97,6 +106,7 @@ public class MockScheduler implements Scheduler {
   }
 
   private void updateMonitor() {
+    // TODO: change this when we figure out what we really want to monitor
     Map vars = new HashMap();
     vars.put(SCHEDULER_CURRENT_TIME, new Date());
     monitor.setVariables(vars);
