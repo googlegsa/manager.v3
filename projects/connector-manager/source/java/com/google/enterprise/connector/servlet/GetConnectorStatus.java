@@ -82,8 +82,8 @@ public class GetConnectorStatus extends HttpServlet {
 
   /**
    * Handler for doGet in order to do unit tests.
-   * @param out
-   * @param connectorTypes
+   * @param out PrintWriter Output for servlet response
+   * @param status ConnectorStatus
    */
   public static void handleDoGet(PrintWriter out, ConnectorStatus status) {
     ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);

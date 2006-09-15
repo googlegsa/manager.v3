@@ -37,6 +37,17 @@ public class ServletUtil {
   public static final String XMLTAG_CONFIGURE_RESPONSE = "ConfigureResponse";
   public static final String XMLTAG_MESSAGE = "message";
   public static final String XMLTAG_FORM_SNIPPET = "FormSnippet";
+  
+  public static final String XMLTAG_CERT_AUTHN = "CertAuthn";
+  public static final String XMLTAG_MAX_FEED_RATE = "MaxFeedRate";
+  public static final String XMLTAG_FEEDERGATE_HOST = "FeederGateHost";
+  public static final String XMLTAG_FEEDERGATE_PORT = "FeederGatePort";
+
+  public static final String XML_RESPONSE_SUCCESS = "0";
+  public static final String XML_SIMPLE_RESPONSE =
+      "<CmResponse>\n" +
+      "  <StatusId>0</StatusId>\n" +
+      "</CmResponse>\n";
 
   public static final int HTML_NORMAL = 0;
   public static final int HTML_HEADING = 1;
@@ -53,6 +64,18 @@ public class ServletUtil {
 
 
   private ServletUtil() {
+  }
+
+  /**
+   * Write a name value pair as an XML element to a PrintWriter.
+   *
+   * @param out where PrintWriter to be written to
+   *
+   */
+  public static void writeSimpleResponse(PrintWriter out, String status) {
+    writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);
+    writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, status);
+    writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
   }
 
   /**

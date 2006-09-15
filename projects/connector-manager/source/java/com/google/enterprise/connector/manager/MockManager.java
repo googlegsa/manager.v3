@@ -21,8 +21,11 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  * A mock implementation for the Manager interface. This implementation
@@ -34,6 +37,8 @@ import java.util.Map;
  */
 public class MockManager implements Manager {
   private static final MockManager INSTANCE = new MockManager();
+  private static final Logger LOG =
+      Logger.getLogger(MockManager.class.getName());
 
   private MockManager() {
   }
@@ -176,6 +181,14 @@ public class MockManager implements Manager {
   public ConfigureResponse setConnectorConfig(String connectorName,
       Map configData, String language) throws ConnectorNotFoundException,
       PersistentStoreException {
+    LOG.info("setConnectorConfig() connectorName: " + connectorName);
+    LOG.info("configData: ");
+    Set set = configData.entrySet();
+    Iterator iterator = set.iterator();
+    while (iterator.hasNext()) {
+      Map.Entry entry = (Map.Entry) iterator.next();
+      LOG.info(entry.getKey() + "/" + entry.getValue());
+    }
     // null is a success response
     return null;
   }
