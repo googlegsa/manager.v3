@@ -86,14 +86,23 @@ public class StringUtils {
    * @return contents as a String
    */
   public static String streamToString(InputStream is) {
-    byte buf[] = new byte[2048];
-    int bytesRead;
+    byte[] bytes = new byte[32768];
+    
+    // Read in the bytes
+    int offset = 0;
+    int numRead = 0;
     try {
-      bytesRead = is.read(buf);
+      while (offset < bytes.length
+             && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
+          offset += numRead;
+      }
+      is.close();
     } catch (IOException e) {
-      throw new IllegalArgumentException("I/O problem reading stream");
+      // TODO: this is ungraceful - need to plan for recovery
+      throw new RuntimeException("I/O Problem.");
     }
-    String res = new String(buf,0,bytesRead);
+    
+    String res = new String(bytes,0,offset);
     return res;
   }
   
