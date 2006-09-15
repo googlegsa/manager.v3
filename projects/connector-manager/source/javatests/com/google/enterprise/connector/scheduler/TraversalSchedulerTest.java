@@ -28,11 +28,11 @@ import java.util.List;
  * Tests the Scheduler.
  *
  */
-public class MockSchedulerTest extends TestCase {
+public class TraversalSchedulerTest extends TestCase {
   private void runWithSchedules(List schedules) {
     WorkQueue workQueue = new WorkQueue(2, 5000);
-    MockScheduler scheduler = 
-      new MockScheduler(new MockInstantiator(), new HashMapMonitor(),
+    TraversalScheduler scheduler = 
+      new TraversalScheduler(new MockInstantiator(), new HashMapMonitor(),
         workQueue, schedules);
     scheduler.init();
     Thread thread = new Thread(scheduler);
