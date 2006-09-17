@@ -1,21 +1,20 @@
 package com.google.enterprise.connector.sharepoint;
 
-import com.google.enterprise.connector.spi.PropertyMap;
-import com.google.enterprise.connector.spi.QueryTraversalManager;
-import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.ResultSet;
-
-import connector.ClientContext;
-import connector.sharepoint.BaseList;
-import connector.sharepoint.ListFactory;
-import connector.sharepoint.Sharepoint;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Iterator;
+import com.google.enterprise.connector.sharepoint.impl.BaseList;
+import com.google.enterprise.connector.sharepoint.impl.ClientContext;
+import com.google.enterprise.connector.sharepoint.impl.ListFactory;
+import com.google.enterprise.connector.sharepoint.impl.Sharepoint;
+import com.google.enterprise.connector.spi.PropertyMap;
+import com.google.enterprise.connector.spi.QueryTraversalManager;
+import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.ResultSet;
 
 public class SharepointQueryManager implements QueryTraversalManager {
 
@@ -70,6 +69,10 @@ public class SharepointQueryManager implements QueryTraversalManager {
     }
   }
 
+  /**
+   * Get each list in turn 
+   * @return
+   */
   private BaseList getList() {
     if (lists != null) {
       if (!lists.hasNext()) {
@@ -81,9 +84,7 @@ public class SharepointQueryManager implements QueryTraversalManager {
   }
 
   public void setBatchHint(int hint) {
-    if (hint < ClientContext.defaultPageSize) {
       ClientContext.setPageSize(hint);
-    }
   }
 
   public String checkpoint(PropertyMap prop) throws RepositoryException {

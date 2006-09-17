@@ -1,15 +1,15 @@
 package com.google.enterprise.connector.sharepoint;
 
-import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.ResultSet;
-
-import connector.sharepoint.BaseList;
+import java.text.ParseException;
+import java.util.Iterator;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.text.ParseException;
-import java.util.Iterator;
+import com.google.enterprise.connector.sharepoint.impl.BaseList;
+import com.google.enterprise.connector.sharepoint.impl.ClientContext;
+import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.ResultSet;
 
 public class SharepointResultSet implements ResultSet {
 
@@ -21,10 +21,15 @@ public class SharepointResultSet implements ResultSet {
   }
 
   public Iterator iterator() throws RepositoryException {
-    return new ResultIterator(list);
+    return list;
   }
 
   public String checkpoint() throws ParseException {
     return list.updateLastAccessTime();
+  }
+  
+  public ClientContext getContext()
+  {
+	  return list.getContext();
   }
 }

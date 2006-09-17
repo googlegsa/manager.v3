@@ -6,9 +6,9 @@
 -->
 <project basedir="." default="build" name="sharepoint-connector">
     &buildfile;
-    <property name="connector-manager.location" value="c:/projects/connector-manager"/>
-    <property name="sharepoint-connector.location" value="c:/projects/sharepoint-connector"/>
-    <property name="third_party.location" value="c:/projects/third_party"/>
+    <property name="connector-manager.location" value="../connector-manager"/>
+    <property name="sharepoint-connector.location" value="../sharepoint-connector"/>
+    <property name="third_party.location" value="../third_party"/>
     <path id="project.classpath">
         <path refid="mainproject.classpath"/>
         <path refid="connector-manager.classpath"/>
@@ -70,7 +70,9 @@
         <pathelement location="${third_party.location}/lib/json.jar"/>
         <pathelement location="${third_party.location}/lib/junit.jar"/>
         <pathelement location="${third_party.location}/lib/servlet-api.jar"/>
-    </path>
+        <pathelement location="${third_party.location}/lib/spring-context.jar"/>
+        <pathelement location="${third_party.location}/lib/spring.jar"/>
+</path>
     <target name="init">
         <mkdir dir="bin"/>
     </target>
@@ -79,11 +81,10 @@
     </target>
     <target depends="init" name="build">
         <ant antfile="${connector-manager.location}/build.xml" inheritAll="false"/>
-        <ant antfile="${third_party.location}/build.xml" inheritAll="false"/>
         <echo message="${ant.project.name}: ${ant.file}"/>
         <javac destdir="bin">
-            <src path="connector-manager/source/java"/>
-            <src path="connector-manager/source/javatests"/>
+            <src path="${connector-manager.location}/source/java"/>
+            <src path="${connector-manager.location}/source/javatests"/>
             <src path="source"/>
             <src path="source/java"/>
             <src path="source/javatests"/>
@@ -92,15 +93,5 @@
             <exclude name="javatests/"/>
             <classpath refid="project.classpath"/>
         </javac>
-    </target>
-    <target name="ConnectorManager (1)">
-        <java classname="ConnectorManager" failonerror="true" fork="yes">
-            <classpath refid="project.classpath"/>
-        </java>
-    </target>
-    <target name="TraveralTest (2)">
-        <java classname="com.google.enterprise.connector.sharepoint.TraveralTest" failonerror="true" fork="yes">
-            <classpath refid="project.classpath"/>
-        </java>
     </target>
 </project>
