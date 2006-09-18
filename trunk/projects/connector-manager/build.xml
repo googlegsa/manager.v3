@@ -9,6 +9,9 @@
 	<!-- Define Directories. -->
 	<property name="projects.dir" value=".." />
 
+	<property name="COMPILE_DEBUG_FLAG" value="true" />
+	<property name="COMPILE_DEBUG_LEVEL" value="source,lines,vars" />
+		
 	<property name="build" value="build" />
 	<property name="dist" value="dist" />
 	<property name="src" value="source/java" />
@@ -67,7 +70,8 @@
 
 	<target name="compile" depends="init">
 		<!-- compile java source files -->
-		<javac srcdir="${src}" destdir="${classes}" debug="${COMPILE_DEBUG_FLAG}">
+		<javac srcdir="${src}" destdir="${classes}" 
+			debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
 			<classpath>
 				<pathelement location="${thirdparty.jar.dir}" />
 				<fileset dir="${thirdparty.jar.dir}">
@@ -79,7 +83,8 @@
 
 	<target name="compile_tests" depends="init,jar">
 		<!-- compile java source files for tests -->
-		<javac srcdir="${tests.src}" destdir="${tests.classes}" debug="${COMPILE_DEBUG_FLAG}">
+		<javac srcdir="${tests.src}" destdir="${tests.classes}" 
+			debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
 			<classpath>
 				<fileset dir="${jar.dir}">
 					<include name="**/*.jar" />
@@ -142,7 +147,7 @@
     also contains all and can be deployed as-is.
    -->
 
-	<target name="war" depends="install_init" description="Builds the WAR file for installation.">
+	<target name="war" depends="install_init,compile,compile_tests" description="Builds the WAR file for installation.">
 		<echo> The war file dir is located at ${war.dir}</echo>
 
 		<war warfile="${war.dir}/${ant.project.name}.war" webxml="${webdocs}/WEB-INF/web.xml">
