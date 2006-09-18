@@ -62,17 +62,14 @@ public class List extends BaseList {
 		Property nameProp = new SimpleProperty(
 				SpiConstants.PROPNAME_CONTENTURL, new SimpleValue(ValueType.STRING, viewURL));
 		pm.put(SpiConstants.PROPNAME_CONTENTURL, nameProp);
-		pm.put(SpiConstants.PROPNAME_DOCID, new SimpleValue(ValueType.STRING, this.getCurrentListKey() + "-" + Id));
+		pm.put(SpiConstants.PROPNAME_DOCID, getDocId(Id));
 		// = "Modified", EEE d MMM yyyy HH:mm:ss z
 		String modifiedTime = em.getAttributeValue(new QName("ows_Modified"));
 		try {
 			if (modifiedTime.indexOf("#") > 0)
 				modifiedTime = modifiedTime
 						.substring(modifiedTime.indexOf("#") + 1);
-			modifiedTime = Util.toGSAFormat(modifiedTime);
-			nameProp = new SimpleProperty(SpiConstants.PROPNAME_LASTMODIFY,
-					new SimpleValue(ValueType.DATE, modifiedTime));
-			pm.put(SpiConstants.PROPNAME_LASTMODIFY, nameProp);
+			pm.put(SpiConstants.PROPNAME_LASTMODIFY, getLastModifiedTime(modifiedTime));
 		} catch (ParseException e) {
 			logger.error(e.getMessage());
 		}

@@ -189,6 +189,11 @@ public class Util {
     return timeToString(dt, gsaFormat);
   }
 
+  public static String toUniversalFormat(String date) throws ParseException {
+	    Date dt = stringToTime(date);
+	    return timeToString(dt, Util.utcFormat2);
+	  }
+
   public static Date stringToTime(String date) throws ParseException {
     SimpleDateFormat formatter = new SimpleDateFormat(getTimeFormat(date));
     return formatter.parse(date);

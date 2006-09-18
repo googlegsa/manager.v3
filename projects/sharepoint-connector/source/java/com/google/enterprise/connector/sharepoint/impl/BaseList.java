@@ -40,7 +40,12 @@ import com.google.enterprise.connector.sharepoint.gen.ListsStub.GetListItemChang
 import com.google.enterprise.connector.sharepoint.gen.ListsStub.GetListItems;
 import com.google.enterprise.connector.sharepoint.gen.ListsStub.GetListItemsResponse;
 import com.google.enterprise.connector.sharepoint.gen.ListsStub.GetListResponse;
+import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.PropertyMap;
+import com.google.enterprise.connector.spi.SimpleProperty;
+import com.google.enterprise.connector.spi.SimpleValue;
+import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.ValueType;
 
 /**
  * generic processing for sharepoint lists, some of the default implementation
@@ -102,7 +107,7 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 
 	private static Log logger;
 
-	private int totalItems = 0;
+	int totalItems = 0;
 
 	static {
 		try {
@@ -150,7 +155,7 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 		list = list.substring(1);
 		list = list.substring(0, list.length() - 1);
 		getItems.setListName(list);
-		//viewFields must be present for sorting to work
+		// viewFields must be present for sorting to work
 		OMElement viewFields = getViewFields();
 		getItems.setViewFields(viewFields);
 		OMElement op = omfactory.createOMElement("queryOptions", omfactory
@@ -204,8 +209,9 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 	private void setQuery(GetListItems items) {
 		OMElement query = omfactory.createOMElement("query", null);
 		OMElement Q = omfactory.createOMElement("Query", null, query);
-		//Q.setText("<OrderBy&lt;<FieldRef Name=\\\"Modified\" Ascending=\"TRUE\"></FieldRef></OrderBy>");
-		//OMElement where = omfactory.createOMElement("Where", null, Q);
+		// Q.setText("<OrderBy&lt;<FieldRef Name=\\\"Modified\"
+		// Ascending=\"TRUE\"></FieldRef></OrderBy>");
+		// OMElement where = omfactory.createOMElement("Where", null, Q);
 		OMElement orderBy = omfactory.createOMElement("OrderBy", null, Q);
 		OMElement field = omfactory.createOMElement("FieldRef", null, orderBy);
 		field.addAttribute("Name", "Modified", null);
@@ -611,4 +617,14 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 		return totalItems;
 	}
 
+	protected Property getDocId(String itemId) {
+		return new SimpleProperty(SpiConstants.PROPNAME_DOCID, new SimpleValue(
+				ValueType.STRING, this.getCurrentListKey() + "-" + itemId));
+	}
+
+	protected Property getLastModifiedTime(String last) throws ParseException{
+		last = Util.toUniversalFormat(last);
+		return new SimpleProperty(SpiConstants.PROPNAME_LASTMODIFY,
+				new SimpleValue(ValueType.DATE, last));
+	}
 }

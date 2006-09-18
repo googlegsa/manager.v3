@@ -84,6 +84,7 @@ public class Survey extends List {
 			logger.info("Found Survey: " + title);
 			PropertyMap map = getList(key);
 			currentRecords.add(map);
+			totalItems++;
 		}
 		lists.clear(); // since getNextDoc is called in a loop, we need to know
 						// to
@@ -129,13 +130,10 @@ public class Survey extends List {
 				SpiConstants.PROPNAME_CONTENTURL, new SimpleValue(
 						ValueType.STRING, viewURL));
 		pm.put(SpiConstants.PROPNAME_CONTENTURL, nameProp);
-		pm.put(SpiConstants.PROPNAME_DOCID, nameProp);
+		pm.put(SpiConstants.PROPNAME_DOCID, getDocId(name));
 		// = "Modified" yyyy HH:mm:ss z
 		String modifiedTime = el.getAttributeValue(new QName(MODIFIED_TIME));
-		modifiedTime = Util.toGSAFormat(modifiedTime);
-		nameProp = new SimpleProperty(SpiConstants.PROPNAME_LASTMODIFY,
-				new SimpleValue(ValueType.DATE, modifiedTime));
-		pm.put(SpiConstants.PROPNAME_LASTMODIFY, nameProp);
+		pm.put(SpiConstants.PROPNAME_LASTMODIFY, getLastModifiedTime(modifiedTime));
 		// set meta data
 		for (int j = 0; j < META_TAGS.length; ++j) {
 			String val = el.getAttributeValue(new QName(META_TAGS[j]));

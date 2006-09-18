@@ -19,6 +19,7 @@ package com.google.enterprise.connector.sharepoint.impl;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Hashtable;
+import java.util.NoSuchElementException;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
@@ -44,7 +45,7 @@ public class ClientContext implements Cloneable {
 
 	String cfgServer = "servers.server", cfgGSA = ".gsa", cfgUrl = ".url";
 
-	static String cfgServers = ".servers", cfgExclude = ".exclude.site[@url]";
+	static String cfgServers = ".servers", cfgExclude = ".exclude.url";
 
 	static String cfgUsername = ".security[@username]",
 			cfgPassword = ".security[@password]";
@@ -61,7 +62,7 @@ public class ClientContext implements Cloneable {
 	static int pageSize = defaultPageSize;
 
 	// SP common
-	String username, password, authType;
+	String username, password;
 
 	final String PROTOCOL = "http", COLON = ":";
 
@@ -156,7 +157,7 @@ public class ClientContext implements Cloneable {
 		feedType = ConnectorConstants.FEEDER_TYPE_URL;
 		processUsername(config.getString(cfgServer + cfgUsername));
 		password = config.getString(cfgServer + cfgPassword);
-		authType = config.getString(cfgServer + cfgAuthType);
+
 		// gsa url
 		String gpath = this.getGsaUrl();
 		if (gpath == null) {
@@ -242,6 +243,11 @@ public class ClientContext implements Cloneable {
 			server = server.substring(0, idx);
 	}
 
+	public void setContentServerUrl(String url) throws UnknownHostException {
+		processServerName(url);
+		config.setProperty(cfgServer + cfgUrl, url);
+	}
+
 	void processUsername(String userName) {
 		String domainUser[] = null;
 		if (userName == null) {
@@ -305,7 +311,7 @@ public class ClientContext implements Cloneable {
 	 * @param server
 	 *            The server to set.
 	 */
-	public void setServer(String server) {
+	private void setServer(String server) {
 		this.server = server;
 	}
 
@@ -335,7 +341,11 @@ public class ClientContext implements Cloneable {
 	}
 
 	public String getAuthType() {
-		return authType;
+		return config.getString(cfgServer + cfgAuthType);
+	}
+
+	public void setAuthType(String auth) {
+		config.setProperty(cfgServer + cfgAuthType, auth);
 	}
 
 	/**
@@ -379,8 +389,31 @@ public class ClientContext implements Cloneable {
 		return config.getString(cfgServer + ".url[@proxy_server]");
 	}
 
+	public void setContentServerProxy(String proxy) {
+		String tag = cfgServer + ".url[@proxy_server]";
+		if (config.getProperty(tag) == null) {
+			config.addProperty(tag, proxy);
+		} else {
+			config.setProperty(tag, proxy);
+		}
+	}
+
 	public int getContentServerProxyPort() {
-		return config.getInt(cfgServer + ".url[@proxy_port]");
+		try {
+			return config.getInt(cfgServer + ".url[@proxy_port]");
+		} catch (NoSuchElementException e) {
+			return 80;
+		}
+	}
+
+	public void setContentServerProxyPort(Integer port) {
+		String tag = cfgServer + ".url[@proxy_port]";
+		if (port == null) {
+			config.setProperty(tag, "");
+		} else {
+			if (config.getProperty(tag) == null)
+				config.addProperty(tag, port);
+		}
 	}
 
 	public static String getDtd() {
@@ -574,6 +607,27 @@ public class ClientContext implements Cloneable {
 		config.setProperty(cfgServers + ".metadata[@tags]", meta);
 	}
 
+	public static void setSkiptFields(String fields) throws ConnectorException {
+		if (fields == null) {
+			gSkipFields.clear();
+		} else {
+			String skips[] = fields.split(",");
+			String missingFields = "";
+			for (int i = 0; i < skips.length; ++i) {
+				if (!ClientContext.getMetaFields().keySet().contains(skips[i])) {
+					missingFields += skips[i] + ",";
+				}
+			}
+			if (!missingFields.equals("")) {
+				throw new ConnectorException(missingFields
+						+ " not found in meta tags of Sharepoint instance");
+
+			}
+			config.setProperty(cfgServers + ".metadata[@exclude]", fields);
+		}
+
+	}
+
 	public static int getPageSize() {
 		return pageSize;
 	}
@@ -617,6 +671,14 @@ public class ClientContext implements Cloneable {
 	 */
 	public static String[] getExclude() {
 		return exclude;
+	}
+
+	public static void setExclude(String[] urls) {
+		exclude = urls;
+		config.setProperty(cfgServers + cfgExclude, null);
+		if (urls != null) {
+			config.setProperty(cfgServers + cfgExclude, exclude);
+		}
 	}
 
 	public static ValueType getFieldType(String name) {

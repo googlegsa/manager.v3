@@ -32,15 +32,11 @@ is to remove the content from <lists> section.
 			http://entca32</url>
 	</gsa>
 	<servers save_feed="true">
-		<metadata exclude="SelectedFlag,NameOrTitle,ImageCreateDate,ImageSize,ImageHeight,SelectedFlag,EncodedAbsWebImgUrl,ImageWidth,Preview,EncodedAbsThumbnailUrl,RequiredField,Thumbnail" tags="FileType,Title,Keywords,Created,Description"/>
+		<metadata tags="FileType,Title,Keywords,Created,Description" exclude="Title"/>
 		<server name="sharepoint_server">
-			<url proxy_port="3128" proxy_server="cache.corp.google.com">
-				http://columbus/
-			</url> 
+			<url proxy_server="" proxy_port="8123">http://columbus.corp.google.com</url> 
 			<security auth_type="ntlm"/> <!-- basic or ntlm -->
 		</server> 
-		<exclude>
-			<url>^http://columbus.corp.google.com</url>
-		</exclude>
-	</servers>
+		
+</servers>
 </gsc-definition>
