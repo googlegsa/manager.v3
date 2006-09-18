@@ -70,8 +70,6 @@ public class TestConnectivity extends HttpServlet {
    *  
    */
   public static void handleDoGet(PrintWriter out) {
-    ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);
-    ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, "0");
-    ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
+    ServletUtil.writeSimpleResponse(out, ServletUtil.XML_RESPONSE_SUCCESS);
   }
 }

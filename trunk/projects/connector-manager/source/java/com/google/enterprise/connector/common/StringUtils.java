@@ -18,6 +18,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 
 public class StringUtils {
   
@@ -106,6 +107,25 @@ public class StringUtils {
     return res;
   }
   
+  /**
+   * Reads all from a Reader into a String. Close the Reader when finished.
+   * Returns the String.
+   * @param reader Reader
+   */
+  public static String readAllToString(Reader reader) throws IOException {
+    char buf[] = new char[4096];
+    StringBuffer strBuffer = new StringBuffer();
+    int size = 0;
+    try {
+      while ((size = reader.read(buf)) != -1) {
+        strBuffer.append(buf, 0, size);
+      }
+    } finally {
+      reader.close();
+    }
+    return strBuffer.toString();
+  }
+
   /**
    * Normalizes strings with \r\n newlines to just \n
    * @param input String to normalize
