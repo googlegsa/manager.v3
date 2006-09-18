@@ -37,7 +37,7 @@ public class ServletUtil {
   public static final String XMLTAG_CONFIGURE_RESPONSE = "ConfigureResponse";
   public static final String XMLTAG_MESSAGE = "message";
   public static final String XMLTAG_FORM_SNIPPET = "FormSnippet";
-  
+
   public static final String XMLTAG_CERT_AUTHN = "CertAuthn";
   public static final String XMLTAG_MAX_FEED_RATE = "MaxFeedRate";
   public static final String XMLTAG_FEEDERGATE_HOST = "FeederGateHost";
@@ -45,22 +45,16 @@ public class ServletUtil {
 
   public static final String XML_RESPONSE_SUCCESS = "0";
   public static final String XML_SIMPLE_RESPONSE =
-      "<CmResponse>\n" +
-      "  <StatusId>0</StatusId>\n" +
-      "</CmResponse>\n";
+      "<CmResponse>\n" + "  <StatusId>0</StatusId>\n" + "</CmResponse>\n";
 
   public static final int HTML_NORMAL = 0;
   public static final int HTML_HEADING = 1;
   public static final int HTML_LINE = 2;
 
-  private static final String[] XMLIndent = { "",
-      "  ",
-      "    ",
-      "      ",
-      "        ",
-      "          ",
-      "            ",
-      "              "};
+  private static final String[] XMLIndent =
+      {
+          "", "  ", "    ", "      ", "        ", "          ", "            ",
+          "              "};
 
 
   private ServletUtil() {
@@ -70,6 +64,7 @@ public class ServletUtil {
    * Write a name value pair as an XML element to a PrintWriter.
    *
    * @param out where PrintWriter to be written to
+   * @param status 
    *
    */
   public static void writeSimpleResponse(PrintWriter out, String status) {
@@ -87,10 +82,9 @@ public class ServletUtil {
    * @param elemValue element value
    */
   public static void writeXMLElement(PrintWriter out, int indentLevel,
-                                  String elemName, String elemValue) {
-    out.println(IndentStr(indentLevel) +
-                "<" + elemName + ">" + elemValue +
-                "</" + elemName + ">");
+      String elemName, String elemValue) {
+    out.println(IndentStr(indentLevel) + "<" + elemName + ">" + elemValue
+        + "</" + elemName + ">");
   }
 
   /** Write an XML tag to a PrintWriter
@@ -101,10 +95,9 @@ public class ServletUtil {
    * @param endingTag add a beginning tag if true, an ending tag if false
    */
   public static void writeXMLTag(PrintWriter out, int indentLevel,
-                          String tagName, boolean endingTag) {
-    out.println(IndentStr(indentLevel) +
-                (endingTag ? "</" : "<") +
-       	        (tagName) + ">");
+      String tagName, boolean endingTag) {
+    out.println(IndentStr(indentLevel) + (endingTag ? "</" : "<") + (tagName)
+        + ">");
   }
 
   // A helper method to ident output string.
@@ -112,8 +105,8 @@ public class ServletUtil {
     if (level < XMLIndent.length) {
       return XMLIndent[level];
     } else {
-      return XMLIndent[XMLIndent.length - 1] +
-             IndentStr(level - XMLIndent.length);
+      return XMLIndent[XMLIndent.length - 1]
+          + IndentStr(level - XMLIndent.length);
     }
   }
 
@@ -122,20 +115,20 @@ public class ServletUtil {
     out.println("<HEAD><TITLE>" + title + "</TITLE></HEAD><BODY>");
   }
 
-  public static void htmlBody(
-      PrintWriter out, int style, String text, boolean linebreak) {
-    switch(style) {
-      case HTML_NORMAL:
-        out.println(text);
-        break;        
-      case HTML_HEADING:
-        out.println("<H1>" + text + "</H1>");
-        break;
-      case HTML_LINE:
-        out.println("<HR>");
-        break;
-      default:
-        break;
+  public static void htmlBody(PrintWriter out, int style, String text,
+      boolean linebreak) {
+    switch (style) {
+    case HTML_NORMAL:
+      out.println(text);
+      break;
+    case HTML_HEADING:
+      out.println("<H1>" + text + "</H1>");
+      break;
+    case HTML_LINE:
+      out.println("<HR>");
+      break;
+    default:
+      break;
     }
     if (linebreak) {
       out.println("<BR>");

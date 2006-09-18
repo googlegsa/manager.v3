@@ -15,7 +15,8 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.enterprise.connector.manager.MockManager;
+import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.logging.Logger;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -38,15 +40,15 @@ public class GetConfigForm extends HttpServlet {
       Logger.getLogger(GetConfigForm.class.getName());
 
   /**
-   * Returns the connector config (form).
-   * @param req 
-   * @param res 
-   * @throws ServletException 
-   * @throws IOException 
+   * Returns the connector config form.
+   * 
+   * @param req
+   * @param res
+   * @throws ServletException
+   * @throws IOException
    * 
    */
-  protected void doGet(HttpServletRequest req,
-                       HttpServletResponse res)
+  protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
     String connectorTypeName = req.getParameter("ConnectorType");
     if (connectorTypeName.length() < 1) {
@@ -60,10 +62,13 @@ public class GetConfigForm extends HttpServlet {
     }
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
-    MockManager mockManager = MockManager.getInstance();
+
+    ServletContext servletContext = this.getServletContext();
+    Manager manager = Context.getInstance(servletContext).getManager();
+
     try {
       ConfigureResponse configResponse =
-          mockManager.getConfigForm(connectorTypeName, language);
+          manager.getConfigForm(connectorTypeName, language);
       handleDoGet(out, configResponse);
     } catch (ConnectorTypeNotFoundException e1) {
       logger.info("Connector Type Not Found Exception");
@@ -74,25 +79,27 @@ public class GetConfigForm extends HttpServlet {
   }
 
   /**
-   * Returns the connector config (form).
-   * @param req 
-   * @param res 
-   * @throws ServletException 
-   * @throws IOException 
+   * Returns the connector config form.
+   * 
+   * @param req
+   * @param res
+   * @throws ServletException
+   * @throws IOException
    * 
    */
-  protected void doPost(HttpServletRequest req,
-                        HttpServletResponse res)
+  protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
     doGet(req, res);
   }
 
   /**
    * Handler for doGet in order to do unit tests.
+   * 
    * @param out
    * @param configResponse
    */
-  public static void handleDoGet(PrintWriter out, ConfigureResponse configResponse) {
+  public static void handleDoGet(PrintWriter out,
+      ConfigureResponse configResponse) {
     ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);
     ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, "0");
 
@@ -104,12 +111,14 @@ public class GetConfigForm extends HttpServlet {
       return;
     }
 
-    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, false);
-    ServletUtil.writeXMLElement(out, 2,
-        ServletUtil.XMLTAG_MESSAGE, configResponse.getMessage());
-    ServletUtil.writeXMLElement(out, 2,
-        ServletUtil.XMLTAG_FORM_SNIPPET, configResponse.getFormSnippet());
-    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, true);
+    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE,
+        false);
+    ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_MESSAGE,
+        configResponse.getMessage());
+    ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_FORM_SNIPPET,
+        configResponse.getFormSnippet());
+    ServletUtil
+        .writeXMLTag(out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, true);
     ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
   }
 }

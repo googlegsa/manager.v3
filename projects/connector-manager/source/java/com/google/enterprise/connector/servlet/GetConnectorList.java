@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -35,43 +36,45 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class GetConnectorList extends HttpServlet {
   private static final Logger logger =
-    Logger.getLogger(GetConnectorList.class.getName());
+      Logger.getLogger(GetConnectorList.class.getName());
 
-    /**
-     * Returns a list of connector types.
-     * @param req 
-     * @param res 
-     * @throws ServletException 
-     * @throws IOException 
-     * 
-     */
-  protected void doGet(HttpServletRequest req,
-                       HttpServletResponse res)
+  /**
+   * Returns a list of connector types.
+   * 
+   * @param req
+   * @param res
+   * @throws ServletException
+   * @throws IOException
+   * 
+   */
+  protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
-    MockManager mockManager = MockManager.getInstance();
-    List connectorTypes = mockManager.getConnectorTypes();
+    ServletContext servletContext = this.getServletContext();
+    Manager manager = Context.getInstance(servletContext).getManager();
+    List connectorTypes = manager.getConnectorTypes();
     handleDoGet(out, connectorTypes);
     out.close();
   }
 
   /**
    * Returns a list of connector types.
-   * @param req 
-   * @param res 
-   * @throws ServletException 
-   * @throws IOException 
+   * 
+   * @param req
+   * @param res
+   * @throws ServletException
+   * @throws IOException
    * 
    */
-  protected void doPost(HttpServletRequest req,
-                        HttpServletResponse res)
+  protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
     doGet(req, res);
   }
 
   /**
    * Handler for doGet in order to do unit tests.
+   * 
    * @param out
    * @param connectorTypes
    */
@@ -81,8 +84,8 @@ public class GetConnectorList extends HttpServlet {
 
     if (connectorTypes == null || connectorTypes.size() == 0) {
       logger.info("Connector manager returns null.");
-      ServletUtil.writeXMLElement(out, 1,
-                                  ServletUtil.XMLTAG_CONNECTOR_TYPES, "null");
+      ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_CONNECTOR_TYPES,
+          "null");
       ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
       return;
     }
@@ -91,7 +94,7 @@ public class GetConnectorList extends HttpServlet {
 
     for (Iterator iter = connectorTypes.iterator(); iter.hasNext();) {
       ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_CONNECTOR_TYPE,
-                                  (String) iter.next());
+          (String) iter.next());
     }
 
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_TYPES, true);
