@@ -42,9 +42,9 @@ public class SimpleConnectorTypeTest extends TestCase {
       String initialConfigForm = configureResponse.getFormSnippet();
       String expectedResult =
           "<tr>\r\n" + "<td>foo</td>\r\n"
-              + "<td><input type=\"text\" name=\"foo\"></td>\r\n" + "</tr>\r\n"
+              + "<td><input type=\"text\" name=\"foo\"/></td>\r\n" + "</tr>\r\n"
               + "<tr>\r\n" + "<td>bar</td>\r\n"
-              + "<td><input type=\"text\" name=\"bar\"></td>\r\n" + "</tr>\r\n";
+              + "<td><input type=\"text\" name=\"bar\"/></td>\r\n" + "</tr>\r\n";
       Assert.assertEquals(expectedResult, initialConfigForm);
     }
     {
@@ -55,9 +55,9 @@ public class SimpleConnectorTypeTest extends TestCase {
       String initialConfigForm = configureResponse.getFormSnippet();
       String expectedResult =
           "<tr>\r\n" + "<td>user</td>\r\n"
-              + "<td><input type=\"text\" name=\"user\"></td>\r\n"
+              + "<td><input type=\"text\" name=\"user\"/></td>\r\n"
               + "</tr>\r\n" + "<tr>\r\n" + "<td>password</td>\r\n"
-              + "<td><input type=\"password\" name=\"password\"></td>\r\n"
+              + "<td><input type=\"password\" name=\"password\"/></td>\r\n"
               + "</tr>\r\n";
       System.out.println(initialConfigForm);
       Assert.assertEquals(expectedResult, initialConfigForm);
@@ -82,14 +82,14 @@ public class SimpleConnectorTypeTest extends TestCase {
       String configForm = configureResponse.getFormSnippet();
       String expectedResult = "<tr>\r\n" + 
             "<td>user</td>\r\n" + 
-            "<td>max<input type=\"hidden\" value=\"max\" name=\"user\"></td>\r\n" + 
+            "<td>max<input type=\"hidden\" value=\"max\" name=\"user\"/></td>\r\n" + 
             "</tr>\r\n" + 
             "<tr>\r\n" + 
             "<td>password</td>\r\n" + 
-            "<td><input type=\"password\" name=\"password\"></td>\r\n" + 
+            "<td><input type=\"password\" name=\"password\"/></td>\r\n" + 
             "</tr>\r\n" + 
-            "<input type=\"hidden\" value=\"heaven\" name=\"destination\">\r\n" +
-            "<input type=\"hidden\" value=\"snickers\" name=\"dog\">\r\n" +
+            "<input type=\"hidden\" value=\"heaven\" name=\"destination\"/>\r\n" +
+            "<input type=\"hidden\" value=\"snickers\" name=\"dog\"/>\r\n" +
             "";
       Assert.assertEquals(expectedResult, configForm);
       String message = configureResponse.getMessage();
