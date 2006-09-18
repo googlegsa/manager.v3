@@ -18,90 +18,49 @@ import com.google.enterprise.connector.spi.ResultSet;
 
 public class SharepointQueryManager implements QueryTraversalManager {
 
-  Iterator lists = null;
-  int currentFactory = 0;
-  Sharepoint sp = null;
-  SharepointResultSet currentResult = null;
-  private static Log logger = LogFactory.getLog(SharepointQueryManager.class);
+	Sharepoint sp = null;
 
-  public SharepointQueryManager(Sharepoint sp) {
-    this.sp = sp;
-  }
+	SharepointResultSet currentResult = null;
 
-  public ResultSet startTraversal() throws RepositoryException {
-    // TODO Auto-generated method stub
-    try {
-      sp.crawl();
-    } catch (Exception e) {
-      logger.error(e);
-      logger.error(e.getMessage());
-      throw new RepositoryException("startTraversal failed");
-    }
-    return getResultSet();
-  }
+	private static Log logger = LogFactory.getLog(SharepointQueryManager.class);
 
-  /**
-   * There are two loops: one is an array of ListFactory, collected from
-   * multiple sites; For each ListFactory, there is another array of "lists"
-   * 
-   * @return ResultSet, representing a single list
-   */
-  private ResultSet getResultSet() {
-    while (true) {
-      // see if the current listfactory has anything left
-      BaseList list = getList();
-      if (list != null) {
-        currentResult = new SharepointResultSet(list);
-        return currentResult;
-      }
-      // now move to next ListFactory
-      ArrayList factories = ListFactory.getListFactories();
-      ListFactory fac = null;
-      if (currentFactory >= factories.size()) {
-        return null;
-      }
-      fac = (ListFactory) factories.get(currentFactory);
-      currentFactory++;
-      if (fac == null) {
-        return null;
-      }
-      lists = fac.getLists().iterator();
-    }
-  }
+	public SharepointQueryManager(Sharepoint sp) {
+		this.sp = sp;
+	}
 
-  /**
-   * Get each list in turn 
-   * @return
-   */
-  private BaseList getList() {
-    if (lists != null) {
-      if (!lists.hasNext()) {
-        return null;
-      }
-      return (BaseList) lists.next();
-    }
-    return null;
-  }
+	public ResultSet startTraversal() throws RepositoryException {
+		// TODO Auto-generated method stub
+		try {
+			sp.crawl();
+		} catch (Exception e) {
+			logger.error(e);
+			logger.error(e.getMessage());
+			throw new RepositoryException("startTraversal failed");
+		}
+		return new SharepointResultSet();
+	}
 
-  public void setBatchHint(int hint) {
-      ClientContext.setPageSize(hint);
-  }
+	public void setBatchHint(int hint) {
+		ClientContext.setPageSize(hint);
+	}
 
-  public String checkpoint(PropertyMap prop) throws RepositoryException {
-    try {
-      String accessTime = currentResult.checkpoint();
-      currentResult = null;
-      return accessTime;
-    } catch (ParseException e) {
-      logger.error(e.getMessage());
-      throw new RepositoryException("checkpoint error");
-    }
-  }
+	public String checkpoint(PropertyMap prop) throws RepositoryException {
+/*		try {
+			String accessTime = currentResult.checkpoint();
+			currentResult = null;
+			return accessTime;
+		} catch (ParseException e) {
+			logger.error(e.getMessage());
+			throw new RepositoryException("checkpoint error");
+		}
+*/		return null;
+	}
 
-  public ResultSet resumeTraversal(String checkpoint) {
-    if (currentResult != null) {
-      return currentResult;
-    }
-    return getResultSet();
-  }
+	public ResultSet resumeTraversal(String checkpoint) {
+		if (currentResult != null) {
+			return currentResult;
+		}
+		return null;
+//		return getResultSet();
+	}
 }

@@ -130,7 +130,7 @@ public class ListFactory extends ConnectorImpl {
 				}
 				baseLists.add(conn);
 			} catch (ConnectorException e) {
-
+				logger.error(e.getMessage());
 			}
 		}
 

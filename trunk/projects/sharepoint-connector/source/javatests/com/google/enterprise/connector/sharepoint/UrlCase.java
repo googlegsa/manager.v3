@@ -14,6 +14,10 @@ import org.apache.commons.logging.LogFactory;
 
 import com.google.enterprise.connector.sharepoint.impl.ClientContext;
 import com.google.enterprise.connector.sharepoint.impl.ConnectorImpl;
+import com.google.enterprise.connector.spi.Property;
+import com.google.enterprise.connector.spi.PropertyMap;
+import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.Value;
 
 public class UrlCase extends TestCase implements ICase {
 
@@ -21,21 +25,28 @@ public class UrlCase extends TestCase implements ICase {
 
 	public void perform(ClientContext context, Object obj) {
 		try {
+			PropertyMap pm = (PropertyMap) obj;
+			Property prop = pm.getProperty(SpiConstants.PROPNAME_CONTENTURL);
+			String url = prop.getValue().getString();
 			HttpClient client = new HttpClient();
-			HeadMethod head = new HeadMethod((String) obj);
-			logger.info("test url:  " + (String)obj);
+			HeadMethod head = new HeadMethod(url);
+			logger.info("test url:  " + url);
 			head.setDoAuthentication(true);
 			Credentials defaultcreds;
 			if (context.getAuthType().equals("ntlm")) {
-				//defaultcreds = new NTCredentials(context.getUserName(),
-					//	context.getPassword(), context.getSPHost(), context.getSpDomain());
-				defaultcreds = new NTCredentials(context.getUserName(), context.getPassword(), context.getSPCanonicalHost(), context.getSpDomain());
+				// defaultcreds = new NTCredentials(context.getUserName(),
+				// context.getPassword(), context.getSPHost(),
+				// context.getSpDomain());
+				defaultcreds = new NTCredentials(context.getUserName(), context
+						.getPassword(), context.getSPCanonicalHost(), context
+						.getSpDomain());
 			} else {
 				defaultcreds = new UsernamePasswordCredentials(context
 						.getUserName(), context.getPassword());
 			}
 			client.getState().setCredentials(
-					new AuthScope(context.getSPCanonicalHost(), context.getSPPort(), AuthScope.ANY_REALM, null),
+					new AuthScope(context.getSPCanonicalHost(), context
+							.getSPPort(), AuthScope.ANY_REALM, null),
 					defaultcreds);
 			client.executeMethod(head);
 

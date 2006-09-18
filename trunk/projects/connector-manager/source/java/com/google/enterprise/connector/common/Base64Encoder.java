@@ -3,14 +3,8 @@
 package com.google.enterprise.connector.common;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.File;
-
-import sun.misc.BASE64Decoder;
+import java.io.Writer;
 
 /**
  * Base64 encoding (RFC1521)

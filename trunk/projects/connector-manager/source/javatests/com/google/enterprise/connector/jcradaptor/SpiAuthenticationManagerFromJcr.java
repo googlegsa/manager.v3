@@ -71,5 +71,4 @@ public class SpiAuthenticationManagerFromJcr implements AuthenticationManager {
     }
     return result;
   }
-
 }
