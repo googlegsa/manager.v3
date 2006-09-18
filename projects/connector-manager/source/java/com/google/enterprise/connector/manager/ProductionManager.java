@@ -134,7 +134,16 @@ public class ProductionManager implements Manager {
    *      #getConnectorStatus(java.lang.String)
    */
   public ConnectorStatus getConnectorStatus(String connectorName) {
-    throw new UnsupportedOperationException();
+    String connectorTypeName;
+    try {
+      connectorTypeName = connectorConfigStore.getConnectorType(connectorName);
+    } catch (ConnectorNotFoundException e) {
+      // TODO: this should become part of the signature - so we should just let
+      // this exception bubble up
+      throw new IllegalArgumentException();
+    }
+    // TODO: resolve this last parameter - we need to give the status a meaning
+    return new ConnectorStatus(connectorName, connectorTypeName, 0);
   }
 
   /*
@@ -182,6 +191,6 @@ public class ProductionManager implements Manager {
       String feederGateHost, int feederGatePort, int maxFeedRate)
       throws PersistentStoreException {
     // TODO - need a real implementation here
-   }
+  }
 
 }

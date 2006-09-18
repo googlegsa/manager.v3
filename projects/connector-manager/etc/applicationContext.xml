@@ -22,7 +22,7 @@
 	<bean id="ConnectorConfigStore"
 		class="com.google.enterprise.connector.persist.FilesystemConnectorConfigStore">
 		<property name="baseDirectory">
-			<value>testdata/staticConnectorConfig/connectors</value>
+			<value>webapps/connector-manager/WEB-INF/connectors</value>
 		</property>
 	</bean>
 

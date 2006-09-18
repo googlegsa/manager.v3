@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.logging.Logger;
 
 /**
  * Uses the file system to store connector configurations. In this
@@ -34,6 +35,9 @@ import java.util.Map.Entry;
  * sub-directory for their type.
  */
 public class FilesystemConnectorConfigStore implements ConnectorConfigStore {
+
+  private static final Logger LOGGER =
+    Logger.getLogger(FilesystemConnectorConfigStore.class.getName());
 
   File baseDirectory = null;
   Map connectorConfigMap = null;
@@ -49,6 +53,11 @@ public class FilesystemConnectorConfigStore implements ConnectorConfigStore {
    */
   public void setBaseDirectory(File baseDirectory) {
     this.baseDirectory = baseDirectory;
+    try {
+      LOGGER.info("Base dir path: "+ baseDirectory.getCanonicalPath());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void discoverExistingConnectorTypes() {

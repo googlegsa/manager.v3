@@ -136,7 +136,7 @@ public class SimpleConnectorType implements ConnectorType {
       }
       buf.append("\" name=\"");
       buf.append(key);
-      buf.append("\"></td>\r\n</tr>\r\n");
+      buf.append("\"/></td>\r\n</tr>\r\n");
     }
     // toss in all the stuff that's in the map but isn't in the keyset
     // taking care to list them in alphabetic order (this is mainly for
@@ -152,7 +152,7 @@ public class SimpleConnectorType implements ConnectorType {
           buf.append(val);
           buf.append("\" name=\"");
           buf.append(key);
-          buf.append("\">\r\n");
+          buf.append("\"/>\r\n");
         }
       }
     }
