@@ -33,10 +33,7 @@ public class TestConnectivityTest extends TestCase {
    * {@link com.google.enterprise.connector.servlet.TestConnectivity#handleDoGet(java.io.PrintWriter)}.
    */
   public void testHandleDoGet() {
-    String expectedResult = 
-      "<CmResponse>\n" +
-      "  <StatusId>0</StatusId>\n" +
-      "</CmResponse>\n";
+    String expectedResult = ServletUtil.XML_SIMPLE_RESPONSE;
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
     TestConnectivity.handleDoGet(out);

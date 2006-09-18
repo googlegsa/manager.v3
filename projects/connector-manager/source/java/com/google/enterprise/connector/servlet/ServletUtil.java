@@ -15,10 +15,26 @@
 
 package com.google.enterprise.connector.servlet;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
- * 
+ *
  * Servlet utility class.
  *
  */
@@ -38,12 +54,17 @@ public class ServletUtil {
   public static final String XMLTAG_MESSAGE = "message";
   public static final String XMLTAG_FORM_SNIPPET = "FormSnippet";
 
+  public static final String XMLTAG_MANAGER_CONFIG = "ManagerConfig";
   public static final String XMLTAG_CERT_AUTHN = "CertAuthn";
   public static final String XMLTAG_MAX_FEED_RATE = "MaxFeedRate";
-  public static final String XMLTAG_FEEDERGATE_HOST = "FeederGateHost";
-  public static final String XMLTAG_FEEDERGATE_PORT = "FeederGatePort";
+  public static final String XMLTAG_FEEDERGATE = "FeederGate";
+  public static final String XMLTAG_FEEDERGATE_HOST = "host";
+  public static final String XMLTAG_FEEDERGATE_PORT = "port";
 
   public static final String XML_RESPONSE_SUCCESS = "0";
+  public static final String XML_RESPONSE_STATUS_EMPTY_REQUEST = "Empty request";
+  public static final String XML_RESPONSE_STATUS_EMPTY_NODE = "Empty node";
+  public static final String XML_RESPONSE_STATUS_PARAM_MISSING = "Param missing";
   public static final String XML_SIMPLE_RESPONSE =
       "<CmResponse>\n" + "  <StatusId>0</StatusId>\n" + "</CmResponse>\n";
 
@@ -51,20 +72,133 @@ public class ServletUtil {
   public static final int HTML_HEADING = 1;
   public static final int HTML_LINE = 2;
 
-  private static final String[] XMLIndent =
-      {
-          "", "  ", "    ", "      ", "        ", "          ", "            ",
-          "              "};
+  private static final String[] XMLIndent = { "",
+      "  ",
+      "    ",
+      "      ",
+      "        ",
+      "          ",
+      "            ",
+      "              "};
 
+
+  private static Logger LOG =
+	    Logger.getLogger(ServletUtil.class.getName());
+
+  private static DocumentBuilderFactory factory =
+	    DocumentBuilderFactory.newInstance();
 
   private ServletUtil() {
+  }
+
+  /**
+   * Parse an XML String to a Document.
+   *
+   * @param fileContent the XML string
+   * @param errorHandler The error handle for SAX parser
+   * @return A result Document object, null on error
+   */
+  public static Document parse(String fileContent,
+                               SAXParseErrorHandler errorHandler) {
+    try {
+      DocumentBuilder builder = factory.newDocumentBuilder();
+      builder.setErrorHandler(errorHandler);
+      Document document = builder.parse(
+        new ByteArrayInputStream(fileContent.getBytes("UTF-8")));
+      return document;
+    } catch (ParserConfigurationException pce) {
+      LOG.log(Level.SEVERE, "Parse exception", pce);
+    } catch (java.io.UnsupportedEncodingException uee) {
+      LOG.log(Level.SEVERE, "Really Unexpected", uee);
+    } catch (SAXException se) {
+      LOG.log(Level.SEVERE, "SAXException", se);
+    } catch (IOException ioe) {
+      LOG.log(Level.SEVERE, "IOException", ioe);
+    }
+    return null;
+  }
+
+  /**
+   * Get text data of first XML element of given name
+   *
+   * @param elem Element The parent XML element
+   * @param name String name of the child text element
+   * @return String attribute value of named child element
+   */
+  public static String getFirstAttribute(Element elem, String name, String attrName) {
+    NodeList nodeList = elem.getElementsByTagName(name);
+    if (nodeList.getLength() == 0) {
+      return null;
+    }
+
+    return (((Element)nodeList.item(0)).getAttribute(attrName));
+  }
+
+  /**
+   * Get text data of first XML element of given name
+   *
+   * @param elem Element The parent XML element
+   * @param name String name of the child text element
+   * @return String attribute value of named child element
+   */
+  public static String getAllAttributes(Element elem, String name, String attrName) {
+    String attrVal = null;
+    NodeList nodeList = elem.getElementsByTagName(name); 
+    int length = nodeList.getLength(); 
+    for (int n = 0; n < length; ++n) {
+      System.out.println(((Element)nodeList.item(n)).getAttribute(attrName));
+    }
+    return attrVal;
+  }
+
+  /**
+   * Get text data of first XML element of given name
+   *
+   * @param elem Element The parent XML element
+   * @param name String name of the child text element
+   * @return text data of named child element
+   */
+  public static String getFirstElementByTagName(Element elem, String name) {
+    NodeList nodeList = elem.getElementsByTagName(name);
+    if (nodeList.getLength() == 0) {
+      return null;
+    }
+
+    NodeList children = nodeList.item(0).getChildNodes();
+    if (children.getLength() == 0 ||
+        children.item(0).getNodeType() != Node.TEXT_NODE) {
+      return null;
+    }
+    return children.item(0).getNodeValue();
+  }
+
+  /**
+   * Get a list of all child text element of given name directly
+   * under a given element
+   *
+   * @param elem the parent element
+   * @param name the given name of searched child elements
+   * @return a list of values of those child text elements
+   */
+  public static List getAllElementsByTagName(Element elem, String name) {
+    NodeList nodeList = elem.getElementsByTagName(name);
+    List result = new ArrayList();
+    for (int i = 0; i < nodeList.getLength(); ++i) {
+      NodeList children = nodeList.item(i).getChildNodes();
+      if (children.getLength() == 0 ||
+          children.item(0).getNodeType() != Node.TEXT_NODE) {
+        continue;
+      }
+      result.add(children.item(0).getNodeValue());
+    }
+    return result;
   }
 
   /**
    * Write a name value pair as an XML element to a PrintWriter.
    *
    * @param out where PrintWriter to be written to
-   * @param status 
+   * @param status String
    *
    */
   public static void writeSimpleResponse(PrintWriter out, String status) {
@@ -82,9 +216,9 @@ public class ServletUtil {
    * @param elemValue element value
    */
   public static void writeXMLElement(PrintWriter out, int indentLevel,
-      String elemName, String elemValue) {
-    out.println(IndentStr(indentLevel) + "<" + elemName + ">" + elemValue
-        + "</" + elemName + ">");
+                                     String elemName, String elemValue) {
+    out.println(IndentStr(indentLevel)
+        + "<" + elemName + ">" + elemValue + "</" + elemName + ">");
   }
 
   /** Write an XML tag to a PrintWriter
@@ -95,9 +229,9 @@ public class ServletUtil {
    * @param endingTag add a beginning tag if true, an ending tag if false
    */
   public static void writeXMLTag(PrintWriter out, int indentLevel,
-      String tagName, boolean endingTag) {
-    out.println(IndentStr(indentLevel) + (endingTag ? "</" : "<") + (tagName)
-        + ">");
+                          String tagName, boolean endingTag) {
+    out.println(IndentStr(indentLevel)
+        + (endingTag ? "</" : "<") + (tagName) + ">");
   }
 
   // A helper method to ident output string.
@@ -115,20 +249,20 @@ public class ServletUtil {
     out.println("<HEAD><TITLE>" + title + "</TITLE></HEAD><BODY>");
   }
 
-  public static void htmlBody(PrintWriter out, int style, String text,
-      boolean linebreak) {
+  public static void htmlBody(
+      PrintWriter out, int style, String text, boolean linebreak) {
     switch (style) {
-    case HTML_NORMAL:
-      out.println(text);
-      break;
-    case HTML_HEADING:
-      out.println("<H1>" + text + "</H1>");
-      break;
-    case HTML_LINE:
-      out.println("<HR>");
-      break;
-    default:
-      break;
+      case HTML_NORMAL:
+        out.println(text);
+        break;
+      case HTML_HEADING:
+        out.println("<H1>" + text + "</H1>");
+        break;
+      case HTML_LINE:
+        out.println("<HR>");
+        break;
+      default:
+        break;
     }
     if (linebreak) {
       out.println("<BR>");

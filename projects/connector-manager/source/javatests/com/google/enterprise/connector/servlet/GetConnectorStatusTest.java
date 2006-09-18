@@ -31,8 +31,8 @@ import com.google.enterprise.connector.manager.ConnectorStatus;
  *
  */
 public class GetConnectorStatusTest extends TestCase {
-  private static final Logger logger =
-    Logger.getLogger(GetConnectorListTest.class.getName());
+  private static final Logger LOG =
+    Logger.getLogger(GetConnectorStatusTest.class.getName());
 
   /**
    * Test method for {@link com.google.enterprise.connector.servlet.GetConnectorStatus
@@ -102,8 +102,8 @@ public class GetConnectorStatusTest extends TestCase {
     GetConnectorStatus.handleDoGet(out, connectorStatus);
     out.flush();
     StringBuffer result = writer.getBuffer();
-    logger.info(result.toString());
-    logger.info(expectedResult);
+    LOG.info(result.toString());
+    LOG.info(expectedResult);
     Assert.assertEquals (StringUtils.normalizeNewlines(expectedResult), 
         StringUtils.normalizeNewlines(result.toString()));
   }
