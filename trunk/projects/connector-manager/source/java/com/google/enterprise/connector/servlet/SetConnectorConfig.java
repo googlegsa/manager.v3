@@ -15,21 +15,23 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.persist.PersistentStoreException;
+import com.google.enterprise.connector.spi.ConfigureResponse;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import com.google.enterprise.connector.manager.MockManager;
-import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.PersistentStoreException;
-import com.google.enterprise.connector.spi.ConfigureResponse;
 
 
 /**
@@ -90,10 +92,13 @@ public class SetConnectorConfig extends HttpServlet {
     configData.put("name3", req.getParameter("name3"));
     res.setContentType(ServletUtil.MIMETYPE_XML); //"text/plain"); //
     PrintWriter out = res.getWriter();
-    MockManager mockManager = MockManager.getInstance();
+    
+    ServletContext servletContext = this.getServletContext();
+    Manager manager = Context.getInstance(servletContext).getManager();
+
     try {
       ConfigureResponse configRes =
-      mockManager.setConnectorConfig(connectorName, configData, lang);
+      manager.setConnectorConfig(connectorName, configData, lang);
     } catch (ConnectorNotFoundException e) {
       LOG.info("ConnectorNotFoundException");
       status = e.toString();

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+
+	<bean id="UrlConn"
+		class="com.google.enterprise.connector.mock.MockUrlConn">
+	</bean>
+
+	<bean id="Pusher"
+		class="com.google.enterprise.connector.pusher.DocPusher">
+		<constructor-arg index="0" type="java.lang.String"
+			value="gsahost" />
+		<constructor-arg index="1" type="int" value="12345" />
+		<constructor-arg index="2" type="java.lang.String"
+			value="datasource" />
+		<constructor-arg index="3" ref="UrlConn" />
+	</bean>
+
+	<bean id="ConnectorTypeInstantiator"
+		class="com.google.enterprise.connector.instantiator.SpringConnectorTypeInstantiator" />
+
+	<bean id="ConnectorConfigStore"
+		class="com.google.enterprise.connector.persist.FilesystemConnectorConfigStore">
+		<property name="baseDirectory">
+			<value>testdata/staticConnectorConfig/connectors</value>
+		</property>
+	</bean>
+
+	<bean id="ConnectorStateStore"
+		class="com.google.enterprise.connector.persist.MockConnectorStateStore" />
+
+	<bean id="ConnectorInstantiator"
+		class="com.google.enterprise.connector.instantiator.SpringConnectorInstantiator">
+		<property name="store" ref="ConnectorConfigStore" />
+		<property name="connectorStateStore" ref="ConnectorStateStore" />
+		<property name="pusher" ref="Pusher" />
+	</bean>
+
+	<bean id="Instantiator"
+		class="com.google.enterprise.connector.instantiator.SpringInstantiator">
+		<constructor-arg ref="ConnectorTypeInstantiator" />
+		<constructor-arg ref="ConnectorInstantiator" />
+	</bean>
+
+	<bean id="Monitor"
+		class="com.google.enterprise.connector.monitor.HashMapMonitor" />
+
+	<bean id="WorkQueue"
+		class="com.google.enterprise.connector.common.WorkQueue">
+		<constructor-arg index="0" type="int" value="2" />
+		<constructor-arg index="1" type="long" value="5000" />
+	</bean>
+
+	<bean id="Manager"
+		class="com.google.enterprise.connector.manager.ProductionManager">
+		<property name="connectorConfigStore"
+			ref="ConnectorConfigStore" />
+		<property name="instantiator" ref="Instantiator" />
+	</bean>
+
+	<bean id="TraversalScheduler"
+		class="com.google.enterprise.connector.scheduler.TraversalScheduler">
+		<constructor-arg index="0" ref="Instantiator" />
+		<constructor-arg index="1" ref="Monitor" />
+		<constructor-arg index="2" ref="WorkQueue" />
+		<constructor-arg index="3">
+			<list>
+				<bean
+					class="com.google.enterprise.connector.scheduler.Schedule">
+					<constructor-arg index="0" type="java.lang.String"
+						value="connectorA" />
+					<constructor-arg index="1">
+						<list>
+							<bean
+								class="com.google.enterprise.connector.scheduler.ScheduleTimeInterval">
+								<constructor-arg index="0">
+									<bean
+										class="com.google.enterprise.connector.scheduler.ScheduleTime">
+										<constructor-arg type="int"
+											value="0" />
+									</bean>
+								</constructor-arg>
+								<constructor-arg index="1">
+									<bean
+										class="com.google.enterprise.connector.scheduler.ScheduleTime">
+										<constructor-arg type="int"
+											value="0" />
+									</bean>
+								</constructor-arg>
+							</bean>
+						</list>
+					</constructor-arg>
+				</bean>
+				<bean
+					class="com.google.enterprise.connector.scheduler.Schedule">
+					<constructor-arg index="0" type="java.lang.String"
+						value="connectorB" />
+					<constructor-arg index="1">
+						<list>
+							<bean
+								class="com.google.enterprise.connector.scheduler.ScheduleTimeInterval">
+								<constructor-arg index="0">
+									<bean
+										class="com.google.enterprise.connector.scheduler.ScheduleTime">
+										<constructor-arg type="int"
+											value="0" />
+									</bean>
+								</constructor-arg>
+								<constructor-arg index="1">
+									<bean
+										class="com.google.enterprise.connector.scheduler.ScheduleTime">
+										<constructor-arg type="int"
+											value="0" />
+									</bean>
+								</constructor-arg>
+							</bean>
+						</list>
+					</constructor-arg>
+				</bean>
+				<bean
+					class="com.google.enterprise.connector.scheduler.Schedule">
+					<constructor-arg index="0" type="java.lang.String"
+						value="connectorC" />
+					<constructor-arg index="1">
+						<list>
+							<bean
+								class="com.google.enterprise.connector.scheduler.ScheduleTimeInterval">
+								<constructor-arg index="0">
+									<bean
+										class="com.google.enterprise.connector.scheduler.ScheduleTime">
+										<constructor-arg type="int"
+											value="0" />
+									</bean>
+								</constructor-arg>
+								<constructor-arg index="1">
+									<bean
+										class="com.google.enterprise.connector.scheduler.ScheduleTime">
+										<constructor-arg type="int"
+											value="0" />
+									</bean>
+								</constructor-arg>
+							</bean>
+						</list>
+					</constructor-arg>
+				</bean>
+				<bean
+					class="com.google.enterprise.connector.scheduler.Schedule">
+					<constructor-arg index="0" type="java.lang.String"
+						value="connectorD" />
+					<constructor-arg index="1">
+						<list>
+							<bean
+								class="com.google.enterprise.connector.scheduler.ScheduleTimeInterval">
+								<constructor-arg index="0">
+									<bean
+										class="com.google.enterprise.connector.scheduler.ScheduleTime">
+										<constructor-arg type="int"
+											value="0" />
+									</bean>
+								</constructor-arg>
+								<constructor-arg index="1">
+									<bean
+										class="com.google.enterprise.connector.scheduler.ScheduleTime">
+										<constructor-arg type="int"
+											value="0" />
+									</bean>
+								</constructor-arg>
+							</bean>
+						</list>
+					</constructor-arg>
+				</bean>
+			</list>
+		</constructor-arg>
+
+	</bean>
+
+</beans>

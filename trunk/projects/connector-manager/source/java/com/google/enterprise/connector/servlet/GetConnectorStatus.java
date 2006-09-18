@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.logging.Logger;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -33,18 +34,17 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class GetConnectorStatus extends HttpServlet {
   private static final Logger logger =
-    Logger.getLogger(GetConnectorStatus.class.getName());
+      Logger.getLogger(GetConnectorStatus.class.getName());
 
-    /**
-     * Returns the connector status.
-     * @param req 
-     * @param res 
-     * @throws ServletException 
-     * @throws IOException 
-     * 
-     */
-  protected void doGet(HttpServletRequest req,
-                       HttpServletResponse res)
+  /**
+   * Returns the connector status.
+   * @param req 
+   * @param res 
+   * @throws ServletException 
+   * @throws IOException 
+   * 
+   */
+  protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
     String connectorName = req.getParameter("ConnectorName");
     if (connectorName.length() < 1) {
@@ -54,11 +54,14 @@ public class GetConnectorStatus extends HttpServlet {
 
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
-    MockManager mockManager = MockManager.getInstance();
-    ConnectorStatus connectorStatus = mockManager.getConnectorStatus(connectorName);
+
+    ServletContext servletContext = this.getServletContext();
+    Manager manager = Context.getInstance(servletContext).getManager();
+
+    ConnectorStatus connectorStatus = manager.getConnectorStatus(connectorName);
     if (connectorStatus == null) {
-      logger.info("Connector manager returns null status for " +
-                   connectorName + ".");
+      logger.info("Connector manager returns null status for " + connectorName
+          + ".");
     }
 
     handleDoGet(out, connectorStatus);
@@ -73,8 +76,7 @@ public class GetConnectorStatus extends HttpServlet {
    * @throws IOException 
    * 
    */
-  protected void doPost(HttpServletRequest req,
-                        HttpServletResponse res)
+  protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
     doGet(req, res);
   }
@@ -93,25 +95,21 @@ public class GetConnectorStatus extends HttpServlet {
       // logger.info("Connector manager returns null status for " +
       //             connectorName + ".");
       // logger.info("Connector manager returns null status.");
-      ServletUtil.writeXMLElement(
-          out, 1, ServletUtil.XMLTAG_CONNECTOT_STATUS, "null");
-      ServletUtil.writeXMLTag(
-          out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
+      ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_CONNECTOT_STATUS,
+          "null");
+      ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
       return;
     }
 
-    ServletUtil.writeXMLTag(
-        out, 1, ServletUtil.XMLTAG_CONNECTOT_STATUS, false);
-    ServletUtil.writeXMLElement(
-        out, 2, ServletUtil.XMLTAG_CONNECTOR_NAME, status.getName());
-    ServletUtil.writeXMLElement(
-        out, 2, ServletUtil.XMLTAG_CONNECTOR_TYPE, status.getType());
-    ServletUtil.writeXMLElement(
-        out, 2, ServletUtil.XMLTAG_STATUS,
-       	Integer.toString(status.getStatus()));
+    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOT_STATUS, false);
+    ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_CONNECTOR_NAME,
+        status.getName());
+    ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_CONNECTOR_TYPE,
+        status.getType());
+    ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_STATUS, Integer
+        .toString(status.getStatus()));
 
-    ServletUtil.writeXMLTag(
-            out, 1, ServletUtil.XMLTAG_CONNECTOT_STATUS, true);
+    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOT_STATUS, true);
     ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
   }
 }
