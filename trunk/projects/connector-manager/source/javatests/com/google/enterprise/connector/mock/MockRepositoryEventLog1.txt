@@ -1,4 +1,5 @@
 # this is a comment
+{"timestamp":"10","type":"save","docid":"doc0","content":"now is the time", "google:contenturl":"http://www.sometesturl.com/test", "google:lastmodify":"Tue, 15 Nov 1994 12:45:26 GMT"}
 {"timestamp":"10","type":"save","docid":"doc1","content":"now is the time"}
 {"timestamp":"20","type":"save","docid":"doc2","content":"now was the time"}
 {"timestamp":"30","type":"save","docid":"doc3","content":"now is the time","name":"foo"}
