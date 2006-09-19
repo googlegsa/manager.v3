@@ -24,8 +24,13 @@ public class NeverEndingQueryTraverser implements Traverser {
    */
   public int runBatch(int batchHint) throws InterruptedException {
     boolean breakLoop = true;
+    // infinite loop
     while (breakLoop) {
-      // infinite loop
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException ie) {
+        // do nothing
+      }
     }
     return batchHint;
   }
