@@ -150,7 +150,7 @@ public class Context {
         (TraversalScheduler) getRequiredBean("TraversalScheduler",
             TraversalScheduler.class);
     traversalScheduler.init();
-    schedulerThread = new Thread(traversalScheduler);
+    schedulerThread = new Thread(traversalScheduler, "TraversalScheduler");
     schedulerThread.start();
   }
 
@@ -168,6 +168,7 @@ public class Context {
     if (isFeeding) {
       startScheduler();
     }
+    started = true;
   }
 
   /**
@@ -224,6 +225,14 @@ public class Context {
    * @return the Manager
    */
   public Manager getManager() {
+    /*
+     * TODO: the call to start() is only a temporary way to start our system.
+     * In the long term, we should set up configuration in tomcat to call
+     * our appropriate starting servlet.  In the meantime, we want all our
+     * servlets to call this method (to start our system if it hasn't already 
+     * been started)
+     */
+    start();
     if (manager != null) {
       return manager;
     }
