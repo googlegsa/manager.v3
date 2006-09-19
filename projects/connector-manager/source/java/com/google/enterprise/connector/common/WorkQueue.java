@@ -86,6 +86,7 @@ public class WorkQueue {
     }
     for (int i = 0; i < numThreads; i++) {
       WorkQueueThread thread = new WorkQueueThread(); 
+      thread.setName("WorkQueueThread-" + numThreads);
       threads.add(thread);
       thread.start();
     }
