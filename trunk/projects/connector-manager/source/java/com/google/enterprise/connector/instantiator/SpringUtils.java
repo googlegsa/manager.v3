@@ -25,7 +25,7 @@ import java.util.Map.Entry;
  */
 public class SpringUtils {
 
-  private static final int INDENT_SIZE = 3;
+  private static final int INDENT_SIZE = 2;
 
   private static void appendSpaces(int n, StringBuffer buf) {
     final String SPACES = "                                            ";
@@ -46,8 +46,8 @@ public class SpringUtils {
    * @param mapStringString A Map of String to String
    * @return A spring xml fragment as a String
    */
-  public static String mapToSpring(Map mapStringString) {
-    return mapToSpring(mapStringString, 0);
+  public static String convertToSpringXml(Map mapStringString) {
+    return convertToSpringXml(mapStringString, 0);
   }
 
   /**
@@ -58,7 +58,7 @@ public class SpringUtils {
    * @param indentLevel A number of levels to indent each line
    * @return A spring xml fragment as a String
    */
-  public static String mapToSpring(Map mapStringString, int indentLevel) {
+  public static String convertToSpringXml(Map mapStringString, int indentLevel) {
     SortedMap sortedMap = new TreeMap(mapStringString);
     StringBuffer buf = new StringBuffer(2048);
     appendSpaces(indentLevel * INDENT_SIZE, buf);
@@ -87,7 +87,7 @@ public class SpringUtils {
 
     appendSpaces(indentLevel * INDENT_SIZE, buf);
     buf.append("</map>\r\n");
-    return new String(buf);
+    return buf.toString();
   }
 
   /**
@@ -98,6 +98,9 @@ public class SpringUtils {
    * @return the inside of the beans element
    */
   public static String stripBeansElement(String connectorBeanProto) {
+    // TODO(ziff): this code should be rewritten using an XML-aware package, rather
+    // than be ad-hoc and depending so strongly on the string representation of
+    // the XML
     int start = connectorBeanProto.indexOf("<beans");
     if (start < 0) {
       throw new IllegalArgumentException();
@@ -123,19 +126,25 @@ public class SpringUtils {
    */
   public static String removeNamedBean(String connectorBeanProto,
       String beanName) {
+    // TODO(ziff): this code should be rewritten using an XML-aware package, rather
+    // than be ad-hoc and depending so strongly on the string representation of
+    // the XML
     int start = connectorBeanProto.indexOf("<bean id=\"" + beanName + "\"");
     if (start < 0) {
-      return connectorBeanProto;    // no such bean to remove
+      return connectorBeanProto; // no such bean to remove
     }
     int finish = connectorBeanProto.indexOf("</bean>");
     if (finish <= start) {
       throw new IllegalArgumentException();
     }
     return connectorBeanProto.substring(0, start)
-        + connectorBeanProto.substring(finish + 7);  // length of "</bean>"
+        + connectorBeanProto.substring(finish + 7); // length of "</bean>"
   }
 
   public static String setBeanID(String connectorBeanProto, String newID) {
+    // TODO(ziff): this code should be rewritten using an XML-aware package, rather
+    // than be ad-hoc and depending so strongly on the string representation of
+    // the XML
     String foo = "<bean id=\"";
     int start = connectorBeanProto.indexOf("<bean");
     if (start < 0) {
@@ -168,14 +177,17 @@ public class SpringUtils {
 
   public static String makeConnectorInstanceXml(String connectorInstanceName,
       String prototypeInstance, Map configKeys) {
+    // TODO(ziff): this code should be rewritten using an XML-aware package, rather
+    // than be ad-hoc and depending so strongly on the string representation of
+    // the XML
     StringBuffer buf = new StringBuffer(8192);
     buf.append(SPRING_XML_START);
-    buf.append(mapToSpring(configKeys, 3));
+    buf.append(convertToSpringXml(configKeys, 3));
     buf.append(SPRING_XML_MIDDLE);
     String newInstanceBean = stripBeansElement(prototypeInstance);
-    String cleansedBean = removeNamedBean(newInstanceBean,"ConnectorConfigMap");
-    String renamedInstanceBean =
-        setBeanID(cleansedBean, connectorInstanceName);
+    String cleansedBean =
+        removeNamedBean(newInstanceBean, "ConnectorConfigMap");
+    String renamedInstanceBean = setBeanID(cleansedBean, connectorInstanceName);
     buf.append(renamedInstanceBean);
     buf.append(SPRING_XML_END);
     return new String(buf);

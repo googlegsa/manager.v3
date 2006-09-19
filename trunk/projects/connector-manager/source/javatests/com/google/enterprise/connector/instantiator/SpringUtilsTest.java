@@ -33,21 +33,21 @@ public class SpringUtilsTest extends TestCase {
   /**
    * Test method for 
    * {@link com.google.enterprise.connector.instantiator.SpringUtils
-   * #mapToSpring(java.util.Map, int)}.
+   * #convertToSpringXml(java.util.Map, int)}.
    * @throws JSONException 
    */
-  public final void testMapToSpring() throws JSONException {
+  public final void testConvertToSpringXml() throws JSONException {
     {
       String jsonInput = "{rowr:bazzle, foo:bar}";
       JSONObject jo = new JSONObject(jsonInput);
       Map m = new JsonObjectAsMap(jo);
-      String springXML = SpringUtils.mapToSpring(m);
+      String springXML = SpringUtils.convertToSpringXml(m);
       String expected =
-          "<map>\r\n" + "   <entry>\r\n"
-              + "      <key><value>foo</value></key>\r\n"
-              + "      <value>bar</value>\r\n" + "   </entry>\r\n"
-              + "   <entry>\r\n" + "      <key><value>rowr</value></key>\r\n"
-              + "      <value>bazzle</value>\r\n" + "   </entry>\r\n"
+          "<map>\r\n" + "  <entry>\r\n"
+              + "    <key><value>foo</value></key>\r\n"
+              + "    <value>bar</value>\r\n" + "  </entry>\r\n"
+              + "  <entry>\r\n" + "    <key><value>rowr</value></key>\r\n"
+              + "    <value>bazzle</value>\r\n" + "  </entry>\r\n"
               + "</map>\r\n" + "";
       Assert.assertEquals(expected, springXML);
     }
@@ -56,15 +56,15 @@ public class SpringUtilsTest extends TestCase {
       String jsonInput = "{tree:tree, now:time, noman:island}";
       JSONObject jo = new JSONObject(jsonInput);
       Map m = new JsonObjectAsMap(jo);
-      String springXML = SpringUtils.mapToSpring(m);
+      String springXML = SpringUtils.convertToSpringXml(m);
       String expected =
-          "<map>\r\n" + "   <entry>\r\n"
-              + "      <key><value>noman</value></key>\r\n"
-              + "      <value>island</value>\r\n" + "   </entry>\r\n"
-              + "   <entry>\r\n" + "      <key><value>now</value></key>\r\n"
-              + "      <value>time</value>\r\n" + "   </entry>\r\n"
-              + "   <entry>\r\n" + "      <key><value>tree</value></key>\r\n"
-              + "      <value>tree</value>\r\n" + "   </entry>\r\n"
+          "<map>\r\n" + "  <entry>\r\n"
+              + "    <key><value>noman</value></key>\r\n"
+              + "    <value>island</value>\r\n" + "  </entry>\r\n"
+              + "  <entry>\r\n" + "    <key><value>now</value></key>\r\n"
+              + "    <value>time</value>\r\n" + "  </entry>\r\n"
+              + "  <entry>\r\n" + "    <key><value>tree</value></key>\r\n"
+              + "    <value>tree</value>\r\n" + "  </entry>\r\n"
               + "</map>\r\n" + "";
       Assert.assertEquals(expected, springXML);
     }
@@ -73,7 +73,7 @@ public class SpringUtilsTest extends TestCase {
       String jsonInput = "{}";
       JSONObject jo = new JSONObject(jsonInput);
       Map m = new JsonObjectAsMap(jo);
-      String springXML = SpringUtils.mapToSpring(m);
+      String springXML = SpringUtils.convertToSpringXml(m);
       String expected = "<map>\r\n</map>\r\n" + "";
       Assert.assertEquals(expected, springXML);
     }
@@ -148,9 +148,9 @@ public class SpringUtilsTest extends TestCase {
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + 
         "<!DOCTYPE beans PUBLIC \"-//SPRING//DTD BEAN//EN\" \"http://www.springframework.org/dtd/spring-beans.dtd\">\n" + 
         "<beans>\n" + 
-        "   <bean id=\"TestConnector1\"\n" + 
-        "       class=\"com.google.enterprise.connector.jcradaptor.SpiRepositoryFromJcr\">\n" + 
-        "   </bean>\n" + 
+        "  <bean id=\"TestConnector1\"\n" + 
+        "      class=\"com.google.enterprise.connector.jcradaptor.SpiRepositoryFromJcr\">\n" + 
+        "  </bean>\n" + 
         "</beans>\n";
       String expectedOutput = 
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + 
@@ -158,22 +158,22 @@ public class SpringUtilsTest extends TestCase {
         "<beans>\n" + 
         "   <bean id=\"ConnectorConfigMap\" class=\"java.util.HashMap\">\n" + 
         "       <constructor-arg>\n" + 
-        "         <map>\n" + 
-        "            <entry>\n" + 
-        "               <key><value>foo</value></key>\n" + 
-        "               <value>bar</value>\n" + 
-        "            </entry>\n" + 
-        "            <entry>\n" + 
-        "               <key><value>rowr</value></key>\n" + 
-        "               <value>bazzle</value>\n" + 
-        "            </entry>\n" + 
-        "         </map>\n" + 
+        "      <map>\n" + 
+        "        <entry>\n" + 
+        "          <key><value>foo</value></key>\n" + 
+        "          <value>bar</value>\n" + 
+        "        </entry>\n" + 
+        "        <entry>\n" + 
+        "          <key><value>rowr</value></key>\n" + 
+        "          <value>bazzle</value>\n" + 
+        "        </entry>\n" + 
+        "      </map>\n" + 
         "       </constructor-arg>\n" + 
         "   </bean>\n" + 
         "\n" + 
-        "   <bean id=\"foo\"\n" + 
-        "       class=\"com.google.enterprise.connector.jcradaptor.SpiRepositoryFromJcr\">\n" + 
-        "   </bean>\n" + 
+        "  <bean id=\"foo\"\n" + 
+        "      class=\"com.google.enterprise.connector.jcradaptor.SpiRepositoryFromJcr\">\n" + 
+        "  </bean>\n" + 
         "</beans>\n";
       String name = "foo";
       String jsonInput = "{rowr:bazzle, foo:bar}";
@@ -198,16 +198,16 @@ public class SpringUtilsTest extends TestCase {
         "<beans>\n" + 
         "   <bean id=\"ConnectorConfigMap\" class=\"java.util.HashMap\">\n" + 
         "       <constructor-arg>\n" + 
-        "         <map>\n" + 
-        "            <entry>\n" + 
-        "               <key><value>foo</value></key>\n" + 
-        "               <value>bar</value>\n" + 
-        "            </entry>\n" + 
-        "            <entry>\n" + 
-        "               <key><value>rowr</value></key>\n" + 
-        "               <value>bazzle</value>\n" + 
-        "            </entry>\n" + 
-        "         </map>\n" + 
+        "      <map>\n" + 
+        "        <entry>\n" + 
+        "          <key><value>foo</value></key>\n" + 
+        "          <value>bar</value>\n" + 
+        "        </entry>\n" + 
+        "        <entry>\n" + 
+        "          <key><value>rowr</value></key>\n" + 
+        "          <value>bazzle</value>\n" + 
+        "        </entry>\n" + 
+        "      </map>\n" + 
         "       </constructor-arg>\n" + 
         "   </bean>\n" + 
         "\n" + 
