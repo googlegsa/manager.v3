@@ -15,16 +15,13 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
-import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.PersistentStoreException;
-import com.google.enterprise.connector.spi.ConfigureResponse;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
@@ -36,12 +33,11 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Admin servlet to set connector config.
- * TODO: This is a temp solution since it is not able to talk to GSA. 
  * 
  */
 public class SetConnectorConfig extends HttpServlet {
   private static final Logger LOG =
-    Logger.getLogger(GetConnectorList.class.getName());
+    Logger.getLogger(SetConnectorConfig.class.getName());
 
   /**
    * Returns the connector config (form) for now.
@@ -55,20 +51,7 @@ public class SetConnectorConfig extends HttpServlet {
   protected void doGet(HttpServletRequest req,
                        HttpServletResponse res)
       throws ServletException, IOException {
-    res.setContentType(ServletUtil.MIMETYPE_HTML);
-    PrintWriter out = res.getWriter();
-    out.print("<HTML><HEAD><TITLE>Set Connector Config</TITLE></HEAD>");
-    out.print("<BODY><H3>Connector Config:</H3><UL>");
-    out.print("</UL><HR><FORM METHOD=POST " +
-      "ACTION=\"/connector-manager/setConnectorConfig\">");
-    out.print("Connector Name   <INPUT TYPE=\"TEXT\" NAME=\"connectorName\"><BR>");
-    out.print("Connector Type   <INPUT TYPE=\"TEXT\" NAME=\"connectorType\"><BR>");
-    out.print("Name1   <INPUT TYPE=\"TEXT\" NAME=\"name1\"><BR>");
-    out.print("Name2   <INPUT TYPE=\"TEXT\" NAME=\"name2\"><BR>");
-    out.print("Name3   <INPUT TYPE=\"TEXT\" NAME=\"name3\"><BR>");
-    out.print("<INPUT TYPE=\"SUBMIT\" NAME=\"action\" VALUE=\"submit\">");
-    out.print("</FORM></BODY></HTML>");
-    out.close();
+    doPost(req, res);
   }
 
   /**
@@ -82,45 +65,26 @@ public class SetConnectorConfig extends HttpServlet {
   protected void doPost(HttpServletRequest req,
                         HttpServletResponse res)
       throws ServletException, IOException {
-    String status = "0";
-    Map configData = new TreeMap();
-    String lang = "en";
-    String connectorName = req.getParameter("connectorName");
-    String connectorType = req.getParameter("connectorType");
-    configData.put("name1", req.getParameter("name1"));
-    configData.put("name2", req.getParameter("name2"));
-    configData.put("name3", req.getParameter("name3"));
-    res.setContentType(ServletUtil.MIMETYPE_XML); //"text/plain"); //
+    String status = ServletUtil.XML_RESPONSE_SUCCESS;
+    String lang = req.getParameter("lang");
+    BufferedReader reader = req.getReader();
     PrintWriter out = res.getWriter();
-    
-    ServletContext servletContext = this.getServletContext();
-    Manager manager = Context.getInstance(servletContext).getManager();
-
-    try {
-      ConfigureResponse configRes =
-      manager.setConnectorConfig(connectorName, configData, lang);
-    } catch (ConnectorNotFoundException e) {
-      LOG.info("ConnectorNotFoundException");
-      status = e.toString();
-      e.printStackTrace();
-    } catch (PersistentStoreException e) {
-      LOG.info("PersistentStoreException");
-      status = e.toString();
-      e.printStackTrace();
+    res.setContentType(ServletUtil.MIMETYPE_XML);
+    String xmlBody = StringUtils.readAllToString(reader);
+    if (xmlBody.length() < 1) {
+      status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_REQUEST;
+      ServletUtil.writeSimpleResponse(out, status);
+      LOG.info("The request is empty");
+      return;
     }
 
-    handleDoPost(out, status);
+    ServletContext servletContext = this.getServletContext();
+    Manager manager = Context.getInstance(servletContext).getManager();
+    SetConnectorConfigHandler handler =
+        new SetConnectorConfigHandler(manager, lang, xmlBody);
+    ServletUtil.writeConfigureResponse(
+        out, handler.getStatus(), handler.getConfigRes());
     out.close();
   }
 
-  /**
-   * Handler for doPost in order to do unit tests.
-   * @param out PrintWriter Output for response
-   * @param status String
-   * 
-   */
-  public void handleDoPost(PrintWriter out, String status) {
-     
-    ServletUtil.writeSimpleResponse(out, status);
-  }
 }
