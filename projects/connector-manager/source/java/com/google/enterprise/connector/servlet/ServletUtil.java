@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,6 +34,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+import com.google.enterprise.connector.spi.ConfigureResponse;
 
 /**
  *
@@ -61,10 +65,19 @@ public class ServletUtil {
   public static final String XMLTAG_FEEDERGATE_HOST = "host";
   public static final String XMLTAG_FEEDERGATE_PORT = "port";
 
+  public static final String XMLTAG_CONNECTOR_CONFIG = "ConnectorConfig";
+  public static final String XMLTAG_PARAMETERS = "Param";
+
   public static final String XML_RESPONSE_SUCCESS = "0";
-  public static final String XML_RESPONSE_STATUS_EMPTY_REQUEST = "Empty request";
+  public static final String XML_RESPONSE_STATUS_EMPTY_REQUEST =
+      "Empty request";
   public static final String XML_RESPONSE_STATUS_EMPTY_NODE = "Empty node";
-  public static final String XML_RESPONSE_STATUS_PARAM_MISSING = "Param missing";
+  public static final String XML_RESPONSE_STATUS_PARAM_MISSING =
+      "Param missing";
+  public static final String XML_RESPONSE_STATUS_NULL_CONNECTOR =
+      "Null connector name";
+  public static final String XML_RESPONSE_STATUS_EMPTY_CONFIG_DATA =
+      "Empty connector configure data";
   public static final String XML_SIMPLE_RESPONSE =
       "<CmResponse>\n" + "  <StatusId>0</StatusId>\n" + "</CmResponse>\n";
 
@@ -119,10 +132,12 @@ public class ServletUtil {
   }
 
   /**
-   * Get text data of first XML element of given name
+   * Get the attribute value of a given attribute name for
+   * the first XML element of given name
    *
    * @param elem Element The parent XML element
    * @param name String name of the child text element
+   * @param attrName String Attribute name
    * @return String attribute value of named child element
    */
   public static String getFirstAttribute(Element elem, String name, String attrName) {
@@ -135,20 +150,24 @@ public class ServletUtil {
   }
 
   /**
-   * Get text data of first XML element of given name
+   * Get the attribute values of a given name/value pair for
+   * the first XML element of given name
    *
    * @param elem Element The parent XML element
    * @param name String name of the child text element
-   * @return String attribute value of named child element
+   * @return attribute name and value map of named child element
+   * 
    */
-  public static String getAllAttributes(Element elem, String name, String attrName) {
-    String attrVal = null;
+  public static Map getAllAttributes(Element elem, String name) {
+    Map attributes = new TreeMap();
     NodeList nodeList = elem.getElementsByTagName(name); 
     int length = nodeList.getLength(); 
     for (int n = 0; n < length; ++n) {
-      System.out.println(((Element)nodeList.item(n)).getAttribute(attrName));
+      attributes.put(
+            ((Element)nodeList.item(n)).getAttribute("name"),
+            ((Element)nodeList.item(n)).getAttribute("value"));
     }
-    return attrVal;
+    return attributes;
   }
 
   /**
@@ -204,6 +223,18 @@ public class ServletUtil {
   public static void writeSimpleResponse(PrintWriter out, String status) {
     writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);
     writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, status);
+    writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
+  }
+
+  public static void writeConfigureResponse(
+      PrintWriter out, String status, ConfigureResponse configRes) {
+    writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);
+    writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, status);
+    writeXMLTag(out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, false);
+    writeXMLElement(
+        out, 2, ServletUtil.XMLTAG_MESSAGE, configRes.getMessage());
+    writeXMLElement(
+        out, 2, ServletUtil.XMLTAG_FORM_SNIPPET, configRes.getFormSnippet());
     writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
   }
 
