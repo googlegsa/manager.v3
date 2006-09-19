@@ -83,9 +83,8 @@ public class ConnectorTypeInstantiatorTest extends TestCase {
     ConnectorTypeInstantiator connectorTypeInstantiator =
         new SpringConnectorTypeInstantiator();
     Set actualNames = new HashSet();
-    int counter = 0;
     for (Iterator i = connectorTypeInstantiator.getConnectorTypeNames(); i
-        .hasNext(); counter++) {
+        .hasNext(); ) {
       String connectorTypeName = (String) i.next();
       verifyConnectorTypeFound(connectorTypeInstantiator, connectorTypeName);
       actualNames.add(connectorTypeName);
