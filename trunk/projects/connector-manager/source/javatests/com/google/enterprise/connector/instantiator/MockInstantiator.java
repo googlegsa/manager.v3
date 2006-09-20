@@ -23,6 +23,8 @@ import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
+import com.google.enterprise.connector.spi.AuthenticationManager;
+import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.QueryTraversalManager;
 import com.google.enterprise.connector.traversal.LongRunningQueryTraverser;
@@ -132,5 +134,13 @@ public class MockInstantiator implements Instantiator {
   }
 
   public void dropConnector(String connectorName) throws InstantiatorException {
+  }
+
+  public AuthenticationManager getAuthenticationManager(String connectorName) throws ConnectorNotFoundException, InstantiatorException {
+    throw new UnsupportedOperationException();
+  }
+
+  public AuthorizationManager getAuthorizationManager(String connectorName) throws ConnectorNotFoundException, InstantiatorException {
+    throw new UnsupportedOperationException();
   }
 }

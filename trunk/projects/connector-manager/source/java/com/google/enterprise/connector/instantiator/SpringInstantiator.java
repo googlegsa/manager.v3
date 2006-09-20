@@ -16,6 +16,8 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
+import com.google.enterprise.connector.spi.AuthenticationManager;
+import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.traversal.Traverser;
 
@@ -92,6 +94,14 @@ public class SpringInstantiator implements Instantiator {
   private void setConnectorConfig(String connectorName, String connectorTypeName, Map configKeys, String prototypeString) throws ConnectorNotFoundException, ConnectorTypeNotFoundException, InstantiatorException {
     connectorInstantiator.setConnectorConfig(connectorName, connectorTypeName,
         configKeys, prototypeString);
+  }
+
+  public AuthenticationManager getAuthenticationManager(String connectorName) throws ConnectorNotFoundException, InstantiatorException {
+    throw new UnsupportedOperationException();
+  }
+
+  public AuthorizationManager getAuthorizationManager(String connectorName) throws ConnectorNotFoundException, InstantiatorException {
+    throw new UnsupportedOperationException();
   }
 
 }
