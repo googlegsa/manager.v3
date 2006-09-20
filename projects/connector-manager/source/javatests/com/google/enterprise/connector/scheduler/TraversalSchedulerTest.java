@@ -22,8 +22,11 @@ import com.google.enterprise.connector.instantiator.SpringConnectorInstantiator;
 import com.google.enterprise.connector.instantiator.SpringConnectorTypeInstantiator;
 import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.monitor.HashMapMonitor;
+import com.google.enterprise.connector.persist.ConnectorConfigStore;
+import com.google.enterprise.connector.persist.ConnectorScheduleStore;
 import com.google.enterprise.connector.persist.FilesystemConnectorConfigStore;
 import com.google.enterprise.connector.persist.MockConnectorStateStore;
+import com.google.enterprise.connector.persist.PrefsStore;
 import com.google.enterprise.connector.pusher.MockPusher;
 
 import junit.framework.Assert;
@@ -36,6 +39,7 @@ import org.springframework.core.io.ResourceLoader;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -45,9 +49,17 @@ import java.util.List;
 public class TraversalSchedulerTest extends TestCase {
   private void runWithSchedules(List schedules, Instantiator instantiator) {
     WorkQueue workQueue = new WorkQueue(2, 5000);
+    ConnectorConfigStore configStore = null;
+    try {
+      configStore = createConnectorConfigStore();
+    } catch (IOException e) {
+      e.printStackTrace();
+      fail(e.getMessage());
+    }
+    ConnectorScheduleStore scheduleStore = createConnectorScheduleStore(schedules);
     TraversalScheduler scheduler = 
       new TraversalScheduler(instantiator, new HashMapMonitor(),
-        workQueue, schedules);
+        workQueue, configStore, scheduleStore);
     scheduler.init();
     Thread thread = new Thread(scheduler);
     thread.start();
@@ -61,6 +73,27 @@ public class TraversalSchedulerTest extends TestCase {
     scheduler.shutdown(false);
   }
 
+  private ConnectorConfigStore createConnectorConfigStore() throws IOException {
+    ResourceLoader rl = new FileSystemResourceLoader();
+    Resource resource = rl.getResource("testdata/staticConnectorConfig/connectors");
+    File file = resource.getFile();
+    FilesystemConnectorConfigStore store = new FilesystemConnectorConfigStore();
+    store.setBaseDirectory(file);
+    return store;
+  }
+  
+  private ConnectorScheduleStore createConnectorScheduleStore(List schedules) {
+    ConnectorScheduleStore store = new PrefsStore();
+    Iterator iter = schedules.iterator();
+    while (iter.hasNext()) {
+      Schedule schedule = (Schedule) iter.next();
+      String connectorName = schedule.getConnectorName();
+      String connectorSchedule = schedule.toString();
+      store.storeConnectorSchedule(connectorName, connectorSchedule);
+    }
+    return store;
+  }
+  
   private Instantiator createMockInstantiator() {
     return new MockInstantiator();
   }

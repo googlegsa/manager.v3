@@ -19,15 +19,20 @@ import com.google.enterprise.connector.common.WorkQueueItem;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.monitor.Monitor;
+import com.google.enterprise.connector.persist.ConnectorConfigStore;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.persist.ConnectorScheduleStore;
+import com.google.enterprise.connector.servlet.TestConnectivity;
 import com.google.enterprise.connector.traversal.Traverser;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Scheduler that schedules connector traversal.  This class is thread safe.  
@@ -36,31 +41,36 @@ import java.util.Map;
 public class TraversalScheduler implements Scheduler {
   public static final String SCHEDULER_CURRENT_TIME = "scheduler/currentTime";
   
+  private static final Logger LOGGER = 
+    Logger.getLogger(TraversalScheduler.class.getName());
+  
   private Instantiator instantiator;
   private Monitor monitor;
   private WorkQueue workQueue;
-  private List schedules;
+  private ConnectorConfigStore configStore;
+  private ConnectorScheduleStore scheduleStore;
   
   private HostLoadManager hostLoadManager;
   
   private boolean isInitialized;
   private boolean isShutdown;
   
-  // TODO: point this to the ScheduleStore
   /**
-   * Create a Scheduler object.   
-   *
+   * Create a scheduler object.
    * @param instantiator
    * @param monitor
    * @param workQueue
-   * @param schedules
+   * @param configStore
+   * @param scheduleStore
    */
   public TraversalScheduler(Instantiator instantiator, Monitor monitor, 
-      WorkQueue workQueue, List schedules) {
+      WorkQueue workQueue, ConnectorConfigStore configStore, 
+      ConnectorScheduleStore scheduleStore) {
     this.instantiator = instantiator;
     this.monitor = monitor;
     this.workQueue = workQueue;
-    this.schedules = schedules;
+    this.configStore = configStore;
+    this.scheduleStore = scheduleStore;
     this.hostLoadManager = new HostLoadManager(100);
     this.isInitialized = false;
     this.isShutdown = false;
@@ -89,6 +99,14 @@ public class TraversalScheduler implements Scheduler {
    * @return a hardcoded schedule.
    */
   private List getSchedules() {
+    List schedules = new ArrayList();
+    Iterator iter = configStore.getConnectorNames();
+    while (iter.hasNext()) {
+      String connectorName = (String) iter.next();
+      String scheduleStr = scheduleStore.getConnectorSchedule(connectorName);
+      Schedule schedule = new Schedule(scheduleStr);
+      schedules.add(schedule);
+    }
     return schedules;
   }
 
@@ -99,7 +117,6 @@ public class TraversalScheduler implements Scheduler {
     } catch (ConnectorNotFoundException cnfe) {
       cnfe.printStackTrace();
     } catch (InstantiatorException ie) {
-      // TODO(danny): please evaluate whether this is the right thing to do
       ie.printStackTrace();
     }
     return traverser;
@@ -152,13 +169,10 @@ public class TraversalScheduler implements Scheduler {
               1000 * (long) Math.pow(2, runnable.getNumConsecutiveFailures());
             long now = System.currentTimeMillis();
             if (runnable.getTimeOfFirstFailure() + backoff > now) {
-              System.out.println("Backing off due to previous failures: "
-                + connectorName);
-              System.out.println("Backoff (ms): " + backoff);
               continue;
             }
           }
-          System.out.println("Adding work to workQueue.");
+          LOGGER.info("Adding traversal work to workQueue: " + connectorName);
           workQueue.addWork(runnable);
           int numDocsTraversed = runnable.getNumDocsTraversed();
           if (numDocsTraversed > 0) {
