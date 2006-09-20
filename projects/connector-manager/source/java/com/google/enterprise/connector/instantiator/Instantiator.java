@@ -16,6 +16,8 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
+import com.google.enterprise.connector.spi.AuthenticationManager;
+import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.traversal.Traverser;
 
@@ -26,6 +28,34 @@ import java.util.Map;
  * Interface for instantiator component.
  */
 public interface Instantiator  {
+
+  /**
+   * gets an AuthenticationManager for a named connector.
+   * 
+   * @param connectorName the String name of the connector for which to get the
+   *        Traverser
+   * @return the AuthenticationManager, fully instantiated
+   * @throws ConnectorNotFoundException to indicate that no connector of the
+   *         specified name is found
+   * @throws InstantiatorException if something bad, probably unrecoverable,
+   *         happens
+   */
+  public AuthenticationManager getAuthenticationManager(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException;
+
+  /**
+   * gets an AuthorizationManager for a named connector.
+   * 
+   * @param connectorName the String name of the connector for which to get the
+   *        Traverser
+   * @return the AuthorizationManager, fully instantiated
+   * @throws ConnectorNotFoundException to indicate that no connector of the
+   *         specified name is found
+   * @throws InstantiatorException if something bad, probably unrecoverable,
+   *         happens
+   */
+  public AuthorizationManager getAuthorizationManager(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException;
 
   /**
    * Finds a named connector.
