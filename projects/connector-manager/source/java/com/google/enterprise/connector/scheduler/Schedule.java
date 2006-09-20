@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.scheduler;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -27,6 +29,58 @@ public class Schedule {
   public Schedule(String connectorName, List timeIntervals) {
     this.connectorName = connectorName;
     this.timeIntervals = timeIntervals;
+  }
+  
+  /**
+   * Create a schedule object.
+   * @param scheduleProto String readable by readString() method
+   */
+  public Schedule(String scheduleProto) {
+    readString(scheduleProto);
+  }
+  
+  /**
+   * Populate a schedule.
+   * 
+   * String of the form: 
+   * e.g. "connector1:1-2:3-5"
+   *
+   */
+  public void readString(String schedule) {
+    String[] strs = schedule.split(":");
+    if (strs.length > 0) {
+      connectorName = strs[0];
+      timeIntervals = new ArrayList();
+      for (int i = 1; i < strs.length; i++) {
+        String[] strs2 = strs[i].split("-");
+        String startTime = strs2[0];
+        String endTime = strs2[1];
+        ScheduleTime t1 = new ScheduleTime(Integer.parseInt(startTime));
+        ScheduleTime t2 = new ScheduleTime(Integer.parseInt(endTime));
+        ScheduleTimeInterval interval = new ScheduleTimeInterval(t1, t2);
+        timeIntervals.add(interval);
+      }
+    }
+  }
+  
+  /**
+   * String of the form: 
+   * e.g. "connector1:1-2:3-5"
+   */
+  public String toString() {
+    StringBuffer buf = new StringBuffer();
+    buf.append(connectorName);
+    Iterator iter = timeIntervals.iterator();
+    while (iter.hasNext()) {
+      ScheduleTimeInterval interval = (ScheduleTimeInterval) iter.next();
+      ScheduleTime startTime = interval.getStartTime();
+      ScheduleTime endTime = interval.getEndTime();
+      buf.append(":");
+      buf.append(startTime.getHour());
+      buf.append("-");
+      buf.append(endTime.getHour());
+    }
+    return buf.toString();
   }
   
   public String getConnectorName() {
