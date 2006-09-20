@@ -20,6 +20,8 @@ import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.pusher.Pusher;
+import com.google.enterprise.connector.spi.AuthenticationManager;
+import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.LoginException;
 import com.google.enterprise.connector.spi.QueryTraversalManager;
@@ -61,7 +63,6 @@ public class SpringConnectorInstantiator implements ConnectorInstantiator {
 
   // implementation fields
   private SortedMap connectorMap = null;
-  private SortedMap traverserMap = null;
   private boolean initialized = false;
 
 
@@ -71,7 +72,6 @@ public class SpringConnectorInstantiator implements ConnectorInstantiator {
    */
   public SpringConnectorInstantiator() {
     connectorMap = new TreeMap();
-    traverserMap = new TreeMap();
   }
 
   /**
@@ -138,7 +138,7 @@ public class SpringConnectorInstantiator implements ConnectorInstantiator {
         LOGGER
             .warning("Persistent store exception while accessing resource for "
                 + connectorName + ".  Skipping this connector.");
-        // TODO(ziff): need generic way of logging exception, that may contain
+        // TODO(ziff): need generic way of logging exceptions, that may contain
         // embedded exceptions
         LOGGER.warning("Exception: " + e.getMessage());
       }
@@ -146,8 +146,10 @@ public class SpringConnectorInstantiator implements ConnectorInstantiator {
         Connector c =
             instantiateSingleConnectorFromResource(connectorName,
                 connectorResource);
+        ConnectorInterfaces connectorInterfaces =
+            new ConnectorInterfaces(connectorName, c);
         if (c != null) {
-          connectorMap.put(connectorName, c);
+          connectorMap.put(connectorName, connectorInterfaces);
         }
       }
     }
@@ -175,6 +177,54 @@ public class SpringConnectorInstantiator implements ConnectorInstantiator {
     return c;
   }
 
+  private ConnectorInterfaces findConnectorInterfaces(String connectorName)
+      throws ConnectorNotFoundException {
+    if (connectorName == null || connectorName.length() < 1) {
+      throw new IllegalArgumentException();
+    }
+    initialize();
+    ConnectorInterfaces connectorInterfaces =
+        (ConnectorInterfaces) connectorMap.get(connectorName);
+    if (connectorInterfaces == null) {
+      throw new ConnectorNotFoundException(connectorName);
+    }
+    return connectorInterfaces;
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.google.enterprise.connector.instantiator.ConnectorInstantiator#getAuthenticationManager(java.lang.String)
+   */
+  public AuthenticationManager getAuthenticationManager(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException {
+    initialize();
+    ConnectorInterfaces connectorInterfaces =
+        findConnectorInterfaces(connectorName);
+    AuthenticationManager result = connectorInterfaces.getAuthenticationManager();
+    if (result == null) {
+      throw new InstantiatorException();
+    }
+    return result;
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.google.enterprise.connector.instantiator.ConnectorInstantiator#getAuthorizationManager(java.lang.String)
+   */
+  public AuthorizationManager getAuthorizationManager(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException {
+    initialize();
+    ConnectorInterfaces connectorInterfaces =
+        findConnectorInterfaces(connectorName);
+    AuthorizationManager result = connectorInterfaces.getAuthorizationManager();
+    if (result == null) {
+      throw new InstantiatorException();
+    }
+    return result;
+  }
+
   /*
    * (non-Javadoc)
    * 
@@ -182,46 +232,13 @@ public class SpringConnectorInstantiator implements ConnectorInstantiator {
    */
   public Traverser getTraverser(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
-    if (connectorName == null || connectorName.length() < 1) {
-      throw new IllegalArgumentException();
+    ConnectorInterfaces connectorInterfaces =
+        findConnectorInterfaces(connectorName);
+    Traverser result = connectorInterfaces.getTraverser();
+    if (result == null) {
+      throw new InstantiatorException();
     }
-    initialize();
-    Traverser result = findTraverser(connectorName);
     return result;
-  }
-
-  private Traverser findTraverser(String connectorName)
-      throws ConnectorNotFoundException, InstantiatorException {
-    Traverser t = (Traverser) traverserMap.get(connectorName);
-    if (t != null) {
-      return t;
-    }
-    Connector c = (Connector) connectorMap.get(connectorName);
-    if (c == null) {
-      throw new ConnectorNotFoundException(connectorName);
-    }
-    // TODO(ziff): get the credentials for this connector
-    Session s = null;
-    try {
-      s = c.login("", "");
-    } catch (LoginException e) {
-      // this is un-recoverable
-      throw new InstantiatorException(e);
-    } catch (RepositoryException e) {
-      // for this one, we could try again later
-      // TODO(ziff): think about how this could be re-tried
-      throw new InstantiatorException(e);
-    }
-    QueryTraversalManager qtm = null;
-    try {
-      qtm = s.getQueryTraversalManager();
-    } catch (RepositoryException e) {
-      // for this one, we could try again later
-      // TODO(ziff): think about how this could be re-tried
-    }
-    t = new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
-    traverserMap.put(connectorName, t);
-    return t;
   }
 
   public void setConnectorConfig(String connectorName,
@@ -251,7 +268,9 @@ public class SpringConnectorInstantiator implements ConnectorInstantiator {
     }
     Connector c =
         instantiateSingleConnectorFromResource(connectorName, resourceString);
-    connectorMap.put(connectorName, c);
+    ConnectorInterfaces connectorInterfaces =
+        new ConnectorInterfaces(connectorName, c);
+    connectorMap.put(connectorName, connectorInterfaces);
   }
 
   /*
@@ -263,6 +282,114 @@ public class SpringConnectorInstantiator implements ConnectorInstantiator {
     initialize();
     store.dropConnector(connectorName);
     connectorMap.remove(connectorName);
-    traverserMap.remove(connectorName);
   }
+
+  class ConnectorInterfaces {
+    final String connectorName;
+    final Connector connector;
+    // these are lazily constructed
+    Traverser traverser = null;
+    AuthenticationManager authenticationManager = null;
+    AuthorizationManager authorizationManager = null;
+
+    String username = null;
+    String password = null;
+
+    ConnectorInterfaces(String connectorName, Connector connector) {
+      this.connectorName = connectorName;
+      this.connector = connector;
+    }
+
+    /**
+     * @return the authenticationManager
+     * @throws InstantiatorException
+     */
+    AuthenticationManager getAuthenticationManager()
+        throws InstantiatorException {
+      if (authenticationManager == null) {
+        Session s = getSession();
+        try {
+          authenticationManager = s.getAuthenticationManager();
+        } catch (RepositoryException e) {
+          // TODO(ziff): think about how this could be re-tried
+          throw new InstantiatorException(e);
+        }
+      }
+      return authenticationManager;
+    }
+
+    /**
+     * @return the authorizationManager
+     * @throws InstantiatorException
+     */
+    AuthorizationManager getAuthorizationManager() throws InstantiatorException {
+      if (authorizationManager == null) {
+        Session s = getSession();
+        try {
+          authorizationManager = s.getAuthorizationManager();
+        } catch (RepositoryException e) {
+          // TODO(ziff): think about how this could be re-tried
+          throw new InstantiatorException(e);
+        }
+      }
+      return authorizationManager;
+    }
+
+    /**
+     * @return the connector
+     */
+    Connector getConnector() {
+      return connector;
+    }
+
+    /**
+     * @return the connectorName
+     */
+    String getConnectorName() {
+      return connectorName;
+    }
+
+    /**
+     * @return the traverser
+     * @throws InstantiatorException
+     */
+    Traverser getTraverser() throws InstantiatorException {
+      if (traverser == null) {
+        Session s = getSession();
+        QueryTraversalManager qtm = null;
+        try {
+          qtm = s.getQueryTraversalManager();
+        } catch (RepositoryException e) {
+          // TODO(ziff): think about how this could be re-tried
+        }
+        traverser =
+            new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
+      }
+      return traverser;
+    }
+
+    private Session getSession() throws InstantiatorException {
+      Session s = null;
+      getCredentials();
+      try {
+        s = connector.login(username, password);
+      } catch (LoginException e) {
+        // this is un-recoverable
+        throw new InstantiatorException(e);
+      } catch (RepositoryException e) {
+        // for this one, we could try again later
+        // TODO(ziff): think about how this could be re-tried
+        throw new InstantiatorException(e);
+      }
+      return s;
+    }
+
+    private void getCredentials() {
+      // TODO we have to move this back into the Connector config itself
+      password = "";
+      username = "";
+    }
+
+  }
+
 }

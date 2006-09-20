@@ -87,21 +87,26 @@ public class SpringInstantiator implements Instantiator {
     // ConnectorTypeNotFoundException if the connectorTypeName doesn't exist
     String prototypeString = getConnectorInstancePrototype(connectorTypeName);
     // then dispatch to the connector instantiator
-    setConnectorConfig(connectorName, connectorTypeName,
-        configKeys, prototypeString);
+    setConnectorConfig(connectorName, connectorTypeName, configKeys,
+        prototypeString);
   }
 
-  private void setConnectorConfig(String connectorName, String connectorTypeName, Map configKeys, String prototypeString) throws ConnectorNotFoundException, ConnectorTypeNotFoundException, InstantiatorException {
+  private void setConnectorConfig(String connectorName,
+      String connectorTypeName, Map configKeys, String prototypeString)
+      throws ConnectorNotFoundException, ConnectorTypeNotFoundException,
+      InstantiatorException {
     connectorInstantiator.setConnectorConfig(connectorName, connectorTypeName,
         configKeys, prototypeString);
   }
 
-  public AuthenticationManager getAuthenticationManager(String connectorName) throws ConnectorNotFoundException, InstantiatorException {
-    throw new UnsupportedOperationException();
+  public AuthenticationManager getAuthenticationManager(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException {
+    return connectorInstantiator.getAuthenticationManager(connectorName);
   }
 
-  public AuthorizationManager getAuthorizationManager(String connectorName) throws ConnectorNotFoundException, InstantiatorException {
-    throw new UnsupportedOperationException();
+  public AuthorizationManager getAuthorizationManager(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException {
+    return connectorInstantiator.getAuthorizationManager(connectorName);
   }
 
 }
