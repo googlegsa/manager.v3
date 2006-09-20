@@ -18,6 +18,8 @@ import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.FilesystemConnectorConfigStore;
 import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
+import com.google.enterprise.connector.spi.AuthenticationManager;
+import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import junit.framework.TestCase;
@@ -48,7 +50,8 @@ public class SpringConnectorInstantiatorTest extends TestCase {
 
     // set up a ConnectorConfigStore
     ResourceLoader rl = new FileSystemResourceLoader();
-    Resource resource = rl.getResource("testdata/staticConnectorConfig/connectors");
+    Resource resource =
+        rl.getResource("testdata/staticConnectorConfig/connectors");
     File file = resource.getFile();
     FilesystemConnectorConfigStore store = new FilesystemConnectorConfigStore();
     store.setBaseDirectory(file);
@@ -64,19 +67,28 @@ public class SpringConnectorInstantiatorTest extends TestCase {
     inst.setConnectorStateStore(css);
     inst.setPusher(pusher);
 
-    verifyTraverser("connectorA", inst);
-    verifyTraverser("connectorB", inst);
-    verifyTraverser("connectorC", inst);
-    verifyTraverser("connectorD", inst);
+    verifyInterfaces("connectorA", inst);
+    verifyInterfaces("connectorB", inst);
+    verifyInterfaces("connectorC", inst);
+    verifyInterfaces("connectorD", inst);
 
   }
 
-  private void verifyTraverser(String connectorName,
-      ConnectorInstantiator inst) throws ConnectorNotFoundException,
-      InstantiatorException {
-    Traverser t = inst.getTraverser(connectorName);
-    if (t == null) {
+  private void verifyInterfaces(String connectorName, ConnectorInstantiator inst)
+      throws ConnectorNotFoundException, InstantiatorException {
+    Traverser traverser = inst.getTraverser(connectorName);
+    if (traverser == null) {
       fail("should get a non-null traverser for " + connectorName);
+    }
+    AuthenticationManager authenticationManager =
+        inst.getAuthenticationManager(connectorName);
+    if (authenticationManager == null) {
+      fail("should get a non-null authenticationManager for " + connectorName);
+    }
+    AuthorizationManager authorizationManager =
+        inst.getAuthorizationManager(connectorName);
+    if (authorizationManager == null) {
+      fail("should get a non-null authorizationManager for " + connectorName);
     }
   }
 }

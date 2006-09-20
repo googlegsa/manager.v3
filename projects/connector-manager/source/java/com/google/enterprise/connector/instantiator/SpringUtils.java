@@ -190,6 +190,6 @@ public class SpringUtils {
     String renamedInstanceBean = setBeanID(cleansedBean, connectorInstanceName);
     buf.append(renamedInstanceBean);
     buf.append(SPRING_XML_END);
-    return new String(buf);
+    return buf.toString();
   }
 }

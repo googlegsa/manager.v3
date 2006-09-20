@@ -78,7 +78,7 @@ public class StringUtils {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    return new String(b);
+    return b.toString();
   }
   
   /**
