@@ -86,7 +86,7 @@ public class WorkQueue {
     }
     for (int i = 0; i < numThreads; i++) {
       WorkQueueThread thread = new WorkQueueThread(); 
-      thread.setName("WorkQueueThread-" + numThreads);
+      thread.setName("WorkQueueThread-" + i);
       threads.add(thread);
       thread.start();
     }
@@ -144,7 +144,7 @@ public class WorkQueue {
   /**
    * Interrupts all WorkQueueItems that have timed out.
    */
-  private void interruptAllTimedOutItems() {
+  private synchronized void interruptAllTimedOutItems() {
     long now;
     // determine which work threads should be interrupted as well as 
     // set nextAbsTimeout
