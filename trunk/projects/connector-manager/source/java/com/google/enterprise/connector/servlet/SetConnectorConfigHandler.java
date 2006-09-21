@@ -55,6 +55,7 @@ public class SetConnectorConfigHandler {
     if (nodeList.getLength() == 0) {
       this.status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE;
       LOG.info(ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE);
+      return;
     }
 
     this.connectorName = ServletUtil.getFirstElementByTagName(

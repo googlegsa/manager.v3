@@ -75,15 +75,11 @@
         <servlet-name>AuthnCheck</servlet-name>
         <servlet-class>com.google.enterprise.connector.servlet.AuthnCheck</servlet-class>
     </servlet>
-    <servlet>
-        <servlet-name>AuthzCheck</servlet-name>
-        <servlet-class>com.google.enterprise.connector.servlet.AuthzCheck</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name></servlet-name>
-        <servlet-class>com.google.enterprise.connector.servlet.</servlet-class>
-    </servlet>
 -->
+    <servlet>
+        <servlet-name>Authorization</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.Authorization</servlet-class>
+    </servlet>
     <servlet>
         <servlet-name>HelloClientFromGSA</servlet-name>
         <servlet-class>com.google.enterprise.connector.servlet.HelloClientFromGSA</servlet-class>
@@ -136,11 +132,11 @@
         <servlet-name>AuthnCheck</servlet-name>
 	<url-pattern>/authnCheck</url-pattern>
     </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AuthzCheck</servlet-name>
-	<url-pattern>/authzCheck</url-pattern>
-    </servlet-mapping>
 -->
+    <servlet-mapping>
+        <servlet-name>Authorization</servlet-name>
+	<url-pattern>/authorization</url-pattern>
+    </servlet-mapping>
     <servlet-mapping>
         <servlet-name>HelloClientFromGSA</servlet-name>
         <url-pattern>/HelloClientFromGSA</url-pattern>

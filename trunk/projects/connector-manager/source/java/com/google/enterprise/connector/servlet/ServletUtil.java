@@ -68,6 +68,14 @@ public class ServletUtil {
   public static final String XMLTAG_CONNECTOR_CONFIG = "ConnectorConfig";
   public static final String XMLTAG_PARAMETERS = "Param";
 
+  public static final String XMLTAG_AUTHZ_QUERY = "AuthorizationQuery";
+  public static final String XMLTAG_CONNECTOR_QUERY = "ConnectorQuery";
+  public static final String XMLTAG_IDENTITY = "Identity";
+  public static final String XMLTAG_RESOURCE = "Resource";
+  public static final String XMLTAG_AUTHZ_RESPONSE = "AuthorizationResponse";
+  public static final String XMLTAG_ANSWER = "Answer";
+  public static final String XMLTAG_DECISION = "Decision";
+
   public static final String XML_RESPONSE_SUCCESS = "0";
   public static final String XML_RESPONSE_STATUS_EMPTY_REQUEST =
       "Empty request";
@@ -76,8 +84,14 @@ public class ServletUtil {
       "Param missing";
   public static final String XML_RESPONSE_STATUS_NULL_CONNECTOR =
       "Null connector name";
+  public static final String XML_RESPONSE_STATUS_NULL_DOCID =
+      "Null doc ID";
   public static final String XML_RESPONSE_STATUS_EMPTY_CONFIG_DATA =
       "Empty connector configure data";
+  public static final String XML_RESPONSE_STATUS_NULL_RESOURCE =
+      "Null resource";
+  public static final String XML_RESPONSE_AUTHZ_DOCID_MISMATCH =
+    "Authorization docid mismatch";
   public static final String XML_SIMPLE_RESPONSE =
       "<CmResponse>\n" + "  <StatusId>0</StatusId>\n" + "</CmResponse>\n";
 
