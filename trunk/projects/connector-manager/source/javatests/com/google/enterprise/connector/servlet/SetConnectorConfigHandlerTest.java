@@ -28,9 +28,6 @@ public class SetConnectorConfigHandlerTest extends TestCase {
   private String connectorType;
   private Map configData;
 
-  /**
-   * Test method for {@link com.google.enterprise.connector.servlet.SetConnectorConfigHandlerTest#SetConnectorConfigHandler(com.google.enterprise.connector.manager.Manager, java.lang.String, java.lang.String)}.
-   */
   public void testSetConnectorConfigHandler1() {
     language = "en";
     connectorName = "connectorA";
@@ -42,9 +39,6 @@ public class SetConnectorConfigHandlerTest extends TestCase {
     doTest(setXMLBody());
   }
 
-  /**
-   * Test method for {@link com.google.enterprise.connector.servlet.SetConnectorConfigHandlerTest#SetConnectorConfigHandler(com.google.enterprise.connector.manager.Manager, java.lang.String, java.lang.String)}.
-   */
   public void testSetConnectorConfigHandler2() {
     language = "en";
     connectorName = "";
@@ -56,9 +50,6 @@ public class SetConnectorConfigHandlerTest extends TestCase {
     doTest(setXMLBody());
   }
 
-  /**
-   * Test method for {@link com.google.enterprise.connector.servlet.SetConnectorConfigHandlerTest#SetConnectorConfigHandler(com.google.enterprise.connector.manager.Manager, java.lang.String, java.lang.String)}.
-   */
   public void testSetConnectorConfigHandler3() {
     language = "en";
     connectorName = "connectorC";

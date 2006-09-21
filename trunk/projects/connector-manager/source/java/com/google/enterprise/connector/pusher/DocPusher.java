@@ -49,23 +49,23 @@ public class DocPusher implements Pusher {
   private static final String XML_FEEDTYPE = "feedtype";
   private static final String XML_GROUP = "group";
   private static final String XML_RECORD = "record";
-  private static final String XML_METADATA = "metadata";
-  private static final String XML_META = "meta";
+//  private static final String XML_METADATA = "metadata";
+//  private static final String XML_META = "meta";
   private static final String XML_CONTENT = "content";
-  private static final String XML_ACTION = "action";
+//  private static final String XML_ACTION = "action";
   private static final String XML_URL = "url";
   private static final String XML_MIMETYPE = "mimetype";
   private static final String XML_LAST_MODIFIED = "last-modified";
-  private static final String XML_LOCK = "lock";
-  private static final String XML_AUTHMETHOD = "authmethod";
-  private static final String XML_NAME = "name";
+//  private static final String XML_LOCK = "lock";
+//  private static final String XML_AUTHMETHOD = "authmethod";
+//  private static final String XML_NAME = "name";
   private static final String XML_ENCODING = "encoding";
   
-  private static final String XML_FULL = "full";
-  private static final String XML_INCREMENTAL = "incremental";
-  private static final String XML_BASE64BINARY = "base64binary";
-  private static final String XML_ADD = "add";
-  private static final String XML_DELETE = "delete";
+//  private static final String XML_FULL = "full";
+//  private static final String XML_INCREMENTAL = "incremental";
+//  private static final String XML_BASE64BINARY = "base64binary";
+//  private static final String XML_ADD = "add";
+//  private static final String XML_DELETE = "delete";
   
   private String host;
   private int port;
@@ -82,6 +82,7 @@ public class DocPusher implements Pusher {
    * @param host GSA host
    * @param port Feeder port
    * @param dataSource datasource for the feed
+   * @param urlConn a connection
    */
   public DocPusher(String host, int port, String dataSource, UrlConn urlConn) {
     this.host = host;
@@ -99,6 +100,7 @@ public class DocPusher implements Pusher {
    * @param host GSA host
    * @param port GSA port
    * @param dataSource datasource for the feed
+   * @param urlConn a connection
    * @param feedType type of the feed (full|incremental)
    * @param action type of action for the feed (add|delete)
    */
