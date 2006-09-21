@@ -156,7 +156,8 @@ public class MockManager implements Manager {
    */
   public List getConnectorStatuses() {
     List statuses = new ArrayList();
-    statuses.add(getConnectorStatus("foo"));
+    statuses.add(getConnectorStatus("connector1"));
+    statuses.add(getConnectorStatus("connector2"));
     return statuses;
   }
 

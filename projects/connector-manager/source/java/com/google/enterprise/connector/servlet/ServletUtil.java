@@ -68,6 +68,13 @@ public class ServletUtil {
   public static final String XMLTAG_CONNECTOR_CONFIG = "ConnectorConfig";
   public static final String XMLTAG_PARAMETERS = "Param";
 
+  public static final String XMLTAG_AUTHN_REQUEST = "AuthnRequest";
+  public static final String XMLTAG_AUTHN_CREDENTIAL = "Credentials";
+  public static final String XMLTAG_AUTHN_USERNAME = "username";
+  public static final String XMLTAG_AUTHN_PASSWORD = "password";
+  public static final String XMLTAG_AUTHN_RESPONSE = "AuthnResponse";
+  public static final String XMLTAG_SUCCESS = "Success";
+  public static final String XMLTAG_FAILURE = "Failure";
   public static final String XMLTAG_AUTHZ_QUERY = "AuthorizationQuery";
   public static final String XMLTAG_CONNECTOR_QUERY = "ConnectorQuery";
   public static final String XMLTAG_IDENTITY = "Identity";
@@ -264,6 +271,21 @@ public class ServletUtil {
                                      String elemName, String elemValue) {
     out.println(IndentStr(indentLevel)
         + "<" + elemName + ">" + elemValue + "</" + elemName + ">");
+  }
+
+  /**
+   * Write a name value pair as an XML element to a PrintWriter.
+   *
+   * @param out where PrintWriter to be written to
+   * @param indentLevel the depth of indentation.
+   * @param elemName element name
+   * @param elemValue element value
+   */
+  public static void writeXMLElementWithAttrs(PrintWriter out, int indentLevel,
+                                     String elemName, String attributes) {
+    
+    out.println(IndentStr(indentLevel)
+        + "<" + elemName + " " + attributes + ">");
   }
 
   /** Write an XML tag to a PrintWriter
