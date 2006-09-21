@@ -14,27 +14,45 @@
 
 package com.google.enterprise.connector.traversal;
 
+import java.util.Date;
+
 /**
- *  A Traverser that runs long but 
+ * A Traverser that runs forever but can be interrupted once/second
  */
 public class InterruptibleQueryTraverser implements Traverser {
 
-  /* (non-Javadoc)
+  /*
+   * (non-Javadoc)
+   * 
    * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
    */
   public int runBatch(int batchHint) throws InterruptedException {
+    int counter = 0;
     boolean breakLoop = true;
+    boolean interrupted = false;
     // infinite loop
     while (breakLoop) {
-      if (Thread.interrupted()) {
-        break;
+      long startTime = new Date().getTime();
+      long now = startTime;
+      while ((now - startTime) < (2 * 1000)) {
+        // this inner loop simulates a call to a CMS that takes a while to
+        // return and can't be interrupted
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException ie) {
+          // Here be dragons: the fact that an InterruptedException was thrown
+          // does NOT mean that if you then call Thread.interrupted() it returns
+          // true! That's why we have to remember that we were interrupted in
+          // order to exit the outer loop at the break below.
+          interrupted = true;
+        }
+        now = new Date().getTime();
       }
-      try {
-        Thread.sleep(60 * 1000);
-      } catch (InterruptedException ie) {
+      counter++;
+      if (interrupted || Thread.interrupted()) {
         break;
       }
     }
-    return batchHint;
+    return counter;
   }
 }
