@@ -26,6 +26,11 @@
 		</property>
 	</bean>
 
+	<bean id="ConnectorScheduleStore"
+		class="com.google.enterprise.connector.persist.MockConnectorScheduleStore">
+		<constructor-arg index="0" ref="ConnectorConfigStore" />
+	</bean>
+
 	<bean id="ConnectorStateStore"
 		class="com.google.enterprise.connector.persist.MockConnectorStateStore" />
 
@@ -63,115 +68,8 @@
 		<constructor-arg index="0" ref="Instantiator" />
 		<constructor-arg index="1" ref="Monitor" />
 		<constructor-arg index="2" ref="WorkQueue" />
-		<constructor-arg index="3">
-			<list>
-				<bean
-					class="com.google.enterprise.connector.scheduler.Schedule">
-					<constructor-arg index="0" type="java.lang.String"
-						value="connectorA" />
-					<constructor-arg index="1">
-						<list>
-							<bean
-								class="com.google.enterprise.connector.scheduler.ScheduleTimeInterval">
-								<constructor-arg index="0">
-									<bean
-										class="com.google.enterprise.connector.scheduler.ScheduleTime">
-										<constructor-arg type="int"
-											value="0" />
-									</bean>
-								</constructor-arg>
-								<constructor-arg index="1">
-									<bean
-										class="com.google.enterprise.connector.scheduler.ScheduleTime">
-										<constructor-arg type="int"
-											value="0" />
-									</bean>
-								</constructor-arg>
-							</bean>
-						</list>
-					</constructor-arg>
-				</bean>
-				<bean
-					class="com.google.enterprise.connector.scheduler.Schedule">
-					<constructor-arg index="0" type="java.lang.String"
-						value="connectorB" />
-					<constructor-arg index="1">
-						<list>
-							<bean
-								class="com.google.enterprise.connector.scheduler.ScheduleTimeInterval">
-								<constructor-arg index="0">
-									<bean
-										class="com.google.enterprise.connector.scheduler.ScheduleTime">
-										<constructor-arg type="int"
-											value="0" />
-									</bean>
-								</constructor-arg>
-								<constructor-arg index="1">
-									<bean
-										class="com.google.enterprise.connector.scheduler.ScheduleTime">
-										<constructor-arg type="int"
-											value="0" />
-									</bean>
-								</constructor-arg>
-							</bean>
-						</list>
-					</constructor-arg>
-				</bean>
-				<bean
-					class="com.google.enterprise.connector.scheduler.Schedule">
-					<constructor-arg index="0" type="java.lang.String"
-						value="connectorC" />
-					<constructor-arg index="1">
-						<list>
-							<bean
-								class="com.google.enterprise.connector.scheduler.ScheduleTimeInterval">
-								<constructor-arg index="0">
-									<bean
-										class="com.google.enterprise.connector.scheduler.ScheduleTime">
-										<constructor-arg type="int"
-											value="0" />
-									</bean>
-								</constructor-arg>
-								<constructor-arg index="1">
-									<bean
-										class="com.google.enterprise.connector.scheduler.ScheduleTime">
-										<constructor-arg type="int"
-											value="0" />
-									</bean>
-								</constructor-arg>
-							</bean>
-						</list>
-					</constructor-arg>
-				</bean>
-				<bean
-					class="com.google.enterprise.connector.scheduler.Schedule">
-					<constructor-arg index="0" type="java.lang.String"
-						value="connectorD" />
-					<constructor-arg index="1">
-						<list>
-							<bean
-								class="com.google.enterprise.connector.scheduler.ScheduleTimeInterval">
-								<constructor-arg index="0">
-									<bean
-										class="com.google.enterprise.connector.scheduler.ScheduleTime">
-										<constructor-arg type="int"
-											value="0" />
-									</bean>
-								</constructor-arg>
-								<constructor-arg index="1">
-									<bean
-										class="com.google.enterprise.connector.scheduler.ScheduleTime">
-										<constructor-arg type="int"
-											value="0" />
-									</bean>
-								</constructor-arg>
-							</bean>
-						</list>
-					</constructor-arg>
-				</bean>
-			</list>
-		</constructor-arg>
-
+		<constructor-arg index="3" ref="ConnectorConfigStore" />
+		<constructor-arg index="4" ref="ConnectorScheduleStore" />
 	</bean>
 
 </beans>
