@@ -157,7 +157,7 @@ public interface Manager {
    * @param tokenList The document set represented as a list of Strings: the
    *        security token for a class of documents
    * @param username The username as a string
-   * @return A List of booleans parallel to the input list of IDs: the boolean
+   * @return A List of Booleans parallel to the input list of IDs: the boolean
    *         in the corresponding position indicates whether that user can see
    *         that document.
    */
