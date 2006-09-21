@@ -39,6 +39,7 @@ public class GetConnectorStatusTest extends TestCase {
    * #handleDoGet(java.io.PrintWriter, com.google.enterprise.connector.manager.ConnectorStatus)}.
    *
    * connectorStatus = null
+   * @throws IOException 
    * 
    */
   public void testHandleDoGet() throws IOException {

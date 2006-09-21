@@ -63,6 +63,7 @@ public class WorkQueue {
    * Creates a WorkQueue with a given number of worker threads.
    * @param numThreads the number of threads to execute work on the WorkQueue.
    * This number should be at least 1.
+   * @param killThreadTimeout 
    */
   public WorkQueue(int numThreads, long killThreadTimeout) {
     if (numThreads <= 0) {

@@ -37,7 +37,7 @@ public class GetConnectorListTest extends TestCase {
   /**
    * Test method for
    * {@link com.google.enterprise.connector.servlet.GetConnectorList 
-   * #handleDoGet(java.io.PrintWriter, java.util.List)
+   * #handleDoGet(java.io.PrintWriter, java.util.List)}
    * @throws IOException
    * 
    * connectorTypes = null
@@ -55,7 +55,7 @@ public class GetConnectorListTest extends TestCase {
   /**
    * Test method for
    * {@link com.google.enterprise.connector.servlet.GetConnectorList 
-   * #handleDoGet
+   * #handleDoGet(java.io.PrintWriter, java.util.List)}
    * @throws IOException
    * 
    * connectorTypes = {"Documentum", "Sharepoint", "Filenet"}

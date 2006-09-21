@@ -22,7 +22,6 @@ import com.google.enterprise.connector.monitor.Monitor;
 import com.google.enterprise.connector.persist.ConnectorConfigStore;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorScheduleStore;
-import com.google.enterprise.connector.servlet.TestConnectivity;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.ArrayList;

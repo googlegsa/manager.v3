@@ -113,7 +113,6 @@ public class TraversalSchedulerTest extends TestCase {
     try {
       baseDir = resource.getFile();
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
       fail();
     }

@@ -109,8 +109,9 @@ public class StringUtils {
   
   /**
    * Reads all from a Reader into a String. Close the Reader when finished.
-   * Returns the String.
    * @param reader Reader
+   * @return the String
+   * @throws IOException 
    */
   public static String readAllToString(Reader reader) throws IOException {
     char buf[] = new char[4096];

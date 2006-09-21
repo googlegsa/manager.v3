@@ -32,6 +32,7 @@ public class Base64Encoder {
    * @param data the character buffer
    * @param out output writer
    * @return the number of bytes processed
+   * @throws IOException 
    */
   public static int encode(byte data[], Writer out)
     throws IOException {
@@ -54,12 +55,12 @@ public class Base64Encoder {
       a = data[off];
       b = data[off+1];
       c = data[off+2];
-      outBuf[outLen++] = (char) (charMap[(a >>> 2) & 0x3F]);
-      outBuf[outLen++] = (char) (charMap[((a << 4) & 0x30) + 
-                                         ((b >>> 4) & 0xf)]);
-      outBuf[outLen++] = (char) (charMap[((b << 2) & 0x3c) + 
-                                         ((c >>> 6) & 0x3)]);
-      outBuf[outLen++] = (char) (charMap[c & 0x3F]);
+      outBuf[outLen++] = charMap[(a >>> 2) & 0x3F];
+      outBuf[outLen++] = charMap[((a << 4) & 0x30) + 
+                                         ((b >>> 4) & 0xf)];
+      outBuf[outLen++] = charMap[((b << 2) & 0x3c) + 
+                                         ((c >>> 6) & 0x3)];
+      outBuf[outLen++] = charMap[c & 0x3F];
       len -= 3;
       off += 3;
     }
@@ -68,22 +69,22 @@ public class Base64Encoder {
       a = data[off];
       b = 0;
       c = 0;
-      outBuf[outLen++] = (char) (charMap[(a >>> 2) & 0x3F]);
-      outBuf[outLen++] = (char) (charMap[((a << 4) & 0x30) + 
-                                         ((b >>> 4) & 0xf)]);
-      outBuf[outLen++] = (char) ('=');
-      outBuf[outLen++] = (char) ('=');
+      outBuf[outLen++] = charMap[(a >>> 2) & 0x3F];
+      outBuf[outLen++] = charMap[((a << 4) & 0x30) + 
+                                         ((b >>> 4) & 0xf)];
+      outBuf[outLen++] = '=';
+      outBuf[outLen++] = '=';
       off++;
     } else if (len == 2) {
       a = data[off];
       b = data[off+1];
       c = 0;
-      outBuf[outLen++] = (char) (charMap[(a >>> 2) & 0x3F]);
-      outBuf[outLen++] = (char) (charMap[((a << 4) & 0x30) + 
-                                         ((b >>> 4) & 0xf)]);
-      outBuf[outLen++] = (char) (charMap[((b << 2) & 0x3c) + 
-                                         ((c >>> 6) & 0x3)]);
-      outBuf[outLen++] = (char) ('=');
+      outBuf[outLen++] = charMap[(a >>> 2) & 0x3F];
+      outBuf[outLen++] = charMap[((a << 4) & 0x30) + 
+                                         ((b >>> 4) & 0xf)];
+      outBuf[outLen++] = charMap[((b << 2) & 0x3c) + 
+                                         ((c >>> 6) & 0x3)];
+      outBuf[outLen++] = '=';
       off+=2;
     }
 
@@ -101,6 +102,7 @@ public class Base64Encoder {
    * @param len length of data in data
    * @param out output writer
    * @return the number of bytes processed
+   * @throws IOException 
    */
   public static int encode(byte data[], int off, int len, Writer out)
     throws IOException {
@@ -120,6 +122,7 @@ public class Base64Encoder {
    * @param out output writer
    * @param bufferSize size of buffer used for each encoding run
    * @return number of bytes processed
+   * @throws IOException 
    */
   public static int encode(InputStream inStream, Writer out, int bufferSize)
     throws IOException {
@@ -146,6 +149,7 @@ public class Base64Encoder {
    * @param inStream the input data stream
    * @param out output writer
    * @return number of bytes processed
+   * @throws IOException 
    */
   public static int encode(InputStream inStream, Writer out)
     throws IOException {

@@ -14,19 +14,25 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.jcradaptor.SpiQueryTraversalManagerFromJcr;
+import com.google.enterprise.connector.jcradaptor.SpiRepositoryFromJcr;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
-import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
+import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
+import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
+import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.spi.LoginException;
 import com.google.enterprise.connector.spi.QueryTraversalManager;
+import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.ResultSet;
+import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.traversal.LongRunningQueryTraverser;
 import com.google.enterprise.connector.traversal.NeverEndingQueryTraverser;
 import com.google.enterprise.connector.traversal.NoopQueryTraverser;
@@ -35,9 +41,10 @@ import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
-import javax.jcr.query.QueryManager;
+import javax.jcr.Repository;
 
 /**
  * 
@@ -48,47 +55,79 @@ public class MockInstantiator implements Instantiator {
   public static final String TRAVERSER_NAME_NOOP = "noop";
   public static final String TRAVERSER_NAME_LONG_RUNNING = "longrunning";
   public static final String TRAVERSER_NAME_NEVER_ENDING = "neverending";
-  
+
   private static final ConnectorType CONNECTOR_TYPE;
-  private static Map traverserMap;
+  private static Map connectorMap;
 
   static {
     CONNECTOR_TYPE = null;
-    traverserMap = new HashMap();
-    
-    MockRepositoryEventList mrel =
-        new MockRepositoryEventList("MockRepositoryEventLog1.txt");
-    MockRepository r = new MockRepository(mrel);
-    QueryManager qm = new MockJcrQueryManager(r.getStore());
+    connectorMap = new HashMap();
 
-    String connectorName = TRAVERSER_NAME1;
-    QueryTraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
-    MockPusher pusher = new MockPusher(System.out);
+    setupConnector(TRAVERSER_NAME1, "MockRepositoryEventLog1.txt");
+    setupConnector(TRAVERSER_NAME2, "MockRepositoryEventLog1.txt");
+
+    AuthenticationManager nullAuthenticationManager =
+        new AuthenticationManager() {
+          public boolean authenticate(String username, String password)
+              throws LoginException, RepositoryException {
+            throw new UnsupportedOperationException();
+          }
+        };
+
+    AuthorizationManager nullAuthorizationManager = new AuthorizationManager() {
+      public ResultSet authorizeDocids(List docidList, String username)
+          throws RepositoryException {
+        throw new UnsupportedOperationException();
+      }
+
+      public ResultSet authorizeTokens(List tokenList, String username)
+          throws RepositoryException {
+        throw new UnsupportedOperationException();
+      }
+    };
+
+    connectorMap.put(TRAVERSER_NAME_NOOP, new ConnectorInterfaces(
+        TRAVERSER_NAME_NOOP, new NoopQueryTraverser(),
+        nullAuthenticationManager, nullAuthorizationManager));
+
+    connectorMap.put(TRAVERSER_NAME_LONG_RUNNING, new ConnectorInterfaces(
+        TRAVERSER_NAME_LONG_RUNNING, new LongRunningQueryTraverser(),
+        nullAuthenticationManager, nullAuthorizationManager));
+
+    connectorMap.put(TRAVERSER_NAME_NEVER_ENDING, new ConnectorInterfaces(
+        TRAVERSER_NAME_NEVER_ENDING, new NeverEndingQueryTraverser(),
+        nullAuthenticationManager, nullAuthorizationManager));
+  }
+
+  private static void setupConnector(String connectorName, String resourceName) {
+    MockRepositoryEventList mrel = new MockRepositoryEventList(resourceName);
+    MockRepository mockRepository = new MockRepository(mrel);
+    Repository repository = new MockJcrRepository(mockRepository);
+    Connector connector = new SpiRepositoryFromJcr(repository);
+
+    QueryTraversalManager qtm;
+    AuthenticationManager authenticationManager;
+    AuthorizationManager authorizationManager;
+    try {
+      Session session = connector.login("admin", "admin");
+      qtm = session.getQueryTraversalManager();
+      authenticationManager = session.getAuthenticationManager();
+      authorizationManager = session.getAuthorizationManager();
+    } catch (Exception e) {
+      // won't happen
+      e.printStackTrace();
+      throw new RuntimeException();
+    }
+
+    Pusher pusher = new MockPusher(System.out);
     ConnectorStateStore connectorStateStore = new MockConnectorStateStore();
+    QueryTraverser queryTraverser =
+        new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
 
-    traverserMap.put(TRAVERSER_NAME1, 
-      new QueryTraverser(pusher, qtm, connectorStateStore, connectorName));
-
-    mrel = new MockRepositoryEventList("MockRepositoryEventLog1.txt");
-    r = new MockRepository(mrel);
-    qm = new MockJcrQueryManager(r.getStore());
-
-    connectorName = TRAVERSER_NAME2;
-    qtm = new SpiQueryTraversalManagerFromJcr(qm);
-    pusher = new MockPusher(System.out);
-    connectorStateStore = new MockConnectorStateStore();
-
-    traverserMap.put(TRAVERSER_NAME2, 
-      new QueryTraverser(pusher, qtm, connectorStateStore, connectorName));
-
-    traverserMap.put(TRAVERSER_NAME_NOOP, 
-      new NoopQueryTraverser());
-    
-    traverserMap.put(TRAVERSER_NAME_LONG_RUNNING, 
-      new LongRunningQueryTraverser());
-    
-    traverserMap.put(TRAVERSER_NAME_NEVER_ENDING, 
-      new NeverEndingQueryTraverser());
+    ConnectorInterfaces connectorInterfaces =
+        new ConnectorInterfaces(connectorName, queryTraverser,
+            authenticationManager, authorizationManager);
+    connectorMap.put(connectorName, connectorInterfaces);
   }
 
   /*
@@ -109,9 +148,10 @@ public class MockInstantiator implements Instantiator {
    *      #getTraverser(java.lang.String)
    */
   public Traverser getTraverser(String connectorName)
-      throws ConnectorNotFoundException {
-    if (traverserMap.containsKey(connectorName)) {
-      return (Traverser) traverserMap.get(connectorName);
+      throws ConnectorNotFoundException, InstantiatorException {
+    if (connectorMap.containsKey(connectorName)) {
+      return ((ConnectorInterfaces) connectorMap.get(connectorName))
+          .getTraverser();
     } else {
       throw new ConnectorNotFoundException("Connector not found: "
           + connectorName);
@@ -124,7 +164,7 @@ public class MockInstantiator implements Instantiator {
   }
 
   public Iterator getConnectorTypeNames() {
-    return traverserMap.keySet().iterator();
+    return connectorMap.keySet().iterator();
   }
 
   public void setConnectorConfig(String connectorName,
@@ -136,11 +176,25 @@ public class MockInstantiator implements Instantiator {
   public void dropConnector(String connectorName) throws InstantiatorException {
   }
 
-  public AuthenticationManager getAuthenticationManager(String connectorName) throws ConnectorNotFoundException, InstantiatorException {
-    throw new UnsupportedOperationException();
+  public AuthenticationManager getAuthenticationManager(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException {
+    if (connectorMap.containsKey(connectorName)) {
+      return ((ConnectorInterfaces) connectorMap.get(connectorName))
+          .getAuthenticationManager();
+    } else {
+      throw new ConnectorNotFoundException("Connector not found: "
+          + connectorName);
+    }
   }
 
-  public AuthorizationManager getAuthorizationManager(String connectorName) throws ConnectorNotFoundException, InstantiatorException {
-    throw new UnsupportedOperationException();
+  public AuthorizationManager getAuthorizationManager(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException {
+    if (connectorMap.containsKey(connectorName)) {
+      return ((ConnectorInterfaces) connectorMap.get(connectorName))
+          .getAuthorizationManager();
+    } else {
+      throw new ConnectorNotFoundException("Connector not found: "
+          + connectorName);
+    }
   }
 }

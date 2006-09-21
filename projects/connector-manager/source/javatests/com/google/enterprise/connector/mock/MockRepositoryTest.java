@@ -42,21 +42,21 @@ public class MockRepositoryTest extends TestCase {
     MockRepository r = new MockRepository(mrel, 
       new MockRepositoryDateTime(0));
  
-    assertTrue(r.getStore().size() == 0);
+    assertEquals(0,r.getStore().size());
     
     r.setTime(new MockRepositoryDateTime(20));
-    assertTrue(r.getStore().size() == 2);
+    assertEquals(2, r.getStore().size());
     
     r.setTime(new MockRepositoryDateTime(39));
-    assertTrue(r.getStore().size() == 3);
+    assertEquals(3, r.getStore().size());
     
     r.setTime(new MockRepositoryDateTime(40));
-    assertTrue(r.getStore().size() == 2);
+    assertEquals(2, r.getStore().size());
     
     r.setTime(new MockRepositoryDateTime(41));
-    assertTrue(r.getStore().size() == 2);
+    assertEquals(2, r.getStore().size());
     
     r.setTime(new MockRepositoryDateTime(100));
-    assertTrue(r.getStore().size() == 4);
+    assertEquals(4, r.getStore().size());
   }
 }

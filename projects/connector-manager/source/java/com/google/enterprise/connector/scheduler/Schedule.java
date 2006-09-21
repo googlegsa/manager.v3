@@ -20,31 +20,31 @@ import java.util.List;
 
 /**
  * A traversal schedule.
- *
+ * 
  */
 public class Schedule {
   private String connectorName;
   private List timeIntervals;
-  
+
   public Schedule(String connectorName, List timeIntervals) {
     this.connectorName = connectorName;
     this.timeIntervals = timeIntervals;
   }
-  
+
   /**
    * Create a schedule object.
+   * 
    * @param scheduleProto String readable by readString() method
    */
   public Schedule(String scheduleProto) {
     readString(scheduleProto);
   }
-  
+
   /**
    * Populate a schedule.
    * 
-   * String of the form: 
-   * e.g. "connector1:1-2:3-5"
-   *
+   * @param schedule String of the form: e.g. "connector1:1-2:3-5"
+   * 
    */
   public void readString(String schedule) {
     String[] strs = schedule.split(":");
@@ -62,10 +62,9 @@ public class Schedule {
       }
     }
   }
-  
+
   /**
-   * String of the form: 
-   * e.g. "connector1:1-2:3-5"
+   * @return String of the form: e.g. "connector1:1-2:3-5"
    */
   public String toString() {
     StringBuffer buf = new StringBuffer();
@@ -82,11 +81,11 @@ public class Schedule {
     }
     return buf.toString();
   }
-  
+
   public String getConnectorName() {
     return connectorName;
   }
-  
+
   public void setConnectorName(String connectorName) {
     this.connectorName = connectorName;
   }
@@ -94,7 +93,7 @@ public class Schedule {
   public List getTimeIntervals() {
     return timeIntervals;
   }
-  
+
   public void setTimeIntervals(List timeIntervals) {
     this.timeIntervals = timeIntervals;
   }

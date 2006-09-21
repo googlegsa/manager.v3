@@ -2,16 +2,14 @@
 
 package com.google.enterprise.connector.common;
 
-import java.util.Arrays;
-import java.io.StringWriter;
-import java.io.ByteArrayInputStream;
-
-import junit.framework.TestCase;
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-import sun.misc.BASE64Encoder;
 import sun.misc.BASE64Decoder;
+
+import java.io.ByteArrayInputStream;
+import java.io.StringWriter;
 
 /**
  *  Unit Test for Base64Encoder
@@ -28,7 +26,7 @@ public class Base64EncoderTest extends TestCase {
     return new TestSuite(Base64EncoderTest.class);
   }
 
-  private BASE64Encoder testEncoder = new BASE64Encoder();
+//  private BASE64Encoder testEncoder = new BASE64Encoder();
   private BASE64Decoder testDecoder = new BASE64Decoder();
 
  

@@ -32,11 +32,6 @@ public class SetManagerConfigHandlerTest extends TestCase {
   private int port;
   private int maxFeedRate;
   
-  /**
-   * Test method for
-   * {@link com.google.enterprise.connector.servlet.SetManagerConfig
-   * #handleDoPost(java.io.PrintWriter, java.lang.String)}.
-   */
   public void testHandleDoPost1() {
     certAuth = true;
     host = "10.32.20.102";
@@ -45,11 +40,6 @@ public class SetManagerConfigHandlerTest extends TestCase {
     doTest(setXMLBody());
   }
 
-  /**
-   * Test method for
-   * {@link com.google.enterprise.connector.servlet.SetManagerConfig
-   * #handleDoPost(java.io.PrintWriter, java.lang.String)}.
-   */
   public void testHandleDoPost2() {
     certAuth = false;
     host = "";
@@ -58,11 +48,6 @@ public class SetManagerConfigHandlerTest extends TestCase {
     doTest(setXMLBody());
   }
 
-  /**
-   * Test method for
-   * {@link com.google.enterprise.connector.servlet.SetManagerConfig
-   * #handleDoPost(java.io.PrintWriter, java.lang.String)}.
-   */
   public void testHandleDoPost3() {
     certAuth = false;
     host = "10.32.20.102";

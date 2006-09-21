@@ -15,13 +15,14 @@
 package com.google.enterprise.connector.spi;
 
 /**
- * The root of the SPI. We do not specify how an object implementing this
- * interface will be obtained. This is left up to implementors, who will
- * probably provide their own constructors or factories, that get injected by
- * Spring or another mechanism.
+ * The root of the SPI. In the connector manager, objects that implement this
+ * interface will be instantiated using Spring, according to Spring bean
+ * definition files generated with the help of the corresponding ConnectorType
+ * implementation.
  * <p>
  * A Connector object is used as something against which to authenticate, via
- * the login method.
+ * the login method. By authenticating, one gets a Session, which then gives
+ * access to all other services.
  */
 public interface Connector {
 
