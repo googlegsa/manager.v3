@@ -91,6 +91,12 @@ public class MockRepositoryEventList {
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
+    } finally {
+      try {
+        isr.close();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 

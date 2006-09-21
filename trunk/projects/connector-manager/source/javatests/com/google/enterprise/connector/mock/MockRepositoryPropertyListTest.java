@@ -70,11 +70,6 @@ public class MockRepositoryPropertyListTest extends TestCase {
       new MockRepositoryProperty("genre", 
                                  PropertyType.STRING, 
                                  "Autobiography");
-    MockRepositoryProperty p2 = 
-      new MockRepositoryProperty("genre", 
-                                 PropertyType.STRING, 
-                                 "Drama");
-    
     pl1.setProperty(p1);
     verifyProperty(pl1, "genre", "Autobiography");
    

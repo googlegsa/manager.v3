@@ -143,7 +143,6 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
 
     {
       MockRepositoryDocument doc = r.getStore().getDocByID("doc4");
-      PropertyMap pm = new SpiPropertyMapFromJcr(new MockJcrNode(doc));
 
       ResultSet resultSet = qtm.startTraversal();
 

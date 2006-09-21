@@ -36,8 +36,9 @@ public class SpringConnectorTypeInstantiatorTest extends TestCase {
    * Test method for
    * {@link com.google.enterprise.connector.instantiator.SpringConnectorTypeInstantiator
    * #getConnectorType(java.lang.String)}.
+   * @throws ConnectorTypeNotFoundException 
    */
-  public final void testGetConnectorType() {
+  public final void testGetConnectorType() throws ConnectorTypeNotFoundException {
     ConnectorTypeInstantiator springConnectorTypeInstantiator =
         new SpringConnectorTypeInstantiator();
     verifyConnectorTypeFound(springConnectorTypeInstantiator, "TestConnector1");
@@ -47,22 +48,16 @@ public class SpringConnectorTypeInstantiatorTest extends TestCase {
 
   private void verifyConnectorTypeFound(
       ConnectorTypeInstantiator inst,
-      String connectorTypeName) {
+      String connectorTypeName) throws ConnectorTypeNotFoundException {
     ConnectorType connectorType = null;
-    try {
+
       connectorType = inst.getConnectorType(connectorTypeName);
-    } catch (ConnectorTypeNotFoundException e) {
-      fail("Should find connector type " + connectorTypeName);
-    }
     Assert.assertNotNull(connectorType);
     // also look for the prototype
     String prototypeString = null;
-    try {
       prototypeString =
           inst.getConnectorInstancePrototype(connectorTypeName);
-    } catch (ConnectorTypeNotFoundException e) {
-      fail("Should find prototype string for type " + connectorTypeName);
-    }
+    Assert.assertNotNull(prototypeString   );
   }
 
   private void verifyConnectorTypeNotFound(
@@ -82,8 +77,9 @@ public class SpringConnectorTypeInstantiatorTest extends TestCase {
    * Test method for
    * {@link com.google.enterprise.connector.instantiator.SpringConnectorTypeInstantiator
    * #getConnectorTypeNames()}.
+   * @throws ConnectorTypeNotFoundException 
    */
-  public final void testGetConnectorTypeNames() {
+  public final void testGetConnectorTypeNames() throws ConnectorTypeNotFoundException {
     String[] expectedConnectorTypeNames =
         new String[] {"TestConnector1", "TestConnector2"};
     Set expectedNamesSet =

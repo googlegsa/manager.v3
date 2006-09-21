@@ -22,6 +22,7 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.traversal.Traverser;
 
+import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import org.springframework.core.io.FileSystemResourceLoader;
@@ -77,18 +78,16 @@ public class SpringConnectorInstantiatorTest extends TestCase {
   private void verifyInterfaces(String connectorName, ConnectorInstantiator inst)
       throws ConnectorNotFoundException, InstantiatorException {
     Traverser traverser = inst.getTraverser(connectorName);
-    if (traverser == null) {
-      fail("should get a non-null traverser for " + connectorName);
-    }
+    Assert.assertNotNull(
+        "should get a non-null traverser for " + connectorName, traverser);
+
     AuthenticationManager authenticationManager =
         inst.getAuthenticationManager(connectorName);
-    if (authenticationManager == null) {
-      fail("should get a non-null authenticationManager for " + connectorName);
-    }
+    Assert.assertNotNull("should get a non-null authenticationManager for "
+        + connectorName, authenticationManager);
     AuthorizationManager authorizationManager =
         inst.getAuthorizationManager(connectorName);
-    if (authorizationManager == null) {
-      fail("should get a non-null authorizationManager for " + connectorName);
-    }
+    Assert.assertNotNull("should get a non-null authorizationManager for "
+        + connectorName, authorizationManager);
   }
 }
