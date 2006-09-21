@@ -14,21 +14,30 @@
 
 package com.google.enterprise.connector.persist;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Mock Schedule Store
  */
 public class MockConnectorScheduleStore implements ConnectorScheduleStore {
 
-  PrefsStore store;
+  private Map store;
+  
+  /**
+   * Empty Schedule Store.
+   */
+  public MockConnectorScheduleStore() {
+    store = new HashMap();
+  }
   
   /**
    * Create a Mock Schedule store with all known connectors to be run 24x7
    * @param configStore ConnectorConfigStore with configured connectors
    */
   public MockConnectorScheduleStore(ConnectorConfigStore configStore) {
-    store = new PrefsStore();
+    store = new HashMap();
     Iterator iter = configStore.getConnectorNames();
     while (iter.hasNext()) {
       String connectorName = (String) iter.next();
@@ -42,7 +51,13 @@ public class MockConnectorScheduleStore implements ConnectorScheduleStore {
    * @see com.google.enterprise.connector.persist.ConnectorScheduleStore#getConnectorSchedule(java.lang.String)
    */
   public String getConnectorSchedule(String connectorName) {
-    return store.getConnectorSchedule(connectorName);
+    String scheduleStr = (String) store.get(connectorName);
+    if (null == scheduleStr) {
+      // if we get an unknown connectorName, we hardcode this to be an empty 
+      // schedule
+      scheduleStr = connectorName + ":1-1";  // a schedule that never runs
+    }
+    return scheduleStr;
   }
 
   /* (non-Javadoc)
@@ -50,7 +65,7 @@ public class MockConnectorScheduleStore implements ConnectorScheduleStore {
    */
   public void storeConnectorSchedule(String connectorName,
       String connectorSchedule) {
-    store.storeConnectorSchedule(connectorName, connectorSchedule);
+    store.put(connectorName, connectorSchedule);
   }
 
 }

@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.manager;
 
+import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
 
 import org.springframework.context.ApplicationContext;
@@ -263,7 +264,7 @@ public class Context {
   }
 
   void shutdown(boolean force) {
-    traversalScheduler.shutdown(force);
+    traversalScheduler.shutdown(force, WorkQueue.DEFAULT_SHUTDOWN_TIMEOUT);
   }
   
   /**
