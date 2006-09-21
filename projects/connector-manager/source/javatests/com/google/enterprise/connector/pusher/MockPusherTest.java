@@ -14,12 +14,9 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.jcradaptor.SpiPropertyMapFromJcr;
 import com.google.enterprise.connector.jcradaptor.SpiQueryTraversalManagerFromJcr;
 import com.google.enterprise.connector.mock.MockRepository;
-import com.google.enterprise.connector.mock.MockRepositoryDocument;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
-import com.google.enterprise.connector.mock.jcr.MockJcrNode;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.QueryTraversalManager;
@@ -44,9 +41,6 @@ public class MockPusherTest extends TestCase {
     MockPusher pusher = new MockPusher(System.out);
 
     {
-      MockRepositoryDocument doc = r.getStore().getDocByID("doc4");
-      PropertyMap pm = new SpiPropertyMapFromJcr(new MockJcrNode(doc));
-
       ResultSet resultSet = qtm.startTraversal();
 
       int counter = 0;

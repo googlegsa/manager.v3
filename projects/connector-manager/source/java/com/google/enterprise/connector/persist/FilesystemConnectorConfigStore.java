@@ -226,7 +226,7 @@ public class FilesystemConnectorConfigStore implements ConnectorConfigStore {
     connectorConfigMap.put(connectorName, info);
   }
 
-  class ConnectorConfigInfo {
+  static class ConnectorConfigInfo {
     String connectorTypeName;
     String connectorName;
     File connectorFile;

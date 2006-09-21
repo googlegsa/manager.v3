@@ -15,13 +15,11 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.jcradaptor.SpiPropertyMapFromJcr;
 import com.google.enterprise.connector.jcradaptor.SpiQueryTraversalManagerFromJcr;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryDocument;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.MockUrlConn;
-import com.google.enterprise.connector.mock.jcr.MockJcrNode;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.QueryTraversalManager;
@@ -66,7 +64,6 @@ public class DocPusherTest extends TestCase {
     DocPusher dpusher = new DocPusher(GSA_HOST, GSA_PORT, DATASOURCE, mockUrlConn);
     
     MockRepositoryDocument doc = r.getStore().getDocByID("doc1");
-    PropertyMap pm = new SpiPropertyMapFromJcr(new MockJcrNode(doc));
     ResultSet resultSet = qtm.startTraversal();
     
     for (Iterator iter = resultSet.iterator(); iter.hasNext();) {

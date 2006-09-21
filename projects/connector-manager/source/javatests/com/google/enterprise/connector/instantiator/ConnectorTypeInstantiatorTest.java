@@ -61,13 +61,16 @@ public class ConnectorTypeInstantiatorTest extends TestCase {
       ConnectorTypeInstantiator connectorTypeInstantiator,
       String connectorTypeName) {
     ConnectorType connectorType = null;
+    boolean exceptionThrown = false;
     try {
       connectorType =
           connectorTypeInstantiator.getConnectorType(connectorTypeName);
     } catch (ConnectorTypeNotFoundException e) {
-      return;
+      exceptionThrown = true;
     }
-    fail("Should find connector type " + connectorTypeName);
+    Assert.assertTrue("ConnectorTypeNotFoundException should have been thrown",
+        exceptionThrown);
+    Assert.assertNull(connectorType);
   }
 
   /**
@@ -84,7 +87,7 @@ public class ConnectorTypeInstantiatorTest extends TestCase {
         new SpringConnectorTypeInstantiator();
     Set actualNames = new HashSet();
     for (Iterator i = connectorTypeInstantiator.getConnectorTypeNames(); i
-        .hasNext(); ) {
+        .hasNext();) {
       String connectorTypeName = (String) i.next();
       verifyConnectorTypeFound(connectorTypeInstantiator, connectorTypeName);
       actualNames.add(connectorTypeName);

@@ -279,9 +279,7 @@ public class DocPusher implements Pusher {
    * Gets the value for a given property.
    */
   private String getPropValue(Property p ) {
-    String name;
     try {
-      name = p.getName();
       Value v = p.getValue();
       return v.getString();
     } catch (RepositoryException e) {

@@ -147,7 +147,7 @@ public class SpringConnectorTypeInstantiator implements ConnectorTypeInstantiato
   }
 
   private List findPrototypeResources(ApplicationContext ac) {
-    Resource[] resourceArray = new Resource[] {};
+    Resource[] resourceArray;
     try {
       resourceArray = ac.getResources(classpathInstancePrototypePattern);
     } catch (IOException e1) {

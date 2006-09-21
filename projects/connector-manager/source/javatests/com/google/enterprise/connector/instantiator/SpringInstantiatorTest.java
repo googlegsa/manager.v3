@@ -98,7 +98,7 @@ public class SpringInstantiatorTest extends TestCase {
       createAndDrop(baseDir, instantiator, configKeys, connectorName,
           connectorTypeName);
     }
-    
+
     {
       // setup the input for this test
       String jsonInput =
@@ -134,13 +134,17 @@ public class SpringInstantiatorTest extends TestCase {
 
     instantiator.dropConnector(connectorName);
 
+    boolean exceptionThrown = false;
     try {
       t = instantiator.getTraverser(connectorName);
-      fail("exception should have been thrown");
     } catch (ConnectorNotFoundException e) {
+      exceptionThrown = true;
       t = null;
     }
 
+    Assert.assertTrue("ConnectorNotFoundException should have been thrown",
+        exceptionThrown);
+    Assert.assertNull(t);
     Assert.assertFalse(connectorFile.exists());
   }
 

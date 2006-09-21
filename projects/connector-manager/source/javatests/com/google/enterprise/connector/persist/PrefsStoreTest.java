@@ -43,12 +43,14 @@ public class PrefsStoreTest extends TestCase {
   public void testGetConnectorSchedule2() {
     PrefsStore store = new PrefsStore();
     boolean exceptionCaught = false;
+    String schedule = null;
     try {
-      String schedule = store.getConnectorSchedule(null);
+      schedule = store.getConnectorSchedule(null);
     } catch (NullPointerException e) {
         exceptionCaught = true;
     }
     Assert.assertTrue(exceptionCaught);
+    Assert.assertNull(schedule);
   }
 
   //Tests getting and setting for a valid connector name and state.  
