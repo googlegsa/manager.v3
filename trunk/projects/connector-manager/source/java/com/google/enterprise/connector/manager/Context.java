@@ -38,6 +38,8 @@ public class Context {
   private static ServletContext servletContext;
 
   private boolean started = false;
+  
+  private boolean isServeletContext = false;
 
   // singletons
   private Manager manager = null;
@@ -74,7 +76,7 @@ public class Context {
   // config file to be specified. This is the default.
 
   private String junitContextLocation =
-      "etc/applicationContext.xml";
+      "testdata/mocktestdata/applicationContext.xml";
 
   /**
    * Sets the junit context location. This must be called before calling any
@@ -123,6 +125,7 @@ public class Context {
     ac.setServletContext(servletContext);
     ac.refresh();
     applicationContext = ac;
+    isServeletContext = true;
   }
 
   /*
@@ -261,5 +264,17 @@ public class Context {
 
   void shutdown(boolean force) {
     traversalScheduler.shutdown(force);
+  }
+  
+  /**
+   * Retrieves the perfix for the Repository file depending on whether its junit
+   * context or servelet context.
+   * @return prefix for the Repository file.
+   */
+  public String getRespositoryFilePrefix() {
+    if (isServeletContext) {
+      return "webapps/connector-manager/WEB-INF/";
+    }
+    return "testdata/mocktestdata/";
   }
 }

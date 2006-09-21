@@ -155,6 +155,8 @@
 			<lib dir="${thirdparty.jar.dir}" includes="*.jar" />
 			<fileset dir="${webdocs}" includes="**" />
 			<webinf dir="etc" includes="**" />
+      <webinf dir="testdata/mocktestdata" includes="MockRepositoryEventLog1.txt" />
+      <webinf dir="testdata/mocktestdata" includes="MockRepositoryEventLog3.txt" />
 		</war>
 
 		<war warfile="${war.dir}/${ant.project.name}_debug.war" webxml="${webdocs}/WEB-INF/web.xml">
@@ -162,6 +164,8 @@
 			<lib dir="${thirdparty.jar.dir}" includes="*.jar" />
 			<fileset dir="${webdocs}" includes="**" />
 			<webinf dir="etc" includes="**" />
+      <webinf dir="testdata/mocktestdata" includes="MockRepositoryEventLog1.txt" />
+      <webinf dir="testdata/mocktestdata" includes="MockRepositoryEventLog3.txt" />
 		</war>
 
 	</target>

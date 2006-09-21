@@ -14,10 +14,14 @@
 
 package com.google.enterprise.connector.mock;
 
+import com.google.enterprise.connector.manager.Context;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -26,6 +30,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * A list of MockRepositoryEvents.  The value of this class is its 
@@ -33,6 +38,8 @@ import java.util.Map;
  */
 public class MockRepositoryEventList {
   List eventList;
+  
+  private static Logger LOGGER = Logger.getLogger(MockRepositoryEventList.class.getName());
 
   /**
    * Looks for the supplied filename on the classpath, and if it can find it, 
@@ -41,7 +48,19 @@ public class MockRepositoryEventList {
    */
   public MockRepositoryEventList(String filename) {
     eventList = new LinkedList();
-    InputStream s = this.getClass().getResourceAsStream(filename);
+    String filePrefix = Context.getInstance().getRespositoryFilePrefix();
+    File inputFile = new File(filePrefix + filename);
+    try {
+      LOGGER.info("Base dir path: "+ inputFile.getCanonicalPath());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    InputStream s;
+    try {
+      s = new FileInputStream(inputFile);
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException(e);
+    }
     InputStreamReader isr = new InputStreamReader(s);
     BufferedReader br = new BufferedReader(isr);
     String line;
