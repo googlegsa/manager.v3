@@ -27,6 +27,11 @@ import java.util.logging.Logger;
  * requests.  This class is multi-thread safe.
  */
 public class WorkQueue {
+  /**
+   *  The default amount of time in ms to wait before shutting down system.
+   */
+  public static final int DEFAULT_SHUTDOWN_TIMEOUT = 10 * 1000;
+
   private static final Logger logger = 
     Logger.getLogger(WorkQueue.class.getName());
   
@@ -44,6 +49,7 @@ public class WorkQueue {
   private Map absTimeoutMap;  // <WorkQueueItem, absTimeout>
   private long nextAbsTimeout;  // next earliest absolute timeout
   private boolean isInitialized;
+  private boolean shutdown;  // true when shutdown is initiated
 
   private int numThreads;
   private Set threads;
@@ -74,6 +80,7 @@ public class WorkQueue {
     this.absTimeoutMap = new HashMap();
     this.nextAbsTimeout = NO_TIMEOUT;
     this.isInitialized = false;
+    this.shutdown = false;
     this.numThreads = numThreads;
     this.threads = new HashSet();
   }
@@ -91,43 +98,55 @@ public class WorkQueue {
       threads.add(thread);
       thread.start();
     }
-    interrupterThread = new InterrupterThread();
+    interrupterThread = new InterrupterThread("InterrupterThread");
     interrupterThread.start();
     isInitialized = true;
+    shutdown = false;
   }
   
   /**
-   * Shutdown the work queue by interrupting any work in progress.  All work
-   * that was added is discarded.
-   * @param force if true, force shutdown, if false, wait till WorkQueue is 
-   * cleared before shutting down
+   * Shutdown the work queue after waiting for 10 seconds.
+   *
+   * @param interrupt if true, interrupt threads.
    */
-  public synchronized void shutdown(boolean force) {
+  public synchronized void shutdown(boolean interrupt) {
+    shutdown(interrupt, DEFAULT_SHUTDOWN_TIMEOUT);
+  }
+  
+  /**
+   * Shutdown the work queue.
+   * 
+   * @param interrupt if true, interrupt threads
+   * @param timeoutInMillis wait at least this timeout for threads to complete
+   * before just returning
+   */
+  public synchronized void shutdown(boolean interrupt, long timeoutInMillis) {
+    shutdown = true;
     if (isInitialized) {
-      if (force) {
+      if (interrupt) {
         Iterator iter = threads.iterator();
         while (iter.hasNext()) {
           Thread thread = (Thread) iter.next();
           thread.interrupt();
         }
+        try {
+          Thread.sleep(timeoutInMillis);
+        } catch (InterruptedException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
       } else {
-        while (true) {
-          boolean noThreadIsWorking = true;
-          Iterator iter = threads.iterator();
-          while (iter.hasNext()) {
-            WorkQueueThread thread = (WorkQueueThread) iter.next();
-            if (thread.isWorking()) {
-              noThreadIsWorking = false;
-              break;
-            }
-          }
-          if (!noThreadIsWorking) {
+        long baseTime = System.currentTimeMillis();
+        while (baseTime + timeoutInMillis < System.currentTimeMillis()) {
+          if (isAnyThreadWorking()) {
             try {
-              Thread.sleep(1000);
+              Thread.sleep(200);
             } catch (InterruptedException e) {
-              // wait until we have no more work
+              // TODO Auto-generated catch block
+              e.printStackTrace();
             }
           } else {
+            // no threads are still working so break out of loop
             break;
           }
         }
@@ -136,6 +155,23 @@ public class WorkQueue {
       workQueue.clear();
       isInitialized = false;
     }
+  }
+  
+  /**
+   * Determine whether any WorkQueue thread is working.
+   * @return true if any thread in the WorkQueue is doing work.
+   */
+  private boolean isAnyThreadWorking() {
+    boolean isAnyThreadWorking = false;
+    Iterator iter = threads.iterator();
+    while (iter.hasNext()) {
+      WorkQueueThread thread = (WorkQueueThread) iter.next();
+      if (thread.isWorking()) {
+        isAnyThreadWorking = true;
+        break;
+      }
+    }
+    return isAnyThreadWorking;
   }
   
   private synchronized long getNextAbsoluteTimeout() {
@@ -220,6 +256,10 @@ public class WorkQueue {
       throw new IllegalStateException(
         "Must init() WorkQueue object before adding work.");
     }
+    if (shutdown) {
+      // don't add more work if we are shutting down
+      return;
+    }
     workQueue.addLast(work);
     notifyAll();
   }
@@ -252,7 +292,8 @@ public class WorkQueue {
      
     private boolean shutdown;  // true if this thread should shutdown and exit
         
-    public InterrupterThread() {
+    public InterrupterThread(String name) {
+      super(name);
       shutdown = false;
     }
         
@@ -298,10 +339,6 @@ public class WorkQueue {
     
     public boolean isWorking() {
       return isWorking;
-    }
-
-    public void setWorking(boolean isWorking) {
-      this.isWorking = isWorking;
     }
 
     public void run() {

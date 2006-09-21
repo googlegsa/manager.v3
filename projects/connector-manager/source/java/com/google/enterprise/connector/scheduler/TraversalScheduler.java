@@ -84,11 +84,11 @@ public class TraversalScheduler implements Scheduler {
     isShutdown = false;
   }
   
-  public synchronized void shutdown(boolean force) {
+  public synchronized void shutdown(boolean interrupt, long timeoutInMillis) {
     if (isShutdown) {
       return;
     }
-    workQueue.shutdown(force);
+    workQueue.shutdown(interrupt, timeoutInMillis);
     isInitialized = false;
     isShutdown = true;
   }

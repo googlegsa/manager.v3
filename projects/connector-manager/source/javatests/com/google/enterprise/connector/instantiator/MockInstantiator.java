@@ -33,6 +33,7 @@ import com.google.enterprise.connector.spi.QueryTraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.ResultSet;
 import com.google.enterprise.connector.spi.Session;
+import com.google.enterprise.connector.traversal.InterruptibleQueryTraverser;
 import com.google.enterprise.connector.traversal.LongRunningQueryTraverser;
 import com.google.enterprise.connector.traversal.NeverEndingQueryTraverser;
 import com.google.enterprise.connector.traversal.NoopQueryTraverser;
@@ -55,6 +56,7 @@ public class MockInstantiator implements Instantiator {
   public static final String TRAVERSER_NAME_NOOP = "noop";
   public static final String TRAVERSER_NAME_LONG_RUNNING = "longrunning";
   public static final String TRAVERSER_NAME_NEVER_ENDING = "neverending";
+  public static final String TRAVERSER_NAME_INTERRUPTIBLE = "interruptible";
 
   private static final ConnectorType CONNECTOR_TYPE;
   private static Map connectorMap;
@@ -97,6 +99,10 @@ public class MockInstantiator implements Instantiator {
     connectorMap.put(TRAVERSER_NAME_NEVER_ENDING, new ConnectorInterfaces(
         TRAVERSER_NAME_NEVER_ENDING, new NeverEndingQueryTraverser(),
         nullAuthenticationManager, nullAuthorizationManager));
+    
+    connectorMap.put(TRAVERSER_NAME_INTERRUPTIBLE, new ConnectorInterfaces(
+      TRAVERSER_NAME_INTERRUPTIBLE, new InterruptibleQueryTraverser(),
+      nullAuthenticationManager, nullAuthorizationManager));
   }
 
   private static void setupConnector(String connectorName, String resourceName) {

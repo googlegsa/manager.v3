@@ -25,8 +25,8 @@ import com.google.enterprise.connector.monitor.HashMapMonitor;
 import com.google.enterprise.connector.persist.ConnectorConfigStore;
 import com.google.enterprise.connector.persist.ConnectorScheduleStore;
 import com.google.enterprise.connector.persist.FilesystemConnectorConfigStore;
+import com.google.enterprise.connector.persist.MockConnectorScheduleStore;
 import com.google.enterprise.connector.persist.MockConnectorStateStore;
-import com.google.enterprise.connector.persist.PrefsStore;
 import com.google.enterprise.connector.pusher.MockPusher;
 
 import junit.framework.Assert;
@@ -56,12 +56,13 @@ public class TraversalSchedulerTest extends TestCase {
       e.printStackTrace();
       fail(e.getMessage());
     }
-    ConnectorScheduleStore scheduleStore = createConnectorScheduleStore(schedules);
+    ConnectorScheduleStore scheduleStore = 
+      createConnectorScheduleStore(schedules);
     TraversalScheduler scheduler = 
       new TraversalScheduler(instantiator, new HashMapMonitor(),
         workQueue, configStore, scheduleStore);
     scheduler.init();
-    Thread thread = new Thread(scheduler);
+    Thread thread = new Thread(scheduler, "TraversalScheduler");
     thread.start();
     // sleep to give it a chance to schedule something
     try {  
@@ -70,9 +71,15 @@ public class TraversalSchedulerTest extends TestCase {
       ie.printStackTrace();
       Assert.fail(ie.toString());
     }
-    scheduler.shutdown(false);
+    scheduler.shutdown(false, 1000);
   }
 
+  /**
+   * Create an object that can return all connector instances referenced in 
+   * MockInstantiator.
+   * @return the ConnectorConfigStore
+   * @throws IOException
+   */
   private ConnectorConfigStore createConnectorConfigStore() throws IOException {
     ResourceLoader rl = new FileSystemResourceLoader();
     Resource resource = rl.getResource("testdata/staticConnectorConfig/connectors");
@@ -83,7 +90,7 @@ public class TraversalSchedulerTest extends TestCase {
   }
   
   private ConnectorScheduleStore createConnectorScheduleStore(List schedules) {
-    ConnectorScheduleStore store = new PrefsStore();
+    ConnectorScheduleStore store = new MockConnectorScheduleStore();
     Iterator iter = schedules.iterator();
     while (iter.hasNext()) {
       Schedule schedule = (Schedule) iter.next();
@@ -176,6 +183,14 @@ public class TraversalSchedulerTest extends TestCase {
     runWithSchedules(schedules, createMockInstantiator());
   }
 
+  /**
+   * Test a traverser that can get interrupted.
+   */
+  public void testInterruptibleTraverser() {
+    List schedules = getSchedules(MockInstantiator.TRAVERSER_NAME_INTERRUPTIBLE);
+    runWithSchedules(schedules, createMockInstantiator());
+  }
+  
   /**
    * Test that tests to mock Traverser objects.
    */
