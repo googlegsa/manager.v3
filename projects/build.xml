@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="google-enterprise-connector-manager" default="everything" basedir=".">
+
+	<!-- ========================= PROPERTIES ============================= -->
+	<property name="version" value="1.0" />
+
+	<!-- Define Directories. -->
+	<property name="connector-manager.dir" value="connector-manager" />
+	<property name="test-connector1.dir" value="test-connector1" />
+	<property name="test-connector2.dir" value="test-connector2" />
+      <property name="install.dir" value="install" />
+
+	<!-- =========================== TASKS =============================== -->
+
+
+	<target name="clean-all">
+		<ant dir="${connector-manager.dir}" target="clean" />
+		<ant dir="${test-connector1.dir}" target="clean" />
+		<ant dir="${test-connector2.dir}" target="clean" />
+	</target>
+
+	<target name="connector-manager">
+		<ant dir="${connector-manager.dir}" />
+	</target>
+
+	<target name="test-connector1">
+		<ant dir="${test-connector1.dir}" />
+	</target>
+
+	<target name="test-connector2">
+		<ant dir="${test-connector2.dir}" />
+	</target>
+
+	<target name="build-all" depends="test-connector1,test-connector2,connector-manager"/>
+
+	<target name="make-install-dir">
+		<mkdir dir="${install.dir}" />
+	</target>
+
+	<target name="install-connector-manager" depends="connector-manager,make-install-dir">
+		<mkdir dir="${install.dir}/connector-manager" />
+		<copy todir="${install.dir}/connector-manager" >
+			<fileset dir="${connector-manager.dir}/dist"/>
+		</copy>
+	</target>
+
+	<target name="install-test-connector1" depends="test-connector1,make-install-dir">
+		<mkdir dir="${install.dir}/test-connector1" />
+		<copy todir="${install.dir}/test-connector1" >
+			<fileset dir="${test-connector1.dir}/dist"/>
+		</copy>
+	</target>
+
+	<target name="install-test-connector2" depends="test-connector2,make-install-dir">
+		<mkdir dir="${install.dir}/test-connector2" />
+		<copy todir="${install.dir}/test-connector2" >
+			<fileset dir="${test-connector2.dir}/dist"/>
+		</copy>
+	</target>
+
+	<target name="install-all" 
+		depends="install-test-connector1,install-test-connector2,install-connector-manager"/>
+
+	<target name="everything" depends="clean-all,build-all,install-all"/>
+
+</project>
