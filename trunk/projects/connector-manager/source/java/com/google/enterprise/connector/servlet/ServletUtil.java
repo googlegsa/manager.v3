@@ -251,11 +251,13 @@ public class ServletUtil {
       PrintWriter out, String status, ConfigureResponse configRes) {
     writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);
     writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, status);
-    writeXMLTag(out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, false);
-    writeXMLElement(
-        out, 2, ServletUtil.XMLTAG_MESSAGE, configRes.getMessage());
-    writeXMLElement(
-        out, 2, ServletUtil.XMLTAG_FORM_SNIPPET, configRes.getFormSnippet());
+    if (configRes != null) {
+      writeXMLTag(out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, false);
+      writeXMLElement(
+          out, 2, ServletUtil.XMLTAG_MESSAGE, configRes.getMessage());
+      writeXMLElement(
+          out, 2, ServletUtil.XMLTAG_FORM_SNIPPET, configRes.getFormSnippet());
+    }
     writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
   }
 

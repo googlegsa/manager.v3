@@ -70,12 +70,10 @@
         <servlet-name>SetSchedule</servlet-name>
         <servlet-class>com.google.enterprise.connector.servlet.SetSchedule</servlet-class>
     </servlet>
-<!--
     <servlet>
-        <servlet-name>AuthnCheck</servlet-name>
-        <servlet-class>com.google.enterprise.connector.servlet.AuthnCheck</servlet-class>
+        <servlet-name>Authenticate</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.Authenticate</servlet-class>
     </servlet>
--->
     <servlet>
         <servlet-name>Authorization</servlet-name>
         <servlet-class>com.google.enterprise.connector.servlet.Authorization</servlet-class>
@@ -83,6 +81,10 @@
     <servlet>
         <servlet-name>HelloClientFromGSA</servlet-name>
         <servlet-class>com.google.enterprise.connector.servlet.HelloClientFromGSA</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>SetConnectorConfigNoGSA</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.SetConnectorConfigNoGSA</servlet-class>
     </servlet>
 
     <servlet-mapping>
@@ -127,12 +129,10 @@
         <servlet-name>SetSchedule</servlet-name>
         <url-pattern>/setSchedule</url-pattern>
     </servlet-mapping>
-<!--
     <servlet-mapping>
-        <servlet-name>AuthnCheck</servlet-name>
-	<url-pattern>/authnCheck</url-pattern>
+        <servlet-name>Authenticate</servlet-name>
+	<url-pattern>/authenticate</url-pattern>
     </servlet-mapping>
--->
     <servlet-mapping>
         <servlet-name>Authorization</servlet-name>
 	<url-pattern>/authorization</url-pattern>
@@ -140,5 +140,9 @@
     <servlet-mapping>
         <servlet-name>HelloClientFromGSA</servlet-name>
         <url-pattern>/HelloClientFromGSA</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>SetConnectorConfigNoGSA</servlet-name>
+        <url-pattern>/setConnectorConfigTest</url-pattern>
     </servlet-mapping>
 </web-app>
