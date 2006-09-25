@@ -86,6 +86,10 @@
         <servlet-name>SetConnectorConfigNoGSA</servlet-name>
         <servlet-class>com.google.enterprise.connector.servlet.SetConnectorConfigNoGSA</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>SetManagerConfigNoGSA</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.SetManagerConfigNoGSA</servlet-class>
+    </servlet>
 
     <servlet-mapping>
         <servlet-name>SetManagerConfig</servlet-name>
@@ -144,5 +148,9 @@
     <servlet-mapping>
         <servlet-name>SetConnectorConfigNoGSA</servlet-name>
         <url-pattern>/setConnectorConfigTest</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>SetManagerConfigNoGSA</servlet-name>
+        <url-pattern>/setManagerConfigTest</url-pattern>
     </servlet-mapping>
 </web-app>

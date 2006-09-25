@@ -20,6 +20,9 @@ import junit.framework.TestCase;
 
 import java.util.logging.Logger;
 
+import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.manager.MockManager;
+
 /**
  * Tests SetManagerConfigHandler class for SetManagerConfig servlet class.
  *
@@ -63,8 +66,10 @@ public class SetManagerConfigHandlerTest extends TestCase {
   }
 
   private void doTest(String xmlBody) {
-	  LOG.info("xmlBody: " + xmlBody);
-    SetManagerConfigHandler hdl = new SetManagerConfigHandler(xmlBody);
+	LOG.info("xmlBody: " + xmlBody);
+    Manager manager = MockManager.getInstance();
+    SetManagerConfigHandler hdl =
+    	new SetManagerConfigHandler(manager, xmlBody);
     LOG.info("authn: " + hdl.isCertAuth() + " this: " + this.certAuth);
     LOG.info("host: " + hdl.getFeederGateHost() + " " + this.host);
     LOG.info("Port: " + hdl.getFeederGatePort());

@@ -18,7 +18,6 @@ package com.google.enterprise.connector.servlet;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
-import com.google.enterprise.connector.persist.PersistentStoreException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -74,25 +73,11 @@ public class SetManagerConfig extends HttpServlet {
       return;
     }
 
-    SetManagerConfigHandler hdl = new SetManagerConfigHandler(xmlBody);
-    status = hdl.getStatus();
-    if (!status.equals(ServletUtil.XML_RESPONSE_SUCCESS)) {
-      ServletUtil.writeSimpleResponse(out, status);
-      return;
-    }
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
-    try {
-      manager.setConnectorManagerConfig(
-          hdl.isCertAuth(), hdl.getFeederGateHost(),
-          hdl.getFeederGatePort(), hdl.getMaxFeedRate());
-    } catch (PersistentStoreException e) {
-      LOG.info("PersistentStoreException");
-      status = e.toString();
-      e.printStackTrace();
-    }
-
-    ServletUtil.writeSimpleResponse(out, status);
+    SetManagerConfigHandler hdl =
+        new SetManagerConfigHandler(manager, xmlBody);
+    ServletUtil.writeSimpleResponse(out, hdl.getStatus());
     out.close();
   }
 }

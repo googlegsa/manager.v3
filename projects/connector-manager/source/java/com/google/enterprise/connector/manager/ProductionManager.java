@@ -193,4 +193,9 @@ public class ProductionManager implements Manager {
     // TODO - need a real implementation here
   }
 
+
+  public void setSchedule(String connectorName, int load, String timeIntervals) {
+    throw new UnsupportedOperationException();	
+  }
+
 }

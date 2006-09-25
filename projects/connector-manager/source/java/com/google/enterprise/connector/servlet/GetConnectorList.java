@@ -35,7 +35,7 @@ import javax.servlet.http.HttpServletResponse;
  * 
  */
 public class GetConnectorList extends HttpServlet {
-  private static final Logger logger =
+  private static final Logger LOG =
       Logger.getLogger(GetConnectorList.class.getName());
 
   /**
@@ -83,7 +83,7 @@ public class GetConnectorList extends HttpServlet {
     ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, "0");
 
     if (connectorTypes == null || connectorTypes.size() == 0) {
-      logger.info("Connector manager returns null.");
+      LOG.info("Connector manager returns null.");
       ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_CONNECTOR_TYPES,
           "null");
       ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
