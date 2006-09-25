@@ -82,6 +82,13 @@ public class ServletUtil {
   public static final String XMLTAG_AUTHZ_RESPONSE = "AuthorizationResponse";
   public static final String XMLTAG_ANSWER = "Answer";
   public static final String XMLTAG_DECISION = "Decision";
+  
+  public static final String XMLTAG_CONNECTOR_SCHEDULES = "ConnectorSchedules";
+  public static final String XMLTAG_SCHEDULE = "Schedules";
+  public static final String XMLTAG_STARTING_TIME = "StartTime";
+  public static final String XMLTAG_ENDING_TIME = "EndTime";
+  public static final String XMLTAG_LOAD = "load";
+  public static final String XMLTAG_TIME_INTERVALS = "TimeIntervals";
 
   public static final String XML_RESPONSE_SUCCESS = "0";
   public static final String XML_RESPONSE_STATUS_EMPTY_REQUEST =
@@ -294,8 +301,9 @@ public class ServletUtil {
    *
    * @param out where PrintWriter to be written to
    * @param indentLevel the depth of indentation
-   * @param tagName name of the XML tag to be added
-   * @param endingTag add a beginning tag if true, an ending tag if false
+   * @param tagName String name of the XML tag to be added
+   * @param endingTag String write a beginning tag if true or
+   * an ending tag if false
    */
   public static void writeXMLTag(PrintWriter out, int indentLevel,
                           String tagName, boolean endingTag) {

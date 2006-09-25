@@ -206,4 +206,9 @@ public class MockManager implements Manager {
     // do nothing
   }
 
+public void setSchedule(String connectorName, int load, String timeIntervals) {
+  // TODO Auto-generated method stub
+  
+}
+
 }

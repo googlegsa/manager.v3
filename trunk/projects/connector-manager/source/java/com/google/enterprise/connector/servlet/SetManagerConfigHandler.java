@@ -18,6 +18,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.persist.PersistentStoreException;
+
 import java.util.logging.Logger;
 
 /**
@@ -38,7 +41,7 @@ public class SetManagerConfigHandler {
    * Reads from an input XML body string
    * @param xmlBody String Input XML body string.
    */
-  public SetManagerConfigHandler(String xmlBody) {
+  public SetManagerConfigHandler(Manager manager, String xmlBody) {
     SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
     Document document = ServletUtil.parse(xmlBody, errorHandler);
     NodeList nodeList =
@@ -60,7 +63,14 @@ public class SetManagerConfigHandler {
     this.feederGatePort = Integer.parseInt(ServletUtil.getFirstAttribute(
         (Element) nodeList.item(0), ServletUtil.XMLTAG_FEEDERGATE,
         ServletUtil.XMLTAG_FEEDERGATE_PORT));
-
+    try {
+      manager.setConnectorManagerConfig(this.certAuth, this.feederGateHost,
+          this.feederGatePort, this.maxFeedRate);
+    } catch (PersistentStoreException e) {
+      LOG.info("PersistentStoreException");
+      this.status = e.toString();
+      e.printStackTrace();
+    }
   }
 
   public boolean isCertAuth() {

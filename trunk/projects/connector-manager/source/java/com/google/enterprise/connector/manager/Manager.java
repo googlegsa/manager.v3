@@ -164,4 +164,6 @@ public interface Manager {
   public List authorizeTokens(String connectorName, List tokenList,
       String username);
 
+  public void setSchedule(String connectorName, int load, String timeIntervals);
+
 }
