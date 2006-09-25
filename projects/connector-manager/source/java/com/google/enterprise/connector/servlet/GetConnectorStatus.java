@@ -33,7 +33,7 @@ import javax.servlet.http.HttpServletResponse;
  * 
  */
 public class GetConnectorStatus extends HttpServlet {
-  private static final Logger logger =
+  private static final Logger LOG =
       Logger.getLogger(GetConnectorStatus.class.getName());
 
   /**
@@ -48,7 +48,7 @@ public class GetConnectorStatus extends HttpServlet {
       throws ServletException, IOException {
     String connectorName = req.getParameter("ConnectorName");
     if (connectorName.length() < 1) {
-      logger.info("ConnectorName is null");
+      LOG.info("ConnectorName is null");
       return;
     }
 
@@ -60,7 +60,7 @@ public class GetConnectorStatus extends HttpServlet {
 
     ConnectorStatus connectorStatus = manager.getConnectorStatus(connectorName);
     if (connectorStatus == null) {
-      logger.info("Connector manager returns null status for " + connectorName
+      LOG.info("Connector manager returns null status for " + connectorName
           + ".");
     }
 
@@ -92,9 +92,6 @@ public class GetConnectorStatus extends HttpServlet {
     ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, "0");
 
     if (status == null) {
-      // logger.info("Connector manager returns null status for " +
-      //             connectorName + ".");
-      // logger.info("Connector manager returns null status.");
       ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_CONNECTOT_STATUS,
           "null");
       ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);

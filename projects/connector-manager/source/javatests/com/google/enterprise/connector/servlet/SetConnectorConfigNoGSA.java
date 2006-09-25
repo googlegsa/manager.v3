@@ -68,7 +68,6 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
   protected void doPost(HttpServletRequest req,
                         HttpServletResponse res)
       throws ServletException, IOException {
-    String status = ServletUtil.XML_RESPONSE_SUCCESS;
     String lang = "en";
     String connectorName = req.getParameter("connectorName");
     String connectorType = req.getParameter("connectorType");
