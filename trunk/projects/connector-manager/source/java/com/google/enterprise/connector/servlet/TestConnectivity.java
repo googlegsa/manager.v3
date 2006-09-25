@@ -29,7 +29,7 @@ import javax.servlet.http.HttpServletResponse;
  * 
  */
 public class TestConnectivity extends HttpServlet {
-  private static final Logger logger = Logger.getLogger(TestConnectivity.class
+  private static final Logger LOG = Logger.getLogger(TestConnectivity.class
     .getName());
 
   /**
@@ -43,7 +43,7 @@ public class TestConnectivity extends HttpServlet {
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
-    logger.info("Hello from the TestConnectivity servlet!");
+    LOG.info("Hello from the TestConnectivity servlet!");
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
     handleDoGet(out);

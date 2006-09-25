@@ -164,6 +164,18 @@ public interface Manager {
   public List authorizeTokens(String connectorName, List tokenList,
       String username);
 
-  public void setSchedule(String connectorName, int load, String timeIntervals);
+  /**
+   * Set schedule for a given Connector.
+   * 
+   * @param connectorName
+   * @param load The hostload as an integer
+   * @param timeIntervals Time intervals in the format of 1-2:3-8
+   * @throws ConnectorNotFoundException If the named connector is not known to
+   *         this manager.
+   * @throws PersistentStoreException If there was a problem storing the
+   *         configuration
+   */
+  public void setSchedule(String connectorName, int load, String timeIntervals)
+      throws ConnectorNotFoundException, PersistentStoreException;
 
 }

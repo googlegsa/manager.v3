@@ -40,8 +40,7 @@ public class SetConnectorConfig extends HttpServlet {
     Logger.getLogger(SetConnectorConfig.class.getName());
 
   /**
-   * Returns the connector config (form) for now.
-   * TODO: doGet just call doPost.
+   * doGet just call doPost.
    * @param req 
    * @param res 
    * @throws ServletException 

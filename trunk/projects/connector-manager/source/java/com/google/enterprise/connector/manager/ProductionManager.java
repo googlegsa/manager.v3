@@ -193,7 +193,12 @@ public class ProductionManager implements Manager {
     // TODO - need a real implementation here
   }
 
-
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.google.enterprise.connector.manager.Manager#setSchedule(
+   *      java.lang.String, int, java.lang.String)
+   */
   public void setSchedule(String connectorName, int load, String timeIntervals) {
     throw new UnsupportedOperationException();	
   }

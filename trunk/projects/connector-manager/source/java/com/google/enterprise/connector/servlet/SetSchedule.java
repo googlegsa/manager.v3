@@ -32,6 +32,8 @@ import org.w3c.dom.NodeList;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.persist.PersistentStoreException;
 
 /**
  * Admin servlet for SetSchedule
@@ -101,7 +103,17 @@ public class SetSchedule extends HttpServlet {
         (Element) nodeList.item(0), ServletUtil.XMLTAG_LOAD));
     String timeIntervals = ServletUtil.getFirstElementByTagName(
          (Element) nodeList.item(0), ServletUtil.XMLTAG_TIME_INTERVALS);
-    manager.setSchedule(connectorName, load, timeIntervals);
+    try {
+      manager.setSchedule(connectorName, load, timeIntervals);
+    } catch (ConnectorNotFoundException e) {
+      LOG.info("ConnectorNotFoundException");
+      status = e.toString();
+      e.printStackTrace();
+    } catch (PersistentStoreException e) {
+      LOG.info("PersistentStoreException");
+      status = e.toString();
+      e.printStackTrace();
+    }
     return status;
   }
 }

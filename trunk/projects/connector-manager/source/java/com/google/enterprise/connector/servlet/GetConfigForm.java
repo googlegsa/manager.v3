@@ -36,7 +36,7 @@ import javax.servlet.http.HttpServletResponse;
  * 
  */
 public class GetConfigForm extends HttpServlet {
-  private static final Logger logger =
+  private static final Logger LOG =
       Logger.getLogger(GetConfigForm.class.getName());
 
   /**
@@ -52,12 +52,12 @@ public class GetConfigForm extends HttpServlet {
       throws ServletException, IOException {
     String connectorTypeName = req.getParameter("ConnectorType");
     if (connectorTypeName.length() < 1) {
-      logger.info("ConnectorType is null");
+      LOG.info("ConnectorType is null");
       return;
     }
     String language = req.getParameter("lang");
     if (language.length() < 1) {
-      logger.info("language is null");
+      LOG.info("language is null");
       return;
     }
     res.setContentType(ServletUtil.MIMETYPE_XML);
@@ -71,7 +71,7 @@ public class GetConfigForm extends HttpServlet {
           manager.getConfigForm(connectorTypeName, language);
       handleDoGet(out, configResponse);
     } catch (ConnectorTypeNotFoundException e1) {
-      logger.info("Connector Type Not Found Exception");
+      LOG.info("Connector Type Not Found Exception");
       e1.printStackTrace();
     }
 
@@ -104,7 +104,7 @@ public class GetConfigForm extends HttpServlet {
     ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, "0");
 
     if (configResponse == null) {
-      logger.info("Connector manager returns null config response.");
+      LOG.info("Connector manager returns null config response.");
       ServletUtil.writeXMLElement(out, 1,
           ServletUtil.XMLTAG_CONFIGURE_RESPONSE, "null");
       ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
