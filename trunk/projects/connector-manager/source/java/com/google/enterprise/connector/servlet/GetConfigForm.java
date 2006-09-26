@@ -71,6 +71,7 @@ public class GetConfigForm extends HttpServlet {
           manager.getConfigForm(connectorTypeName, language);
       handleDoGet(out, configResponse);
     } catch (ConnectorTypeNotFoundException e1) {
+      ServletUtil.writeSimpleResponse(out, e1.toString());
       LOG.info("Connector Type Not Found Exception");
       e1.printStackTrace();
     }

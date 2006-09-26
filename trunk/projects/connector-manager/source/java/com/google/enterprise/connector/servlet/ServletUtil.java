@@ -46,6 +46,8 @@ public class ServletUtil {
   public static final String MIMETYPE_XML = "text/xml";
   public static final String MIMETYPE_HTML = "text/html";
 
+  public static final String QUERY_PARAM_LANG = "lang";
+
   public static final String XMLTAG_RESPONSE_ROOT = "CmResponse";
   public static final String XMLTAG_STATUSID = "StatusId";
   public static final String XMLTAG_CONNECTOR_TYPES = "ConnectorTypes";
@@ -105,13 +107,25 @@ public class ServletUtil {
   public static final String XML_RESPONSE_STATUS_NULL_RESOURCE =
       "Null resource";
   public static final String XML_RESPONSE_AUTHZ_DOCID_MISMATCH =
-    "Authorization docid mismatch";
+      "Authorization docid mismatch";
   public static final String XML_SIMPLE_RESPONSE =
       "<CmResponse>\n" + "  <StatusId>0</StatusId>\n" + "</CmResponse>\n";
+
+  public static final String DEFAULT_FORM =
+    "<tr><td>Username</td><td>\n" + 
+    "<input type=\"text\" name=\"Username\" /></td></tr>\n" + 
+    "<tr><td>Password</td><td>\n" + 
+    "<input type=\"password\" name=\"Password\" /></td></tr>\n" + 
+    "<tr><td>Repository</td><td>\n" + 
+    "<input type=\"text\" name=\"Repository\" /></td></tr>\n";
 
   public static final int HTML_NORMAL = 0;
   public static final int HTML_HEADING = 1;
   public static final int HTML_LINE = 2;
+  public static final String HTML_INPUT = "input";
+  public static final String HTML_NAME = "name=\"";
+  public static final String HTML_VALUE = " value=\"";
+  public static final char HTML_QUOTE = '"';
 
   private static final String[] XMLIndent = { "",
       "  ",
@@ -319,6 +333,10 @@ public class ServletUtil {
       return XMLIndent[XMLIndent.length - 1]
           + IndentStr(level - XMLIndent.length);
     }
+  }
+
+  public static String htmlErrorPage(String status) {
+    return "<HTML><BODY>Error: " + status + "</BODY></HTML>";
   }
 
   public static void htmlHeadWithTitle(PrintWriter out, String title) {
