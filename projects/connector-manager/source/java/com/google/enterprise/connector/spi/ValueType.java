@@ -29,6 +29,10 @@ public class ValueType {
   
   private static int count = 0;
   
+  public String toString() {
+    return tag;   
+  }
+  
   /**
    * The String type
    */

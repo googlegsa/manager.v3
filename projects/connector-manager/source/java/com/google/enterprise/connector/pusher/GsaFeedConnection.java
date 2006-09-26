@@ -17,9 +17,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 
 /**
  * Opens a connection to a url and sends data to it.
@@ -35,6 +37,15 @@ public class GsaFeedConnection implements FeedConnection {
     this.port = port;
   }
   
+  /*
+   * Urlencodes the xml string.
+   */
+  private String encode(String data) throws UnsupportedEncodingException {
+    String encodedData =
+        URLEncoder.encode(data, DocPusher.XML_DEFAULT_ENCODING);
+    return data;
+  }
+
   /*
    * Generates the feed url for a given GSA host.
    */
@@ -53,7 +64,7 @@ public class GsaFeedConnection implements FeedConnection {
     uc.setDoOutput(true);
     uc.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
     OutputStreamWriter osw = new OutputStreamWriter(uc.getOutputStream());
-    osw.write(data);
+    osw.write(encode(data));
     osw.flush();
     
     StringBuffer buf = new StringBuffer();

@@ -21,38 +21,50 @@ import com.google.enterprise.connector.spi.Value;
 import java.util.Iterator;
 
 /**
- * Google SPI Property adaptor using JCR property.  Part of an implementation 
- * of the complete Google connector SPI using JCR.  This class is a fairly 
+ * Google SPI Property adaptor using JCR property. Part of an implementation of
+ * the complete Google connector SPI using JCR. This class is a fairly
  * delegation of similar calls to the appropriate JCR calls.
  */
 public class SpiPropertyFromJcr implements Property {
 
   private javax.jcr.Property property;
+  private final String name;
 
   public SpiPropertyFromJcr(javax.jcr.Property p) {
     if (p == null) {
       throw new IllegalArgumentException();
     }
     this.property = p;
+    try {
+      this.name = property.getName();
+    } catch (javax.jcr.RepositoryException e) {
+      throw new IllegalArgumentException();
+    }
+  }
+
+  public SpiPropertyFromJcr(javax.jcr.Property p, String alias) {
+    if (p == null) {
+      throw new IllegalArgumentException();
+    }
+    this.property = p;
+    this.name = alias;
   }
 
   /**
    * Returns the name of the property.
+   * 
    * @return The String name
    * @throws RepositoryException
    */
   public String getName() throws RepositoryException {
-    try {
-      return property.getName();
-    } catch (javax.jcr.RepositoryException e) {
-      throw new RepositoryException(e);
-    }
+    return name;
   }
 
   /**
    * Returns the first value of the property or null if there is none.
+   * 
    * @return The Value
-   * @throws RepositoryException 
+   * @throws RepositoryException
    */
   public Value getValue() throws RepositoryException {
     Iterator i = getValues();
@@ -64,8 +76,9 @@ public class SpiPropertyFromJcr implements Property {
 
   /**
    * Returns the values of the property as an iterator.
+   * 
    * @return An Iterator of Values
-   * @throws RepositoryException 
+   * @throws RepositoryException
    */
   public Iterator getValues() throws RepositoryException {
     javax.jcr.Value value = getSingleJcrValue();
@@ -81,9 +94,9 @@ public class SpiPropertyFromJcr implements Property {
     try {
       values = property.getValues();
     } catch (javax.jcr.ValueFormatException e) {
-      // This shouldn't happen - because it would mean that the property is 
+      // This shouldn't happen - because it would mean that the property is
       // single-valued - but we already tried getting its one value under that
-      // assumption.  So this is an internal consistency error
+      // assumption. So this is an internal consistency error
       throw new RepositoryException("Property is neither single-valued nor"
           + " multiple valued", e);
     } catch (javax.jcr.RepositoryException e) {

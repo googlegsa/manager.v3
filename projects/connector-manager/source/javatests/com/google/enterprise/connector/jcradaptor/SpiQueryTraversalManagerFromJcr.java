@@ -20,6 +20,7 @@ import com.google.enterprise.connector.spi.QueryTraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.ResultSet;
 import com.google.enterprise.connector.spi.SimpleValue;
+import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 
 import org.json.JSONException;
@@ -46,9 +47,12 @@ public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
   }
 
   public String checkpoint(PropertyMap pm) throws RepositoryException {
-    String uuid = fetchAndVerifyValueForCheckpoint(pm, "jcr:uuid").getString();
-    Calendar c = fetchAndVerifyValueForCheckpoint(pm, "jcr:lastModified")
-        .getDate();
+    String uuid =
+        fetchAndVerifyValueForCheckpoint(pm, SpiConstants.PROPNAME_DOCID)
+            .getString();
+    Calendar c =
+        fetchAndVerifyValueForCheckpoint(pm, SpiConstants.PROPNAME_LASTMODIFY)
+            .getDate();
     String dateString = SimpleValue.calendarToIso8601(c);
     String result = null;
     try {

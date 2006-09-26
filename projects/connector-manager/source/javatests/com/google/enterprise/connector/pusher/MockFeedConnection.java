@@ -19,12 +19,26 @@ import com.google.enterprise.connector.pusher.FeedConnection;
 
 public class MockFeedConnection implements FeedConnection {
 
-	public MockFeedConnection() {
-	}
+  StringBuffer buf = null;
+  
+  public String getFeed() {
+    String result;
+    if (buf == null) {
+      result = "";
+    }
+    result = buf.toString();
+    buf = new StringBuffer(2048);
+    return result;
+  }
 
-	public String sendData(String data) throws IOException {
-		System.out.println(data);
-		return "Mock response";
-	}
+  public MockFeedConnection() {
+    buf = new StringBuffer(2048);
+  }
+
+  public String sendData(String data) throws IOException {
+    buf.append(data);
+    System.out.println(data);
+    return "Mock response";
+  }
 
 }

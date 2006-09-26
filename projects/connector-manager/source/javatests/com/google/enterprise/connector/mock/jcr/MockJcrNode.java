@@ -131,6 +131,11 @@ public class MockJcrNode implements Node {
     return p.getString();
   }
 
+  public boolean hasProperty(String arg0) throws RepositoryException {
+    Property p = findProperty(arg0);
+    return (p != null);
+  }
+
   // The following methods may be needed later but are temporarily
   // unimplemented
 
@@ -170,10 +175,6 @@ public class MockJcrNode implements Node {
   }
 
   public boolean hasNode(String arg0) throws RepositoryException {
-    throw new UnsupportedOperationException();
-  }
-
-  public boolean hasProperty(String arg0) throws RepositoryException {
     throw new UnsupportedOperationException();
   }
 

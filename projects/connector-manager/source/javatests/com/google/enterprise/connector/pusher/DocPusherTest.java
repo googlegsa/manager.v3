@@ -40,13 +40,15 @@ public class DocPusherTest extends TestCase {
   private static final String DATASOURCE = "datasource";
   
   public void testTake() throws RepositoryException {
-    String expectedXml = "<?xml version='1.0' encoding='UTF-8'?><!DOCTYPE gsafeed "
-      + "PUBLIC \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\"><gsafeed>"
-      + "<header><datasource>datasource</datasource><feedtype>full</feedtype>"
-      + "</header><group><record url=\"http://www.sometesturl.com/test\""
-      + " mimetype=\"text/plain\" last-modified=\"Tue, 15 "
-      + "Nov 1994 12:45:26 GMT\"><content encoding=\"base64binary\">"
-      + "bm93IGlzIHRoZSB0aW1l</content></record></group></gsafeed>";
+    String expectedXml =
+        "datasource=datasource&feedtype=full&data="
+            + "<?xml version='1.0' encoding='UTF-8'?><!DOCTYPE gsafeed "
+            + "PUBLIC \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\"><gsafeed>"
+            + "<header><datasource>datasource</datasource><feedtype>full</feedtype>"
+            + "</header><group><record url=\"http://www.sometesturl.com/test\""
+            + " mimetype=\"text/plain\" last-modified=\"Tue, 15 "
+            + "Nov 1994 12:45:26 GMT\"><content encoding=\"base64binary\">"
+            + "bm93IGlzIHRoZSB0aW1l</content></record></group></gsafeed>";
     String resultXML;
     String gsaExpectedResponse = "Mock response";
     String gsaActualResponse;
@@ -66,12 +68,19 @@ public class DocPusherTest extends TestCase {
     for (Iterator iter = resultSet.iterator(); iter.hasNext();) {
       PropertyMap propertyMap = (PropertyMap) iter.next();
       dpusher.take(propertyMap);
-      resultXML = dpusher.getXmlData();
+//      resultXML = dpusher.getXmlData();
+      resultXML = mockFeedConnection.getFeed();
       gsaActualResponse = dpusher.getGsaResponse();
-      Assert.assertEquals(true, expectedXml.equals(resultXML));
-      Assert.assertEquals(true, gsaExpectedResponse.equals(gsaActualResponse));
+      Assert.assertEquals(expectedXml, resultXML);
+      Assert.assertEquals(gsaExpectedResponse, gsaActualResponse);
       
     }
   }
-
+  /**
+   * Tests DocPusher.
+   * @throws RepositoryException 
+   */
+  public void simpleTest() throws RepositoryException {
+    ;
+  }
 }

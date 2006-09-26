@@ -264,6 +264,9 @@ public class Context {
   }
 
   void shutdown(boolean force) {
+    if (!isFeeding) {
+      return;
+    }
     traversalScheduler.shutdown(force, WorkQueue.DEFAULT_SHUTDOWN_TIMEOUT);
   }
   
