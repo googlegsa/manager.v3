@@ -20,7 +20,7 @@ import java.io.IOException;
  * Interface for a url connection. This takes in data and url to which the 
  * data needs to be sent.
  */
-public interface UrlConn {
+public interface FeedConnection {
 
   /**
    * Open a connection to this url and sends data.

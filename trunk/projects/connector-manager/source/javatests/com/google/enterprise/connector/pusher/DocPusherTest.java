@@ -19,7 +19,6 @@ import com.google.enterprise.connector.jcradaptor.SpiQueryTraversalManagerFromJc
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryDocument;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
-import com.google.enterprise.connector.mock.MockUrlConn;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.QueryTraversalManager;
@@ -58,8 +57,8 @@ public class DocPusherTest extends TestCase {
     QueryManager qm = new MockJcrQueryManager(r.getStore());
     QueryTraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
     
-    MockUrlConn mockUrlConn = new MockUrlConn();
-    DocPusher dpusher = new DocPusher(DATASOURCE, mockUrlConn);
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(DATASOURCE, mockFeedConnection);
     
     MockRepositoryDocument doc = r.getStore().getDocByID("doc1");
     ResultSet resultSet = qtm.startTraversal();
