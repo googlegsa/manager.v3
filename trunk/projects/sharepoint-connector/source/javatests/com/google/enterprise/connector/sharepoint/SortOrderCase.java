@@ -24,6 +24,7 @@ public class SortOrderCase extends TestCase implements ICase {
 			String currId = current.getProperty(SpiConstants.PROPNAME_DOCID)
 					.getValue().getString();
 			this.assertNotSame(prevId, currId);
+			System.out.println("test sorting order: " + currId);
 			String prevListId = prevId.substring(0, prevId.indexOf("}"));
 			String currListId = currId.substring(0, currId.indexOf("}"));
 			if (!prevListId.equals(currListId)) {

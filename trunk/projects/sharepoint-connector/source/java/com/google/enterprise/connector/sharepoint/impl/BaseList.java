@@ -35,8 +35,6 @@ import org.apache.commons.logging.LogFactory;
 
 import com.google.enterprise.connector.sharepoint.gen.ListsStub;
 import com.google.enterprise.connector.sharepoint.gen.ListsStub.GetList;
-import com.google.enterprise.connector.sharepoint.gen.ListsStub.GetListItemChanges;
-import com.google.enterprise.connector.sharepoint.gen.ListsStub.GetListItemChangesResponse;
 import com.google.enterprise.connector.sharepoint.gen.ListsStub.GetListItems;
 import com.google.enterprise.connector.sharepoint.gen.ListsStub.GetListItemsResponse;
 import com.google.enterprise.connector.sharepoint.gen.ListsStub.GetListResponse;
@@ -91,7 +89,7 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 
 	int currentItem = 0;
 
-	HashMap processedList = new HashMap();
+	static Hashtable processedList = new Hashtable();
 
 	private boolean crawlAll = false, pushFeed = true;
 
@@ -109,6 +107,7 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 
 	int totalItems = 0;
 
+	PropertyMap lastItem = null;
 	static {
 		try {
 			logger = LogFactory.getLog(BaseList.class);
@@ -146,11 +145,11 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 	 * @throws RemoteException
 	 * @throws ParseException
 	 */
-	public boolean processFirstPagedItems(String list) throws RemoteException,
-			ParseException {
+	public boolean processFirstPagedItems(String list, String lastAccessTime)
+			throws RemoteException, ParseException {
 		logger.debug("getListItems " + list);
 		getItems = new GetListItems();
-		setQuery(getItems);
+		setQuery(getItems, lastAccessTime);
 		getItems.setRowLimit("" + ClientContext.getPageSize());
 		list = list.substring(1);
 		list = list.substring(0, list.length() - 1);
@@ -174,7 +173,11 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 		return processOnePagedItems(paging);
 	}
 
-	boolean processNextPagedItems() throws RemoteException {
+	boolean processNextPagedItems() throws Exception {
+		//automatic checkpoint if there are more than one item
+		if (lastItem != null && paging != null ) {
+			Util.checkpoint(getContext(), lastItem);
+		}
 		return processOnePagedItems(paging);
 	}
 
@@ -206,16 +209,24 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 	 * 
 	 * @return
 	 */
-	private void setQuery(GetListItems items) {
+	private void setQuery(GetListItems items, String lastAccessTime) {
 		OMElement query = omfactory.createOMElement("query", null);
 		OMElement Q = omfactory.createOMElement("Query", null, query);
-		// Q.setText("<OrderBy&lt;<FieldRef Name=\\\"Modified\"
-		// Ascending=\"TRUE\"></FieldRef></OrderBy>");
-		// OMElement where = omfactory.createOMElement("Where", null, Q);
+		if (lastAccessTime != null) {
+			OMElement where = omfactory.createOMElement("Where", null, Q);
+			OMElement geq = omfactory.createOMElement("Geq", null, where);
+			OMElement fieldref = omfactory.createOMElement("FieldRef", null,
+					geq);
+			fieldref.addAttribute("Name", "Modified", null);
+			OMElement value = omfactory.createOMElement("Value", null, geq);
+			value.addAttribute("Type", "DateTime", null);
+			value.setText(lastAccessTime);
+			// value.setText("2006-09-23T05:53:30");
+		}
 		OMElement orderBy = omfactory.createOMElement("OrderBy", null, Q);
 		OMElement field = omfactory.createOMElement("FieldRef", null, orderBy);
 		field.addAttribute("Name", "Modified", null);
-		field.addAttribute("Ascending", "FALSE", null);
+		field.addAttribute("Ascending", "TRUE", null);
 		items.setQuery(query);
 	}
 
@@ -262,7 +273,7 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 			// recursively get all items
 
 			logger.debug("Processing " + this.getCurrentListTitle());
-			return processFirstPagedItems(name);
+			return processFirstPagedItems(name, null);
 			// all the item's time format doesn't have
 			// timezone info, and they are not converted to the local timezone
 			// that
@@ -271,8 +282,10 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 			// in this case, all the items' time converted to local timezone
 			// where
 			// connector is running on, in the ...T...Z format
-			logger.debug(this.getCurrentListTitle() + " has been processed");
-			return processListItemChanges(name, lastAccessTime);
+			logger.debug(this.getCurrentListTitle()
+					+ " has been processed before");
+			// return processListItemChanges(name, lastAccessTime);
+			return processFirstPagedItems(name, lastAccessTime);
 		}
 	}
 
@@ -303,7 +316,7 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 		String sItemCount = em.getAttribute(new QName("ItemCount"))
 				.getAttributeValue();
 		int item = Integer.parseInt(sItemCount);
-		Util.recordItem(getContext(), item);
+		// Util.recordItem(getContext(), item);
 		em = (OMElement) em.getChildElements().next(); // fields tag
 		Hashtable skips = getSkipFields();
 		ita = em.getChildElements(); // field tag
@@ -362,25 +375,30 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 	 * @throws RemoteException
 	 * @throws ParseException
 	 */
-	protected boolean processNextDoc() throws RemoteException, ParseException {
+	protected boolean processNextDoc() throws Exception {
 		if (paging != null) {
-			// there are something unfinished
+			// there are something unfinished on the current list
 			processNextPagedItems();
 			return true;
 		}
+		ListFactory.updateLastAccessTime(); // update access time for already
+		// retrieved list
 		Date lastAccessTime = new Date();
 		boolean hasContent = false;
 		while (itList.hasNext()) {
 			String key = (String) itList.next();
 			String title = (String) lists.get(key);
 			hasContent = processList(key, title);
-			if (hasContent) {
-				// there might be something left, that will be processed by next
-				// call to getNextDoc
-				processedList.put(key, lastAccessTime);
-				return true;
-			} else {
-				Util.saveLastAccessTime(key, lastAccessTime);
+			if (!ClientContext.isCrawlStructure()) {
+				if (hasContent) {
+					// there might be something left, that will be processed by
+					// next
+					// call to getNextDoc
+					ListFactory.recordLastList(key, lastAccessTime);
+					return true;
+				} else {
+					Util.saveLastAccessTime(key, lastAccessTime);
+				}
 			}
 		}
 		return hasContent;
@@ -405,35 +423,6 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 		}
 		// Util.recordCrawledList(1);
 		return true;
-	}
-
-	public String updateLastAccessTime() throws ParseException {
-		// If we are only crawling the structure, we don't mark the time
-		if (ClientContext.isCrawlStructure())
-			return null;
-		int size;
-		boolean skipCurrent = false;
-		if (itCurrentRecords != null && itCurrentRecords.hasNext()) {
-			skipCurrent = true;// current page is not done
-		} else if (paging != null) {
-			skipCurrent = true; // has next page
-		} else {
-			skipCurrent = false;
-		}
-		Iterator keys = processedList.keySet().iterator();
-		while (keys.hasNext()) {
-			String key = (String) keys.next();
-			if (skipCurrent && key.equals(getCurrentListKey())) {
-				continue;
-			}
-			Date lastAccessTime = (Date) processedList.get(key);
-			Util.saveLastAccessTime(key, lastAccessTime);
-		}
-		if (skipCurrent) {
-			return getCurrentListKey();
-		} else {
-			return "complete";
-		}
 	}
 
 	public java.util.List getCurrentRecords() {
@@ -480,32 +469,14 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 		this.currentListTitle = currentListTitle;
 	}
 
-	/**
-	 * Returns changed items in a list.
-	 * 
-	 * @param list
-	 * @throws RemoteException
-	 * @throws ParseException
-	 */
-	protected boolean processListItemChanges(String list, String since)
-			throws RemoteException, ParseException {
-		logger.debug("Inside getListItemChanges");
-		GetListItemChanges changes = new GetListItemChanges();
-		changes.setListName(list);
-		changes.setSince(since);
-		changes.setViewFields(getViewFields());
-		GetListItemChangesResponse response = ((ListsStub) getSoap())
-				.GetListItemChanges(changes);
-		OMElement em = response.getGetListItemChangesResult();
-		return processListResults(em);
-	}
-
 	OMElement getViewFields() {
 		logger.debug("get the list of view fields to retrieve");
 		// need to nest: <viewFields><ViewFields>, probably Sharepoint bug
-		OMElement omfields = omfactory.createOMElement("viewFields", omfactory
-				.createOMNamespace(Sharepoint.SP_NAMESPACE,
-						Sharepoint.SP_PREFIX));
+		// OMElement omfields = omfactory.createOMElement("viewFields",
+		// omfactory
+		// .createOMNamespace(Sharepoint.SP_NAMESPACE,
+		// Sharepoint.SP_PREFIX));
+		OMElement omfields = omfactory.createOMElement("viewFields", null);
 		OMElement omf = omfactory.createOMElement("ViewFields", null, omfields);
 		Iterator it = metaFields.keySet().iterator();
 		Hashtable gSkipFields = ClientContext.getSkipFields();
@@ -521,6 +492,7 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 	}
 
 	private boolean processListResults(OMElement em) {
+		ClientContext context = getContext();
 		Iterator ita = em.getChildElements();
 		if (!em.getChildElements().hasNext()) {// result tag
 			return false;
@@ -537,12 +509,33 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 		PropertyMap map;
 		while (it.hasNext()) {
 			OMElement item = (OMElement) it.next();
+			if (context.hasCheckpoint()) {
+				if (context.getCheckpointList()
+						.equals(this.getCurrentListKey())) {
+					String Id = item.getAttributeValue(new QName("ows_ID"));
+					long checkpointId = context.getCheckpointItem();
+					if (checkpointId != -1) {
+						if (Integer.valueOf(Id).longValue() <= checkpointId) {
+							continue;
+						}
+					}
+				}
+
+			}
+
 			map = processItem(item);
 			if (map != null) {
 				currentRecords.add(map);
 			}
 		}
-		return true;
+		if (context.hasCheckpoint()) {
+			context.clearCheckpoint();
+		}
+		if (currentRecords.size() > 0) {
+			lastItem = (PropertyMap) currentRecords
+					.get(currentRecords.size() - 1);
+		}
+		return currentRecords.size() > 0;
 	}
 
 	public boolean hasNext() {
@@ -622,7 +615,7 @@ public abstract class BaseList extends ConnectorImpl implements Iterator {
 				ValueType.STRING, this.getCurrentListKey() + "-" + itemId));
 	}
 
-	protected Property getLastModifiedTime(String last) throws ParseException{
+	protected Property getLastModifiedTime(String last) throws ParseException {
 		last = Util.toUniversalFormat(last);
 		return new SimpleProperty(SpiConstants.PROPNAME_LASTMODIFY,
 				new SimpleValue(ValueType.DATE, last));

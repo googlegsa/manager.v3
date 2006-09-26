@@ -32,9 +32,9 @@ public class TestList extends TestCase {
 		loopItems(BaseList.TYPE_GENERIC_LIST, new UrlCase());
 	}
 
-	public void atestItemCount() throws Exception {
+	public void testItemCount() throws Exception {
 		ClientContext context = new ClientContext(username, password);
-		ClientContext.setCrawlAll(true);
+		ClientContext.setCrawlAll(false);
 		Sharepoint sp = new Sharepoint(context);
 		sp.crawl();
 		Iterator it = ListFactory.getListFactories().iterator();
@@ -99,7 +99,6 @@ public class TestList extends TestCase {
 		PropertyMap pm = null;
 		while (it.hasNext()) {
 			pm = (PropertyMap) it.next();
-
 			icase.perform(((SharepointResultSet) rs).getContext(), pm);
 		}
 	}

@@ -19,7 +19,6 @@ public class SharepointConnector implements Connector {
 		try {
 			ClientContext.init();
 			ClientContext.setMode(ConnectorConstants.MODE_QUERY);
-			ClientContext.setCrawlAll(true);
 		} catch (ConfigurationException e) {
 
 		}

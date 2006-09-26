@@ -13,11 +13,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.google.enterprise.connector.sharepoint.impl.ClientContext;
-import com.google.enterprise.connector.sharepoint.impl.ConnectorImpl;
+import com.google.enterprise.connector.sharepoint.impl.Util;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.spi.Value;
 
 public class UrlCase extends TestCase implements ICase {
 
@@ -55,6 +54,7 @@ public class UrlCase extends TestCase implements ICase {
 				fail();
 			}
 		} catch (Exception e) {
+			Util.processException(logger, e);
 			fail();
 		}
 	}

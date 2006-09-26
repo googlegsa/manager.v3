@@ -98,7 +98,7 @@
 	</target>
 	
 	<target depends="build" name="sharepoint-connector">
-		<jar destfile="${sharepoint-connector.location}/dist/sharepoint-connector.jar" basedir="bin" excludes="**/Test.class" />
+		<jar destfile="${sharepoint-connector.location}/bin/sharepoint-connector.jar" basedir="bin" excludes="**/Test.class" />
 	</target>
 
 </project>

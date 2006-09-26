@@ -1,6 +1,5 @@
 package com.google.enterprise.connector.sharepoint;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -10,9 +9,22 @@ import org.apache.commons.logging.LogFactory;
 import com.google.enterprise.connector.sharepoint.impl.BaseList;
 import com.google.enterprise.connector.sharepoint.impl.ClientContext;
 import com.google.enterprise.connector.sharepoint.impl.ListFactory;
+import com.google.enterprise.connector.sharepoint.impl.Sharepoint;
+import com.google.enterprise.connector.sharepoint.impl.Util;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.ResultSet;
 
+/**
+ * The underlying implementation of the iterator goes over multiple list
+ * factories and lists. After each list is processed, "lastAccessTime" is kept.
+ * How do I know a list is processed? Since the "resultset" iterator goes across
+ * multiple lists, only when the "next()" is trying to retrieve something from
+ * the next list, will I know for sure that the items from current list have all
+ * been retrieved. That's the time I "flush" it.
+ * 
+ * @author jeffling
+ * 
+ */
 public class SharepointResultSet implements ResultSet {
 
 	SharepointIterator iterator = new SharepointIterator();
@@ -71,7 +83,7 @@ public class SharepointResultSet implements ResultSet {
 					return false;
 				}
 				lists = fac.getLists().iterator();
-				fac.getContext();
+				context = fac.getContext();
 			}
 		}
 
@@ -98,7 +110,11 @@ public class SharepointResultSet implements ResultSet {
 			if (list != null && list.hasNext()) {
 				return true;
 			}
-			return moveToNextList();
+			boolean hasNext = moveToNextList();
+			if (!hasNext) {
+				return moveToNextList();
+			}
+			return hasNext;
 		}
 
 		public void remove() {
