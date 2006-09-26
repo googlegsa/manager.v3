@@ -67,8 +67,6 @@ public class DocPusher implements Pusher {
 //  private static final String XML_ADD = "add";
 //  private static final String XML_DELETE = "delete";
   
-  private String host;
-  private int port;
   private String dataSource;
   private String feedType;
   private String action;
@@ -79,14 +77,10 @@ public class DocPusher implements Pusher {
   private String gsaResponse;
   /**
    * 
-   * @param host GSA host
-   * @param port Feeder port
    * @param dataSource datasource for the feed
    * @param urlConn a connection
    */
-  public DocPusher(String host, int port, String dataSource, UrlConn urlConn) {
-    this.host = host;
-    this.port = port;
+  public DocPusher(String dataSource, UrlConn urlConn) {
     this.dataSource = dataSource;
     this.urlConn = urlConn;
     this.feedType = "full";
@@ -96,87 +90,7 @@ public class DocPusher implements Pusher {
   }
   
   /**
-   * 
-   * @param host GSA host
-   * @param port GSA port
-   * @param dataSource datasource for the feed
-   * @param urlConn a connection
-   * @param feedType type of the feed (full|incremental)
-   * @param action type of action for the feed (add|delete)
-   */
-  public DocPusher(String host, int port, String dataSource, UrlConn urlConn,
-      String feedType, String action) {
-    this.host = host;
-    this.port = port;
-    this.dataSource = dataSource;
-    this.urlConn = urlConn;
-    this.feedType = feedType;
-    this.action = action;
-    //TODO Remove this once we are able to get the mimetype from the property map.
-    this.mimetype = "text/plain";
-    
-  }
-  
-  /**
-   * Sets the host and port
-   * @param host GSA host
-   * @param port feeder port on GSA
-   */
-  public void setHostPort(String host, int port) {
-    this.host = host;
-    this.port = port;
-  }
-  
-  /**
-   * Sets the data source string.
-   * @param source the name of the data source
-   */
-  public void setDataSource(String source) {
-    dataSource = source;
-  }
-  
-  /**
-   * Retrieves the data source.
-   * @return the data source
-   */
-  public String getDataSource() {
-    return dataSource;
-  }
-  
-  /**
-   * Retrieves the feed type.
-   * @return the feed type
-   */
-  public String getFeedType() {
-    return feedType;
-  }
-
-  /**
-   * Seta the feed type.
-   * @param feedType type of the feed (full|incremental)
-   */
-  public void setFeedType(String feedType) {
-    this.feedType = feedType;
-  }
-
-  /**
-   * Retrieves the action on the feed.
-   * @return action type (add|delete)
-   */
-  public String getAction() {
-    return action;
-  }
-
-  /**
-   * Sets the action type for the feed
-   * @param action
-   */
-  public void setAction(String action) {
-    this.action = action;
-  }
-  
-  /**
-   * Retrieves the xml String to be fed into GSA.
+   * Retrieves the xml String to be fed into GSA.  For testing only.
    * @return xmlData xml string that can be fed into GSA.
    */
   protected String getXmlData() {
@@ -184,23 +98,7 @@ public class DocPusher implements Pusher {
   }
 
   /**
-   * Retrieves the UrlConn object. 
-   * @return urlConn the UrlConn object
-   */
-  public UrlConn getUrlConn() {
-    return urlConn;
-  }
-
-  /**
-   * Sets the UrlConn object.
-   * @param urlConn the UrlConn object
-   */
-  public void setUrlConn(UrlConn urlConn) {
-    this.urlConn = urlConn;
-  }
-  
-  /**
-   * Gets the response from GSA when the feed is sent.
+   * Gets the response from GSA when the feed is sent.  For testing only.
    * @return gsaResponse response from GSA.
    */
   protected String getGsaResponse() {
@@ -359,15 +257,6 @@ public class DocPusher implements Pusher {
   }
   
   /*
-   * Generates the feed url for a given GSA host.
-   */
-  private URL getFeedUrl() throws MalformedURLException{
-    String feedUrl = "http://" + host + ":" + port + "/xmlfeed";
-    URL url = new URL(feedUrl);
-    return url;
-  }
-  
-  /*
    * Urlencodes the xml string.
    */
   private String encodeXmlData() throws UnsupportedEncodingException {
@@ -392,10 +281,7 @@ public class DocPusher implements Pusher {
     URL feedUrl = null;
     try {
       String encodedXmlData = encodeXmlData();
-      feedUrl = getFeedUrl();
-      urlConn.setUrl(feedUrl);
-      urlConn.setData(encodedXmlData);
-      gsaResponse = urlConn.sendData();      
+      gsaResponse = urlConn.sendData(encodedXmlData);      
     } catch (MalformedURLException e) {
       e.printStackTrace();
     } catch (UnsupportedEncodingException e) {
