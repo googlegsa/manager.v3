@@ -16,10 +16,13 @@ package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
+import com.google.enterprise.connector.spi.ConfigureResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -27,11 +30,16 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-
+/**
+ * Test SetConnectorConfig servlet through a browser.
+ *
+ */
 public class SetConnectorConfigNoGSA extends HttpServlet {
+  private static final Logger LOG =
+    Logger.getLogger(SetConnectorConfigNoGSA.class.getName());
 
   /**
-   * Returns the connector config (form) for now.
+   * Returns the connector config form for given connector type.
    * @param req 
    * @param res 
    * @throws ServletException 
@@ -41,19 +49,48 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
   protected void doGet(HttpServletRequest req,
                        HttpServletResponse res)
       throws ServletException, IOException {
+    String connectorTypeName = req.getParameter(
+        ServletUtil.XMLTAG_CONNECTOR_TYPE);
+    String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
     res.setContentType(ServletUtil.MIMETYPE_HTML);
     PrintWriter out = res.getWriter();
-    out.print("<HTML><HEAD><TITLE>Set Connector Config</TITLE></HEAD>");
-    out.print("<BODY><H3>Connector Config:</H3>");
-    out.print("<HR><FORM METHOD=POST " +
-      "ACTION=\"/connector-manager/setConnectorConfigTest\">");
-    out.print("Connector Name   <INPUT TYPE=\"TEXT\" NAME=\"connectorName\"><BR>");
-    out.print("Connector Type   <INPUT TYPE=\"TEXT\" NAME=\"connectorType\"><BR>");
-    out.print("Name1   <INPUT TYPE=\"TEXT\" NAME=\"name1\"><BR>");
-    out.print("Name2   <INPUT TYPE=\"TEXT\" NAME=\"name2\"><BR>");
-    out.print("Name3   <INPUT TYPE=\"TEXT\" NAME=\"name3\"><BR>");
-    out.print("<INPUT TYPE=\"SUBMIT\" NAME=\"action\" VALUE=\"submit\">");
-    out.print("</FORM></BODY></HTML>");
+    ServletContext servletContext = this.getServletContext();
+    Manager manager = Context.getInstance(servletContext).getManager();
+
+    ConfigureResponse configResponse = null;
+    try {
+      configResponse = manager.getConfigForm(connectorTypeName, language);
+    } catch (ConnectorTypeNotFoundException e1) {
+      ServletUtil.writeSimpleResponse(out, e1.toString());
+      LOG.info("Connector Type Not Found Exception");
+      e1.printStackTrace();
+      out.close();
+      return;
+    }
+
+    out.println("<HTML><HEAD><TITLE>Set Connector Config</TITLE></HEAD>");
+    out.println("<BODY><H3>Connector Config:</H3>");
+    out.println("<HR><FORM METHOD=POST " +
+        "ACTION=\"/connector-manager/setConnectorConfigTest?" +
+        ServletUtil.XMLTAG_CONNECTOR_TYPE + "=" + connectorTypeName +
+        "&lang=" + language + "\"><TABLE>");
+    out.println("<tr><td>Connector Name</td><td>" +
+        "<INPUT TYPE=\"TEXT\" NAME=\"connectorName\"></td></tr>");
+    out.println("<tr><td>Connector Type</td><td>" +
+        "<INPUT TYPE=\"TEXT\" NAME=\"connectorType\" " +
+        "VALUE=\"" + connectorTypeName + "\"></td></tr>");
+
+    String formSnippet = null;
+    if (configResponse == null || configResponse.getFormSnippet() == null) {
+      formSnippet = ServletUtil.DEFAULT_FORM;
+    } else {
+      formSnippet = configResponse.getFormSnippet();
+    }
+    out.println(formSnippet);
+    out.println("<tr><td><INPUT TYPE=\"SUBMIT\" NAME=\"action\"" +
+        "VALUE=\"submit\"></td></tr>");
+    out.println("</TABLE></FORM></BODY></HTML>");
+
     out.close();
   }
 
@@ -68,7 +105,7 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
   protected void doPost(HttpServletRequest req,
                         HttpServletResponse res)
       throws ServletException, IOException {
-    String lang = "en";
+    String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
     String connectorName = req.getParameter("connectorName");
     String connectorType = req.getParameter("connectorType");
     StringWriter writer = new StringWriter();
