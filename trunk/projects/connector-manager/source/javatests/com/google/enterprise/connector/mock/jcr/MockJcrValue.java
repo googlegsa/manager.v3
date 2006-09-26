@@ -16,6 +16,7 @@ package com.google.enterprise.connector.mock.jcr;
 
 import com.google.enterprise.connector.mock.MockRepositoryProperty;
 import com.google.enterprise.connector.mock.MockRepositoryProperty.PropertyType;
+import com.google.enterprise.connector.spi.SimpleValue;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -46,7 +47,14 @@ public class MockJcrValue implements Value {
 
   public String getString() throws ValueFormatException, IllegalStateException,
       RepositoryException {
-    return val;
+    String result;
+    if (type == PropertyType.DATE) {
+      Calendar c = getDate();
+      result = SimpleValue.calendarToIso8601(c);
+    } else {
+      result = val;
+    }
+    return result;
   }
 
   public InputStream getStream() throws IllegalStateException,

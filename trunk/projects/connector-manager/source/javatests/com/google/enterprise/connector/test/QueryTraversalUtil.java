@@ -59,55 +59,7 @@ public class QueryTraversalUtil {
       PropertyMap pm = null;
       for (Iterator iter = resultSet.iterator(); iter.hasNext();) {
         pm = (PropertyMap) iter.next();
-        Property nameProp = pm.getProperty(SpiConstants.PROPNAME_DOCID);
-        // every document should have a name
-        String name = nameProp.getValue().getString();
-
-        Property contentUrlProp = pm
-            .getProperty(SpiConstants.PROPNAME_CONTENTURL);
-
-        Property contentProp = null;
-        String contentSnippet = "...no content...";
-        // contentSnippet is just for display in this test
-
-        if (contentUrlProp != null) {
-          contentSnippet = contentUrlProp.getValue().getString();
-          // if a contentUrl is present, the content manager will
-          // just pass it to the GSA. In this test, we print it out
-        } else {
-          // if there is no contentUrl, the connector manager will ask for
-          // the content property and will base-64 encode it. Here we will
-          // only access the first so many characers of the content and
-          // print it out
-          contentProp = pm.getProperty(SpiConstants.PROPNAME_CONTENT);
-          if (contentProp != null) {
-            Value contentVal = contentProp.getValue();
-            ValueType contentType = contentVal.getType();
-            if (contentType == ValueType.STRING) {
-              String fullContent = contentVal.getString();
-              int snippetLength = 20;
-              if (fullContent == null) {
-                contentSnippet = "...null content...";
-              } else if (fullContent.length() == 0) {
-                contentSnippet = "...empty content...";
-              } else if (fullContent.length() > snippetLength) {
-                contentSnippet = fullContent.substring(0, snippetLength);
-              } else {
-                contentSnippet = fullContent;
-              }
-            } else if (contentType == ValueType.BINARY) {
-              contentSnippet = "...binary content...";
-            } else {
-              throw new IllegalArgumentException("content value is "
-                  + contentType + ": it should be string or binary ");
-            }
-          }
-        }
-        // here the real content manager would format the document as
-        // required by the feed API and send it to the GSA.
-        System.out.println("Document " + name);
-        System.out.println("Content");
-        System.out.println(contentSnippet);
+        processOneDocument(pm);
         counter++;
         if (counter == batchHint) {
           // this test program only takes batchHint results from each
@@ -135,5 +87,57 @@ public class QueryTraversalUtil {
       // Or, it may be running this connector on a schedule and there may be a
       // scheduled pause.
     }
+  }
+
+  public static void processOneDocument(PropertyMap pm) throws RepositoryException {
+    Property nameProp = pm.getProperty(SpiConstants.PROPNAME_DOCID);
+    // every document should have a name
+    String name = nameProp.getValue().getString();
+
+    Property contentUrlProp = pm
+        .getProperty(SpiConstants.PROPNAME_CONTENTURL);
+
+    Property contentProp = null;
+    String contentSnippet = "...no content...";
+    // contentSnippet is just for display in this test
+
+    if (contentUrlProp != null) {
+      contentSnippet = contentUrlProp.getValue().getString();
+      // if a contentUrl is present, the content manager will
+      // just pass it to the GSA. In this test, we print it out
+    } else {
+      // if there is no contentUrl, the connector manager will ask for
+      // the content property and will base-64 encode it. Here we will
+      // only access the first so many characers of the content and
+      // print it out
+      contentProp = pm.getProperty(SpiConstants.PROPNAME_CONTENT);
+      if (contentProp != null) {
+        Value contentVal = contentProp.getValue();
+        ValueType contentType = contentVal.getType();
+        if (contentType == ValueType.STRING) {
+          String fullContent = contentVal.getString();
+          int snippetLength = 20;
+          if (fullContent == null) {
+            contentSnippet = "...null content...";
+          } else if (fullContent.length() == 0) {
+            contentSnippet = "...empty content...";
+          } else if (fullContent.length() > snippetLength) {
+            contentSnippet = fullContent.substring(0, snippetLength);
+          } else {
+            contentSnippet = fullContent;
+          }
+        } else if (contentType == ValueType.BINARY) {
+          contentSnippet = "...binary content...";
+        } else {
+          throw new IllegalArgumentException("content value is "
+              + contentType + ": it should be string or binary ");
+        }
+      }
+    }
+    // here the real content manager would format the document as
+    // required by the feed API and send it to the GSA.
+    System.out.println("Document " + name);
+    System.out.println("Content");
+    System.out.println(contentSnippet);
   }
 }

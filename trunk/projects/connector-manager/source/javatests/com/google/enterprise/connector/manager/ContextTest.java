@@ -30,16 +30,11 @@ public class ContextTest extends TestCase {
    */
   public final void testStart() {
     Context.getInstance().setJunitContext();
+    Context.getInstance().setFeeding(false);
     Context.getInstance().start();
     ApplicationContext ac = Context.getInstance().getApplicationContext();
     printBeanNames(ac);
-    try {
-      Thread.sleep(200);
-    } catch (InterruptedException ie) {
-      ie.printStackTrace();
-      Assert.fail(ie.toString());
-    }
-    Context.getInstance().shutdown(false);
+    Context.getInstance().shutdown(true);
   }
 
   private void printBeanNames(ApplicationContext ac) {

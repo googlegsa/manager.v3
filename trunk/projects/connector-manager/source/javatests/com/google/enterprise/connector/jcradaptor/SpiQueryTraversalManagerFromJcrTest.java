@@ -24,6 +24,7 @@ import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.QueryTraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.ResultSet;
+import com.google.enterprise.connector.spi.SpiConstants;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -39,8 +40,8 @@ import javax.jcr.LoginException;
 import javax.jcr.query.QueryManager;
 
 public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
-  private static final Logger logger = Logger
-      .getLogger(MockRepositoryPropertyTest.class.getName());
+  private static final Logger logger =
+      Logger.getLogger(MockRepositoryPropertyTest.class.getName());
 
   /**
    * Test generating checkpoints
@@ -53,8 +54,8 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
   public void testCheckpoint() throws RepositoryException, LoginException,
       javax.jcr.RepositoryException, JSONException {
 
-    MockRepositoryEventList mrel = new MockRepositoryEventList(
-        "MockRepositoryEventLog1.txt");
+    MockRepositoryEventList mrel =
+        new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
     QueryTraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
@@ -76,10 +77,11 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
   }
 
   public void testExtractFromCheckpoint() throws JSONException {
-    String checkpointString = "{\"uuid\":\"doc1\","
-        + "\"lastModified\":\"1970-01-01T00:00:10.000Z\"}";
-    SpiQueryTraversalManagerFromJcr qtm = new SpiQueryTraversalManagerFromJcr(
-        null);
+    String checkpointString =
+        "{\"uuid\":\"doc1\","
+            + "\"lastModified\":\"1970-01-01T00:00:10.000Z\"}";
+    SpiQueryTraversalManagerFromJcr qtm =
+        new SpiQueryTraversalManagerFromJcr(null);
 
     JSONObject jo = new JSONObject(checkpointString);
     Calendar c = qtm.extractCalendarFromCheckpoint(jo, checkpointString);
@@ -92,8 +94,8 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
 
   public void testResumeTraversal() throws RepositoryException {
 
-    MockRepositoryEventList mrel = new MockRepositoryEventList(
-        "MockRepositoryEventLog1.txt");
+    MockRepositoryEventList mrel =
+        new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
     QueryTraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
@@ -109,7 +111,8 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
       int counter = 0;
       for (Iterator iter = resultSet.iterator(); iter.hasNext();) {
         PropertyMap propertyMap = (PropertyMap) iter.next();
-        logger.info(propertyMap.getProperty("jcr:uuid").getValue().getString());
+        logger.info(propertyMap.getProperty(SpiConstants.PROPNAME_DOCID)
+            .getValue().getString());
         counter++;
       }
       Assert.assertEquals(2, counter);
@@ -126,7 +129,8 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
       int counter = 0;
       for (Iterator iter = resultSet.iterator(); iter.hasNext();) {
         PropertyMap propertyMap = (PropertyMap) iter.next();
-        logger.info(propertyMap.getProperty("jcr:uuid").getValue().getString());
+        logger.info(propertyMap.getProperty(SpiConstants.PROPNAME_DOCID)
+            .getValue().getString());
         counter++;
       }
       Assert.assertEquals(0, counter);
@@ -135,8 +139,8 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
 
   public void testStartTraversal() throws RepositoryException {
 
-    MockRepositoryEventList mrel = new MockRepositoryEventList(
-        "MockRepositoryEventLog1.txt");
+    MockRepositoryEventList mrel =
+        new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
     QueryTraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
@@ -149,7 +153,8 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
       int counter = 0;
       for (Iterator iter = resultSet.iterator(); iter.hasNext();) {
         PropertyMap propertyMap = (PropertyMap) iter.next();
-        logger.info(propertyMap.getProperty("jcr:uuid").getValue().getString());
+        logger.info(propertyMap.getProperty(SpiConstants.PROPNAME_DOCID)
+            .getValue().getString());
         counter++;
       }
       Assert.assertEquals(4, counter);

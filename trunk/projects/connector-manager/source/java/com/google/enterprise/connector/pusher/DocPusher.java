@@ -27,54 +27,51 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 
 /**
- * Class to generate xml feed for a document from the Property Map and send it 
+ * Class to generate xml feed for a document from the Property Map and send it
  * to GSA.
  */
 
 public class DocPusher implements Pusher {
-  
+
   // Strings for XML tags.
-  private static final String XML_DEFAULT_ENCODING = "UTF-8";
-  private static final String XML_START = 
-    "<?xml version='1.0' encoding='" 
-    + XML_DEFAULT_ENCODING
-    + "'?><!DOCTYPE gsafeed PUBLIC"
-    + " \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">";
+  public static final String XML_DEFAULT_ENCODING = "UTF-8";
+  private static final String XML_START =
+      "<?xml version='1.0' encoding='" + XML_DEFAULT_ENCODING
+          + "'?><!DOCTYPE gsafeed PUBLIC"
+          + " \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">";
   private static final String XML_GSAFEED = "gsafeed";
   private static final String XML_HEADER = "header";
   private static final String XML_DATASOURCE = "datasource";
   private static final String XML_FEEDTYPE = "feedtype";
   private static final String XML_GROUP = "group";
   private static final String XML_RECORD = "record";
-//  private static final String XML_METADATA = "metadata";
-//  private static final String XML_META = "meta";
+  // private static final String XML_METADATA = "metadata";
+  // private static final String XML_META = "meta";
   private static final String XML_CONTENT = "content";
-//  private static final String XML_ACTION = "action";
+  // private static final String XML_ACTION = "action";
   private static final String XML_URL = "url";
   private static final String XML_MIMETYPE = "mimetype";
   private static final String XML_LAST_MODIFIED = "last-modified";
-//  private static final String XML_LOCK = "lock";
-//  private static final String XML_AUTHMETHOD = "authmethod";
-//  private static final String XML_NAME = "name";
+  // private static final String XML_LOCK = "lock";
+  // private static final String XML_AUTHMETHOD = "authmethod";
+  // private static final String XML_NAME = "name";
   private static final String XML_ENCODING = "encoding";
-  
-//  private static final String XML_FULL = "full";
-//  private static final String XML_INCREMENTAL = "incremental";
-//  private static final String XML_BASE64BINARY = "base64binary";
-//  private static final String XML_ADD = "add";
-//  private static final String XML_DELETE = "delete";
-  
+
+  // private static final String XML_FULL = "full";
+  // private static final String XML_INCREMENTAL = "incremental";
+  // private static final String XML_BASE64BINARY = "base64binary";
+  // private static final String XML_ADD = "add";
+  // private static final String XML_DELETE = "delete";
+
   private String dataSource;
   private String feedType;
-  private String action;
   private FeedConnection feedConnection;
-  private String mimetype;
-  
+
   private String xmlData;
   private String gsaResponse;
+
   /**
    * 
    * @param dataSource datasource for the feed
@@ -84,13 +81,11 @@ public class DocPusher implements Pusher {
     this.dataSource = dataSource;
     this.feedConnection = feedConnection;
     this.feedType = "full";
-    this.action = "add";  
-    // TODO Remove this once we are able to get the mimetype from the property map.
-    this.mimetype = "text/plain";
   }
-  
+
   /**
-   * Retrieves the xml String to be fed into GSA.  For testing only.
+   * Retrieves the xml String to be fed into GSA. For testing only.
+   * 
    * @return xmlData xml string that can be fed into GSA.
    */
   protected String getXmlData() {
@@ -98,7 +93,8 @@ public class DocPusher implements Pusher {
   }
 
   /**
-   * Gets the response from GSA when the feed is sent.  For testing only.
+   * Gets the response from GSA when the feed is sent. For testing only.
+   * 
    * @return gsaResponse response from GSA.
    */
   protected String getGsaResponse() {
@@ -106,20 +102,19 @@ public class DocPusher implements Pusher {
   }
 
   /*
-   * Converts a string to its base64 encoding.
-   * @param str the string to be encoded
-   * @return the base64 encoding of original input string
-   * @throws IOException
+   * Converts a string to its base64 encoding. @param str the string to be
+   * encoded @return the base64 encoding of original input string @throws
+   * IOException
    */
   private static String base64Encode(String str) throws IOException {
     ByteArrayInputStream inputStream =
-      new ByteArrayInputStream(str.getBytes(XML_DEFAULT_ENCODING));
+        new ByteArrayInputStream(str.getBytes(XML_DEFAULT_ENCODING));
     StringWriter sw = new StringWriter();
     Base64Encoder.encode(inputStream, sw);
     sw.flush();
     return sw.toString();
   }
-  
+
   /*
    * Wraps an xm tag with < and >.
    */
@@ -130,7 +125,7 @@ public class DocPusher implements Pusher {
     buf.append(">");
     return buf.toString();
   }
-  
+
   /*
    * Wraps an xml tag with </ and >.
    */
@@ -141,18 +136,19 @@ public class DocPusher implements Pusher {
     buf.append(">");
     return buf.toString();
   }
-  
+
   /*
    * Generate the record tag for the xml data.
    */
-  private String xmlWrapRecord(String contentUrl, String lastModified, String content) {
+  private String xmlWrapRecord(String contentUrl, String lastModified,
+      String content, String mimetype) {
     StringBuffer buf = new StringBuffer();
     buf.append("<");
     buf.append(XML_RECORD);
     buf.append(" ");
     buf.append(XML_URL);
     buf.append("=\"");
-    buf. append(contentUrl);
+    buf.append(contentUrl);
     buf.append("\" ");
     buf.append(XML_MIMETYPE);
     buf.append("=\"");
@@ -172,11 +168,11 @@ public class DocPusher implements Pusher {
     buf.append(xmlWrapEnd(XML_RECORD));
     return buf.toString();
   }
-  
+
   /*
    * Gets the value for a given property.
    */
-  private String getPropValue(Property p ) {
+  private String getPropValue(Property p) {
     try {
       Value v = p.getValue();
       return v.getString();
@@ -184,7 +180,7 @@ public class DocPusher implements Pusher {
       throw new RuntimeException(e);
     }
   }
-  
+
   /*
    * Builds the xml string for a given property map.
    */
@@ -201,7 +197,7 @@ public class DocPusher implements Pusher {
     xmlData.append(xmlWrapEnd(XML_FEEDTYPE));
     xmlData.append(xmlWrapEnd(XML_HEADER));
     xmlData.append(xmlWrapStart(XML_GROUP));
-    
+
     // Gets contenturl property from the property map.
     Property contentUrlProp = null;
     try {
@@ -210,12 +206,12 @@ public class DocPusher implements Pusher {
       throw new RuntimeException(e);
     }
     if (contentUrlProp == null) {
-      throw new IllegalArgumentException(SpiConstants.PROPNAME_CONTENTURL 
-        + " is missing");
+      throw new IllegalArgumentException(SpiConstants.PROPNAME_CONTENTURL
+          + " is missing");
     }
     String contentUrl = getPropValue(contentUrlProp);
-    
-    //Gets the content property from the property map.
+
+    // Gets the content property from the property map.
     Property contentProp = null;
     try {
       contentProp = pm.getProperty(SpiConstants.PROPNAME_CONTENT);
@@ -224,7 +220,7 @@ public class DocPusher implements Pusher {
     }
     if (contentProp == null) {
       throw new IllegalArgumentException(SpiConstants.PROPNAME_CONTENT
-        + " is missing");
+          + " is missing");
     }
     String content = null;
     try {
@@ -232,8 +228,8 @@ public class DocPusher implements Pusher {
     } catch (IOException e) {
       e.printStackTrace();
     }
-    
-    //Gets the lastmodify property from the property map.
+
+    // Gets the lastmodify property from the property map.
     Property lastModifiedProp = null;
     try {
       lastModifiedProp = pm.getProperty(SpiConstants.PROPNAME_LASTMODIFY);
@@ -242,46 +238,45 @@ public class DocPusher implements Pusher {
     }
     if (lastModifiedProp == null) {
       throw new IllegalArgumentException(SpiConstants.PROPNAME_LASTMODIFY
-        + " is missing");
+          + " is missing");
     }
     String lastModified = getPropValue(lastModifiedProp);
-    
-    //TODO Get the mimetype property from the property map.
-    
-    xmlData.append(xmlWrapRecord(contentUrl, lastModified, content));
-    
+
+    String mimetype = "text/plain";
+
+    xmlData.append(xmlWrapRecord(contentUrl, lastModified, content, mimetype));
+
     xmlData.append(xmlWrapEnd(XML_GROUP));
     xmlData.append(xmlWrapEnd(XML_GSAFEED));
-    
+
     return xmlData.toString();
   }
-  
+
   /*
-   * Urlencodes the xml string.
+   * Composes the final message
    */
-  private String encodeXmlData() throws UnsupportedEncodingException {
-    String data =
-      URLEncoder.encode("datasource", XML_DEFAULT_ENCODING)
-      + "=" + URLEncoder.encode(dataSource, XML_DEFAULT_ENCODING);
-    data +=
-      "&" + URLEncoder.encode("feedtype", XML_DEFAULT_ENCODING)
-      + "=" + URLEncoder.encode(feedType, XML_DEFAULT_ENCODING);
-    data +=
-      "&" + URLEncoder.encode("data", XML_DEFAULT_ENCODING)
-      + "=" + URLEncoder.encode(xmlData, XML_DEFAULT_ENCODING);
-    return data;
+  private String composeMessage()  {
+    StringBuffer buf = new StringBuffer(8192);
+    buf.append("datasource=");
+    buf.append(dataSource);
+    buf.append("&feedtype=");
+    buf.append(feedType);
+    buf.append("&data=");
+    buf.append(xmlData);
+    return buf.toString();
   }
-  
+
   /**
    * Takes a property map and sends a the feed to the GSA.
+   * 
    * @param pm PropertyMap corresponding to the document.
    */
   public void take(PropertyMap pm) {
     xmlData = buildXmlData(pm);
     URL feedUrl = null;
     try {
-      String encodedXmlData = encodeXmlData();
-      gsaResponse = feedConnection.sendData(encodedXmlData);      
+      String message = composeMessage();
+      gsaResponse = feedConnection.sendData(message);
     } catch (MalformedURLException e) {
       e.printStackTrace();
     } catch (UnsupportedEncodingException e) {
