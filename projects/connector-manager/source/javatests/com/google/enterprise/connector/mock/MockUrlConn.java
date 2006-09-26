@@ -13,43 +13,18 @@
 // limitations under the License.
 package com.google.enterprise.connector.mock;
 
+import java.io.IOException;
+
 import com.google.enterprise.connector.pusher.UrlConn;
 
-import java.io.IOException;
-import java.net.URL;
-
-
 public class MockUrlConn implements UrlConn {
-  
-  private URL url;
-  private String data;
-  
-  public MockUrlConn() {   
-  }
-  
-  public MockUrlConn(URL url, String data) {
-    this.url = url;
-    this.data = data;
-  }
 
-  public URL getUrl() {
-    return url;
-  }
+	public MockUrlConn() {
+	}
 
-  public void setUrl(URL url) {
-    this.url = url;
-  }
-
-  public String getData() {
-    return data;
-  }
-
-  public void setData(String data) {
-    this.data = data;
-  }
-  
-  public String sendData() throws IOException {
-    return "Mock response";
-  }
+	public String sendData(String data) throws IOException {
+		System.out.println(data);
+		return "Mock response";
+	}
 
 }
