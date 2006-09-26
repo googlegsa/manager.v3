@@ -4,16 +4,16 @@
 
 	<bean id="UrlConn"
 		class="com.google.enterprise.connector.pusher.FeedUrlConn">
+		<constructor-arg index="0" type="java.lang.String"
+			value="gsahost" />
+		<constructor-arg index="1" type="int" value="19900" />
 	</bean>
 
 	<bean id="Pusher"
 		class="com.google.enterprise.connector.pusher.DocPusher">
 		<constructor-arg index="0" type="java.lang.String"
-			value="gsahost" />
-		<constructor-arg index="1" type="int" value="19900" />
-		<constructor-arg index="2" type="java.lang.String"
 			value="datasource_tomcat" />
-		<constructor-arg index="3" ref="UrlConn" />
+		<constructor-arg index="1" ref="UrlConn" />
 	</bean>
 
 	<bean id="ConnectorTypeInstantiator"

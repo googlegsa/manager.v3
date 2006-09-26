@@ -38,8 +38,6 @@ import javax.jcr.query.QueryManager;
  */
 public class DocPusherTest extends TestCase {
 
-  private static final String GSA_HOST = "gsahost";
-  private static final int GSA_PORT = 12345;
   private static final String DATASOURCE = "datasource";
   
   public void testTake() throws RepositoryException {
@@ -61,7 +59,7 @@ public class DocPusherTest extends TestCase {
     QueryTraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
     
     MockUrlConn mockUrlConn = new MockUrlConn();
-    DocPusher dpusher = new DocPusher(GSA_HOST, GSA_PORT, DATASOURCE, mockUrlConn);
+    DocPusher dpusher = new DocPusher(DATASOURCE, mockUrlConn);
     
     MockRepositoryDocument doc = r.getStore().getDocByID("doc1");
     ResultSet resultSet = qtm.startTraversal();

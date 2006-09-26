@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.pusher;
 
 import java.io.IOException;
-import java.net.URL;
 
 /**
  * Interface for a url connection. This takes in data and url to which the 
@@ -23,16 +22,12 @@ import java.net.URL;
  */
 public interface UrlConn {
 
-  public URL getUrl();
-  public void setUrl(URL url);
-  public String getData();
-  public void setData(String data);
-  
   /**
    * Open a connection to this url and sends data.
+   * @param data The String to send
    * @return response from the server.
    * @throws IOException
    */
-  public String sendData()throws IOException;
+  public String sendData(String data)throws IOException;
   
 }

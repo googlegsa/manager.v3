@@ -17,6 +17,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
@@ -25,34 +26,28 @@ import java.net.URLConnection;
  */
 public class FeedUrlConn implements UrlConn {
   
-  private URL url;
-  private String data;
+  private URL url = null;;
+  private String host;
+  private int port;
   
-  public FeedUrlConn() {
+  public FeedUrlConn(String host, int port) {
+    this.host = host;
+    this.port = port;
   }
   
-  public FeedUrlConn(URL url, String data) {
-    this.url = url;
-    this.data = data;
-  }
-  
-  public URL getUrl() {
+  /*
+   * Generates the feed url for a given GSA host.
+   */
+  private URL getFeedUrl() throws MalformedURLException{
+    String feedUrl = "http://" + host + ":" + port + "/xmlfeed";
+    URL url = new URL(feedUrl);
     return url;
   }
-
-  public void setUrl(URL url) {
-    this.url = url;
-  }
-
-  public String getData() {
-    return data;
-  }
-
-  public void setData(String data) {
-    this.data = data;
-  }
-
-  public String sendData() throws IOException {
+  
+  public String sendData(String data) throws IOException {
+    if (url == null) {
+      url = getFeedUrl();
+    }
     URLConnection uc = url.openConnection();
     uc.setDoInput(true);
     uc.setDoOutput(true);
@@ -72,4 +67,6 @@ public class FeedUrlConn implements UrlConn {
     br.close();
     return buf.toString();
   }
+  
+  
 }
