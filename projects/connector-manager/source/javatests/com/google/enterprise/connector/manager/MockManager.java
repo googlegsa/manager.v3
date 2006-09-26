@@ -133,8 +133,33 @@ public class MockManager implements Manager {
    */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String language) throws ConnectorNotFoundException {
-    // have caller use default form by returning null
-    return null;
+    String message = "Sample form for " + connectorName + "lang " + language;
+    String formSnippet =
+        "<tr>\n"
+        + "<td>Username</td>\n"
+        + "<td>\n"
+        + "<input type=\"text\" name=\"Username\" />\n"
+        + "</td>\n"
+        + "</tr>\n"
+        + "<tr>\n"
+        + "<td>Password</td>\n"
+        + "<td>\n"
+        + "<input type=\"password\" name=\"Password\" />\n"
+        + "</td>\n"
+        + "</tr>\n"
+        + "<tr>\n"
+        + "<td>Color</td>\n"
+        + "<td>\n"
+        + "<input type=\"text\" name=\"Color\" />\n"
+        + "</td>\n"
+        + "</tr>\n"
+        + "<tr>\n"
+        + "<td>Repository File</td>\n"
+        + "<td>\n"
+        + "<input type=\"text\" name=\"Repository File\" />\n"
+        + "</td>\n"
+        + "</tr>\n";
+    return new ConfigureResponse(message, formSnippet);
   }
 
   /*
