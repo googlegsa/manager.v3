@@ -24,13 +24,13 @@ import java.net.URLConnection;
 /**
  * Opens a connection to a url and sends data to it.
  */
-public class FeedUrlConn implements UrlConn {
+public class GsaFeedConnection implements FeedConnection {
   
   private URL url = null;;
   private String host;
   private int port;
   
-  public FeedUrlConn(String host, int port) {
+  public GsaFeedConnection(String host, int port) {
     this.host = host;
     this.port = port;
   }

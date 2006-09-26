@@ -70,7 +70,7 @@ public class DocPusher implements Pusher {
   private String dataSource;
   private String feedType;
   private String action;
-  private UrlConn urlConn;
+  private FeedConnection feedConnection;
   private String mimetype;
   
   private String xmlData;
@@ -78,11 +78,11 @@ public class DocPusher implements Pusher {
   /**
    * 
    * @param dataSource datasource for the feed
-   * @param urlConn a connection
+   * @param feedConnection a connection
    */
-  public DocPusher(String dataSource, UrlConn urlConn) {
+  public DocPusher(String dataSource, FeedConnection feedConnection) {
     this.dataSource = dataSource;
-    this.urlConn = urlConn;
+    this.feedConnection = feedConnection;
     this.feedType = "full";
     this.action = "add";  
     // TODO Remove this once we are able to get the mimetype from the property map.
@@ -281,7 +281,7 @@ public class DocPusher implements Pusher {
     URL feedUrl = null;
     try {
       String encodedXmlData = encodeXmlData();
-      gsaResponse = urlConn.sendData(encodedXmlData);      
+      gsaResponse = feedConnection.sendData(encodedXmlData);      
     } catch (MalformedURLException e) {
       e.printStackTrace();
     } catch (UnsupportedEncodingException e) {

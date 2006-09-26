@@ -11,15 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package com.google.enterprise.connector.mock;
+package com.google.enterprise.connector.pusher;
 
 import java.io.IOException;
 
-import com.google.enterprise.connector.pusher.UrlConn;
+import com.google.enterprise.connector.pusher.FeedConnection;
 
-public class MockUrlConn implements UrlConn {
+public class MockFeedConnection implements FeedConnection {
 
-	public MockUrlConn() {
+	public MockFeedConnection() {
 	}
 
 	public String sendData(String data) throws IOException {
