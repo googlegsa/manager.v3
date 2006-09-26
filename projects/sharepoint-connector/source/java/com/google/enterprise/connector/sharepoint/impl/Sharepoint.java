@@ -49,15 +49,24 @@ public class Sharepoint {
   public Sharepoint(int index) throws UnknownHostException {
     serverIndex = index;
     mainContext = new ClientContext(serverIndex);
+	ListFactory.reset();
   }
 
   public Sharepoint(String name) throws UnknownHostException {
     mainContext = new ClientContext(name);
+	ListFactory.reset();
   }
 
   public Sharepoint(ClientContext context) throws UnknownHostException {
     mainContext = context;
+	ListFactory.reset();
   }
+  
+  public ClientContext getContext()
+  {
+	  return mainContext;
+  }
+  
 
   /**
    * This method gets all the sites of this server, and crawls them
@@ -164,7 +173,7 @@ public class Sharepoint {
        * Thread.currentThread().sleep(2000); } while (pool.getActiveCount() >
        * 0); pool.safeShutDown();
        */
-      Util.report();
+//      Util.report();
     }
   }
 

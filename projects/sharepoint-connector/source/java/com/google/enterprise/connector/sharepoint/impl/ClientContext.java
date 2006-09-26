@@ -81,6 +81,8 @@ public class ClientContext implements Cloneable {
 
 	static String[] exclude = null;
 
+	static String checkpointList = null;
+	static long checkpointItem = -1 ;
 	private String repositoryName;
 
 	/**
@@ -700,5 +702,30 @@ public class ClientContext implements Cloneable {
 
 	public void setSpDomain(String spDomain) {
 		this.spDomain = spDomain;
+	}
+	
+	public static long getCheckpointItem() {
+		return checkpointItem;
+	}
+
+	public static void setCheckpointItem(long item) {
+		checkpointItem = item;
+	}
+
+	public static String getCheckpointList() {
+		return checkpointList;
+	}
+	public static void setCheckpointList(String list) {
+		checkpointList = list;
+	}
+
+	public static boolean hasCheckpoint()
+	{
+		return checkpointList != null;
+	}
+
+	public static void clearCheckpoint()
+	{
+		checkpointList = null;
 	}
 }

@@ -11723,27 +11723,8 @@
                                     }
                                 localViewFields.serialize(xmlWriter);
                              } if (localSinceTracker){
-			 		namespace = "http://schemas.microsoft.com/sharepoint/soap/";
-
-					if (! namespace.equals("")) {
-						prefix = xmlWriter.getPrefix(namespace);
-
-						if (prefix == null) {
-							prefix = org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
-
-							xmlWriter.writeStartElement(prefix,"since", namespace);
-							xmlWriter.writeNamespace(prefix, namespace);
-							xmlWriter.setPrefix(prefix, namespace);
-
-						} else {
-							xmlWriter.writeStartElement(namespace,"since");
-						}
-
-					} else {
-						xmlWriter.writeStartElement("since");
-					}
-
-				
+//jeff
+                            	 xmlWriter.writeStartElement("since");
                             //xmlWriter.writeStartElement("http://schemas.microsoft.com/sharepoint/soap/","since");
                             xmlWriter.writeCharacters(org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localSince));
                             xmlWriter.writeEndElement();
@@ -16320,6 +16301,8 @@
 				    private  org.apache.axiom.soap.SOAPEnvelope toEnvelope(org.apache.axiom.soap.SOAPFactory factory, ListsStub.GetListItemChanges param, boolean optimizeContent){
                     org.apache.axiom.soap.SOAPEnvelope emptyEnvelope = factory.getDefaultEnvelope();
                          
+			        			emptyEnvelope.declareNamespace("http://www.w3.org/2001/XMLSchema-instance", "xsi");
+			        			emptyEnvelope.declareNamespace("http://www.w3.org/2001/XMLSchema", "xsd");
                                 emptyEnvelope.getBody().addChild(param.getOMElement(ListsStub.GetListItemChanges.MY_QNAME,factory));
                             
                      return emptyEnvelope;

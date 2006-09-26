@@ -24,6 +24,7 @@ public class WebFactory extends ConnectorImpl {
 
 	public WebFactory(ClientContext context) throws ConnectorException {
 		super.setContext(context);
+		ListFactory.clearListFactories();
 		try {
 			super.setSoap(new SiteDataStub(), context.getSite() + _soapAddress);
 		} catch (Exception e) {

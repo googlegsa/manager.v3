@@ -25,9 +25,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.google.enterprise.connector.sharepoint.gen.SiteDataStub;
+import com.google.enterprise.connector.sharepoint.gen.SiteDataStub.GetList;
 import com.google.enterprise.connector.sharepoint.gen.SiteDataStub.GetListCollection;
 import com.google.enterprise.connector.sharepoint.gen.SiteDataStub.GetListCollectionResponse;
+import com.google.enterprise.connector.sharepoint.gen.SiteDataStub.GetListResponse;
 import com.google.enterprise.connector.sharepoint.gen.SiteDataStub._sList;
+import com.google.enterprise.connector.sharepoint.gen.SiteDataStub._sListMetadata;
+import com.google.enterprise.connector.sharepoint.gen.SiteDataStub._sProperty;
 
 public class ListFactory extends ConnectorImpl {
 
@@ -36,6 +40,10 @@ public class ListFactory extends ConnectorImpl {
 	static ArrayList factories = new ArrayList();
 
 	ArrayList baseLists = new ArrayList();
+
+	private static String lastListKey;
+
+	private static Date lastAccessTime;
 
 	private static Log logger = LogFactory.getLog(ListFactory.class);
 
@@ -51,6 +59,13 @@ public class ListFactory extends ConnectorImpl {
 		}
 	}
 
+	/**
+	 * Only the lists that have changed since last access time, or has never
+	 * been processed will be returned
+	 * 
+	 * @param context
+	 * @return
+	 */
 	private HashMap discoverLists(ClientContext context) {
 		HashMap lists = new HashMap();
 		try {
@@ -80,6 +95,7 @@ public class ListFactory extends ConnectorImpl {
 						// returned by Sharepoint through web service
 						String sModified = sList[i].getLastModified();
 						Date modified = Util.stringToTime(sModified);
+
 						if (last.after(modified)) {
 							continue;
 						}
@@ -92,7 +108,7 @@ public class ListFactory extends ConnectorImpl {
 				String title = sList[i].getTitle();
 				((HashMap) lists.get(type)).put(name, title);
 			}
-	//		Util.recordList(context, sList.length);
+			// Util.recordList(context, sList.length);
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 		}
@@ -102,6 +118,7 @@ public class ListFactory extends ConnectorImpl {
 	void crawlLists(ClientContext context, HashMap lists) {
 		BaseList conn = null;
 		Iterator it = lists.keySet().iterator();
+		baseLists.clear();
 		while (it.hasNext()) {
 			try {
 				String baseType = (String) it.next();
@@ -136,44 +153,23 @@ public class ListFactory extends ConnectorImpl {
 
 	}
 
-	public void crawlListByType(String sType) {
+	public void crawlCheckpointList(String checkpoint) {
 		ClientContext context = getContext();
-		HashMap lists = discoverLists(context);
-		BaseList conn = null;
-		Iterator it = lists.keySet().iterator();
-		while (it.hasNext()) {
-			try {
-				String baseType = (String) it.next();
-				HashMap entries = (HashMap) lists.get(baseType);
-				if (!baseType.equals(sType)) {
-					continue;
-				}
-				if (sType.equals(BaseList.TYPE_GENERIC_LIST)) {
-					conn = new List(context, entries);
-				} else if (sType.equals(BaseList.TYPE_DOC)) {
-					conn = new Documents(context, entries);
-				} else if (sType.equals(BaseList.TYPE_DISCUSSION)) {
-					conn = new Discussions(context, entries);
-				} else if (sType.equals(BaseList.TYPE_SURVEY)) {
-					conn = new Survey(context, entries);
-				} else if (sType.equals(BaseList.TYPE_ISSUE)) {
-					conn = new Issue(context, entries);
-				} else {
-					String unexpected = "";
-					Iterator extraLists = entries.values().iterator();
-					while (extraLists.hasNext()) {
-						unexpected += ", ";
-					}
-					throw new ConnectorException("Unexpected BaseType = "
-							+ baseType + ", list names: " + unexpected);
-				}
-				if (conn == null) {
-					continue;
-				}
-				conn.query();
-			} catch (ConnectorException e) {
-				Util.processException(logger, e);
-			}
+		try {
+			SiteDataStub stub = ((SiteDataStub) getSoap());
+			GetList getList = new GetList();
+			getList.setStrListName(context.getCheckpointList());
+			GetListResponse resp = stub.GetList(getList);
+			_sListMetadata data = resp.getSListMetadata();
+			String baseType = data.getBaseType();
+			HashMap lists = new HashMap();
+			lists.put(baseType, new HashMap());
+			String title = data.getTitle();
+			((HashMap) lists.get(baseType)).put(context.getCheckpointList(),
+					title);
+			crawlLists(context, lists);
+		} catch (Exception e) {
+			Util.processException(logger, e);
 		}
 	}
 
@@ -189,5 +185,31 @@ public class ListFactory extends ConnectorImpl {
 
 	public static ArrayList getListFactories() {
 		return factories;
+	}
+
+	public static void clearListFactories() {
+		factories.clear();
+	}
+
+	public static void recordLastList(String key, Date time) {
+		lastListKey = key;
+		lastAccessTime = time;
+	}
+
+	public static void updateLastAccessTime() {
+		if (lastListKey != null) {
+			Util.saveLastAccessTime(lastListKey, lastAccessTime);
+		}
+	}
+
+	/**
+	 * To be called when starting from scratch
+	 *
+	 */
+	public static void reset()
+	{
+		lastListKey = null;
+		lastAccessTime = null;
+		factories.clear();
 	}
 }

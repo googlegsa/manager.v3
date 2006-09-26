@@ -77,9 +77,6 @@ public class Survey extends List {
 		while (it.hasNext()) {
 			String key = (String) it.next();
 			String title = (String) lists.get(key);
-			if (!listChanged(key)) {
-				continue;
-			}
 			anyChanges = true;
 			logger.info("Found Survey: " + title);
 			PropertyMap map = getList(key);
@@ -93,15 +90,6 @@ public class Survey extends List {
 			return false;
 		}
 		return true;
-	}
-
-	private boolean listChanged(String list) throws ParseException,
-			RemoteException {
-		String since = Util.getLastAccessTime(list);
-		if (since == null || "".equals(since.trim())) {
-			return true;
-		}
-		return processListItemChanges(list, since);
 	}
 
 	/**
@@ -123,7 +111,7 @@ public class Survey extends List {
 			return null;
 		}
 		OMElement el = (OMElement) result.getChildElements().next();
-		String viewURL = el.getAttributeValue(new QName(VIEW_URL));
+		String viewURL = getContext().getSite() + el.getAttributeValue(new QName(VIEW_URL));
 		viewURL = Util.encodeURL(viewURL);
 		SimplePropertyMap pm = new SimplePropertyMap();
 		Property nameProp = new SimpleProperty(
@@ -145,6 +133,11 @@ public class Survey extends List {
 			pm.put(META_TAGS[j], nameProp);
 		}
 		return pm;
+	}
+
+	protected Property getDocId(String itemId) {
+		return new SimpleProperty(SpiConstants.PROPNAME_DOCID, new SimpleValue(
+				ValueType.STRING, itemId + "-"));
 	}
 
 	/**
