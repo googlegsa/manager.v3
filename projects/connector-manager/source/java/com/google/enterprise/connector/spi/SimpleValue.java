@@ -32,15 +32,15 @@ public class SimpleValue implements Value {
 
   private final ValueType type;
   private final String stringValue;
-  private final byte [] byteArrayValue; 
+  private final byte[] byteArrayValue;
 
   public SimpleValue(ValueType t, String v) {
-    this.type = t;   
+    this.type = t;
     this.stringValue = v;
     this.byteArrayValue = new byte[] {};
   }
 
-  public SimpleValue(ValueType t, byte [] v) {
+  public SimpleValue(ValueType t, byte[] v) {
     this.type = t;
     this.stringValue = null;
     this.byteArrayValue = v;
@@ -53,7 +53,8 @@ public class SimpleValue implements Value {
    */
   public boolean getBoolean() throws IllegalArgumentException,
       RepositoryException {
-    if (stringValue.equalsIgnoreCase("t") || stringValue.equalsIgnoreCase("true")) {
+    if (stringValue.equalsIgnoreCase("t")
+        || stringValue.equalsIgnoreCase("true")) {
       return true;
     }
     return false;
@@ -108,7 +109,7 @@ public class SimpleValue implements Value {
       IllegalStateException, RepositoryException {
     if (byteArrayValue.length > 0) {
       return new ByteArrayInputStream(byteArrayValue);
-    } 
+    }
     return new ByteArrayInputStream(stringValue.getBytes());
   }
 
@@ -132,22 +133,40 @@ public class SimpleValue implements Value {
   }
 
   private static final TimeZone TIME_ZONE_GMT = TimeZone.getTimeZone("GMT+0");
-  private static final Calendar GMT_CALENDAR = Calendar.getInstance(TIME_ZONE_GMT);
+  private static final Calendar GMT_CALENDAR =
+      Calendar.getInstance(TIME_ZONE_GMT);
   private static final SimpleDateFormat ISO8601_DATE_FORMAT_MILLIS =
       new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
   private static final SimpleDateFormat ISO8601_DATE_FORMAT_SECS =
       new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+  public static final SimpleDateFormat RFC822_DATE_FORMAT =
+      new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss");
 
   static {
     ISO8601_DATE_FORMAT_MILLIS.setCalendar(GMT_CALENDAR);
     ISO8601_DATE_FORMAT_MILLIS.setLenient(true);
     ISO8601_DATE_FORMAT_SECS.setCalendar(GMT_CALENDAR);
     ISO8601_DATE_FORMAT_SECS.setLenient(true);
+    RFC822_DATE_FORMAT.setCalendar(GMT_CALENDAR);
+    RFC822_DATE_FORMAT.setLenient(true);
+  }
+
+  /**
+   * Formats a calendar object as RFC 822.
+   * 
+   * @param c
+   * @return a String in RFC 822 format - always in GMT zone
+   */
+  public static String calendarToRfc822(Calendar c) {
+    Date d = c.getTime();
+    String isoString = RFC822_DATE_FORMAT.format(d) + " GMT";
+    return isoString;
   }
 
   /**
    * Formats a calendar object as ISO-8601.
-   * @param c 
+   * 
+   * @param c
    * @return a String in ISO-8601 format - always in GMT zone
    */
   public static String calendarToIso8601(Calendar c) {
@@ -171,6 +190,7 @@ public class SimpleValue implements Value {
   /**
    * Parses a String in ISO-8601 format (GMT zone) and returns an equivalent
    * java.util.Calendar object.
+   * 
    * @param s
    * @return a Calendar object
    * @throws ParseException if the the String can not be parsed
