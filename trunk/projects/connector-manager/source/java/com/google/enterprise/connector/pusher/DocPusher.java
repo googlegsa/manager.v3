@@ -15,9 +15,11 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.common.Base64Encoder;
+import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.SimpleValue;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 
@@ -27,6 +29,12 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class to generate xml feed for a document from the Property Map and send it
@@ -34,6 +42,17 @@ import java.net.URL;
  */
 
 public class DocPusher implements Pusher {
+
+  private static Set propertySkipSet;
+
+  static {
+    propertySkipSet = new HashSet();
+    propertySkipSet.add(SpiConstants.PROPNAME_CONTENT);
+    propertySkipSet.add(SpiConstants.PROPNAME_DOCID);
+  }
+
+  private static final Logger LOGGER =
+      Logger.getLogger(WorkQueue.class.getName());
 
   // Strings for XML tags.
   public static final String XML_DEFAULT_ENCODING = "UTF-8";
@@ -47,8 +66,8 @@ public class DocPusher implements Pusher {
   private static final String XML_FEEDTYPE = "feedtype";
   private static final String XML_GROUP = "group";
   private static final String XML_RECORD = "record";
-  // private static final String XML_METADATA = "metadata";
-  // private static final String XML_META = "meta";
+  private static final String XML_METADATA = "metadata";
+  private static final String XML_META = "meta";
   private static final String XML_CONTENT = "content";
   // private static final String XML_ACTION = "action";
   private static final String XML_URL = "url";
@@ -133,58 +152,209 @@ public class DocPusher implements Pusher {
     StringBuffer buf = new StringBuffer();
     buf.append("</");
     buf.append(str);
-    buf.append(">");
+    buf.append(">\n");
     return buf.toString();
   }
 
   /*
    * Generate the record tag for the xml data.
    */
-  private String xmlWrapRecord(String contentUrl, String lastModified,
-      String content, String mimetype) {
+  private String xmlWrapRecord(String searchUrl, String lastModified,
+      String content, String mimetype, PropertyMap pm) {
     StringBuffer buf = new StringBuffer();
     buf.append("<");
     buf.append(XML_RECORD);
     buf.append(" ");
     buf.append(XML_URL);
     buf.append("=\"");
-    buf.append(contentUrl);
+    buf.append(searchUrl);
     buf.append("\" ");
     buf.append(XML_MIMETYPE);
     buf.append("=\"");
     buf.append(mimetype);
-    buf.append("\" ");
-    buf.append(XML_LAST_MODIFIED);
-    buf.append("=\"");
-    buf.append(lastModified);
-    buf.append("\">");
+    buf.append("\"");
+    if (lastModified != null) {
+      buf.append(" ");
+      buf.append(XML_LAST_MODIFIED);
+      buf.append("=\"");
+      buf.append(lastModified);
+      buf.append("\"");
+    }
+    buf.append(">\n");
+    xmlWrapMetadata(buf, pm);
     buf.append("<");
     buf.append(XML_CONTENT);
     buf.append(" ");
     buf.append(XML_ENCODING);
-    buf.append("=\"base64binary\">");
+    buf.append("=\"base64binary\">\n");
     buf.append(content);
+    buf.append("\n");
     buf.append(xmlWrapEnd(XML_CONTENT));
     buf.append(xmlWrapEnd(XML_RECORD));
     return buf.toString();
   }
 
+  private void xmlWrapMetadata(StringBuffer buf, PropertyMap pm) {
+    Iterator i;
+    try {
+      i = pm.getProperties();
+    } catch (RepositoryException e) {
+      LOGGER.logp(Level.WARNING, this.getClass().getName(), "xmlWrapMetadata",
+          "Swallowing exception while scanning properties", e);
+      return;
+    }
+    if (!i.hasNext()) {
+      return;
+    }
+    buf.append(xmlWrapStart(XML_METADATA));
+    buf.append("\n");
+    while (i.hasNext()) {
+      Property p = (Property) i.next();
+      String name;
+      try {
+        name = p.getName();
+      } catch (RepositoryException e) {
+        LOGGER.logp(Level.WARNING, this.getClass().getName(),
+            "xmlWrapMetadata",
+            "Swallowing exception while scanning properties", e);
+        continue;
+      }
+      if (!propertySkipSet.contains(name)) {
+        wrapOneProperty(buf, p);
+      }
+    }
+    buf.append(xmlWrapEnd(XML_METADATA));
+  }
+
+  private void wrapOneProperty(StringBuffer buf, Property p) {
+    String name;
+    try {
+      name = p.getName();
+    } catch (RepositoryException e) {
+      LOGGER.logp(Level.WARNING, this.getClass().getName(), "xmlWrapMetadata",
+          "Swallowing exception while scanning values", e);
+      return;
+    }
+    Iterator values;
+    try {
+      values = p.getValues();
+    } catch (RepositoryException e) {
+      LOGGER.logp(Level.WARNING, this.getClass().getName(), "xmlWrapMetadata",
+          "Swallowing exception while scanning values", e);
+      return;
+    }
+    buf.append("<");
+    buf.append(XML_META);
+    buf.append(" name=\"");
+    buf.append(name);
+    buf.append("\" content=\"");
+    String delimiter = "";
+    while (values.hasNext()) {
+      Value value = (Value) values.next();
+      String valString = "";
+      try {
+        valString = value.getString();
+      } catch (IllegalArgumentException e) {
+        LOGGER.logp(Level.WARNING, this.getClass().getName(),
+            "xmlWrapMetadata", "Swallowing exception while accessing property "
+                + name, e);
+        continue;
+      } catch (RepositoryException e) {
+        LOGGER.logp(Level.WARNING, this.getClass().getName(),
+            "xmlWrapMetadata", "Swallowing exception while accessing property "
+                + name, e);
+        continue;
+      }
+      if (valString.length() < 1) {
+        continue;
+      }
+      buf.append(delimiter);
+      // TODO: escape quotes
+      buf.append(valString);
+      delimiter = ", ";
+    }
+    buf.append("\"/>\n");
+  }
+
+  /*
+   * Gets the Calendar value for a given property.
+   */
+  private Calendar getCalendarAndThrow(PropertyMap pm, String name)
+      throws IllegalArgumentException, RepositoryException {
+    Calendar result = null;
+    Value v = getValueAndThrow(pm, name);
+    result = v.getDate();
+    return result;
+  }
+
+  /*
+   * Gets the String value for a given property.
+   */
+  private String getStringAndThrow(PropertyMap pm, String name)
+      throws IllegalArgumentException, RepositoryException {
+    String result = null;
+    Value v = getValueAndThrow(pm, name);
+    if (v == null) {
+      return null;
+    }
+    result = v.getString();
+    return result;
+  }
+
+  private Value getValueAndThrow(PropertyMap pm, String name)
+      throws RepositoryException {
+    Property prop = pm.getProperty(name);
+    if (prop == null) {
+      return null;
+    }
+    Value v = prop.getValue();
+    return v;
+  }
+
   /*
    * Gets the value for a given property.
    */
-  private String getPropValue(Property p) {
+  private String getOptionalString(PropertyMap pm, String name) {
+    String result = null;
     try {
-      Value v = p.getValue();
-      return v.getString();
+      result = getStringAndThrow(pm, name);
+    } catch (IllegalArgumentException e) {
+      LOGGER.logp(Level.WARNING, this.getClass().getName(),
+          "getOptionalString", "Swallowing exception while accessing " + name,
+          e);
     } catch (RepositoryException e) {
+      LOGGER.logp(Level.WARNING, this.getClass().getName(),
+          "getOptionalString", "Swallowing exception while accessing " + name,
+          e);
+    }
+    return result;
+  }
+
+  /*
+   * Gets the value for a given property.
+   */
+  private String getRequiredString(PropertyMap pm, String name) {
+    String result = null;
+    try {
+      result = getStringAndThrow(pm, name);
+    } catch (IllegalArgumentException e) {
+      LOGGER.logp(Level.WARNING, this.getClass().getName(),
+          "getRequiredString",
+          "Catching exception, rethrowing as RuntimeException", e);
+      throw new RuntimeException(e);
+    } catch (RepositoryException e) {
+      LOGGER.logp(Level.WARNING, this.getClass().getName(),
+          "getRequiredString",
+          "Catching exception, rethrowing as RuntimeException", e);
       throw new RuntimeException(e);
     }
+    return result;
   }
 
   /*
    * Builds the xml string for a given property map.
    */
-  protected String buildXmlData(PropertyMap pm) {
+  protected String buildXmlData(PropertyMap pm, String connectorName) {
     StringBuffer xmlData = new StringBuffer();
     xmlData.append(XML_START);
     xmlData.append(xmlWrapStart(XML_GSAFEED));
@@ -197,54 +367,63 @@ public class DocPusher implements Pusher {
     xmlData.append(xmlWrapEnd(XML_FEEDTYPE));
     xmlData.append(xmlWrapEnd(XML_HEADER));
     xmlData.append(xmlWrapStart(XML_GROUP));
+    xmlData.append("\n");
 
-    // Gets contenturl property from the property map.
-    Property contentUrlProp = null;
-    try {
-      contentUrlProp = pm.getProperty(SpiConstants.PROPNAME_CONTENTURL);
-    } catch (RepositoryException e) {
-      throw new RuntimeException(e);
+    String searchurl = getOptionalString(pm, SpiConstants.PROPNAME_SEARCHURL);
+    if (searchurl != null) {
+      // TODO: validate that this looks like a URL
+      ;
+    } else {
+      String docid = getRequiredString(pm, SpiConstants.PROPNAME_DOCID);
+      StringBuffer buf = new StringBuffer("googleconnector://");
+      buf.append(connectorName);
+      buf.append(".localhost?docid=");
+      buf.append(docid);
+      searchurl = buf.toString();
     }
-    if (contentUrlProp == null) {
-      throw new IllegalArgumentException(SpiConstants.PROPNAME_CONTENTURL
-          + " is missing");
-    }
-    String contentUrl = getPropValue(contentUrlProp);
 
-    // Gets the content property from the property map.
-    Property contentProp = null;
-    try {
-      contentProp = pm.getProperty(SpiConstants.PROPNAME_CONTENT);
-    } catch (RepositoryException e) {
-      throw new RuntimeException(e);
+    String contentUrl = getOptionalString(pm, SpiConstants.PROPNAME_CONTENTURL);
+
+    String content = getOptionalString(pm, SpiConstants.PROPNAME_CONTENT);
+    if (content == null) {
+      content = "";
     }
-    if (contentProp == null) {
-      throw new IllegalArgumentException(SpiConstants.PROPNAME_CONTENT
-          + " is missing");
-    }
-    String content = null;
     try {
-      content = base64Encode(getPropValue(contentProp));
+      content = base64Encode(content);
     } catch (IOException e) {
-      e.printStackTrace();
+      LOGGER.logp(Level.WARNING, this.getClass().getName(), "buildXmlData",
+          "Swallowing exception while base64-encoding.", e);
+      content = "";
     }
 
-    // Gets the lastmodify property from the property map.
-    Property lastModifiedProp = null;
+    Calendar lastModified = null;
     try {
-      lastModifiedProp = pm.getProperty(SpiConstants.PROPNAME_LASTMODIFY);
+      lastModified = getCalendarAndThrow(pm, SpiConstants.PROPNAME_LASTMODIFY);
+    } catch (IllegalArgumentException e) {
+      LOGGER.logp(Level.WARNING, this.getClass().getName(), "buildXmlData",
+          "Swallowing exception while getting "
+              + SpiConstants.PROPNAME_LASTMODIFY, e);
     } catch (RepositoryException e) {
-      throw new RuntimeException(e);
+      LOGGER.logp(Level.WARNING, this.getClass().getName(), "buildXmlData",
+          "Swallowing exception while getting "
+              + SpiConstants.PROPNAME_LASTMODIFY, e);
     }
-    if (lastModifiedProp == null) {
-      throw new IllegalArgumentException(SpiConstants.PROPNAME_LASTMODIFY
-          + " is missing");
+    String lastModifiedString;
+    if (lastModified == null) {
+      // maybe someone supplied a date as a string in some other format
+      lastModifiedString =
+          getOptionalString(pm, SpiConstants.PROPNAME_LASTMODIFY);
+    } else {
+      lastModifiedString = SimpleValue.calendarToRfc822(lastModified);
     }
-    String lastModified = getPropValue(lastModifiedProp);
 
-    String mimetype = "text/plain";
+    String mimetype = getOptionalString(pm, SpiConstants.PROPNAME_MIMETYPE);
+    if (mimetype == null) {
+      mimetype = SpiConstants.DEFAULT_MIMETYPE;
+    }
 
-    xmlData.append(xmlWrapRecord(contentUrl, lastModified, content, mimetype));
+    xmlData.append(xmlWrapRecord(searchurl, lastModifiedString, content,
+        mimetype, pm));
 
     xmlData.append(xmlWrapEnd(XML_GROUP));
     xmlData.append(xmlWrapEnd(XML_GSAFEED));
@@ -255,7 +434,7 @@ public class DocPusher implements Pusher {
   /*
    * Composes the final message
    */
-  private String composeMessage()  {
+  private String composeMessage() {
     StringBuffer buf = new StringBuffer(8192);
     buf.append("datasource=");
     buf.append(dataSource);
@@ -270,19 +449,23 @@ public class DocPusher implements Pusher {
    * Takes a property map and sends a the feed to the GSA.
    * 
    * @param pm PropertyMap corresponding to the document.
+   * @param connectorName The connector name that fed this document
    */
-  public void take(PropertyMap pm) {
-    xmlData = buildXmlData(pm);
+  public void take(PropertyMap pm, String connectorName) {
+    xmlData = buildXmlData(pm, connectorName);
     URL feedUrl = null;
     try {
       String message = composeMessage();
       gsaResponse = feedConnection.sendData(message);
     } catch (MalformedURLException e) {
-      e.printStackTrace();
+      LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
+          "Received exception while feeding, continuing", e);
     } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
+      LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
+          "Received exception while feeding, continuing", e);
     } catch (IOException e) {
-      e.printStackTrace();
+      LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
+          "Received exception while feeding, continuing", e);
     }
   }
 }

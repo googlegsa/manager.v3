@@ -58,6 +58,18 @@ public class SpiConstants {
   public static final String PROPNAME_CONTENTURL = "google:contenturl";
 
   /**
+   * Identifies an optional single-valued string property that, if present, will
+   * be used by the GSA as the primary URI for this documeny - instead of the
+   * normal googleconnector:// URI which the connector manager fabricates.
+   * Connector developers should provide this if they the GSA to do web-style
+   * authentication and authorization for this document.  If this is specified, 
+   * the GSA will not call back to the connector manager as serve-time
+   * <p>
+   * Value: google:contenturl
+   */
+  public static final String PROPNAME_SEARCHURL = "google:searchurl";
+
+  /**
    * Identifies a single-valued property that may be either string or binary and
    * gives direct access to the primary content to be indexed.
    * <p>
@@ -77,6 +89,23 @@ public class SpiConstants {
   public static final String PROPNAME_SECURITYTOKEN = "google:securitytoken";
 
   /**
+   * Identifies an single-valued String property that gives the mime type for
+   * the content of this document. If this is not supplied, then the system will
+   * use the value of DEFAULT_MIMETYPE.
+   * <p>
+   * Value: google:mimetype
+   */
+  public static final String PROPNAME_MIMETYPE = "google:mimetype";
+
+  /**
+   * The mime type that the connector manager uses as a default, if a document
+   * does not specify.
+   * <p>
+   * Value: text/html
+   */
+  public static final String DEFAULT_MIMETYPE = "text/html";
+
+  /**
    * Identifies an optional, single-valued property that gives a URL that should
    * be used in a results page as the primary user reference for a document.
    * This may be different from the contenturl, if present: contenturl should
@@ -88,8 +117,8 @@ public class SpiConstants {
   public static final String PROPNAME_DISPLAYURL = "google:displayurl";
 
   /**
-   * Identifies a property used in authorization results that indicates
-   * whether this user can see this document.
+   * Identifies a property used in authorization results that indicates whether
+   * this user can see this document.
    * <p>
    * Value: google:authviewpermit
    */

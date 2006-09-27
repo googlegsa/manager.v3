@@ -33,7 +33,7 @@ public class MockPusher implements Pusher {
     printStream = ps;
   }
 
-  public void take(PropertyMap pm) {
+  public void take(PropertyMap pm, String connectorName) {
 
     String docid = null;
 

@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.manager;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import org.springframework.context.ApplicationContext;
