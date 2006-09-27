@@ -141,7 +141,7 @@ public class MockRepositoryEvent {
         "specify a non-zero time stamp");      
     }
     List l = new LinkedList();
-    for (Iterator iter = params.entrySet().iterator(); iter.hasNext(); ) {
+    for (Iterator iter = propBag.entrySet().iterator(); iter.hasNext(); ) {
     	Map.Entry entry = (Map.Entry) iter.next();
       String key = (String) entry.getKey();
       String value = (String) entry.getValue();

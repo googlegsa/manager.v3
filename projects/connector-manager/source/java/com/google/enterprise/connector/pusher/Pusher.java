@@ -25,7 +25,8 @@ public interface Pusher {
   /**
    * Takes an spi document and pushes it along, presumably to the GSA
    * @param pm A property map the represent a document.
+   * @param connectorName The name of the connector sending the document
    */
-  public void take(PropertyMap pm);
+  public void take(PropertyMap pm, String connectorName);
 
 }

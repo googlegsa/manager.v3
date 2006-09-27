@@ -46,7 +46,7 @@ public class MockPusherTest extends TestCase {
       int counter = 0;
       for (Iterator iter = resultSet.iterator(); iter.hasNext();) {
         PropertyMap propertyMap = (PropertyMap) iter.next();
-        pusher.take(propertyMap);
+        pusher.take(propertyMap, "junit");
         counter++;
       }
       Assert.assertEquals(4, counter);

@@ -85,7 +85,7 @@ public class QueryTraverser implements Traverser {
         throw new InterruptedException();
       }
       pm = (PropertyMap) iter.next();
-      pusher.take(pm);
+      pusher.take(pm, connectorName);
       counter++;
       if (counter == batchHint) {
         break;
