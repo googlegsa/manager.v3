@@ -175,7 +175,7 @@ public class SimpleValueTest extends TestCase {
     Date d = new Date(999);
     c.setTime(d);
     String s = SimpleValue.calendarToIso8601(c);
-    Assert.assertEquals(s, "1970-01-01T00:00:00.999Z");
+    Assert.assertEquals("1970-01-01T00:00:00.999Z", s);
   }
 
   public void testIso8601ToCalendar() throws ParseException {
@@ -194,5 +194,14 @@ public class SimpleValueTest extends TestCase {
       Assert.assertEquals(50000, millis);
     }
   }
+
+  public void testCalendarToRfc822() {
+    Calendar c = Calendar.getInstance();
+    Date d = new Date(999);
+    c.setTime(d);
+    String s = SimpleValue.calendarToRfc822(c);
+    Assert.assertEquals("Thu, 01 Jan 1970 00:00:00 GMT", s);
+  }
+
 
 }
