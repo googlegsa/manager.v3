@@ -56,7 +56,8 @@ public class SetScheduleNoGSA extends HttpServlet {
         + "NAME=\"load\"></td></tr>");
     out.print("<tr><td><INPUT type=\"radio\" NAME=\"forTime\" VALUE=\"all\">For all day/night</td></tr>");
     out.print("<tr><td><INPUT type=\"radio\" NAME=\"forTime\" VALUE=\"some\">For some time intervals</td></tr>");
-    out.print("<tr><td><TEXTAREA NAME=\"TimeIntervals\" rows=\"10\" cols=\"16\"></TEXTAREA></td></tr>");
+    out.print("<tr><td><TEXTAREA NAME=\"" + ServletUtil.XMLTAG_TIME_INTERVALS
+        + "\" rows=\"10\" cols=\"16\"></TEXTAREA></td></tr>");
     out.println("<tr><td><INPUT TYPE=\"SUBMIT\" "
         + "NAME=\"action\" VALUE=\"submit\"></td></tr>");
     out.println("</TABLE></FORM></BODY></HTML>");
@@ -74,14 +75,12 @@ public class SetScheduleNoGSA extends HttpServlet {
   protected void doPost(HttpServletRequest req,
                         HttpServletResponse res)
       throws ServletException, IOException {
-    String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
-    String load = req.getParameter("load");
     String forTime = req.getParameter("forTime");
-    String[] timeIntervals = null;
-    if (forTime.equalsIgnoreCase("false")) {
-      timeIntervals = req.getParameterValues("timeIntervals");
+    String timeIntervals = null;
+    if (forTime.equalsIgnoreCase("some")) {
+      timeIntervals = req.getParameter(ServletUtil.XMLTAG_TIME_INTERVALS);
     } else {
-      timeIntervals = new String[] {"0-24"};
+      timeIntervals = new String("0-24");
     }
     StringWriter writer = new StringWriter();
     writer.write("<" + ServletUtil.XMLTAG_CONNECTOR_SCHEDULES + ">\n");
@@ -92,23 +91,22 @@ public class SetScheduleNoGSA extends HttpServlet {
         + req.getParameter(ServletUtil.XMLTAG_LOAD) + "</"
         + ServletUtil.XMLTAG_LOAD + ">\n");
     writer.write("  <" + ServletUtil.XMLTAG_TIME_INTERVALS + ">");
-    for (int n = 0; n < timeIntervals.length; ++n) {
-      if (n == 0) {
-        writer.write(":");
-      }
-      writer.write(timeIntervals[n]);
-      LOG.info("GGG " + timeIntervals[n]);
+    if (timeIntervals.indexOf("\r\n") != -1) {
+      writer.write(timeIntervals.replaceAll("\r\n", ":"));
+    } else {
+      writer.write(timeIntervals.replace('\n', ':'));
     }
-    writer.write("  </" + ServletUtil.XMLTAG_TIME_INTERVALS + ">");
-    writer.write("</" + ServletUtil.XMLTAG_CONNECTOR_SCHEDULES + ">");
+    writer.write("</" + ServletUtil.XMLTAG_TIME_INTERVALS + ">\n");
+    writer.write("</" + ServletUtil.XMLTAG_CONNECTOR_SCHEDULES + ">\n");
     writer.close();
 
-    LOG.info("GGG " + writer.getBuffer().toString());
+    LOG.info(writer.getBuffer().toString());
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
-    String status = SetSchedule.handleDoPost(manager, writer.getBuffer().toString());
+    String status = SetSchedule.handleDoPost(manager,
+        writer.getBuffer().toString());
     ServletUtil.writeSimpleResponse(out, status);
     out.close();
   }
