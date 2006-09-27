@@ -94,6 +94,10 @@
         <servlet-name>UpdateConnectorNoGSA</servlet-name>
         <servlet-class>com.google.enterprise.connector.servlet.UpdateConnectorNoGSA</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>SetScheduleNoGSA</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.SetScheduleNoGSA</servlet-class>
+    </servlet>
 
     <servlet-mapping>
         <servlet-name>SetManagerConfig</servlet-name>
@@ -160,5 +164,9 @@
     <servlet-mapping>
         <servlet-name>UpdateConnectorNoGSA</servlet-name>
 	<url-pattern>/updateConnectorTest</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>SetScheduleNoGSA</servlet-name>
+	<url-pattern>/setScheduleTest</url-pattern>
     </servlet-mapping>
 </web-app>
