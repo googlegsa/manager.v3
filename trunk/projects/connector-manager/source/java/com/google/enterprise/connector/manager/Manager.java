@@ -21,6 +21,7 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The main interface to the Connector Manager. Front ends such as servlets or
@@ -143,11 +144,9 @@ public interface Manager {
    * @param docidList The document set represented as a list of Strings: the
    *        docid for each document
    * @param username The username as a string
-   * @return A List of booleans parallel to the input list of IDs: the boolean
-   *         in the corresponding position indicates whether that user can see
-   *         that document.
+   * @return A Set of IDs indicating which documents the user can see.
    */
-  public List authorizeDocids(String connectorName, List docidList,
+  public Set authorizeDocids(String connectorName, List docidList,
       String username);
 
   /**
@@ -157,11 +156,9 @@ public interface Manager {
    * @param tokenList The document set represented as a list of Strings: the
    *        security token for a class of documents
    * @param username The username as a string
-   * @return A List of Booleans parallel to the input list of IDs: the boolean
-   *         in the corresponding position indicates whether that user can see
-   *         that document.
+   * @return A Set of tokens that are authorized.
    */
-  public List authorizeTokens(String connectorName, List tokenList,
+  public Set authorizeTokens(String connectorName, List tokenList,
       String username);
 
   /**

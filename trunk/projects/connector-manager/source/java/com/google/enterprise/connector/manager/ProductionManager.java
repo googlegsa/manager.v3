@@ -15,24 +15,34 @@
 package com.google.enterprise.connector.manager;
 
 import com.google.enterprise.connector.instantiator.Instantiator;
+import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorConfigStore;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
+import com.google.enterprise.connector.spi.AuthenticationManager;
+import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.spi.LoginException;
+import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.ResultSet;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.logging.Logger;
 
 /**
- * 
+ *
  */
 public class ProductionManager implements Manager {
+  private static final Logger LOG =
+    Logger.getLogger(ProductionManager.class.getName());
 
   Instantiator instantiator;
   ConnectorConfigStore connectorConfigStore;
@@ -59,41 +69,90 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager
    *      #authenticate(java.lang.String, java.lang.String, java.lang.String)
    */
   public boolean authenticate(String connectorName, String username,
       String password) {
-    // TODO need a real implementation
-    return true;
+    boolean result = false;
+
+    try {
+      AuthenticationManager authnManager =
+        instantiator.getAuthenticationManager(connectorName);
+      result = authnManager.authenticate(username, password);
+    } catch (ConnectorNotFoundException e) {
+      LOG.info(e.getMessage());
+    } catch (InstantiatorException e) {
+      LOG.info(e.getMessage());
+    } catch (LoginException e) {
+      LOG.info(e.getMessage());
+    } catch (RepositoryException e) {
+      LOG.info(e.getMessage());
+    }
+
+    return result;
   }
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager
    *      #authorizeDocids(java.lang.String, java.util.List, java.lang.String)
    */
-  public List authorizeDocids(String connectorName, List docidList,
+  public Set authorizeDocids(String connectorName, List docidList,
       String username) {
-    throw new UnsupportedOperationException();
+    Set result = new HashSet();
+    try {
+      AuthorizationManager authzManager =
+        instantiator.getAuthorizationManager(connectorName);
+      ResultSet resultSet = authzManager.authorizeDocids(docidList, username);
+      Iterator iter = resultSet.iterator();
+      while (iter.hasNext()) {
+        result.add(iter.next());
+      }
+    } catch (ConnectorNotFoundException e) {
+      LOG.info(e.getMessage());
+    } catch (InstantiatorException e) {
+      LOG.info(e.getMessage());
+    } catch (RepositoryException e) {
+      LOG.info(e.getMessage());
+    }
+
+    return result;
   }
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager
    *      #authorizeTokens(java.lang.String, java.util.List, java.lang.String)
    */
-  public List authorizeTokens(String connectorName, List tokenList,
+  public Set authorizeTokens(String connectorName, List tokenList,
       String username) {
-    throw new UnsupportedOperationException();
+    Set result = new HashSet();
+    try {
+      AuthorizationManager authzManager =
+        instantiator.getAuthorizationManager(connectorName);
+      ResultSet resultSet = authzManager.authorizeTokens(tokenList, username);
+      Iterator iter = resultSet.iterator();
+      while (iter.hasNext()) {
+        result.add(iter.next());
+      }
+    } catch (ConnectorNotFoundException e) {
+      LOG.info(e.getMessage());
+    } catch (InstantiatorException e) {
+      LOG.info(e.getMessage());
+    } catch (RepositoryException e) {
+      LOG.info(e.getMessage());
+    }
+
+    return result;
   }
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager
    *      #getConfigForm(java.lang.String, java.lang.String)
    */
@@ -106,7 +165,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager
    *      #getConfigFormForConnector(java.lang.String, java.lang.String)
    */
@@ -129,7 +188,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager
    *      #getConnectorStatus(java.lang.String)
    */
@@ -148,7 +207,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#getConnectorStatuses()
    */
   public List getConnectorStatuses() {
@@ -157,7 +216,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#getConnectorTypes()
    */
   public List getConnectorTypes() {
@@ -171,7 +230,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#setConnectorConfig(java.lang.String,
    *      java.util.Map, java.lang.String)
    */
@@ -183,7 +242,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#setConnectorManagerConfig(boolean,
    *      java.lang.String, int, int)
    */
@@ -195,12 +254,12 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#setSchedule(
    *      java.lang.String, int, java.lang.String)
    */
   public void setSchedule(String connectorName, int load, String timeIntervals) {
-    throw new UnsupportedOperationException();	
+    throw new UnsupportedOperationException();
   }
 
 }
