@@ -190,25 +190,21 @@ public class Authorization extends HttpServlet {
           docidList.add(url.substring(
               url.lastIndexOf(DOCID) + DOCID.length(), url.length()));
         }
-        List answerList = manager.authorizeDocids((String) entryConn.getKey(),
-            docidList, (String) entry.getKey());
-        if (answerList.isEmpty() || answerList.size() != docidList.size()) {
-          status = ServletUtil.XML_RESPONSE_AUTHZ_DOCID_MISMATCH;
-          continue;
-        }
-        Iterator itAns = answerList.iterator();
+        Set answerSet = manager.authorizeDocids((String) entryConn.getKey(),
+            docidList, (String) entry.getKey());        
         for (Iterator iter = ((List) entryConn.getValue()).iterator();
             iter.hasNext();) {
+          String docid = (String) iter.next();
           ServletUtil.writeXMLTag(
               out, 2, ServletUtil.XMLTAG_ANSWER, false);
           ServletUtil.writeXMLElement(
-              out, 3, ServletUtil.XMLTAG_RESOURCE, (String) iter.next());
-          if (!((Boolean) itAns.next()).booleanValue()) {
+              out, 3, ServletUtil.XMLTAG_RESOURCE, docid);
+          if (answerSet.contains(docid)) {
             ServletUtil.writeXMLElement(
-                out, 3, ServletUtil.XMLTAG_DECISION, "Deny");
+              out, 3, ServletUtil.XMLTAG_DECISION, "Permit");
           } else {
             ServletUtil.writeXMLElement(
-                out, 3, ServletUtil.XMLTAG_DECISION, "Permit");
+              out, 3, ServletUtil.XMLTAG_DECISION, "Deny");
           }
           ServletUtil.writeXMLTag(
               out, 2, ServletUtil.XMLTAG_ANSWER, true);
