@@ -140,7 +140,7 @@ public class SimpleValue implements Value {
   private static final SimpleDateFormat ISO8601_DATE_FORMAT_SECS =
       new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
   public static final SimpleDateFormat RFC822_DATE_FORMAT =
-      new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss");
+      new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss z");
 
   static {
     ISO8601_DATE_FORMAT_MILLIS.setCalendar(GMT_CALENDAR);
@@ -149,6 +149,7 @@ public class SimpleValue implements Value {
     ISO8601_DATE_FORMAT_SECS.setLenient(true);
     RFC822_DATE_FORMAT.setCalendar(GMT_CALENDAR);
     RFC822_DATE_FORMAT.setLenient(true);
+    RFC822_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
 
   /**
@@ -159,7 +160,7 @@ public class SimpleValue implements Value {
    */
   public static String calendarToRfc822(Calendar c) {
     Date d = c.getTime();
-    String isoString = RFC822_DATE_FORMAT.format(d) + " GMT";
+    String isoString = RFC822_DATE_FORMAT.format(d);
     return isoString;
   }
 
