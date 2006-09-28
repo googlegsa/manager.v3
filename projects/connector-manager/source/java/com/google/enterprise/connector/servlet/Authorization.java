@@ -191,15 +191,16 @@ public class Authorization extends HttpServlet {
               url.lastIndexOf(DOCID) + DOCID.length(), url.length()));
         }
         Set answerSet = manager.authorizeDocids((String) entryConn.getKey(),
-            docidList, (String) entry.getKey());        
-        for (Iterator iter = ((List) entryConn.getValue()).iterator();
-            iter.hasNext();) {
-          String docid = (String) iter.next();
+            docidList, (String) entry.getKey());    
+        // Assume that iter and iterDocid are in parallel.
+        Iterator iter = ((List) entryConn.getValue()).iterator();
+        Iterator iterDocid = docidList.iterator();
+        while (iter.hasNext() && iterDocid.hasNext()) {
           ServletUtil.writeXMLTag(
               out, 2, ServletUtil.XMLTAG_ANSWER, false);
           ServletUtil.writeXMLElement(
-              out, 3, ServletUtil.XMLTAG_RESOURCE, docid);
-          if (answerSet.contains(docid)) {
+              out, 3, ServletUtil.XMLTAG_RESOURCE, (String) iter.next());
+          if (answerSet.contains(iterDocid.next())) {
             ServletUtil.writeXMLElement(
               out, 3, ServletUtil.XMLTAG_DECISION, "Permit");
           } else {

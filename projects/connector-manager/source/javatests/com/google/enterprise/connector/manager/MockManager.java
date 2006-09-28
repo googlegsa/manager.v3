@@ -21,6 +21,7 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -53,13 +54,11 @@ public class MockManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#authorizeTokens(java.lang.String,
    *      java.util.List, java.lang.String)
    */
-  public List authorizeTokens(String connectorName, List tokenList,
+  public Set authorizeTokens(String connectorName, List tokenList,
       String username) {
-    List tokenAuthList = new ArrayList();
-    for (int i = 0; i < tokenList.size(); i++) {
-      tokenAuthList.add(Boolean.valueOf(true));
-    }
-    return tokenAuthList;
+    Set tokenAuthSet = new HashSet();
+    tokenAuthSet.addAll(tokenList);
+    return tokenAuthSet;
   }
 
   /*
@@ -79,13 +78,11 @@ public class MockManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#authorizeDocids(java.lang.String,
    *      java.util.List, java.lang.String)
    */
-  public List authorizeDocids(String connectorName, List docidList,
+  public Set authorizeDocids(String connectorName, List docidList,
       String username) {
-    List docidAuthList = new ArrayList();
-    for (int i = 0; i < docidList.size(); i++) {
-      docidAuthList.add(Boolean.valueOf(true));
-    }
-    return docidAuthList;
+    Set docidAuthSet = new HashSet();
+    docidAuthSet.addAll(docidList);
+    return docidAuthSet;
   }
 
   /*
