@@ -47,7 +47,7 @@ public class GetConnectorStatus extends HttpServlet {
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
     String connectorName = req.getParameter("ConnectorName");
-    if (connectorName.length() < 1) {
+    if (connectorName == null || connectorName.length() < 1) {
       LOG.info("ConnectorName is null");
       return;
     }

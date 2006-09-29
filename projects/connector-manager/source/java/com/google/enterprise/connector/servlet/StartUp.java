@@ -1,0 +1,69 @@
+// Copyright (C) 2006 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package com.google.enterprise.connector.servlet;
+
+import com.google.enterprise.connector.manager.Context;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.logging.Logger;
+
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+/**
+ * Admin servlet for Authenticate
+ *
+ */
+public class StartUp  extends HttpServlet {
+  private static final Logger LOGGER =
+    Logger.getLogger(StartUp.class.getName());
+
+  public void init() {
+    LOGGER.info("init");
+    ServletContext servletContext = this.getServletContext();
+    try {
+      doConnectorManagerStartup(servletContext);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    LOGGER.info("init done");   
+  }
+  
+  protected void doGet(HttpServletRequest req, HttpServletResponse res)
+      throws ServletException, IOException {
+    doPost(req, res);
+  }
+
+  protected void doPost(HttpServletRequest req, HttpServletResponse res)
+      throws ServletException, IOException {
+    ServletContext servletContext = this.getServletContext();
+    doConnectorManagerStartup(servletContext);
+    res.setContentType("text/html");
+    PrintWriter out = res.getWriter();
+    out.println("<HTML><HEAD><TITLE>Connector Manager Started</TITLE>"+
+                "</HEAD><BODY>Connector manager has been successfully started.</BODY></HTML>");
+    out.close();
+    LOGGER.info("Connector Manager started.");
+  }
+
+  public static void doConnectorManagerStartup(ServletContext servletContext) throws IOException {
+    Context context = Context.getInstance(servletContext);
+    context.start();
+  }
+}

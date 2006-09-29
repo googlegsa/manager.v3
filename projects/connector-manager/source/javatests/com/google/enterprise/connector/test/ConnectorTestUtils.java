@@ -14,7 +14,13 @@
 
 package com.google.enterprise.connector.test;
 
+import com.google.enterprise.connector.manager.Context;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.Resource;
+
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -106,4 +112,14 @@ public class ConnectorTestUtils {
     String result = input.replaceAll("\r\n", "\n");
     return result;
   }
+
+  public static String getFileFullPath(String fileName, Context context) throws IOException {
+    ApplicationContext applicationContext = context.getApplicationContext();
+    Resource resource = applicationContext.getResource(fileName);
+    File file = resource.getFile();
+    String path = file.getAbsolutePath();
+    return path;
+  }
+  
+
 }

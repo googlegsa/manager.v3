@@ -15,12 +15,16 @@
 package com.google.enterprise.connector.manager;
 
 import com.google.enterprise.connector.common.WorkQueue;
+import com.google.enterprise.connector.persist.ConnectorConfigStore;
+import com.google.enterprise.connector.persist.FilesystemConnectorConfigStore;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
@@ -31,6 +35,9 @@ import javax.servlet.ServletContext;
  */
 public class Context {
 
+  private static final String SERVLET_FILESYSTEM_CONFIG_STORE_DIR =
+      "WEB-INF/connectors";
+
   private static final Logger LOGGER =
       Logger.getLogger(Context.class.getName());
 
@@ -39,13 +46,14 @@ public class Context {
   private static ServletContext servletContext;
 
   private boolean started = false;
-  
+
   private boolean isServletContext = false;
 
   // singletons
   private Manager manager = null;
   private TraversalScheduler traversalScheduler = null;
   private Thread schedulerThread = null;
+  private ConnectorConfigStore connectorConfigStore = null;
 
   // control variables for turning off normal functionality - testing only
   private boolean isFeeding = true;
@@ -223,20 +231,44 @@ public class Context {
     return result;
   }
 
+  private void initConnectorConfigStore() {
+    if (connectorConfigStore != null) {
+      return;
+    }
+    initApplicationContext();
+    connectorConfigStore =
+        (ConnectorConfigStore) getRequiredBean("ConnectorConfigStore",
+            ConnectorConfigStore.class);
+    if (connectorConfigStore instanceof FilesystemConnectorConfigStore) {
+      FilesystemConnectorConfigStore filesystemConnectorConfigStore =
+          (FilesystemConnectorConfigStore) connectorConfigStore;
+      if (isServletContext) {
+        File baseDirectory;
+        try {
+          baseDirectory =
+              applicationContext.getResource(
+                  SERVLET_FILESYSTEM_CONFIG_STORE_DIR).getFile();
+        } catch (IOException e) {
+          throw new IllegalStateException(
+              "Can't get base directory for FilesystemConnectorConfigStore "
+                  + SERVLET_FILESYSTEM_CONFIG_STORE_DIR);
+        }
+        filesystemConnectorConfigStore.setBaseDirectory(baseDirectory);
+      } else {
+        // junit context
+        // allow the junit test to call setBaseDirectory() on their own
+      }
+    }
+
+  }
+
   /**
    * Gets the singleton Manager.
    * 
    * @return the Manager
    */
   public Manager getManager() {
-    /*
-     * TODO: the call to start() is only a temporary way to start our system.
-     * In the long term, we should set up configuration in tomcat to call
-     * our appropriate starting servlet.  In the meantime, we want all our
-     * servlets to call this method (to start our system if it hasn't already 
-     * been started)
-     */
-    start();
+    initConnectorConfigStore();
     if (manager != null) {
       return manager;
     }
@@ -269,10 +301,11 @@ public class Context {
     }
     traversalScheduler.shutdown(force, WorkQueue.DEFAULT_SHUTDOWN_TIMEOUT);
   }
-  
+
   /**
    * Retrieves the perfix for the Repository file depending on whether its junit
-   * context or servelet context.
+   * context or servlet context.
+   * 
    * @return prefix for the Repository file.
    */
   public String getRepositoryFilePrefix() {

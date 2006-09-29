@@ -98,7 +98,12 @@
         <servlet-name>SetScheduleNoGSA</servlet-name>
         <servlet-class>com.google.enterprise.connector.servlet.SetScheduleNoGSA</servlet-class>
     </servlet>
-
+    <servlet>
+        <servlet-name>StartUp</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.StartUp</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+ 
     <servlet-mapping>
         <servlet-name>SetManagerConfig</servlet-name>
 	<url-pattern>/setManagerConfig</url-pattern>
@@ -168,5 +173,9 @@
     <servlet-mapping>
         <servlet-name>SetScheduleNoGSA</servlet-name>
 	<url-pattern>/setScheduleTest</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>StartUp</servlet-name>
+	<url-pattern>/startUp</url-pattern>
     </servlet-mapping>
 </web-app>
