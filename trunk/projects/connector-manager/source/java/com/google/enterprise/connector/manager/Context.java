@@ -40,7 +40,7 @@ public class Context {
 
   private boolean started = false;
   
-  private boolean isServeletContext = false;
+  private boolean isServletContext = false;
 
   // singletons
   private Manager manager = null;
@@ -126,7 +126,7 @@ public class Context {
     ac.setServletContext(servletContext);
     ac.refresh();
     applicationContext = ac;
-    isServeletContext = true;
+    isServletContext = true;
   }
 
   /*
@@ -255,11 +255,11 @@ public class Context {
   }
 
   /**
-   * Gets the applicationContext. For testing only
+   * Gets the applicationContext. For testing only.
    * 
    * @return the applicationContext
    */
-  ApplicationContext getApplicationContext() {
+  public ApplicationContext getApplicationContext() {
     return applicationContext;
   }
 
@@ -275,8 +275,8 @@ public class Context {
    * context or servelet context.
    * @return prefix for the Repository file.
    */
-  public String getRespositoryFilePrefix() {
-    if (isServeletContext) {
+  public String getRepositoryFilePrefix() {
+    if (isServletContext) {
       return "webapps/connector-manager/WEB-INF/";
     }
     return "testdata/mocktestdata/";

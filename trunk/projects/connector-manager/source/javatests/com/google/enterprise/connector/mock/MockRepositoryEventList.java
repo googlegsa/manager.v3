@@ -48,7 +48,7 @@ public class MockRepositoryEventList {
    */
   public MockRepositoryEventList(String filename) {
     eventList = new LinkedList();
-    String filePrefix = Context.getInstance().getRespositoryFilePrefix();
+    String filePrefix = Context.getInstance().getRepositoryFilePrefix();
     File inputFile = new File(filePrefix + filename);
     try {
       LOGGER.info("Base dir path: "+ inputFile.getCanonicalPath());
