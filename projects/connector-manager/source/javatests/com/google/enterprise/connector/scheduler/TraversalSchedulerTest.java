@@ -71,7 +71,7 @@ public class TraversalSchedulerTest extends TestCase {
       ie.printStackTrace();
       Assert.fail(ie.toString());
     }
-    scheduler.shutdown(false, 1000);
+    scheduler.shutdown(false, 5000);
   }
 
   /**
@@ -192,7 +192,7 @@ public class TraversalSchedulerTest extends TestCase {
   }
   
   /**
-   * Test that tests to mock Traverser objects.
+   * Test that tests two mock Traverser objects.
    */
   public void testTwoTraversers() {
     List schedules = getSchedules(MockInstantiator.TRAVERSER_NAME1);
@@ -205,5 +205,4 @@ public class TraversalSchedulerTest extends TestCase {
     schedules.addAll(getSchedules("connectorB"));
     runWithSchedules(schedules, createRealInstantiator());
   }  
-
 }

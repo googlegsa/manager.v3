@@ -38,10 +38,11 @@ import java.util.logging.Logger;
  * Must initialize TraversalScheduler before running it.
  */
 public class TraversalScheduler implements Scheduler {
-  public static final String SCHEDULER_CURRENT_TIME = "scheduler/currentTime";
+  public static final String SCHEDULER_CURRENT_TIME = "/Scheduler/currentTime";
   
   private static final Logger LOGGER = 
     Logger.getLogger(TraversalScheduler.class.getName());
+  private static final int TRAVERSAL_TIMEOUT = 5000;
   
   private Instantiator instantiator;
   private Monitor monitor;
@@ -85,6 +86,7 @@ public class TraversalScheduler implements Scheduler {
   }
   
   public synchronized void shutdown(boolean interrupt, long timeoutInMillis) {
+    LOGGER.info("Shutdown initiated...");
     if (isShutdown) {
       return;
     }
@@ -146,10 +148,27 @@ public class TraversalScheduler implements Scheduler {
     }
     return false;
   }
-  
-  public synchronized void run() {
+
+  /**
+   * Determines whether scheduler should run.  Assumes caller holds instance 
+   * lock.
+   * @return true if we are in a running state and scheduler should run or
+   * continue running
+   */
+  private boolean isRunningState() {
+    return isInitialized && !isShutdown;
+  }
+
+  public void run() {
     Map runnables = new HashMap();  // <connectorName, Runnable>
-    while (isInitialized && !isShutdown) {
+    while (true) {
+      synchronized (this) {
+        if (!isRunningState()) {
+          LOGGER.info("TraversalScheduler thread is stopping due to " 
+            + "shutdown or not being initialized.");
+          return;
+        }
+      }
       List schedules = getSchedules();
       for (Iterator iter = schedules.iterator(); iter.hasNext(); ){
         Schedule schedule = (Schedule) iter.next();
@@ -158,7 +177,7 @@ public class TraversalScheduler implements Scheduler {
           TraverserRunnable runnable = 
             (TraverserRunnable) runnables.get(connectorName);
           if (null == runnable) {
-            runnable = new TraverserRunnable(connectorName, 5000);
+            runnable = new TraverserRunnable(connectorName, TRAVERSAL_TIMEOUT);
             runnables.put(connectorName, runnable);
           }
           // we back off if we have received previous failures (e.g. when trying
@@ -171,8 +190,16 @@ public class TraversalScheduler implements Scheduler {
               continue;
             }
           }
-          LOGGER.info("Adding traversal work to workQueue: " + connectorName);
-          workQueue.addWork(runnable);
+          LOGGER.info("Trying to add traversal work to workQueue: "
+            + connectorName);
+          synchronized (this) {
+            if (!isRunningState()) {
+                LOGGER.info("TraversalScheduler thread is stopping due to " 
+                  + "shutdown or not being initialized.");
+                return;
+            }
+            workQueue.addWork(runnable);
+          }
           int numDocsTraversed = runnable.getNumDocsTraversed();
           if (numDocsTraversed > 0) {
             hostLoadManager.updateNumDocsTraversed(connectorName, 
@@ -189,14 +216,16 @@ public class TraversalScheduler implements Scheduler {
       
       // Give someone else a chance to run.
       try {
-        wait(1000);
+        synchronized (this) {
+          wait(1000);
+        }
       } catch (InterruptedException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
       }
     }
   }
-  
+
   private class TraverserRunnable extends WorkQueueItem {
     private String connectorName;
     private int numDocsTraversed;
@@ -263,10 +292,10 @@ public class TraversalScheduler implements Scheduler {
       Traverser traverser = getTraverser(connectorName);
       if (null != traverser) {
         try {
-          System.out.println("Begin runBatch");
+          LOGGER.info("Begin runBatch");
           numDocsTraversed = traverser.runBatch(
             hostLoadManager.determineBatchHint(connectorName));
-          System.out.println("End runBatch");
+          LOGGER.info("End runBatch");
           numConsecutiveFailures = 0;
           timeOfFirstFailure = 0;
         } catch (InterruptedException e) {
