@@ -58,7 +58,7 @@ public class UpdateConnector extends HttpServlet {
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
-    String language = req.getParameter("lang");
+    String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
     BufferedReader reader = req.getReader();
     PrintWriter out = res.getWriter();
@@ -89,10 +89,10 @@ public class UpdateConnector extends HttpServlet {
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
     String status = ServletUtil.XML_RESPONSE_SUCCESS;
-    String lang = req.getParameter("lang");
+    String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
     Map configData = new TreeMap();
-    String connectorName = req.getParameter("connectorName");
-    String connectorType = req.getParameter("connectorType");
+    String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
+    String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
     Enumeration names = req.getParameterNames();
     for (Enumeration e = names ; e.hasMoreElements() ;) {
       String name = (String) e.nextElement();
@@ -107,11 +107,11 @@ public class UpdateConnector extends HttpServlet {
     try {
       configRes = manager.setConnectorConfig(connectorName, configData, lang);
     } catch (ConnectorNotFoundException e) {
-      LOG.info("ConnectorNotFoundException");
+      LOG.info("ConnectorNotFoundException" + e.getMessage());
       status = e.toString();
       e.printStackTrace();
     } catch (PersistentStoreException e) {
-      LOG.info("PersistentStoreException");
+      LOG.info("PersistentStoreException" + e.getMessage());
       status = e.toString();
       e.printStackTrace();
     }
@@ -151,7 +151,8 @@ public class UpdateConnector extends HttpServlet {
         "<HTML><HEAD><TITLE>Update Connector Config</TITLE></HEAD>\n"
         + "<BODY><H3>Update Connector Config:</H3><HR>\n"
         + "<FORM METHOD=POST ACTION=\"/connector-manager/updateConnector?"
-        + "ConnectorName=" + connectorName + "&lang=" + language + "\"><TABLE>"
+        + ServletUtil.XMLTAG_CONNECTOR_NAME + "=" + connectorName + "&"
+        + ServletUtil.QUERY_PARAM_LANG + "=" + language + "\"><TABLE>"
         + "<tr><td>Connector Name: " + connectorName + "</td></tr><tr>\n");
     int beginQuote = 0;
     int endQuote = 0;

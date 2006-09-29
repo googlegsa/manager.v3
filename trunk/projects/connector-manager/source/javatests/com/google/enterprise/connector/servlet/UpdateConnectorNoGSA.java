@@ -104,10 +104,10 @@ public class UpdateConnectorNoGSA extends HttpServlet {
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
     String status = ServletUtil.XML_RESPONSE_SUCCESS;
-    String lang = req.getParameter("lang");
+    String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
     Map configData = new TreeMap();
-    String connectorName = req.getParameter("connectorName");
-    String connectorType = req.getParameter("connectorType");
+    String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
+    String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
     Enumeration names = req.getParameterNames();
     for (Enumeration e = names; e.hasMoreElements();) {
       String name = (String) e.nextElement();
@@ -122,11 +122,11 @@ public class UpdateConnectorNoGSA extends HttpServlet {
     try {
       configRes = manager.setConnectorConfig(connectorName, configData, lang);
     } catch (ConnectorNotFoundException e) {
-      LOG.info("ConnectorNotFoundException");
+      LOG.info("ConnectorNotFoundException" + e.getMessage());
       status = e.toString();
       e.printStackTrace();
     } catch (PersistentStoreException e) {
-      LOG.info("PersistentStoreException");
+      LOG.info("PersistentStoreException" + e.getMessage());
       status = e.toString();
       e.printStackTrace();
     }
