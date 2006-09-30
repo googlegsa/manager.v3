@@ -26,6 +26,7 @@ import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
+import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.LoginException;
@@ -99,10 +100,10 @@ public class MockInstantiator implements Instantiator {
     connectorMap.put(TRAVERSER_NAME_NEVER_ENDING, new ConnectorInterfaces(
         TRAVERSER_NAME_NEVER_ENDING, new NeverEndingQueryTraverser(),
         nullAuthenticationManager, nullAuthorizationManager));
-    
+
     connectorMap.put(TRAVERSER_NAME_INTERRUPTIBLE, new ConnectorInterfaces(
-      TRAVERSER_NAME_INTERRUPTIBLE, new InterruptibleQueryTraverser(),
-      nullAuthenticationManager, nullAuthorizationManager));
+        TRAVERSER_NAME_INTERRUPTIBLE, new InterruptibleQueryTraverser(),
+        nullAuthenticationManager, nullAuthorizationManager));
   }
 
   private static void setupConnector(String connectorName, String resourceName) {
@@ -202,5 +203,11 @@ public class MockInstantiator implements Instantiator {
       throw new ConnectorNotFoundException("Connector not found: "
           + connectorName);
     }
+  }
+
+  public ConfigureResponse getConfigFormForConnector(String connectorName,
+      String connectorTypeName, String language)
+      throws ConnectorNotFoundException {
+    throw new UnsupportedOperationException();
   }
 }

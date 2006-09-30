@@ -190,4 +190,8 @@ public class SharepointConnectorType implements ConnectorType {
 		context.setSkiptFields(value);
 	}
 
+  public ConfigureResponse getPopulatedConfigForm(Map configMap, String language) {
+    throw new UnsupportedOperationException();
+  }
+
 }

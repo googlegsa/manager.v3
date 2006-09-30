@@ -38,11 +38,11 @@ import java.util.TreeSet;
 import java.util.logging.Logger;
 
 /**
- *
+ * 
  */
 public class ProductionManager implements Manager {
-  private static final Logger LOG =
-    Logger.getLogger(ProductionManager.class.getName());
+  private static final Logger LOGGER =
+      Logger.getLogger(ProductionManager.class.getName());
 
   Instantiator instantiator;
   ConnectorConfigStore connectorConfigStore;
@@ -69,7 +69,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   *
+   * 
    * @see com.google.enterprise.connector.manager.Manager
    *      #authenticate(java.lang.String, java.lang.String, java.lang.String)
    */
@@ -79,16 +79,16 @@ public class ProductionManager implements Manager {
 
     try {
       AuthenticationManager authnManager =
-        instantiator.getAuthenticationManager(connectorName);
+          instantiator.getAuthenticationManager(connectorName);
       result = authnManager.authenticate(username, password);
     } catch (ConnectorNotFoundException e) {
-      LOG.info(e.getMessage());
+      LOGGER.info(e.getMessage());
     } catch (InstantiatorException e) {
-      LOG.info(e.getMessage());
+      LOGGER.info(e.getMessage());
     } catch (LoginException e) {
-      LOG.info(e.getMessage());
+      LOGGER.info(e.getMessage());
     } catch (RepositoryException e) {
-      LOG.info(e.getMessage());
+      LOGGER.info(e.getMessage());
     }
 
     return result;
@@ -96,7 +96,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   *
+   * 
    * @see com.google.enterprise.connector.manager.Manager
    *      #authorizeDocids(java.lang.String, java.util.List, java.lang.String)
    */
@@ -105,18 +105,18 @@ public class ProductionManager implements Manager {
     Set result = new HashSet();
     try {
       AuthorizationManager authzManager =
-        instantiator.getAuthorizationManager(connectorName);
+          instantiator.getAuthorizationManager(connectorName);
       ResultSet resultSet = authzManager.authorizeDocids(docidList, username);
       Iterator iter = resultSet.iterator();
       while (iter.hasNext()) {
         result.add(iter.next());
       }
     } catch (ConnectorNotFoundException e) {
-      LOG.info(e.getMessage());
+      LOGGER.info(e.getMessage());
     } catch (InstantiatorException e) {
-      LOG.info(e.getMessage());
+      LOGGER.info(e.getMessage());
     } catch (RepositoryException e) {
-      LOG.info(e.getMessage());
+      LOGGER.info(e.getMessage());
     }
 
     return result;
@@ -124,7 +124,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   *
+   * 
    * @see com.google.enterprise.connector.manager.Manager
    *      #authorizeTokens(java.lang.String, java.util.List, java.lang.String)
    */
@@ -133,18 +133,18 @@ public class ProductionManager implements Manager {
     Set result = new HashSet();
     try {
       AuthorizationManager authzManager =
-        instantiator.getAuthorizationManager(connectorName);
+          instantiator.getAuthorizationManager(connectorName);
       ResultSet resultSet = authzManager.authorizeTokens(tokenList, username);
       Iterator iter = resultSet.iterator();
       while (iter.hasNext()) {
         result.add(iter.next());
       }
     } catch (ConnectorNotFoundException e) {
-      LOG.info(e.getMessage());
+      LOGGER.info(e.getMessage());
     } catch (InstantiatorException e) {
-      LOG.info(e.getMessage());
+      LOGGER.info(e.getMessage());
     } catch (RepositoryException e) {
-      LOG.info(e.getMessage());
+      LOGGER.info(e.getMessage());
     }
 
     return result;
@@ -152,7 +152,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   *
+   * 
    * @see com.google.enterprise.connector.manager.Manager
    *      #getConfigForm(java.lang.String, java.lang.String)
    */
@@ -165,30 +165,23 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   *
+   * 
    * @see com.google.enterprise.connector.manager.Manager
    *      #getConfigFormForConnector(java.lang.String, java.lang.String)
    */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
-      String language) throws ConnectorNotFoundException {
+      String language) throws ConnectorNotFoundException, InstantiatorException {
     String connectorTypeName =
         connectorConfigStore.getConnectorType(connectorName);
-    // TODO: this will return the form - but without the existing config
-    // pre-filled in
-    ConfigureResponse response = null;
-    try {
-      response = getConfigForm(connectorTypeName, language);
-    } catch (ConnectorTypeNotFoundException e) {
-      // shouldn't happen, because we just checked and established the known
-      // type
-      throw new IllegalArgumentException();
-    }
+    ConfigureResponse response =
+        instantiator.getConfigFormForConnector(connectorName,
+            connectorTypeName, language);
     return response;
   }
 
   /*
    * (non-Javadoc)
-   *
+   * 
    * @see com.google.enterprise.connector.manager.Manager
    *      #getConnectorStatus(java.lang.String)
    */
@@ -207,7 +200,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   *
+   * 
    * @see com.google.enterprise.connector.manager.Manager#getConnectorStatuses()
    */
   public List getConnectorStatuses() {
@@ -216,7 +209,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   *
+   * 
    * @see com.google.enterprise.connector.manager.Manager#getConnectorTypes()
    */
   public List getConnectorTypes() {
@@ -230,19 +223,26 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   *
+   * 
    * @see com.google.enterprise.connector.manager.Manager#setConnectorConfig(java.lang.String,
    *      java.util.Map, java.lang.String)
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      Map configData, String language) throws ConnectorNotFoundException,
-      PersistentStoreException {
+      String connectorTypeName, Map configData, String language)
+      throws ConnectorNotFoundException, PersistentStoreException {
+    try {
+      instantiator.setConnectorConfig(connectorName, connectorTypeName,
+          configData);
+    } catch (InstantiatorException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
     throw new UnsupportedOperationException();
   }
 
   /*
    * (non-Javadoc)
-   *
+   * 
    * @see com.google.enterprise.connector.manager.Manager#setConnectorManagerConfig(boolean,
    *      java.lang.String, int, int)
    */
@@ -254,7 +254,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   *
+   * 
    * @see com.google.enterprise.connector.manager.Manager#setSchedule(
    *      java.lang.String, int, java.lang.String)
    */

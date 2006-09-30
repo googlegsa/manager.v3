@@ -39,11 +39,11 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
  * 
  * http://localhost:8080/connector-manager/updateConnectorTest?
  * ConnectorName=connectorA&lang=en&Username=foo&Password=passwd
- *
+ * 
  */
 public class UpdateConnectorNoGSA extends HttpServlet {
-  private static final Logger LOG = Logger.getLogger(UpdateConnectorNoGSA.class
-    .getName());
+  private static final Logger LOGGER =
+      Logger.getLogger(UpdateConnectorNoGSA.class.getName());
 
   /**
    * Returns the config form filled with data.
@@ -71,12 +71,13 @@ public class UpdateConnectorNoGSA extends HttpServlet {
         writer.write("  <" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">"
             + connectorName + "</" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">\n");
       } else if (name.equalsIgnoreCase(ServletUtil.XMLTAG_CONNECTOR_TYPE)) {
-        String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
+        String connectorType =
+            req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
         writer.write("  <" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">"
             + connectorType + "</" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">\n");
       } else {
-        writer.write("  <" + ServletUtil.XMLTAG_PARAMETERS
-            + " name=\"" + name + "\" value=\"" + req.getParameter(name) + "\"/>\n");
+        writer.write("  <" + ServletUtil.XMLTAG_PARAMETERS + " name=\"" + name
+            + "\" value=\"" + req.getParameter(name) + "\"/>\n");
       }
     }
     writer.write("</" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">");
@@ -87,8 +88,8 @@ public class UpdateConnectorNoGSA extends HttpServlet {
 
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
-    out.print(UpdateConnector.handleDoGet(manager,
-        writer.getBuffer().toString(), connectorName, language));
+    out.print(UpdateConnector.handleDoGet(manager, writer.getBuffer()
+        .toString(), connectorName, language));
     out.close();
   }
 
@@ -120,13 +121,15 @@ public class UpdateConnectorNoGSA extends HttpServlet {
     Manager manager = Context.getInstance(servletContext).getManager();
     ConfigureResponse configRes = null;
     try {
-      configRes = manager.setConnectorConfig(connectorName, configData, lang);
+      configRes =
+          manager.setConnectorConfig(connectorName, connectorType, configData,
+              lang);
     } catch (ConnectorNotFoundException e) {
-      LOG.info("ConnectorNotFoundException" + e.getMessage());
+      LOGGER.info("ConnectorNotFoundException" + e.getMessage());
       status = e.toString();
       e.printStackTrace();
     } catch (PersistentStoreException e) {
-      LOG.info("PersistentStoreException" + e.getMessage());
+      LOGGER.info("PersistentStoreException" + e.getMessage());
       status = e.toString();
       e.printStackTrace();
     }

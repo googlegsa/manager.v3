@@ -20,17 +20,23 @@ import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
+import com.google.enterprise.connector.test.JsonObjectAsMap;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.core.io.FileSystemResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Tests for the Spring-base Connector Instantiator
@@ -44,9 +50,10 @@ public class SpringConnectorInstantiatorTest extends TestCase {
    * @throws IOException
    * @throws InstantiatorException
    * @throws ConnectorNotFoundException
+   * @throws JSONException
    */
   public final void testGetTraverser() throws IOException,
-      ConnectorNotFoundException, InstantiatorException {
+      ConnectorNotFoundException, InstantiatorException, JSONException {
     SpringConnectorInstantiator inst = new SpringConnectorInstantiator();
 
     // set up a ConnectorConfigStore
@@ -68,14 +75,39 @@ public class SpringConnectorInstantiatorTest extends TestCase {
     inst.setConnectorStateStore(css);
     inst.setPusher(pusher);
 
-    verifyInterfaces("connectorA", inst);
-    verifyInterfaces("connectorB", inst);
-    verifyInterfaces("connectorC", inst);
-    verifyInterfaces("connectorD", inst);
+    verifyInterfaces("connectorA", inst, makeJsonMap("{foo:bar, "
+        + "\"Repository File\":\"MockRepositoryEventLog3.txt\"}"));
+    verifyInterfaces("connectorB", inst, makeJsonMap("{foo:bar, "
+        + "\"Repository File\":\"MockRepositoryEventLog1.txt\"}"));
+    verifyInterfaces("connectorC", inst, makeJsonMap("{foo:bar, "
+        + "\"Repository File\":\"MockRepositoryEventLog1.txt\"}"));
+    verifyInterfaces("connectorD", inst, makeJsonMap("{foo:bar, "
+        + "\"Repository File\":\"MockRepositoryEventLog1.txt\"}"));
 
   }
 
-  private void verifyInterfaces(String connectorName, ConnectorInstantiator inst)
+  private Map makeJsonMap(String jsonInput) throws JSONException {
+    JSONObject jo = new JSONObject(jsonInput);
+    Map map = new JsonObjectAsMap(jo);
+    return map;
+  }
+
+  private void compareMaps(Map map1, Map map2, String map1name, String map2name) {
+    Set set1 = map1.keySet();
+    Set set2 = map2.keySet();
+    Assert.assertTrue("there is a key in " + map2name + " that's not in "
+        + map1name, set1.containsAll(set2));
+    Assert.assertTrue("there is a key in " + map1name + " that's not in "
+        + map2name, set2.containsAll(set1));
+
+    for (Iterator i = set1.iterator(); i.hasNext();) {
+      Object next = i.next();
+      Assert.assertEquals(map1.get(next), map2.get(next));
+    }
+  }
+
+  private void verifyInterfaces(String connectorName,
+      ConnectorInstantiator inst, Map expectedMap)
       throws ConnectorNotFoundException, InstantiatorException {
     Traverser traverser = inst.getTraverser(connectorName);
     Assert.assertNotNull(
@@ -85,9 +117,16 @@ public class SpringConnectorInstantiatorTest extends TestCase {
         inst.getAuthenticationManager(connectorName);
     Assert.assertNotNull("should get a non-null authenticationManager for "
         + connectorName, authenticationManager);
+
     AuthorizationManager authorizationManager =
         inst.getAuthorizationManager(connectorName);
     Assert.assertNotNull("should get a non-null authorizationManager for "
         + connectorName, authorizationManager);
+
+    Map configMap = inst.getConfigMap(connectorName);
+    Assert.assertNotNull(
+        "should get a non-null configMap for " + connectorName, configMap);
+
+    compareMaps(expectedMap, configMap, "expectedMap", "configMap");
   }
 }

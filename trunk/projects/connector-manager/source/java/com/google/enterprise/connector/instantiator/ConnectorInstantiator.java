@@ -55,6 +55,30 @@ public interface ConnectorInstantiator {
       throws ConnectorNotFoundException, InstantiatorException;
 
   /**
+   * gets a Config Map for a named connector.
+   * 
+   * @param connectorName the String name of the connector for which to get the
+   *        Config Map
+   * @return the Config Map, fully instantiated
+   * @throws ConnectorNotFoundException to indicate that no connector of the
+   *         specified name is found
+   * @throws InstantiatorException if something bad, probably unrecoverable,
+   *         happens
+   */
+  public Map getConfigMap(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException;
+
+  /**
+   * Gets the type for a named connector
+   * 
+   * @param connectorName
+   * @return the connector type name
+   * @throws ConnectorNotFoundException if the connector does not exist
+   */
+  public String getConnectorType(String connectorName)
+      throws ConnectorNotFoundException;
+
+  /**
    * Drops a named connector.
    * 
    * @param connectorName the String name of the connector to drop

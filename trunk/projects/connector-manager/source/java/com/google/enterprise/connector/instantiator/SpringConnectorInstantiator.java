@@ -138,39 +138,48 @@ public class SpringConnectorInstantiator implements ConnectorInstantiator {
         LOGGER.warning("Exception: " + e.getMessage());
       }
       if (connectorResource != null) {
-        Connector c =
+        ConnectorInterfaces connectorInterfaces =
             instantiateSingleConnectorFromResource(connectorName,
                 connectorResource);
-        ConnectorInterfaces connectorInterfaces =
-            new ConnectorInterfaces(connectorName, c, pusher,
-                connectorStateStore);
-        if (c != null) {
+        if (connectorInterfaces != null) {
           connectorMap.put(connectorName, connectorInterfaces);
         }
       }
     }
   }
 
-  private Connector instantiateSingleConnectorFromResource(
+  private ConnectorInterfaces instantiateSingleConnectorFromResource(
       String connectorName, String resource) {
     String fullResource = "file:" + resource;
     ApplicationContext ac = new ClassPathXmlApplicationContext(fullResource);
-    String[] beanList = ac.getBeanNamesForType(Connector.class);
+    Connector c =
+        (Connector) getConnectorBeanFromAppContext(connectorName, fullResource,
+            ac, Connector.class);
+    Map configMap = (Map) ac.getBean("ConnectorConfigMap", Map.class);
+    ConnectorInterfaces connectorInterfaces =
+        new ConnectorInterfaces(connectorName, c, pusher, connectorStateStore,
+            configMap);
+    return connectorInterfaces;
+  }
+
+  private Object getConnectorBeanFromAppContext(String name, String resource,
+      ApplicationContext ac, Class clazz) {
+    String[] beanList = ac.getBeanNamesForType(clazz);
     if (beanList.length < 1) {
-      LOGGER.warning("Spring finds no Connector definition for connector "
-          + connectorName + " in resource " + fullResource
-          + ".  Skipping this connector.");
+      LOGGER.warning("Spring finds no " + clazz.getName()
+          + " definition for " + name + " in resource "
+          + resource + ".  Skipping");
       return null;
     }
     if (beanList.length > 1) {
       // TODO(ziff): maybe print out all the named Connectors found
       LOGGER
-          .warning("Spring finds multiple Connector definitions for connector "
-              + connectorName + " in resource " + fullResource
+          .warning("Spring finds multiple " + clazz.getName() + " definitions for "
+              + name + " in resource " + resource
               + ".  Instantiating only the first one.");
     }
-    Connector c = (Connector) ac.getBean(beanList[0]);
-    return c;
+    Object bean = ac.getBean(beanList[0]);
+    return bean;
   }
 
   private ConnectorInterfaces findConnectorInterfaces(String connectorName)
@@ -229,9 +238,21 @@ public class SpringConnectorInstantiator implements ConnectorInstantiator {
    */
   public Traverser getTraverser(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
+    initialize();
     ConnectorInterfaces connectorInterfaces =
         findConnectorInterfaces(connectorName);
     Traverser result = connectorInterfaces.getTraverser();
+    if (result == null) {
+      throw new InstantiatorException();
+    }
+    return result;
+  }
+
+  public Map getConfigMap(String connectorName) throws ConnectorNotFoundException, InstantiatorException {
+    initialize();
+    ConnectorInterfaces connectorInterfaces =
+        findConnectorInterfaces(connectorName);
+    Map result = connectorInterfaces.getConfigMap();
     if (result == null) {
       throw new InstantiatorException();
     }
@@ -263,10 +284,9 @@ public class SpringConnectorInstantiator implements ConnectorInstantiator {
     } catch (PersistentStoreException e) {
       throw new InstantiatorException("Config store malfunction");
     }
-    Connector c =
-        instantiateSingleConnectorFromResource(connectorName, resourceString);
+
     ConnectorInterfaces connectorInterfaces =
-        new ConnectorInterfaces(connectorName, c, pusher, connectorStateStore);
+        instantiateSingleConnectorFromResource(connectorName, resourceString);
     connectorMap.put(connectorName, connectorInterfaces);
   }
 
@@ -279,6 +299,11 @@ public class SpringConnectorInstantiator implements ConnectorInstantiator {
     initialize();
     store.dropConnector(connectorName);
     connectorMap.remove(connectorName);
+  }
+
+  public String getConnectorType(String connectorName) throws ConnectorNotFoundException {
+    String connectorType = store.getConnectorType(connectorName);
+    return connectorType;
   }
 
 }

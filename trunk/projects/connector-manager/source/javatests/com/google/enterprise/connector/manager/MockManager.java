@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  */
 public class MockManager implements Manager {
   private static final MockManager INSTANCE = new MockManager();
-  private static final Logger LOG =
+  private static final Logger LOGGER =
       Logger.getLogger(MockManager.class.getName());
 
   private MockManager() {
@@ -91,7 +91,7 @@ public class MockManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#getConnectorTypes()
    */
   public List getConnectorTypes() {
-    return Arrays.asList(new String[]{"Documentum", "Sharepoint", "Filenet"});
+    return Arrays.asList(new String[] {"Documentum", "Sharepoint", "Filenet"});
   }
 
   public void storeConfig(boolean certAuth, String feederGateHost,
@@ -104,21 +104,19 @@ public class MockManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#getConfigForm(java.lang.String,
    *      java.lang.String)
    */
-  public ConfigureResponse getConfigForm(String connectorTypeName, String language)
-      throws ConnectorTypeNotFoundException {
-    String message = "Sample form for " + connectorTypeName + "lang " + language;
-    String formSnippet = 
-      "    <tr><td>Repository</td>" +
-      "      <td><input type=\"text\" name=\"repository\" value=\"\"></td>" +
-      "    </tr>" +
-      "    <tr><td>Username</td>" +
-      "      <td><input type=\"text\" name=\"username\" value=\"\">" +
-      "      </td></tr>" +
-      "    <tr><td>Password</td>" +
-      "      <td><input type=\"password\" name=\"passwd\" value=\"\">" +
-      "    </td></tr>" +
-      "    <tr><td>Seed URIs</td>" + 
-      "      <td><textarea name=\"seedUris\"></textarea></td></tr>";
+  public ConfigureResponse getConfigForm(String connectorTypeName,
+      String language) throws ConnectorTypeNotFoundException {
+    String message =
+        "Sample form for " + connectorTypeName + "lang " + language;
+    String formSnippet =
+        "    <tr><td>Repository</td>"
+            + "      <td><input type=\"text\" name=\"repository\" value=\"\"></td>"
+            + "    </tr>" + "    <tr><td>Username</td>"
+            + "      <td><input type=\"text\" name=\"username\" value=\"\">"
+            + "      </td></tr>" + "    <tr><td>Password</td>"
+            + "      <td><input type=\"password\" name=\"passwd\" value=\"\">"
+            + "    </td></tr>" + "    <tr><td>Seed URIs</td>"
+            + "      <td><textarea name=\"seedUris\"></textarea></td></tr>";
     return new ConfigureResponse(message, formSnippet);
   }
 
@@ -132,30 +130,15 @@ public class MockManager implements Manager {
       String language) throws ConnectorNotFoundException {
     String message = "Sample form for " + connectorName + "lang " + language;
     String formSnippet =
-        "<tr>\n"
-        + "<td>Username</td>\n"
-        + "<td>\n"
-        + "<input type=\"text\" name=\"Username\" />\n"
-        + "</td>\n"
-        + "</tr>\n"
-        + "<tr>\n"
-        + "<td>Password</td>\n"
-        + "<td>\n"
-        + "<input type=\"password\" name=\"Password\" />\n"
-        + "</td>\n"
-        + "</tr>\n"
-        + "<tr>\n"
-        + "<td>Color</td>\n"
-        + "<td>\n"
-        + "<input type=\"text\" name=\"Color\" />\n"
-        + "</td>\n"
-        + "</tr>\n"
-        + "<tr>\n"
-        + "<td>Repository File</td>\n"
-        + "<td>\n"
-        + "<input type=\"text\" name=\"Repository File\" />\n"
-        + "</td>\n"
-        + "</tr>\n";
+        "<tr>\n" + "<td>Username</td>\n" + "<td>\n"
+            + "<input type=\"text\" name=\"Username\" />\n" + "</td>\n"
+            + "</tr>\n" + "<tr>\n" + "<td>Password</td>\n" + "<td>\n"
+            + "<input type=\"password\" name=\"Password\" />\n" + "</td>\n"
+            + "</tr>\n" + "<tr>\n" + "<td>Color</td>\n" + "<td>\n"
+            + "<input type=\"text\" name=\"Color\" />\n" + "</td>\n"
+            + "</tr>\n" + "<tr>\n" + "<td>Repository File</td>\n" + "<td>\n"
+            + "<input type=\"text\" name=\"Repository File\" />\n" + "</td>\n"
+            + "</tr>\n";
     return new ConfigureResponse(message, formSnippet);
   }
 
@@ -202,15 +185,15 @@ public class MockManager implements Manager {
    *      java.util.Map, java.lang.String)
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      Map configData, String language) throws ConnectorNotFoundException,
-      PersistentStoreException {
-    LOG.info("setConnectorConfig() connectorName: " + connectorName);
-    LOG.info("configData: ");
+      String connectorTypeName, Map configData, String language)
+      throws ConnectorNotFoundException, PersistentStoreException {
+    LOGGER.info("setConnectorConfig() connectorName: " + connectorName);
+    LOGGER.info("configData: ");
     Set set = configData.entrySet();
     Iterator iterator = set.iterator();
     while (iterator.hasNext()) {
       Map.Entry entry = (Map.Entry) iterator.next();
-      LOG.info(entry.getKey() + "/" + entry.getValue());
+      LOGGER.info(entry.getKey() + "/" + entry.getValue());
     }
     // null is a success response
     return null;
@@ -228,9 +211,9 @@ public class MockManager implements Manager {
     // do nothing
   }
 
-public void setSchedule(String connectorName, int load, String timeIntervals) {
-  // TODO Auto-generated method stub
-  
-}
+  public void setSchedule(String connectorName, int load, String timeIntervals) {
+    // TODO Auto-generated method stub
+
+  }
 
 }

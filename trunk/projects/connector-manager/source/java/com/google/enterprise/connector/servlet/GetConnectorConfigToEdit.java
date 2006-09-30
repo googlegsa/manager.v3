@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
@@ -36,7 +37,7 @@ import javax.servlet.http.HttpServletResponse;
  * 
  */
 public class GetConnectorConfigToEdit extends HttpServlet {
-  private static final Logger LOG = Logger.getLogger(
+  private static final Logger LOGGER = Logger.getLogger(
     GetConnectorConfigToEdit.class.getName());
 
   /**
@@ -67,7 +68,11 @@ public class GetConnectorConfigToEdit extends HttpServlet {
       formSnippet = configResponse.getFormSnippet();
     } catch (ConnectorNotFoundException e) {
       status = e.toString();
-      LOG.info(status);
+      LOGGER.info(status);
+      e.printStackTrace();
+    } catch (InstantiatorException e) {
+      status = e.toString();
+      LOGGER.info(status);
       e.printStackTrace();
     }
     if (formSnippet == null) {

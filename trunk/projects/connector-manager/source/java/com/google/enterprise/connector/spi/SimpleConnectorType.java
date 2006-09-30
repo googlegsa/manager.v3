@@ -23,11 +23,27 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Simple implementation of the ConnectorType interface. Implementors may use this
- * directly or for reference. This implementation has no I18N - it just uses a
- * list of configuration keys for both validation and display.
+ * Simple implementation of the ConnectorType interface. Implementors may use
+ * this directly or for reference. This implementation has no I18N - it just
+ * uses a list of configuration keys for both validation and display.
  */
 public class SimpleConnectorType implements ConnectorType {
+
+  private static final String HIDDEN = "hidden";
+  private static final String STARS = "*****";
+  private static final String VALUE = "value";
+  private static final String NAME = "name";
+  private static final String TEXT = "text";
+  private static final String TYPE = "type";
+  private static final String INPUT = "input";
+  private static final String CLOSE_ELEMENT = "/>";
+  private static final String OPEN_ELEMENT = "<";
+  private static final String PASSWORD = "password";
+  private static final String TR_END = "</tr>\r\n";
+  private static final String TD_END = "</td>\r\n";
+  private static final String TD_START = "<td>";
+  private static final String TR_START = "<tr>\r\n";
+
 
   private List keys = null;
   private Set keySet = null;
@@ -48,7 +64,7 @@ public class SimpleConnectorType implements ConnectorType {
       throw new IllegalStateException();
     }
     this.keys = keys;
-    this.keySet = new HashSet(this.keys);
+    this.keySet = new HashSet(keys);
   }
 
   /**
@@ -81,90 +97,123 @@ public class SimpleConnectorType implements ConnectorType {
     if (keys == null) {
       throw new IllegalStateException();
     }
-    ConfigureResponse configureResponse = makeConfigForm(null, null);
-    this.initialConfigForm = configureResponse.getFormSnippet();
+    this.initialConfigForm = makeConfigForm(null);
     return initialConfigForm;
   }
 
-  /**
-   * Validates a config map to make sure that everything is there and returns a
-   * new form if there's something missing. In practice, this method does two
-   * things - so closely related that it is one method rather than two: if the
-   * configData parameter is null, it creates a default form based on the config
-   * keys in the list. If configData is not null, it creates a form just for the
-   * ones that are missing, and returns an appropriate message.
-   * 
-   * @param configData
-   * @param language
-   * @return a ConfigureResponse with a message, as appropiate, and the
-   *         constructed form. If configData was non-null and all items are
-   *         valid, then both message and form will be null.
-   */
-  private ConfigureResponse makeConfigForm(Map configData, String language) {
-    StringBuffer buf = new StringBuffer(2048);
-    boolean allOk = true;
+  private boolean validateConfigMap(Map configData) {
     for (Iterator i = keys.iterator(); i.hasNext();) {
       String key = (String) i.next();
-      buf.append("<tr>\r\n<td>");
-      buf.append(key);
-      buf.append("</td>\r\n<td>");
-      boolean isPassword = key.equalsIgnoreCase("password");
-      boolean shouldHide = false;
-      String val = "";
-      if (configData != null) {
-        val = (String) configData.get(key);
-        if (val != null && val.length() > 0) {
-          shouldHide = true;
-          if (isPassword) {
-            buf.append("******");
-          } else {
-            buf.append(val);
-          }
-        } else {
-          // remember that we found at least one item with no value in the map
-          allOk = false;
+      String val = (String) configData.get(key);
+      if (val == null || val.length() == 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private void appendAttribute(StringBuffer buf, String attrName,
+      String attrValue) {
+    buf.append(" ");
+    buf.append(attrName);
+    buf.append("=\"");
+    // TODO xml-encode the special characters (< > " etc.)
+    buf.append(attrValue);
+    buf.append("\"");
+  }
+
+  /**
+   * Make a config form snippet using the keys (in the supplied order) and, if
+   * passed a non-null config map, pre-filling values in from that map
+   * 
+   * @param configMap
+   * @return config form snippet
+   */
+  private String makeConfigForm(Map configMap) {
+    StringBuffer buf = new StringBuffer(2048);
+    for (Iterator i = keys.iterator(); i.hasNext();) {
+      String key = (String) i.next();
+      appendStartRow(buf, key);
+      buf.append(OPEN_ELEMENT);
+      buf.append(INPUT);
+      if (key.equalsIgnoreCase(PASSWORD)) {
+        appendAttribute(buf, TYPE, PASSWORD);
+      } else {
+        appendAttribute(buf, TYPE, TEXT);
+      }
+      appendAttribute(buf, NAME, key);
+      if (configMap != null) {
+        String value = (String) configMap.get(key);
+        if (value != null) {
+          appendAttribute(buf, VALUE, value);
         }
       }
-      buf.append("<input type=\"");
-      if (shouldHide) {
-        buf.append("hidden\" value=\"");
-        buf.append(val);
-      } else if (key.equalsIgnoreCase("password")) {
-        buf.append("password");
-      } else {
-        buf.append("text");
-      }
-      buf.append("\" name=\"");
-      buf.append(key);
-      buf.append("\"/></td>\r\n</tr>\r\n");
+      appendEndRow(buf);
     }
+    return buf.toString();
+  }
+
+  private String makeValidatedForm(Map configMap) {
+    StringBuffer buf = new StringBuffer(2048);
+    for (Iterator i = keys.iterator(); i.hasNext();) {
+      String key = (String) i.next();
+      appendStartRow(buf, key);
+
+      String value = (String) configMap.get(key);
+      if (value == null) {
+        buf.append(OPEN_ELEMENT);
+        buf.append(INPUT);
+        if (key.equalsIgnoreCase(PASSWORD)) {
+          appendAttribute(buf, TYPE, PASSWORD);
+        } else {
+          appendAttribute(buf, TYPE, TEXT);
+        }
+      } else {
+        if (key.equalsIgnoreCase(PASSWORD)) {
+          buf.append(STARS);
+        } else {
+          buf.append(value);
+        }
+        buf.append(OPEN_ELEMENT);
+        buf.append(INPUT);
+        appendAttribute(buf, TYPE, HIDDEN);
+        appendAttribute(buf, VALUE, value);
+      }
+      appendAttribute(buf, NAME, key);
+      appendEndRow(buf);
+    }
+    
     // toss in all the stuff that's in the map but isn't in the keyset
     // taking care to list them in alphabetic order (this is mainly for
     // testability).
-    if (configData != null) {
-      Iterator i = new TreeSet(configData.keySet()).iterator();
-      while (i.hasNext()) {
-        String key = (String) i.next();
-        if (!keySet.contains(key)) {
-          // add another hidden field to preserve this data
-          String val = (String) configData.get(key);
-          buf.append("<input type=\"hidden\" value=\"");
-          buf.append(val);
-          buf.append("\" name=\"");
-          buf.append(key);
-          buf.append("\"/>\r\n");
-        }
+    Iterator i = new TreeSet(configMap.keySet()).iterator();
+    while (i.hasNext()) {
+      String key = (String) i.next();
+      if (!keySet.contains(key)) {
+        // add another hidden field to preserve this data
+        String val = (String) configMap.get(key);
+        buf.append("<input type=\"hidden\" value=\"");
+        buf.append(val);
+        buf.append("\" name=\"");
+        buf.append(key);
+        buf.append("\"/>\r\n");
       }
     }
-    if (configData != null) {
-      if (!allOk) {
-        return new ConfigureResponse(
-            "Some configuration keys are missing values", new String(buf));
-      } else {
-        return new ConfigureResponse(null, null);
-      }
-    }
-    return new ConfigureResponse(null, new String(buf));
+    return buf.toString();
+  }
+
+  private void appendStartRow(StringBuffer buf, String key) {
+    buf.append(TR_START);
+    buf.append(TD_START);
+    buf.append(key);
+    buf.append(TD_END);
+    buf.append(TD_START);
+  }
+
+  private void appendEndRow(StringBuffer buf) {
+    buf.append(CLOSE_ELEMENT);
+    buf.append(TD_END);
+    buf.append(TR_END);
   }
 
   /**
@@ -198,16 +247,24 @@ public class SimpleConnectorType implements ConnectorType {
    *      java.lang.String)
    */
   public ConfigureResponse validateConfig(Map configData, String language) {
-    ConfigureResponse result = makeConfigForm(configData, language);
-    String message = result.getMessage();
-    if (message != null && message.length() > 0) {
-      return result;
+    if (validateConfigMap(configData)) {
+      // all is ok
+      return new ConfigureResponse(null, null);
     }
-    ConnectorType embeddedConfigurer = getEmbeddedConfigurer(configData, language);
-    if (embeddedConfigurer == null) {
-      return result;
-    }
-    return embeddedConfigurer.validateConfig(configData, language);
+    String form = makeValidatedForm(configData);
+    return new ConfigureResponse("Some required configuration is missing", form);
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.google.enterprise.connector.spi.Configurer
+   *      #getPopulatedConfigForm(java.util.Map,java.lang.String)
+   */
+  public ConfigureResponse getPopulatedConfigForm(Map configMap, String language) {
+    ConfigureResponse result =
+        new ConfigureResponse("", makeConfigForm(configMap));
+    return result;
   }
 
 }

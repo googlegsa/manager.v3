@@ -303,7 +303,7 @@ public class ServletUtil {
    * @param out where PrintWriter to be written to
    * @param indentLevel the depth of indentation.
    * @param elemName element name
-   * @param elemValue element value
+   * @param attributes attributes
    */
   public static void writeXMLElementWithAttrs(PrintWriter out, int indentLevel,
                                      String elemName, String attributes) {

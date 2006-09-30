@@ -26,6 +26,8 @@ import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.Traverser;
 
+import java.util.Map;
+
 /**
  * 
  */
@@ -35,6 +37,7 @@ public class ConnectorInterfaces {
   final Connector connector;
   final Pusher pusher;
   final ConnectorStateStore connectorStateStore;
+  final Map configMap;
 
   // these are lazily constructed
   Traverser traverser = null;
@@ -50,13 +53,15 @@ public class ConnectorInterfaces {
    * @param connector
    * @param pusher
    * @param connectorStateStore
+   * @param configMap the configuration map
    */
   ConnectorInterfaces(String connectorName, Connector connector, Pusher pusher,
-      ConnectorStateStore connectorStateStore) {
+      ConnectorStateStore connectorStateStore, Map configMap) {
     this.connectorName = connectorName;
     this.connector = connector;
     this.pusher = pusher;
     this.connectorStateStore = connectorStateStore;
+    this.configMap = configMap;
   }
 
   /**
@@ -75,6 +80,7 @@ public class ConnectorInterfaces {
     this.traverser = traverser;
     this.authenticationManager = authenticationManager;
     this.authorizationManager = authorizationManager;
+    this.configMap = null;
   }
 
   /**
@@ -109,6 +115,10 @@ public class ConnectorInterfaces {
       }
     }
     return authorizationManager;
+  }
+
+  public Map getConfigMap() {
+    return configMap;
   }
 
   /**
