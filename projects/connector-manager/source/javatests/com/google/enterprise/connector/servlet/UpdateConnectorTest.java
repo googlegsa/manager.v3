@@ -31,7 +31,7 @@ public class UpdateConnectorTest extends TestCase {
   /**
    * Test method for {@link com.google.enterprise.connector.servlet.
    * UpdateConnector#handleDoGet(com.google.enterprise.connector.manager.Manager,
-   *  java.lang.String, java.lang.String)}.
+   *  java.lang.String, java.lang.String, java.lang.String)}.
    */
   public void testHandleDoGet() {
     String connectorName = "cname1";

@@ -18,6 +18,7 @@ import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
+import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.traversal.Traverser;
 
@@ -83,7 +84,7 @@ public class SpringInstantiator implements Instantiator {
       String connectorTypeName, Map configKeys)
       throws ConnectorNotFoundException, ConnectorTypeNotFoundException,
       InstantiatorException {
-    // get the protype string - this also validates by throwing a
+    // get the prototype string - this also validates by throwing a
     // ConnectorTypeNotFoundException if the connectorTypeName doesn't exist
     String prototypeString = getConnectorInstancePrototype(connectorTypeName);
     // then dispatch to the connector instantiator
@@ -107,6 +108,21 @@ public class SpringInstantiator implements Instantiator {
   public AuthorizationManager getAuthorizationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
     return connectorInstantiator.getAuthorizationManager(connectorName);
+  }
+
+  public ConfigureResponse getConfigFormForConnector(String connectorName,
+      String connectorTypeName, String language)
+      throws ConnectorNotFoundException, InstantiatorException {
+    ConnectorType connectorType;
+    try {
+      connectorType =
+          connectorTypeInstantiator.getConnectorType(connectorTypeName);
+    } catch (ConnectorTypeNotFoundException e) {
+      throw new IllegalStateException(e.getMessage());
+    }
+    Map configMap = connectorInstantiator.getConfigMap(connectorName);
+    ConfigureResponse configureResponse = connectorType.getPopulatedConfigForm(configMap, language);
+    return configureResponse;
   }
 
 }

@@ -75,7 +75,7 @@ public class SetConnectorConfigHandler {
     this.configRes = null;
     try {
     	this.configRes = manager.setConnectorConfig(
- 		this.connectorName, this.configData, language);
+ 		this.connectorName, this.connectorType, this.configData, language);
     } catch (ConnectorNotFoundException e) {
         LOG.info("ConnectorNotFoundException");
         status = e.toString();

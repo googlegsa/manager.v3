@@ -34,6 +34,19 @@ public interface ConnectorType {
   public ConfigureResponse getConfigForm(String language);
 
   /**
+   * Get populated configuration form snippet.
+   * 
+   * @param configMap A map of name, value pairs (String, String) of
+   *        configuration data
+   * @param language A locale string, such as "en" or "fr_CA" which the
+   *        implementation may use to produce appropriate descriptions and
+   *        messages
+   * @return a ConfigureResponse object. The form must be prepopulated with the
+   *         supplied data in the map.
+   */
+  public ConfigureResponse getPopulatedConfigForm(Map configMap, String language);
+
+  /**
    * Validates config data and returns a new form snippet and error message if
    * needed.
    * 

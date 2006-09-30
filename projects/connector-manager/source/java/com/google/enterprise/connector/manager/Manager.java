@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.manager;
 
+import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
@@ -40,8 +41,9 @@ public interface Manager {
    * @throws PersistentStoreException If there was a problem storing the
    *         configuration
    */
-  public void setConnectorManagerConfig(boolean certAuth, String feederGateHost,
-      int feederGatePort, int maxFeedRate) throws PersistentStoreException;
+  public void setConnectorManagerConfig(boolean certAuth,
+      String feederGateHost, int feederGatePort, int maxFeedRate)
+      throws PersistentStoreException;
 
   /**
    * Returns a list of connector types that this manager knows about.
@@ -81,8 +83,8 @@ public interface Manager {
    * @throws ConnectorTypeNotFoundException If the named connector type is not
    *         known to this manager.
    */
-  public ConfigureResponse getConfigForm(String connectorTypeName, String language)
-      throws ConnectorTypeNotFoundException;
+  public ConfigureResponse getConfigForm(String connectorTypeName,
+      String language) throws ConnectorTypeNotFoundException;
 
   /**
    * Get configuration data as a form snippet for an existing connnector. This
@@ -99,15 +101,17 @@ public interface Manager {
    *         a default form.
    * @throws ConnectorNotFoundException If the named connector is not known to
    *         this manager.
+   * @throws InstantiatorException
    */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
-      String language) throws ConnectorNotFoundException;
+      String language) throws ConnectorNotFoundException, InstantiatorException;
 
   /**
    * Set config data for a new Connector or update config data for a running
    * Connector instance
    * 
    * @param connectorName The connector to update
+   * @param connectorTypeName The connector's type
    * @param configData A map of name, value pairs (String, String) of
    *        configuration data to submit
    * @param language A locale string, such as "en" or "fr_CA" which the
@@ -122,9 +126,9 @@ public interface Manager {
    * @throws PersistentStoreException If there was a problem storing the
    *         configuration
    */
-  public ConfigureResponse setConnectorConfig(String connectorName, 
-      Map configData, String language) throws ConnectorNotFoundException,
-      PersistentStoreException;
+  public ConfigureResponse setConnectorConfig(String connectorName,
+      String connectorTypeName, Map configData, String language)
+      throws ConnectorNotFoundException, PersistentStoreException;
 
   /**
    * Authenticates a user against a named connector.
