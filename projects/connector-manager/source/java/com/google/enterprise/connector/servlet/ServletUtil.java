@@ -278,6 +278,7 @@ public class ServletUtil {
           out, 2, ServletUtil.XMLTAG_MESSAGE, configRes.getMessage());
       writeXMLElement(
           out, 2, ServletUtil.XMLTAG_FORM_SNIPPET, configRes.getFormSnippet());
+      writeXMLTag(out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, true);
     }
     writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
   }

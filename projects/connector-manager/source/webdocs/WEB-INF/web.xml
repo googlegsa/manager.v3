@@ -103,6 +103,10 @@
         <servlet-class>com.google.enterprise.connector.servlet.StartUp</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
+    <servlet>
+        <servlet-name>GetConnectorConfigToEdit</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.GetConnectorConfigToEdit</servlet-class>
+    </servlet>
  
     <servlet-mapping>
         <servlet-name>SetManagerConfig</servlet-name>
@@ -177,5 +181,9 @@
     <servlet-mapping>
         <servlet-name>StartUp</servlet-name>
 	<url-pattern>/startUp</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetConnectorConfigToEdit</servlet-name>
+	<url-pattern>/getConnectorConfigToEdit</url-pattern>
     </servlet-mapping>
 </web-app>
