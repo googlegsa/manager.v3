@@ -18,6 +18,9 @@ package com.google.enterprise.connector.servlet;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
+import com.google.enterprise.connector.spi.ConfigureResponse;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -50,7 +53,34 @@ public class SetConnectorConfig extends HttpServlet {
   protected void doGet(HttpServletRequest req,
                        HttpServletResponse res)
       throws ServletException, IOException {
-    doPost(req, res);
+    String status = ServletUtil.XML_RESPONSE_SUCCESS;
+    String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
+    String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
+    PrintWriter out = res.getWriter();
+    res.setContentType(ServletUtil.MIMETYPE_XML);
+
+    ServletContext servletContext = this.getServletContext();
+    Manager manager = Context.getInstance(servletContext).getManager();
+    String formSnippet = null;
+    ConfigureResponse configResponse = null;
+    try {
+      configResponse = manager.getConfigForm(connectorType, language);
+      if (configResponse != null) {
+        formSnippet = configResponse.getFormSnippet();
+      }
+    } catch (ConnectorTypeNotFoundException e) {
+      status = e.toString();
+      ServletUtil.writeSimpleResponse(out, status);
+      LOG.info(status);
+      e.printStackTrace();
+    }
+
+    if (formSnippet == null) {
+      formSnippet = ServletUtil.DEFAULT_FORM;
+    }
+
+    GetConfigForm.handleDoGet(out, configResponse);
+    out.close();
   }
 
   /**
@@ -65,7 +95,9 @@ public class SetConnectorConfig extends HttpServlet {
                         HttpServletResponse res)
       throws ServletException, IOException {
     String status = ServletUtil.XML_RESPONSE_SUCCESS;
-    String lang = req.getParameter("lang");
+    // The GoogleHttpClient does not allow it. 
+    // req.getParameter("lang"); would fail with empty xmlBody.
+    String lang = "en";
     BufferedReader reader = req.getReader();
     PrintWriter out = res.getWriter();
     res.setContentType(ServletUtil.MIMETYPE_XML);
