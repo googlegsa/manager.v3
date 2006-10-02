@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.common.Base64Encoder;
+import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.PropertyMap;
@@ -25,6 +26,7 @@ import com.google.enterprise.connector.spi.Value;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -155,7 +157,7 @@ public class DocPusher implements Pusher {
     buf.append(">\n");
     return buf.toString();
   }
-
+  
   /*
    * Generate the record tag for the xml data.
    */
@@ -300,6 +302,20 @@ public class DocPusher implements Pusher {
     result = v.getString();
     return result;
   }
+  
+  /*
+   * Gets the InputStream value for a given property.
+   */
+  private InputStream getStreamAndThrow(PropertyMap pm, String name) 
+    throws RepositoryException {
+    InputStream result = null;
+    Value v = getValueAndThrow(pm, name);
+    if (v == null) {
+      return null;
+    }
+    result = v.getStream();
+    return result;
+  }
 
   private Value getValueAndThrow(PropertyMap pm, String name)
       throws RepositoryException {
@@ -352,6 +368,25 @@ public class DocPusher implements Pusher {
   }
 
   /*
+   * Gets the value for a given property.
+   */
+  private InputStream getOptionalStream(PropertyMap pm, String name) {
+    InputStream result = null;
+    try {
+      result = getStreamAndThrow(pm, name);
+    } catch (IllegalArgumentException e) {
+      LOGGER.logp(Level.WARNING, this.getClass().getName(),
+          "getOptionalStream", "Swallowing exception while accessing " + name,
+          e);
+    } catch (RepositoryException e) {
+      LOGGER.logp(Level.WARNING, this.getClass().getName(),
+          "getOptionalStream", "Swallowing exception while accessing " + name,
+          e);
+    }
+    return result;
+  }
+  
+  /*
    * Builds the xml string for a given property map.
    */
   protected String buildXmlData(PropertyMap pm, String connectorName) {
@@ -384,11 +419,12 @@ public class DocPusher implements Pusher {
 
     String contentUrl = getOptionalString(pm, SpiConstants.PROPNAME_CONTENTURL);
 
-    String content = getOptionalString(pm, SpiConstants.PROPNAME_CONTENT);
-    if (content == null) {
-      content = "";
-    }
+    InputStream contentStream = 
+      getOptionalStream(pm, SpiConstants.PROPNAME_CONTENT);
+    String content;
+    
     try {
+      content = StringUtils.streamToString(contentStream);
       content = base64Encode(content);
     } catch (IOException e) {
       LOGGER.logp(Level.WARNING, this.getClass().getName(), "buildXmlData",
