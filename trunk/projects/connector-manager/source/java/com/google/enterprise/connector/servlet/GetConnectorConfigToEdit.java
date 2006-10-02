@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletResponse;
  * 
  */
 public class GetConnectorConfigToEdit extends HttpServlet {
-  private static final Logger LOGGER = Logger.getLogger(
+  private static final Logger LOG = Logger.getLogger(
     GetConnectorConfigToEdit.class.getName());
 
   /**
@@ -51,7 +51,6 @@ public class GetConnectorConfigToEdit extends HttpServlet {
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
-    String status = ServletUtil.XML_RESPONSE_SUCCESS;
     String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
 
@@ -60,28 +59,32 @@ public class GetConnectorConfigToEdit extends HttpServlet {
 
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
-    String formSnippet = null;
+    handleDoGet(out, manager, connectorName, language);
+    out.close();
+  }
+
+  public static void handleDoGet(PrintWriter out, Manager manager,
+      String connectorName, String language) {
+    String status = ServletUtil.XML_RESPONSE_SUCCESS;
     ConfigureResponse configResponse = null;
     try {
       configResponse =
           manager.getConfigFormForConnector(connectorName, language);
-      formSnippet = configResponse.getFormSnippet();
     } catch (ConnectorNotFoundException e) {
       status = e.toString();
-      LOGGER.info(status);
+      LOG.info(status);
       e.printStackTrace();
     } catch (InstantiatorException e) {
       status = e.toString();
-      LOGGER.info(status);
+      LOG.info(status);
       e.printStackTrace();
     }
-    if (formSnippet == null) {
-      formSnippet = ServletUtil.DEFAULT_FORM;
-      configResponse = new ConfigureResponse(configResponse.getMessage(),
-          formSnippet);
-    }
 
+    if (configResponse == null || configResponse.getFormSnippet().length() < 1) {
+      ServletUtil.writeSimpleResponse(
+          out, ServletUtil.XML_RESPONSE_STATUS_NULL_FORM_SNIPPET);
+      return;
+    }
     ServletUtil.writeConfigureResponse(out, status, configResponse);
-    out.close();
   }
 }

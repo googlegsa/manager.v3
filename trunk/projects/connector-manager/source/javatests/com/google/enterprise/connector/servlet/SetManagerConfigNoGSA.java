@@ -58,8 +58,6 @@ public class SetManagerConfigNoGSA extends HttpServlet {
     out.println("<tr><td>GSA Port</td> <td><INPUT TYPE=\"TEXT\" "
         + "NAME=\"" + ServletUtil.XMLTAG_FEEDERGATE_PORT
         + "\"></td></tr><tr>");
-    out.println("<tr><td>Max Feed Rate</td> <td><INPUT TYPE=\"TEXT\" "
-        + "NAME=\"" + ServletUtil.XMLTAG_MAX_FEED_RATE + "\"></td></tr><tr>");
     out.println("<tr><td><INPUT TYPE=\"SUBMIT\" "
         + "NAME=\"action\" VALUE=\"submit\"></td></tr>");
     out.println("</TABLE></FORM></BODY></HTML>");
@@ -87,9 +85,6 @@ public class SetManagerConfigNoGSA extends HttpServlet {
         + req.getParameter(ServletUtil.XMLTAG_FEEDERGATE_HOST) + "\" "
         + ServletUtil.XMLTAG_FEEDERGATE_PORT + "=\""
         + req.getParameter(ServletUtil.XMLTAG_FEEDERGATE_PORT) + "\"/>");
-    writer.write("  <" + ServletUtil.XMLTAG_MAX_FEED_RATE + ">"
-        + req.getParameter(ServletUtil.XMLTAG_MAX_FEED_RATE)
-        + "</" + ServletUtil.XMLTAG_MAX_FEED_RATE + ">");
     writer.write("</" + ServletUtil.XMLTAG_MANAGER_CONFIG + ">");
     writer.close();
 

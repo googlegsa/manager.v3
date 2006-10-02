@@ -55,8 +55,6 @@ public class SetManagerConfigHandler {
         ServletUtil.XMLTAG_CERT_AUTHN).equalsIgnoreCase("true")) {
       this.certAuth = true;
     }
-    this.maxFeedRate = Integer.parseInt(ServletUtil.getFirstElementByTagName(
-        (Element) nodeList.item(0), ServletUtil.XMLTAG_MAX_FEED_RATE));
     this.feederGateHost = ServletUtil.getFirstAttribute(
         (Element) nodeList.item(0), ServletUtil.XMLTAG_FEEDERGATE,
          ServletUtil.XMLTAG_FEEDERGATE_HOST);

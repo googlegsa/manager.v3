@@ -39,7 +39,6 @@ public class GetConfigFormTest extends TestCase {
     String expectedResult =
       "<CmResponse>\n" +
       "  <StatusId>0</StatusId>\n" +
-      "  <ConfigureResponse>null</ConfigureResponse>\n" +
       "</CmResponse>\n";
     ConfigureResponse configResponse = null;
     doTest(configResponse, expectedResult);
@@ -54,7 +53,6 @@ public class GetConfigFormTest extends TestCase {
       "  <StatusId>0</StatusId>\n" +
       "  <ConfigureResponse>\n" +
       "    <message>null</message>\n" +
-      "    <FormSnippet>null</FormSnippet>\n" +
       "  </ConfigureResponse>\n" +
       "</CmResponse>\n";
     String message = null;
@@ -85,17 +83,19 @@ public class GetConfigFormTest extends TestCase {
       "  <StatusId>0</StatusId>\n" +
       "  <ConfigureResponse>\n" +
       "    <message>" + message + "</message>\n" +
-      "    <FormSnippet>" + formSnippet + "</FormSnippet>\n" +
+      "    <FormSnippet><![CDATA[" + formSnippet + "]]></FormSnippet>\n" +
       "  </ConfigureResponse>\n" +
       "</CmResponse>\n";      
-    ConfigureResponse configResponse = new ConfigureResponse(message, formSnippet);
+    ConfigureResponse configResponse =
+        new ConfigureResponse(message, formSnippet);
     doTest(configResponse, expectedResult);
   }
 
   private void doTest(ConfigureResponse configResponse, String expectedResult) {
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
-    GetConfigForm.handleDoGet(out, configResponse);
+    GetConfigForm.handleDoGet(
+        out, ServletUtil.XML_RESPONSE_SUCCESS, configResponse);
     out.flush();
     StringBuffer result = writer.getBuffer();
     logger.info(result.toString());

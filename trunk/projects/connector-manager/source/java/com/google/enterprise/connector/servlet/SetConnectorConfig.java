@@ -78,7 +78,7 @@ public class SetConnectorConfig extends HttpServlet {
       formSnippet = ServletUtil.DEFAULT_FORM;
     }
 
-    GetConfigForm.handleDoGet(out, configResponse);
+    GetConfigForm.handleDoGet(out, status, configResponse);
     out.close();
   }
 
