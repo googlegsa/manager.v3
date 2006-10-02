@@ -115,6 +115,37 @@ public class DocPusherTest extends TestCase {
     
   }
 
+  /**
+   * Tests DocPusher.
+   * 
+   * @throws RepositoryException
+   */
+  public void testWordDoc() throws RepositoryException {
+    String json1 =
+      "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+      + ",\"google:mimetype\":\"application/msword\""
+      + ",\"contentfile\":\"testdata/mocktestdata/test.doc\"" 
+      + ",\"author\":\"ziff\""
+      + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
+      + "}\r\n" + "";
+    PropertyMap propertyMap =
+        SpiPropertyMapFromJcrTest.makePropertyMapFromJson(json1);
+
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(DATASOURCE, mockFeedConnection);
+    dpusher.take(propertyMap, "junit");
+    String resultXML = mockFeedConnection.getFeed();
+    String gsResponse = dpusher.getGsaResponse();
+
+    assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
+        resultXML);
+    assertStringContains("<meta name=\"author\" content=\"ziff\"/>",
+        resultXML);
+    assertStringContains("url=\"googleconnector://junit.localhost?docid=doc1\"",
+        resultXML);
+    
+  }
+
   public static void assertStringContains(String expected, String actual) {
     Assert.assertTrue("Expected:\n" + expected + "\nDid not appear in\n"
         + actual, actual.indexOf(expected) > 0);

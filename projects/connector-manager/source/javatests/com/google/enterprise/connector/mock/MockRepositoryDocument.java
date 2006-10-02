@@ -14,8 +14,18 @@
 
 package com.google.enterprise.connector.mock;
 
+import com.google.enterprise.connector.common.StringUtils;
+import com.google.enterprise.connector.pusher.DocPusher;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 
 /**
  * Mock document object for unit tests.
@@ -28,12 +38,56 @@ import org.json.JSONObject;
  */
 public class MockRepositoryDocument {
   private MockRepositoryDateTime timeStamp;
+  /*
+   * The Repository document can handle both returning either a String or an
+   * InputStream.  Callers can call either and will realize the String or 
+   * InputStream on demand.
+   */
   private String content;
+  private String contentFile;
+  private InputStream inputStream;
   private String docid;
   private MockRepositoryPropertyList proplist;
 
+  /**
+   * Get the content as a String.  The getContentStream() method should be used
+   * in favor of this method.
+   * @return
+   */
   public String getContent() {
+    if (null == content || 0 == content.length()) {
+      try {
+        InputStream is = getContentStream();
+        if (null != is) {
+          content = StringUtils.streamToString(is);
+        }
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+    }
     return content;
+  }
+  
+  public InputStream getContentStream() throws FileNotFoundException {
+    if (null == inputStream) {
+      if (null == contentFile || 0 == contentFile.length()) {
+        try {
+          if (null == content) {
+            return null;
+          }
+          inputStream = 
+            new ByteArrayInputStream(
+              content.getBytes(DocPusher.XML_DEFAULT_ENCODING));
+        } catch (UnsupportedEncodingException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+      } else {
+        inputStream = new FileInputStream(contentFile);
+      }
+    }
+    return inputStream;
   }
 
   public String getDocID() {
@@ -73,6 +127,12 @@ public class MockRepositoryDocument {
     jo.remove("docid");
     this.content = jo.optString("content");
     jo.remove("content");
+    this.contentFile = jo.optString("contentfile");
+    jo.remove("contentfile");
+    if (0 != this.content.length() && 0 != this.contentFile.length()) {
+      throw new IllegalArgumentException("Only one of content or contentfile " +
+            "should be set.");
+    }
     this.proplist = new MockRepositoryPropertyList(jo);
   }
 }

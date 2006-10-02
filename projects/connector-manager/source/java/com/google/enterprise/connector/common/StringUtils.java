@@ -87,7 +87,8 @@ public class StringUtils {
    * @return contents as a String
    */
   public static String streamToString(InputStream is) {
-    byte[] bytes = new byte[32768];
+    int bytesLen = 32768;
+    byte[] bytes = new byte[bytesLen];
     
     // Read in the bytes
     int offset = 0;
@@ -95,7 +96,15 @@ public class StringUtils {
     try {
       while (offset < bytes.length
              && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
-          offset += numRead;
+        offset += numRead;
+        // if we have reach the limit, we want to increase the size to get the
+        // entire String
+        if (bytes.length == offset) {
+          byte[] temp = bytes;
+          bytesLen *= 2;
+          bytes = new byte[bytesLen];
+          System.arraycopy(temp, 0, bytes, 0, temp.length);
+        }
       }
       is.close();
     } catch (IOException e) {
