@@ -96,7 +96,7 @@ public class SetConnectorConfig extends HttpServlet {
     String status = ServletUtil.XML_RESPONSE_SUCCESS;
     // The GoogleHttpClient does not allow it. 
     // req.getParameter("lang"); would fail with empty xmlBody.
-    String lang = "en";
+    // We decided to have <lang> inside of post xmlBody.
     BufferedReader reader = req.getReader();
     PrintWriter out = res.getWriter();
     res.setContentType(ServletUtil.MIMETYPE_XML);
@@ -111,7 +111,7 @@ public class SetConnectorConfig extends HttpServlet {
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
     SetConnectorConfigHandler handler =
-        new SetConnectorConfigHandler(manager, lang, xmlBody);
+        new SetConnectorConfigHandler(manager, xmlBody);
     ServletUtil.writeConfigureResponse(
         out, handler.getStatus(), handler.getConfigRes());
     out.close();

@@ -73,10 +73,11 @@ public class SetConnectorConfigHandlerTest extends TestCase {
     LOG.info("xmlBody: " + xmlBody);
     Manager manager = MockManager.getInstance();
     SetConnectorConfigHandler hdl = new SetConnectorConfigHandler(
-        manager, this.language, xmlBody);
+        manager, xmlBody);
     LOG.info("ConnectorName: " + hdl.getConnectorName() + " this: " + this.connectorName);
     LOG.info("ConnectorType: " + hdl.getConnectorType() + " this: " + this.connectorType);
     if (hdl.getStatus().equals(ServletUtil.XML_RESPONSE_SUCCESS)) {
+      Assert.assertEquals(hdl.getLanguage(), this.language);
       Assert.assertEquals(hdl.getConnectorName(), this.connectorName);
       Assert.assertEquals(hdl.getConnectorType(), this.connectorType);
       Assert.assertEquals(hdl.getConfigData(), this.configData);
@@ -93,6 +94,7 @@ public class SetConnectorConfigHandlerTest extends TestCase {
   public String setXMLBody() {
     String body = 
       "<" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">\n" +
+      "  <" + ServletUtil.QUERY_PARAM_LANG + ">" + this.language + "</" + ServletUtil.QUERY_PARAM_LANG + ">\n" +
       "  <" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">" + this.connectorName + "</" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">\n" +
       "  <" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">" + this.connectorType + "</" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">\n";
     Set set = configData.entrySet();

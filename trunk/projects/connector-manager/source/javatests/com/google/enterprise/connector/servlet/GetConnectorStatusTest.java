@@ -23,7 +23,8 @@ import java.io.StringWriter;
 import java.util.logging.Logger;
 
 import com.google.enterprise.connector.common.StringUtils;
-import com.google.enterprise.connector.manager.ConnectorStatus;
+import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.manager.MockManager;
 
 
 /**
@@ -42,47 +43,32 @@ public class GetConnectorStatusTest extends TestCase {
    * @throws IOException 
    * 
    */
-  public void testHandleDoGet() throws IOException {
-    ConnectorStatus connectorStatus = null;
-    String expectedResult =
-        "<CmResponse>\n" +
-        "  <StatusId>0</StatusId>\n" +
-        "  <ConnectorStatus>null</ConnectorStatus>\n" +
-        "</CmResponse>\n";
-    doTest(connectorStatus, expectedResult);
-  }
-
   public void testHandleDoGet2() throws IOException {
     String name = null;
-    String type = "Documentum";
     int status = 0;
-    doTestStatus(name, type, status);
+    doTestStatus(name, status);
   }
 
   public void testHandleDoGet3() throws IOException {
     String name = "connectorName";
-    String type = null;
     int status = 0;
-    doTestStatus(name, type, status);
+    doTestStatus(name, status);
   }
 
   public void testHandleDoGet4() throws IOException {
     String name = "";
-    String type = "Documentum";
     int status = 0;
-    doTestStatus(name, type, status);
+    doTestStatus(name, status);
   }
  
   public void testHandleDoGet5() throws IOException {
     String name = "connectorName";
-    String type = "Documentum";
     int status = 0;
-    doTestStatus(name, type, status);
+    doTestStatus(name, status);
   }
 
-  private void doTestStatus(String name, String type, int status) throws IOException {
-    ConnectorStatus connectorStatus =
-        new ConnectorStatus(name, type, status);
+  private void doTestStatus(String name, int status) throws IOException {
+    String type = "Documentum";
     String expectedResult =
         "<CmResponse>\n" +
         "  <StatusId>0</StatusId>\n" +
@@ -92,20 +78,22 @@ public class GetConnectorStatusTest extends TestCase {
         "    <Status>" +  Integer.toString(status) +  "</Status>\n" +
         "  </ConnectorStatus>\n" +
         "</CmResponse>\n";
-    doTest(connectorStatus, expectedResult);
+    doTest(name, expectedResult);
   }
 
-  private void doTest(ConnectorStatus connectorStatus,
+  private void doTest(String connectorName,
                       String expectedResult)
       throws IOException {
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
-    GetConnectorStatus.handleDoGet(out, connectorStatus);
+    Manager manager = MockManager.getInstance();
+    GetConnectorStatus.handleDoGet(out, manager, connectorName);
     out.flush();
     StringBuffer result = writer.getBuffer();
     LOG.info(result.toString());
     LOG.info(expectedResult);
     Assert.assertEquals (StringUtils.normalizeNewlines(expectedResult), 
         StringUtils.normalizeNewlines(result.toString()));
+    out.close();
   }
 }

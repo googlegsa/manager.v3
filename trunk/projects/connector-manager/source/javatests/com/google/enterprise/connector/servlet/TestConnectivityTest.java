@@ -41,6 +41,7 @@ public class TestConnectivityTest extends TestCase {
     StringBuffer result = writer.getBuffer();
     Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult), 
         StringUtils.normalizeNewlines(result.toString()));
+    out.close();
   }
 
 }

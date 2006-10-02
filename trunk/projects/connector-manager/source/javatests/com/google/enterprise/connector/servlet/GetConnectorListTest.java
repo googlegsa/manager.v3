@@ -45,10 +45,10 @@ public class GetConnectorListTest extends TestCase {
   public void testHandleDoGet1() throws IOException {
     List connectorTypes = null;
     String expectedResult = 
-        "<CmResponse>\n" +
-        "  <StatusId>0</StatusId>\n" +
-        "  <ConnectorTypes>null</ConnectorTypes>\n" +
-        "</CmResponse>\n";
+        "<CmResponse>\n"
+        + "  <StatusId>" + ServletUtil.XML_RESPONSE_STATUS_NULL_CONNECTOR_TYPE
+        + "</StatusId>\n"
+        + "</CmResponse>\n";
     doTest(connectorTypes, expectedResult);
   }
 
@@ -64,14 +64,14 @@ public class GetConnectorListTest extends TestCase {
     List connectorTypes = Arrays.asList(new String[]{
         "Documentum", "Sharepoint", "Filenet"});
     String expectedResult =
-        "<CmResponse>\n" +
-        "  <StatusId>0</StatusId>\n" +
-        "  <ConnectorTypes>\n" +
-        "    <ConnectorType>Documentum</ConnectorType>\n" +
-        "    <ConnectorType>Sharepoint</ConnectorType>\n" +
-        "    <ConnectorType>Filenet</ConnectorType>\n" +
-        "  </ConnectorTypes>\n" +
-        "</CmResponse>\n";
+        "<CmResponse>\n"
+        + "  <StatusId>0</StatusId>\n"
+        + "  <ConnectorTypes>\n"
+        + "    <ConnectorType>Documentum</ConnectorType>\n"
+        + "    <ConnectorType>Sharepoint</ConnectorType>\n"
+        + "    <ConnectorType>Filenet</ConnectorType>\n"
+        + "  </ConnectorTypes>\n"
+        + "</CmResponse>\n";
     doTest(connectorTypes, expectedResult);
   }
 
@@ -87,5 +87,6 @@ public class GetConnectorListTest extends TestCase {
     LOG.info(expectedResult);
     Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult), 
         StringUtils.normalizeNewlines(result.toString()));
+    out.close();
   }
 }

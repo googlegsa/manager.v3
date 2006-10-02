@@ -35,6 +35,7 @@ public class SetConnectorConfigHandler {
     Logger.getLogger(SetConnectorConfigHandler.class.getName());
 
   private String status = ServletUtil.XML_RESPONSE_SUCCESS;
+  private String language;
   private String connectorName;
   private String connectorType;
   private Map configData;
@@ -46,8 +47,7 @@ public class SetConnectorConfigHandler {
    * @param language String.
    * @param xmlBody String Input XML body string.
    */
-  public SetConnectorConfigHandler(
-      Manager manager, String language, String xmlBody) {
+  public SetConnectorConfigHandler(Manager manager, String xmlBody) {
     SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
     Document document = ServletUtil.parse(xmlBody, errorHandler);
     NodeList nodeList =
@@ -58,6 +58,8 @@ public class SetConnectorConfigHandler {
       return;
     }
 
+    this.language = ServletUtil.getFirstElementByTagName(
+        (Element) nodeList.item(0), ServletUtil.QUERY_PARAM_LANG);
     this.connectorName = ServletUtil.getFirstElementByTagName(
         (Element) nodeList.item(0), ServletUtil.XMLTAG_CONNECTOR_NAME);
     if (this.connectorName == null) {
@@ -74,17 +76,17 @@ public class SetConnectorConfigHandler {
 
     this.configRes = null;
     try {
-    	this.configRes = manager.setConnectorConfig(
- 		this.connectorName, this.connectorType, this.configData, language);
+      this.configRes = manager.setConnectorConfig(this.connectorName,
+ 		this.connectorType, this.configData, this.language);
     } catch (ConnectorNotFoundException e) {
-        LOG.info("ConnectorNotFoundException");
-        status = e.toString();
-        e.printStackTrace();
-      } catch (PersistentStoreException e) {
-        LOG.info("PersistentStoreException");
-        status = e.toString();
-        e.printStackTrace();
-      }
+      LOG.info("ConnectorNotFoundException");
+      status = e.toString();
+      e.printStackTrace();
+    } catch (PersistentStoreException e) {
+      LOG.info("PersistentStoreException");
+      status = e.toString();
+      e.printStackTrace();
+    }
 
   }
 
@@ -106,5 +108,9 @@ public class SetConnectorConfigHandler {
 
   public String getConnectorType() {
     return connectorType;
+  }
+
+  public String getLanguage() {
+    return language;
   }
 }

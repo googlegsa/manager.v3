@@ -102,6 +102,8 @@ public class ServletUtil {
       "Null connector name";
   public static final String XML_RESPONSE_STATUS_NULL_CONNECTOR_TYPE =
       "Null connector type name";
+  public static final String XML_RESPONSE_STATUS_NULL_CONNECTOR_STATUS =
+      "Null connector status";
   public static final String XML_RESPONSE_STATUS_NULL_FORM_SNIPPET =
 	  "Null form snippet or configure response";
   public static final String XML_RESPONSE_STATUS_NULL_DOCID =
