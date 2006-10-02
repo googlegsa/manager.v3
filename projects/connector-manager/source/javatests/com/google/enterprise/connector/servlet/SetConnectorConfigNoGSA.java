@@ -106,10 +106,12 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
                         HttpServletResponse res)
       throws ServletException, IOException {
     String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
-    String connectorName = req.getParameter("connectorName");
-    String connectorType = req.getParameter("connectorType");
+    String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
+    String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
     StringWriter writer = new StringWriter();
     writer.write("<" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">");
+    writer.write("  <" + ServletUtil.QUERY_PARAM_LANG + ">"
+        + lang + "</" + ServletUtil.QUERY_PARAM_LANG + ">\n");
     writer.write("  <" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">"
         + connectorName + "</" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">");
     writer.write("  <" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">"
@@ -128,7 +130,7 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
     SetConnectorConfigHandler handler = new SetConnectorConfigHandler(
-        manager, lang, writer.getBuffer().toString());
+        manager, writer.getBuffer().toString());
     ServletUtil.writeConfigureResponse(
         out, handler.getStatus(), handler.getConfigRes());
     out.close();

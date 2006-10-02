@@ -46,25 +46,22 @@ public class GetConnectorStatus extends HttpServlet {
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
-    String connectorName = req.getParameter("ConnectorName");
+    String status = ServletUtil.XML_RESPONSE_SUCCESS;
+    String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
+    res.setContentType(ServletUtil.MIMETYPE_XML);
+    PrintWriter out = res.getWriter();
+
     if (connectorName == null || connectorName.length() < 1) {
+      status = ServletUtil.XML_RESPONSE_STATUS_NULL_CONNECTOR;
+      ServletUtil.writeSimpleResponse(out, status);
       LOG.info("ConnectorName is null");
       return;
     }
 
-    res.setContentType(ServletUtil.MIMETYPE_XML);
-    PrintWriter out = res.getWriter();
-
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
 
-    ConnectorStatus connectorStatus = manager.getConnectorStatus(connectorName);
-    if (connectorStatus == null) {
-      LOG.info("Connector manager returns null status for " + connectorName
-          + ".");
-    }
-
-    handleDoGet(out, connectorStatus);
+    handleDoGet(out, manager, connectorName);
     out.close();
   }
 
@@ -87,24 +84,29 @@ public class GetConnectorStatus extends HttpServlet {
    * @param out PrintWriter Output for servlet response
    * @param status ConnectorStatus
    */
-  public static void handleDoGet(PrintWriter out, ConnectorStatus status) {
-    ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);
-    ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, "0");
+  public static void handleDoGet(
+      PrintWriter out, Manager manager, String connectorName) {
+    String status = ServletUtil.XML_RESPONSE_SUCCESS;
 
-    if (status == null) {
-      ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_CONNECTOT_STATUS,
-          "null");
-      ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
-      return;
+    ConnectorStatus connectorStatus = manager.getConnectorStatus(connectorName);
+
+    if (connectorStatus == null) {
+      status = ServletUtil.XML_RESPONSE_STATUS_NULL_CONNECTOR_STATUS;
+      ServletUtil.writeSimpleResponse(out, status);
+      LOG.info("Connector manager returns null status for " + connectorName
+          + ".");
+     return;
     }
 
+    ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);
+    ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, "0");
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOT_STATUS, false);
     ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_CONNECTOR_NAME,
-        status.getName());
+        connectorStatus.getName());
     ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_CONNECTOR_TYPE,
-        status.getType());
+        connectorStatus.getType());
     ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_STATUS, Integer
-        .toString(status.getStatus()));
+        .toString(connectorStatus.getStatus()));
 
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOT_STATUS, true);
     ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);

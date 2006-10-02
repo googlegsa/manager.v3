@@ -102,5 +102,6 @@ public class GetConfigFormTest extends TestCase {
     logger.info(expectedResult);
     Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult), 
         StringUtils.normalizeNewlines(result.toString()));
+    out.close();
   }
 }

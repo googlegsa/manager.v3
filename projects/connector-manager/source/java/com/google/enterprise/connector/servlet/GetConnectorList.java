@@ -79,17 +79,17 @@ public class GetConnectorList extends HttpServlet {
    * @param connectorTypes
    */
   public static void handleDoGet(PrintWriter out, List connectorTypes) {
-    ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);
-    ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, "0");
+    String status = ServletUtil.XML_RESPONSE_SUCCESS;
 
     if (connectorTypes == null || connectorTypes.size() == 0) {
+      status = ServletUtil.XML_RESPONSE_STATUS_NULL_CONNECTOR_TYPE;
+      ServletUtil.writeSimpleResponse(out, status);
       LOG.info("Connector manager returns null.");
-      ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_CONNECTOR_TYPES,
-          "null");
-      ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
       return;
     }
 
+    ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);
+    ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, status);
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_TYPES, false);
 
     for (Iterator iter = connectorTypes.iterator(); iter.hasNext();) {

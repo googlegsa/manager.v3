@@ -183,5 +183,6 @@ public class AuthorizationTest extends TestCase {
     LOG.info(expectedResult);
     Assert.assertEquals (StringUtils.normalizeNewlines(expectedResult), 
         StringUtils.normalizeNewlines(result.toString()));
+    out.close();
   }
 }
