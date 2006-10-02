@@ -156,7 +156,7 @@ public class Authorization extends HttpServlet {
         } else {
           connDocs = (Map) map.get(identity);
           if (connDocs.containsKey(connectorName)) {
-            urlList = (List) map.get(connectorName);
+            urlList = (List) connDocs.get(connectorName);
           } else {
             urlList = new ArrayList();
             connDocs.put(connectorName, urlList);

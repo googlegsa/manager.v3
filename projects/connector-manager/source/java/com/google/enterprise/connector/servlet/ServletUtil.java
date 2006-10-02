@@ -47,6 +47,7 @@ public class ServletUtil {
   public static final String MIMETYPE_HTML = "text/html";
 
   public static final String QUERY_PARAM_LANG = "lang";
+  public static final String DEFAULT_LANGUAGE = "en";
 
   public static final String XMLTAG_RESPONSE_ROOT = "CmResponse";
   public static final String XMLTAG_STATUSID = "StatusId";
@@ -62,7 +63,6 @@ public class ServletUtil {
 
   public static final String XMLTAG_MANAGER_CONFIG = "ManagerConfig";
   public static final String XMLTAG_CERT_AUTHN = "CertAuthn";
-  public static final String XMLTAG_MAX_FEED_RATE = "MaxFeedRate";
   public static final String XMLTAG_FEEDERGATE = "FeederGate";
   public static final String XMLTAG_FEEDERGATE_HOST = "host";
   public static final String XMLTAG_FEEDERGATE_PORT = "port";
@@ -100,6 +100,10 @@ public class ServletUtil {
       "Param missing";
   public static final String XML_RESPONSE_STATUS_NULL_CONNECTOR =
       "Null connector name";
+  public static final String XML_RESPONSE_STATUS_NULL_CONNECTOR_TYPE =
+      "Null connector type name";
+  public static final String XML_RESPONSE_STATUS_NULL_FORM_SNIPPET =
+	  "Null form snippet or configure response";
   public static final String XML_RESPONSE_STATUS_NULL_DOCID =
       "Null doc ID";
   public static final String XML_RESPONSE_STATUS_EMPTY_CONFIG_DATA =
@@ -276,8 +280,11 @@ public class ServletUtil {
       writeXMLTag(out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, false);
       writeXMLElement(
           out, 2, ServletUtil.XMLTAG_MESSAGE, configRes.getMessage());
-      writeXMLElement(
-          out, 2, ServletUtil.XMLTAG_FORM_SNIPPET, configRes.getFormSnippet());
+      if (configRes.getFormSnippet() != null) {
+        writeXMLElement(
+            out, 2, ServletUtil.XMLTAG_FORM_SNIPPET,
+            "<![CDATA[" + configRes.getFormSnippet() + "]]>");
+      }
       writeXMLTag(out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, true);
     }
     writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);

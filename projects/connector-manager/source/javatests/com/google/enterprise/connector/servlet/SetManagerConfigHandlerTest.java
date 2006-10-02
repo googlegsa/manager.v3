@@ -33,13 +33,11 @@ public class SetManagerConfigHandlerTest extends TestCase {
   private boolean certAuth;
   private String host;
   private int port;
-  private int maxFeedRate;
   
   public void testHandleDoPost1() {
     certAuth = true;
     host = "10.32.20.102";
     port = 9411;
-    maxFeedRate = 20;
     doTest(setXMLBody());
   }
 
@@ -47,7 +45,6 @@ public class SetManagerConfigHandlerTest extends TestCase {
     certAuth = false;
     host = "";
     port = 9411;
-    maxFeedRate = 20;
     doTest(setXMLBody());
   }
 
@@ -55,12 +52,10 @@ public class SetManagerConfigHandlerTest extends TestCase {
     certAuth = false;
     host = "10.32.20.102";
     port = 9411;
-    maxFeedRate = 20;
     String xmlBody =
         "<ManagerConfig>" +
         "  <CertAuthn>false</CertAuthn>" +
         "  <FeederGate host=\"10.32.20.102\" port=\"9411\">a gate</FeederGate>" +
-        "  <MaxFeedRate>20</MaxFeedRate>" +
         "</ManagerConfig>";
     doTest(xmlBody);
   }
@@ -73,11 +68,9 @@ public class SetManagerConfigHandlerTest extends TestCase {
     LOG.info("authn: " + hdl.isCertAuth() + " this: " + this.certAuth);
     LOG.info("host: " + hdl.getFeederGateHost() + " " + this.host);
     LOG.info("Port: " + hdl.getFeederGatePort());
-    LOG.info("rate: " + hdl.getMaxFeedRate());
     Assert.assertEquals(hdl.isCertAuth(), this.certAuth);
     Assert.assertEquals(hdl.getFeederGateHost(), this.host);
     Assert.assertEquals(hdl.getFeederGatePort(), this.port);
-    Assert.assertEquals(hdl.getMaxFeedRate(), this.maxFeedRate);
   }
 
 
@@ -86,7 +79,6 @@ public String setXMLBody() {
 	  "<" + ServletUtil.XMLTAG_MANAGER_CONFIG + ">\n" +
       "  <CertAuthn>" + this.certAuth + "</CertAuthn>\n" +
       "  <FeederGate host=\"" + this.host + "\" port=\""+ this.port + "\"/>\n" +
-      "  <MaxFeedRate>" + this.maxFeedRate + "</MaxFeedRate>\n" +
       "</" + ServletUtil.XMLTAG_MANAGER_CONFIG + ">";
   }
 }

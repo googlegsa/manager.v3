@@ -32,12 +32,12 @@ import javax.servlet.http.HttpServletResponse;
 
 
 /**
- * Admin servlet to get the config form for a given connector type and language.
+ * Admin servlet to get the config form for
+ * a given connector type and language.
  * 
  */
 public class GetConfigForm extends HttpServlet {
-  private static final String DEFAULT_LANGUAGE = "en";
-  private static final Logger LOGGER =
+  private static final Logger LOG =
       Logger.getLogger(GetConfigForm.class.getName());
 
   /**
@@ -51,18 +51,23 @@ public class GetConfigForm extends HttpServlet {
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
-    String connectorTypeName = req.getParameter("ConnectorType");
-    if (connectorTypeName == null || connectorTypeName.length() < 1) {
-      LOGGER.severe("ConnectorType is null");
-      return;
-    }
-    String language = req.getParameter("lang");
-    if (language == null || language.length() < 1) {
-      LOGGER.info("language is null");
-      language = DEFAULT_LANGUAGE;
-    }
+    String status = ServletUtil.XML_RESPONSE_SUCCESS;
+    String connectorTypeName =
+        req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
+
+    if (connectorTypeName == null || connectorTypeName.length() < 1) {
+      status = ServletUtil.XML_RESPONSE_STATUS_NULL_CONNECTOR_TYPE;
+      ServletUtil.writeSimpleResponse(out, status);
+      LOG.severe(status);
+      return;
+    }
+    String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
+    if (language == null || language.length() < 1) {
+      LOG.info("language is null");
+      language = ServletUtil.DEFAULT_LANGUAGE;
+    }
 
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
@@ -70,10 +75,10 @@ public class GetConfigForm extends HttpServlet {
     try {
       ConfigureResponse configResponse =
           manager.getConfigForm(connectorTypeName, language);
-      handleDoGet(out, configResponse);
+      handleDoGet(out, status, configResponse);
     } catch (ConnectorTypeNotFoundException e1) {
       ServletUtil.writeSimpleResponse(out, e1.toString());
-      LOGGER.info("Connector Type Not Found Exception");
+      LOG.info("Connector Type Not Found Exception");
       e1.printStackTrace();
     }
 
@@ -100,27 +105,8 @@ public class GetConfigForm extends HttpServlet {
    * @param out
    * @param configResponse
    */
-  public static void handleDoGet(PrintWriter out,
+  public static void handleDoGet(PrintWriter out, String status,
       ConfigureResponse configResponse) {
-    ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);
-    ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, "0");
-
-    if (configResponse == null) {
-      LOGGER.info("Connector manager returns null config response.");
-      ServletUtil.writeXMLElement(out, 1,
-          ServletUtil.XMLTAG_CONFIGURE_RESPONSE, "null");
-      ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
-      return;
-    }
-
-    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE,
-        false);
-    ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_MESSAGE,
-        configResponse.getMessage());
-    ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_FORM_SNIPPET,
-        configResponse.getFormSnippet());
-    ServletUtil
-        .writeXMLTag(out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, true);
-    ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
+    ServletUtil.writeConfigureResponse(out, status, configResponse);
   }
 }
