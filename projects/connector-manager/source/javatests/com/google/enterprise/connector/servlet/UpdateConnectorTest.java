@@ -48,7 +48,7 @@ public class UpdateConnectorTest extends TestCase {
 	String expectedResult =
       "<HTML><HEAD><TITLE>Update Connector Config</TITLE></HEAD>\n" + 
       "<BODY><H3>Update Connector Config:</H3><HR>\n" + 
-      "<FORM METHOD=POST ACTION=\"/connector-manager/updateConnector?ConnectorName=cname1&lang=en\"><TABLE><tr><td>Connector Name: cname1</td></tr><tr>\n" + 
+      "<FORM METHOD=POST ACTION=\"/connector-manager/updateConnector?ConnectorName=cname1&Lang=en\"><TABLE><tr><td>Connector Name: cname1</td></tr><tr>\n" + 
       "<tr>\n" + 
       "<td>Username</td>\n" + 
       "<td>\n" + 
