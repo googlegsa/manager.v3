@@ -46,7 +46,7 @@ public class ServletUtil {
   public static final String MIMETYPE_XML = "text/xml";
   public static final String MIMETYPE_HTML = "text/html";
 
-  public static final String QUERY_PARAM_LANG = "lang";
+  public static final String QUERY_PARAM_LANG = "Lang";
   public static final String DEFAULT_LANGUAGE = "en";
 
   public static final String XMLTAG_RESPONSE_ROOT = "CmResponse";
