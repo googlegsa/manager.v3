@@ -47,7 +47,8 @@ import java.util.List;
  *
  */
 public class TraversalSchedulerTest extends TestCase {
-  private void runWithSchedules(List schedules, Instantiator instantiator) {
+  private TraversalScheduler runWithSchedules(List schedules, 
+      Instantiator instantiator, boolean shutdown) {
     WorkQueue workQueue = new WorkQueue(2, 5000);
     ConnectorConfigStore configStore = null;
     try {
@@ -64,14 +65,23 @@ public class TraversalSchedulerTest extends TestCase {
     scheduler.init();
     Thread thread = new Thread(scheduler, "TraversalScheduler");
     thread.start();
-    // sleep to give it a chance to schedule something
-    try {  
-      Thread.sleep(200);
-    } catch (InterruptedException ie) {
-      ie.printStackTrace();
-      Assert.fail(ie.toString());
+    if (shutdown) {
+      // sleep to give it a chance to schedule something
+      try {  
+        Thread.sleep(200);
+      } catch (InterruptedException ie) {
+        ie.printStackTrace();
+        Assert.fail(ie.toString());
+      }
+      scheduler.shutdown(false, 5000);
     }
-    scheduler.shutdown(false, 5000);
+    
+    return scheduler;
+  }
+  
+  private TraversalScheduler runWithSchedules(List schedules,
+      Instantiator instantiator) {
+    return runWithSchedules(schedules, instantiator, true);
   }
 
   /**
@@ -158,6 +168,23 @@ public class TraversalSchedulerTest extends TestCase {
     schedules.add(schedule);
     
     return schedules;
+  }
+  
+  public void testRemoveConnector() {
+    String connectorName = MockInstantiator.TRAVERSER_NAME_LONG_RUNNING;
+    List schedules = getSchedules(connectorName);
+    TraversalScheduler scheduler = 
+      runWithSchedules(schedules, createMockInstantiator(), false);
+
+    // sleep to give it a chance to schedule something
+    try {  
+      Thread.sleep(100);
+    } catch (InterruptedException ie) {
+      ie.printStackTrace();
+      Assert.fail(ie.toString());
+    }
+
+    scheduler.removeConnector(connectorName);   
   }
   
   public void testNoopTraverser() {

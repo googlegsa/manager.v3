@@ -28,9 +28,11 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -52,8 +54,14 @@ public class TraversalScheduler implements Scheduler {
   
   private HostLoadManager hostLoadManager;
   
-  private boolean isInitialized;
-  private boolean isShutdown;
+  private boolean isInitialized;  // Protected by instance lock.
+  private boolean isShutdown;  // Protected by instance lock.
+  
+  // Map of runnables that are currently scheduled.  Protected by instance lock.
+  private Map runnables = new HashMap();  // <connectorName, TraverserRunnable>
+  // Set of connectors removed.  Needed so that we only schedule connectors
+  // that haven't been removed.  Protected by instance lock.
+  private Set removedConnectors;
   
   /**
    * Create a scheduler object.
@@ -74,6 +82,7 @@ public class TraversalScheduler implements Scheduler {
     this.hostLoadManager = new HostLoadManager(100);
     this.isInitialized = false;
     this.isShutdown = false;
+    this.removedConnectors = new HashSet();
   }
   
   public synchronized void init() {
@@ -96,18 +105,23 @@ public class TraversalScheduler implements Scheduler {
   }
   
   /**
-   * Return a hardcoded schedule.
-   * @return a hardcoded schedule.
+   * Return a traversal schedule as store in the configuration and schedule
+   * stores.  As a side effect, clear the removedConnectors Set.
+   * @return a schedule of traversal work
    */
-  private List getSchedules() {
+  private synchronized List getSchedules() {
     List schedules = new ArrayList();
     Iterator iter = configStore.getConnectorNames();
     while (iter.hasNext()) {
       String connectorName = (String) iter.next();
+      if (removedConnectors.contains(connectorName)) {
+        continue;
+      }
       String scheduleStr = scheduleStore.getConnectorSchedule(connectorName);
       Schedule schedule = new Schedule(scheduleStr);
       schedules.add(schedule);
     }
+    removedConnectors.clear();
     return schedules;
   }
 
@@ -159,8 +173,27 @@ public class TraversalScheduler implements Scheduler {
     return isInitialized && !isShutdown;
   }
 
+  /**
+   * Call this method when a connector is removed.  Assumes ScheduleStore has 
+   * already been updated to reflect the schedule change.  This causes the 
+   * scheduler to gracefully interrupt any work that is done on this connector.
+   * @param connectorName name of the connector instance
+   */
+  public void removeConnector(String connectorName) {
+    synchronized (this) {
+      // let scheduler know not to schedule more work for this connector
+      removedConnectors.add(connectorName);
+      
+      // interrupt any work that is already getting done
+      TraversalWorkQueueItem runnable = 
+        (TraversalWorkQueueItem) runnables.remove(connectorName);
+      if (null != runnable) {
+        workQueue.cancelWork(runnable);
+      }
+    }    
+  }
+  
   public void run() {
-    Map runnables = new HashMap();  // <connectorName, Runnable>
     while (true) {
       synchronized (this) {
         if (!isRunningState()) {
@@ -174,11 +207,14 @@ public class TraversalScheduler implements Scheduler {
         Schedule schedule = (Schedule) iter.next();
         if (shouldRun(schedule)) {
           String connectorName = schedule.getConnectorName();
-          TraverserRunnable runnable = 
-            (TraverserRunnable) runnables.get(connectorName);
-          if (null == runnable) {
-            runnable = new TraverserRunnable(connectorName, TRAVERSAL_TIMEOUT);
-            runnables.put(connectorName, runnable);
+          TraversalWorkQueueItem runnable;
+          synchronized (this) {
+            runnable = (TraversalWorkQueueItem) runnables.get(connectorName);
+            if (null == runnable) {
+              runnable = 
+                new TraversalWorkQueueItem(connectorName, TRAVERSAL_TIMEOUT);
+              runnables.put(connectorName, runnable);
+            }
           }
           // we back off if we have received previous failures (e.g. when trying
           // to get a Traverser object)
@@ -197,6 +233,11 @@ public class TraversalScheduler implements Scheduler {
                 LOGGER.info("TraversalScheduler thread is stopping due to " 
                   + "shutdown or not being initialized.");
                 return;
+            }
+            if (removedConnectors.contains(connectorName)) {
+              LOGGER.info("Connector was removed so no work for it will be " 
+                + "done: " + connectorName);
+              continue;
             }
             workQueue.addWork(runnable);
           }
@@ -226,7 +267,7 @@ public class TraversalScheduler implements Scheduler {
     }
   }
 
-  private class TraverserRunnable extends WorkQueueItem {
+  private class TraversalWorkQueueItem extends WorkQueueItem {
     private String connectorName;
     private int numDocsTraversed;
     private boolean isFinished;
@@ -239,7 +280,7 @@ public class TraversalScheduler implements Scheduler {
     // time allowed for doing a traversal before we give up
     private long timeout;
     
-    public TraverserRunnable(String connectorName, long timeout) {
+    public TraversalWorkQueueItem(String connectorName, long timeout) {
       this.connectorName = connectorName;
       this.numDocsTraversed = 0;
       this.isFinished = false;
@@ -300,6 +341,7 @@ public class TraversalScheduler implements Scheduler {
           timeOfFirstFailure = 0;
         } catch (InterruptedException e) {
           // timeout causes interruption of execution
+          LOGGER.info("TraverserRunnable was interrupted");
         }
       } else {
         failure();

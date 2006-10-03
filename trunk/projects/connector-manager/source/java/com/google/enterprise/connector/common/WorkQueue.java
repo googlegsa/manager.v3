@@ -32,7 +32,7 @@ public class WorkQueue {
    */
   public static final int DEFAULT_SHUTDOWN_TIMEOUT = 10 * 1000;
 
-  private static final Logger logger = 
+  private static final Logger LOGGER = 
     Logger.getLogger(WorkQueue.class.getName());
   
   // possible value for nextAbsTimeout
@@ -265,6 +265,33 @@ public class WorkQueue {
   }
   
   /**
+   * Cancel a piece of work by interrupting it.
+   * @param work the piece of work to be updated.
+   */
+  public synchronized void cancelWork(WorkQueueItem work) {
+    if (!isInitialized) {
+      throw new IllegalStateException(
+        "Must init() WorkQueue object before canceling work.");
+    }
+    if (shutdown) {
+      // if we're shutting down it doesn't matter since work will finish
+      return;
+    }
+    
+    if (workQueue.remove(work)) {
+      // If the work is in the queue, it means no thread is operating on it
+      // so we simply finish.
+      LOGGER.info("Cancelling work by removing unstarted work from work" 
+        + " queue.");
+    } else {
+      // See if a thread is working on this item.
+      LOGGER.info("Cancelling work by interrupting the worker thread.");
+      Thread thread = work.getWorkQueueThread();
+      thread.interrupt();
+    }
+  }
+  
+  /**
    * Remove a piece of work.
    * @return the work item
    */
@@ -363,7 +390,7 @@ public class WorkQueue {
           isWorking = true;
           item.doWork();
         } catch (RuntimeException e) {
-          logger.warning("WorkQueueThread work had problems: " 
+          LOGGER.warning("WorkQueueThread work had problems: " 
             + e.getMessage());
           continue;
         } finally {
