@@ -76,6 +76,8 @@ public class MockJcrValue implements Value {
 
   public Calendar getDate() throws ValueFormatException, IllegalStateException,
       RepositoryException {
+    // TODO: must fix this where sometimes we get the date value as a long but
+    // sometimes we get the value in the format "Tue, 15 Nov 1994 12:45:26 GMT".
     long ticks = getLong();
     Calendar result = Calendar.getInstance();
     result.setTimeInMillis(ticks * 1000);
