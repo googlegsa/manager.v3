@@ -63,6 +63,21 @@ public class GetConnectorConfigToEdit extends HttpServlet {
     out.close();
   }
 
+  /**
+   * Returns the connector config form with pre-filled data.
+   * Just call doGet
+   * 
+   * @param req
+   * @param res
+   * @throws ServletException
+   * @throws IOException
+   * 
+   */
+  protected void doPost(HttpServletRequest req, HttpServletResponse res)
+  throws ServletException, IOException {
+    doGet(req, res);
+  }
+
   public static void handleDoGet(PrintWriter out, Manager manager,
       String connectorName, String language) {
     String status = ServletUtil.XML_RESPONSE_SUCCESS;
