@@ -125,10 +125,13 @@ public interface Manager {
    *         this manager.
    * @throws PersistentStoreException If there was a problem storing the
    *         configuration
+   * @throws InstantiatorException If the instantiator cannot store the 
+   *         configuration
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
       String connectorTypeName, Map configData, String language)
-      throws ConnectorNotFoundException, PersistentStoreException;
+      throws ConnectorNotFoundException, PersistentStoreException,
+      InstantiatorException;
 
   /**
    * Authenticates a user against a named connector.
