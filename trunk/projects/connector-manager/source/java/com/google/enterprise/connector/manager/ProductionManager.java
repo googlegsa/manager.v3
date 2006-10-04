@@ -204,7 +204,14 @@ public class ProductionManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#getConnectorStatuses()
    */
   public List getConnectorStatuses() {
-    throw new UnsupportedOperationException();
+    List result = new ArrayList();
+    String connectorName;
+    Iterator iter = connectorConfigStore.getConnectorNames();
+    while (iter.hasNext()) {
+      connectorName = (String) iter.next();
+      result.add(getConnectorStatus(connectorName));
+    }
+    return result;
   }
 
   /*
@@ -229,15 +236,11 @@ public class ProductionManager implements Manager {
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
       String connectorTypeName, Map configData, String language)
-      throws ConnectorNotFoundException, PersistentStoreException {
-    try {
-      instantiator.setConnectorConfig(connectorName, connectorTypeName,
+      throws ConnectorNotFoundException, PersistentStoreException,
+      InstantiatorException {
+    instantiator.setConnectorConfig(connectorName, connectorTypeName,
           configData);
-    } catch (InstantiatorException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   /*
@@ -250,6 +253,7 @@ public class ProductionManager implements Manager {
       String feederGateHost, int feederGatePort, int maxFeedRate)
       throws PersistentStoreException {
     // TODO - need a real implementation here
+    throw new UnsupportedOperationException();
   }
 
   /*
@@ -259,7 +263,8 @@ public class ProductionManager implements Manager {
    *      java.lang.String, int, java.lang.String)
    */
   public void setSchedule(String connectorName, int load, String timeIntervals) {
+    
+    // TODO: must respect load.  What is this load?  Is it docsPerMinute?
     throw new UnsupportedOperationException();
   }
-
 }

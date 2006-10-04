@@ -14,6 +14,13 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.manager.ConnectorManagerException;
+import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.persist.PersistentStoreException;
+import com.google.enterprise.connector.spi.ConfigureResponse;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -27,12 +34,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.manager.Manager;
-import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.PersistentStoreException;
-import com.google.enterprise.connector.spi.ConfigureResponse;
 
 /**
  * Test UpdateConnector through a browser.
@@ -124,14 +125,9 @@ public class UpdateConnectorNoGSA extends HttpServlet {
       configRes =
           manager.setConnectorConfig(connectorName, connectorType, configData,
               lang);
-    } catch (ConnectorNotFoundException e) {
-      LOGGER.info("ConnectorNotFoundException" + e.getMessage());
-      status = e.toString();
-      e.printStackTrace();
-    } catch (PersistentStoreException e) {
-      LOGGER.info("PersistentStoreException" + e.getMessage());
-      status = e.toString();
-      e.printStackTrace();
+    } catch (ConnectorManagerException e) {
+      LOGGER.info(e.getMessage());
+      status = e.getMessage();
     }
 
     ServletUtil.writeConfigureResponse(out, status, configRes);

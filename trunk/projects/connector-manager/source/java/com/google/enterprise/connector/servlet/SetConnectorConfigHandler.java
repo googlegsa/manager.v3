@@ -14,14 +14,15 @@
 
 package com.google.enterprise.connector.servlet;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
+import com.google.enterprise.connector.manager.ConnectorManagerException;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import java.util.Map;
 import java.util.logging.Logger;
@@ -78,16 +79,10 @@ public class SetConnectorConfigHandler {
     try {
       this.configRes = manager.setConnectorConfig(this.connectorName,
  		this.connectorType, this.configData, this.language);
-    } catch (ConnectorNotFoundException e) {
-      LOG.info("ConnectorNotFoundException");
-      status = e.toString();
-      e.printStackTrace();
-    } catch (PersistentStoreException e) {
-      LOG.info("PersistentStoreException");
-      status = e.toString();
-      e.printStackTrace();
+    } catch (ConnectorManagerException e) {
+      LOG.info(e.getMessage());
+      status = e.getMessage();
     }
-
   }
 
   public String getStatus() {
