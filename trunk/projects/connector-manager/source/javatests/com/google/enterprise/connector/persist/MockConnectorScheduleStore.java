@@ -53,9 +53,9 @@ public class MockConnectorScheduleStore implements ConnectorScheduleStore {
   public String getConnectorSchedule(String connectorName) {
     String scheduleStr = (String) store.get(connectorName);
     if (null == scheduleStr) {
-      // if we get an unknown connectorName, we hardcode this to be an empty 
-      // schedule
-      scheduleStr = connectorName + ":1-1";  // a schedule that never runs
+      // if we get an unknown connectorName (i.e. one without known schedule),
+      // we default to always run
+      scheduleStr = connectorName + ":0-0";
     }
     return scheduleStr;
   }
