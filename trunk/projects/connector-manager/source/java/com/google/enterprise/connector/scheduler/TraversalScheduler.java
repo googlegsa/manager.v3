@@ -226,7 +226,7 @@ public class TraversalScheduler implements Scheduler {
               continue;
             }
           }
-          LOGGER.info("Trying to add traversal work to workQueue: "
+          LOGGER.finer("Trying to add traversal work to workQueue: "
             + connectorName);
           synchronized (this) {
             if (!isRunningState()) {
@@ -333,10 +333,10 @@ public class TraversalScheduler implements Scheduler {
       Traverser traverser = getTraverser(connectorName);
       if (null != traverser) {
         try {
-          LOGGER.info("Begin runBatch");
+          LOGGER.finer("Begin runBatch");
           numDocsTraversed = traverser.runBatch(
             hostLoadManager.determineBatchHint(connectorName));
-          LOGGER.info("End runBatch");
+          LOGGER.finer("End runBatch");
           numConsecutiveFailures = 0;
           timeOfFirstFailure = 0;
         } catch (InterruptedException e) {
