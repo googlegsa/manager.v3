@@ -139,7 +139,7 @@ public class DocPusher implements Pusher {
   /*
    * Wraps an xm tag with < and >.
    */
-  private String xmlWrapStart(String str) {
+  private static String xmlWrapStart(String str) {
     StringBuffer buf = new StringBuffer();
     buf.append("<");
     buf.append(str);
@@ -150,7 +150,7 @@ public class DocPusher implements Pusher {
   /*
    * Wraps an xml tag with </ and >.
    */
-  private String xmlWrapEnd(String str) {
+  private static String xmlWrapEnd(String str) {
     StringBuffer buf = new StringBuffer();
     buf.append("</");
     buf.append(str);
@@ -424,8 +424,9 @@ public class DocPusher implements Pusher {
     String content;
     
     try {
-      content = StringUtils.streamToString(contentStream);
-      content = base64Encode(content);
+      StringWriter writer = new StringWriter();
+      Base64Encoder.encode(contentStream, writer);
+      content = writer.toString();
     } catch (IOException e) {
       LOGGER.logp(Level.WARNING, this.getClass().getName(), "buildXmlData",
           "Swallowing exception while base64-encoding.", e);
