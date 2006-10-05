@@ -158,7 +158,7 @@ public class ConnectorInterfaces {
     Session s = null;
     getCredentials();
     try {
-      s = connector.login(username, password);
+      s = connector.login();
     } catch (LoginException e) {
       // this is un-recoverable
       throw new InstantiatorException(e);

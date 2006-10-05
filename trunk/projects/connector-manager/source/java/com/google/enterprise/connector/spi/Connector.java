@@ -27,17 +27,16 @@ package com.google.enterprise.connector.spi;
 public interface Connector {
 
   /**
-   * Authenticates against the repository and returns a session belonging to the
-   * named user. If an exception is thrown, the implementor should provide an
-   * explanatory message.
+   * Gets a session with sufficient privileges to perform all actions related to
+   * the SPI. Credentials, if needed, are supplied externally through injection
+   * via Spring or some other mechanism. If an exception is thrown, the
+   * implementor should provide an explanatory message.
    * 
-   * @param username A String, the user's name
-   * @param password A String, the user's password
    * @return An object implementing the {@link Session} interface
    * @throws LoginException if there is a credentials-related problem
    * @throws RepositoryException if there is a more general problem, such as the
    *         system is unreachable or down
    */
-  public Session login(String username, String password) throws LoginException,
+  public Session login() throws LoginException,
       RepositoryException;
 }

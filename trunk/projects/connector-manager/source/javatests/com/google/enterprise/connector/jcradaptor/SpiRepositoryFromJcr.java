@@ -14,12 +14,10 @@
 
 package com.google.enterprise.connector.jcradaptor;
 
-import com.google.enterprise.connector.spi.LoginException;
 import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.spi.LoginException;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
-
-import java.util.Map;
 
 import javax.jcr.Credentials;
 import javax.jcr.SimpleCredentials;
@@ -34,6 +32,10 @@ public class SpiRepositoryFromJcr implements Connector {
 
   javax.jcr.Repository repo;
 
+  public SpiRepositoryFromJcr() {
+    ;
+  }
+
   /**
    * Construct an adaptor for a repository by using a JCR repository.
    * 
@@ -43,11 +45,24 @@ public class SpiRepositoryFromJcr implements Connector {
     this.repo = repo;
   }
 
-  public void setConfig(Map configData) throws RepositoryException {
-    ;  
+  private String username = "";
+  private String password = "";
+  
+  /**
+   * @param password the password to set
+   */
+  public void setPassword(String password) {
+    this.password = password;
   }
 
-  public Session login(String username, String password) throws LoginException,
+  /**
+   * @param username the username to set
+   */
+  public void setUsername(String username) {
+    this.username = username;
+  }
+
+  public Session login() throws LoginException,
       RepositoryException {
     try {
       Credentials simpleCredentials = new SimpleCredentials(username, password

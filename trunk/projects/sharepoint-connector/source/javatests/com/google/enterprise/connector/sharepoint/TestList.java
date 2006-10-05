@@ -91,8 +91,10 @@ public class TestList extends TestCase {
 	}
 
 	protected void loopItems(String type, ICase icase) throws Exception {
-		Connector repo = new SharepointConnector();
-		Session sess = repo.login(username, password);
+        SharepointConnector repo = new SharepointConnector();
+        repo.setUsername(username);
+        repo.setPassword(password);
+		Session sess = repo.login();
 		QueryTraversalManager mgr = sess.getQueryTraversalManager();
 		ResultSet rs = mgr.startTraversal();
 		Iterator it = rs.iterator();
