@@ -82,7 +82,8 @@ public class GetConnectorStatus extends HttpServlet {
   /**
    * Handler for doGet in order to do unit tests.
    * @param out PrintWriter Output for servlet response
-   * @param status ConnectorStatus
+   * @param manager 
+   * @param connectorName 
    */
   public static void handleDoGet(
       PrintWriter out, Manager manager, String connectorName) {

@@ -43,7 +43,7 @@ public class GsaFeedConnection implements FeedConnection {
   private String encode(String data) throws UnsupportedEncodingException {
     String encodedData =
         URLEncoder.encode(data, DocPusher.XML_DEFAULT_ENCODING);
-    return data;
+    return encodedData;
   }
 
   /*

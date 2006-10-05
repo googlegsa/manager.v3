@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.common.Base64Encoder;
-import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.PropertyMap;
@@ -24,7 +23,6 @@ import com.google.enterprise.connector.spi.SimpleValue;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -120,20 +118,6 @@ public class DocPusher implements Pusher {
    */
   protected String getGsaResponse() {
     return gsaResponse;
-  }
-
-  /*
-   * Converts a string to its base64 encoding. @param str the string to be
-   * encoded @return the base64 encoding of original input string @throws
-   * IOException
-   */
-  private static String base64Encode(String str) throws IOException {
-    ByteArrayInputStream inputStream =
-        new ByteArrayInputStream(str.getBytes(XML_DEFAULT_ENCODING));
-    StringWriter sw = new StringWriter();
-    Base64Encoder.encode(inputStream, sw);
-    sw.flush();
-    return sw.toString();
   }
 
   /*

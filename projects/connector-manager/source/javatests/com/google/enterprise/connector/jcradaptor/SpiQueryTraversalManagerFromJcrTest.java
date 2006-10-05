@@ -146,8 +146,6 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
     QueryTraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
 
     {
-      MockRepositoryDocument doc = r.getStore().getDocByID("doc4");
-
       ResultSet resultSet = qtm.startTraversal();
 
       int counter = 0;

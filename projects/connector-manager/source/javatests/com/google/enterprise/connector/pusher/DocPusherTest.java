@@ -18,7 +18,6 @@ package com.google.enterprise.connector.pusher;
 import com.google.enterprise.connector.jcradaptor.SpiPropertyMapFromJcrTest;
 import com.google.enterprise.connector.jcradaptor.SpiQueryTraversalManagerFromJcr;
 import com.google.enterprise.connector.mock.MockRepository;
-import com.google.enterprise.connector.mock.MockRepositoryDocument;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.spi.PropertyMap;
@@ -73,7 +72,6 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(DATASOURCE, mockFeedConnection);
 
-    MockRepositoryDocument doc = r.getStore().getDocByID("doc1");
     ResultSet resultSet = qtm.startTraversal();
 
     for (Iterator iter = resultSet.iterator(); iter.hasNext();) {
@@ -104,7 +102,6 @@ public class DocPusherTest extends TestCase {
     DocPusher dpusher = new DocPusher(DATASOURCE, mockFeedConnection);
     dpusher.take(propertyMap, "junit");
     String resultXML = mockFeedConnection.getFeed();
-    String gsResponse = dpusher.getGsaResponse();
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
         resultXML);
@@ -135,8 +132,7 @@ public class DocPusherTest extends TestCase {
     DocPusher dpusher = new DocPusher(DATASOURCE, mockFeedConnection);
     dpusher.take(propertyMap, "junit");
     String resultXML = mockFeedConnection.getFeed();
-    String gsResponse = dpusher.getGsaResponse();
-
+ 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
         resultXML);
     assertStringContains("<meta name=\"author\" content=\"ziff\"/>",

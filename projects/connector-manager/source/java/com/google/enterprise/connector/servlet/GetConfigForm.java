@@ -103,6 +103,7 @@ public class GetConfigForm extends HttpServlet {
    * Handler for doGet in order to do unit tests.
    * 
    * @param out
+   * @param status 
    * @param configResponse
    */
   public static void handleDoGet(PrintWriter out, String status,
