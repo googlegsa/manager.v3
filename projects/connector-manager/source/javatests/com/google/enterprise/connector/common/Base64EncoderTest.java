@@ -9,6 +9,9 @@ import junit.framework.TestSuite;
 import sun.misc.BASE64Decoder;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.StringWriter;
 
 /**
@@ -84,6 +87,39 @@ public class Base64EncoderTest extends TestCase {
     assertEquals(input, decode);
   }
 
+  public void testWordDoc() throws Exception {
+    File file = new File("testdata/mocktestdata/test.doc");
+    long fileLength = file.length();
+    
+    // first, read original file bytes
+    byte[] bytes = new byte[(int) fileLength];    
+    FileInputStream fis = new FileInputStream(file);
+    int offset = 0;
+    int numRead = 0;
+    while (offset < bytes.length
+        && (numRead=fis.read(bytes, offset, bytes.length-offset)) >= 0) {
+      offset += numRead;
+    }
+    fis.close();
+   
+    // encode and decode bytes (using byte[])
+    StringWriter writer = new StringWriter();
+    Base64Encoder.encode(bytes, writer);
+    byte[] newBytes = testDecoder.decodeBuffer(writer.toString());
+    
+    // encode and decode bytes (using InputStream)
+    StringWriter writer2 = new StringWriter();
+    fis = new FileInputStream(file);
+    Base64Encoder.encode(fis, writer2);
+    byte[] newBytes2 = testDecoder.decodeBuffer(writer.toString());
+    
+    // last, make sure bytes are still the same
+    for (int i = 0; i < bytes.length; i++) {
+      assertEquals(bytes[i], newBytes[i]);
+      assertEquals(bytes[i], newBytes2[i]);
+    }
+  }
+  
   public void testSpeed() throws Exception {
     byte[] input = new byte[1024*1024];
     StringWriter writer = new StringWriter((input.length / 3 + 1) * 4);
