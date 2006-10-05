@@ -14,24 +14,41 @@ import com.google.enterprise.connector.spi.Session;
 
 public class SharepointConnector implements Connector {
 
-	private static Log logger = LogFactory.getLog(SharepointConnector.class);
-	static {
-		try {
-			ClientContext.init();
-			ClientContext.setMode(ConnectorConstants.MODE_QUERY);
-		} catch (ConfigurationException e) {
+  private static Log LOGGER = LogFactory.getLog(SharepointConnector.class);
 
-		}
-	}
+  private String username = null;
+  private String password = null;
 
-	public Session login(String username, String password)
-			throws LoginException, RepositoryException {
-		try {
-			return new SharepointSession(username, password);
-		} catch (Exception e) {
-			Util.processException(logger, e);
-			logger.error(e.getMessage());
-			throw new RepositoryException("connection to repo failed");
-		}
-	}
+  /**
+   * @param password the password to set
+   */
+  void setPassword(String password) {
+    this.password = password;
+  }
+
+  /**
+   * @param username the username to set
+   */
+  void setUsername(String username) {
+    this.username = username;
+  }
+
+  static {
+    try {
+      ClientContext.init();
+      ClientContext.setMode(ConnectorConstants.MODE_QUERY);
+    } catch (ConfigurationException e) {
+
+    }
+  }
+
+  public Session login() throws LoginException, RepositoryException {
+    try {
+      return new SharepointSession(username, password);
+    } catch (Exception e) {
+      Util.processException(LOGGER, e);
+      LOGGER.error(e.getMessage());
+      throw new RepositoryException("connection to repo failed");
+    }
+  }
 }

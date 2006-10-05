@@ -121,7 +121,8 @@ public class SpringInstantiatorTest extends TestCase {
     File connectorTypeDir = new File(baseDir, connectorTypeName);
     File connectorFile = new File(connectorTypeDir, connectorName + ".xml");
 
-    Assert.assertFalse(connectorFile.exists());
+    Assert.assertFalse("connectorFile " + connectorFile.getAbsolutePath() +
+        " should not exist",connectorFile.exists());
 
     instantiator.setConnectorConfig(connectorName, connectorTypeName,
         configKeys);

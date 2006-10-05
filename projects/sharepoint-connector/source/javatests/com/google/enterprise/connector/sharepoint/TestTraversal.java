@@ -17,14 +17,17 @@ import com.google.enterprise.connector.spi.Session;
 
 public class TestTraversal extends TestCase {
 	static HashMap map1 = new HashMap(), map2 = new HashMap();
+    String username = "ent-sales-d2\\sales-admin", password = "t3stth@t";
 
 	/**
 	 * @param args
 	 */
 	public void qtestAll() throws Exception {
 		// TODO Auto-generated method stub
-		Connector repo = new SharepointConnector();
-		Session sess = repo.login("ent-sales-d2\\sales-admin", "t3stth@t");
+        SharepointConnector repo = new SharepointConnector();
+        repo.setUsername(username);
+        repo.setPassword(password);
+        Session sess = repo.login();
 		QueryTraversalManager mgr = sess.getQueryTraversalManager();
 		ResultSet rs = mgr.startTraversal();
 		while (rs != null) {
@@ -40,8 +43,10 @@ public class TestTraversal extends TestCase {
 
 	public void testTraversal() throws Exception {
 		ClientContext.setCrawlAll(true);
-		Connector repo = new SharepointConnector();
-		Session sess = repo.login("ent-sales-d2\\sales-admin", "t3stth@t");
+        SharepointConnector repo = new SharepointConnector();
+        repo.setUsername(username);
+        repo.setPassword(password);
+		Session sess = repo.login();
 		QueryTraversalManager mgr = sess.getQueryTraversalManager();
 		int docCount = QueryTraversalUtil.runTraversal(mgr, 10, map1);
 		System.out.println("total docs:" + docCount);
@@ -52,8 +57,10 @@ public class TestTraversal extends TestCase {
 	public void testBatchSizeOne() throws Exception {
 		map2.clear();
 		ClientContext.setCrawlAll(true);
-		Connector repo = new SharepointConnector();
-		Session sess = repo.login("ent-sales-d2\\sales-admin", "t3stth@t");
+        SharepointConnector repo = new SharepointConnector();
+        repo.setUsername(username);
+        repo.setPassword(password);
+		Session sess = repo.login();
 		QueryTraversalManager mgr = sess.getQueryTraversalManager();
 		int docCount = QueryTraversalUtil.runTraversal(mgr, 1, map2);
 		System.out.println("total docs:" + docCount);
@@ -70,8 +77,10 @@ public class TestTraversal extends TestCase {
 		Util.clearCrawlState();
 		System.out.println(map1.size());
 		ClientContext.setCrawlAll(true);
-		Connector repo = new SharepointConnector();
-		Session sess = repo.login("ent-sales-d2\\sales-admin", "t3stth@t");
+        SharepointConnector repo = new SharepointConnector();
+        repo.setUsername(username);
+        repo.setPassword(password);
+		Session sess = repo.login();
 		QueryTraversalManager mgr = sess.getQueryTraversalManager();
 		mgr.setBatchHint(100);
 		ResultSet rs = mgr.startTraversal();
@@ -83,7 +92,7 @@ public class TestTraversal extends TestCase {
 
 		ClientContext.setCrawlAll(false);// in production this doesn't need
 											// to be called
-		Session sess2 = repo.login("ent-sales-d2\\sales-admin", "t3stth@t");
+		Session sess2 = repo.login();
 		QueryTraversalManager mgr2 = sess.getQueryTraversalManager();
 		mgr2.setBatchHint(100);
 		rs = mgr2.resumeTraversal(null);
@@ -100,14 +109,16 @@ public class TestTraversal extends TestCase {
 		map2.clear();
 		ClientContext.setCrawlAll(true);
 		Util.clearCrawlState();
-		Connector repo = new SharepointConnector();
-		Session sess = repo.login("ent-sales-d2\\sales-admin", "t3stth@t");
+        SharepointConnector repo = new SharepointConnector();
+        repo.setUsername(username);
+        repo.setPassword(password);
+		Session sess = repo.login();
 		QueryTraversalManager mgr = sess.getQueryTraversalManager();
 		mgr.setBatchHint(100);
 		ResultSet rs = mgr.startTraversal();
 		PropertyMap pm = QueryTraversalUtil.processResultSet(rs, 100, map2);
 		// now force another session
-		Session sess2 = repo.login("ent-sales-d2\\sales-admin", "t3stth@t");
+		Session sess2 = repo.login();
 		QueryTraversalManager mgr2 = sess.getQueryTraversalManager();
 		mgr2.setBatchHint(100);
 		rs = mgr2.resumeTraversal(null);
@@ -124,8 +135,10 @@ public class TestTraversal extends TestCase {
 	 */
 	public void testRepeat() throws Exception {
 		map2.clear();
-		Connector repo = new SharepointConnector();
-		Session sess = repo.login("ent-sales-d2\\sales-admin", "t3stth@t");
+        SharepointConnector repo = new SharepointConnector();
+        repo.setUsername(username);
+        repo.setPassword(password);
+		Session sess = repo.login();
 		QueryTraversalManager mgr = sess.getQueryTraversalManager();
 		//finish the iteration
 		QueryTraversalUtil.runTraversal(mgr, -1, map2);
