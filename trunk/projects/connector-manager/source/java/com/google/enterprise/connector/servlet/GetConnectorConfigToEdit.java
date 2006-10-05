@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletResponse;
  * 
  */
 public class GetConnectorConfigToEdit extends HttpServlet {
-  private static final Logger LOG = Logger.getLogger(
+  private static final Logger LOGGER = Logger.getLogger(
     GetConnectorConfigToEdit.class.getName());
 
   /**
@@ -87,11 +87,11 @@ public class GetConnectorConfigToEdit extends HttpServlet {
           manager.getConfigFormForConnector(connectorName, language);
     } catch (ConnectorNotFoundException e) {
       status = e.toString();
-      LOG.info(status);
+      LOGGER.info(status);
       e.printStackTrace();
     } catch (InstantiatorException e) {
       status = e.toString();
-      LOG.info(status);
+      LOGGER.info(status);
       e.printStackTrace();
     }
 

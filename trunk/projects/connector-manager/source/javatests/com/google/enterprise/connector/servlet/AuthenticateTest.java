@@ -30,7 +30,7 @@ import java.util.logging.Logger;
  *
  */
 public class AuthenticateTest extends TestCase {
-  private static final Logger LOG =
+  private static final Logger LOGGER =
     Logger.getLogger(AuthenticateTest.class.getName());
 
   /**
@@ -63,15 +63,15 @@ public class AuthenticateTest extends TestCase {
   }
 
   private void doTest(String xmlBody, String expectedResult) {
-    LOG.info("xmlBody: " + xmlBody);
+    LOGGER.info("xmlBody: " + xmlBody);
     Manager manager = MockManager.getInstance();
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
     Authenticate.handleDoPost(out, xmlBody, manager);
     out.flush();
     StringBuffer result = writer.getBuffer();
-    LOG.info(result.toString());
-    LOG.info(expectedResult);
+    LOGGER.info(result.toString());
+    LOGGER.info(expectedResult);
     Assert.assertEquals (StringUtils.normalizeNewlines(expectedResult), 
         StringUtils.normalizeNewlines(result.toString()));
     out.close();

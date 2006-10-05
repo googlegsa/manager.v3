@@ -53,7 +53,7 @@ public class ServletUtil {
   public static final String XMLTAG_STATUSID = "StatusId";
   public static final String XMLTAG_CONNECTOR_TYPES = "ConnectorTypes";
   public static final String XMLTAG_CONNECTOR_TYPE = "ConnectorType";
-  public static final String XMLTAG_CONNECTOT_STATUS = "ConnectorStatus";
+  public static final String XMLTAG_CONNECTOR_STATUS = "ConnectorStatus";
   public static final String XMLTAG_CONNECTOR_NAME = "ConnectorName";
   public static final String XMLTAG_STATUS = "Status";
   public static final String XMLTAG_CONFIG_FORM = "ConfigForm";

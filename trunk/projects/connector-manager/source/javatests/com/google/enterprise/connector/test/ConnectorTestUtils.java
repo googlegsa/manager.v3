@@ -26,16 +26,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 public class ConnectorTestUtils {
-  
+
   private ConnectorTestUtils() {
     // prevents instantiation
   }
 
   /**
-   * Find a named file on the classpath then read the entire content as a 
-   * String, skipping
-   * comment lines (lines that begin with #) and end-line comments 
-   * (from the first occurrence of // to the end). 
+   * Find a named file on the classpath then read the entire content as a
+   * String, skipping comment lines (lines that begin with #) and end-line
+   * comments (from the first occurrence of // to the end).
+   * 
    * @param filename The name of file on the classpath
    * @return The contents of the reader (skipping comments)
    */
@@ -49,18 +49,19 @@ public class ConnectorTestUtils {
     InputStream s = ConnectorTestUtils.class.getResourceAsStream(filename);
     if (s == null) {
       throw new IllegalArgumentException(
-        "filename must be found on the classpath: " + filename);
+          "filename must be found on the classpath: " + filename);
     }
     InputStreamReader isr = new InputStreamReader(s);
     BufferedReader br = new BufferedReader(isr);
     return streamToString(br);
   }
-  
+
   /**
    * Read a buffered reader and return the entire contents as a String, skipping
-   * comment lines (lines that begin with #) and end-line comments 
-   * (from the first occurrence of // to the end). 
-   * @param br  An Buffered Reader ready for reading
+   * comment lines (lines that begin with #) and end-line comments (from the
+   * first occurrence of // to the end).
+   * 
+   * @param br An Buffered Reader ready for reading
    * @return The contents of the reader (skipping comments)
    */
   public static String streamToString(BufferedReader br) {
@@ -74,20 +75,21 @@ public class ConnectorTestUtils {
         }
         int index = line.indexOf("//");
         if (index == -1) {
-          b.append(line);          
+          b.append(line);
         } else {
           b.append(line.subSequence(0, index));
         }
-        b.append('\n');        
+        b.append('\n');
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
     return new String(b);
   }
-  
+
   /**
    * Read an entire InputStream and return its contents as a String
+   * 
    * @param is InputStream to read
    * @return contents as a String
    */
@@ -99,12 +101,13 @@ public class ConnectorTestUtils {
     } catch (IOException e) {
       throw new IllegalArgumentException("I/O problem reading stream");
     }
-    String res = new String(buf,0,bytesRead);
+    String res = new String(buf, 0, bytesRead);
     return res;
   }
-  
+
   /**
    * Normalizes strings with \r\n newlines to just \n
+   * 
    * @param input String to normalize
    * @return the normalized result
    */
@@ -113,13 +116,24 @@ public class ConnectorTestUtils {
     return result;
   }
 
-  public static String getFileFullPath(String fileName, Context context) throws IOException {
+  /**
+   * Gets the full path of a file by resolving it using the Context. This allows
+   * there to be a different root directory if this is a junit test rather than
+   * a servlet context.  For now, this routine is only for testing.
+   * 
+   * @param fileName A relative file name to resolve
+   * @param context The context
+   * @return The full path name
+   * @throws IOException
+   */
+  public static String getFileFullPath(String fileName, Context context)
+      throws IOException {
     ApplicationContext applicationContext = context.getApplicationContext();
     Resource resource = applicationContext.getResource(fileName);
     File file = resource.getFile();
     String path = file.getAbsolutePath();
     return path;
   }
-  
+
 
 }
