@@ -4,7 +4,6 @@ import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryDocument;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrNode;
-import com.google.enterprise.connector.pusher.DocPusher;
 import com.google.enterprise.connector.pusher.MockFeedConnection;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.PropertyMap;
@@ -102,8 +101,6 @@ public class SpiPropertyMapFromJcrTest extends TestCase {
     return propertyMap;
   }
 
-  private static final String DATASOURCE = "datasource";
-
   public final void testSpiPropertyMapFromJcrFromMockRepo()
       throws RepositoryException {
     {
@@ -113,7 +110,6 @@ public class SpiPropertyMapFromJcrTest extends TestCase {
       MockRepositoryDocument doc = r.getStore().getDocByID("doc1");
 
       MockFeedConnection mockFeedConnection = new MockFeedConnection();
-      DocPusher dpusher = new DocPusher(DATASOURCE, mockFeedConnection);
 
       Node node = new MockJcrNode(doc);
       PropertyMap propertyMap = new SpiPropertyMapFromJcr(node);

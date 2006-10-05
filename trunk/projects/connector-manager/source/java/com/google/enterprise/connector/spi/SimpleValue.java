@@ -43,7 +43,10 @@ public class SimpleValue implements Value {
   public SimpleValue(ValueType t, byte[] v) {
     this.type = t;
     this.stringValue = null;
-    this.byteArrayValue = v;
+    this.byteArrayValue = new byte[v.length];
+    for (int i=0; i<v.length; i++) {
+      this.byteArrayValue[i] = v[i];
+    }
   }
 
   /*

@@ -52,7 +52,7 @@ public class MockRepositoryDocument {
   /**
    * Get the content as a String.  The getContentStream() method should be used
    * in favor of this method.
-   * @return
+   * @return the content as a String
    */
   public String getContent() {
     if (null == content || 0 == content.length()) {
