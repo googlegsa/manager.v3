@@ -255,8 +255,8 @@ public class Context {
         }
         filesystemConnectorConfigStore.setBaseDirectory(baseDirectory);
       } else {
-        // junit context
-        // allow the junit test to call setBaseDirectory() on their own
+        // junit context - we choose to do nothing here.  It is up to the
+        // junit test to call setBaseDirectory() as it wants
       }
     }
 

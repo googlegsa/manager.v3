@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletResponse;
  * 
  */
 public class GetConfigForm extends HttpServlet {
-  private static final Logger LOG =
+  private static final Logger LOGGER =
       Logger.getLogger(GetConfigForm.class.getName());
 
   /**
@@ -60,12 +60,12 @@ public class GetConfigForm extends HttpServlet {
     if (connectorTypeName == null || connectorTypeName.length() < 1) {
       status = ServletUtil.XML_RESPONSE_STATUS_NULL_CONNECTOR_TYPE;
       ServletUtil.writeSimpleResponse(out, status);
-      LOG.severe(status);
+      LOGGER.severe(status);
       return;
     }
     String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
     if (language == null || language.length() < 1) {
-      LOG.info("language is null");
+      LOGGER.info("language is null");
       language = ServletUtil.DEFAULT_LANGUAGE;
     }
 
@@ -78,7 +78,7 @@ public class GetConfigForm extends HttpServlet {
       handleDoGet(out, status, configResponse);
     } catch (ConnectorTypeNotFoundException e1) {
       ServletUtil.writeSimpleResponse(out, e1.toString());
-      LOG.info("Connector Type Not Found Exception");
+      LOGGER.info("Connector Type Not Found Exception");
       e1.printStackTrace();
     }
 

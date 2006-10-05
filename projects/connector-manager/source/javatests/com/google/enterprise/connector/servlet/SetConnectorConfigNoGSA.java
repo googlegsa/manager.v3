@@ -35,7 +35,7 @@ import javax.servlet.http.HttpServletResponse;
  *
  */
 public class SetConnectorConfigNoGSA extends HttpServlet {
-  private static final Logger LOG =
+  private static final Logger LOGGER =
     Logger.getLogger(SetConnectorConfigNoGSA.class.getName());
 
   /**
@@ -62,7 +62,7 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
       configResponse = manager.getConfigForm(connectorTypeName, language);
     } catch (ConnectorTypeNotFoundException e1) {
       ServletUtil.writeSimpleResponse(out, e1.toString());
-      LOG.info("Connector Type Not Found Exception");
+      LOGGER.info("Connector Type Not Found Exception");
       e1.printStackTrace();
       out.close();
       return;

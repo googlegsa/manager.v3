@@ -100,7 +100,7 @@ public class GetConnectorStatus extends HttpServlet {
 
     ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);
     ServletUtil.writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, "0");
-    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOT_STATUS, false);
+    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_STATUS, false);
     ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_CONNECTOR_NAME,
         connectorStatus.getName());
     ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_CONNECTOR_TYPE,
@@ -108,7 +108,7 @@ public class GetConnectorStatus extends HttpServlet {
     ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_STATUS, Integer
         .toString(connectorStatus.getStatus()));
 
-    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOT_STATUS, true);
+    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_STATUS, true);
     ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
   }
 }

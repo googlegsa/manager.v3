@@ -27,12 +27,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Admin servlet for Authenticate
- *
+ * The main purpose of this servlet is to have its "init" method called when the
+ * container starts up. This is by done by means of the web.xml file. But I also
+ * gave it a get and post that do the same thing.
+ * 
  */
-public class StartUp  extends HttpServlet {
+public class StartUp extends HttpServlet {
   private static final Logger LOGGER =
-    Logger.getLogger(StartUp.class.getName());
+      Logger.getLogger(StartUp.class.getName());
 
   public void init() {
     LOGGER.info("init");
@@ -42,9 +44,9 @@ public class StartUp  extends HttpServlet {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    LOGGER.info("init done");   
+    LOGGER.info("init done");
   }
-  
+
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
     doPost(req, res);
@@ -54,15 +56,17 @@ public class StartUp  extends HttpServlet {
       throws ServletException, IOException {
     ServletContext servletContext = this.getServletContext();
     doConnectorManagerStartup(servletContext);
-    res.setContentType("text/html");
+    res.setContentType(ServletUtil.MIMETYPE_HTML);
     PrintWriter out = res.getWriter();
-    out.println("<HTML><HEAD><TITLE>Connector Manager Started</TITLE>"+
-                "</HEAD><BODY>Connector manager has been successfully started.</BODY></HTML>");
+    out
+        .println("<HTML><HEAD><TITLE>Connector Manager Started</TITLE>"
+            + "</HEAD><BODY>Connector manager has been successfully started.</BODY></HTML>");
     out.close();
     LOGGER.info("Connector Manager started.");
   }
 
-  public static void doConnectorManagerStartup(ServletContext servletContext) throws IOException {
+  public static void doConnectorManagerStartup(ServletContext servletContext)
+      throws IOException {
     Context context = Context.getInstance(servletContext);
     context.start();
   }

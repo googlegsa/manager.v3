@@ -41,7 +41,7 @@ import org.w3c.dom.NodeList;
  *
  */
 public class Authenticate  extends HttpServlet {
-  private static final Logger LOG =
+  private static final Logger LOGGER =
     Logger.getLogger(Authenticate.class.getName());
 
   /**
@@ -75,7 +75,7 @@ public class Authenticate  extends HttpServlet {
     if (xmlBody.length() < 1) {
       status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_REQUEST;
       ServletUtil.writeSimpleResponse(out, status);
-      LOG.info("The request is empty");
+      LOGGER.info("The request is empty");
       return;
     }
 
@@ -95,7 +95,7 @@ public class Authenticate  extends HttpServlet {
         document.getElementsByTagName(ServletUtil.XMLTAG_AUTHN_REQUEST);
     if (nodeList.getLength() == 0) {
       status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE;
-      LOG.info(ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE);
+      LOGGER.info(ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE);
       ServletUtil.writeSimpleResponse(out, status);
       return;
     }
@@ -104,7 +104,7 @@ public class Authenticate  extends HttpServlet {
       document.getElementsByTagName(ServletUtil.XMLTAG_AUTHN_CREDENTIAL);
     if (credList.getLength() == 0) {
       status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE;
-      LOG.info(ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE);
+      LOGGER.info(ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE);
       ServletUtil.writeSimpleResponse(out, status);
       return;
     }
