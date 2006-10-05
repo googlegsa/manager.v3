@@ -252,8 +252,8 @@ public class ProductionManager implements Manager {
   public void setConnectorManagerConfig(boolean certAuth,
       String feederGateHost, int feederGatePort, int maxFeedRate)
       throws PersistentStoreException {
-    // TODO - need a real implementation here
-    throw new UnsupportedOperationException();
+    // TODO: need a real implementation here for now we read this configuration
+    // through Spring.
   }
 
   /*
