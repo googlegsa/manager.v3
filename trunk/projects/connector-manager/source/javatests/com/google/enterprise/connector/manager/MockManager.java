@@ -211,9 +211,25 @@ public class MockManager implements Manager {
     // do nothing
   }
 
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.google.enterprise.connector.manager.Manager#setSchedule(
+   *      java.lang.String, int, java.lang.String)
+   */
   public void setSchedule(String connectorName, int load, String timeIntervals) {
     // TODO Auto-generated method stub
 
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.google.enterprise.connector.manager.Manager#removeConnector(
+   *      java.lang.String)
+   */
+  public void removeConnector(String connectorName) throws ConnectorNotFoundException, PersistentStoreException {
+    LOGGER.info("Removing connector: " + connectorName);
   }
 
 }
