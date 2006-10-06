@@ -101,6 +101,7 @@ public class SetConnectorConfig extends HttpServlet {
     PrintWriter out = res.getWriter();
     res.setContentType(ServletUtil.MIMETYPE_XML);
     String xmlBody = StringUtils.readAllToString(reader);
+    xmlBody = ServletUtil.stripCmPrefix(xmlBody);
     if (xmlBody.length() < 1) {
       status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_REQUEST;
       ServletUtil.writeSimpleResponse(out, status);
@@ -116,5 +117,4 @@ public class SetConnectorConfig extends HttpServlet {
         out, handler.getStatus(), handler.getConfigRes());
     out.close();
   }
-
 }

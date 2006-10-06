@@ -83,7 +83,8 @@ public class GetConfigFormTest extends TestCase {
       "  <StatusId>0</StatusId>\n" +
       "  <ConfigureResponse>\n" +
       "    <message>" + message + "</message>\n" +
-      "    <FormSnippet><![CDATA[" + formSnippet + "]]></FormSnippet>\n" +
+      "    <FormSnippet><![CDATA[" + ServletUtil.prependCmPrefix(formSnippet) + 
+      "]]></FormSnippet>\n" +
       "  </ConfigureResponse>\n" +
       "</CmResponse>\n";      
     ConfigureResponse configResponse =
