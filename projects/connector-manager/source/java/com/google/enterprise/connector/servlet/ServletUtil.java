@@ -142,6 +142,8 @@ public class ServletUtil {
       "            ",
       "              "};
 
+  private static final String PREFIX_CM = " name=\"CM_";
+  private static final String PREFIX_NO_CM = " name=\"";
 
   private static Logger LOG =
 	    Logger.getLogger(ServletUtil.class.getName());
@@ -285,7 +287,7 @@ public class ServletUtil {
       if (configRes.getFormSnippet() != null) {
         writeXMLElement(
             out, 2, ServletUtil.XMLTAG_FORM_SNIPPET,
-            "<![CDATA[" + configRes.getFormSnippet() + "]]>");
+            "<![CDATA[" + prependCmPrefix(configRes.getFormSnippet()) + "]]>");
       }
       writeXMLTag(out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, true);
     }
@@ -376,5 +378,25 @@ public class ServletUtil {
 
   public static void htmlPage(PrintWriter out) {
     out.println("</BODY></HTML>");
+  }
+
+  /*
+   * Given a String such as:
+   * <Param name="CM_Color" value="a"/> <Param name="CM_Password" value="a"/>
+   * 
+   * Return a String such as:
+   * <Param name="Color" value="a"/> <Param name="Password" value="a"/>
+   */
+  public static String stripCmPrefix(String str) {
+    String result = str.replaceAll(PREFIX_CM, PREFIX_NO_CM);
+    return result;
+  }
+  
+  /*
+   * Inverse operation for stripCmPrefix.
+   */
+  public static String prependCmPrefix(String str) {
+    String result = str.replaceAll(PREFIX_NO_CM, PREFIX_CM);
+    return result;
   }
 }

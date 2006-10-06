@@ -23,6 +23,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -80,6 +81,8 @@ public class SetConnectorConfigHandler {
     } catch (ConnectorManagerException e) {
       LOG.info(e.getMessage());
       status = e.getMessage();
+    } catch (Throwable t) {
+      LOG.log(Level.WARNING, "", t);
     }
   }
 
