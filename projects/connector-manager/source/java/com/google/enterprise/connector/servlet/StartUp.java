@@ -58,9 +58,9 @@ public class StartUp extends HttpServlet {
     doConnectorManagerStartup(servletContext);
     res.setContentType(ServletUtil.MIMETYPE_HTML);
     PrintWriter out = res.getWriter();
-    out
-        .println("<HTML><HEAD><TITLE>Connector Manager Started</TITLE>"
-            + "</HEAD><BODY>Connector manager has been successfully started.</BODY></HTML>");
+    out.println("<HTML><HEAD><TITLE>Connector Manager Started</TITLE></HEAD>"
+        + "<BODY>Connector manager has been successfully started.</BODY>"
+        + "</HTML>");
     out.close();
     LOGGER.info("Connector Manager started.");
   }

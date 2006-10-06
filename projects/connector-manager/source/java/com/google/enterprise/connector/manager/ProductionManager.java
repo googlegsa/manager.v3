@@ -239,7 +239,7 @@ public class ProductionManager implements Manager {
       throws ConnectorNotFoundException, PersistentStoreException,
       InstantiatorException {
     instantiator.setConnectorConfig(connectorName, connectorTypeName,
-          configData);
+        configData);
     return null;
   }
 
@@ -266,5 +266,16 @@ public class ProductionManager implements Manager {
     
     // TODO: must respect load.  What is this load?  Is it docsPerMinute?
     throw new UnsupportedOperationException();
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.google.enterprise.connector.manager.Manager#removeConnector(
+   *      java.lang.String)
+   */
+  public void removeConnector(String connectorName)
+      throws ConnectorNotFoundException, PersistentStoreException {
+    throw new UnsupportedOperationException();    
   }
 }

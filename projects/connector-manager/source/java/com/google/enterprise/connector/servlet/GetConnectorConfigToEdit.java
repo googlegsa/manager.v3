@@ -74,7 +74,7 @@ public class GetConnectorConfigToEdit extends HttpServlet {
    * 
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
-  throws ServletException, IOException {
+      throws ServletException, IOException {
     doGet(req, res);
   }
 

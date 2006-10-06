@@ -182,4 +182,15 @@ public interface Manager {
   public void setSchedule(String connectorName, int load, String timeIntervals)
       throws ConnectorNotFoundException, PersistentStoreException;
 
+  /*
+   * Remove a connector for a given Connector.
+   * 
+   * @param connectorName
+   * @throws ConnectorNotFoundException If the named connector is not known to
+   *         this manager.
+   * @throws PersistentStoreException If there was a problem storing the
+   *         configuration
+   */
+  public void removeConnector(String connectorName)
+      throws ConnectorNotFoundException, PersistentStoreException;
 }

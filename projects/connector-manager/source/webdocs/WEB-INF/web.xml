@@ -107,6 +107,10 @@
         <servlet-name>GetConnectorConfigToEdit</servlet-name>
         <servlet-class>com.google.enterprise.connector.servlet.GetConnectorConfigToEdit</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>RemoveConnector</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.RemoveConnector</servlet-class>
+    </servlet>
  
     <servlet-mapping>
         <servlet-name>SetManagerConfig</servlet-name>
@@ -185,5 +189,9 @@
     <servlet-mapping>
         <servlet-name>GetConnectorConfigToEdit</servlet-name>
 	<url-pattern>/getConnectorConfigToEdit</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RemoveConnector</servlet-name>
+	<url-pattern>/removeConnector</url-pattern>
     </servlet-mapping>
 </web-app>
