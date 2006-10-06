@@ -147,7 +147,7 @@ public class FilesystemConnectorConfigStore implements ConnectorConfigStore {
    * 
    * @see com.google.enterprise.connector.persist.ConnectorConfigStore#getConnectorType(java.lang.String)
    */
-  public String getConnectorType(String connectorName)
+  public String getConnectorTypeName(String connectorName)
       throws ConnectorNotFoundException {
     initialize();
     ConnectorConfigInfo result =
@@ -178,7 +178,7 @@ public class FilesystemConnectorConfigStore implements ConnectorConfigStore {
     }
   }
 
-  public void dropConnector(String connectorName) {
+  public void dropConnectorFromStore(String connectorName) {
     initialize();
     ConnectorConfigInfo info =
         (ConnectorConfigInfo) connectorConfigMap.get(connectorName);

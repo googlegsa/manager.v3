@@ -297,12 +297,12 @@ public class SpringConnectorInstantiator implements ConnectorInstantiator {
    */
   public void dropConnector(String connectorName) throws InstantiatorException {
     initialize();
-    store.dropConnector(connectorName);
+    store.dropConnectorFromStore(connectorName);
     connectorMap.remove(connectorName);
   }
 
   public String getConnectorType(String connectorName) throws ConnectorNotFoundException {
-    String connectorType = store.getConnectorType(connectorName);
+    String connectorType = store.getConnectorTypeName(connectorName);
     return connectorType;
   }
 

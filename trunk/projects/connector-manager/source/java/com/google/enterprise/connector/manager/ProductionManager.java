@@ -172,7 +172,7 @@ public class ProductionManager implements Manager {
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String language) throws ConnectorNotFoundException, InstantiatorException {
     String connectorTypeName =
-        connectorConfigStore.getConnectorType(connectorName);
+        connectorConfigStore.getConnectorTypeName(connectorName);
     ConfigureResponse response =
         instantiator.getConfigFormForConnector(connectorName,
             connectorTypeName, language);
@@ -188,7 +188,7 @@ public class ProductionManager implements Manager {
   public ConnectorStatus getConnectorStatus(String connectorName) {
     String connectorTypeName;
     try {
-      connectorTypeName = connectorConfigStore.getConnectorType(connectorName);
+      connectorTypeName = connectorConfigStore.getConnectorTypeName(connectorName);
     } catch (ConnectorNotFoundException e) {
       // TODO: this should become part of the signature - so we should just let
       // this exception bubble up
