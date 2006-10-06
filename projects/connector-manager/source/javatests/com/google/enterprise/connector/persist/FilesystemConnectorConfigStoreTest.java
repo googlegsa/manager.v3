@@ -75,7 +75,7 @@ public class FilesystemConnectorConfigStoreTest extends TestCase {
   private void getConnectorInfo(String connectorName, ConnectorConfigStore store)
       throws ConnectorNotFoundException, PersistentStoreException {
     System.out.println(connectorName + " "
-        + store.getConnectorType(connectorName) + " "
+        + store.getConnectorTypeName(connectorName) + " "
         + store.getConnectorResourceString(connectorName));
   }
 }

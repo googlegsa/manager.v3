@@ -36,7 +36,7 @@ public interface ConnectorConfigStore {
    * @return its type, as a String
    * @throws ConnectorNotFoundException if the named connector is not found
    */
-  public String getConnectorType(String connectorName)
+  public String getConnectorTypeName(String connectorName)
       throws ConnectorNotFoundException;
 
   /**
@@ -57,7 +57,7 @@ public interface ConnectorConfigStore {
    * 
    * @param connectorName
    */
-  public void dropConnector(String connectorName);
+  public void dropConnectorFromStore(String connectorName);
 
   /**
    * Creates a new connector config for the named connector of the named type.
