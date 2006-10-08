@@ -192,5 +192,6 @@ public interface Manager {
    *         configuration
    */
   public void removeConnector(String connectorName)
-      throws ConnectorNotFoundException, PersistentStoreException;
+      throws ConnectorNotFoundException, PersistentStoreException,
+      InstantiatorException;
 }
