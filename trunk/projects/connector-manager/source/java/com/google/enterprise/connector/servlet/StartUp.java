@@ -47,6 +47,11 @@ public class StartUp extends HttpServlet {
     LOGGER.info("init done");
   }
 
+  public void destroy() {
+    LOGGER.info("destroy");
+    Context.getInstance().shutdown(true);
+  }
+  
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
     doPost(req, res);

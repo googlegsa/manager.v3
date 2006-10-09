@@ -25,6 +25,7 @@ import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
@@ -295,11 +296,14 @@ public class Context {
     return applicationContext;
   }
 
-  void shutdown(boolean force) {
+  public void shutdown(boolean force) {
+    LOGGER.log(Level.INFO, "shutdown");
     if (!isFeeding) {
       return;
     }
-    traversalScheduler.shutdown(force, WorkQueue.DEFAULT_SHUTDOWN_TIMEOUT);
+    if (null != traversalScheduler) {
+      traversalScheduler.shutdown(force, WorkQueue.DEFAULT_SHUTDOWN_TIMEOUT);
+    }
   }
 
   /**
