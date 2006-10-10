@@ -156,7 +156,6 @@ public class ConnectorInterfaces {
 
   private Session getSession() throws InstantiatorException {
     Session s = null;
-    getCredentials();
     try {
       s = connector.login();
     } catch (LoginException e) {
@@ -169,12 +168,5 @@ public class ConnectorInterfaces {
     }
     return s;
   }
-
-  private void getCredentials() {
-    // TODO we have to move this back into the Connector config itself
-    password = "";
-    username = "";
-  }
-
 
 }

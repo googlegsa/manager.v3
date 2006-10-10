@@ -139,12 +139,16 @@ public class Context {
   }
 
   /*
-   * Choose a deafult context, if it wasn't specified in any other way. For now,
+   * Choose a default context, if it wasn't specified in any other way. For now,
    * we chooseservlet context by default.
    */
   private void initApplicationContext() {
     if (applicationContext == null) {
-      setServletContext();
+      if (servletContext != null) {
+        setServletContext();        
+      } else {
+        setJunitContext();
+      }
     }
     if (applicationContext == null) {
       throw new IllegalStateException("Spring failure - no application context");
@@ -293,6 +297,7 @@ public class Context {
    * @return the applicationContext
    */
   public ApplicationContext getApplicationContext() {
+    initApplicationContext();
     return applicationContext;
   }
 
@@ -317,5 +322,10 @@ public class Context {
       return "webapps/connector-manager/WEB-INF/";
     }
     return "testdata/mocktestdata/";
+  }
+
+  public String getCommonDirPath() {
+    String result = "testdata/mocktestdata/";
+    return result;
   }
 }

@@ -33,17 +33,39 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * A list of MockRepositoryEvents.  The value of this class is its 
- * constructor, which knows how to create events from a file, using json
+ * A list of MockRepositoryEvents. The value of this class is its constructor,
+ * which knows how to create events from a file, using json
  */
 public class MockRepositoryEventList {
-  List eventList;
-  
-  private static Logger LOGGER = Logger.getLogger(MockRepositoryEventList.class.getName());
+  private List eventList = null;
+  private String workDirName = null;
+  private String repositoryFileName = null;
+
+  private static Logger LOGGER =
+      Logger.getLogger(MockRepositoryEventList.class.getName());
 
   /**
-   * Looks for the supplied filename on the classpath, and if it can find it, 
+   * @param repositoryFileName the repositoryFileName to set
+   */
+  public void setRepositoryFileName(String repositoryFileName) {
+    this.repositoryFileName = repositoryFileName;
+  }
+
+  /**
+   * @param workDirName the workDirName to set
+   */
+  public void setWorkDirName(String workDirName) {
+    this.workDirName = workDirName;
+  }
+
+  public MockRepositoryEventList() {
+    ;
+  }
+
+  /**
+   * Looks for the supplied filename on the classpath, and if it can find it,
    * reads the file and parses
+   * 
    * @param filename
    */
   public MockRepositoryEventList(String filename) {
@@ -51,10 +73,14 @@ public class MockRepositoryEventList {
     String filePrefix = Context.getInstance().getRepositoryFilePrefix();
     File inputFile = new File(filePrefix + filename);
     try {
-      LOGGER.info("Base dir path: "+ inputFile.getCanonicalPath());
+      LOGGER.info("Base dir path: " + inputFile.getCanonicalPath());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+    initFromFile(inputFile);
+  }
+
+  private void initFromFile(File inputFile) {
     InputStream s;
     try {
       s = new FileInputStream(inputFile);
@@ -101,7 +127,25 @@ public class MockRepositoryEventList {
   }
 
   public List getEventList() {
+    if (eventList != null) {
+      return eventList;
+    }
+    eventList = new LinkedList();
+    if (repositoryFileName != null) {
+      if (workDirName != null) {
+        File workDir = new File(workDirName);
+        if (!workDir.exists()) {
+          throw new IllegalArgumentException("Specified working directory "
+              + workDir.getPath() + " does not exist");
+        }
+        File repositoryFile = new File(workDir, repositoryFileName);
+        initFromFile(repositoryFile);
+      } else {
+        File repositoryFile = new File(repositoryFileName);
+        initFromFile(repositoryFile);
+      }
+    }
     return eventList;
   }
-  
+
 }

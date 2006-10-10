@@ -20,6 +20,7 @@ import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
+import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
 import com.google.enterprise.connector.traversal.Traverser;
 
@@ -34,9 +35,7 @@ import org.springframework.core.io.ResourceLoader;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Tests for the Spring-base Connector Instantiator
@@ -92,20 +91,6 @@ public class SpringConnectorInstantiatorTest extends TestCase {
     return map;
   }
 
-  private void compareMaps(Map map1, Map map2, String map1name, String map2name) {
-    Set set1 = map1.keySet();
-    Set set2 = map2.keySet();
-    Assert.assertTrue("there is a key in " + map2name + " that's not in "
-        + map1name, set1.containsAll(set2));
-    Assert.assertTrue("there is a key in " + map1name + " that's not in "
-        + map2name, set2.containsAll(set1));
-
-    for (Iterator i = set1.iterator(); i.hasNext();) {
-      Object next = i.next();
-      Assert.assertEquals(map1.get(next), map2.get(next));
-    }
-  }
-
   private void verifyInterfaces(String connectorName,
       ConnectorInstantiator inst, Map expectedMap)
       throws ConnectorNotFoundException, InstantiatorException {
@@ -127,6 +112,6 @@ public class SpringConnectorInstantiatorTest extends TestCase {
     Assert.assertNotNull(
         "should get a non-null configMap for " + connectorName, configMap);
 
-    compareMaps(expectedMap, configMap, "expectedMap", "configMap");
+    ConnectorTestUtils.compareMaps(expectedMap, configMap, "expectedMap", "configMap");
   }
 }
