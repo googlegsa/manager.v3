@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.scheduler;
 
+import com.google.enterprise.connector.persist.ConnectorScheduleStore;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,40 +37,37 @@ public class HostLoadManager {
    */
   private long periodInMillis;
   
-  /* 
-   * docs per second (TODO: we want to remove this and replace with 
-   * configuration store and determine the right value on a per connector 
-   * instance basis)  
+  /**
+   * Used for determining the loads of the schedules.
    */
-  private int maxFeedRate; 
+  private ConnectorScheduleStore scheduleStore;
   
   /**
-   * TODO: constructor should take a configuration store object which will tell
-   * us what the real maxFeedRate values are for each connector.
    * By default, the HostLoadManager will use a one minute period for
    * calculating the batchHint.
    * @param maxFeedRate
    */
-  public HostLoadManager(int maxFeedRate) {
-    this(MINUTE_IN_MILLIS, maxFeedRate);
+  public HostLoadManager(ConnectorScheduleStore scheduleStore) {
+    this(MINUTE_IN_MILLIS, scheduleStore);
   }
   
   /**
-   * TODO: constructor should take a configuration store object which will tell
-   * us what the real maxFeedRate values are for each connector.
    * @param periodInMillis time period in which we enforce the maxFeedRate
    * @param maxFeedRate
    */
-  public HostLoadManager(long periodInMillis, int maxFeedRate) {
+  public HostLoadManager(long periodInMillis, 
+      ConnectorScheduleStore scheduleStore) {
     this.periodInMillis = periodInMillis;
-    this.maxFeedRate = maxFeedRate;
+    this.scheduleStore = scheduleStore;
     
     startTimeInMillis = System.currentTimeMillis();
     connectorNameToNumDocsTraversed = new HashMap();
   }
   
-  private int getMaxFeedRate(String connectorName) {
-    return maxFeedRate;  // TODO: actually get value from configuration store
+  private int getMaxLoad(String connectorName) {
+    String scheduleStr = scheduleStore.getConnectorSchedule(connectorName);
+    Schedule schedule = new Schedule(scheduleStr);
+    return schedule.getLoad();
   }
   
   /**
@@ -127,7 +126,7 @@ public class HostLoadManager {
    */
   public int determineBatchHint(String connectorName) {
     int maxDocsPerPeriod = 
-      (int) ((periodInMillis / 1000f) * getMaxFeedRate(connectorName));
+      (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
     int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
     int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
     if (remainingDocsToTraverse > BATCH_SIZE) {

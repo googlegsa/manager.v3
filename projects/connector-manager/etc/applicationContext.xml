@@ -60,6 +60,8 @@
 		class="com.google.enterprise.connector.manager.ProductionManager">
 		<property name="connectorConfigStore"
 			ref="ConnectorConfigStore" />
+                <property name="connectorScheduleStore"
+                        ref="ConnectorScheduleStore" />
 		<property name="instantiator" ref="Instantiator" />
 	</bean>
 

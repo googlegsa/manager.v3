@@ -79,7 +79,7 @@ public class TraversalScheduler implements Scheduler {
     this.workQueue = workQueue;
     this.configStore = configStore;
     this.scheduleStore = scheduleStore;
-    this.hostLoadManager = new HostLoadManager(100);
+    this.hostLoadManager = new HostLoadManager(scheduleStore);
     this.isInitialized = false;
     this.isShutdown = false;
     this.removedConnectors = new HashSet();
