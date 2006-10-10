@@ -14,25 +14,44 @@
 
 package com.google.enterprise.connector.scheduler;
 
+import com.google.enterprise.connector.persist.ConnectorScheduleStore;
+import com.google.enterprise.connector.persist.MockConnectorScheduleStore;
+
 import junit.framework.Assert;
 import junit.framework.TestCase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Test HostLoadManager class.
  */
 public class HostLoadManagerTest extends TestCase {
+  private ConnectorScheduleStore getScheduleStore() {
+    return new MockConnectorScheduleStore();
+  }
+  
+  private static void addLoad(ConnectorScheduleStore scheduleStore, 
+      String connectorName, int load) {
+    Schedule schedule = new Schedule(connectorName + ":" + load + ":0-0");
+    String connectorSchedule = schedule.toString();
+    scheduleStore.storeConnectorSchedule(connectorName, connectorSchedule);
+  }
+  
   public void testMaxFeedRateLimit() {
-    final int maxFeedRate = 1;  // 1 dps == 60 dpm
     final String connectorName = "cn1";
-    HostLoadManager hostLoadManager = new HostLoadManager(maxFeedRate);
+    ConnectorScheduleStore scheduleStore = getScheduleStore();
+    addLoad(scheduleStore, connectorName, 60);
+    HostLoadManager hostLoadManager = new HostLoadManager(scheduleStore);
     hostLoadManager.updateNumDocsTraversed(connectorName, 60);
     Assert.assertEquals(0, hostLoadManager.determineBatchHint(connectorName));
   }
   
   public void testMultipleUpdates() {
-    final int maxFeedRate = 1;  // 1 dps == 60 dpm
     final String connectorName = "cn1";
-    HostLoadManager hostLoadManager = new HostLoadManager(maxFeedRate);
+    ConnectorScheduleStore scheduleStore = getScheduleStore();
+    addLoad(scheduleStore, connectorName, 60);
+    HostLoadManager hostLoadManager = new HostLoadManager(scheduleStore);
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
@@ -40,10 +59,12 @@ public class HostLoadManagerTest extends TestCase {
   }
   
   public void testMultipleConnectors() {
-    final int maxFeedRate = 1;  // 1 dps == 60 dpm
     final String connectorName1 = "cn1";
     final String connectorName2 = "cn2";
-    HostLoadManager hostLoadManager = new HostLoadManager(maxFeedRate);
+    ConnectorScheduleStore scheduleStore = getScheduleStore();
+    addLoad(scheduleStore, connectorName1, 60);
+    addLoad(scheduleStore, connectorName2, 60);
+    HostLoadManager hostLoadManager = new HostLoadManager(scheduleStore);
     hostLoadManager.updateNumDocsTraversed(connectorName1, 60);
     Assert.assertEquals(0, hostLoadManager.determineBatchHint(connectorName1));
 
@@ -53,10 +74,11 @@ public class HostLoadManagerTest extends TestCase {
   
   public void testPeriod() {
     final long periodInMillis = 1000;
-    final int maxFeedRate = 60;  // 60 dps
     final String connectorName = "cn1";
+    ConnectorScheduleStore scheduleStore = getScheduleStore();
+    addLoad(scheduleStore, connectorName, 3600);
     HostLoadManager hostLoadManager = 
-      new HostLoadManager(periodInMillis, maxFeedRate);
+      new HostLoadManager(periodInMillis, scheduleStore);
     hostLoadManager.updateNumDocsTraversed(connectorName, 55);
     Assert.assertEquals(5, hostLoadManager.determineBatchHint(connectorName));
     // sleep a period (and then some) so that batchHint is reset 

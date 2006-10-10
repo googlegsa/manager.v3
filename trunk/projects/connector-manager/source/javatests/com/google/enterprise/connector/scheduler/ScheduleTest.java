@@ -18,6 +18,7 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -25,7 +26,7 @@ import java.util.List;
  */
 public class ScheduleTest extends TestCase {
   public void testSerialization() {
-    final String str = "connector1:1-2:3-5";
+    final String str = "connector1:60:1-2:3-5";
     
     List intervals = new ArrayList();
     ScheduleTimeInterval interval1 = 
@@ -34,10 +35,10 @@ public class ScheduleTest extends TestCase {
       new ScheduleTimeInterval(new ScheduleTime(3), new ScheduleTime(5));
     intervals.add(interval1);
     intervals.add(interval2);
-    Schedule schedule = new Schedule("connector1", intervals);
+    Schedule schedule = new Schedule("connector1", 60, intervals);
     Assert.assertEquals(str, schedule.toString());
     
-    Schedule schedule2 = new Schedule("whatever", null);
+    Schedule schedule2 = new Schedule("whatever", 30, Collections.EMPTY_LIST);
     schedule2.readString(str);
     Assert.assertEquals(str, schedule2.toString());
     

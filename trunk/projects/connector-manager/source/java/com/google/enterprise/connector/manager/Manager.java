@@ -172,7 +172,7 @@ public interface Manager {
    * Set schedule for a given Connector.
    * 
    * @param connectorName
-   * @param load The hostload as an integer
+   * @param load The hostload (in docs per minute) as an integer
    * @param timeIntervals Time intervals in the format of 1-2:3-8
    * @throws ConnectorNotFoundException If the named connector is not known to
    *         this manager.

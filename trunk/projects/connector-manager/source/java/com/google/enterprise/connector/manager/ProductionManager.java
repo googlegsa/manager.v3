@@ -18,8 +18,10 @@ import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorConfigStore;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.persist.ConnectorScheduleStore;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
+import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -46,7 +48,8 @@ public class ProductionManager implements Manager {
 
   Instantiator instantiator;
   ConnectorConfigStore connectorConfigStore;
-
+  ConnectorScheduleStore connectorScheduleStore;
+  
   public ProductionManager() {
   }
 
@@ -58,6 +61,13 @@ public class ProductionManager implements Manager {
     this.connectorConfigStore = connectorConfigStore;
   }
 
+  /**
+   * @param connectorScheduleStore the connectorScheduleStore to set
+   */
+  public void setConnectorScheduleStore(
+      ConnectorScheduleStore connectorScheduleStore) {
+    this.connectorScheduleStore = connectorScheduleStore;
+  }
 
   /**
    * @param instantiator the instantiator to set
@@ -264,8 +274,11 @@ public class ProductionManager implements Manager {
    */
   public void setSchedule(String connectorName, int load, String timeIntervals) {
     
-    // TODO: must respect load.  What is this load?  Is it docsPerMinute?
-    throw new UnsupportedOperationException();
+    Schedule schedule =
+      new Schedule(connectorName + ":" + load + ":" + timeIntervals);
+    String connectorSchedule = schedule.toString();
+    connectorScheduleStore.storeConnectorSchedule(connectorName,
+      connectorSchedule);
   }
 
   /*

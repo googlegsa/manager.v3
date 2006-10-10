@@ -164,7 +164,7 @@ public class TraversalSchedulerTest extends TestCase {
     intervals.add(new ScheduleTimeInterval(
       new ScheduleTime(0),
       new ScheduleTime(0)));
-    Schedule schedule = new Schedule(traverserName, intervals);
+    Schedule schedule = new Schedule(traverserName, 60, intervals);
     schedules.add(schedule);
     
     return schedules;
