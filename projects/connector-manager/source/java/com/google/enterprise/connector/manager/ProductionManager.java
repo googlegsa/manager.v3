@@ -16,7 +16,6 @@ package com.google.enterprise.connector.manager;
 
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
-import com.google.enterprise.connector.persist.ConnectorConfigStore;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorScheduleStore;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -47,18 +46,9 @@ public class ProductionManager implements Manager {
       Logger.getLogger(ProductionManager.class.getName());
 
   Instantiator instantiator;
-  ConnectorConfigStore connectorConfigStore;
   ConnectorScheduleStore connectorScheduleStore;
   
   public ProductionManager() {
-  }
-
-
-  /**
-   * @param connectorConfigStore the connectorConfigStore to set
-   */
-  public void setConnectorConfigStore(ConnectorConfigStore connectorConfigStore) {
-    this.connectorConfigStore = connectorConfigStore;
   }
 
   /**
@@ -68,7 +58,7 @@ public class ProductionManager implements Manager {
       ConnectorScheduleStore connectorScheduleStore) {
     this.connectorScheduleStore = connectorScheduleStore;
   }
-
+  
   /**
    * @param instantiator the instantiator to set
    */
@@ -182,7 +172,7 @@ public class ProductionManager implements Manager {
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String language) throws ConnectorNotFoundException, InstantiatorException {
     String connectorTypeName =
-        connectorConfigStore.getConnectorTypeName(connectorName);
+        instantiator.getConnectorTypeName(connectorName);
     ConfigureResponse response =
         instantiator.getConfigFormForConnector(connectorName,
             connectorTypeName, language);
@@ -198,7 +188,7 @@ public class ProductionManager implements Manager {
   public ConnectorStatus getConnectorStatus(String connectorName) {
     String connectorTypeName;
     try {
-      connectorTypeName = connectorConfigStore.getConnectorTypeName(connectorName);
+      connectorTypeName = instantiator.getConnectorTypeName(connectorName);
     } catch (ConnectorNotFoundException e) {
       // TODO: this should become part of the signature - so we should just let
       // this exception bubble up
@@ -216,7 +206,7 @@ public class ProductionManager implements Manager {
   public List getConnectorStatuses() {
     List result = new ArrayList();
     String connectorName;
-    Iterator iter = connectorConfigStore.getConnectorNames();
+    Iterator iter = instantiator.getConnectorNames();
     while (iter.hasNext()) {
       connectorName = (String) iter.next();
       result.add(getConnectorStatus(connectorName));

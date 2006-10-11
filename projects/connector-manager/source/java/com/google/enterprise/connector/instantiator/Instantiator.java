@@ -123,4 +123,23 @@ public interface Instantiator {
       String connectorTypeName, Map configKeys)
       throws ConnectorNotFoundException, ConnectorTypeNotFoundException,
       InstantiatorException;
+  
+  /**
+   * Get the names of all known connectors
+   * 
+   * @return an Iterator of String names
+   */
+  public Iterator getConnectorNames();
+
+  /**
+   * Get the type for a known connector
+   * 
+   * @param connectorName the connector to look up
+   * @return its type, as a String
+   * @throws ConnectorNotFoundException if the named connector is not found
+   */
+  public String getConnectorTypeName(String connectorName)
+      throws ConnectorNotFoundException;
+
+
 }

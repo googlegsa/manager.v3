@@ -16,7 +16,6 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
-import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
@@ -32,7 +31,7 @@ import java.util.Map;
 /**
  * 
  */
-public class SpringInstantiator implements InstantiatorConfigStore {
+public class SpringInstantiator implements Instantiator {
 
   TypeMap typeMap = null;
   InstanceMap instanceMap = null;
@@ -197,32 +196,11 @@ public class SpringInstantiator implements InstantiatorConfigStore {
   /*
    * (non-Javadoc)
    * 
-   * @see com.google.enterprise.connector.persist.ConnectorConfigStore#dropConnectorFromStore(java.lang.String)
-   */
-  public void dropConnectorFromStore(String connectorName) {
-    initialize();
-    instanceMap.dropConnector(connectorName);
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
    * @see com.google.enterprise.connector.persist.ConnectorConfigStore#getConnectorNames()
    */
   public Iterator getConnectorNames() {
     initialize();
     return instanceMap.keySet().iterator();
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.google.enterprise.connector.persist.ConnectorConfigStore#getConnectorResourceString(java.lang.String)
-   */
-  public String getConnectorResourceString(String connectorName)
-      throws ConnectorNotFoundException, PersistentStoreException {
-    initialize();
-    throw new UnsupportedOperationException();
   }
 
   /*
@@ -238,19 +216,6 @@ public class SpringInstantiator implements InstantiatorConfigStore {
       throw new ConnectorNotFoundException();
     }
     return instanceInfo.getName();
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.google.enterprise.connector.persist.ConnectorConfigStore#setConnectorConfig(java.lang.String,
-   *      java.lang.String, java.lang.String)
-   */
-  public void setConnectorConfig(String connectorName,
-      String connectorTypeName, String newConfig)
-      throws PersistentStoreException {
-    // do nothing - this was only called by the instantiator implementation
-    // anyway
   }
 
 }

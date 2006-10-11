@@ -22,7 +22,6 @@ import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.MockConnectorStateStore;
-import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.AuthenticationManager;
@@ -52,7 +51,7 @@ import javax.jcr.Repository;
 /**
  * 
  */
-public class MockInstantiator implements InstantiatorConfigStore {
+public class MockInstantiator implements Instantiator {
   public static final String TRAVERSER_NAME1 = "foo";
   public static final String TRAVERSER_NAME2 = "bar";
   public static final String TRAVERSER_NAME_NOOP = "noop";
@@ -212,23 +211,12 @@ public class MockInstantiator implements InstantiatorConfigStore {
     throw new UnsupportedOperationException();
   }
 
-  public void dropConnectorFromStore(String connectorName) {
-    ;
-  }
-
   public Iterator getConnectorNames() {
     return connectorMap.keySet().iterator();
-  }
-
-  public String getConnectorResourceString(String connectorName) throws ConnectorNotFoundException, PersistentStoreException {
-    return "";
   }
 
   public String getConnectorTypeName(String connectorName) throws ConnectorNotFoundException {
     return "";
   }
 
-  public void setConnectorConfig(String connectorName, String connectorTypeName, String newConfig) throws PersistentStoreException {
-    ;
- }
 }
