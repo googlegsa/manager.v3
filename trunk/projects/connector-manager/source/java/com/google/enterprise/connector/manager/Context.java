@@ -15,16 +15,12 @@
 package com.google.enterprise.connector.manager;
 
 import com.google.enterprise.connector.common.WorkQueue;
-import com.google.enterprise.connector.persist.ConnectorConfigStore;
-import com.google.enterprise.connector.persist.FilesystemConnectorConfigStore;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -54,7 +50,6 @@ public class Context {
   private Manager manager = null;
   private TraversalScheduler traversalScheduler = null;
   private Thread schedulerThread = null;
-  private ConnectorConfigStore connectorConfigStore = null;
 
   // control variables for turning off normal functionality - testing only
   private boolean isFeeding = true;
@@ -235,45 +230,13 @@ public class Context {
     }
     return result;
   }
-
-  private void initConnectorConfigStore() {
-    if (connectorConfigStore != null) {
-      return;
-    }
-    initApplicationContext();
-    connectorConfigStore =
-        (ConnectorConfigStore) getRequiredBean("ConnectorConfigStore",
-            ConnectorConfigStore.class);
-    if (connectorConfigStore instanceof FilesystemConnectorConfigStore) {
-      FilesystemConnectorConfigStore filesystemConnectorConfigStore =
-          (FilesystemConnectorConfigStore) connectorConfigStore;
-      if (isServletContext) {
-        File baseDirectory;
-        try {
-          baseDirectory =
-              applicationContext.getResource(
-                  SERVLET_FILESYSTEM_CONFIG_STORE_DIR).getFile();
-        } catch (IOException e) {
-          throw new IllegalStateException(
-              "Can't get base directory for FilesystemConnectorConfigStore "
-                  + SERVLET_FILESYSTEM_CONFIG_STORE_DIR);
-        }
-        filesystemConnectorConfigStore.setBaseDirectory(baseDirectory);
-      } else {
-        // junit context - we choose to do nothing here.  It is up to the
-        // junit test to call setBaseDirectory() as it wants
-      }
-    }
-
-  }
-
+  
   /**
    * Gets the singleton Manager.
    * 
    * @return the Manager
    */
   public Manager getManager() {
-    initConnectorConfigStore();
     if (manager != null) {
       return manager;
     }
