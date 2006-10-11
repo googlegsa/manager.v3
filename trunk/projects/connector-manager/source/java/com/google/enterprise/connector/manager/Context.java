@@ -288,7 +288,9 @@ public class Context {
   }
 
   public String getCommonDirPath() {
-    String result = "testdata/mocktestdata/";
-    return result;
+    if (isServletContext) {
+      return "webapps/connector-manager/WEB-INF";
+    }
+    return "testdata/mocktestdata/";
   }
 }
