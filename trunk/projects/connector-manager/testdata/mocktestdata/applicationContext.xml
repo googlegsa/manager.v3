@@ -25,7 +25,6 @@
 
 	<bean id="ConnectorScheduleStore"
 		class="com.google.enterprise.connector.persist.MockConnectorScheduleStore">
-		<constructor-arg index="0" ref="ConnectorConfigStore" />
 	</bean>
 
 	<bean id="ConnectorStateStore"
