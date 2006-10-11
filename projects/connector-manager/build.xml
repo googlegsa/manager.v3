@@ -36,8 +36,6 @@
 
 	<!-- =========================== TASKS =============================== -->
 	<target name="test_connector_jars">
-		<ant inheritAll="false" antfile="${projects.dir}/test-connector1/build.xml" />
-		<ant inheritAll="false" antfile="${projects.dir}/test-connector2/build.xml" />
 		<ant inheritAll="false" antfile="${projects.dir}/test-connectorA/build.xml" />
 		<ant inheritAll="false" antfile="${projects.dir}/test-connectorB/build.xml" />
 	</target>
@@ -107,8 +105,6 @@
 				<fileset dir="${thirdparty.jar.dir}">
 					<include name="**/*.jar" />
 				</fileset>
-				<pathelement location="${projects.dir}/test-connector1/dist/jar/testconnector1.jar" />
-				<pathelement location="${projects.dir}/test-connector2/dist/jar/testconnector2.jar" />
 				<pathelement location="${projects.dir}/test-connectorA/dist/jar/testconnectorA.jar" />
 				<pathelement location="${projects.dir}/test-connectorB/dist/jar/testconnectorB.jar" />
 				<pathelement location="${tests.classes}" />
@@ -137,8 +133,6 @@
 		<delete dir="${build}" />
 		<delete dir="${dist}" />
 	</target>
-
-
 
 	<!-- ======================Installation targets====================== -->
 
