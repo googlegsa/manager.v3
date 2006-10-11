@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.persist;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -26,25 +25,10 @@ public class MockConnectorScheduleStore implements ConnectorScheduleStore {
   private Map store;
   
   /**
-   * Empty Schedule Store.
+   * Create a Mock Schedule store with all known connectors to be run 24x7
    */
   public MockConnectorScheduleStore() {
     store = new HashMap();
-  }
-  
-  /**
-   * Create a Mock Schedule store with all known connectors to be run 24x7
-   * @param configStore ConnectorConfigStore with configured connectors
-   */
-  public MockConnectorScheduleStore(ConnectorConfigStore configStore) {
-    store = new HashMap();
-    Iterator iter = configStore.getConnectorNames();
-    while (iter.hasNext()) {
-      String connectorName = (String) iter.next();
-      final String allDaySchedule = "0-0";
-      String connectorSchedule = connectorName + ":" + allDaySchedule;
-      storeConnectorSchedule(connectorName, connectorSchedule);
-    }
   }
   
   /* (non-Javadoc)
