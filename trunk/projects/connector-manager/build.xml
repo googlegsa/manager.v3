@@ -11,7 +11,7 @@
 
 	<property name="COMPILE_DEBUG_FLAG" value="true" />
 	<property name="COMPILE_DEBUG_LEVEL" value="source,lines,vars" />
-		
+
 	<property name="build" value="build" />
 	<property name="dist" value="dist" />
 	<property name="src" value="source/java" />
@@ -38,6 +38,8 @@
 	<target name="test_connector_jars">
 		<ant inheritAll="false" antfile="${projects.dir}/test-connector1/build.xml" />
 		<ant inheritAll="false" antfile="${projects.dir}/test-connector2/build.xml" />
+		<ant inheritAll="false" antfile="${projects.dir}/test-connectorA/build.xml" />
+		<ant inheritAll="false" antfile="${projects.dir}/test-connectorB/build.xml" />
 	</target>
 
 	<target name="connector_manager" depends="connector_spi,connector_spi_test,install_init,war">
@@ -70,7 +72,7 @@
 
 	<target name="compile" depends="init">
 		<!-- compile java source files -->
-		<javac srcdir="${src}" destdir="${classes}" 
+		<javac srcdir="${src}" destdir="${classes}"
 			debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
 			<classpath>
 				<pathelement location="${thirdparty.jar.dir}" />
@@ -83,7 +85,7 @@
 
 	<target name="compile_tests" depends="init,jar">
 		<!-- compile java source files for tests -->
-		<javac srcdir="${tests.src}" destdir="${tests.classes}" 
+		<javac srcdir="${tests.src}" destdir="${tests.classes}"
 			debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
 			<classpath>
 				<fileset dir="${jar.dir}">
@@ -107,6 +109,8 @@
 				</fileset>
 				<pathelement location="${projects.dir}/test-connector1/dist/jar/testconnector1.jar" />
 				<pathelement location="${projects.dir}/test-connector2/dist/jar/testconnector2.jar" />
+				<pathelement location="${projects.dir}/test-connectorA/dist/jar/testconnectorA.jar" />
+				<pathelement location="${projects.dir}/test-connectorB/dist/jar/testconnectorB.jar" />
 				<pathelement location="${tests.classes}" />
 				<pathelement location="${tests.src}" />
 				<pathelement path="${java.class.path}" />
