@@ -31,7 +31,7 @@ import java.util.logging.Logger;
 public class TypeMap extends TreeMap {
 
   private static String CONNECTOR_TYPE_PATTERN =
-      "classpath*:conf/connectorType.xml";
+      "classpath*:config/connectorType.xml";
 
   private static final Logger LOGGER =
       Logger.getLogger(TypeMap.class.getName());
@@ -72,6 +72,10 @@ public class TypeMap extends TreeMap {
           + " resources.  No connector types can be found", e);
       return;
     }
+    
+    if (resourceArray.length == 0) {
+      LOGGER.info("No connector types found.");      
+    }
 
     List resources = Arrays.asList(resourceArray);
     for (Iterator i = resources.iterator(); i.hasNext();) {
@@ -82,12 +86,13 @@ public class TypeMap extends TreeMap {
         continue;
       }
       this.put(typeInfo.getConnectorTypeName(), typeInfo);
+      LOGGER.info("Found connector type: " + typeInfo.getConnectorTypeName());
     }
   }
 
   private void initializeDefaultBaseDirectory() {
-    // TODO: get this from the context
-    baseDirectory = new File(".");
+    String commonDirPath = Context.getInstance().getCommonDirPath();
+    baseDirectory = new File(commonDirPath);
   }
 
   private void initializeBaseDirectories(String baseDirPath) {
@@ -135,6 +140,8 @@ public class TypeMap extends TreeMap {
         typeNameIterator.remove();
       } else {
         typeInfo.setConnectorTypeDir(connectorTypeDir);
+        LOGGER.info("Connector type: " + typeInfo.getConnectorTypeName() + " has directory " +
+            connectorTypeDir.getAbsolutePath());
       }
     }
   }

@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.manager.ProductionManager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.pusher.Pusher;
@@ -27,11 +28,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * 
  */
 public class SpringInstantiator implements Instantiator {
+  
+  private static final Logger LOGGER =
+    Logger.getLogger(SpringInstantiator.class.getName());
 
   TypeMap typeMap = null;
   InstanceMap instanceMap = null;
@@ -49,6 +54,7 @@ public class SpringInstantiator implements Instantiator {
     if (typeMap != null) {
       return;
     }
+    LOGGER.info("Initializing instantiator");
     typeMap = new TypeMap();
     instanceMap = new InstanceMap(typeMap);
   }

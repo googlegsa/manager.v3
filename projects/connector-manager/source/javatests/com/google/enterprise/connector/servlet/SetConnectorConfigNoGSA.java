@@ -62,7 +62,7 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
       configResponse = manager.getConfigForm(connectorTypeName, language);
     } catch (ConnectorTypeNotFoundException e1) {
       ServletUtil.writeSimpleResponse(out, e1.toString());
-      LOGGER.info("Connector Type Not Found Exception");
+      LOGGER.info("Connector Type Not Found Exception" + connectorTypeName);
       e1.printStackTrace();
       out.close();
       return;
