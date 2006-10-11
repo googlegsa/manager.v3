@@ -19,7 +19,6 @@ import com.google.enterprise.connector.common.WorkQueueItem;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.monitor.Monitor;
-import com.google.enterprise.connector.persist.ConnectorConfigStore;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorScheduleStore;
 import com.google.enterprise.connector.traversal.Traverser;
@@ -49,7 +48,6 @@ public class TraversalScheduler implements Scheduler {
   private Instantiator instantiator;
   private Monitor monitor;
   private WorkQueue workQueue;
-  private ConnectorConfigStore configStore;
   private ConnectorScheduleStore scheduleStore;
   
   private HostLoadManager hostLoadManager;
@@ -68,16 +66,13 @@ public class TraversalScheduler implements Scheduler {
    * @param instantiator
    * @param monitor
    * @param workQueue
-   * @param configStore
    * @param scheduleStore
    */
   public TraversalScheduler(Instantiator instantiator, Monitor monitor, 
-      WorkQueue workQueue, ConnectorConfigStore configStore, 
-      ConnectorScheduleStore scheduleStore) {
+      WorkQueue workQueue, ConnectorScheduleStore scheduleStore) {
     this.instantiator = instantiator;
     this.monitor = monitor;
     this.workQueue = workQueue;
-    this.configStore = configStore;
     this.scheduleStore = scheduleStore;
     this.hostLoadManager = new HostLoadManager(scheduleStore);
     this.isInitialized = false;
@@ -111,7 +106,7 @@ public class TraversalScheduler implements Scheduler {
    */
   private synchronized List getSchedules() {
     List schedules = new ArrayList();
-    Iterator iter = configStore.getConnectorNames();
+    Iterator iter = instantiator.getConnectorNames();
     while (iter.hasNext()) {
       String connectorName = (String) iter.next();
       if (removedConnectors.contains(connectorName)) {

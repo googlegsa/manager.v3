@@ -6,8 +6,8 @@
 
 	<!-- Define Directories. -->
 	<property name="connector-manager.dir" value="connector-manager" />
-	<property name="test-connector1.dir" value="test-connector1" />
-	<property name="test-connector2.dir" value="test-connector2" />
+	<property name="test-connectorA.dir" value="test-connectorA" />
+	<property name="test-connectorB.dir" value="test-connectorB" />
       <property name="install.dir" value="install" />
 
 	<!-- =========================== TASKS =============================== -->
@@ -15,23 +15,23 @@
 
 	<target name="clean-all">
 		<ant dir="${connector-manager.dir}" target="clean" />
-		<ant dir="${test-connector1.dir}" target="clean" />
-		<ant dir="${test-connector2.dir}" target="clean" />
+		<ant dir="${test-connectorA.dir}" target="clean" />
+		<ant dir="${test-connectorB.dir}" target="clean" />
 	</target>
 
 	<target name="connector-manager">
 		<ant dir="${connector-manager.dir}" />
 	</target>
 
-	<target name="test-connector1">
-		<ant dir="${test-connector1.dir}" />
+	<target name="test-connectorA">
+		<ant dir="${test-connectorA.dir}" />
 	</target>
 
-	<target name="test-connector2">
-		<ant dir="${test-connector2.dir}" />
+	<target name="test-connectorB">
+		<ant dir="${test-connectorB.dir}" />
 	</target>
 
-	<target name="build-all" depends="test-connector1,test-connector2,connector-manager"/>
+	<target name="build-all" depends="test-connectorA,test-connectorB,connector-manager"/>
 
 	<target name="make-install-dir">
 		<mkdir dir="${install.dir}" />
@@ -44,22 +44,22 @@
 		</copy>
 	</target>
 
-	<target name="install-test-connector1" depends="test-connector1,make-install-dir">
-		<mkdir dir="${install.dir}/test-connector1" />
-		<copy todir="${install.dir}/test-connector1" >
-			<fileset dir="${test-connector1.dir}/dist"/>
+	<target name="install-test-connectorA" depends="test-connectorA,make-install-dir">
+		<mkdir dir="${install.dir}/test-connectorA" />
+		<copy todir="${install.dir}/test-connectorA" >
+			<fileset dir="${test-connectorA.dir}/dist"/>
 		</copy>
 	</target>
 
-	<target name="install-test-connector2" depends="test-connector2,make-install-dir">
-		<mkdir dir="${install.dir}/test-connector2" />
-		<copy todir="${install.dir}/test-connector2" >
-			<fileset dir="${test-connector2.dir}/dist"/>
+	<target name="install-test-connectorB" depends="test-connectorB,make-install-dir">
+		<mkdir dir="${install.dir}/test-connectorB" />
+		<copy todir="${install.dir}/test-connectorB" >
+			<fileset dir="${test-connectorB.dir}/dist"/>
 		</copy>
 	</target>
 
 	<target name="install-all" 
-		depends="install-test-connector1,install-test-connector2,install-connector-manager"/>
+		depends="install-test-connectorA,install-test-connectorB,install-connector-manager"/>
 
 	<target name="everything" depends="clean-all,build-all,install-all"/>
 

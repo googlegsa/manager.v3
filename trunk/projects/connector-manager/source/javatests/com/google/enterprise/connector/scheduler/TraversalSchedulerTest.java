@@ -15,7 +15,7 @@
 package com.google.enterprise.connector.scheduler;
 
 import com.google.enterprise.connector.common.WorkQueue;
-import com.google.enterprise.connector.instantiator.InstantiatorConfigStore;
+import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.monitor.HashMapMonitor;
@@ -27,7 +27,6 @@ import com.google.enterprise.connector.pusher.MockPusher;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -38,13 +37,13 @@ import java.util.List;
  */
 public class TraversalSchedulerTest extends TestCase {
   private TraversalScheduler runWithSchedules(List schedules, 
-      InstantiatorConfigStore instantiator, boolean shutdown) {
+      Instantiator instantiator, boolean shutdown) {
     WorkQueue workQueue = new WorkQueue(2, 5000);
     ConnectorScheduleStore scheduleStore = 
       createConnectorScheduleStore(schedules);
     TraversalScheduler scheduler = 
       new TraversalScheduler(instantiator, new HashMapMonitor(),
-        workQueue, instantiator, scheduleStore);
+        workQueue, scheduleStore);
     scheduler.init();
     Thread thread = new Thread(scheduler, "TraversalScheduler");
     thread.start();
@@ -63,7 +62,7 @@ public class TraversalSchedulerTest extends TestCase {
   }
   
   private TraversalScheduler runWithSchedules(List schedules,
-      InstantiatorConfigStore instantiator) {
+      Instantiator instantiator) {
     return runWithSchedules(schedules, instantiator, true);
   }
 
@@ -71,7 +70,6 @@ public class TraversalSchedulerTest extends TestCase {
    * Create an object that can return all connector instances referenced in 
    * MockInstantiator.
    * @return the ConnectorConfigStore
-   * @throws IOException
    */
   private ConnectorScheduleStore createConnectorScheduleStore(List schedules) {
     ConnectorScheduleStore store = new MockConnectorScheduleStore();
@@ -85,18 +83,18 @@ public class TraversalSchedulerTest extends TestCase {
     return store;
   }
   
-  private InstantiatorConfigStore createMockInstantiator() {
+  private Instantiator createMockInstantiator() {
     return new MockInstantiator();
   }
   
-  private InstantiatorConfigStore createRealInstantiator() {
+  private Instantiator createRealInstantiator() {
     // set up a pusher
     MockPusher pusher = new MockPusher(System.out);
 
     // set up a ConnectorStateStore
     MockConnectorStateStore css = new MockConnectorStateStore();
 
-    InstantiatorConfigStore instantiator =
+    Instantiator instantiator =
       new SpringInstantiator(pusher);
     
     return instantiator;
