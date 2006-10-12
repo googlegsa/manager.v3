@@ -38,4 +38,11 @@ public class MockConnectorStateStore extends HashMap implements
     this.put(connectorName, connectorState);
   }
 
+  /* (non-Javadoc)
+   * @see com.google.enterprise.connector.persist.ConnectorStateStore#removeConnectorState(java.lang.String)
+   */
+  public void removeConnectorState(String connectorName) {
+    this.remove(connectorName);
+  }
+
 }

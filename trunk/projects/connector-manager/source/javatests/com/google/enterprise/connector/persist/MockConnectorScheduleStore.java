@@ -52,4 +52,10 @@ public class MockConnectorScheduleStore implements ConnectorScheduleStore {
     store.put(connectorName, connectorSchedule);
   }
 
+  /* (non-Javadoc)
+   * @see com.google.enterprise.connector.persist.ConnectorScheduleStore#removeConnectorSchedule(java.lang.String)
+   */
+  public void removeConnectorSchedule(String connectorName) {
+    store.remove(connectorName);
+  }
 }

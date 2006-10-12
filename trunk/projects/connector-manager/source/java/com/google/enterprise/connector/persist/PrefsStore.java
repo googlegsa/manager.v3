@@ -13,6 +13,9 @@
 // limitations under the License.
 package com.google.enterprise.connector.persist;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 /**
@@ -20,6 +23,9 @@ import java.util.prefs.Preferences;
  *
  */
 public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
+
+  private static final Logger LOGGER =
+    Logger.getLogger(PrefsStore.class.getName());
 
   private static Preferences prefs = 
     Preferences.userNodeForPackage(PrefsStore.class);
@@ -52,6 +58,14 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
   }
   
   /**
+   * Remove a connector schedule.  If no such connector exists, do nothing.
+   * @param connectorName name of the connector.
+   */
+  public void removeConnectorSchedule(String connectorName) {
+    prefsSchedule.remove(connectorName);
+  }
+    
+  /**
    * Retrieves connector state
    * @param connectorName connector name
    * @return connectorState state of the corresponding connector.
@@ -68,7 +82,35 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
    * @param connectorState state of the corresponding connector.
    */
   public void storeConnectorState(String connectorName, String connectorState) {
-      prefsState.put(connectorName, connectorState);    
+    prefsState.put(connectorName, connectorState);    
   }
-
+  
+  /**
+   * Remove connector state.  If no such connector exists, do nothing.
+   * @param connectorName name of the connector.
+   */
+  public void removeConnectorState(String connectorName) {
+    prefsState.remove(connectorName);
+  }
+  
+  /**
+   * Clear out all persistent state (schedules and state).
+   * @return true if successful
+   */
+  public boolean clear() {
+    boolean result = true;
+    try {
+      prefsSchedule.clear();
+    } catch (BackingStoreException e) {
+      LOGGER.log(Level.WARNING, "Could not clear schedule store.", e);
+      result = false;
+    }
+    try {
+      prefsState.clear();
+    } catch (BackingStoreException e) {
+      LOGGER.log(Level.WARNING, "Could not clear state store.", e);
+      result = false;
+    }
+    return result;
+  }
 }

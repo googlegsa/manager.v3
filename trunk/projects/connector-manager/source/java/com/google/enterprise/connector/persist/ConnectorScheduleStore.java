@@ -36,4 +36,10 @@ public interface ConnectorScheduleStore {
   public void storeConnectorSchedule(String connectorName, 
       String connectorSchedule);
   
+  /**
+   * Remove a connector schedule.  If no such connector exists, do nothing.
+   * @param connectorName name of the connector.
+   */
+  public void removeConnectorSchedule(String connectorName);
+  
 }
