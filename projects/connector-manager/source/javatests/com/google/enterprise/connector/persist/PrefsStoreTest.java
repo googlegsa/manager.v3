@@ -21,10 +21,20 @@ import junit.framework.TestCase;
  */
 public class PrefsStoreTest extends TestCase {
 
+  protected PrefsStore store;
+  
+  protected void setUp() {
+    store = new PrefsStore();
+    store.clear();
+  }
+  
+  protected void tearDown() {
+    store.clear();
+  }
+  
   // Tests getting and setting for a valid connector name and schedule.
   
   public void testGetandSetConnectorSchedule() {
-    PrefsStore store = new PrefsStore();
     String expectedSchedule = "schedule of connectorA";
     String connectorName = "connectorA";
     store.storeConnectorSchedule(connectorName, expectedSchedule);
@@ -34,14 +44,12 @@ public class PrefsStoreTest extends TestCase {
   
   // Tests getting schedule for an unknown connector
   public void testGetConnectorSchedule1() {
-    PrefsStore store = new PrefsStore();
     String schedule = store.getConnectorSchedule("some wierd connector name");
     Assert.assertNull(schedule);
   }
   
   // Tests if the exception is thrown correctly when the connector name is null. 
   public void testGetConnectorSchedule2() {
-    PrefsStore store = new PrefsStore();
     boolean exceptionCaught = false;
     String schedule = null;
     try {
@@ -53,9 +61,21 @@ public class PrefsStoreTest extends TestCase {
     Assert.assertNull(schedule);
   }
 
+  public void testRemoveConnector() {
+    String connectorName = "foo";
+    String connectorSchedule = "foo's schedule";
+    String schedule = store.getConnectorSchedule(connectorName);
+    Assert.assertNull(schedule);
+    store.storeConnectorSchedule(connectorName, connectorSchedule);
+    schedule = store.getConnectorSchedule(connectorName);
+    Assert.assertEquals(connectorSchedule, schedule);
+    store.removeConnectorSchedule(connectorName);
+    schedule = store.getConnectorSchedule(connectorName);
+    Assert.assertNull(schedule);
+  }
+  
   //Tests getting and setting for a valid connector name and state.  
   public void testGetandSetConnectorState() {
-    PrefsStore store = new PrefsStore();
     String expectedState = "state of connectorA";
     String connectorName = "connectorA";
     store.storeConnectorState(connectorName, expectedState);
@@ -65,14 +85,12 @@ public class PrefsStoreTest extends TestCase {
   
   //Tests getting state for an unknown connector.
   public void testGetConnectorState1() {
-    PrefsStore store = new PrefsStore();
     String state = store.getConnectorState("some wierd connector name");
     Assert.assertNull(state);
   }
   
   // Tests if the exception is thrown correctly when the connector name is null. 
   public void testGetConnectorState2() {
-    PrefsStore store = new PrefsStore();
     boolean exceptionCaught = false;
     try {
       String state = store.getConnectorState(null);
@@ -81,4 +99,17 @@ public class PrefsStoreTest extends TestCase {
     }
     Assert.assertTrue(exceptionCaught);
   }  
+
+  public void testRemoveState() {
+    String connectorName = "foo";
+    String connectorState = "foo's state";
+    String state = store.getConnectorState(connectorName);
+    Assert.assertNull(state);
+    store.storeConnectorState(connectorName, connectorState);
+    state = store.getConnectorState(connectorName);
+    Assert.assertEquals(connectorState, state);
+    store.removeConnectorState(connectorName);
+    state = store.getConnectorState(connectorName);
+    Assert.assertNull(state);
+  }
 }

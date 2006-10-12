@@ -35,4 +35,10 @@ public interface ConnectorStateStore {
    */
   public void storeConnectorState(String connectorName, String connectorState);
 
+  /**
+   * Remove connector state.  If no such connector exists, do nothing.
+   * @param connectorName name of the connector.
+   */
+  public void removeConnectorState(String connectorName);
+  
 }

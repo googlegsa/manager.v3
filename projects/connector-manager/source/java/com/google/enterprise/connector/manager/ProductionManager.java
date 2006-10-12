@@ -18,9 +18,12 @@ import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorScheduleStore;
+import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.scheduler.Schedule;
+import com.google.enterprise.connector.scheduler.Scheduler;
+import com.google.enterprise.connector.scheduler.TraversalScheduler;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -48,6 +51,8 @@ public class ProductionManager implements Manager {
 
   Instantiator instantiator;
   ConnectorScheduleStore connectorScheduleStore;
+  ConnectorStateStore connectorStateStore;
+  Scheduler scheduler;
   
   public ProductionManager() {
   }
@@ -58,6 +63,22 @@ public class ProductionManager implements Manager {
   public void setConnectorScheduleStore(
       ConnectorScheduleStore connectorScheduleStore) {
     this.connectorScheduleStore = connectorScheduleStore;
+  }
+
+  /**
+   * @param connectorStateStore the connectorStateStore to set
+   */
+  public void setConnectorStateStore(
+      ConnectorStateStore connectorStateStore) {
+    this.connectorStateStore = connectorStateStore;
+  }
+  
+  /**
+   * Set the scheduler.
+   * @param scheduler the scheduler to set.
+   */
+  public void setScheduler(Scheduler scheduler) {
+    this.scheduler = scheduler;
   }
   
   /**
@@ -286,6 +307,9 @@ public class ProductionManager implements Manager {
   public void removeConnector(String connectorName)
       throws ConnectorNotFoundException, PersistentStoreException,
       InstantiatorException {
-	  instantiator.dropConnector(connectorName);
+    instantiator.dropConnector(connectorName);
+    connectorScheduleStore.removeConnectorSchedule(connectorName);
+    connectorStateStore.removeConnectorState(connectorName);
+    scheduler.removeConnector(connectorName);
   }
 }
