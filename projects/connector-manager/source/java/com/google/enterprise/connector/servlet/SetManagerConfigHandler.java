@@ -21,6 +21,7 @@ import org.w3c.dom.NodeList;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -28,7 +29,7 @@ import java.util.logging.Logger;
  *
  */
 public class SetManagerConfigHandler {
-  private static final Logger LOG =
+  private static final Logger LOGGER =
     Logger.getLogger(SetManagerConfigHandler.class.getName());
 
   private String status = ServletUtil.XML_RESPONSE_SUCCESS;
@@ -41,13 +42,20 @@ public class SetManagerConfigHandler {
    * @param xmlBody String Input XML body string.
    */
   public SetManagerConfigHandler(Manager manager, String xmlBody) {
+    if (xmlBody == null || xmlBody.length() < 1) {
+      status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_REQUEST;
+      LOGGER.log(Level.WARNING, ServletUtil.XML_RESPONSE_STATUS_EMPTY_REQUEST);
+      return;
+    }
+
     SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
     Document document = ServletUtil.parse(xmlBody, errorHandler);
     NodeList nodeList =
         document.getElementsByTagName(ServletUtil.XMLTAG_MANAGER_CONFIG);
-    if (nodeList.getLength() == 0) {
+    if (nodeList == null || nodeList.getLength() == 0) {
       this.status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE;
-      LOG.info(ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE);
+      LOGGER.log(Level.WARNING, ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE);
+      return;
     }
 
     if (ServletUtil.getFirstElementByTagName((Element) nodeList.item(0),
@@ -64,9 +72,8 @@ public class SetManagerConfigHandler {
       manager.setConnectorManagerConfig(this.certAuth, this.feederGateHost,
           this.feederGatePort);
     } catch (PersistentStoreException e) {
-      LOG.info("PersistentStoreException");
       this.status = e.toString();
-      e.printStackTrace();
+      LOGGER.log(Level.WARNING, "Persistent Store: ", e);
     }
   }
 

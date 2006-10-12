@@ -15,14 +15,9 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.enterprise.connector.common.StringUtils;
-import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.manager.Manager;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -30,10 +25,12 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.enterprise.connector.common.StringUtils;
+import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.manager.Manager;
+
 
 public class SetManagerConfig extends HttpServlet {
-  private static final Logger LOG =
-    Logger.getLogger(SetManagerConfig.class.getName());
 
   /**
    * Returns the simple response if successfully setting the manager config.
@@ -64,15 +61,9 @@ public class SetManagerConfig extends HttpServlet {
     String status = ServletUtil.XML_RESPONSE_SUCCESS;
     BufferedReader reader = req.getReader();
     res.setContentType(ServletUtil.MIMETYPE_XML);
-    PrintWriter out = res.getWriter();
     String xmlBody = StringUtils.readAllToString(reader);
-    if (xmlBody.length() < 1) {
-      status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_REQUEST;
-      ServletUtil.writeSimpleResponse(out, status);
-      LOG.info("The request is empty");
-      return;
-    }
 
+    PrintWriter out = res.getWriter();
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
     SetManagerConfigHandler hdl =
