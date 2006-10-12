@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -133,7 +134,7 @@ public class WorkQueue {
           Thread.sleep(timeoutInMillis);
         } catch (InterruptedException e) {
           // TODO Auto-generated catch block
-          e.printStackTrace();
+          LOGGER.log(Level.WARNING, "Interrupted Exception: ", e);
         }
       } else {
         long baseTime = System.currentTimeMillis();
@@ -143,7 +144,7 @@ public class WorkQueue {
               Thread.sleep(200);
             } catch (InterruptedException e) {
               // TODO Auto-generated catch block
-              e.printStackTrace();
+              LOGGER.log(Level.WARNING, "Interrupted Exception: ", e);
             }
           } else {
             // no threads are still working so break out of loop
@@ -350,6 +351,7 @@ public class WorkQueue {
         } catch (InterruptedException e) {
           // thread was signalled to determine whether there are new work items
           // to be interrupted
+          LOGGER.log(Level.WARNING, "Interrupted Exception: ", e);
         }
 
         interruptAllTimedOutItems();
@@ -377,6 +379,7 @@ public class WorkQueue {
               WorkQueue.this.wait();
             } catch (InterruptedException ie) {
               // thread exits when shutdown of WorkQueue occurs
+              LOGGER.log(Level.WARNING, "Interrupted Exception: ", ie);
               return;
             }
           }
@@ -390,8 +393,7 @@ public class WorkQueue {
           isWorking = true;
           item.doWork();
         } catch (RuntimeException e) {
-          LOGGER.warning("WorkQueueThread work had problems: " 
-            + e.getMessage());
+          LOGGER.log(Level.WARNING, "WorkQueueThread work had problems: ", e);
           continue;
         } finally {
           isWorking = false;

@@ -43,8 +43,8 @@ public class AuthenticateTest extends TestCase {
     String xmlBody =
       "<AuthnRequest>\n" +
       "  <Credentials>\n" +
-      "    <username>fooUser</username>\n" + 
-      "    <password>fooPassword</password>\n" + 
+      "    <Username>fooUser</Username>\n" + 
+      "    <Password>fooPassword</Password>\n" + 
       "  </Credentials>\n" +
       "</AuthnRequest>";
 
