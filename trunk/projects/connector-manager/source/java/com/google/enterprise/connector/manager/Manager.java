@@ -37,12 +37,11 @@ public interface Manager {
    *        should be used
    * @param feederGateHost The GSA host expressed as a String
    * @param feederGatePort The GSA feeder port number
-   * @param maxFeedRate The maximum feed rate expressed in documents/second
    * @throws PersistentStoreException If there was a problem storing the
    *         configuration
    */
   public void setConnectorManagerConfig(boolean certAuth,
-      String feederGateHost, int feederGatePort, int maxFeedRate)
+      String feederGateHost, int feederGatePort)
       throws PersistentStoreException;
 
   /**

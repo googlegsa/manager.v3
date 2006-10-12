@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -82,13 +83,14 @@ public class ProductionManager implements Manager {
           instantiator.getAuthenticationManager(connectorName);
       result = authnManager.authenticate(username, password);
     } catch (ConnectorNotFoundException e) {
-      LOGGER.info(e.getMessage());
+      LOGGER.log(Level.WARNING, "Connector " + connectorName
+        + " Not Found: ", e);
     } catch (InstantiatorException e) {
-      LOGGER.info(e.getMessage());
+      LOGGER.log(Level.WARNING, "Instantiator: ", e);
     } catch (LoginException e) {
-      LOGGER.info(e.getMessage());
+      LOGGER.log(Level.WARNING, "Login: ", e);
     } catch (RepositoryException e) {
-      LOGGER.info(e.getMessage());
+      LOGGER.log(Level.WARNING, "Repository: ", e);
     }
 
     return result;
@@ -112,11 +114,12 @@ public class ProductionManager implements Manager {
         result.add(iter.next());
       }
     } catch (ConnectorNotFoundException e) {
-      LOGGER.info(e.getMessage());
+      LOGGER.log(Level.WARNING, "Connector " + connectorName
+          + " Not Found: ", e);
     } catch (InstantiatorException e) {
-      LOGGER.info(e.getMessage());
+      LOGGER.log(Level.WARNING, "Instantiator: ", e);
     } catch (RepositoryException e) {
-      LOGGER.info(e.getMessage());
+      LOGGER.log(Level.WARNING, "Repository: ", e);
     }
 
     return result;
@@ -140,11 +143,12 @@ public class ProductionManager implements Manager {
         result.add(iter.next());
       }
     } catch (ConnectorNotFoundException e) {
-      LOGGER.info(e.getMessage());
+      LOGGER.log(Level.WARNING, "Connector " + connectorName
+          + " Not Found: ", e);
     } catch (InstantiatorException e) {
-      LOGGER.info(e.getMessage());
+      LOGGER.log(Level.WARNING, "Instantiator: ", e);
     } catch (RepositoryException e) {
-      LOGGER.info(e.getMessage());
+      LOGGER.log(Level.WARNING, "Repository: ", e);
     }
 
     return result;
@@ -186,12 +190,14 @@ public class ProductionManager implements Manager {
    *      #getConnectorStatus(java.lang.String)
    */
   public ConnectorStatus getConnectorStatus(String connectorName) {
-    String connectorTypeName;
+    String connectorTypeName = null;
     try {
       connectorTypeName = instantiator.getConnectorTypeName(connectorName);
     } catch (ConnectorNotFoundException e) {
       // TODO: this should become part of the signature - so we should just let
       // this exception bubble up
+      LOGGER.log(Level.WARNING, "Connector type " + connectorTypeName
+        + " Not Found: ", e);
       throw new IllegalArgumentException();
     }
     // TODO: resolve this last parameter - we need to give the status a meaning
@@ -250,7 +256,7 @@ public class ProductionManager implements Manager {
    *      java.lang.String, int, int)
    */
   public void setConnectorManagerConfig(boolean certAuth,
-      String feederGateHost, int feederGatePort, int maxFeedRate)
+      String feederGateHost, int feederGatePort)
       throws PersistentStoreException {
     // TODO: need a real implementation here for now we read this configuration
     // through Spring.

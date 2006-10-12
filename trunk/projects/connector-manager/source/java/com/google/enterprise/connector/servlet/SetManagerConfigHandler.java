@@ -33,7 +33,6 @@ public class SetManagerConfigHandler {
 
   private String status = ServletUtil.XML_RESPONSE_SUCCESS;
   private boolean certAuth;
-  private int maxFeedRate;
   private String feederGateHost;
   private int feederGatePort;
 
@@ -63,7 +62,7 @@ public class SetManagerConfigHandler {
         ServletUtil.XMLTAG_FEEDERGATE_PORT));
     try {
       manager.setConnectorManagerConfig(this.certAuth, this.feederGateHost,
-          this.feederGatePort, this.maxFeedRate);
+          this.feederGatePort);
     } catch (PersistentStoreException e) {
       LOG.info("PersistentStoreException");
       this.status = e.toString();
@@ -81,10 +80,6 @@ public class SetManagerConfigHandler {
 
   public int getFeederGatePort() {
     return feederGatePort;
-  }
-
-  public int getMaxFeedRate() {
-    return maxFeedRate;
   }
 
   public String getStatus() {
