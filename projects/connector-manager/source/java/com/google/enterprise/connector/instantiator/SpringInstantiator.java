@@ -14,8 +14,8 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.manager.ProductionManager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.AuthenticationManager;
@@ -41,10 +41,13 @@ public class SpringInstantiator implements Instantiator {
   TypeMap typeMap = null;
   InstanceMap instanceMap = null;
   Pusher pusher;
+  ConnectorStateStore connectorStateStore;
   Map connectorCache;
 
-  public SpringInstantiator(Pusher pusher) {
+  public SpringInstantiator(Pusher pusher, 
+      ConnectorStateStore connectorStateStore) {
     this.pusher = pusher;
+    this.connectorStateStore = connectorStateStore;
     connectorCache = new HashMap();
     // NOTE: we can't call initialize() here because then there would be a
     // circular dependency on the Context, which hasn't been constructed yet
@@ -95,7 +98,7 @@ public class SpringInstantiator implements Instantiator {
       }
       connectorInterfaces =
           new ConnectorInterfaces(connectorName, instanceInfo.getConnector(),
-              pusher, null, instanceInfo.getProperties());
+              pusher, connectorStateStore, instanceInfo.getProperties());
       connectorCache.put(connectorName, connectorInterfaces);
     }
     return connectorInterfaces;
@@ -221,7 +224,7 @@ public class SpringInstantiator implements Instantiator {
     if (instanceInfo == null) {
       throw new ConnectorNotFoundException();
     }
-    return instanceInfo.getName();
+    return instanceInfo.getTypeInfo().getConnectorTypeName();
   }
 
 }

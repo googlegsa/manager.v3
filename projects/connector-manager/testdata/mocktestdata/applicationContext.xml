@@ -23,6 +23,7 @@
 	<bean id="Instantiator"
 		class="com.google.enterprise.connector.instantiator.SpringInstantiator">
 		<constructor-arg ref="Pusher" />
+		<constructor-arg ref="ConnectorStateStore" />
 	</bean>
 
 	<bean id="Monitor"

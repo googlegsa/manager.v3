@@ -95,7 +95,7 @@ public class TraversalSchedulerTest extends TestCase {
     MockConnectorStateStore css = new MockConnectorStateStore();
 
     Instantiator instantiator =
-      new SpringInstantiator(pusher);
+      new SpringInstantiator(pusher, css);
     
     return instantiator;
   }
