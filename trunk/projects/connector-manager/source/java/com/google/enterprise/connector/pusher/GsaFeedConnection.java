@@ -64,7 +64,7 @@ public class GsaFeedConnection implements FeedConnection {
     uc.setDoOutput(true);
     uc.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
     OutputStreamWriter osw = new OutputStreamWriter(uc.getOutputStream());
-    osw.write(encode(data));
+    osw.write(data);
     osw.flush();
     
     StringBuffer buf = new StringBuffer();
