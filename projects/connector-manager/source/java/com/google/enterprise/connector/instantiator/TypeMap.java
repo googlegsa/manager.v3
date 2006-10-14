@@ -80,6 +80,7 @@ public class TypeMap extends TreeMap {
 
     if (resourceArray.length == 0) {
       LOGGER.info("No connector types found.");
+      return;
     }
 
     List resources = Arrays.asList(resourceArray);
