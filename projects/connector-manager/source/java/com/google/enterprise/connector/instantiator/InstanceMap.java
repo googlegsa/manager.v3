@@ -25,7 +25,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * 
+ * This class keeps track of the installed connector instances, maintains a
+ * corresponding directory structure and maintains properties files that
+ * implement the instances.
  */
 public class InstanceMap extends TreeMap {
 
@@ -133,17 +135,20 @@ public class InstanceMap extends TreeMap {
     if (connectorDir.exists()) {
       if (connectorDir.isDirectory()) {
         // we don't know why this directory already exists, but we're ok with it
+        LOGGER.warning("Connector directory "
+            + connectorDir.getAbsolutePath()
+            + "; already exists for connector" + name);
         return connectorDir;
       } else {
         throw new InstantiatorException("Existing file blocks creation of "
-            + "connector directory at " + connectorDir.getPath()
+            + "connector directory at " + connectorDir.getAbsolutePath()
             + " for connector " + name);
       }
     } else {
       connectorDir.mkdirs();
       if (!connectorDir.exists()) {
         throw new InstantiatorException("Can't create "
-            + "connector directory at " + connectorDir.getPath()
+            + "connector directory at " + connectorDir.getAbsolutePath()
             + " for connector " + name);
       }
     }
@@ -170,7 +175,7 @@ public class InstanceMap extends TreeMap {
       if (!connectorDir.delete()) {
         LOGGER.warning("Can't delete connector directory "
             + connectorDir.getPath()
-            + "; this connector may be difficult to delete.");       
+            + "; this connector may be difficult to delete.");
       }
     }
     this.remove(name);

@@ -36,31 +36,6 @@ import java.util.Map;
 public class InstanceMapTest extends TestCase {
 
   /**
-   * @param name
-   */
-  public InstanceMapTest(String name) {
-    super(name);
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see junit.framework.TestCase#setUp()
-   */
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see junit.framework.TestCase#tearDown()
-   */
-  protected void tearDown() throws Exception {
-    super.tearDown();
-  }
-
-  /**
    * Test method for
    * {@link com.google.enterprise.connector.instantiator.InstanceMap
    * #getInstanceInfo(java.lang.String)}.
@@ -77,6 +52,10 @@ public class InstanceMapTest extends TestCase {
     Assert.assertEquals(0, instanceMap.size());
 
     {
+      /**
+       * Test creation of a connector of type TestConnectorA. The type should
+       * already have been created.
+       */
       String name = "connector1";
       String typeName = "TestConnectorA";
       String jsonConfigString =
@@ -86,6 +65,10 @@ public class InstanceMapTest extends TestCase {
     }
 
     {
+      /**
+       * Test creation of a connector of type TestConnectorB. The type should
+       * already have been created.
+       */
       String name = "connector2";
       String typeName = "TestConnectorB";
       String jsonConfigString =
@@ -97,6 +80,10 @@ public class InstanceMapTest extends TestCase {
     Assert.assertEquals(2, instanceMap.size());
 
     {
+      /**
+       * Test update of a connector instance of type TestConnectorB. The
+       * instance was created in an earlier test.
+       */
       String name = "connector2";
       String typeName = "TestConnectorB";
       String jsonConfigString =
@@ -108,6 +95,10 @@ public class InstanceMapTest extends TestCase {
     Assert.assertEquals(2, instanceMap.size());
 
     {
+      /**
+       * Test update of a connector instance of type TestConnectorA. The
+       * instance was created in an earlier test.
+       */
       String name = "connector3";
       String typeName = "TestConnectorA";
       String jsonConfigString =
@@ -115,10 +106,13 @@ public class InstanceMapTest extends TestCase {
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
       updateConnectorTest(instanceMap, name, typeName, jsonConfigString);
     }
-    
+
     Assert.assertEquals(3, instanceMap.size());
 
     {
+      /**
+       * Test creation of a connector second instance of type TestConnectorB.
+       */
       String name = "connector3";
       String typeName = "TestConnectorB";
       String jsonConfigString =
@@ -126,13 +120,13 @@ public class InstanceMapTest extends TestCase {
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
       updateConnectorTest(instanceMap, name, typeName, jsonConfigString);
     }
-    
+
     Assert.assertEquals(3, instanceMap.size());
-    
+
     instanceMap.dropConnector("connector1");
     instanceMap.dropConnector("connector2");
     instanceMap.dropConnector("connector3");
-    
+
     Assert.assertEquals(0, instanceMap.size());
 
   }
