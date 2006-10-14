@@ -97,16 +97,16 @@ public class TypeInfo {
    * 
    * @param r A spring resource pointing to xml bean definitions.
    * @return TypeInfo extracted from that resource
-   * @throws FactoryCreationFailure
-   * @throws BeanListFailure
-   * @throws NoBeansFound
-   * @throws BeanInstantiationFailure
-   * @throws InstanceXmlFailure
-   * @throws InstanceXmlMissing 
+   * @throws FactoryCreationFailureException
+   * @throws BeanListFailureException
+   * @throws NoBeansFoundException
+   * @throws BeanInstantiationFailureException
+   * @throws InstanceXmlFailureException
+   * @throws InstanceXmlMissingException 
    */
   static TypeInfo fromSpringResourceAndThrow(Resource r)
-      throws FactoryCreationFailure, BeanListFailure, NoBeansFound,
-      BeanInstantiationFailure, InstanceXmlFailure, InstanceXmlMissing {
+      throws FactoryCreationFailureException, BeanListFailureException, NoBeansFoundException,
+      BeanInstantiationFailureException, InstanceXmlFailureException, InstanceXmlMissingException {
     String connectorTypeName = null;
     ConnectorType connectorType = null;
     Resource connectorInstancePrototype = null;
@@ -116,7 +116,7 @@ public class TypeInfo {
     try {
       factory = new XmlBeanFactory(r);
     } catch (RuntimeException e) {
-      throw new FactoryCreationFailure(r, e);
+      throw new FactoryCreationFailureException(r, e);
     }
 
     // get the list of Connector Types defined in the bean factory
@@ -124,12 +124,12 @@ public class TypeInfo {
     try {
       beanList = factory.getBeanNamesForType(ConnectorType.class);
     } catch (Exception e) {
-      throw new BeanListFailure(r, e);
+      throw new BeanListFailureException(r, e);
     }
 
     // make sure there is at least one Connector Type
     if (beanList.length < 1) {
-      throw new NoBeansFound(r);
+      throw new NoBeansFoundException(r);
     }
 
     // remember the name of the first one found, and instantiate it
@@ -137,18 +137,18 @@ public class TypeInfo {
     try {
       connectorType = (ConnectorType) factory.getBean(connectorTypeName);
     } catch (Exception e) {
-      throw new BeanInstantiationFailure(r, e, connectorTypeName);
+      throw new BeanInstantiationFailureException(r, e, connectorTypeName);
     }
 
     // find the instance prototype
     try {
       connectorInstancePrototype = r.createRelative(CONNECTOR_INSTANCE_XML);
     } catch (Exception e) {
-      throw new InstanceXmlFailure(r, e, connectorTypeName);
+      throw new InstanceXmlFailureException(r, e, connectorTypeName);
     }
 
     if (!connectorInstancePrototype.exists()) {
-      throw new InstanceXmlMissing(r, connectorTypeName);
+      throw new InstanceXmlMissingException(r, connectorTypeName);
     }
 
     TypeInfo result =
@@ -180,42 +180,42 @@ public class TypeInfo {
     }
   }
 
-  static class FactoryCreationFailure extends TypeInfoException {
-    FactoryCreationFailure(Resource resource, Exception cause) {
+  static class FactoryCreationFailureException extends TypeInfoException {
+    FactoryCreationFailureException(Resource resource, Exception cause) {
       super("Exception from Spring while creating bean "
           + "factory from resource " + resource.getDescription(), cause);
     }
   }
-  static class BeanListFailure extends TypeInfoException {
-    BeanListFailure(Resource resource, Exception cause) {
+  static class BeanListFailureException extends TypeInfoException {
+    BeanListFailureException(Resource resource, Exception cause) {
       super("Exception from Spring while listing beans "
           + " from factory from resource " + resource.getDescription(), cause);
     }
   }
-  static class NoBeansFound extends TypeInfoException {
-    NoBeansFound(Resource resource) {
+  static class NoBeansFoundException extends TypeInfoException {
+    NoBeansFoundException(Resource resource) {
       super("Resource " + resource.getDescription()
           + " contains no definitions for ConnectorType");
     }
   }
-  static class BeanInstantiationFailure extends TypeInfoException {
-    BeanInstantiationFailure(Resource resource, Exception cause,
+  static class BeanInstantiationFailureException extends TypeInfoException {
+    BeanInstantiationFailureException(Resource resource, Exception cause,
         String connectorTypeName) {
       super("Exception from Spring while instantiating " + " connector type "
           + connectorTypeName + " from resource " + resource.getDescription(),
           cause);
     }
   }
-  static class InstanceXmlFailure extends TypeInfoException {
-    InstanceXmlFailure(Resource resource, Exception cause,
+  static class InstanceXmlFailureException extends TypeInfoException {
+    InstanceXmlFailureException(Resource resource, Exception cause,
         String connectorTypeName) {
       super("Exception from Spring while creating " + CONNECTOR_INSTANCE_XML
           + " sibling resource for " + connectorTypeName + " from resource "
           + resource.getDescription(), cause);
     }
   }
-  static class InstanceXmlMissing extends TypeInfoException {
-    InstanceXmlMissing(Resource resource, String connectorTypeName) {
+  static class InstanceXmlMissingException extends TypeInfoException {
+    InstanceXmlMissingException(Resource resource, String connectorTypeName) {
       super("Can't find " + CONNECTOR_INSTANCE_XML + " sibling resource for "
           + connectorTypeName + " from resource  " + resource.getDescription());
     }

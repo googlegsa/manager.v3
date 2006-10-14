@@ -17,11 +17,11 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.instantiator.InstanceInfo;
 import com.google.enterprise.connector.instantiator.TypeInfo;
 import com.google.enterprise.connector.instantiator.InstanceInfo.InstanceInfoException;
-import com.google.enterprise.connector.instantiator.InstanceInfo.NoBeansFound;
+import com.google.enterprise.connector.instantiator.InstanceInfo.NoBeansFoundException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.NullConnectorNameException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.NullDirectoryException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.NullTypeInfoException;
-import com.google.enterprise.connector.instantiator.InstanceInfo.PropertyProcessingFailure;
+import com.google.enterprise.connector.instantiator.InstanceInfo.PropertyProcessingFailureException;
 import com.google.enterprise.connector.instantiator.TypeInfo.TypeInfoException;
 
 import junit.framework.Assert;
@@ -137,7 +137,7 @@ public class InstanceInfoTest extends TestCase {
     boolean correctExceptionThrown = false;
     try {
       instanceInfo = InstanceInfo.fromDirectoryAndThrow("fred", connectorDir, typeInfo);
-    } catch (PropertyProcessingFailure e) {
+    } catch (PropertyProcessingFailureException e) {
       correctExceptionThrown = true;
       LOGGER.log(Level.WARNING,
           "Null directory exception", e);
@@ -159,7 +159,7 @@ public class InstanceInfoTest extends TestCase {
     boolean correctExceptionThrown = false;
     try {
       instanceInfo = InstanceInfo.fromDirectoryAndThrow("fred", connectorDir, typeInfo);
-    } catch (NoBeansFound e) {
+    } catch (NoBeansFoundException e) {
       correctExceptionThrown = true;
       LOGGER.log(Level.WARNING,
           "Null directory exception", e);

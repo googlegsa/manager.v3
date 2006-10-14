@@ -34,7 +34,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * 
+ * Container for info about a Connector Instance. Instantiable only through a
+ * static factory that uses Spring.
  */
 public class InstanceInfo {
 
@@ -125,11 +126,12 @@ public class InstanceInfo {
   }
 
   public static InstanceInfo fromDirectoryAndThrow(String connectorName,
-      File connectorDir, TypeInfo typeInfo) throws FactoryCreationFailure,
-      BeanListFailure, NoBeansFound, BeanInstantiationFailure,
+      File connectorDir, TypeInfo typeInfo)
+      throws FactoryCreationFailureException, BeanListFailureException,
+      NoBeansFoundException, BeanInstantiationFailureException,
       NullDirectoryException, NullTypeInfoException,
-      NullConnectorNameException, PropertyProcessingInternalFailure,
-      PropertyProcessingFailure {
+      NullConnectorNameException, PropertyProcessingInternalFailureException,
+      PropertyProcessingFailureException {
 
     if (connectorName == null || connectorName.length() < 1) {
       throw new NullConnectorNameException();
@@ -149,9 +151,7 @@ public class InstanceInfo {
     String propertiesFileName = connectorName + PROPERTIES_SUFFIX;
     File propertiesFile = new File(connectorDir, propertiesFileName);
 
-    properties =
-        initPropertiesFromFile(propertiesFile, connectorName,
-            propertiesFileName);
+    properties = initPropertiesFromFile(propertiesFile, propertiesFileName);
 
     Resource connectorInstancePrototype =
         typeInfo.getConnectorInstancePrototype();
@@ -169,15 +169,16 @@ public class InstanceInfo {
   private static Connector makeConnectorWithSpring(Connector connector,
       Properties properties, File propertiesFile,
       Resource connectorInstancePrototype, String connectorName)
-      throws FactoryCreationFailure, BeanListFailure, NoBeansFound,
-      BeanInstantiationFailure, PropertyProcessingInternalFailure,
-      PropertyProcessingFailure {
+      throws FactoryCreationFailureException, BeanListFailureException,
+      NoBeansFoundException, BeanInstantiationFailureException,
+      PropertyProcessingInternalFailureException,
+      PropertyProcessingFailureException {
     XmlBeanFactory factory;
 
     try {
       factory = new XmlBeanFactory(connectorInstancePrototype);
     } catch (BeansException e) {
-      throw new FactoryCreationFailure(e, connectorInstancePrototype,
+      throw new FactoryCreationFailureException(e, connectorInstancePrototype,
           connectorName);
     }
 
@@ -187,13 +188,13 @@ public class InstanceInfo {
         cfg = new PropertyPlaceholderConfigurer();
         cfg.setLocation(new FileSystemResource(propertiesFile));
       } catch (Exception e) {
-        throw new PropertyProcessingInternalFailure(e, propertiesFile,
+        throw new PropertyProcessingInternalFailureException(e, propertiesFile,
             connectorInstancePrototype, connectorName);
       }
       try {
         cfg.postProcessBeanFactory(factory);
       } catch (Exception e) {
-        throw new PropertyProcessingFailure(e, propertiesFile,
+        throw new PropertyProcessingFailureException(e, propertiesFile,
             connectorInstancePrototype, connectorName);
       }
     }
@@ -203,14 +204,14 @@ public class InstanceInfo {
     try {
       beanList = factory.getBeanNamesForType(Connector.class);
     } catch (Exception e) {
-      throw new BeanListFailure(e, connectorInstancePrototype, connectorName,
-          Connector.class);
+      throw new BeanListFailureException(e, connectorInstancePrototype,
+          connectorName, Connector.class);
     }
 
     // make sure there is at least one Connector Type
     if (beanList.length < 1) {
-      throw new NoBeansFound(connectorInstancePrototype, connectorName,
-          Connector.class);
+      throw new NoBeansFoundException(connectorInstancePrototype,
+          connectorName, Connector.class);
     }
 
     // remember the name of the first one found, and instantiate it
@@ -218,8 +219,8 @@ public class InstanceInfo {
     try {
       connector = (Connector) factory.getBean(beanName);
     } catch (Exception e) {
-      throw new BeanInstantiationFailure(e, connectorInstancePrototype,
-          connectorName, beanName);
+      throw new BeanInstantiationFailureException(e,
+          connectorInstancePrototype, connectorName, beanName);
     }
 
     // if more Connectors were found issue a warning
@@ -237,14 +238,14 @@ public class InstanceInfo {
     return connector;
   }
 
-  private static Properties initPropertiesFromFile(File propertiesFile,
-      String connectorName, String propertiesFileName) {
+  public static Properties initPropertiesFromFile(File propertiesFile,
+      String propertiesFileName) {
     Properties properties = null;
     FileInputStream fileInputStream;
     try {
       fileInputStream = new FileInputStream(propertiesFile);
     } catch (FileNotFoundException e) {
-      LOGGER.warning("No properties file for connector " + connectorName
+      LOGGER.warning("No properties file " + propertiesFileName
           + "; attempting instantiation stand-alone.");
       fileInputStream = null;
     }
@@ -253,9 +254,10 @@ public class InstanceInfo {
       try {
         properties.load(fileInputStream);
       } catch (IOException e) {
-        LOGGER.log(Level.WARNING, "Problem loading properties file "
-            + propertiesFileName + " for connector " + connectorName
-            + "; attempting instantiation stand-alone.", e);
+        LOGGER
+            .log(Level.WARNING, "Problem loading properties file "
+                + propertiesFileName
+                + "; attempting instantiation stand-alone.", e);
         fileInputStream = null;
         properties = null;
       } finally {
@@ -265,7 +267,7 @@ public class InstanceInfo {
           e.printStackTrace();
           LOGGER.log(Level.WARNING,
               "Problem closing properties file input stream "
-                  + propertiesFileName + " for connector " + connectorName, e);
+                  + propertiesFileName, e);
         }
       }
     }
@@ -287,12 +289,12 @@ public class InstanceInfo {
     try {
       fos = new FileOutputStream(propertiesFile);
     } catch (FileNotFoundException e) {
-      throw new PropertyFileCreationFailure(e, propertiesFile);
+      throw new PropertyFileCreationFailureException(e, propertiesFile);
     }
     try {
       properties.store(fos, null);
     } catch (IOException e) {
-      throw new PropertyFileCreationFailure(e, propertiesFile);
+      throw new PropertyFileCreationFailureException(e, propertiesFile);
     } finally {
       try {
         fos.close();
@@ -327,32 +329,32 @@ public class InstanceInfo {
       super("Attempt to instantiate a connector with a null TypeInfo");
     }
   }
-  static class FactoryCreationFailure extends InstanceInfoException {
-    FactoryCreationFailure(Throwable cause,
+  static class FactoryCreationFailureException extends InstanceInfoException {
+    FactoryCreationFailureException(Throwable cause,
         Resource connectorInstancePrototype, String connectorName) {
       super("Spring factory creation failure for connector " + connectorName
           + " using resource " + connectorInstancePrototype.getDescription(),
           cause);
     }
   }
-  static class BeanListFailure extends InstanceInfoException {
-    BeanListFailure(Throwable cause, Resource connectorInstancePrototype,
-        String connectorName, Class clazz) {
+  static class BeanListFailureException extends InstanceInfoException {
+    BeanListFailureException(Throwable cause,
+        Resource connectorInstancePrototype, String connectorName, Class clazz) {
       super("Spring failure while accessing beans of type " + clazz.getName()
           + " for connector " + connectorName + " using resource "
           + connectorInstancePrototype.getDescription(), cause);
     }
   }
-  static class NoBeansFound extends InstanceInfoException {
-    NoBeansFound(Resource connectorInstancePrototype, String connectorName,
-        Class clazz) {
+  static class NoBeansFoundException extends InstanceInfoException {
+    NoBeansFoundException(Resource connectorInstancePrototype,
+        String connectorName, Class clazz) {
       super("No beans found of type " + clazz.getName() + " for connector "
           + connectorName + " using resource "
           + connectorInstancePrototype.getDescription());
     }
   }
-  static class BeanInstantiationFailure extends InstanceInfoException {
-    BeanInstantiationFailure(Throwable cause,
+  static class BeanInstantiationFailureException extends InstanceInfoException {
+    BeanInstantiationFailureException(Throwable cause,
         Resource connectorInstancePrototype, String connectorName,
         String beanName) {
       super("Spring failure while instantiating bean " + beanName
@@ -360,17 +362,19 @@ public class InstanceInfo {
           + connectorInstancePrototype.getDescription(), cause);
     }
   }
-  static class PropertyProcessingInternalFailure extends InstanceInfoException {
-    PropertyProcessingInternalFailure(Throwable cause, File propertiesFile,
-        Resource connectorInstancePrototype, String connectorName) {
+  static class PropertyProcessingInternalFailureException extends
+      InstanceInfoException {
+    PropertyProcessingInternalFailureException(Throwable cause,
+        File propertiesFile, Resource connectorInstancePrototype,
+        String connectorName) {
       super("Spring internal failure while processing properties file "
           + propertiesFile.getPath() + " for connector " + connectorName
           + " using resource " + connectorInstancePrototype.getDescription(),
           cause);
     }
   }
-  static class PropertyProcessingFailure extends InstanceInfoException {
-    PropertyProcessingFailure(Throwable cause, File propertiesFile,
+  static class PropertyProcessingFailureException extends InstanceInfoException {
+    PropertyProcessingFailureException(Throwable cause, File propertiesFile,
         Resource connectorInstancePrototype, String connectorName) {
       super("Problem while processing properties file "
           + propertiesFile.getPath() + " for connector " + connectorName
@@ -378,8 +382,9 @@ public class InstanceInfo {
           cause);
     }
   }
-  static class PropertyFileCreationFailure extends InstanceInfoException {
-    PropertyFileCreationFailure(Throwable cause, File propertiesFile) {
+  static class PropertyFileCreationFailureException extends
+      InstanceInfoException {
+    PropertyFileCreationFailureException(Throwable cause, File propertiesFile) {
       super("Problem creating property file " + propertiesFile.getPath(), cause);
     }
   }

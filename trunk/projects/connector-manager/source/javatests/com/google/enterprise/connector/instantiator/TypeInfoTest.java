@@ -15,9 +15,9 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.instantiator.TypeInfo;
-import com.google.enterprise.connector.instantiator.TypeInfo.BeanInstantiationFailure;
-import com.google.enterprise.connector.instantiator.TypeInfo.FactoryCreationFailure;
-import com.google.enterprise.connector.instantiator.TypeInfo.InstanceXmlMissing;
+import com.google.enterprise.connector.instantiator.TypeInfo.BeanInstantiationFailureException;
+import com.google.enterprise.connector.instantiator.TypeInfo.FactoryCreationFailureException;
+import com.google.enterprise.connector.instantiator.TypeInfo.InstanceXmlMissingException;
 import com.google.enterprise.connector.instantiator.TypeInfo.TypeInfoException;
 
 import junit.framework.Assert;
@@ -35,7 +35,8 @@ import java.util.logging.Logger;
 public class TypeInfoTest extends TestCase {
 
   private static final Logger LOGGER =
-    Logger.getLogger(TypeInfoTest.class.getName());
+      Logger.getLogger(TypeInfoTest.class.getName());
+
   /**
    * Test method for
    * {@link com.google.enterprise.connector.instantiator.TypeInfo
@@ -53,10 +54,11 @@ public class TypeInfoTest extends TestCase {
       exceptionThrown = true;
     }
     Assert.assertFalse(exceptionThrown);
-    Assert.assertNotNull(typeInfo);    
+    Assert.assertNotNull(typeInfo);
   }
 
   public final void testFromSpringResourceNegative1() {
+    // missing type resource causes FactoryCreationFailureException
     String resourceName =
         "testdata/connectorTypeTests/negative1/connectorType.xml";
     Resource r = new FileSystemResource(resourceName);
@@ -64,17 +66,18 @@ public class TypeInfoTest extends TestCase {
     boolean correctExceptionThrown = false;
     try {
       typeInfo = TypeInfo.fromSpringResourceAndThrow(r);
-    } catch (FactoryCreationFailure e) {
+    } catch (FactoryCreationFailureException e) {
       LOGGER.log(Level.WARNING, "Factory Creation Failure", e);
       correctExceptionThrown = true;
     } catch (TypeInfoException e) {
       LOGGER.log(Level.WARNING, e.getMessage(), e);
     }
     Assert.assertTrue(correctExceptionThrown);
-    Assert.assertNull(typeInfo);    
+    Assert.assertNull(typeInfo);
   }
 
   public final void testFromSpringResourceNegative2() {
+    // malformed xml type resource also prompts FactoryCreationFailureException
     String resourceName =
         "testdata/connectorTypeTests/negative2/connectorType.xml";
     Resource r = new FileSystemResource(resourceName);
@@ -82,17 +85,19 @@ public class TypeInfoTest extends TestCase {
     boolean correctExceptionThrown = false;
     try {
       typeInfo = TypeInfo.fromSpringResourceAndThrow(r);
-    } catch (FactoryCreationFailure e) {
+    } catch (FactoryCreationFailureException e) {
       LOGGER.log(Level.WARNING, "Factory Creation Failure", e);
       correctExceptionThrown = true;
     } catch (TypeInfoException e) {
       LOGGER.log(Level.WARNING, e.getMessage(), e);
     }
     Assert.assertTrue(correctExceptionThrown);
-    Assert.assertNull(typeInfo);    
+    Assert.assertNull(typeInfo);
   }
 
   public final void testFromSpringResourceNegative3() {
+    // xml resource specifies a property that doesn't exist - this prompts
+    // BeanInstantiationFailureException
     String resourceName =
         "testdata/connectorTypeTests/negative3/connectorType.xml";
     Resource r = new FileSystemResource(resourceName);
@@ -100,17 +105,19 @@ public class TypeInfoTest extends TestCase {
     boolean correctExceptionThrown = false;
     try {
       typeInfo = TypeInfo.fromSpringResourceAndThrow(r);
-    } catch (BeanInstantiationFailure e) {
+    } catch (BeanInstantiationFailureException e) {
       LOGGER.log(Level.WARNING, "Factory Creation Failure", e);
       correctExceptionThrown = true;
     } catch (TypeInfoException e) {
       LOGGER.log(Level.WARNING, e.getMessage(), e);
     }
     Assert.assertTrue(correctExceptionThrown);
-    Assert.assertNull(typeInfo);    
+    Assert.assertNull(typeInfo);
   }
-  
+
   public final void testFromSpringResourceNegative4() {
+    // valid type xml but missing instance xml prompts
+    // InstanceXmlMissingException
     String resourceName =
         "testdata/connectorTypeTests/negative4/connectorType.xml";
     Resource r = new FileSystemResource(resourceName);
@@ -118,14 +125,14 @@ public class TypeInfoTest extends TestCase {
     boolean correctExceptionThrown = false;
     try {
       typeInfo = TypeInfo.fromSpringResourceAndThrow(r);
-    } catch (InstanceXmlMissing e) {
+    } catch (InstanceXmlMissingException e) {
       LOGGER.log(Level.WARNING, "Factory Creation Failure", e);
       correctExceptionThrown = true;
     } catch (TypeInfoException e) {
       LOGGER.log(Level.WARNING, e.getMessage(), e);
     }
     Assert.assertTrue(correctExceptionThrown);
-    Assert.assertNull(typeInfo);    
+    Assert.assertNull(typeInfo);
   }
 
 }

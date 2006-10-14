@@ -28,6 +28,11 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * This class keeps track of the installed connector types and maintains a
+ * corresponding directory structure.
+ * 
+ */
 public class TypeMap extends TreeMap {
 
   private static String CONNECTOR_TYPE_PATTERN =
@@ -41,8 +46,8 @@ public class TypeMap extends TreeMap {
   }
 
   /**
-   * For testing only. Either parametermay below may be null, in which case the
-   * default is used.
+   * For testing only. Either parameter may be null, in which case the default
+   * is used.
    * 
    * @param connectorTypePattern used instead of normal default
    * @param baseDirPath
@@ -72,9 +77,9 @@ public class TypeMap extends TreeMap {
           + " resources.  No connector types can be found", e);
       return;
     }
-    
+
     if (resourceArray.length == 0) {
-      LOGGER.info("No connector types found.");      
+      LOGGER.info("No connector types found.");
     }
 
     List resources = Arrays.asList(resourceArray);
@@ -140,8 +145,8 @@ public class TypeMap extends TreeMap {
         typeNameIterator.remove();
       } else {
         typeInfo.setConnectorTypeDir(connectorTypeDir);
-        LOGGER.info("Connector type: " + typeInfo.getConnectorTypeName() + " has directory " +
-            connectorTypeDir.getAbsolutePath());
+        LOGGER.info("Connector type: " + typeInfo.getConnectorTypeName()
+            + " has directory " + connectorTypeDir.getAbsolutePath());
       }
     }
   }
