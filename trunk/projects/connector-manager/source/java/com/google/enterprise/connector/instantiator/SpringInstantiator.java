@@ -209,7 +209,7 @@ public class SpringInstantiator implements Instantiator {
    */
   public Iterator getConnectorNames() {
     initialize();
-    return instanceMap.keySet().iterator();
+    return Collections.unmodifiableSet(instanceMap.keySet()).iterator();
   }
 
   /*
