@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -113,6 +114,11 @@ public class TraversalScheduler implements Scheduler {
         continue;
       }
       String scheduleStr = scheduleStore.getConnectorSchedule(connectorName);
+      if (null == scheduleStr) {
+        LOGGER.log(Level.WARNING, "Could not find schedule for connector: " +
+          connectorName);
+        continue;
+      }
       Schedule schedule = new Schedule(scheduleStr);
       schedules.add(schedule);
     }
