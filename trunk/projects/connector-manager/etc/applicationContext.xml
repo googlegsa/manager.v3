@@ -2,11 +2,21 @@
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 <beans>
 
+	<bean id="ApplicationContextProperties" 
+		class="java.lang.String">
+		<constructor-arg value="/WEB-INF/applicationContext.properties"/>
+	</bean>
+
+	<bean id="PropertyPlaceholderConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" >
+		<property name="location" ref="ApplicationContextProperties"/>
+	</bean>	
+
 	<bean id="FeedConnection"
 		class="com.google.enterprise.connector.pusher.GsaFeedConnection">
 		<constructor-arg index="0" type="java.lang.String"
-			value="gsahost" />
-		<constructor-arg index="1" type="int" value="19900" />
+			value="${gsa.feed.host}" />
+		<constructor-arg index="1" type="int" value="${gsa.feed.port}" />
 	</bean>
 
 	<bean id="Pusher"

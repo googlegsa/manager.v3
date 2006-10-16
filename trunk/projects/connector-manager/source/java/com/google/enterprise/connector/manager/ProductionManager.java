@@ -279,8 +279,12 @@ public class ProductionManager implements Manager {
   public void setConnectorManagerConfig(boolean certAuth,
       String feederGateHost, int feederGatePort)
       throws PersistentStoreException {
-    // TODO: need a real implementation here for now we read this configuration
-    // through Spring.
+    try {
+      Context.getInstance().setConnectorManagerConfig(certAuth,
+          feederGateHost, feederGatePort);
+    } catch (InstantiatorException e) {
+      throw new PersistentStoreException(e);
+    }
   }
 
   /*

@@ -15,12 +15,19 @@
 package com.google.enterprise.connector.manager;
 
 import com.google.enterprise.connector.common.WorkQueue;
+import com.google.enterprise.connector.instantiator.InstanceInfo;
+import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
 
+import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
+import org.springframework.core.io.Resource;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,8 +39,11 @@ import javax.servlet.ServletContext;
  */
 public class Context {
 
-  private static final String SERVLET_FILESYSTEM_CONFIG_STORE_DIR =
-      "WEB-INF/connectors";
+  public static final String GSA_FEED_HOST_PROPERTY_KEY = "gsa.feed.host";
+  public static final String GSA_FEED_PORT_PROPERTY_KEY = "gsa.feed.port";
+
+  private static final String APPLICATION_CONTEXT_PROPERTIES_BEAN_NAME =
+      "ApplicationContextProperties";
 
   private static final Logger LOGGER =
       Logger.getLogger(Context.class.getName());
@@ -140,7 +150,7 @@ public class Context {
   private void initApplicationContext() {
     if (applicationContext == null) {
       if (servletContext != null) {
-        setServletContext();        
+        setServletContext();
       } else {
         setJunitContext();
       }
@@ -148,6 +158,11 @@ public class Context {
     if (applicationContext == null) {
       throw new IllegalStateException("Spring failure - no application context");
     }
+  }
+
+  private void reInitApplicationContext() {
+    applicationContext = null;
+    initApplicationContext();
   }
 
   /**
@@ -183,6 +198,11 @@ public class Context {
     started = true;
   }
 
+  private void restart() {
+    started = false;
+    start();
+  }
+  
   /**
    * Get a bean from the application context that we MUST have to operate.
    * 
@@ -230,7 +250,7 @@ public class Context {
     }
     return result;
   }
-  
+
   /**
    * Gets the singleton Manager.
    * 
@@ -275,22 +295,49 @@ public class Context {
   }
 
   /**
-   * Retrieves the perfix for the Repository file depending on whether its junit
-   * context or servlet context.
+   * Retrieves the prefix for the Common directory file depending on whether its
+   * junit context or servlet context.
    * 
    * @return prefix for the Repository file.
    */
-  public String getRepositoryFilePrefix() {
-    if (isServletContext) {
-      return "webapps/connector-manager/WEB-INF/";
-    }
-    return "testdata/mocktestdata/";
-  }
-
   public String getCommonDirPath() {
     if (isServletContext) {
       return "webapps/connector-manager/WEB-INF";
     }
     return "testdata/mocktestdata/";
+  }
+
+  public void setConnectorManagerConfig(boolean certAuth,
+      String feederGateHost, int feederGatePort) throws InstantiatorException {
+    initApplicationContext();
+    String propFileName = null;
+    try {
+      propFileName =
+          (String) applicationContext.getBean(
+              APPLICATION_CONTEXT_PROPERTIES_BEAN_NAME, java.lang.String.class);
+    } catch (BeansException e) {
+      throw new InstantiatorException("Spring exception while getting "
+          + APPLICATION_CONTEXT_PROPERTIES_BEAN_NAME + " bean", e);
+    }
+    if (propFileName == null || propFileName.length() < 1) {
+      throw new InstantiatorException("Null or empty file name returned from "
+          + "Spring while getting " + APPLICATION_CONTEXT_PROPERTIES_BEAN_NAME
+          + " bean");
+    }
+    Resource propResource = applicationContext.getResource(propFileName);
+    File propFile;
+    try {
+      propFile = propResource.getFile();
+    } catch (IOException e) {
+      throw new InstantiatorException(e);
+    }
+    Properties props =
+        InstanceInfo.initPropertiesFromFile(propFile, propFileName);
+    props.put(GSA_FEED_HOST_PROPERTY_KEY, feederGateHost);
+    props.put(GSA_FEED_PORT_PROPERTY_KEY, Integer.toString(feederGatePort));
+    InstanceInfo.writePropertiesToFile(props, propFile);
+    shutdown(true);  // force shutdown
+    reInitApplicationContext();
+    restart();
   }
 }

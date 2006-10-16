@@ -285,6 +285,12 @@ public class InstanceInfo {
     properties.put(GOOGLE_WORK_DIR, Context.getInstance().getCommonDirPath());
     String propertiesFileName = connectorName + PROPERTIES_SUFFIX;
     File propertiesFile = new File(connectorDir, propertiesFileName);
+    writePropertiesToFile(properties, propertiesFile);
+    return fromDirectoryAndThrow(connectorName, connectorDir, typeInfo);
+  }
+
+  public static void writePropertiesToFile(Properties properties,
+      File propertiesFile) throws PropertyFileCreationFailureException {
     FileOutputStream fos;
     try {
       fos = new FileOutputStream(propertiesFile);
@@ -302,7 +308,6 @@ public class InstanceInfo {
         LOGGER.log(Level.WARNING, "Trouble closing properties file stream", e);
       }
     }
-    return fromDirectoryAndThrow(connectorName, connectorDir, typeInfo);
   }
 
   static class InstanceInfoException extends InstantiatorException {
