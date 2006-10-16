@@ -27,6 +27,11 @@ public class MockPusher implements Pusher {
 
   private int totalDocs;
   private PrintStream printStream;
+  
+  public MockPusher() {
+    totalDocs = 0;
+    printStream = System.out;   
+  }
 
   public MockPusher(PrintStream ps) {
     totalDocs = 0;
