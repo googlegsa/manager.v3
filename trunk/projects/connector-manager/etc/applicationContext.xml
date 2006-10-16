@@ -17,7 +17,7 @@
 	</bean>
 
 	<bean id="ConnectorScheduleStore"
-		class="com.google.enterprise.connector.persist.PrefsStore">
+		class="com.google.enterprise.connector.persist.MockConnectorScheduleStore">
 	</bean>
 
 	<bean id="ConnectorStateStore"
