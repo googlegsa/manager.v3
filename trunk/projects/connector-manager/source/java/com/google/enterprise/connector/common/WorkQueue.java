@@ -94,8 +94,7 @@ public class WorkQueue {
       return;
     }
     for (int i = 0; i < numThreads; i++) {
-      WorkQueueThread thread = new WorkQueueThread(); 
-      thread.setName("WorkQueueThread-" + i);
+      WorkQueueThread thread = new WorkQueueThread("WorkQueueThread-" + i); 
       threads.add(thread);
       thread.start();
     }
@@ -218,7 +217,10 @@ public class WorkQueue {
     absTimeoutMap.remove(item);
     // replace hanging thread with new thread if timeout is too long
     threads.remove(item.getWorkQueueThread());
-    WorkQueueThread thread = new WorkQueueThread();
+    LOGGER.log(Level.WARNING, "Replacing work queue thread: " 
+      + item.getWorkQueueThread().getName());
+    WorkQueueThread thread = 
+      new WorkQueueThread(item.getWorkQueueThread().getName());
     threads.add(thread);
     thread.start();
   }
@@ -365,6 +367,10 @@ public class WorkQueue {
    */
   private class WorkQueueThread extends Thread {    
     private boolean isWorking;
+    
+    public WorkQueueThread(String name) {
+      super(name);
+    }
     
     public boolean isWorking() {
       return isWorking;
