@@ -14,6 +14,18 @@
 
 package com.google.enterprise.connector.pusher;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import com.google.enterprise.connector.common.Base64Encoder;
 import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.spi.Property;
@@ -22,19 +34,6 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SimpleValue;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Class to generate xml feed for a document from the Property Map and send it
@@ -71,6 +70,7 @@ public class DocPusher implements Pusher {
   private static final String XML_CONTENT = "content";
   // private static final String XML_ACTION = "action";
   private static final String XML_URL = "url";
+  private static final String XML_DISPLAY_URL = "displayurl";
   private static final String XML_MIMETYPE = "mimetype";
   private static final String XML_LAST_MODIFIED = "last-modified";
   // private static final String XML_LOCK = "lock";
@@ -93,11 +93,9 @@ public class DocPusher implements Pusher {
 
   /**
    * 
-   * @param dataSource datasource for the feed
    * @param feedConnection a connection
    */
-  public DocPusher(String dataSource, FeedConnection feedConnection) {
-    this.dataSource = dataSource;
+  public DocPusher(FeedConnection feedConnection) {
     this.feedConnection = feedConnection;
     this.feedType = "full";
   }
@@ -145,40 +143,41 @@ public class DocPusher implements Pusher {
   /*
    * Generate the record tag for the xml data.
    */
-  private String xmlWrapRecord(String searchUrl, String lastModified,
-      String content, String mimetype, PropertyMap pm) {
+  private String xmlWrapRecord(String searchUrl, String displayUrl,
+      String lastModified, String content, String mimetype, PropertyMap pm) {
     StringBuffer buf = new StringBuffer();
     buf.append("<");
     buf.append(XML_RECORD);
     buf.append(" ");
-    buf.append(XML_URL);
-    buf.append("=\"");
-    buf.append(searchUrl);
-    buf.append("\" ");
-    buf.append(XML_MIMETYPE);
-    buf.append("=\"");
-    buf.append(mimetype);
-    buf.append("\"");
+    appendAttrValuePair(XML_URL, searchUrl, buf);
+    if (displayUrl != null && displayUrl.length() > 0) {
+        appendAttrValuePair(XML_DISPLAY_URL, displayUrl, buf);
+    }
+    appendAttrValuePair(XML_MIMETYPE, mimetype, buf);
     if (lastModified != null) {
-      buf.append(" ");
-      buf.append(XML_LAST_MODIFIED);
-      buf.append("=\"");
-      buf.append(lastModified);
-      buf.append("\"");
+        appendAttrValuePair(XML_LAST_MODIFIED, lastModified, buf);
     }
     buf.append(">\n");
     xmlWrapMetadata(buf, pm);
     buf.append("<");
     buf.append(XML_CONTENT);
     buf.append(" ");
-    buf.append(XML_ENCODING);
-    buf.append("=\"base64binary\">\n");
+    appendAttrValuePair(XML_ENCODING, "base64binary", buf);
+    buf.append(">\n");
     buf.append(content);
     buf.append("\n");
     buf.append(xmlWrapEnd(XML_CONTENT));
     buf.append(xmlWrapEnd(XML_RECORD));
     return buf.toString();
   }
+
+private void appendAttrValuePair(String attrName, String value, StringBuffer buf) {
+	// TODO(ziff): think about quote-escaping and xml-escapinmg the value
+	buf.append(attrName);
+    buf.append("=\"");
+    buf.append(value);
+    buf.append("\" ");
+}
 
   private void xmlWrapMetadata(StringBuffer buf, PropertyMap pm) {
     Iterator i;
@@ -231,9 +230,9 @@ public class DocPusher implements Pusher {
     }
     buf.append("<");
     buf.append(XML_META);
-    buf.append(" name=\"");
-    buf.append(name);
-    buf.append("\" content=\"");
+    buf.append(" ");
+    appendAttrValuePair("name", name, buf);
+    buf.append("content=\"");
     String delimiter = "";
     while (values.hasNext()) {
       Value value = (Value) values.next();
@@ -401,8 +400,6 @@ public class DocPusher implements Pusher {
       searchurl = buf.toString();
     }
 
-    String contentUrl = getOptionalString(pm, SpiConstants.PROPNAME_CONTENTURL);
-
     InputStream contentStream = 
       getOptionalStream(pm, SpiConstants.PROPNAME_CONTENT);
     String content;
@@ -443,8 +440,10 @@ public class DocPusher implements Pusher {
       mimetype = SpiConstants.DEFAULT_MIMETYPE;
     }
 
-    xmlData.append(xmlWrapRecord(searchurl, lastModifiedString, content,
-        mimetype, pm));
+    String displayUrl = getOptionalString(pm, SpiConstants.PROPNAME_DISPLAYURL);
+
+    xmlData.append(xmlWrapRecord(searchurl, displayUrl, lastModifiedString,
+        content, mimetype, pm));
 
     xmlData.append(xmlWrapEnd(XML_GROUP));
     xmlData.append(xmlWrapEnd(XML_GSAFEED));
@@ -473,8 +472,8 @@ public class DocPusher implements Pusher {
    * @param connectorName The connector name that fed this document
    */
   public void take(PropertyMap pm, String connectorName) {
+	this.dataSource = connectorName;
     xmlData = buildXmlData(pm, connectorName);
-    URL feedUrl = null;
     try {
       String message = composeMessage();
       gsaResponse = feedConnection.sendData(message);
