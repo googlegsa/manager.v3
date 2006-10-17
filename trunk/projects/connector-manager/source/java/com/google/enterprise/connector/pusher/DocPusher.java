@@ -42,6 +42,35 @@ import com.google.enterprise.connector.spi.Value;
 
 public class DocPusher implements Pusher {
 
+  private static final String XML_LESS_THAN = "&lt;";
+  private static final String XML_AMPERSAND = "&amp;";
+  private static final String XML_QUOTE = "&quot;";
+  private static final String XML_APOSTROPHE = "&apos;";
+
+  private static void XmlEncodeAttrValue(String val, StringBuffer buf) {
+    for (int i = 0; i < val.length(); i++) {
+      char c = val.charAt(i);
+      /**
+       * Only these characters need to be encoded, according to
+       * http://www.w3.org/TR/REC-xml/#NT-AttValue Actually, we could only
+       * encode one of the quote characters if we knew that that was the one
+       * used to wrap the valuye, but we'll play it safe and encode both. TODO:
+       * what happens to white-space?
+       */
+      if (c == '<') {
+        buf.append(XML_LESS_THAN);
+      } else if (c == '&') {
+        buf.append(XML_AMPERSAND);
+      } else if (c == '"') {
+        buf.append(XML_QUOTE);
+      } else if (c == '\'') {
+        buf.append(XML_APOSTROPHE);
+      } else {
+        buf.append(c);
+      }
+    }
+  }
+
   private static Set propertySkipSet;
 
   static {
@@ -139,7 +168,7 @@ public class DocPusher implements Pusher {
     buf.append(">\n");
     return buf.toString();
   }
-  
+
   /*
    * Generate the record tag for the xml data.
    */
@@ -151,11 +180,11 @@ public class DocPusher implements Pusher {
     buf.append(" ");
     appendAttrValuePair(XML_URL, searchUrl, buf);
     if (displayUrl != null && displayUrl.length() > 0) {
-        appendAttrValuePair(XML_DISPLAY_URL, displayUrl, buf);
+      appendAttrValuePair(XML_DISPLAY_URL, displayUrl, buf);
     }
     appendAttrValuePair(XML_MIMETYPE, mimetype, buf);
     if (lastModified != null) {
-        appendAttrValuePair(XML_LAST_MODIFIED, lastModified, buf);
+      appendAttrValuePair(XML_LAST_MODIFIED, lastModified, buf);
     }
     buf.append(">\n");
     xmlWrapMetadata(buf, pm);
@@ -171,13 +200,13 @@ public class DocPusher implements Pusher {
     return buf.toString();
   }
 
-private void appendAttrValuePair(String attrName, String value, StringBuffer buf) {
-	// TODO(ziff): think about quote-escaping and xml-escapinmg the value
-	buf.append(attrName);
+  private void appendAttrValuePair(String attrName, String value,
+      StringBuffer buf) {
+    buf.append(attrName);
     buf.append("=\"");
-    buf.append(value);
+    XmlEncodeAttrValue(value, buf);
     buf.append("\" ");
-}
+  }
 
   private void xmlWrapMetadata(StringBuffer buf, PropertyMap pm) {
     Iterator i;
@@ -254,8 +283,7 @@ private void appendAttrValuePair(String attrName, String value, StringBuffer buf
         continue;
       }
       buf.append(delimiter);
-      // TODO: escape quotes
-      buf.append(valString);
+      XmlEncodeAttrValue(valString, buf);
       delimiter = ", ";
     }
     buf.append("\"/>\n");
@@ -285,12 +313,12 @@ private void appendAttrValuePair(String attrName, String value, StringBuffer buf
     result = v.getString();
     return result;
   }
-  
+
   /*
    * Gets the InputStream value for a given property.
    */
-  private InputStream getStreamAndThrow(PropertyMap pm, String name) 
-    throws RepositoryException {
+  private InputStream getStreamAndThrow(PropertyMap pm, String name)
+      throws RepositoryException {
     InputStream result = null;
     Value v = getValueAndThrow(pm, name);
     if (v == null) {
@@ -368,7 +396,7 @@ private void appendAttrValuePair(String attrName, String value, StringBuffer buf
     }
     return result;
   }
-  
+
   /*
    * Builds the xml string for a given property map.
    */
@@ -400,10 +428,10 @@ private void appendAttrValuePair(String attrName, String value, StringBuffer buf
       searchurl = buf.toString();
     }
 
-    InputStream contentStream = 
-      getOptionalStream(pm, SpiConstants.PROPNAME_CONTENT);
+    InputStream contentStream =
+        getOptionalStream(pm, SpiConstants.PROPNAME_CONTENT);
     String content;
-    
+
     try {
       StringWriter writer = new StringWriter();
       Base64Encoder.encode(contentStream, writer);
@@ -472,7 +500,7 @@ private void appendAttrValuePair(String attrName, String value, StringBuffer buf
    * @param connectorName The connector name that fed this document
    */
   public void take(PropertyMap pm, String connectorName) {
-	this.dataSource = connectorName;
+    this.dataSource = connectorName;
     xmlData = buildXmlData(pm, connectorName);
     try {
       String message = composeMessage();

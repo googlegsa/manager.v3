@@ -83,7 +83,7 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
-   * Tests DocPusher.
+   * Test basic metadata representation.
    * 
    * @throws RepositoryException
    */
@@ -111,7 +111,7 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
-   * Tests DocPusher.
+   * Test displayurl.
    * 
    * @throws RepositoryException
    */
@@ -135,7 +135,49 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
-   * Tests DocPusher.
+   * Test special characters in metadata values.
+   * 
+   * @throws RepositoryException
+   */
+  public void testSpecials() throws RepositoryException {
+    String json1 =
+        "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+            + ",\"content\":\"now is the time\"" 
+            // note double escaping in the line below, since this is a json string
+            + ",\"special\":\"`~!@#$%^&*()_+-={}[]|\\\\:\\\";'<>?,./\""
+            + ",\"japanese\":\"\u5317\u6d77\u9053\""
+            + ",\"chinese\":\"\u5317\u4eac\u5e02\""
+            + "}\r\n" + "";
+    PropertyMap propertyMap =
+        SpiPropertyMapFromJcrTest.makePropertyMapFromJson(json1);
+
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection);
+    dpusher.take(propertyMap, "junit");
+    String resultXML = mockFeedConnection.getFeed();
+
+    assertStringContains("<meta name=\"special\" " +
+        // only single escapes here, because this is not a json string
+        // but xml-sensitive characters have been replaced with entities
+            "content=\"`~!@#$%^&amp;*()_+-={}[]|\\:&quot;;&apos;&lt;>?,./\"/>",
+        resultXML);
+    
+    assertStringContains("<meta name=\"japanese\" " +
+        // only single escapes here, because this is not a json string
+        // but xml-sensitive characters have been replaced with entities
+            "content=\"\u5317\u6d77\u9053\"/>",
+        resultXML);
+    
+    assertStringContains("<meta name=\"chinese\" " +
+        // only single escapes here, because this is not a json string
+        // but xml-sensitive characters have been replaced with entities
+            "content=\"\u5317\u4eac\u5e02\"/>",
+        resultXML);
+    
+  }
+
+  /**
+   * Tests a word document.
    * 
    * @throws RepositoryException
    */
