@@ -8,9 +8,7 @@
 
 	<bean id="Pusher"
 		class="com.google.enterprise.connector.pusher.DocPusher">
-		<constructor-arg index="0" type="java.lang.String"
-			value="datasource_junit" />
-		<constructor-arg index="1" ref="FeedConnection" />
+		<constructor-arg index="0" ref="FeedConnection" />
 	</bean>
 
 	<bean id="ConnectorScheduleStore"

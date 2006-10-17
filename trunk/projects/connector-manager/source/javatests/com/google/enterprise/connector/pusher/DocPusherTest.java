@@ -38,25 +38,23 @@ import javax.jcr.query.QueryManager;
  */
 public class DocPusherTest extends TestCase {
 
-  private static final String DATASOURCE = "datasource";
-
   public void testTake() throws RepositoryException {
     String expectedXml =
-        "datasource=datasource&feedtype=full&data="
+        "datasource=junit&feedtype=full&data="
             + "<?xml version=\'1.0\' encoding=\'UTF-8\'?>"
             + "<!DOCTYPE gsafeed PUBLIC \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">"
-            + "<gsafeed><header><datasource>datasource</datasource>\n"
+            + "<gsafeed><header><datasource>junit</datasource>\n"
             + "<feedtype>full</feedtype>\n"
             + "</header>\n"
             + "<group>\n"
             + "<record url=\"http://www.sometesturl.com/test\" mimetype=\""
             + SpiConstants.DEFAULT_MIMETYPE
-            + "\" last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
+            + "\" last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\" >\n"
             + "<metadata>\n"
             + "<meta name=\"google:lastmodify\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
             + "<meta name=\"google:searchurl\" content=\"http://www.sometesturl.com/test\"/>\n"
             + "<meta name=\"jcr:lastModified\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
-            + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
+            + "</metadata>\n" + "<content encoding=\"base64binary\" >\n"
             + "bm93IGlzIHRoZSB0aW1l\n" + "</content>\n" + "</record>\n"
             + "</group>\n" + "</gsafeed>\n" + "";
     String resultXML;
@@ -70,7 +68,7 @@ public class DocPusherTest extends TestCase {
     QueryTraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(DATASOURCE, mockFeedConnection);
+    DocPusher dpusher = new DocPusher(mockFeedConnection);
 
     ResultSet resultSet = qtm.startTraversal();
 
@@ -99,7 +97,7 @@ public class DocPusherTest extends TestCase {
         SpiPropertyMapFromJcrTest.makePropertyMapFromJson(json1);
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(DATASOURCE, mockFeedConnection);
+    DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(propertyMap, "junit");
     String resultXML = mockFeedConnection.getFeed();
 
@@ -108,6 +106,30 @@ public class DocPusherTest extends TestCase {
     assertStringContains("<meta name=\"author\" content=\"ziff\"/>",
         resultXML);
     assertStringContains("url=\"googleconnector://junit.localhost?docid=doc1\"",
+        resultXML);
+    
+  }
+
+  /**
+   * Tests DocPusher.
+   * 
+   * @throws RepositoryException
+   */
+  public void testDisplayUrl() throws RepositoryException {
+    String json1 =
+        "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+            + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+            + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+            + "}\r\n" + "";
+    PropertyMap propertyMap =
+        SpiPropertyMapFromJcrTest.makePropertyMapFromJson(json1);
+
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection);
+    dpusher.take(propertyMap, "junit");
+    String resultXML = mockFeedConnection.getFeed();
+
+    assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
     
   }
@@ -129,7 +151,7 @@ public class DocPusherTest extends TestCase {
         SpiPropertyMapFromJcrTest.makePropertyMapFromJson(json1);
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(DATASOURCE, mockFeedConnection);
+    DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(propertyMap, "junit");
     String resultXML = mockFeedConnection.getFeed();
  
