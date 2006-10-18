@@ -24,7 +24,8 @@ public interface FeedConnection {
 
   /**
    * Open a connection to this url and sends data.
-   * @param data The String to send
+   * @param data The String to send.  This data is assumed to have been URL
+   * encoded.
    * @return response from the server.
    * @throws IOException
    */

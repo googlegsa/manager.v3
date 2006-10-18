@@ -36,15 +36,6 @@ public class GsaFeedConnection implements FeedConnection {
     this.host = host;
     this.port = port;
   }
-  
-  /*
-   * Urlencodes the xml string.
-   */
-  private String encode(String data) throws UnsupportedEncodingException {
-    String encodedData =
-        URLEncoder.encode(data, DocPusher.XML_DEFAULT_ENCODING);
-    return encodedData;
-  }
 
   /*
    * Generates the feed url for a given GSA host.
