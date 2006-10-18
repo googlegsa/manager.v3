@@ -14,18 +14,6 @@
 
 package com.google.enterprise.connector.pusher;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import com.google.enterprise.connector.common.Base64Encoder;
 import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.spi.Property;
@@ -34,6 +22,19 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SimpleValue;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URLEncoder;
+import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class to generate xml feed for a document from the Property Map and send it
@@ -192,9 +193,8 @@ public class DocPusher implements Pusher {
     buf.append(XML_CONTENT);
     buf.append(" ");
     appendAttrValuePair(XML_ENCODING, "base64binary", buf);
-    buf.append(">\n");
+    buf.append(">");
     buf.append(content);
-    buf.append("\n");
     buf.append(xmlWrapEnd(XML_CONTENT));
     buf.append(xmlWrapEnd(XML_RECORD));
     return buf.toString();
@@ -480,17 +480,19 @@ public class DocPusher implements Pusher {
   }
 
   /*
-   * Composes the final message
+   * Returns URL Encoded data to be sent to feeder.
    */
-  private String composeMessage() {
-    StringBuffer buf = new StringBuffer(8192);
-    buf.append("datasource=");
-    buf.append(dataSource);
-    buf.append("&feedtype=");
-    buf.append(feedType);
-    buf.append("&data=");
-    buf.append(xmlData);
-    return buf.toString();
+  private String encodeXmlData() throws UnsupportedEncodingException {
+    String data =
+      URLEncoder.encode("datasource", XML_DEFAULT_ENCODING)
+      + "=" + URLEncoder.encode(dataSource, XML_DEFAULT_ENCODING);
+    data +=
+      "&" + URLEncoder.encode("feedtype", XML_DEFAULT_ENCODING)
+      + "=" + URLEncoder.encode(feedType, XML_DEFAULT_ENCODING);
+    data +=
+      "&" + URLEncoder.encode("data", XML_DEFAULT_ENCODING)
+      + "=" + URLEncoder.encode(xmlData, XML_DEFAULT_ENCODING);
+    return data;
   }
 
   /**
@@ -503,7 +505,7 @@ public class DocPusher implements Pusher {
     this.dataSource = connectorName;
     xmlData = buildXmlData(pm, connectorName);
     try {
-      String message = composeMessage();
+      String message = encodeXmlData();
       gsaResponse = feedConnection.sendData(message);
     } catch (MalformedURLException e) {
       LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",

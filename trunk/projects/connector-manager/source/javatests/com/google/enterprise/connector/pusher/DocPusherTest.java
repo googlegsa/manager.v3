@@ -54,8 +54,8 @@ public class DocPusherTest extends TestCase {
             + "<meta name=\"google:lastmodify\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
             + "<meta name=\"google:searchurl\" content=\"http://www.sometesturl.com/test\"/>\n"
             + "<meta name=\"jcr:lastModified\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
-            + "</metadata>\n" + "<content encoding=\"base64binary\" >\n"
-            + "bm93IGlzIHRoZSB0aW1l\n" + "</content>\n" + "</record>\n"
+            + "</metadata>\n" + "<content encoding=\"base64binary\" >"
+            + "bm93IGlzIHRoZSB0aW1l" + "</content>\n" + "</record>\n"
             + "</group>\n" + "</gsafeed>\n" + "";
     String resultXML;
     String gsaExpectedResponse = "Mock response";
