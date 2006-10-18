@@ -20,9 +20,9 @@ package com.google.enterprise.connector.common;
 public abstract class WorkQueueItem {
   private static final long timeout = 5 * 1000;
   // the thread that is executing the item (this is used for interrupting work)
-  private Thread workQueueThread;
+  private WorkQueueThread workQueueThread;
   
-  public Thread getWorkQueueThread() {
+  public WorkQueueThread getWorkQueueThread() {
     return workQueueThread;
   }
 
@@ -31,7 +31,7 @@ public abstract class WorkQueueItem {
    * This thread will be used to interrupt the work if timeout occurs.
    * @param workQueueThread
    */
-  public void setWorkQueueThread(Thread workQueueThread) {
+  public void setWorkQueueThread(WorkQueueThread workQueueThread) {
     this.workQueueThread = workQueueThread;
   }
 
