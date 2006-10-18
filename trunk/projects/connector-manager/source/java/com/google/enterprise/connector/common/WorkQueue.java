@@ -94,7 +94,8 @@ public class WorkQueue {
       return;
     }
     for (int i = 0; i < numThreads; i++) {
-      WorkQueueThread thread = new WorkQueueThread("WorkQueueThread-" + i); 
+      WorkQueueThread thread = 
+        new WorkQueueThread("WorkQueueThread-" + i, this); 
       threads.add(thread);
       thread.start();
     }
@@ -126,8 +127,8 @@ public class WorkQueue {
       if (interrupt) {
         Iterator iter = threads.iterator();
         while (iter.hasNext()) {
-          Thread thread = (Thread) iter.next();
-          thread.interrupt();
+          WorkQueueThread thread = (WorkQueueThread) iter.next();
+          thread.interruptAndKill();
         }
         try {
           Thread.sleep(timeoutInMillis);
@@ -193,10 +194,12 @@ public class WorkQueue {
       Long absTimeout = (Long) entry.getValue();
       if (absTimeout.longValue() <= now) {  // we have a timeout
         WorkQueueItem item = (WorkQueueItem) entry.getKey();
-        item.getWorkQueueThread().interrupt();
         // if the wait is too long, then we want to replace the thread
         if (absTimeout.longValue() + killThreadTimeout <= now) {
           replaceHangingThread(item);
+          item.getWorkQueueThread().interruptAndKill();
+        } else {
+          item.getWorkQueueThread().interrupt();
         }
       } else {  // we have a thread that will timeout later
         if ((NO_TIMEOUT == getNextAbsoluteTimeout())
@@ -220,7 +223,7 @@ public class WorkQueue {
     LOGGER.log(Level.WARNING, "Replacing work queue thread: " 
       + item.getWorkQueueThread().getName());
     WorkQueueThread thread = 
-      new WorkQueueThread(item.getWorkQueueThread().getName());
+      new WorkQueueThread(item.getWorkQueueThread().getName(), this);
     threads.add(thread);
     thread.start();
   }
@@ -229,7 +232,7 @@ public class WorkQueue {
    * Work to do right before executing the item.
    * @param item
    */
-  private void preWork(WorkQueueItem item) {
+  void preWork(WorkQueueItem item) {
     Long absTimeout = 
       new Long(item.getTimeout() + System.currentTimeMillis());
     synchronized(this) {
@@ -244,7 +247,7 @@ public class WorkQueue {
    * Work to do right after executing an item.
    * @param item
    */
-  private void postWork(WorkQueueItem item) {
+  void postWork(WorkQueueItem item) {
     synchronized(this) {
       absTimeoutMap.remove(item);
     }
@@ -298,7 +301,7 @@ public class WorkQueue {
    * Remove a piece of work.
    * @return the work item
    */
-  private WorkQueueItem removeWork() {
+  WorkQueueItem removeWork() {
     return (WorkQueueItem) workQueue.removeFirst();
   }
 
@@ -357,54 +360,6 @@ public class WorkQueue {
         }
 
         interruptAllTimedOutItems();
-      }
-    }
-  }
-  
-  /**
-   * A WorkQueueThread executes work in the WorkQueue and calls the associated
-   * callback method when the work is complete.
-   */
-  private class WorkQueueThread extends Thread {    
-    private boolean isWorking;
-    
-    public WorkQueueThread(String name) {
-      super(name);
-    }
-    
-    public boolean isWorking() {
-      return isWorking;
-    }
-
-    public void run() {
-      while (true) {
-        WorkQueueItem item;
-        synchronized (WorkQueue.this) {
-          while (workQueue.isEmpty()) {
-            try {
-              WorkQueue.this.wait();
-            } catch (InterruptedException ie) {
-              // thread exits when shutdown of WorkQueue occurs
-              LOGGER.log(Level.WARNING, "Interrupted Exception: ", ie);
-              return;
-            }
-          }
-          
-          item = removeWork();
-        }
-        
-        item.setWorkQueueThread(this);
-        try {
-          WorkQueue.this.preWork(item);
-          isWorking = true;
-          item.doWork();
-        } catch (RuntimeException e) {
-          LOGGER.log(Level.WARNING, "WorkQueueThread work had problems: ", e);
-          continue;
-        } finally {
-          isWorking = false;
-          WorkQueue.this.postWork(item);
-        }
       }
     }
   }
