@@ -109,6 +109,7 @@ public class MockRepositoryDocument {
     this.timeStamp = timeStamp;
     this.docid = docid;
     this.content = content;
+    this.contentFile = proplist.lookupStringValue("contentfile");
     this.proplist = proplist;
   }
 
