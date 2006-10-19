@@ -56,9 +56,8 @@ public class WorkQueueThread extends Thread {
           try {
             workQueue.wait();
           } catch (InterruptedException ie) {
-            // thread exits when shutdown of WorkQueue occurs
-            LOGGER.log(Level.WARNING, "Interrupted Exception: ", ie);
             if (exit) {
+              // thread exits, for example, when shutdown of WorkQueue occurs
               LOGGER.log(Level.INFO,
                 "Interrupted WorkQueueThread is exiting due to interrupt "
                   + "and kill.");
@@ -66,6 +65,8 @@ public class WorkQueueThread extends Thread {
             } else {
               // if we aren't killing this thread, we go back to wait for more
               // work
+              LOGGER.log(Level.INFO, "Interrupted WorkQueueThread is fine so" +
+                    " will continue to wait for work.", ie);
               continue;
             }
           }

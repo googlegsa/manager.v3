@@ -93,16 +93,19 @@ public class WorkQueue {
     if (isInitialized) {
       return;
     }
+    interrupterThread = new InterrupterThread("InterrupterThread");
+    interrupterThread.start();
+    isInitialized = true;
+    shutdown = false;
+
+    // start WorkQueueThreads after initialization since they depend on the 
+    // WorkQueue
     for (int i = 0; i < numThreads; i++) {
       WorkQueueThread thread = 
         new WorkQueueThread("WorkQueueThread-" + i, this); 
       threads.add(thread);
       thread.start();
     }
-    interrupterThread = new InterrupterThread("InterrupterThread");
-    interrupterThread.start();
-    isInitialized = true;
-    shutdown = false;
   }
   
   /**
@@ -311,8 +314,7 @@ public class WorkQueue {
    */
   public synchronized int getWorkCount() {
     if (!isInitialized) {
-      throw new IllegalStateException(
-        "Must init() WorkQueue object before getWorkCount().");
+      return 0;
     }
     return workQueue.size();
   }
