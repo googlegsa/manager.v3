@@ -199,6 +199,7 @@ public class WorkQueue {
         WorkQueueItem item = (WorkQueueItem) entry.getKey();
         // if the wait is too long, then we want to replace the thread
         if (absTimeout.longValue() + killThreadTimeout <= now) {
+          iter.remove();
           replaceHangingThread(item);
           item.getWorkQueueThread().interruptAndKill();
         } else {
@@ -216,11 +217,11 @@ public class WorkQueue {
   /**
    * Given that a particular work item is hanging and isn't responding to
    * an interrupt, we want to be able to reclaim the thread that is hung
-   * executing that work.  We do so by spawning a new thread.
+   * executing that work.  We do so by spawning a new thread.  Caller must
+   * hold instance lock.
    * @param item the item that is causing the hang
    */
   private void replaceHangingThread(WorkQueueItem item) {
-    absTimeoutMap.remove(item);
     // replace hanging thread with new thread if timeout is too long
     threads.remove(item.getWorkQueueThread());
     LOGGER.log(Level.WARNING, "Replacing work queue thread: " 
