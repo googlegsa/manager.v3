@@ -1,4 +1,4 @@
 # Test word doc
-{"timestamp":"100000","type":"save","docid":"worddoc","google:mimetype":"application/msword","contentfile":"webapps/connector-manager/WEB-INF/test.doc","google:contenturl":"http://www.sometesturl.com/test"}
+{"timestamp":"100000","type":"save","docid":"worddoc","google:mimetype":"application/msword","contentfile":"webapps/connector-manager/WEB-INF/test.doc"}
 # Test display URL
-{"timestamp":"100010","type":"save","docid":"displayurl","google:mimetype":"text/plain","content":"event log four content","google:contenturl":"http://www.sometesturl.com/test4"}
+{"timestamp":"101010","type":"save","docid":"displayurl","google:mimetype":"text/plain","content":"event log four content","google:displayurl":"http://www.google.com"}
