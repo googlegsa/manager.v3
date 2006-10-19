@@ -108,7 +108,7 @@ public class DocPusherTest extends TestCase {
     assertStringContains(
       urlEncode("<meta name=\"author\" content=\"ziff\"/>"), resultXML);
     assertStringContains(
-      urlEncode("url=\"googleconnector://junit.localhost?docid=doc1\""),
+      urlEncode("url=\"googleconnector://junit.localhost/doc?docid=doc1\""),
       resultXML);
 
   }
@@ -209,7 +209,7 @@ public class DocPusherTest extends TestCase {
     assertStringContains(
       urlEncode("<meta name=\"author\" content=\"ziff\"/>"), resultXML);
     assertStringContains(
-      urlEncode("url=\"googleconnector://junit.localhost?docid=doc1\""), 
+      urlEncode("url=\"googleconnector://junit.localhost/doc?docid=doc1\""), 
       resultXML);
 
   }
