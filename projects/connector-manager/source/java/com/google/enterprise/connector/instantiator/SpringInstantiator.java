@@ -222,7 +222,8 @@ public class SpringInstantiator implements Instantiator {
     initialize();
     InstanceInfo instanceInfo = (InstanceInfo) instanceMap.get(connectorName);
     if (instanceInfo == null) {
-      throw new ConnectorNotFoundException();
+      throw new ConnectorNotFoundException("Connector not found: " 
+        + connectorName);
     }
     return instanceInfo.getTypeInfo().getConnectorTypeName();
   }
