@@ -43,12 +43,15 @@ public class AuthorizationTest extends TestCase {
         "<AuthorizationQuery>\n" + 
         "<ConnectorQuery>\n" + 
         "  <Identity source=\"gsa\">CN=foo</Identity>\n" + 
-        "  <Resource>googleconnector://connector1/?docID=foo1</Resource>\n" + 
-        "  <Resource>googleconnector://connector2/?docID=foo2</Resource>\n" + 
+        "  <Resource>googleconnector://connector1/?" + ServletUtil.DOCID +
+        "foo1</Resource>\n" + 
+        "  <Resource>googleconnector://connector2/?" + ServletUtil.DOCID +
+        "foo2</Resource>\n" + 
         "</ConnectorQuery>\n" + 
         "<ConnectorQuery>\n" + 
         "  <Identity source=\"connector\">username</Identity>\n" + 
-        "  <Resource>googleconnector://connector3/?docID=foo3</Resource>\n" + 
+        "  <Resource>googleconnector://connector3/?" + ServletUtil.DOCID +
+        "foo3</Resource>\n" + 
         "</ConnectorQuery>\n" + 
         "</AuthorizationQuery>";
 
@@ -56,15 +59,18 @@ public class AuthorizationTest extends TestCase {
     	"<CmResponse>\n" +
     	"  <AuthorizationResponse>\n" + 
         "    <Answer>\n" + 
-        "      <Resource>googleconnector://connector1/?docID=foo1</Resource>\n" + 
+        "      <Resource>googleconnector://connector1/?" + ServletUtil.DOCID +
+        "foo1</Resource>\n" + 
         "      <Decision>Permit</Decision>\n" + 
         "    </Answer>\n" + 
         "    <Answer>\n" + 
-        "      <Resource>googleconnector://connector2/?docID=foo2</Resource>\n" + 
+        "      <Resource>googleconnector://connector2/?" + ServletUtil.DOCID +
+        "foo2</Resource>\n" + 
         "      <Decision>Permit</Decision>\n" + 
         "    </Answer>\n" + 
         "    <Answer>\n" + 
-        "      <Resource>googleconnector://connector3/?docID=foo3</Resource>\n" + 
+        "      <Resource>googleconnector://connector3/?" + ServletUtil.DOCID +
+        "foo3</Resource>\n" + 
         "      <Decision>Permit</Decision>\n" + 
         "    </Answer>\n" + 
         "  </AuthorizationResponse>\n" +
@@ -85,7 +91,7 @@ public class AuthorizationTest extends TestCase {
         "<AuthorizationQuery>\n" + 
         "<ConnectorQuery>\n" + 
         "  <Identity source=\"gsa\">CN=foo</Identity>\n" + 
-        "  <Resource>googleconnector:///?docID=foo1</Resource>\n" + 
+        "  <Resource>googleconnector:///?" + ServletUtil.DOCID + "foo1</Resource>\n" + 
         "</ConnectorQuery>\n" + 
         "</AuthorizationQuery>";
 
@@ -101,7 +107,7 @@ public class AuthorizationTest extends TestCase {
    * {@link com.google.enterprise.connector.servlet.Authorization#handleDoPost(
    * java.lang.String, com.google.enterprise.connector.manager.Manager)}.
    * 
-   * docID does not exist.
+   * docid does not exist.
    */
   public void testHandleDoPost3() {
     String xmlBody =
@@ -132,7 +138,8 @@ public class AuthorizationTest extends TestCase {
         "<AuthorizationQuery>\n" + 
         "<ConnectorQuery>\n" + 
         "  <Identity source=\"gsa\"></Identity>\n" + 
-        "  <Resource>googleconnector://connector1/?docID=foo1</Resource>\n" + 
+        "  <Resource>googleconnector://connector1/?" + ServletUtil.DOCID +
+        "foo1</Resource>\n" + 
         "</ConnectorQuery>\n" + 
         "</AuthorizationQuery>";
 
@@ -140,7 +147,8 @@ public class AuthorizationTest extends TestCase {
     	"<CmResponse>\n" +
     	"  <AuthorizationResponse>\n" + 
         "    <Answer>\n" + 
-        "      <Resource>googleconnector://connector1/?docID=foo1</Resource>\n" + 
+        "      <Resource>googleconnector://connector1/?" + ServletUtil.DOCID +
+        "foo1</Resource>\n" + 
         "      <Decision>Permit</Decision>\n" + 
         "    </Answer>\n" + 
         "  </AuthorizationResponse>\n" +

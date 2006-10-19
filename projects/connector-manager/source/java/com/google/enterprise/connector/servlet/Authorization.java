@@ -48,9 +48,6 @@ public class Authorization extends HttpServlet {
   private static final Logger LOG =
     Logger.getLogger(Authorization.class.getName());
 
-  private static String PROTOCOL = "googleconnector://";
-  private static String DOCID = "docID=";
-
   /**
    * Returns an answer for each resource from the request.
    * @param req 
@@ -132,8 +129,8 @@ public class Authorization extends HttpServlet {
       for (Iterator iter = resources.iterator(); iter.hasNext();) {
         String url = (String) iter.next();
         String connectorName = url.substring(
-            url.indexOf(PROTOCOL) + PROTOCOL.length());
-        if (url.lastIndexOf(DOCID) == -1) {
+            url.indexOf(ServletUtil.PROTOCOL) + ServletUtil.PROTOCOL.length());
+        if (url.lastIndexOf(ServletUtil.DOCID) == -1) {
           status = ServletUtil.XML_RESPONSE_STATUS_NULL_DOCID;
           continue;
         }
@@ -188,7 +185,8 @@ public class Authorization extends HttpServlet {
             iterUrl.hasNext();) {
           String url = (String) iterUrl.next();
           docidList.add(url.substring(
-              url.lastIndexOf(DOCID) + DOCID.length(), url.length()));
+              url.lastIndexOf(ServletUtil.DOCID) +
+              ServletUtil.DOCID.length(), url.length()));
         }
         Set answerSet = manager.authorizeDocids((String) entryConn.getKey(),
             docidList, (String) entry.getKey());    
