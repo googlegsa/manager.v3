@@ -423,7 +423,7 @@ public class DocPusher implements Pusher {
       String docid = getRequiredString(pm, SpiConstants.PROPNAME_DOCID);
       StringBuffer buf = new StringBuffer("googleconnector://");
       buf.append(connectorName);
-      buf.append(".localhost?docid=");
+      buf.append(".localhost/doc?docid=");
       buf.append(docid);
       searchurl = buf.toString();
     }
