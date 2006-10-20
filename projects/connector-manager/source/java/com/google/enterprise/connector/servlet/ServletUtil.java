@@ -46,8 +46,8 @@ public class ServletUtil {
   public static final String MIMETYPE_XML = "text/xml";
   public static final String MIMETYPE_HTML = "text/html";
 
-  public static String PROTOCOL = "googleconnector://";
-  public static String DOCID = "docID=";
+  public static final String PROTOCOL = "googleconnector://";
+  public static final String DOCID = "/doc?docid=";
 
   public static final String QUERY_PARAM_LANG = "Lang";
   public static final String DEFAULT_LANGUAGE = "en";
