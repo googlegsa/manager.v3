@@ -159,7 +159,7 @@
 
 		<war warfile="${war.dir}/${ant.project.name}_debug.war" webxml="${webdocs}/WEB-INF/web.xml">
 			<lib dir="${jar.dir}" includes="*.jar" />
-			<lib dir="${thirdparty.jar.dir}" includes="*.jar" />
+			<lib dir="${thirdparty.jar.dir}" includes="*.jar" excludes="servlet-api.jar" />
 			<fileset dir="${webdocs}" includes="**" />
 			<webinf dir="etc" includes="**" />
       <webinf dir="testdata/mocktestdata" includes="MockRepositoryEventLog*.txt" />
