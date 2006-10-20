@@ -37,8 +37,10 @@ public class SetManagerConfigTest extends TestCase {
   private static final String APPLICATION_PROPERTIES =
       "applicationContext.properties";
 
-  public final void testsetConnectorManagerConfig() throws JSONException,
+  public final void testSetConnectorManagerConfig() throws JSONException,
       InstantiatorException, IOException {
+    // TODO(ziff): make a copy of this file first and work from it,
+    // so it doesn't appear that this file is modified every time the test runs
     String propFileName = TEST_DIR + APPLICATION_PROPERTIES;
     Context context = Context.getInstance();
     context.setJunitContextLocation(TEST_DIR + APPLICATION_CONTEXT);
