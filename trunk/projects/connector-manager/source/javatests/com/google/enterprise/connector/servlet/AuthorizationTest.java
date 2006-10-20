@@ -43,15 +43,15 @@ public class AuthorizationTest extends TestCase {
         "<AuthorizationQuery>\n" + 
         "<ConnectorQuery>\n" + 
         "  <Identity source=\"gsa\">CN=foo</Identity>\n" + 
-        "  <Resource>googleconnector://connector1/?" + ServletUtil.DOCID +
-        "foo1</Resource>\n" + 
-        "  <Resource>googleconnector://connector2/?" + ServletUtil.DOCID +
-        "foo2</Resource>\n" + 
+        "  <Resource>googleconnector://connector1.localhost" +
+           ServletUtil.DOCID + "foo1</Resource>\n" + 
+        "  <Resource>googleconnector://connector2.localhost" +
+           ServletUtil.DOCID + "foo2</Resource>\n" + 
         "</ConnectorQuery>\n" + 
         "<ConnectorQuery>\n" + 
         "  <Identity source=\"connector\">username</Identity>\n" + 
-        "  <Resource>googleconnector://connector3/?" + ServletUtil.DOCID +
-        "foo3</Resource>\n" + 
+        "  <Resource>googleconnector://connector3.localhost" +
+           ServletUtil.DOCID + "foo3</Resource>\n" + 
         "</ConnectorQuery>\n" + 
         "</AuthorizationQuery>";
 
@@ -59,18 +59,18 @@ public class AuthorizationTest extends TestCase {
     	"<CmResponse>\n" +
     	"  <AuthorizationResponse>\n" + 
         "    <Answer>\n" + 
-        "      <Resource>googleconnector://connector1/?" + ServletUtil.DOCID +
-        "foo1</Resource>\n" + 
+        "      <Resource>googleconnector://connector1.localhost" +
+               ServletUtil.DOCID + "foo1</Resource>\n" + 
         "      <Decision>Permit</Decision>\n" + 
         "    </Answer>\n" + 
         "    <Answer>\n" + 
-        "      <Resource>googleconnector://connector2/?" + ServletUtil.DOCID +
-        "foo2</Resource>\n" + 
+        "      <Resource>googleconnector://connector2.localhost" +
+               ServletUtil.DOCID + "foo2</Resource>\n" + 
         "      <Decision>Permit</Decision>\n" + 
         "    </Answer>\n" + 
         "    <Answer>\n" + 
-        "      <Resource>googleconnector://connector3/?" + ServletUtil.DOCID +
-        "foo3</Resource>\n" + 
+        "      <Resource>googleconnector://connector3.localhost" +
+               ServletUtil.DOCID + "foo3</Resource>\n" + 
         "      <Decision>Permit</Decision>\n" + 
         "    </Answer>\n" + 
         "  </AuthorizationResponse>\n" +
@@ -91,7 +91,8 @@ public class AuthorizationTest extends TestCase {
         "<AuthorizationQuery>\n" + 
         "<ConnectorQuery>\n" + 
         "  <Identity source=\"gsa\">CN=foo</Identity>\n" + 
-        "  <Resource>googleconnector:///?" + ServletUtil.DOCID + "foo1</Resource>\n" + 
+        "  <Resource>googleconnector://.localhost" +
+           ServletUtil.DOCID + "foo1</Resource>\n" + 
         "</ConnectorQuery>\n" + 
         "</AuthorizationQuery>";
 
@@ -114,7 +115,8 @@ public class AuthorizationTest extends TestCase {
         "<AuthorizationQuery>\n" + 
         "<ConnectorQuery>\n" + 
         "  <Identity source=\"gsa\">CN=foo</Identity>\n" + 
-        "  <Resource>googleconnector://Connector3/?DOCID=foo1</Resource>\n" + 
+        "  <Resource>googleconnector://Connector3.localhost" +
+           "/doc?DOCID=foo1</Resource>\n" + 
         "</ConnectorQuery>\n" + 
         "</AuthorizationQuery>";
 
@@ -138,8 +140,8 @@ public class AuthorizationTest extends TestCase {
         "<AuthorizationQuery>\n" + 
         "<ConnectorQuery>\n" + 
         "  <Identity source=\"gsa\"></Identity>\n" + 
-        "  <Resource>googleconnector://connector1/?" + ServletUtil.DOCID +
-        "foo1</Resource>\n" + 
+        "  <Resource>googleconnector://connector1.localhost" +
+           ServletUtil.DOCID + "foo1</Resource>\n" + 
         "</ConnectorQuery>\n" + 
         "</AuthorizationQuery>";
 
@@ -147,8 +149,8 @@ public class AuthorizationTest extends TestCase {
     	"<CmResponse>\n" +
     	"  <AuthorizationResponse>\n" + 
         "    <Answer>\n" + 
-        "      <Resource>googleconnector://connector1/?" + ServletUtil.DOCID +
-        "foo1</Resource>\n" + 
+        "      <Resource>googleconnector://connector1.localhost" +
+               ServletUtil.DOCID + "foo1</Resource>\n" + 
         "      <Decision>Permit</Decision>\n" + 
         "    </Answer>\n" + 
         "  </AuthorizationResponse>\n" +
