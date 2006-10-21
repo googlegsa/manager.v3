@@ -150,7 +150,7 @@ public interface Manager {
    * @param docidList The document set represented as a list of Strings: the
    *        docid for each document
    * @param username The username as a string
-   * @return A Set of IDs indicating which documents the user can see.
+   * @return A Set of String IDs indicating which documents the user can see.
    */
   public Set authorizeDocids(String connectorName, List docidList,
       String username);
