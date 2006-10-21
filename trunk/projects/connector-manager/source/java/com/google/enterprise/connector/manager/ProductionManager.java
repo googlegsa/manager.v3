@@ -23,14 +23,15 @@ import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.scheduler.Scheduler;
-import com.google.enterprise.connector.scheduler.TraversalScheduler;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.LoginException;
+import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.ResultSet;
+import com.google.enterprise.connector.spi.SpiConstants;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -132,7 +133,14 @@ public class ProductionManager implements Manager {
       ResultSet resultSet = authzManager.authorizeDocids(docidList, username);
       Iterator iter = resultSet.iterator();
       while (iter.hasNext()) {
-        result.add(iter.next());
+        PropertyMap pm = (PropertyMap) iter.next();
+        String uuid = pm.getProperty(SpiConstants.PROPNAME_DOCID).getValue()
+          .getString();
+        boolean ok = pm.getProperty(SpiConstants.PROPNAME_AUTH_VIEWPERMIT)
+          .getValue().getBoolean();
+        if (ok) {
+          result.add(uuid);
+        }     
       }
     } catch (ConnectorNotFoundException e) {
       LOGGER.log(Level.WARNING, "Connector " + connectorName
