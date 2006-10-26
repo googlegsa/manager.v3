@@ -16,6 +16,7 @@ package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.common.Base64FilterInputStream;
 import com.google.enterprise.connector.common.StringUtils;
+import com.google.enterprise.connector.common.UrlEncodedFilterInputStream;
 import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.PropertyMap;
@@ -506,21 +507,23 @@ public class DocPusher implements Pusher {
   /*
    * Returns URL Encoded data to be sent to feeder.
    */
-  private String encodeXmlData() throws UnsupportedEncodingException {
-    // TODO: in order to avoid having to realize the entire stream of data as
-    // a String, we need to create URLEncodedFilterInputStream.  This 
-    // InputStream should then be sent to FeedConnection.
-    String xmlDataStr = StringUtils.streamToString(xmlData);
-    String data =
+  private InputStream encodeXmlData() throws UnsupportedEncodingException {
+    String prefix =
       URLEncoder.encode("datasource", XML_DEFAULT_ENCODING)
       + "=" + URLEncoder.encode(dataSource, XML_DEFAULT_ENCODING);
-    data +=
+    prefix +=
       "&" + URLEncoder.encode("feedtype", XML_DEFAULT_ENCODING)
       + "=" + URLEncoder.encode(feedType, XML_DEFAULT_ENCODING);
-    data +=
+    prefix +=
       "&" + URLEncoder.encode("data", XML_DEFAULT_ENCODING)
-      + "=" + URLEncoder.encode(xmlDataStr, XML_DEFAULT_ENCODING);
-    return data;
+      + "=";
+    
+    InputStream xmlDataStream = new UrlEncodedFilterInputStream(xmlData);
+    
+    String suffix = "";
+    InputStream is =
+      stringWrappedInputStream(prefix, xmlDataStream, suffix);
+    return is;
   }
 
   /**
@@ -533,7 +536,7 @@ public class DocPusher implements Pusher {
     this.dataSource = connectorName;
     xmlData = buildXmlData(pm, connectorName);
     try {
-      String message = encodeXmlData();
+      InputStream message = encodeXmlData();
       gsaResponse = feedConnection.sendData(message);
     } catch (MalformedURLException e) {
       LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",

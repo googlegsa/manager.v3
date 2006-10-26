@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.pusher;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Interface for a url connection. This takes in data and url to which the 
@@ -24,11 +25,11 @@ public interface FeedConnection {
 
   /**
    * Open a connection to this url and sends data.
-   * @param data The String to send.  This data is assumed to have been URL
+   * @param data The InputStream to send.  This data is assumed to have been URL
    * encoded.
    * @return response from the server.
    * @throws IOException
    */
-  public String sendData(String data)throws IOException;
+  public String sendData(InputStream data)throws IOException;
   
 }
