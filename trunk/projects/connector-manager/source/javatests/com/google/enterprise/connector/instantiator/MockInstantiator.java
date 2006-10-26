@@ -175,7 +175,7 @@ public class MockInstantiator implements Instantiator {
   }
 
   public void setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configKeys)
+      String connectorTypeName, Map configKeys, boolean update)
       throws ConnectorNotFoundException, ConnectorTypeNotFoundException,
       InstantiatorException {
   }

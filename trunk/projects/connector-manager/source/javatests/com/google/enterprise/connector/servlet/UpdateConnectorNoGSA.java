@@ -122,7 +122,7 @@ public class UpdateConnectorNoGSA extends HttpServlet {
     try {
       configRes =
           manager.setConnectorConfig(connectorName, connectorType, configData,
-              lang);
+              lang, true);
     } catch (ConnectorManagerException e) {
       LOGGER.info(e.getMessage());
       status = e.getMessage();

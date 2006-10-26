@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.manager;
 
+import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
@@ -32,8 +33,6 @@ import java.util.logging.Logger;
  * A mock implementation for the Manager interface. This implementation
  * basically hardcodes a bunch of responses and can be used before the actual
  * implementation is complete.
- * 
- * TODO: move to javatests when possible.
  * 
  */
 public class MockManager implements Manager {
@@ -92,10 +91,6 @@ public class MockManager implements Manager {
    */
   public List getConnectorTypes() {
     return Arrays.asList(new String[] {"Documentum", "Sharepoint", "Filenet"});
-  }
-
-  public void storeConfig(boolean certAuth, String feederGateHost,
-      int feederGatePort, int maxFeedRate) {
   }
 
   /*
@@ -185,9 +180,11 @@ public class MockManager implements Manager {
    *      java.util.Map, java.lang.String)
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configData, String language)
-      throws ConnectorNotFoundException, PersistentStoreException {
+      String connectorTypeName, Map configData, String language, boolean update)
+      throws ConnectorNotFoundException, ConnectorExistsException,
+      PersistentStoreException {
     LOGGER.info("setConnectorConfig() connectorName: " + connectorName);
+    LOGGER.info("setConnectorConfig() update: " + update);
     LOGGER.info("configData: ");
     Set set = configData.entrySet();
     Iterator iterator = set.iterator();

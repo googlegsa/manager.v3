@@ -24,6 +24,9 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.enterprise.connector.persist.ConnectorExistsException;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+
 /**
  * This class keeps track of the installed connector instances, maintains a
  * corresponding directory structure and maintains properties files that
@@ -87,12 +90,20 @@ public class InstanceMap extends TreeMap {
     return (InstanceInfo) get(name);
   }
 
-  public void updateConnector(String name, String typeName, Map config)
-      throws InstantiatorException {
+  public void updateConnector(
+      String name, String typeName, Map config, boolean update)
+      throws InstantiatorException, ConnectorNotFoundException,
+      ConnectorExistsException {
     InstanceInfo instanceInfo = getInstanceInfo(name);
     if (instanceInfo == null) {
+      if (update) {
+        throw new ConnectorNotFoundException();  
+      }
       createNewConnector(name, typeName, config);
     } else {
+      if (!update) {
+        throw new ConnectorExistsException();
+      }
       TypeInfo typeInfo = instanceInfo.getTypeInfo();
       String previousTypeName = typeInfo.getConnectorTypeName();
       if (previousTypeName.equals(typeName)) {

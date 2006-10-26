@@ -71,6 +71,7 @@ public class ServletUtil {
   public static final String XMLTAG_FEEDERGATE_PORT = "port";
 
   public static final String XMLTAG_CONNECTOR_CONFIG = "ConnectorConfig";
+  public static final String XMLTAG_UPDATE_CONNECTOR = "Update";
   public static final String XMLTAG_PARAMETERS = "Param";
 
   public static final String XMLTAG_AUTHN_REQUEST = "AuthnRequest";
@@ -89,9 +90,6 @@ public class ServletUtil {
   public static final String XMLTAG_DECISION = "Decision";
   
   public static final String XMLTAG_CONNECTOR_SCHEDULES = "ConnectorSchedules";
-  public static final String XMLTAG_SCHEDULE = "Schedules";
-  public static final String XMLTAG_STARTING_TIME = "StartTime";
-  public static final String XMLTAG_ENDING_TIME = "EndTime";
   public static final String XMLTAG_LOAD = "load";
   public static final String XMLTAG_TIME_INTERVALS = "TimeIntervals";
 

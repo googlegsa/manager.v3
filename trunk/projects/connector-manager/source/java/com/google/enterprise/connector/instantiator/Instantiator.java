@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.spi.AuthenticationManager;
@@ -115,15 +116,17 @@ public interface Instantiator {
    * @param connectorName The connector to create
    * @param connectorTypeName The type for this connector
    * @param configKeys A configuration map for this connector
+   * @param update A boolean true if updating the existing connector
    * @throws ConnectorNotFoundException
+   * @throws ConnectorExistsException 
    * @throws ConnectorTypeNotFoundException
    * @throws InstantiatorException
    */
   public void setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configKeys)
-      throws ConnectorNotFoundException, ConnectorTypeNotFoundException,
-      InstantiatorException;
-  
+      String connectorTypeName, Map configKeys, boolean update)
+      throws ConnectorNotFoundException, ConnectorExistsException,
+      ConnectorTypeNotFoundException, InstantiatorException;
+
   /**
    * Get the names of all known connectors
    * 

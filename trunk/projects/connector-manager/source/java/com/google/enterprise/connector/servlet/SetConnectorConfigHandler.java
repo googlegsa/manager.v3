@@ -31,13 +31,14 @@ import java.util.logging.Logger;
  *
  */
 public class SetConnectorConfigHandler {
-  private static final Logger LOG =
+  private static final Logger LOGGER =
     Logger.getLogger(SetConnectorConfigHandler.class.getName());
 
   private String status = ServletUtil.XML_RESPONSE_SUCCESS;
   private String language;
   private String connectorName;
   private String connectorType;
+  private boolean update = false;
   private Map configData;
   private ConfigureResponse configRes;
 
@@ -54,7 +55,7 @@ public class SetConnectorConfigHandler {
         document.getElementsByTagName(ServletUtil.XMLTAG_CONNECTOR_CONFIG);
     if (nodeList.getLength() == 0) {
       this.status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE;
-      LOG.info(ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE);
+      LOGGER.log(Level.WARNING, ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE);
       return;
     }
 
@@ -68,6 +69,10 @@ public class SetConnectorConfigHandler {
     }
     this.connectorType = ServletUtil.getFirstElementByTagName(
         (Element) nodeList.item(0), ServletUtil.XMLTAG_CONNECTOR_TYPE);
+    if (ServletUtil.getFirstElementByTagName((Element) nodeList.item(0),
+        ServletUtil.XMLTAG_UPDATE_CONNECTOR).equalsIgnoreCase("true")) {
+      this.update = true;
+    }
     this.configData = ServletUtil.getAllAttributes(
         (Element) nodeList.item(0), ServletUtil.XMLTAG_PARAMETERS);
     if (this.configData.isEmpty()) {
@@ -77,12 +82,12 @@ public class SetConnectorConfigHandler {
     this.configRes = null;
     try {
       this.configRes = manager.setConnectorConfig(this.connectorName,
- 		this.connectorType, this.configData, this.language);
+          this.connectorType, this.configData, this.language, this.update);
     } catch (ConnectorManagerException e) {
-      LOG.info(e.getMessage());
       status = e.getMessage();
+      LOGGER.log(Level.WARNING, e.getMessage(), e);
     } catch (Throwable t) {
-      LOG.log(Level.WARNING, "", t);
+      LOGGER.log(Level.WARNING, "", t);
     }
   }
 
@@ -108,5 +113,9 @@ public class SetConnectorConfigHandler {
 
   public String getLanguage() {
     return language;
+  }
+
+  public boolean isUpdate() {
+    return update;
   }
 }

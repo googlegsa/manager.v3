@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.manager;
 
 import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
@@ -116,6 +117,8 @@ public interface Manager {
    * @param language A locale string, such as "en" or "fr_CA" which the
    *        implementation may use to produce appropriate descriptions and
    *        messages
+   * @param update A boolean true to update the giving existing connector,
+   *        false to create a new connector for the given connector name
    * @return a ConfigureResponse object. If the return object is null, then this
    *         means that the configuration was valid and has been successfully
    *         stored. If the object is non-null, then the caller should try
@@ -128,9 +131,10 @@ public interface Manager {
    *         configuration
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configData, String language)
-      throws ConnectorNotFoundException, PersistentStoreException,
-      InstantiatorException;
+      String connectorTypeName, Map configData, String language,
+      boolean update)
+      throws ConnectorNotFoundException, ConnectorExistsException,
+      PersistentStoreException, InstantiatorException;
 
   /**
    * Authenticates a user against a named connector.
