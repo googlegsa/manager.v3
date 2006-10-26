@@ -95,7 +95,7 @@ public class Base64Encoder {
    * Write out a buffer using Base64 encoding.
    *
    * WARNING: This method will not flush the Writer 'out' (second argument). 
-   * You'll have to do this yourself, or loose some of your precious data. 
+   * You'll have to do this yourself, or lose some of your precious data. 
    *
    * @param data the character buffer
    * @param off the starting offset in data
@@ -116,7 +116,7 @@ public class Base64Encoder {
    * Write out a whole {@link InputStream} using Base64 encoding.
    *
    * WARNING: This method will not flush the Writer 'out' (second argument). 
-   * You'll have to do this yourself, or loose some of your precious data. 
+   * You'll have to do this yourself, or lose some of your precious data. 
    *
    * @param inStream the input data stream
    * @param out output writer
@@ -144,7 +144,7 @@ public class Base64Encoder {
    * using default buffer size of 1024*3.
    *
    * WARNING: This method will not flush the Writer 'out' (second argument). 
-   * You'll have to do this yourself, or loose some of your precious data. 
+   * You'll have to do this yourself, or lose some of your precious data. 
    *
    * @param inStream the input data stream
    * @param out output writer

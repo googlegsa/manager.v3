@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 
 public class StringUtils {
   
@@ -82,7 +83,7 @@ public class StringUtils {
   }
   
   /**
-   * Read an entire InputStream and return its contents as a String
+   * Read an entire InputStream (as UTF-8) and return its contents as a String
    * @param is InputStream to read
    * @return contents as a String
    */
@@ -112,7 +113,13 @@ public class StringUtils {
       throw new RuntimeException("I/O Problem.");
     }
     
-    String res = new String(bytes,0,offset);
+    String res = null;
+    try {
+      res = new String(bytes,0,offset,"UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
     return res;
   }
   

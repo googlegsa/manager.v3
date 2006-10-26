@@ -14,7 +14,8 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.common.Base64Encoder;
+import com.google.enterprise.connector.common.Base64FilterInputStream;
+import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.PropertyMap;
@@ -23,13 +24,17 @@ import com.google.enterprise.connector.spi.SimpleValue;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
+import java.io.SequenceInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -118,7 +123,7 @@ public class DocPusher implements Pusher {
   private String feedType;
   private FeedConnection feedConnection;
 
-  private String xmlData;
+  private InputStream xmlData;
   private String gsaResponse;
 
   /**
@@ -128,15 +133,6 @@ public class DocPusher implements Pusher {
   public DocPusher(FeedConnection feedConnection) {
     this.feedConnection = feedConnection;
     this.feedType = "full";
-  }
-
-  /**
-   * Retrieves the xml String to be fed into GSA. For testing only.
-   * 
-   * @return xmlData xml string that can be fed into GSA.
-   */
-  protected String getXmlData() {
-    return xmlData;
   }
 
   /**
@@ -169,35 +165,64 @@ public class DocPusher implements Pusher {
     buf.append(">\n");
     return buf.toString();
   }
-
+  
+  private static InputStream stringWrappedInputStream(String prefix, 
+      InputStream is, String suffix) {
+    InputStream result = null;
+    
+    try {
+      ByteArrayInputStream prefixStream = 
+        new ByteArrayInputStream(prefix.getBytes(XML_DEFAULT_ENCODING));
+      
+      ByteArrayInputStream suffixStream = 
+        new ByteArrayInputStream(suffix.getBytes(XML_DEFAULT_ENCODING));
+ 
+      InputStream[] inputStreams = 
+        new InputStream[]{ prefixStream, is, suffixStream };
+      Enumeration inputStreamEnum = 
+        Collections.enumeration(Arrays.asList(inputStreams));
+      result = new SequenceInputStream(inputStreamEnum);
+    } catch (UnsupportedEncodingException e) {
+      LOGGER.log(Level.SEVERE, "Encoding error.", e);
+    } 
+    return result;
+  }
+  
   /*
    * Generate the record tag for the xml data.
    */
-  private String xmlWrapRecord(String searchUrl, String displayUrl,
-      String lastModified, String content, String mimetype, PropertyMap pm) {
-    StringBuffer buf = new StringBuffer();
-    buf.append("<");
-    buf.append(XML_RECORD);
-    buf.append(" ");
-    appendAttrValuePair(XML_URL, searchUrl, buf);
+  private InputStream xmlWrapRecord(String searchUrl, String displayUrl,
+      String lastModified, InputStream content, String mimetype, 
+      PropertyMap pm) {
+    // build prefix
+    StringBuffer prefix = new StringBuffer();
+    prefix.append("<");
+    prefix.append(XML_RECORD);
+    prefix.append(" ");
+    appendAttrValuePair(XML_URL, searchUrl, prefix);
     if (displayUrl != null && displayUrl.length() > 0) {
-      appendAttrValuePair(XML_DISPLAY_URL, displayUrl, buf);
+      appendAttrValuePair(XML_DISPLAY_URL, displayUrl, prefix);
     }
-    appendAttrValuePair(XML_MIMETYPE, mimetype, buf);
+    appendAttrValuePair(XML_MIMETYPE, mimetype, prefix);
     if (lastModified != null) {
-      appendAttrValuePair(XML_LAST_MODIFIED, lastModified, buf);
+      appendAttrValuePair(XML_LAST_MODIFIED, lastModified, prefix);
     }
-    buf.append(">\n");
-    xmlWrapMetadata(buf, pm);
-    buf.append("<");
-    buf.append(XML_CONTENT);
-    buf.append(" ");
-    appendAttrValuePair(XML_ENCODING, "base64binary", buf);
-    buf.append(">");
-    buf.append(content);
-    buf.append(xmlWrapEnd(XML_CONTENT));
-    buf.append(xmlWrapEnd(XML_RECORD));
-    return buf.toString();
+    prefix.append(">\n");
+    xmlWrapMetadata(prefix, pm);
+    prefix.append("<");
+    prefix.append(XML_CONTENT);
+    prefix.append(" ");
+    appendAttrValuePair(XML_ENCODING, "base64binary", prefix);
+    prefix.append(">");
+    
+    // build suffix
+    StringBuffer suffix = new StringBuffer();
+    suffix.append(xmlWrapEnd(XML_CONTENT));
+    suffix.append(xmlWrapEnd(XML_RECORD));
+    
+    InputStream is = 
+      stringWrappedInputStream(prefix.toString(), content, suffix.toString());
+    return is;
   }
 
   private void appendAttrValuePair(String attrName, String value,
@@ -400,21 +425,28 @@ public class DocPusher implements Pusher {
   /*
    * Builds the xml string for a given property map.
    */
-  protected String buildXmlData(PropertyMap pm, String connectorName) {
-    StringBuffer xmlData = new StringBuffer();
-    xmlData.append(XML_START);
-    xmlData.append(xmlWrapStart(XML_GSAFEED));
-    xmlData.append(xmlWrapStart(XML_HEADER));
-    xmlData.append(xmlWrapStart(XML_DATASOURCE));
-    xmlData.append(dataSource);
-    xmlData.append(xmlWrapEnd(XML_DATASOURCE));
-    xmlData.append(xmlWrapStart(XML_FEEDTYPE));
-    xmlData.append(feedType);
-    xmlData.append(xmlWrapEnd(XML_FEEDTYPE));
-    xmlData.append(xmlWrapEnd(XML_HEADER));
-    xmlData.append(xmlWrapStart(XML_GROUP));
-    xmlData.append("\n");
+  protected InputStream buildXmlData(PropertyMap pm, String connectorName) {
+    // build prefix
+    StringBuffer prefix = new StringBuffer();
+    prefix.append(XML_START);
+    prefix.append(xmlWrapStart(XML_GSAFEED));
+    prefix.append(xmlWrapStart(XML_HEADER));
+    prefix.append(xmlWrapStart(XML_DATASOURCE));
+    prefix.append(dataSource);
+    prefix.append(xmlWrapEnd(XML_DATASOURCE));
+    prefix.append(xmlWrapStart(XML_FEEDTYPE));
+    prefix.append(feedType);
+    prefix.append(xmlWrapEnd(XML_FEEDTYPE));
+    prefix.append(xmlWrapEnd(XML_HEADER));
+    prefix.append(xmlWrapStart(XML_GROUP));
+    prefix.append("\n");
 
+    // build suffix
+    StringBuffer suffix = new StringBuffer();
+    suffix.append(xmlWrapEnd(XML_GROUP));
+    suffix.append(xmlWrapEnd(XML_GSAFEED));
+
+    // build record
     String searchurl = getOptionalString(pm, SpiConstants.PROPNAME_SEARCHURL);
     if (searchurl != null) {
       // TODO: validate that this looks like a URL
@@ -429,19 +461,10 @@ public class DocPusher implements Pusher {
     }
 
     InputStream contentStream =
-        getOptionalStream(pm, SpiConstants.PROPNAME_CONTENT);
-    String content;
-
-    try {
-      StringWriter writer = new StringWriter();
-      Base64Encoder.encode(contentStream, writer);
-      content = writer.toString();
-    } catch (IOException e) {
-      LOGGER.logp(Level.WARNING, this.getClass().getName(), "buildXmlData",
-          "Swallowing exception while base64-encoding.", e);
-      content = "";
-    }
-
+      getOptionalStream(pm, SpiConstants.PROPNAME_CONTENT);
+    InputStream encodedContentStream =
+      new Base64FilterInputStream(contentStream);
+    
     Calendar lastModified = null;
     try {
       lastModified = getCalendarAndThrow(pm, SpiConstants.PROPNAME_LASTMODIFY);
@@ -470,19 +493,24 @@ public class DocPusher implements Pusher {
 
     String displayUrl = getOptionalString(pm, SpiConstants.PROPNAME_DISPLAYURL);
 
-    xmlData.append(xmlWrapRecord(searchurl, displayUrl, lastModifiedString,
-        content, mimetype, pm));
+    InputStream recordInputStream = 
+      xmlWrapRecord(searchurl, displayUrl, lastModifiedString, 
+        encodedContentStream, mimetype, pm); 
+    InputStream is = 
+      stringWrappedInputStream(prefix.toString(), recordInputStream, 
+        suffix.toString());
 
-    xmlData.append(xmlWrapEnd(XML_GROUP));
-    xmlData.append(xmlWrapEnd(XML_GSAFEED));
-
-    return xmlData.toString();
+    return is;
   }
 
   /*
    * Returns URL Encoded data to be sent to feeder.
    */
   private String encodeXmlData() throws UnsupportedEncodingException {
+    // TODO: in order to avoid having to realize the entire stream of data as
+    // a String, we need to create URLEncodedFilterInputStream.  This 
+    // InputStream should then be sent to FeedConnection.
+    String xmlDataStr = StringUtils.streamToString(xmlData);
     String data =
       URLEncoder.encode("datasource", XML_DEFAULT_ENCODING)
       + "=" + URLEncoder.encode(dataSource, XML_DEFAULT_ENCODING);
@@ -491,7 +519,7 @@ public class DocPusher implements Pusher {
       + "=" + URLEncoder.encode(feedType, XML_DEFAULT_ENCODING);
     data +=
       "&" + URLEncoder.encode("data", XML_DEFAULT_ENCODING)
-      + "=" + URLEncoder.encode(xmlData, XML_DEFAULT_ENCODING);
+      + "=" + URLEncoder.encode(xmlDataStr, XML_DEFAULT_ENCODING);
     return data;
   }
 
