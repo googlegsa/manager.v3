@@ -22,7 +22,7 @@ import java.util.logging.Logger;
  * callback method when the work is complete.
  */
 public class WorkQueueThread extends Thread {
-  private static final Logger LOGGER = 
+  private static final Logger LOGGER =
     Logger.getLogger(WorkQueueThread.class.getName());
 
   private WorkQueue workQueue;
@@ -50,42 +50,47 @@ public class WorkQueueThread extends Thread {
 
   public void run() {
     while (true) {
-      WorkQueueItem item;
-      synchronized (workQueue) {
-        while (0 == workQueue.getWorkCount()) {
-          try {
-            workQueue.wait();
-          } catch (InterruptedException ie) {
-            if (exit) {
-              // thread exits, for example, when shutdown of WorkQueue occurs
-              LOGGER.log(Level.INFO,
-                "Interrupted WorkQueueThread is exiting due to interrupt "
+      try {
+        WorkQueueItem item;
+        synchronized (workQueue) {
+          while (0 == workQueue.getWorkCount()) {
+            try {
+              workQueue.wait();
+            } catch (InterruptedException ie) {
+              if (exit) {
+                // thread exits, for example, when shutdown of WorkQueue occurs
+                LOGGER.log(Level.INFO,
+                  "Interrupted WorkQueueThread is exiting due to interrupt "
                   + "and kill.");
-              return;
-            } else {
-              // if we aren't killing this thread, we go back to wait for more
-              // work
-              LOGGER.log(Level.INFO, "Interrupted WorkQueueThread is fine so" +
-                    " will continue to wait for work.", ie);
-              continue;
+                return;
+              } else {
+                // if we aren't killing this thread, we go back to wait for more
+                // work
+                LOGGER.log(Level.INFO, "Interrupted WorkQueueThread is fine so" +
+                  " will continue to wait for work.", ie);
+                continue;
+              }
             }
           }
+
+          item = workQueue.removeWork();
         }
 
-        item = workQueue.removeWork();
-      }
+        item.setWorkQueueThread(this);
+        try {
+          workQueue.preWork(item);
+          isWorking = true;
+          item.doWork();
+        } catch (RuntimeException e) {
+          LOGGER.log(Level.WARNING, "WorkQueueThread work had problems: ", e);
+          continue;
+        } finally {
+          isWorking = false;
+          workQueue.postWork(item);
+        }
 
-      item.setWorkQueueThread(this);
-      try {
-        workQueue.preWork(item);
-        isWorking = true;
-        item.doWork();
-      } catch (RuntimeException e) {
-        LOGGER.log(Level.WARNING, "WorkQueueThread work had problems: ", e);
-        continue;
-      } finally {
-        isWorking = false;
-        workQueue.postWork(item);
+      } catch (Throwable t) {
+        LOGGER.log(Level.WARNING, "WorkQueueThread has problems: ", t);
       }
     }
   }
