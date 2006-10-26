@@ -32,6 +32,7 @@ import java.io.PrintWriter;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
@@ -108,10 +109,10 @@ public class UpdateConnector extends HttpServlet {
     try {
       configRes =
           manager.setConnectorConfig(connectorName, connectorType, configData,
-              lang);
+              lang, true);
     } catch (ConnectorManagerException e) {
-      LOGGER.info(e.getMessage());
       status = e.getMessage();
+      LOGGER.log(Level.WARNING, e.getMessage(), e);
     }
 
     ServletUtil.writeConfigureResponse(out, status, configRes);

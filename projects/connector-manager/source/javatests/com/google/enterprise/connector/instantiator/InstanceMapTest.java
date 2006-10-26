@@ -18,6 +18,8 @@ import com.google.enterprise.connector.instantiator.InstanceInfo;
 import com.google.enterprise.connector.instantiator.InstanceMap;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.instantiator.TypeMap;
+import com.google.enterprise.connector.persist.ConnectorExistsException;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
 
@@ -42,9 +44,11 @@ public class InstanceMapTest extends TestCase {
    * 
    * @throws JSONException
    * @throws InstantiatorException
+   * @throws ConnectorExistsException 
+   * @throws ConnectorNotFoundException 
    */
   public final void testGetInstanceInfo() throws JSONException,
-      InstantiatorException {
+      InstantiatorException, ConnectorNotFoundException, ConnectorExistsException {
     TypeMap typeMap =
         new TypeMap("classpath*:config/connectorType.xml",
             "testdata/instantiatorTests");
@@ -61,7 +65,7 @@ public class InstanceMapTest extends TestCase {
       String jsonConfigString =
           "{username:foo, password:bar, color:red, "
               + "RepositoryFile:MockRepositoryEventLog3.txt}";
-      updateConnectorTest(instanceMap, name, typeName, jsonConfigString);
+      updateConnectorTest(instanceMap, name, typeName, false, jsonConfigString);
     }
 
     {
@@ -74,7 +78,7 @@ public class InstanceMapTest extends TestCase {
       String jsonConfigString =
           "{username:foo, password:bar, flavor:minty-fresh, "
               + "RepositoryFile:MockRepositoryEventLog3.txt}";
-      updateConnectorTest(instanceMap, name, typeName, jsonConfigString);
+      updateConnectorTest(instanceMap, name, typeName, false, jsonConfigString);
     }
 
     Assert.assertEquals(2, instanceMap.size());
@@ -89,10 +93,24 @@ public class InstanceMapTest extends TestCase {
       String jsonConfigString =
           "{username:foo, password:bar, flavor:butterscotch, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
-      updateConnectorTest(instanceMap, name, typeName, jsonConfigString);
+      updateConnectorTest(instanceMap, name, typeName, true, jsonConfigString);
     }
 
     Assert.assertEquals(2, instanceMap.size());
+
+    {
+      /**
+       * Test creation of a connector second instance of type TestConnectorB.
+       */
+      String name = "connector3";
+      String typeName = "TestConnectorB";
+      String jsonConfigString =
+          "{username:foo, password:bar, flavor:chocolate, "
+              + "RepositoryFile:MockRepositoryEventLog2.txt}";
+      updateConnectorTest(instanceMap, name, typeName, false, jsonConfigString);
+    }
+
+    Assert.assertEquals(3, instanceMap.size());
 
     {
       /**
@@ -104,21 +122,7 @@ public class InstanceMapTest extends TestCase {
       String jsonConfigString =
           "{username:foo, password:bar, color:blue, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
-      updateConnectorTest(instanceMap, name, typeName, jsonConfigString);
-    }
-
-    Assert.assertEquals(3, instanceMap.size());
-
-    {
-      /**
-       * Test creation of a connector second instance of type TestConnectorB.
-       */
-      String name = "connector3";
-      String typeName = "TestConnectorB";
-      String jsonConfigString =
-          "{username:foo, password:bar, flavor:chocolate, "
-              + "RepositoryFile:MockRepositoryEventLog2.txt}";
-      updateConnectorTest(instanceMap, name, typeName, jsonConfigString);
+      updateConnectorTest(instanceMap, name, typeName, true, jsonConfigString);
     }
 
     Assert.assertEquals(3, instanceMap.size());
@@ -132,10 +136,10 @@ public class InstanceMapTest extends TestCase {
   }
 
   private void updateConnectorTest(InstanceMap instanceMap, String name,
-      String typeName, String jsonConfigString) throws JSONException,
-      InstantiatorException {
+      String typeName, boolean update, String jsonConfigString) throws JSONException,
+      InstantiatorException, ConnectorNotFoundException, ConnectorExistsException {
     Map config = new JsonObjectAsMap(new JSONObject(jsonConfigString));
-    instanceMap.updateConnector(name, typeName, config);
+    instanceMap.updateConnector(name, typeName, config, update);
     InstanceInfo instanceInfo = instanceMap.getInstanceInfo(name);
     File connectorDir = instanceInfo.getConnectorDir();
     Assert.assertTrue(connectorDir.exists());

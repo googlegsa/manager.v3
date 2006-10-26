@@ -38,6 +38,7 @@ public class SetConnectorConfigHandlerTest extends TestCase {
   private String connectorName;
   private String connectorType;
   private Map configData;
+  private boolean update;
 
   public void testSetConnectorConfigHandler1() {
     language = "en";
@@ -65,7 +66,32 @@ public class SetConnectorConfigHandlerTest extends TestCase {
     language = "en";
     connectorName = "connectorC";
     connectorType = "documentum";
+    update = true;
     configData = new TreeMap();
+    doTest(setXMLBody());
+  }
+
+  public void testSetConnectorConfigHandler4() {
+    language = "en";
+    connectorName = "connectorC";
+    connectorType = "documentum";
+    update = true;
+    configData = new TreeMap();
+    configData.put("name1", "valueB1");
+    configData.put("name2", "valueB2");
+    configData.put("name3", "valueB3");
+    doTest(setXMLBody());
+  }
+
+  public void testSetConnectorConfigHandler5() {
+    language = "en";
+    connectorName = "connectorC";
+    connectorType = "documentum";
+    update = false;
+    configData = new TreeMap();
+    configData.put("name1", "valueB1");
+    configData.put("name2", "valueB2");
+    configData.put("name3", "valueB3");
     doTest(setXMLBody());
   }
 
@@ -80,6 +106,7 @@ public class SetConnectorConfigHandlerTest extends TestCase {
       Assert.assertEquals(hdl.getLanguage(), this.language);
       Assert.assertEquals(hdl.getConnectorName(), this.connectorName);
       Assert.assertEquals(hdl.getConnectorType(), this.connectorType);
+      Assert.assertEquals(hdl.isUpdate(), this.update);
       Assert.assertEquals(hdl.getConfigData(), this.configData);
     } else if (hdl.getStatus().equals(
         ServletUtil.XML_RESPONSE_STATUS_NULL_CONNECTOR)) {
@@ -96,7 +123,8 @@ public class SetConnectorConfigHandlerTest extends TestCase {
       "<" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">\n" +
       "  <" + ServletUtil.QUERY_PARAM_LANG + ">" + this.language + "</" + ServletUtil.QUERY_PARAM_LANG + ">\n" +
       "  <" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">" + this.connectorName + "</" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">\n" +
-      "  <" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">" + this.connectorType + "</" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">\n";
+      "  <" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">" + this.connectorType + "</" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">\n" +
+      "  <" + ServletUtil.XMLTAG_UPDATE_CONNECTOR + ">" + this.update + "</" + ServletUtil.XMLTAG_UPDATE_CONNECTOR + ">\n";
     Set set = configData.entrySet();
     Iterator iterator = set.iterator();
     while (iterator.hasNext()) {

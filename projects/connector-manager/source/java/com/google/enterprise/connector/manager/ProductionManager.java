@@ -270,11 +270,12 @@ public class ProductionManager implements Manager {
    *      java.util.Map, java.lang.String)
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configData, String language)
+      String connectorTypeName, Map configData, String language,
+      boolean update)
       throws ConnectorNotFoundException, PersistentStoreException,
       InstantiatorException {
     instantiator.setConnectorConfig(connectorName, connectorTypeName,
-        configData);
+        configData, update);
     return null;
   }
 

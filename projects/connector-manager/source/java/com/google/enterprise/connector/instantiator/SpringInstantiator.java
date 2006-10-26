@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -194,11 +195,12 @@ public class SpringInstantiator implements Instantiator {
    *      java.lang.String, java.util.Map)
    */
   public void setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configKeys)
-      throws ConnectorNotFoundException, ConnectorTypeNotFoundException,
-      InstantiatorException {
+      String connectorTypeName, Map configKeys, boolean update)
+      throws ConnectorNotFoundException, ConnectorExistsException,
+      ConnectorTypeNotFoundException, InstantiatorException {
     initialize();
-    instanceMap.updateConnector(connectorName, connectorTypeName, configKeys);
+    instanceMap.updateConnector(
+        connectorName, connectorTypeName, configKeys, update);
 
   }
 
