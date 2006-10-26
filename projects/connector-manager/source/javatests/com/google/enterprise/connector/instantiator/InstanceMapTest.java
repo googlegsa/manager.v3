@@ -18,6 +18,7 @@ import com.google.enterprise.connector.instantiator.InstanceInfo;
 import com.google.enterprise.connector.instantiator.InstanceMap;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.instantiator.TypeMap;
+import com.google.enterprise.connector.manager.ConnectorManagerException;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
@@ -123,6 +124,48 @@ public class InstanceMapTest extends TestCase {
           "{username:foo, password:bar, color:blue, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
       updateConnectorTest(instanceMap, name, typeName, true, jsonConfigString);
+    }
+
+    Assert.assertEquals(3, instanceMap.size());
+
+    {
+      /**
+       * Test create of an existing connector instance of type TestConnectorA.
+       * It should throw a ConnectorExistsException.
+       */
+      String name = "connector2";
+      String typeName = "TestConnectorA";
+      String jsonConfigString =
+          "{username:foo, password:bar, flavor:butterscotch, "
+              + "RepositoryFile:MockRepositoryEventLog2.txt}";
+      try {
+        updateConnectorTest(instanceMap, name, typeName, false, jsonConfigString);
+      } catch (ConnectorExistsException e) {
+        Assert.assertTrue(true);
+      } catch (ConnectorManagerException e) {
+        Assert.assertTrue(false);
+      }
+    }
+
+    Assert.assertEquals(3, instanceMap.size());
+
+    {
+      /**
+       * Test update of a non-existing connector instance of type TestConnectorB.
+       * It should throw a ConnectorNotFoundException.
+       */
+      String name = "connectorNew";
+      String typeName = "TestConnectorB";
+      String jsonConfigString =
+          "{username:foo, password:bar, flavor:butterscotch, "
+              + "RepositoryFile:MockRepositoryEventLog2.txt}";
+      try {
+        updateConnectorTest(instanceMap, name, typeName, true, jsonConfigString);
+      } catch (ConnectorNotFoundException e) {
+        Assert.assertTrue(true);
+      } catch (ConnectorManagerException e) {
+        Assert.assertTrue(false);
+      }
     }
 
     Assert.assertEquals(3, instanceMap.size());
