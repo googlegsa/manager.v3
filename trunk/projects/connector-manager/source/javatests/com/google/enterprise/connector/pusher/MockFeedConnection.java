@@ -13,9 +13,10 @@
 // limitations under the License.
 package com.google.enterprise.connector.pusher;
 
-import java.io.IOException;
+import com.google.enterprise.connector.common.StringUtils;
 
-import com.google.enterprise.connector.pusher.FeedConnection;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class MockFeedConnection implements FeedConnection {
 
@@ -35,9 +36,10 @@ public class MockFeedConnection implements FeedConnection {
     buf = new StringBuffer(2048);
   }
 
-  public String sendData(String data) throws IOException {
-    buf.append(data);
-    System.out.println(data);
+  public String sendData(InputStream data) throws IOException {
+    String dataStr = StringUtils.streamToString(data);
+    buf.append(dataStr);
+    System.out.println(dataStr);
     return "Mock response";
   }
 

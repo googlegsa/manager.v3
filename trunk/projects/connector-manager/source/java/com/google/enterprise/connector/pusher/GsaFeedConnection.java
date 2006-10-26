@@ -15,6 +15,7 @@ package com.google.enterprise.connector.pusher;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
@@ -44,7 +45,7 @@ public class GsaFeedConnection implements FeedConnection {
     return url;
   }
   
-  public String sendData(String data) throws IOException {
+  public String sendData(InputStream data) throws IOException {
     if (url == null) {
       url = getFeedUrl();
     }
@@ -53,7 +54,10 @@ public class GsaFeedConnection implements FeedConnection {
     uc.setDoOutput(true);
     uc.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
     OutputStreamWriter osw = new OutputStreamWriter(uc.getOutputStream());
-    osw.write(data);
+    int val;
+    while (-1 != (val = data.read())) {
+      osw.write(val); 
+    }
     osw.flush();
     
     StringBuffer buf = new StringBuffer();
