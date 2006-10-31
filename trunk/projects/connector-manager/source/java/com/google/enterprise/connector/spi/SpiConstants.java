@@ -117,11 +117,17 @@ public class SpiConstants {
   public static final String PROPNAME_DISPLAYURL = "google:displayurl";
 
   /**
+   * If this boolean property is present and is true, then the document will
+   * be marked as public.
+   */
+  public static final String PROPNAME_ISPUBLIC = "google:ispublic";
+
+  
+  /**
    * Identifies a property used in authorization results that indicates whether
    * this user can see this document.
    * <p>
    * Value: google:authviewpermit
    */
   public static final String PROPNAME_AUTH_VIEWPERMIT = "google:authviewpermit";
-
 }
