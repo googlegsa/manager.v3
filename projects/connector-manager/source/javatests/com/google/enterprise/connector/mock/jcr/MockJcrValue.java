@@ -86,8 +86,10 @@ public class MockJcrValue implements Value {
 
   public boolean getBoolean() throws ValueFormatException,
       IllegalStateException, RepositoryException {
-    // TODO(ziff): will be needed later for full testing
-    throw new UnsupportedOperationException();
+    if (val.equalsIgnoreCase("t") || val.equalsIgnoreCase("true")) {
+      return true;
+    }
+    return false;
   }
 
   public int getType() {

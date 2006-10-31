@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.common.Base64FilterInputStream;
-import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.common.UrlEncodedFilterInputStream;
 import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.spi.Property;
@@ -110,7 +109,7 @@ public class DocPusher implements Pusher {
   private static final String XML_MIMETYPE = "mimetype";
   private static final String XML_LAST_MODIFIED = "last-modified";
   // private static final String XML_LOCK = "lock";
-  // private static final String XML_AUTHMETHOD = "authmethod";
+  private static final String XML_AUTHMETHOD = "authmethod";
   // private static final String XML_NAME = "name";
   private static final String XML_ENCODING = "encoding";
 
@@ -120,6 +119,8 @@ public class DocPusher implements Pusher {
   // private static final String XML_ADD = "add";
   // private static final String XML_DELETE = "delete";
 
+  private static final String CONNECTOR_AUTHMETHOD = "httpbasic";
+
   private String dataSource;
   private String feedType;
   private FeedConnection feedConnection;
@@ -128,7 +129,7 @@ public class DocPusher implements Pusher {
   private String gsaResponse;
 
   /**
-   * 
+   *
    * @param feedConnection a connection
    */
   public DocPusher(FeedConnection feedConnection) {
@@ -138,7 +139,7 @@ public class DocPusher implements Pusher {
 
   /**
    * Gets the response from GSA when the feed is sent. For testing only.
-   * 
+   *
    * @return gsaResponse response from GSA.
    */
   protected String getGsaResponse() {
@@ -166,34 +167,34 @@ public class DocPusher implements Pusher {
     buf.append(">\n");
     return buf.toString();
   }
-  
-  private static InputStream stringWrappedInputStream(String prefix, 
+
+  private static InputStream stringWrappedInputStream(String prefix,
       InputStream is, String suffix) {
     InputStream result = null;
-    
+
     try {
-      ByteArrayInputStream prefixStream = 
+      ByteArrayInputStream prefixStream =
         new ByteArrayInputStream(prefix.getBytes(XML_DEFAULT_ENCODING));
-      
-      ByteArrayInputStream suffixStream = 
+
+      ByteArrayInputStream suffixStream =
         new ByteArrayInputStream(suffix.getBytes(XML_DEFAULT_ENCODING));
- 
-      InputStream[] inputStreams = 
+
+      InputStream[] inputStreams =
         new InputStream[]{ prefixStream, is, suffixStream };
-      Enumeration inputStreamEnum = 
+      Enumeration inputStreamEnum =
         Collections.enumeration(Arrays.asList(inputStreams));
       result = new SequenceInputStream(inputStreamEnum);
     } catch (UnsupportedEncodingException e) {
       LOGGER.log(Level.SEVERE, "Encoding error.", e);
-    } 
+    }
     return result;
   }
-  
+
   /*
    * Generate the record tag for the xml data.
    */
   private InputStream xmlWrapRecord(String searchUrl, String displayUrl,
-      String lastModified, InputStream content, String mimetype, 
+      String lastModified, InputStream content, String mimetype,
       PropertyMap pm) {
     // build prefix
     StringBuffer prefix = new StringBuffer();
@@ -208,6 +209,14 @@ public class DocPusher implements Pusher {
     if (lastModified != null) {
       appendAttrValuePair(XML_LAST_MODIFIED, lastModified, prefix);
     }
+    try {
+      Property isPublic = pm.getProperty(SpiConstants.PROPNAME_ISPUBLIC);
+      if (isPublic != null && !isPublic.getValue().getBoolean()) {
+        appendAttrValuePair(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD, prefix);
+      }
+    } catch (RepositoryException e) {
+      LOGGER.log(Level.WARNING, "Problem getting ispublic property.", e);
+    }
     prefix.append(">\n");
     xmlWrapMetadata(prefix, pm);
     prefix.append("<");
@@ -215,13 +224,13 @@ public class DocPusher implements Pusher {
     prefix.append(" ");
     appendAttrValuePair(XML_ENCODING, "base64binary", prefix);
     prefix.append(">");
-    
+
     // build suffix
     StringBuffer suffix = new StringBuffer();
     suffix.append(xmlWrapEnd(XML_CONTENT));
     suffix.append(xmlWrapEnd(XML_RECORD));
-    
-    InputStream is = 
+
+    InputStream is =
       stringWrappedInputStream(prefix.toString(), content, suffix.toString());
     return is;
   }
@@ -454,18 +463,14 @@ public class DocPusher implements Pusher {
       ;
     } else {
       String docid = getRequiredString(pm, SpiConstants.PROPNAME_DOCID);
-      StringBuffer buf = new StringBuffer("googleconnector://");
-      buf.append(connectorName);
-      buf.append(".localhost/doc?docid=");
-      buf.append(docid);
-      searchurl = buf.toString();
+      searchurl = constructGoogleConnectorUrl(connectorName, docid);
     }
 
     InputStream contentStream =
       getOptionalStream(pm, SpiConstants.PROPNAME_CONTENT);
     InputStream encodedContentStream =
       new Base64FilterInputStream(contentStream);
-    
+
     Calendar lastModified = null;
     try {
       lastModified = getCalendarAndThrow(pm, SpiConstants.PROPNAME_LASTMODIFY);
@@ -494,14 +499,31 @@ public class DocPusher implements Pusher {
 
     String displayUrl = getOptionalString(pm, SpiConstants.PROPNAME_DISPLAYURL);
 
-    InputStream recordInputStream = 
-      xmlWrapRecord(searchurl, displayUrl, lastModifiedString, 
-        encodedContentStream, mimetype, pm); 
-    InputStream is = 
-      stringWrappedInputStream(prefix.toString(), recordInputStream, 
+    InputStream recordInputStream =
+      xmlWrapRecord(searchurl, displayUrl, lastModifiedString,
+        encodedContentStream, mimetype, pm);
+    InputStream is =
+      stringWrappedInputStream(prefix.toString(), recordInputStream,
         suffix.toString());
 
     return is;
+  }
+
+  /**
+   * Form a Google connector URL.
+   * @param connectorName
+   * @param docid
+   * @return
+   */
+  private String constructGoogleConnectorUrl(String connectorName,
+      String docid) {
+    String searchurl;
+    StringBuffer buf = new StringBuffer("googleconnector://");
+    buf.append(connectorName);
+    buf.append(".localhost/doc?docid=");
+    buf.append(docid);
+    searchurl = buf.toString();
+    return searchurl;
   }
 
   /*
@@ -517,9 +539,9 @@ public class DocPusher implements Pusher {
     prefix +=
       "&" + URLEncoder.encode("data", XML_DEFAULT_ENCODING)
       + "=";
-    
+
     InputStream xmlDataStream = new UrlEncodedFilterInputStream(xmlData);
-    
+
     String suffix = "";
     InputStream is =
       stringWrappedInputStream(prefix, xmlDataStream, suffix);
@@ -528,7 +550,7 @@ public class DocPusher implements Pusher {
 
   /**
    * Takes a property map and sends a the feed to the GSA.
-   * 
+   *
    * @param pm PropertyMap corresponding to the document.
    * @param connectorName The connector name that fed this document
    */
