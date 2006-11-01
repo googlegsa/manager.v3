@@ -61,11 +61,11 @@ public class SpiConstants {
    * Identifies an optional single-valued string property that, if present, will
    * be used by the GSA as the primary URI for this documeny - instead of the
    * normal googleconnector:// URI which the connector manager fabricates.
-   * Connector developers should provide this if they the GSA to do web-style
+   * Connector developers should provide this if they want the GSA to do web-style
    * authentication and authorization for this document.  If this is specified, 
    * the GSA will not call back to the connector manager as serve-time
    * <p>
-   * Value: google:contenturl
+   * Value: google:searchurl
    */
   public static final String PROPNAME_SEARCHURL = "google:searchurl";
 
@@ -119,6 +119,8 @@ public class SpiConstants {
   /**
    * If this boolean property is present and is true, then the document will
    * be marked as public.
+   * <p>
+   * Value: google:ispublic
    */
   public static final String PROPNAME_ISPUBLIC = "google:ispublic";
 
