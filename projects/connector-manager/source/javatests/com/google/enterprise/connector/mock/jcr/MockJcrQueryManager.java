@@ -20,7 +20,9 @@ import com.google.enterprise.connector.spi.SimpleValue;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.MessageFormat;
 import java.text.ParseException;
+import java.text.ParsePosition;
 import java.util.Calendar;
 
 import javax.jcr.Node;
@@ -36,6 +38,30 @@ import javax.jcr.query.QueryManager;
  */
 public class MockJcrQueryManager implements QueryManager {
 
+  private static final String XPATH_QUERY_STRING_UNBOUNDED_DEFAULT = 
+    "//*[@jcr:primaryType='nt:resource'] order by @jcr:lastModified, @jcr:uuid";
+  
+  private static final String XPATH_QUERY_STRING_BOUNDED_DEFAULT = 
+    "//*[@jcr:primaryType = 'nt:resource' and @jcr:lastModified >= " +
+    "''{0}''] order by @jcr:lastModified, @jcr:uuid";
+  
+  private String xpathUnboundedTraversalQuery;
+  private String xpathBoundedTraversalQuery;
+  
+  /**
+   * @param xpathBoundedTraversalQuery the xpathBoundedTraversalQuery to set
+   */
+  void setXpathBoundedTraversalQuery(String xpathBoundedTraversalQuery) {
+    this.xpathBoundedTraversalQuery = xpathBoundedTraversalQuery;
+  }
+
+  /**
+   * @param xpathUnboundedTraversalQuery the xpathUnboundedTraversalQuery to set
+   */
+  void setXpathUnboundedTraversalQuery(String xpathUnboundedTraversalQuery) {
+    this.xpathUnboundedTraversalQuery = xpathUnboundedTraversalQuery;
+  }
+
   MockRepositoryDocumentStore store;
   static final String[] SUPPORTED_LANGUAGES = new String[] {
       "mockQueryLanguage", Query.XPATH};
@@ -47,6 +73,8 @@ public class MockJcrQueryManager implements QueryManager {
    */
   public MockJcrQueryManager(MockRepositoryDocumentStore store) {
     this.store = store;
+    this.xpathUnboundedTraversalQuery = XPATH_QUERY_STRING_UNBOUNDED_DEFAULT;
+    this.xpathBoundedTraversalQuery = XPATH_QUERY_STRING_BOUNDED_DEFAULT;
   }
 
   /**
@@ -105,22 +133,19 @@ public class MockJcrQueryManager implements QueryManager {
   private Query createXpathQuery(String statement)
       throws InvalidQueryException, RepositoryException {
 
-    String queryStringNoBound = 
-      "//element(*, nt:resource) order by jcr:lastModified, jcr:uuid";
-
-    if (statement.equals(queryStringNoBound)) {
+    if (statement.equals(xpathUnboundedTraversalQuery)) {
       return createXpathQueryNoBound();
     }
 
-    String queryPrefix = "//element(*, nt:resource)[@jcr:lastModified >= "
-        + "xs:dateTime(\"";
-
-    if (!statement.startsWith(queryPrefix)) {
-      throw new InvalidQueryException("Invalid query: " + statement + ".  "
-          + "Query must begin with: " + queryPrefix);
+    MessageFormat mf = new MessageFormat(xpathBoundedTraversalQuery);
+    Object[] objs = mf.parse(statement, new ParsePosition(0));
+    
+    if (objs == null || objs.length < 1 || !(objs[0] instanceof String)) {
+      throw new InvalidQueryException("Invalid query: \"" + statement + "\" "
+          + "does not match format: \"" + xpathBoundedTraversalQuery + "\"");      
     }
-
-    return createXpathQueryWithBound(statement, queryPrefix);
+    String dateString = (String) objs[0];
+    return createXpathQueryWithBound(statement, dateString);
   }
 
   private Query createXpathQueryNoBound() {
@@ -128,13 +153,12 @@ public class MockJcrQueryManager implements QueryManager {
     return new MockJcrQuery(from, store);
   }
 
-  private Query createXpathQueryWithBound(String statement, String queryPrefix)
+  private Query createXpathQueryWithBound(String statement, String dateString)
       throws InvalidQueryException {
-    String statementRemainder = statement.substring(queryPrefix.length());
 
     Calendar c = null;
     try {
-      c = SimpleValue.iso8601ToCalendar(statementRemainder);
+      c = SimpleValue.iso8601ToCalendar(dateString);
     } catch (ParseException e) {
       throw new InvalidQueryException("Invalid query: " + statement + ".  "
           + "Can't parse date.", e);

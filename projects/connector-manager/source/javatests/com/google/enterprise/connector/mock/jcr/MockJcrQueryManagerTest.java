@@ -21,6 +21,7 @@ import com.google.enterprise.connector.mock.MockRepositoryPropertyTest;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import java.text.MessageFormat;
 import java.util.logging.Logger;
 
 import javax.jcr.Node;
@@ -81,14 +82,19 @@ public class MockJcrQueryManagerTest extends TestCase {
 
     QueryManager qm = new MockJcrQueryManager(r.getStore());
 
-    String queryPrefix = 
-      "//element(*, nt:resource)[@jcr:lastModified >= xs:dateTime(\"";
-    String queryPostfix = "\")] order by jcr:lastModified, jcr:uuid";
+    String messagePattern = 
+      "//*[@jcr:primaryType = 'nt:resource' and @jcr:lastModified >= " +
+      "''{0}''] order by @jcr:lastModified, @jcr:uuid";
 
     String time = "1970-01-01T00:00:50Z";
 
-    String statement = queryPrefix + time + queryPostfix;
     String language = Query.XPATH;
+
+    Object[] arguments = { time };
+    String statement = MessageFormat.format(
+        messagePattern,
+        arguments);
+    System.out.println(statement);
 
     Query query = qm.createQuery(statement, language);
 
