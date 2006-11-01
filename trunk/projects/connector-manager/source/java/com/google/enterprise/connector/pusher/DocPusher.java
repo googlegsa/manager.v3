@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -58,21 +59,27 @@ public class DocPusher implements Pusher {
       char c = val.charAt(i);
       /**
        * Only these characters need to be encoded, according to
-       * http://www.w3.org/TR/REC-xml/#NT-AttValue Actually, we could only
+       * http://www.w3.org/TR/REC-xml/#NT-AttValue.   Actually, we could only
        * encode one of the quote characters if we knew that that was the one
-       * used to wrap the valuye, but we'll play it safe and encode both. TODO:
+       * used to wrap the value, but we'll play it safe and encode both. TODO:
        * what happens to white-space?
        */
-      if (c == '<') {
+      switch (c) {
+      case '<':
         buf.append(XML_LESS_THAN);
-      } else if (c == '&') {
+        break;
+      case '&':
         buf.append(XML_AMPERSAND);
-      } else if (c == '"') {
+        break;
+      case '"':
         buf.append(XML_QUOTE);
-      } else if (c == '\'') {
+        break;
+      case '\'':
         buf.append(XML_APOSTROPHE);
-      } else {
+        break;
+      default:
         buf.append(c);
+        break;
       }
     }
   }
@@ -459,8 +466,13 @@ public class DocPusher implements Pusher {
     // build record
     String searchurl = getOptionalString(pm, SpiConstants.PROPNAME_SEARCHURL);
     if (searchurl != null) {
-      // TODO: validate that this looks like a URL
-      ;
+      // check that this looks like a URL
+      try {
+        URL url = new URL(searchurl);
+      } catch (MalformedURLException e) {
+        LOGGER.warning("Supplied search url " + searchurl + " is malformed: "
+            + e.getMessage());
+      }
     } else {
       String docid = getRequiredString(pm, SpiConstants.PROPNAME_DOCID);
       searchurl = constructGoogleConnectorUrl(connectorName, docid);
@@ -531,11 +543,11 @@ public class DocPusher implements Pusher {
    */
   private InputStream encodeXmlData() throws UnsupportedEncodingException {
     String prefix =
-      URLEncoder.encode("datasource", XML_DEFAULT_ENCODING)
-      + "=" + URLEncoder.encode(dataSource, XML_DEFAULT_ENCODING);
+        URLEncoder.encode("datasource", XML_DEFAULT_ENCODING) + "="
+            + URLEncoder.encode(dataSource, XML_DEFAULT_ENCODING);
     prefix +=
-      "&" + URLEncoder.encode("feedtype", XML_DEFAULT_ENCODING)
-      + "=" + URLEncoder.encode(feedType, XML_DEFAULT_ENCODING);
+        "&" + URLEncoder.encode("feedtype", XML_DEFAULT_ENCODING) + "="
+            + URLEncoder.encode(feedType, XML_DEFAULT_ENCODING);
     prefix +=
       "&" + URLEncoder.encode("data", XML_DEFAULT_ENCODING)
       + "=";
