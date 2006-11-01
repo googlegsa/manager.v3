@@ -56,6 +56,7 @@ public class WorkQueue {
   private Set threads;
   
   private InterrupterThread interrupterThread;
+  private LifeThread lifeThread;
   
   /**
    * Creates a WorkQueue with a default 60 second timeout before a thread is
@@ -101,11 +102,22 @@ public class WorkQueue {
     // start WorkQueueThreads after initialization since they depend on the 
     // WorkQueue
     for (int i = 0; i < numThreads; i++) {
-      WorkQueueThread thread = 
-        new WorkQueueThread("WorkQueueThread-" + i, this); 
-      threads.add(thread);
-      thread.start();
+      createAndStartWorkQueueThread("WorkQueueThread-" + i);
     }
+    lifeThread = new LifeThread("LifeThread");
+    lifeThread.start();
+  }
+
+  /**
+   * Create WorkQueueThread and start it.  Also add it to threads Set so we can
+   * keep track of it.
+   * @param name name of the thread
+   */
+  private void createAndStartWorkQueueThread(String name) {
+    WorkQueueThread thread = 
+      new WorkQueueThread(name, this); 
+    threads.add(thread);
+    thread.start();
   }
   
   /**
@@ -156,6 +168,7 @@ public class WorkQueue {
         }
       }
       interrupterThread.shutdown();
+      lifeThread.shutdown();
       workQueue.clear();
       isInitialized = false;
     }
@@ -325,16 +338,12 @@ public class WorkQueue {
    * Interrupts WorkQueueItemThread if it takes too long.
    */
   private class InterrupterThread extends Thread {
-     
-    private boolean shutdown;  // true if this thread should shutdown and exit
         
     public InterrupterThread(String name) {
       super(name);
-      shutdown = false;
     }
         
     public void shutdown() {
-      shutdown = true;
       synchronized (this) {
         notifyAll();
       }      
@@ -363,6 +372,46 @@ public class WorkQueue {
         }
 
         interruptAllTimedOutItems();
+      }
+    }
+  }
+  
+  /**
+   * Ensures that WorkQueue does not have any dead WorkQueueThreads.
+   */
+  private class LifeThread extends Thread {
+    // Timeout in milliseconds.
+    private static final int LIFE_THREAD_WAIT_TIMEOUT = 60 * 1000;
+
+    public LifeThread(String name) {
+      super(name);
+    }
+    
+    public void shutdown() {
+      synchronized (this) {
+        notifyAll();
+      }
+    }
+    
+    public void run() {
+      while (!shutdown) {
+        try {
+          synchronized (this) {
+            wait(LIFE_THREAD_WAIT_TIMEOUT);
+          }
+          Iterator iter = threads.iterator();
+          while (iter.hasNext()) {
+            Thread thread = (Thread) iter.next();
+            if (!thread.isAlive()) {
+              LOGGER.log(Level.WARNING, "WorkQueueThread was dead and is " +
+                    "restarted by LifeThread: " + thread.getName());
+              iter.remove();
+              createAndStartWorkQueueThread(thread.getName());
+            }
+          }
+        } catch (InterruptedException e) {
+          LOGGER.log(Level.WARNING, "", e);
+        }
       }
     }
   }
