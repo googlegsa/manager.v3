@@ -26,6 +26,7 @@ import com.google.enterprise.connector.spi.Value;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.Calendar;
 
@@ -42,8 +43,34 @@ public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
 
   javax.jcr.query.QueryManager queryManager;
 
+  private static final String XPATH_QUERY_STRING_UNBOUNDED_DEFAULT = 
+    "//*[@jcr:primaryType='nt:resource'] order by @jcr:lastModified, @jcr:uuid";
+  
+  private static final String XPATH_QUERY_STRING_BOUNDED_DEFAULT = 
+    "//*[@jcr:primaryType = 'nt:resource' and @jcr:lastModified >= " +
+    "''{0}''] order by @jcr:lastModified, @jcr:uuid";
+ 
+  private String xpathUnboundedTraversalQuery;
+  private String xpathBoundedTraversalQuery;
+  
+  /**
+   * @param xpathBoundedTraversalQuery the xpathBoundedTraversalQuery to set
+   */
+  void setXpathBoundedTraversalQuery(String xpathBoundedTraversalQuery) {
+    this.xpathBoundedTraversalQuery = xpathBoundedTraversalQuery;
+  }
+
+  /**
+   * @param xpathUnboundedTraversalQuery the xpathUnboundedTraversalQuery to set
+   */
+  void setXpathUnboundedTraversalQuery(String xpathUnboundedTraversalQuery) {
+    this.xpathUnboundedTraversalQuery = xpathUnboundedTraversalQuery;
+  }
+
   public SpiQueryTraversalManagerFromJcr(QueryManager queryManager) {
     this.queryManager = queryManager;
+    this.xpathUnboundedTraversalQuery = XPATH_QUERY_STRING_UNBOUNDED_DEFAULT;
+    this.xpathBoundedTraversalQuery = XPATH_QUERY_STRING_BOUNDED_DEFAULT;
   }
 
   public String checkpoint(PropertyMap pm) throws RepositoryException {
@@ -149,13 +176,12 @@ public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
 
   private String makeCheckpointQueryString(String uuid, Calendar c)
       throws RepositoryException {
-    String queryPrefix = "//element(*, nt:resource)[@jcr:lastModified >= xs:dateTime(\"";
-    String queryPostfix = "\")] order by jcr:lastModified, jcr:uuid";
 
     String time = SimpleValue.calendarToIso8601(c);
-
-    String statement = queryPrefix + time + queryPostfix;
-
+    Object[] arguments = { time };
+    String statement = MessageFormat.format(
+        xpathBoundedTraversalQuery,
+        arguments);
     return statement;
   }
 
@@ -189,9 +215,9 @@ public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
   }
 
   public ResultSet startTraversal() throws RepositoryException {
-    String queryString = "//element(*, nt:resource) order by jcr:lastModified, jcr:uuid";
     String lang = Query.XPATH;
-    javax.jcr.query.Query query = makeCheckpointQuery(queryString, lang);
+    javax.jcr.query.Query query = 
+      makeCheckpointQuery(xpathUnboundedTraversalQuery, lang);
     QueryResult queryResult = null;
     try {
       queryResult = query.execute();
@@ -211,4 +237,5 @@ public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
   public void setBatchHint(int batchHint) throws RepositoryException {
     ;
   }
+
 }
