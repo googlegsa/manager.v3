@@ -53,7 +53,7 @@ public class WorkQueue {
   private boolean shutdown;  // true when shutdown is initiated
 
   private int numThreads;
-  private Set threads;
+  private Set threads;  // access is protected by "threads" instance lock
   
   private InterrupterThread interrupterThread;
   private LifeThread lifeThread;
@@ -101,23 +101,24 @@ public class WorkQueue {
 
     // start WorkQueueThreads after initialization since they depend on the 
     // WorkQueue
-    for (int i = 0; i < numThreads; i++) {
-      createAndStartWorkQueueThread("WorkQueueThread-" + i);
-    }
+    synchronized (threads) {
+      for (int i = 0; i < numThreads; i++) {
+        threads.add(createAndStartWorkQueueThread("WorkQueueThread-" + i));
+      }
+    }    
     lifeThread = new LifeThread("LifeThread");
     lifeThread.start();
   }
 
   /**
-   * Create WorkQueueThread and start it.  Also add it to threads Set so we can
-   * keep track of it.
+   * Create WorkQueueThread and start it.
    * @param name name of the thread
    */
-  private void createAndStartWorkQueueThread(String name) {
+  private WorkQueueThread createAndStartWorkQueueThread(String name) {
     WorkQueueThread thread = 
-      new WorkQueueThread(name, this); 
-    threads.add(thread);
+      new WorkQueueThread(name, this);     
     thread.start();
+    return thread;
   }
   
   /**
@@ -140,11 +141,13 @@ public class WorkQueue {
     shutdown = true;
     if (isInitialized) {
       if (interrupt) {
-        Iterator iter = threads.iterator();
-        while (iter.hasNext()) {
-          WorkQueueThread thread = (WorkQueueThread) iter.next();
-          thread.interruptAndKill();
-        }
+        synchronized (threads) {
+          Iterator iter = threads.iterator();
+          while (iter.hasNext()) {
+            WorkQueueThread thread = (WorkQueueThread) iter.next();
+            thread.interruptAndKill();
+          }
+        }        
         try {
           Thread.sleep(timeoutInMillis);
         } catch (InterruptedException e) {
@@ -180,14 +183,16 @@ public class WorkQueue {
    */
   private boolean isAnyThreadWorking() {
     boolean isAnyThreadWorking = false;
-    Iterator iter = threads.iterator();
-    while (iter.hasNext()) {
-      WorkQueueThread thread = (WorkQueueThread) iter.next();
-      if (thread.isWorking()) {
-        isAnyThreadWorking = true;
-        break;
+    synchronized (threads) {
+      Iterator iter = threads.iterator();
+      while (iter.hasNext()) {
+        WorkQueueThread thread = (WorkQueueThread) iter.next();
+        if (thread.isWorking()) {
+          isAnyThreadWorking = true;
+          break;
+        }
       }
-    }
+    }    
     return isAnyThreadWorking;
   }
   
@@ -236,12 +241,14 @@ public class WorkQueue {
    */
   private void replaceHangingThread(WorkQueueItem item) {
     // replace hanging thread with new thread if timeout is too long
-    threads.remove(item.getWorkQueueThread());
-    LOGGER.log(Level.WARNING, "Replacing work queue thread: " 
-      + item.getWorkQueueThread().getName());
     WorkQueueThread thread = 
       new WorkQueueThread(item.getWorkQueueThread().getName(), this);
-    threads.add(thread);
+    synchronized (threads) {
+      threads.remove(item.getWorkQueueThread());
+      LOGGER.log(Level.WARNING, "Replacing work queue thread: "
+        + item.getWorkQueueThread().getName());
+      threads.add(thread);
+    }    
     thread.start();
   }
 
@@ -399,16 +406,21 @@ public class WorkQueue {
           synchronized (this) {
             wait(LIFE_THREAD_WAIT_TIMEOUT);
           }
-          Iterator iter = threads.iterator();
-          while (iter.hasNext()) {
-            Thread thread = (Thread) iter.next();
-            if (!thread.isAlive()) {
-              LOGGER.log(Level.WARNING, "WorkQueueThread was dead and is " +
-                    "restarted by LifeThread: " + thread.getName());
-              iter.remove();
-              createAndStartWorkQueueThread(thread.getName());
+          Set replacementThreads = new HashSet();
+          synchronized (threads) {
+            Iterator iter = threads.iterator();
+            while (iter.hasNext()) {
+              Thread thread = (Thread) iter.next();
+              if (!thread.isAlive()) {
+                LOGGER.log(Level.WARNING, "WorkQueueThread was dead and is "
+                  + "restarted by LifeThread: " + thread.getName());
+                iter.remove();
+                replacementThreads.add(
+                  createAndStartWorkQueueThread(thread.getName()));
+              }
             }
-          }
+            threads.addAll(replacementThreads);
+          }          
         } catch (InterruptedException e) {
           LOGGER.log(Level.WARNING, "", e);
         }
