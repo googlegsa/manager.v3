@@ -27,7 +27,7 @@ import java.net.URLConnection;
  */
 public class GsaFeedConnection implements FeedConnection {
   
-  private URL url = null;;
+  private URL url = null;
   private String host;
   private int port;
   

@@ -105,6 +105,7 @@ public class DocPusher implements Pusher {
   private static final String XML_HEADER = "header";
   private static final String XML_DATASOURCE = "datasource";
   private static final String XML_FEEDTYPE = "feedtype";
+  private static final String XML_DATA = "data";
   private static final String XML_GROUP = "group";
   private static final String XML_RECORD = "record";
   private static final String XML_METADATA = "metadata";
@@ -120,7 +121,8 @@ public class DocPusher implements Pusher {
   // private static final String XML_NAME = "name";
   private static final String XML_ENCODING = "encoding";
 
-  // private static final String XML_FULL = "full";
+  private static final String XML_FEED_FULL = "full";
+  private static final String XML_FEED_METADATA_AND_URL = "metadata-and-url";
   // private static final String XML_INCREMENTAL = "incremental";
   // private static final String XML_BASE64BINARY = "base64binary";
   // private static final String XML_ADD = "add";
@@ -128,12 +130,12 @@ public class DocPusher implements Pusher {
 
   private static final String CONNECTOR_AUTHMETHOD = "httpbasic";
 
+  private FeedConnection feedConnection;
+  private String gsaResponse;
+  
   private String dataSource;
   private String feedType;
-  private FeedConnection feedConnection;
-
   private InputStream xmlData;
-  private String gsaResponse;
 
   /**
    *
@@ -141,7 +143,6 @@ public class DocPusher implements Pusher {
    */
   public DocPusher(FeedConnection feedConnection) {
     this.feedConnection = feedConnection;
-    this.feedType = "full";
   }
 
   /**
@@ -209,10 +210,13 @@ public class DocPusher implements Pusher {
     prefix.append(XML_RECORD);
     prefix.append(" ");
     appendAttrValuePair(XML_URL, searchUrl, prefix);
-    if (displayUrl != null && displayUrl.length() > 0) {
+    if (feedType != XML_FEED_METADATA_AND_URL &&
+        displayUrl != null && displayUrl.length() > 0) {
       appendAttrValuePair(XML_DISPLAY_URL, displayUrl, prefix);
     }
-    appendAttrValuePair(XML_MIMETYPE, mimetype, prefix);
+    if (mimetype != null) {
+      appendAttrValuePair(XML_MIMETYPE, mimetype, prefix);
+    }
     if (lastModified != null) {
       appendAttrValuePair(XML_LAST_MODIFIED, lastModified, prefix);
     }
@@ -226,15 +230,19 @@ public class DocPusher implements Pusher {
     }
     prefix.append(">\n");
     xmlWrapMetadata(prefix, pm);
-    prefix.append("<");
-    prefix.append(XML_CONTENT);
-    prefix.append(" ");
-    appendAttrValuePair(XML_ENCODING, "base64binary", prefix);
-    prefix.append(">");
+    if (feedType != XML_FEED_METADATA_AND_URL) {
+      prefix.append("<");
+      prefix.append(XML_CONTENT);
+      prefix.append(" ");
+      appendAttrValuePair(XML_ENCODING, "base64binary", prefix);
+      prefix.append(">");
+    }
 
     // build suffix
     StringBuffer suffix = new StringBuffer();
-    suffix.append(xmlWrapEnd(XML_CONTENT));
+    if (feedType != XML_FEED_METADATA_AND_URL) {
+      suffix.append(xmlWrapEnd(XML_CONTENT));
+    }
     suffix.append(xmlWrapEnd(XML_RECORD));
 
     InputStream is =
@@ -464,14 +472,16 @@ public class DocPusher implements Pusher {
     suffix.append(xmlWrapEnd(XML_GSAFEED));
 
     // build record
-    String searchurl = getOptionalString(pm, SpiConstants.PROPNAME_SEARCHURL);
-    if (searchurl != null) {
+    String searchurl = null;
+    if (this.feedType == XML_FEED_METADATA_AND_URL) {
+      searchurl = getOptionalString(pm, SpiConstants.PROPNAME_SEARCHURL);
       // check that this looks like a URL
       try {
         URL url = new URL(searchurl);
       } catch (MalformedURLException e) {
         LOGGER.warning("Supplied search url " + searchurl + " is malformed: "
             + e.getMessage());
+        return null;
       }
     } else {
       String docid = getRequiredString(pm, SpiConstants.PROPNAME_DOCID);
@@ -495,17 +505,17 @@ public class DocPusher implements Pusher {
           "Swallowing exception while getting "
               + SpiConstants.PROPNAME_LASTMODIFY, e);
     }
-    String lastModifiedString;
+    String lastModifiedString = null;
     if (lastModified == null) {
       // maybe someone supplied a date as a string in some other format
       lastModifiedString =
           getOptionalString(pm, SpiConstants.PROPNAME_LASTMODIFY);
-    } else {
+    } else if (this.feedType != XML_FEED_METADATA_AND_URL) {
       lastModifiedString = SimpleValue.calendarToRfc822(lastModified);
     }
 
     String mimetype = getOptionalString(pm, SpiConstants.PROPNAME_MIMETYPE);
-    if (mimetype == null) {
+    if (mimetype == null && this.feedType != XML_FEED_METADATA_AND_URL) {
       mimetype = SpiConstants.DEFAULT_MIMETYPE;
     }
 
@@ -543,14 +553,14 @@ public class DocPusher implements Pusher {
    */
   private InputStream encodeXmlData() throws UnsupportedEncodingException {
     String prefix =
-        URLEncoder.encode("datasource", XML_DEFAULT_ENCODING) + "="
+        URLEncoder.encode(XML_DATASOURCE, XML_DEFAULT_ENCODING) + "="
             + URLEncoder.encode(dataSource, XML_DEFAULT_ENCODING);
     prefix +=
-        "&" + URLEncoder.encode("feedtype", XML_DEFAULT_ENCODING) + "="
+        "&" + URLEncoder.encode(XML_FEEDTYPE, XML_DEFAULT_ENCODING) + "="
             + URLEncoder.encode(feedType, XML_DEFAULT_ENCODING);
     prefix +=
-      "&" + URLEncoder.encode("data", XML_DEFAULT_ENCODING)
-      + "=";
+        "&" + URLEncoder.encode(XML_DATA, XML_DEFAULT_ENCODING)
+            + "=";
 
     InputStream xmlDataStream = new UrlEncodedFilterInputStream(xmlData);
 
@@ -560,6 +570,13 @@ public class DocPusher implements Pusher {
     return is;
   }
 
+  private void setFeedType(PropertyMap pm) {
+    if (getOptionalString(pm, SpiConstants.PROPNAME_SEARCHURL) != null) {
+      this.feedType = XML_FEED_METADATA_AND_URL;
+    } else {
+      this.feedType = XML_FEED_FULL;
+    }
+  }
   /**
    * Takes a property map and sends a the feed to the GSA.
    *
@@ -568,7 +585,13 @@ public class DocPusher implements Pusher {
    */
   public void take(PropertyMap pm, String connectorName) {
     this.dataSource = connectorName;
-    xmlData = buildXmlData(pm, connectorName);
+    setFeedType(pm);
+    this.xmlData = buildXmlData(pm, connectorName);
+    if (this.xmlData == null) {
+      LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
+         "Skipped this document for feeding, continuing");
+      return;
+    }
     try {
       InputStream message = encodeXmlData();
       gsaResponse = feedConnection.sendData(message);
