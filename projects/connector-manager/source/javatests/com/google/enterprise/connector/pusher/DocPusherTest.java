@@ -40,19 +40,39 @@ import javax.jcr.query.QueryManager;
  */
 public class DocPusherTest extends TestCase {
 
-  public void testTake() throws RepositoryException {
+  public void testTakeUrlMeta() throws RepositoryException {
+    String rawData = "<?xml version=\'1.0\' encoding=\'UTF-8\'?>"
+        + "<!DOCTYPE gsafeed PUBLIC \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">"
+        + "<gsafeed><header><datasource>junit</datasource>\n"
+        + "<feedtype>metadata-and-url</feedtype>\n"
+        + "</header>\n"
+        + "<group>\n"
+        + "<record url=\"http://www.sometesturl.com/test\""
+        + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\" >\n"
+        + "<metadata>\n"
+        + "<meta name=\"google:lastmodify\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
+        + "<meta name=\"google:searchurl\" content=\"http://www.sometesturl.com/test\"/>\n"
+        + "<meta name=\"jcr:lastModified\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
+        + "</metadata>\n" + "</record>\n" + "</group>\n"
+        + "</gsafeed>\n";
+    String expectedXml = "datasource=junit&feedtype=metadata-and-url&data="
+        + urlEncode(rawData);
+
+    takeFeed(expectedXml, "MockRepositoryEventLog5.txt");
+  }
+  
+  public void testTakeFull() throws RepositoryException {
     String rawData = "<?xml version=\'1.0\' encoding=\'UTF-8\'?>"
       + "<!DOCTYPE gsafeed PUBLIC \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">"
       + "<gsafeed><header><datasource>junit</datasource>\n"
       + "<feedtype>full</feedtype>\n"
       + "</header>\n"
       + "<group>\n"
-      + "<record url=\"http://www.sometesturl.com/test\" mimetype=\""
+      + "<record url=\"googleconnector://junit.localhost/doc?docid=doc1\" mimetype=\""
       + SpiConstants.DEFAULT_MIMETYPE
       + "\" last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\" >\n"
       + "<metadata>\n"
       + "<meta name=\"google:lastmodify\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
-      + "<meta name=\"google:searchurl\" content=\"http://www.sometesturl.com/test\"/>\n"
       + "<meta name=\"jcr:lastModified\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
       + "</metadata>\n" + "<content encoding=\"base64binary\" >"
       + "bm93IGlzIHRoZSB0aW1l" + "</content>\n" + "</record>\n" + "</group>\n"
@@ -60,12 +80,17 @@ public class DocPusherTest extends TestCase {
     String expectedXml = "datasource=junit&feedtype=full&data="
       + urlEncode(rawData);
 
+    takeFeed(expectedXml, "MockRepositoryEventLog6.txt");
+  }
+
+  public void takeFeed(String expectedXml, String repository)
+      throws RepositoryException {
     String resultXML;
     String gsaExpectedResponse = "Mock response";
     String gsaActualResponse;
 
     MockRepositoryEventList mrel = new MockRepositoryEventList(
-      "MockRepositoryEventLog3.txt");
+        repository);
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
     QueryTraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
