@@ -222,11 +222,14 @@ public class DocPusher implements Pusher {
     }
     try {
       Property isPublic = pm.getProperty(SpiConstants.PROPNAME_ISPUBLIC);
-      if (isPublic != null && !isPublic.getValue().getBoolean()) {
+      if (isPublic != null && isPublic.getValue().getBoolean() == false) {
         appendAttrValuePair(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD, prefix);
       }
     } catch (RepositoryException e) {
       LOGGER.log(Level.WARNING, "Problem getting ispublic property.", e);
+    } catch (IllegalArgumentException e) {
+      LOGGER.log(Level.WARNING, "Illegal value for ispublic property."
+          + " Treat as a public doc", e);
     }
     prefix.append(">\n");
     xmlWrapMetadata(prefix, pm);

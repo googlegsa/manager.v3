@@ -40,52 +40,98 @@ import javax.jcr.query.QueryManager;
  */
 public class DocPusherTest extends TestCase {
 
+  /**
+   * Test Take for a URL/metadata feed when google.searchurl exists.
+   * 
+   * @throws RepositoryException
+   */
   public void testTakeUrlMeta() throws RepositoryException {
-    String rawData = "<?xml version=\'1.0\' encoding=\'UTF-8\'?>"
-        + "<!DOCTYPE gsafeed PUBLIC \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">"
-        + "<gsafeed><header><datasource>junit</datasource>\n"
-        + "<feedtype>metadata-and-url</feedtype>\n"
-        + "</header>\n"
-        + "<group>\n"
-        + "<record url=\"http://www.sometesturl.com/test\""
+    String[] expectedXml = new String[1];
+    String feedType = "metadata-and-url";
+    String record = "<record url=\"http://www.sometesturl.com/test\""
         + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\" >\n"
         + "<metadata>\n"
         + "<meta name=\"google:lastmodify\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:searchurl\" content=\"http://www.sometesturl.com/test\"/>\n"
         + "<meta name=\"jcr:lastModified\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
-        + "</metadata>\n" + "</record>\n" + "</group>\n"
-        + "</gsafeed>\n";
-    String expectedXml = "datasource=junit&feedtype=metadata-and-url&data="
-        + urlEncode(rawData);
-
+        + "</metadata>\n" + "</record>\n";
+    
+    expectedXml[0] = buildExpectedXML(feedType, record);
     takeFeed(expectedXml, "MockRepositoryEventLog5.txt");
   }
   
-  public void testTakeFull() throws RepositoryException {
-    String rawData = "<?xml version=\'1.0\' encoding=\'UTF-8\'?>"
-      + "<!DOCTYPE gsafeed PUBLIC \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">"
-      + "<gsafeed><header><datasource>junit</datasource>\n"
-      + "<feedtype>full</feedtype>\n"
-      + "</header>\n"
-      + "<group>\n"
-      + "<record url=\"googleconnector://junit.localhost/doc?docid=doc1\" mimetype=\""
-      + SpiConstants.DEFAULT_MIMETYPE
+  /**
+   * Test Take for a content feed.
+   * 
+   * @throws RepositoryException
+   */
+  public void testTakeContent() throws RepositoryException {
+    String[] expectedXml = new String[1];
+    String feedType = "full";
+    String record = "<record url=\"googleconnector://junit.localhost/doc?docid=doc1\""
+      + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE
       + "\" last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\" >\n"
       + "<metadata>\n"
       + "<meta name=\"google:lastmodify\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
       + "<meta name=\"jcr:lastModified\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
       + "</metadata>\n" + "<content encoding=\"base64binary\" >"
-      + "bm93IGlzIHRoZSB0aW1l" + "</content>\n" + "</record>\n" + "</group>\n"
-      + "</gsafeed>\n" + "";
-    String expectedXml = "datasource=junit&feedtype=full&data="
-      + urlEncode(rawData);
-
+      + "bm93IGlzIHRoZSB0aW1l" + "</content>\n" + "</record>\n";
+    
+    expectedXml[0] = buildExpectedXML(feedType, record);
     takeFeed(expectedXml, "MockRepositoryEventLog6.txt");
   }
 
-  public void takeFeed(String expectedXml, String repository)
+  /**
+   * Test Take for isPublic.
+   * 
+   * @throws RepositoryException
+   */
+  public void testTakeIsPublic() throws RepositoryException {
+    String[] expectedXml = new String[3];
+    String feedType = "full";
+    
+    // case 1: "google:ispublic":"false"
+    String record = "<record url=\"googleconnector://junit.localhost/doc?docid=users\""
+        + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE
+        + "\" last-modified=\"Thu, 01 Jan 1970 00:00:00 GMT\""
+        + " authmethod=\"httpbasic\" >\n"
+        + "<metadata>\n"
+        + "<meta name=\"acl\" content=\"joe, mary, fred, mark, bill, admin\"/>\n"
+        + "<meta name=\"google:ispublic\" content=\"false\"/>\n"
+        + "<meta name=\"google:lastmodify\" content=\"1970-01-01T00:00:00.000Z\"/>\n"
+        + "</metadata>\n" + "<content encoding=\"base64binary\" >"
+        + "VGhpcyBpcyBhIHNlY3VyZSBkb2N1bWVudA==" + "</content>\n" + "</record>\n";
+    expectedXml[0] = buildExpectedXML(feedType, record);
+
+    // case 2: "google:ispublic":"true"
+    record = "<record url=\"googleconnector://junit.localhost/doc?docid=doc1\""
+        + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE
+        + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\" >\n"
+        + "<metadata>\n"
+        + "<meta name=\"acl\" content=\"joe, mary\"/>\n"
+        + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
+        + "<meta name=\"google:lastmodify\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
+        + "</metadata>\n" + "<content encoding=\"base64binary\" >"
+        + "VGhpcyBpcyB0aGUgcHVibGljIGRvY3VtZW50Lg==" + "</content>\n" + "</record>\n";
+    expectedXml[1] = buildExpectedXML(feedType, record);
+
+    // case 3: "google:ispublic":"public"; the value "public" is illegal value.
+    record = "<record url=\"googleconnector://junit.localhost/doc?docid=doc2\""
+      + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE
+      + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\" >\n"
+      + "<metadata>\n"
+      + "<meta name=\"acl\" content=\"joe, mary\"/>\n"
+      + "<meta name=\"google:ispublic\" content=\"public\"/>\n"
+      + "<meta name=\"google:lastmodify\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
+      + "</metadata>\n" + "<content encoding=\"base64binary\" >"
+      + "VGhpcyBpcyBhIGRvY3VtZW50Lg==" + "</content>\n" + "</record>\n";
+    expectedXml[2] = buildExpectedXML(feedType, record);
+
+    takeFeed(expectedXml, "MockRepositoryEventLog7.txt");
+  }
+
+  private void takeFeed(String[] expectedXml, String repository)
       throws RepositoryException {
-    String resultXML;
     String gsaExpectedResponse = "Mock response";
     String gsaActualResponse;
 
@@ -100,13 +146,16 @@ public class DocPusherTest extends TestCase {
 
     ResultSet resultSet = qtm.startTraversal();
 
+    int i = 0;
     for (Iterator iter = resultSet.iterator(); iter.hasNext();) {
+      Assert.assertFalse(i == expectedXml.length);
       PropertyMap propertyMap = (PropertyMap) iter.next();
       dpusher.take(propertyMap, "junit");
-      resultXML = mockFeedConnection.getFeed();
+      String resultXML = mockFeedConnection.getFeed();
       gsaActualResponse = dpusher.getGsaResponse();
-      Assert.assertEquals(expectedXml, resultXML);
+      Assert.assertEquals(expectedXml[i], resultXML);
       Assert.assertEquals(gsaExpectedResponse, gsaActualResponse);
+      ++i;
     }
   }
 
@@ -243,4 +292,19 @@ public class DocPusherTest extends TestCase {
     Assert.assertTrue("Expected:\n" + expected + "\nDid not appear in\n"
       + actual, actual.indexOf(expected) > 0);
   }
+
+  private String buildExpectedXML(String feedType, String record) {
+    String rawData = "<?xml version=\'1.0\' encoding=\'UTF-8\'?>"
+        + "<!DOCTYPE gsafeed PUBLIC \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">"
+        + "<gsafeed><header><datasource>junit</datasource>\n"
+        + "<feedtype>" + feedType + "</feedtype>\n"
+        + "</header>\n"
+        + "<group>\n"
+        + record
+        + "</group>\n"
+        + "</gsafeed>\n";
+    return "datasource=junit&feedtype=" + feedType + "&data="
+        + urlEncode(rawData);
+  }
+
 }
