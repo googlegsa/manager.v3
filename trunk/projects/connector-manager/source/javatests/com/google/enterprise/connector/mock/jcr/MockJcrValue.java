@@ -86,10 +86,23 @@ public class MockJcrValue implements Value {
 
   public boolean getBoolean() throws ValueFormatException,
       IllegalStateException, RepositoryException {
-    if (val.equalsIgnoreCase("t") || val.equalsIgnoreCase("true")) {
+    if (val.equalsIgnoreCase("t")
+        || val.equalsIgnoreCase("true")
+        || val.equalsIgnoreCase("y")
+        || val.equalsIgnoreCase("yes")
+        || val.equalsIgnoreCase("ok")
+        || val.equals("1")) {
       return true;
     }
-    return false;
+    if (val.equalsIgnoreCase("f")
+        || val.equalsIgnoreCase("false")
+        || val.equalsIgnoreCase("n")
+        || val.equalsIgnoreCase("no")
+        || val.equals("0")) {
+      return false;
+    }
+
+    throw new IllegalArgumentException();
   }
 
   public int getType() {
