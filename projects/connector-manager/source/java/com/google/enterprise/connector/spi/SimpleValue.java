@@ -57,22 +57,10 @@ public class SimpleValue implements Value {
   public boolean getBoolean() throws IllegalArgumentException,
       RepositoryException {
     if (stringValue.equalsIgnoreCase("t")
-        || stringValue.equalsIgnoreCase("true")
-        || stringValue.equalsIgnoreCase("y")
-        || stringValue.equalsIgnoreCase("yes")
-        || stringValue.equalsIgnoreCase("ok")
-        || stringValue.equals("1")) {
+        || stringValue.equalsIgnoreCase("true")) {
       return true;
     }
-    if (stringValue.equalsIgnoreCase("f")
-        || stringValue.equalsIgnoreCase("false")
-        || stringValue.equalsIgnoreCase("n")
-        || stringValue.equalsIgnoreCase("no")
-        || stringValue.equals("0")) {
-      return false;
-    }
-
-    throw new IllegalArgumentException();
+    return false;
   }
 
   /*

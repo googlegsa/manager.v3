@@ -43,28 +43,11 @@ public class SimpleValueTest extends TestCase {
         .getBoolean());
     Assert.assertEquals(true, new SimpleValue(ValueType.BOOLEAN, "TrUe")
         .getBoolean());
-    Assert.assertEquals(true, new SimpleValue(ValueType.BOOLEAN, "yEs")
-        .getBoolean());
-    Assert.assertEquals(true, new SimpleValue(ValueType.BOOLEAN, "oK")
-    .getBoolean());
-    Assert.assertEquals(true, new SimpleValue(ValueType.BOOLEAN, "1")
-        .getBoolean());
-    try {
-      boolean value = new SimpleValue(ValueType.BOOLEAN,
-          "true for you maybe").getBoolean();
-      Assert.assertTrue(false);
-    } catch (IllegalArgumentException e) {
-      Assert.assertTrue(true);
-    }
+    Assert.assertEquals(false, new SimpleValue(ValueType.BOOLEAN,
+        "true for you maybe").getBoolean());
     Assert.assertEquals(false, new SimpleValue(ValueType.BOOLEAN, "false")
         .getBoolean());
     Assert.assertEquals(false, new SimpleValue(ValueType.BOOLEAN, "F")
-        .getBoolean());
-    Assert.assertEquals(false, new SimpleValue(ValueType.BOOLEAN, "No")
-        .getBoolean());
-    Assert.assertEquals(false, new SimpleValue(ValueType.BOOLEAN, "nO")
-        .getBoolean());
-    Assert.assertEquals(false, new SimpleValue(ValueType.BOOLEAN, "0")
         .getBoolean());
   }
 

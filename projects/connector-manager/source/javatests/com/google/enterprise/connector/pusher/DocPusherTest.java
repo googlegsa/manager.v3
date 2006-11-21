@@ -67,7 +67,7 @@ public class DocPusherTest extends TestCase {
    */
   public void testTakeContent() throws RepositoryException {
     String[] expectedXml = new String[1];
-    String feedType = "full";
+    String feedType = "incremental";
     String record = "<record url=\"googleconnector://junit.localhost/doc?docid=doc1\""
       + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE
       + "\" last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\" >\n"
@@ -88,7 +88,7 @@ public class DocPusherTest extends TestCase {
    */
   public void testTakeIsPublic() throws RepositoryException {
     String[] expectedXml = new String[3];
-    String feedType = "full";
+    String feedType = "incremental";
     
     // case 1: "google:ispublic":"false"
     String record = "<record url=\"googleconnector://junit.localhost/doc?docid=users\""

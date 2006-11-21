@@ -121,9 +121,9 @@ public class DocPusher implements Pusher {
   // private static final String XML_NAME = "name";
   private static final String XML_ENCODING = "encoding";
 
-  private static final String XML_FEED_FULL = "full";
+  // private static final String XML_FEED_FULL = "full";
   private static final String XML_FEED_METADATA_AND_URL = "metadata-and-url";
-  // private static final String XML_INCREMENTAL = "incremental";
+  private static final String XML_FEED_INCREMENTAL = "incremental";
   // private static final String XML_BASE64BINARY = "base64binary";
   // private static final String XML_ADD = "add";
   // private static final String XML_DELETE = "delete";
@@ -222,7 +222,7 @@ public class DocPusher implements Pusher {
     }
     try {
       Property isPublic = pm.getProperty(SpiConstants.PROPNAME_ISPUBLIC);
-      if (isPublic != null && isPublic.getValue().getBoolean() == false) {
+      if (isPublic != null && getBoolean(isPublic.getValue().getString()) == false) {
         appendAttrValuePair(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD, prefix);
       }
     } catch (RepositoryException e) {
@@ -577,9 +577,31 @@ public class DocPusher implements Pusher {
     if (getOptionalString(pm, SpiConstants.PROPNAME_SEARCHURL) != null) {
       this.feedType = XML_FEED_METADATA_AND_URL;
     } else {
-      this.feedType = XML_FEED_FULL;
+      this.feedType = XML_FEED_INCREMENTAL;
     }
   }
+
+  private boolean getBoolean(String stringValue)
+      throws IllegalArgumentException {
+    if (stringValue.equalsIgnoreCase("t")
+        || stringValue.equalsIgnoreCase("true")
+        || stringValue.equalsIgnoreCase("y")
+        || stringValue.equalsIgnoreCase("yes")
+        || stringValue.equalsIgnoreCase("ok")
+        || stringValue.equals("1")) {
+      return true;
+    }
+    if (stringValue.equalsIgnoreCase("f")
+        || stringValue.equalsIgnoreCase("false")
+        || stringValue.equalsIgnoreCase("n")
+        || stringValue.equalsIgnoreCase("no")
+        || stringValue.equals("0")) {
+      return false;
+    }
+
+    throw new IllegalArgumentException();
+  }
+
   /**
    * Takes a property map and sends a the feed to the GSA.
    *
