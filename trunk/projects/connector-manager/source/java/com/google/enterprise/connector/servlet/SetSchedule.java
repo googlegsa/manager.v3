@@ -17,6 +17,7 @@ package com.google.enterprise.connector.servlet;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
@@ -40,7 +41,7 @@ import com.google.enterprise.connector.persist.PersistentStoreException;
  *
  */
 public class SetSchedule extends HttpServlet {
-  private static final Logger LOG =
+  private static final Logger LOGGER =
     Logger.getLogger(SetSchedule.class.getName());
 
     /**
@@ -66,34 +67,37 @@ public class SetSchedule extends HttpServlet {
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
-    String status = ServletUtil.XML_RESPONSE_SUCCESS;
     BufferedReader reader = req.getReader();
     PrintWriter out = res.getWriter();
     res.setContentType(ServletUtil.MIMETYPE_XML);
     String xmlBody = StringUtils.readAllToString(reader);
-    if (xmlBody.length() < 1) {
-      status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_REQUEST;
-      ServletUtil.writeSimpleResponse(out, status);
-      LOG.info("The request is empty");
+    if (xmlBody == null || xmlBody.length() < 1) {
+      ServletUtil.writeSimpleResponse(
+          out, ConnectorMessageCode.RESPONSE_EMPTY_REQUEST);
+      LOGGER.info("The request is empty");
       return;
     }
     
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
-    status = handleDoPost(manager, xmlBody);
-    ServletUtil.writeSimpleResponse(out, status);
+    ConnectorMessageCode status = handleDoPost(manager, xmlBody);
+    ServletUtil.writeResponse(out, status);
     out.close();
   }
   
-  public static String handleDoPost(Manager manager, String xmlBody) {
-    String status = ServletUtil.XML_RESPONSE_SUCCESS;
+  public static ConnectorMessageCode handleDoPost(Manager manager, String xmlBody) {
+    ConnectorMessageCode status = new ConnectorMessageCode();
     SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
     Document document = ServletUtil.parse(xmlBody, errorHandler);
+    if (document == null) {
+      status.setMessageId(ConnectorMessageCode.EXCEPTION_XML_PARSING);
+      return status;
+    }
     NodeList nodeList =
         document.getElementsByTagName(ServletUtil.XMLTAG_CONNECTOR_SCHEDULES);
-    if (nodeList.getLength() == 0) {
-      status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE;
-      LOG.info(ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE);
+    if (nodeList == null || nodeList.getLength() == 0) {
+      status.setMessageId(ConnectorMessageCode.RESPONSE_EMPTY_NODE);
+      LOGGER.warning("Error: " + ConnectorMessageCode.RESPONSE_EMPTY_NODE);
       return status;
     }
 
@@ -102,17 +106,18 @@ public class SetSchedule extends HttpServlet {
     int load = Integer.parseInt(ServletUtil.getFirstElementByTagName(
         (Element) nodeList.item(0), ServletUtil.XMLTAG_LOAD));
     String timeIntervals = ServletUtil.getFirstElementByTagName(
-         (Element) nodeList.item(0), ServletUtil.XMLTAG_TIME_INTERVALS);
+        (Element) nodeList.item(0), ServletUtil.XMLTAG_TIME_INTERVALS);
+
     try {
       manager.setSchedule(connectorName, load, timeIntervals);
     } catch (ConnectorNotFoundException e) {
-      LOG.info("ConnectorNotFoundException");
-      status = e.toString();
-      e.printStackTrace();
+      LOGGER.log(Level.WARNING, "Connector Not Found Exception: ", e);
+      status.setMessageId(ConnectorMessageCode.EXCEPTION_CONNECTOR_NOT_FOUND);
+      String[] params = {connectorName};
+      status.setParams(params);
     } catch (PersistentStoreException e) {
-      LOG.info("PersistentStoreException");
-      status = e.toString();
-      e.printStackTrace();
+      LOGGER.log(Level.WARNING, "Persistent Store Exception: ", e);
+      status.setMessageId(ConnectorMessageCode.EXCEPTION_PERSISTENT_STORE);
     }
     return status;
   }

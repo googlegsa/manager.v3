@@ -47,12 +47,12 @@ public class SetScheduleTest extends TestCase {
           + "  <" + ServletUtil.XMLTAG_TIME_INTERVALS + ">" + timeIntervals + "</"
           + ServletUtil.XMLTAG_TIME_INTERVALS + ">\n"
           + "</" + ServletUtil.XMLTAG_CONNECTOR_SCHEDULES + ">\n";
-    String expectedResult = "0";
+    int expectedResult = ConnectorMessageCode.SUCCESS;
     LOG.info(xmlBody);
     Manager manager = MockManager.getInstance();
-    String status = SetSchedule.handleDoPost(manager, xmlBody);
-    LOG.info(status);
-    Assert.assertEquals(status, expectedResult); 
+    ConnectorMessageCode status = SetSchedule.handleDoPost(manager, xmlBody);
+    LOG.info("Status Id: " + String.valueOf(status.getMessageId()));
+    Assert.assertEquals(status.getMessageId(), expectedResult); 
   }
 
 }

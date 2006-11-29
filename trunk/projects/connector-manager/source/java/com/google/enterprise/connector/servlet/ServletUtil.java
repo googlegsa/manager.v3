@@ -43,6 +43,10 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
  *
  */
 public class ServletUtil {
+
+  private static Logger LOGGER =
+    Logger.getLogger(ServletUtil.class.getName());
+
   public static final String MIMETYPE_XML = "text/xml";
   public static final String MIMETYPE_HTML = "text/html";
 
@@ -54,6 +58,11 @@ public class ServletUtil {
 
   public static final String XMLTAG_RESPONSE_ROOT = "CmResponse";
   public static final String XMLTAG_STATUSID = "StatusId";
+  public static final String XMLTAG_STATUS_MESSAGE = "StatusMsg";
+  public static final String XMLTAG_STATUS_PARAMS = "CMParams";
+  public static final String XMLTAG_STATUS_PARAM_ORDER = "Order";
+  public static final String XMLTAG_STATUS_PARAM = "CMParam";
+	  
   public static final String XMLTAG_CONNECTOR_TYPES = "ConnectorTypes";
   public static final String XMLTAG_CONNECTOR_TYPE = "ConnectorType";
   public static final String XMLTAG_CONNECTOR_STATUS = "ConnectorStatus";
@@ -146,9 +155,6 @@ public class ServletUtil {
   private static final String PREFIX_CM = " name=\"CM_";
   private static final String PREFIX_NO_CM = " name=\"";
 
-  private static Logger LOG =
-	    Logger.getLogger(ServletUtil.class.getName());
-
   private static DocumentBuilderFactory factory =
 	    DocumentBuilderFactory.newInstance();
 
@@ -168,16 +174,16 @@ public class ServletUtil {
       DocumentBuilder builder = factory.newDocumentBuilder();
       builder.setErrorHandler(errorHandler);
       Document document = builder.parse(
-        new ByteArrayInputStream(fileContent.getBytes("UTF-8")));
+          new ByteArrayInputStream(fileContent.getBytes("UTF-8")));
       return document;
     } catch (ParserConfigurationException pce) {
-      LOG.log(Level.SEVERE, "Parse exception", pce);
+      LOGGER.log(Level.SEVERE, "Parse exception", pce);
     } catch (java.io.UnsupportedEncodingException uee) {
-      LOG.log(Level.SEVERE, "Really Unexpected", uee);
+      LOGGER.log(Level.SEVERE, "Really Unexpected", uee);
     } catch (SAXException se) {
-      LOG.log(Level.SEVERE, "SAXException", se);
+      LOGGER.log(Level.SEVERE, "SAX Exception", se);
     } catch (IOException ioe) {
-      LOG.log(Level.SEVERE, "IOException", ioe);
+      LOGGER.log(Level.SEVERE, "IO Exception", ioe);
     }
     return null;
   }
@@ -265,16 +271,89 @@ public class ServletUtil {
   }
 
   /**
-   * Write a name value pair as an XML element to a PrintWriter.
+   * Write an XML response with only status (string) to a PrintWriter.
    *
    * @param out where PrintWriter to be written to
    * @param status String
    *
    */
   public static void writeSimpleResponse(PrintWriter out, String status) {
-    writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);
+    writeRootResponse(out, false);
     writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, status);
-    writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
+    writeRootResponse(out, true);
+  }
+
+  /**
+   * Write an XML response with only StatusId (int) to a PrintWriter.
+   *
+   * @param out where PrintWriter to be written to
+   * @param statusId int
+   *
+   */
+  public static void writeSimpleResponse(PrintWriter out, int statusId) {
+    writeRootResponse(out, false);
+    writeStatusResponse(out, new ConnectorMessageCode(statusId, null, null));
+    writeRootResponse(out, true);
+  }
+
+  /**
+   * Write an XML response with full status to a PrintWriter.
+   *
+   * @param out where PrintWriter to be written to
+   * @param status ConnectorMessageCode
+   *
+   */
+  public static void writeResponse(PrintWriter out,
+                                   ConnectorMessageCode status) {
+    writeRootResponse(out, false);
+    writeStatusResponse(out, status);
+    writeRootResponse(out, true);
+  }
+
+  /**
+   * Write the root XML tag <CMResponse> to a PrintWriter.
+   *
+   * @param out where PrintWriter to be written to
+   * @param endingTag boolean true if it is the ending tag
+   *
+   */
+  public static void writeRootResponse(PrintWriter out, boolean endingTag) {
+    writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, endingTag);
+  }
+
+  /**
+   * Write a partial XML status response to a Writer.
+   *
+   * @param out where Writer to be written to
+   * @param status ConnectorMessageCode
+   *
+   */
+  public static void writeStatusResponse(PrintWriter out,
+                                         ConnectorMessageCode status) {
+    writeXMLElement(
+        out, 1, ServletUtil.XMLTAG_STATUSID,
+        Integer.toString(status.getMessageId()));
+
+    if (status.getMessage() != null && status.getMessage().length() > 1) {
+      writeXMLElement(
+          out, 1, ServletUtil.XMLTAG_STATUS_MESSAGE, status.getMessage());
+    }
+
+    if (status.getParams() == null) {
+      return;
+    }
+
+    for (int i = 0; i < status.getParams().length; ++i) {
+      String param = status.getParams()[i].toString();
+      if (param == null || param.length() < 1) {
+        continue;
+      }
+      out.println(IndentStr(1)
+          + "<" + XMLTAG_STATUS_PARAMS
+          + " " + XMLTAG_STATUS_PARAM_ORDER + "=\"" + Integer.toString(i) + "\""
+          + " " + XMLTAG_STATUS_PARAM + "=\"" + param
+          + "\"/>");
+    }
   }
 
   public static void writeConfigureResponse(
@@ -310,6 +389,20 @@ public class ServletUtil {
   }
 
   /**
+   * Write a name value pair as an XML element to a StringBuffer.
+   *
+   * @param out where StringBuffer to be written to
+   * @param indentLevel the depth of indentation.
+   * @param elemName element name
+   * @param elemValue element value
+   */
+  public static void writeXMLElement(StringBuffer out, int indentLevel,
+                                     String elemName, String elemValue) {
+    out.append(IndentStr(indentLevel)).append("<").append(elemName).append(">")
+        .append(elemValue).append("</").append(elemName).append(">");
+  }
+
+  /**
    * Write a name value pair as an XML element to a PrintWriter.
    *
    * @param out where PrintWriter to be written to
@@ -319,7 +412,6 @@ public class ServletUtil {
    */
   public static void writeXMLElementWithAttrs(PrintWriter out, int indentLevel,
                                      String elemName, String attributes) {
-    
     out.println(IndentStr(indentLevel)
         + "<" + elemName + " " + attributes + ">");
   }
@@ -336,6 +428,20 @@ public class ServletUtil {
                           String tagName, boolean endingTag) {
     out.println(IndentStr(indentLevel)
         + (endingTag ? "</" : "<") + (tagName) + ">");
+  }
+
+  /** Write an XML tag to a StringBuffer
+  *
+  * @param out where StringBuffer to be written to
+  * @param indentLevel the depth of indentation
+  * @param tagName String name of the XML tag to be added
+  * @param endingTag String write a beginning tag if true or
+  * an ending tag if false
+  */
+  public static void writeXMLTag(StringBuffer out, int indentLevel,
+                                 String tagName, boolean endingTag) {
+    out.append(IndentStr(indentLevel)).append(endingTag ? "</" : "<")
+        .append(tagName).append(">");
   }
 
   // A helper method to ident output string.

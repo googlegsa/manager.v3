@@ -105,9 +105,9 @@ public class SetScheduleNoGSA extends HttpServlet {
     PrintWriter out = res.getWriter();
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
-    String status = SetSchedule.handleDoPost(manager,
+    ConnectorMessageCode status = SetSchedule.handleDoPost(manager,
         writer.getBuffer().toString());
-    ServletUtil.writeSimpleResponse(out, status);
+    ServletUtil.writeResponse(out, status);
     out.close();
   }
 }
