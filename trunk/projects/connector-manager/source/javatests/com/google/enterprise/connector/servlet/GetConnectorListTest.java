@@ -31,13 +31,13 @@ import java.util.logging.Logger;
  *
  */
 public class GetConnectorListTest extends TestCase {
-  private static final Logger LOG = Logger
+  private static final Logger LOGGER = Logger
     .getLogger(GetConnectorListTest.class.getName());
 
   /**
    * Test method for
    * {@link com.google.enterprise.connector.servlet.GetConnectorList 
-   * #handleDoGet(java.io.PrintWriter, java.util.List)}
+   * #handleDoPost(java.io.PrintWriter, java.util.List)}
    * @throws IOException
    * 
    * connectorTypes = null
@@ -46,7 +46,7 @@ public class GetConnectorListTest extends TestCase {
     List connectorTypes = null;
     String expectedResult = 
         "<CmResponse>\n"
-        + "  <StatusId>" + ServletUtil.XML_RESPONSE_STATUS_NULL_CONNECTOR_TYPE
+        + "  <StatusId>" + ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_TYPE
         + "</StatusId>\n"
         + "</CmResponse>\n";
     doTest(connectorTypes, expectedResult);
@@ -55,7 +55,7 @@ public class GetConnectorListTest extends TestCase {
   /**
    * Test method for
    * {@link com.google.enterprise.connector.servlet.GetConnectorList 
-   * #handleDoGet(java.io.PrintWriter, java.util.List)}
+   * #handleDoPost(java.io.PrintWriter, java.util.List)}
    * @throws IOException
    * 
    * connectorTypes = {"Documentum", "Sharepoint", "Filenet"}
@@ -80,11 +80,11 @@ public class GetConnectorListTest extends TestCase {
       throws IOException {
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
-    GetConnectorList.handleDoGet(out, connectorTypes);
+    GetConnectorList.handleDoPost(connectorTypes, out);
     out.flush();
     StringBuffer result = writer.getBuffer();
-    LOG.info(result.toString());
-    LOG.info(expectedResult);
+    LOGGER.info(result.toString());
+    LOGGER.info(expectedResult);
     Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult), 
         StringUtils.normalizeNewlines(result.toString()));
     out.close();

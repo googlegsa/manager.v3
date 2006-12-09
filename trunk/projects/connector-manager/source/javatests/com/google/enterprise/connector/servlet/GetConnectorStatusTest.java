@@ -87,7 +87,7 @@ public class GetConnectorStatusTest extends TestCase {
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
     Manager manager = MockManager.getInstance();
-    GetConnectorStatus.handleDoGet(out, manager, connectorName);
+    GetConnectorStatus.handleDoGet(connectorName, manager, out);
     out.flush();
     StringBuffer result = writer.getBuffer();
     LOG.info(result.toString());

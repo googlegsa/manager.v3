@@ -32,7 +32,7 @@ import java.util.logging.Logger;
  *
  */
 public class SetConnectorConfigHandlerTest extends TestCase {
-  private static final Logger LOG =
+  private static final Logger LOGGER =
       Logger.getLogger(SetConnectorConfigHandlerTest.class.getName());
   private String language;
   private String connectorName;
@@ -96,23 +96,23 @@ public class SetConnectorConfigHandlerTest extends TestCase {
   }
 
   private void doTest(String xmlBody) {
-    LOG.info("xmlBody: " + xmlBody);
+    LOGGER.info("xmlBody: " + xmlBody);
     Manager manager = MockManager.getInstance();
     SetConnectorConfigHandler hdl = new SetConnectorConfigHandler(
-        manager, xmlBody);
-    LOG.info("ConnectorName: " + hdl.getConnectorName() + " this: " + this.connectorName);
-    LOG.info("ConnectorType: " + hdl.getConnectorType() + " this: " + this.connectorType);
-    if (hdl.getStatus().equals(ServletUtil.XML_RESPONSE_SUCCESS)) {
+        xmlBody, manager);
+    LOGGER.info("ConnectorName: " + hdl.getConnectorName() + " this: " + this.connectorName);
+    LOGGER.info("ConnectorType: " + hdl.getConnectorType() + " this: " + this.connectorType);
+    if (hdl.getStatus().isSuccess()) {
       Assert.assertEquals(hdl.getLanguage(), this.language);
       Assert.assertEquals(hdl.getConnectorName(), this.connectorName);
       Assert.assertEquals(hdl.getConnectorType(), this.connectorType);
       Assert.assertEquals(hdl.isUpdate(), this.update);
       Assert.assertEquals(hdl.getConfigData(), this.configData);
-    } else if (hdl.getStatus().equals(
-        ServletUtil.XML_RESPONSE_STATUS_NULL_CONNECTOR)) {
+    } else if (hdl.getStatus().getMessageId() ==
+        ConnectorMessageCode.RESPONSE_NULL_CONNECTOR) {
       Assert.assertEquals(0, this.connectorName.length());
-    } else if (hdl.getStatus().equals(
-        ServletUtil.XML_RESPONSE_STATUS_EMPTY_CONFIG_DATA)) {
+    } else if (hdl.getStatus().getMessageId() ==
+        ConnectorMessageCode.RESPONSE_NULL_CONFIG_DATA) {
       Assert.assertEquals(hdl.getConnectorName(), this.connectorName);
       Assert.assertEquals(hdl.getConfigData(), this.configData);
     }

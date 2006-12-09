@@ -14,111 +14,73 @@
 
 package com.google.enterprise.connector.servlet;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
-import com.google.enterprise.connector.common.StringUtils;
-import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
+
+import org.w3c.dom.Element;
+
+import java.io.PrintWriter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Admin servlet for SetSchedule
  *
  */
-public class SetSchedule extends HttpServlet {
+public class SetSchedule extends ConnectorManagerServlet {
   private static final Logger LOGGER =
     Logger.getLogger(SetSchedule.class.getName());
 
-    /**
-     * Returns the simple response if successfully setting the schedule.
-     * @param req
-     * @param res
-     * @throws ServletException
-     * @throws IOException
-     *
-     */
-  protected void doGet(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
-    doPost(req, res);
+  /**
+   * Writes the XML response for setting the schedule.
+   */
+  /* (non-Javadoc)
+   * @see com.google.enterprise.connector.servlet.ConnectorManagerGetServlet#
+   * processDoGet(java.lang.String, java.lang.String,
+   * com.google.enterprise.connector.manager.Manager, java.io.PrintWriter)
+   */
+  protected void processDoPost(
+      String xmlBody, Manager manager, PrintWriter out) {
+    ConnectorMessageCode status = handleDoPost(xmlBody, manager);
+    ServletUtil.writeResponse(out, status);
   }
 
   /**
-   * Returns the simple response if successfully setting the schedule.
-   * @param req
-   * @param res
-   * @throws ServletException
-   * @throws IOException
-   *
+   * Returns an error code (ConnectorMessageCode) for setting the schedule.
+   * 
+   * @param xmlBody String the XML request body string 
+   * @param manager Manager
    */
-  protected void doPost(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
-    BufferedReader reader = req.getReader();
-    PrintWriter out = res.getWriter();
-    res.setContentType(ServletUtil.MIMETYPE_XML);
-    String xmlBody = StringUtils.readAllToString(reader);
-    if (xmlBody == null || xmlBody.length() < 1) {
-      ServletUtil.writeSimpleResponse(
-          out, ConnectorMessageCode.RESPONSE_EMPTY_REQUEST);
-      LOGGER.info("The request is empty");
-      return;
-    }
-    
-    ServletContext servletContext = this.getServletContext();
-    Manager manager = Context.getInstance(servletContext).getManager();
-    ConnectorMessageCode status = handleDoPost(manager, xmlBody);
-    ServletUtil.writeResponse(out, status);
-    out.close();
-  }
-  
-  public static ConnectorMessageCode handleDoPost(Manager manager, String xmlBody) {
+  public static ConnectorMessageCode handleDoPost(
+      String xmlBody, Manager manager) {
     ConnectorMessageCode status = new ConnectorMessageCode();
-    SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
-    Document document = ServletUtil.parse(xmlBody, errorHandler);
-    if (document == null) {
-      status.setMessageId(ConnectorMessageCode.EXCEPTION_XML_PARSING);
-      return status;
-    }
-    NodeList nodeList =
-        document.getElementsByTagName(ServletUtil.XMLTAG_CONNECTOR_SCHEDULES);
-    if (nodeList == null || nodeList.getLength() == 0) {
-      status.setMessageId(ConnectorMessageCode.RESPONSE_EMPTY_NODE);
-      LOGGER.warning("Error: " + ConnectorMessageCode.RESPONSE_EMPTY_NODE);
+    Element root = ServletUtil.parseAndGetRootElement(
+        xmlBody, ServletUtil.XMLTAG_CONNECTOR_SCHEDULES);
+    if (root == null) {
+      status.setMessageId(ConnectorMessageCode.ERROR_PARSING_XML_REQUEST);
       return status;
     }
 
     String connectorName = ServletUtil.getFirstElementByTagName(
-        (Element) nodeList.item(0), ServletUtil.XMLTAG_CONNECTOR_NAME);
+        root, ServletUtil.XMLTAG_CONNECTOR_NAME);
     int load = Integer.parseInt(ServletUtil.getFirstElementByTagName(
-        (Element) nodeList.item(0), ServletUtil.XMLTAG_LOAD));
+        root, ServletUtil.XMLTAG_LOAD));
     String timeIntervals = ServletUtil.getFirstElementByTagName(
-        (Element) nodeList.item(0), ServletUtil.XMLTAG_TIME_INTERVALS);
+        root, ServletUtil.XMLTAG_TIME_INTERVALS);
 
     try {
       manager.setSchedule(connectorName, load, timeIntervals);
     } catch (ConnectorNotFoundException e) {
-      LOGGER.log(Level.WARNING, "Connector Not Found Exception: ", e);
-      status.setMessageId(ConnectorMessageCode.EXCEPTION_CONNECTOR_NOT_FOUND);
-      String[] params = {connectorName};
-      status.setParams(params);
+      status = new ConnectorMessageCode(
+          ConnectorMessageCode.EXCEPTION_CONNECTOR_NOT_FOUND, connectorName);
+      LOGGER.log(
+          Level.WARNING, ServletUtil.LOG_EXCEPTION_CONNECTOR_NOT_FOUND, e);
     } catch (PersistentStoreException e) {
-      LOGGER.log(Level.WARNING, "Persistent Store Exception: ", e);
       status.setMessageId(ConnectorMessageCode.EXCEPTION_PERSISTENT_STORE);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_PERSISTENT_STORE, e);
     }
+
     return status;
   }
 }

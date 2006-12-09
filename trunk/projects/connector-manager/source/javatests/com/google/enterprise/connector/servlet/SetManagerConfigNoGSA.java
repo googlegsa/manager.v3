@@ -95,7 +95,7 @@ public class SetManagerConfigNoGSA extends HttpServlet {
     Manager manager = Context.getInstance(servletContext).getManager();
     SetManagerConfigHandler handler = new SetManagerConfigHandler(
         manager, writer.getBuffer().toString());
-    ServletUtil.writeSimpleResponse(out, handler.getStatus());
+    ServletUtil.writeResponse(out, handler.getStatus());
     out.close();
   }
 }

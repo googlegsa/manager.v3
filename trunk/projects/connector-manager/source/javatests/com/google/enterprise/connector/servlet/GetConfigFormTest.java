@@ -52,7 +52,6 @@ public class GetConfigFormTest extends TestCase {
       "<CmResponse>\n" +
       "  <StatusId>0</StatusId>\n" +
       "  <ConfigureResponse>\n" +
-      "    <message>null</message>\n" +
       "  </ConfigureResponse>\n" +
       "</CmResponse>\n";
     String message = null;
@@ -82,9 +81,9 @@ public class GetConfigFormTest extends TestCase {
       "<CmResponse>\n" +
       "  <StatusId>0</StatusId>\n" +
       "  <ConfigureResponse>\n" +
-      "    <message>" + message + "</message>\n" +
       "    <FormSnippet><![CDATA[" + ServletUtil.prependCmPrefix(formSnippet) + 
       "]]></FormSnippet>\n" +
+      "    <message>" + message + "</message>\n" +
       "  </ConfigureResponse>\n" +
       "</CmResponse>\n";      
     ConfigureResponse configResponse =
@@ -96,7 +95,7 @@ public class GetConfigFormTest extends TestCase {
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
     GetConfigForm.handleDoGet(
-        out, ServletUtil.XML_RESPONSE_SUCCESS, configResponse);
+        configResponse, new ConnectorMessageCode(), out);
     out.flush();
     StringBuffer result = writer.getBuffer();
     logger.info(result.toString());

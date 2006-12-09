@@ -22,6 +22,7 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
@@ -60,10 +61,11 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
     ConfigureResponse configResponse = null;
     try {
       configResponse = manager.getConfigForm(connectorTypeName, language);
-    } catch (ConnectorTypeNotFoundException e1) {
-      ServletUtil.writeSimpleResponse(out, e1.toString());
-      LOGGER.info("Connector Type Not Found Exception" + connectorTypeName);
-      e1.printStackTrace();
+    } catch (ConnectorTypeNotFoundException e) {
+      ServletUtil.writeResponse(
+          out, ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_TYPE);
+      LOGGER.log(
+          Level.WARNING, ServletUtil.LOG_RESPONSE_NULL_CONNECTOR_TYPE, e);
       out.close();
       return;
     }
@@ -130,8 +132,8 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
     SetConnectorConfigHandler handler = new SetConnectorConfigHandler(
-        manager, writer.getBuffer().toString());
-    ServletUtil.writeConfigureResponse(
+        writer.getBuffer().toString(), manager);
+    ConnectorManagerGetServlet.writeConfigureResponse(
         out, handler.getStatus(), handler.getConfigRes());
     out.close();
   }

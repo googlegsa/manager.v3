@@ -15,20 +15,18 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -37,8 +35,8 @@ import javax.servlet.http.HttpServletResponse;
  * Admin servlet to set connector config.
  * 
  */
-public class SetConnectorConfig extends HttpServlet {
-  private static final Logger LOG =
+public class SetConnectorConfig extends ConnectorManagerServlet {
+  private static final Logger LOGGER =
     Logger.getLogger(SetConnectorConfig.class.getName());
 
   /**
@@ -52,7 +50,7 @@ public class SetConnectorConfig extends HttpServlet {
   protected void doGet(HttpServletRequest req,
                        HttpServletResponse res)
       throws ServletException, IOException {
-    String status = ServletUtil.XML_RESPONSE_SUCCESS;
+    ConnectorMessageCode status = new ConnectorMessageCode();
     String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
     String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
     PrintWriter out = res.getWriter();
@@ -68,53 +66,36 @@ public class SetConnectorConfig extends HttpServlet {
         formSnippet = configResponse.getFormSnippet();
       }
     } catch (ConnectorTypeNotFoundException e) {
-      status = e.toString();
-      ServletUtil.writeSimpleResponse(out, status);
-      LOG.info(status);
-      e.printStackTrace();
+      ServletUtil.writeResponse(
+          out, ConnectorMessageCode.EXCEPTION_CONNECTOR_TYPE_NOT_FOUND);
+      LOGGER.log(Level.WARNING,
+          ServletUtil.LOG_EXCEPTION_CONNECTOR_TYPE_NOT_FOUND, e);
     }
 
     if (formSnippet == null) {
       formSnippet = ServletUtil.DEFAULT_FORM;
     }
 
-    GetConfigForm.handleDoGet(out, status, configResponse);
+    GetConfigForm.handleDoGet(configResponse, status, out);
     out.close();
   }
 
   /**
-   * Returns the simple response if successfully setting the connector config.
-   * @param req 
-   * @param res 
-   * @throws ServletException 
-   * @throws IOException 
-   * 
+   * Writes the XML response for setting the connector config.
    */
-  protected void doPost(HttpServletRequest req,
-                        HttpServletResponse res)
-      throws ServletException, IOException {
-    String status = ServletUtil.XML_RESPONSE_SUCCESS;
-    // The GoogleHttpClient does not allow it. 
-    // req.getParameter("lang"); would fail with empty xmlBody.
-    // We decided to have <lang> inside of post xmlBody.
-    BufferedReader reader = req.getReader();
-    PrintWriter out = res.getWriter();
-    res.setContentType(ServletUtil.MIMETYPE_XML);
-    String xmlBody = StringUtils.readAllToString(reader);
-    xmlBody = ServletUtil.stripCmPrefix(xmlBody);
-    if (xmlBody.length() < 1) {
-      status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_REQUEST;
-      ServletUtil.writeSimpleResponse(out, status);
-      LOG.info("The request is empty");
-      return;
-    }
-
-    ServletContext servletContext = this.getServletContext();
-    Manager manager = Context.getInstance(servletContext).getManager();
+  /*
+   * (non-Javadoc)
+   * @see com.google.enterprise.connector.servlet.ConnectorManagerServlet
+   * #processDoPost(java.lang.String,
+   * com.google.enterprise.connector.manager.Manager, java.io.PrintWriter)
+   */
+  protected void processDoPost(
+      String xmlBody, Manager manager, PrintWriter out) {
     SetConnectorConfigHandler handler =
-        new SetConnectorConfigHandler(manager, xmlBody);
-    ServletUtil.writeConfigureResponse(
+        new SetConnectorConfigHandler(xmlBody, manager);
+    ConnectorManagerGetServlet.writeConfigureResponse(
         out, handler.getStatus(), handler.getConfigRes());
     out.close();
   }
+
 }

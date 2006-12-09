@@ -14,91 +14,58 @@
 
 package com.google.enterprise.connector.servlet;
 
-import java.io.IOException;
+import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.persist.PersistentStoreException;
+
 import java.io.PrintWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import com.google.enterprise.connector.manager.ConnectorManagerException;
-import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.manager.Manager;
-
 /*
  * Admin servlet for removing a connector by a given name.
  */
-public class RemoveConnector extends HttpServlet {
+public class RemoveConnector extends ConnectorManagerGetServlet {
   private static final Logger LOGGER =
       Logger.getLogger(RemoveConnector.class.getName());
 
-  /**
-   * Returns the simple response if successfully removing the manager config.
-   * @param req
-   * @param res
-   * @throws ServletException
-   * @throws IOException
-   *
+  /* (non-Javadoc)
+   * @see com.google.enterprise.connector.servlet.ConnectorManagerGetServlet#
+   * processDoGet(java.lang.String, java.lang.String,
+   * com.google.enterprise.connector.manager.Manager, java.io.PrintWriter)
    */
-  protected void doGet(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
-    String connectorName =
-        req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
-    PrintWriter out = res.getWriter();
-    res.setContentType(ServletUtil.MIMETYPE_XML);
-
-    ServletContext servletContext = this.getServletContext();
-    Manager manager = Context.getInstance(servletContext).getManager();
-
-    handleDoGet(out, manager, connectorName);
-    out.close();
-  }
-
-  /**
-   * Returns the simple response if successfully removing the manager config.
-   * 
-   * Just call doGet
-   * 
-   * @param req
-   * @param res
-   * @throws ServletException
-   * @throws IOException
-   *
-   */
-  protected void doPost(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
-    doGet(req, res);
+  protected void processDoGet(
+      String connectorName, String lang, Manager manager, PrintWriter out) {
+    handleDoGet(connectorName, manager, out);
   }
 
   /**
    * Handler for doGet in order to do unit tests.
+   * Returns the simple response if successfully removing the manager config.
    * 
-   * @param out
-   * @param manager
-   * @param connectorName
+   * @param xmlBody String the XML request body string 
+   * @param manager Manager
+   * @param out PrintWriter where the response is written
    */
   public static void handleDoGet(
-      PrintWriter out, Manager manager, String connectorName) {
-    String status = ServletUtil.XML_RESPONSE_SUCCESS;
-    if (connectorName == null || connectorName.length() < 1) {
-      status = ServletUtil.XML_RESPONSE_STATUS_NULL_CONNECTOR;
-      ServletUtil.writeSimpleResponse(out, status);
-      LOGGER.log(Level.SEVERE, status);
-      return;
-    }
-
+      String connectorName, Manager manager, PrintWriter out) {
+    ConnectorMessageCode status = new ConnectorMessageCode();
     try {
       manager.removeConnector(connectorName);
-    } catch (ConnectorManagerException e) {
-      LOGGER.log(Level.WARNING,
-          "Unable to remove the connector: " + connectorName, e);
+    } catch (ConnectorNotFoundException e) {
+      status = new ConnectorMessageCode(
+        ConnectorMessageCode.EXCEPTION_CONNECTOR_NOT_FOUND, connectorName);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_CONNECTOR_NOT_FOUND, e);
+    } catch (InstantiatorException e) {
+      status.setMessageId(ConnectorMessageCode.EXCEPTION_INSTANTIATOR);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_INSTANTIATOR, e);
+    } catch (PersistentStoreException e) {
+      status.setMessageId(ConnectorMessageCode.EXCEPTION_PERSISTENT_STORE);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_PERSISTENT_STORE, e);
     }
 
-    ServletUtil.writeSimpleResponse(out, status);
+    ServletUtil.writeResponse(out, status);
   }
 
 }

@@ -25,6 +25,7 @@ import java.io.StringWriter;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
@@ -103,7 +104,7 @@ public class UpdateConnectorNoGSA extends HttpServlet {
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
-    String status = ServletUtil.XML_RESPONSE_SUCCESS;
+    ConnectorMessageCode status = new ConnectorMessageCode();
     String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
     Map configData = new TreeMap();
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
@@ -124,11 +125,13 @@ public class UpdateConnectorNoGSA extends HttpServlet {
           manager.setConnectorConfig(connectorName, connectorType, configData,
               lang, true);
     } catch (ConnectorManagerException e) {
-      LOGGER.info(e.getMessage());
-      status = e.getMessage();
+      status = new ConnectorMessageCode(
+          ConnectorMessageCode.EXCEPTION_CONNECTOR_MANAGER);
+      LOGGER.log(Level.WARNING,
+          ServletUtil.LOG_EXCEPTION_CONNECTOR_MANAGER, e);
     }
 
-    ServletUtil.writeConfigureResponse(out, status, configRes);
+    ConnectorManagerGetServlet.writeConfigureResponse(out, status, configRes);
     out.close();
   }
 }

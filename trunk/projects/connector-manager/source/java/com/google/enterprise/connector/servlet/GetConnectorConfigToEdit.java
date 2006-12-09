@@ -15,20 +15,13 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.instantiator.InstantiatorException;
-import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 
-import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 
 /**
@@ -36,70 +29,42 @@ import javax.servlet.http.HttpServletResponse;
  * for a given existing connector name and language.
  * 
  */
-public class GetConnectorConfigToEdit extends HttpServlet {
+public class GetConnectorConfigToEdit extends ConnectorManagerGetServlet {
   private static final Logger LOGGER = Logger.getLogger(
     GetConnectorConfigToEdit.class.getName());
 
-  /**
-   * Returns the connector config form with pre-filled data.
-   * 
-   * @param req
-   * @param res
-   * @throws ServletException
-   * @throws IOException
-   * 
+  /* (non-Javadoc)
+   * @see com.google.enterprise.connector.servlet.ConnectorManagerGetServlet#
+   * processDoGet(java.lang.String, java.lang.String,
+   * com.google.enterprise.connector.manager.Manager, java.io.PrintWriter)
    */
-  protected void doGet(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
-    String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
-    String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
-
-    PrintWriter out = res.getWriter();
-    res.setContentType(ServletUtil.MIMETYPE_XML);
-
-    ServletContext servletContext = this.getServletContext();
-    Manager manager = Context.getInstance(servletContext).getManager();
-    handleDoGet(out, manager, connectorName, language);
-    out.close();
+  protected void processDoGet(String connectorName, String lang, Manager manager, PrintWriter out) {
+    handleDoGet(connectorName, lang, manager, out);
   }
 
   /**
+   * Handler for doGet in order to do unit tests.
    * Returns the connector config form with pre-filled data.
-   * Just call doGet
-   * 
-   * @param req
-   * @param res
-   * @throws ServletException
-   * @throws IOException
    * 
    */
-  protected void doPost(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
-    doGet(req, res);
-  }
-
-  public static void handleDoGet(PrintWriter out, Manager manager,
-      String connectorName, String language) {
-    String status = ServletUtil.XML_RESPONSE_SUCCESS;
+  public static void handleDoGet(String connectorName, String language,
+      Manager manager, PrintWriter out) {
+    ConnectorMessageCode status = new ConnectorMessageCode();
     ConfigureResponse configResponse = null;
     try {
       configResponse =
           manager.getConfigFormForConnector(connectorName, language);
     } catch (ConnectorNotFoundException e) {
-      status = e.toString();
-      LOGGER.info(status);
-      e.printStackTrace();
+      status = new ConnectorMessageCode(
+          ConnectorMessageCode.EXCEPTION_CONNECTOR_NOT_FOUND, connectorName);
+      LOGGER.log(
+          Level.WARNING, ServletUtil.LOG_EXCEPTION_CONNECTOR_NOT_FOUND, e);
     } catch (InstantiatorException e) {
-      status = e.toString();
-      LOGGER.info(status);
-      e.printStackTrace();
+      status.setMessageId(ConnectorMessageCode.EXCEPTION_INSTANTIATOR);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_INSTANTIATOR, e);
     }
 
-    if (configResponse == null || configResponse.getFormSnippet().length() < 1) {
-      ServletUtil.writeSimpleResponse(
-          out, ServletUtil.XML_RESPONSE_STATUS_NULL_FORM_SNIPPET);
-      return;
-    }
-    ServletUtil.writeConfigureResponse(out, status, configResponse);
+    writeConfigureResponse(out, status, configResponse);
   }
+
 }

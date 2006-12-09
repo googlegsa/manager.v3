@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Iterator;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,23 +30,35 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-
 /**
- * Admin servlet to get a list of connector types.
- * 
+ * An abstract class for Connector Manager servlets.
+ * It contains an abstract method "processDoPost".
+ *
  */
-public class GetConnectorList extends HttpServlet {
+public abstract class ConnectorManagerServlet extends HttpServlet {
   private static final Logger LOGGER =
-      Logger.getLogger(GetConnectorList.class.getName());
+      Logger.getLogger(ConnectorManagerServlet.class.getName());
 
   /**
-   * Returns a list of connector types.
+   * This abstract method processes XML servlet-specific request body,
+   * make servlet-specific call to the connector manager and write the
+   * XML response body.
+   * 
+   * @param xmlBody String the servlet-specific request body string in XML
+   * @param manager Manager
+   * @param out PrintWriter where the XML response body is written
+   */
+  protected abstract void processDoPost(
+      String xmlBody, Manager manager, PrintWriter out);
+
+  /**
+   * Returns an XML response to the HTTP GET request.
    * 
    * @param req
    * @param res
    * @throws ServletException
    * @throws IOException
-   * 
+   *
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
@@ -55,49 +66,32 @@ public class GetConnectorList extends HttpServlet {
   }
 
   /**
-   * Returns a list of connector types.
-   * 
+   * Returns an XML response including full status (ConnectorMessageCode) to
+   * the HTTP POST request.
    * @param req
    * @param res
    * @throws ServletException
    * @throws IOException
-   * 
+   *
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
-    res.setContentType(ServletUtil.MIMETYPE_XML);
+    BufferedReader reader = req.getReader();
     PrintWriter out = res.getWriter();
+    res.setContentType(ServletUtil.MIMETYPE_XML);
+    String xmlBody = StringUtils.readAllToString(reader);
+    if (xmlBody == null || xmlBody.length() < 1) {
+      ServletUtil.writeResponse(
+          out, ConnectorMessageCode.RESPONSE_EMPTY_REQUEST);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_RESPONSE_EMPTY_REQUEST);
+      out.close();
+      return;
+    }
+    
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
-    List connectorTypes = manager.getConnectorTypes();
-    handleDoPost(connectorTypes, out);
+    processDoPost(xmlBody, manager, out);
     out.close();
   }
 
-  /**
-   * Handler for doGet in order to do unit tests.
-   * 
-   * @param connectorTypes List a list of connector types
-   * @param out PrintWriter where the response is written
-   */
-  public static void handleDoPost(List connectorTypes, PrintWriter out) {
-    if (connectorTypes == null || connectorTypes.size() == 0) {
-      ServletUtil.writeResponse(
-          out, ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_TYPE);
-      LOGGER.log(Level.WARNING, ServletUtil.LOG_RESPONSE_NULL_CONNECTOR_TYPE);
-      return;
-    }
-
-    ServletUtil.writeRootTag(out, false);
-    ServletUtil.writeStatusId(out, ConnectorMessageCode.SUCCESS);
-    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_TYPES, false);
-
-    for (Iterator iter = connectorTypes.iterator(); iter.hasNext();) {
-      ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_CONNECTOR_TYPE,
-          (String) iter.next());
-    }
-
-    ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_TYPES, true);
-    ServletUtil.writeRootTag(out, true);
-  }
 }

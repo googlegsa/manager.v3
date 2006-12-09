@@ -29,8 +29,8 @@ import javax.servlet.http.HttpServletResponse;
  * 
  */
 public class TestConnectivity extends HttpServlet {
-  private static final Logger LOG = Logger.getLogger(TestConnectivity.class
-    .getName());
+  private static final Logger LOGGER =
+      Logger.getLogger(TestConnectivity.class.getName());
 
   /**
    * Returns a simple acknowledgement.
@@ -43,7 +43,7 @@ public class TestConnectivity extends HttpServlet {
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
-    LOG.info("Hello from the TestConnectivity servlet!");
+    LOGGER.info("Hello from the TestConnectivity servlet!");
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
     handleDoGet(out);
@@ -70,6 +70,6 @@ public class TestConnectivity extends HttpServlet {
    *  
    */
   public static void handleDoGet(PrintWriter out) {
-    ServletUtil.writeSimpleResponse(out, ServletUtil.XML_RESPONSE_SUCCESS);
+    ServletUtil.writeResponse(out, ConnectorMessageCode.SUCCESS);
   }
 }
