@@ -36,8 +36,8 @@ public class AuthenticateTest extends TestCase {
   /**
    * Test method for 
    * {@link com.google.enterprise.connector.servlet.Authenticate#handleDoPost(
-   * java.io.PrintWriter, java.lang.String,
-   * com.google.enterprise.connector.manager.Manager)}.
+   * java.lang.String, com.google.enterprise.connector.manager.Manager,
+   * java.io.PrintWriter)}.
    */
   public void testHandleDoPost() {
     String xmlBody =
@@ -67,7 +67,7 @@ public class AuthenticateTest extends TestCase {
     Manager manager = MockManager.getInstance();
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
-    Authenticate.handleDoPost(out, xmlBody, manager);
+    Authenticate.handleDoPost(xmlBody, manager, out);
     out.flush();
     StringBuffer result = writer.getBuffer();
     LOGGER.info(result.toString());

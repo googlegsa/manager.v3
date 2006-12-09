@@ -22,6 +22,7 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
@@ -51,21 +52,22 @@ public class GetConfigForm extends HttpServlet {
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
-    String status = ServletUtil.XML_RESPONSE_SUCCESS;
+    ConnectorMessageCode status = new ConnectorMessageCode();
     String connectorTypeName =
         req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
 
     if (connectorTypeName == null || connectorTypeName.length() < 1) {
-      status = ServletUtil.XML_RESPONSE_STATUS_NULL_CONNECTOR_TYPE;
-      ServletUtil.writeSimpleResponse(out, status);
-      LOGGER.severe(status);
+      ServletUtil.writeResponse(
+          out, ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_TYPE);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_RESPONSE_NULL_CONNECTOR_TYPE);
+      out.close();
       return;
     }
     String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
     if (language == null || language.length() < 1) {
-      LOGGER.info("language is null");
+      LOGGER.log(Level.WARNING, "Language is null");
       language = ServletUtil.DEFAULT_LANGUAGE;
     }
 
@@ -75,11 +77,14 @@ public class GetConfigForm extends HttpServlet {
     try {
       ConfigureResponse configResponse =
           manager.getConfigForm(connectorTypeName, language);
-      handleDoGet(out, status, configResponse);
-    } catch (ConnectorTypeNotFoundException e1) {
-      ServletUtil.writeSimpleResponse(out, e1.toString());
-      LOGGER.info("Connector Type Not Found Exception: " + connectorTypeName);
-      e1.printStackTrace();
+      handleDoGet(configResponse, status, out);
+    } catch (ConnectorTypeNotFoundException e) {
+      status = new ConnectorMessageCode(
+          ConnectorMessageCode.EXCEPTION_CONNECTOR_TYPE_NOT_FOUND,
+              connectorTypeName);
+      ServletUtil.writeResponse(out, status);
+      LOGGER.log(Level.WARNING,
+          ServletUtil.LOG_EXCEPTION_CONNECTOR_TYPE_NOT_FOUND, e);
     }
 
     out.close();
@@ -102,12 +107,12 @@ public class GetConfigForm extends HttpServlet {
   /**
    * Handler for doGet in order to do unit tests.
    * 
-   * @param out
-   * @param status 
-   * @param configResponse
+   * @param configResponse ConfigureResponse
+   * @param status ConnectorMessageCode
+   * @param out PrintWriter where the response is written
    */
-  public static void handleDoGet(PrintWriter out, String status,
-      ConfigureResponse configResponse) {
-    ServletUtil.writeConfigureResponse(out, status, configResponse);
+  public static void handleDoGet(ConfigureResponse configResponse,
+      ConnectorMessageCode status, PrintWriter out) {
+    ConnectorManagerGetServlet.writeConfigureResponse(out, status, configResponse);
   }
 }

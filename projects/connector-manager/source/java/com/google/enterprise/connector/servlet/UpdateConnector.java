@@ -22,9 +22,7 @@ import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -66,10 +64,10 @@ public class UpdateConnector extends HttpServlet {
     PrintWriter out = res.getWriter();
     res.setContentType(ServletUtil.MIMETYPE_HTML);
     String xmlBody = StringUtils.readAllToString(reader);
-    if (xmlBody.length() < 1) {
-      String status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_REQUEST;
-      ServletUtil.writeSimpleResponse(out, status);
-      LOGGER.info("The request is empty");
+    if (xmlBody == null || xmlBody.length() < 1) {
+      ServletUtil.writeResponse(
+          out, ConnectorMessageCode.RESPONSE_EMPTY_REQUEST);
+      LOGGER.warning(ServletUtil.LOG_RESPONSE_EMPTY_REQUEST);
       return;
     }
 
@@ -90,7 +88,7 @@ public class UpdateConnector extends HttpServlet {
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
-    String status = ServletUtil.XML_RESPONSE_SUCCESS;
+    ConnectorMessageCode status = new ConnectorMessageCode();
     String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
     Map configData = new TreeMap();
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
@@ -111,25 +109,21 @@ public class UpdateConnector extends HttpServlet {
           manager.setConnectorConfig(connectorName, connectorType, configData,
               lang, true);
     } catch (ConnectorManagerException e) {
-      status = e.getMessage();
-      LOGGER.log(Level.WARNING, e.getMessage(), e);
+      status = new ConnectorMessageCode(
+          ConnectorMessageCode.EXCEPTION_CONNECTOR_EXISTS, connectorName);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_CONNECTOR_EXISTS, e);
     }
 
-    ServletUtil.writeConfigureResponse(out, status, configRes);
+    ConnectorManagerGetServlet.writeConfigureResponse(out, status, configRes);
     out.close();
   }
 
   public static String handleDoGet(Manager manager, String xmlBody,
       String connectorName, String language) {
-    String status = ServletUtil.XML_RESPONSE_SUCCESS;
-    SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
-    Document document = ServletUtil.parse(xmlBody, errorHandler);
-    NodeList nodeList =
-        document.getElementsByTagName(ServletUtil.XMLTAG_CONNECTOR_CONFIG);
-    if (nodeList.getLength() == 0) {
-      status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE;
-      LOGGER.info(ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE);
-      return ServletUtil.htmlErrorPage(status);
+    Element root = ServletUtil.parseAndGetRootElement(
+      xmlBody, ServletUtil.XMLTAG_CONNECTOR_CONFIG);
+    if (root == null) {
+      return htmlErrorPage(ServletUtil.LOG_RESPONSE_EMPTY_NODE);
     }
 
     String formSnippet = null;
@@ -138,13 +132,9 @@ public class UpdateConnector extends HttpServlet {
           manager.getConfigFormForConnector(connectorName, language);
       formSnippet = configRes.getFormSnippet();
     } catch (ConnectorNotFoundException e) {
-      status = e.toString();
-      LOGGER.info(status);
-      e.printStackTrace();
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_CONNECTOR_NOT_FOUND, e);
     } catch (InstantiatorException e) {
-      status = e.toString();
-      LOGGER.info(status);
-      e.printStackTrace();
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_INSTANTIATOR, e);
     }
     if (formSnippet == null) {
       formSnippet = ServletUtil.DEFAULT_FORM;
@@ -164,24 +154,22 @@ public class UpdateConnector extends HttpServlet {
     String snip = formSnippet;
     String value = null;
     Map configData =
-        ServletUtil.getAllAttributes((Element) nodeList.item(0),
-            ServletUtil.XMLTAG_PARAMETERS);
+        ServletUtil.getAllAttributes(root, ServletUtil.XMLTAG_PARAMETERS);
     if (configData.isEmpty()) {
-      status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_CONFIG_DATA;
-      return ServletUtil.htmlErrorPage(status);
+      return htmlErrorPage("Empty config data");
     }
 
-    while ((beginQuote = snip.indexOf(ServletUtil.HTML_NAME)) != -1) {
+    while ((beginQuote = snip.indexOf(ServletUtil.ATTRIBUTE_NAME)) != -1) {
       endQuote =
-          snip.indexOf(ServletUtil.HTML_QUOTE, beginQuote
-              + ServletUtil.HTML_NAME.length());
+          snip.indexOf(ServletUtil.QUOTE, beginQuote
+              + ServletUtil.ATTRIBUTE_NAME.length());
       sbuf.append(snip.substring(0, endQuote + 1));
       String key =
-          snip.substring(beginQuote + ServletUtil.HTML_NAME.length(), endQuote);
+          snip.substring(beginQuote + ServletUtil.ATTRIBUTE_NAME.length(), endQuote);
       value = (String) configData.get(key);
       if (value != null) {
-        sbuf.append(ServletUtil.HTML_VALUE).append(value).append(
-            ServletUtil.HTML_QUOTE);
+        sbuf.append(ServletUtil.ATTRIBUTE_VALUE).append(value).append(
+            ServletUtil.QUOTE);
       }
       snip = snip.substring(endQuote + 1, snip.length());
 
@@ -190,5 +178,9 @@ public class UpdateConnector extends HttpServlet {
     sbuf.append("<tr><td><INPUT TYPE=\"SUBMIT\" NAME=\"action\" VALUE="
         + "\"submit\"></td></tr></TABLE></FORM></BODY></HTML>\n");
     return sbuf.toString();
+  }
+  
+  public static String htmlErrorPage(String status) {
+    return "<HTML><BODY>Error: " + status + "</BODY></HTML>";
   }
 }

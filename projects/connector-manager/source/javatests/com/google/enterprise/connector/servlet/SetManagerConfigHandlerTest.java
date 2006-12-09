@@ -28,7 +28,7 @@ import com.google.enterprise.connector.manager.MockManager;
  *
  */
 public class SetManagerConfigHandlerTest extends TestCase {
-  private static final Logger LOG =
+  private static final Logger LOGGER =
 	  Logger.getLogger(SetManagerConfigHandlerTest.class.getName());
   private boolean certAuth;
   private String host;
@@ -61,16 +61,16 @@ public class SetManagerConfigHandlerTest extends TestCase {
   }
 
   private void doTest(String xmlBody) {
-	LOG.info("xmlBody: " + xmlBody);
+	LOGGER.info("xmlBody: " + xmlBody);
     Manager manager = MockManager.getInstance();
     SetManagerConfigHandler hdl =
     	new SetManagerConfigHandler(manager, xmlBody);
-    LOG.info("authn: " + hdl.isCertAuth() + " this: " + this.certAuth);
-    LOG.info("host: " + hdl.getFeederGateHost() + " " + this.host);
-    LOG.info("Port: " + hdl.getFeederGatePort());
-    Assert.assertEquals(hdl.isCertAuth(), this.certAuth);
-    Assert.assertEquals(hdl.getFeederGateHost(), this.host);
-    Assert.assertEquals(hdl.getFeederGatePort(), this.port);
+    LOGGER.info("authn: " + hdl.isCertAuth() + " this: " + this.certAuth);
+    LOGGER.info("host: " + hdl.getFeederGateHost() + " " + this.host);
+    LOGGER.info("Port: " + hdl.getFeederGatePort());
+    Assert.assertEquals(this.certAuth, hdl.isCertAuth());
+    Assert.assertEquals(this.host, hdl.getFeederGateHost());
+    Assert.assertEquals(this.port, hdl.getFeederGatePort());
   }
 
 

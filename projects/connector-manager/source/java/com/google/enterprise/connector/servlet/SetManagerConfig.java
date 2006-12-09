@@ -15,60 +15,27 @@
 
 package com.google.enterprise.connector.servlet;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.PrintWriter;
-
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import com.google.enterprise.connector.common.StringUtils;
-import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 
+import java.io.PrintWriter;
 
-public class SetManagerConfig extends HttpServlet {
 
-  /**
-   * Returns the simple response if successfully setting the manager config.
-   * @param req
-   * @param res
-   * @throws ServletException
-   * @throws IOException
-   *
+/**
+ * Returns the success response if successfully setting the manager config.
+ *
+ */
+public class SetManagerConfig extends ConnectorManagerServlet {
+
+  /*
+   * (non-Javadoc)
+   * @see com.google.enterprise.connector.servlet.ConnectorManagerServlet
+   * #processDoPost(java.lang.String,
+   * com.google.enterprise.connector.manager.Manager, java.io.PrintWriter)
    */
-  protected void doGet(HttpServletRequest req,
-                       HttpServletResponse res)
-      throws ServletException, IOException {
-    doPost(req, res);
-  }
-
-  /**
-   * Returns the simple response if successfully setting the manager config.
-   * @param req
-   * @param res
-   * @throws ServletException
-   * @throws IOException
-   *
-   */
-  protected void doPost(HttpServletRequest req,
-                        HttpServletResponse res)
-      throws ServletException, IOException
-  {
-    String status = ServletUtil.XML_RESPONSE_SUCCESS;
-    BufferedReader reader = req.getReader();
-    res.setContentType(ServletUtil.MIMETYPE_XML);
-    String xmlBody = StringUtils.readAllToString(reader);
-
-    PrintWriter out = res.getWriter();
-    ServletContext servletContext = this.getServletContext();
-    Manager manager = Context.getInstance(servletContext).getManager();
+  protected void processDoPost(
+      String xmlBody, Manager manager, PrintWriter out) {
     SetManagerConfigHandler hdl =
         new SetManagerConfigHandler(manager, xmlBody);
-    ServletUtil.writeSimpleResponse(out, hdl.getStatus());
-    out.close();
+    ServletUtil.writeResponse(out, hdl.getStatus());
   }
 }

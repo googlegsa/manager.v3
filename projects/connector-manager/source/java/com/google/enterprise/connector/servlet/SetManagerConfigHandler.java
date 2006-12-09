@@ -14,12 +14,10 @@
 
 package com.google.enterprise.connector.servlet;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.PersistentStoreException;
+
+import org.w3c.dom.Element;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,48 +30,44 @@ public class SetManagerConfigHandler {
   private static final Logger LOGGER =
     Logger.getLogger(SetManagerConfigHandler.class.getName());
 
-  private String status = ServletUtil.XML_RESPONSE_SUCCESS;
+  private ConnectorMessageCode status;
   private boolean certAuth;
   private String feederGateHost;
   private int feederGatePort;
 
   /*
-   * Reads from an input XML body string
+   * Reads from a request input XML string
+   *
+   * @param manager Manager
    * @param xmlBody String Input XML body string.
    */
   public SetManagerConfigHandler(Manager manager, String xmlBody) {
-    if (xmlBody == null || xmlBody.length() < 1) {
-      status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_REQUEST;
-      LOGGER.log(Level.WARNING, ServletUtil.XML_RESPONSE_STATUS_EMPTY_REQUEST);
+    this.status = new ConnectorMessageCode();
+    Element root = ServletUtil.parseAndGetRootElement(
+      xmlBody, ServletUtil.XMLTAG_MANAGER_CONFIG);
+    if (root == null) {
+      this.status = new ConnectorMessageCode(
+          ConnectorMessageCode.ERROR_PARSING_XML_REQUEST);
       return;
     }
 
-    SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
-    Document document = ServletUtil.parse(xmlBody, errorHandler);
-    NodeList nodeList =
-        document.getElementsByTagName(ServletUtil.XMLTAG_MANAGER_CONFIG);
-    if (nodeList == null || nodeList.getLength() == 0) {
-      this.status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE;
-      LOGGER.log(Level.WARNING, ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE);
-      return;
-    }
-
-    if (ServletUtil.getFirstElementByTagName((Element) nodeList.item(0),
-        ServletUtil.XMLTAG_CERT_AUTHN).equalsIgnoreCase("true")) {
+    if (ServletUtil.getFirstElementByTagName(
+        root, ServletUtil.XMLTAG_CERT_AUTHN).equalsIgnoreCase("true")) {
       this.certAuth = true;
     }
     this.feederGateHost = ServletUtil.getFirstAttribute(
-        (Element) nodeList.item(0), ServletUtil.XMLTAG_FEEDERGATE,
-         ServletUtil.XMLTAG_FEEDERGATE_HOST);
+        root, ServletUtil.XMLTAG_FEEDERGATE,
+            ServletUtil.XMLTAG_FEEDERGATE_HOST);
     this.feederGatePort = Integer.parseInt(ServletUtil.getFirstAttribute(
-        (Element) nodeList.item(0), ServletUtil.XMLTAG_FEEDERGATE,
-        ServletUtil.XMLTAG_FEEDERGATE_PORT));
+        root, ServletUtil.XMLTAG_FEEDERGATE,
+            ServletUtil.XMLTAG_FEEDERGATE_PORT));
     try {
       manager.setConnectorManagerConfig(this.certAuth, this.feederGateHost,
           this.feederGatePort);
     } catch (PersistentStoreException e) {
-      this.status = e.toString();
-      LOGGER.log(Level.WARNING, "Persistent Store: ", e);
+      this.status = new ConnectorMessageCode(
+          ConnectorMessageCode.EXCEPTION_PERSISTENT_STORE);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_PERSISTENT_STORE, e);
     }
   }
 
@@ -89,7 +83,7 @@ public class SetManagerConfigHandler {
     return feederGatePort;
   }
 
-  public String getStatus() {
+  public ConnectorMessageCode getStatus() {
     return status;
   }
 }

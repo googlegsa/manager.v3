@@ -98,8 +98,8 @@ public class AuthorizationTest extends TestCase {
 
     String expectedResult =
         "<CmResponse>\n" + 
-        "  <StatusId>Null connector name</StatusId>\n" +
-        "</CmResponse>\n";
+        "  <StatusId>" + ConnectorMessageCode.RESPONSE_NULL_CONNECTOR +
+        "</StatusId>\n" + "</CmResponse>\n";
     doTest(xmlBody, expectedResult);
   }
 
@@ -122,8 +122,8 @@ public class AuthorizationTest extends TestCase {
 
     String expectedResult =
         "<CmResponse>\n" + 
-        "  <StatusId>Null doc ID</StatusId>\n" +
-        "</CmResponse>\n";
+        "  <StatusId>" + ConnectorMessageCode.RESPONSE_NULL_DOCID +
+        "</StatusId>\n" + "</CmResponse>\n";
     doTest(xmlBody, expectedResult);
   }
 
@@ -176,8 +176,8 @@ public class AuthorizationTest extends TestCase {
 
 	    String expectedResult =
 	        "<CmResponse>\n" + 
-	        "  <StatusId>Null resource</StatusId>\n" +
-	        "</CmResponse>\n";
+	        "  <StatusId>" + ConnectorMessageCode.RESPONSE_NULL_RESOURCE +
+            "</StatusId>\n" + "</CmResponse>\n";
 	    doTest(xmlBody, expectedResult);
   }
 
@@ -186,7 +186,7 @@ public class AuthorizationTest extends TestCase {
     Manager manager = MockManager.getInstance();
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
-    Authorization.handleDoPost(out, xmlBody, manager);
+    Authorization.handleDoPost(xmlBody, manager, out);
     out.flush();
     StringBuffer result = writer.getBuffer();
     LOG.info(result.toString());

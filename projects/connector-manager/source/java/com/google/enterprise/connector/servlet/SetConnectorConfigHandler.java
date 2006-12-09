@@ -14,13 +14,14 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.enterprise.connector.manager.ConnectorManagerException;
+import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.persist.ConnectorExistsException;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import java.util.Map;
 import java.util.logging.Level;
@@ -34,7 +35,7 @@ public class SetConnectorConfigHandler {
   private static final Logger LOGGER =
     Logger.getLogger(SetConnectorConfigHandler.class.getName());
 
-  private String status = ServletUtil.XML_RESPONSE_SUCCESS;
+  private ConnectorMessageCode status;
   private String language;
   private String connectorName;
   private String connectorType;
@@ -48,50 +49,63 @@ public class SetConnectorConfigHandler {
    * @param language String.
    * @param xmlBody String Input XML body string.
    */
-  public SetConnectorConfigHandler(Manager manager, String xmlBody) {
-    SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
-    Document document = ServletUtil.parse(xmlBody, errorHandler);
-    NodeList nodeList =
-        document.getElementsByTagName(ServletUtil.XMLTAG_CONNECTOR_CONFIG);
-    if (nodeList.getLength() == 0) {
-      this.status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE;
-      LOGGER.log(Level.WARNING, ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE);
+  public SetConnectorConfigHandler(String xmlBody, Manager manager) {
+    this.status = new ConnectorMessageCode();
+    xmlBody = ServletUtil.stripCmPrefix(xmlBody);
+    Element root = ServletUtil.parseAndGetRootElement(
+        xmlBody, ServletUtil.XMLTAG_CONNECTOR_CONFIG);
+    if (root == null) {
+      this.status.setMessageId(ConnectorMessageCode.ERROR_PARSING_XML_REQUEST);
       return;
     }
 
     this.language = ServletUtil.getFirstElementByTagName(
-        (Element) nodeList.item(0), ServletUtil.QUERY_PARAM_LANG);
+        root, ServletUtil.QUERY_PARAM_LANG);
     this.connectorName = ServletUtil.getFirstElementByTagName(
-        (Element) nodeList.item(0), ServletUtil.XMLTAG_CONNECTOR_NAME);
+        root, ServletUtil.XMLTAG_CONNECTOR_NAME);
     if (this.connectorName == null) {
-      this.status = ServletUtil.XML_RESPONSE_STATUS_NULL_CONNECTOR;
+      this.status.setMessageId(ConnectorMessageCode.RESPONSE_NULL_CONNECTOR);
       return;
     }
     this.connectorType = ServletUtil.getFirstElementByTagName(
-        (Element) nodeList.item(0), ServletUtil.XMLTAG_CONNECTOR_TYPE);
-    if (ServletUtil.getFirstElementByTagName((Element) nodeList.item(0),
+        root, ServletUtil.XMLTAG_CONNECTOR_TYPE);
+    if (ServletUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_UPDATE_CONNECTOR).equalsIgnoreCase("true")) {
       this.update = true;
     }
     this.configData = ServletUtil.getAllAttributes(
-        (Element) nodeList.item(0), ServletUtil.XMLTAG_PARAMETERS);
+        root, ServletUtil.XMLTAG_PARAMETERS);
     if (this.configData.isEmpty()) {
-      this.status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_CONFIG_DATA;
+      this.status.setMessageId(ConnectorMessageCode.RESPONSE_NULL_CONFIG_DATA);
     }
 
     this.configRes = null;
     try {
       this.configRes = manager.setConnectorConfig(this.connectorName,
           this.connectorType, this.configData, this.language, this.update);
-    } catch (ConnectorManagerException e) {
-      status = e.getMessage();
-      LOGGER.log(Level.WARNING, e.getMessage(), e);
+    } catch (ConnectorNotFoundException e) {
+      this.status = new ConnectorMessageCode(
+          ConnectorMessageCode.EXCEPTION_CONNECTOR_NOT_FOUND, connectorName);
+      LOGGER.log(
+          Level.WARNING, ServletUtil.LOG_EXCEPTION_CONNECTOR_NOT_FOUND, e);
+    } catch (ConnectorExistsException e) {
+      this.status = new ConnectorMessageCode(
+          ConnectorMessageCode.EXCEPTION_CONNECTOR_EXISTS, connectorName);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_CONNECTOR_EXISTS, e);
+    } catch (InstantiatorException e) {
+       this.status.setMessageId(ConnectorMessageCode.EXCEPTION_INSTANTIATOR);
+       LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_INSTANTIATOR, e);
+    } catch (PersistentStoreException e) {
+      this.status.setMessageId(
+          ConnectorMessageCode.EXCEPTION_PERSISTENT_STORE);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_PERSISTENT_STORE, e);
     } catch (Throwable t) {
+      this.status.setMessageId(ConnectorMessageCode.EXCEPTION_THROWABLE);
       LOGGER.log(Level.WARNING, "", t);
     }
   }
 
-  public String getStatus() {
+  public ConnectorMessageCode getStatus() {
     return status;
   }
 

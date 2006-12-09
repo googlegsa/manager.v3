@@ -32,7 +32,7 @@ public class SetScheduleTest extends TestCase {
 
 	/**
 	 * Test method for {@link com.google.enterprise.connector.servlet.SetSchedule#
-	 * handleDoPost(com.google.enterprise.connector.manager.Manager, java.lang.String)}.
+	 * handleDoPost(java.lang.String, com.google.enterprise.connector.manager.Manager)}.
 	 */
   public void testHandleDoPost() {
     String connectorName = "connector1";
@@ -50,7 +50,7 @@ public class SetScheduleTest extends TestCase {
     int expectedResult = ConnectorMessageCode.SUCCESS;
     LOG.info(xmlBody);
     Manager manager = MockManager.getInstance();
-    ConnectorMessageCode status = SetSchedule.handleDoPost(manager, xmlBody);
+    ConnectorMessageCode status = SetSchedule.handleDoPost(xmlBody, manager);
     LOG.info("Status Id: " + String.valueOf(status.getMessageId()));
     Assert.assertEquals(status.getMessageId(), expectedResult); 
   }

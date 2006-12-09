@@ -225,7 +225,11 @@ public class MockManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#removeConnector(
    *      java.lang.String)
    */
-  public void removeConnector(String connectorName) throws ConnectorNotFoundException, PersistentStoreException {
+  public void removeConnector(String connectorName)
+      throws ConnectorNotFoundException, PersistentStoreException {
+    if (connectorName == "connector2") {
+      throw new ConnectorNotFoundException();
+    }
     LOGGER.info("Removing connector: " + connectorName);
   }
 

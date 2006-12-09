@@ -14,25 +14,15 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.ConnectorStatus;
-import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -40,76 +30,49 @@ import org.w3c.dom.NodeList;
  * Admin servlet for Authenticate
  *
  */
-public class Authenticate  extends HttpServlet {
+public class Authenticate extends ConnectorManagerServlet {
   private static final Logger LOGGER =
-    Logger.getLogger(Authenticate.class.getName());
+      Logger.getLogger(Authenticate.class.getName());
 
-  /**
-   * Returns credentials for connectors.
-   * @param req 
-   * @param res 
-   * @throws ServletException 
-   * @throws IOException 
-   * 
+  /*
+   * (non-Javadoc)
+   * @see com.google.enterprise.connector.servlet.ConnectorManagerServlet
+   * #processDoPost(java.lang.String,
+   * com.google.enterprise.connector.manager.Manager, java.io.PrintWriter)
    */
-  protected void doGet(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
-    doPost(req, res);  
+  protected void processDoPost(
+      String xmlBody, Manager manager, PrintWriter out) {
+    handleDoPost(xmlBody, manager, out);
   }
 
   /**
-   * Returns credentials for connectors.
-   * @param req 
-   * @param res 
-   * @throws ServletException 
-   * @throws IOException 
+   * Handler for doPost in order to do unit tests.
+   * Writes credentials for connectors.
    * 
+   * @param xmlBody String the XML request body string 
+   * @param manager Manager
+   * @param out PrintWriter where the response is written
    */
-  protected void doPost(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
-    String status = ServletUtil.XML_RESPONSE_SUCCESS;
-    BufferedReader reader = req.getReader();
-    PrintWriter out = res.getWriter();
-    res.setContentType(ServletUtil.MIMETYPE_XML);
-    String xmlBody = StringUtils.readAllToString(reader);
-    if (xmlBody.length() < 1) {
-      status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_REQUEST;
-      ServletUtil.writeSimpleResponse(out, status);
-      LOGGER.info("The request is empty");
-      return;
-    }
-
-    ServletContext servletContext = this.getServletContext();
-    Manager manager = Context.getInstance(servletContext).getManager();
-    handleDoPost(out, xmlBody, manager);
-    out.close();
-
-  }
-
-  public static void handleDoPost(PrintWriter out,
-      String xmlBody, Manager manager) {
-    String status = ServletUtil.XML_RESPONSE_SUCCESS;
-    SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
-    Document document = ServletUtil.parse(xmlBody, errorHandler);
-    NodeList nodeList =
-        document.getElementsByTagName(ServletUtil.XMLTAG_AUTHN_REQUEST);
-    if (nodeList.getLength() == 0) {
-      status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE;
-      LOGGER.info(ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE);
-      ServletUtil.writeSimpleResponse(out, status);
+  public static void handleDoPost(
+      String xmlBody, Manager manager, PrintWriter out) {
+    Element root = ServletUtil.parseAndGetRootElement(
+        xmlBody, ServletUtil.XMLTAG_AUTHN_REQUEST);
+    if (root == null) {
+      ServletUtil.writeResponse(
+          out, ConnectorMessageCode.ERROR_PARSING_XML_REQUEST);
       return;
     }
 
     NodeList credList =
-      document.getElementsByTagName(ServletUtil.XMLTAG_AUTHN_CREDENTIAL);
+        root.getElementsByTagName(ServletUtil.XMLTAG_AUTHN_CREDENTIAL);
     if (credList.getLength() == 0) {
-      status = ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE;
-      LOGGER.info(ServletUtil.XML_RESPONSE_STATUS_EMPTY_NODE);
-      ServletUtil.writeSimpleResponse(out, status);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_RESPONSE_EMPTY_NODE);
+      ServletUtil.writeResponse(
+          out, ConnectorMessageCode.RESPONSE_EMPTY_NODE);
       return;
     }
 
-    ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);
+    ServletUtil.writeRootTag(out, false);
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_AUTHN_RESPONSE, false);
 
     String username = ServletUtil.getFirstElementByTagName(
@@ -135,7 +98,8 @@ public class Authenticate  extends HttpServlet {
       }
     }
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_AUTHN_RESPONSE, true);
-    ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
+    ServletUtil.writeRootTag(out, true);
     return;
   }
+
 }

@@ -15,6 +15,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -35,7 +36,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import com.google.enterprise.connector.spi.ConfigureResponse;
 
 /**
  *
@@ -102,28 +102,28 @@ public class ServletUtil {
   public static final String XMLTAG_LOAD = "load";
   public static final String XMLTAG_TIME_INTERVALS = "TimeIntervals";
 
-  public static final String XML_RESPONSE_SUCCESS = "0";
-  public static final String XML_RESPONSE_STATUS_EMPTY_REQUEST =
-      "Empty request";
-  public static final String XML_RESPONSE_STATUS_EMPTY_NODE = "Empty node";
-  public static final String XML_RESPONSE_STATUS_PARAM_MISSING =
-      "Param missing";
-  public static final String XML_RESPONSE_STATUS_NULL_CONNECTOR =
+  public static final String LOG_RESPONSE_EMPTY_REQUEST = "Empty request";
+  public static final String LOG_RESPONSE_EMPTY_NODE = "Empty node";
+  public static final String LOG_RESPONSE_NULL_CONNECTOR =
       "Null connector name";
-  public static final String XML_RESPONSE_STATUS_NULL_CONNECTOR_TYPE =
+  public static final String LOG_RESPONSE_NULL_CONNECTOR_TYPE =
       "Null connector type name";
-  public static final String XML_RESPONSE_STATUS_NULL_CONNECTOR_STATUS =
-      "Null connector status";
-  public static final String XML_RESPONSE_STATUS_NULL_FORM_SNIPPET =
-	  "Null form snippet or configure response";
-  public static final String XML_RESPONSE_STATUS_NULL_DOCID =
-      "Null doc ID";
-  public static final String XML_RESPONSE_STATUS_EMPTY_CONFIG_DATA =
-      "Empty connector configure data";
-  public static final String XML_RESPONSE_STATUS_NULL_RESOURCE =
-      "Null resource";
-  public static final String XML_RESPONSE_AUTHZ_DOCID_MISMATCH =
-      "Authorization docid mismatch";
+
+  public static final String LOG_EXCEPTION_CONNECTOR_TYPE_NOT_FOUND =
+      "Exception: the connector type is not found";
+  public static final String LOG_EXCEPTION_CONNECTOR_NOT_FOUND =
+      "Exception: the connector is not found";
+  public static final String LOG_EXCEPTION_CONNECTOR_EXISTS =
+      "Exception: the connector exists";
+  public static final String LOG_EXCEPTION_INSTANTIATOR =
+      "Exception: instantiator";
+  public static final String LOG_EXCEPTION_PERSISTENT_STORE =
+      "Exception: persistent store";
+  public static final String LOG_EXCEPTION_THROWABLE =
+      "Exception: throwable";
+  public static final String LOG_EXCEPTION_CONNECTOR_MANAGER =
+      "Exception: general";
+
   public static final String XML_SIMPLE_RESPONSE =
       "<CmResponse>\n" + "  <StatusId>0</StatusId>\n" + "</CmResponse>\n";
 
@@ -135,13 +135,9 @@ public class ServletUtil {
     "<tr><td>Repository</td><td>\n" + 
     "<input type=\"text\" name=\"Repository\" /></td></tr>\n";
 
-  public static final int HTML_NORMAL = 0;
-  public static final int HTML_HEADING = 1;
-  public static final int HTML_LINE = 2;
-  public static final String HTML_INPUT = "input";
-  public static final String HTML_NAME = "name=\"";
-  public static final String HTML_VALUE = " value=\"";
-  public static final char HTML_QUOTE = '"';
+  public static final String ATTRIBUTE_NAME = "name=\"";
+  public static final String ATTRIBUTE_VALUE = " value=\"";
+  public static final char QUOTE = '"';
 
   private static final String[] XMLIndent = { "",
       "  ",
@@ -189,6 +185,31 @@ public class ServletUtil {
   }
 
   /**
+   * Get a root element from the XML request body.
+   * 
+   * @param xmlBody String the XML request body
+   * @param rootTagName String the root element tag name
+   * @return a result Element object if successful, null on error 
+   */
+  public static Element parseAndGetRootElement(String xmlBody, String rootTagName) {
+    SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
+    Document document = ServletUtil.parse(xmlBody, errorHandler);
+    if (document == null) {
+      LOGGER.log(Level.WARNING, "XML parsing exception!");
+      return null;
+    }
+
+    NodeList nodeList =
+      document.getElementsByTagName(rootTagName);
+    if (nodeList == null || nodeList.getLength() == 0) {
+      LOGGER.log(Level.WARNING, "Empty node: " + rootTagName);
+      return null;
+    }
+
+    return (Element) nodeList.item(0);
+  }
+
+  /**
    * Get the attribute value of a given attribute name for
    * the first XML element of given name
    *
@@ -197,7 +218,8 @@ public class ServletUtil {
    * @param attrName String Attribute name
    * @return String attribute value of named child element
    */
-  public static String getFirstAttribute(Element elem, String name, String attrName) {
+  public static String getFirstAttribute(
+      Element elem, String name, String attrName) {
     NodeList nodeList = elem.getElementsByTagName(name);
     if (nodeList.getLength() == 0) {
       return null;
@@ -220,9 +242,8 @@ public class ServletUtil {
     NodeList nodeList = elem.getElementsByTagName(name); 
     int length = nodeList.getLength(); 
     for (int n = 0; n < length; ++n) {
-      attributes.put(
-            ((Element)nodeList.item(n)).getAttribute("name"),
-            ((Element)nodeList.item(n)).getAttribute("value"));
+      attributes.put(((Element)nodeList.item(n)).getAttribute("name"),
+                     ((Element)nodeList.item(n)).getAttribute("value"));
     }
     return attributes;
   }
@@ -271,29 +292,16 @@ public class ServletUtil {
   }
 
   /**
-   * Write an XML response with only status (string) to a PrintWriter.
-   *
-   * @param out where PrintWriter to be written to
-   * @param status String
-   *
-   */
-  public static void writeSimpleResponse(PrintWriter out, String status) {
-    writeRootResponse(out, false);
-    writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, status);
-    writeRootResponse(out, true);
-  }
-
-  /**
    * Write an XML response with only StatusId (int) to a PrintWriter.
    *
    * @param out where PrintWriter to be written to
    * @param statusId int
    *
    */
-  public static void writeSimpleResponse(PrintWriter out, int statusId) {
-    writeRootResponse(out, false);
-    writeStatusResponse(out, new ConnectorMessageCode(statusId, null, null));
-    writeRootResponse(out, true);
+  public static void writeResponse(PrintWriter out, int statusId) {
+    writeRootTag(out, false);
+    writeStatusId(out, statusId);
+    writeRootTag(out, true);
   }
 
   /**
@@ -305,9 +313,9 @@ public class ServletUtil {
    */
   public static void writeResponse(PrintWriter out,
                                    ConnectorMessageCode status) {
-    writeRootResponse(out, false);
-    writeStatusResponse(out, status);
-    writeRootResponse(out, true);
+    writeRootTag(out, false);
+    writeMessageCode(out, status);
+    writeRootTag(out, true);
   }
 
   /**
@@ -317,22 +325,33 @@ public class ServletUtil {
    * @param endingTag boolean true if it is the ending tag
    *
    */
-  public static void writeRootResponse(PrintWriter out, boolean endingTag) {
+  public static void writeRootTag(PrintWriter out, boolean endingTag) {
     writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, endingTag);
   }
 
   /**
-   * Write a partial XML status response to a Writer.
+   * Write a statusId response to a PrintWriter.
    *
-   * @param out where Writer to be written to
+   * @param out where PrintWriter to be written to
+   * @param statusId int
+   *
+   */
+  public static void writeStatusId(PrintWriter out,
+                                   int statusId) {
+    writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID,
+        Integer.toString(statusId));
+  }
+
+  /**
+   * Write a partial XML status response to a PrintWriter.
+   *
+   * @param out where PrintWriter to be written to
    * @param status ConnectorMessageCode
    *
    */
-  public static void writeStatusResponse(PrintWriter out,
-                                         ConnectorMessageCode status) {
-    writeXMLElement(
-        out, 1, ServletUtil.XMLTAG_STATUSID,
-        Integer.toString(status.getMessageId()));
+  public static void writeMessageCode(PrintWriter out,
+                                      ConnectorMessageCode status) {
+    writeStatusId(out, status.getMessageId());
 
     if (status.getMessage() != null && status.getMessage().length() > 1) {
       writeXMLElement(
@@ -348,30 +367,12 @@ public class ServletUtil {
       if (param == null || param.length() < 1) {
         continue;
       }
-      out.println(IndentStr(1)
+      out.println(indentStr(1)
           + "<" + XMLTAG_STATUS_PARAMS
           + " " + XMLTAG_STATUS_PARAM_ORDER + "=\"" + Integer.toString(i) + "\""
           + " " + XMLTAG_STATUS_PARAM + "=\"" + param
           + "\"/>");
     }
-  }
-
-  public static void writeConfigureResponse(
-      PrintWriter out, String status, ConfigureResponse configRes) {
-    writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, false);
-    writeXMLElement(out, 1, ServletUtil.XMLTAG_STATUSID, status);
-    if (configRes != null) {
-      writeXMLTag(out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, false);
-      writeXMLElement(
-          out, 2, ServletUtil.XMLTAG_MESSAGE, configRes.getMessage());
-      if (configRes.getFormSnippet() != null) {
-        writeXMLElement(
-            out, 2, ServletUtil.XMLTAG_FORM_SNIPPET,
-            "<![CDATA[" + prependCmPrefix(configRes.getFormSnippet()) + "]]>");
-      }
-      writeXMLTag(out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, true);
-    }
-    writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, true);
   }
 
   /**
@@ -384,7 +385,7 @@ public class ServletUtil {
    */
   public static void writeXMLElement(PrintWriter out, int indentLevel,
                                      String elemName, String elemValue) {
-    out.println(IndentStr(indentLevel)
+    out.println(indentStr(indentLevel)
         + "<" + elemName + ">" + elemValue + "</" + elemName + ">");
   }
 
@@ -398,8 +399,8 @@ public class ServletUtil {
    */
   public static void writeXMLElement(StringBuffer out, int indentLevel,
                                      String elemName, String elemValue) {
-    out.append(IndentStr(indentLevel)).append("<").append(elemName).append(">")
-        .append(elemValue).append("</").append(elemName).append(">");
+    out.append(indentStr(indentLevel)).append("<").append(elemName).append(">");
+    out.append(elemValue).append("</").append(elemName).append(">");
   }
 
   /**
@@ -410,10 +411,25 @@ public class ServletUtil {
    * @param elemName element name
    * @param attributes attributes
    */
-  public static void writeXMLElementWithAttrs(PrintWriter out, int indentLevel,
-                                     String elemName, String attributes) {
-    out.println(IndentStr(indentLevel)
+  public static void writeXMLElementWithAttrs(
+      PrintWriter out, int indentLevel, String elemName, String attributes) {
+    out.println(indentStr(indentLevel)
         + "<" + elemName + " " + attributes + ">");
+  }
+
+  /**
+   * Write name value pair(s) as an XML element with attributes only to a
+   * StringBuffer.
+   *
+   * @param out where StringBuffer to be written to
+   * @param indentLevel the depth of indentation.
+   * @param elemName element name
+   * @param attributes attributes
+   */
+  public static void writeXMLElementWithAttrs(
+      StringBuffer out, int indentLevel, String elemName, String attributes) {
+    out.append(indentStr(indentLevel)).append("<").append(elemName);
+    out.append(" ").append(attributes).append("/>");
   }
 
   /** Write an XML tag to a PrintWriter
@@ -426,7 +442,7 @@ public class ServletUtil {
    */
   public static void writeXMLTag(PrintWriter out, int indentLevel,
                           String tagName, boolean endingTag) {
-    out.println(IndentStr(indentLevel)
+    out.println(indentStr(indentLevel)
         + (endingTag ? "</" : "<") + (tagName) + ">");
   }
 
@@ -440,51 +456,18 @@ public class ServletUtil {
   */
   public static void writeXMLTag(StringBuffer out, int indentLevel,
                                  String tagName, boolean endingTag) {
-    out.append(IndentStr(indentLevel)).append(endingTag ? "</" : "<")
-        .append(tagName).append(">");
+    out.append(indentStr(indentLevel)).append(endingTag ? "</" : "<");
+    out.append(tagName).append(">");
   }
 
   // A helper method to ident output string.
-  private static String IndentStr(int level) {
+  private static String indentStr(int level) {
     if (level < XMLIndent.length) {
       return XMLIndent[level];
     } else {
       return XMLIndent[XMLIndent.length - 1]
-          + IndentStr(level - XMLIndent.length);
+          + indentStr(level - XMLIndent.length);
     }
-  }
-
-  public static String htmlErrorPage(String status) {
-    return "<HTML><BODY>Error: " + status + "</BODY></HTML>";
-  }
-
-  public static void htmlHeadWithTitle(PrintWriter out, String title) {
-    out.println("<HTML>");
-    out.println("<HEAD><TITLE>" + title + "</TITLE></HEAD><BODY>");
-  }
-
-  public static void htmlBody(
-      PrintWriter out, int style, String text, boolean linebreak) {
-    switch (style) {
-      case HTML_NORMAL:
-        out.println(text);
-        break;
-      case HTML_HEADING:
-        out.println("<H1>" + text + "</H1>");
-        break;
-      case HTML_LINE:
-        out.println("<HR>");
-        break;
-      default:
-        break;
-    }
-    if (linebreak) {
-      out.println("<BR>");
-    }
-  }
-
-  public static void htmlPage(PrintWriter out) {
-    out.println("</BODY></HTML>");
   }
 
   /*
@@ -506,4 +489,5 @@ public class ServletUtil {
     String result = str.replaceAll(PREFIX_NO_CM, PREFIX_CM);
     return result;
   }
+
 }

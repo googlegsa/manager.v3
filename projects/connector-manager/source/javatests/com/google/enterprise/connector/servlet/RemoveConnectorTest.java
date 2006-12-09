@@ -51,10 +51,11 @@ public class RemoveConnectorTest extends TestCase {
     String expectedResult =
         "<CmResponse>\n"
         + "  <StatusId>"
-        + ServletUtil.XML_RESPONSE_STATUS_NULL_CONNECTOR
+        + ConnectorMessageCode.EXCEPTION_CONNECTOR_NOT_FOUND
         + "</StatusId>\n"
+        + "  <CMParams Order=\"0\" CMParam=\"connector2\"/>\n"
         + "</CmResponse>\n";
-    String connectorName = null;
+    String connectorName = "connector2";
     doTest(connectorName, expectedResult);
   }
 
@@ -63,7 +64,7 @@ public class RemoveConnectorTest extends TestCase {
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
     RemoveConnector.handleDoGet(
-        out, manager, connectorName);
+        connectorName, manager, out);
     out.flush();
     StringBuffer result = writer.getBuffer();
     LOGGER.info(result.toString());

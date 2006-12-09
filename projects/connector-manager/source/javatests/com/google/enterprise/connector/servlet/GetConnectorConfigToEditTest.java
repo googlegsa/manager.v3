@@ -44,7 +44,6 @@ public class GetConnectorConfigToEditTest extends TestCase {
         "<CmResponse>\n" +
         "  <StatusId>0</StatusId>\n" +
         "  <ConfigureResponse>\n" +
-        "    <message>Sample form for connectorAlang en</message>\n" +
         "    <FormSnippet><![CDATA[<tr>\n" +
         "<td>Username</td>\n" + 
         "<td>\n" + 
@@ -70,13 +69,14 @@ public class GetConnectorConfigToEditTest extends TestCase {
         "</td>\n" + 
         "</tr>\n" + 
         "]]></FormSnippet>\n" +
+        "    <message>Sample form for connectorAlang en</message>\n" +
         "  </ConfigureResponse>\n" + 
         "</CmResponse>\n";
     String connectorName = "connectorA";
     Manager manager = MockManager.getInstance();
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
-    GetConnectorConfigToEdit.handleDoGet(out, manager, connectorName, "en");
+    GetConnectorConfigToEdit.handleDoGet(connectorName, "en", manager, out);
     StringBuffer result = writer.getBuffer();
     LOG.info(result.toString());
     LOG.info(expectedResult);
