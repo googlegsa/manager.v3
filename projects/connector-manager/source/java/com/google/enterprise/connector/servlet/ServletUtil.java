@@ -15,6 +15,11 @@
 
 package com.google.enterprise.connector.servlet;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -30,22 +35,21 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
 
 /**
+ * Servlet constant and utility class.
  *
- * Servlet utility class.
+ * Non-instantiable class that holds constants and XML tag constants,
+ * utilities for reading/writing XML string, etc.
  *
  */
 public class ServletUtil {
 
   private static Logger LOGGER =
     Logger.getLogger(ServletUtil.class.getName());
+
+  private ServletUtil() {
+  }
 
   public static final String MIMETYPE_XML = "text/xml";
   public static final String MIMETYPE_HTML = "text/html";
@@ -139,7 +143,8 @@ public class ServletUtil {
   public static final String ATTRIBUTE_VALUE = " value=\"";
   public static final char QUOTE = '"';
 
-  private static final String[] XMLIndent = { "",
+  private static final String[] XMLIndent = {
+      "",
       "  ",
       "    ",
       "      ",
@@ -153,9 +158,6 @@ public class ServletUtil {
 
   private static DocumentBuilderFactory factory =
 	    DocumentBuilderFactory.newInstance();
-
-  private ServletUtil() {
-  }
 
   /**
    * Parse an XML String to a Document.
@@ -191,7 +193,8 @@ public class ServletUtil {
    * @param rootTagName String the root element tag name
    * @return a result Element object if successful, null on error 
    */
-  public static Element parseAndGetRootElement(String xmlBody, String rootTagName) {
+  public static Element parseAndGetRootElement(
+      String xmlBody, String rootTagName) {
     SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
     Document document = ServletUtil.parse(xmlBody, errorHandler);
     if (document == null) {
@@ -447,13 +450,13 @@ public class ServletUtil {
   }
 
   /** Write an XML tag to a StringBuffer
-  *
-  * @param out where StringBuffer to be written to
-  * @param indentLevel the depth of indentation
-  * @param tagName String name of the XML tag to be added
-  * @param endingTag String write a beginning tag if true or
-  * an ending tag if false
-  */
+   *
+   * @param out where StringBuffer to be written to
+   * @param indentLevel the depth of indentation
+   * @param tagName String name of the XML tag to be added
+   * @param endingTag String write a beginning tag if true or
+   * an ending tag if false
+   */
   public static void writeXMLTag(StringBuffer out, int indentLevel,
                                  String tagName, boolean endingTag) {
     out.append(indentStr(indentLevel)).append(endingTag ? "</" : "<");
@@ -466,24 +469,30 @@ public class ServletUtil {
       return XMLIndent[level];
     } else {
       return XMLIndent[XMLIndent.length - 1]
-          + indentStr(level - XMLIndent.length);
+          + indentStr(level + 1 - XMLIndent.length);
     }
   }
 
-  /*
+  /**
    * Given a String such as:
    * <Param name="CM_Color" value="a"/> <Param name="CM_Password" value="a"/>
    * 
    * Return a String such as:
    * <Param name="Color" value="a"/> <Param name="Password" value="a"/>
+   *
+   * @param str String an XML string with PREFIX_CM as above
+   * @return a result XML string without PREFIX_CM as above
    */
   public static String stripCmPrefix(String str) {
     String result = str.replaceAll(PREFIX_CM, PREFIX_NO_CM);
     return result;
   }
   
-  /*
+  /**
    * Inverse operation for stripCmPrefix.
+   *
+   * @param str String an XML string without PREFIX_CM as above
+   * @return a result XML string with PREFIX_CM as above
    */
   public static String prependCmPrefix(String str) {
     String result = str.replaceAll(PREFIX_NO_CM, PREFIX_CM);

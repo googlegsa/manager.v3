@@ -66,8 +66,10 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
         formSnippet = configResponse.getFormSnippet();
       }
     } catch (ConnectorTypeNotFoundException e) {
-      ServletUtil.writeResponse(
-          out, ConnectorMessageCode.EXCEPTION_CONNECTOR_TYPE_NOT_FOUND);
+      status = new ConnectorMessageCode(
+          ConnectorMessageCode.EXCEPTION_CONNECTOR_TYPE_NOT_FOUND,
+              connectorType);
+      ServletUtil.writeResponse(out, status);
       LOGGER.log(Level.WARNING,
           ServletUtil.LOG_EXCEPTION_CONNECTOR_TYPE_NOT_FOUND, e);
     }

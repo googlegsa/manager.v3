@@ -36,8 +36,9 @@ public class ConnectorMessageCode {
   public static final int RESPONSE_NULL_CONNECTOR_STATUS = 5217;
   public static final int RESPONSE_NULL_FORM_SNIPPET = 5218;
   public static final int RESPONSE_NULL_CONFIG_DATA = 5219;
-  public static final int RESPONSE_NULL_RESOURCE = 5220;
-  public static final int RESPONSE_NULL_DOCID = 5221;
+  public static final int RESPONSE_NULL_CONFIGURE = 5220;
+  public static final int RESPONSE_NULL_RESOURCE = 5221;
+  public static final int RESPONSE_NULL_DOCID = 5222;
 
   public static final int ERROR_PARSING_XML_REQUEST = 5300;
   public static final int EXCEPTION_CONNECTOR_MANAGER = 5301;
