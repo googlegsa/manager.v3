@@ -25,6 +25,7 @@
 	<property name="tests.todir" value="tests_outdir" />
 	<property name="jar.dir" value="${dist}/jarfile" />
 	<property name="spi.jarfile" value="${jar.dir}/connector_spi.jar" />
+	<property name="util.jarfile" value="${jar.dir}/connector_util.jar" />
 	<property name="connector.jarfile" value="${jar.dir}/connector.jar" />
 	<property name="tests.jarfile" value="${jar.dir}/connector_tests.jar" />
 	<property name="thirdparty.jar.dir" value="../third_party/lib" />
@@ -46,10 +47,10 @@
 	<target name="connector_spi" depends="init,compile,jar">
 	</target>
 
+	<target name="connector_util" depends="init,compile,jar">
+	</target>
+
 	<target name="connector" depends="init,compile,jar">
-		<jar jarfile="${connector.jarfile}">
-			<fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**" />
-		</jar>
 	</target>
 
 	<target name="connector_spi_test" depends="connector_spi,compile_tests">
@@ -124,6 +125,13 @@
 		<jar jarfile="${spi.jarfile}">
 			<fileset dir="${classes}" includes="**/spi/**" excludes="**/javatests/**" />
 		</jar>
+		<jar jarfile="${util.jarfile}">
+			<fileset dir="${classes}"> 
+				<include name="**/servlet/ConnectorMessageCode.class" />
+				<include name="**/servlet/ServletUtil.class" />
+				<include name="**/servlet/SAXParseErrorHandler.class" />
+			</fileset>
+		</jar>
 		<jar jarfile="${connector.jarfile}">
 			<fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**" />
 		</jar>
@@ -148,7 +156,7 @@
 	<target name="war" depends="install_init,compile,compile_tests,connector_spi_test" description="Builds the WAR file for installation.">
 		<echo> The war file dir is located at ${war.dir}</echo>
 
-		<war warfile="${war.dir}/${ant.project.name}.war" webxml="${webdocs}/WEB-INF/web.xml">
+		<war warfile="${war.dir}/${ant.project.name}.war" webxml="${webdocs}/web.xml">
 			<lib dir="${jar.dir}" includes="*.jar" excludes="connector_tests.jar" />
 			<lib dir="${thirdparty.jar.dir}" includes="*.jar" excludes="servlet-api.jar" />
 			<fileset dir="${webdocs}" includes="**" />
@@ -157,7 +165,7 @@
       <webinf dir="testdata/mocktestdata" includes="MockRepositoryEventLog3.txt" />
 		</war>
 
-		<war warfile="${war.dir}/${ant.project.name}_debug.war" webxml="${webdocs}/WEB-INF/web.xml">
+		<war warfile="${war.dir}/${ant.project.name}_debug.war" webxml="${webdocs}/web.xml">
 			<lib dir="${jar.dir}" includes="*.jar" />
 			<lib dir="${thirdparty.jar.dir}" includes="*.jar" excludes="servlet-api.jar" />
 			<fileset dir="${webdocs}" includes="**" />
