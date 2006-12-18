@@ -20,6 +20,7 @@ import com.google.enterprise.connector.jcradaptor.SpiQueryTraversalManagerFromJc
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
+import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.QueryTraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -68,7 +69,8 @@ public class DocPusherTest extends TestCase {
   public void testTakeContent() throws RepositoryException {
     String[] expectedXml = new String[1];
     String feedType = "incremental";
-    String record = "<record url=\"googleconnector://junit.localhost/doc?docid=doc1\""
+    String record = "<record url=\"" + ServletUtil.PROTOCOL
+      + "junit.localhost" + ServletUtil.DOCID + "doc1\""
       + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE
       + "\" last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\" >\n"
       + "<metadata>\n"
@@ -91,7 +93,8 @@ public class DocPusherTest extends TestCase {
     String feedType = "incremental";
     
     // case 1: "google:ispublic":"false"
-    String record = "<record url=\"googleconnector://junit.localhost/doc?docid=users\""
+    String record = "<record url=\"" + ServletUtil.PROTOCOL
+        + "junit.localhost" + ServletUtil.DOCID + "users\""
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:00 GMT\""
         + " authmethod=\"httpbasic\" >\n"
@@ -104,7 +107,8 @@ public class DocPusherTest extends TestCase {
     expectedXml[0] = buildExpectedXML(feedType, record);
 
     // case 2: "google:ispublic":"true"
-    record = "<record url=\"googleconnector://junit.localhost/doc?docid=doc1\""
+    record = "<record url=\"" + ServletUtil.PROTOCOL
+        + "junit.localhost" + ServletUtil.DOCID + "doc1\""
         + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\" >\n"
         + "<metadata>\n"
@@ -116,7 +120,8 @@ public class DocPusherTest extends TestCase {
     expectedXml[1] = buildExpectedXML(feedType, record);
 
     // case 3: "google:ispublic":"public"; the value "public" is illegal value.
-    record = "<record url=\"googleconnector://junit.localhost/doc?docid=doc2\""
+    record = "<record url=\"" + ServletUtil.PROTOCOL
+      + "junit.localhost" + ServletUtil.DOCID + "doc2\""
       + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE
       + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\" >\n"
       + "<metadata>\n"
@@ -182,8 +187,8 @@ public class DocPusherTest extends TestCase {
     assertStringContains(
       urlEncode("<meta name=\"author\" content=\"ziff\"/>"), resultXML);
     assertStringContains(
-      urlEncode("url=\"googleconnector://junit.localhost/doc?docid=doc1\""),
-      resultXML);
+      urlEncode("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
+                + ServletUtil.DOCID + "doc1\""), resultXML);
 
   }
 
@@ -283,9 +288,8 @@ public class DocPusherTest extends TestCase {
     assertStringContains(
       urlEncode("<meta name=\"author\" content=\"ziff\"/>"), resultXML);
     assertStringContains(
-      urlEncode("url=\"googleconnector://junit.localhost/doc?docid=doc1\""), 
-      resultXML);
-
+      urlEncode("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
+                + ServletUtil.DOCID + "doc1\""), resultXML);
   }
 
   public static void assertStringContains(String expected, String actual) {

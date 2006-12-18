@@ -17,6 +17,7 @@ package com.google.enterprise.connector.pusher;
 import com.google.enterprise.connector.common.Base64FilterInputStream;
 import com.google.enterprise.connector.common.UrlEncodedFilterInputStream;
 import com.google.enterprise.connector.common.WorkQueue;
+import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -543,7 +544,7 @@ public class DocPusher implements Pusher {
   private String constructGoogleConnectorUrl(String connectorName,
       String docid) {
     String searchurl;
-    StringBuffer buf = new StringBuffer("googleconnector://");
+    StringBuffer buf = new StringBuffer(ServletUtil.PROTOCOL);
     buf.append(connectorName);
     buf.append(".localhost/doc?docid=");
     buf.append(docid);
