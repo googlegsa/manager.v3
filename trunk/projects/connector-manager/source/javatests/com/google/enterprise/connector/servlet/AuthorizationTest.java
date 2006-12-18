@@ -30,7 +30,7 @@ import java.util.logging.Logger;
  *
  */
 public class AuthorizationTest extends TestCase {
-  private static final Logger LOG =
+  private static final Logger LOGGER =
     Logger.getLogger(AuthorizationTest.class.getName());
 
   /**
@@ -43,14 +43,14 @@ public class AuthorizationTest extends TestCase {
         "<AuthorizationQuery>\n" + 
         "<ConnectorQuery>\n" + 
         "  <Identity source=\"gsa\">CN=foo</Identity>\n" + 
-        "  <Resource>googleconnector://connector1.localhost" +
+        "  <Resource>" + ServletUtil.PROTOCOL + "connector1.localhost" +
            ServletUtil.DOCID + "foo1</Resource>\n" + 
-        "  <Resource>googleconnector://connector2.localhost" +
+        "  <Resource>" + ServletUtil.PROTOCOL + "connector2.localhost" +
            ServletUtil.DOCID + "foo2</Resource>\n" + 
         "</ConnectorQuery>\n" + 
         "<ConnectorQuery>\n" + 
         "  <Identity source=\"connector\">username</Identity>\n" + 
-        "  <Resource>googleconnector://connector3.localhost" +
+        "  <Resource>" + ServletUtil.PROTOCOL + "connector3.localhost" +
            ServletUtil.DOCID + "foo3</Resource>\n" + 
         "</ConnectorQuery>\n" + 
         "</AuthorizationQuery>";
@@ -59,17 +59,17 @@ public class AuthorizationTest extends TestCase {
     	"<CmResponse>\n" +
     	"  <AuthorizationResponse>\n" + 
         "    <Answer>\n" + 
-        "      <Resource>googleconnector://connector1.localhost" +
+        "      <Resource>" + ServletUtil.PROTOCOL + "connector1.localhost" +
                ServletUtil.DOCID + "foo1</Resource>\n" + 
         "      <Decision>Permit</Decision>\n" + 
         "    </Answer>\n" + 
         "    <Answer>\n" + 
-        "      <Resource>googleconnector://connector2.localhost" +
+        "      <Resource>" + ServletUtil.PROTOCOL + "connector2.localhost" +
                ServletUtil.DOCID + "foo2</Resource>\n" + 
         "      <Decision>Permit</Decision>\n" + 
         "    </Answer>\n" + 
         "    <Answer>\n" + 
-        "      <Resource>googleconnector://connector3.localhost" +
+        "      <Resource>" + ServletUtil.PROTOCOL + "connector3.localhost" +
                ServletUtil.DOCID + "foo3</Resource>\n" + 
         "      <Decision>Permit</Decision>\n" + 
         "    </Answer>\n" + 
@@ -91,7 +91,7 @@ public class AuthorizationTest extends TestCase {
         "<AuthorizationQuery>\n" + 
         "<ConnectorQuery>\n" + 
         "  <Identity source=\"gsa\">CN=foo</Identity>\n" + 
-        "  <Resource>googleconnector://.localhost" +
+        "  <Resource>" + ServletUtil.PROTOCOL + ".localhost" +
            ServletUtil.DOCID + "foo1</Resource>\n" + 
         "</ConnectorQuery>\n" + 
         "</AuthorizationQuery>";
@@ -115,7 +115,7 @@ public class AuthorizationTest extends TestCase {
         "<AuthorizationQuery>\n" + 
         "<ConnectorQuery>\n" + 
         "  <Identity source=\"gsa\">CN=foo</Identity>\n" + 
-        "  <Resource>googleconnector://Connector3.localhost" +
+        "  <Resource>" + ServletUtil.PROTOCOL + "Connector3.localhost" +
            "/doc?DOCID=foo1</Resource>\n" + 
         "</ConnectorQuery>\n" + 
         "</AuthorizationQuery>";
@@ -140,7 +140,7 @@ public class AuthorizationTest extends TestCase {
         "<AuthorizationQuery>\n" + 
         "<ConnectorQuery>\n" + 
         "  <Identity source=\"gsa\"></Identity>\n" + 
-        "  <Resource>googleconnector://connector1.localhost" +
+        "  <Resource>" + ServletUtil.PROTOCOL + "connector1.localhost" +
            ServletUtil.DOCID + "foo1</Resource>\n" + 
         "</ConnectorQuery>\n" + 
         "</AuthorizationQuery>";
@@ -149,7 +149,7 @@ public class AuthorizationTest extends TestCase {
     	"<CmResponse>\n" +
     	"  <AuthorizationResponse>\n" + 
         "    <Answer>\n" + 
-        "      <Resource>googleconnector://connector1.localhost" +
+        "      <Resource>" + ServletUtil.PROTOCOL + "connector1.localhost" +
                ServletUtil.DOCID + "foo1</Resource>\n" + 
         "      <Decision>Permit</Decision>\n" + 
         "    </Answer>\n" + 
@@ -182,15 +182,15 @@ public class AuthorizationTest extends TestCase {
   }
 
   private void doTest(String xmlBody, String expectedResult) {
-    LOG.info("xmlBody: " + xmlBody);
+    LOGGER.info("xmlBody: " + xmlBody);
     Manager manager = MockManager.getInstance();
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
     Authorization.handleDoPost(xmlBody, manager, out);
     out.flush();
     StringBuffer result = writer.getBuffer();
-    LOG.info(result.toString());
-    LOG.info(expectedResult);
+    LOGGER.info(result.toString());
+    LOGGER.info(expectedResult);
     Assert.assertEquals (StringUtils.normalizeNewlines(expectedResult), 
         StringUtils.normalizeNewlines(result.toString()));
     out.close();
