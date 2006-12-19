@@ -1,5 +1,4 @@
-<html>
-<body>
+|| testpage || ||
 <div style="PADDING:8px; BACKGROUND-COLOR:white">  <h1>  <font size="5"> Connector
 Framework Technical Introduction</font>  </h1>  <span style="FONT-WEIGHT:bold">Draft
 1.0a2</span><br style="FONT-WEIGHT:bold"/>  <span style="FONT-WEIGHT:bold">Revised 18 Dec
@@ -393,9 +392,4 @@ align="center"> <table border="0" cellpadding="8" cellspacing="0" width="100%"> 
 about Google Docs &amp; Spreadsheets">Google Docs &amp; Spreadsheets -- Web word
 processing and spreadsheets.</a> </td> <td align="right"> <a class="smalllink"
 href="https://writely.corp.google.com/Edit?tab=edit&amp;docid=ag39np58q3_4gp947c"
-title="Edit this page">Edit this page (if you have permission).</a> </td> </tr> </tbody>
-</table> </td> </tr> </tbody> </table> </div>
-
-</BODY>
-
-</html>
+title="Edit this page">Edit this page (if you have permission).</a> || || testpage||
