@@ -1,10 +1,8 @@
-#summary One-sentence summary of this page.
+#The *Google Connector Framework (GCF)*  is an open-source Java framework that enables
+Google search appliances to present content stored in various popular *Enterprise Content
+Management (ECM)* systems.
 
 = Introduction =
-
-The *Google Connector Framework (GCF)*  is an open-source Java framework that enables
-Google search appliances to present content stored in various popular *Enterprise Content
-Management (ECM)* systems. 
 
 Although Google is providing the first release of this framework, it's important to note
 that Google does not officially provide technical support for the Connector Framework; as
@@ -19,91 +17,104 @@ documentation.
 
 = Details =
 
-THe following test HTML is pasted in from dear old Writely... 
+  Connector Framework Technical Introduction
+Draft 1.0a2
+Revised 18 Dec 2006 (jwp)
 
-<div style="PADDING:8px; BACKGROUND-COLOR:white">  <h1>  <font size="5"> Connector
-Framework Technical Introduction</font>  </h1>  <span style="FONT-WEIGHT:bold">Draft
-1.0a2</span><br style="FONT-WEIGHT:bold"/>  <span style="FONT-WEIGHT:bold">Revised 18 Dec
-2006 (jwp)</span><br/>  <br/>  The <span style="FONT-WEIGHT:bold">Google Connector
-Framework (GCF)</span>  enables Google search appliances to work with content stored in
-various popular Enterprise Content Management systems. An <span
-style="FONT-WEIGHT:bold">Enterprise Content Management (ECM)</span>  system provides a
-central repository for large numbers of documents; it is not uncommon for such systems to
-manage ten million documents. While all ECM systems provide some ability to retrieve
-documents based on associated keywords or other metadata, this functionality is extremely
-limited and slow in comparison to the powerful, flexible search capabilities that Google
-search appliances provide.<br/>  <br/>  Many ECM systems provide an API that enables the
-programmatic manipulation of documents. You can use the Connector Framework to create your
-own Java connector that calls the native API of a specific ECM system on behalf of Google
-search appliances. Multiple connector instances enable a search appliance to interact with
-multiple ECM systems.<br/>  <br/>  Most ECM systems authenticate users, control access to
-documents, and provide version-management functionality. Each connector enables a Google
-search appliance to provide customized, optimized, automatic interaction with the
-authentication and authorization features of a specific ECM system in order to:<span
-style="FONT-WEIGHT:bold"></span><br/>  <div style="MARGIN-LEFT:40px">  <span
-style="FONT-WEIGHT:bold"></span>  </div>  <div style="MARGIN-LEFT:40px">  <ul>  <li> 
-Build and update the index of searchable documents </li>  </ul>  </div>  <div
-style="MARGIN-LEFT:40px">  <ul>  <li>  Customize search results according to the access
-privileges of the user that issued the search query </li>  </ul>  <ul>  <li>  Serve
-documents from the ECM repository when the user clicks links in the search results<br/> 
-</li>  <li>  Provide a single-sign-on experience that allows users to log into the search
+The Google Connector Framework (GCF) enables Google search appliances to work with content
+stored in various popular Enterprise Content Management systems. An Enterprise Content
+Management (ECM) system provides a central repository for large numbers of documents; it
+is not uncommon for such systems to manage ten million documents. While all ECM systems
+provide some ability to retrieve documents based on associated keywords or other metadata,
+this functionality is extremely limited and slow in comparison to the powerful, flexible
+search capabilities that Google search appliances provide.
+
+Many ECM systems provide an API that enables the programmatic manipulation of documents.
+You can use the Connector Framework to create your own Java connector that calls the
+native API of a specific ECM system on behalf of Google search appliances. Multiple
+connector instances enable a search appliance to interact with multiple ECM systems.
+
+Most ECM systems authenticate users, control access to documents, and provide
+version-management functionality. Each connector enables a Google search appliance to
+provide customized, optimized, automatic interaction with the authentication and
+authorization features of a specific ECM system in order to:
+
+    * Build and update the index of searchable documents
+
+    * Customize search results according to the access privileges of the user that issued
+the search query
+
+    * Serve documents from the ECM repository when the user clicks links in the search results
+    * Provide a single-sign-on experience that allows users to log into the search
 appliance and the ECM system only once per day, rather than every time the user issues a
-query or clicks a link in search results </li>  </ul>  <br/>  </div>  Many ECM systems
-provide a means of signalling users when documents are added, deleted, or changed. Your
-Java connector can use events generated by the ECM system to keep its index of crawled
-documents up-to-date. However, the Connector Framework does not require the ECM system to
-generate events. If the file paths that the Google search appliance uses to crawl the
-document repository are not suitable for direct access to the document by users, your
-connector can represent them differently in search results.<br/>  <br/>  The Google
-Connector Framework (GCF) introduces one new significant public component, the <span
-style="FONT-WEIGHT:bold">Connector Manager</span>. This service is responsible for hosting
-and running connectors built with this framework. It also manages all communications
-between Google search appliances and connectors. To manage your connectors, you'll run an
-instance of the Connector Manager on any application server that provides a servlet
-interface, such as Apache Tomcat. &nbsp; <div style="MARGIN-LEFT:40px">  <br/>  </div> 
-The Google Connector Framework (GCF) also provides:<br/>  <div style="MARGIN-LEFT:40px"> 
-<div style="MARGIN-LEFT:40px">  <br/>  </div>  <ul>  <li style="FONT-WEIGHT:bold">  A
-simple and consistent graphical user interface (GUI) for administration of connectors.
-</li>  </ul>  <div style="MARGIN-LEFT:40px">  The Administration console of the Google
-search appliance provides a graphical user interface for configuring and managing
-connectors. Using the Connector Framework, you can customize and extend this interface to
-accommodate specific features of your own connectors.<br/>  </div>  <ul
-style="FONT-WEIGHT:bold">  <li>  Programmatic configuration of connectors by means of
-Spring-compliant XML files. </li>  </ul>  <div style="MARGIN-LEFT:40px">  For ease of
-installation, you can use a <a
-href="http://docs.google.com/View?docid=dfpz45vp_2dspqpt#Spring" title="Spring">Spring</a>
- file to<br/>  <ul>  <li>  Automate the configuration of all connector settings </li> 
-<li>  Configure optional features that do not lend themselves well to representation in a
-graphical interface </li>  <li>  Specify configuration details not visible to the
-connector, such as the hostname of the machine on which its Connector Manager instance
-runs<br/>  </li>  </ul>  </div>  <div style="MARGIN-LEFT:40px">  </div>  <ul
-style="FONT-WEIGHT:bold">  <li>  Common scheduling and reporting that is customizable for
-each connector instance. </li>  </ul>  <div style="MARGIN-LEFT:40px">  The GSA console
-provides centralized scheduling and reporting for all installed connectors, and you can
-configure individual connectors to augment or supersede these settings. You can customize
-your connector's crawling, feeding, authentication, and authorization behavior for optimum
-interaction with a specific ECM system. Additionally, you can configure each individual
-connector instance for optimum support of installation-specific parameters, such as the
-maximum number of requests it may send to a particular document repository in a specified
-time period.<br/>  </div>  <ul>  <li>  <span style="FONT-WEIGHT:bold">Open source
-code<br/>  </span>  </li>  </ul>  <div style="MARGIN-LEFT:40px">  Google uses the Apache 2
-license to make the Connector Framework source code open. Google's goals in making the
-project open-source are:<br/>  <ul>  <li>  To encourage and facilitate the development of
-connectors and other custom code for the GSA </li>  </ul>  <ul>  <li>  To provide the
-ultimately authoritative documentation of system behavior: source code. </li>  <li>  To
-allow developers to debug with the aid of full view of the source </li>  <li>  To open the
-architecture and development of the framework as a cooperative project </li>  <li>  To
-give developers freedom to fix bugs in the framework<br/>  </li>  <li>  To enable
-developers to add significant new features easily<br/>  </li>  <li>  To encourage the free
-exchange of features, fixes, and other ideas within the developer community </li>  </ul> 
-<br/>  </div>  <div style="MARGIN-LEFT:40px">  </div>  </div>  <span
-style="COLOR:#3333ff"></span>Although Google is providing the first release of this
-framework, it's important to note that Google does not officially provide technical
-support for the Connector Framework; as with any other open-source project, technical
-support, bug fixes, and new features for this framework come from your fellow members of
-the open-source community.<br/>  <br/>  Please note also that this version of the
-Connector Framework does not yet provide full functionality. Rather, it provides an early
-peek at this project for those who wish to get an early start on the design and
-development of their own connectors. Google urges you to return to this site regularly for
-updates to the connector framework source code and its documentation.<br/>  <div
-style="MARGIN-LEFT:40px">  <br/>  <br/>  </div>
+query or clicks a link in search results
+
+
+Many ECM systems provide a means of signalling users when documents are added, deleted, or
+changed. Your Java connector can use events generated by the ECM system to keep its index
+of crawled documents up-to-date. However, the Connector Framework does not require the ECM
+system to generate events. If the file paths that the Google search appliance uses to
+crawl the document repository are not suitable for direct access to the document by users,
+your connector can represent them differently in search results.
+
+The Google Connector Framework (GCF) introduces one new significant public component, the
+Connector Manager. This service is responsible for hosting and running connectors built
+with this framework. It also manages all communications between Google search appliances
+and connectors. To manage your connectors, you'll run an instance of the Connector Manager
+on any application server that provides a servlet interface, such as Apache Tomcat.  
+
+The Google Connector Framework (GCF) also provides:
+
+    * A simple and consistent graphical user interface (GUI) for administration of connectors.
+
+The Administration console of the Google search appliance provides a graphical user
+interface for configuring and managing connectors. Using the Connector Framework, you can
+customize and extend this interface to accommodate specific features of your own connectors.
+
+    * Programmatic configuration of connectors by means of Spring-compliant XML files.
+
+For ease of installation, you can use a Spring file to
+
+    * Automate the configuration of all connector settings
+    * Configure optional features that do not lend themselves well to representation in a
+graphical interface
+    * Specify configuration details not visible to the connector, such as the hostname of
+the machine on which its Connector Manager instance runs
+
+    * Common scheduling and reporting that is customizable for each connector instance.
+
+The GSA console provides centralized scheduling and reporting for all installed
+connectors, and you can configure individual connectors to augment or supersede these
+settings. You can customize your connector's crawling, feeding, authentication, and
+authorization behavior for optimum interaction with a specific ECM system. Additionally,
+you can configure each individual connector instance for optimum support of
+installation-specific parameters, such as the maximum number of requests it may send to a
+particular document repository in a specified time period.
+
+    * Open source code
+
+Google uses the Apache 2 license to make the Connector Framework source code open.
+Google's goals in making the project open-source are:
+
+    * To encourage and facilitate the development of connectors and other custom code for
+the GSA
+
+    * To provide the ultimately authoritative documentation of system behavior: source code.
+    * To allow developers to debug with the aid of full view of the source
+    * To open the architecture and development of the framework as a cooperative project
+    * To give developers freedom to fix bugs in the framework
+    * To enable developers to add significant new features easily
+    * To encourage the free exchange of features, fixes, and other ideas within the
+developer community
+
+
+Although Google is providing the first release of this framework, it's important to note
+that Google does not officially provide technical support for the Connector Framework; as
+with any other open-source project, technical support, bug fixes, and new features for
+this framework come from your fellow members of the open-source community.
+
+Please note also that this version of the Connector Framework does not yet provide full
+functionality. Rather, it provides an early peek at this project for those who wish to get
+an early start on the design and development of their own connectors. Google urges you to
+return to this site regularly for updates to the connector framework source code and its
+documentation.
