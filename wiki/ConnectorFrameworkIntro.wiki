@@ -126,7 +126,8 @@ off-board authentication (AuthN) server is required for Single-Sign On functiona
 otherwise, it is optional.
 
 You can see a diagram of the Connector Framework architecture at 
-"http://docs.google.com/Doc?id=w.dgnhd83_20m6tkjd"
+[http://docs.google.com/Doc?id=w.dgnhd83_20m6tkjd Connector Framework architecture]
+
 
 <!-- I still haven't figured out how to arrange thngs so the lines running from the
 servlet intf to the connectors don't cross the lines running from the connectors to the ECMs.
