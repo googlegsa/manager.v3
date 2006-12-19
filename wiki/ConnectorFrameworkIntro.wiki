@@ -5,9 +5,13 @@ Management (ECM)* systems.
 = Change History = 
 
 29 Nov 2006 First Draft (dmz/ns) Two-pager & outline
+
 12 Dec 2006 Draft 1.0d1 (jwp) Expanded outline & first draft
+
 15 Dec 2006 Draft 1.0a1 (jwp) Edits per 12-14 team meeting
+
 18 Dec 2006 Draft 1.0a2 (jwp) Move to Wiki, revise arch diagram
+
 
 = Google Connector Framework Technical Introduction=
 *Draft 1.0a2*
