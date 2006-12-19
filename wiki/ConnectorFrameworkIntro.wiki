@@ -1,4 +1,4 @@
-#The *Google Connector Framework (GCF)*  is an open-source Java framework that enables
+The *Google Connector Framework (GCF)*  is an open-source Java framework that enables
 Google search appliances to present content stored in various popular *Enterprise Content
 Management (ECM)* systems.
 
