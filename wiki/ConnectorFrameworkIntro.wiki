@@ -13,9 +13,6 @@ Management (ECM)* systems.
 *Draft 1.0a2*
 *Revised 18 Dec 2006 (jwp)*
 
-
-
-
 The *Google Connector Framework (GCF)* enables Google search appliances to work with
 content stored in various popular Enterprise Content Management systems. An *Enterprise
 Content Management (ECM)* system provides a central repository for large numbers of
@@ -127,12 +124,14 @@ exactly one ECM system, but the ECM system can manage multiple repositories. The
 off-board authentication (AuthN) server is required for Single-Sign On functionality;
 otherwise, it is optional.
 
-Figure 1: Connector Architecture
+You can see a diagram of the Connector Framework architecture at 
+"http://docs.google.com/Doc?id=w.dgnhd83_20m6tkjd"
 
 <!-- I still haven't figured out how to arrange thngs so the lines running from the
 servlet intf to the connectors don't cross the lines running from the connectors to the ECMs.
 Do we need to show the user's browser?-->
-[Connector Manager]
+
+
 A single .jar file contains the executable code and resources required to create a
 connector instance. To install this file, you place it in a designated directory on an
 application server that runs a Connector Manager instance. The administrator of the Google
