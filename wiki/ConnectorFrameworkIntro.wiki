@@ -14,7 +14,9 @@ Management (ECM)* systems.
 
 
 = Google Connector Framework Technical Introduction=
+
 *Draft 1.0a2*
+
 *Revised 18 Dec 2006 (jwp)*
 
 The *Google Connector Framework (GCF)* enables Google search appliances to work with
