@@ -2,37 +2,32 @@ The *Google Connector Framework (GCF)*  is an open-source Java framework that en
 Google search appliances to present content stored in various popular *Enterprise Content
 Management (ECM)* systems.
 
-= Introduction =
+= Change History = 
 
-Although Google is providing the first release of this framework, it's important to note
-that Google does not officially provide technical support for the Connector Framework; as
-with any other open-source project, technical support, bug fixes, and new features for
-this framework come from your fellow members of the open-source community.
+29 Nov 2006 First Draft (dmz/ns) Two-pager & outline
+12 Dec 2006 Draft 1.0d1 (jwp) Expanded outline & first draft
+15 Dec 2006 Draft 1.0a1 (jwp) Edits per 12-14 team meeting
+18 Dec 2006 Draft 1.0a2 (jwp) Move to Wiki, revise arch diagram
 
-Please note also that this version of the Connector Framework does not yet provide full
-functionality. Rather, it provides an early peek at this project for those who wish to get
-an early start on the design and development of their own connectors. Google urges you to
-return to this site regularly for updates to the connector framework source code and its
-documentation.
+= Google Connector Framework Technical Introduction=
+*Draft 1.0a2*
+*Revised 18 Dec 2006 (jwp)*
 
-= Details =
 
-  Connector Framework Technical Introduction
-Draft 1.0a2
-Revised 18 Dec 2006 (jwp)
 
-The Google Connector Framework (GCF) enables Google search appliances to work with content
-stored in various popular Enterprise Content Management systems. An Enterprise Content
-Management (ECM) system provides a central repository for large numbers of documents; it
-is not uncommon for such systems to manage ten million documents. While all ECM systems
-provide some ability to retrieve documents based on associated keywords or other metadata,
-this functionality is extremely limited and slow in comparison to the powerful, flexible
-search capabilities that Google search appliances provide.
 
-Many ECM systems provide an API that enables the programmatic manipulation of documents.
-You can use the Connector Framework to create your own Java connector that calls the
-native API of a specific ECM system on behalf of Google search appliances. Multiple
-connector instances enable a search appliance to interact with multiple ECM systems.
+The *Google Connector Framework (GCF)* enables Google search appliances to work with
+content stored in various popular Enterprise Content Management systems. An *Enterprise
+Content Management (ECM)* system provides a central repository for large numbers of
+documents; it is not uncommon for such systems to manage ten million documents. While all
+ECM systems provide some ability to retrieve documents based on associated keywords or
+other metadata, this functionality is extremely limited and slow in comparison to the
+powerful, flexible search capabilities that Google search appliances provide.
+
+Many ECM systems provide an API that enables the programmatic manipulation of the ECM
+repository. You can use the Connector Framework to create your own Java connector that
+calls the native API of a specific ECM system on behalf of Google search appliances.
+Multiple connector instances enable a search appliance to interact with multiple ECM systems.
 
 Most ECM systems authenticate users, control access to documents, and provide
 version-management functionality. Each connector enables a Google search appliance to
