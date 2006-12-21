@@ -22,14 +22,19 @@ Create a new empty directory.  You may use any name for this directory, but for 
 
 == Code Layout ==
 
-You will notice the following directories (this list is not complete):
+Inside the connector-manager directory, you will find the following directories (this list is not complete):
 
-||connector-manager/||	|| 	|| 	||
-|| 		||projects/	|| 	|| 	||
-|| 		|| 	||connector-manager/	||	||
-|| 		|| 	||test-connectorA/	||	||
-|| 		|| 	||test-connectorB/	||	||
-|| 		|| 	||third_party/		||	||
+  * projects/
+    * connector-manager/
+      * etc/
+      * source/
+        * java/
+        * javatests/
+      * testdata/
+    * test-connectorA/
+    * test-connectorB/
+    * third_party/
+      * lib/
 
 == Copy the JCR Jar to the Right Place ==
 
