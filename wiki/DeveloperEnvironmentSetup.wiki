@@ -20,41 +20,40 @@ Note on the JDK version: the connector manager is designed so that it can be bui
 
 Create a new empty directory.  You may use any name for this directory, but for clarity we will use "connector-manager" in the decriptions below.  Checkout the Connector Manager code into the "connector-manager" directory.  Use the svn client of your choice.  Point the client to the Connector Manager Code Site, and supply your name and password if required. 
 
-== Code Layout ==
+== Directory Layout ==
 
 Inside the connector-manager directory, you will find the following directories (this list is not complete):
 
-  * projects/
-    * connector-manager/
-      * etc/
-      * source/
-        * java/
-        * javatests/
-      * testdata/
-    * test-connectorA/
-    * test-connectorB/
-    * third_party/
-      * lib/
+  * {{{projects/}}}
+    * {{{connector-manager/}}}
+      * {{{etc/}}}
+      * {{{source/}}}
+        * {{{java/}}}
+        * {{{javatests/}}}
+      * {{{testdata/}}}
+    * {{{test-connectorA/}}}
+    * {{{test-connectorB/}}}
+    * {{{third_party/}}}
+      * {{{lib/}}}
 
 == Copy the JCR Jar to the Right Place ==
 
-IMPORTANT: Copy the jcr-1.0.jar to connector-manager/projects/third_party/lib.
+IMPORTANT: Copy the jcr-1.0.jar to {{{connector-manager/projects/third_party/lib}}}.
 
 == Verify that the Connector Manager Builds ==
 
-Use a shell or command window and change directory into the "connector-manager/projects" directory.  Run "ant" in that directory.  There should be no errors reported.  A common cause of problems here is not copying the jcr-1.0.jar to the proper place.
+Use a shell or command window and change directory into the {{{connector-manager/projects}}} directory.  Run "ant" in that directory.  There should be no errors reported.  A common cause of problems here is not copying the jcr-1.0.jar to the proper place.
 
-= Set up Eclipse Projects =
+== Set up Eclipse Projects ==
 
 For clarity, the following directions assume that you will create a new eclipse workspace for this development.  This is not required.  It is possible to use an existing eclipse workspace, but the steps you would then follow would be subtly different, depending on the state of your current workspace. 
 
   # Start up eclipse.  Point it to a new workspace.  This workspace should be a new directory, independent from the directory into which you checked out the connector-manager svn repository.
-  # Go to Preferences->Java->Compiler.  Set Compiler Compliance Level to 1.4.
-  # Go to Preferences->Java->Installed JREs.  Make sure you have a 1.4.2 JRE or JDK and make it the default for this workspace.
-  # Create the following four projects, “connector-manager”, “third_party”, “test-connectorA” and “test-connectorB”.  For each one, follow these steps (replace “project-name” appropriately.
-    # File->New->Project.  Choose “Java Project”
-    # Fill in the project-name.
-    # Choose “Create project from existing source” and browse to the sub-directory under “projects” in your svn checkout directory whose name corresponds to the project-name.  For example, the directory for the “connector-manager” project is connector-manager/projects/connector-manager.
-  # There should be no errors shown although there may be warnings.  It may be necessary to clean the connector-manager project.  To do so, select that project, then choose Project->Clean
-  # Verify that all is well by running the unit tests through eclipse.  Right-click on the connector-manager project and choose Run As->Junit Test.  All tests should be green.
-
+  # Go to {{{Preferences->Java->Compiler}}}.  Set Compiler Compliance Level to 1.4.
+  # Go to {{{Preferences->Java->Installed JREs}}}.  Make sure you have a 1.4.2 JRE or JDK and make it the default for this workspace.
+  # Create the following four projects, {{{connector-manager}}}, {{{third_party}}}, {{{test-connectorA}}} and {{{test-connectorB}}}.  For each one, follow these steps (replace {{{project-name}}} appropriately.
+    * {{{File->New->Project}}}.  Choose {{{Java Project}}}
+    * Fill in the project-name.
+    * Choose {{{Create project from existing source}}} and browse to the sub-directory under {{{projects}}} in your svn checkout directory whose name corresponds to the project-name.  For example, the directory for the {{{connector-manager}}} project is {{{connector-manager/projects/connector-manager}}}.
+  # There should be no errors shown although there may be warnings.  It may be necessary to clean the connector-manager project.  To do so, select that project, then choose {{{Project->Clean}}}
+  # Verify that all is well by running the unit tests through eclipse.  Right-click on the connector-manager project and choose {{{Run As->Junit Test}}}.  All tests should be green.
