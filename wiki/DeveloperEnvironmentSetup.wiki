@@ -6,7 +6,7 @@ These instructions are intended for developers who want to develop a new connect
 
 The steps in this document are suggestions, not requirements.  For example, Ant and Eclipse are not required, but that is the only scenario we describe here.  You are free to use whatever development tools you like! 
 
-= Prerequisites =
+== Prerequisites ==
 
 Install [http://ant.apache.org/ Apache Ant], [http://www.eclipse.org/ Eclipse], and [http://tomcat.apache.org/ Tomcat].  See those websites for download and installation instructions.
 
@@ -16,26 +16,26 @@ For building tests, download the JSR-170 api: jcr-1.0.jar.  See the [http://jcp.
 
 Note on the JDK version: the connector manager is designed so that it can be built and run using JDK 1.4.2.  It should work fine with newer JDKs.
 
-= Checking out the Connector Manager Code =
+== Checking out the Connector Manager Code ==
 
 Create a new empty directory.  You may use any name for this directory, but for clarity we will use "connector-manager" in the decriptions below.  Checkout the Connector Manager code into the "connector-manager" directory.  Use the svn client of your choice.  Point the client to the Connector Manager Code Site, and supply your name and password if required. 
 
-= Code Layout =
+== Code Layout ==
 
 You will notice the following directories (this list is not complete):
 
-connector-manager/
-   projects/
-      connector-manager/
-      test-connectorA/
-      test-connectorB/
-      third_party/
+||connector-manager/||	|| 	|| 	||
+|| 		||projects/	|| 	|| 	||
+|| 		|| 	||connector-manager/	||	||
+|| 		|| 	||test-connectorA/	||	||
+|| 		|| 	||test-connectorB/	||	||
+|| 		|| 	||third_party/		||	||
 
-= Copy the JCR Jar to the Right Place =
+== Copy the JCR Jar to the Right Place ==
 
 IMPORTANT: Copy the jcr-1.0.jar to connector-manager/projects/third_party/lib.
 
-= Verify that the Connector Manager Builds =
+== Verify that the Connector Manager Builds ==
 
 Use a shell or command window and change directory into the "connector-manager/projects" directory.  Run "ant" in that directory.  There should be no errors reported.  A common cause of problems here is not copying the jcr-1.0.jar to the proper place.
 
