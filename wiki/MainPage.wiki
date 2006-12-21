@@ -15,3 +15,7 @@ Some important disclaimers:
   * The documentation in this wiki is informal and unsupported.  When and if this project becomes formally supported, supported documentation will also be made available.  
 
 This wiki is maintained by the development team itself.  
+
+== Documentation Links ==
+
+  * [DeveloperEnvironmentSetup]  Some hints on getting started as a developer
