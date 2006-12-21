@@ -1,4 +1,5 @@
 #summary Start here to explore the Connector Manager wiki!
+#labels Featured
 
 = Introduction =
 
