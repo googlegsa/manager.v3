@@ -1,0 +1,17 @@
+#summary Directions for setting up a developer environment
+
+= Introduction =
+
+These instructions are intended for developers who want to develop a new connector for Google Search Appliance, using the Connector Manager or who want to work on the Connector Manager itself.  
+
+The steps in this document are suggestions, not requirements.  For example, Ant and Eclipse are not required, but that is the only scenario we describe here.  You are free to use whatever development tools you like! 
+
+= Prerequisites =
+
+Install Apache Ant, Eclipse, and Tomcat .  See those websites for downloads and installation instructions.
+
+Install a subversion (svn) client.  See the Connector Manager Code Site ("Source" tab) for a list of svn clients.
+
+For building tests, download the JSR-170 api: jcr-1.0.jar.  See the JSR-170 Site.
+
+Note on the JDK version: the connector manager is designed to be built and run using JDK 1.4.2.  It should work fine with newer JDKs.
