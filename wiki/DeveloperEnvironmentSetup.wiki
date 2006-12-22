@@ -52,7 +52,7 @@ For clarity, the following directions assume that you will create a new eclipse 
   # Go to {{{Window->Preferences->Java->Compiler}}}.  Set Compiler Compliance Level to 1.4.
   # Go to {{{Window->Preferences->Java->Installed JREs}}}.  Make sure you have a 1.4.2 JRE or JDK and make it the default for this workspace.
   # Create the following four projects, {{{connector-manager}}}, {{{third_party}}}, {{{test-connectorA}}} and {{{test-connectorB}}}.  For each one, follow these steps (replace {{{project-name}}} appropriately.
-    * {{{File->New->Project}}}.  Choose {{{Java Project}}}
+    * {{{File->New->Project}}}.  Choose {{{Java Project}}} and click {{{Next}}}
     * Fill in the project-name.
     * Choose {{{Create project from existing source}}} and browse to the sub-directory under {{{projects}}} in your svn checkout directory whose name corresponds to the project-name.  For example, the directory for the {{{connector-manager}}} project is {{{connector-manager/projects/connector-manager}}}.
   # There should be no errors shown although there may be warnings.  It may be necessary to clean the connector-manager project.  To do so, select that project, then choose {{{Project->Clean}}}
