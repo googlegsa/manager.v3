@@ -1,0 +1,11 @@
+#summary How to get in touch with the Google Enterprise Connector Manager team
+
+= Contact the Google Enterprise Connector Manager team =
+
+Thanks for your interest in the Google Enterprise Connector Manager!
+
+Please feel free to get in touch with us.
+
+If you have a bug, issue or suggestion, you can make an entry in the Issues database.  Just click on the "Issues" tab on this or any project page.  Anyone can submit an issue.
+
+If you would like to exchange email, please use the Google-Search-Appliance group on googlegroups: http://groups.google.com/group/Google-Search-Appliance.  Membership is required for posting, but anyone may join.  This is a general interest group - if interest warrants, we will establish a developer group.
