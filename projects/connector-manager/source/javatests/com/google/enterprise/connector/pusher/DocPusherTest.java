@@ -50,6 +50,7 @@ public class DocPusherTest extends TestCase {
     String[] expectedXml = new String[1];
     String feedType = "metadata-and-url";
     String record = "<record url=\"http://www.sometesturl.com/test\""
+        + " mimetype=\"text/html\""
         + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\" >\n"
         + "<metadata>\n"
         + "<meta name=\"google:lastmodify\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
