@@ -187,9 +187,12 @@ public class DocPusher implements Pusher {
 
       ByteArrayInputStream suffixStream =
         new ByteArrayInputStream(suffix.getBytes(XML_DEFAULT_ENCODING));
-
-      InputStream[] inputStreams =
-        new InputStream[]{ prefixStream, is, suffixStream };
+      InputStream[] inputStreams;
+      if (is != null) {
+        inputStreams = new InputStream[]{ prefixStream, is, suffixStream };
+      } else {
+        inputStreams = new InputStream[]{ prefixStream, suffixStream };
+      }
       Enumeration inputStreamEnum =
         Collections.enumeration(Arrays.asList(inputStreams));
       result = new SequenceInputStream(inputStreamEnum);
@@ -211,8 +214,7 @@ public class DocPusher implements Pusher {
     prefix.append(XML_RECORD);
     prefix.append(" ");
     appendAttrValuePair(XML_URL, searchUrl, prefix);
-    if (feedType != XML_FEED_METADATA_AND_URL &&
-        displayUrl != null && displayUrl.length() > 0) {
+    if (displayUrl != null && displayUrl.length() > 0) {
       appendAttrValuePair(XML_DISPLAY_URL, displayUrl, prefix);
     }
     if (mimetype != null) {
@@ -249,6 +251,7 @@ public class DocPusher implements Pusher {
     }
     suffix.append(xmlWrapEnd(XML_RECORD));
 
+   
     InputStream is =
       stringWrappedInputStream(prefix.toString(), content, suffix.toString());
     return is;
@@ -491,11 +494,13 @@ public class DocPusher implements Pusher {
       String docid = getRequiredString(pm, SpiConstants.PROPNAME_DOCID);
       searchurl = constructGoogleConnectorUrl(connectorName, docid);
     }
-
-    InputStream contentStream =
-      getOptionalStream(pm, SpiConstants.PROPNAME_CONTENT);
-    InputStream encodedContentStream =
-      new Base64FilterInputStream(contentStream);
+    
+    InputStream encodedContentStream = null;
+    if (this.feedType != XML_FEED_METADATA_AND_URL) {
+      InputStream contentStream =
+        getOptionalStream(pm, SpiConstants.PROPNAME_CONTENT);
+       encodedContentStream = new Base64FilterInputStream(contentStream);
+    }
 
     Calendar lastModified = null;
     try {
@@ -514,20 +519,21 @@ public class DocPusher implements Pusher {
       // maybe someone supplied a date as a string in some other format
       lastModifiedString =
           getOptionalString(pm, SpiConstants.PROPNAME_LASTMODIFY);
-    } else if (this.feedType != XML_FEED_METADATA_AND_URL) {
+    } else {
       lastModifiedString = SimpleValue.calendarToRfc822(lastModified);
     }
-
+    
     String mimetype = getOptionalString(pm, SpiConstants.PROPNAME_MIMETYPE);
-    if (mimetype == null && this.feedType != XML_FEED_METADATA_AND_URL) {
+    if (mimetype == null) {
       mimetype = SpiConstants.DEFAULT_MIMETYPE;
     }
 
     String displayUrl = getOptionalString(pm, SpiConstants.PROPNAME_DISPLAYURL);
 
-    InputStream recordInputStream =
+    InputStream recordInputStream = 
       xmlWrapRecord(searchurl, displayUrl, lastModifiedString,
         encodedContentStream, mimetype, pm);
+    
     InputStream is =
       stringWrappedInputStream(prefix.toString(), recordInputStream,
         suffix.toString());
