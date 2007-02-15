@@ -109,6 +109,7 @@ public class SimpleProperty implements Property {
       return null;
     }
     List l = new ArrayList(1);
+    l.add(value);
     return l.iterator();
   }
 
