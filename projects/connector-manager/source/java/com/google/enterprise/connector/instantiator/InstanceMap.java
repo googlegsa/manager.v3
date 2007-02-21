@@ -26,6 +26,7 @@ import java.util.logging.Logger;
 
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.spi.ConfigureResponse;
 
 /**
  * This class keeps track of the installed connector instances, maintains a
@@ -90,16 +91,18 @@ public class InstanceMap extends TreeMap {
     return (InstanceInfo) get(name);
   }
 
-  public void updateConnector(
-      String name, String typeName, Map config, boolean update)
+  public ConfigureResponse updateConnector(
+      String name, String typeName, Map config,
+      String language, boolean update)
       throws InstantiatorException, ConnectorNotFoundException,
       ConnectorExistsException {
     InstanceInfo instanceInfo = getInstanceInfo(name);
+    ConfigureResponse response = null;
     if (instanceInfo == null) {
       if (update) {
         throw new ConnectorNotFoundException();  
       }
-      createNewConnector(name, typeName, config);
+      response = createNewConnector(name, typeName, config, language);
     } else {
       if (!update) {
         throw new ConnectorExistsException();
@@ -108,27 +111,30 @@ public class InstanceMap extends TreeMap {
       String previousTypeName = typeInfo.getConnectorTypeName();
       if (previousTypeName.equals(typeName)) {
         File connectorDir = instanceInfo.getConnectorDir();
-        resetConfig(name, connectorDir, typeInfo, config);
+        response = resetConfig(name, connectorDir, typeInfo, config, language);
       } else {
         // an existing connector is being given a new type - drop then add
         dropConnector(name);
-        createNewConnector(name, typeName, config);
+        response = createNewConnector(name, typeName, config, language);
       }
     }
+    return response;
   }
 
-  private void createNewConnector(String name, String typeName, Map config)
+  private ConfigureResponse createNewConnector(String name, String typeName,
+	  Map config, String language)
       throws InstantiatorException {
     TypeInfo typeInfo = typeMap.getTypeInfo(typeName);
     if (typeInfo == null) {
       throw new InstantiatorException();
     }
     File connectorDir = makeConnectorDirectory(name, typeInfo);
-    resetConfig(name, connectorDir, typeInfo, config);
+    return resetConfig(name, connectorDir, typeInfo, config, language);
   }
 
-  private void resetConfig(String name, File connectorDir, TypeInfo typeInfo,
-      Map config) throws InstantiatorException {
+  private ConfigureResponse resetConfig(String name, File connectorDir,
+      TypeInfo typeInfo, Map config, String language)
+      throws InstantiatorException {
     InstanceInfo instanceInfo =
         InstanceInfo.fromNewConfig(name, connectorDir, typeInfo, config);
     if (instanceInfo == null) {
@@ -137,6 +143,9 @@ public class InstanceMap extends TreeMap {
       throw new InstantiatorException();
     }
     this.put(name, instanceInfo);
+
+    // now, validate the configuration.
+    return typeInfo.getConnectorType().validateConfig(config, language);
   }
 
   private File makeConnectorDirectory(String name, TypeInfo typeInfo)

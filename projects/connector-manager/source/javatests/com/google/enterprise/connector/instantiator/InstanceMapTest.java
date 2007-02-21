@@ -63,10 +63,12 @@ public class InstanceMapTest extends TestCase {
        */
       String name = "connector1";
       String typeName = "TestConnectorA";
+      String language = "en";
       String jsonConfigString =
           "{username:foo, password:bar, color:red, "
               + "RepositoryFile:MockRepositoryEventLog3.txt}";
-      updateConnectorTest(instanceMap, name, typeName, false, jsonConfigString);
+      updateConnectorTest(instanceMap, name, typeName, language,
+    		              false, jsonConfigString);
     }
 
     {
@@ -76,10 +78,12 @@ public class InstanceMapTest extends TestCase {
        */
       String name = "connector2";
       String typeName = "TestConnectorB";
+      String language = "en";
       String jsonConfigString =
           "{username:foo, password:bar, flavor:minty-fresh, "
               + "RepositoryFile:MockRepositoryEventLog3.txt}";
-      updateConnectorTest(instanceMap, name, typeName, false, jsonConfigString);
+      updateConnectorTest(instanceMap, name, typeName, language,
+    		              false, jsonConfigString);
     }
 
     Assert.assertEquals(2, instanceMap.size());
@@ -91,10 +95,12 @@ public class InstanceMapTest extends TestCase {
        */
       String name = "connector2";
       String typeName = "TestConnectorB";
+      String language = "en";
       String jsonConfigString =
           "{username:foo, password:bar, flavor:butterscotch, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
-      updateConnectorTest(instanceMap, name, typeName, true, jsonConfigString);
+      updateConnectorTest(instanceMap, name, typeName, language,
+    		              true, jsonConfigString);
     }
 
     Assert.assertEquals(2, instanceMap.size());
@@ -105,10 +111,12 @@ public class InstanceMapTest extends TestCase {
        */
       String name = "connector3";
       String typeName = "TestConnectorB";
+      String language = "en";
       String jsonConfigString =
           "{username:foo, password:bar, flavor:chocolate, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
-      updateConnectorTest(instanceMap, name, typeName, false, jsonConfigString);
+      updateConnectorTest(instanceMap, name, typeName, language,
+    		              false, jsonConfigString);
     }
 
     Assert.assertEquals(3, instanceMap.size());
@@ -120,10 +128,12 @@ public class InstanceMapTest extends TestCase {
        */
       String name = "connector3";
       String typeName = "TestConnectorA";
+      String language = "en";
       String jsonConfigString =
           "{username:foo, password:bar, color:blue, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
-      updateConnectorTest(instanceMap, name, typeName, true, jsonConfigString);
+      updateConnectorTest(instanceMap, name, typeName, language,
+    		              true, jsonConfigString);
     }
 
     Assert.assertEquals(3, instanceMap.size());
@@ -135,11 +145,13 @@ public class InstanceMapTest extends TestCase {
        */
       String name = "connector2";
       String typeName = "TestConnectorA";
+      String language = "en";
       String jsonConfigString =
           "{username:foo, password:bar, flavor:butterscotch, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
       try {
-        updateConnectorTest(instanceMap, name, typeName, false, jsonConfigString);
+        updateConnectorTest(instanceMap, name, typeName, language,
+        		            false, jsonConfigString);
       } catch (ConnectorExistsException e) {
         Assert.assertTrue(true);
       } catch (ConnectorManagerException e) {
@@ -156,11 +168,13 @@ public class InstanceMapTest extends TestCase {
        */
       String name = "connectorNew";
       String typeName = "TestConnectorB";
+      String language = "en";
       String jsonConfigString =
           "{username:foo, password:bar, flavor:butterscotch, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
       try {
-        updateConnectorTest(instanceMap, name, typeName, true, jsonConfigString);
+        updateConnectorTest(instanceMap, name, typeName, language,
+        		            true, jsonConfigString);
       } catch (ConnectorNotFoundException e) {
         Assert.assertTrue(true);
       } catch (ConnectorManagerException e) {
@@ -179,10 +193,11 @@ public class InstanceMapTest extends TestCase {
   }
 
   private void updateConnectorTest(InstanceMap instanceMap, String name,
-      String typeName, boolean update, String jsonConfigString) throws JSONException,
-      InstantiatorException, ConnectorNotFoundException, ConnectorExistsException {
+      String typeName, String language, boolean update,
+      String jsonConfigString) throws JSONException, InstantiatorException,
+      ConnectorNotFoundException, ConnectorExistsException {
     Map config = new JsonObjectAsMap(new JSONObject(jsonConfigString));
-    instanceMap.updateConnector(name, typeName, config, update);
+    instanceMap.updateConnector(name, typeName, config, language, update);
     InstanceInfo instanceInfo = instanceMap.getInstanceInfo(name);
     File connectorDir = instanceInfo.getConnectorDir();
     Assert.assertTrue(connectorDir.exists());
