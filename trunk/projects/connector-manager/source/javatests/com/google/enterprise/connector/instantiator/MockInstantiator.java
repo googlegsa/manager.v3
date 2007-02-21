@@ -174,10 +174,12 @@ public class MockInstantiator implements Instantiator {
     return connectorMap.keySet().iterator();
   }
 
-  public void setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configKeys, boolean update)
+  public ConfigureResponse setConnectorConfig(String connectorName,
+      String connectorTypeName, Map configKeys, String language,
+      boolean update)
       throws ConnectorNotFoundException, ConnectorTypeNotFoundException,
       InstantiatorException {
+	  return null;
   }
 
   public void dropConnector(String connectorName) throws InstantiatorException {

@@ -116,14 +116,20 @@ public interface Instantiator {
    * @param connectorName The connector to create
    * @param connectorTypeName The type for this connector
    * @param configKeys A configuration map for this connector
+   * @param A locale string, such as "en" or "fr_CA" which the
+   *        implementation may use to produce appropriate descriptions and
+   *        messages
    * @param update A boolean true if updating the existing connector
+   * @return null if config is valid and accepted, a ConfigureResponse object
+   *         if config is invalid.
    * @throws ConnectorNotFoundException
    * @throws ConnectorExistsException 
    * @throws ConnectorTypeNotFoundException
    * @throws InstantiatorException
    */
-  public void setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configKeys, boolean update)
+  public ConfigureResponse setConnectorConfig(String connectorName,
+      String connectorTypeName, Map configKeys, String language,
+      boolean update)
       throws ConnectorNotFoundException, ConnectorExistsException,
       ConnectorTypeNotFoundException, InstantiatorException;
 
