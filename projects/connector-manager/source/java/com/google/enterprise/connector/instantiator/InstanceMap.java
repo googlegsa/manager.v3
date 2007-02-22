@@ -142,10 +142,13 @@ public class InstanceMap extends TreeMap {
       // thrown, but just in case
       throw new InstantiatorException();
     }
-    this.put(name, instanceInfo);
-
     // now, validate the configuration.
-    return typeInfo.getConnectorType().validateConfig(config, language);
+    ConfigureResponse response =
+    	typeInfo.getConnectorType().validateConfig(config, language);
+    if (response == null) {
+    	this.put(name, instanceInfo);
+    }
+    return response; 
   }
 
   private File makeConnectorDirectory(String name, TypeInfo typeInfo)
