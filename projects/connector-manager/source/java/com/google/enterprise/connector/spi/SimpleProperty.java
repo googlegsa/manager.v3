@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.spi;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -103,14 +104,12 @@ public class SimpleProperty implements Property {
    */
   public Iterator getValues() throws RepositoryException {
     if (repeating) {
+        if (valueList == null) {
+            return Arrays.asList(new Value[]{}).iterator();
+          }
       return valueList.iterator();
     }
-    if (value == null) {
-      return null;
-    }
-    List l = new ArrayList(1);
-    l.add(value);
-    return l.iterator();
+    return Arrays.asList(new Value[]{value}).iterator();
   }
 
 }
