@@ -155,6 +155,31 @@ public class SimpleValueTest extends TestCase {
 
   /**
    * Test method for
+   * {@link com.google.enterprise.connector.spi.SimpleValue#toString()}.
+   * 
+   * @throws RepositoryException
+   * @throws IllegalArgumentException
+   */
+  public final void testToString() throws IllegalArgumentException,
+      RepositoryException {
+    Assert
+        .assertEquals("0", new SimpleValue(ValueType.STRING, "0").toString());
+    Assert.assertEquals("foo", new SimpleValue(ValueType.STRING, "foo")
+        .toString());
+    Assert.assertEquals("true", new SimpleValue(ValueType.STRING, "true")
+        .toString());
+    Assert.assertEquals("100.000", new SimpleValue(ValueType.STRING, "100.000")
+        .toString());
+    Assert.assertEquals("12345.0", new SimpleValue(ValueType.STRING, "12345.0")
+    .toString());
+    String str = new TestSimpleValue(ValueType.STRING, "12345.0")
+    .toString();
+    Assert.assertNotNull(str);
+    Assert.assertTrue("Actual value: " + str, str.indexOf("RepositoryException") >= 0); 
+  }
+
+  /**
+   * Test method for
    * {@link com.google.enterprise.connector.spi.SimpleValue#getType()}.
    * 
    * @throws RepositoryException
@@ -203,5 +228,15 @@ public class SimpleValueTest extends TestCase {
     Assert.assertEquals("Thu, 01 Jan 1970 00:00:00 GMT", s);
   }
 
-
+  class TestSimpleValue extends SimpleValue {
+	  public TestSimpleValue(ValueType t, String v) {
+		    super(t,v);
+	  }
+	  
+	  public String getString() throws IllegalArgumentException,
+	      RepositoryException {
+	    throw new RepositoryException("just testing");
+	  }
+ }
+  
 }

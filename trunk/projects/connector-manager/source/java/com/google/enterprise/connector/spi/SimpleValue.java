@@ -49,6 +49,14 @@ public class SimpleValue implements Value {
     }
   }
 
+  public String toString() {
+      try {
+          return getString();
+      } catch (RepositoryException e) {
+          return e.toString();
+      }
+  }
+  
   /*
    * (non-Javadoc)
    * 
