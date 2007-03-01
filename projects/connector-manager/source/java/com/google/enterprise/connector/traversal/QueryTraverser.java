@@ -46,7 +46,7 @@ public class QueryTraverser implements Traverser {
    * 
    * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
    */
-  public int runBatch(int batchHint) throws InterruptedException {
+  public synchronized int runBatch(int batchHint) throws InterruptedException {
     int counter = 0;
     PropertyMap pm = null;
     String connectorState =
