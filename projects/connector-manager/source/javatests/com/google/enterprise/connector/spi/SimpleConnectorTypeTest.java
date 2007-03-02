@@ -107,10 +107,7 @@ public class SimpleConnectorTypeTest extends TestCase {
       Map map = new JsonObjectAsMap(jo);
       ConfigureResponse configureResponse =
           simpleConnectorType.validateConfig(map, null);
-      String configForm = configureResponse.getFormSnippet();
-      Assert.assertEquals(null, configForm);
-      String message = configureResponse.getMessage();
-      Assert.assertEquals(null, message);
+      Assert.assertEquals(null, configureResponse);
     }
   }
 

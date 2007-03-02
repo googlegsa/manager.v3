@@ -249,7 +249,7 @@ public class SimpleConnectorType implements ConnectorType {
   public ConfigureResponse validateConfig(Map configData, String language) {
     if (validateConfigMap(configData)) {
       // all is ok
-      return new ConfigureResponse(null, null);
+      return null;
     }
     String form = makeValidatedForm(configData);
     return new ConfigureResponse("Some required configuration is missing", form);
