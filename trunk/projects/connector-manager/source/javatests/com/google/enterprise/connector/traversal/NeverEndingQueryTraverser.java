@@ -22,7 +22,7 @@ public class NeverEndingQueryTraverser implements Traverser {
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
    */
-  public int runBatch(int batchHint) throws InterruptedException {
+  public int runBatch(int batchHint) {
     boolean breakLoop = true;
     // infinite loop
     while (breakLoop) {

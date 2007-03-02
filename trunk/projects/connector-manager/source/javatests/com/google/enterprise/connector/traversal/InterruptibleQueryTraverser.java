@@ -26,7 +26,7 @@ public class InterruptibleQueryTraverser implements Traverser {
    * 
    * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
    */
-  public int runBatch(int batchHint) throws InterruptedException {
+  public int runBatch(int batchHint) {
     int counter = 0;
     boolean breakLoop = true;
     boolean interrupted = false;
