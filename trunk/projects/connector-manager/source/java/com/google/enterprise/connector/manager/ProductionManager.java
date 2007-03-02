@@ -274,9 +274,9 @@ public class ProductionManager implements Manager {
       boolean update)
       throws ConnectorNotFoundException, PersistentStoreException,
       InstantiatorException {
-    instantiator.setConnectorConfig(connectorName, connectorTypeName,
+    ConfigureResponse resp =  instantiator.setConnectorConfig(connectorName, connectorTypeName,
         configData, language, update);
-    return null;
+    return resp;
   }
 
   /*

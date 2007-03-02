@@ -133,8 +133,12 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
     Manager manager = Context.getInstance(servletContext).getManager();
     SetConnectorConfigHandler handler = new SetConnectorConfigHandler(
         writer.getBuffer().toString(), manager);
+    ConfigureResponse configRes = handler.getConfigRes();
+    ConnectorMessageCode status = (configRes == null) ? handler.getStatus() :
+    	new ConnectorMessageCode(ConnectorMessageCode.INVALID_CONNECTOR_CONFIG); 
+
     ConnectorManagerGetServlet.writeConfigureResponse(
-        out, handler.getStatus(), handler.getConfigRes());
+        out, status, configRes);
     out.close();
   }
 }
