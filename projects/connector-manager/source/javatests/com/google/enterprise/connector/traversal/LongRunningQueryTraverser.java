@@ -22,9 +22,13 @@ public class LongRunningQueryTraverser implements Traverser {
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
    */
-  public int runBatch(int batchHint) throws InterruptedException {
+  public int runBatch(int batchHint) {
     long sleepTime = 60 * 1000;
-    Thread.sleep(sleepTime);
+    try {
+      Thread.sleep(sleepTime);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
     return batchHint;
   }
 
