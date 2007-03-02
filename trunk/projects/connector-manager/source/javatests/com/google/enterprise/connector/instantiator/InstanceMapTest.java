@@ -65,7 +65,7 @@ public class InstanceMapTest extends TestCase {
       String typeName = "TestConnectorA";
       String language = "en";
       String jsonConfigString =
-          "{username:foo, password:bar, color:red, "
+          "{Username:foo, Password:bar, Color:red, "
               + "RepositoryFile:MockRepositoryEventLog3.txt}";
       updateConnectorTest(instanceMap, name, typeName, language,
     		              false, jsonConfigString);
@@ -80,7 +80,7 @@ public class InstanceMapTest extends TestCase {
       String typeName = "TestConnectorB";
       String language = "en";
       String jsonConfigString =
-          "{username:foo, password:bar, flavor:minty-fresh, "
+          "{Username:foo, Password:bar, Flavor:minty-fresh, "
               + "RepositoryFile:MockRepositoryEventLog3.txt}";
       updateConnectorTest(instanceMap, name, typeName, language,
     		              false, jsonConfigString);
@@ -97,7 +97,7 @@ public class InstanceMapTest extends TestCase {
       String typeName = "TestConnectorB";
       String language = "en";
       String jsonConfigString =
-          "{username:foo, password:bar, flavor:butterscotch, "
+          "{Username:foo, Password:bar, Flavor:butterscotch, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
       updateConnectorTest(instanceMap, name, typeName, language,
     		              true, jsonConfigString);
@@ -113,7 +113,7 @@ public class InstanceMapTest extends TestCase {
       String typeName = "TestConnectorB";
       String language = "en";
       String jsonConfigString =
-          "{username:foo, password:bar, flavor:chocolate, "
+          "{Username:foo, Password:bar, Flavor:chocolate, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
       updateConnectorTest(instanceMap, name, typeName, language,
     		              false, jsonConfigString);
@@ -130,7 +130,7 @@ public class InstanceMapTest extends TestCase {
       String typeName = "TestConnectorA";
       String language = "en";
       String jsonConfigString =
-          "{username:foo, password:bar, color:blue, "
+          "{Username:foo, Password:bar, Color:blue, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
       updateConnectorTest(instanceMap, name, typeName, language,
     		              true, jsonConfigString);
@@ -147,7 +147,7 @@ public class InstanceMapTest extends TestCase {
       String typeName = "TestConnectorA";
       String language = "en";
       String jsonConfigString =
-          "{username:foo, password:bar, flavor:butterscotch, "
+          "{Username:foo, Password:bar, Flavor:butterscotch, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
       try {
         updateConnectorTest(instanceMap, name, typeName, language,
@@ -170,7 +170,7 @@ public class InstanceMapTest extends TestCase {
       String typeName = "TestConnectorB";
       String language = "en";
       String jsonConfigString =
-          "{username:foo, password:bar, flavor:butterscotch, "
+          "{Username:foo, Password:bar, Flavor:butterscotch, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
       try {
         updateConnectorTest(instanceMap, name, typeName, language,
