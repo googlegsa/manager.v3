@@ -130,7 +130,10 @@ public class UpdateConnectorNoGSA extends HttpServlet {
       LOGGER.log(Level.WARNING,
           ServletUtil.LOG_EXCEPTION_CONNECTOR_MANAGER, e);
     }
-
+    if (configRes != null) {
+      status =
+      	new ConnectorMessageCode(ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
+    }
     ConnectorManagerGetServlet.writeConfigureResponse(out, status, configRes);
     out.close();
   }

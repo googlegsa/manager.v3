@@ -95,8 +95,12 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
       String xmlBody, Manager manager, PrintWriter out) {
     SetConnectorConfigHandler handler =
         new SetConnectorConfigHandler(xmlBody, manager);
+    ConfigureResponse configRes = handler.getConfigRes();
+    ConnectorMessageCode status = (configRes == null) ? handler.getStatus() :
+    	new ConnectorMessageCode(ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
+
     ConnectorManagerGetServlet.writeConfigureResponse(
-        out, handler.getStatus(), handler.getConfigRes());
+        out, status, configRes);
     out.close();
   }
 

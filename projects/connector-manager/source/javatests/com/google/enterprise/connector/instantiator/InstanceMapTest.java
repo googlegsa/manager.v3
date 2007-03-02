@@ -37,6 +37,23 @@ import java.util.Map;
  * 
  */
 public class InstanceMapTest extends TestCase {
+  
+  private static final String TEST_DIR_NAME = "testdata/tempInstantiatorTests";
+  private File baseDirectory;
+
+  protected void setUp() throws Exception {
+    super.setUp();
+    // Make sure that the test directory does not exist
+    tearDown();
+    Assert.assertTrue(baseDirectory.mkdirs());
+  }
+
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    baseDirectory = new File(TEST_DIR_NAME);
+    Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+  }
+
 
   /**
    * Test method for
@@ -52,7 +69,7 @@ public class InstanceMapTest extends TestCase {
       InstantiatorException, ConnectorNotFoundException, ConnectorExistsException {
     TypeMap typeMap =
         new TypeMap("classpath*:config/connectorType.xml",
-            "testdata/instantiatorTests");
+            TEST_DIR_NAME);
     InstanceMap instanceMap = new InstanceMap(typeMap);
     Assert.assertEquals(0, instanceMap.size());
 

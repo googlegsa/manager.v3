@@ -113,7 +113,10 @@ public class UpdateConnector extends HttpServlet {
           ConnectorMessageCode.EXCEPTION_CONNECTOR_EXISTS, connectorName);
       LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_CONNECTOR_EXISTS, e);
     }
-
+    if (configRes != null) {
+      status =
+    	new ConnectorMessageCode(ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
+    }
     ConnectorManagerGetServlet.writeConfigureResponse(out, status, configRes);
     out.close();
   }

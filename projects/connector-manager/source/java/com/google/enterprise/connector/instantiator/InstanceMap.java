@@ -116,6 +116,12 @@ public class InstanceMap extends TreeMap {
         // an existing connector is being given a new type - drop then add
         dropConnector(name);
         response = createNewConnector(name, typeName, config, language);
+        if (response != null) {
+          // TODO: We need to restore original Connector config. This is
+          // necessary once we allow update a Connector with new ConnectorType.
+       	  LOGGER.severe("Failed to update Connector config." +
+       		" Need to restore original Connector config.");
+        }
       }
     }
     return response;
@@ -147,6 +153,9 @@ public class InstanceMap extends TreeMap {
     	typeInfo.getConnectorType().validateConfig(config, language);
     if (response == null) {
     	this.put(name, instanceInfo);
+    } else {
+    	LOGGER.warning("An invalid config for connector \"" + name
+    		+ "\" was rejected.");
     }
     return response; 
   }

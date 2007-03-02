@@ -154,5 +154,22 @@ public class ConnectorTestUtils {
     }
   }
 
+  public static boolean deleteAllFiles(File dir) {
+    if(!dir.exists()) {
+        return true;
+    }
+    boolean res = true;
+    if(dir.isDirectory()) {
+        File[] files = dir.listFiles();
+        for(int i = 0; i < files.length; i++) {
+            res &= deleteAllFiles(files[i]);
+        }
+        res = dir.delete();//Delete dir itself
+    } else {
+        res = dir.delete();
+    }
+    return res;
+  }
+  
 
 }
