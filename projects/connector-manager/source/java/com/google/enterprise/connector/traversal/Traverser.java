@@ -34,9 +34,7 @@ public interface Traverser {
    *         the batch hint). Perhaps we should return a more complicated
    *         structure that allows for more interesting monitoring: number of
    *         successful docs, number failed, average size, etc.
-   * @throws InterruptedException If the traversal perceives that an interrupt
-   *         was requested and it is able to interrupt itself.
    */
-  public int runBatch(int batchHint) throws InterruptedException;
+  public int runBatch(int batchHint);
 
 }

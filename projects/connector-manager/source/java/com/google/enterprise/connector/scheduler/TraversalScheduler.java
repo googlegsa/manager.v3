@@ -333,17 +333,12 @@ public class TraversalScheduler implements Scheduler {
     public void doWork() {
       Traverser traverser = getTraverser(connectorName);
       if (null != traverser) {
-        try {
-          LOGGER.finer("Begin runBatch");
-          numDocsTraversed = traverser.runBatch(
-            hostLoadManager.determineBatchHint(connectorName));
-          LOGGER.finer("End runBatch");
-          numConsecutiveFailures = 0;
-          timeOfFirstFailure = 0;
-        } catch (InterruptedException e) {
-          // timeout causes interruption of execution
-          LOGGER.info("TraverserRunnable was interrupted");
-        }
+        LOGGER.finer("Begin runBatch");
+        numDocsTraversed = traverser.runBatch(
+          hostLoadManager.determineBatchHint(connectorName));
+        LOGGER.finer("End runBatch");
+        numConsecutiveFailures = 0;
+        timeOfFirstFailure = 0;
       } else {
         failure();
       }
