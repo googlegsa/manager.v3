@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,30 +38,26 @@ public class SimpleConnectorTypeTest extends TestCase {
     {
       SimpleConnectorType simpleConnectorType = new SimpleConnectorType();
       simpleConnectorType.setConfigKeys(new String[] {"foo", "bar"});
-      ConfigureResponse configureResponse =
-          simpleConnectorType.getConfigForm(null);
+      ConfigureResponse configureResponse = simpleConnectorType
+          .getConfigForm(null);
       String initialConfigForm = configureResponse.getFormSnippet();
-      String expectedResult =
-          "<tr>\r\n" + "<td>foo</td>\r\n"
-              + "<td><input type=\"text\" name=\"foo\"/></td>\r\n"
-              + "</tr>\r\n" + "<tr>\r\n" + "<td>bar</td>\r\n"
-              + "<td><input type=\"text\" name=\"bar\"/></td>\r\n"
-              + "</tr>\r\n";
+      String expectedResult = "<tr>\r\n" + "<td>foo</td>\r\n"
+          + "<td><input type=\"text\" name=\"foo\"/></td>\r\n" + "</tr>\r\n"
+          + "<tr>\r\n" + "<td>bar</td>\r\n"
+          + "<td><input type=\"text\" name=\"bar\"/></td>\r\n" + "</tr>\r\n";
       Assert.assertEquals(expectedResult, initialConfigForm);
     }
     {
       SimpleConnectorType simpleConnectorType = new SimpleConnectorType();
       simpleConnectorType.setConfigKeys(new String[] {"user", "password"});
-      ConfigureResponse configureResponse =
-          simpleConnectorType.getConfigForm(null);
+      ConfigureResponse configureResponse = simpleConnectorType
+          .getConfigForm(null);
       String initialConfigForm = configureResponse.getFormSnippet();
-      String expectedResult =
-          "<tr>\r\n" + "<td>user</td>\r\n"
-              + "<td><input type=\"text\" name=\"user\"/></td>\r\n"
-              + "</tr>\r\n" + "<tr>\r\n" + "<td>password</td>\r\n"
-              + "<td><input type=\"password\" name=\"password\"/></td>\r\n"
-              + "</tr>\r\n";
-      System.out.println(initialConfigForm);
+      String expectedResult = "<tr>\r\n" + "<td>user</td>\r\n"
+          + "<td><input type=\"text\" name=\"user\"/></td>\r\n" + "</tr>\r\n"
+          + "<tr>\r\n" + "<td>password</td>\r\n"
+          + "<td><input type=\"password\" name=\"password\"/></td>\r\n"
+          + "</tr>\r\n";
       Assert.assertEquals(expectedResult, initialConfigForm);
     }
   }
@@ -76,24 +72,23 @@ public class SimpleConnectorTypeTest extends TestCase {
     {
       SimpleConnectorType simpleConnectorType = new SimpleConnectorType();
       simpleConnectorType.setConfigKeys(new String[] {"user", "password"});
-      JSONObject jo =
-          new JSONObject("{user:max, dog:snickers, destination:heaven}");
+      JSONObject jo = new JSONObject(
+          "{user:max, dog:snickers, destination:heaven}");
       Map map = new JsonObjectAsMap(jo);
-      ConfigureResponse configureResponse =
-          simpleConnectorType.validateConfig(map, null);
+      ConfigureResponse configureResponse = simpleConnectorType.validateConfig(
+          map, null);
       String configForm = configureResponse.getFormSnippet();
-      String expectedResult =
-          "<tr>\r\n"
-              + "<td>user</td>\r\n"
-              + "<td>max<input type=\"hidden\" value=\"max\" name=\"user\"/></td>\r\n"
-              + "</tr>\r\n"
-              + "<tr>\r\n"
-              + "<td>password</td>\r\n"
-              + "<td><input type=\"password\" name=\"password\"/></td>\r\n"
-              + "</tr>\r\n"
-              + "<input type=\"hidden\" value=\"heaven\" name=\"destination\"/>\r\n"
-              + "<input type=\"hidden\" value=\"snickers\" name=\"dog\"/>\r\n"
-              + "";
+      String expectedResult = 
+    	  "<tr>\r\n"
+          + "<td>user</td>\r\n"
+          + "<td><input type=\"text\" value=\"max\" name=\"user\"/></td>\r\n"
+          + "</tr>\r\n"
+          + "<tr>\r\n"
+          + "<td><font color=red>password</font></td>\r\n"
+          + "<td><input type=\"password\" name=\"password\"/></td>\r\n"
+          + "</tr>\r\n"
+          + "<input type=\"hidden\" value=\"heaven\" name=\"destination\"/>\r\n"
+          + "<input type=\"hidden\" value=\"snickers\" name=\"dog\"/>\r\n" + "";
       Assert.assertEquals(expectedResult, configForm);
       String message = configureResponse.getMessage();
       Assert.assertTrue(message.length() > 0);
@@ -102,18 +97,40 @@ public class SimpleConnectorTypeTest extends TestCase {
     {
       SimpleConnectorType simpleConnectorType = new SimpleConnectorType();
       simpleConnectorType.setConfigKeys(new String[] {"user", "password"});
-      JSONObject jo =
-          new JSONObject("{user:max, password:xyzzy, dog:snickers}");
+      JSONObject jo = new JSONObject("{user:max, password:xyzzy, dog:snickers}");      
       Map map = new JsonObjectAsMap(jo);
-      ConfigureResponse configureResponse =
-          simpleConnectorType.validateConfig(map, null);
-      Assert.assertEquals(null, configureResponse);
+      ConfigureResponse configureResponse = simpleConnectorType.validateConfig(
+          map, null);
+      Assert.assertNull(configureResponse);
+    }
+    
+    {
+      TestConnectorType testConnectorType = new TestConnectorType();
+      testConnectorType.setConfigKeys(new String[] {"user", "password"});
+      JSONObject jo = new JSONObject("{user:max, password:xyzzy}");      
+      Map map = new JsonObjectAsMap(jo);
+      ConfigureResponse configureResponse = testConnectorType.validateConfig(
+          map, null);
+      String configForm = configureResponse.getFormSnippet();
+      String expectedResult = 
+        "<tr>\r\n"
+          + "<td>user</td>\r\n"
+          + "<td><input type=\"text\" value=\"max\" name=\"user\"/></td>\r\n"
+          + "</tr>\r\n"
+          + "<tr>\r\n"
+          + "<td><font color=red>password</font></td>\r\n"
+          + "<td><input type=\"password\" name=\"password\"/></td>\r\n"
+          + "</tr>\r\n";
+      Assert.assertEquals(expectedResult, configForm);
+      String message = configureResponse.getMessage();
+      Assert.assertTrue(message.length() > 0);
     }
   }
 
   /**
    * Test method for
-   * {@link com.google.enterprise.connector.spi.SimpleConnectorType#getPopulatedConfigForm(java.util.Map, java.lang.String)}.
+   * {@link com.google.enterprise.connector.spi.SimpleConnectorType#
+   * getPopulatedConfigForm(java.util.Map, java.lang.String)}.
    * 
    * @throws JSONException
    */
@@ -122,22 +139,31 @@ public class SimpleConnectorTypeTest extends TestCase {
       SimpleConnectorType simpleConnectorType = new SimpleConnectorType();
       simpleConnectorType.setConfigKeys(new String[] {"user", "password"});
       Map map = new JsonObjectAsMap(new JSONObject("{user:max, password:foo}"));
-      ConfigureResponse configureResponse =
-          simpleConnectorType.getPopulatedConfigForm(map, null);
+      ConfigureResponse configureResponse = simpleConnectorType
+          .getPopulatedConfigForm(map, null);
       String configForm = configureResponse.getFormSnippet();
-      String expectedResult =
-          "<tr>\r\n"
-              + "<td>user</td>\r\n"
-              + "<td><input type=\"text\" name=\"user\" value=\"max\"/></td>\r\n"
-              + "</tr>\r\n"
-              + "<tr>\r\n"
-              + "<td>password</td>\r\n"
-              + "<td><input type=\"password\" name=\"password\" value=\"foo\"/>"
-              + "</td>\r\n"
-              + "</tr>\r\n";
+      String expectedResult = "<tr>\r\n" + "<td>user</td>\r\n"
+          + "<td><input type=\"text\" name=\"user\" value=\"max\"/></td>\r\n"
+          + "</tr>\r\n" + "<tr>\r\n" + "<td>password</td>\r\n"
+          + "<td><input type=\"password\" name=\"password\" value=\"foo\"/>"
+          + "</td>\r\n" + "</tr>\r\n";
       Assert.assertEquals(expectedResult, configForm);
       String message = configureResponse.getMessage();
       Assert.assertTrue(message.length() == 0);
+    }
+  }
+  private static class TestConnectorType extends SimpleConnectorType {
+    public TestConnectorType() {
+      super();
+    }
+    public boolean validateConfigPair(String key, String val) {
+      if (!super.validateConfigPair(key, val)) {
+        return false;
+      }
+      if (val.equals("xyzzy")) {
+        return false;
+      }
+      return true;
     }
   }
 }
