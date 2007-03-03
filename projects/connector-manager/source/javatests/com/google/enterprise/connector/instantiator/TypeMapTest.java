@@ -34,14 +34,15 @@ public class TypeMapTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     // Make sure that the test directory does not exist
-    tearDown();
+    baseDirectory = new File(TEST_DIR_NAME);
+    Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    // Then recreate it empty
     Assert.assertTrue(baseDirectory.mkdirs());
   }
 
   protected void tearDown() throws Exception {
-    super.tearDown();
-    baseDirectory = new File(TEST_DIR_NAME);
     Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    super.tearDown();
   }
 
   /**
