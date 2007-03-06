@@ -8,10 +8,9 @@
 	<property name="connector-manager.dir" value="connector-manager" />
 	<property name="test-connectorA.dir" value="test-connectorA" />
 	<property name="test-connectorB.dir" value="test-connectorB" />
-      <property name="install.dir" value="install" />
+	<property name="install.dir" value="install" />
 
 	<!-- =========================== TASKS =============================== -->
-
 
 	<target name="clean-all">
 		<ant dir="${connector-manager.dir}" target="clean" />
@@ -58,7 +57,13 @@
 		</copy>
 	</target>
 
-	<target name="install-all" 
+	<target name="test-all" depends="test-connectorA,test-connectorB,connector-manager">
+		<ant dir="${connector-manager.dir}" target="run_tests" />
+		<ant dir="${test-connectorA.dir}" target="run_tests" />
+		<ant dir="${test-connectorB.dir}" target="run_tests" />
+	</target>
+
+	<target name="install-all"
 		depends="install-test-connectorA,install-test-connectorB,install-connector-manager"/>
 
 	<target name="everything" depends="clean-all,build-all,install-all"/>

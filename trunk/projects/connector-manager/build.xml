@@ -34,7 +34,6 @@
 	<!-- The directory where all war-files are collected -->
 	<property name="war.dir" value="${dist}/${ant.project.name}" />
 
-
 	<!-- =========================== TASKS =============================== -->
 	<target name="test_connector_jars">
 		<ant inheritAll="false" antfile="${projects.dir}/test-connectorA/build.xml" />
@@ -75,9 +74,7 @@
 			debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
 			<classpath>
 				<pathelement location="${thirdparty.jar.dir}" />
-				<fileset dir="${thirdparty.jar.dir}">
-					<include name="**/*.jar" />
-				</fileset>
+				<fileset dir="${thirdparty.jar.dir}" includes="**/*.jar" />
 			</classpath>
 		</javac>
 	</target>
@@ -87,25 +84,19 @@
 		<javac srcdir="${tests.src}" destdir="${tests.classes}"
 			debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
 			<classpath>
-				<fileset dir="${jar.dir}">
-					<include name="**/*.jar" />
-				</fileset>
+				<fileset dir="${jar.dir}" includes="**/*.jar" />
 				<pathelement location="${thirdparty.jar.dir}" />
-				<fileset dir="${thirdparty.jar.dir}">
-					<include name="**/*.jar" />
-				</fileset>
+				<fileset dir="${thirdparty.jar.dir}" includes="**/*.jar" />
 			</classpath>
 		</javac>
 	</target>
 
 	<target name="run_tests" depends="compile_tests,jar,test_connector_jars">
-		<junit>
+		<junit haltonfailure="yes">
 			<classpath>
 				<pathelement location="${connector.jarfile}" />
 				<pathelement location="${spi.jarfile}" />
-				<fileset dir="${thirdparty.jar.dir}">
-					<include name="**/*.jar" />
-				</fileset>
+				<fileset dir="${thirdparty.jar.dir}" includes="**/*.jar" />
 				<pathelement location="${projects.dir}/test-connectorA/dist/jar/testconnectorA.jar" />
 				<pathelement location="${projects.dir}/test-connectorB/dist/jar/testconnectorB.jar" />
 				<pathelement location="${tests.classes}" />
@@ -114,19 +105,18 @@
 			</classpath>
 			<formatter type="plain" />
 			<batchtest fork="yes" todir="${tests.todir}">
-				<fileset dir="${tests.src}">
-					<include name="**/*Test.java" />
-				</fileset>
+				<fileset dir="${tests.src}" includes="**/*Test.java" />
 			</batchtest>
 		</junit>
 	</target>
 
-	<target name="jar" depends="compile" description="Create a jar for the Connector SPI project">
+	<target name="jar" depends="compile"
+		description="Create a jar for the Connector SPI project">
 		<jar jarfile="${spi.jarfile}">
 			<fileset dir="${classes}" includes="**/spi/**" excludes="**/javatests/**" />
 		</jar>
 		<jar jarfile="${util.jarfile}">
-			<fileset dir="${classes}"> 
+			<fileset dir="${classes}">
 				<include name="**/servlet/ConnectorMessageCode.class" />
 				<include name="**/servlet/ServletUtil.class" />
 				<include name="**/servlet/SAXParseErrorHandler.class" />
@@ -140,6 +130,7 @@
 	<target name="clean" description="Deletes all build files.">
 		<delete dir="${build}" />
 		<delete dir="${dist}" />
+		<delete dir="${tests.todir}" />
 	</target>
 
 	<!-- ======================Installation targets====================== -->
@@ -148,12 +139,12 @@
 		<mkdir dir="${war.dir}" />
 	</target>
 
-
 	<!--  Builds a Web Archive - basically a JAR file which
-    also contains all and can be deployed as-is.
-   -->
+	also contains all and can be deployed as-is.
+	-->
 
-	<target name="war" depends="install_init,compile,compile_tests,connector_spi_test" description="Builds the WAR file for installation.">
+	<target name="war" depends="install_init,compile,compile_tests,connector_spi_test"
+		description="Builds the WAR file for installation.">
 		<echo> The war file dir is located at ${war.dir}</echo>
 
 		<war warfile="${war.dir}/${ant.project.name}.war" webxml="${webdocs}/web.xml">
