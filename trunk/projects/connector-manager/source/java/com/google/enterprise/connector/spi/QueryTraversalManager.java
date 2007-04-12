@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.spi;
 
+import com.google.enterprise.connector.traversal.QueryTraverserMonitor;
+
 /**
  * Interface for implementing query-based traversal.
  * <p>
@@ -147,12 +149,15 @@ public interface QueryTraversalManager {
    * as many or as few of the results as it wants, but it gurantees to call
    * {@link #checkpoint(PropertyMap)} passing in the past object is has
    * successfully processed.
-   * 
+   * @param monitor An object implementing QueryTraverserMonitor, which the
+   *        Traverser (or the objects that IT calls) may use to request a 
+   *        different timeout, and/or to report progress.
    * @return A ResultSet of documents from the repository in natural order
    * @throws RepositoryException if the Repository is unreachable or similar
    *           exceptional condition.
    */
-  public ResultSet startTraversal() throws RepositoryException;
+  public ResultSet startTraversal(QueryTraverserMonitor monitor) 
+    throws RepositoryException;
 
   /**
    * Continues traversal from a supplied checkpoint. The checkPoint parameter
@@ -162,11 +167,15 @@ public interface QueryTraversalManager {
    * checkpoint string.
    * 
    * @param checkPoint String that indicates from where to resume traversal.
+   * @param monitor An object implementing QueryTraverserMonitor, which the
+   *        Traverser (or the objects that IT calls) may use to request a 
+   *        different timeout, and/or to report progress.
    * @return ResultSet object that returns documents starting just after the
    *         checkpoint.
    * @throws RepositoryException
    */
-  public ResultSet resumeTraversal(String checkPoint)
+  public ResultSet resumeTraversal(String checkPoint,
+      QueryTraverserMonitor monitor)
       throws RepositoryException;
 
   /**

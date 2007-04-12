@@ -150,7 +150,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
 
-    ResultSet resultSet = qtm.startTraversal();
+    ResultSet resultSet = qtm.startTraversal(null);
 
     int i = 0;
     for (Iterator iter = resultSet.iterator(); iter.hasNext();) {

@@ -71,7 +71,7 @@ public class QueryTraverserTest extends TestCase {
     int totalDocsProcessed = 0;
     int batchNumber = 0;
     while (docsProcessed != 0) {
-      docsProcessed = traverser.runBatch(batchSize);
+      docsProcessed = traverser.runBatch(batchSize, null);
       totalDocsProcessed += docsProcessed;
       System.out.println("Batch# " + batchNumber + " docs " + docsProcessed +
           " checkpoint " + connectorStateStore.getConnectorState(connectorName));

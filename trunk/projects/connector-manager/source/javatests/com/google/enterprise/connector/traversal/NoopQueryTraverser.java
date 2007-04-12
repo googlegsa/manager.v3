@@ -22,7 +22,7 @@ public class NoopQueryTraverser implements Traverser {
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
    */
-  public int runBatch(int batchHint) {
+  public int runBatch(int batchHint, QueryTraverserMonitor monitor) {
     return batchHint;
   }
 

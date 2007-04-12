@@ -21,6 +21,7 @@ import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.monitor.Monitor;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorScheduleStore;
+import com.google.enterprise.connector.traversal.QueryTraverserMonitor;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.ArrayList;
@@ -268,7 +269,8 @@ public class TraversalScheduler implements Scheduler {
     }
   }
 
-  private class TraversalWorkQueueItem extends WorkQueueItem {
+  private class TraversalWorkQueueItem extends WorkQueueItem 
+    implements QueryTraverserMonitor {
     private String connectorName;
     private int numDocsTraversed;
     private boolean isFinished;
@@ -280,6 +282,18 @@ public class TraversalScheduler implements Scheduler {
     
     // time allowed for doing a traversal before we give up
     private long timeout;
+    
+    private long timeoutAdditional = 0;
+    
+    // methods from QueryTraverserMonitor
+    public synchronized void requestTimeout(long timeoutAdditional) {
+      this.timeoutAdditional = timeoutAdditional;
+    }
+    
+    public void reportProgress(double percentDone) {
+      LOGGER.info(connectorName + " reports progress: " + 
+          percentDone + "% done.");
+    }
     
     public TraversalWorkQueueItem(String connectorName, long timeout) {
       this.connectorName = connectorName;
@@ -304,6 +318,12 @@ public class TraversalScheduler implements Scheduler {
         try {
           synchronized(this) {
             wait(timeout);
+            // if the Connector requested a larger timeout, take it now:
+            if (timeoutAdditional > 0) {
+              long timeoutWait = timeoutAdditional;
+              timeoutAdditional = 0;
+              wait(timeoutWait);
+            }
           }
         } catch (InterruptedException e) {
           // TODO Auto-generated catch block
@@ -335,7 +355,8 @@ public class TraversalScheduler implements Scheduler {
       if (null != traverser) {
         LOGGER.finer("Begin runBatch");
         numDocsTraversed = traverser.runBatch(
-          hostLoadManager.determineBatchHint(connectorName));
+          hostLoadManager.determineBatchHint(connectorName),
+          this);
         LOGGER.finer("End runBatch");
         numConsecutiveFailures = 0;
         timeOfFirstFailure = 0;
