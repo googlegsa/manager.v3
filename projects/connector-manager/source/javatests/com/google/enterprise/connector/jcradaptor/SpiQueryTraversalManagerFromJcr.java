@@ -22,6 +22,7 @@ import com.google.enterprise.connector.spi.ResultSet;
 import com.google.enterprise.connector.spi.SimpleValue;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.traversal.QueryTraverserMonitor;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -108,7 +109,8 @@ public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
     return value;
   }
 
-  public ResultSet resumeTraversal(String checkPoint)
+  public ResultSet resumeTraversal(String checkPoint, 
+      QueryTraverserMonitor monitor)
       throws RepositoryException {
     JSONObject jo = null;
     try {
@@ -214,7 +216,8 @@ public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
     return c;
   }
 
-  public ResultSet startTraversal() throws RepositoryException {
+  public ResultSet startTraversal(QueryTraverserMonitor monitor) 
+    throws RepositoryException {
     String lang = Query.XPATH;
     javax.jcr.query.Query query = 
       makeCheckpointQuery(xpathUnboundedTraversalQuery, lang);

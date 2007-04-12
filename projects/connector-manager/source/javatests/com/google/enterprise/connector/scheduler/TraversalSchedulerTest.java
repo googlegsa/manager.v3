@@ -165,6 +165,12 @@ public class TraversalSchedulerTest extends TestCase {
     runWithSchedules(schedules, createMockInstantiator());
   }
   
+  public void testRequestsMoreTimeTraverser() {
+    List schedules = getSchedules(
+        MockInstantiator.TRAVERSER_NAME_REQUESTS_MORE_TIME);
+    runWithSchedules(schedules, createMockInstantiator());
+  }
+  
   /**
    * Test that tests two mock Traverser objects.
    */

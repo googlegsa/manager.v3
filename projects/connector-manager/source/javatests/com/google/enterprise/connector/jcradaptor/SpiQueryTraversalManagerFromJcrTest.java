@@ -106,7 +106,7 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
 
       String checkpointString = qtm.checkpoint(pm);
 
-      ResultSet resultSet = qtm.resumeTraversal(checkpointString);
+      ResultSet resultSet = qtm.resumeTraversal(checkpointString, null);
 
       int counter = 0;
       for (Iterator iter = resultSet.iterator(); iter.hasNext();) {
@@ -124,7 +124,7 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
 
       String checkpointString = qtm.checkpoint(pm);
 
-      ResultSet resultSet = qtm.resumeTraversal(checkpointString);
+      ResultSet resultSet = qtm.resumeTraversal(checkpointString, null);
 
       int counter = 0;
       for (Iterator iter = resultSet.iterator(); iter.hasNext();) {
@@ -146,7 +146,7 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
     QueryTraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
 
     {
-      ResultSet resultSet = qtm.startTraversal();
+      ResultSet resultSet = qtm.startTraversal(null);
 
       int counter = 0;
       for (Iterator iter = resultSet.iterator(); iter.hasNext();) {

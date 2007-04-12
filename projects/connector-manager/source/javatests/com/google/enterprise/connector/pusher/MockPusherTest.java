@@ -41,7 +41,7 @@ public class MockPusherTest extends TestCase {
     MockPusher pusher = new MockPusher(System.out);
 
     {
-      ResultSet resultSet = qtm.startTraversal();
+      ResultSet resultSet = qtm.startTraversal(null);
 
       int counter = 0;
       for (Iterator iter = resultSet.iterator(); iter.hasNext();) {

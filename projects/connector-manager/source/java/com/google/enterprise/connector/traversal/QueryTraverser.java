@@ -46,7 +46,7 @@ public class QueryTraverser implements Traverser {
    * 
    * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
    */
-  public synchronized int runBatch(int batchHint) {
+  public synchronized int runBatch(int batchHint, QueryTraverserMonitor monitor) {
     int counter = 0;
     PropertyMap pm = null;
     String connectorState =
@@ -54,14 +54,15 @@ public class QueryTraverser implements Traverser {
     ResultSet resultSet = null;
     if (connectorState == null) {
       try {
-        resultSet = queryTraversalManager.startTraversal();
+        resultSet = queryTraversalManager.startTraversal(monitor);
       } catch (RepositoryException e) {
         // TODO:ziff Auto-generated catch block
         e.printStackTrace();
       }
     } else {
       try {
-        resultSet = queryTraversalManager.resumeTraversal(connectorState);
+        resultSet = queryTraversalManager.resumeTraversal(connectorState,
+            monitor);
       } catch (RepositoryException e) {
         // TODO:ziff Auto-generated catch block
         e.printStackTrace();
