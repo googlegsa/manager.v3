@@ -73,7 +73,8 @@ public class UpdateConnector extends HttpServlet {
 
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
-    out.print(handleDoGet(manager, xmlBody, connectorName, language));
+    out.print(handleDoGet(manager, xmlBody, connectorName, language,
+        req.getContextPath()));
     out.close();
   }
 
@@ -122,7 +123,7 @@ public class UpdateConnector extends HttpServlet {
   }
 
   public static String handleDoGet(Manager manager, String xmlBody,
-      String connectorName, String language) {
+      String connectorName, String language, String contextPath) {
     Element root = ServletUtil.parseAndGetRootElement(
       xmlBody, ServletUtil.XMLTAG_CONNECTOR_CONFIG);
     if (root == null) {
@@ -147,7 +148,9 @@ public class UpdateConnector extends HttpServlet {
         new StringBuffer(
             "<HTML><HEAD><TITLE>Update Connector Config</TITLE></HEAD>\n"
                 + "<BODY><H3>Update Connector Config:</H3><HR>\n"
-                + "<FORM METHOD=POST ACTION=\"/connector-manager/updateConnector?"
+                + "<FORM METHOD=POST ACTION=\""
+                + contextPath
+                + "/updateConnector?"
                 + ServletUtil.XMLTAG_CONNECTOR_NAME + "=" + connectorName + "&"
                 + ServletUtil.QUERY_PARAM_LANG + "=" + language + "\"><TABLE>"
                 + "<tr><td>Connector Name: " + connectorName

@@ -76,7 +76,7 @@ public class UpdateConnectorTest extends TestCase {
       "<tr><td><INPUT TYPE=\"SUBMIT\" NAME=\"action\" VALUE=\"submit\"></td></tr></TABLE></FORM></BODY></HTML>\n";
 
     Manager manager = MockManager.getInstance();
-    String result = UpdateConnector.handleDoGet(manager, xmlBody, connectorName, "en");
+    String result = UpdateConnector.handleDoGet(manager, xmlBody, connectorName, "en", "/connector-manager");
     Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult), 
       StringUtils.normalizeNewlines(result.toString()));
   }
