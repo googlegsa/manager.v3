@@ -302,7 +302,7 @@ public class Context {
    */
   public String getCommonDirPath() {
     if (isServletContext) {
-      return "webapps/connector-manager/WEB-INF";
+      return servletContext.getRealPath("/") + File.separator + "WEB-INF";
     }
     return "testdata/mocktestdata/";
   }
