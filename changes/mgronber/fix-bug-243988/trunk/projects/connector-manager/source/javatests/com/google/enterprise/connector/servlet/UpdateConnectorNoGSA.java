@@ -89,7 +89,7 @@ public class UpdateConnectorNoGSA extends HttpServlet {
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
     out.print(UpdateConnector.handleDoGet(manager, writer.getBuffer()
-        .toString(), connectorName, language));
+        .toString(), connectorName, language, req.getContextPath()));
     out.close();
   }
 
