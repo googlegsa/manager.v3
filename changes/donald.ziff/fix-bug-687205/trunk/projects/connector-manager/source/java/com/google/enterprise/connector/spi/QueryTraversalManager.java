@@ -63,7 +63,7 @@ import com.google.enterprise.connector.traversal.QueryTraverserMonitor;
  * consume the entire ResultSet returned by either the startTraversal or
  * resumeTraversal calls. The Connector Manager will consume as many it chooses,
  * depending on load, schedule and other factors. The Connector Manager
- * guarantees to call getCheckpoint supplying the last document it has
+ * guarantees to call checkpoint() supplying the last document it has
  * successfully processed from the ResultSet it was using. Thus, the implementor
  * is free to use a query that only returns a small number of results, if that
  * gets better performance.
@@ -102,7 +102,7 @@ import com.google.enterprise.connector.traversal.QueryTraverserMonitor;
  * <ul>
  * <li><code>startTraversal()</code> Clear the internal state. Return the
  * first few documents
- * <li><code>getCheckpoint(PropertyMap pm)</code> This can be taken as a
+ * <li><code>checkpoint(PropertyMap pm)</code> This can be taken as a
  * signal from the Connector Manager that documents have been successfully
  * processed, up to the last one reported. The implementation can now commit a
  * change to external store bringing it up to that document. A null String may
@@ -112,13 +112,13 @@ import com.google.enterprise.connector.traversal.QueryTraverserMonitor;
  * <li><code>resumeTraversal(String checkpoint)</code> Resume traversal
  * according to the internal state of the implementation. The Connector Manager
  * will pass in whatever checkpoint String was returned by the last call to
- * getCheckpoint - but the implementation is free to ignore this and use its
+ * checkpoint - but the implementation is free to ignore this and use its
  * internal state.
  * </ul>
  * The implementation must be careful about when and how it commits its internal
  * state to external storage. Remember again that the Connector Manager makes no
  * guarantee to consume the entire result set return by a traversal call. So the
- * implementation should wait until the ckecpoint call, examine the parameter
+ * implementation should wait until the checkpoint call, examine the parameter
  * passed in and only commit the state up to that document.
  * <p>
  * <b> Note on "Metadata and URL" feeds vs. Content feeds </b>
@@ -167,8 +167,8 @@ public interface QueryTraversalManager {
    * Starts (or restarts) traversal from the beginning. This action will return
    * objects starting from the very oldest, or with the smallest IDs, or
    * whatever natural order the implementation prefers. The caller may consume
-   * as many or as few of the results as it wants, but it gurantees to call
-   * {@link #checkpoint(PropertyMap)} passing in the past object is has
+   * as many or as few of the results as it wants, but it guarantees to call
+   * {@link #checkpoint(PropertyMap)} passing in the last object it has
    * successfully processed.
    * @param monitor An object implementing QueryTraverserMonitor, which the
    *        Traverser (or the objects that IT calls) may use to request a 
