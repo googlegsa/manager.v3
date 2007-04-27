@@ -18,8 +18,11 @@ package com.google.enterprise.connector.spi;
 import java.util.Map;
 
 /**
- * Configuration interface for an SPI implementation.
- * 
+ * The root of the SPI for connector configuration. The connector manager will
+ * use <a href="http://www.springframework.org/">Spring</a> to instantiate
+ * objects that implement this interface. The implementor MUST provide a Spring
+ * XML configuration file named connectorType.xml to control this process. See
+ * the package documentation for more details.
  */
 public interface ConnectorType {
 

@@ -32,7 +32,7 @@ public class SpiConstants {
   /**
    * Identifies a single-valued, string property that uniquely identifies a
    * document to this connector. The internal structure of this string is opaque
-   * to the GSA. Only printable, non-whitespace, ASCII characters are permitted
+   * to the Search Appliance. Only printable, non-whitespace, ASCII characters are permitted
    * in a DOCID. The connector implementor is encouraged to implement this by
    * using the natural ID in the foreign repository.
    * <p>
@@ -50,8 +50,7 @@ public class SpiConstants {
   public static final String PROPNAME_LASTMODIFY = "google:lastmodify";
 
   /**
-   * Identifies a single-valued string property that gives a legal http url that
-   * the GSA can use to pull the primary content file for a document.
+   * Reserved for future use.
    * <p>
    * Value: google:contenturl
    */
@@ -59,11 +58,11 @@ public class SpiConstants {
 
   /**
    * Identifies an optional single-valued string property that, if present, will
-   * be used by the GSA as the primary URI for this document - instead of the
+   * be used by the Search Appliance as the primary URI for this document - instead of the
    * normal googleconnector:// URI which the connector manager fabricates.
-   * Connector developers should provide this if they want the GSA to do web-style
+   * Connector developers should provide this if they want the Search Appliance to do web-style
    * authentication and authorization for this document.  If this is specified, 
-   * the GSA will not call back to the connector manager as serve-time
+   * the Search Appliance will not call back to the connector manager as serve-time
    * <p>
    * Value: google:searchurl
    */
@@ -79,7 +78,7 @@ public class SpiConstants {
 
   /**
    * Identifies a single-valued string property that serves as a security token.
-   * At serve time, the GSA presents this token along with the querying user's
+   * At serve time, the Search Appliance presents this token along with the querying user's
    * identity, and the connector tells us whether this user has permission to
    * view a document of this class. This may be implemented by a textual pointer
    * to an ACL.
@@ -117,8 +116,7 @@ public class SpiConstants {
   public static final String PROPNAME_DISPLAYURL = "google:displayurl";
 
   /**
-   * If this boolean property is present and is true, then the document will
-   * be marked as public.
+   * Unless this property is present and is false, then the document will be marked as public.
    * <p>
    * Value: google:ispublic
    */

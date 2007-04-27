@@ -17,43 +17,46 @@ package com.google.enterprise.connector.spi;
 import java.util.List;
 
 /**
- * Authorization Manager.  All calls related to authorizing 
- * particular users to see particular documents pass through this interface.
+ * Authorization Manager. All calls related to authorizing particular users to
+ * see particular documents pass through this interface.
  */
 public interface AuthorizationManager {
-  
+
   /**
-   * Gets authorization from the repository for a set of documents by ID. 
-   * @param docidList  The document set represented as a list of Strings:  
-   *                   the docid for each document
-   * @param username   The username as a string
-   * @return   A ResultSet where each property map has a String property 
-   *    {@link SpiConstants}.PROPNAME_DOCID with a document ID from the list,
-   *    and a boolean property {@link SpiConstants}.PROPNAME_AUTH_VIEWPERMIT
-   *    that indicates whether this user can view this document.  This result
-   *    set should contain an element for each document id supplied, but 
-   *    does not need to be in the same order as the docidList.
+   * Gets authorization from the repository for a set of documents by ID.
+   * 
+   * @param docidList
+   *          The document set represented as a list of Strings: the docid for
+   *          each document. The docid strings which the connector manager will
+   *          pass in should have come from the search appliance, from documents
+   *          that this connector submitted for indexing via traversal. Thus the
+   *          docids should have started as {@link SpiConstants}.PROPNAME_DOCID
+   *          properties that were part of an {@link ResultSet} returned from a
+   *          {@link QueryTraversalManager}.startTraversal or
+   *          {@link QueryTraversalManager}.resumeTraversal call.
+   * @param username
+   *          The username as a string
+   * @return A {@link ResultSet} where each {@link PropertyMap} has a String
+   *         property {@link SpiConstants}.PROPNAME_DOCID with a document ID
+   *         from the list, and a boolean property {@link SpiConstants}.PROPNAME_AUTH_VIEWPERMIT
+   *         that indicates whether this user can view this document. This
+   *         result set should contain an element for each document id supplied,
+   *         but does not need to be in the same order as the docidList.
    * @throws RepositoryException
    */
   public ResultSet authorizeDocids(List docidList, String username)
-    throws RepositoryException;
-
+      throws RepositoryException;
+  
   /**
-   * Gets authorization from the repository for a set of documents by token. 
-   * @param tokenList  The document set represented as a list of Strings:  
-   *                   the security token for a class of documents
-   * @param username   The username as a string
-   * @return   A ResultSet where each property map has a String property 
-   *    {@link SpiConstants}.PROPNAME_SECURITYTOKEN with a security token
-   *    from the list,
-   *    and a boolean property {@link SpiConstants}.PROPNAME_AUTH_VIEWPERMIT
-   *    that indicates whether this user can view documents
-   *    associated with this token.  This result
-   *    set should contain an element for each security token supplied, but 
-   *    does not need to be in the same order as the tokenList.
+   * Gets authorization from the repository for a set of documents by token.
+   * 
+   * @param tokenList
+   * @param username
+   * @return A {@link ResultSet}
    * @throws RepositoryException
+   * @deprecated
    */
   public ResultSet authorizeTokens(List tokenList, String username)
-    throws RepositoryException;
+      throws RepositoryException;
 
 }
