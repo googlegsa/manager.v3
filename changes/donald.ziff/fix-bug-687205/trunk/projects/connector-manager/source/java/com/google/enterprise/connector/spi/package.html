@@ -22,14 +22,14 @@
 <body bgcolor="white">
 
 <p>Defines the SPI for connector developers who wish to write
-plug-ins to the google search appliance.</p>
+plug-ins to the Google Search Appliance.</p>
 <p>All connectors written to this interface should be housed in an
 instance of the Connector Manager. The Connector Manager is java
 software intended to run in a servlet container such as Tomcat. An
 instance of the Connector Manager will be present (as of a future
-version number as yet undecided) by default on-board all Googles Search
+version number as yet undecided) by default on-board all Search
 Appliances-we call this the "internal" Connector Manager. In addition,
-the Google Search Apppliance (as of that same version) will have the
+the Google Search Appliance (as of that same version) will have the
 ability to interact with one or more Connector Managers installed
 outside the box-"external" connector managers.</p>
 <p>In principle, any connector that correctly implements this
@@ -89,7 +89,7 @@ to provide the Administrator Console with forms and validation methods
 for these configuration screens.</p>
 <p>Example: suppose you want to write a connector for a 3rd-party
 CMS named "XyzCms". You would write a complete java implementation of
-this SPI, using the XyzCms's proprietary api. You would also provide the
+this SPI, using the XyzCms's proprietary API. You would also provide the
 two xml files, ConnectorType.xml and ConnectorInstance.xml. You might
 give the defined beans in both XML files the ids "XyzCmsConnector" - or
 perhaps "XyzCmsConnectorFromMyCompany", to ensure uniqueness.</p>

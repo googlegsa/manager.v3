@@ -212,10 +212,10 @@ public interface QueryTraversalManager {
    * state, up to the document passed in.
    * 
    * @param pm A property map obtained from a ResultSet obtained from either
-   *          {@link #startTraversal()} or {link
-   *          {@link #resumeTraversal(String)}.
+   *          {@link #startTraversal(QueryTraverserMonitor)} or
+   *          {@link #resumeTraversal(String, QueryTraverserMonitor)}.
    * @return A string that can be used by a subsequent call to the
-   *         {@link #resumeTraversal(String)} method.
+   *         {@link #resumeTraversal(String, QueryTraverserMonitor)} method.
    * @throws RepositoryException
    */
   public String checkpoint(PropertyMap pm) throws RepositoryException;
