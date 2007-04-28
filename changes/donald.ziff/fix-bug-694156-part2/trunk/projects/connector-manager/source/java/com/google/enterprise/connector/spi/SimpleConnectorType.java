@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -271,7 +272,7 @@ public class SimpleConnectorType implements ConnectorType {
    * 
    * @see com.google.enterprise.connector.spi.Configurer#getConfigForm(java.lang.String)
    */
-  public ConfigureResponse getConfigForm(String language) {
+  public ConfigureResponse getConfigForm(Locale locale) {
     ConfigureResponse result = new ConfigureResponse("",
         getInitialConfigForm());
     LOGGER.info("getConfigForm form:\n" + result.getFormSnippet());
@@ -285,7 +286,7 @@ public class SimpleConnectorType implements ConnectorType {
    *      java.lang.String)
    */
   public ConfigureResponse validateConfig(Map configData,
-      String language) {
+      Locale locale) {
     if (validateConfigMap(configData)) {
       // all is ok
       return null;
@@ -303,7 +304,7 @@ public class SimpleConnectorType implements ConnectorType {
    *      #getPopulatedConfigForm(java.util.Map,java.lang.String)
    */
   public ConfigureResponse getPopulatedConfigForm(Map configMap,
-      String language) {
+      Locale locale) {
     ConfigureResponse result = new ConfigureResponse("",
         makeConfigForm(configMap));
     return result;

@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.instantiator.InstanceInfo;
 import com.google.enterprise.connector.instantiator.InstanceMap;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
@@ -31,6 +32,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -215,7 +217,8 @@ public class InstanceMapTest extends TestCase {
       String jsonConfigString) throws JSONException, InstantiatorException,
       ConnectorNotFoundException, ConnectorExistsException {
     Map config = new JsonObjectAsMap(new JSONObject(jsonConfigString));
-    instanceMap.updateConnector(name, typeName, config, language, update);
+    Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
+    instanceMap.updateConnector(name, typeName, config, locale, update);
     InstanceInfo instanceInfo = instanceMap.getInstanceInfo(name);
     File connectorDir = instanceInfo.getConnectorDir();
     Assert.assertTrue(connectorDir.exists());

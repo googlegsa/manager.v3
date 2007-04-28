@@ -15,36 +15,38 @@
 package com.google.enterprise.connector.spi;
 
 
+import java.util.Locale;
 import java.util.Map;
 
 /**
- * Configuration interface for an SPI implementation.
- * 
+ * The root of the SPI for connector configuration. The connector manager will
+ * use <a href="http://www.springframework.org/">Spring</a> to instantiate
+ * objects that implement this interface. The implementor MUST provide a Spring
+ * XML configuration file named connectorType.xml to control this process. See
+ * the package documentation for more details.
  */
 public interface ConnectorType {
 
   /**
    * Get initial configuration form snippet.
+   * @param locale A java.util.Locale which the implementation may use to 
+   *        produce appropriate descriptions and messages
    * 
-   * @param language A locale string, such as "en" or "fr_CA" which the
-   *        implementation may use to produce appropriate descriptions and
-   *        messages
    * @return a ConfigureResponse object.
    */
-  public ConfigureResponse getConfigForm(String language);
+  public ConfigureResponse getConfigForm(Locale locale);
 
   /**
    * Get populated configuration form snippet.
    * 
    * @param configMap A map of name, value pairs (String, String) of
    *        configuration data
-   * @param language A locale string, such as "en" or "fr_CA" which the
-   *        implementation may use to produce appropriate descriptions and
-   *        messages
+   * @param locale A java.util.Locale which the implementation may use to 
+   *        produce appropriate descriptions and messages
    * @return a ConfigureResponse object. The form must be prepopulated with the
    *         supplied data in the map.
    */
-  public ConfigureResponse getPopulatedConfigForm(Map configMap, String language);
+  public ConfigureResponse getPopulatedConfigForm(Map configMap, Locale locale);
 
   /**
    * Validates config data and returns a new form snippet and error message if
@@ -52,14 +54,13 @@ public interface ConnectorType {
    * 
    * @param configData A map of name, value pairs (String, String) of
    *        configuration data
-   * @param language A locale string, such as "en" or "fr_CA" which the
-   *        implementation may use to produce appropriate descriptions and
-   *        messages
+   * @param locale A java.util.Locale which the implementation may use to 
+   *        produce appropriate descriptions and messages
    * @return a ConfigureResponse object. If the returned object is null, this
    *         means that the configuration is acceptable. If the return is
    *         non-null, then the response contains a new form snippet (and
    *         message, as appropriate)
    */
-  public ConfigureResponse validateConfig(Map configData, String language);
+  public ConfigureResponse validateConfig(Map configData, Locale locale);
 
 }

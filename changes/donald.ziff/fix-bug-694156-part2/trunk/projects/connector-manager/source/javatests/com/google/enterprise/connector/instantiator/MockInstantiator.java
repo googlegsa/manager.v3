@@ -45,6 +45,7 @@ import com.google.enterprise.connector.traversal.Traverser;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.jcr.Repository;
@@ -181,7 +182,7 @@ public class MockInstantiator implements Instantiator {
   }
 
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configKeys, String language,
+      String connectorTypeName, Map configKeys, Locale locale,
       boolean update)
       throws ConnectorNotFoundException, ConnectorTypeNotFoundException,
       InstantiatorException {
@@ -214,7 +215,7 @@ public class MockInstantiator implements Instantiator {
   }
 
   public ConfigureResponse getConfigFormForConnector(String connectorName,
-      String connectorTypeName, String language)
+      String connectorTypeName, Locale locale)
       throws ConnectorNotFoundException {
     throw new UnsupportedOperationException();
   }
