@@ -169,7 +169,7 @@ public class SimpleValue implements Value {
    * @param c
    * @return a String in RFC 822 format - always in GMT zone
    */
-  public static String calendarToRfc822(Calendar c) {
+  public static synchronized String calendarToRfc822(Calendar c) {
     Date d = c.getTime();
     String isoString = RFC822_DATE_FORMAT.format(d);
     return isoString;
@@ -181,13 +181,13 @@ public class SimpleValue implements Value {
    * @param c
    * @return a String in ISO-8601 format - always in GMT zone
    */
-  public static String calendarToIso8601(Calendar c) {
+  public static synchronized String calendarToIso8601(Calendar c) {
     Date d = c.getTime();
     String isoString = ISO8601_DATE_FORMAT_MILLIS.format(d);
     return isoString;
   }
 
-  private static Date iso8601ToDate(String s) throws ParseException {
+  private static synchronized Date iso8601ToDate(String s) throws ParseException {
     Date d = null;
     try {
       d = ISO8601_DATE_FORMAT_MILLIS.parse(s);
@@ -207,7 +207,7 @@ public class SimpleValue implements Value {
    * @return a Calendar object
    * @throws ParseException if the the String can not be parsed
    */
-  public static Calendar iso8601ToCalendar(String s) throws ParseException {
+  public static synchronized Calendar iso8601ToCalendar(String s) throws ParseException {
     Date d = iso8601ToDate(s);
     Calendar c = Calendar.getInstance();
     c.setTime(d);
