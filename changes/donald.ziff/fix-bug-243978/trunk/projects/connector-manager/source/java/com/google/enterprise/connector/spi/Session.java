@@ -36,7 +36,7 @@ public interface Session {
    * Authentication Manager.  This may be for one of these reasons:
    * <ul>
    * <li> Authentication is not needed for this data source
-   * <li> Authentication is handled through another GSA-supported mechanism,
+   * <li> Authentication is handled through another Search Appliance-supported mechanism,
    * such as LDAP
    * </ul>
    * @return    a AuthenticationManager - may be null
@@ -52,7 +52,7 @@ public interface Session {
    * <ul>
    * <li> Authorization is not needed for this data source - all documents are
    * public
-   * <li> Authorization is handled through another GSA-supported mechanism,
+   * <li> Authorization is handled through another Search Appliance-supported mechanism,
    * such as NTLM or Basic Auth
    * </ul>
    * @return    a AuthorizationManager - may be null
