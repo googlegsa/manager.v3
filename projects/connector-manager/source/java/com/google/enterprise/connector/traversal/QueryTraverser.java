@@ -77,20 +77,24 @@ public class QueryTraverser implements Traverser {
       e.printStackTrace();
     }
 
-    while (iter.hasNext()) {
-      if (Thread.currentThread().isInterrupted()) {
-        break;
+    try {
+      while (iter.hasNext()) {
+        if (Thread.currentThread().isInterrupted()) {
+          break;
+        }
+        pm = (PropertyMap) iter.next();
+        pusher.take(pm, connectorName);
+        counter++;
+        if (counter == batchHint) {
+          break;
+        }
       }
-      pm = (PropertyMap) iter.next();
-      pusher.take(pm, connectorName);
-      counter++;
-      if (counter == batchHint) {
-        break;
+    } finally {
+      // in case we have an unexpected exception such as a RuntimeException,
+      // we ensure that we checkpoint what we've done
+      if (counter != 0) {
+        checkpointAndSave(pm);
       }
-    }
-
-    if (counter != 0) {
-      checkpointAndSave(pm);
     }
 
     return counter;
