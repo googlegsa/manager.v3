@@ -17,7 +17,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -53,21 +53,23 @@ public class GsaFeedConnection implements FeedConnection {
     uc.setDoInput(true);
     uc.setDoOutput(true);
     uc.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-    OutputStreamWriter osw = new OutputStreamWriter(uc.getOutputStream());
+    OutputStream outputStream = uc.getOutputStream();
+    byte[] bytebuf = new byte[2048];
     int val;
-    while (-1 != (val = data.read())) {
-      osw.write(val); 
+    while (-1 != (val = data.read(bytebuf))) {
+      outputStream.write(bytebuf, 0, val);
     }
-    osw.flush();
+    outputStream.flush();
     
     StringBuffer buf = new StringBuffer();
-    BufferedReader br =
-      new BufferedReader(new InputStreamReader(uc.getInputStream()));
+    InputStream inputStream = uc.getInputStream();
+	BufferedReader br =
+      new BufferedReader(new InputStreamReader(inputStream,"UTF8"));
     String line;
     while ((line = br.readLine()) != null) {
       buf.append(line);
     }
-    osw.close();
+    outputStream.close();
     br.close();
     return buf.toString();
   }
