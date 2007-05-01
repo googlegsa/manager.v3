@@ -15,14 +15,17 @@
 package com.google.enterprise.connector.spi;
 
 /**
- * The root of the SPI. In the connector manager, objects that implement this
- * interface will be instantiated using Spring, according to Spring bean
- * definition files generated with the help of the corresponding ConnectorType
- * implementation.
+ * The root of the SPI for connector instances. The connector manager will use
+ * <a href="http://www.springframework.org/">Spring</a> to instantiate objects
+ * that implement this interface. The implementor MUST provide a Spring XML
+ * configuration file named connectorInstance.xml to control this process. See
+ * the package documentation for more details.
  * <p>
  * A Connector object is used as something against which to authenticate, via
  * the login method. By authenticating, one gets a Session, which then gives
- * access to all other services.
+ * access to all other services. Note, this is presumably "superuser", one-time
+ * only authentication, not authentication for a given user query session (which
+ * takes place via the {@link AuthenticationManager}.
  */
 public interface Connector {
 
@@ -33,10 +36,11 @@ public interface Connector {
    * implementor should provide an explanatory message.
    * 
    * @return An object implementing the {@link Session} interface
-   * @throws LoginException if there is a credentials-related problem
-   * @throws RepositoryException if there is a more general problem, such as the
-   *         system is unreachable or down
+   * @throws LoginException
+   *           if there is a credentials-related problem
+   * @throws RepositoryException
+   *           if there is a more general problem, such as the system is
+   *           unreachable or down
    */
-  public Session login() throws LoginException,
-      RepositoryException;
+  public Session login() throws LoginException, RepositoryException;
 }

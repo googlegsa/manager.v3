@@ -195,7 +195,8 @@ public class ProductionManager implements Manager {
       String language) throws ConnectorTypeNotFoundException {
     ConnectorType connectorType =
         instantiator.getConnectorType(connectorTypeName);
-    return connectorType.getConfigForm(null);
+	Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
+    return connectorType.getConfigForm(locale);
   }
 
   /*

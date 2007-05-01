@@ -18,7 +18,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -37,8 +36,7 @@ import java.util.logging.Logger;
  * is non-null and non-empty.
  * <p>
  * Implementors may want to override the
- * {@link com.google.enterprise.connector.spi.SimpleConnectorType#
- * validateConfigPair(java.lang.String, java.lang.String)} method. This is used
+ * validateConfigPair(java.lang.String, java.lang.String) method. This is used
  * to validate a particular key-value pair.
  */
 public class SimpleConnectorType implements ConnectorType {
@@ -272,7 +270,7 @@ public class SimpleConnectorType implements ConnectorType {
    * 
    * @see com.google.enterprise.connector.spi.Configurer#getConfigForm(java.lang.String)
    */
-  public ConfigureResponse getConfigForm(Locale locale) {
+  public ConfigureResponse getConfigForm(String language) {
     ConfigureResponse result = new ConfigureResponse("",
         getInitialConfigForm());
     LOGGER.info("getConfigForm form:\n" + result.getFormSnippet());
@@ -286,7 +284,7 @@ public class SimpleConnectorType implements ConnectorType {
    *      java.lang.String)
    */
   public ConfigureResponse validateConfig(Map configData,
-      Locale locale) {
+      String language) {
     if (validateConfigMap(configData)) {
       // all is ok
       return null;
@@ -304,7 +302,7 @@ public class SimpleConnectorType implements ConnectorType {
    *      #getPopulatedConfigForm(java.util.Map,java.lang.String)
    */
   public ConfigureResponse getPopulatedConfigForm(Map configMap,
-      Locale locale) {
+      String language) {
     ConfigureResponse result = new ConfigureResponse("",
         makeConfigForm(configMap));
     return result;

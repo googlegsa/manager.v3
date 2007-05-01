@@ -26,22 +26,23 @@ import com.google.enterprise.connector.traversal.QueryTraverserMonitor;
  * <p>
  * A good use case is a repository that supports access to documents in
  * last-modified-date order. In particular, suppose a repository supports a
- * query analogous to the following SQL query:
+ * query analogous to the following SQL query (the repository need not support
+ * SQL, SQL is used here only as an example):
  * <p>
  * 
  * <pre>
- *   select documentid, lastmodifydate from documents 
- *   where  lastmodifydate &gt; &lt;i&gt;date-constant&lt;/i&gt; 
- *   order by lastmodifydate
+ *        select documentid, lastmodifydate from documents 
+ *        where  lastmodifydate &lt; &lt;i&gt;date-constant&lt;/i&gt; 
+ *        order by lastmodifydate
  * </pre>
  * 
  * <p>
  * Such a repository can easily be traversed by lastmodifydate, and the state of
  * the traversal is easily encapsulated in a single, small data item: the date
- * of the last document processed. Also, this is particularly convenient because
- * if a document is processed during traversal, but then later modified, then it
- * will be picked up again later in the traversal process. Thus, this traversal
- * is appropriate both for initial load and for incremental update.
+ * of the last document processed. Lastmodifydate is convenient because if a
+ * document is processed during traversal, but then later modified, then it will
+ * be picked up again later in the traversal process. Thus, this traversal is
+ * appropriate both for initial load and for incremental update.
  * <p>
  * For such a repository, the implementor is urged to let the Connector Manager
  * (the caller) maintain the traversal state. This is achieved by implementing
@@ -62,7 +63,7 @@ import com.google.enterprise.connector.traversal.QueryTraverserMonitor;
  * consume the entire ResultSet returned by either the startTraversal or
  * resumeTraversal calls. The Connector Manager will consume as many it chooses,
  * depending on load, schedule and other factors. The Connector Manager
- * guarantees to call getCheckpoint supplying the last document it has
+ * guarantees to call checkpoint() supplying the last document it has
  * successfully processed from the ResultSet it was using. Thus, the implementor
  * is free to use a query that only returns a small number of results, if that
  * gets better performance.
@@ -70,7 +71,7 @@ import com.google.enterprise.connector.traversal.QueryTraverserMonitor;
  * For example, to continue the SQL analogy, a query like this could be used:
  * 
  * <pre>
- *   select TOP 10 documentid, lastmodifydate from documents ...
+ *        select TOP 10 documentid, lastmodifydate from documents ...
  * </pre>
  * 
  * The <code>setBatchHint</code> method is provided so that the Connector
@@ -101,7 +102,7 @@ import com.google.enterprise.connector.traversal.QueryTraverserMonitor;
  * <ul>
  * <li><code>startTraversal()</code> Clear the internal state. Return the
  * first few documents
- * <li><code>getCheckpoint(PropertyMap pm)</code> This can be taken as a
+ * <li><code>checkpoint(PropertyMap pm)</code> This can be taken as a
  * signal from the Connector Manager that documents have been successfully
  * processed, up to the last one reported. The implementation can now commit a
  * change to external store bringing it up to that document. A null String may
@@ -111,33 +112,53 @@ import com.google.enterprise.connector.traversal.QueryTraverserMonitor;
  * <li><code>resumeTraversal(String checkpoint)</code> Resume traversal
  * according to the internal state of the implementation. The Connector Manager
  * will pass in whatever checkpoint String was returned by the last call to
- * getCheckpoint - but the implementation is free to ignore this and use its
+ * checkpoint - but the implementation is free to ignore this and use its
  * internal state.
  * </ul>
  * The implementation must be careful about when and how it commits its internal
  * state to external storage. Remember again that the Connector Manager makes no
  * guarantee to consume the entire result set return by a traversal call. So the
- * implementation should wait until the ckecpoint call, examine the parameter
+ * implementation should wait until the checkpoint call, examine the parameter
  * passed in and only commit the state up to that document.
  * <p>
- * <b> Note on property maps returned by traversal calls </b>
+ * <b> Note on "Metadata and URL" feeds vs. Content feeds </b>
+ * <p>
+ * Some repositories are fully web-enabled but are difficult or impossible for
+ * the Search Appliance to crawl, because they make heavy use of ASP or JSP, or
+ * they have a metadata model that is not conveniently accessible with the
+ * content in a single page. Such repositories are good candidates for
+ * connectors. However, a developer may not choose to implement authentication
+ * and authorization through a connector. It may be sufficient to use standard
+ * web mechanisms for these tasks.
+ * </p>
+ * <p>
+ * The developer can achieve this by following these steps. In the property map
+ * returned by the traversal methods, specify the {@link SpiConstants}.PROPNAME_SEARCHURL
+ * property. The value should be a URL. If this property is specified, the
+ * Connector Manager will use a "URL Feed" rather than a "Content Feed" for that
+ * document. In this case, the implementor should NOT supply the content of the
+ * document. The Search Appliance will fetch the content from the specified URL.
+ * Also, this URL will be used to trigger normal authentication and
+ * authorization for that document. For more details, see the documentation on
+ * Metadata and URL Feeds.
+ * <p>
+ * <b>Note on property maps returned by traversal calls</b>
  * <p>
  * The property maps returned by the queries defined here represent documents.
  * They must contain special properties according to the following rules:
  * <ul>
  * <li> {@link SpiConstants}.PROPNAME_DOCID This property must be present.
- * <li> {@link SpiConstants}.PROPNAME_CONTENTURL If present, the GSA will pull
- * content using the value of this property. If not present, then the
- * {@link SpiConstants}.PROPNAME_CONTENT property should be present.
- * <li> {@link SpiConstants}.PROPNAME_CONTENT Will not be used if the
- * {@link SpiConstants}.PROPNAME_CONTENTURL is present. If present, the
- * connector framework will base-64 encode the value and present it to the GSA
- * as the primary content to be indexed.
- * <li> {@link SpiConstants}.PROPNAME_SECURITYCLASS If present, this will be
- * persisted in the index and used at serve-time to determine whether a given
- * user is authorized to view this document.
+ * <li> {@link SpiConstants}.PROPNAME_SEARCHURL If present, this means that the
+ * Connector Manager will generate a Metadata and URL feed, with the specified
+ * URL. If this is present, then the PROPNAME_CONTENT property should NOT be.
+ * <li> {@link SpiConstants}.PROPNAME_CONTENT This property should hold the
+ * content of the document. If present, the connector framework will base-64
+ * encode the value and present it to the Search Appliance as the primary content to be
+ * indexed. If this is present, then the PROPNAME_SEARCHURL property should NOT
+ * be.
  * <li> {@link SpiConstants}.PROPNAME_DISPLAYURL If present, this will be used
- * as the primary link on a results page
+ * as the primary link on a results page. This should NOT be used with
+ * PROPNAME_SEARCHURL.
  * </ul>
  */
 public interface QueryTraversalManager {
@@ -146,8 +167,8 @@ public interface QueryTraversalManager {
    * Starts (or restarts) traversal from the beginning. This action will return
    * objects starting from the very oldest, or with the smallest IDs, or
    * whatever natural order the implementation prefers. The caller may consume
-   * as many or as few of the results as it wants, but it gurantees to call
-   * {@link #checkpoint(PropertyMap)} passing in the past object is has
+   * as many or as few of the results as it wants, but it guarantees to call
+   * {@link #checkpoint(PropertyMap)} passing in the last object it has
    * successfully processed.
    * @param monitor An object implementing QueryTraverserMonitor, which the
    *        Traverser (or the objects that IT calls) may use to request a 
@@ -191,10 +212,10 @@ public interface QueryTraversalManager {
    * state, up to the document passed in.
    * 
    * @param pm A property map obtained from a ResultSet obtained from either
-   *          {@link #startTraversal()} or {link
-   *          {@link #resumeTraversal(String)}.
+   *          {@link #startTraversal(QueryTraverserMonitor)} or
+   *          {@link #resumeTraversal(String, QueryTraverserMonitor)}.
    * @return A string that can be used by a subsequent call to the
-   *         {@link #resumeTraversal(String)} method.
+   *         {@link #resumeTraversal(String, QueryTraverserMonitor)} method.
    * @throws RepositoryException
    */
   public String checkpoint(PropertyMap pm) throws RepositoryException;
