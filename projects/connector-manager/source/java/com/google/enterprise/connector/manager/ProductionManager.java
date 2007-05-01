@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.manager;
 
+import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -193,7 +195,8 @@ public class ProductionManager implements Manager {
       String language) throws ConnectorTypeNotFoundException {
     ConnectorType connectorType =
         instantiator.getConnectorType(connectorTypeName);
-    return connectorType.getConfigForm(language);
+	Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
+    return connectorType.getConfigForm(locale);
   }
 
   /*
@@ -206,9 +209,10 @@ public class ProductionManager implements Manager {
       String language) throws ConnectorNotFoundException, InstantiatorException {
     String connectorTypeName =
         instantiator.getConnectorTypeName(connectorName);
+    Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
     ConfigureResponse response =
         instantiator.getConfigFormForConnector(connectorName,
-            connectorTypeName, language);
+            connectorTypeName, locale);
     return response;
   }
 
@@ -274,8 +278,9 @@ public class ProductionManager implements Manager {
       boolean update)
       throws ConnectorNotFoundException, PersistentStoreException,
       InstantiatorException {
+	Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
     ConfigureResponse resp =  instantiator.setConnectorConfig(connectorName, connectorTypeName,
-        configData, language, update);
+        configData, locale, update);
     return resp;
   }
 

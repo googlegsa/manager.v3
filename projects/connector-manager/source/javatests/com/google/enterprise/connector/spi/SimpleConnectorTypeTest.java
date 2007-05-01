@@ -22,6 +22,7 @@ import junit.framework.TestCase;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -32,7 +33,7 @@ public class SimpleConnectorTypeTest extends TestCase {
   /**
    * Test method for
    * {@link com.google.enterprise.connector.spi.SimpleConnectorType
-   * #getConfigForm(java.lang.String)}.
+   * #getConfigForm(Locale)}.
    */
   public final void testGetConfigForm() {
     {
@@ -64,7 +65,7 @@ public class SimpleConnectorTypeTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.enterprise.connector.spi.SimpleConnectorType#validateConfig(java.util.Map, java.lang.String)}.
+   * {@link com.google.enterprise.connector.spi.SimpleConnectorType#validateConfig(java.util.Map, Locale)}.
    * 
    * @throws JSONException
    */
@@ -130,7 +131,7 @@ public class SimpleConnectorTypeTest extends TestCase {
   /**
    * Test method for
    * {@link com.google.enterprise.connector.spi.SimpleConnectorType#
-   * getPopulatedConfigForm(java.util.Map, java.lang.String)}.
+   * getPopulatedConfigForm(java.util.Map, Locale)}.
    * 
    * @throws JSONException
    */

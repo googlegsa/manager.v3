@@ -24,6 +24,7 @@ import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -106,7 +107,7 @@ public interface Instantiator {
       throws ConnectorTypeNotFoundException;
 
   public ConfigureResponse getConfigFormForConnector(String connectorName,
-      String connectorTypeName, String language)
+      String connectorTypeName, Locale locale)
       throws ConnectorNotFoundException, InstantiatorException;
 
   /**
@@ -128,7 +129,7 @@ public interface Instantiator {
    * @throws InstantiatorException
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configKeys, String language,
+      String connectorTypeName, Map configKeys, Locale locale,
       boolean update)
       throws ConnectorNotFoundException, ConnectorExistsException,
       ConnectorTypeNotFoundException, InstantiatorException;
