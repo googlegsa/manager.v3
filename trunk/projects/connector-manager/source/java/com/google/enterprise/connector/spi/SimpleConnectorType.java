@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -36,16 +37,13 @@ import java.util.logging.Logger;
  * is non-null and non-empty.
  * <p>
  * Implementors may want to override the
- * {@link com.google.enterprise.connector.spi.SimpleConnectorType#
- * validateConfigPair(java.lang.String, java.lang.String)} method. This is used
+ * validateConfigPair(java.lang.String, java.lang.String) method. This is used
  * to validate a particular key-value pair.
  */
 public class SimpleConnectorType implements ConnectorType {
   private static final Logger LOGGER = Logger
       .getLogger(SimpleConnectorType.class.getName());
 
-  private static final String HIDDEN = "hidden";
-  private static final String STARS = "*****";
   private static final String VALUE = "value";
   private static final String NAME = "name";
   private static final String TEXT = "text";
@@ -259,19 +257,19 @@ public class SimpleConnectorType implements ConnectorType {
    * it.
    * 
    * @param configData
-   * @param language
+   * @param locale
    * @return another Configurer, which may be null
    */
-  ConnectorType getEmbeddedConfigurer(Map configData, String language) {
+  ConnectorType getEmbeddedConfigurer(Map configData, Locale locale) {
     return null;
   }
 
   /*
    * (non-Javadoc)
    * 
-   * @see com.google.enterprise.connector.spi.Configurer#getConfigForm(java.lang.String)
+   * @see com.google.enterprise.connector.spi.Configurer#getConfigForm(java.util.Locale)
    */
-  public ConfigureResponse getConfigForm(String language) {
+  public ConfigureResponse getConfigForm(Locale locale) {
     ConfigureResponse result = new ConfigureResponse("",
         getInitialConfigForm());
     LOGGER.info("getConfigForm form:\n" + result.getFormSnippet());
@@ -282,10 +280,10 @@ public class SimpleConnectorType implements ConnectorType {
    * (non-Javadoc)
    * 
    * @see com.google.enterprise.connector.spi.Configurer#validateConfig(java.util.Map,
-   *      java.lang.String)
+   *      java.util.Locale)
    */
   public ConfigureResponse validateConfig(Map configData,
-      String language) {
+      Locale locale) {
     if (validateConfigMap(configData)) {
       // all is ok
       return null;
@@ -300,10 +298,10 @@ public class SimpleConnectorType implements ConnectorType {
    * (non-Javadoc)
    * 
    * @see com.google.enterprise.connector.spi.Configurer
-   *      #getPopulatedConfigForm(java.util.Map,java.lang.String)
+   *      #getPopulatedConfigForm(java.util.Map,java.util.Locale)
    */
   public ConfigureResponse getPopulatedConfigForm(Map configMap,
-      String language) {
+      Locale locale) {
     ConfigureResponse result = new ConfigureResponse("",
         makeConfigForm(configMap));
     return result;

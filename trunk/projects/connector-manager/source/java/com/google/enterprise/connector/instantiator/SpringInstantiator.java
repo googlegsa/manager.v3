@@ -28,6 +28,7 @@ import com.google.enterprise.connector.traversal.Traverser;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -125,7 +126,7 @@ public class SpringInstantiator implements Instantiator {
    *      java.lang.String, java.lang.String)
    */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
-      String connectorTypeName, String language)
+      String connectorTypeName, Locale locale)
       throws ConnectorNotFoundException, InstantiatorException {
     initialize();
     InstanceInfo instanceInfo = (InstanceInfo) instanceMap.get(connectorName);
@@ -136,7 +137,7 @@ public class SpringInstantiator implements Instantiator {
     ConnectorType connectorType = typeInfo.getConnectorType();
     Map configMap = instanceInfo.getProperties();
     ConfigureResponse configureResponse =
-        connectorType.getPopulatedConfigForm(configMap, language);
+        connectorType.getPopulatedConfigForm(configMap, locale);
     return configureResponse;
   }
 
@@ -195,13 +196,13 @@ public class SpringInstantiator implements Instantiator {
    *      java.lang.String, java.util.Map)
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configKeys, String language,
+      String connectorTypeName, Map configKeys, Locale locale,
       boolean update)
       throws ConnectorNotFoundException, ConnectorExistsException,
       ConnectorTypeNotFoundException, InstantiatorException {
     initialize();
     return instanceMap.updateConnector(
-        connectorName, connectorTypeName, configKeys, language, update);
+        connectorName, connectorTypeName, configKeys, locale, update);
 
   }
 
