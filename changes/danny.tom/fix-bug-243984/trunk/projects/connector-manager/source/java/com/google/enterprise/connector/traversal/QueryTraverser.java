@@ -91,7 +91,7 @@ public class QueryTraverser implements Traverser {
       }
     } finally {
       // in case we have an unexpected exception such as a RuntimeException,
-      // we ensure that we 
+      // we ensure that we checkpoint what we've done
       if (counter != 0) {
         checkpointAndSave(pm);
       }
