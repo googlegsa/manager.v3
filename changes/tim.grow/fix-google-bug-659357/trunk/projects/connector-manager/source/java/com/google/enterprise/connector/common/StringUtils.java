@@ -82,16 +82,12 @@ public class StringUtils {
     return b.toString();
   }
   
-  public static String streamToString(InputStream is) {
-    return streamToString(is, "UTF-8");
-  }
-
   /**
    * Read an entire InputStream (as UTF-8) and return its contents as a String
    * @param is InputStream to read
    * @return contents as a String
    */
-  public static String streamToString(InputStream is, String charsetName) {
+  public static String streamToString(InputStream is) {
     int bytesLen = 32768;
     byte[] bytes = new byte[bytesLen];
     
@@ -119,7 +115,7 @@ public class StringUtils {
     
     String res = null;
     try {
-      res = new String(bytes,0,offset,charsetName);
+      res = new String(bytes,0,offset,"UTF-8");
     } catch (UnsupportedEncodingException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
