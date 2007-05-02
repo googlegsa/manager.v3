@@ -59,7 +59,7 @@ public class MockRepositoryDocument {
       try {
         InputStream is = getContentStream();
         if (null != is) {
-          content = StringUtils.streamToString(is, "ISO-8859-1");
+          content = StringUtils.streamToString(is);
         }
       } catch (IOException e) {
         // TODO Auto-generated catch block
@@ -72,11 +72,17 @@ public class MockRepositoryDocument {
   public InputStream getContentStream() throws FileNotFoundException {
     if (null == inputStream) {
       if (null == contentFile || 0 == contentFile.length()) {
-        if (null == content) {
-          return null;
+        try {
+          if (null == content) {
+            return null;
+          }
+          inputStream = 
+            new ByteArrayInputStream(
+              content.getBytes(DocPusher.XML_DEFAULT_ENCODING));
+        } catch (UnsupportedEncodingException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
         }
-        inputStream = 
-          new ByteArrayInputStream(content.getBytes());
       } else {
         inputStream = new FileInputStream(contentFile);
       }
