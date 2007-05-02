@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.traversal;
 
-import com.google.enterprise.connector.traversal.QueryTraverserMonitor;
-
 /**
  * Interface presented by a Traverser.  Used by the Scheduler.
  */
@@ -40,6 +38,6 @@ public interface Traverser {
    *         structure that allows for more interesting monitoring: number of
    *         successful docs, number failed, average size, etc.
    */
-  public int runBatch(int batchHint, QueryTraverserMonitor monitor);
+  public int runBatch(int batchHint);
 
 }

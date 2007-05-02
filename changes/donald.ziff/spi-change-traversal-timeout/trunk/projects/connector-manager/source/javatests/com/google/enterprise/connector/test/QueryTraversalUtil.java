@@ -39,7 +39,7 @@ public class QueryTraversalUtil {
 
     queryTraversalManager.setBatchHint(batchHint);
 
-    ResultSet resultSet = queryTraversalManager.startTraversal(null);
+    ResultSet resultSet = queryTraversalManager.startTraversal();
     // The real connector manager will not always start from the beginning.
     // It will start from the beginning if it receives an explicit admin
     // command to do so, or if it thinks that it has never run this connector
@@ -76,7 +76,7 @@ public class QueryTraversalUtil {
       }
 
       String checkPointString = queryTraversalManager.checkpoint(pm);
-      resultSet = queryTraversalManager.resumeTraversal(checkPointString, null);
+      resultSet = queryTraversalManager.resumeTraversal(checkPointString);
       // the real connector manager will call checkpoint (as here) as soon
       // as possible after processing the last property map it wants to process.
       // It would then store the checkpoint string it received in persistent

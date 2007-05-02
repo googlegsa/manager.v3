@@ -22,7 +22,7 @@ public class LongRunningQueryTraverser implements Traverser {
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
    */
-  public int runBatch(int batchHint, QueryTraverserMonitor monitor) {
+  public int runBatch(int batchHint) {
     long sleepTime = 60 * 1000;
     try {
       Thread.sleep(sleepTime);

@@ -13,11 +13,10 @@ import java.util.Date;
      * 
      * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
      */
-    public int runBatch(int batchHint, QueryTraverserMonitor monitor) {
-      long sleepTime = 120 * 1000;
+    public int runBatch(int batchHint) {
+      long sleepTime = 10 * 60 * 1000;  // ten minutes
 
       boolean breakLoop = true;
-      monitor.requestTimeout(sleepTime);
       boolean interrupted = false;
       int counter = 0;
       while (breakLoop) {
