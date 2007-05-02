@@ -63,6 +63,7 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
     res.setContentType(ServletUtil.MIMETYPE_XML);
+    res.setCharacterEncoding("UTF-8");
     PrintWriter out = res.getWriter();
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
     if (connectorName == null || connectorName.length() < 1) {
