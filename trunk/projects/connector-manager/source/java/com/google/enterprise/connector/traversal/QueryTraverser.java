@@ -69,6 +69,10 @@ public class QueryTraverser implements Traverser {
       }
     }
 
+    if (resultSet == null) {
+      return 0;
+    }
+    
     Iterator iter = null;
     try {
       iter = resultSet.iterator();
