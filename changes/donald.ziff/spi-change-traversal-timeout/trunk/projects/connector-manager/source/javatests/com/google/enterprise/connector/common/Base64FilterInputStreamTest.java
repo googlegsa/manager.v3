@@ -51,4 +51,44 @@ public class Base64FilterInputStreamTest extends TestCase {
     Assert.assertEquals(expectedBytes.length, bytesRead);
     Assert.assertTrue(Arrays.equals(expectedBytes, resultBytes));  
   }
+  
+  /**
+   * ByteArrayInputStream that returns a single byte at a time even if you 
+   * request more.
+   */
+  private class SingleByteArrayInputStream extends ByteArrayInputStream {
+    public SingleByteArrayInputStream(byte[] bytes) {
+      super(bytes);
+    }
+    
+    public int read(byte[] b, int off, int len) {
+      int byteValue = read();
+      
+      if (-1 == byteValue) {
+        return -1;
+      } else {
+        b[off] = (byte) byteValue;
+        return 1;
+      }
+    }
+  }
+  
+  /**
+   * Test that this stream works even if the underlying stream does not return
+   * bytes in multiples of 3.
+   */
+  public void testBug243976() throws IOException {
+    byte[] bytes = new byte[]{ 'a', 'b', 'c'};
+    SingleByteArrayInputStream bais = new SingleByteArrayInputStream(bytes);
+    Base64FilterInputStream is = new Base64FilterInputStream(bais);
+    int val;
+    byte[] expectedBytes = new byte[]{ 'Y', 'W', 'J', 'j' };
+    byte[] resultBytes = new byte[expectedBytes.length];
+    int index = 0;
+    while (-1 != (val = is.read())) {
+      resultBytes[index] = (byte) val;
+      index++;
+    }
+    Assert.assertTrue(Arrays.equals(expectedBytes, resultBytes));    
+  }
 }

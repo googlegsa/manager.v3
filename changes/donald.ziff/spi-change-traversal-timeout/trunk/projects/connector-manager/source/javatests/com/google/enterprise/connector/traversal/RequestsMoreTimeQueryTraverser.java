@@ -14,7 +14,7 @@ import java.util.Date;
      * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
      */
     public int runBatch(int batchHint) {
-      long sleepTime = 10 * 60 * 1000;  // ten minutes
+      long sleepTime = 120 * 1000;
 
       boolean breakLoop = true;
       boolean interrupted = false;

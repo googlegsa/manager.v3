@@ -169,7 +169,8 @@ public interface QueryTraversalManager {
    * as many or as few of the results as it wants, but it guarantees to call
    * {@link #checkpoint(PropertyMap)} passing in the last object it has
    * successfully processed.
-   * @return A ResultSet of documents from the repository in natural order
+   * @return A ResultSet of documents from the repository in natural order, or
+   *         null if there are no documents.
    * @throws RepositoryException if the Repository is unreachable or similar
    *           exceptional condition.
    */
@@ -185,7 +186,7 @@ public interface QueryTraversalManager {
    * 
    * @param checkPoint String that indicates from where to resume traversal.
    * @return ResultSet object that returns documents starting just after the
-   *         checkpoint.
+   *         checkpoint, or null if there are no documents.
    * @throws RepositoryException
    */
   public ResultSet resumeTraversal(String checkPoint)

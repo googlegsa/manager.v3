@@ -76,9 +76,15 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
+    for (java.util.Enumeration headerNames = req.getHeaderNames(); headerNames.hasMoreElements(); ) {
+      String name = (String) headerNames.nextElement();
+      LOGGER.log(Level.WARNING, "HEADER " + name + ": " + req.getHeader(name));
+    }
     BufferedReader reader = req.getReader();
-    PrintWriter out = res.getWriter();
+//     BufferedReader reader = new BufferedReader(new java.io.InputStreamReader(req.getInputStream(), "UTF-8"));
     res.setContentType(ServletUtil.MIMETYPE_XML);
+    res.setCharacterEncoding("UTF-8");
+    PrintWriter out = res.getWriter();
     String xmlBody = StringUtils.readAllToString(reader);
     if (xmlBody == null || xmlBody.length() < 1) {
       ServletUtil.writeResponse(

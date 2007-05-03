@@ -41,26 +41,54 @@ public class Base64FilterInputStream extends FilterInputStream {
   private byte rawBuf[] = new byte[rawBufSize];
   private byte encodedBuf[];
   
+  private int rawBufEndPos = 0;  // position starting with no valid data
+  
   /*
    * Position of next int to read.
    */
   private int encodedBufPos = 0;
-  private int encodedBufEndPos = 0;  // position with no valid data
+  private int encodedBufEndPos = 0;  // position starting with no valid data
   
   public int read() throws IOException {
-    // if we have processed all read data
+    // if we have processed all encoded data
     if (encodedBufEndPos == encodedBufPos) {
-      // try reading more data
-      int bytesRead = in.read(rawBuf, 0, rawBuf.length);
-      if (-1 == bytesRead) {
-        return -1;
+      int numLeftoverBytes = rawBufEndPos;
+      int numEncodableBytes = 0;
+
+      while (0 == numEncodableBytes) {
+        int bytesRead = 
+          in.read(rawBuf, rawBufEndPos, rawBuf.length - rawBufEndPos);
+        if (-1 == bytesRead) {
+          if (0 == numLeftoverBytes) {
+            // if we had no bytes and we can't read any new bytes, that's the 
+            // end
+            return -1;
+          } else {
+            // if we can't read new bytes, but we had some from before, then
+            // it is okay to encode those.
+            numEncodableBytes += numLeftoverBytes;
+            numLeftoverBytes = 0;
+            break;
+          }
+        } else {
+          rawBufEndPos += bytesRead;
+        }
+        
+        // encode bytes in groups of three bytes
+        numLeftoverBytes = rawBufEndPos % 3;
+        numEncodableBytes = rawBufEndPos - numLeftoverBytes;
       }
-      
+
+      // encode the encodeable bytes (i.e. all bytes except possibly one or two
+      // extra bytes if it isn't a multiple of three)
       StringWriter writer = new StringWriter();
-      int encodedBytesLen = Base64Encoder.encode(rawBuf, 0, bytesRead, writer);
+      int encodedBytesLen = 
+        Base64Encoder.encode(rawBuf, 0, numEncodableBytes, writer);
       encodedBuf = writer.toString().getBytes();
       encodedBufPos = 0;
       encodedBufEndPos = encodedBuf.length;
+      System.arraycopy(rawBuf, numEncodableBytes, rawBuf, 0, numLeftoverBytes);
+      rawBufEndPos = numLeftoverBytes;
     }
     
     // INVARIANT: we have encoded data that can be returned
