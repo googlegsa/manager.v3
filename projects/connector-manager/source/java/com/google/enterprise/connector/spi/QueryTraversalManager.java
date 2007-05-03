@@ -173,7 +173,8 @@ public interface QueryTraversalManager {
    * @param monitor An object implementing QueryTraverserMonitor, which the
    *        Traverser (or the objects that IT calls) may use to request a 
    *        different timeout, and/or to report progress.
-   * @return A ResultSet of documents from the repository in natural order
+   * @return A ResultSet of documents from the repository in natural order, or
+   *         null if there are no documents.
    * @throws RepositoryException if the Repository is unreachable or similar
    *           exceptional condition.
    */
@@ -192,7 +193,7 @@ public interface QueryTraversalManager {
    *        Traverser (or the objects that IT calls) may use to request a 
    *        different timeout, and/or to report progress.
    * @return ResultSet object that returns documents starting just after the
-   *         checkpoint.
+   *         checkpoint, or null if there are no documents.
    * @throws RepositoryException
    */
   public ResultSet resumeTraversal(String checkPoint,
