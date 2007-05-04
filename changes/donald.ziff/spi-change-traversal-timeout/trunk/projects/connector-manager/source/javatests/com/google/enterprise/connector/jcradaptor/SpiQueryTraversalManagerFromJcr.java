@@ -21,8 +21,8 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.ResultSet;
 import com.google.enterprise.connector.spi.SimpleValue;
 import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.traversal.QueryTraverserMonitor;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -54,9 +54,6 @@ public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
   private String xpathUnboundedTraversalQuery;
   private String xpathBoundedTraversalQuery;
   
-  public void setTraversalContext(TraversalContext traversalContext) {
-  }
-
   /**
    * @param xpathBoundedTraversalQuery the xpathBoundedTraversalQuery to set
    */
@@ -112,7 +109,8 @@ public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
     return value;
   }
 
-  public ResultSet resumeTraversal(String checkPoint)
+  public ResultSet resumeTraversal(String checkPoint, 
+      QueryTraverserMonitor monitor)
       throws RepositoryException {
     JSONObject jo = null;
     try {
@@ -218,7 +216,7 @@ public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
     return c;
   }
 
-  public ResultSet startTraversal() 
+  public ResultSet startTraversal(QueryTraverserMonitor monitor) 
     throws RepositoryException {
     String lang = Query.XPATH;
     javax.jcr.query.Query query = 
