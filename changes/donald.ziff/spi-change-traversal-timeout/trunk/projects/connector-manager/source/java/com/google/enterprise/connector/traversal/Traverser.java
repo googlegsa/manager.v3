@@ -30,9 +30,6 @@ public interface Traverser {
    * @param batchHint Must be a positive integer. IllegalArgumentException is
    *        thrown for non-positive parameters. This requests that the traversal
    *        method process no more than that number of documents in this batch.
-   * @param monitor An object implementing QueryTraverserMonitor, which the
-   *        Traverser (or the objects that IT calls) may use to request a 
-   *        different timeout, and/or to report progress.
    * @return The actual number of documents processed (may not be the same as
    *         the batch hint). Perhaps we should return a more complicated
    *         structure that allows for more interesting monitoring: number of

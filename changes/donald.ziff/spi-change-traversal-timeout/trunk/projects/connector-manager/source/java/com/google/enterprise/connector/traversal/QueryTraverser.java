@@ -56,12 +56,14 @@ public class QueryTraverser implements Traverser {
       try {
         resultSet = queryTraversalManager.startTraversal();
       } catch (RepositoryException e) {
+        // TODO:ziff Auto-generated catch block
         e.printStackTrace();
       }
     } else {
       try {
         resultSet = queryTraversalManager.resumeTraversal(connectorState);
        } catch (RepositoryException e) {
+        // TODO:ziff Auto-generated catch block
         e.printStackTrace();
       }
     }
@@ -74,6 +76,7 @@ public class QueryTraverser implements Traverser {
     try {
       iter = resultSet.iterator();
     } catch (RepositoryException e) {
+      // TODO:ziff Auto-generated catch block
       e.printStackTrace();
     }
 
@@ -105,6 +108,7 @@ public class QueryTraverser implements Traverser {
     try {
       connectorState = queryTraversalManager.checkpoint(pm);
     } catch (RepositoryException e) {
+      // TODO:ziff Auto-generated catch block
       e.printStackTrace();
     }
     connectorStateStore.storeConnectorState(connectorName, connectorState);
