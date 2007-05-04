@@ -39,7 +39,6 @@ import com.google.enterprise.connector.traversal.LongRunningQueryTraverser;
 import com.google.enterprise.connector.traversal.NeverEndingQueryTraverser;
 import com.google.enterprise.connector.traversal.NoopQueryTraverser;
 import com.google.enterprise.connector.traversal.QueryTraverser;
-import com.google.enterprise.connector.traversal.RequestsMoreTimeQueryTraverser;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.HashMap;
@@ -106,10 +105,6 @@ public class MockInstantiator implements Instantiator {
 
     connectorMap.put(TRAVERSER_NAME_INTERRUPTIBLE, new ConnectorInterfaces(
         TRAVERSER_NAME_INTERRUPTIBLE, new InterruptibleQueryTraverser(),
-        nullAuthenticationManager, nullAuthorizationManager));
-    
-    connectorMap.put(TRAVERSER_NAME_REQUESTS_MORE_TIME, new ConnectorInterfaces(
-        TRAVERSER_NAME_REQUESTS_MORE_TIME, new RequestsMoreTimeQueryTraverser(),
         nullAuthenticationManager, nullAuthorizationManager));
   }
 
