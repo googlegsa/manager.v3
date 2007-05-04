@@ -21,7 +21,6 @@ import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.monitor.Monitor;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorScheduleStore;
-import com.google.enterprise.connector.traversal.QueryTraverserMonitor;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.ArrayList;
@@ -269,8 +268,7 @@ public class TraversalScheduler implements Scheduler {
     }
   }
 
-  private class TraversalWorkQueueItem extends WorkQueueItem 
-    implements QueryTraverserMonitor {
+  private class TraversalWorkQueueItem extends WorkQueueItem {
     private String connectorName;
     private int numDocsTraversed;
     private boolean isFinished;
@@ -355,8 +353,7 @@ public class TraversalScheduler implements Scheduler {
       if (null != traverser) {
         LOGGER.finer("Begin runBatch");
         numDocsTraversed = traverser.runBatch(
-          hostLoadManager.determineBatchHint(connectorName),
-          this);
+          hostLoadManager.determineBatchHint(connectorName));
         LOGGER.finer("End runBatch");
         numConsecutiveFailures = 0;
         timeOfFirstFailure = 0;
