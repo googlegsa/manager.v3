@@ -21,6 +21,7 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.ResultSet;
 import com.google.enterprise.connector.spi.SimpleValue;
 import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.spi.Value;
 
 import org.json.JSONException;
@@ -53,6 +54,9 @@ public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
   private String xpathUnboundedTraversalQuery;
   private String xpathBoundedTraversalQuery;
   
+  public void setTraversalContext(TraversalContext traversalContext) {
+  }
+
   /**
    * @param xpathBoundedTraversalQuery the xpathBoundedTraversalQuery to set
    */
