@@ -37,4 +37,9 @@ public interface Traverser {
    */
   public int runBatch(int batchHint);
 
+  /**
+   * Gets the preferred timeout
+   * @return The timeout, in milliseconds
+   */
+  public int getTimeoutMillis();
 }

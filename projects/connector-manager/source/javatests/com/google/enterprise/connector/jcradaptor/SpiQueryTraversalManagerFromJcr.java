@@ -235,7 +235,6 @@ public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
   }
 
   public void setBatchHint(int batchHint) throws RepositoryException {
-    ;
   }
 
 }

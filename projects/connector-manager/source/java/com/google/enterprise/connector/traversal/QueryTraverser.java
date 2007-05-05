@@ -16,6 +16,7 @@ package com.google.enterprise.connector.traversal;
 
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.pusher.Pusher;
+import com.google.enterprise.connector.spi.HasTimeout;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.QueryTraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -32,6 +33,9 @@ public class QueryTraverser implements Traverser {
   private QueryTraversalManager queryTraversalManager;
   private ConnectorStateStore connectorStateStore;
   private String connectorName;
+  private int timeout;
+  
+  private static final int TRAVERSAL_TIMEOUT = 5000;
 
   public QueryTraverser(Pusher p, QueryTraversalManager q,
       ConnectorStateStore c, String n) {
@@ -39,6 +43,10 @@ public class QueryTraverser implements Traverser {
     this.queryTraversalManager = q;
     this.connectorStateStore = c;
     this.connectorName = n;
+    if (this.queryTraversalManager instanceof HasTimeout) {
+    	int requestedTimeout = ((HasTimeout) queryTraversalManager).getTimeoutMillis();
+    	this.timeout = Math.max(requestedTimeout, TRAVERSAL_TIMEOUT);
+    }
   }
 
   /*
@@ -112,5 +120,9 @@ public class QueryTraverser implements Traverser {
       e.printStackTrace();
     }
     connectorStateStore.storeConnectorState(connectorName, connectorState);
+  }
+  
+  public int getTimeoutMillis() {
+	return timeout;
   }
 }
