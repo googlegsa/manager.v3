@@ -53,6 +53,29 @@ public class Base64FilterInputStreamTest extends TestCase {
   }
   
   /**
+   * Compare results from read() and read(bytes[], int, int) methods.
+   * @throws IOException
+   */
+  public void testReadMethods() throws IOException {
+    byte[] bytes = new byte[]{ 'a' };
+    ByteArrayInputStream bais1 = new ByteArrayInputStream(bytes);
+    Base64FilterInputStream is1 = new Base64FilterInputStream(bais1);
+    ByteArrayInputStream bais2 = new ByteArrayInputStream(bytes);
+    Base64FilterInputStream is2 = new Base64FilterInputStream(bais2);
+
+    int val;
+    byte[] resultBytes = new byte[4];
+    val = is1.read(resultBytes, 0, 4);
+    Assert.assertEquals(4, val);
+    
+    int index = 0;
+    while (-1 != (val = is2.read())) {
+      Assert.assertTrue(resultBytes[index] == (byte) val);
+      index++;
+    }
+  }
+  
+  /**
    * ByteArrayInputStream that returns a single byte at a time even if you 
    * request more.
    */
