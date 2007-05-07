@@ -17,6 +17,7 @@ package com.google.enterprise.connector.common;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.net.URLEncoder;
 
 /**
@@ -43,49 +44,68 @@ public class UrlEncodedFilterInputStream extends FilterInputStream {
   private int encodedBufPos = 0;
   private int encodedBufEndPos = 0;  // position with no valid data
   
+  private byte[] readBuffer = new byte[1];
+  
   public int read() throws IOException {
-    // if we have processed all read data
-    if (encodedBufEndPos == encodedBufPos) {
-      // try reading more data
-      int bytesRead = in.read(rawBuf, 0, rawBuf.length);
-      if (-1 == bytesRead) {
-        return -1;
-      }
-      
-      String rawBufStr = new String(rawBuf, 0, bytesRead, "UTF-8");
-      String encodedBufStr = URLEncoder.encode(rawBufStr, "UTF-8");
-      encodedBuf = encodedBufStr.getBytes("UTF-8");
-      encodedBufPos = 0;
-      encodedBufEndPos = encodedBuf.length;
-    }
-    
-    // INVARIANT: we have encoded data that can be returned
-    int result = encodedBuf[encodedBufPos];
-    encodedBufPos++;
-    return result;
+    int retVal = read(readBuffer, 0, 1);
+    if (-1 == retVal) {
+      return -1;
+    } else {
+      return readBuffer[0];
+    } 
   }
   
   public int read(byte b[], int off, int len) throws IOException {
     if (len < 0) {
       return 0;
     }
-    
-    int bytesRead = 0;
-    for (int i = 0; i < len; i++) {
-      int val = read();
-      if (-1 == val) {
-        if (0 == i) {
-          return -1;
-        } else {
-          return bytesRead;
-        }
-      } else {
-        bytesRead++;
-        // we read a legitimate value so add that to byte array
-        b[off + i] = (byte) val;
+
+    int currOff = off;  // current position to write into b
+    int currLen = len;  // num bytes to write into b
+
+    while (true) {
+      // fulfill read based on already encoded bytes
+      if (encodedBufEndPos - encodedBufPos > 0) {
+        int numBytesToCopy = 
+          Math.min(currLen, encodedBufEndPos - encodedBufPos);
+        System.arraycopy(encodedBuf, encodedBufPos, b, currOff, numBytesToCopy);
+        encodedBufPos += numBytesToCopy;
+        currLen -= numBytesToCopy;
+        currOff += numBytesToCopy;
       }
-    }
-    
-    return bytesRead;
+      
+      // if already done fulfilling entire read request, return
+      if (currLen <= 0) {
+        return len;
+      }
+      
+      // try reading more data
+      int bytesRead = -1;
+      try {
+        bytesRead = in.read(rawBuf, 0, rawBuf.length);
+      } catch (IOException e) {
+        // if we've read any bytes, we return that number
+        if (currLen < len) {
+          return len - currLen;
+        } else {
+          throw e;
+        }
+      }
+      
+      if (-1 == bytesRead) {
+        if (currLen < len) {
+          return len - currLen;
+        } else {
+          return -1;
+        }
+      }
+      
+      // encode data
+      String rawBufStr = new String(rawBuf, 0, bytesRead, "UTF-8");
+      String encodedBufStr = URLEncoder.encode(rawBufStr, "UTF-8");
+      encodedBuf = encodedBufStr.getBytes("UTF-8");
+      encodedBufPos = 0;
+      encodedBufEndPos = encodedBuf.length;
+    }    
   }
 }
