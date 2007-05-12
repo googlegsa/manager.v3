@@ -160,18 +160,6 @@ public interface Manager {
       String username);
 
   /**
-   * Gets authorization from a named connector for a set of documents by token.
-   * 
-   * @param connectorName
-   * @param tokenList The document set represented as a list of Strings: the
-   *        security token for a class of documents
-   * @param username The username as a string
-   * @return A Set of tokens that are authorized.
-   */
-  public Set authorizeTokens(String connectorName, List tokenList,
-      String username);
-
-  /**
    * Set schedule for a given Connector.
    * 
    * @param connectorName
