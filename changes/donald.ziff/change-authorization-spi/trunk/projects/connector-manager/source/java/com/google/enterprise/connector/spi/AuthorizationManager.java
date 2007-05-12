@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@ public interface AuthorizationManager {
    *        of an {@link ResultSet} returned from a
    *        {@link QueryTraversalManager}.startTraversal or
    *        {@link QueryTraversalManager}.resumeTraversal call.
-   * @param identity The user's identity
+   * @param identity The user's identity, as an
+   *        {@link AuthenticationIdentity}
    * @return A List of {@link AuthorizationResponse} objects, one for each
    *         docid in the docidList parameter; however, this list does not
    *         need to be in the same order.

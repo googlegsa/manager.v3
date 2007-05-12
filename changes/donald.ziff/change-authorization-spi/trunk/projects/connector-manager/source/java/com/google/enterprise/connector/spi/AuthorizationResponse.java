@@ -15,8 +15,8 @@
 package com.google.enterprise.connector.spi;
 
 /**
- * The response for the {@link AuthorizationManager}.authorizeDocids
- * method.
+ * The carrier type of the list returned by the
+ * {@link AuthorizationManager}.authorizeDocids method.
  */
 public class AuthorizationResponse {
 
@@ -24,7 +24,7 @@ public class AuthorizationResponse {
   private final String docid;
 
   /**
-   * Makes an authorizeDocids.
+   * Makes an AuthorizationResponse.
    * 
    * @param valid Indicates that authorization was successful (valid)
    * @param docid The docid for which authorization succeeded - should not
@@ -47,7 +47,7 @@ public class AuthorizationResponse {
   /**
    * Gets the docid.
    * 
-   * @return data - should not be null or empty
+   * @return docid - should not be null or empty
    */
   public String getDocid() {
     return docid;
