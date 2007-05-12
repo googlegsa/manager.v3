@@ -121,13 +121,4 @@ public class SpiConstants {
    * Value: google:ispublic
    */
   public static final String PROPNAME_ISPUBLIC = "google:ispublic";
-
-  
-  /**
-   * Identifies a property used in authorization results that indicates whether
-   * this user can see this document.
-   * <p>
-   * Value: google:authviewpermit
-   */
-  public static final String PROPNAME_AUTH_VIEWPERMIT = "google:authviewpermit";
 }

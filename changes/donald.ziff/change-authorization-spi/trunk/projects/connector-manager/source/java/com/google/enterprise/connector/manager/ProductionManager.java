@@ -32,10 +32,7 @@ import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.LoginException;
-import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.ResultSet;
-import com.google.enterprise.connector.spi.SpiConstants;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -141,7 +138,8 @@ public class ProductionManager implements Manager {
     try {
       AuthorizationManager authzManager =
           instantiator.getAuthorizationManager(connectorName);
-      List results = authzManager.authorizeDocids(docidList, username);
+      AuthenticationIdentity identity = new UserPassIdentity(username, null);
+      List results = authzManager.authorizeDocids(docidList, identity);
       Iterator iter = results.iterator();
       while (iter.hasNext()) {
         AuthorizationResponse response = (AuthorizationResponse) iter.next();
@@ -205,8 +203,7 @@ public class ProductionManager implements Manager {
       connectorTypeName = instantiator.getConnectorTypeName(connectorName);
     } catch (ConnectorNotFoundException e) {
       // TODO: this should become part of the signature - so we should just
-      // let
-      // this exception bubble up
+      // let this exception bubble up
       LOGGER.log(Level.WARNING, "Connector type " + connectorTypeName
           + " Not Found: ", e);
       throw new IllegalArgumentException();

@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.jcradaptor;
 
+import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -48,11 +49,12 @@ public class SpiAuthorizationManagerFromJcr implements AuthorizationManager {
    * @see com.google.enterprise.connector.spi.AuthorizationManager
    *      #authorizeDocids(java.util.List, java.lang.String)
    */
-  public List authorizeDocids(List docidList, String username)
+  public List authorizeDocids(List docidList, AuthenticationIdentity identity)
       throws RepositoryException {
     // we rely on the ability of the current session to impersonate any
     // other user
-    Credentials creds = new SimpleCredentials(username, new char[] {});
+    Credentials creds =
+        new SimpleCredentials(identity.getUsername(), new char[] {});
     Session userSession;
     try {
       userSession = sess.impersonate(creds);

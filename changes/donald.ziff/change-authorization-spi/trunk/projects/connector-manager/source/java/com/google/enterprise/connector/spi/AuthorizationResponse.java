@@ -15,7 +15,8 @@
 package com.google.enterprise.connector.spi;
 
 /**
- * The response for the {@link AuthorizationManager}.authenticate method.
+ * The response for the {@link AuthorizationManager}.authorizeDocids
+ * method.
  */
 public class AuthorizationResponse {
 
@@ -23,26 +24,30 @@ public class AuthorizationResponse {
   private final String docid;
 
   /**
-   * Makes an AuthenticationResponse.
-   * @param valid   Indicates that authentication was successful (valid)
-   * @param docid   Reserved for future use.  May be set but will be ignored.
+   * Makes an authorizeDocids.
+   * 
+   * @param valid Indicates that authorization was successful (valid)
+   * @param docid The docid for which authorization succeeded - should not
+   *        be null or empty
    */
   public AuthorizationResponse(boolean valid, String docid) {
     this.valid = valid;
     this.docid = docid;
   }
-  
+
   /**
-   * Tests whether authentication was valid
-   * @return true if authentication was valid
+   * Tests whether authorization was valid
+   * 
+   * @return true if authorization was valid
    */
   public boolean isValid() {
     return valid;
   }
 
   /**
-   * Get the client data
-   * @return data - may be null
+   * Gets the docid.
+   * 
+   * @return data - should not be null or empty
    */
   public String getDocid() {
     return docid;
