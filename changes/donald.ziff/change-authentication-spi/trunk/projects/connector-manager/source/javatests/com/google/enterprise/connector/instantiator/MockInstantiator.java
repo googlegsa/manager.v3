@@ -86,11 +86,6 @@ public class MockInstantiator implements Instantiator {
           throws RepositoryException {
         throw new UnsupportedOperationException();
       }
-
-      public ResultSet authorizeTokens(List tokenList, String username)
-          throws RepositoryException {
-        throw new UnsupportedOperationException();
-      }
     };
 
     connectorMap.put(TRAVERSER_NAME_NOOP, new ConnectorInterfaces(

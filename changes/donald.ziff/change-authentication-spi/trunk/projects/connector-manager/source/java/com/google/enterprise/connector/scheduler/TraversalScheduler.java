@@ -21,7 +21,6 @@ import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.monitor.Monitor;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorScheduleStore;
-import com.google.enterprise.connector.traversal.QueryTraverserMonitor;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.ArrayList;
@@ -45,7 +44,6 @@ public class TraversalScheduler implements Scheduler {
   
   private static final Logger LOGGER = 
     Logger.getLogger(TraversalScheduler.class.getName());
-  private static final int TRAVERSAL_TIMEOUT = 5000;
   
   private Instantiator instantiator;
   private Monitor monitor;
@@ -214,7 +212,7 @@ public class TraversalScheduler implements Scheduler {
             runnable = (TraversalWorkQueueItem) runnables.get(connectorName);
             if (null == runnable) {
               runnable = 
-                new TraversalWorkQueueItem(connectorName, TRAVERSAL_TIMEOUT);
+                new TraversalWorkQueueItem(connectorName);
               runnables.put(connectorName, runnable);
             }
           }
@@ -269,9 +267,9 @@ public class TraversalScheduler implements Scheduler {
     }
   }
 
-  private class TraversalWorkQueueItem extends WorkQueueItem 
-    implements QueryTraverserMonitor {
+  private class TraversalWorkQueueItem extends WorkQueueItem {
     private String connectorName;
+    private Traverser traverser;
     private int numDocsTraversed;
     private boolean isFinished;
     
@@ -284,24 +282,15 @@ public class TraversalScheduler implements Scheduler {
     private long timeout;
     
     private long timeoutAdditional = 0;
-    
-    // methods from QueryTraverserMonitor
-    public synchronized void requestTimeout(long timeoutAdditional) {
-      this.timeoutAdditional = timeoutAdditional;
-    }
-    
-    public void reportProgress(double percentDone) {
-      LOGGER.info(connectorName + " reports progress: " + 
-          percentDone + "% done.");
-    }
-    
-    public TraversalWorkQueueItem(String connectorName, long timeout) {
+        
+    public TraversalWorkQueueItem(String connectorName) {
       this.connectorName = connectorName;
+      this.traverser = getTraverser(connectorName);
       this.numDocsTraversed = 0;
       this.isFinished = false;
       this.numConsecutiveFailures = 0;
       this.timeOfFirstFailure = 0;
-      this.timeout = timeout;
+      this.timeout = traverser.getTimeoutMillis();
     }
     
     public int getNumDocsTraversed() {
@@ -351,12 +340,10 @@ public class TraversalScheduler implements Scheduler {
     }
     
     public void doWork() {
-      Traverser traverser = getTraverser(connectorName);
       if (null != traverser) {
         LOGGER.finer("Begin runBatch");
         numDocsTraversed = traverser.runBatch(
-          hostLoadManager.determineBatchHint(connectorName),
-          this);
+          hostLoadManager.determineBatchHint(connectorName));
         LOGGER.finer("End runBatch");
         numConsecutiveFailures = 0;
         timeOfFirstFailure = 0;

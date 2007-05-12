@@ -1,10 +1,10 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,9 @@ import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.scheduler.Scheduler;
+import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
+import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
@@ -56,7 +58,7 @@ public class ProductionManager implements Manager {
   ConnectorScheduleStore connectorScheduleStore;
   ConnectorStateStore connectorStateStore;
   Scheduler scheduler;
-  
+
   public ProductionManager() {
   }
 
@@ -71,19 +73,19 @@ public class ProductionManager implements Manager {
   /**
    * @param connectorStateStore the connectorStateStore to set
    */
-  public void setConnectorStateStore(
-      ConnectorStateStore connectorStateStore) {
+  public void setConnectorStateStore(ConnectorStateStore connectorStateStore) {
     this.connectorStateStore = connectorStateStore;
   }
-  
+
   /**
    * Set the scheduler.
+   * 
    * @param scheduler the scheduler to set.
    */
   public void setScheduler(Scheduler scheduler) {
     this.scheduler = scheduler;
   }
-  
+
   /**
    * @param instantiator the instantiator to set
    */
@@ -96,7 +98,8 @@ public class ProductionManager implements Manager {
    * (non-Javadoc)
    * 
    * @see com.google.enterprise.connector.manager.Manager
-   *      #authenticate(java.lang.String, java.lang.String, java.lang.String)
+   *      #authenticate(java.lang.String, java.lang.String,
+   *      java.lang.String)
    */
   public boolean authenticate(String connectorName, String username,
       String password) {
@@ -105,10 +108,14 @@ public class ProductionManager implements Manager {
     try {
       AuthenticationManager authnManager =
           instantiator.getAuthenticationManager(connectorName);
-      result = authnManager.authenticate(username, password);
+      AuthenticationIdentity identity =
+          new UserPassIdentity(username, password);
+      AuthenticationResponse authenticationResponse =
+          authnManager.authenticate(identity);
+      result = authenticationResponse.isValid();
     } catch (ConnectorNotFoundException e) {
-      LOGGER.log(Level.WARNING, "Connector " + connectorName
-        + " Not Found: ", e);
+      LOGGER.log(Level.WARNING, "Connector " + connectorName + " Not Found: ",
+          e);
     } catch (InstantiatorException e) {
       LOGGER.log(Level.WARNING, "Instantiator: ", e);
     } catch (LoginException e) {
@@ -124,7 +131,8 @@ public class ProductionManager implements Manager {
    * (non-Javadoc)
    * 
    * @see com.google.enterprise.connector.manager.Manager
-   *      #authorizeDocids(java.lang.String, java.util.List, java.lang.String)
+   *      #authorizeDocids(java.lang.String, java.util.List,
+   *      java.lang.String)
    */
   public Set authorizeDocids(String connectorName, List docidList,
       String username) {
@@ -136,46 +144,18 @@ public class ProductionManager implements Manager {
       Iterator iter = resultSet.iterator();
       while (iter.hasNext()) {
         PropertyMap pm = (PropertyMap) iter.next();
-        String uuid = pm.getProperty(SpiConstants.PROPNAME_DOCID).getValue()
-          .getString();
-        boolean ok = pm.getProperty(SpiConstants.PROPNAME_AUTH_VIEWPERMIT)
-          .getValue().getBoolean();
+        String uuid =
+            pm.getProperty(SpiConstants.PROPNAME_DOCID).getValue().getString();
+        boolean ok =
+            pm.getProperty(SpiConstants.PROPNAME_AUTH_VIEWPERMIT).getValue()
+                .getBoolean();
         if (ok) {
           result.add(uuid);
-        }     
+        }
       }
     } catch (ConnectorNotFoundException e) {
-      LOGGER.log(Level.WARNING, "Connector " + connectorName
-          + " Not Found: ", e);
-    } catch (InstantiatorException e) {
-      LOGGER.log(Level.WARNING, "Instantiator: ", e);
-    } catch (RepositoryException e) {
-      LOGGER.log(Level.WARNING, "Repository: ", e);
-    }
-
-    return result;
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.google.enterprise.connector.manager.Manager
-   *      #authorizeTokens(java.lang.String, java.util.List, java.lang.String)
-   */
-  public Set authorizeTokens(String connectorName, List tokenList,
-      String username) {
-    Set result = new HashSet();
-    try {
-      AuthorizationManager authzManager =
-          instantiator.getAuthorizationManager(connectorName);
-      ResultSet resultSet = authzManager.authorizeTokens(tokenList, username);
-      Iterator iter = resultSet.iterator();
-      while (iter.hasNext()) {
-        result.add(iter.next());
-      }
-    } catch (ConnectorNotFoundException e) {
-      LOGGER.log(Level.WARNING, "Connector " + connectorName
-          + " Not Found: ", e);
+      LOGGER.log(Level.WARNING, "Connector " + connectorName + " Not Found: ",
+          e);
     } catch (InstantiatorException e) {
       LOGGER.log(Level.WARNING, "Instantiator: ", e);
     } catch (RepositoryException e) {
@@ -195,7 +175,7 @@ public class ProductionManager implements Manager {
       String language) throws ConnectorTypeNotFoundException {
     ConnectorType connectorType =
         instantiator.getConnectorType(connectorTypeName);
-	Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
+    Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
     return connectorType.getConfigForm(locale);
   }
 
@@ -207,8 +187,7 @@ public class ProductionManager implements Manager {
    */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String language) throws ConnectorNotFoundException, InstantiatorException {
-    String connectorTypeName =
-        instantiator.getConnectorTypeName(connectorName);
+    String connectorTypeName = instantiator.getConnectorTypeName(connectorName);
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
     ConfigureResponse response =
         instantiator.getConfigFormForConnector(connectorName,
@@ -227,13 +206,15 @@ public class ProductionManager implements Manager {
     try {
       connectorTypeName = instantiator.getConnectorTypeName(connectorName);
     } catch (ConnectorNotFoundException e) {
-      // TODO: this should become part of the signature - so we should just let
+      // TODO: this should become part of the signature - so we should just
+      // let
       // this exception bubble up
       LOGGER.log(Level.WARNING, "Connector type " + connectorTypeName
-        + " Not Found: ", e);
+          + " Not Found: ", e);
       throw new IllegalArgumentException();
     }
-    // TODO: resolve this last parameter - we need to give the status a meaning
+    // TODO: resolve this last parameter - we need to give the status a
+    // meaning
     return new ConnectorStatus(connectorName, connectorTypeName, 0);
   }
 
@@ -274,13 +255,13 @@ public class ProductionManager implements Manager {
    *      java.util.Map, java.lang.String)
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configData, String language,
-      boolean update)
+      String connectorTypeName, Map configData, String language, boolean update)
       throws ConnectorNotFoundException, PersistentStoreException,
       InstantiatorException {
-	Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
-    ConfigureResponse resp =  instantiator.setConnectorConfig(connectorName, connectorTypeName,
-        configData, locale, update);
+    Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
+    ConfigureResponse resp =
+        instantiator.setConnectorConfig(connectorName, connectorTypeName,
+            configData, locale, update);
     return resp;
   }
 
@@ -294,8 +275,8 @@ public class ProductionManager implements Manager {
       String feederGateHost, int feederGatePort)
       throws PersistentStoreException {
     try {
-      Context.getInstance().setConnectorManagerConfig(certAuth,
-          feederGateHost, feederGatePort);
+      Context.getInstance().setConnectorManagerConfig(certAuth, feederGateHost,
+          feederGatePort);
     } catch (InstantiatorException e) {
       throw new PersistentStoreException(e);
     }
@@ -308,12 +289,12 @@ public class ProductionManager implements Manager {
    *      java.lang.String, int, java.lang.String)
    */
   public void setSchedule(String connectorName, int load, String timeIntervals) {
-    
+
     Schedule schedule =
-      new Schedule(connectorName + ":" + load + ":" + timeIntervals);
+        new Schedule(connectorName + ":" + load + ":" + timeIntervals);
     String connectorSchedule = schedule.toString();
     connectorScheduleStore.storeConnectorSchedule(connectorName,
-      connectorSchedule);
+        connectorSchedule);
   }
 
   /*

@@ -48,21 +48,65 @@ public class Base64FilterInputStream extends FilterInputStream {
    */
   private int encodedBufPos = 0;
   private int encodedBufEndPos = 0;  // position starting with no valid data
+
+  private byte[] readBuffer = new byte[1];
   
   public int read() throws IOException {
-    // if we have processed all encoded data
-    if (encodedBufEndPos == encodedBufPos) {
+    int retVal = read(readBuffer, 0, 1);
+    if (-1 == retVal) {
+      return -1;
+    } else {
+      return readBuffer[0];
+    }
+  }
+  
+  public int read(byte b[], int off, int len) throws IOException {
+    if (len < 0) {
+      return 0;
+    }
+    
+    int currOff = off;  // current position to write into b
+    int currLen = len;  // num bytes to write into b
+    while (true) {
       int numLeftoverBytes = rawBufEndPos;
       int numEncodableBytes = 0;
 
+      // fulfill read based on already encoded bytes
+      if (encodedBufEndPos - encodedBufPos > 0) {
+        int numBytesToCopy = 
+          Math.min(currLen, encodedBufEndPos - encodedBufPos);
+        System.arraycopy(encodedBuf, encodedBufPos, b, currOff, numBytesToCopy);
+        encodedBufPos += numBytesToCopy;      
+        currLen -= numBytesToCopy;
+        currOff += numBytesToCopy;
+      }
+      
+      // if already done fulfilling entire read request, return
+      if (currLen <= 0) {
+        return len;
+      }
+
+      // if we reach here, it means we need more encoded bytes
       while (0 == numEncodableBytes) {
-        int bytesRead = 
-          in.read(rawBuf, rawBufEndPos, rawBuf.length - rawBufEndPos);
+        int bytesRead = -1;
+        try {
+          bytesRead =
+            in.read(rawBuf, rawBufEndPos, rawBuf.length - rawBufEndPos);
+        } catch (IOException e) {
+          // if we've read any bytes, we return that number
+          if (currLen < len) {
+            return len - currLen;
+          } else {
+            throw e;
+          }
+        }
         if (-1 == bytesRead) {
           if (0 == numLeftoverBytes) {
-            // if we had no bytes and we can't read any new bytes, that's the 
-            // end
-            return -1;
+            if (currLen < len) {
+              return len - currLen;
+            } else {
+              return -1;
+            }
           } else {
             // if we can't read new bytes, but we had some from before, then
             // it is okay to encode those.
@@ -79,7 +123,7 @@ public class Base64FilterInputStream extends FilterInputStream {
         numEncodableBytes = rawBufEndPos - numLeftoverBytes;
       }
 
-      // encode the encodeable bytes (i.e. all bytes except possibly one or two
+      // encode the encodable bytes (i.e. all bytes except possibly one or two
       // extra bytes if it isn't a multiple of three)
       StringWriter writer = new StringWriter();
       int encodedBytesLen = 
@@ -90,34 +134,5 @@ public class Base64FilterInputStream extends FilterInputStream {
       System.arraycopy(rawBuf, numEncodableBytes, rawBuf, 0, numLeftoverBytes);
       rawBufEndPos = numLeftoverBytes;
     }
-    
-    // INVARIANT: we have encoded data that can be returned
-    int result = encodedBuf[encodedBufPos];
-    encodedBufPos++;
-    return result;
-  }
-  
-  public int read(byte b[], int off, int len) throws IOException {
-    if (len < 0) {
-      return 0;
-    }
-    
-    int bytesRead = 0;
-    for (int i = 0; i < len; i++) {
-      int val = read();
-      if (-1 == val) {
-        if (0 == i) {
-          return -1;
-        } else {
-          return bytesRead;
-        }
-      } else {
-        bytesRead++;
-        // we read a legitimate value so add that to byte array
-        b[off + i] = (byte) val;
-      }
-    }
-    
-    return bytesRead;
   }
 }

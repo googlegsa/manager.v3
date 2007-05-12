@@ -22,8 +22,13 @@ public class NoopQueryTraverser implements Traverser {
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
    */
-  public int runBatch(int batchHint, QueryTraverserMonitor monitor) {
+  public int runBatch(int batchHint) {
     return batchHint;
   }
 
+  private static final int TRAVERSAL_TIMEOUT = 5000;
+
+  public int getTimeoutMillis() {
+	return TRAVERSAL_TIMEOUT;
+  }
 }

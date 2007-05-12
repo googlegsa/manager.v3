@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.spi;
 
-import com.google.enterprise.connector.traversal.QueryTraverserMonitor;
 
 /**
  * Interface for implementing query-based traversal.
@@ -170,15 +169,12 @@ public interface QueryTraversalManager {
    * as many or as few of the results as it wants, but it guarantees to call
    * {@link #checkpoint(PropertyMap)} passing in the last object it has
    * successfully processed.
-   * @param monitor An object implementing QueryTraverserMonitor, which the
-   *        Traverser (or the objects that IT calls) may use to request a 
-   *        different timeout, and/or to report progress.
    * @return A ResultSet of documents from the repository in natural order, or
    *         null if there are no documents.
    * @throws RepositoryException if the Repository is unreachable or similar
    *           exceptional condition.
    */
-  public ResultSet startTraversal(QueryTraverserMonitor monitor) 
+  public ResultSet startTraversal() 
     throws RepositoryException;
 
   /**
@@ -189,15 +185,11 @@ public interface QueryTraversalManager {
    * checkpoint string.
    * 
    * @param checkPoint String that indicates from where to resume traversal.
-   * @param monitor An object implementing QueryTraverserMonitor, which the
-   *        Traverser (or the objects that IT calls) may use to request a 
-   *        different timeout, and/or to report progress.
    * @return ResultSet object that returns documents starting just after the
    *         checkpoint, or null if there are no documents.
    * @throws RepositoryException
    */
-  public ResultSet resumeTraversal(String checkPoint,
-      QueryTraverserMonitor monitor)
+  public ResultSet resumeTraversal(String checkPoint)
       throws RepositoryException;
 
   /**
@@ -213,10 +205,10 @@ public interface QueryTraversalManager {
    * state, up to the document passed in.
    * 
    * @param pm A property map obtained from a ResultSet obtained from either
-   *          {@link #startTraversal(QueryTraverserMonitor)} or
-   *          {@link #resumeTraversal(String, QueryTraverserMonitor)}.
+   *          {@link #startTraversal()} or
+   *          {@link #resumeTraversal(String)}.
    * @return A string that can be used by a subsequent call to the
-   *         {@link #resumeTraversal(String, QueryTraverserMonitor)} method.
+   *         {@link #resumeTraversal(String)} method.
    * @throws RepositoryException
    */
   public String checkpoint(PropertyMap pm) throws RepositoryException;
