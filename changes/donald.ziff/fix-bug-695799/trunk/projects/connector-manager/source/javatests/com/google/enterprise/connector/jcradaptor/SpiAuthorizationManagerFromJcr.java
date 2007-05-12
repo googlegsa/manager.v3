@@ -96,16 +96,4 @@ public class SpiAuthorizationManagerFromJcr implements AuthorizationManager {
       userSession.logout();
     }
   }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.google.enterprise.connector.spi.AuthorizationManager#authorizeTokens(java.util.List,
-   *      java.lang.String)
-   */
-  public ResultSet authorizeTokens(List tokenList, String username)
-      throws RepositoryException {
-    throw new UnsupportedOperationException();
-  }
-
 }

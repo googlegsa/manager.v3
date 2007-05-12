@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.instantiator.InstanceInfo;
 import com.google.enterprise.connector.instantiator.TypeInfo;
+import com.google.enterprise.connector.instantiator.InstanceInfo.FactoryCreationFailureException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.InstanceInfoException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.NoBeansFoundException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.NullConnectorNameException;
@@ -222,7 +223,7 @@ public class InstanceInfoTest extends TestCase {
     } catch (InstanceInfoException e) {
       exceptionThrown = true;
       Assert.assertTrue("Expected InstanceInfoException",
-          e instanceof InstanceInfoException);
+          e instanceof FactoryCreationFailureException);
     }
     Assert.assertTrue(exceptionThrown);
   }

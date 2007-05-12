@@ -46,6 +46,19 @@
 	<target name="connector_spi" depends="init,compile,jar">
 	</target>
 
+	<target name="spi-javadoc">
+	<javadoc access="public" author="false" 
+		destdir="doc/javadoc/spi" doctitle="Google Search Appliance Connector SPI" 
+		nodeprecated="false" nodeprecatedlist="true" noindex="false" nonavbar="false" 
+		notree="false" source="1.4" 
+		sourcepath="${src}"
+		splitindex="true" use="true" version="true">
+	    <fileset dir="${src}/com/google/enterprise/connector/spi">
+	        <include name="*.java"/>
+	      </fileset>
+		</javadoc>
+	</target>
+	
 	<target name="connector_util" depends="init,compile,jar">
 	</target>
 

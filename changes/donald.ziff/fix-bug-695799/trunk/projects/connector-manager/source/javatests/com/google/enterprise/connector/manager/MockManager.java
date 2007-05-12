@@ -50,19 +50,6 @@ public class MockManager implements Manager {
   /*
    * (non-Javadoc)
    * 
-   * @see com.google.enterprise.connector.manager.Manager#authorizeTokens(java.lang.String,
-   *      java.util.List, java.lang.String)
-   */
-  public Set authorizeTokens(String connectorName, List tokenList,
-      String username) {
-    Set tokenAuthSet = new HashSet();
-    tokenAuthSet.addAll(tokenList);
-    return tokenAuthSet;
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
    * @see com.google.enterprise.connector.manager.Manager#authenticate(java.lang.String,
    *      java.lang.String, java.lang.String)
    */

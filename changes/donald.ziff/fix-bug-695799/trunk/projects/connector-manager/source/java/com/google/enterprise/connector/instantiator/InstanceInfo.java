@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.google.enterprise.connector.spi.Connector;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.beans.factory.xml.XmlBeanFactory;
-import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
@@ -153,10 +152,8 @@ public final class InstanceInfo {
     File specialInstancePrototype =
         new File(connectorDir, SPECIAL_INSTANCE_CONFIG_FILE_NAME);
     if (specialInstancePrototype.exists()) {
-      // if this file exists, we use this it in preference to the
-      // default
-      // prototype associated with the type. This allows customers to
-      // supply
+      // if this file exists, we use this it in preference to the default
+      // prototype associated with the type. This allows customers to supply
       // their own per-instance config xml
       connectorInstancePrototype =
           new FileSystemResource(specialInstancePrototype);
