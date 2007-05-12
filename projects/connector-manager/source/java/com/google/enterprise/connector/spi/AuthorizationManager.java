@@ -46,4 +46,5 @@ public interface AuthorizationManager {
    */
   ResultSet authorizeDocids(List docidList, String username)
       throws RepositoryException;
+
 }
