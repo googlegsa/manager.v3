@@ -1,10 +1,10 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,12 +37,14 @@ import java.util.logging.Logger;
  * Container for info about a Connector Instance. Instantiable only through a
  * static factory that uses Spring.
  */
-public class InstanceInfo {
+public final class InstanceInfo {
 
   private static final Logger LOGGER =
       Logger.getLogger(InstanceInfo.class.getName());
 
   private static final String PROPERTIES_SUFFIX = ".properties";
+  private static final String SPECIAL_INSTANCE_CONFIG_FILE_NAME =
+      "connectorInstance.xml";
   private static final String GOOGLE_CONNECTOR_WORK_DIR =
       "googleConnectorWorkDir";
   private static final String GOOGLE_WORK_DIR = "googleWorkDir";
@@ -96,13 +98,6 @@ public class InstanceInfo {
     return connectorDir;
   }
 
-  /**
-   * @param typeInfo
-   * @param name
-   * @param connector
-   * @param properties
-   * @param propertiesFile
-   */
   private InstanceInfo(final TypeInfo typeInfo, final String name,
       final Connector connector, final Properties properties,
       final File propertiesFile, final File connectorDir) {
@@ -127,10 +122,9 @@ public class InstanceInfo {
 
   public static InstanceInfo fromDirectoryAndThrow(String connectorName,
       File connectorDir, TypeInfo typeInfo)
-      throws FactoryCreationFailureException, BeanListFailureException,
-      NoBeansFoundException, BeanInstantiationFailureException,
-      NullDirectoryException, NullTypeInfoException,
-      NullConnectorNameException, PropertyProcessingInternalFailureException,
+      throws FactoryCreationFailureException, NoBeansFoundException,
+      BeanInstantiationFailureException, NullDirectoryException,
+      NullTypeInfoException, NullConnectorNameException,
       PropertyProcessingFailureException {
 
     if (connectorName == null || connectorName.length() < 1) {
@@ -153,8 +147,22 @@ public class InstanceInfo {
 
     properties = initPropertiesFromFile(propertiesFile, propertiesFileName);
 
-    Resource connectorInstancePrototype =
-        typeInfo.getConnectorInstancePrototype();
+    Resource connectorInstancePrototype = null;
+
+    File specialInstancePrototype =
+        new File(connectorDir, SPECIAL_INSTANCE_CONFIG_FILE_NAME);
+    if (specialInstancePrototype.exists()) {
+      // if this file exists, we use this it in preference to the default
+      // prototype associated with the type. This allows customers to supply
+      // their own per-instance config xml
+      connectorInstancePrototype =
+          new FileSystemResource(specialInstancePrototype);
+      LOGGER.log(Level.INFO,
+          "Using connector-specific xml config for connector" + connectorName
+              + " at path " + specialInstancePrototype.getPath());
+    } else {
+      connectorInstancePrototype = typeInfo.getConnectorInstancePrototype();
+    }
 
     connector =
         makeConnectorWithSpring(connector, properties, propertiesFile,
@@ -169,10 +177,8 @@ public class InstanceInfo {
   private static Connector makeConnectorWithSpring(Connector connector,
       Properties properties, File propertiesFile,
       Resource connectorInstancePrototype, String connectorName)
-      throws FactoryCreationFailureException, BeanListFailureException,
-      NoBeansFoundException, BeanInstantiationFailureException,
-      PropertyProcessingInternalFailureException,
-      PropertyProcessingFailureException {
+      throws FactoryCreationFailureException, NoBeansFoundException,
+      BeanInstantiationFailureException, PropertyProcessingFailureException {
     XmlBeanFactory factory;
 
     try {
@@ -183,59 +189,67 @@ public class InstanceInfo {
     }
 
     if (properties != null) {
-      PropertyPlaceholderConfigurer cfg;
-      try {
+      PropertyPlaceholderConfigurer cfg =
+          (PropertyPlaceholderConfigurer) getRequiredBean(
+              connectorInstancePrototype, connectorName, factory,
+              PropertyPlaceholderConfigurer.class);
+      if (cfg == null) {
         cfg = new PropertyPlaceholderConfigurer();
-        cfg.setLocation(new FileSystemResource(propertiesFile));
-      } catch (Exception e) {
-        throw new PropertyProcessingInternalFailureException(e, propertiesFile,
-            connectorInstancePrototype, connectorName);
       }
+      cfg.setLocation(new FileSystemResource(propertiesFile));
       try {
         cfg.postProcessBeanFactory(factory);
-      } catch (Exception e) {
+      } catch (BeansException e) {
         throw new PropertyProcessingFailureException(e, propertiesFile,
             connectorInstancePrototype, connectorName);
       }
     }
 
-    // get the list of Connectors defined in the bean factory
-    String beanList[];
-    try {
-      beanList = factory.getBeanNamesForType(Connector.class);
-    } catch (Exception e) {
-      throw new BeanListFailureException(e, connectorInstancePrototype,
+    connector =
+        (Connector) getRequiredBean(connectorInstancePrototype, connectorName,
+            factory, Connector.class);
+    if (connector == null) {
+      throw new NoBeansFoundException(connectorInstancePrototype,
           connectorName, Connector.class);
     }
 
-    // make sure there is at least one Connector Type
+    return connector;
+  }
+
+  private static Object getRequiredBean(Resource connectorInstancePrototype,
+      String connectorName, XmlBeanFactory factory, Class clazz)
+      throws NoBeansFoundException, BeanInstantiationFailureException {
+    Object result;
+    // get the list of beans defined in the bean factory of the required type
+    String[] beanList;
+    beanList = factory.getBeanNamesForType(clazz);
+
+    // make sure there is at least one
     if (beanList.length < 1) {
-      throw new NoBeansFoundException(connectorInstancePrototype,
-          connectorName, Connector.class);
+      return null;
     }
 
     // remember the name of the first one found, and instantiate it
     String beanName = beanList[0];
     try {
-      connector = (Connector) factory.getBean(beanName);
-    } catch (Exception e) {
+      result = factory.getBean(beanName);
+    } catch (BeansException e) {
       throw new BeanInstantiationFailureException(e,
           connectorInstancePrototype, connectorName, beanName);
     }
 
-    // if more Connectors were found issue a warning
+    // if more beans were found issue a warning
     if (beanList.length > 1) {
       StringBuffer buf = new StringBuffer();
       for (int i = 1; i < beanList.length; i++) {
         buf.append(" ");
         buf.append(beanList[i]);
       }
-      LOGGER.log(Level.WARNING,
-          "Resource contains multiple Connector Type definitions.  Using the first: "
-              + beanName + ".  Skipping:" + buf);
+      LOGGER.log(Level.WARNING, "Resource contains multiple " + clazz.getName()
+          + " definitions.  " + "Using the first: " + beanName + ".  Skipping:"
+          + buf);
     }
-
-    return connector;
+    return result;
   }
 
   public static Properties initPropertiesFromFile(File propertiesFile,

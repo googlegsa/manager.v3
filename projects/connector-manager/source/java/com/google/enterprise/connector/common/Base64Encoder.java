@@ -62,7 +62,6 @@ public class Base64Encoder {
     throws IOException {
     int outLen = 0;
     byte a, b, c;
-    int start = off;
     while (len >= 3) {
       a = data[off];
       b = data[off+1];

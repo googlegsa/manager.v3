@@ -126,8 +126,7 @@ public class Base64FilterInputStream extends FilterInputStream {
       // encode the encodable bytes (i.e. all bytes except possibly one or two
       // extra bytes if it isn't a multiple of three)
       StringWriter writer = new StringWriter();
-      int encodedBytesLen = 
-        Base64Encoder.encode(rawBuf, 0, numEncodableBytes, writer);
+      Base64Encoder.encode(rawBuf, 0, numEncodableBytes, writer);
       encodedBuf = writer.toString().getBytes();
       encodedBufPos = 0;
       encodedBufEndPos = encodedBuf.length;
