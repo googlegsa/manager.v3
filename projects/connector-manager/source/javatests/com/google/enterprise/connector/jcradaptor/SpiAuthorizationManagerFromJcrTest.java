@@ -123,4 +123,5 @@ public class SpiAuthorizationManagerFromJcrTest extends TestCase {
           .booleanValue(), ok);
     }
   }
+
 }

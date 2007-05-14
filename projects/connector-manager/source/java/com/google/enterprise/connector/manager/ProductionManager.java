@@ -306,4 +306,5 @@ public class ProductionManager implements Manager {
     connectorStateStore.removeConnectorState(connectorName);
     scheduler.removeConnector(connectorName);
   }
+
 }
