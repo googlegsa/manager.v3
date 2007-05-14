@@ -32,8 +32,8 @@ public interface AuthorizationManager {
    *        indexing via traversal. Thus the docids should have started as
    *        {@link SpiConstants}.PROPNAME_DOCID properties that were part
    *        of an {@link ResultSet} returned from a
-   *        {@link QueryTraversalManager}.startTraversal or
-   *        {@link QueryTraversalManager}.resumeTraversal call.
+   *        {@link TraversalManager}.startTraversal or
+   *        {@link TraversalManager}.resumeTraversal call.
    * @param identity The user's identity, as an
    *        {@link AuthenticationIdentity}
    * @return A List of {@link AuthorizationResponse} objects, one for each
