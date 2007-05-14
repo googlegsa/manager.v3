@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,13 +28,11 @@ import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.AuthorizationManager;
+import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.LoginException;
-import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.ResultSet;
-import com.google.enterprise.connector.spi.SpiConstants;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -140,15 +138,13 @@ public class ProductionManager implements Manager {
     try {
       AuthorizationManager authzManager =
           instantiator.getAuthorizationManager(connectorName);
-      ResultSet resultSet = authzManager.authorizeDocids(docidList, username);
-      Iterator iter = resultSet.iterator();
+      AuthenticationIdentity identity = new UserPassIdentity(username, null);
+      List results = authzManager.authorizeDocids(docidList, identity);
+      Iterator iter = results.iterator();
       while (iter.hasNext()) {
-        PropertyMap pm = (PropertyMap) iter.next();
-        String uuid =
-            pm.getProperty(SpiConstants.PROPNAME_DOCID).getValue().getString();
-        boolean ok =
-            pm.getProperty(SpiConstants.PROPNAME_AUTH_VIEWPERMIT).getValue()
-                .getBoolean();
+        AuthorizationResponse response = (AuthorizationResponse) iter.next();
+        String uuid = response.getDocid();
+        boolean ok = response.isValid();
         if (ok) {
           result.add(uuid);
         }
@@ -207,8 +203,7 @@ public class ProductionManager implements Manager {
       connectorTypeName = instantiator.getConnectorTypeName(connectorName);
     } catch (ConnectorNotFoundException e) {
       // TODO: this should become part of the signature - so we should just
-      // let
-      // this exception bubble up
+      // let this exception bubble up
       LOGGER.log(Level.WARNING, "Connector type " + connectorTypeName
           + " Not Found: ", e);
       throw new IllegalArgumentException();
