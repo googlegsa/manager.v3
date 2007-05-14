@@ -24,7 +24,9 @@ import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.pusher.Pusher;
+import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
+import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
@@ -32,7 +34,6 @@ import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.LoginException;
 import com.google.enterprise.connector.spi.QueryTraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.ResultSet;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.traversal.InterruptibleQueryTraverser;
 import com.google.enterprise.connector.traversal.LongRunningQueryTraverser;
@@ -73,19 +74,14 @@ public class MockInstantiator implements Instantiator {
 
     AuthenticationManager nullAuthenticationManager =
         new AuthenticationManager() {
-          public boolean authenticate(String username, String password)
+          public AuthenticationResponse authenticate(AuthenticationIdentity identity)
               throws LoginException, RepositoryException {
             throw new UnsupportedOperationException();
           }
         };
 
     AuthorizationManager nullAuthorizationManager = new AuthorizationManager() {
-      public ResultSet authorizeDocids(List docidList, String username)
-          throws RepositoryException {
-        throw new UnsupportedOperationException();
-      }
-
-      public ResultSet authorizeTokens(List tokenList, String username)
+      public List authorizeDocids(List docidList, AuthenticationIdentity identity)
           throws RepositoryException {
         throw new UnsupportedOperationException();
       }

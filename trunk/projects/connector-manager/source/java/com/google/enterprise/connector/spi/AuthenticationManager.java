@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,18 +21,19 @@ package com.google.enterprise.connector.spi;
 public interface AuthenticationManager {
 
   /**
-   * Authenticates against the repository and returns true or false depending on
-   * whether authentication was successful. If an exception is thrown, the
-   * implementor should provide an explanatory message.
+   * Authenticates against the repository and returns true or false
+   * depending on whether authentication was successful. If an exception is
+   * thrown, the implementor should provide an explanatory message.
    * 
-   * @param username A String, the user's name
-   * @param password A String, the user's password
-   * @return True means that authentication succeeded, false indicates failure
+   * @param identity A AuthenticationIdentity object that encapsulates the
+   *        user's identity
+   * @return True means that authentication succeeded, false indicates
+   *         failure
    * @throws LoginException if there is a credentials-related problem that
-   *           prohibits authentication
-   * @throws RepositoryException if there is a more general problem, such as the
-   *           system is unreachable or down
+   *         prohibits authentication
+   * @throws RepositoryException if there is a more general problem, such
+   *         as the system is unreachable or down
    */
-  public boolean authenticate(String username, String password)
+  public AuthenticationResponse authenticate(AuthenticationIdentity identity)
       throws LoginException, RepositoryException;
 }

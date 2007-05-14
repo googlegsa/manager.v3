@@ -1,5 +1,6 @@
 package com.google.enterprise.connector.jcradaptor;
 
+import com.google.enterprise.connector.manager.UserPassIdentity;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
@@ -28,18 +29,18 @@ public class SpiAuthenticationManagerFromJcrTest extends TestCase {
     AuthenticationManager authenticationManager =
         new SpiAuthenticationManagerFromJcr(session);
 
-    Assert.assertFalse(authenticationManager.authenticate("jimbo", "jimbo"));
-    Assert.assertFalse(authenticationManager.authenticate("admin", "admin1"));
-    Assert.assertFalse(authenticationManager.authenticate("joe", "password"));
-    Assert.assertFalse(authenticationManager.authenticate("jimbo", null));
+    Assert.assertFalse(authenticationManager.authenticate(new UserPassIdentity("jimbo","jimbo")).isValid());
+    Assert.assertFalse(authenticationManager.authenticate(new UserPassIdentity("admin","admin1")).isValid());
+    Assert.assertFalse(authenticationManager.authenticate(new UserPassIdentity("joe","password")).isValid());
+    Assert.assertFalse(authenticationManager.authenticate(new UserPassIdentity("jimbo",null)).isValid());
 
     // in this repository, the superuser account is open with any password
-    Assert.assertTrue(authenticationManager.authenticate(null, "jimbo"));
-    Assert.assertTrue(authenticationManager.authenticate(null, null));
+    Assert.assertTrue(authenticationManager.authenticate(new UserPassIdentity(null,"jimbo")).isValid());
+    Assert.assertTrue(authenticationManager.authenticate(new UserPassIdentity(null,null)).isValid());
 
-    Assert.assertTrue(authenticationManager.authenticate("admin", "admin"));
-    Assert.assertTrue(authenticationManager.authenticate("joe", "joe"));
-    Assert.assertTrue(authenticationManager.authenticate("mary", "mary"));
+    Assert.assertTrue(authenticationManager.authenticate(new UserPassIdentity("admin","admin")).isValid());
+    Assert.assertTrue(authenticationManager.authenticate(new UserPassIdentity("joe","joe")).isValid());
+    Assert.assertTrue(authenticationManager.authenticate(new UserPassIdentity("mary","mary")).isValid());
   }
 
 }
