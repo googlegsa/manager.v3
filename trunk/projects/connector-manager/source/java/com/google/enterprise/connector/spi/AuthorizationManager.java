@@ -43,5 +43,4 @@ public interface AuthorizationManager {
    */
   List authorizeDocids(List docidList, AuthenticationIdentity identity)
       throws RepositoryException;
-
 }
