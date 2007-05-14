@@ -14,7 +14,9 @@
 
 package com.google.enterprise.connector.jcradaptor;
 
+import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
+import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.LoginException;
 import com.google.enterprise.connector.spi.RepositoryException;
 
@@ -40,15 +42,17 @@ public class SpiAuthenticationManagerFromJcr implements AuthenticationManager {
    * @see com.google.enterprise.connector.spi.AuthenticationManager
    *      #authenticate(java.lang.String,java.lang.String)
    */
-  public boolean authenticate(String username, String password)
+  public AuthenticationResponse authenticate(AuthenticationIdentity identity)
       throws LoginException, RepositoryException {
+    String username = identity.getUsername();
+    String password = identity.getPassword();
     if (username == null) {
       username = "";
     }
     if (password == null) {
       password = "";
     }
-    boolean result = false;
+    boolean valid = false;
     Repository repo = sess.getRepository();
     SimpleCredentials creds =
         new SimpleCredentials(username, password.toCharArray());
@@ -56,7 +60,7 @@ public class SpiAuthenticationManagerFromJcr implements AuthenticationManager {
     try {
       userSess = repo.login(creds);
       if (userSess != null) {
-        result = true;
+        valid = true;
       }
     } catch (javax.jcr.LoginException e) {
       // TODO: ziff Does this mean that login failed? In that case, we should
@@ -69,6 +73,7 @@ public class SpiAuthenticationManagerFromJcr implements AuthenticationManager {
         userSess.logout();
       }
     }
+    AuthenticationResponse result = new AuthenticationResponse(valid, null);
     return result;
   }
 }
