@@ -32,19 +32,16 @@ public interface AuthorizationManager {
    *        indexing via traversal. Thus the docids should have started as
    *        {@link SpiConstants}.PROPNAME_DOCID properties that were part
    *        of an {@link ResultSet} returned from a
-   *        {@link QueryTraversalManager}.startTraversal or
-   *        {@link QueryTraversalManager}.resumeTraversal call.
-   * @param username The username as a string
-   * @return A {@link ResultSet} where each {@link PropertyMap} has a
-   *         String property {@link SpiConstants}.PROPNAME_DOCID with a
-   *         document ID from the list, and a boolean property
-   *         {@link SpiConstants}.PROPNAME_AUTH_VIEWPERMIT that indicates
-   *         whether this user can view this document. This result set
-   *         should contain an element for each document id supplied, but
-   *         does not need to be in the same order as the docidList.
+   *        {@link TraversalManager}.startTraversal or
+   *        {@link TraversalManager}.resumeTraversal call.
+   * @param identity The user's identity, as an
+   *        {@link AuthenticationIdentity}
+   * @return A List of {@link AuthorizationResponse} objects, one for each
+   *         docid in the docidList parameter; however, this list does not
+   *         need to be in the same order.
    * @throws RepositoryException
    */
-  ResultSet authorizeDocids(List docidList, String username)
+  List authorizeDocids(List docidList, AuthenticationIdentity identity)
       throws RepositoryException;
 
 }
