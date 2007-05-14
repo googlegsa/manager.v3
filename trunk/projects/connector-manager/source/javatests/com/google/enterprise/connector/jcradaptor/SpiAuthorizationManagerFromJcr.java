@@ -90,4 +90,5 @@ public class SpiAuthorizationManagerFromJcr implements AuthorizationManager {
       userSession.logout();
     }
   }
+
 }
