@@ -90,7 +90,7 @@ public class QueryTraverser implements Traverser {
 
     try {
       while (iter.hasNext()) {
-        if (Thread.currentThread().isInterrupted()) {
+        if (Thread.interrupted()) {
           break;
         }
         pm = (PropertyMap) iter.next();

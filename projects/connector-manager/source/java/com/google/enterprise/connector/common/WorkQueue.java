@@ -41,7 +41,7 @@ public class WorkQueue {
   
   // relative timeout that tells us when we should just kill a WorkQueueThread 
   // instead of just trying to interrupt it
-  private long killThreadTimeout = 60 * 1000;
+  private long killThreadTimeout = 5 * 60 * 1000;
   
   /*
    * Variables that are protected by instance lock
@@ -292,6 +292,12 @@ public class WorkQueue {
     }
     workQueue.addLast(work);
     notifyAll();
+    
+    // wake up interrupter thread.  this code is not strictly necessary but 
+    // ensures that work item properly gets timed out 
+    synchronized (interrupterThread) {
+      interrupterThread.interrupt();
+    }
   }
   
   /**
