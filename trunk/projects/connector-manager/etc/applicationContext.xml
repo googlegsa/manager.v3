@@ -43,7 +43,6 @@
 	<bean id="WorkQueue"
 		class="com.google.enterprise.connector.common.WorkQueue">
 		<constructor-arg index="0" type="int" value="2" />
-		<constructor-arg index="1" type="long" value="5000" />
 	</bean>
 
 	<bean id="Manager"
