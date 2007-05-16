@@ -114,4 +114,5 @@ public class GetConnectorInstanceList extends HttpServlet {
         true);
     ServletUtil.writeRootTag(out, true);
   }
+
 }
