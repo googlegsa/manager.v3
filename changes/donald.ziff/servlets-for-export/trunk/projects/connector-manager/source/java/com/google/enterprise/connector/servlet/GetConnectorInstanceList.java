@@ -83,10 +83,9 @@ public class GetConnectorInstanceList extends HttpServlet {
    */
   public static void handleDoPost(List connectorInstances, PrintWriter out) {
     if (connectorInstances == null || connectorInstances.size() == 0) {
-      // TODO: fix these return codes
       ServletUtil.writeResponse(out,
-          ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_TYPE);
-      LOGGER.log(Level.WARNING, ServletUtil.LOG_RESPONSE_NULL_CONNECTOR_TYPE);
+          ConnectorMessageCode.RESPONSE_NULL_CONNECTOR);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_RESPONSE_NULL_CONNECTOR);
       return;
     }
 
