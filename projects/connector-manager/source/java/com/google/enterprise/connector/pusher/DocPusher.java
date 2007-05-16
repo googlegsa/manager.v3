@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -44,8 +44,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Class to generate xml feed for a document from the Property Map and send it
- * to GSA.
+ * Class to generate xml feed for a document from the Property Map and send
+ * it to GSA.
  */
 
 public class DocPusher implements Pusher {
@@ -60,10 +60,10 @@ public class DocPusher implements Pusher {
       char c = val.charAt(i);
       /**
        * Only these characters need to be encoded, according to
-       * http://www.w3.org/TR/REC-xml/#NT-AttValue.   Actually, we could only
-       * encode one of the quote characters if we knew that that was the one
-       * used to wrap the value, but we'll play it safe and encode both. TODO:
-       * what happens to white-space?
+       * http://www.w3.org/TR/REC-xml/#NT-AttValue. Actually, we could only
+       * encode one of the quote characters if we knew that that was the
+       * one used to wrap the value, but we'll play it safe and encode
+       * both. TODO: what happens to white-space?
        */
       switch (c) {
       case '<':
@@ -133,13 +133,13 @@ public class DocPusher implements Pusher {
 
   private FeedConnection feedConnection;
   private String gsaResponse;
-  
+
   private String dataSource;
   private String feedType;
   private InputStream xmlData;
 
   /**
-   *
+   * 
    * @param feedConnection a connection
    */
   public DocPusher(FeedConnection feedConnection) {
@@ -148,7 +148,7 @@ public class DocPusher implements Pusher {
 
   /**
    * Gets the response from GSA when the feed is sent. For testing only.
-   *
+   * 
    * @return gsaResponse response from GSA.
    */
   protected String getGsaResponse() {
@@ -183,18 +183,18 @@ public class DocPusher implements Pusher {
 
     try {
       ByteArrayInputStream prefixStream =
-        new ByteArrayInputStream(prefix.getBytes(XML_DEFAULT_ENCODING));
+          new ByteArrayInputStream(prefix.getBytes(XML_DEFAULT_ENCODING));
 
       ByteArrayInputStream suffixStream =
-        new ByteArrayInputStream(suffix.getBytes(XML_DEFAULT_ENCODING));
+          new ByteArrayInputStream(suffix.getBytes(XML_DEFAULT_ENCODING));
       InputStream[] inputStreams;
       if (is != null) {
-        inputStreams = new InputStream[]{ prefixStream, is, suffixStream };
+        inputStreams = new InputStream[] {prefixStream, is, suffixStream};
       } else {
-        inputStreams = new InputStream[]{ prefixStream, suffixStream };
+        inputStreams = new InputStream[] {prefixStream, suffixStream};
       }
       Enumeration inputStreamEnum =
-        Collections.enumeration(Arrays.asList(inputStreams));
+          Collections.enumeration(Arrays.asList(inputStreams));
       result = new SequenceInputStream(inputStreamEnum);
     } catch (UnsupportedEncodingException e) {
       LOGGER.log(Level.SEVERE, "Encoding error.", e);
@@ -206,8 +206,7 @@ public class DocPusher implements Pusher {
    * Generate the record tag for the xml data.
    */
   private InputStream xmlWrapRecord(String searchUrl, String displayUrl,
-      String lastModified, InputStream content, String mimetype,
-      PropertyMap pm) {
+      String lastModified, InputStream content, String mimetype, PropertyMap pm) {
     // build prefix
     StringBuffer prefix = new StringBuffer();
     prefix.append("<");
@@ -225,7 +224,8 @@ public class DocPusher implements Pusher {
     }
     try {
       Property isPublic = pm.getProperty(SpiConstants.PROPNAME_ISPUBLIC);
-      if (isPublic != null && getBoolean(isPublic.getValue().getString()) == false) {
+      if (isPublic != null
+          && getBoolean(isPublic.getValue().getString()) == false) {
         appendAttrValuePair(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD, prefix);
       }
     } catch (RepositoryException e) {
@@ -251,9 +251,9 @@ public class DocPusher implements Pusher {
     }
     suffix.append(xmlWrapEnd(XML_RECORD));
 
-   
+
     InputStream is =
-      stringWrappedInputStream(prefix.toString(), content, suffix.toString());
+        stringWrappedInputStream(prefix.toString(), content, suffix.toString());
     return is;
   }
 
@@ -494,12 +494,12 @@ public class DocPusher implements Pusher {
       String docid = getRequiredString(pm, SpiConstants.PROPNAME_DOCID);
       searchurl = constructGoogleConnectorUrl(connectorName, docid);
     }
-    
+
     InputStream encodedContentStream = null;
     if (this.feedType != XML_FEED_METADATA_AND_URL) {
       InputStream contentStream =
-        getOptionalStream(pm, SpiConstants.PROPNAME_CONTENT);
-       encodedContentStream = new Base64FilterInputStream(contentStream);
+          getOptionalStream(pm, SpiConstants.PROPNAME_CONTENT);
+      encodedContentStream = new Base64FilterInputStream(contentStream);
     }
 
     Calendar lastModified = null;
@@ -522,7 +522,7 @@ public class DocPusher implements Pusher {
     } else {
       lastModifiedString = SimpleValue.calendarToRfc822(lastModified);
     }
-    
+
     String mimetype = getOptionalString(pm, SpiConstants.PROPNAME_MIMETYPE);
     if (mimetype == null) {
       mimetype = SpiConstants.DEFAULT_MIMETYPE;
@@ -530,25 +530,25 @@ public class DocPusher implements Pusher {
 
     String displayUrl = getOptionalString(pm, SpiConstants.PROPNAME_DISPLAYURL);
 
-    InputStream recordInputStream = 
-      xmlWrapRecord(searchurl, displayUrl, lastModifiedString,
-        encodedContentStream, mimetype, pm);
-    
+    InputStream recordInputStream =
+        xmlWrapRecord(searchurl, displayUrl, lastModifiedString,
+            encodedContentStream, mimetype, pm);
+
     InputStream is =
-      stringWrappedInputStream(prefix.toString(), recordInputStream,
-        suffix.toString());
+        stringWrappedInputStream(prefix.toString(), recordInputStream, suffix
+            .toString());
 
     return is;
   }
 
   /**
    * Form a Google connector URL.
+   * 
    * @param connectorName
    * @param docid
    * @return
    */
-  private String constructGoogleConnectorUrl(String connectorName,
-      String docid) {
+  private String constructGoogleConnectorUrl(String connectorName, String docid) {
     String searchurl;
     StringBuffer buf = new StringBuffer(ServletUtil.PROTOCOL);
     buf.append(connectorName);
@@ -568,15 +568,12 @@ public class DocPusher implements Pusher {
     prefix +=
         "&" + URLEncoder.encode(XML_FEEDTYPE, XML_DEFAULT_ENCODING) + "="
             + URLEncoder.encode(feedType, XML_DEFAULT_ENCODING);
-    prefix +=
-        "&" + URLEncoder.encode(XML_DATA, XML_DEFAULT_ENCODING)
-            + "=";
+    prefix += "&" + URLEncoder.encode(XML_DATA, XML_DEFAULT_ENCODING) + "=";
 
     InputStream xmlDataStream = new UrlEncodedFilterInputStream(xmlData);
 
     String suffix = "";
-    InputStream is =
-      stringWrappedInputStream(prefix, xmlDataStream, suffix);
+    InputStream is = stringWrappedInputStream(prefix, xmlDataStream, suffix);
     return is;
   }
 
@@ -594,15 +591,13 @@ public class DocPusher implements Pusher {
         || stringValue.equalsIgnoreCase("true")
         || stringValue.equalsIgnoreCase("y")
         || stringValue.equalsIgnoreCase("yes")
-        || stringValue.equalsIgnoreCase("ok")
-        || stringValue.equals("1")) {
+        || stringValue.equalsIgnoreCase("ok") || stringValue.equals("1")) {
       return true;
     }
     if (stringValue.equalsIgnoreCase("f")
         || stringValue.equalsIgnoreCase("false")
         || stringValue.equalsIgnoreCase("n")
-        || stringValue.equalsIgnoreCase("no")
-        || stringValue.equals("0")) {
+        || stringValue.equalsIgnoreCase("no") || stringValue.equals("0")) {
       return false;
     }
 
@@ -611,7 +606,7 @@ public class DocPusher implements Pusher {
 
   /**
    * Takes a property map and sends a the feed to the GSA.
-   *
+   * 
    * @param pm PropertyMap corresponding to the document.
    * @param connectorName The connector name that fed this document
    */
@@ -621,11 +616,12 @@ public class DocPusher implements Pusher {
     this.xmlData = buildXmlData(pm, connectorName);
     if (this.xmlData == null) {
       LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
-         "Skipped this document for feeding, continuing");
+          "Skipped this document for feeding, continuing");
       return;
     }
+    InputStream message = null;
     try {
-      InputStream message = encodeXmlData();
+      message = encodeXmlData();
       gsaResponse = feedConnection.sendData(message);
     } catch (MalformedURLException e) {
       LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
@@ -636,6 +632,15 @@ public class DocPusher implements Pusher {
     } catch (IOException e) {
       LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
           "Received exception while feeding, continuing", e);
+    } finally {
+      if (message != null) {
+        try {
+          message.close();
+        } catch (IOException e) {
+          LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
+              "Received exception while closing input stream, continuing", e);
+        }
+      }
     }
   }
 }
