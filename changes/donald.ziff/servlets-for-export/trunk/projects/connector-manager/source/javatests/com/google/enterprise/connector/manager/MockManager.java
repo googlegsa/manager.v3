@@ -133,8 +133,7 @@ public class MockManager implements Manager {
     String name = connectorName;
     String type = "Documentum";
     int status = 0;
-    // TODO: put a plausible looking schedule here
-    String schedule = "";
+    String schedule = connectorName + ":100:0-0";
     return new ConnectorStatus(name, type, status, schedule);
   }
 
