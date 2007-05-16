@@ -67,6 +67,8 @@ public class ServletUtil {
   public static final String XMLTAG_STATUS_PARAM_ORDER = "Order";
   public static final String XMLTAG_STATUS_PARAM = "CMParam";
 	  
+  public static final String XMLTAG_CONNECTOR_INSTANCES = "ConnectorInstances";
+  public static final String XMLTAG_CONNECTOR_INSTANCE = "ConnectorInstance";
   public static final String XMLTAG_CONNECTOR_TYPES = "ConnectorTypes";
   public static final String XMLTAG_CONNECTOR_TYPE = "ConnectorType";
   public static final String XMLTAG_CONNECTOR_STATUS = "ConnectorStatus";
@@ -103,6 +105,7 @@ public class ServletUtil {
   public static final String XMLTAG_DECISION = "Decision";
   
   public static final String XMLTAG_CONNECTOR_SCHEDULES = "ConnectorSchedules";
+  public static final String XMLTAG_CONNECTOR_SCHEDULE = "ConnectorSchedule";
   public static final String XMLTAG_LOAD = "load";
   public static final String XMLTAG_TIME_INTERVALS = "TimeIntervals";
 

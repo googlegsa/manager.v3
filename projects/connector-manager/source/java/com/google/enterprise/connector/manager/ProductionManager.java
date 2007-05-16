@@ -208,9 +208,11 @@ public class ProductionManager implements Manager {
           + " Not Found: ", e);
       throw new IllegalArgumentException();
     }
-    // TODO: resolve this last parameter - we need to give the status a
+    String schedule =
+        connectorScheduleStore.getConnectorSchedule(connectorName);
+    // TODO: resolve the third parameter - we need to give the status a
     // meaning
-    return new ConnectorStatus(connectorName, connectorTypeName, 0);
+    return new ConnectorStatus(connectorName, connectorTypeName, 0, schedule);
   }
 
   /*

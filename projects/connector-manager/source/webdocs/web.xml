@@ -41,6 +41,10 @@
         <servlet-class>com.google.enterprise.connector.servlet.GetConnectorList</servlet-class>
     </servlet>
     <servlet>
+        <servlet-name>GetConnectorInstanceList</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.GetConnectorInstanceList</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>SetConnectorConfig</servlet-name>
         <servlet-class>com.google.enterprise.connector.servlet.SetConnectorConfig</servlet-class>
     </servlet>
@@ -123,6 +127,10 @@
     <servlet-mapping>
 	<servlet-name>GetConnectorList</servlet-name>
 	<url-pattern>/getConnectorList</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+	<servlet-name>GetConnectorInstanceList</servlet-name>
+	<url-pattern>/getConnectorInstanceList</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>SetConnectorConfig</servlet-name>
