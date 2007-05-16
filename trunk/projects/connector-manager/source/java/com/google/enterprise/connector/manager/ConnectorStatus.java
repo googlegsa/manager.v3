@@ -22,18 +22,21 @@ public class ConnectorStatus {
   private final String name;
   private final String type;
   private final int status;
+  private final String schedule;
   
   /**
    * Primary constructor.  
    * @param name the connector's name
-   * @param type the coneector's type
+   * @param type the connector's type
    * @param status the connector's status
+   * @param schedule the connector's schedule
    */
-  public ConnectorStatus(String name, String type, int status) {
+  public ConnectorStatus(String name, String type, int status, String schedule) {
     super();
     this.name = name;
     this.type = type;
     this.status = status;
+    this.schedule = schedule;
   }
 
   /**
@@ -58,6 +61,14 @@ public class ConnectorStatus {
    */
   public int getStatus() {
     return status;
+  }
+
+  /**
+   * Gets the schedule
+   * @return the schedule
+   */
+  public String getSchedule() {
+    return schedule;
   }
 
 }

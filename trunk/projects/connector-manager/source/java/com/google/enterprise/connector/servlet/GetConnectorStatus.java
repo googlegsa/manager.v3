@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,48 +30,55 @@ public class GetConnectorStatus extends ConnectorManagerGetServlet {
   private static final Logger LOGGER =
       Logger.getLogger(GetConnectorStatus.class.getName());
 
-  /* (non-Javadoc)
+  /*
+   * (non-Javadoc)
+   * 
    * @see com.google.enterprise.connector.servlet.ConnectorManagerGetServlet#
-   * processDoGet(java.lang.String, java.lang.String,
-   * com.google.enterprise.connector.manager.Manager, java.io.PrintWriter)
+   *      processDoGet(java.lang.String, java.lang.String,
+   *      com.google.enterprise.connector.manager.Manager,
+   *      java.io.PrintWriter)
    */
-  protected void processDoGet(
-      String connectorName, String lang, Manager manager, PrintWriter out) {
+  protected void processDoGet(String connectorName, String lang,
+      Manager manager, PrintWriter out) {
     handleDoGet(connectorName, manager, out);
   }
 
   /**
-   * Handler for doGet in order to do unit tests.
-   * Returns the connector status.
+   * Handler for doGet in order to do unit tests. Returns the connector
+   * status.
    * 
-   * @param connectorName 
-   * @param manager 
+   * @param connectorName
+   * @param manager
    * @param out PrintWriter where the response is written
    */
-  public static void handleDoGet(
-      String connectorName, Manager manager, PrintWriter out) {
+  public static void handleDoGet(String connectorName, Manager manager,
+      PrintWriter out) {
     ConnectorMessageCode status = new ConnectorMessageCode();
-    ConnectorStatus connectorStatus =
-        manager.getConnectorStatus(connectorName);
+    ConnectorStatus connectorStatus = manager.getConnectorStatus(connectorName);
     if (connectorStatus == null) {
-      status = new ConnectorMessageCode(
-          ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_STATUS, connectorName);
-      LOGGER.warning("Connector manager returns no status for "
-          + connectorName);
+      status =
+          new ConnectorMessageCode(
+              ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_STATUS,
+              connectorName);
+      LOGGER
+          .warning("Connector manager returns no status for " + connectorName);
     }
 
     ServletUtil.writeRootTag(out, false);
     ServletUtil.writeMessageCode(out, status);
     if (connectorStatus != null) {
-      ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_STATUS, false);
+      ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_STATUS,
+          false);
       ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_CONNECTOR_NAME,
           connectorStatus.getName());
       ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_CONNECTOR_TYPE,
           connectorStatus.getType());
       ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_STATUS, Integer
           .toString(connectorStatus.getStatus()));
-
-      ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_STATUS, true);
+      ServletUtil.writeXMLElement(out, 2,
+          ServletUtil.XMLTAG_CONNECTOR_SCHEDULE, connectorStatus.getSchedule());
+      ServletUtil
+          .writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_STATUS, true);
     }
     ServletUtil.writeRootTag(out, true);
   }

@@ -76,6 +76,7 @@ public class GetConnectorStatusTest extends TestCase {
         "    <ConnectorName>" + name + "</ConnectorName>\n" +
         "    <ConnectorType>" + type + "</ConnectorType>\n" +
         "    <Status>" +  Integer.toString(status) +  "</Status>\n" +
+        "    <ConnectorSchedule>" + name + ":100:0-0</ConnectorSchedule>\n" +
         "  </ConnectorStatus>\n" +
         "</CmResponse>\n";
     doTest(name, expectedResult);
