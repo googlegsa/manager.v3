@@ -22,6 +22,7 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -221,4 +222,14 @@ public class MockManager implements Manager {
     LOGGER.info("Removing connector: " + connectorName);
   }
 
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.google.enterprise.connector.manager.Manager#getConnectorConfig(
+   *      java.lang.String)
+   */
+  public Map getConnectorConfig(String connectorName)
+      throws ConnectorNotFoundException {
+    return new HashMap();
+  }
 }

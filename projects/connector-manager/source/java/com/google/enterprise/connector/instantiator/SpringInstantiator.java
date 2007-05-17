@@ -232,4 +232,19 @@ public class SpringInstantiator implements Instantiator {
     return instanceInfo.getTypeInfo().getConnectorTypeName();
   }
 
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.google.enterprise.connector.instantiator.Instantiator#getConnectorConfig(java.lang.String)
+   */
+  public Map getConnectorConfig(String connectorName)
+      throws ConnectorNotFoundException {
+    initialize();
+    InstanceInfo instanceInfo = (InstanceInfo) instanceMap.get(connectorName);
+    if (instanceInfo == null) {
+      throw new ConnectorNotFoundException("Connector not found: " 
+        + connectorName);
+    }
+    return instanceInfo.getProperties();
+  }
 }
