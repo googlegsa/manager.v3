@@ -31,7 +31,7 @@ import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.LoginException;
+import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.RepositoryException;
 
 import java.util.ArrayList;
@@ -116,7 +116,7 @@ public class ProductionManager implements Manager {
           e);
     } catch (InstantiatorException e) {
       LOGGER.log(Level.WARNING, "Instantiator: ", e);
-    } catch (LoginException e) {
+    } catch (RepositoryLoginException e) {
       LOGGER.log(Level.WARNING, "Login: ", e);
     } catch (RepositoryException e) {
       LOGGER.log(Level.WARNING, "Repository: ", e);

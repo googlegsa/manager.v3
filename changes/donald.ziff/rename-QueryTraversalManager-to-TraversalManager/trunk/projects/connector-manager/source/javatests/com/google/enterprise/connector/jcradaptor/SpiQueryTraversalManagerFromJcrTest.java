@@ -48,7 +48,7 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
    * 
    * @throws RepositoryException
    * @throws javax.jcr.RepositoryException
-   * @throws LoginException
+   * @throws RepositoryLoginException
    * @throws JSONException
    */
   public void testCheckpoint() throws RepositoryException, LoginException,

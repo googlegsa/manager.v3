@@ -78,7 +78,7 @@ public class SpiQueryTraversalManagerFromJcr implements TraversalManager {
         fetchAndVerifyValueForCheckpoint(pm, SpiConstants.PROPNAME_DOCID)
             .getString();
     Calendar c =
-        fetchAndVerifyValueForCheckpoint(pm, SpiConstants.PROPNAME_LASTMODIFY)
+        fetchAndVerifyValueForCheckpoint(pm, SpiConstants.PROPNAME_LASTMODIFIED)
             .getDate();
     String dateString = SimpleValue.calendarToIso8601(c);
     String result = null;

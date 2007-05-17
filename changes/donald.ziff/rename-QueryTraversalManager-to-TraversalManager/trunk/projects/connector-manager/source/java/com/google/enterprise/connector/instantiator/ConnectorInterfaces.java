@@ -19,7 +19,7 @@ import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.Connector;
-import com.google.enterprise.connector.spi.LoginException;
+import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
@@ -158,7 +158,7 @@ public class ConnectorInterfaces {
     Session s = null;
     try {
       s = connector.login();
-    } catch (LoginException e) {
+    } catch (RepositoryLoginException e) {
       // this is un-recoverable
       throw new InstantiatorException(e);
     } catch (RepositoryException e) {

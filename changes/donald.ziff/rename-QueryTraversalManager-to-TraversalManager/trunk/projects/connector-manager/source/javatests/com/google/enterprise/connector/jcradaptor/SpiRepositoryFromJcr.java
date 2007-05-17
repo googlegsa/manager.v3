@@ -15,7 +15,7 @@
 package com.google.enterprise.connector.jcradaptor;
 
 import com.google.enterprise.connector.spi.Connector;
-import com.google.enterprise.connector.spi.LoginException;
+import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
 
@@ -62,7 +62,7 @@ public class SpiRepositoryFromJcr implements Connector {
     this.username = username;
   }
 
-  public Session login() throws LoginException,
+  public Session login() throws RepositoryLoginException,
       RepositoryException {
     try {
       Credentials simpleCredentials = new SimpleCredentials(username, password
@@ -70,7 +70,7 @@ public class SpiRepositoryFromJcr implements Connector {
       javax.jcr.Session session = repo.login(simpleCredentials);
       return new SpiSessionFromJcr(session);
     } catch (javax.jcr.LoginException e) {
-      throw new LoginException(e);
+      throw new RepositoryLoginException(e);
     } catch (javax.jcr.RepositoryException e) {
       throw new RepositoryException(e);
     }

@@ -29,14 +29,14 @@ public class SpiPropertyMapFromJcrTest extends TestCase {
           "{\"timestamp\":\"10\",\"docid\":\"doc1\","
               + "\"content\":\"now is the time\", "
               + "\"google:contenturl\":\"http://www.sometesturl.com/test\""
-              + ", \"google:lastmodify\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
+              + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
               + "}\r\n" + "";
       String date1 = "1970-01-01T00:00:10.000Z";
       String date2 = "Tue, 15 Nov 1994 12:45:26 GMT";
       PropertyMap propertyMap = makePropertyMapFromJson(json1);
       int count = countProperties(propertyMap);
       Assert.assertEquals(5, count);
-      validateProperty(propertyMap, SpiConstants.PROPNAME_LASTMODIFY, date2);
+      validateProperty(propertyMap, SpiConstants.PROPNAME_LASTMODIFIED, date2);
       validateProperty(propertyMap, "jcr:lastModified", date1);
       validateProperty(propertyMap, SpiConstants.PROPNAME_CONTENT,
           "now is the time");
@@ -53,7 +53,7 @@ public class SpiPropertyMapFromJcrTest extends TestCase {
       PropertyMap propertyMap = makePropertyMapFromJson(json1);
       int count = countProperties(propertyMap);
       Assert.assertEquals(4, count);
-      validateProperty(propertyMap, SpiConstants.PROPNAME_LASTMODIFY, date1);
+      validateProperty(propertyMap, SpiConstants.PROPNAME_LASTMODIFIED, date1);
       validateProperty(propertyMap, SpiConstants.PROPNAME_CONTENT,
           "now is the time");
       validateProperty(propertyMap, SpiConstants.PROPNAME_CONTENTURL,

@@ -29,11 +29,11 @@ public interface AuthenticationManager {
    *        user's identity
    * @return True means that authentication succeeded, false indicates
    *         failure
-   * @throws LoginException if there is a credentials-related problem that
+   * @throws RepositoryLoginException if there is a credentials-related problem that
    *         prohibits authentication
    * @throws RepositoryException if there is a more general problem, such
    *         as the system is unreachable or down
    */
   public AuthenticationResponse authenticate(AuthenticationIdentity identity)
-      throws LoginException, RepositoryException;
+      throws RepositoryLoginException, RepositoryException;
 }

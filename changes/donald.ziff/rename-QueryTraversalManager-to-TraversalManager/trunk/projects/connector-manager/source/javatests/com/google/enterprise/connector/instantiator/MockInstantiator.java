@@ -31,7 +31,7 @@ import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.LoginException;
+import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
@@ -75,7 +75,7 @@ public class MockInstantiator implements Instantiator {
     AuthenticationManager nullAuthenticationManager =
         new AuthenticationManager() {
           public AuthenticationResponse authenticate(AuthenticationIdentity identity)
-              throws LoginException, RepositoryException {
+              throws RepositoryLoginException, RepositoryException {
             throw new UnsupportedOperationException();
           }
         };

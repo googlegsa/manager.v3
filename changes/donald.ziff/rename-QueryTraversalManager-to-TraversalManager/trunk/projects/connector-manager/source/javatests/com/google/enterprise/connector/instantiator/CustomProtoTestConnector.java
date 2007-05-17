@@ -15,7 +15,7 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.spi.Connector;
-import com.google.enterprise.connector.spi.LoginException;
+import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
 
@@ -52,7 +52,7 @@ public final class CustomProtoTestConnector implements Connector {
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.spi.Connector#login()
    */
-  public Session login() throws LoginException, RepositoryException {
+  public Session login() throws RepositoryLoginException, RepositoryException {
      return delegateConnector.login();
   }
 }
