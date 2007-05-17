@@ -46,38 +46,45 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * Provides utilities to import/export connectors from/to XML.
+ * Utilities to import/export connectors from/to XML.
  */
 public class ImportExport {
+  private static final Logger LOGGER =
+      Logger.getLogger(ImportExport.class.getName());
+
   /**
    * Exports a list of connectors.
    * @return a List of ImportExportConnectors
    */
   public static final List getConnectors(Manager manager) {
-    try {
-      List connectors = new ArrayList();
+    List connectors = new ArrayList();
 
-      for (Iterator i = manager.getConnectorStatuses().iterator();
-           i.hasNext();
-           ) {
-        ConnectorStatus connectorStatus = (ConnectorStatus) i.next();
-        String name = connectorStatus.getName();
-        String type = connectorStatus.getType();
-        // XXX(timg): temporary workaround for bug 713650
-        String scheduleString = connectorStatus.getName() + ":100:0-0";
-        Map config = manager.getConnectorConfig(connectorStatus.getName());
-        ImportExportConnector connector = new ImportExportConnector(
-            name, type, scheduleString, config);
-        connectors.add(connector);
+    for (Iterator i = manager.getConnectorStatuses().iterator();
+         i.hasNext();
+         ) {
+      ConnectorStatus connectorStatus = (ConnectorStatus) i.next();
+      String name = connectorStatus.getName();
+      String type = connectorStatus.getType();
+      // XXX(timg): temporary workaround for bug 713650
+      String scheduleString = connectorStatus.getName() + ":100:0-0";
+      Map config = null;
+      try {
+        config = manager.getConnectorConfig(connectorStatus.getName());
+      } catch (ConnectorNotFoundException e) {
+        // should never happen
+        LOGGER.log(Level.WARNING, e.getMessage(), e);
+        throw new RuntimeException(e);
       }
-
-      return connectors;
-    } catch (ConnectorNotFoundException e) {
-      // should never happen
-      throw new RuntimeException(e);
+      ImportExportConnector connector = new ImportExportConnector(
+          name, type, scheduleString, config);
+      connectors.add(connector);
     }
+
+    return connectors;
   }
 
   /**
@@ -90,48 +97,68 @@ public class ImportExport {
    */
   public static final void setConnectors(Manager manager, List connectors)
       throws InstantiatorException, PersistentStoreException {
-    try {
-      Set previousConnectorNames = new HashSet();
-      for (Iterator i = manager.getConnectorStatuses().iterator();
-           i.hasNext();
-           ) {
-        previousConnectorNames.add(((ConnectorStatus) i.next()).getName());
+    Set previousConnectorNames = new HashSet();
+    for (Iterator i = manager.getConnectorStatuses().iterator();
+         i.hasNext();
+         ) {
+      previousConnectorNames.add(((ConnectorStatus) i.next()).getName());
+    }
+
+    for (Iterator i = connectors.iterator(); i.hasNext(); ) {
+      ImportExportConnector connector = (ImportExportConnector) i.next();
+      String name = connector.getName();
+      String type = connector.getType();
+      Map config = connector.getConfig();
+      Schedule schedule = new Schedule(connector.getScheduleString());
+
+      String language = "en";
+      boolean update = previousConnectorNames.contains(name);
+
+      // set connector config
+      ConfigureResponse configureResponse = null;
+      try {
+        configureResponse =
+            manager.setConnectorConfig(name, type, config, language, update);
+      } catch (ConnectorExistsException e) {
+        // should never happen
+        LOGGER.log(Level.WARNING, e.getMessage(), e);
+        throw new RuntimeException(e);
+      } catch (ConnectorNotFoundException e) {
+        // should never happen
+        LOGGER.log(Level.WARNING, e.getMessage(), e);
+        throw new RuntimeException(e);
+      }
+      if (configureResponse != null) {
+        // should never happen
+        String msg = "setConnectorConfig(name=" + name + "\"): "
+            + configureResponse.getMessage();
+        LOGGER.log(Level.WARNING, msg);
+        throw new RuntimeException();
       }
 
-      for (Iterator i = connectors.iterator(); i.hasNext(); ) {
-        ImportExportConnector connector = (ImportExportConnector) i.next();
-        String name = connector.getName();
-        String type = connector.getType();
-        Map config = connector.getConfig();
-        Schedule schedule = new Schedule(connector.getScheduleString());
-
-        String language = "en";
-        boolean update = previousConnectorNames.contains(name);
-
-        ConfigureResponse configureResponse =
-            manager.setConnectorConfig(name, type, config, language, update);
-        if (configureResponse != null) {
-          // should never happen
-          throw new RuntimeException();
-        }
-
+      // set schedule
+      try {
         manager.setSchedule(
             name, schedule.getLoad(), schedule.getTimeIntervalsAsString());
-
-        previousConnectorNames.remove(name);
+      } catch (ConnectorNotFoundException e) {
+        // should never happen
+        LOGGER.log(Level.WARNING, e.getMessage(), e);
+        throw new RuntimeException(e);
       }
 
-      // remove previous connectors which no longer exist
-      for (Iterator i = previousConnectorNames.iterator(); i.hasNext(); ) {
-        String name = (String) i.next();
+      previousConnectorNames.remove(name);
+    }
+
+    // remove previous connectors which no longer exist
+    for (Iterator i = previousConnectorNames.iterator(); i.hasNext(); ) {
+      String name = (String) i.next();
+      try {
         manager.removeConnector(name);
+      } catch (ConnectorNotFoundException e) {
+        // should never happen
+        LOGGER.log(Level.WARNING, e.getMessage(), e);
+        throw new RuntimeException(e);
       }
-    } catch (ConnectorExistsException e) {
-      // should never happen
-      throw new RuntimeException(e);
-    } catch (ConnectorNotFoundException e) {
-      // should never happen
-      throw new RuntimeException(e);
     }
   }
 
@@ -166,7 +193,7 @@ public class ImportExport {
   }
 
   /**
-   * Deserialializes connectors from XML.
+   * Deserialializes connectors from XML string.
    * @return a List of ImportExportConnectors
    */
   public static List fromXmlString(String xmlString) {

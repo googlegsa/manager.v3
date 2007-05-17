@@ -3,7 +3,8 @@ package com.google.enterprise.connector.importexport;
 import java.util.Map;
 
 /**
- * Encapsulates all the information we export/import per connector instance.
+ * An encapsulation of all the information we export/import per connector
+ * instance.
  */
 public class ImportExportConnector {
   private String name;
