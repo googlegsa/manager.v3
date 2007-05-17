@@ -185,4 +185,15 @@ public interface Manager {
   public void removeConnector(String connectorName)
       throws ConnectorNotFoundException, PersistentStoreException,
       InstantiatorException;
+
+  /**
+   * Get a connector's ConnectorType-specific configuration data
+   *
+   * @param connectorName the connector to look up
+   * @return a Map&lt;String, String&gt; of its ConnectorType-specific
+   * configuration data
+   * @throws ConnectorNotFoundException if the named connector is not found
+   */
+  public Map getConnectorConfig(String connectorName)
+      throws ConnectorNotFoundException;
 }
