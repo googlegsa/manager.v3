@@ -48,9 +48,9 @@ public class Context {
   public static final String GSA_FEED_PORT_PROPERTY_KEY = "gsa.feed.port";
 
   public static final String DEFAULT_JUNIT_CONTEXT_LOCATION =
-      "testdata/mocktestdata/applicationContext.xml/";
+      "testdata/mocktestdata/applicationContext.xml";
   public static final String DEFAULT_JUNIT_COMMON_DIR_PATH =
-      "testdata/mocktestdata/";
+      "testdata/mocktestdata";
 
   private static final String APPLICATION_CONTEXT_PROPERTIES_BEAN_NAME =
       "ApplicationContextProperties";
@@ -74,8 +74,8 @@ public class Context {
   // control variables for turning off normal functionality - testing only
   private boolean isFeeding = true;
 
-  private String standaloneContextLocation = DEFAULT_JUNIT_CONTEXT_LOCATION;
-  private String standaloneCommonDirPath = DEFAULT_JUNIT_COMMON_DIR_PATH;
+  private String standaloneContextLocation;
+  private String standaloneCommonDirPath;
 
   /**
    * @param feeding to feed or not to feed
