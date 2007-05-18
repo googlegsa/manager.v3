@@ -17,7 +17,7 @@ package com.google.enterprise.connector.spi;
 import java.util.Iterator;
 
 /**
- * A handle to a query result set.
+ * A handle to a list of documents for indexing.
  */
 public interface PropertyMapList {
 
