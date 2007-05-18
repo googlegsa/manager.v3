@@ -21,7 +21,7 @@ import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.ResultSet;
+import com.google.enterprise.connector.spi.PropertyMapList;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -41,10 +41,10 @@ public class MockPusherTest extends TestCase {
     MockPusher pusher = new MockPusher(System.out);
 
     {
-      ResultSet resultSet = qtm.startTraversal();
+      PropertyMapList propertyMapList = qtm.startTraversal();
 
       int counter = 0;
-      for (Iterator iter = resultSet.iterator(); iter.hasNext();) {
+      for (Iterator iter = propertyMapList.iterator(); iter.hasNext();) {
         PropertyMap propertyMap = (PropertyMap) iter.next();
         pusher.take(propertyMap, "junit");
         counter++;

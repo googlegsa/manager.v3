@@ -21,7 +21,7 @@ public class MockJcrAdaptedToSpiTraversalTest extends TestCase {
     javax.jcr.Repository jcrRepo = new MockJcrRepository(r);
     Connector repo = new SpiRepositoryFromJcr(jcrRepo);
     Session session = repo.login();
-    TraversalManager qtm = session.getQueryTraversalManager();
+    TraversalManager qtm = session.getTraversalManager();
     QueryTraversalUtil.runTraversal(qtm, 2);
   }
   

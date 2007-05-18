@@ -31,7 +31,7 @@ public interface AuthorizationManager {
    *        appliance, from documents that this connector submitted for
    *        indexing via traversal. Thus the docids should have started as
    *        {@link SpiConstants}.PROPNAME_DOCID properties that were part
-   *        of an {@link ResultSet} returned from a
+   *        of an {@link PropertyMapList} returned from a
    *        {@link TraversalManager}.startTraversal or
    *        {@link TraversalManager}.resumeTraversal call.
    * @param identity The user's identity, as an

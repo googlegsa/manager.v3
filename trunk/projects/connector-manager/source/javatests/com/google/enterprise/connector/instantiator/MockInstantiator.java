@@ -115,7 +115,7 @@ public class MockInstantiator implements Instantiator {
     AuthorizationManager authorizationManager;
     try {
       Session session = connector.login();
-      qtm = session.getQueryTraversalManager();
+      qtm = session.getTraversalManager();
       authenticationManager = session.getAuthenticationManager();
       authorizationManager = session.getAuthorizationManager();
     } catch (Exception e) {
