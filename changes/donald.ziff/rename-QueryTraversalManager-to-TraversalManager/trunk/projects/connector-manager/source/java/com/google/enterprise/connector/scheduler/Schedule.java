@@ -80,16 +80,7 @@ public class Schedule {
     StringBuffer buf = new StringBuffer();
     buf.append(connectorName);
     buf.append(":" + load);
-    Iterator iter = timeIntervals.iterator();
-    while (iter.hasNext()) {
-      ScheduleTimeInterval interval = (ScheduleTimeInterval) iter.next();
-      ScheduleTime startTime = interval.getStartTime();
-      ScheduleTime endTime = interval.getEndTime();
-      buf.append(":");
-      buf.append(startTime.getHour());
-      buf.append("-");
-      buf.append(endTime.getHour());
-    }
+    buf.append(":" + getTimeIntervalsAsString());
     return buf.toString();
   }
 
@@ -100,8 +91,28 @@ public class Schedule {
   public int getLoad() {
     return load;
   }
-  
+
   public List getTimeIntervals() {
     return timeIntervals;
+  }
+
+  /**
+   * @return String of the form: e.g. "1-2:3-5"
+   */
+  public String getTimeIntervalsAsString() {
+    StringBuffer buf = new StringBuffer();
+    Iterator iter = timeIntervals.iterator();
+    for (int index = 0; iter.hasNext(); index++) {
+      ScheduleTimeInterval interval = (ScheduleTimeInterval) iter.next();
+      ScheduleTime startTime = interval.getStartTime();
+      ScheduleTime endTime = interval.getEndTime();
+      if (index != 0) {
+        buf.append(":");
+      }
+      buf.append(startTime.getHour());
+      buf.append("-");
+      buf.append(endTime.getHour());
+    }
+    return buf.toString();
   }
 }

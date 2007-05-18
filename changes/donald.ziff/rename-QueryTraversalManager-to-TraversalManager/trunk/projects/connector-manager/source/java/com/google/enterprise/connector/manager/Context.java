@@ -36,11 +36,21 @@ import javax.servlet.ServletContext;
 /**
  * Static services for establishing the application context. This consists of
  * configuration, instantiating singletons, start up, etc.
+ * This code supports two context types: servlet (as a web application within
+ * an application server) and standalone.
+ * When we run junit tests, we use a standalone context.
+ * Use the methods setStandaloneContext and setServletContext to select the
+ * context type.
  */
 public class Context {
 
   public static final String GSA_FEED_HOST_PROPERTY_KEY = "gsa.feed.host";
   public static final String GSA_FEED_PORT_PROPERTY_KEY = "gsa.feed.port";
+
+  public static final String DEFAULT_JUNIT_CONTEXT_LOCATION =
+      "testdata/mocktestdata/applicationContext.xml";
+  public static final String DEFAULT_JUNIT_COMMON_DIR_PATH =
+      "testdata/mocktestdata";
 
   private static final String APPLICATION_CONTEXT_PROPERTIES_BEAN_NAME =
       "ApplicationContextProperties";
@@ -64,6 +74,9 @@ public class Context {
   // control variables for turning off normal functionality - testing only
   private boolean isFeeding = true;
 
+  private String standaloneContextLocation;
+  private String standaloneCommonDirPath;
+
   /**
    * @param feeding to feed or not to feed
    */
@@ -86,37 +99,36 @@ public class Context {
     // private to insure singleton
   }
 
-  // two ways to start up at present: from a junit test and from a servlet
-  // context. For junit tests, we allow the location of the applicationContext
-  // config file to be specified. This is the default.
-
-  private String junitContextLocation =
-      "testdata/mocktestdata/applicationContext.xml";
-
   /**
-   * Sets the junit context location. This must be called before calling any
-   * getters.
-   * 
-   * @param junitContextLocation the junitContextLocation to set
+   * Establishes that we are operating within the standalone context. In
+   * this case, we use a FileSystemApplicationContext.
+   * @param contextLocation the name of the context XML file used for
+   * instantiation.
+   * @param commonDirPath the location of the common directory which contains
+   * ConnectorType and Connector instantiation configuration data.
    */
-  public void setJunitContextLocation(String junitContextLocation) {
-    this.junitContextLocation = junitContextLocation;
+  public void setStandaloneContext(String contextLocation,
+                                   String commonDirPath) {
+    this.standaloneContextLocation = contextLocation;
+    this.standaloneCommonDirPath = commonDirPath;
+    if (applicationContext != null) {
+      // too late - someone else already established a context. this might
+      // happen with multiple junit tests that each want to establish a context.
+      // so long as they use the same context location, it's ok. if they want a
+      // different context location, they should refresh() - see below
+      return;
+    }
+    applicationContext =
+        new FileSystemXmlApplicationContext(standaloneContextLocation);
   }
 
   /**
-   * Establishes that we are operating within the junit test framework. In this
-   * case, we use a FileSystemApplicationContext with a default location that
-   * can be overridden. Must be caled before any getters.
+   * Calls setStandaloneContext with DEFAULT_JUNIT_CONTEXT_LOCATION and
+   * DEFAULT_JUNIT_COMMON_DIR_PATH.
    */
   public void setJunitContext() {
-    if (applicationContext == null) {
-      // too late - someone else already established a context. this might
-      // happen with multiple junit tests that each want to establish acontext.
-      // so long as they use the same context location, it's ok. if they want a
-      // different context location, they should refresh() - see below
-    }
-    applicationContext =
-        new FileSystemXmlApplicationContext(junitContextLocation);
+    setStandaloneContext(DEFAULT_JUNIT_CONTEXT_LOCATION,
+                         DEFAULT_JUNIT_COMMON_DIR_PATH);
   }
 
   /**
@@ -130,7 +142,7 @@ public class Context {
       // too late - someone else already established a context.
       // This is normal. Either: another servlet got there first, or this is
       // actually a test and the junit test case got there first and established
-      // a junit context, but then a servlet came along and called this
+      // a standalone context, but then a servlet came along and called this
       // method
       return;
     }
@@ -296,15 +308,16 @@ public class Context {
 
   /**
    * Retrieves the prefix for the Common directory file depending on whether its
-   * junit context or servlet context.
+   * standalone context or servlet context.
    * 
    * @return prefix for the Repository file.
    */
   public String getCommonDirPath() {
     if (isServletContext) {
       return servletContext.getRealPath("/") + File.separator + "WEB-INF";
+    } else {
+      return standaloneCommonDirPath;
     }
-    return "testdata/mocktestdata/";
   }
 
   public void setConnectorManagerConfig(boolean certAuth,

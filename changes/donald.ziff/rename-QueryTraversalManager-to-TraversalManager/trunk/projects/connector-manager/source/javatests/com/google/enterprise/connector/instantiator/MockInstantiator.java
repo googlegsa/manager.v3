@@ -218,4 +218,8 @@ public class MockInstantiator implements Instantiator {
   public String getConnectorTypeName(String connectorName) throws ConnectorNotFoundException {
     return "";
   }
+
+  public Map getConnectorConfig(String connectorName) {
+    return new HashMap();
+  }
 }

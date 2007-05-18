@@ -309,4 +309,14 @@ public class ProductionManager implements Manager {
     scheduler.removeConnector(connectorName);
   }
 
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.google.enterprise.connector.manager.Manager#getConnectorConfig(
+   *      java.lang.String)
+   */
+  public Map getConnectorConfig(String connectorName)
+      throws ConnectorNotFoundException {
+    return instantiator.getConnectorConfig(connectorName);
+  }
 }
