@@ -43,7 +43,8 @@ public class SetManagerConfigTest extends TestCase {
     // so it doesn't appear that this file is modified every time the test runs
     String propFileName = TEST_DIR + APPLICATION_PROPERTIES;
     Context context = Context.getInstance();
-    context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT, "testdata/mocktestdata/");
+    context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
+                                 "testdata/mocktestdata/");
     context.setFeeding(false);
     Assert.assertTrue(true);
 

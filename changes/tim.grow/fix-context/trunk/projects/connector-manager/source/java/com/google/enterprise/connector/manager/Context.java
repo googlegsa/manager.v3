@@ -113,7 +113,7 @@ public class Context {
     }
 
     if (standaloneCommonDirPath == null) {
-      standaloneContextLocation = DEFAULT_JUNIT_COMMON_DIR_PATH;
+      standaloneCommonDirPath = DEFAULT_JUNIT_COMMON_DIR_PATH;
     }
 
     applicationContext =
