@@ -21,7 +21,7 @@ import com.google.enterprise.connector.mock.MockRepositoryPropertyTest;
 import com.google.enterprise.connector.mock.jcr.MockJcrNode;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.spi.PropertyMap;
-import com.google.enterprise.connector.spi.QueryTraversalManager;
+import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.ResultSet;
 import com.google.enterprise.connector.spi.SpiConstants;
@@ -48,7 +48,7 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
    * 
    * @throws RepositoryException
    * @throws javax.jcr.RepositoryException
-   * @throws LoginException
+   * @throws RepositoryLoginException
    * @throws JSONException
    */
   public void testCheckpoint() throws RepositoryException, LoginException,
@@ -58,7 +58,7 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
-    QueryTraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
+    TraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
 
     {
       MockRepositoryDocument doc = r.getStore().getDocByID("doc1");
@@ -98,7 +98,7 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
-    QueryTraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
+    TraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
 
     {
       MockRepositoryDocument doc = r.getStore().getDocByID("doc2");
@@ -143,7 +143,7 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
-    QueryTraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
+    TraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
 
     {
       ResultSet resultSet = qtm.startTraversal();

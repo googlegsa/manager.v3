@@ -15,7 +15,7 @@
 package com.google.enterprise.connector.spi;
 
 /**
- * HasTimeout.  This should be implemented by a QueryTraversalManager if it wants 
+ * HasTimeout.  This should be implemented by a TraversalManager if it wants 
  * to supply the ConnectorManager with its own timeout value.
  *
  */

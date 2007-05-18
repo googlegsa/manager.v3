@@ -16,7 +16,7 @@ package com.google.enterprise.connector.spi;
 
 /**
  * TraversalContext.  This is an interface to a callback object that 
- * the Connector Manager will pass in to a QueryTraversalManager, which 
+ * the Connector Manager will pass in to a TraversalManager, which 
  * the manager can the use to call back to get information from the 
  * Connector Manager.  Thus, a connector developer does not need to
  * provide an implementation of this object.  However, for testing 

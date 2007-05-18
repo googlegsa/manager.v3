@@ -36,11 +36,11 @@ public interface Connector {
    * implementor should provide an explanatory message.
    * 
    * @return An object implementing the {@link Session} interface
-   * @throws LoginException
+   * @throws RepositoryLoginException
    *           if there is a credentials-related problem
    * @throws RepositoryException
    *           if there is a more general problem, such as the system is
    *           unreachable or down
    */
-  public Session login() throws LoginException, RepositoryException;
+  public Session login() throws RepositoryLoginException, RepositoryException;
 }

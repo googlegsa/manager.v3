@@ -504,21 +504,21 @@ public class DocPusher implements Pusher {
 
     Calendar lastModified = null;
     try {
-      lastModified = getCalendarAndThrow(pm, SpiConstants.PROPNAME_LASTMODIFY);
+      lastModified = getCalendarAndThrow(pm, SpiConstants.PROPNAME_LASTMODIFIED);
     } catch (IllegalArgumentException e) {
       LOGGER.logp(Level.WARNING, this.getClass().getName(), "buildXmlData",
           "Swallowing exception while getting "
-              + SpiConstants.PROPNAME_LASTMODIFY, e);
+              + SpiConstants.PROPNAME_LASTMODIFIED, e);
     } catch (RepositoryException e) {
       LOGGER.logp(Level.WARNING, this.getClass().getName(), "buildXmlData",
           "Swallowing exception while getting "
-              + SpiConstants.PROPNAME_LASTMODIFY, e);
+              + SpiConstants.PROPNAME_LASTMODIFIED, e);
     }
     String lastModifiedString = null;
     if (lastModified == null) {
       // maybe someone supplied a date as a string in some other format
       lastModifiedString =
-          getOptionalString(pm, SpiConstants.PROPNAME_LASTMODIFY);
+          getOptionalString(pm, SpiConstants.PROPNAME_LASTMODIFIED);
     } else {
       lastModifiedString = SimpleValue.calendarToRfc822(lastModified);
     }

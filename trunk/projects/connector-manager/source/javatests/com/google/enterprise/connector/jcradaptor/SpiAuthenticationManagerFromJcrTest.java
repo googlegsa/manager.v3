@@ -18,7 +18,7 @@ import javax.jcr.SimpleCredentials;
 public class SpiAuthenticationManagerFromJcrTest extends TestCase {
 
   public final void testAuthenticate() throws LoginException,
-      RepositoryException, com.google.enterprise.connector.spi.LoginException,
+      RepositoryException, com.google.enterprise.connector.spi.RepositoryLoginException,
       com.google.enterprise.connector.spi.RepositoryException {
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog2.txt");

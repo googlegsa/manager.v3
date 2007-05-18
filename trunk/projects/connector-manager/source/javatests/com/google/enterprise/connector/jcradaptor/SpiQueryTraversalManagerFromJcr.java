@@ -16,7 +16,7 @@ package com.google.enterprise.connector.jcradaptor;
 
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.PropertyMap;
-import com.google.enterprise.connector.spi.QueryTraversalManager;
+import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.ResultSet;
 import com.google.enterprise.connector.spi.SimpleValue;
@@ -39,7 +39,7 @@ import javax.jcr.query.QueryResult;
 /**
  * Adaptor to JCR class of the same name
  */
-public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
+public class SpiQueryTraversalManagerFromJcr implements TraversalManager {
 
   javax.jcr.query.QueryManager queryManager;
 
@@ -78,7 +78,7 @@ public class SpiQueryTraversalManagerFromJcr implements QueryTraversalManager {
         fetchAndVerifyValueForCheckpoint(pm, SpiConstants.PROPNAME_DOCID)
             .getString();
     Calendar c =
-        fetchAndVerifyValueForCheckpoint(pm, SpiConstants.PROPNAME_LASTMODIFY)
+        fetchAndVerifyValueForCheckpoint(pm, SpiConstants.PROPNAME_LASTMODIFIED)
             .getDate();
     String dateString = SimpleValue.calendarToIso8601(c);
     String result = null;

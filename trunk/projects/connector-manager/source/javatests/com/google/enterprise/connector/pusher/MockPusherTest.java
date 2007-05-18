@@ -19,7 +19,7 @@ import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.spi.PropertyMap;
-import com.google.enterprise.connector.spi.QueryTraversalManager;
+import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.ResultSet;
 
@@ -36,7 +36,7 @@ public class MockPusherTest extends TestCase {
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
-    QueryTraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
+    TraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
     
     MockPusher pusher = new MockPusher(System.out);
 
