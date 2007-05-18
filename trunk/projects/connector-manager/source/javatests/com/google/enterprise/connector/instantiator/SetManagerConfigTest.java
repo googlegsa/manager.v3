@@ -42,6 +42,7 @@ public class SetManagerConfigTest extends TestCase {
     // TODO(ziff): make a copy of this file first and work from it,
     // so it doesn't appear that this file is modified every time the test runs
     String propFileName = TEST_DIR + APPLICATION_PROPERTIES;
+    Context.refresh();
     Context context = Context.getInstance();
     context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
                                  "testdata/mocktestdata/");
@@ -67,6 +68,7 @@ public class SetManagerConfigTest extends TestCase {
     
     context.setConnectorManagerConfig(true, host, port);
     verifyPropsValues(host, port, propFileName);
+    Context.refresh();
   }
 
   private void verifyPropsValues(String expectedHost, int expectedPort,
