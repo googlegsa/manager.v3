@@ -68,6 +68,7 @@ public class SetManagerConfigTest extends TestCase {
     
     context.setConnectorManagerConfig(true, host, port);
     verifyPropsValues(host, port, propFileName);
+    Context.refresh();
   }
 
   private void verifyPropsValues(String expectedHost, int expectedPort,
