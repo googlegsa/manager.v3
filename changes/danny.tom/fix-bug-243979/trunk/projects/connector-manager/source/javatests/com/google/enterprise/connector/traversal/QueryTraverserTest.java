@@ -21,7 +21,7 @@ import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
-import com.google.enterprise.connector.spi.QueryTraversalManager;
+import com.google.enterprise.connector.spi.TraversalManager;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -41,7 +41,7 @@ public class QueryTraverserTest extends TestCase {
    * @throws InterruptedException 
    */
   public final void testRunBatch() throws InterruptedException {
-    
+    runTestBatches(0);
     runTestBatches(1);
     runTestBatches(2);
     runTestBatches(3);
@@ -57,7 +57,7 @@ public class QueryTraverserTest extends TestCase {
     QueryManager qm = new MockJcrQueryManager(r.getStore());
 
     String connectorName = "foo";
-    QueryTraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
+    TraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
     MockPusher pusher = new MockPusher(System.out);
     ConnectorStateStore connectorStateStore = new MockConnectorStateStore();
 
@@ -71,7 +71,11 @@ public class QueryTraverserTest extends TestCase {
     int totalDocsProcessed = 0;
     int batchNumber = 0;
     while (docsProcessed != 0) {
-      docsProcessed = traverser.runBatch(batchSize, null);
+      try {
+        docsProcessed = traverser.runBatch(batchSize);
+      } catch (IllegalArgumentException e) {
+        Assert.assertTrue(batchSize <= 0);
+      }
       totalDocsProcessed += docsProcessed;
       System.out.println("Batch# " + batchNumber + " docs " + docsProcessed +
           " checkpoint " + connectorStateStore.getConnectorState(connectorName));
