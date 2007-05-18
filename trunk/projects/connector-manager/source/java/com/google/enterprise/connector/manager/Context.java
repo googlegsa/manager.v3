@@ -50,7 +50,7 @@ public class Context {
   public static final String DEFAULT_JUNIT_CONTEXT_LOCATION =
       "testdata/mocktestdata/applicationContext.xml";
   public static final String DEFAULT_JUNIT_COMMON_DIR_PATH =
-      "testdata/mocktestdata";
+      "testdata/mocktestdata/";
 
   private static final String APPLICATION_CONTEXT_PROPERTIES_BEAN_NAME =
       "ApplicationContextProperties";
@@ -99,6 +99,27 @@ public class Context {
     // private to insure singleton
   }
 
+  private void initializeStandaloneApplicationContext() {
+    if (applicationContext != null) {
+      // too late - someone else already established a context. this might
+      // happen with multiple junit tests that each want to establish a context.
+      // so long as they use the same context location, it's ok. if they want a
+      // different context location, they should refresh() - see below
+      return;
+    }
+
+    if (standaloneContextLocation == null) {
+      standaloneContextLocation = DEFAULT_JUNIT_CONTEXT_LOCATION;
+    }
+
+    if (standaloneCommonDirPath == null) {
+      standaloneCommonDirPath = DEFAULT_JUNIT_COMMON_DIR_PATH;
+    }
+
+    applicationContext =
+        new FileSystemXmlApplicationContext(standaloneContextLocation);
+  }
+
   /**
    * Establishes that we are operating within the standalone context. In
    * this case, we use a FileSystemApplicationContext.
@@ -111,24 +132,7 @@ public class Context {
                                    String commonDirPath) {
     this.standaloneContextLocation = contextLocation;
     this.standaloneCommonDirPath = commonDirPath;
-    if (applicationContext != null) {
-      // too late - someone else already established a context. this might
-      // happen with multiple junit tests that each want to establish a context.
-      // so long as they use the same context location, it's ok. if they want a
-      // different context location, they should refresh() - see below
-      return;
-    }
-    applicationContext =
-        new FileSystemXmlApplicationContext(standaloneContextLocation);
-  }
-
-  /**
-   * Calls setStandaloneContext with DEFAULT_JUNIT_CONTEXT_LOCATION and
-   * DEFAULT_JUNIT_COMMON_DIR_PATH.
-   */
-  public void setJunitContext() {
-    setStandaloneContext(DEFAULT_JUNIT_CONTEXT_LOCATION,
-                         DEFAULT_JUNIT_COMMON_DIR_PATH);
+    initializeStandaloneApplicationContext();
   }
 
   /**
@@ -164,7 +168,7 @@ public class Context {
       if (servletContext != null) {
         setServletContext();
       } else {
-        setJunitContext();
+        initializeStandaloneApplicationContext();
       }
     }
     if (applicationContext == null) {
@@ -313,6 +317,7 @@ public class Context {
    * @return prefix for the Repository file.
    */
   public String getCommonDirPath() {
+    initApplicationContext();
     if (isServletContext) {
       return servletContext.getRealPath("/") + File.separator + "WEB-INF";
     } else {
