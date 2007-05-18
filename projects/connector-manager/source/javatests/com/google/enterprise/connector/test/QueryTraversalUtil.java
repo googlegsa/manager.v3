@@ -16,7 +16,7 @@ package com.google.enterprise.connector.test;
 
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.PropertyMap;
-import com.google.enterprise.connector.spi.QueryTraversalManager;
+import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.ResultSet;
 import com.google.enterprise.connector.spi.SpiConstants;
@@ -27,14 +27,14 @@ import java.util.Iterator;
 
 /**
  * This class provides a simple end-to-end test for an SPI implementation's
- * QueryTraversalManager. The way this class uses the SPI's traversal calls is
+ * TraversalManager. The way this class uses the SPI's traversal calls is
  * close to the way that the connector manager does, but this is a single
  * self-contained class. See the comments to understand how the connector
  * manager differs from this simple test.
  */
 public class QueryTraversalUtil {
 
-  public static void runTraversal(QueryTraversalManager queryTraversalManager,
+  public static void runTraversal(TraversalManager queryTraversalManager,
       int batchHint) throws RepositoryException {
 
     queryTraversalManager.setBatchHint(batchHint);

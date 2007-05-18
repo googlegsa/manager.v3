@@ -31,8 +31,8 @@ import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.LoginException;
-import com.google.enterprise.connector.spi.QueryTraversalManager;
+import com.google.enterprise.connector.spi.RepositoryLoginException;
+import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.traversal.InterruptibleQueryTraverser;
@@ -75,7 +75,7 @@ public class MockInstantiator implements Instantiator {
     AuthenticationManager nullAuthenticationManager =
         new AuthenticationManager() {
           public AuthenticationResponse authenticate(AuthenticationIdentity identity)
-              throws LoginException, RepositoryException {
+              throws RepositoryLoginException, RepositoryException {
             throw new UnsupportedOperationException();
           }
         };
@@ -110,7 +110,7 @@ public class MockInstantiator implements Instantiator {
     Repository repository = new MockJcrRepository(mockRepository);
     Connector connector = new SpiRepositoryFromJcr(repository);
 
-    QueryTraversalManager qtm;
+    TraversalManager qtm;
     AuthenticationManager authenticationManager;
     AuthorizationManager authorizationManager;
     try {

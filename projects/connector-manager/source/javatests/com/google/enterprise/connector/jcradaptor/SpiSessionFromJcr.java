@@ -16,7 +16,7 @@ package com.google.enterprise.connector.jcradaptor;
 
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
-import com.google.enterprise.connector.spi.QueryTraversalManager;
+import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
 
@@ -34,7 +34,7 @@ public class SpiSessionFromJcr implements Session {
     this.session = session;
   }
 
-  public QueryTraversalManager getQueryTraversalManager()
+  public TraversalManager getQueryTraversalManager()
       throws RepositoryException {
     Workspace workspace = session.getWorkspace();
     QueryManager queryManager = null;

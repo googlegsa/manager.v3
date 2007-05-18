@@ -1,7 +1,7 @@
 package com.google.enterprise.connector.traversal;
 
 /**
- * An interface which can be passed to a Connector's QueryTraversalManager 
+ * An interface which can be passed to a Connector's TraversalManager 
  * to interact with the ConnectorManager (CM), to provide guidance on its
  * management, in particular, the timeout which the Connector requests.  
  */

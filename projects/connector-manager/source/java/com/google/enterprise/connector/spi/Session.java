@@ -23,11 +23,11 @@ package com.google.enterprise.connector.spi;
 public interface Session {
   
   /**
-   * Gets a QueryTraversalManager to implement query-based traversal.  
-   * @return    a QueryTraversalManager - should not be null
+   * Gets a TraversalManager to implement query-based traversal.  
+   * @return    a TraversalManager - should not be null
    * @throws RepositoryException
    */
-  public QueryTraversalManager getQueryTraversalManager() 
+  public TraversalManager getQueryTraversalManager() 
       throws RepositoryException;
   
   /**

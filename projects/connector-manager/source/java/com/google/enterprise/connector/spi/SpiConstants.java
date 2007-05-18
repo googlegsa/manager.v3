@@ -48,7 +48,7 @@ public class SpiConstants {
    * <p>
    * Value: google:lastmodify
    */
-  public static final String PROPNAME_LASTMODIFY = "google:lastmodify";
+  public static final String PROPNAME_LASTMODIFIED = "google:lastmodified";
 
   /**
    * Reserved for future use.

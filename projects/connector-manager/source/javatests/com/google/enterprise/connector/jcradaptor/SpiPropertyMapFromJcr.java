@@ -45,7 +45,7 @@ public class SpiPropertyMapFromJcr implements PropertyMap {
     aliasMap = new HashMap();
     aliasMap.put(SpiConstants.PROPNAME_DOCID, "jcr:uuid");
     aliasMap.put(SpiConstants.PROPNAME_CONTENT, "jcr:content");
-    aliasMap.put(SpiConstants.PROPNAME_LASTMODIFY, "jcr:lastModified");
+    aliasMap.put(SpiConstants.PROPNAME_LASTMODIFIED, "jcr:lastModified");
   }
 
   private Set getOriginalPropertyNames() throws RepositoryException {

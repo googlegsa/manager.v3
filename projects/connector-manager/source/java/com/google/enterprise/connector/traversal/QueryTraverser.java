@@ -18,26 +18,26 @@ import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.HasTimeout;
 import com.google.enterprise.connector.spi.PropertyMap;
-import com.google.enterprise.connector.spi.QueryTraversalManager;
+import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.ResultSet;
 
 import java.util.Iterator;
 
 /**
- * Traverser for a repository implemented using a QueryTraversalManager
+ * Traverser for a repository implemented using a TraversalManager
  */
 public class QueryTraverser implements Traverser {
 
   private Pusher pusher;
-  private QueryTraversalManager queryTraversalManager;
+  private TraversalManager queryTraversalManager;
   private ConnectorStateStore connectorStateStore;
   private String connectorName;
   private int timeout;
   
   private static final int TRAVERSAL_TIMEOUT = 5000;
 
-  public QueryTraverser(Pusher p, QueryTraversalManager q,
+  public QueryTraverser(Pusher p, TraversalManager q,
       ConnectorStateStore c, String n) {
     this.pusher = p;
     this.queryTraversalManager = q;

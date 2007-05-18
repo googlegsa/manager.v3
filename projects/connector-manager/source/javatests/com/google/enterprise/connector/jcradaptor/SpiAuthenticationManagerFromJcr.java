@@ -17,7 +17,7 @@ package com.google.enterprise.connector.jcradaptor;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.connector.spi.LoginException;
+import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.RepositoryException;
 
 import javax.jcr.Repository;
@@ -43,7 +43,7 @@ public class SpiAuthenticationManagerFromJcr implements AuthenticationManager {
    *      #authenticate(java.lang.String,java.lang.String)
    */
   public AuthenticationResponse authenticate(AuthenticationIdentity identity)
-      throws LoginException, RepositoryException {
+      throws RepositoryLoginException, RepositoryException {
     String username = identity.getUsername();
     String password = identity.getPassword();
     if (username == null) {
@@ -65,7 +65,7 @@ public class SpiAuthenticationManagerFromJcr implements AuthenticationManager {
     } catch (javax.jcr.LoginException e) {
       // TODO: ziff Does this mean that login failed? In that case, we should
       // just set result to false and continue...
-      throw new LoginException(e);
+      throw new RepositoryLoginException(e);
     } catch (javax.jcr.RepositoryException e) {
       throw new RepositoryException(e);
     } finally {
