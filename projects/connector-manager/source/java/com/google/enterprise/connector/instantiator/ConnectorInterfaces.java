@@ -144,7 +144,7 @@ public class ConnectorInterfaces {
       Session s = getSession();
       TraversalManager qtm = null;
       try {
-        qtm = s.getQueryTraversalManager();
+        qtm = s.getTraversalManager();
       } catch (RepositoryException e) {
         // TODO(ziff): think about how this could be re-tried
       }

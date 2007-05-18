@@ -18,7 +18,7 @@ import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.ResultSet;
+import com.google.enterprise.connector.spi.PropertyMapList;
 import com.google.enterprise.connector.spi.SimpleValue;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
@@ -108,7 +108,7 @@ public class SpiQueryTraversalManagerFromJcr implements TraversalManager {
     return value;
   }
 
-  public ResultSet resumeTraversal(String checkPoint)
+  public PropertyMapList resumeTraversal(String checkPoint)
       throws RepositoryException {
     JSONObject jo = null;
     try {
@@ -153,11 +153,11 @@ public class SpiQueryTraversalManagerFromJcr implements TraversalManager {
     }
 
     if (useThisNode) {
-      ResultSet result = new SpiResultSetFromJcr(thisNode, nodes);
+      PropertyMapList result = new SpiResultSetFromJcr(thisNode, nodes);
       return result;
     }
 
-    ResultSet result = new SpiResultSetFromJcr(nodes);
+    PropertyMapList result = new SpiResultSetFromJcr(nodes);
     return result;
   }
 
@@ -214,7 +214,7 @@ public class SpiQueryTraversalManagerFromJcr implements TraversalManager {
     return c;
   }
 
-  public ResultSet startTraversal() throws RepositoryException {
+  public PropertyMapList startTraversal() throws RepositoryException {
     String lang = Query.XPATH;
     javax.jcr.query.Query query = 
       makeCheckpointQuery(xpathUnboundedTraversalQuery, lang);
@@ -230,7 +230,7 @@ public class SpiQueryTraversalManagerFromJcr implements TraversalManager {
     } catch (javax.jcr.RepositoryException e) {
       throw new RepositoryException(e);
     }
-    ResultSet result = new SpiResultSetFromJcr(nodes);
+    PropertyMapList result = new SpiResultSetFromJcr(nodes);
     return result;
   }
 

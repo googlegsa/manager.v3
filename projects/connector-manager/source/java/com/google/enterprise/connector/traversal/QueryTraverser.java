@@ -20,7 +20,7 @@ import com.google.enterprise.connector.spi.HasTimeout;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.ResultSet;
+import com.google.enterprise.connector.spi.PropertyMapList;
 
 import java.util.Iterator;
 
@@ -59,7 +59,7 @@ public class QueryTraverser implements Traverser {
     PropertyMap pm = null;
     String connectorState =
         connectorStateStore.getConnectorState(connectorName);
-    ResultSet resultSet = null;
+    PropertyMapList resultSet = null;
     if (connectorState == null) {
       try {
         resultSet = queryTraversalManager.startTraversal();

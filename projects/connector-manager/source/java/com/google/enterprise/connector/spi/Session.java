@@ -27,7 +27,7 @@ public interface Session {
    * @return    a TraversalManager - should not be null
    * @throws RepositoryException
    */
-  public TraversalManager getQueryTraversalManager() 
+  public TraversalManager getTraversalManager() 
       throws RepositoryException;
   
   /**

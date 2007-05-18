@@ -18,7 +18,7 @@ import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.ResultSet;
+import com.google.enterprise.connector.spi.PropertyMapList;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.ValueType;
@@ -39,7 +39,7 @@ public class QueryTraversalUtil {
 
     queryTraversalManager.setBatchHint(batchHint);
 
-    ResultSet resultSet = queryTraversalManager.startTraversal();
+    PropertyMapList propertyMapList = queryTraversalManager.startTraversal();
     // The real connector manager will not always start from the beginning.
     // It will start from the beginning if it receives an explicit admin
     // command to do so, or if it thinks that it has never run this connector
@@ -48,7 +48,7 @@ public class QueryTraversalUtil {
     // the connector. If it can find no stored checkpoint, it assumes that
     // it has never run this connector before and starts from the beginning,
     // as here.
-    if (resultSet == null) {
+    if (propertyMapList == null) {
       // in this test program, we will stop in this situation. The real
       // connector manager might wait for a while, then try again
       return;
@@ -57,7 +57,7 @@ public class QueryTraversalUtil {
     while (true) {
       int counter = 0;
       PropertyMap pm = null;
-      for (Iterator iter = resultSet.iterator(); iter.hasNext();) {
+      for (Iterator iter = propertyMapList.iterator(); iter.hasNext();) {
         pm = (PropertyMap) iter.next();
         processOneDocument(pm);
         counter++;
@@ -76,7 +76,7 @@ public class QueryTraversalUtil {
       }
 
       String checkPointString = queryTraversalManager.checkpoint(pm);
-      resultSet = queryTraversalManager.resumeTraversal(checkPointString);
+      propertyMapList = queryTraversalManager.resumeTraversal(checkPointString);
       // the real connector manager will call checkpoint (as here) as soon
       // as possible after processing the last property map it wants to process.
       // It would then store the checkpoint string it received in persistent
