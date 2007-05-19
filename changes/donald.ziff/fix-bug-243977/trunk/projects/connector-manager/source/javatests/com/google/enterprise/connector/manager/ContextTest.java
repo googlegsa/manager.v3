@@ -28,12 +28,16 @@ public class ContextTest extends TestCase {
    * {@link com.google.enterprise.connector.manager.Context#start()}.
    */
   public final void testStart() {
-    Context.getInstance().setJunitContext();
+    Context.refresh();
+    Context.getInstance().setStandaloneContext(
+        Context.DEFAULT_JUNIT_CONTEXT_LOCATION,
+        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
     Context.getInstance().setFeeding(false);
     Context.getInstance().start();
     ApplicationContext ac = Context.getInstance().getApplicationContext();
     printBeanNames(ac);
     Context.getInstance().shutdown(true);
+    Context.refresh();
   }
 
   private void printBeanNames(ApplicationContext ac) {
@@ -45,5 +49,4 @@ public class ContextTest extends TestCase {
       System.out.println(beanList[i] + " " + bean.getClass().toString());
     }
   }
-
 }

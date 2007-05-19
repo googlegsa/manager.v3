@@ -24,7 +24,7 @@ import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.ResultSet;
+import com.google.enterprise.connector.spi.PropertyMapList;
 import com.google.enterprise.connector.spi.SpiConstants;
 
 import junit.framework.Assert;
@@ -150,10 +150,10 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
 
-    ResultSet resultSet = qtm.startTraversal();
+    PropertyMapList propertyMapList = qtm.startTraversal();
 
     int i = 0;
-    for (Iterator iter = resultSet.iterator(); iter.hasNext();) {
+    for (Iterator iter = propertyMapList.iterator(); iter.hasNext();) {
       Assert.assertFalse(i == expectedXml.length);
       PropertyMap propertyMap = (PropertyMap) iter.next();
       dpusher.take(propertyMap, "junit");

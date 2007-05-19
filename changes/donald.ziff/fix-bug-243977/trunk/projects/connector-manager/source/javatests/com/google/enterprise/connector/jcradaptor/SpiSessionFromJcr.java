@@ -34,7 +34,7 @@ public class SpiSessionFromJcr implements Session {
     this.session = session;
   }
 
-  public TraversalManager getQueryTraversalManager()
+  public TraversalManager getTraversalManager()
       throws RepositoryException {
     Workspace workspace = session.getWorkspace();
     QueryManager queryManager = null;

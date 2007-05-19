@@ -59,11 +59,11 @@ package com.google.enterprise.connector.spi;
  * resumes traversal from the supplied checkpoint
  * </ul>
  * Please observe that the Connector Manager (the caller) makes no guarantee to
- * consume the entire ResultSet returned by either the startTraversal or
+ * consume the entire PropertyMapList returned by either the startTraversal or
  * resumeTraversal calls. The Connector Manager will consume as many it chooses,
  * depending on load, schedule and other factors. The Connector Manager
  * guarantees to call checkpoint() supplying the last document it has
- * successfully processed from the ResultSet it was using. Thus, the implementor
+ * successfully processed from the PropertyMapList it was using. Thus, the implementor
  * is free to use a query that only returns a small number of results, if that
  * gets better performance.
  * <p>
@@ -76,7 +76,7 @@ package com.google.enterprise.connector.spi;
  * The <code>setBatchHint</code> method is provided so that the Connector
  * Manager can tell the implementation that it only wants that many results per
  * call. This is a hint - the implementation need not observe it. The
- * implementation is free to return a ResultSet with fewer or more results. For
+ * implementation is free to return a PropertyMapList with fewer or more results. For
  * example, the traversal may be completely up to date, so perhaps there are no
  * results to return. Or, for internal reasons, the implementation may not want
  * to return the full batchHint number of results. Probably, returning zero
@@ -169,32 +169,32 @@ public interface TraversalManager {
    * as many or as few of the results as it wants, but it guarantees to call
    * {@link #checkpoint(PropertyMap)} passing in the last object it has
    * successfully processed.
-   * @return A ResultSet of documents from the repository in natural order, or
+   * @return A PropertyMapList of documents from the repository in natural order, or
    *         null if there are no documents.
    * @throws RepositoryException if the Repository is unreachable or similar
    *           exceptional condition.
    */
-  public ResultSet startTraversal() 
+  public PropertyMapList startTraversal() 
     throws RepositoryException;
 
   /**
    * Continues traversal from a supplied checkpoint. The checkPoint parameter
    * will have been created by a call to the {@link #checkpoint(PropertyMap)}
-   * method. The ResultSet object returns objects from the repository in natural
+   * method. The PropertyMapList object returns objects from the repository in natural
    * order starting just after the document that was used to create the
    * checkpoint string.
    * 
    * @param checkPoint String that indicates from where to resume traversal.
-   * @return ResultSet object that returns documents starting just after the
+   * @return PropertyMapList object that returns documents starting just after the
    *         checkpoint, or null if there are no documents.
    * @throws RepositoryException
    */
-  public ResultSet resumeTraversal(String checkPoint)
+  public PropertyMapList resumeTraversal(String checkPoint)
       throws RepositoryException;
 
   /**
    * Checkpoints the traversal process. The caller passes in a property map
-   * taken from the {@link ResultSet} object that it obtained from either the
+   * taken from the {@link PropertyMapList} object that it obtained from either the
    * startTraversal or resumeTraversal methods. This property map is the last
    * document that the caller successfully processed. This is NOT necessarily
    * the last object from the result set - the caller may consume as much or as
@@ -204,7 +204,7 @@ public interface TraversalManager {
    * to maintain state itself, it should use this call as a signal to commit its
    * state, up to the document passed in.
    * 
-   * @param pm A property map obtained from a ResultSet obtained from either
+   * @param pm A property map obtained from a PropertyMapList obtained from either
    *          {@link #startTraversal()} or
    *          {@link #resumeTraversal(String)}.
    * @return A string that can be used by a subsequent call to the
