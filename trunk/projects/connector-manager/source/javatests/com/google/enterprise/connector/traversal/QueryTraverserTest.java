@@ -71,10 +71,17 @@ public class QueryTraverserTest extends TestCase {
     int totalDocsProcessed = 0;
     int batchNumber = 0;
     while (docsProcessed != 0) {
+      boolean exceptionThrown = false;
       try {
         docsProcessed = traverser.runBatch(batchSize);
       } catch (IllegalArgumentException e) {
+        exceptionThrown = true;
         Assert.assertTrue(batchSize <= 0);
+        return;
+      } finally {
+        if (!exceptionThrown) {
+          Assert.assertTrue(batchSize > 0);
+        }
       }
       totalDocsProcessed += docsProcessed;
       System.out.println("Batch# " + batchNumber + " docs " + docsProcessed +
