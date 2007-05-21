@@ -499,7 +499,9 @@ public class DocPusher implements Pusher {
     if (this.feedType != XML_FEED_METADATA_AND_URL) {
       InputStream contentStream =
           getOptionalStream(pm, SpiConstants.PROPNAME_CONTENT);
-      encodedContentStream = new Base64FilterInputStream(contentStream);
+      if (null != contentStream) {
+        encodedContentStream = new Base64FilterInputStream(contentStream);
+      }
     }
 
     Calendar lastModified = null;
