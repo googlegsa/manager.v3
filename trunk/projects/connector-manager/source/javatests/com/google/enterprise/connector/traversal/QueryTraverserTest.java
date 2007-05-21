@@ -41,7 +41,7 @@ public class QueryTraverserTest extends TestCase {
    * @throws InterruptedException 
    */
   public final void testRunBatch() throws InterruptedException {
-    
+    runTestBatches(0);
     runTestBatches(1);
     runTestBatches(2);
     runTestBatches(3);
@@ -71,7 +71,11 @@ public class QueryTraverserTest extends TestCase {
     int totalDocsProcessed = 0;
     int batchNumber = 0;
     while (docsProcessed != 0) {
-      docsProcessed = traverser.runBatch(batchSize);
+      try {
+        docsProcessed = traverser.runBatch(batchSize);
+      } catch (IllegalArgumentException e) {
+        Assert.assertTrue(batchSize <= 0);
+      }
       totalDocsProcessed += docsProcessed;
       System.out.println("Batch# " + batchNumber + " docs " + docsProcessed +
           " checkpoint " + connectorStateStore.getConnectorState(connectorName));
