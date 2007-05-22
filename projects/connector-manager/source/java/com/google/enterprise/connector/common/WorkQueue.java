@@ -380,8 +380,8 @@ public class WorkQueue {
           }
         } catch (InterruptedException e) {
           // thread was signalled to determine whether there are new work items
-          // to be interrupted
-          LOGGER.log(Level.WARNING, "Interrupted Exception: ", e);
+          // to be interrupted (this is done under normal operation--e.g. when 
+          // we add a work item)
         }
 
         interruptAllTimedOutItems();
