@@ -342,8 +342,12 @@ public class TraversalScheduler implements Scheduler {
     public void doWork() {
       if (null != traverser) {
         LOGGER.finer("Begin runBatch");
-        numDocsTraversed = traverser.runBatch(
-          hostLoadManager.determineBatchHint(connectorName));
+        int batchHint = hostLoadManager.determineBatchHint(connectorName); 
+        if (0 == batchHint) {
+          numDocsTraversed = 0;
+        } else {
+          numDocsTraversed = traverser.runBatch(batchHint);
+        }
         LOGGER.finer("End runBatch");
         numConsecutiveFailures = 0;
         timeOfFirstFailure = 0;

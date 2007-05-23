@@ -34,7 +34,7 @@ public class GsaFeedConnection implements FeedConnection {
   private int port;
   
   private static final Logger LOGGER =
-          Logger.getLogger(GsaFeedConnection.class.getName());
+      Logger.getLogger(GsaFeedConnection.class.getName());
   
   public GsaFeedConnection(String host, int port) {
     this.host = host;
@@ -89,7 +89,6 @@ public class GsaFeedConnection implements FeedConnection {
     while ((line = br.readLine()) != null) {
       buf.append(line);
     }
-    outputStream.close();
     br.close();
     return buf.toString();
   }

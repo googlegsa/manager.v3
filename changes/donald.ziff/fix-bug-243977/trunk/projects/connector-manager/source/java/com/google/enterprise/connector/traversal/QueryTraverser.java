@@ -55,6 +55,16 @@ public class QueryTraverser implements Traverser {
    * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
    */
   public synchronized int runBatch(int batchHint) {
+    if (batchHint <= 0) {
+      throw new IllegalArgumentException("batchHint must be a positive int");
+    }
+    try {
+      queryTraversalManager.setBatchHint(batchHint);
+    } catch (RepositoryException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    
     int counter = 0;
     PropertyMap pm = null;
     String connectorState =
