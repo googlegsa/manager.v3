@@ -13,23 +13,24 @@
 	<property name="COMPILE_DEBUG_LEVEL" value="source,lines,vars" />
 
 	<property name="build" value="build" />
+	<property name="prod" value="${build}/prod" />
 	<property name="dist" value="dist" />
 	<property name="src" value="source/java" />
-	<property name="classes" value="${build}/classes" />
+	<property name="classes" value="${prod}/classes" />
 	<property name="webdocs" value="source/webdocs" />
 
 	<property name="tests.src" value="source/javatests" />
 	<property name="tests.build" value="build/tests" />
 	<property name="tests.classes" value="${tests.build}/classes" />
-	<property name="tests.testdatadir" value="${tests.src}/com/google/enterprise/connector/testdata" />
 	<property name="tests.todir" value="tests_outdir" />
 	<property name="jar.dir" value="${dist}/jarfile" />
 	<property name="spi.jarfile" value="${jar.dir}/connector_spi.jar" />
 	<property name="util.jarfile" value="${jar.dir}/connector_util.jar" />
 	<property name="connector.jarfile" value="${jar.dir}/connector.jar" />
 	<property name="tests.jarfile" value="${jar.dir}/connector_tests.jar" />
-	<property name="thirdparty.jar.dir" value="../third_party/lib" />
-	<property name="junit.jarfile" value="${thirdparty.jar.dir}/junit.jar" />
+	<property name="thirdparty.prod.jars" value="third-party/prod" />
+	<property name="thirdparty.tests.jars" value="third-party/tests" />
+	<property name="junit.jarfile" value="${thirdparty.prod.jars}/junit.jar" />
 
 	<!-- The directory where all war-files are collected -->
 	<property name="war.dir" value="${dist}/${ant.project.name}" />
@@ -40,39 +41,26 @@
 		<ant inheritAll="false" antfile="${projects.dir}/test-connectorB/build.xml" />
 	</target>
 
-	<target name="connector_manager" depends="connector_spi,connector_spi_test,install_init,war">
+	<target name="connector_manager" description="Google Enterprise Connector Manager" depends="war">
+	</target>
+
+	<target name="all" depends="connector_manager,run_tests">
 	</target>
 
 	<target name="connector_spi" depends="init,compile,jar">
 	</target>
 
 	<target name="spi-javadoc">
-	<javadoc access="public" author="false" 
-		destdir="doc/javadoc/spi" doctitle="Google Search Appliance Connector SPI" 
-		nodeprecated="false" nodeprecatedlist="true" noindex="false" nonavbar="false" 
-		notree="false" source="1.4" 
-		sourcepath="${src}"
-		splitindex="true" use="true" version="true">
-	    <fileset dir="${src}/com/google/enterprise/connector/spi">
-	        <include name="*.java"/>
-	      </fileset>
+		<javadoc access="public" author="false" destdir="doc/javadoc/spi" doctitle="Google Search Appliance Connector SPI" nodeprecated="false" nodeprecatedlist="true" noindex="false" nonavbar="false" notree="false" source="1.4" sourcepath="${src}" splitindex="true" use="true" version="true">
+			<fileset dir="${src}/com/google/enterprise/connector/spi">
+				<include name="*.java" />
+			</fileset>
 		</javadoc>
-	</target>
-	
-	<target name="connector_util" depends="init,compile,jar">
-	</target>
-
-	<target name="connector" depends="init,compile,jar">
-	</target>
-
-	<target name="connector_spi_test" depends="connector_spi,compile_tests">
-		<jar jarfile="${tests.jarfile}">
-			<fileset dir="${tests.classes}" includes="**/*.class" excludes="**/spi/**" />
-		</jar>
 	</target>
 
 	<target name="init">
 		<mkdir dir="${build}" />
+		<mkdir dir="${prod}" />
 		<mkdir dir="${dist}" />
 		<mkdir dir="${classes}" />
 		<mkdir dir="${tests.build}" />
@@ -83,38 +71,39 @@
 
 	<target name="compile" depends="init">
 		<!-- compile java source files -->
-		<javac srcdir="${src}" destdir="${classes}"
-			debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
+		<javac srcdir="${src}" destdir="${classes}" debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
 			<classpath>
-				<pathelement location="${thirdparty.jar.dir}" />
-				<fileset dir="${thirdparty.jar.dir}" includes="**/*.jar" />
+				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
 			</classpath>
 		</javac>
 	</target>
 
-	<target name="compile_tests" depends="init,jar">
+	<target name="compile_tests" depends="init,compile">
 		<!-- compile java source files for tests -->
-		<javac srcdir="${tests.src}" destdir="${tests.classes}"
-			debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
+		<javac srcdir="${tests.src}" destdir="${tests.classes}" debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
 			<classpath>
-				<fileset dir="${jar.dir}" includes="**/*.jar" />
-				<pathelement location="${thirdparty.jar.dir}" />
-				<fileset dir="${thirdparty.jar.dir}" includes="**/*.jar" />
+				<pathelement location="${classes}" />
+				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+				<fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
 			</classpath>
 		</javac>
 	</target>
 
-	<target name="run_tests" depends="compile_tests,jar,test_connector_jars">
+	<target name="run_tests" depends="compile_tests">
 		<junit haltonfailure="yes">
 			<classpath>
-				<pathelement location="${connector.jarfile}" />
-				<pathelement location="${spi.jarfile}" />
-				<fileset dir="${thirdparty.jar.dir}" includes="**/*.jar" />
+				<pathelement location="${classes}" />
+				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+				<fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
 				<pathelement location="${projects.dir}/test-connectorA/dist/jar/testconnectorA.jar" />
 				<pathelement location="${projects.dir}/test-connectorB/dist/jar/testconnectorB.jar" />
 				<pathelement location="${tests.classes}" />
-				<pathelement location="${tests.src}" />
 				<pathelement path="${java.class.path}" />
+				<!-- The following line is needed because some tests use tesdata in 
+				${tests.src}/com/google/enterprise/connector/testdata 
+				TODO: refactor those tests to use the testdata directory that all the other tests use: 
+				"testdata" (relative to this directory) -->
+				<pathelement location="${tests.src}" />
 			</classpath>
 			<formatter type="plain" />
 			<batchtest fork="yes" todir="${tests.todir}">
@@ -123,8 +112,7 @@
 		</junit>
 	</target>
 
-	<target name="jar" depends="compile"
-		description="Create a jar for the Connector SPI project">
+	<target name="jar" depends="compile" description="Create a jar for the Connector SPI project">
 		<jar jarfile="${spi.jarfile}">
 			<fileset dir="${classes}" includes="**/spi/**" excludes="**/javatests/**" />
 		</jar>
@@ -137,6 +125,9 @@
 		</jar>
 		<jar jarfile="${connector.jarfile}">
 			<fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**" />
+		</jar>
+		<jar jarfile="${tests.jarfile}">
+			<fileset dir="${tests.classes}" includes="**/*.class" excludes="**/spi/**" />
 		</jar>
 	</target>
 
@@ -156,26 +147,24 @@
 	also contains all and can be deployed as-is.
 	-->
 
-	<target name="war" depends="install_init,compile,compile_tests,connector_spi_test"
-		description="Builds the WAR file for installation.">
+	<target name="war" depends="install_init,jar,test_connector_jars" description="Builds the WAR file for installation.">
 		<echo> The war file dir is located at ${war.dir}</echo>
 
 		<war warfile="${war.dir}/${ant.project.name}.war" webxml="${webdocs}/web.xml">
 			<lib dir="${jar.dir}" includes="*.jar" excludes="connector_tests.jar" />
-			<lib dir="${thirdparty.jar.dir}" includes="*.jar" excludes="servlet-api.jar" />
-			<fileset dir="${webdocs}" includes="**" />
+			<lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
 			<webinf dir="etc" includes="**" />
-      <webinf dir="testdata/mocktestdata" includes="MockRepositoryEventLog1.txt" />
-      <webinf dir="testdata/mocktestdata" includes="MockRepositoryEventLog3.txt" />
 		</war>
 
 		<war warfile="${war.dir}/${ant.project.name}_debug.war" webxml="${webdocs}/web.xml">
 			<lib dir="${jar.dir}" includes="*.jar" />
-			<lib dir="${thirdparty.jar.dir}" includes="*.jar" excludes="servlet-api.jar" />
-			<fileset dir="${webdocs}" includes="**" />
+			<lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
 			<webinf dir="etc" includes="**" />
-      <webinf dir="testdata/mocktestdata" includes="MockRepositoryEventLog*.txt" />
-      <webinf dir="testdata/mocktestdata" includes="test.doc" />
+			<!-- above this line is all the stuff that goes in the normal prod jar, 
+				below is the stuff that is only needed for testing -->
+			<lib dir="${thirdparty.tests.jars}" includes="*.jar" />
+			<webinf dir="testdata/mocktestdata" includes="MockRepositoryEventLog*.txt" />
+			<webinf dir="testdata/mocktestdata" includes="test.doc" />
 		</war>
 
 	</target>
