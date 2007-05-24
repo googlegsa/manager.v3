@@ -129,7 +129,9 @@ public class QueryTraverser implements Traverser {
       // TODO:ziff Auto-generated catch block
       e.printStackTrace();
     }
-    connectorStateStore.storeConnectorState(connectorName, connectorState);
+    if (connectorState != null) {
+      connectorStateStore.storeConnectorState(connectorName, connectorState);
+    }
   }
   
   public int getTimeoutMillis() {
