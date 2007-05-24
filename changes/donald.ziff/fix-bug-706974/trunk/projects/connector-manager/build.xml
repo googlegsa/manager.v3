@@ -41,7 +41,7 @@
 		<ant inheritAll="false" antfile="${projects.dir}/test-connectorB/build.xml" />
 	</target>
 
-	<target name="connector_manager" depends="war">
+	<target name="connector_manager" description="Google Enterprise Connector Manager" depends="war">
 	</target>
 
 	<target name="all" depends="connector_manager,run_tests">
@@ -84,7 +84,6 @@
 		<javac srcdir="${tests.src}" destdir="${tests.classes}" debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
 			<classpath>
 				<pathelement location="${classes}" />
-				<fileset dir="${jar.dir}" includes="**/*.jar" />
 				<pathelement location="${thirdparty.prod.jars}" />
 				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
 				<pathelement location="${thirdparty.tests.jars}" />
@@ -97,7 +96,6 @@
 		<junit haltonfailure="yes">
 			<classpath>
 				<pathelement location="${classes}" />
-				<fileset dir="${jar.dir}" includes="**/*.jar" />
 				<pathelement location="${thirdparty.prod.jars}" />
 				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
 				<pathelement location="${thirdparty.tests.jars}" />
@@ -160,14 +158,12 @@
 		<war warfile="${war.dir}/${ant.project.name}.war" webxml="${webdocs}/web.xml">
 			<lib dir="${jar.dir}" includes="*.jar" excludes="connector_tests.jar" />
 			<lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
-			<fileset dir="${webdocs}" includes="**" />
 			<webinf dir="etc" includes="**" />
 		</war>
 
 		<war warfile="${war.dir}/${ant.project.name}_debug.war" webxml="${webdocs}/web.xml">
 			<lib dir="${jar.dir}" includes="*.jar" />
 			<lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
-			<fileset dir="${webdocs}" includes="**" />
 			<webinf dir="etc" includes="**" />
 			<!-- above this line is all the stuff that goes in the normal prod jar, 
 				below is the stuff that is only needed for testing -->
