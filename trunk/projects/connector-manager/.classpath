@@ -2,15 +2,16 @@
 <classpath>
 	<classpathentry kind="src" path="source/java"/>
 	<classpathentry excluding="**/.svn/**" kind="src" path="source/javatests"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3.8.1"/>
-	<classpathentry kind="lib" path="/third_party/lib/json.jar"/>
-	<classpathentry kind="lib" path="/third_party/lib/jcr-1.0.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre"/>
-	<classpathentry kind="lib" path="/third_party/lib/spring.jar"/>
-	<classpathentry kind="lib" path="/third_party/lib/commons-logging.jar"/>
-	<classpathentry kind="lib" path="/third_party/lib/spring-context.jar"/>
-	<classpathentry kind="lib" path="/third_party/lib/servlet-api.jar"/>
-	<classpathentry kind="lib" path="/test-connectorA/dist/jar/testconnectorA.jar"/>
-	<classpathentry kind="lib" path="/test-connectorB/dist/jar/testconnectorB.jar"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3.8.1"/>
+	<classpathentry exported="true" kind="lib" path="/test-connectorA/dist/jar/testconnectorA.jar"/>
+	<classpathentry exported="true" kind="lib" path="/test-connectorB/dist/jar/testconnectorB.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/j2sdk1.4.2_14"/>
+	<classpathentry kind="lib" path="third-party/tests/jcr-1.0.jar"/>
+	<classpathentry kind="lib" path="third-party/tests/json.jar"/>
+	<classpathentry kind="lib" path="third-party/tests/junit.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/spring.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/spring-context.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/servlet-api.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/commons-logging.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
