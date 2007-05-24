@@ -73,7 +73,6 @@
 		<!-- compile java source files -->
 		<javac srcdir="${src}" destdir="${classes}" debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
 			<classpath>
-				<pathelement location="${thirdparty.prod.jars}" />
 				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
 			</classpath>
 		</javac>
@@ -84,9 +83,7 @@
 		<javac srcdir="${tests.src}" destdir="${tests.classes}" debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
 			<classpath>
 				<pathelement location="${classes}" />
-				<pathelement location="${thirdparty.prod.jars}" />
 				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-				<pathelement location="${thirdparty.tests.jars}" />
 				<fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
 			</classpath>
 		</javac>
@@ -96,9 +93,7 @@
 		<junit haltonfailure="yes">
 			<classpath>
 				<pathelement location="${classes}" />
-				<pathelement location="${thirdparty.prod.jars}" />
 				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-				<pathelement location="${thirdparty.tests.jars}" />
 				<fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
 				<pathelement location="${projects.dir}/test-connectorA/dist/jar/testconnectorA.jar" />
 				<pathelement location="${projects.dir}/test-connectorB/dist/jar/testconnectorB.jar" />
