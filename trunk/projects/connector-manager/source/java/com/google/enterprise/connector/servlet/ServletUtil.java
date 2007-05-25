@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -155,9 +157,6 @@ public class ServletUtil {
       "          ",
       "            ",
       "              "};
-
-  private static final String PREFIX_CM = " name=\"CM_";
-  private static final String PREFIX_NO_CM = " name=\"";
 
   private static DocumentBuilderFactory factory =
 	    DocumentBuilderFactory.newInstance();
@@ -476,6 +475,12 @@ public class ServletUtil {
     }
   }
 
+  private static final Pattern PREPEND_CM_PATTERN = Pattern
+  .compile("\\bname\\b\\s*=\\s*[\"']");
+
+  private static final Pattern STRIP_CM_PATTERN = Pattern
+  .compile("(\\bname\\b\\s*=\\s*[\"'])CM_");
+
   /**
    * Given a String such as:
    * <Param name="CM_Color" value="a"/> <Param name="CM_Password" value="a"/>
@@ -487,9 +492,11 @@ public class ServletUtil {
    * @return a result XML string without PREFIX_CM as above
    */
   public static String stripCmPrefix(String str) {
-    String result = str.replaceAll(PREFIX_CM, PREFIX_NO_CM);
+    StringBuffer buf = new StringBuffer(2 * str.length());
+    Matcher matcher = STRIP_CM_PATTERN.matcher(str);
+    String result = matcher.replaceAll("$1");
     return result;
-  }
+ }
   
   /**
    * Inverse operation for stripCmPrefix.
@@ -498,7 +505,9 @@ public class ServletUtil {
    * @return a result XML string with PREFIX_CM as above
    */
   public static String prependCmPrefix(String str) {
-    String result = str.replaceAll(PREFIX_NO_CM, PREFIX_CM);
+    StringBuffer buf = new StringBuffer(2 * str.length());
+    Matcher matcher = PREPEND_CM_PATTERN.matcher(str);
+    String result = matcher.replaceAll("$0CM_");
     return result;
   }
 
