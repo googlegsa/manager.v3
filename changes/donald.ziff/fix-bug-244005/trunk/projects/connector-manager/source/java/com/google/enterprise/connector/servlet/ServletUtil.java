@@ -479,7 +479,7 @@ public class ServletUtil {
   .compile("\\bname\\b\\s*=\\s*[\"']");
 
   private static final Pattern STRIP_CM_PATTERN = Pattern
-  .compile("\\bname\\b\\s*=\\s*[\"']CM_");
+  .compile("(\\bname\\b\\s*=\\s*[\"'])CM_");
 
   /**
    * Given a String such as:
@@ -492,17 +492,11 @@ public class ServletUtil {
    * @return a result XML string without PREFIX_CM as above
    */
   public static String stripCmPrefix(String str) {
-    StringBuffer buf = new StringBuffer(str.length());
+    StringBuffer buf = new StringBuffer(2 * str.length());
     Matcher matcher = STRIP_CM_PATTERN.matcher(str);
-    int prev = 0;
-    while (matcher.find()) {
-      buf.append(str.subSequence(prev,matcher.end()-3));
-      prev = matcher.end();
-    }
-    buf.append(str.subSequence(prev, str.length()));
-    String result = new String(buf);
+    String result = matcher.replaceAll("$1");
     return result;
-  }
+ }
   
   /**
    * Inverse operation for stripCmPrefix.
@@ -513,14 +507,7 @@ public class ServletUtil {
   public static String prependCmPrefix(String str) {
     StringBuffer buf = new StringBuffer(2 * str.length());
     Matcher matcher = PREPEND_CM_PATTERN.matcher(str);
-    int prev = 0;
-    while (matcher.find()) {
-      buf.append(str.subSequence(prev,matcher.end()));
-      buf.append("CM_");
-      prev = matcher.end();
-    }
-    buf.append(str.subSequence(prev, str.length()));
-    String result = new String(buf);
+    String result = matcher.replaceAll("$0CM_");
     return result;
   }
 
