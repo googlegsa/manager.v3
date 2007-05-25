@@ -27,6 +27,7 @@ import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
@@ -69,8 +70,7 @@ public class ImportExport {
       ConnectorStatus connectorStatus = (ConnectorStatus) i.next();
       String name = connectorStatus.getName();
       String type = connectorStatus.getType();
-      // XXX(timg): temporary workaround for bug 713650
-      String scheduleString = connectorStatus.getName() + ":100:0-0";
+      String scheduleString = connectorStatus.getSchedule();
       Map config = null;
       try {
         config = manager.getConnectorConfig(connectorStatus.getName());
@@ -284,7 +284,8 @@ public class ImportExport {
    */
   public static final void main(String[] args) throws Exception {
     Context context = Context.getInstance();
-    context.setStandaloneContext("WEB-INF/applicationContext.xml", "WEB-INF");
+    context.setStandaloneContext("WEB-INF/applicationContext.xml",
+                                 new File("WEB-INF").getAbsolutePath());
     Manager manager = context.getManager();
 
     if (args.length == 2 && args[0].equals("export")) {
