@@ -476,10 +476,15 @@ public class ServletUtil {
   }
 
   private static final Pattern PREPEND_CM_PATTERN = Pattern
-  .compile("\\bname\\b\\s*=\\s*[\"']([^'\"]*)[\"']");
+  .compile("\\bname\\b\\s*=\\s*[\"']");
 
   private static final Pattern STRIP_CM_PATTERN = Pattern
-  .compile("\\bname\\b\\s*=\\s*[\"'](CM_[^'\"]*)[\"']");
+  .compile("\\bname\\b\\s*=\\s*[\"']CM_");
+//  private static final Pattern PREPEND_CM_PATTERN = Pattern
+//  .compile("\\bname\\b\\s*=\\s*[\"']([^'\"]*)[\"']");
+//
+//  private static final Pattern STRIP_CM_PATTERN = Pattern
+//  .compile("\\bname\\b\\s*=\\s*[\"'](CM_[^'\"]*)[\"']");
 
   /**
    * Given a String such as:
@@ -496,8 +501,7 @@ public class ServletUtil {
     Matcher matcher = STRIP_CM_PATTERN.matcher(str);
     int prev = 0;
     while (matcher.find()) {
-      buf.append(str.subSequence(prev,matcher.start(1)));
-      buf.append(str.subSequence(matcher.start(1)+3,matcher.end()));
+      buf.append(str.subSequence(prev,matcher.end()-3));
       prev = matcher.end();
     }
     buf.append(str.subSequence(prev, str.length()));
@@ -516,9 +520,8 @@ public class ServletUtil {
     Matcher matcher = PREPEND_CM_PATTERN.matcher(str);
     int prev = 0;
     while (matcher.find()) {
-      buf.append(str.subSequence(prev,matcher.start(1)));
+      buf.append(str.subSequence(prev,matcher.end()));
       buf.append("CM_");
-      buf.append(str.subSequence(matcher.start(1),matcher.end()));
       prev = matcher.end();
     }
     buf.append(str.subSequence(prev, str.length()));
