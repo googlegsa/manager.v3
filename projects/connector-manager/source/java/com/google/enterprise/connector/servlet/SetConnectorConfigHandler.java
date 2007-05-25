@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
@@ -51,7 +52,9 @@ public class SetConnectorConfigHandler {
    */
   public SetConnectorConfigHandler(String xmlBody, Manager manager) {
     this.status = new ConnectorMessageCode();
-    xmlBody = ServletUtil.stripCmPrefix(xmlBody);
+    if (Context.getInstance().gsaAdminRequiresPrefix()) {
+      xmlBody = ServletUtil.stripCmPrefix(xmlBody);
+    }
     Element root = ServletUtil.parseAndGetRootElement(
         xmlBody, ServletUtil.XMLTAG_CONNECTOR_CONFIG);
     if (root == null) {

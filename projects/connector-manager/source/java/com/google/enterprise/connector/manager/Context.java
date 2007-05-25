@@ -46,6 +46,11 @@ public class Context {
 
   public static final String GSA_FEED_HOST_PROPERTY_KEY = "gsa.feed.host";
   public static final String GSA_FEED_PORT_PROPERTY_KEY = "gsa.feed.port";
+  public static final String GSA_ADMIN_REQUIRES_PREFIX_KEY =
+      "gsa.admin.requiresPrefix";
+
+  public static final Boolean GSA_ADMIN_REQUIRES_PREFIX_DEFAULT =
+      Boolean.FALSE;
 
   public static final String DEFAULT_JUNIT_CONTEXT_LOCATION =
       "testdata/mocktestdata/applicationContext.xml";
@@ -76,6 +81,8 @@ public class Context {
 
   private String standaloneContextLocation;
   private String standaloneCommonDirPath;
+
+  private Boolean gsaAdminRequiresPrefix = null;
 
   /**
    * @param feeding to feed or not to feed
@@ -325,9 +332,7 @@ public class Context {
     }
   }
 
-  public void setConnectorManagerConfig(boolean certAuth,
-      String feederGateHost, int feederGatePort) throws InstantiatorException {
-    initApplicationContext();
+  private String getPropFileName() throws InstantiatorException {
     String propFileName = null;
     try {
       propFileName =
@@ -342,6 +347,10 @@ public class Context {
           + "Spring while getting " + APPLICATION_CONTEXT_PROPERTIES_BEAN_NAME
           + " bean");
     }
+    return propFileName;
+  }
+
+  private File getPropFile(String propFileName) throws InstantiatorException {
     Resource propResource = applicationContext.getResource(propFileName);
     File propFile;
     try {
@@ -349,6 +358,14 @@ public class Context {
     } catch (IOException e) {
       throw new InstantiatorException(e);
     }
+    return propFile;
+  }
+
+  public void setConnectorManagerConfig(boolean certAuth,
+      String feederGateHost, int feederGatePort) throws InstantiatorException {
+    initApplicationContext();
+    String propFileName = getPropFileName();
+    File propFile = getPropFile(propFileName);
     Properties props =
         InstanceInfo.initPropertiesFromFile(propFile, propFileName);
     props.put(GSA_FEED_HOST_PROPERTY_KEY, feederGateHost);
@@ -357,5 +374,37 @@ public class Context {
     shutdown(true);  // force shutdown
     reInitApplicationContext();
     restart();
+  }
+
+  /**
+   * Whether or not the GSA requires the connector manager to prepend a
+   * connector-manager-specific prefix to connector configuration
+   * property names.  Older GSA require the prefix, and newer GSAs do not.
+   * This value is read from the <code>gsa.admin.requiresPrefix</code>
+   * property in the application context properties file.
+   * If the <code>gsa.admin.requiresPrefix</code> property is not defined, the
+   * default value is <code>false</code>.
+   */
+  public boolean gsaAdminRequiresPrefix() {
+    initApplicationContext();
+    if (gsaAdminRequiresPrefix == null) {
+      try {
+        String propFileName = getPropFileName();
+        File propFile = getPropFile(propFileName);
+        Properties props =
+            InstanceInfo.initPropertiesFromFile(propFile, propFileName);
+        String prop = props.getProperty(
+            GSA_ADMIN_REQUIRES_PREFIX_KEY,
+            GSA_ADMIN_REQUIRES_PREFIX_DEFAULT.toString());
+        gsaAdminRequiresPrefix = Boolean.valueOf(prop);
+      } catch (InstantiatorException e) {
+        LOGGER.log(Level.WARNING,
+                   "Unable to read application context properties file.  " +
+                   "Using default value for Context.gsaAdminRequiresPrefix().",
+                   e);
+        gsaAdminRequiresPrefix = GSA_ADMIN_REQUIRES_PREFIX_DEFAULT;
+      }
+    }
+    return gsaAdminRequiresPrefix.booleanValue();
   }
 }

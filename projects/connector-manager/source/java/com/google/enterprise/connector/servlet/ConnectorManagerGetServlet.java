@@ -116,10 +116,13 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
           out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, false);
       if (configRes.getFormSnippet() != null &&
           configRes.getFormSnippet().length() > 0) {
+        String formSnippet = configRes.getFormSnippet();
+        if (Context.getInstance().gsaAdminRequiresPrefix()) {
+          formSnippet = ServletUtil.prependCmPrefix(formSnippet);
+        }
         ServletUtil.writeXMLElement(
             out, 2, ServletUtil.XMLTAG_FORM_SNIPPET,
-            "<![CDATA[" +
-            ServletUtil.prependCmPrefix(configRes.getFormSnippet()) + "]]>");
+            "<![CDATA[" + formSnippet + "]]>");
       }
       if (configRes.getMessage() != null &&
           configRes.getMessage().length() > 0) {
