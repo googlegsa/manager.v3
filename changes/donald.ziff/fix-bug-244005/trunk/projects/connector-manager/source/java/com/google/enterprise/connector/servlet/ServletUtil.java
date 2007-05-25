@@ -480,11 +480,6 @@ public class ServletUtil {
 
   private static final Pattern STRIP_CM_PATTERN = Pattern
   .compile("\\bname\\b\\s*=\\s*[\"']CM_");
-//  private static final Pattern PREPEND_CM_PATTERN = Pattern
-//  .compile("\\bname\\b\\s*=\\s*[\"']([^'\"]*)[\"']");
-//
-//  private static final Pattern STRIP_CM_PATTERN = Pattern
-//  .compile("\\bname\\b\\s*=\\s*[\"'](CM_[^'\"]*)[\"']");
 
   /**
    * Given a String such as:
