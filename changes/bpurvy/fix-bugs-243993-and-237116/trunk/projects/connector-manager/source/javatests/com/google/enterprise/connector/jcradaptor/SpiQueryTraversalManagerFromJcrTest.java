@@ -23,7 +23,7 @@ import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.ResultSet;
+import com.google.enterprise.connector.spi.PropertyMapList;
 import com.google.enterprise.connector.spi.SpiConstants;
 
 import junit.framework.Assert;
@@ -106,10 +106,10 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
 
       String checkpointString = qtm.checkpoint(pm);
 
-      ResultSet resultSet = qtm.resumeTraversal(checkpointString);
+      PropertyMapList propertyMapList = qtm.resumeTraversal(checkpointString);
 
       int counter = 0;
-      for (Iterator iter = resultSet.iterator(); iter.hasNext();) {
+      for (Iterator iter = propertyMapList.iterator(); iter.hasNext();) {
         PropertyMap propertyMap = (PropertyMap) iter.next();
         logger.info(propertyMap.getProperty(SpiConstants.PROPNAME_DOCID)
             .getValue().getString());
@@ -124,10 +124,10 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
 
       String checkpointString = qtm.checkpoint(pm);
 
-      ResultSet resultSet = qtm.resumeTraversal(checkpointString);
+      PropertyMapList propertyMapList = qtm.resumeTraversal(checkpointString);
 
       int counter = 0;
-      for (Iterator iter = resultSet.iterator(); iter.hasNext();) {
+      for (Iterator iter = propertyMapList.iterator(); iter.hasNext();) {
         PropertyMap propertyMap = (PropertyMap) iter.next();
         logger.info(propertyMap.getProperty(SpiConstants.PROPNAME_DOCID)
             .getValue().getString());
@@ -146,10 +146,10 @@ public class SpiQueryTraversalManagerFromJcrTest extends TestCase {
     TraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
 
     {
-      ResultSet resultSet = qtm.startTraversal();
+      PropertyMapList propertyMapList = qtm.startTraversal();
 
       int counter = 0;
-      for (Iterator iter = resultSet.iterator(); iter.hasNext();) {
+      for (Iterator iter = propertyMapList.iterator(); iter.hasNext();) {
         PropertyMap propertyMap = (PropertyMap) iter.next();
         logger.info(propertyMap.getProperty(SpiConstants.PROPNAME_DOCID)
             .getValue().getString());

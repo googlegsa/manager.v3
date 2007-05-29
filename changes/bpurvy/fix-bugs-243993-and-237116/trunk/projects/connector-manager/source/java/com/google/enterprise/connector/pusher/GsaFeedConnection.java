@@ -21,6 +21,8 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Opens a connection to a url and sends data to it.
@@ -30,6 +32,9 @@ public class GsaFeedConnection implements FeedConnection {
   private URL url = null;
   private String host;
   private int port;
+  
+  private static final Logger LOGGER =
+      Logger.getLogger(GsaFeedConnection.class.getName());
   
   public GsaFeedConnection(String host, int port) {
     this.host = host;
@@ -54,13 +59,28 @@ public class GsaFeedConnection implements FeedConnection {
     uc.setDoOutput(true);
     uc.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
     OutputStream outputStream = uc.getOutputStream();
+
     byte[] bytebuf = new byte[2048];
     int val;
-    while (-1 != (val = data.read(bytebuf))) {
-      outputStream.write(bytebuf, 0, val);
+
+    try {
+      // if there is an exception during this read/write, we do our
+      // best to close the url connection and read the result
+      while (-1 != (val = data.read(bytebuf))) {
+        outputStream.write(bytebuf, 0, val);
+      }
+      outputStream.flush();
+    } catch (IOException e) {
+      LOGGER.log(Level.SEVERE, "IOException while posting: continuing", e);
+    } finally {
+      try {
+        outputStream.close();
+      } catch (IOException e) {
+        LOGGER.log(Level.SEVERE,
+            "IOException while closing after post: continuing", e);
+      }
     }
-    outputStream.flush();
-    
+
     StringBuffer buf = new StringBuffer();
     InputStream inputStream = uc.getInputStream();
 	BufferedReader br =
@@ -69,10 +89,8 @@ public class GsaFeedConnection implements FeedConnection {
     while ((line = br.readLine()) != null) {
       buf.append(line);
     }
-    outputStream.close();
     br.close();
     return buf.toString();
   }
-  
-  
+
 }

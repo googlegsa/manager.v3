@@ -25,7 +25,7 @@ import javax.jcr.NodeIterator;
  * Adaptor from connector.Spi.ResultSet to javax.jcr.Query
  */
 public class SpiResultSetFromJcr implements
-    com.google.enterprise.connector.spi.ResultSet {
+    com.google.enterprise.connector.spi.PropertyMapList {
 
   private final Node startNode;
   private final NodeIterator jcrIterator;

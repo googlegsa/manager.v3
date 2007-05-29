@@ -47,25 +47,25 @@ public class GetConnectorConfigToEditTest extends TestCase {
         "    <FormSnippet><![CDATA[<tr>\n" +
         "<td>Username</td>\n" + 
         "<td>\n" + 
-        "<input type=\"text\" name=\"CM_Username\" />\n" + 
+        "<input type=\"text\" name=\"Username\" />\n" + 
         "</td>\n" + 
         "</tr>\n" + 
         "<tr>\n" + 
         "<td>Password</td>\n" + 
         "<td>\n" + 
-        "<input type=\"password\" name=\"CM_Password\" />\n" + 
+        "<input type=\"password\" name=\"Password\" />\n" + 
         "</td>\n" + 
         "</tr>\n" + 
         "<tr>\n" + 
         "<td>Color</td>\n" + 
         "<td>\n" + 
-        "<input type=\"text\" name=\"CM_Color\" />\n" + 
+        "<input type=\"text\" name=\"Color\" />\n" + 
         "</td>\n" + 
         "</tr>\n" + 
         "<tr>\n" + 
         "<td>Repository File</td>\n" + 
         "<td>\n" + 
-        "<input type=\"text\" name=\"CM_Repository File\" />\n" + 
+        "<input type=\"text\" name=\"Repository File\" />\n" + 
         "</td>\n" + 
         "</tr>\n" + 
         "]]></FormSnippet>\n" +

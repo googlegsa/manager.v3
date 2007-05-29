@@ -34,6 +34,7 @@ import java.io.SequenceInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -539,8 +540,9 @@ public class DocPusher implements Pusher {
 
     InputStream encodedContentStream = null;
     if (this.feedType != XML_FEED_METADATA_AND_URL) {
-      InputStream contentStream = new GoogleContentStream(
+      InputStream contentStream = getNonNullContentStream(
           getOptionalStream(pm, SpiConstants.PROPNAME_CONTENT));
+ 
       if (null != contentStream) {
         encodedContentStream = new Base64FilterInputStream(contentStream);
       }
@@ -586,6 +588,37 @@ public class DocPusher implements Pusher {
   }
 
   /**
+   * defaultContent is a string that is substituted for null or empty
+   * content streams, in order to make sure the GSA indexes the feed item.
+   */
+  private static final String defaultContent = " ";
+  
+  /**
+   * Inspect the content stream for a feed item, and if it's null or empty,
+   * substitute a string which will insure that the feed items gets indexed
+   * by the GSA
+   * @param contentStream from the feed item
+   * @return 
+   */
+  private InputStream getNonNullContentStream(InputStream contentStream) {
+    InputStream output = contentStream;
+    try {
+      if (contentStream == null || contentStream.available() == 0) {
+        output = 
+            new ByteArrayInputStream(defaultContent.getBytes("UTF-8"));
+      }
+    } catch (IOException e) {
+      LOGGER.log(Level.SEVERE, "IO error.", e);
+      /*
+       * It's possible the stream is just bad, but it could also be
+       * that it doesn't support "available()". So we DON'T substitute the
+       * defaultString if an exception was raised.
+       */
+    }
+    return output;
+  }
+  
+  /**
    * Form a Google connector URL.
    * 
    * @param connectorName
@@ -615,7 +648,7 @@ public class DocPusher implements Pusher {
     prefix += "&" + URLEncoder.encode(XML_DATA, XML_DEFAULT_ENCODING) + "=";
 
     InputStream xmlDataStream = new UrlEncodedFilterInputStream(xmlData);
-
+    // xmlDataStream = logFeed(xmlDataStream);
     String suffix = "";
     InputStream is = stringWrappedInputStream(prefix, xmlDataStream, suffix);
     return is;
@@ -647,7 +680,22 @@ public class DocPusher implements Pusher {
 
     throw new IllegalArgumentException();
   }
-  
+  private static byte[] arr = new byte[1024];
+  private InputStream logFeed(InputStream is) {
+  int len = 0; 
+    try {
+      System.out.println("available:" + is.available());
+      if (is.available() > 1024) return is;
+      len = is.read(arr, 0, 1024);
+      LOGGER.logp(Level.SEVERE, this.getClass().getName(), "feeding ",
+          URLDecoder.decode(new String(arr, 0, len), "UTF-8"));
+      return new ByteArrayInputStream(arr, 0, len);
+    } catch (Exception e) { // have to catch IllegalArgumentException
+      LOGGER.logp(Level.SEVERE, this.getClass().getName(), "couldn't decode ",
+          new String(arr, 0, len));
+    } 
+    return is;
+  }
   /**
    * Takes a property map and sends a the feed to the GSA.
    * 

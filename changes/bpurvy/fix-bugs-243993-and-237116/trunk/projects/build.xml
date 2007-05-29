@@ -59,13 +59,12 @@
 
 	<target name="test-all" depends="test-connectorA,test-connectorB,connector-manager">
 		<ant dir="${connector-manager.dir}" target="run_tests" />
-		<ant dir="${test-connectorA.dir}" target="run_tests" />
-		<ant dir="${test-connectorB.dir}" target="run_tests" />
+		<!-- at present, the test-connectors do not have a run_tests target -->
 	</target>
 
 	<target name="install-all"
 		depends="install-test-connectorA,install-test-connectorB,install-connector-manager"/>
 
-	<target name="everything" depends="clean-all,build-all,install-all"/>
+	<target name="everything" depends="clean-all,build-all,test-all,install-all"/>
 
 </project>

@@ -20,7 +20,7 @@ import com.google.enterprise.connector.spi.HasTimeout;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.ResultSet;
+import com.google.enterprise.connector.spi.PropertyMapList;
 
 import java.util.Iterator;
 
@@ -55,11 +55,21 @@ public class QueryTraverser implements Traverser {
    * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
    */
   public synchronized int runBatch(int batchHint) {
+    if (batchHint <= 0) {
+      throw new IllegalArgumentException("batchHint must be a positive int");
+    }
+    try {
+      queryTraversalManager.setBatchHint(batchHint);
+    } catch (RepositoryException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    
     int counter = 0;
     PropertyMap pm = null;
     String connectorState =
         connectorStateStore.getConnectorState(connectorName);
-    ResultSet resultSet = null;
+    PropertyMapList resultSet = null;
     if (connectorState == null) {
       try {
         resultSet = queryTraversalManager.startTraversal();
@@ -119,7 +129,9 @@ public class QueryTraverser implements Traverser {
       // TODO:ziff Auto-generated catch block
       e.printStackTrace();
     }
-    connectorStateStore.storeConnectorState(connectorName, connectorState);
+    if (connectorState != null) {
+      connectorStateStore.storeConnectorState(connectorName, connectorState);
+    }
   }
   
   public int getTimeoutMillis() {
