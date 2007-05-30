@@ -30,6 +30,7 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Iterator;
@@ -106,28 +107,6 @@ public class DocPusherTest extends TestCase {
     
     expectedXml[0] = buildExpectedXML(feedType, record);
     takeFeed(expectedXml, "MockRepositoryEventLog6.txt");
-  }
-
-  /**
-   * Test Take for a content feed.
-   * 
-   * @throws RepositoryException
-   */
-  public void testTakeContentNull() throws RepositoryException {
-    String[] expectedXml = new String[1];
-    String feedType = "incremental";
-    String record = "<record url=\"" + ServletUtil.PROTOCOL
-      + "junit.localhost" + ServletUtil.DOCID + "doc1\""
-      + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE
-      + "\" last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\" >\n"
-      + "<metadata>\n"
-      + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
-      + "<meta name=\"jcr:lastModified\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
-      + "</metadata>\n" + "<content encoding=\"base64binary\" >"
-      + "IA==" + "</content>\n" + "</record>\n";
-    
-    expectedXml[0] = buildExpectedXML(feedType, record);
-    takeFeed(expectedXml, "MockRepositoryEventLog8.txt");
   }
 
   /**

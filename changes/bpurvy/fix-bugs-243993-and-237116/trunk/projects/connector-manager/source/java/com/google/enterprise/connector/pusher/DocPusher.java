@@ -270,32 +270,30 @@ public class DocPusher implements Pusher {
 
   /**
    * Wrap the metadata and append it to the string buffer. Empty metadata
-   * properties are not appended. Returns an indication of whether there
-   * was any metadata.
+   * properties are not appended. 
    * @param buf string buffer
    * @param pm property map
-   * @return true if any metadata was appended; false if not.
    */
-  private boolean xmlWrapMetadata(StringBuffer buf, PropertyMap pm) {
+  private void xmlWrapMetadata(StringBuffer buf, PropertyMap pm) {
     Iterator i;
     try {
       i = pm.getProperties();
     } catch (RepositoryException e) {
       LOGGER.logp(Level.WARNING, this.getClass().getName(), "xmlWrapMetadata",
           "Swallowing exception while scanning properties", e);
-      return false;
+      return;
     }
     if (!i.hasNext()) {
-      return false;
+      return;
     }
     /**
      *  accumulate metadata in a separate buffer, so we can avoid changing
      *  'buf' if all properties were null.
      */
-    StringBuffer metadataBuf = new StringBuffer();
-    metadataBuf.append(xmlWrapStart(XML_METADATA));
-    metadataBuf.append("\n");
-    boolean dataWasAppended = false;
+
+    buf.append(xmlWrapStart(XML_METADATA));
+    buf.append("\n");
+
     while (i.hasNext()) {
       Property p = (Property) i.next();
       String name;
@@ -308,34 +306,26 @@ public class DocPusher implements Pusher {
         continue;
       }
       if (!propertySkipSet.contains(name)) {
-        dataWasAppended |= wrapOneProperty(metadataBuf, p);
+        wrapOneProperty(buf, p);
       }
     }
-    if (dataWasAppended) {
-      metadataBuf.append(xmlWrapEnd(XML_METADATA));
-      buf.append(metadataBuf);
-      return true;
-    } 
-    return false;
+    buf.append(xmlWrapEnd(XML_METADATA));
   }
 
   /**
    * Wrap a single Property and append to string buffer. Does nothing if
-   * the Property's value is null or zero-length. Returns an indication of
-   * whether any data was appended.
+   * the Property's value is null or zero-length. 
    * @param buf string buffer
    * @param p Property
-   * @return true if any data was appended; false if not.
    */
-  private boolean wrapOneProperty(StringBuffer buf, Property p) {
+  private void wrapOneProperty(StringBuffer buf, Property p) {
     String name;
-    boolean dataWasAppended = false;
     try {
       name = p.getName();
     } catch (RepositoryException e) {
       LOGGER.logp(Level.WARNING, this.getClass().getName(), "xmlWrapMetadata",
           "Swallowing exception while scanning values", e);
-      return dataWasAppended;
+      return;
     }
     Iterator values;
     try {
@@ -343,11 +333,12 @@ public class DocPusher implements Pusher {
     } catch (RepositoryException e) {
       LOGGER.logp(Level.WARNING, this.getClass().getName(), "xmlWrapMetadata",
           "Swallowing exception while scanning values", e);
-      return dataWasAppended;
+      return;
     }
     // if property is null, don't encode it; GSA won't process 
-    if (!values.hasNext()) return dataWasAppended;
+    if (!values.hasNext()) return;
     StringBuffer metadataBuf = new StringBuffer();
+    boolean dataWasAppended = false;
     metadataBuf.append("<");
     metadataBuf.append(XML_META);
     metadataBuf.append(" ");
@@ -386,7 +377,6 @@ public class DocPusher implements Pusher {
       metadataBuf.append("\"/>\n");
       buf.append(metadataBuf);
     }
-    return dataWasAppended;
   }
 
   /*
@@ -588,10 +578,10 @@ public class DocPusher implements Pusher {
   }
 
   /**
-   * defaultContent is a string that is substituted for null or empty
+   * DEFAULT_CONTENT is a string that is substituted for null or empty
    * content streams, in order to make sure the GSA indexes the feed item.
    */
-  private static final String defaultContent = " ";
+  private static final String DEFAULT_CONTENT = " ";
   
   /**
    * Inspect the content stream for a feed item, and if it's null or empty,
@@ -603,17 +593,12 @@ public class DocPusher implements Pusher {
   private InputStream getNonNullContentStream(InputStream contentStream) {
     InputStream output = contentStream;
     try {
-      if (contentStream == null || contentStream.available() == 0) {
+      if (contentStream == null) {
         output = 
-            new ByteArrayInputStream(defaultContent.getBytes("UTF-8"));
+            new ByteArrayInputStream(DEFAULT_CONTENT.getBytes("UTF-8"));
       }
     } catch (IOException e) {
       LOGGER.log(Level.SEVERE, "IO error.", e);
-      /*
-       * It's possible the stream is just bad, but it could also be
-       * that it doesn't support "available()". So we DON'T substitute the
-       * defaultString if an exception was raised.
-       */
     }
     return output;
   }
@@ -648,7 +633,6 @@ public class DocPusher implements Pusher {
     prefix += "&" + URLEncoder.encode(XML_DATA, XML_DEFAULT_ENCODING) + "=";
 
     InputStream xmlDataStream = new UrlEncodedFilterInputStream(xmlData);
-    // xmlDataStream = logFeed(xmlDataStream);
     String suffix = "";
     InputStream is = stringWrappedInputStream(prefix, xmlDataStream, suffix);
     return is;
@@ -680,22 +664,7 @@ public class DocPusher implements Pusher {
 
     throw new IllegalArgumentException();
   }
-  private static byte[] arr = new byte[1024];
-  private InputStream logFeed(InputStream is) {
-  int len = 0; 
-    try {
-      System.out.println("available:" + is.available());
-      if (is.available() > 1024) return is;
-      len = is.read(arr, 0, 1024);
-      LOGGER.logp(Level.SEVERE, this.getClass().getName(), "feeding ",
-          URLDecoder.decode(new String(arr, 0, len), "UTF-8"));
-      return new ByteArrayInputStream(arr, 0, len);
-    } catch (Exception e) { // have to catch IllegalArgumentException
-      LOGGER.logp(Level.SEVERE, this.getClass().getName(), "couldn't decode ",
-          new String(arr, 0, len));
-    } 
-    return is;
-  }
+
   /**
    * Takes a property map and sends a the feed to the GSA.
    * 
