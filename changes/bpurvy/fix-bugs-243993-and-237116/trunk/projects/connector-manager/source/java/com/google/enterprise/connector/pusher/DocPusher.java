@@ -286,10 +286,6 @@ public class DocPusher implements Pusher {
     if (!i.hasNext()) {
       return;
     }
-    /**
-     *  accumulate metadata in a separate buffer, so we can avoid changing
-     *  'buf' if all properties were null.
-     */
 
     buf.append(xmlWrapStart(XML_METADATA));
     buf.append("\n");
