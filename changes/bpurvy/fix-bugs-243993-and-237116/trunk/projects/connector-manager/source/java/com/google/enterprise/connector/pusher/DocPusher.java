@@ -588,6 +588,8 @@ public class DocPusher implements Pusher {
    * by the GSA
    * @param contentStream from the feed item
    * @return an InputStream which is guaranteed to be non-null.
+   * @throws RuntimeException if the DEFAULT_CONTENT string above cannot
+   * be UTF-8-encoded into a ByteArrayInputStream.
    */
   private InputStream getNonNullContentStream(InputStream contentStream) {
     InputStream output = contentStream;
@@ -598,6 +600,8 @@ public class DocPusher implements Pusher {
       }
     } catch (IOException e) {
       LOGGER.log(Level.SEVERE, "IO error.", e);
+      throw new RuntimeException("failed to create default content stream:" + 
+          e.toString());
     }
     return output;
   }
