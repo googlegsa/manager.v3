@@ -146,6 +146,8 @@ public class DocPusherTest extends TestCase {
     expectedXml[1] = buildExpectedXML(feedType, record);
 
     // case 3: "google:ispublic":"public"; the value "public" is illegal value.
+    // note also: MockRepositoryEventLog7.txt has a "" in the acl property,
+    // which null-handling should drop out, leaving just "joe, mary"
     record = "<record url=\"" + ServletUtil.PROTOCOL
       + "junit.localhost" + ServletUtil.DOCID + "doc2\""
       + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE
