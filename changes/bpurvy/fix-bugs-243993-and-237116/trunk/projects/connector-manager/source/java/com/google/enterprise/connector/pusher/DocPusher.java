@@ -32,7 +32,6 @@ import java.io.SequenceInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -331,15 +330,21 @@ public class DocPusher implements Pusher {
     }
     // if property is null, don't encode it; GSA won't process 
     if (!values.hasNext()) return;
-    StringBuffer metadataBuf = new StringBuffer();
-    boolean dataWasAppended = false;
-    metadataBuf.append("<");
-    metadataBuf.append(XML_META);
-    metadataBuf.append(" ");
-    appendAttrValuePair("name", name, metadataBuf);
-    metadataBuf.append("content=\"");
+    
+    /* in case there are only null values, we want to "roll back" the
+     * XML_META tag. So save our current length:
+     */
+    int indexMetaStart = buf.length();
+    
+    buf.append("<");
+    buf.append(XML_META);
+    buf.append(" ");
+    appendAttrValuePair("name", name, buf);
+    buf.append("content=\"");
     String delimiter = "";
     
+    // mark the beginning of the values:
+    int indexValuesStart = buf.length();
     while (values.hasNext()) {
       Value value = (Value) values.next();
       String valString = "";
@@ -356,20 +361,20 @@ public class DocPusher implements Pusher {
                 + name, e);
         continue;
       }
-      if (valString.length() < 1) {
+      if (valString.length() == 0) {
         continue;
       }
-      metadataBuf.append(delimiter);
-      XmlEncodeAttrValue(valString, metadataBuf);
-      dataWasAppended = true;
+      buf.append(delimiter);
+      XmlEncodeAttrValue(valString, buf);
       delimiter = ", ";
     }
-    /* If there were no additions to metadataBuf (because of empty values), 
-     * don't append it to the StringBuffer passed in.
+    /* If there were no additions to buf (because of empty values), 
+     * roll back to before the XML_META tag
      */
-    if (dataWasAppended) {
-      metadataBuf.append("\"/>\n");
-      buf.append(metadataBuf);
+    if (buf.length() > indexValuesStart) {
+      buf.append("\"/>\n");
+    } else {
+      buf.delete(indexMetaStart, buf.length());
     }
   }
 
@@ -582,7 +587,7 @@ public class DocPusher implements Pusher {
    * substitute a string which will insure that the feed items gets indexed
    * by the GSA
    * @param contentStream from the feed item
-   * @return 
+   * @return an InputStream which is guaranteed to be non-null.
    */
   private InputStream getNonNullContentStream(InputStream contentStream) {
     InputStream output = contentStream;

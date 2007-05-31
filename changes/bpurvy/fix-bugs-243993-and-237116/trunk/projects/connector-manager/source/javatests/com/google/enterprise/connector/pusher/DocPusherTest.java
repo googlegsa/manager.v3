@@ -30,7 +30,6 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
-import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Iterator;
@@ -87,6 +86,7 @@ public class DocPusherTest extends TestCase {
     expectedXml[0] = buildExpectedXML(feedType, record);
     takeFeed(expectedXml, "MockRepositoryEventLog5null.txt");
   }  
+  
   /**
    * Test Take for a content feed.
    * 
@@ -115,7 +115,7 @@ public class DocPusherTest extends TestCase {
    * @throws RepositoryException
    */
   public void testTakeIsPublic() throws RepositoryException {
-    String[] expectedXml = new String[3];
+    String[] expectedXml = new String[4];
     String feedType = "incremental";
     
     // case 1: "google:ispublic":"false"
@@ -157,7 +157,7 @@ public class DocPusherTest extends TestCase {
       + "</metadata>\n" + "<content encoding=\"base64binary\" >"
       + "VGhpcyBpcyBhIGRvY3VtZW50Lg==" + "</content>\n" + "</record>\n";
     expectedXml[2] = buildExpectedXML(feedType, record);
-
+    
     takeFeed(expectedXml, "MockRepositoryEventLog7.txt");
   }
 
