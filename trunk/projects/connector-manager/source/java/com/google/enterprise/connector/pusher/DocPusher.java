@@ -265,6 +265,12 @@ public class DocPusher implements Pusher {
     buf.append("\" ");
   }
 
+  /**
+   * Wrap the metadata and append it to the string buffer. Empty metadata
+   * properties are not appended. 
+   * @param buf string buffer
+   * @param pm property map
+   */
   private void xmlWrapMetadata(StringBuffer buf, PropertyMap pm) {
     Iterator i;
     try {
@@ -277,8 +283,10 @@ public class DocPusher implements Pusher {
     if (!i.hasNext()) {
       return;
     }
+
     buf.append(xmlWrapStart(XML_METADATA));
     buf.append("\n");
+
     while (i.hasNext()) {
       Property p = (Property) i.next();
       String name;
@@ -297,6 +305,12 @@ public class DocPusher implements Pusher {
     buf.append(xmlWrapEnd(XML_METADATA));
   }
 
+  /**
+   * Wrap a single Property and append to string buffer. Does nothing if
+   * the Property's value is null or zero-length. 
+   * @param buf string buffer
+   * @param p Property
+   */
   private void wrapOneProperty(StringBuffer buf, Property p) {
     String name;
     try {
@@ -314,12 +328,23 @@ public class DocPusher implements Pusher {
           "Swallowing exception while scanning values", e);
       return;
     }
+    // if property is null, don't encode it; GSA won't process 
+    if (!values.hasNext()) return;
+    
+    /* in case there are only null values, we want to "roll back" the
+     * XML_META tag. So save our current length:
+     */
+    int indexMetaStart = buf.length();
+    
     buf.append("<");
     buf.append(XML_META);
     buf.append(" ");
     appendAttrValuePair("name", name, buf);
     buf.append("content=\"");
     String delimiter = "";
+    
+    // mark the beginning of the values:
+    int indexValuesStart = buf.length();
     while (values.hasNext()) {
       Value value = (Value) values.next();
       String valString = "";
@@ -336,14 +361,21 @@ public class DocPusher implements Pusher {
                 + name, e);
         continue;
       }
-      if (valString.length() < 1) {
+      if (valString.length() == 0) {
         continue;
       }
       buf.append(delimiter);
       XmlEncodeAttrValue(valString, buf);
       delimiter = ", ";
     }
-    buf.append("\"/>\n");
+    /* If there were no additions to buf (because of empty values), 
+     * roll back to before the XML_META tag
+     */
+    if (buf.length() > indexValuesStart) {
+      buf.append("\"/>\n");
+    } else {
+      buf.delete(indexMetaStart, buf.length());
+    }
   }
 
   /*
@@ -497,8 +529,9 @@ public class DocPusher implements Pusher {
 
     InputStream encodedContentStream = null;
     if (this.feedType != XML_FEED_METADATA_AND_URL) {
-      InputStream contentStream =
-          getOptionalStream(pm, SpiConstants.PROPNAME_CONTENT);
+      InputStream contentStream = getNonNullContentStream(
+          getOptionalStream(pm, SpiConstants.PROPNAME_CONTENT));
+ 
       if (null != contentStream) {
         encodedContentStream = new Base64FilterInputStream(contentStream);
       }
@@ -544,6 +577,36 @@ public class DocPusher implements Pusher {
   }
 
   /**
+   * DEFAULT_CONTENT is a string that is substituted for null or empty
+   * content streams, in order to make sure the GSA indexes the feed item.
+   */
+  private static final String DEFAULT_CONTENT = " ";
+  
+  /**
+   * Inspect the content stream for a feed item, and if it's null or empty,
+   * substitute a string which will insure that the feed items gets indexed
+   * by the GSA
+   * @param contentStream from the feed item
+   * @return an InputStream which is guaranteed to be non-null.
+   * @throws RuntimeException if the DEFAULT_CONTENT string above cannot
+   * be UTF-8-encoded into a ByteArrayInputStream.
+   */
+  private InputStream getNonNullContentStream(InputStream contentStream) {
+    InputStream output = contentStream;
+    try {
+      if (contentStream == null) {
+        output = 
+            new ByteArrayInputStream(DEFAULT_CONTENT.getBytes("UTF-8"));
+      }
+    } catch (IOException e) {
+      LOGGER.log(Level.SEVERE, "IO error.", e);
+      throw new RuntimeException("failed to create default content stream:" + 
+          e.toString());
+    }
+    return output;
+  }
+  
+  /**
    * Form a Google connector URL.
    * 
    * @param connectorName
@@ -573,7 +636,6 @@ public class DocPusher implements Pusher {
     prefix += "&" + URLEncoder.encode(XML_DATA, XML_DEFAULT_ENCODING) + "=";
 
     InputStream xmlDataStream = new UrlEncodedFilterInputStream(xmlData);
-
     String suffix = "";
     InputStream is = stringWrappedInputStream(prefix, xmlDataStream, suffix);
     return is;
