@@ -1,2 +1,0 @@
-# testing pusher with a multi-valued metadata item with o
-{"timestamp":"10","type":"save","docid":"doc1", "google:searchurl":"http://www.sometesturl.com/test", "acl":{type:string, value:[joe,,fred]}, "google:lastmodified":"Tue, 15 Nov 1994 12:45:26 GMT"}
