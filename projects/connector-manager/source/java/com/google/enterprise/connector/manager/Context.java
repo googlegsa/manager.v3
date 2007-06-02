@@ -361,8 +361,8 @@ public class Context {
     return propFile;
   }
 
-  public void setConnectorManagerConfig(boolean certAuth,
-      String feederGateHost, int feederGatePort) throws InstantiatorException {
+  public void setConnectorManagerConfig(String feederGateHost,
+      int feederGatePort) throws InstantiatorException {
     initApplicationContext();
     String propFileName = getPropFileName();
     File propFile = getPropFile(propFileName);

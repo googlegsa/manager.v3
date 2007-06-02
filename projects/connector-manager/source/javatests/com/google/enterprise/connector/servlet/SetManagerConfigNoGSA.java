@@ -50,8 +50,6 @@ public class SetManagerConfigNoGSA extends HttpServlet {
     out.print("<BODY><H3>Manager Config:</H3>");
     out.print("<HR><FORM METHOD=POST " +
       "ACTION=\"/connector-manager/setManagerConfigTest\"><TABLE>");
-    out.println("<tr><td>Cert Authn <input type=\"checkbox\""
-        + "NAME=\"" + ServletUtil.XMLTAG_CERT_AUTHN + "\"></td></tr>");
     out.println("<tr><td>GSA Host</td> <td><INPUT TYPE=\"TEXT\" "
         + "NAME=\"" + ServletUtil.XMLTAG_FEEDERGATE_HOST
         + "\"></td></tr><tr>");
@@ -77,10 +75,7 @@ public class SetManagerConfigNoGSA extends HttpServlet {
       throws ServletException, IOException {
     StringWriter writer = new StringWriter();
     writer.write("<" + ServletUtil.XMLTAG_MANAGER_CONFIG + ">");
-    writer.write("  <" + ServletUtil.XMLTAG_CERT_AUTHN + ">"
-        + req.getParameter(ServletUtil.XMLTAG_CERT_AUTHN)
-        + "</" + ServletUtil.XMLTAG_CERT_AUTHN + ">");
-    writer.write("  <" + ServletUtil.XMLTAG_FEEDERGATE + " "
+    writer.write("<" + ServletUtil.XMLTAG_FEEDERGATE + " "
         + ServletUtil.XMLTAG_FEEDERGATE_HOST + "=\""
         + req.getParameter(ServletUtil.XMLTAG_FEEDERGATE_HOST) + "\" "
         + ServletUtil.XMLTAG_FEEDERGATE_PORT + "=\""

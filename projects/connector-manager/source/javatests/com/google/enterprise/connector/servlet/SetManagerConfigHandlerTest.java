@@ -30,26 +30,25 @@ import com.google.enterprise.connector.manager.MockManager;
 public class SetManagerConfigHandlerTest extends TestCase {
   private static final Logger LOGGER =
 	  Logger.getLogger(SetManagerConfigHandlerTest.class.getName());
-  private boolean certAuth;
   private String host;
   private int port;
   
   public void testHandleDoPost1() {
-    certAuth = true;
     host = "10.32.20.102";
     port = 9411;
     doTest(setXMLBody());
   }
 
   public void testHandleDoPost2() {
-    certAuth = false;
     host = "";
     port = 9411;
     doTest(setXMLBody());
   }
 
+  /*
+   * Test using old XML that includes CertAuthn Element.
+   */
   public void testHandleDoPost3() {
-    certAuth = false;
     host = "10.32.20.102";
     port = 9411;
     String xmlBody =
@@ -65,10 +64,8 @@ public class SetManagerConfigHandlerTest extends TestCase {
     Manager manager = MockManager.getInstance();
     SetManagerConfigHandler hdl =
     	new SetManagerConfigHandler(manager, xmlBody);
-    LOGGER.info("authn: " + hdl.isCertAuth() + " this: " + this.certAuth);
     LOGGER.info("host: " + hdl.getFeederGateHost() + " " + this.host);
     LOGGER.info("Port: " + hdl.getFeederGatePort());
-    Assert.assertEquals(this.certAuth, hdl.isCertAuth());
     Assert.assertEquals(this.host, hdl.getFeederGateHost());
     Assert.assertEquals(this.port, hdl.getFeederGatePort());
   }
@@ -77,7 +74,6 @@ public class SetManagerConfigHandlerTest extends TestCase {
 public String setXMLBody() {
   return
 	  "<" + ServletUtil.XMLTAG_MANAGER_CONFIG + ">\n" +
-      "  <CertAuthn>" + this.certAuth + "</CertAuthn>\n" +
       "  <FeederGate host=\"" + this.host + "\" port=\""+ this.port + "\"/>\n" +
       "</" + ServletUtil.XMLTAG_MANAGER_CONFIG + ">";
   }

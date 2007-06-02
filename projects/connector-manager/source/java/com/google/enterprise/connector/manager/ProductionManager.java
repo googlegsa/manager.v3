@@ -268,11 +268,10 @@ public class ProductionManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#setConnectorManagerConfig(boolean,
    *      java.lang.String, int, int)
    */
-  public void setConnectorManagerConfig(boolean certAuth,
-      String feederGateHost, int feederGatePort)
-      throws PersistentStoreException {
+  public void setConnectorManagerConfig(String feederGateHost,
+      int feederGatePort) throws PersistentStoreException {
     try {
-      Context.getInstance().setConnectorManagerConfig(certAuth, feederGateHost,
+      Context.getInstance().setConnectorManagerConfig(feederGateHost,
           feederGatePort);
     } catch (InstantiatorException e) {
       throw new PersistentStoreException(e);
