@@ -31,7 +31,6 @@ public class SetManagerConfigHandler {
     Logger.getLogger(SetManagerConfigHandler.class.getName());
 
   private ConnectorMessageCode status;
-  private boolean certAuth;
   private String feederGateHost;
   private int feederGatePort;
 
@@ -51,10 +50,6 @@ public class SetManagerConfigHandler {
       return;
     }
 
-    if (ServletUtil.getFirstElementByTagName(
-        root, ServletUtil.XMLTAG_CERT_AUTHN).equalsIgnoreCase("true")) {
-      this.certAuth = true;
-    }
     this.feederGateHost = ServletUtil.getFirstAttribute(
         root, ServletUtil.XMLTAG_FEEDERGATE,
             ServletUtil.XMLTAG_FEEDERGATE_HOST);
@@ -62,17 +57,13 @@ public class SetManagerConfigHandler {
         root, ServletUtil.XMLTAG_FEEDERGATE,
             ServletUtil.XMLTAG_FEEDERGATE_PORT));
     try {
-      manager.setConnectorManagerConfig(this.certAuth, this.feederGateHost,
+      manager.setConnectorManagerConfig(this.feederGateHost,
           this.feederGatePort);
     } catch (PersistentStoreException e) {
       this.status = new ConnectorMessageCode(
           ConnectorMessageCode.EXCEPTION_PERSISTENT_STORE);
       LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_PERSISTENT_STORE, e);
     }
-  }
-
-  public boolean isCertAuth() {
-    return certAuth;
   }
 
   public String getFeederGateHost() {

@@ -82,7 +82,6 @@ public class ServletUtil {
   public static final String XMLTAG_FORM_SNIPPET = "FormSnippet";
 
   public static final String XMLTAG_MANAGER_CONFIG = "ManagerConfig";
-  public static final String XMLTAG_CERT_AUTHN = "CertAuthn";
   public static final String XMLTAG_FEEDERGATE = "FeederGate";
   public static final String XMLTAG_FEEDERGATE_HOST = "host";
   public static final String XMLTAG_FEEDERGATE_PORT = "port";

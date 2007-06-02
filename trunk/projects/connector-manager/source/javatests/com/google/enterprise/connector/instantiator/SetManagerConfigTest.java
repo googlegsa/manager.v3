@@ -63,10 +63,10 @@ public class SetManagerConfigTest extends TestCase {
     System.out.println("Host = " + host);
     System.out.println("Port = " + port);
 
-    context.setConnectorManagerConfig(true, "shme", 14);
+    context.setConnectorManagerConfig("shme", 14);
     verifyPropsValues("shme", 14, propFileName);
     
-    context.setConnectorManagerConfig(true, host, port);
+    context.setConnectorManagerConfig(host, port);
     verifyPropsValues(host, port, propFileName);
     Context.refresh();
   }

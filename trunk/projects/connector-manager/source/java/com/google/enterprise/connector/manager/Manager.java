@@ -34,16 +34,13 @@ public interface Manager {
   /**
    * Stores configuration changes to the Connector Manager itself.
    * 
-   * @param certAuth Boolean indicating whether certificate authentication
-   *        should be used
    * @param feederGateHost The GSA host expressed as a String
    * @param feederGatePort The GSA feeder port number
    * @throws PersistentStoreException If there was a problem storing the
    *         configuration
    */
-  public void setConnectorManagerConfig(boolean certAuth,
-      String feederGateHost, int feederGatePort)
-      throws PersistentStoreException;
+  public void setConnectorManagerConfig(String feederGateHost,
+      int feederGatePort) throws PersistentStoreException;
 
   /**
    * Returns a list of connector types that this manager knows about.
