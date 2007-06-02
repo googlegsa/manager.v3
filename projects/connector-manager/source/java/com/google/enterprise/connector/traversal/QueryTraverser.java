@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.traversal;
 
 import com.google.enterprise.connector.persist.ConnectorStateStore;
+import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.HasTimeout;
 import com.google.enterprise.connector.spi.PropertyMap;
@@ -23,11 +24,15 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.PropertyMapList;
 
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Traverser for a repository implemented using a TraversalManager
  */
 public class QueryTraverser implements Traverser {
+  private static final Logger LOGGER =
+      Logger.getLogger(QueryTraverser.class.getName());
 
   private Pusher pusher;
   private TraversalManager queryTraversalManager;
@@ -113,6 +118,8 @@ public class QueryTraverser implements Traverser {
       }
     } catch (OutOfMemoryError e) {
       forceCheckpoint = true;
+    } catch (PushException e) {
+      LOGGER.log(Level.WARNING, e.getMessage(), e);
     } finally {
       // checkpoint completed work as well as skip past troublesome documents 
       // (e.g. documents that are too large and will always fail)

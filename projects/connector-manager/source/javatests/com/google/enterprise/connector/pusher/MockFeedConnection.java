@@ -40,7 +40,7 @@ public class MockFeedConnection implements FeedConnection {
     String dataStr = StringUtils.streamToString(data);
     buf.append(dataStr);
     System.out.println(dataStr);
-    return "Mock response";
+    return GsaFeedConnection.SUCCESS_RESPONSE;
   }
 
 }
