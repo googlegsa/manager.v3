@@ -27,6 +27,6 @@ public interface Pusher {
    * @param pm A property map the represent a document.
    * @param connectorName The name of the connector sending the document
    */
-  public void take(PropertyMap pm, String connectorName);
+  public void take(PropertyMap pm, String connectorName) throws PushException;
 
 }

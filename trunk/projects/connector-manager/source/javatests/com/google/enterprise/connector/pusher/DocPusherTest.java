@@ -46,7 +46,7 @@ public class DocPusherTest extends TestCase {
    * 
    * @throws RepositoryException
    */
-  public void testTakeUrlMeta() throws RepositoryException {
+  public void testTakeUrlMeta() throws PushException, RepositoryException {
     String[] expectedXml = new String[1];
     String feedType = "metadata-and-url";
     String record = "<record url=\"http://www.sometesturl.com/test\""
@@ -71,7 +71,7 @@ public class DocPusherTest extends TestCase {
    * 
    * @throws RepositoryException
    */
-  public void testTakeUrlMetaNulls() throws RepositoryException {
+  public void testTakeUrlMetaNulls() throws PushException, RepositoryException {
     String[] expectedXml = new String[1];
     String feedType = "metadata-and-url";
     String record = "<record url=\"http://www.sometesturl.com/test\""
@@ -92,7 +92,7 @@ public class DocPusherTest extends TestCase {
    * 
    * @throws RepositoryException
    */
-  public void testTakeContent() throws RepositoryException {
+  public void testTakeContent() throws PushException, RepositoryException {
     String[] expectedXml = new String[1];
     String feedType = "incremental";
     String record = "<record url=\"" + ServletUtil.PROTOCOL
@@ -114,7 +114,7 @@ public class DocPusherTest extends TestCase {
    * 
    * @throws RepositoryException
    */
-  public void testTakeIsPublic() throws RepositoryException {
+  public void testTakeIsPublic() throws PushException, RepositoryException {
     String[] expectedXml = new String[4];
     String feedType = "incremental";
     
@@ -164,8 +164,8 @@ public class DocPusherTest extends TestCase {
   }
 
   private void takeFeed(String[] expectedXml, String repository)
-      throws RepositoryException {
-    String gsaExpectedResponse = "Mock response";
+      throws PushException, RepositoryException {
+    String gsaExpectedResponse = GsaFeedConnection.SUCCESS_RESPONSE;
     String gsaActualResponse;
 
     MockRepositoryEventList mrel = new MockRepositoryEventList(
@@ -197,7 +197,7 @@ public class DocPusherTest extends TestCase {
    * 
    * @throws RepositoryException
    */
-  public void testSimpleDoc() throws RepositoryException {
+  public void testSimpleDoc() throws PushException, RepositoryException {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
       + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
       + ",\"google:contenturl\":\"http://www.sometesturl.com/test\"" + "}\r\n"
@@ -225,7 +225,7 @@ public class DocPusherTest extends TestCase {
    * 
    * @throws RepositoryException
    */
-  public void testDisplayUrl() throws RepositoryException {
+  public void testDisplayUrl() throws PushException, RepositoryException {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
       + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
       + ",\"google:displayurl\":\"http://www.sometesturl.com/test\"" + "}\r\n"
@@ -248,7 +248,7 @@ public class DocPusherTest extends TestCase {
    * 
    * @throws RepositoryException
    */
-  public void testSpecials() throws RepositoryException {
+  public void testSpecials() throws PushException, RepositoryException {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
       + ",\"content\":\"now is the time\""
       // note double escaping in the line below, since this is a json string
@@ -296,7 +296,7 @@ public class DocPusherTest extends TestCase {
    * 
    * @throws RepositoryException
    */
-  public void testWordDoc() throws RepositoryException {
+  public void testWordDoc() throws PushException, RepositoryException {
     final String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
       + ",\"google:mimetype\":\"application/msword\""
       + ",\"contentfile\":\"testdata/mocktestdata/test.doc\""

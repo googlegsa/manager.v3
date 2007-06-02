@@ -674,7 +674,7 @@ public class DocPusher implements Pusher {
    * @param pm PropertyMap corresponding to the document.
    * @param connectorName The connector name that fed this document
    */
-  public void take(PropertyMap pm, String connectorName) {
+  public void take(PropertyMap pm, String connectorName) throws PushException {
     this.dataSource = connectorName;
     setFeedType(pm);
     this.xmlData = buildXmlData(pm, connectorName);
@@ -687,22 +687,31 @@ public class DocPusher implements Pusher {
     try {
       message = encodeXmlData();
       gsaResponse = feedConnection.sendData(message);
+      if (!gsaResponse.equals(GsaFeedConnection.SUCCESS_RESPONSE)) {
+        throw new PushException("gsaResponse=" + gsaResponse);
+      }
     } catch (MalformedURLException e) {
       LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
-          "Received exception while feeding, continuing", e);
+                  "Rethrowing MalformedURLException as PushException", e);
+      throw new PushException("MalformedURLException: " + e.getMessage(), e);
     } catch (UnsupportedEncodingException e) {
       LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
-          "Received exception while feeding, continuing", e);
+                  "Rethrowing UnsupportedEncodingException as PushException",
+                  e);
+      throw new PushException(
+          "UnsupportedEncodingException: " + e.getMessage(), e);
     } catch (IOException e) {
       LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
-          "Received exception while feeding, continuing", e);
+                  "Rethrowing IOException as PushException", e);
+      throw new PushException("IOException: " + e.getMessage(), e);
     } finally {
       if (message != null) {
         try {
           message.close();
         } catch (IOException e) {
           LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
-              "Received exception while closing input stream, continuing", e);
+                      "Rethrowing IOException as PushException", e);
+          throw new PushException("IOException: " + e.getMessage(), e);
         }
       }
     }

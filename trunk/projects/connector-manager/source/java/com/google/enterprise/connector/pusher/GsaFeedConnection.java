@@ -28,7 +28,12 @@ import java.util.logging.Logger;
  * Opens a connection to a url and sends data to it.
  */
 public class GsaFeedConnection implements FeedConnection {
-  
+
+  /**
+   * The GSA's response when it successfully receives a feed.
+   */
+  public static final String SUCCESS_RESPONSE = "Success";
+
   private URL url = null;
   private String host;
   private int port;
