@@ -98,6 +98,7 @@ public class QueryTraverser implements Traverser {
       e.printStackTrace();
     }
 
+    boolean forceCheckpoint = false;
     try {
       while (iter.hasNext()) {
         if (Thread.interrupted()) {
@@ -110,11 +111,15 @@ public class QueryTraverser implements Traverser {
           break;
         }
       }
+    } catch (OutOfMemoryError e) {
+      forceCheckpoint = true;
     } finally {
-      // in case we have an unexpected exception such as a RuntimeException,
-      // we ensure that we checkpoint what we've done
-      if (counter != 0) {
-        checkpointAndSave(pm);
+      // checkpoint completed work as well as skip past troublesome documents 
+      // (e.g. documents that are too large and will always fail)
+      if (forceCheckpoint || (counter != 0)) {
+        if (null != pm) {
+          checkpointAndSave(pm);
+        }
       }
     }
 
