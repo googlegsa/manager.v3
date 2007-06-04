@@ -19,9 +19,10 @@ import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.HasTimeout;
 import com.google.enterprise.connector.spi.PropertyMap;
-import com.google.enterprise.connector.spi.TraversalManager;
-import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.PropertyMapList;
+import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.TraversalManager;
 
 import java.util.Iterator;
 import java.util.logging.Level;
@@ -32,7 +33,7 @@ import java.util.logging.Logger;
  */
 public class QueryTraverser implements Traverser {
   private static final Logger LOGGER =
-      Logger.getLogger(QueryTraverser.class.getName());
+    Logger.getLogger(QueryTraverser.class.getName());
 
   private Pusher pusher;
   private TraversalManager queryTraversalManager;
@@ -118,6 +119,21 @@ public class QueryTraverser implements Traverser {
       }
     } catch (OutOfMemoryError e) {
       forceCheckpoint = true;
+      String docid = null;
+      try {
+        docid = 
+          pm.getProperty(SpiConstants.PROPNAME_DOCID).getValue().getString();
+      } catch (IllegalArgumentException e1) {
+        // TODO Auto-generated catch block
+        e1.printStackTrace();
+      } catch (RepositoryException e1) {
+        // TODO Auto-generated catch block
+        e1.printStackTrace();
+      }
+      LOGGER.warning("Out of JVM Heap Space.  Most likely document (" 
+        + docid 
+        + ") is too large.  To fix, increase heap space or reduce size " 
+        + "of document.");
     } catch (PushException e) {
       LOGGER.log(Level.WARNING, e.getMessage(), e);
     } finally {
