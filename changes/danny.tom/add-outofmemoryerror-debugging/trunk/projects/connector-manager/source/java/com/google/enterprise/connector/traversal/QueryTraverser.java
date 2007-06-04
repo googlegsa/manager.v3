@@ -15,24 +15,24 @@
 package com.google.enterprise.connector.traversal;
 
 import com.google.enterprise.connector.persist.ConnectorStateStore;
+import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.pusher.Pusher;
-import com.google.enterprise.connector.scheduler.TraversalScheduler;
 import com.google.enterprise.connector.spi.HasTimeout;
 import com.google.enterprise.connector.spi.PropertyMap;
+import com.google.enterprise.connector.spi.PropertyMapList;
+import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
-import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.PropertyMapList;
 
 import java.util.Iterator;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * Traverser for a repository implemented using a TraversalManager
  */
 public class QueryTraverser implements Traverser {
-
-  private static final Logger LOGGER = 
+  private static final Logger LOGGER =
     Logger.getLogger(QueryTraverser.class.getName());
 
   private Pusher pusher;
@@ -134,6 +134,8 @@ public class QueryTraverser implements Traverser {
         + docid 
         + ") is too large.  To fix, increase heap space or reduce size " 
         + "of document.");
+    } catch (PushException e) {
+      LOGGER.log(Level.WARNING, e.getMessage(), e);
     } finally {
       // checkpoint completed work as well as skip past troublesome documents 
       // (e.g. documents that are too large and will always fail)
