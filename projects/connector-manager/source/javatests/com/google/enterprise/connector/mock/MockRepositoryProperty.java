@@ -14,10 +14,15 @@
 
 package com.google.enterprise.connector.mock;
 
+import com.google.enterprise.connector.common.StringUtils;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,10 +48,11 @@ public class MockRepositoryProperty {
     public static final PropertyType STRING = new PropertyType("string");
     public static final PropertyType DATE = new PropertyType("date");
     public static final PropertyType INTEGER = new PropertyType("integer");
+    public static final PropertyType STREAM = new PropertyType("stream");
     public static final PropertyType UNDEFINED = new PropertyType("undefined");
 
     private static final PropertyType[] PRIVATE_VALUES =
-        {STRING, DATE, INTEGER, UNDEFINED};
+        {STRING, DATE, INTEGER, STREAM, UNDEFINED};
     public static final List Values =
         Collections.unmodifiableList(Arrays.asList(PRIVATE_VALUES));
 
@@ -81,6 +87,8 @@ public class MockRepositoryProperty {
   private String name;
   private PropertyType type;
   private String value;
+  private InputStream streamValue;  // used for streams
+  private boolean streamRead;  // indicates that stream has been used
   private List multivalues;
   private boolean repeating;
 
@@ -114,6 +122,9 @@ public class MockRepositoryProperty {
     } else if (o instanceof JSONObject) {
       JSONObject jo = (JSONObject) o;
       init(name, jo);
+    } else if (o instanceof InputStream) {
+      InputStream is = (InputStream) o; 
+      init(name, is);
     } else {
       throw new IllegalArgumentException(
           "Can't construct a MockRepositoryProperty from this: " + o);
@@ -154,8 +165,16 @@ public class MockRepositoryProperty {
       throw new IllegalArgumentException(
           "Can't make a property from this json object");
     }
-
   }
+
+  private void init(String name, InputStream is) {
+    this.name = name;
+    this.type = PropertyType.STREAM;
+    this.streamValue = is;
+    this.value = null;
+    this.repeating = false;
+    this.multivalues = null;
+  }  
 
   private String valuesToString() {
     if (!repeating) {
@@ -190,6 +209,13 @@ public class MockRepositoryProperty {
   }
 
   public String getValue() {
+    if (type.equals(PropertyType.STREAM)) {
+      if (null == value) {
+        value = StringUtils.streamToString(streamValue);
+        streamRead = true;
+      }
+      return value;
+    }
     if (!repeating) {
       return value;
     }
@@ -203,12 +229,34 @@ public class MockRepositoryProperty {
 
   public String[] getValues() {
     if (!repeating) {
-      return new String[] {value};
+      return new String[] {getValue()};
     } else {
       return (String[]) multivalues.toArray(EMPTY_STRING_ARRAY);
     }
   }
 
+  /**
+   * Return the underlying InputStream.  This method should only be called if
+   * the type is PropertyType.STREAM. 
+   * 
+   * @return the underlying InputStream if object is of type STREAM
+   */
+  public InputStream getStreamValue() {
+    if (!type.equals(PropertyType.STREAM)) {
+      throw new IllegalStateException("Can only call getStreamValue() on " +
+            "properties of type PropertyType.STREAM");
+    }
+
+    if (streamRead) {
+      if (null != value) {
+        return new ByteArrayInputStream(value.getBytes());
+      } else {
+        throw new IllegalStateException("Cannot call getStreamValue() twice");
+      }
+    }
+    return streamValue;
+  }
+  
   public boolean isRepeating() {
     return repeating;
   }

@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.mock.jcr;
 
+import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.mock.MockRepositoryProperty;
 import com.google.enterprise.connector.mock.MockRepositoryProperty.PropertyType;
 import com.google.enterprise.connector.spi.SimpleValue;
@@ -33,11 +34,15 @@ public class MockJcrValue implements Value {
 
   String val;
   PropertyType type;
-  
+  InputStream streamVal;
 
   public MockJcrValue(MockRepositoryProperty p) {
     this.val = p.getValue();
     this.type = p.getType();
+    this.streamVal = null;
+    if (p.getType().equals(PropertyType.STREAM)) {
+      this.streamVal = p.getStreamValue();
+    }
   }
 
   public MockJcrValue(PropertyType type, String v) {
@@ -48,9 +53,11 @@ public class MockJcrValue implements Value {
   public String getString() throws ValueFormatException, IllegalStateException,
       RepositoryException {
     String result;
-    if (type == PropertyType.DATE) {
+    if (type.equals(PropertyType.DATE)) {
       Calendar c = getDate();
       result = SimpleValue.calendarToIso8601(c);
+    } else if (type.equals(PropertyType.STREAM)) {
+      result = StringUtils.streamToString(streamVal);
     } else {
       result = val;
     }
@@ -59,8 +66,14 @@ public class MockJcrValue implements Value {
 
   public InputStream getStream() throws IllegalStateException,
       RepositoryException {
-    InputStream is = new ByteArrayInputStream(val.getBytes());
-    return is;
+      if (null == streamVal) {
+        // Convert non-stream values into a stream
+        InputStream is = new ByteArrayInputStream(val.getBytes());
+        return is;
+      } else {
+        // Return the original stream as is
+        return streamVal;
+      }
   }
 
   public long getLong() throws ValueFormatException, IllegalStateException,
