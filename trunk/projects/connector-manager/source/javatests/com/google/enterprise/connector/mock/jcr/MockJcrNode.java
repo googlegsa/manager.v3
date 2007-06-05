@@ -17,6 +17,7 @@ package com.google.enterprise.connector.mock.jcr;
 import com.google.enterprise.connector.mock.MockRepositoryDocument;
 import com.google.enterprise.connector.mock.MockRepositoryProperty;
 
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Calendar;
 import java.util.Iterator;
@@ -86,9 +87,14 @@ public class MockJcrNode implements Node {
   private void init() {
     propList = new LinkedList();
     // Convert the special MockRepositoryDocument schema to a JCR property list
-    MockRepositoryProperty p;
+    MockRepositoryProperty p = null;
     // content
-    p = new MockRepositoryProperty("jcr:content", doc.getContent());
+    try {
+      p = new MockRepositoryProperty("jcr:content", doc.getContentStream());
+    } catch (FileNotFoundException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
     if (p != null) {
       propList.add(new MockJcrProperty(p));
     }
