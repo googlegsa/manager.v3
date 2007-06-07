@@ -53,16 +53,10 @@ public class QueryTraverserTest extends TestCase {
   private void runTestBatches(int batchSize) throws InterruptedException {
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
-    MockRepository r = new MockRepository(mrel);
-    QueryManager qm = new MockJcrQueryManager(r.getStore());
-
     String connectorName = "foo";
-    TraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
-    MockPusher pusher = new MockPusher(System.out);
     ConnectorStateStore connectorStateStore = new MockConnectorStateStore();
-
-    Traverser traverser =
-        new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
+    Traverser traverser = 
+      createTraverser(mrel, connectorName, connectorStateStore);
 
     System.out.println();
     System.out.println("Running batch test batchsize " + batchSize);
@@ -91,4 +85,41 @@ public class QueryTraverserTest extends TestCase {
     Assert.assertEquals(4,totalDocsProcessed);
   }
 
+  /**
+   * Create a Traverser.
+   * @param mrel
+   * @param connectorName
+   * @param connectorStateStore
+   * @return
+   */
+  private Traverser createTraverser(MockRepositoryEventList mrel,
+      String connectorName, ConnectorStateStore connectorStateStore) {
+    MockRepository r = new MockRepository(mrel);
+    QueryManager qm = new MockJcrQueryManager(r.getStore());
+
+    TraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
+    MockPusher pusher = new MockPusher(System.out);
+
+    Traverser traverser =
+        new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
+    return traverser;
+  }
+  
+  /**
+   * Test that we are indeed streaming the file.
+   */
+  public final void testLargeFileStream() {
+    MockRepositoryEventList mrel =
+      new MockRepositoryEventList("MockRepositoryEventLogLargeFile.txt");
+    String connectorName = "foo";
+    ConnectorStateStore connectorStateStore = new MockConnectorStateStore();
+    Traverser traverser = 
+      createTraverser(mrel, connectorName, connectorStateStore);
+    int docsProcessed = -1;
+    while (docsProcessed != 0) {
+      docsProcessed = traverser.runBatch(1);
+    }
+
+  }
+  
 }

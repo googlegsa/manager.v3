@@ -14,12 +14,15 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.enterprise.connector.common.Base64FilterInputStream;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Iterator;
 
@@ -29,8 +32,7 @@ public class MockPusher implements Pusher {
   private PrintStream printStream;
   
   public MockPusher() {
-    totalDocs = 0;
-    printStream = System.out;   
+    this(System.out);
   }
 
   public MockPusher(PrintStream ps) {
@@ -102,9 +104,36 @@ public class MockPusher implements Pusher {
       for (Iterator j = p.getValues(); j.hasNext();) {
         Value v = (Value) j.next();
         printStream.println("<" + name + ">");
-        printStream.println(v.getString());
+        if (null == v.getStream()) {
+          printStream.println(v.getString());
+        }
         printStream.println("</" + name + ">");
       }
+      // if we have a contentfile property, we want to stream the InputStream
+      // to demonstrate that we don't blow up memory
+      Value v = p.getValue();
+      if (null != v.getStream()) {
+        InputStream contentStream = v.getStream();
+        InputStream encodedContentStream = null;
+        if (null != contentStream) {
+          encodedContentStream = new Base64FilterInputStream(contentStream);
+        }
+        int totalBytesRead = 0;
+        if (null != encodedContentStream) {
+          int bytesRead = 0;
+          byte[] b = new byte[4096];
+          try {
+            while (-1 != (bytesRead = encodedContentStream.read(b))) {
+              totalBytesRead += bytesRead;
+            }
+          } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+          }
+        }
+        printStream.println("Total bytes read in base64 encoded file: "
+          + totalBytesRead);
+      }  
     } catch (RepositoryException e) {
       throw new RuntimeException(e);
     }
