@@ -1,3 +1,2 @@
 # Mock repository event log with large file
-# Test word doc
 {"timestamp":"100000","type":"save","docid":"largefile","google:mimetype":"text/plain","contentfile":"testdata/mocktestdata/largefile.txt"}

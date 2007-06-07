@@ -34,14 +34,16 @@ public class SpiPropertyMapFromJcrTest extends TestCase {
       String date1 = "1970-01-01T00:00:10.000Z";
       String date2 = "Tue, 15 Nov 1994 12:45:26 GMT";
       PropertyMap propertyMap = makePropertyMapFromJson(json1);
-      int count = countProperties(propertyMap);
-      Assert.assertEquals(5, count);
+    
       validateProperty(propertyMap, SpiConstants.PROPNAME_LASTMODIFIED, date2);
       validateProperty(propertyMap, "jcr:lastModified", date1);
       validateProperty(propertyMap, SpiConstants.PROPNAME_CONTENT,
           "now is the time");
       validateProperty(propertyMap, SpiConstants.PROPNAME_CONTENTURL,
           "http://www.sometesturl.com/test");
+      
+      int count = countProperties(propertyMap);
+      Assert.assertEquals(5, count);
     }
     {
       String json1 =
@@ -51,13 +53,14 @@ public class SpiPropertyMapFromJcrTest extends TestCase {
               + "}\r\n" + "";
       String date1 = "1970-01-01T00:00:10.000Z";
       PropertyMap propertyMap = makePropertyMapFromJson(json1);
-      int count = countProperties(propertyMap);
-      Assert.assertEquals(4, count);
       validateProperty(propertyMap, SpiConstants.PROPNAME_LASTMODIFIED, date1);
       validateProperty(propertyMap, SpiConstants.PROPNAME_CONTENT,
           "now is the time");
       validateProperty(propertyMap, SpiConstants.PROPNAME_CONTENTURL,
           "http://www.sometesturl.com/test");
+      
+      int count = countProperties(propertyMap);
+      Assert.assertEquals(4, count);
     }
   }
 
