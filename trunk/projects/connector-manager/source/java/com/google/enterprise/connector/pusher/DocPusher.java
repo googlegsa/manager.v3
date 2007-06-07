@@ -257,7 +257,7 @@ public class DocPusher implements Pusher {
     return is;
   }
 
-  private void appendAttrValuePair(String attrName, String value,
+  private static void appendAttrValuePair(String attrName, String value,
       StringBuffer buf) {
     buf.append(attrName);
     buf.append("=\"");
@@ -271,12 +271,12 @@ public class DocPusher implements Pusher {
    * @param buf string buffer
    * @param pm property map
    */
-  private void xmlWrapMetadata(StringBuffer buf, PropertyMap pm) {
+  private static void xmlWrapMetadata(StringBuffer buf, PropertyMap pm) {
     Iterator i;
     try {
       i = pm.getProperties();
     } catch (RepositoryException e) {
-      LOGGER.logp(Level.WARNING, this.getClass().getName(), "xmlWrapMetadata",
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
           "Swallowing exception while scanning properties", e);
       return;
     }
@@ -293,7 +293,7 @@ public class DocPusher implements Pusher {
       try {
         name = p.getName();
       } catch (RepositoryException e) {
-        LOGGER.logp(Level.WARNING, this.getClass().getName(),
+        LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
             "xmlWrapMetadata",
             "Swallowing exception while scanning properties", e);
         continue;
@@ -311,12 +311,12 @@ public class DocPusher implements Pusher {
    * @param buf string buffer
    * @param p Property
    */
-  private void wrapOneProperty(StringBuffer buf, Property p) {
+  private static void wrapOneProperty(StringBuffer buf, Property p) {
     String name;
     try {
       name = p.getName();
     } catch (RepositoryException e) {
-      LOGGER.logp(Level.WARNING, this.getClass().getName(), "xmlWrapMetadata",
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
           "Swallowing exception while scanning values", e);
       return;
     }
@@ -324,7 +324,7 @@ public class DocPusher implements Pusher {
     try {
       values = p.getValues();
     } catch (RepositoryException e) {
-      LOGGER.logp(Level.WARNING, this.getClass().getName(), "xmlWrapMetadata",
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
           "Swallowing exception while scanning values", e);
       return;
     }
@@ -351,12 +351,12 @@ public class DocPusher implements Pusher {
       try {
         valString = value.getString();
       } catch (IllegalArgumentException e) {
-        LOGGER.logp(Level.WARNING, this.getClass().getName(),
+        LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
             "xmlWrapMetadata", "Swallowing exception while accessing property "
                 + name, e);
         continue;
       } catch (RepositoryException e) {
-        LOGGER.logp(Level.WARNING, this.getClass().getName(),
+        LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
             "xmlWrapMetadata", "Swallowing exception while accessing property "
                 + name, e);
         continue;
@@ -381,7 +381,7 @@ public class DocPusher implements Pusher {
   /*
    * Gets the Calendar value for a given property.
    */
-  private Calendar getCalendarAndThrow(PropertyMap pm, String name)
+  private static Calendar getCalendarAndThrow(PropertyMap pm, String name)
       throws IllegalArgumentException, RepositoryException {
     Calendar result = null;
     Value v = getValueAndThrow(pm, name);
@@ -392,7 +392,7 @@ public class DocPusher implements Pusher {
   /*
    * Gets the String value for a given property.
    */
-  private String getStringAndThrow(PropertyMap pm, String name)
+  private static String getStringAndThrow(PropertyMap pm, String name)
       throws IllegalArgumentException, RepositoryException {
     String result = null;
     Value v = getValueAndThrow(pm, name);
@@ -406,7 +406,7 @@ public class DocPusher implements Pusher {
   /*
    * Gets the InputStream value for a given property.
    */
-  private InputStream getStreamAndThrow(PropertyMap pm, String name)
+  private static InputStream getStreamAndThrow(PropertyMap pm, String name)
       throws RepositoryException {
     InputStream result = null;
     Value v = getValueAndThrow(pm, name);
@@ -417,7 +417,7 @@ public class DocPusher implements Pusher {
     return result;
   }
 
-  private Value getValueAndThrow(PropertyMap pm, String name)
+  private static Value getValueAndThrow(PropertyMap pm, String name)
       throws RepositoryException {
     Property prop = pm.getProperty(name);
     if (prop == null) {
@@ -430,16 +430,16 @@ public class DocPusher implements Pusher {
   /*
    * Gets the value for a given property.
    */
-  private String getOptionalString(PropertyMap pm, String name) {
+  private static String getOptionalString(PropertyMap pm, String name) {
     String result = null;
     try {
       result = getStringAndThrow(pm, name);
     } catch (IllegalArgumentException e) {
-      LOGGER.logp(Level.WARNING, this.getClass().getName(),
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
           "getOptionalString", "Swallowing exception while accessing " + name,
           e);
     } catch (RepositoryException e) {
-      LOGGER.logp(Level.WARNING, this.getClass().getName(),
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
           "getOptionalString", "Swallowing exception while accessing " + name,
           e);
     }
@@ -449,17 +449,17 @@ public class DocPusher implements Pusher {
   /*
    * Gets the value for a given property.
    */
-  private String getRequiredString(PropertyMap pm, String name) {
+  private static String getRequiredString(PropertyMap pm, String name) {
     String result = null;
     try {
       result = getStringAndThrow(pm, name);
     } catch (IllegalArgumentException e) {
-      LOGGER.logp(Level.WARNING, this.getClass().getName(),
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
           "getRequiredString",
           "Catching exception, rethrowing as RuntimeException", e);
       throw new RuntimeException(e);
     } catch (RepositoryException e) {
-      LOGGER.logp(Level.WARNING, this.getClass().getName(),
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
           "getRequiredString",
           "Catching exception, rethrowing as RuntimeException", e);
       throw new RuntimeException(e);
@@ -470,16 +470,16 @@ public class DocPusher implements Pusher {
   /*
    * Gets the value for a given property.
    */
-  private InputStream getOptionalStream(PropertyMap pm, String name) {
+  private static InputStream getOptionalStream(PropertyMap pm, String name) {
     InputStream result = null;
     try {
       result = getStreamAndThrow(pm, name);
     } catch (IllegalArgumentException e) {
-      LOGGER.logp(Level.WARNING, this.getClass().getName(),
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
           "getOptionalStream", "Swallowing exception while accessing " + name,
           e);
     } catch (RepositoryException e) {
-      LOGGER.logp(Level.WARNING, this.getClass().getName(),
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
           "getOptionalStream", "Swallowing exception while accessing " + name,
           e);
     }
@@ -496,10 +496,10 @@ public class DocPusher implements Pusher {
     prefix.append(xmlWrapStart(XML_GSAFEED));
     prefix.append(xmlWrapStart(XML_HEADER));
     prefix.append(xmlWrapStart(XML_DATASOURCE));
-    prefix.append(dataSource);
+    prefix.append(this.dataSource);
     prefix.append(xmlWrapEnd(XML_DATASOURCE));
     prefix.append(xmlWrapStart(XML_FEEDTYPE));
-    prefix.append(feedType);
+    prefix.append(this.feedType);
     prefix.append(xmlWrapEnd(XML_FEEDTYPE));
     prefix.append(xmlWrapEnd(XML_HEADER));
     prefix.append(xmlWrapStart(XML_GROUP));
@@ -541,11 +541,11 @@ public class DocPusher implements Pusher {
     try {
       lastModified = getCalendarAndThrow(pm, SpiConstants.PROPNAME_LASTMODIFIED);
     } catch (IllegalArgumentException e) {
-      LOGGER.logp(Level.WARNING, this.getClass().getName(), "buildXmlData",
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "buildXmlData",
           "Swallowing exception while getting "
               + SpiConstants.PROPNAME_LASTMODIFIED, e);
     } catch (RepositoryException e) {
-      LOGGER.logp(Level.WARNING, this.getClass().getName(), "buildXmlData",
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "buildXmlData",
           "Swallowing exception while getting "
               + SpiConstants.PROPNAME_LASTMODIFIED, e);
     }
@@ -591,7 +591,8 @@ public class DocPusher implements Pusher {
    * @throws RuntimeException if the DEFAULT_CONTENT string above cannot
    * be UTF-8-encoded into a ByteArrayInputStream.
    */
-  private InputStream getNonNullContentStream(InputStream contentStream) {
+  private static InputStream getNonNullContentStream(
+      InputStream contentStream) {
     InputStream output = contentStream;
     try {
       if (contentStream == null) {
@@ -613,7 +614,8 @@ public class DocPusher implements Pusher {
    * @param docid
    * @return
    */
-  private String constructGoogleConnectorUrl(String connectorName, String docid) {
+  private static String constructGoogleConnectorUrl(String connectorName, 
+      String docid) {
     String searchurl;
     StringBuffer buf = new StringBuffer(ServletUtil.PROTOCOL);
     buf.append(connectorName);
@@ -649,7 +651,7 @@ public class DocPusher implements Pusher {
     }
   }
 
-  private boolean getBoolean(String stringValue)
+  private static boolean getBoolean(String stringValue)
       throws IllegalArgumentException {
     if (stringValue.equalsIgnoreCase("t")
         || stringValue.equalsIgnoreCase("true")
@@ -679,7 +681,7 @@ public class DocPusher implements Pusher {
     setFeedType(pm);
     this.xmlData = buildXmlData(pm, connectorName);
     if (this.xmlData == null) {
-      LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
           "Skipped this document for feeding, continuing");
       return;
     }
@@ -691,17 +693,17 @@ public class DocPusher implements Pusher {
         throw new PushException("gsaResponse=" + gsaResponse);
       }
     } catch (MalformedURLException e) {
-      LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
                   "Rethrowing MalformedURLException as PushException", e);
       throw new PushException("MalformedURLException: " + e.getMessage(), e);
     } catch (UnsupportedEncodingException e) {
-      LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
                   "Rethrowing UnsupportedEncodingException as PushException",
                   e);
       throw new PushException(
           "UnsupportedEncodingException: " + e.getMessage(), e);
     } catch (IOException e) {
-      LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
                   "Rethrowing IOException as PushException", e);
       throw new PushException("IOException: " + e.getMessage(), e);
     } finally {
@@ -709,7 +711,7 @@ public class DocPusher implements Pusher {
         try {
           message.close();
         } catch (IOException e) {
-          LOGGER.logp(Level.WARNING, this.getClass().getName(), "take",
+          LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
                       "Rethrowing IOException as PushException", e);
           throw new PushException("IOException: " + e.getMessage(), e);
         }
