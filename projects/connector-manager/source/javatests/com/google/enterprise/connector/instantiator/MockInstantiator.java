@@ -14,7 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.jcradaptor.SpiRepositoryFromJcr;
+import com.google.enterprise.connector.jcradaptor.SpiConnectorFromJcr;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
@@ -108,7 +108,7 @@ public class MockInstantiator implements Instantiator {
     MockRepositoryEventList mrel = new MockRepositoryEventList(resourceName);
     MockRepository mockRepository = new MockRepository(mrel);
     Repository repository = new MockJcrRepository(mockRepository);
-    Connector connector = new SpiRepositoryFromJcr(repository);
+    Connector connector = new SpiConnectorFromJcr(repository);
 
     TraversalManager qtm;
     AuthenticationManager authenticationManager;
