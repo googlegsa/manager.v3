@@ -16,7 +16,7 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.jcradaptor.SpiPropertyMapFromJcrTest;
-import com.google.enterprise.connector.jcradaptor.SpiQueryTraversalManagerFromJcr;
+import com.google.enterprise.connector.jcradaptor.SpiTraversalManagerFromJcr;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
@@ -172,7 +172,7 @@ public class DocPusherTest extends TestCase {
         repository);
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
-    TraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
+    TraversalManager qtm = new SpiTraversalManagerFromJcr(qm);
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
