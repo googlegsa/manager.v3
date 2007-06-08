@@ -12,6 +12,8 @@
 
 	<!-- =========================== TASKS =============================== -->
 
+	<target name="clean" depends="clean-all" />
+
 	<target name="clean-all">
 		<ant dir="${connector-manager.dir}" target="clean" />
 		<ant dir="${test-connectorA.dir}" target="clean" />
@@ -19,7 +21,7 @@
 	</target>
 
 	<target name="connector-manager">
-		<ant dir="${connector-manager.dir}" />
+		<ant dir="${connector-manager.dir}" target="all" />
 	</target>
 
 	<target name="test-connectorA">
