@@ -43,7 +43,7 @@ public class SpiSessionFromJcr implements Session {
     } catch (javax.jcr.RepositoryException e) {
       throw new RepositoryException(e);
     }
-    return new SpiQueryTraversalManagerFromJcr(queryManager);
+    return new SpiTraversalManagerFromJcr(queryManager);
   }
 
   public AuthenticationManager getAuthenticationManager()

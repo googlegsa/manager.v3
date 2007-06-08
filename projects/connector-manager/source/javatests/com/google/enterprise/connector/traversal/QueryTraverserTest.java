@@ -14,7 +14,7 @@
 
 package com.google.enterprise.connector.traversal;
 
-import com.google.enterprise.connector.jcradaptor.SpiQueryTraversalManagerFromJcr;
+import com.google.enterprise.connector.jcradaptor.SpiTraversalManagerFromJcr;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
@@ -97,7 +97,7 @@ public class QueryTraverserTest extends TestCase {
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
 
-    TraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
+    TraversalManager qtm = new SpiTraversalManagerFromJcr(qm);
     MockPusher pusher = new MockPusher(System.out);
 
     Traverser traverser =
