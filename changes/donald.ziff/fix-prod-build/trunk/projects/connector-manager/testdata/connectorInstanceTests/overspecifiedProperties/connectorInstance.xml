@@ -8,7 +8,7 @@
 		<property name="customIntProperty" value="${customIntProperty}" />
 	</bean>
 	<bean id="nestedConnector"
-		class="com.google.enterprise.connector.jcradaptor.SpiRepositoryFromJcr">
+		class="com.google.enterprise.connector.jcradaptor.SpiConnectorFromJcr">
 		<constructor-arg>
 			<bean
 				class="com.google.enterprise.connector.mock.jcr.MockJcrRepository">

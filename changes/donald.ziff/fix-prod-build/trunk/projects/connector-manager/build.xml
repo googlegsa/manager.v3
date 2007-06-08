@@ -41,14 +41,13 @@
 		<ant inheritAll="false" dir="${projects.dir}/test-connectorB" />
 	</target>
 
-	<target name="connector_manager" description="Google Enterprise Connector Manager" depends="war">
-	</target>
+	<target name="connector_manager" description="Google Enterprise Connector Manager" depends="war-prod" />
 
-	<target name="all" depends="connector_manager,run_tests">
-	</target>
+	<target name="all" depends="war" />
 
-	<target name="connector_spi" depends="init,compile,jar">
-	</target>
+	<target name="everything" depends="all,run_tests" />
+
+	<target name="connector_spi" depends="init,compile,jar" />
 
 	<target name="spi-javadoc">
 		<javadoc access="public" author="false" destdir="doc/javadoc/spi" doctitle="Google Search Appliance Connector SPI" nodeprecated="false" nodeprecatedlist="true" noindex="false" nonavbar="false" notree="false" source="1.4" sourcepath="${src}" splitindex="true" use="true" version="true">
@@ -174,6 +173,8 @@
 			<!-- above this line is all the stuff that goes in the normal prod jar, 
 				below is the stuff that is only needed for testing -->
 			<lib dir="${thirdparty.tests.jars}" includes="*.jar" />
+			<lib dir="${projects.dir}/test-connectorA/dist/jar" includes="*.jar" />
+			<lib dir="${projects.dir}/test-connectorB/dist/jar" includes="*.jar" />
 			<webinf dir="testdata/mocktestdata" includes="MockRepositoryEventLog*.txt" />
 			<webinf dir="testdata/mocktestdata" includes="test.doc" />
 		</war>

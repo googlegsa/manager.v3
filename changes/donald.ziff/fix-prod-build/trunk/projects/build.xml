@@ -19,7 +19,7 @@
 	</target>
 
 	<target name="connector-manager">
-		<ant dir="${connector-manager.dir}" />
+		<ant dir="${connector-manager.dir}" target="all" />
 	</target>
 
 	<target name="test-connectorA">
