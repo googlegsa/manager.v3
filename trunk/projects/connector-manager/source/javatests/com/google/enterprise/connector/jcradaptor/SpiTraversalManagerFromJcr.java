@@ -153,11 +153,11 @@ public class SpiTraversalManagerFromJcr implements TraversalManager {
     }
 
     if (useThisNode) {
-      PropertyMapList result = new SpiResultSetFromJcr(thisNode, nodes);
+      PropertyMapList result = new SpiPropertyMapListFromJcr(thisNode, nodes);
       return result;
     }
 
-    PropertyMapList result = new SpiResultSetFromJcr(nodes);
+    PropertyMapList result = new SpiPropertyMapListFromJcr(nodes);
     return result;
   }
 
@@ -230,7 +230,7 @@ public class SpiTraversalManagerFromJcr implements TraversalManager {
     } catch (javax.jcr.RepositoryException e) {
       throw new RepositoryException(e);
     }
-    PropertyMapList result = new SpiResultSetFromJcr(nodes);
+    PropertyMapList result = new SpiPropertyMapListFromJcr(nodes);
     return result;
   }
 
