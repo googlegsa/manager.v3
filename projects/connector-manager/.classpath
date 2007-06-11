@@ -6,12 +6,11 @@
 	<classpathentry exported="true" kind="lib" path="/test-connectorA/dist/jar/testconnectorA.jar"/>
 	<classpathentry exported="true" kind="lib" path="/test-connectorB/dist/jar/testconnectorB.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/j2sdk1.4.2_14"/>
-	<classpathentry kind="lib" path="third-party/tests/jcr-1.0.jar"/>
 	<classpathentry kind="lib" path="third-party/tests/json.jar"/>
 	<classpathentry kind="lib" path="third-party/tests/junit.jar"/>
 	<classpathentry kind="lib" path="third-party/prod/spring.jar"/>
-	<classpathentry kind="lib" path="third-party/prod/spring-context.jar"/>
 	<classpathentry kind="lib" path="third-party/prod/servlet-api.jar"/>
 	<classpathentry kind="lib" path="third-party/prod/commons-logging.jar"/>
+	<classpathentry kind="lib" path="third-party/tests/jcr-1.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
