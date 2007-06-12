@@ -85,7 +85,6 @@ public class GetConnectorInstanceList extends HttpServlet {
     if (connectorInstances == null || connectorInstances.size() == 0) {
       ServletUtil.writeResponse(out,
           ConnectorMessageCode.RESPONSE_NULL_CONNECTOR);
-      LOGGER.log(Level.WARNING, ServletUtil.LOG_RESPONSE_NULL_CONNECTOR);
       return;
     }
 

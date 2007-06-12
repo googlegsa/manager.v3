@@ -78,7 +78,7 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
       throws ServletException, IOException {
     for (java.util.Enumeration headerNames = req.getHeaderNames(); headerNames.hasMoreElements(); ) {
       String name = (String) headerNames.nextElement();
-      LOGGER.log(Level.WARNING, "HEADER " + name + ": " + req.getHeader(name));
+      LOGGER.log(Level.INFO, "HEADER " + name + ": " + req.getHeader(name));
     }
     BufferedReader reader = req.getReader();
 //     BufferedReader reader = new BufferedReader(new java.io.InputStreamReader(req.getInputStream(), "UTF-8"));
