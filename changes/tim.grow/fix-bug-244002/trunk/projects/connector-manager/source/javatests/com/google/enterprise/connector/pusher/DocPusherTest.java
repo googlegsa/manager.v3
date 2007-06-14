@@ -318,7 +318,6 @@ public class DocPusherTest extends TestCase {
       + actual, actual.indexOf(expected) > 0);
   }
 
-  
   private String buildExpectedXML(String feedType, String record) {
     String rawData = "<?xml version=\'1.0\' encoding=\'UTF-8\'?>"
         + "<!DOCTYPE gsafeed PUBLIC \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">"
@@ -330,31 +329,5 @@ public class DocPusherTest extends TestCase {
         + "</group>\n"
         + "</gsafeed>\n";
     return rawData;
-  }
-
-  // XXX(timg)
-  public void testXXX() throws Exception {
-    String repository = "MockRepositoryEventLog10.txt";
-    String hostname = "entca36";
-    int port = 19900;
-
-    MockRepositoryEventList mrel = new MockRepositoryEventList(
-        repository);
-    MockRepository r = new MockRepository(mrel);
-    QueryManager qm = new MockJcrQueryManager(r.getStore());
-    TraversalManager qtm = new SpiTraversalManagerFromJcr(qm);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-
-    FeedConnection feedConnection =
-        new GsaFeedConnection(hostname, port);
-    DocPusher dpusher = new DocPusher(feedConnection);
-
-    PropertyMapList propertyMapList = qtm.startTraversal();
-
-    for (Iterator iter = propertyMapList.iterator(); iter.hasNext();) {
-      PropertyMap propertyMap = (PropertyMap) iter.next();
-      dpusher.take(propertyMap, "junit");
-    }
   }
 }
