@@ -156,16 +156,23 @@
 	<target name="war-prod" depends="install_init,jar-prod" description="Builds the Production WAR file for installation.">
 		<echo> The production war file dir is located at ${war.dir}</echo>
 
+		<tstamp />
 		<war warfile="${war.dir}/${ant.project.name}.war" webxml="${webdocs}/web.xml">
 			<lib dir="${jar.dir}" includes="*.jar" excludes="connector_tests.jar" />
 			<lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
 			<webinf dir="etc" includes="**" />
+			<manifest>
+				<attribute name="Implementation-Title" value="Connector Manager"/>
+				<attribute name="Implementation-Version" value="${version} ${TODAY}"/> 
+				<attribute name="Implementation-Vendor" value="Google Inc."/>
+			</manifest>
 		</war>
 	</target>
 
 	<target name="war-tests" depends="install_init,jar,test_connector_jars" description="Builds the Test WAR file for installation.">
 		<echo> The test war file dir is located at ${war.dir}</echo>
 
+		<tstamp />
 		<war warfile="${war.dir}/${ant.project.name}_debug.war" webxml="${webdocs}/web.xml">
 			<lib dir="${jar.dir}" includes="*.jar" />
 			<lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
@@ -177,6 +184,11 @@
 			<lib dir="${projects.dir}/test-connectorB/dist/jar" includes="*.jar" />
 			<webinf dir="testdata/mocktestdata" includes="MockRepositoryEventLog*.txt" />
 			<webinf dir="testdata/mocktestdata" includes="test.doc" />
+			<manifest>
+				<attribute name="Implementation-Title" value="Connector Manager"/>
+				<attribute name="Implementation-Version" value="${version} ${TODAY}"/> 
+				<attribute name="Implementation-Vendor" value="Google Inc."/>
+			</manifest>
 		</war>
 
 	</target>

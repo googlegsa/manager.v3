@@ -21,15 +21,21 @@
 	</target>
 
 	<target name="connector-manager">
-		<ant dir="${connector-manager.dir}" target="all" />
+		<ant dir="${connector-manager.dir}" target="all">
+			<reference refid="version" />
+		</ant>
 	</target>
 
 	<target name="test-connectorA">
-		<ant dir="${test-connectorA.dir}" />
+		<ant dir="${test-connectorA.dir}">
+			<reference refid="version" />
+		</ant>
 	</target>
 
 	<target name="test-connectorB">
-		<ant dir="${test-connectorB.dir}" />
+		<ant dir="${test-connectorB.dir}">
+			<reference refid="version" />
+		</ant>
 	</target>
 
 	<target name="build-all" depends="test-connectorA,test-connectorB,connector-manager"/>
