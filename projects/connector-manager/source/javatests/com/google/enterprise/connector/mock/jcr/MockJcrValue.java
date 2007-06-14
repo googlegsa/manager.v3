@@ -37,11 +37,11 @@ public class MockJcrValue implements Value {
   InputStream streamVal;
 
   public MockJcrValue(MockRepositoryProperty p) {
+    this.val = p.getValue();
     this.type = p.getType();
+    this.streamVal = null;
     if (p.getType().equals(PropertyType.STREAM)) {
       this.streamVal = p.getStreamValue();
-    } else {
-      this.val = p.getValue();
     }
   }
 
@@ -57,10 +57,7 @@ public class MockJcrValue implements Value {
       Calendar c = getDate();
       result = SimpleValue.calendarToIso8601(c);
     } else if (type.equals(PropertyType.STREAM)) {
-      if (null == val) {
-        val = StringUtils.streamToString(streamVal);
-      }
-      result = val;
+      result = StringUtils.streamToString(streamVal);
     } else {
       result = val;
     }
