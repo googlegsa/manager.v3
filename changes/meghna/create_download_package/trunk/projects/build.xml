@@ -13,6 +13,8 @@
 
 	<!-- =========================== TASKS =============================== -->
 
+	<target name="clean" depends="clean-all" />
+
 	<target name="clean-all">
 		<ant dir="${connector-manager.dir}" target="clean" />
 		<ant dir="${test-connectorA.dir}" target="clean" />
@@ -20,15 +22,21 @@
 	</target>
 
 	<target name="connector-manager">
-		<ant dir="${connector-manager.dir}" />
+		<ant dir="${connector-manager.dir}" target="all">
+			<reference refid="version" />
+		</ant>
 	</target>
 
 	<target name="test-connectorA">
-		<ant dir="${test-connectorA.dir}" />
+		<ant dir="${test-connectorA.dir}">
+			<reference refid="version" />
+		</ant>
 	</target>
 
 	<target name="test-connectorB">
-		<ant dir="${test-connectorB.dir}" />
+		<ant dir="${test-connectorB.dir}">
+			<reference refid="version" />
+		</ant>
 	</target>
 
 	<target name="build-all" depends="test-connectorA,test-connectorB,connector-manager"/>
@@ -43,21 +51,33 @@
 			<fileset dir="${connector-manager.dir}/dist"/>
 		</copy>
 	</target>
-  
+
 	<target name="make-downloads-dir">
 		<mkdir dir="${downloads.dir}" />
 	</target>
   
-  <target name="download-connector-manager" depends="connector-manager,make-downloads-dir">
-    <tar destfile="${downloads.dir}/connector-manager-${version}.tar">
-      <tarfileset dir="${connector-manager.dir}/dist/connector-manager">
-        <include name="connector-manager.war"/>
-      </tarfileset>
-      <tarfileset dir="${connector-manager.dir}">
-        <include name="README"/>
-        <include name="LICENSE"/>
-      </tarfileset>
-    </tar>    
+	<target name="connector-manager-war-prod" >
+		<ant dir="${connector-manager.dir}" target="war-prod">
+            		<reference refid="version" />
+        	</ant>		
+	</target>	
+
+	<target name="download-connector-manager" depends="connector-manager-war-prod,make-downloads-dir">
+		<tar destfile="${downloads.dir}/connector-manager-${version}.tar">
+			<tarfileset dir="${connector-manager.dir}/dist/connector-manager">
+				<include name="connector-manager.war"/>
+			</tarfileset>
+			<tarfileset dir="${connector-manager.dir}">
+				<include name="README"/>
+				<include name="LICENSE"/>
+			</tarfileset>
+		</tar>
+		<gzip zipfile="${downloads.dir}/connector-manager-${version}.tar.gz"
+			 src="${downloads.dir}/connector-manager-${version}.tar"/> 
+		<zip destfile="${downloads.dir}/connector-manager-${version}.zip">
+			<zipfileset dir="${connector-manager.dir}/dist/connector-manager" includes="connector-manager.war"/>
+			<zipfileset dir="${connector-manager.dir}" includes="README,LICENSE"/>
+		</zip>
 	</target>
 
 	<target name="install-test-connectorA" depends="test-connectorA,make-install-dir">
