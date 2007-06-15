@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.common.Base64FilterInputStream;
-import com.google.enterprise.connector.common.UrlEncodedFilterInputStream;
 import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Property;
@@ -32,7 +31,6 @@ import java.io.SequenceInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
@@ -625,24 +623,6 @@ public class DocPusher implements Pusher {
     return searchurl;
   }
 
-  /*
-   * Returns URL Encoded data to be sent to feeder.
-   */
-  private InputStream encodeXmlData() throws UnsupportedEncodingException {
-    String prefix =
-        URLEncoder.encode(XML_DATASOURCE, XML_DEFAULT_ENCODING) + "="
-            + URLEncoder.encode(dataSource, XML_DEFAULT_ENCODING);
-    prefix +=
-        "&" + URLEncoder.encode(XML_FEEDTYPE, XML_DEFAULT_ENCODING) + "="
-            + URLEncoder.encode(feedType, XML_DEFAULT_ENCODING);
-    prefix += "&" + URLEncoder.encode(XML_DATA, XML_DEFAULT_ENCODING) + "=";
-
-    InputStream xmlDataStream = new UrlEncodedFilterInputStream(xmlData);
-    String suffix = "";
-    InputStream is = stringWrappedInputStream(prefix, xmlDataStream, suffix);
-    return is;
-  }
-
   private void setFeedType(PropertyMap pm) {
     if (getOptionalString(pm, SpiConstants.PROPNAME_SEARCHURL) != null) {
       this.feedType = XML_FEED_METADATA_AND_URL;
@@ -687,8 +667,7 @@ public class DocPusher implements Pusher {
     }
     InputStream message = null;
     try {
-      message = encodeXmlData();
-      gsaResponse = feedConnection.sendData(message);
+      gsaResponse = feedConnection.sendData(dataSource, feedType, xmlData);
       if (!gsaResponse.equals(GsaFeedConnection.SUCCESS_RESPONSE)) {
         throw new PushException("gsaResponse=" + gsaResponse);
       }
@@ -696,25 +675,17 @@ public class DocPusher implements Pusher {
       LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
                   "Rethrowing MalformedURLException as PushException", e);
       throw new PushException("MalformedURLException: " + e.getMessage(), e);
-    } catch (UnsupportedEncodingException e) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
-                  "Rethrowing UnsupportedEncodingException as PushException",
-                  e);
-      throw new PushException(
-          "UnsupportedEncodingException: " + e.getMessage(), e);
     } catch (IOException e) {
       LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
                   "Rethrowing IOException as PushException", e);
       throw new PushException("IOException: " + e.getMessage(), e);
     } finally {
-      if (message != null) {
-        try {
-          message.close();
-        } catch (IOException e) {
-          LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
-                      "Rethrowing IOException as PushException", e);
-          throw new PushException("IOException: " + e.getMessage(), e);
-        }
+      try {
+        xmlData.close();
+      } catch (IOException e) {
+        LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
+                    "Rethrowing IOException as PushException", e);
+        throw new PushException("IOException: " + e.getMessage(), e);
       }
     }
   }

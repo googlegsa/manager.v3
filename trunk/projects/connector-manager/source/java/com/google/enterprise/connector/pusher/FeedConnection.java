@@ -25,11 +25,16 @@ public interface FeedConnection {
 
   /**
    * Open a connection to this url and sends data.
-   * @param data The InputStream to send.  This data is assumed to have been URL
-   * encoded.
+   * @param dataSource see
+   * http://code.google.com/enterprise/documentation/feedsguide.html
+   * @param feedType see
+   * http://code.google.com/enterprise/documentation/feedsguide.html
+   * @param data see
+   * http://code.google.com/enterprise/documentation/feedsguide.html
    * @return response from the server.
    * @throws IOException
    */
-  public String sendData(InputStream data)throws IOException;
+  public String sendData(String dataSource, String feedType, InputStream data)
+      throws IOException;
   
 }

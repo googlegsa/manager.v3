@@ -13,6 +13,8 @@
 // limitations under the License.
 package com.google.enterprise.connector.pusher;
 
+import com.google.enterprise.connector.servlet.ServletUtil;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +36,11 @@ public class GsaFeedConnection implements FeedConnection {
    */
   public static final String SUCCESS_RESPONSE = "Success";
 
+  // multipart/form-data uploads require a boundary to delimit controls.
+  // Since we XML-escape or base64-encode all data provided by the connector,
+  // the feed XML will never contain "<<".
+  private static final String BOUNDARY = "<<";
+
   private URL url = null;
   private String host;
   private int port;
@@ -54,15 +61,29 @@ public class GsaFeedConnection implements FeedConnection {
     URL url = new URL(feedUrl);
     return url;
   }
-  
-  public String sendData(InputStream data) throws IOException {
+
+  private static final void writeMultipartControlHeader(
+      OutputStream outputStream,
+      String name,
+      String mimetype)
+      throws IOException {
+    outputStream.write(("--" + BOUNDARY + "\n").getBytes());
+    outputStream.write(("Content-Disposition: form-data;").getBytes());
+    outputStream.write((" name=\"" + name + "\"\n").getBytes());
+    outputStream.write(("Content-Type: " + mimetype + "\n").getBytes());
+    outputStream.write("\n".getBytes());
+  }
+
+  public String sendData(String dataSource, String feedType, InputStream data)
+      throws IOException {
     if (url == null) {
       url = getFeedUrl();
     }
     URLConnection uc = url.openConnection();
     uc.setDoInput(true);
     uc.setDoOutput(true);
-    uc.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+    uc.setRequestProperty("Content-Type",
+                          "multipart/form-data; boundary=" + BOUNDARY);
     OutputStream outputStream = uc.getOutputStream();
 
     byte[] bytebuf = new byte[2048];
@@ -71,9 +92,26 @@ public class GsaFeedConnection implements FeedConnection {
     try {
       // if there is an exception during this read/write, we do our
       // best to close the url connection and read the result
+
+      writeMultipartControlHeader(outputStream,
+                                  "datasource",
+                                  ServletUtil.MIMETYPE_TEXT_PLAIN);
+      outputStream.write((dataSource + "\n").getBytes());
+
+      writeMultipartControlHeader(outputStream,
+                                  "feedtype",
+                                  ServletUtil.MIMETYPE_TEXT_PLAIN);
+      outputStream.write((feedType + "\n").getBytes());
+
+      writeMultipartControlHeader(outputStream,
+                                  "data",
+                                  ServletUtil.MIMETYPE_XML);
       while (-1 != (val = data.read(bytebuf))) {
         outputStream.write(bytebuf, 0, val);
       }
+      outputStream.write("\n".getBytes());
+
+      outputStream.write(("--" + BOUNDARY + "--\n").getBytes());
       outputStream.flush();
     } catch (IOException e) {
       LOGGER.log(Level.SEVERE, "IOException while posting: continuing", e);

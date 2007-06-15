@@ -55,6 +55,7 @@ public class ServletUtil {
 
   public static final String MIMETYPE_XML = "text/xml";
   public static final String MIMETYPE_HTML = "text/html";
+  public static final String MIMETYPE_TEXT_PLAIN = "text/plain";
 
   public static final String PROTOCOL = "googleconnector://";
   public static final String DOCID = "/doc?docid=";
