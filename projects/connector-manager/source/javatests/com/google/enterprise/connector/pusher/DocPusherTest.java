@@ -161,6 +161,32 @@ public class DocPusherTest extends TestCase {
     takeFeed(expectedXml, "MockRepositoryEventLog7.txt");
   }
 
+  /**
+   * Test whether MockRepostitoryEventList, MockRepository, and DocPusher
+   * can handle I18N'd content.
+   */
+  public void testI18N() throws PushException, RepositoryException {
+    String[] expectedXml = new String[1];
+    String feedType = "incremental";
+    String url =
+        ServletUtil.PROTOCOL + "junit.localhost" + ServletUtil.DOCID + "doc10";
+    String content =
+        "PGh0bWw+w47DscWjw6lyw7HDpcWjw67DtsOxw6XEvMOuxb7DpcWjw67DtsOxPC9odG1sPg==";
+    String record = "<record url=\"" + url + "\""
+      + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
+      + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\" >\n"
+      + "<metadata>\n"
+      + "<meta name=\"contentfile\" content=\"testdata/mocktestdata/i18n.html\"/>\n"
+      + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
+      + "<meta name=\"google:mimetype\" content=\"text/html\"/>\n"
+      + "<meta name=\"jcr:lastModified\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
+      + "</metadata>\n" + "<content encoding=\"base64binary\" >"
+      + content + "</content>\n" + "</record>\n";
+
+    expectedXml[0] = buildExpectedXML(feedType, record);
+    takeFeed(expectedXml, "MockRepositoryEventLog8.txt");
+  }
+
   private void takeFeed(String[] expectedXml, String repository)
       throws PushException, RepositoryException {
     String gsaExpectedResponse = GsaFeedConnection.SUCCESS_RESPONSE;
