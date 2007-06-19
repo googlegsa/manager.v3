@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="google-enterprise-connector-manager" default="everything" basedir=".">
+
+	<!-- ========================= PROPERTIES ============================= -->
+	<property name="version" value="1.0" />
+
+	<!-- Define Directories. -->
+	<property name="connector-manager.dir" value="connector-manager" />
+	<property name="test-connectorA.dir" value="test-connectorA" />
+	<property name="test-connectorB.dir" value="test-connectorB" />
+	<property name="install.dir" value="install" />
+	<property name="downloads.dir" value="downloads" />
+
+	<!-- =========================== TASKS =============================== -->
+
+	<target name="clean-all">
+		<ant dir="${connector-manager.dir}" target="clean" />
+		<ant dir="${test-connectorA.dir}" target="clean" />
+		<ant dir="${test-connectorB.dir}" target="clean" />
+	</target>
+
+	<target name="connector-manager">
+		<ant dir="${connector-manager.dir}" />
+	</target>
+
+	<target name="test-connectorA">
+		<ant dir="${test-connectorA.dir}" />
+	</target>
+
+	<target name="test-connectorB">
+		<ant dir="${test-connectorB.dir}" />
+	</target>
+
+	<target name="build-all" depends="test-connectorA,test-connectorB,connector-manager"/>
+
+	<target name="make-install-dir">
+		<mkdir dir="${install.dir}" />
+	</target>
+
+	<target name="install-connector-manager" depends="connector-manager,make-install-dir">
+		<mkdir dir="${install.dir}/connector-manager" />
+		<copy todir="${install.dir}/connector-manager" >
+			<fileset dir="${connector-manager.dir}/dist"/>
+		</copy>
+	</target>
+
+	<target name="make-downloads-dir">
+		<mkdir dir="${downloads.dir}" />
+	</target>
+  
+	<target name="connector-manager-war-prod" >
+		<ant dir="${connector-manager.dir}" target="war-prod">
+            		<reference refid="version" />
+        	</ant>		
+	</target>	
+
+	<target name="download-connector-manager" depends="connector-manager-war-prod,make-downloads-dir">
+		<tar destfile="${downloads.dir}/connector-manager-${version}.tar">
+			<tarfileset dir="${connector-manager.dir}/dist/connector-manager">
+				<include name="connector-manager.war"/>
+			</tarfileset>
+			<tarfileset dir="${connector-manager.dir}">
+				<include name="README"/>
+				<include name="LICENSE"/>
+			</tarfileset>
+		</tar>
+		<gzip zipfile="${downloads.dir}/connector-manager-${version}.tar.gz"
+			 src="${downloads.dir}/connector-manager-${version}.tar"/> 
+		<zip destfile="${downloads.dir}/connector-manager-${version}.zip">
+			<zipfileset dir="${connector-manager.dir}/dist/connector-manager" includes="connector-manager.war"/>
+			<zipfileset dir="${connector-manager.dir}" includes="README,LICENSE"/>
+		</zip>
+	</target>
+
+	<target name="install-test-connectorA" depends="test-connectorA,make-install-dir">
+		<mkdir dir="${install.dir}/test-connectorA" />
+		<copy todir="${install.dir}/test-connectorA" >
+			<fileset dir="${test-connectorA.dir}/dist"/>
+		</copy>
+	</target>
+
+	<target name="install-test-connectorB" depends="test-connectorB,make-install-dir">
+		<mkdir dir="${install.dir}/test-connectorB" />
+		<copy todir="${install.dir}/test-connectorB" >
+			<fileset dir="${test-connectorB.dir}/dist"/>
+		</copy>
+	</target>
+
+	<target name="test-all" depends="test-connectorA,test-connectorB,connector-manager">
+		<ant dir="${connector-manager.dir}" target="run_tests" />
+		<!-- at present, the test-connectors do not have a run_tests target -->
+	</target>
+
+	<target name="install-all"
+		depends="install-test-connectorA,install-test-connectorB,install-connector-manager"/>
+
+	<target name="everything" depends="clean-all,build-all,test-all,install-all"/>
+
+</project>
