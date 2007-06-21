@@ -70,13 +70,10 @@ public class MockPusher implements Pusher {
     } catch (RepositoryException e) {
       throw new RuntimeException(e);
     }
-    if (cProp == null) {
-      throw new IllegalArgumentException("Both "
-        + SpiConstants.PROPNAME_CONTENTURL + " and "
-        + SpiConstants.PROPNAME_CONTENT + " are missing");
+    if (cProp != null) {
+      processProperty(cProp);
     }
-    processProperty(cProp);
-
+    
     try {
       for (Iterator i = pm.getProperties(); i.hasNext();) {
         Property property = (Property) i.next();
@@ -86,7 +83,7 @@ public class MockPusher implements Pusher {
             || name.equals(SpiConstants.PROPNAME_CONTENTURL)
             || name.equals(SpiConstants.PROPNAME_DOCID)) {
             // we already dealt with these
-            break;
+            continue;
           }
         }
         processProperty(property);
