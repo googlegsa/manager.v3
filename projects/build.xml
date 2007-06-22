@@ -13,8 +13,6 @@
 
 	<!-- =========================== TASKS =============================== -->
 
-	<target name="clean" depends="clean-all" />
-
 	<target name="clean-all">
 		<ant dir="${connector-manager.dir}" target="clean" />
 		<ant dir="${test-connectorA.dir}" target="clean" />
@@ -22,21 +20,15 @@
 	</target>
 
 	<target name="connector-manager">
-		<ant dir="${connector-manager.dir}" target="all">
-			<reference refid="version" />
-		</ant>
+		<ant dir="${connector-manager.dir}" />
 	</target>
 
 	<target name="test-connectorA">
-		<ant dir="${test-connectorA.dir}">
-			<reference refid="version" />
-		</ant>
+		<ant dir="${test-connectorA.dir}" />
 	</target>
 
 	<target name="test-connectorB">
-		<ant dir="${test-connectorB.dir}">
-			<reference refid="version" />
-		</ant>
+		<ant dir="${test-connectorB.dir}" />
 	</target>
 
 	<target name="build-all" depends="test-connectorA,test-connectorB,connector-manager"/>
@@ -56,13 +48,7 @@
 		<mkdir dir="${downloads.dir}" />
 	</target>
   
-	<target name="connector-manager-war-prod" >
-		<ant dir="${connector-manager.dir}" target="war-prod">
-            		<reference refid="version" />
-        	</ant>		
-	</target>	
-
-	<target name="download-connector-manager" depends="connector-manager-war-prod,make-downloads-dir">
+	<target name="download-connector-manager" depends="connector-manager,make-downloads-dir">
 		<tar destfile="${downloads.dir}/connector-manager-${version}.tar">
 			<tarfileset dir="${connector-manager.dir}/dist/connector-manager">
 				<include name="connector-manager.war"/>

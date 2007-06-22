@@ -36,8 +36,7 @@ public class MockFeedConnection implements FeedConnection {
     buf = new StringBuffer(2048);
   }
 
-  public String sendData(String datasource, String feedtype, InputStream data)
-      throws IOException {
+  public String sendData(InputStream data) throws IOException {
     String dataStr = StringUtils.streamToString(data);
     buf.append(dataStr);
     System.out.println(dataStr);

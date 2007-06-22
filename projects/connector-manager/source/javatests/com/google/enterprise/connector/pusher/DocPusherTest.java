@@ -16,7 +16,7 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.jcradaptor.SpiPropertyMapFromJcrTest;
-import com.google.enterprise.connector.jcradaptor.SpiTraversalManagerFromJcr;
+import com.google.enterprise.connector.jcradaptor.SpiQueryTraversalManagerFromJcr;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
@@ -30,6 +30,8 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Iterator;
 
 import javax.jcr.query.QueryManager;
@@ -161,32 +163,6 @@ public class DocPusherTest extends TestCase {
     takeFeed(expectedXml, "MockRepositoryEventLog7.txt");
   }
 
-  /**
-   * Test whether MockRepostitoryEventList, MockRepository, and DocPusher
-   * can handle I18N'd content.
-   */
-  public void testI18N() throws PushException, RepositoryException {
-    String[] expectedXml = new String[1];
-    String feedType = "incremental";
-    String url =
-        ServletUtil.PROTOCOL + "junit.localhost" + ServletUtil.DOCID + "doc10";
-    String content =
-        "PGh0bWw+w47DscWjw6lyw7HDpcWjw67DtsOxw6XEvMOuxb7DpcWjw67DtsOxPC9odG1sPg==";
-    String record = "<record url=\"" + url + "\""
-      + " mimetype=\"" + SpiConstants.DEFAULT_MIMETYPE + "\""
-      + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\" >\n"
-      + "<metadata>\n"
-      + "<meta name=\"contentfile\" content=\"testdata/mocktestdata/i18n.html\"/>\n"
-      + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
-      + "<meta name=\"google:mimetype\" content=\"text/html\"/>\n"
-      + "<meta name=\"jcr:lastModified\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
-      + "</metadata>\n" + "<content encoding=\"base64binary\" >"
-      + content + "</content>\n" + "</record>\n";
-
-    expectedXml[0] = buildExpectedXML(feedType, record);
-    takeFeed(expectedXml, "MockRepositoryEventLog8.txt");
-  }
-
   private void takeFeed(String[] expectedXml, String repository)
       throws PushException, RepositoryException {
     String gsaExpectedResponse = GsaFeedConnection.SUCCESS_RESPONSE;
@@ -196,7 +172,7 @@ public class DocPusherTest extends TestCase {
         repository);
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
-    TraversalManager qtm = new SpiTraversalManagerFromJcr(qm);
+    TraversalManager qtm = new SpiQueryTraversalManagerFromJcr(qm);
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
@@ -234,13 +210,13 @@ public class DocPusherTest extends TestCase {
     dpusher.take(propertyMap, "junit");
     String resultXML = mockFeedConnection.getFeed();
 
-    assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
-                         resultXML);
-    assertStringContains("<meta name=\"author\" content=\"ziff\"/>",
-                         resultXML);
-    assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
-                         + ServletUtil.DOCID + "doc1\"",
-                         resultXML);
+    assertStringContains(
+      urlEncode("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\""), resultXML);
+    assertStringContains(
+      urlEncode("<meta name=\"author\" content=\"ziff\"/>"), resultXML);
+    assertStringContains(
+      urlEncode("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
+                + ServletUtil.DOCID + "doc1\""), resultXML);
 
   }
 
@@ -262,8 +238,8 @@ public class DocPusherTest extends TestCase {
     dpusher.take(propertyMap, "junit");
     String resultXML = mockFeedConnection.getFeed();
 
-    assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
-                         resultXML);
+    assertStringContains(
+      urlEncode("displayurl=\"http://www.sometesturl.com/test\""), resultXML);
 
   }
 
@@ -287,27 +263,32 @@ public class DocPusherTest extends TestCase {
     dpusher.take(propertyMap, "junit");
     String resultXML = mockFeedConnection.getFeed();
 
-    assertStringContains(
-        "<meta name=\"special\" " +
-        // only single escapes here, because this is not a json string
-        // but xml-sensitive characters have been replaced with entities
-        "content=\"`~!@#$%^&amp;*()_+-={}[]|\\:&quot;;&apos;&lt;>?,./\"/>",
-        resultXML);
+    assertStringContains(urlEncode("<meta name=\"special\" " +
+    // only single escapes here, because this is not a json string
+      // but xml-sensitive characters have been replaced with entities
+      "content=\"`~!@#$%^&amp;*()_+-={}[]|\\:&quot;;&apos;&lt;>?,./\"/>"),
+      resultXML);
 
-    assertStringContains(
-        "<meta name=\"japanese\" " +
-        // only single escapes here, because this is not a json string
-        // but xml-sensitive characters have been replaced with entities
-        "content=\"\u5317\u6d77\u9053\"/>",
-        resultXML);
+    assertStringContains(urlEncode("<meta name=\"japanese\" " +
+    // only single escapes here, because this is not a json string
+      // but xml-sensitive characters have been replaced with entities
+      "content=\"\u5317\u6d77\u9053\"/>"), resultXML);
 
-    assertStringContains(
-        "<meta name=\"chinese\" " +
-        // only single escapes here, because this is not a json string
-        // but xml-sensitive characters have been replaced with entities
-        "content=\"\u5317\u4eac\u5e02\"/>",
-        resultXML);
+    assertStringContains(urlEncode("<meta name=\"chinese\" " +
+    // only single escapes here, because this is not a json string
+      // but xml-sensitive characters have been replaced with entities
+      "content=\"\u5317\u4eac\u5e02\"/>"), resultXML);
 
+  }
+
+  private static String urlEncode(String str) {
+    try {
+      return URLEncoder.encode(str, DocPusher.XML_DEFAULT_ENCODING);
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+      fail();
+    }
+    return null;
   }
 
   /**
@@ -330,13 +311,13 @@ public class DocPusherTest extends TestCase {
     dpusher.take(propertyMap, "junit");
     String resultXML = mockFeedConnection.getFeed();
 
-    assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
-                         resultXML);
-    assertStringContains("<meta name=\"author\" content=\"ziff\"/>",
-                         resultXML);
-    assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
-                         + ServletUtil.DOCID + "doc1\"",
-                         resultXML);
+    assertStringContains(
+      urlEncode("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\""), resultXML);
+    assertStringContains(
+      urlEncode("<meta name=\"author\" content=\"ziff\"/>"), resultXML);
+    assertStringContains(
+      urlEncode("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
+                + ServletUtil.DOCID + "doc1\""), resultXML);
   }
 
   public static void assertStringContains(String expected, String actual) {
@@ -344,6 +325,7 @@ public class DocPusherTest extends TestCase {
       + actual, actual.indexOf(expected) > 0);
   }
 
+  
   private String buildExpectedXML(String feedType, String record) {
     String rawData = "<?xml version=\'1.0\' encoding=\'UTF-8\'?>"
         + "<!DOCTYPE gsafeed PUBLIC \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">"
@@ -354,6 +336,8 @@ public class DocPusherTest extends TestCase {
         + record
         + "</group>\n"
         + "</gsafeed>\n";
-    return rawData;
+    return "datasource=junit&feedtype=" + feedType + "&data="
+        + urlEncode(rawData);
   }
+
 }
