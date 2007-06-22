@@ -285,8 +285,10 @@ public final class InstanceInfo {
         }
       }
     }
-    properties.remove(GOOGLE_WORK_DIR);
-    properties.remove(GOOGLE_CONNECTOR_WORK_DIR);
+    if (null != properties) {
+      properties.remove(GOOGLE_WORK_DIR);
+      properties.remove(GOOGLE_CONNECTOR_WORK_DIR);
+    }
     return properties;
   }
 
