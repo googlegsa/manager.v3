@@ -195,74 +195,80 @@ public class TraversalScheduler implements Scheduler {
   
   public void run() {
     while (true) {
-      synchronized (this) {
-        if (!isRunningState()) {
-          LOGGER.info("TraversalScheduler thread is stopping due to " 
-            + "shutdown or not being initialized.");
-          return;
-        }
-      }
-      List schedules = getSchedules();
-      for (Iterator iter = schedules.iterator(); iter.hasNext(); ){
-        Schedule schedule = (Schedule) iter.next();
-        if (shouldRun(schedule)) {
-          String connectorName = schedule.getConnectorName();
-          TraversalWorkQueueItem runnable;
-          synchronized (this) {
-            runnable = (TraversalWorkQueueItem) runnables.get(connectorName);
-            if (null == runnable) {
-              runnable = 
-                new TraversalWorkQueueItem(connectorName);
-              runnables.put(connectorName, runnable);
-            }
-          }
-          // we back off if we have received previous failures (e.g. when trying
-          // to get a Traverser object)
-          if (runnable.getNumConsecutiveFailures() >= 2) {
-            long backoff = 
-              1000 * (long) Math.pow(2, runnable.getNumConsecutiveFailures());
-            long now = System.currentTimeMillis();
-            if (runnable.getTimeOfFirstFailure() + backoff > now) {
-              continue;
-            }
-          }
-          LOGGER.finer("Trying to add traversal work to workQueue: "
-            + connectorName);
-          synchronized (this) {
-            if (!isRunningState()) {
-                LOGGER.info("TraversalScheduler thread is stopping due to " 
-                  + "shutdown or not being initialized.");
-                return;
-            }
-            if (removedConnectors.contains(connectorName)) {
-              LOGGER.info("Connector was removed so no work for it will be " 
-                + "done: " + connectorName);
-              continue;
-            }
-            workQueue.addWork(runnable);
-          }
-          int numDocsTraversed = runnable.getNumDocsTraversed();
-          if (numDocsTraversed > 0) {
-            hostLoadManager.updateNumDocsTraversed(connectorName, 
-              numDocsTraversed);
-          } else {
-            // Traversal of 0 documents indicates some type of problem.
-            // It may be that runnable is not returning or able to be 
-            // interrupted.
-            runnable.failure();
-          }
-        }
-      }
-      updateMonitor();
-      
-      // Give someone else a chance to run.
       try {
         synchronized (this) {
-          wait(1000);
+          if (!isRunningState()) {
+            LOGGER.info("TraversalScheduler thread is stopping due to " 
+              + "shutdown or not being initialized.");
+            return;
+          }
         }
-      } catch (InterruptedException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        List schedules = getSchedules();
+        for (Iterator iter = schedules.iterator(); iter.hasNext(); ){
+          Schedule schedule = (Schedule) iter.next();
+          if (shouldRun(schedule)) {
+            String connectorName = schedule.getConnectorName();
+            TraversalWorkQueueItem runnable;
+            synchronized (this) {
+              runnable = (TraversalWorkQueueItem) runnables.get(connectorName);
+              if (null == runnable) {
+                runnable = 
+                  new TraversalWorkQueueItem(connectorName);
+                runnables.put(connectorName, runnable);
+              }
+            }
+            // we back off if we have received previous failures (e.g. when trying
+            // to get a Traverser object)
+            if (runnable.getNumConsecutiveFailures() >= 2) {
+              long backoff = 
+                1000 * (long) Math.pow(2, runnable.getNumConsecutiveFailures());
+              long now = System.currentTimeMillis();
+              if (runnable.getTimeOfFirstFailure() + backoff > now) {
+                continue;
+              }
+            }
+            LOGGER.finer("Trying to add traversal work to workQueue: "
+              + connectorName);
+            synchronized (this) {
+              if (!isRunningState()) {
+                  LOGGER.info("TraversalScheduler thread is stopping due to " 
+                    + "shutdown or not being initialized.");
+                  return;
+              }
+              if (removedConnectors.contains(connectorName)) {
+                LOGGER.info("Connector was removed so no work for it will be " 
+                  + "done: " + connectorName);
+                continue;
+              }
+              workQueue.addWork(runnable);
+            }
+            int numDocsTraversed = runnable.getNumDocsTraversed();
+            if (numDocsTraversed > 0) {
+              hostLoadManager.updateNumDocsTraversed(connectorName, 
+                numDocsTraversed);
+            } else {
+              // Traversal of 0 documents indicates some type of problem.
+              // It may be that runnable is not returning or able to be 
+              // interrupted.
+              runnable.failure();
+            }
+          }
+        }
+        updateMonitor();
+        
+        // Give someone else a chance to run.
+        try {
+          synchronized (this) {
+            wait(1000);
+          }
+        } catch (InterruptedException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+      } catch (Throwable t) {
+        t.printStackTrace();
+        LOGGER.log(Level.SEVERE, 
+          "TraversalScheduler caught unexpected Throwable: ", t);
       }
     }
   }
