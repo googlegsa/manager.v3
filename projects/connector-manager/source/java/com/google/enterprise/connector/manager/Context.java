@@ -18,6 +18,8 @@ import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.instantiator.InstanceInfo;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
+import com.google.enterprise.connector.spi.TraversalContext;
+import com.google.enterprise.connector.traversal.ProductionTraversalContext;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -75,6 +77,7 @@ public class Context {
   private Manager manager = null;
   private TraversalScheduler traversalScheduler = null;
   private Thread schedulerThread = null;
+  private TraversalContext traversalContext = null;
 
   // control variables for turning off normal functionality - testing only
   private boolean isFeeding = true;
@@ -285,6 +288,27 @@ public class Context {
     }
     manager = (Manager) getRequiredBean("Manager", Manager.class);
     return manager;
+  }
+
+
+  /**
+   * Gets the singleton TraversalContext.
+   * 
+   * @return the TraversalContext
+   */
+  public TraversalContext getTraversalContext() {
+    if (traversalContext != null) {
+      return traversalContext;
+    }
+    try {
+      traversalContext = (TraversalContext) getRequiredBean("TraversalContext", 
+          TraversalContext.class);
+    } catch (IllegalStateException e) {
+      LOGGER.warning("Can't find suitable " + TraversalContext.class.getName()
+          + " bean in context, using default.");
+      traversalContext = new ProductionTraversalContext();
+    }
+    return traversalContext;
   }
 
 
