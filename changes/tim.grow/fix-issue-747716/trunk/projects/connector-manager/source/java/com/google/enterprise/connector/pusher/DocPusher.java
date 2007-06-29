@@ -656,11 +656,12 @@ public class DocPusher implements Pusher {
     throw new IllegalArgumentException();
   }
 
-  // FilterInputStream which "echos" all content to an OutputStream
-  private static class EchoInputStream extends FilterInputStream {
+  // FilterInputStream which "tees" all content to an OutputStream.
+  // (named after the UNIX 'tee' command)
+  private static class TeeInputStream extends FilterInputStream {
     protected OutputStream out;
 
-    public EchoInputStream(InputStream in, OutputStream out) {
+    public TeeInputStream(InputStream in, OutputStream out) {
       super(in);
       this.out = out;
     }
@@ -707,20 +708,22 @@ public class DocPusher implements Pusher {
     }
     InputStream message = null;
     InputStream is = xmlData;
+    String osFilename = Context.getInstance().getTeedFeedFile();
     File osFile = null;
     OutputStream os = null;
-    String localFeedDir = Context.getInstance().getLocalFeedDir();
-    if (localFeedDir != null) {
-      try {
-        osFile = new File(localFeedDir, connectorName);
-        os = new BufferedOutputStream(new FileOutputStream(osFile, true));
-        is = new EchoInputStream(xmlData, os);
-      } catch (IOException e) {
-        LOGGER.logp(Level.WARNING,
-                    DocPusher.class.getName(),
-                    "take",
-                    "cannot write file: " + osFile.getAbsolutePath(),
-                    e);
+    if (osFilename != null) {
+      osFile = new File(osFilename);
+      if (osFile.exists()) {
+        try {
+          os = new BufferedOutputStream(new FileOutputStream(osFile, true));
+          is = new TeeInputStream(xmlData, os);
+        } catch (IOException e) {
+          LOGGER.logp(Level.WARNING,
+                      DocPusher.class.getName(),
+                      "take",
+                      "cannot write file: " + osFile.getAbsolutePath(),
+                      e);
+        }
       }
     }
     try {

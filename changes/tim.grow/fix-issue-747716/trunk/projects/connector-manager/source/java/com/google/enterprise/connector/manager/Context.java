@@ -18,6 +18,8 @@ import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.instantiator.InstanceInfo;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
+import com.google.enterprise.connector.spi.TraversalContext;
+import com.google.enterprise.connector.traversal.ProductionTraversalContext;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -48,7 +50,7 @@ public class Context {
   public static final String GSA_FEED_PORT_PROPERTY_KEY = "gsa.feed.port";
   public static final String GSA_ADMIN_REQUIRES_PREFIX_KEY =
       "gsa.admin.requiresPrefix";
-  public static final String LOCAL_FEED_DIR_PROPERTY_KEY = "localFeedDir";
+  public static final String TEED_FEED_FILE_PROPERTY_KEY = "teedFeedFile";
 
   public static final Boolean GSA_ADMIN_REQUIRES_PREFIX_DEFAULT =
       Boolean.FALSE;
@@ -76,6 +78,7 @@ public class Context {
   private Manager manager = null;
   private TraversalScheduler traversalScheduler = null;
   private Thread schedulerThread = null;
+  private TraversalContext traversalContext = null;
 
   // control variables for turning off normal functionality - testing only
   private boolean isFeeding = true;
@@ -85,8 +88,8 @@ public class Context {
 
   private Boolean gsaAdminRequiresPrefix = null;
 
-  private boolean isLocalFeedDirInitialized = false;
-  private String localFeedDir = null;
+  private boolean isTeedFeedFileInitialized = false;
+  private String teedFeedFile = null;
 
   /**
    * @param feeding to feed or not to feed
@@ -293,6 +296,27 @@ public class Context {
 
 
   /**
+   * Gets the singleton TraversalContext.
+   * 
+   * @return the TraversalContext
+   */
+  public TraversalContext getTraversalContext() {
+    if (traversalContext != null) {
+      return traversalContext;
+    }
+    try {
+      traversalContext = (TraversalContext) getRequiredBean("TraversalContext", 
+          TraversalContext.class);
+    } catch (IllegalStateException e) {
+      LOGGER.warning("Can't find suitable " + TraversalContext.class.getName()
+          + " bean in context, using default.");
+      traversalContext = new ProductionTraversalContext();
+    }
+    return traversalContext;
+  }
+
+
+  /**
    * Throws out the current context instance and gets another one. For testing
    * only. This could really boolux things up if it were used in production!
    * 
@@ -413,27 +437,27 @@ public class Context {
   }
 
   /**
-   * Reads <code>localFeedDir</code> from the application context properties file.
+   * Reads <code>teedFeedFile</code> from the application context properties file.
    * See google-enterprise-connector-manager/projects/connector-manager/etc/applicationContext.properties
    * for additional documentation.
    */
-  public String getLocalFeedDir() {
+  public String getTeedFeedFile() {
     initApplicationContext();
-    if (!isLocalFeedDirInitialized) {
+    if (!isTeedFeedFileInitialized) {
       try {
         String propFileName = getPropFileName();
         File propFile = getPropFile(propFileName);
         Properties props =
             InstanceInfo.initPropertiesFromFile(propFile, propFileName);
-        localFeedDir = props.getProperty(LOCAL_FEED_DIR_PROPERTY_KEY);
+        teedFeedFile = props.getProperty(TEED_FEED_FILE_PROPERTY_KEY);
       } catch (InstantiatorException e) {
         LOGGER.log(Level.WARNING,
                    "Unable to read application context properties file. " +
-                   "Using default value for Context.getLocalFeedDir().",
+                   "Using default value for Context.getTeedFeedFile().",
                    e);
       }
-      isLocalFeedDirInitialized = true;
+      isTeedFeedFileInitialized = true;
     }
-    return localFeedDir;
+    return teedFeedFile;
   }
 }
