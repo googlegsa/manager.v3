@@ -16,6 +16,7 @@ package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.common.Base64FilterInputStream;
 import com.google.enterprise.connector.common.WorkQueue;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.PropertyMap;
@@ -24,9 +25,14 @@ import com.google.enterprise.connector.spi.SimpleValue;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.SequenceInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -650,6 +656,41 @@ public class DocPusher implements Pusher {
     throw new IllegalArgumentException();
   }
 
+  // FilterInputStream which "tees" all content to an OutputStream.
+  // (named after the UNIX 'tee' command)
+  private static class TeeInputStream extends FilterInputStream {
+    protected OutputStream out;
+
+    public TeeInputStream(InputStream in, OutputStream out) {
+      super(in);
+      this.out = out;
+    }
+
+    public int read() throws IOException {
+      int retval = super.read();
+      if (retval != -1) {
+        out.write(retval);
+      }
+      return retval;
+    }
+
+    public int read(byte[] b) throws IOException {
+      int retval = super.read(b);
+      if (retval != -1) {
+        out.write(b, 0, retval);
+      }
+      return retval;
+    }
+
+    public int read(byte[] b, int off, int len) throws IOException {
+      int retval = super.read(b, off, len);
+      if (retval != -1) {
+        out.write(b, off, retval);
+      }
+      return retval;
+    }
+  }
+
   /**
    * Takes a property map and sends a the feed to the GSA.
    * 
@@ -666,8 +707,27 @@ public class DocPusher implements Pusher {
       return;
     }
     InputStream message = null;
+    InputStream is = xmlData;
+    String osFilename = Context.getInstance().getTeedFeedFile();
+    File osFile = null;
+    OutputStream os = null;
+    if (osFilename != null) {
+      osFile = new File(osFilename);
+      if (osFile.exists()) {
+        try {
+          os = new BufferedOutputStream(new FileOutputStream(osFile, true));
+          is = new TeeInputStream(xmlData, os);
+        } catch (IOException e) {
+          LOGGER.logp(Level.WARNING,
+                      DocPusher.class.getName(),
+                      "take",
+                      "cannot write file: " + osFile.getAbsolutePath(),
+                      e);
+        }
+      }
+    }
     try {
-      gsaResponse = feedConnection.sendData(dataSource, feedType, xmlData);
+      gsaResponse = feedConnection.sendData(dataSource, feedType, is);
       if (!gsaResponse.equals(GsaFeedConnection.SUCCESS_RESPONSE)) {
         throw new PushException("gsaResponse=" + gsaResponse);
       }
@@ -686,6 +746,16 @@ public class DocPusher implements Pusher {
         LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
                     "Rethrowing IOException as PushException", e);
         throw new PushException("IOException: " + e.getMessage(), e);
+      }
+      if (os != null) {
+        try {
+          os.close();
+        } catch (IOException e) {
+          LOGGER.logp(Level.WARNING,
+                      DocPusher.class.getName(),
+                      "take",
+                      "cannot close file: " + osFile.getAbsolutePath());
+        }
       }
     }
   }
