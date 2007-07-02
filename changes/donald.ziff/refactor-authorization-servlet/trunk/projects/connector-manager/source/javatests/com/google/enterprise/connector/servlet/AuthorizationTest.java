@@ -129,7 +129,7 @@ public class AuthorizationTest extends TestCase {
 
   public void testParsing() {
     {
-      AuthParser authorizationParser = new AuthParser(TEST_XML1);
+      AuthorizationParser authorizationParser = new AuthorizationParser(TEST_XML1);
       authorizationParser.parse();
       Assert.assertEquals(2, authorizationParser.countParsedIdentities());
       Assert.assertEquals(1, authorizationParser
@@ -140,8 +140,8 @@ public class AuthorizationTest extends TestCase {
           .countUrlsForIdentityConnectorPair("username", "connector3"));
     }
     {
-      AuthParser authorizationParser =
-          new AuthParser(TWO_IDENTITIES_TWO_CONNECTORS);
+      AuthorizationParser authorizationParser =
+          new AuthorizationParser(TWO_IDENTITIES_TWO_CONNECTORS);
       authorizationParser.parse();
       Assert.assertEquals(2, authorizationParser.countParsedIdentities());
       Assert.assertEquals(2, authorizationParser
@@ -152,7 +152,7 @@ public class AuthorizationTest extends TestCase {
           .countUrlsForIdentityConnectorPair("username", "connector2"));
     }
     {
-      AuthParser authorizationParser = new AuthParser(ONE_IDENTITY_TWO_QUERIES);
+      AuthorizationParser authorizationParser = new AuthorizationParser(ONE_IDENTITY_TWO_QUERIES);
       authorizationParser.parse();
       Assert.assertEquals(1, authorizationParser.countParsedIdentities());
       Assert.assertEquals(2, authorizationParser
@@ -161,8 +161,8 @@ public class AuthorizationTest extends TestCase {
           .countUrlsForIdentityConnectorPair("username", "connector2"));
     }
     {
-      AuthParser authorizationParser =
-          new AuthParser(TWO_IDENTITIES_MULTIPLE_QUERIES);
+      AuthorizationParser authorizationParser =
+          new AuthorizationParser(TWO_IDENTITIES_MULTIPLE_QUERIES);
       authorizationParser.parse();
       Assert.assertEquals(2, authorizationParser.countParsedIdentities());
       Assert.assertEquals(1, authorizationParser
@@ -171,7 +171,7 @@ public class AuthorizationTest extends TestCase {
           .countUrlsForIdentityConnectorPair("username1", "connector2"));
     }
     {
-      AuthParser authorizationParser = new AuthParser(MALFORMED_XML);
+      AuthorizationParser authorizationParser = new AuthorizationParser(MALFORMED_XML);
       authorizationParser.parse();
       Assert.assertNull(authorizationParser.getParseMap());
       Assert.assertEquals(ConnectorMessageCode.ERROR_PARSING_XML_REQUEST,

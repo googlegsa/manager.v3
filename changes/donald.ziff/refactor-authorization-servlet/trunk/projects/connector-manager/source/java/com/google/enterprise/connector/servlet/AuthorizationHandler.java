@@ -65,13 +65,13 @@ public class AuthorizationHandler {
    * Writes an answer for each resource from the request.
    */
   public void handleDoPost() {
-    AuthParser authParser = new AuthParser(xmlBody);
-    authParser.parse();
-    status = authParser.getStatus();
+    AuthorizationParser authorizationParser = new AuthorizationParser(xmlBody);
+    authorizationParser.parse();
+    status = authorizationParser.getStatus();
     if (status == ConnectorMessageCode.ERROR_PARSING_XML_REQUEST) {
       ServletUtil.writeResponse(out,status);
     }
-    parseMap = authParser.getParseMap();
+    parseMap = authorizationParser.getParseMap();
     computeResultSet();
     generateXml();
     return;
