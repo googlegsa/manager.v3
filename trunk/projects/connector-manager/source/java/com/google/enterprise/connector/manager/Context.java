@@ -50,6 +50,7 @@ public class Context {
   public static final String GSA_FEED_PORT_PROPERTY_KEY = "gsa.feed.port";
   public static final String GSA_ADMIN_REQUIRES_PREFIX_KEY =
       "gsa.admin.requiresPrefix";
+  public static final String TEED_FEED_FILE_PROPERTY_KEY = "teedFeedFile";
 
   public static final Boolean GSA_ADMIN_REQUIRES_PREFIX_DEFAULT =
       Boolean.FALSE;
@@ -86,6 +87,9 @@ public class Context {
   private String standaloneCommonDirPath;
 
   private Boolean gsaAdminRequiresPrefix = null;
+
+  private boolean isTeedFeedFileInitialized = false;
+  private String teedFeedFile = null;
 
   /**
    * @param feeding to feed or not to feed
@@ -423,12 +427,37 @@ public class Context {
         gsaAdminRequiresPrefix = Boolean.valueOf(prop);
       } catch (InstantiatorException e) {
         LOGGER.log(Level.WARNING,
-                   "Unable to read application context properties file.  " +
+                   "Unable to read application context properties file. " +
                    "Using default value for Context.gsaAdminRequiresPrefix().",
                    e);
         gsaAdminRequiresPrefix = GSA_ADMIN_REQUIRES_PREFIX_DEFAULT;
       }
     }
     return gsaAdminRequiresPrefix.booleanValue();
+  }
+
+  /**
+   * Reads <code>teedFeedFile</code> from the application context properties file.
+   * See google-enterprise-connector-manager/projects/connector-manager/etc/applicationContext.properties
+   * for additional documentation.
+   */
+  public String getTeedFeedFile() {
+    initApplicationContext();
+    if (!isTeedFeedFileInitialized) {
+      try {
+        String propFileName = getPropFileName();
+        File propFile = getPropFile(propFileName);
+        Properties props =
+            InstanceInfo.initPropertiesFromFile(propFile, propFileName);
+        teedFeedFile = props.getProperty(TEED_FEED_FILE_PROPERTY_KEY);
+      } catch (InstantiatorException e) {
+        LOGGER.log(Level.WARNING,
+                   "Unable to read application context properties file. " +
+                   "Using default value for Context.getTeedFeedFile().",
+                   e);
+      }
+      isTeedFeedFileInitialized = true;
+    }
+    return teedFeedFile;
   }
 }
