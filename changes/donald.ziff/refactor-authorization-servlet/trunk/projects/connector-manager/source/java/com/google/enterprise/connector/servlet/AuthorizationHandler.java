@@ -16,9 +16,6 @@ package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.manager.Manager;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,10 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Map.Entry;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * This class does the real work for the authorization servlet
@@ -45,7 +39,7 @@ public class AuthorizationHandler {
 
   int status;
   int numDocs;
-  Map urlsByIdentity;
+  private Map parseMap;
   Map results;
 
   AuthorizationHandler(String xmlBody, Manager manager, PrintWriter out) {
@@ -71,7 +65,13 @@ public class AuthorizationHandler {
    * Writes an answer for each resource from the request.
    */
   public void handleDoPost() {
-    parse();
+    AuthParser authParser = new AuthParser(xmlBody);
+    authParser.parse();
+    status = authParser.getStatus();
+    if (status == ConnectorMessageCode.ERROR_PARSING_XML_REQUEST) {
+      ServletUtil.writeResponse(out,status);
+    }
+    parseMap = authParser.getParseMap();
     computeResultSet();
     generateXml();
     return;
@@ -113,7 +113,7 @@ public class AuthorizationHandler {
   }
 
   private void computeResultSet() {
-    for (Iterator i = urlsByIdentity.entrySet().iterator(); i.hasNext();) {
+    for (Iterator i = parseMap.entrySet().iterator(); i.hasNext();) {
       Entry e = (Entry) i.next();
       String identity = (String) e.getKey();
       Map urlsByConnector = (Map) e.getValue();
@@ -146,194 +146,7 @@ public class AuthorizationHandler {
     }
   }
 
-  /**
-   * Parse the XML into a map of maps of maps.
-   * 
-   * First-level map is keyed by identity - the value contains all the urls
-   * governed by the same identity.
-   * 
-   * Second-level map is keyed by connector name - the value is all the urls
-   * that come from the same connector.
-   * 
-   * Third-level map is keyed by docid - the value is a ParsedUrl.
-   * 
-   * In practice, for now, it is unlikely that the same connector will show up
-   * under more than one identity. In fact, the most likely case is that the two
-   * top-level maps have only one item.
-   * 
-   * Visibility is default to facilitate testing
-   */
-  void parse() {
-    Element root = ServletUtil.parseAndGetRootElement(xmlBody,
-        ServletUtil.XMLTAG_AUTHZ_QUERY);
 
-    if (root == null) {
-      ServletUtil.writeResponse(out,
-          ConnectorMessageCode.ERROR_PARSING_XML_REQUEST);
-      return;
-    }
 
-    NodeList queryList = root
-        .getElementsByTagName(ServletUtil.XMLTAG_CONNECTOR_QUERY);
-
-    if (queryList.getLength() == 0) {
-      LOGGER.log(Level.WARNING, ServletUtil.LOG_RESPONSE_EMPTY_NODE);
-      return;
-    }
-
-    status = ConnectorMessageCode.SUCCESS;
-    numDocs = 0;
-    urlsByIdentity = new HashMap();
-
-    for (int i = 0; i < queryList.getLength(); ++i) {
-      Element queryItem = (Element) queryList.item(i);
-      parseIdentityGroup(queryItem);
-      if (status != ConnectorMessageCode.SUCCESS) {
-        return;
-      }
-    }
-
-    if (numDocs == 0) {
-      LOGGER.warning("No docid available.");
-      return;
-    }
-  }
-
-  private void parseIdentityGroup(Element queryItem) {
-    String identity = ServletUtil.getFirstElementByTagName(queryItem,
-        ServletUtil.XMLTAG_IDENTITY);
-    String source = ServletUtil.getFirstAttribute(queryItem,
-        ServletUtil.XMLTAG_IDENTITY, "source");
-    List resources = ServletUtil.getAllElementsByTagName(queryItem,
-        ServletUtil.XMLTAG_RESOURCE);
-    if (resources.isEmpty()) {
-      status = ConnectorMessageCode.RESPONSE_NULL_RESOURCE;
-      return;
-    }
-
-    Map urlsByConnector = (Map) urlsByIdentity.get(identity);
-    if (urlsByConnector == null) {
-      urlsByConnector = new HashMap();
-      urlsByIdentity.put(identity, urlsByConnector);
-    }
-
-    for (Iterator iter = resources.iterator(); iter.hasNext();) {
-      parseResource(urlsByConnector, iter);
-    }
-  }
-
-  private void parseResource(Map urlsByConnector, Iterator iter) {
-    String url = (String) iter.next();
-    ParsedUrl p = new ParsedUrl(url);
-    if (p.getStatus() == ConnectorMessageCode.SUCCESS) {
-      Map urlsByDocid = (Map) urlsByConnector.get(p.getConnectorName());
-      if (urlsByDocid == null) {
-        urlsByDocid = new HashMap();
-        urlsByConnector.put(p.getConnectorName(), urlsByDocid);
-      }
-      urlsByDocid.put(p.getDocid(), p);
-      numDocs++;
-    } else {
-      status = p.getStatus();
-    }
-  }
-
-  /**
-   * Return number of identities found. Just for testing.
-   * 
-   * @return number of identities
-   */
-  int countParsedIdentities() {
-    return urlsByIdentity.size();
-  }
-
-  /**
-   * Return number of connector names found for a given identity. Just for
-   * testing.
-   * 
-   * @return number of identities
-   */
-  int countConnectorsForIdentity(String identity) {
-    Map urlsByConnector = (Map) urlsByIdentity.get(identity);
-    if (urlsByConnector == null) {
-      return 0;
-    }
-    return urlsByConnector.size();
-  }
-
-  /**
-   * Return number of urls found for a given identity-connector pair. Just for
-   * testing.
-   * 
-   * @return number of identities
-   */
-  int countUrlsForIdentityConnectorPair(String identity, String connectorName) {
-    Map urlsByConnector = (Map) urlsByIdentity.get(identity);
-    if (urlsByConnector == null) {
-      return 0;
-    }
-    Map urlsByDocid = (Map) urlsByConnector.get(connectorName);
-    if (urlsByDocid == null) {
-      return 0;
-    }
-    return urlsByDocid.size();
-  }
-
-  static class ParsedUrl {
-    private static final Pattern URL_PATTERN = Pattern.compile("^"
-        + ServletUtil.PROTOCOL + "([^./]*)(?:[^/]*)?"
-        + "(?:/[dD][oO][cC]\\?(?:[^&]*&)*[dD][oO][cC][iI][dD]=([^&]*))?");
-
-    private int urlStatus = ConnectorMessageCode.SUCCESS;
-    private String url = null;
-    private String connectorName = null;
-    private String docid = null;
-
-    ParsedUrl(String urlparam) {
-
-      url = urlparam;
-      Matcher matcher = URL_PATTERN.matcher(url);
-      boolean found = matcher.find();
-
-      if (!found) {
-        urlStatus = ConnectorMessageCode.RESPONSE_NULL_CONNECTOR;
-        return;
-      } else {
-        try {
-          connectorName = matcher.group(1);
-        } catch (IllegalStateException e) {
-          // just leave the connectorName null - we'll catch the error later
-        }
-        try {
-          docid = matcher.group(2);
-        } catch (IllegalStateException e) {
-          // just leave the docid null - we'll catch the error later
-        }
-      }
-
-      if (docid == null || docid.length() < 1) {
-        urlStatus = ConnectorMessageCode.RESPONSE_NULL_DOCID;
-      }
-      if (connectorName == null || connectorName.length() < 1) {
-        urlStatus = ConnectorMessageCode.RESPONSE_NULL_CONNECTOR;
-      }
-    }
-
-    public String getConnectorName() {
-      return connectorName;
-    }
-
-    public String getDocid() {
-      return docid;
-    }
-
-    public int getStatus() {
-      return urlStatus;
-    }
-
-    public String getUrl() {
-      return url;
-    }
-
-  }
+  
 }

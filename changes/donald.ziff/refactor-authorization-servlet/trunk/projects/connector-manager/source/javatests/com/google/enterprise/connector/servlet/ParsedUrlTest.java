@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.enterprise.connector.servlet.AuthorizationHandler.ParsedUrl;
-
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
