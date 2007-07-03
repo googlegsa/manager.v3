@@ -86,52 +86,72 @@ public class AuthorizationTest extends TestCase {
       "<AuthorizationQuery>\n"
           + "<ConnectorQuery>\n"
           + "  <Identity source=\"connector\">username</Identity>\n"
-          + "  <Resource>googleconnector://connector1.localhost/doc?docid=doc1a</Resource>\n"
-          + "  <Resource>googleconnector://connector2.localhost/doc?docid=doc2a</Resource>\n"
-          + "  <Resource>googleconnector://connector1.localhost/doc?docid=doc1b</Resource>\n"
-          + "  <Resource>googleconnector://connector2.localhost/doc?docid=doc2b</Resource>\n"
+          + "  <Resource>googleconnector://connector1.localhost/" +
+                "doc?docid=doc1a</Resource>\n"
+          + "  <Resource>googleconnector://connector2.localhost/" +
+                "doc?docid=doc2a</Resource>\n"
+          + "  <Resource>googleconnector://connector1.localhost/" +
+                "doc?docid=doc1b</Resource>\n"
+          + "  <Resource>googleconnector://connector2.localhost/" +
+                "doc?docid=doc2b</Resource>\n"
           + "</ConnectorQuery>\n"
           + "<ConnectorQuery>\n"
           + "  <Identity source=\"connector\">username2</Identity>\n"
-          + "  <Resource>googleconnector://connector1.localhost/doc?docid=doc1c</Resource>\n"
-          + "  <Resource>googleconnector://connector2.localhost/doc?docid=doc2c</Resource>\n"
-          + "  <Resource>googleconnector://connector1.localhost/doc?docid=doc1d</Resource>\n"
-          + "  <Resource>googleconnector://connector2.localhost/doc?docid=doc2d</Resource>\n"
-          + "</ConnectorQuery>\n" + "</AuthorizationQuery>\n" + "";
+          + "  <Resource>googleconnector://connector1.localhost/" +
+                "doc?docid=doc1c</Resource>\n"
+          + "  <Resource>googleconnector://connector2.localhost/doc?" +
+                "docid=doc2c</Resource>\n"
+          + "  <Resource>googleconnector://connector1.localhost/doc?" +
+                "docid=doc1d</Resource>\n"
+          + "  <Resource>googleconnector://connector2.localhost/doc?" +
+                "docid=doc2d</Resource>\n"
+          + "</ConnectorQuery>\n" + "</AuthorizationQuery>\n";
   private static final String ONE_IDENTITY_TWO_QUERIES =
       "<AuthorizationQuery>\n"
           + "<ConnectorQuery>\n"
           + "  <Identity source=\"connector\">username</Identity>\n"
-          + "  <Resource>googleconnector://connector1.localhost/doc?docid=doc1a</Resource>\n"
-          + "  <Resource>googleconnector://connector2.localhost/doc?docid=doc2a</Resource>\n"
-          + "  <Resource>googleconnector://connector1.localhost/doc?docid=doc1b</Resource>\n"
-          + "  <Resource>googleconnector://connector2.localhost/doc?docid=doc2b</Resource>\n"
+          + "  <Resource>googleconnector://connector1.localhost/" +
+                "doc?docid=doc1a</Resource>\n"
+          + "  <Resource>googleconnector://connector2.localhost/" +
+                "doc?docid=doc2a</Resource>\n"
+          + "  <Resource>googleconnector://connector1.localhost/" +
+                "doc?docid=doc1b</Resource>\n"
+          + "  <Resource>googleconnector://connector2.localhost/" +
+                "doc?docid=doc2b</Resource>\n"
           + "</ConnectorQuery>\n"
           + "<ConnectorQuery>\n"
           + "  <Identity source=\"connector\">username</Identity>\n"
-          + "  <Resource>googleconnector://connector1.localhost/doc?docid=doc1c</Resource>\n"
-          + "  <Resource>googleconnector://connector2.localhost/doc?docid=doc2c</Resource>\n"
-          + "  <Resource>googleconnector://connector1.localhost/doc?docid=doc1d</Resource>\n"
-          + "  <Resource>googleconnector://connector2.localhost/doc?docid=doc2d</Resource>\n"
-          + "</ConnectorQuery>\n" + "</AuthorizationQuery>\n" + "";
+          + "  <Resource>googleconnector://connector1.localhost/" +
+                "doc?docid=doc1c</Resource>\n"
+          + "  <Resource>googleconnector://connector2.localhost/" +
+                "doc?docid=doc2c</Resource>\n"
+          + "  <Resource>googleconnector://connector1.localhost/" +
+                "doc?docid=doc1d</Resource>\n"
+          + "  <Resource>googleconnector://connector2.localhost/" +
+                "doc?docid=doc2d</Resource>\n"
+          + "</ConnectorQuery>\n" + "</AuthorizationQuery>\n";
   private static final String TWO_IDENTITIES_MULTIPLE_QUERIES =
       "<AuthorizationQuery>\n"
           + "<ConnectorQuery>\n"
           + "  <Identity source=\"connector\">username1</Identity>\n"
-          + "  <Resource>googleconnector://connector1.localhost/doc?docid=doc1a</Resource>\n"
+          + "  <Resource>googleconnector://connector1.localhost/" +
+                "doc?docid=doc1a</Resource>\n"
           + "</ConnectorQuery>\n"
           + "<ConnectorQuery>\n"
           + "  <Identity source=\"connector\">username2</Identity>\n"
-          + "  <Resource>googleconnector://connector2.localhost/doc?docid=doc2a</Resource>\n"
+          + "  <Resource>googleconnector://connector2.localhost/" +
+                "doc?docid=doc2a</Resource>\n"
           + "</ConnectorQuery>\n"
           + "<ConnectorQuery>\n"
           + "  <Identity source=\"connector\">username1</Identity>\n"
-          + "  <Resource>googleconnector://connector1.localhost/doc?docid=doc1b</Resource>\n"
+          + "  <Resource>googleconnector://connector1.localhost/" +
+                "doc?docid=doc1b</Resource>\n"
           + "</ConnectorQuery>\n"
           + "<ConnectorQuery>\n"
           + "  <Identity source=\"connector\">username2</Identity>\n"
-          + "  <Resource>googleconnector://connector2.localhost/doc?docid=doc2b</Resource>\n"
-          + "</ConnectorQuery>\n" + "</AuthorizationQuery>\n" + "";
+          + "  <Resource>googleconnector://connector2.localhost/" +
+                "doc?docid=doc2b</Resource>\n"
+          + "</ConnectorQuery>\n" + "</AuthorizationQuery>\n";
 
   private static final String MALFORMED_XML =
       "<AuthorizationQuery>\n" + "<ConnectorQuery>\n"
@@ -140,7 +160,8 @@ public class AuthorizationTest extends TestCase {
 
   public void testParsing() {
     {
-      AuthorizationParser authorizationParser = new AuthorizationParser(TEST_XML1);
+      AuthorizationParser authorizationParser = 
+        new AuthorizationParser(TEST_XML1);
       authorizationParser.parse();
       Assert.assertEquals(2, authorizationParser.countParsedIdentities());
       Assert.assertEquals(1, authorizationParser
@@ -163,7 +184,8 @@ public class AuthorizationTest extends TestCase {
           .countUrlsForIdentityConnectorPair("username", "connector2"));
     }
     {
-      AuthorizationParser authorizationParser = new AuthorizationParser(ONE_IDENTITY_TWO_QUERIES);
+      AuthorizationParser authorizationParser = 
+        new AuthorizationParser(ONE_IDENTITY_TWO_QUERIES);
       authorizationParser.parse();
       Assert.assertEquals(1, authorizationParser.countParsedIdentities());
       Assert.assertEquals(2, authorizationParser
@@ -182,7 +204,8 @@ public class AuthorizationTest extends TestCase {
           .countUrlsForIdentityConnectorPair("username1", "connector2"));
     }
     {
-      AuthorizationParser authorizationParser = new AuthorizationParser(MALFORMED_XML);
+      AuthorizationParser authorizationParser = 
+        new AuthorizationParser(MALFORMED_XML);
       authorizationParser.parse();
       Assert.assertNull(authorizationParser.getParseMap());
       Assert.assertEquals(ConnectorMessageCode.ERROR_PARSING_XML_REQUEST,
