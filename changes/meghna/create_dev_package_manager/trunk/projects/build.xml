@@ -18,7 +18,7 @@
 	<target name="clean-all">
 		<ant dir="${connector-manager.dir}" target="clean" />
 		<ant dir="${test-connectorA.dir}" target="clean" />
-		<ant dir="${test-connectorB.dir}" target="clean" />		
+		<ant dir="${test-connectorB.dir}" target="clean" />
 	</target>
 
 	<target name="connector-manager">
