@@ -34,37 +34,48 @@ public class AuthorizationTest extends TestCase {
       Logger.getLogger(AuthorizationTest.class.getName());
 
   private static final String TEST_XML1 =
-      "<AuthorizationQuery>\n" + "<ConnectorQuery>\n"
-          + "  <Identity source=\"gsa\">CN=foo</Identity>\n" + "  <Resource>"
-          + ServletUtil.PROTOCOL + "connector1.localhost" + ServletUtil.DOCID
-          + "foo1</Resource>\n" + "  <Resource>" + ServletUtil.PROTOCOL
-          + "connector2.localhost" + ServletUtil.DOCID + "foo2</Resource>\n"
-          + "</ConnectorQuery>\n" + "<ConnectorQuery>\n"
-          + "  <Identity source=\"connector\">username</Identity>\n"
-          + "  <Resource>" + ServletUtil.PROTOCOL + "connector3.localhost"
-          + ServletUtil.DOCID + "foo3</Resource>\n" + "</ConnectorQuery>\n"
-          + "</AuthorizationQuery>";
-
+      "<AuthorizationQuery>\n" + 
+      "<ConnectorQuery>\n" + 
+      "  <Identity source=\"gsa\">CN=foo</Identity>\n" + 
+      "  <Resource>" + ServletUtil.PROTOCOL + "connector1.localhost" +
+         ServletUtil.DOCID + "foo1</Resource>\n" + 
+      "  <Resource>" + ServletUtil.PROTOCOL + "connector2.localhost" +
+         ServletUtil.DOCID + "foo2</Resource>\n" + 
+      "</ConnectorQuery>\n" + 
+      "<ConnectorQuery>\n" + 
+      "  <Identity source=\"connector\">username</Identity>\n" + 
+      "  <Resource>" + ServletUtil.PROTOCOL + "connector3.localhost" +
+         ServletUtil.DOCID + "foo3</Resource>\n" + 
+      "</ConnectorQuery>\n" + 
+      "</AuthorizationQuery>";
+  
   private static final String TEST_XML2 =
-      "<AuthorizationQuery>\n" + "<ConnectorQuery>\n"
-          + "  <Identity source=\"gsa\">CN=foo</Identity>\n" + "  <Resource>"
-          + ServletUtil.PROTOCOL + ".localhost" + ServletUtil.DOCID
-          + "foo1</Resource>\n" + "</ConnectorQuery>\n"
-          + "</AuthorizationQuery>";
+      "<AuthorizationQuery>\n" + 
+      "<ConnectorQuery>\n" + 
+      "  <Identity source=\"gsa\">CN=foo</Identity>\n" + 
+      "  <Resource>" + ServletUtil.PROTOCOL + ".localhost" +
+         ServletUtil.DOCID + "foo1</Resource>\n" + 
+      "</ConnectorQuery>\n" + 
+      "</AuthorizationQuery>";
 
   private static final String TEST_XML3 =
-      "<AuthorizationQuery>\n" + "<ConnectorQuery>\n"
-          + "  <Identity source=\"gsa\">CN=foo</Identity>\n" + "  <Resource>"
-          + ServletUtil.PROTOCOL + "Connector3.localhost"
-          + "/doc?DOC=foo1</Resource>\n" + "</ConnectorQuery>\n"
-          + "</AuthorizationQuery>";
+      "<AuthorizationQuery>\n" + 
+      "<ConnectorQuery>\n" + 
+      "  <Identity source=\"gsa\">CN=foo</Identity>\n" + 
+      "  <Resource>" + ServletUtil.PROTOCOL + "Connector3.localhost" +
+         "/doc?DOC=foo1</Resource>\n" + 
+      "</ConnectorQuery>\n" + 
+      "</AuthorizationQuery>";
 
   private static final String TEST_XML4 =
-      "<AuthorizationQuery>\n" + "<ConnectorQuery>\n"
-          + "  <Identity source=\"gsa\"></Identity>\n" + "  <Resource>"
-          + ServletUtil.PROTOCOL + "connector1.localhost" + ServletUtil.DOCID
-          + "foo1</Resource>\n" + "</ConnectorQuery>\n"
-          + "</AuthorizationQuery>";
+      "<AuthorizationQuery>\n" + 
+      "<ConnectorQuery>\n" + 
+      "  <Identity source=\"gsa\"></Identity>\n" + 
+      "  <Resource>" + ServletUtil.PROTOCOL + "connector1.localhost" +
+         ServletUtil.DOCID + "foo1</Resource>\n" + 
+      "</ConnectorQuery>\n" + 
+      "</AuthorizationQuery>";
+
 
   private static final String TEST_XML5 =
       "<AuthorizationQuery>\n" + "<ConnectorQuery>\n"

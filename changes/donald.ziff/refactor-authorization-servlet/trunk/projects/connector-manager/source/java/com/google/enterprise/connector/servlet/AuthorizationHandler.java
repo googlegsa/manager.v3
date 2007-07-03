@@ -70,6 +70,7 @@ public class AuthorizationHandler {
     status = authorizationParser.getStatus();
     if (status == ConnectorMessageCode.ERROR_PARSING_XML_REQUEST) {
       ServletUtil.writeResponse(out,status);
+      return;
     }
     parseMap = authorizationParser.getParseMap();
     computeResultSet();
