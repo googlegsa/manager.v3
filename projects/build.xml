@@ -78,6 +78,62 @@
 			<zipfileset dir="${connector-manager.dir}/dist/connector-manager" includes="connector-manager.war"/>
 			<zipfileset dir="${connector-manager.dir}" includes="README,LICENSE"/>
 		</zip>
+		<checksum file="${downloads.dir}/connector-manager-${version}.tar.gz"/>
+		<checksum file="${downloads.dir}/connector-manager-${version}.zip"/>		
+		<tar destfile="${downloads.dir}/connector-manager-dev-${version}.tar">
+			<tarfileset dir=".">
+				<include name="build.xml"/>
+			</tarfileset>
+			<tarfileset dir="${connector-manager.dir}"
+				prefix="${connector-manager.dir}">
+				<include name="LICENSE"/>
+				<include name="README"/>
+				<include name="build.xml"/>
+				<include name="doc/**/*"/>
+				<include name="etc/**/*"/>
+				<include name="source/**/*"/>
+				<include name="testdata/**/*"/>
+				<include name="third-party/**/*"/>
+				<include name=".classpath"/>
+				<include name=".project"/> 
+			</tarfileset>
+			<tarfileset dir="${test-connectorA.dir}"
+				prefix="${test-connectorA.dir}">
+				<include name="config/**/*"/>
+				<include name="source/**/*"/>
+				<include name="build.xml"/>
+				<include name=".classpath"/>
+				<include name=".project"/>
+			</tarfileset>
+			<tarfileset dir="${test-connectorB.dir}"
+				prefix="${test-connectorB.dir}">
+				<include name="config/**/*"/>
+				<include name="source/**/*"/>
+				<include name="build.xml"/>
+				<include name=".classpath"/>
+				<include name=".project"/>
+			</tarfileset>
+		</tar>
+		<gzip zipfile="${downloads.dir}/connector-manager-dev-${version}.tar.gz" 
+			src="${downloads.dir}/connector-manager-dev-${version}.tar"/>		
+		<zip destfile="${downloads.dir}/connector-manager-dev-${version}.zip">
+			<zipfileset dir="." includes="build.xml"/>
+			<zipfileset dir="${connector-manager.dir}" 
+				includes="LICENSE,README,build.xml,doc/**/*,etc/**/*,
+				source/**/*,testdata/**/*,third-party/**/*,
+				.classpath,.project"
+				prefix="${connector-manager.dir}"/>
+			<zipfileset dir="${test-connectorA.dir}" 
+				includes="config/**/,source/**/,build.xml
+				.classpath,.project" 
+				prefix="${test-connectorA.dir}"/>
+			<zipfileset dir="${test-connectorB.dir}" 
+				includes="config/**/,source/**/,build.xml
+				.classpath,.project" 
+				prefix="${test-connectorB.dir}"/>
+		</zip>
+		<checksum file="${downloads.dir}/connector-manager-dev-${version}.tar.gz"/>
+		<checksum file="${downloads.dir}/connector-manager-dev-${version}.zip"/>
 	</target>
 
 	<target name="install-test-connectorA" depends="test-connectorA,make-install-dir">
@@ -102,6 +158,6 @@
 	<target name="install-all"
 		depends="install-test-connectorA,install-test-connectorB,install-connector-manager"/>
 
-	<target name="everything" depends="clean-all,build-all,test-all,install-all"/>
+	<target name="everything" depends="clean-all,build-all,test-all,install-all,download-connector-manager"/>
 
 </project>
