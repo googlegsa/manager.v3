@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.spi;
 
-import com.google.enterprise.connector.spiimpl.DocumentListImpl;
-
 /**
  * Interface that represents a list of documents to be traversed. This type is
  * the return type of <code>{@link TraversalManager}.startTraversal()</code>
@@ -88,7 +86,7 @@ import com.google.enterprise.connector.spiimpl.DocumentListImpl;
  * implemented by a call to a foreign repository that may itself throw an
  * exception.
  */
-public interface DocumentList extends DocumentListImpl {
+public interface DocumentList extends Document, Property {
 
   /**
    * Moves the document cursor down one row from its current position. The
