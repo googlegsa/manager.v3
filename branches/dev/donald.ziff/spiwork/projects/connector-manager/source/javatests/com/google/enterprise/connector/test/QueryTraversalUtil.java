@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,21 +14,15 @@
 
 package com.google.enterprise.connector.test;
 
-import com.google.enterprise.connector.spi.Property;
-import com.google.enterprise.connector.spi.PropertyMap;
-import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.PropertyMapList;
 import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.spi.Value;
-import com.google.enterprise.connector.spi.ValueType;
-
-import java.util.Iterator;
+import com.google.enterprise.connector.spi.TraversalManager;
 
 /**
  * This class provides a simple end-to-end test for an SPI implementation's
- * TraversalManager. The way this class uses the SPI's traversal calls is
- * close to the way that the connector manager does, but this is a single
+ * TraversalManager. The way this class uses the SPI's traversal calls is close
+ * to the way that the connector manager does, but this is a single
  * self-contained class. See the comments to understand how the connector
  * manager differs from this simple test.
  */
@@ -39,7 +33,7 @@ public class QueryTraversalUtil {
 
     queryTraversalManager.setBatchHint(batchHint);
 
-    PropertyMapList propertyMapList = queryTraversalManager.startTraversal();
+    DocumentList documentList = queryTraversalManager.startTraversal();
     // The real connector manager will not always start from the beginning.
     // It will start from the beginning if it receives an explicit admin
     // command to do so, or if it thinks that it has never run this connector
@@ -48,7 +42,7 @@ public class QueryTraversalUtil {
     // the connector. If it can find no stored checkpoint, it assumes that
     // it has never run this connector before and starts from the beginning,
     // as here.
-    if (propertyMapList == null) {
+    if (documentList == null) {
       // in this test program, we will stop in this situation. The real
       // connector manager might wait for a while, then try again
       return;
@@ -56,10 +50,8 @@ public class QueryTraversalUtil {
 
     while (true) {
       int counter = 0;
-      PropertyMap pm = null;
-      for (Iterator iter = propertyMapList.iterator(); iter.hasNext();) {
-        pm = (PropertyMap) iter.next();
-        processOneDocument(pm);
+      while (documentList.nextDocument()) {
+        processOneDocument(documentList);
         counter++;
         if (counter == batchHint) {
           // this test program only takes batchHint results from each
@@ -75,8 +67,8 @@ public class QueryTraversalUtil {
         break;
       }
 
-      String checkPointString = queryTraversalManager.checkpoint(pm);
-      propertyMapList = queryTraversalManager.resumeTraversal(checkPointString);
+      String checkPointString = documentList.checkpoint();
+      documentList = queryTraversalManager.resumeTraversal(checkPointString);
       // the real connector manager will call checkpoint (as here) as soon
       // as possible after processing the last property map it wants to process.
       // It would then store the checkpoint string it received in persistent
@@ -89,50 +81,25 @@ public class QueryTraversalUtil {
     }
   }
 
-  public static void processOneDocument(PropertyMap pm) throws RepositoryException {
-    Property nameProp = pm.getProperty(SpiConstants.PROPNAME_DOCID);
+  public static void processOneDocument(DocumentList documentList)
+      throws RepositoryException {
+
     // every document should have a name
-    String name = nameProp.getValue().getString();
+    String name = (documentList.findProperty(SpiConstants.PROPNAME_DOCID) && documentList
+        .nextValue()) ? documentList.getValue().toString() : null;
 
-    Property contentUrlProp = pm
-        .getProperty(SpiConstants.PROPNAME_CONTENTURL);
+    String contentSnippet = (documentList
+        .findProperty(SpiConstants.PROPNAME_CONTENTURL) && documentList
+        .nextValue()) ? documentList.getValue().toString() : null;
 
-    Property contentProp = null;
-    String contentSnippet = "...no content...";
-    // contentSnippet is just for display in this test
-
-    if (contentUrlProp != null) {
-      contentSnippet = contentUrlProp.getValue().getString();
-      // if a contentUrl is present, the content manager will
-      // just pass it to the GSA. In this test, we print it out
-    } else {
+    if (contentSnippet == null) {
       // if there is no contentUrl, the connector manager will ask for
       // the content property and will base-64 encode it. Here we will
       // only access the first so many characers of the content and
       // print it out
-      contentProp = pm.getProperty(SpiConstants.PROPNAME_CONTENT);
-      if (contentProp != null) {
-        Value contentVal = contentProp.getValue();
-        ValueType contentType = contentVal.getType();
-        if (contentType == ValueType.STRING) {
-          String fullContent = contentVal.getString();
-          int snippetLength = 20;
-          if (fullContent == null) {
-            contentSnippet = "...null content...";
-          } else if (fullContent.length() == 0) {
-            contentSnippet = "...empty content...";
-          } else if (fullContent.length() > snippetLength) {
-            contentSnippet = fullContent.substring(0, snippetLength);
-          } else {
-            contentSnippet = fullContent;
-          }
-        } else if (contentType == ValueType.BINARY) {
-          contentSnippet = "...binary content...";
-        } else {
-          throw new IllegalArgumentException("content value is "
-              + contentType + ": it should be string or binary ");
-        }
-      }
+      contentSnippet = (documentList
+          .findProperty(SpiConstants.PROPNAME_CONTENT) && documentList
+          .nextValue()) ? documentList.getValue().toString() : "no content";
     }
     // here the real content manager would format the document as
     // required by the feed API and send it to the GSA.

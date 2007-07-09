@@ -18,12 +18,12 @@ import com.google.enterprise.connector.common.Base64FilterInputStream;
 import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.servlet.ServletUtil;
-import com.google.enterprise.connector.spi.Property;
-import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.SimpleValue;
 import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.spiimpl.BinaryValue;
+import com.google.enterprise.connector.spiimpl.DateValue;
+import com.google.enterprise.connector.spiimpl.Document;
+import com.google.enterprise.connector.spiimpl.ValueImpl;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -38,11 +38,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -110,7 +108,6 @@ public class DocPusher implements Pusher {
   private static final String XML_HEADER = "header";
   private static final String XML_DATASOURCE = "datasource";
   private static final String XML_FEEDTYPE = "feedtype";
-  private static final String XML_DATA = "data";
   private static final String XML_GROUP = "group";
   private static final String XML_RECORD = "record";
   private static final String XML_METADATA = "metadata";
@@ -210,7 +207,7 @@ public class DocPusher implements Pusher {
    * Generate the record tag for the xml data.
    */
   private InputStream xmlWrapRecord(String searchUrl, String displayUrl,
-      String lastModified, InputStream content, String mimetype, PropertyMap pm) {
+      String lastModified, InputStream content, String mimetype, Document document) {
     // build prefix
     StringBuffer prefix = new StringBuffer();
     prefix.append("<");
@@ -227,10 +224,13 @@ public class DocPusher implements Pusher {
       appendAttrValuePair(XML_LAST_MODIFIED, lastModified, prefix);
     }
     try {
-      Property isPublic = pm.getProperty(SpiConstants.PROPNAME_ISPUBLIC);
-      if (isPublic != null
-          && getBoolean(isPublic.getValue().getString()) == false) {
-        appendAttrValuePair(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD, prefix);
+      if (document.findProperty(SpiConstants.PROPNAME_ISPUBLIC)
+          && document.nextValue()) {
+        ValueImpl v = (ValueImpl) document.getValue();
+        boolean isPublic = v.toBoolean();
+        if (!isPublic) {
+          appendAttrValuePair(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD, prefix);
+        }
       }
     } catch (RepositoryException e) {
       LOGGER.log(Level.WARNING, "Problem getting ispublic property.", e);
@@ -239,7 +239,7 @@ public class DocPusher implements Pusher {
           + " Treat as a public doc", e);
     }
     prefix.append(">\n");
-    xmlWrapMetadata(prefix, pm);
+    xmlWrapMetadata(prefix, document);
     if (feedType != XML_FEED_METADATA_AND_URL) {
       prefix.append("<");
       prefix.append(XML_CONTENT);
@@ -273,29 +273,20 @@ public class DocPusher implements Pusher {
    * Wrap the metadata and append it to the string buffer. Empty metadata
    * properties are not appended. 
    * @param buf string buffer
-   * @param pm property map
+   * @param document property map
    */
-  private static void xmlWrapMetadata(StringBuffer buf, PropertyMap pm) {
-    Iterator i;
-    try {
-      i = pm.getProperties();
-    } catch (RepositoryException e) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
-          "Swallowing exception while scanning properties", e);
-      return;
-    }
-    if (!i.hasNext()) {
+  private static void xmlWrapMetadata(StringBuffer buf, Document document) {
+
+    if (!document.nextProperty()) {
       return;
     }
 
     buf.append(xmlWrapStart(XML_METADATA));
     buf.append("\n");
-
-    while (i.hasNext()) {
-      Property p = (Property) i.next();
+    do {
       String name;
       try {
-        name = p.getName();
+        name = document.getPropertyName();
       } catch (RepositoryException e) {
         LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
             "xmlWrapMetadata",
@@ -303,37 +294,32 @@ public class DocPusher implements Pusher {
         continue;
       }
       if (!propertySkipSet.contains(name)) {
-        wrapOneProperty(buf, p);
+        wrapOneProperty(buf, document);
       }
-    }
+    } while (document.nextProperty());
     buf.append(xmlWrapEnd(XML_METADATA));
-  }
+  } 
 
   /**
-   * Wrap a single Property and append to string buffer. Does nothing if
-   * the Property's value is null or zero-length. 
+   * Wrap a single Property and append to string buffer. Does nothing if the
+   * Property's value is null or zero-length.
+   * 
    * @param buf string buffer
-   * @param p Property
+   * @param document Property
    */
-  private static void wrapOneProperty(StringBuffer buf, Property p) {
+  private static void wrapOneProperty(StringBuffer buf, Document document) {
     String name;
     try {
-      name = p.getName();
+      name = document.getPropertyName();
     } catch (RepositoryException e) {
       LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
           "Swallowing exception while scanning values", e);
       return;
     }
-    Iterator values;
-    try {
-      values = p.getValues();
-    } catch (RepositoryException e) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
-          "Swallowing exception while scanning values", e);
+   // if property is null, don't encode it; GSA won't process 
+    if (!document.nextValue()) {
       return;
     }
-    // if property is null, don't encode it; GSA won't process 
-    if (!values.hasNext()) return;
     
     /* in case there are only null values, we want to "roll back" the
      * XML_META tag. So save our current length:
@@ -349,29 +335,25 @@ public class DocPusher implements Pusher {
     
     // mark the beginning of the values:
     int indexValuesStart = buf.length();
-    while (values.hasNext()) {
-      Value value = (Value) values.next();
-      String valString = "";
+    do  {
+      ValueImpl value = null;
       try {
-        valString = value.getString();
-      } catch (IllegalArgumentException e) {
-        LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
-            "xmlWrapMetadata", "Swallowing exception while accessing property "
-                + name, e);
-        continue;
+        value = (ValueImpl) document.getValue();
       } catch (RepositoryException e) {
         LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
             "xmlWrapMetadata", "Swallowing exception while accessing property "
                 + name, e);
         continue;
       }
+      String valString = "";
+      valString = value.toFeedXml();
       if (valString.length() == 0) {
         continue;
       }
       buf.append(delimiter);
       XmlEncodeAttrValue(valString, buf);
       delimiter = ", ";
-    }
+    } while (document.nextValue());
     /* If there were no additions to buf (because of empty values), 
      * roll back to before the XML_META tag
      */
@@ -385,59 +367,75 @@ public class DocPusher implements Pusher {
   /*
    * Gets the Calendar value for a given property.
    */
-  private static Calendar getCalendarAndThrow(PropertyMap pm, String name)
+  private static String getCalendarAndThrow(Document document, String name)
       throws IllegalArgumentException, RepositoryException {
-    Calendar result = null;
-    Value v = getValueAndThrow(pm, name);
-    result = v.getDate();
+    String result = null;
+    ValueImpl v = getValueAndThrow(document, name);
+    if (v instanceof DateValue) {
+      result = ((DateValue) v).toRfc822();
+    } else {
+      result = v.toFeedXml();
+    }
     return result;
   }
 
   /*
    * Gets the String value for a given property.
    */
-  private static String getStringAndThrow(PropertyMap pm, String name)
+  private static String getStringAndThrow(Document document, String name)
       throws IllegalArgumentException, RepositoryException {
     String result = null;
-    Value v = getValueAndThrow(pm, name);
+    ValueImpl v = getValueAndThrow(document, name);
     if (v == null) {
       return null;
     }
-    result = v.getString();
+    result = v.toFeedXml();
     return result;
   }
 
   /*
    * Gets the InputStream value for a given property.
    */
-  private static InputStream getStreamAndThrow(PropertyMap pm, String name)
+  private static InputStream getStreamAndThrow(Document document, String name)
       throws RepositoryException {
     InputStream result = null;
-    Value v = getValueAndThrow(pm, name);
+    ValueImpl v = getValueAndThrow(document, name);
     if (v == null) {
       return null;
     }
-    result = v.getStream();
+    if (v instanceof BinaryValue) {
+      result = ((BinaryValue) v).getInputStream();
+    } else {
+      String s = v.toString();
+      byte[] bytes;
+      try {
+        bytes = s.getBytes("UTF-8");
+      } catch (UnsupportedEncodingException e) {
+        e.printStackTrace();
+        result = null;
+        return result;
+      }
+      result = new ByteArrayInputStream(bytes);
+    }
     return result;
   }
 
-  private static Value getValueAndThrow(PropertyMap pm, String name)
+  private static ValueImpl getValueAndThrow(Document document, String name)
       throws RepositoryException {
-    Property prop = pm.getProperty(name);
-    if (prop == null) {
-      return null;
+    ValueImpl v = null;
+    if (document.findProperty(name) && document.nextValue()) {
+      v = (ValueImpl) document.getValue();
     }
-    Value v = prop.getValue();
     return v;
   }
 
   /*
    * Gets the value for a given property.
    */
-  private static String getOptionalString(PropertyMap pm, String name) {
+  private static String getOptionalString(Document document, String name) {
     String result = null;
     try {
-      result = getStringAndThrow(pm, name);
+      result = getStringAndThrow(document, name);
     } catch (IllegalArgumentException e) {
       LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
           "getOptionalString", "Swallowing exception while accessing " + name,
@@ -453,10 +451,10 @@ public class DocPusher implements Pusher {
   /*
    * Gets the value for a given property.
    */
-  private static String getRequiredString(PropertyMap pm, String name) {
+  private static String getRequiredString(Document document, String name) {
     String result = null;
     try {
-      result = getStringAndThrow(pm, name);
+      result = getStringAndThrow(document, name);
     } catch (IllegalArgumentException e) {
       LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
           "getRequiredString",
@@ -474,10 +472,10 @@ public class DocPusher implements Pusher {
   /*
    * Gets the value for a given property.
    */
-  private static InputStream getOptionalStream(PropertyMap pm, String name) {
+  private static InputStream getOptionalStream(Document document, String name) {
     InputStream result = null;
     try {
-      result = getStreamAndThrow(pm, name);
+      result = getStreamAndThrow(document, name);
     } catch (IllegalArgumentException e) {
       LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
           "getOptionalStream", "Swallowing exception while accessing " + name,
@@ -493,7 +491,7 @@ public class DocPusher implements Pusher {
   /*
    * Builds the xml string for a given property map.
    */
-  protected InputStream buildXmlData(PropertyMap pm, String connectorName) {
+  protected InputStream buildXmlData(Document document, String connectorName) {
     // build prefix
     StringBuffer prefix = new StringBuffer();
     prefix.append(XML_START);
@@ -517,7 +515,7 @@ public class DocPusher implements Pusher {
     // build record
     String searchurl = null;
     if (this.feedType == XML_FEED_METADATA_AND_URL) {
-      searchurl = getOptionalString(pm, SpiConstants.PROPNAME_SEARCHURL);
+      searchurl = getOptionalString(document, SpiConstants.PROPNAME_SEARCHURL);
       // check that this looks like a URL
       try {
         URL url = new URL(searchurl);
@@ -527,23 +525,23 @@ public class DocPusher implements Pusher {
         return null;
       }
     } else {
-      String docid = getRequiredString(pm, SpiConstants.PROPNAME_DOCID);
+      String docid = getRequiredString(document, SpiConstants.PROPNAME_DOCID);
       searchurl = constructGoogleConnectorUrl(connectorName, docid);
     }
 
     InputStream encodedContentStream = null;
     if (this.feedType != XML_FEED_METADATA_AND_URL) {
       InputStream contentStream = getNonNullContentStream(
-          getOptionalStream(pm, SpiConstants.PROPNAME_CONTENT));
+          getOptionalStream(document, SpiConstants.PROPNAME_CONTENT));
  
       if (null != contentStream) {
         encodedContentStream = new Base64FilterInputStream(contentStream);
       }
     }
 
-    Calendar lastModified = null;
+    String lastModified = null;
     try {
-      lastModified = getCalendarAndThrow(pm, SpiConstants.PROPNAME_LASTMODIFIED);
+      lastModified = getCalendarAndThrow(document, SpiConstants.PROPNAME_LASTMODIFIED);
     } catch (IllegalArgumentException e) {
       LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "buildXmlData",
           "Swallowing exception while getting "
@@ -553,25 +551,17 @@ public class DocPusher implements Pusher {
           "Swallowing exception while getting "
               + SpiConstants.PROPNAME_LASTMODIFIED, e);
     }
-    String lastModifiedString = null;
-    if (lastModified == null) {
-      // maybe someone supplied a date as a string in some other format
-      lastModifiedString =
-          getOptionalString(pm, SpiConstants.PROPNAME_LASTMODIFIED);
-    } else {
-      lastModifiedString = SimpleValue.calendarToRfc822(lastModified);
-    }
 
-    String mimetype = getOptionalString(pm, SpiConstants.PROPNAME_MIMETYPE);
+    String mimetype = getOptionalString(document, SpiConstants.PROPNAME_MIMETYPE);
     if (mimetype == null) {
       mimetype = SpiConstants.DEFAULT_MIMETYPE;
     }
 
-    String displayUrl = getOptionalString(pm, SpiConstants.PROPNAME_DISPLAYURL);
+    String displayUrl = getOptionalString(document, SpiConstants.PROPNAME_DISPLAYURL);
 
     InputStream recordInputStream =
-        xmlWrapRecord(searchurl, displayUrl, lastModifiedString,
-            encodedContentStream, mimetype, pm);
+        xmlWrapRecord(searchurl, displayUrl, lastModified,
+            encodedContentStream, mimetype, document);
 
     InputStream is =
         stringWrappedInputStream(prefix.toString(), recordInputStream, suffix
@@ -616,7 +606,7 @@ public class DocPusher implements Pusher {
    * 
    * @param connectorName
    * @param docid
-   * @return
+   * @return the connector url
    */
   private static String constructGoogleConnectorUrl(String connectorName, 
       String docid) {
@@ -629,31 +619,12 @@ public class DocPusher implements Pusher {
     return searchurl;
   }
 
-  private void setFeedType(PropertyMap pm) {
-    if (getOptionalString(pm, SpiConstants.PROPNAME_SEARCHURL) != null) {
+  private void setFeedType(Document document) {
+    if (getOptionalString(document, SpiConstants.PROPNAME_SEARCHURL) != null) {
       this.feedType = XML_FEED_METADATA_AND_URL;
     } else {
       this.feedType = XML_FEED_INCREMENTAL;
     }
-  }
-
-  private static boolean getBoolean(String stringValue)
-      throws IllegalArgumentException {
-    if (stringValue.equalsIgnoreCase("t")
-        || stringValue.equalsIgnoreCase("true")
-        || stringValue.equalsIgnoreCase("y")
-        || stringValue.equalsIgnoreCase("yes")
-        || stringValue.equalsIgnoreCase("ok") || stringValue.equals("1")) {
-      return true;
-    }
-    if (stringValue.equalsIgnoreCase("f")
-        || stringValue.equalsIgnoreCase("false")
-        || stringValue.equalsIgnoreCase("n")
-        || stringValue.equalsIgnoreCase("no") || stringValue.equals("0")) {
-      return false;
-    }
-
-    throw new IllegalArgumentException();
   }
 
   // FilterInputStream which "tees" all content to an OutputStream.
@@ -694,13 +665,13 @@ public class DocPusher implements Pusher {
   /**
    * Takes a property map and sends a the feed to the GSA.
    * 
-   * @param pm PropertyMap corresponding to the document.
+   * @param document DocumentList corresponding to the document.
    * @param connectorName The connector name that fed this document
    */
-  public void take(PropertyMap pm, String connectorName) throws PushException {
+  public void take(Document document, String connectorName) throws PushException {
     this.dataSource = connectorName;
-    setFeedType(pm);
-    this.xmlData = buildXmlData(pm, connectorName);
+    setFeedType(document);
+    this.xmlData = buildXmlData(document, connectorName);
     if (this.xmlData == null) {
       LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
           "Skipped this document for feeding, continuing");

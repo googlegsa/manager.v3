@@ -12,21 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.pusher;
+package com.google.enterprise.connector.spi.old;
 
-import com.google.enterprise.connector.spiimpl.Document;
+import com.google.enterprise.connector.spi.RepositoryException;
+
+import java.util.Iterator;
 
 /**
- * Interface for a pusher - something that takes spi documents
- * and sends them along on their way
+ * A handle to a list of documents for indexing.
  */
-public interface Pusher {
-  
+public interface PropertyMapList {
+
   /**
-   * Takes an spi document and pushes it along, presumably to the GSA
-   * @param document A DocumentList
-   * @param connectorName The name of the connector sending the document
+   * Produces an iterator through which query results can be explored. Each
+   * result is a {@link PropertyMap}. This method should only be called once. 
+   * @return Iterator of {@link PropertyMap} objects
+   * @throws RepositoryException if something is wrong with the repository, 
+   * such as no connectivity
    */
-  public void take(Document document, String connectorName) throws PushException;
+  public Iterator iterator() throws RepositoryException;
 
 }

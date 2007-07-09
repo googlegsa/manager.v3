@@ -14,10 +14,10 @@
 
 package com.google.enterprise.connector.jcradaptor;
 
-import com.google.enterprise.connector.spi.Property;
-import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.old.Property;
+import com.google.enterprise.connector.spi.old.PropertyMap;
 
 import java.util.HashMap;
 import java.util.HashSet;

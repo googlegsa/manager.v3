@@ -18,10 +18,10 @@ import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.mock.MockRepositoryProperty;
 import com.google.enterprise.connector.mock.MockRepositoryPropertyList;
 import com.google.enterprise.connector.mock.jcr.MockJcrProperty;
-import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.Value;
-import com.google.enterprise.connector.spi.ValueType;
+import com.google.enterprise.connector.spi.old.Property;
+import com.google.enterprise.connector.spi.old.Value;
+import com.google.enterprise.connector.spi.old.ValueType;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;

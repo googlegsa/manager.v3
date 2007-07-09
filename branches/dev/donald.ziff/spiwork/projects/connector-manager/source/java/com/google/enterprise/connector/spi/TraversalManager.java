@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -63,9 +63,9 @@ package com.google.enterprise.connector.spi;
  * resumeTraversal calls. The Connector Manager will consume as many it chooses,
  * depending on load, schedule and other factors. The Connector Manager
  * guarantees to call checkpoint() supplying the last document it has
- * successfully processed from the PropertyMapList it was using. Thus, the implementor
- * is free to use a query that only returns a small number of results, if that
- * gets better performance.
+ * successfully processed from the PropertyMapList it was using. Thus, the
+ * implementor is free to use a query that only returns a small number of
+ * results, if that gets better performance.
  * <p>
  * For example, to continue the SQL analogy, a query like this could be used:
  * 
@@ -76,14 +76,14 @@ package com.google.enterprise.connector.spi;
  * The <code>setBatchHint</code> method is provided so that the Connector
  * Manager can tell the implementation that it only wants that many results per
  * call. This is a hint - the implementation need not observe it. The
- * implementation is free to return a PropertyMapList with fewer or more results. For
- * example, the traversal may be completely up to date, so perhaps there are no
- * results to return. Or, for internal reasons, the implementation may not want
- * to return the full batchHint number of results. Probably, returning zero
- * results will have impact on scheduling - the Connector Manager may choose to
- * wait longer after receiving zero results before it calls again. But
- * implementations are free to return zero results if they choose. Also, if zero
- * results are returned, the Connector Manager will probably not call
+ * implementation is free to return a PropertyMapList with fewer or more
+ * results. For example, the traversal may be completely up to date, so perhaps
+ * there are no results to return. Or, for internal reasons, the implementation
+ * may not want to return the full batchHint number of results. Probably,
+ * returning zero results will have impact on scheduling - the Connector Manager
+ * may choose to wait longer after receiving zero results before it calls again.
+ * But implementations are free to return zero results if they choose. Also, if
+ * zero results are returned, the Connector Manager will probably not call
  * <code>checkpoint</code> before calling start or resume traversal again.
  * <p>
  * An implementation need not let the Connector Manager store the traversal
@@ -101,12 +101,12 @@ package com.google.enterprise.connector.spi;
  * <ul>
  * <li><code>startTraversal()</code> Clear the internal state. Return the
  * first few documents
- * <li><code>checkpoint(PropertyMap pm)</code> This can be taken as a
- * signal from the Connector Manager that documents have been successfully
- * processed, up to the last one reported. The implementation can now commit a
- * change to external store bringing it up to that document. A null String may
- * be returned, which signals to the Connector Manager that it need not bother
- * to store any state on the implementation's behalf. Or the implementation may
+ * <li><code>checkpoint(PropertyMap pm)</code> This can be taken as a signal
+ * from the Connector Manager that documents have been successfully processed,
+ * up to the last one reported. The implementation can now commit a change to
+ * external store bringing it up to that document. A null String may be
+ * returned, which signals to the Connector Manager that it need not bother to
+ * store any state on the implementation's behalf. Or the implementation may
  * return a diagnostic string.
  * <li><code>resumeTraversal(String checkpoint)</code> Resume traversal
  * according to the internal state of the implementation. The Connector Manager
@@ -152,9 +152,9 @@ package com.google.enterprise.connector.spi;
  * URL. If this is present, then the PROPNAME_CONTENT property should NOT be.
  * <li> {@link SpiConstants}.PROPNAME_CONTENT This property should hold the
  * content of the document. If present, the connector framework will base-64
- * encode the value and present it to the Search Appliance as the primary content to be
- * indexed. If this is present, then the PROPNAME_SEARCHURL property should NOT
- * be.
+ * encode the value and present it to the Search Appliance as the primary
+ * content to be indexed. If this is present, then the PROPNAME_SEARCHURL
+ * property should NOT be.
  * <li> {@link SpiConstants}.PROPNAME_DISPLAYURL If present, this will be used
  * as the primary link on a results page. This should NOT be used with
  * PROPNAME_SEARCHURL.
@@ -167,51 +167,31 @@ public interface TraversalManager {
    * objects starting from the very oldest, or with the smallest IDs, or
    * whatever natural order the implementation prefers. The caller may consume
    * as many or as few of the results as it wants, but it guarantees to call
-   * {@link #checkpoint(PropertyMap)} passing in the last object it has
-   * successfully processed.
-   * @return A PropertyMapList of documents from the repository in natural order, or
-   *         null if there are no documents.
+   * <code>{@link DocumentList#checkpoint()}</code> passing in the last object
+   * it has successfully processed.
+   * 
+   * @return A DocumentList of documents from the repository in natural order,
+   *         or null if there are no documents.
    * @throws RepositoryException if the Repository is unreachable or similar
-   *           exceptional condition.
+   *         exceptional condition.
    */
-  public PropertyMapList startTraversal() 
-    throws RepositoryException;
+  public DocumentList startTraversal() throws RepositoryException;
 
   /**
    * Continues traversal from a supplied checkpoint. The checkPoint parameter
-   * will have been created by a call to the {@link #checkpoint(PropertyMap)}
-   * method. The PropertyMapList object returns objects from the repository in natural
-   * order starting just after the document that was used to create the
-   * checkpoint string.
+   * will have been created by a call to the
+   * <code>{@link DocumentList#checkpoint()}</code> method. The
+   * PropertyMapList object returns objects from the repository in natural order
+   * starting just after the document that was used to create the checkpoint
+   * string.
    * 
    * @param checkPoint String that indicates from where to resume traversal.
-   * @return PropertyMapList object that returns documents starting just after the
+   * @return DocumentList object that returns documents starting just after the
    *         checkpoint, or null if there are no documents.
    * @throws RepositoryException
    */
-  public PropertyMapList resumeTraversal(String checkPoint)
+  public DocumentList resumeTraversal(String checkPoint)
       throws RepositoryException;
-
-  /**
-   * Checkpoints the traversal process. The caller passes in a property map
-   * taken from the {@link PropertyMapList} object that it obtained from either the
-   * startTraversal or resumeTraversal methods. This property map is the last
-   * document that the caller successfully processed. This is NOT necessarily
-   * the last object from the result set - the caller may consume as much or as
-   * little of a result set as it chooses. If the implementation wants the
-   * caller to persist the traversal state, then it should write a string
-   * representation of that state and return it. If the implementation prefers
-   * to maintain state itself, it should use this call as a signal to commit its
-   * state, up to the document passed in.
-   * 
-   * @param pm A property map obtained from a PropertyMapList obtained from either
-   *          {@link #startTraversal()} or
-   *          {@link #resumeTraversal(String)}.
-   * @return A string that can be used by a subsequent call to the
-   *         {@link #resumeTraversal(String)} method.
-   * @throws RepositoryException
-   */
-  public String checkpoint(PropertyMap pm) throws RepositoryException;
 
   /**
    * Sets the preferred batch size. The caller advises the implementation that
