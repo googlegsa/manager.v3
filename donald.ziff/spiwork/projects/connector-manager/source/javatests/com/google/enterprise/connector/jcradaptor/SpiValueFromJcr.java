@@ -15,8 +15,8 @@
 package com.google.enterprise.connector.jcradaptor;
 
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.Value;
-import com.google.enterprise.connector.spi.ValueType;
+import com.google.enterprise.connector.spi.old.Value;
+import com.google.enterprise.connector.spi.old.ValueType;
 
 import java.io.InputStream;
 import java.util.Calendar;

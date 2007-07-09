@@ -12,21 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.pusher;
+package com.google.enterprise.connector.spi.old;
 
-import com.google.enterprise.connector.spiimpl.Document;
+
+import java.util.LinkedList;
 
 /**
- * Interface for a pusher - something that takes spi documents
- * and sends them along on their way
+ * Simple convenience implementation of the spi.PropertyMapList interface. This
+ * class is not part of the spi - it is provided for developers to assist in
+ * implementations of the spi.
  */
-public interface Pusher {
-  
-  /**
-   * Takes an spi document and pushes it along, presumably to the GSA
-   * @param document A DocumentList
-   * @param connectorName The name of the connector sending the document
-   */
-  public void take(Document document, String connectorName) throws PushException;
+public class SimplePropertyMapList extends LinkedList implements PropertyMapList {
 
 }

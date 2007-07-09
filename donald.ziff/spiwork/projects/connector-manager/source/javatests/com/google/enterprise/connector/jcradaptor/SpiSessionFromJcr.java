@@ -14,11 +14,12 @@
 
 package com.google.enterprise.connector.jcradaptor;
 
+import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
-import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
+import com.google.enterprise.connector.spi.old.NewTraversalManagerAdaptor;
 
 import javax.jcr.Workspace;
 import javax.jcr.query.QueryManager;
@@ -43,7 +44,7 @@ public class SpiSessionFromJcr implements Session {
     } catch (javax.jcr.RepositoryException e) {
       throw new RepositoryException(e);
     }
-    return new SpiTraversalManagerFromJcr(queryManager);
+    return new NewTraversalManagerAdaptor(new SpiTraversalManagerFromJcr(queryManager));
   }
 
   public AuthenticationManager getAuthenticationManager()
