@@ -14,7 +14,7 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.spiimpl.Document;
+import com.google.enterprise.connector.spi.Document;
 
 /**
  * Interface for a pusher - something that takes spi documents

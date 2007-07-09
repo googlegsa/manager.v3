@@ -18,11 +18,11 @@ import com.google.enterprise.connector.common.Base64FilterInputStream;
 import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.servlet.ServletUtil;
+import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
 import com.google.enterprise.connector.spiimpl.DateValue;
-import com.google.enterprise.connector.spiimpl.Document;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
 
 import java.io.BufferedOutputStream;
