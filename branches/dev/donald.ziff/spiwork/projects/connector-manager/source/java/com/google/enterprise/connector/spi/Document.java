@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.spiimpl;
-
-import com.google.enterprise.connector.spi.Document;
+package com.google.enterprise.connector.spi;
 
 
-public interface DocumentListImpl extends Document {
-  
-  public boolean nextDocument();
+public interface Document extends Property {
 
+  public boolean nextProperty();
+
+  public boolean findProperty(String name);
+
+  public String checkpoint() throws RepositoryException;
 }
