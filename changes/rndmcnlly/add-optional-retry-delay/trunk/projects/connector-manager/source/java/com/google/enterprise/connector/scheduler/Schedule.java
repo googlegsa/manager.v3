@@ -52,17 +52,27 @@ public class Schedule {
    * 
    * @param schedule String of the form:
    *    <connectorName>:<load>:<retryDelayMillis>:<timeIntervals>
-   * e.g. "connector1:60:86400000:1-2:3-5"
-   * 
+   *    OR
+   *    <connectorName>:<load>:<timeIntervals>
+   * e.g. "connector1:60:86400000:1-2:3-5", "connector1:60:1-2:3-5" 
+   *  
    */
   public void readString(String schedule) {
-    String[] strs = schedule.split(":");
-    if (strs.length >= 4) {  // must have at least one time interval
+    String exceptionReason = "Invalid schedule string format: " + schedule;
+    try {
+      String[] strs = schedule.split(":");
       connectorName = strs[0];
       load = Integer.parseInt(strs[1]);
-      retryDelayMillis = Integer.parseInt(strs[2]);
-      timeIntervals = new ArrayList();
-      for (int i = 3; i < strs.length; i++) {
+      int intervalsStart = -1;
+      if(strs[2].indexOf('-') < 0) {
+        retryDelayMillis = Integer.parseInt(strs[2]);
+        intervalsStart = 3;
+      } else {
+        intervalsStart = 2;
+      }
+      timeIntervals = new ArrayList(); 
+          
+      for (int i = intervalsStart; i < strs.length; i++) {
         String[] strs2 = strs[i].split("-");
         String startTime = strs2[0];
         String endTime = strs2[1];
@@ -71,9 +81,11 @@ public class Schedule {
         ScheduleTimeInterval interval = new ScheduleTimeInterval(t1, t2);
         timeIntervals.add(interval);
       }
-    } else {
-      throw new IllegalArgumentException("Schedule should have at least one " +
-            "time interval: " + schedule);
+      if (timeIntervals.size() < 1) {
+        throw new IllegalArgumentException(exceptionReason);
+      }
+    } catch(ArrayIndexOutOfBoundsException aioobe) {
+      throw new IllegalArgumentException(exceptionReason);
     }
   }
 
