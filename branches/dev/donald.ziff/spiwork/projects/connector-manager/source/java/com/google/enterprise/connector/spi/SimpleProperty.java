@@ -22,9 +22,6 @@ public class SimpleProperty implements Property {
   }
 
   public Value getValue() {
-    if (value == null) {
-      throw new IllegalStateException();
-    }
     return value;
   }
 
@@ -35,9 +32,7 @@ public class SimpleProperty implements Property {
     boolean hasNext = iterator.hasNext();
     if (hasNext) {
       value = (Value) iterator.next();
-    } else {
-      value = null;
-    }
+    } 
     return hasNext;
   }
 
