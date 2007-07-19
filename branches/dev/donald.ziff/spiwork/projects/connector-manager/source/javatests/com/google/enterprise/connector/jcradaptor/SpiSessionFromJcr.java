@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.jcradaptor;
 
+import com.google.enterprise.connector.jcradaptor.old.SpiTraversalManagerFromJcr;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;

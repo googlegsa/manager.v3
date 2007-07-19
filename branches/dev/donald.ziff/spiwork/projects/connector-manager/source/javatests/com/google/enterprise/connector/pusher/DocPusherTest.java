@@ -15,8 +15,8 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.jcradaptor.SpiPropertyMapFromJcrTest;
-import com.google.enterprise.connector.jcradaptor.SpiTraversalManagerFromJcr;
+import com.google.enterprise.connector.jcradaptor.old.SpiPropertyMapFromJcrTest;
+import com.google.enterprise.connector.jcradaptor.old.SpiTraversalManagerFromJcr;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
@@ -227,7 +227,7 @@ public class DocPusherTest extends TestCase {
     while (documentList.nextDocument()) {
       System.out.println("Test " + i + " output");
       Assert.assertFalse(i == expectedXml.length);
-      dpusher.take(documentList, "junit");
+      dpusher.take(documentList.getDocument(), "junit");
       System.out.println("Test " + i + " assertions");
       String resultXML = mockFeedConnection.getFeed();
       gsaActualResponse = dpusher.getGsaResponse();
@@ -240,8 +240,9 @@ public class DocPusherTest extends TestCase {
 
   /**
    * Test basic metadata representation.
+   * @throws RepositoryException 
    */
-  public void testSimpleDoc() throws PushException {
+  public void testSimpleDoc() throws PushException, RepositoryException {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
@@ -252,7 +253,7 @@ public class DocPusherTest extends TestCase {
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
-    dpusher.take(documentList, "junit");
+    dpusher.take(documentList.getDocument(), "junit");
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
@@ -266,8 +267,9 @@ public class DocPusherTest extends TestCase {
   /**
    * Test displayurl.
    * @throws PushException 
+   * @throws RepositoryException 
    */
-  public void testDisplayUrl() throws PushException {
+  public void testDisplayUrl() throws PushException, RepositoryException {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
@@ -275,10 +277,10 @@ public class DocPusherTest extends TestCase {
     PropertyMap propertyMap = SpiPropertyMapFromJcrTest
         .makePropertyMapFromJson(json1);
     DocumentList documentList = new NewDocumentListAdaptor(propertyMap);
-
+ 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
-    dpusher.take(documentList, "junit");
+    dpusher.take(documentList.getDocument(), "junit");
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
@@ -289,8 +291,9 @@ public class DocPusherTest extends TestCase {
   /**
    * Test special characters in metadata values.
    * @throws PushException 
+   * @throws RepositoryException 
    */
-  public void testSpecials() throws PushException {
+  public void testSpecials() throws PushException, RepositoryException {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\""
         // note double escaping in the line below, since this is a json string
@@ -300,10 +303,10 @@ public class DocPusherTest extends TestCase {
     PropertyMap propertyMap = SpiPropertyMapFromJcrTest
         .makePropertyMapFromJson(json1);
     DocumentList documentList = new NewDocumentListAdaptor(propertyMap);
-
+ 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
-    dpusher.take(documentList, "junit");
+    dpusher.take(documentList.getDocument(), "junit");
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("<meta name=\"special\" " +
@@ -326,8 +329,9 @@ public class DocPusherTest extends TestCase {
 
   /**
    * Tests a word document.
+   * @throws RepositoryException 
    */
-  public void testWordDoc() throws PushException {
+  public void testWordDoc() throws PushException, RepositoryException {
     final String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"google:mimetype\":\"application/msword\""
         + ",\"contentfile\":\"testdata/mocktestdata/test.doc\""
@@ -337,10 +341,10 @@ public class DocPusherTest extends TestCase {
     PropertyMap propertyMap = SpiPropertyMapFromJcrTest
         .makePropertyMapFromJson(json1);
     DocumentList documentList = new NewDocumentListAdaptor(propertyMap);
-
+ 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
-    dpusher.take(documentList, "junit");
+    dpusher.take(documentList.getDocument(), "junit");
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",

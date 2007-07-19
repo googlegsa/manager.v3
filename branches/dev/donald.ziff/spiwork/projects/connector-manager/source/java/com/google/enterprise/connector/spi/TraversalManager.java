@@ -31,17 +31,18 @@ package com.google.enterprise.connector.spi;
  * 
  * <pre>
  *        select documentid, lastmodifydate from documents 
- *        where  lastmodifydate &lt; &lt;i&gt;date-constant&lt;/i&gt; 
+ *        where  lastmodifydate &lt; &lt;b&gt;&lt;i&gt;date-constant&lt;/i&gt;&lt;/b&gt; 
  *        order by lastmodifydate
  * </pre>
  * 
  * <p>
  * Such a repository can easily be traversed by lastmodifydate, and the state of
  * the traversal is easily encapsulated in a single, small data item: the date
- * of the last document processed. Lastmodifydate is convenient because if a
- * document is processed during traversal, but then later modified, then it will
- * be picked up again later in the traversal process. Thus, this traversal is
- * appropriate both for initial load and for incremental update.
+ * of the last document processed. Increasing last-modified-date order is
+ * convenient because if a document is processed during traversal, but then
+ * later modified, then it will be picked up again later in the traversal
+ * process. Thus, this traversal is appropriate both for initial load and for
+ * incremental update.
  * <p>
  * For such a repository, the implementor is urged to let the Connector Manager
  * (the caller) maintain the traversal state. This is achieved by implementing

@@ -1,18 +1,20 @@
 package com.google.enterprise.connector.spi.old;
 
+import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.spi.Property;
 
 import java.util.Iterator;
 
-public class NewDocumentListAdaptor implements DocumentList {
+public class NewDocumentListAdaptor implements DocumentList, Document, Property {
 
   private com.google.enterprise.connector.spi.old.TraversalManager oldTraversalManager = null;
   private PropertyMapList propertyMapList = null;
   private Iterator propertyMapListIterator = null;
   private PropertyMap propertyMap = null;
-  private Property property = null;
+  private com.google.enterprise.connector.spi.old.Property oldProperty = null;
   private Iterator propertyIterator = null;
   private Iterator valueIterator = null;
   private com.google.enterprise.connector.spi.old.Value oldValue = null;
@@ -56,18 +58,18 @@ public class NewDocumentListAdaptor implements DocumentList {
   }
 
   public boolean findProperty(String name) {
-    property = null;
+    oldProperty = null;
     valueIterator = null;
     try {
-      property = propertyMap.getProperty(name);
+      oldProperty = propertyMap.getProperty(name);
     } catch (RepositoryException e) {
       throw new IllegalStateException();
     }
-    return (property != null);
+    return (oldProperty != null);
   }
 
   public boolean nextProperty() {
-    property = null;
+    oldProperty = null;
     valueIterator = null;
     if (propertyIterator == null) {
       try {
@@ -78,7 +80,8 @@ public class NewDocumentListAdaptor implements DocumentList {
     }
     boolean hasNext = propertyIterator.hasNext();
     if (hasNext) {
-      property = (Property) propertyIterator.next();
+      oldProperty = (com.google.enterprise.connector.spi.old.Property) propertyIterator
+          .next();
     } else {
       propertyIterator = null;
     }
@@ -86,16 +89,16 @@ public class NewDocumentListAdaptor implements DocumentList {
   }
 
   public String getPropertyName() throws RepositoryException {
-    if (property == null) {
+    if (oldProperty == null) {
       return null;
     }
-    return property.getName();
+    return oldProperty.getName();
   }
 
   public boolean nextValue() {
     if (valueIterator == null) {
       try {
-        valueIterator = property.getValues();
+        valueIterator = oldProperty.getValues();
       } catch (RepositoryException e) {
         throw new IllegalStateException();
       }
@@ -136,6 +139,14 @@ public class NewDocumentListAdaptor implements DocumentList {
       return Value.getStringValue(value.getString());
     }
     return null;
+  }
+
+  public Document getDocument() {
+    return this;
+  }
+
+  public Property getProperty() {
+    return this;
   }
 
 }

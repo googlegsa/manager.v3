@@ -19,8 +19,10 @@ import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
 import com.google.enterprise.connector.spiimpl.DateValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
@@ -46,8 +48,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Class to generate xml feed for a document from the Property Map and send
- * it to GSA.
+ * Class to generate xml feed for a document from the Property Map and send it
+ * to GSA.
  */
 
 public class DocPusher implements Pusher {
@@ -63,9 +65,9 @@ public class DocPusher implements Pusher {
       /**
        * Only these characters need to be encoded, according to
        * http://www.w3.org/TR/REC-xml/#NT-AttValue. Actually, we could only
-       * encode one of the quote characters if we knew that that was the
-       * one used to wrap the value, but we'll play it safe and encode
-       * both. TODO: what happens to white-space?
+       * encode one of the quote characters if we knew that that was the one
+       * used to wrap the value, but we'll play it safe and encode both. TODO:
+       * what happens to white-space?
        */
       switch (c) {
       case '<':
@@ -95,15 +97,14 @@ public class DocPusher implements Pusher {
     propertySkipSet.add(SpiConstants.PROPNAME_DOCID);
   }
 
-  private static final Logger LOGGER =
-      Logger.getLogger(WorkQueue.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(WorkQueue.class
+      .getName());
 
   // Strings for XML tags.
   public static final String XML_DEFAULT_ENCODING = "UTF-8";
-  private static final String XML_START =
-      "<?xml version='1.0' encoding='" + XML_DEFAULT_ENCODING
-          + "'?><!DOCTYPE gsafeed PUBLIC"
-          + " \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">";
+  private static final String XML_START = "<?xml version='1.0' encoding='"
+      + XML_DEFAULT_ENCODING + "'?><!DOCTYPE gsafeed PUBLIC"
+      + " \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">";
   private static final String XML_GSAFEED = "gsafeed";
   private static final String XML_HEADER = "header";
   private static final String XML_DATASOURCE = "datasource";
@@ -183,19 +184,19 @@ public class DocPusher implements Pusher {
     InputStream result = null;
 
     try {
-      ByteArrayInputStream prefixStream =
-          new ByteArrayInputStream(prefix.getBytes(XML_DEFAULT_ENCODING));
+      ByteArrayInputStream prefixStream = new ByteArrayInputStream(prefix
+          .getBytes(XML_DEFAULT_ENCODING));
 
-      ByteArrayInputStream suffixStream =
-          new ByteArrayInputStream(suffix.getBytes(XML_DEFAULT_ENCODING));
+      ByteArrayInputStream suffixStream = new ByteArrayInputStream(suffix
+          .getBytes(XML_DEFAULT_ENCODING));
       InputStream[] inputStreams;
       if (is != null) {
         inputStreams = new InputStream[] {prefixStream, is, suffixStream};
       } else {
         inputStreams = new InputStream[] {prefixStream, suffixStream};
       }
-      Enumeration inputStreamEnum =
-          Collections.enumeration(Arrays.asList(inputStreams));
+      Enumeration inputStreamEnum = Collections.enumeration(Arrays
+          .asList(inputStreams));
       result = new SequenceInputStream(inputStreamEnum);
     } catch (UnsupportedEncodingException e) {
       LOGGER.log(Level.SEVERE, "Encoding error.", e);
@@ -207,7 +208,8 @@ public class DocPusher implements Pusher {
    * Generate the record tag for the xml data.
    */
   private InputStream xmlWrapRecord(String searchUrl, String displayUrl,
-      String lastModified, InputStream content, String mimetype, Document document) {
+      String lastModified, InputStream content, String mimetype,
+      Document document) {
     // build prefix
     StringBuffer prefix = new StringBuffer();
     prefix.append("<");
@@ -224,9 +226,8 @@ public class DocPusher implements Pusher {
       appendAttrValuePair(XML_LAST_MODIFIED, lastModified, prefix);
     }
     try {
-      if (document.findProperty(SpiConstants.PROPNAME_ISPUBLIC)
-          && document.nextValue()) {
-        ValueImpl v = (ValueImpl) document.getValue();
+      ValueImpl v = (ValueImpl) Value.getSingleValueByPropertyName(document, SpiConstants.PROPNAME_ISPUBLIC);
+      if (v != null) {
         boolean isPublic = v.toBoolean();
         if (!isPublic) {
           appendAttrValuePair(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD, prefix);
@@ -256,8 +257,8 @@ public class DocPusher implements Pusher {
     suffix.append(xmlWrapEnd(XML_RECORD));
 
 
-    InputStream is =
-        stringWrappedInputStream(prefix.toString(), content, suffix.toString());
+    InputStream is = stringWrappedInputStream(prefix.toString(), content,
+        suffix.toString());
     return is;
   }
 
@@ -271,97 +272,142 @@ public class DocPusher implements Pusher {
 
   /**
    * Wrap the metadata and append it to the string buffer. Empty metadata
-   * properties are not appended. 
+   * properties are not appended.
+   * 
    * @param buf string buffer
    * @param document property map
    */
   private static void xmlWrapMetadata(StringBuffer buf, Document document) {
 
-    if (!document.nextProperty()) {
+    boolean nextProperty = false;
+    try {
+      nextProperty = document.nextProperty();
+    } catch (RepositoryException e) {
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
+          "Swallowing exception while starting to scan properties", e);
+    }
+    if (!nextProperty) {
       return;
     }
 
     buf.append(xmlWrapStart(XML_METADATA));
     buf.append("\n");
-    do {
+
+    while (nextProperty) {
+      Property property = null;
       String name;
       try {
-        name = document.getPropertyName();
+        property = document.getProperty();
+        name = property.getPropertyName();
+      } catch (RepositoryException e) {
+        LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
+            "xmlWrapMetadata", "Swallowing exception while reading properties",
+            e);
+        continue;
+      }
+      if (!propertySkipSet.contains(name)) {
+        wrapOneProperty(buf, property);
+      }
+      try {
+        nextProperty = document.nextProperty();
       } catch (RepositoryException e) {
         LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
             "xmlWrapMetadata",
             "Swallowing exception while scanning properties", e);
-        continue;
+        break;
       }
-      if (!propertySkipSet.contains(name)) {
-        wrapOneProperty(buf, document);
-      }
-    } while (document.nextProperty());
+    }
     buf.append(xmlWrapEnd(XML_METADATA));
-  } 
+  }
 
   /**
    * Wrap a single Property and append to string buffer. Does nothing if the
    * Property's value is null or zero-length.
    * 
    * @param buf string buffer
-   * @param document Property
+   * @param property Property
    */
-  private static void wrapOneProperty(StringBuffer buf, Document document) {
+  private static void wrapOneProperty(StringBuffer buf, Property property) {
     String name;
     try {
-      name = document.getPropertyName();
+      name = property.getPropertyName();
     } catch (RepositoryException e) {
       LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
           "Swallowing exception while scanning values", e);
       return;
     }
-   // if property is null, don't encode it; GSA won't process 
-    if (!document.nextValue()) {
+    // if property is null, don't encode it; GSA won't process
+
+    boolean nextValue = false;
+    try {
+      nextValue = property.nextValue();
+    } catch (RepositoryException e) {
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
+          "Swallowing exception while starting to scan values for property "
+              + name, e);
+    }
+    if (!nextValue) {
       return;
     }
-    
-    /* in case there are only null values, we want to "roll back" the
-     * XML_META tag. So save our current length:
+
+    /*
+     * in case there are only null values, we want to "roll back" the XML_META
+     * tag. So save our current length:
      */
     int indexMetaStart = buf.length();
-    
+
     buf.append("<");
     buf.append(XML_META);
     buf.append(" ");
     appendAttrValuePair("name", name, buf);
     buf.append("content=\"");
     String delimiter = "";
-    
+
     // mark the beginning of the values:
     int indexValuesStart = buf.length();
-    do  {
-      ValueImpl value = null;
+    while (nextValue) {
+      wrapOneValue(buf, property, name, delimiter);
+      delimiter = ", ";
       try {
-        value = (ValueImpl) document.getValue();
+        nextValue = property.nextValue();
       } catch (RepositoryException e) {
         LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
-            "xmlWrapMetadata", "Swallowing exception while accessing property "
-                + name, e);
-        continue;
+            "xmlWrapMetadata",
+            "Swallowing exception while scanning values for property " + name,
+            e);
+        break;
       }
-      String valString = "";
-      valString = value.toFeedXml();
-      if (valString.length() == 0) {
-        continue;
-      }
-      buf.append(delimiter);
-      XmlEncodeAttrValue(valString, buf);
-      delimiter = ", ";
-    } while (document.nextValue());
-    /* If there were no additions to buf (because of empty values), 
-     * roll back to before the XML_META tag
+    }
+    /*
+     * If there were no additions to buf (because of empty values), roll back to
+     * before the XML_META tag
      */
     if (buf.length() > indexValuesStart) {
       buf.append("\"/>\n");
     } else {
       buf.delete(indexMetaStart, buf.length());
     }
+  }
+
+  private static void wrapOneValue(StringBuffer buf, Property property,
+      String name, String delimiter) {
+    ValueImpl value = null;
+    try {
+      value = (ValueImpl) property.getValue();
+    } catch (RepositoryException e) {
+      LOGGER
+          .logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
+              "Swallowing exception while accessing values for property "
+                  + name, e);
+      return;
+    }
+    String valString = "";
+    valString = value.toFeedXml();
+    if (valString.length() == 0) {
+      return;
+    }
+    buf.append(delimiter);
+    XmlEncodeAttrValue(valString, buf);
   }
 
   /*
@@ -423,9 +469,7 @@ public class DocPusher implements Pusher {
   private static ValueImpl getValueAndThrow(Document document, String name)
       throws RepositoryException {
     ValueImpl v = null;
-    if (document.findProperty(name) && document.nextValue()) {
-      v = (ValueImpl) document.getValue();
-    }
+    v = (ValueImpl) Value.getSingleValueByPropertyName(document, name);
     return v;
   }
 
@@ -531,9 +575,9 @@ public class DocPusher implements Pusher {
 
     InputStream encodedContentStream = null;
     if (this.feedType != XML_FEED_METADATA_AND_URL) {
-      InputStream contentStream = getNonNullContentStream(
-          getOptionalStream(document, SpiConstants.PROPNAME_CONTENT));
- 
+      InputStream contentStream = getNonNullContentStream(getOptionalStream(
+          document, SpiConstants.PROPNAME_CONTENT));
+
       if (null != contentStream) {
         encodedContentStream = new Base64FilterInputStream(contentStream);
       }
@@ -541,7 +585,8 @@ public class DocPusher implements Pusher {
 
     String lastModified = null;
     try {
-      lastModified = getCalendarAndThrow(document, SpiConstants.PROPNAME_LASTMODIFIED);
+      lastModified = getCalendarAndThrow(document,
+          SpiConstants.PROPNAME_LASTMODIFIED);
     } catch (IllegalArgumentException e) {
       LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "buildXmlData",
           "Swallowing exception while getting "
@@ -552,55 +597,54 @@ public class DocPusher implements Pusher {
               + SpiConstants.PROPNAME_LASTMODIFIED, e);
     }
 
-    String mimetype = getOptionalString(document, SpiConstants.PROPNAME_MIMETYPE);
+    String mimetype = getOptionalString(document,
+        SpiConstants.PROPNAME_MIMETYPE);
     if (mimetype == null) {
       mimetype = SpiConstants.DEFAULT_MIMETYPE;
     }
 
-    String displayUrl = getOptionalString(document, SpiConstants.PROPNAME_DISPLAYURL);
+    String displayUrl = getOptionalString(document,
+        SpiConstants.PROPNAME_DISPLAYURL);
 
-    InputStream recordInputStream =
-        xmlWrapRecord(searchurl, displayUrl, lastModified,
-            encodedContentStream, mimetype, document);
+    InputStream recordInputStream = xmlWrapRecord(searchurl, displayUrl,
+        lastModified, encodedContentStream, mimetype, document);
 
-    InputStream is =
-        stringWrappedInputStream(prefix.toString(), recordInputStream, suffix
-            .toString());
+    InputStream is = stringWrappedInputStream(prefix.toString(),
+        recordInputStream, suffix.toString());
 
     return is;
   }
 
   /**
-   * DEFAULT_CONTENT is a string that is substituted for null or empty
-   * content streams, in order to make sure the GSA indexes the feed item.
+   * DEFAULT_CONTENT is a string that is substituted for null or empty content
+   * streams, in order to make sure the GSA indexes the feed item.
    */
   private static final String DEFAULT_CONTENT = " ";
-  
+
   /**
    * Inspect the content stream for a feed item, and if it's null or empty,
-   * substitute a string which will insure that the feed items gets indexed
-   * by the GSA
+   * substitute a string which will insure that the feed items gets indexed by
+   * the GSA
+   * 
    * @param contentStream from the feed item
    * @return an InputStream which is guaranteed to be non-null.
-   * @throws RuntimeException if the DEFAULT_CONTENT string above cannot
-   * be UTF-8-encoded into a ByteArrayInputStream.
+   * @throws RuntimeException if the DEFAULT_CONTENT string above cannot be
+   *         UTF-8-encoded into a ByteArrayInputStream.
    */
-  private static InputStream getNonNullContentStream(
-      InputStream contentStream) {
+  private static InputStream getNonNullContentStream(InputStream contentStream) {
     InputStream output = contentStream;
     try {
       if (contentStream == null) {
-        output = 
-            new ByteArrayInputStream(DEFAULT_CONTENT.getBytes("UTF-8"));
+        output = new ByteArrayInputStream(DEFAULT_CONTENT.getBytes("UTF-8"));
       }
     } catch (IOException e) {
       LOGGER.log(Level.SEVERE, "IO error.", e);
-      throw new RuntimeException("failed to create default content stream:" + 
-          e.toString());
+      throw new RuntimeException("failed to create default content stream:"
+          + e.toString());
     }
     return output;
   }
-  
+
   /**
    * Form a Google connector URL.
    * 
@@ -608,7 +652,7 @@ public class DocPusher implements Pusher {
    * @param docid
    * @return the connector url
    */
-  private static String constructGoogleConnectorUrl(String connectorName, 
+  private static String constructGoogleConnectorUrl(String connectorName,
       String docid) {
     String searchurl;
     StringBuffer buf = new StringBuffer(ServletUtil.PROTOCOL);
@@ -668,7 +712,8 @@ public class DocPusher implements Pusher {
    * @param document DocumentList corresponding to the document.
    * @param connectorName The connector name that fed this document
    */
-  public void take(Document document, String connectorName) throws PushException {
+  public void take(Document document, String connectorName)
+      throws PushException {
     this.dataSource = connectorName;
     setFeedType(document);
     this.xmlData = buildXmlData(document, connectorName);
@@ -689,11 +734,8 @@ public class DocPusher implements Pusher {
           os = new BufferedOutputStream(new FileOutputStream(osFile, true));
           is = new TeeInputStream(xmlData, os);
         } catch (IOException e) {
-          LOGGER.logp(Level.WARNING,
-                      DocPusher.class.getName(),
-                      "take",
-                      "cannot write file: " + osFile.getAbsolutePath(),
-                      e);
+          LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
+              "cannot write file: " + osFile.getAbsolutePath(), e);
         }
       }
     }
@@ -704,28 +746,26 @@ public class DocPusher implements Pusher {
       }
     } catch (MalformedURLException e) {
       LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
-                  "Rethrowing MalformedURLException as PushException", e);
+          "Rethrowing MalformedURLException as PushException", e);
       throw new PushException("MalformedURLException: " + e.getMessage(), e);
     } catch (IOException e) {
       LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
-                  "Rethrowing IOException as PushException", e);
+          "Rethrowing IOException as PushException", e);
       throw new PushException("IOException: " + e.getMessage(), e);
     } finally {
       try {
         xmlData.close();
       } catch (IOException e) {
         LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
-                    "Rethrowing IOException as PushException", e);
+            "Rethrowing IOException as PushException", e);
         throw new PushException("IOException: " + e.getMessage(), e);
       }
       if (os != null) {
         try {
           os.close();
         } catch (IOException e) {
-          LOGGER.logp(Level.WARNING,
-                      DocPusher.class.getName(),
-                      "take",
-                      "cannot close file: " + osFile.getAbsolutePath());
+          LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
+              "cannot close file: " + osFile.getAbsolutePath());
         }
       }
     }

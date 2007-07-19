@@ -18,6 +18,7 @@ import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.Value;
 
 /**
  * This class provides a simple end-to-end test for an SPI implementation's
@@ -67,7 +68,7 @@ public class QueryTraversalUtil {
         break;
       }
 
-      String checkPointString = documentList.checkpoint();
+      String checkPointString = documentList.getDocument().checkpoint();
       documentList = queryTraversalManager.resumeTraversal(checkPointString);
       // the real connector manager will call checkpoint (as here) as soon
       // as possible after processing the last property map it wants to process.
@@ -85,21 +86,23 @@ public class QueryTraversalUtil {
       throws RepositoryException {
 
     // every document should have a name
-    String name = (documentList.findProperty(SpiConstants.PROPNAME_DOCID) && documentList
-        .nextValue()) ? documentList.getValue().toString() : null;
+    String name = Value.getSingleValueStringByPropertyName(documentList
+        .getDocument(), SpiConstants.PROPNAME_DOCID);
 
-    String contentSnippet = (documentList
-        .findProperty(SpiConstants.PROPNAME_CONTENTURL) && documentList
-        .nextValue()) ? documentList.getValue().toString() : null;
+    // if a CONTENTURL was specified, use it
+    String contentSnippet = Value.getSingleValueStringByPropertyName(documentList
+        .getDocument(), SpiConstants.PROPNAME_CONTENTURL);
 
     if (contentSnippet == null) {
       // if there is no contentUrl, the connector manager will ask for
       // the content property and will base-64 encode it. Here we will
-      // only access the first so many characers of the content and
+      // only access the first so many characters of the content and
       // print it out
-      contentSnippet = (documentList
-          .findProperty(SpiConstants.PROPNAME_CONTENT) && documentList
-          .nextValue()) ? documentList.getValue().toString() : "no content";
+      contentSnippet = Value.getSingleValueStringByPropertyName(documentList
+          .getDocument(), SpiConstants.PROPNAME_CONTENT);
+      if (contentSnippet == null) {
+        contentSnippet = "no content";
+      }
     }
     // here the real content manager would format the document as
     // required by the feed API and send it to the GSA.

@@ -96,11 +96,20 @@ public class QueryTraverser implements Traverser {
 
     boolean forceCheckpoint = false;
     try {
-      while (resultSet.nextDocument()) {
+      boolean nextDocument = true;
+      while (true) {
+        try {
+          nextDocument = resultSet.nextDocument();
+        } catch (RepositoryException e) {
+          LOGGER.log(Level.SEVERE, "Repository Exception during traversal.", e);
+        }
+        if (!nextDocument) {
+          break;
+        }
         if (Thread.interrupted()) {
           break;
         }
-        pusher.take(resultSet, connectorName);
+        pusher.take(resultSet.getDocument(), connectorName);
         counter++;
         if (counter == batchHint) {
           break;
@@ -110,8 +119,10 @@ public class QueryTraverser implements Traverser {
       forceCheckpoint = true;
       String docid = null;
       try {
-        docid = (resultSet.findProperty(SpiConstants.PROPNAME_DOCID) && resultSet
-            .nextValue()) ? resultSet.getValue().toString() : null;
+        docid = (resultSet.getDocument().findProperty(
+            SpiConstants.PROPNAME_DOCID) && resultSet.getDocument()
+            .getProperty().nextValue()) ? resultSet.getDocument().getProperty()
+            .getValue().toString() : null;
       } catch (IllegalArgumentException e1) {
         // TODO Auto-generated catch block
         e1.printStackTrace();
@@ -124,6 +135,10 @@ public class QueryTraverser implements Traverser {
           + "of document.");
     } catch (PushException e) {
       LOGGER.log(Level.WARNING, e.getMessage(), e);
+      e.printStackTrace();
+    } catch (RepositoryException e) {
+      LOGGER.log(Level.WARNING, e.getMessage(), e);
+      e.printStackTrace();
     } finally {
       // checkpoint completed work as well as skip past troublesome documents
       // (e.g. documents that are too large and will always fail)
@@ -140,7 +155,7 @@ public class QueryTraverser implements Traverser {
   private void checkpointAndSave(DocumentList pm) {
     String connectorState = null;
     try {
-      connectorState = pm.checkpoint();
+      connectorState = pm.getDocument().checkpoint();
     } catch (RepositoryException e) {
       // TODO:ziff Auto-generated catch block
       e.printStackTrace();

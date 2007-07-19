@@ -14,7 +14,7 @@
 
 package com.google.enterprise.connector.traversal;
 
-import com.google.enterprise.connector.jcradaptor.SpiTraversalManagerFromJcr;
+import com.google.enterprise.connector.jcradaptor.old.SpiTraversalManagerFromJcr;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
