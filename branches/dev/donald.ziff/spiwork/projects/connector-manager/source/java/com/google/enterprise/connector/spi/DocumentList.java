@@ -54,6 +54,14 @@ package com.google.enterprise.connector.spi;
  *   handleDocSpecially(doc); 
  * }
  * </pre>
+ * 
+ * Note: one possible implementation technique is to provide a single stateful
+ * object that implements <code>{link DocumentList}</code>,
+ * <code>{link Document}</code> and <code>{link Property}</code>, and
+ * returns <code>this</code> to all calls to <code>getDocument</code> and
+ * <code>Document.getProperty()</code>. Or, if preferred, the implementor may
+ * use separate objects for each of those interfaces.
+ * 
  */
 public interface DocumentList {
 
@@ -61,7 +69,7 @@ public interface DocumentList {
    * Moves the document cursor down one row from its current position. The
    * document cursor is initially positioned before the first document; the
    * first call to this method makes the first document current; the second call
-   * makes the second document current, and so on. 
+   * makes the second document current, and so on.
    * 
    * @return <code>true</code> if the new current document is valid;
    *         <code>false</code> if there are no more documents
