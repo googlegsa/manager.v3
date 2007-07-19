@@ -133,16 +133,33 @@ public abstract class Value {
 
   /**
    * Convenience function for access to a single named value from a DocumentList
-   * @param documentList the Document List from which to extract the Value
+   * 
+   * @param document the Document List from which to extract the Value
    * @param propertyName the name of the Property
-   * @return The first Value of that named property, if there is one
+   * @return The first Value of that named property, if there is one -
+   *         <code>null</code> otherwise
    * @throws RepositoryException
    */
-  public static Value getSingleValueByPropertyName(DocumentList documentList,
+  public static Value getSingleValueByPropertyName(Document document,
       String propertyName) throws RepositoryException {
-    return (documentList.findProperty(SpiConstants.PROPNAME_DOCID) && documentList
-        .nextValue()) ? documentList.getValue() : null;
+    return (document.findProperty(propertyName) && document
+        .getProperty().nextValue()) ? document.getProperty().getValue() : null;
 
+  }
+  
+  /**
+   * Convenience function for access to a single string value from a DocumentList
+   * 
+   * @param document the Document List from which to extract the Value
+   * @param propertyName the name of the Property
+   * @return The string Value of that named property, if there is one -
+   *         <code>null</code> otherwise
+   * @throws RepositoryException
+   */
+  public static String getSingleValueStringByPropertyName(Document document,
+      String propertyName) throws RepositoryException {
+    Value v = getSingleValueByPropertyName(document, propertyName);
+    return (v == null) ? null : v.toString();
   }
 
   /**
@@ -154,14 +171,14 @@ public abstract class Value {
   public abstract String toString();
 
   private static final TimeZone TIME_ZONE_GMT = TimeZone.getTimeZone("GMT+0");
-  private static final Calendar GMT_CALENDAR =
-      Calendar.getInstance(TIME_ZONE_GMT);
-  private static final SimpleDateFormat ISO8601_DATE_FORMAT_MILLIS =
-      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-  private static final SimpleDateFormat ISO8601_DATE_FORMAT_SECS =
-      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-  public static final SimpleDateFormat RFC822_DATE_FORMAT =
-      new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss z");
+  private static final Calendar GMT_CALENDAR = Calendar
+      .getInstance(TIME_ZONE_GMT);
+  private static final SimpleDateFormat ISO8601_DATE_FORMAT_MILLIS = new SimpleDateFormat(
+      "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+  private static final SimpleDateFormat ISO8601_DATE_FORMAT_SECS = new SimpleDateFormat(
+      "yyyy-MM-dd'T'HH:mm:ss'Z'");
+  public static final SimpleDateFormat RFC822_DATE_FORMAT = new SimpleDateFormat(
+      "EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss z");
 
   static {
     ISO8601_DATE_FORMAT_MILLIS.setCalendar(GMT_CALENDAR);
@@ -197,7 +214,8 @@ public abstract class Value {
     return isoString;
   }
 
-  private static synchronized Date iso8601ToDate(String s) throws ParseException {
+  private static synchronized Date iso8601ToDate(String s)
+      throws ParseException {
     Date d = null;
     try {
       d = ISO8601_DATE_FORMAT_MILLIS.parse(s);
@@ -217,7 +235,8 @@ public abstract class Value {
    * @return a Calendar object
    * @throws ParseException if the the String can not be parsed
    */
-  public static synchronized Calendar iso8601ToCalendar(String s) throws ParseException {
+  public static synchronized Calendar iso8601ToCalendar(String s)
+      throws ParseException {
     Date d = iso8601ToDate(s);
     Calendar c = Calendar.getInstance();
     c.setTime(d);

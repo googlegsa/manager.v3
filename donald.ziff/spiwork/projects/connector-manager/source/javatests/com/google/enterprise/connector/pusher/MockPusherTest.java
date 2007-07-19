@@ -14,7 +14,7 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.jcradaptor.SpiTraversalManagerFromJcr;
+import com.google.enterprise.connector.jcradaptor.old.SpiTraversalManagerFromJcr;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
@@ -44,7 +44,7 @@ public class MockPusherTest extends TestCase {
 
       int counter = 0;
       while (propertyMapList.nextDocument()) {
-        pusher.take(propertyMapList, "junit");
+        pusher.take(propertyMapList.getDocument(), "junit");
         counter++;
       }
       Assert.assertEquals(4, counter);

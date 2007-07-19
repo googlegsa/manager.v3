@@ -4,21 +4,12 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class SimpleDocument implements Document {
-  
-  public static Value getSingleValueProperty(Document document,
-      String propertyName) throws RepositoryException {
-    Value v = null; 
-    if (document.findProperty(propertyName) && document.nextValue()) {
-      v = document.getValue();
-    }
-    return v;
-  }
 
   private Map properties;
   private Iterator iterator;
   private Property property;
   private String checkpoint;
-   
+
   public SimpleDocument(Map properties) {
     this.properties = properties;
     this.iterator = null;
@@ -30,10 +21,11 @@ public class SimpleDocument implements Document {
     if (checkpoint != null) {
       return;
     }
-    Value v = getSingleValueProperty(this, SpiConstants.PROPNAME_LASTMODIFIED);
+    Value v = Value.getSingleValueByPropertyName(this,
+        SpiConstants.PROPNAME_LASTMODIFIED);
     checkpoint = v.toString();
   }
-  
+
   public String checkpoint() throws RepositoryException {
     setCheckpoint();
     return checkpoint;
@@ -65,25 +57,8 @@ public class SimpleDocument implements Document {
     return hasNext;
   }
 
-  public String getPropertyName() throws RepositoryException {
-    if (property == null) {
-      throw new IllegalStateException();
-    }
-    return property.getPropertyName();
-  }
-
-  public Value getValue() throws RepositoryException {
-    if (property == null) {
-      throw new IllegalStateException();
-    }
-    return property.getValue();
-  }
-
-  public boolean nextValue() {
-    if (property == null) {
-      throw new IllegalStateException();
-    }
-    return property.nextValue();
+  public Property getProperty() {
+    return property;
   }
 
 }

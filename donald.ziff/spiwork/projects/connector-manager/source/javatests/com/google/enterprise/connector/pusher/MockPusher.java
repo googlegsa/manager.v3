@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@ package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.common.Base64FilterInputStream;
 import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
@@ -25,13 +26,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 
-import javax.jcr.Property;
 
 public class MockPusher implements Pusher {
 
   private int totalDocs;
   private PrintStream printStream;
-  
+
   public MockPusher() {
     this(System.out);
   }
@@ -42,43 +42,54 @@ public class MockPusher implements Pusher {
   }
 
   public void take(Document document, String connectorName) {
- 
+
     String docid = null;
 
     printStream.println("<document>");
 
     // first take care of some special attributes
+    Property property = null;
 
     // we just do the DOCID first so it is easy to find
-    if (!document.findProperty(SpiConstants.PROPNAME_DOCID)) {
-      throw new IllegalArgumentException(SpiConstants.PROPNAME_DOCID
-          + " is missing");      
-    }
-
-   processProperty(document);
-
-    Property cProp = null;
-    if (!document.findProperty(SpiConstants.PROPNAME_CONTENTURL)) {
-      if (!document.findProperty(SpiConstants.PROPNAME_CONTENT)) {
-        throw new IllegalArgumentException("Both "
-            + SpiConstants.PROPNAME_CONTENTURL + " and "
-            + SpiConstants.PROPNAME_CONTENT + " are missing");
+    try {
+      if (!document.findProperty(SpiConstants.PROPNAME_DOCID)) {
+        throw new IllegalArgumentException(SpiConstants.PROPNAME_DOCID
+            + " is missing");
       }
+      property = document.getProperty();
+    } catch (RepositoryException e) {
+      throw new RuntimeException(e);
     }
-    processProperty(document);
+
+    processProperty(property);
+
+    try {
+      if (!document.findProperty(SpiConstants.PROPNAME_CONTENTURL)) {
+        if (!document.findProperty(SpiConstants.PROPNAME_CONTENT)) {
+          throw new IllegalArgumentException("Both "
+              + SpiConstants.PROPNAME_CONTENTURL + " and "
+              + SpiConstants.PROPNAME_CONTENT + " are missing");
+        }
+        property = document.getProperty();
+      }
+    } catch (RepositoryException e) {
+      throw new RuntimeException(e);
+    }
+    processProperty(property);
 
     try {
       while (document.nextProperty()) {
-        String name = document.getPropertyName();
+        property = document.getProperty();
+        String name = property.getPropertyName();
         if (name.startsWith("google:")) {
           if (name.equals(SpiConstants.PROPNAME_CONTENT)
-            || name.equals(SpiConstants.PROPNAME_CONTENTURL)
-            || name.equals(SpiConstants.PROPNAME_DOCID)) {
+              || name.equals(SpiConstants.PROPNAME_CONTENTURL)
+              || name.equals(SpiConstants.PROPNAME_DOCID)) {
             // we already dealt with these
             break;
           }
         }
-        processProperty(document);
+        processProperty(property);
       }
       totalDocs++;
     } catch (RepositoryException e) {
@@ -86,16 +97,16 @@ public class MockPusher implements Pusher {
     }
   }
 
-  private void processProperty(Document documentList) {
+  private void processProperty(Property property) {
     String name;
     try {
-      documentList.nextValue();
-      name = documentList.getPropertyName();
+      property.nextValue();
+      name = property.getPropertyName();
       // if we have a contentfile property, we want to stream the InputStream
       // to demonstrate that we don't blow up memory
-      Value v = documentList.getValue();
+      Value v = property.getValue();
       if (v instanceof BinaryValue) {
-        InputStream contentStream = ((BinaryValue)v).getInputStream();
+        InputStream contentStream = ((BinaryValue) v).getInputStream();
         InputStream encodedContentStream = null;
         if (null != contentStream) {
           encodedContentStream = new Base64FilterInputStream(contentStream);
@@ -114,13 +125,13 @@ public class MockPusher implements Pusher {
           }
         }
         printStream.println("Total bytes read in base64 encoded file: "
-          + totalBytesRead);
-      } 
+            + totalBytesRead);
+      }
       do {
         printStream.println("<" + name + ">");
         printStream.println(v.toString());
         printStream.println("</" + name + ">");
-      } while (documentList.nextValue());
+      } while (property.nextValue());
     } catch (RepositoryException e) {
       throw new RuntimeException(e);
     }
