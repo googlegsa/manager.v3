@@ -207,10 +207,10 @@ public final class InstanceInfo {
     connector =
         (Connector) getRequiredBean(connectorInstancePrototype, connectorName,
             factory, Connector.class);
-    if (connector == null) {      
+    if (connector == null) {
       throw new NoBeansFoundException(connectorInstancePrototype,
           connectorName, Connector.class);
-    }    
+    }
     return connector;
   }
 
