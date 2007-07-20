@@ -34,20 +34,20 @@ import java.io.*;
  *
  * Extended version of {@link
  * org.springframework.beans.factory.config.PropertyPlaceholderConfigurer}
- * that encrypts sensitive properties (like passwords) before writing
- * them and decrypts them when reading them back. The JCE API is used
+ * that looks for encrypted sensitive properties (like passwords)
+ * and decrypts them when reading them back. The JCE API is used
  * for the relevant key storage and cryptography.
  *
  * <p> You can configure the following parameters used by this class:
  * <ul>
- * <li>File in which keystore is kept. Use this#setKeyStorePath.
+ * <li>File in which keystore is kept. Use #setKeyStorePath.
  * <li>File in which password securing keystore is kept. Use
- *     this#setKeyStorePasswdPath}.
+ *     #setKeyStorePasswdPath}.
  * <li>The format of the keystore. Your JCE provider must support this.
-       Use this#setKeyStoreType. The default is "JCEKS", which is
+       Use #setKeyStoreType. The default is "JCEKS", which is
  *     provided by the default Sun JCE provider.
  * <li>The algorithm used for encryption. Your JCE provider must support
- *     this. Use this#setKeyStoreCryptoAlgo. The default is "AES",
+ *     this. Use #setKeyStoreCryptoAlgo. The default is "AES",
  *     which is provided by the default Sun JCE provider.
  * </ul>
  *
@@ -75,7 +75,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
 
   /*
    * Overridden from the base class implementation. This looks for a
-   * property called "Password" and encrypts it.
+   * property called "Password" and decrypts it.
    */
   public void convertProperties(Properties properties) {   
     String encPasswd = properties.getProperty("Password");
@@ -199,26 +199,35 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       // Encode bytes to base64 to get a string
       return new sun.misc.BASE64Encoder().encode(enc);
     } catch (NoSuchAlgorithmException e) {
-      LOGGER.log(Level.SEVERE, "Could not encrypt password: provider does " +
-      		"not have algorithm");
-    } catch (NoSuchPaddingException e) {
-      LOGGER.log(Level.SEVERE, "Could not encrypt password: incorrect padding");
-    } catch (InvalidKeyException e) {
-      LOGGER.log(Level.SEVERE, "Could not encrypt password: invalid key");
-    } catch (KeyStoreException e) {
-      LOGGER.log(Level.SEVERE, "Could not encrypt password: bad keystore");
-    } catch (CertificateException e) {
-      LOGGER.log(Level.SEVERE, "Could not encrypt password: bad certificate");
+      String msg = "Could not encrypt password: provider does not have algorithm";
+      LOGGER.log(Level.SEVERE, msg);
+      throw new RuntimeException(msg);
     } catch (IOException e) {
-      LOGGER.log(Level.SEVERE, "Could not encrypt password: I/O error");
+      String msg = "Could not encrypt password: I/O error";
+      LOGGER.log(Level.SEVERE, msg);
+      throw new RuntimeException(msg);
+    } catch (NoSuchPaddingException e) {
+      LOGGER.log(Level.SEVERE, "Could not encrypt password");
+      throw new RuntimeException("Could not encrypt password");
+    } catch (InvalidKeyException e) {
+      LOGGER.log(Level.SEVERE, "Could not encrypt password");
+      throw new RuntimeException("Could not encrypt password");
+    } catch (KeyStoreException e) {
+      LOGGER.log(Level.SEVERE, "Could not encrypt password");
+      throw new RuntimeException("Could not encrypt password");
+    } catch (CertificateException e) {
+      LOGGER.log(Level.SEVERE, "Could not encrypt password");
+      throw new RuntimeException("Could not encrypt password");
     } catch (IllegalStateException e) {
-      LOGGER.log(Level.SEVERE, "Could not encrypt password: illegal state");
+      LOGGER.log(Level.SEVERE, "Could not encrypt password");
+      throw new RuntimeException("Could not encrypt password");
     } catch (IllegalBlockSizeException e) {
-      LOGGER.log(Level.SEVERE, "Could not encrypt password: illegal block size");
+      LOGGER.log(Level.SEVERE, "Could not encrypt password");
+      throw new RuntimeException("Could not encrypt password");
     } catch (BadPaddingException e) {
-      LOGGER.log(Level.SEVERE, "Could not encrypt password: bad padding");
+      LOGGER.log(Level.SEVERE, "Could not encrypt password");
+      throw new RuntimeException("Could not encrypt password");
     }
-    return null; // should never get here
   }
   
   public static String decryptString(String cipherText) {
@@ -235,25 +244,34 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       // Decode using utf-8
       return new String(utf8, "UTF8");
     } catch (NoSuchAlgorithmException e) {
-      LOGGER.log(Level.SEVERE, "Could not decrypt password: provider does " +
-      		"not have algorithm");
-    } catch (KeyStoreException e) {
-      LOGGER.log(Level.SEVERE, "Could not decrypt password: bad keystore");
-    } catch (CertificateException e) {
-      LOGGER.log(Level.SEVERE, "Could not decrypt password: bad certificate");
+      String msg = "Could not decrypt password: provider does not have algorithm";
+      LOGGER.log(Level.SEVERE, msg);
+      throw new RuntimeException(msg);
     } catch (IOException e) {
-      LOGGER.log(Level.SEVERE, "Could not decrypt password: I/O error");
+      String msg = "Could not decrypt password: I/O error";
+      LOGGER.log(Level.SEVERE, msg);
+      throw new RuntimeException(msg);
+    } catch (KeyStoreException e) {
+      LOGGER.log(Level.SEVERE, "Could not decrypt password");
+      throw new RuntimeException("Could not decrypt password");
+    } catch (CertificateException e) {
+      LOGGER.log(Level.SEVERE, "Could not decrypt password");
+      throw new RuntimeException("Could not decrypt password");
     } catch (NoSuchPaddingException e) {
-      LOGGER.log(Level.SEVERE, "Could not decrypt password: incorrect padding");
+      LOGGER.log(Level.SEVERE, "Could not decrypt password");
+      throw new RuntimeException("Could not decrypt password");
     } catch (InvalidKeyException e) {
-      LOGGER.log(Level.SEVERE, "Could not decrypt password: invalid key");
+      LOGGER.log(Level.SEVERE, "Could not decrypt password");
+      throw new RuntimeException("Could not decrypt password");
     } catch (BadPaddingException e) {      
-      LOGGER.log(Level.SEVERE, "Could not decrypt password: bad padding");
+      LOGGER.log(Level.SEVERE, "Could not decrypt password");
+      throw new RuntimeException("Could not decrypt password");
     } catch (IllegalStateException e) {
-      LOGGER.log(Level.SEVERE, "Could not decrypt password: illegal state");
+      LOGGER.log(Level.SEVERE, "Could not decrypt password");
+      throw new RuntimeException("Could not decrypt password");
     } catch (IllegalBlockSizeException e) {
-      LOGGER.log(Level.SEVERE, "Could not decrypt password: illegal block size");
+      LOGGER.log(Level.SEVERE, "Could not decrypt password");
+      throw new RuntimeException("Could not decrypt password");
     }
-    return ""; // should never get here
   }
 }

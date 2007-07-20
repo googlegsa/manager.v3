@@ -18,7 +18,6 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.spi.Connector;
 
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.beans.factory.xml.XmlBeanFactory;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
