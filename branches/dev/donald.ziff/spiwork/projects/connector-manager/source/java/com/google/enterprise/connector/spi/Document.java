@@ -19,12 +19,7 @@ package com.google.enterprise.connector.spi;
  * can be explored both as a map and a list. List-like functionality is provided
  * through the <code>nextProperty()</code> and <code>getProperty()</code>
  * methods. Map-like functionality is provided through the
- * <code>{@link #findProperty(String)}</code> method, discussed below. In
- * addition, a Document has a special method <code>{@link #checkpoint()}</code>,
- * which produces a String that encapsulates the current document so that if
- * this String is provided to
- * <code>{@link TraversalManager#resumeTraversal(String)}</code>, the
- * traversal will resume from the next document after this one.
+ * <code>{@link #findProperty(String)}</code> method, discussed below. 
  * <p>
  * Similar to <code>{@link DocumentList}</code> and
  * <code>{@link Property}</code>, the list functionality is based on a
@@ -129,22 +124,4 @@ public interface Document {
    * @throws RepositoryException
    */
   public Property getProperty() throws RepositoryException;
-
-  /**
-   * Provides a checkpoint that can be used to control traversal. The
-   * implementor should provide a string that can be used by the framework to
-   * resume traversal starting just after this document. The framework will
-   * typically call this method on the last document it has chosen to process
-   * (for whatever reason: scheduling, completion of all documents currently
-   * available, etc.) It will persist this string, so that it can be recovered
-   * after a crash if necessary. When it chooses to restart traversal, it will
-   * supply this string in a call to
-   * <code>{@link TraversalManager#resumeTraversal(String)}</code>.
-   * 
-   * @return A string that can be used by a subsequent call to the
-   *         {@link TraversalManager#resumeTraversal(String)} method.
-   * @throws RepositoryException if a repository access error occurs
-   */
-  public String checkpoint() throws RepositoryException;
-
 }

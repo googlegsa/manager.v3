@@ -38,21 +38,24 @@ package com.google.enterprise.connector.spi;
  * <code>{@link #nextDocument()}</code> <b>unless</b> that subsequent call
  * returns false. In other words, a Document object becomes invalid as soon as
  * another valid Document is obtained.
+ * <p>
+ * In addition, a this interface has a special method
+ * <code>{@link #checkpoint()}</code>, which produces a String that
+ * encapsulates the cursor position, so that if this String is provided to
+ * <code>{@link TraversalManager#resumeTraversal(String)}</code>, the
+ * traversal will resume from the next document after this one.
  * </ul>
  * The typical pattern for consuming an object that implements this interface is
  * this (disregarding exception handling):
  * 
  * <pre>
  * DocumentList docList = ...
- * Document doc = null;
  * while (docList.nextDocument()) {
- *   doc = docList.getDocument();
+ *   Document doc = docList.getDocument();
  *   handleDoc(doc);
+ *   if (whatever reason) break;
  * }
- * if (doc != null) {
- *   // last call to nextDocument() returned false, so doc is still valid
- *   handleDocSpecially(doc); 
- * }
+ * String check = doclist.checkpoint();
  * </pre>
  * 
  * Note: one possible implementation technique is to provide a single stateful
@@ -84,4 +87,21 @@ public interface DocumentList {
    * @throws RepositoryException if a repository access error occurs
    */
   public Document getDocument() throws RepositoryException;
+
+  /**
+   * Provides a checkpoint that can be used to control traversal. The
+   * implementor should provide a string that can be used by the framework to
+   * resume traversal starting just after this document. The framework will
+   * typically call this method on the last document it has chosen to process
+   * (for whatever reason: scheduling, completion of all documents currently
+   * available, etc.) It will persist this string, so that it can be recovered
+   * after a crash if necessary. When it chooses to restart traversal, it will
+   * supply this string in a call to
+   * <code>{@link TraversalManager#resumeTraversal(String)}</code>.
+   * 
+   * @return A string that can be used by a subsequent call to the
+   *         {@link TraversalManager#resumeTraversal(String)} method.
+   * @throws RepositoryException if a repository access error occurs
+   */
+  public String checkpoint() throws RepositoryException;
 }

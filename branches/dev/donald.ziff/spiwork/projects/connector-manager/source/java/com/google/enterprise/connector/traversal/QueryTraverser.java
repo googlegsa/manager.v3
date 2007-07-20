@@ -155,7 +155,7 @@ public class QueryTraverser implements Traverser {
   private void checkpointAndSave(DocumentList pm) {
     String connectorState = null;
     try {
-      connectorState = pm.getDocument().checkpoint();
+      connectorState = pm.checkpoint();
     } catch (RepositoryException e) {
       // TODO:ziff Auto-generated catch block
       e.printStackTrace();

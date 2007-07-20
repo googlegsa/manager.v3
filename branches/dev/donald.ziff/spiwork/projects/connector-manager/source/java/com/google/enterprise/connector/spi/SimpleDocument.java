@@ -15,11 +15,6 @@ public class SimpleDocument implements Document {
     this.property = null;
   }
 
-  public String checkpoint() throws RepositoryException {
-    return Value.getSingleValueByPropertyName(this,
-        SpiConstants.PROPNAME_LASTMODIFIED).toString();
-  }
-
   public boolean findProperty(String name) {
     if (iterator != null) {
       throw new IllegalStateException();

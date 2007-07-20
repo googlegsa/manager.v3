@@ -30,4 +30,9 @@ public class SimpleDocumentList implements DocumentList {
     return document;
   }
 
+  public String checkpoint() throws RepositoryException {
+    return Value.getSingleValueByPropertyName(document,
+        SpiConstants.PROPNAME_LASTMODIFIED).toString();
+  }
+
 }
