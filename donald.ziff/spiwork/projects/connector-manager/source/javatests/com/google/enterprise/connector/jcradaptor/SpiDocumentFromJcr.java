@@ -4,10 +4,6 @@ import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.spi.Value;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -98,44 +94,6 @@ public class SpiDocumentFromJcr implements Document {
     this.property = null;
   }
 
-  public String checkpoint() throws RepositoryException {
-    String uuid = fetchAndVerifyValueForCheckpoint(
-        SpiConstants.PROPNAME_DOCID).toString();
-    String dateString = fetchAndVerifyValueForCheckpoint(
-        SpiConstants.PROPNAME_LASTMODIFIED).toString();
-    String result = null;
-    try {
-      JSONObject jo = new JSONObject();
-      jo.put("uuid", uuid);
-      jo.put("lastModified", dateString);
-      result = jo.toString();
-    } catch (JSONException e) {
-      throw new RepositoryException("Unexpected JSON problem", e);
-    }
-    return result;
-  }
-
-  private Value fetchAndVerifyValueForCheckpoint(String pName)
-      throws RepositoryException {
-    if (node == null) {
-      throw new IllegalStateException();
-    }
-    if (!findProperty(pName)) {
-      throw new IllegalArgumentException("checkpoint must have a " + pName
-          + " property");
-    }
-    if (!property.nextValue()) {
-      throw new IllegalArgumentException("checkpoint must have a non-empty"
-          + pName + " property");
-    }
-    Value value = property.getValue();
-    if (value == null) {
-      throw new IllegalArgumentException("checkpoint " + pName
-          + " property must have a non-null value");
-    }
-    return value;
-  }
-
   public boolean findProperty(String name) throws RepositoryException {
     setupAliases();
     // we use a lazily constructed map - if there's an entry, we're done
@@ -176,27 +134,6 @@ public class SpiDocumentFromJcr implements Document {
       findProperty(name);
     }
     return hasNext;
-  }
-
-  public String getPropertyName() throws RepositoryException {
-    if (property == null) {
-      throw new IllegalStateException();
-    }
-    return property.getPropertyName();
-  }
-
-  public Value getValue() throws RepositoryException {
-    if (property == null) {
-      throw new IllegalStateException();
-    }
-    return property.getValue();
-  }
-
-  public boolean nextValue() throws RepositoryException {
-    if (property == null) {
-      throw new IllegalStateException();
-    }
-    return property.nextValue();
   }
 
   public Property getProperty() {
