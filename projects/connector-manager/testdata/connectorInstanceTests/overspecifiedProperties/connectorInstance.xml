@@ -28,7 +28,7 @@
 		</constructor-arg>
 	</bean>
 	<bean id="propertyPlaceholderConfigurer"
-		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		class="com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer">
 		<property name="properties">
 			<props>
 				<prop key="customProperty">hungadunga</prop>

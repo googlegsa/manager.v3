@@ -223,7 +223,19 @@ public class InstanceMapTest extends TestCase {
     File connectorDir = instanceInfo.getConnectorDir();
     Assert.assertTrue(connectorDir.exists());
     Assert.assertEquals(name, instanceInfo.getName());
-    ConnectorTestUtils.compareMaps(config, instanceInfo.getProperties(),
+    
+    // the password will be encrypted, so will differ between the two maps
+    Map instanceProps = instanceInfo.getProperties();
+    String encPasswd = (String) instanceProps.get("Password");
+    String plainPasswd = (String) config.get("Password");
+    String decryptedPasswd = 
+        EncryptedPropertyPlaceholderConfigurer.decryptString(encPasswd);
+    Assert.assertFalse(encPasswd.equals(plainPasswd));
+    Assert.assertEquals(decryptedPasswd, plainPasswd);
+    
+    // set back to plaintext password when comparing entire map
+    instanceProps.put("Password", plainPasswd);
+    ConnectorTestUtils.compareMaps(config, instanceProps,
         "input config", "returned config");
   }
 }

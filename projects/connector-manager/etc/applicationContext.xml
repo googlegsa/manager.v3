@@ -2,15 +2,16 @@
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 <beans>
 
-	<bean id="ApplicationContextProperties" 
+	<bean id="ApplicationContextProperties"
 		class="java.lang.String">
 		<constructor-arg value="/WEB-INF/applicationContext.properties"/>
 	</bean>
 
-	<bean id="PropertyPlaceholderConfigurer"
-		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" >
+	<bean id="EncryptedPropertyPlaceholderConfigurer"
+		class="com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer">
 		<property name="location" ref="ApplicationContextProperties"/>
 	</bean>	
+
 
 	<bean id="FeedConnection"
 		class="com.google.enterprise.connector.pusher.GsaFeedConnection">
