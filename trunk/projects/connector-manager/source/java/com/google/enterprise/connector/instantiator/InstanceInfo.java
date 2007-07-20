@@ -18,7 +18,6 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.spi.Connector;
 
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.beans.factory.xml.XmlBeanFactory;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -187,19 +186,19 @@ public final class InstanceInfo {
       throw new FactoryCreationFailureException(e, connectorInstancePrototype,
           connectorName);
     }
-
+    
     if (properties != null) {
-      PropertyPlaceholderConfigurer cfg =
-          (PropertyPlaceholderConfigurer) getRequiredBean(
+      EncryptedPropertyPlaceholderConfigurer cfg =
+          (EncryptedPropertyPlaceholderConfigurer) getRequiredBean(
               connectorInstancePrototype, connectorName, factory,
-              PropertyPlaceholderConfigurer.class);
+              EncryptedPropertyPlaceholderConfigurer.class);
       if (cfg == null) {
-        cfg = new PropertyPlaceholderConfigurer();
-      }
-      cfg.setLocation(new FileSystemResource(propertiesFile));
+        cfg = new EncryptedPropertyPlaceholderConfigurer();
+      }      
+      cfg.setLocation(new FileSystemResource(propertiesFile));      
       try {
         cfg.postProcessBeanFactory(factory);
-      } catch (BeansException e) {
+      } catch (BeansException e) {        
         throw new PropertyProcessingFailureException(e, propertiesFile,
             connectorInstancePrototype, connectorName);
       }
@@ -212,7 +211,6 @@ public final class InstanceInfo {
       throw new NoBeansFoundException(connectorInstancePrototype,
           connectorName, Connector.class);
     }
-
     return connector;
   }
 
@@ -314,6 +312,7 @@ public final class InstanceInfo {
       throw new PropertyFileCreationFailureException(e, propertiesFile);
     }
     try {
+      encryptSensitiveProperties(properties);
       properties.store(fos, null);
     } catch (IOException e) {
       throw new PropertyFileCreationFailureException(e, propertiesFile);
@@ -323,6 +322,15 @@ public final class InstanceInfo {
       } catch (IOException e) {
         LOGGER.log(Level.WARNING, "Trouble closing properties file stream", e);
       }
+    }
+  }
+  
+  private static void encryptSensitiveProperties(Properties properties) {
+    String plainPassword = properties.getProperty("Password");
+    if (plainPassword != null) {
+      String encryptedPassword = 
+          EncryptedPropertyPlaceholderConfigurer.encryptString(plainPassword);
+      properties.setProperty("Password", encryptedPassword);
     }
   }
 

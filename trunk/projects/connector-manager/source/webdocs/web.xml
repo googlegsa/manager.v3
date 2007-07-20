@@ -26,6 +26,45 @@
       Connector Servlets.
     </description>
 
+    <!-- initialization parameters -->
+
+    <context-param>
+      <param-name>keystore_type</param-name>
+      <param-value>JCEKS</param-value>
+      <description>
+        The type of keystore to use. Your JCE provider must support it.
+      </description>
+    </context-param>
+
+    <context-param>
+      <param-name>keystore_crypto_algo</param-name>
+      <param-value>AES</param-value>
+      <description>
+        Algorithm used to encrypt passwords. Your JCE provider must
+        support it.
+      </description>
+    </context-param>
+
+
+    <context-param>
+      <param-name>keystore_passwd_file</param-name>
+      <param-value>keystore_passwd</param-value>
+      <description>
+        File containing the password that is used to secure the
+        keystore. If this is not provided, an empty password will be
+        used.
+      </description>
+    </context-param>
+
+    <context-param>
+      <param-name>keystore_file</param-name>
+      <param-value>connector_manager.keystore</param-value>
+      <description>
+        Filename of keystore. Will be created if it does not exist.
+      </description>
+    </context-param>
+
+
     <!-- Define servlets that are included in the Connector application -->
 
     <servlet>
