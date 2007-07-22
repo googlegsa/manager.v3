@@ -18,6 +18,7 @@ import com.google.enterprise.connector.jcradaptor.old.SpiTraversalManagerFromJcr
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
+import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.TraversalManager;
@@ -43,8 +44,9 @@ public class MockPusherTest extends TestCase {
       DocumentList propertyMapList = qtm.startTraversal();
 
       int counter = 0;
-      while (propertyMapList.nextDocument()) {
-        pusher.take(propertyMapList.getDocument(), "junit");
+      Document document = null;
+      while ((document = propertyMapList.nextDocument()) != null) {
+        pusher.take(document, "junit");
         counter++;
       }
       Assert.assertEquals(4, counter);

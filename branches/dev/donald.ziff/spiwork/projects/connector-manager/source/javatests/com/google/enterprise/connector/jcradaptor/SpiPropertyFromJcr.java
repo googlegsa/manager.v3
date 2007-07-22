@@ -50,13 +50,6 @@ public class SpiPropertyFromJcr implements Property {
     return name;
   }
 
-  public Value getValue() {
-    if (value  == null) {
-      throw new IllegalStateException();
-    }
-    return value;
-  }
-  
   private static Value toSpiValue(javax.jcr.Value jcrValue)
       throws RepositoryException {
     int jcrType = jcrValue.getType();
@@ -89,7 +82,7 @@ public class SpiPropertyFromJcr implements Property {
     }
   }
 
-  public boolean nextValue() throws RepositoryException {
+  public Value nextValue() throws RepositoryException {
     if (iterator == null) {
       try {
         iterator = Arrays.asList(property.getValues()).iterator();
@@ -105,7 +98,7 @@ public class SpiPropertyFromJcr implements Property {
     } else {
       value = null;
     }
-    return hasNext;
+    return value;
   }
 
 }

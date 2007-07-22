@@ -15,23 +15,19 @@ public class SimpleDocumentList implements DocumentList {
     this.document = null;
   }
 
-  public boolean nextDocument() {
+  public Document nextDocument() {
     if (iterator == null) {
       iterator = documents.iterator();
     }
-    boolean hasNext = iterator.hasNext();
-    if (hasNext) {
+    if (iterator.hasNext()) {
       document = (Document) iterator.next();
-    } 
-    return hasNext;
-  }
-
-  public Document getDocument() {
-    return document;
+      return document;
+    }
+    return null;
   }
 
   public String checkpoint() throws RepositoryException {
-    return Value.getSingleValueByPropertyName(document,
+    return Value.getSingleValue(document,
         SpiConstants.PROPNAME_LASTMODIFIED).toString();
   }
 
