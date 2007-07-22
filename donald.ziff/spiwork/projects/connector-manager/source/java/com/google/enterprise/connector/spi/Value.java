@@ -140,11 +140,13 @@ public abstract class Value {
    *         <code>null</code> otherwise
    * @throws RepositoryException
    */
-  public static Value getSingleValueByPropertyName(Document document,
+  public static Value getSingleValue(Document document,
       String propertyName) throws RepositoryException {
-    return (document.findProperty(propertyName) && document
-        .getProperty().nextValue()) ? document.getProperty().getValue() : null;
-
+    Property p = document.findProperty(propertyName);
+    if (p == null) {
+      return null;
+    }
+    return p.nextValue();
   }
   
   /**
@@ -156,10 +158,13 @@ public abstract class Value {
    *         <code>null</code> otherwise
    * @throws RepositoryException
    */
-  public static String getSingleValueStringByPropertyName(Document document,
+  public static String getSingleValueString(Document document,
       String propertyName) throws RepositoryException {
-    Value v = getSingleValueByPropertyName(document, propertyName);
-    return (v == null) ? null : v.toString();
+    Value v = getSingleValue(document, propertyName);
+    if (v == null) {
+      return null;
+    }
+    return v.toString();
   }
 
   /**

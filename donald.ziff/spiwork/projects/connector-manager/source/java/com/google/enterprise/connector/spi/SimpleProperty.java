@@ -4,36 +4,19 @@ import java.util.Iterator;
 import java.util.List;
 
 public class SimpleProperty implements Property {
-  
-  String name;
+
   List values;
   Iterator iterator;
-  Value value;
-  
-  public SimpleProperty(String name, List values) {
-    this.name = name;
+
+  public SimpleProperty(List values) {
     this.values = values;
     this.iterator = null;
-    this.value = null;
   }
 
-  public String getPropertyName() {
-    return name;
-  }
-
-  public Value getValue() {
-    return value;
-  }
-
-  public boolean nextValue() {
+  public Value nextValue() {
     if (iterator == null) {
       iterator = values.iterator();
     }
-    boolean hasNext = iterator.hasNext();
-    if (hasNext) {
-      value = (Value) iterator.next();
-    } 
-    return hasNext;
+    return (iterator.hasNext()) ? (Value) iterator.next() : null;
   }
-
 }

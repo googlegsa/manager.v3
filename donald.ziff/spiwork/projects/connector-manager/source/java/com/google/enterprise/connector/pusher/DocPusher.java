@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -226,7 +227,8 @@ public class DocPusher implements Pusher {
       appendAttrValuePair(XML_LAST_MODIFIED, lastModified, prefix);
     }
     try {
-      ValueImpl v = (ValueImpl) Value.getSingleValueByPropertyName(document, SpiConstants.PROPNAME_ISPUBLIC);
+      ValueImpl v = (ValueImpl) Value.getSingleValue(document,
+          SpiConstants.PROPNAME_ISPUBLIC);
       if (v != null) {
         boolean isPublic = v.toBoolean();
         if (!isPublic) {
@@ -279,43 +281,41 @@ public class DocPusher implements Pusher {
    */
   private static void xmlWrapMetadata(StringBuffer buf, Document document) {
 
-    boolean nextProperty = false;
+    Set propertyNames = null;
     try {
-      nextProperty = document.nextProperty();
+      propertyNames = document.getPropertyNames();
     } catch (RepositoryException e) {
       LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
-          "Swallowing exception while starting to scan properties", e);
+          "Swallowing exception while starting getting property names", e);
     }
-    if (!nextProperty) {
+
+    if (propertyNames == null) {
+      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
+          "Property names set is empty");
+      return;
+    }
+    if (propertyNames.isEmpty()) {
       return;
     }
 
     buf.append(xmlWrapStart(XML_METADATA));
     buf.append("\n");
 
-    while (nextProperty) {
+    for (Iterator iter = propertyNames.iterator(); iter.hasNext();) {
       Property property = null;
-      String name;
+      String name = (String) iter.next();
+      if (propertySkipSet.contains(name)) {
+        continue;
+      }
       try {
-        property = document.getProperty();
-        name = property.getPropertyName();
+        property = document.findProperty(name);
       } catch (RepositoryException e) {
         LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
             "xmlWrapMetadata", "Swallowing exception while reading properties",
             e);
         continue;
       }
-      if (!propertySkipSet.contains(name)) {
-        wrapOneProperty(buf, property);
-      }
-      try {
-        nextProperty = document.nextProperty();
-      } catch (RepositoryException e) {
-        LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
-            "xmlWrapMetadata",
-            "Swallowing exception while scanning properties", e);
-        break;
-      }
+      wrapOneProperty(buf, name, property);
     }
     buf.append(xmlWrapEnd(XML_METADATA));
   }
@@ -325,31 +325,12 @@ public class DocPusher implements Pusher {
    * Property's value is null or zero-length.
    * 
    * @param buf string buffer
+   * @param name the property's name
    * @param property Property
    */
-  private static void wrapOneProperty(StringBuffer buf, Property property) {
-    String name;
-    try {
-      name = property.getPropertyName();
-    } catch (RepositoryException e) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
-          "Swallowing exception while scanning values", e);
-      return;
-    }
-    // if property is null, don't encode it; GSA won't process
-
-    boolean nextValue = false;
-    try {
-      nextValue = property.nextValue();
-    } catch (RepositoryException e) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
-          "Swallowing exception while starting to scan values for property "
-              + name, e);
-    }
-    if (!nextValue) {
-      return;
-    }
-
+  private static void wrapOneProperty(StringBuffer buf, String name,
+      Property property) {
+    Value v = null;
     /*
      * in case there are only null values, we want to "roll back" the XML_META
      * tag. So save our current length:
@@ -365,18 +346,20 @@ public class DocPusher implements Pusher {
 
     // mark the beginning of the values:
     int indexValuesStart = buf.length();
-    while (nextValue) {
-      wrapOneValue(buf, property, name, delimiter);
-      delimiter = ", ";
+    ValueImpl value = null;
+    while (true) {
       try {
-        nextValue = property.nextValue();
+        value = (ValueImpl) property.nextValue();
       } catch (RepositoryException e) {
-        LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
-            "xmlWrapMetadata",
-            "Swallowing exception while scanning values for property " + name,
-            e);
+        LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
+            "Swallowing exception while scanning values for property " + name, e);
+        continue;
+      }
+      if (value == null) {
         break;
       }
+      wrapOneValue(buf, value, name, delimiter);
+      delimiter = ", ";
     }
     /*
      * If there were no additions to buf (because of empty values), roll back to
@@ -389,18 +372,8 @@ public class DocPusher implements Pusher {
     }
   }
 
-  private static void wrapOneValue(StringBuffer buf, Property property,
+  private static void wrapOneValue(StringBuffer buf, ValueImpl value,
       String name, String delimiter) {
-    ValueImpl value = null;
-    try {
-      value = (ValueImpl) property.getValue();
-    } catch (RepositoryException e) {
-      LOGGER
-          .logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
-              "Swallowing exception while accessing values for property "
-                  + name, e);
-      return;
-    }
     String valString = "";
     valString = value.toFeedXml();
     if (valString.length() == 0) {
@@ -469,7 +442,7 @@ public class DocPusher implements Pusher {
   private static ValueImpl getValueAndThrow(Document document, String name)
       throws RepositoryException {
     ValueImpl v = null;
-    v = (ValueImpl) Value.getSingleValueByPropertyName(document, name);
+    v = (ValueImpl) Value.getSingleValue(document, name);
     return v;
   }
 

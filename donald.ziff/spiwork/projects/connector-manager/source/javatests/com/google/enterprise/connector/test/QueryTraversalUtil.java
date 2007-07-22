@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.test;
 
+import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
@@ -51,8 +52,9 @@ public class QueryTraversalUtil {
 
     while (true) {
       int counter = 0;
-      while (documentList.nextDocument()) {
-        processOneDocument(documentList);
+      Document document = null;
+      while ((document = documentList.nextDocument()) != null) {
+        processOneDocument(document);
         counter++;
         if (counter == batchHint) {
           // this test program only takes batchHint results from each
@@ -82,24 +84,24 @@ public class QueryTraversalUtil {
     }
   }
 
-  public static void processOneDocument(DocumentList documentList)
+  public static void processOneDocument(Document document)
       throws RepositoryException {
 
     // every document should have a name
-    String name = Value.getSingleValueStringByPropertyName(documentList
-        .getDocument(), SpiConstants.PROPNAME_DOCID);
+    String name = Value.getSingleValueString(document,
+        SpiConstants.PROPNAME_DOCID);
 
     // if a CONTENTURL was specified, use it
-    String contentSnippet = Value.getSingleValueStringByPropertyName(documentList
-        .getDocument(), SpiConstants.PROPNAME_CONTENTURL);
+    String contentSnippet = Value.getSingleValueString(document,
+        SpiConstants.PROPNAME_CONTENTURL);
 
     if (contentSnippet == null) {
       // if there is no contentUrl, the connector manager will ask for
       // the content property and will base-64 encode it. Here we will
       // only access the first so many characters of the content and
       // print it out
-      contentSnippet = Value.getSingleValueStringByPropertyName(documentList
-          .getDocument(), SpiConstants.PROPNAME_CONTENT);
+      contentSnippet = Value.getSingleValueString(document,
+          SpiConstants.PROPNAME_CONTENT);
       if (contentSnippet == null) {
         contentSnippet = "no content";
       }

@@ -94,18 +94,18 @@ public class SpiDocumentFromJcr implements Document {
     this.property = null;
   }
 
-  public boolean findProperty(String name) throws RepositoryException {
+  public Property findProperty(String name) throws RepositoryException {
     setupAliases();
     // we use a lazily constructed map - if there's an entry, we're done
     property = (Property) aliasedPropertyMap.get(name);
     if (property != null) {
-      return true;
+      return property;
     }
     // otherwise, we create an entry
     // first, we check whether there is a JCR property with this name
     String originalName = (String) aliasedPropertyNames.get(name);
     if (originalName == null) {
-      return false;
+      return null;
     }
     // now we believe there is a JCR property with this name,
     // so we construct the SPI property and cache it
@@ -122,22 +122,12 @@ public class SpiDocumentFromJcr implements Document {
     }
     property = new SpiPropertyFromJcr(jcrProperty, name);
     aliasedPropertyMap.put(name, property);
-    return true;
-  }
-
-  public boolean nextProperty() throws RepositoryException {
-    setupAliases();
-    propertyIterator = aliasedPropertyNames.keySet().iterator();
-    boolean hasNext = propertyIterator.hasNext();
-    if (hasNext) {
-      String name = (String) propertyIterator.next();
-      findProperty(name);
-    }
-    return hasNext;
-  }
-
-  public Property getProperty() {
     return property;
+  }
+
+  public Set getPropertyNames() throws RepositoryException {
+    setupAliases();
+    return aliasedPropertyNames.keySet();
   }
 
 }

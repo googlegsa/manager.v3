@@ -14,7 +14,7 @@ import javax.jcr.NodeIterator;
 
 public class SpiDocumentListFromJcr implements DocumentList {
 
-  private final Node startNode;
+  private Node startNode;
   private final NodeIterator jcrIterator;
   private Document document = null;
 
@@ -28,29 +28,25 @@ public class SpiDocumentListFromJcr implements DocumentList {
     jcrIterator = nodes;
   }
 
-  public boolean nextDocument() {
+  public Document nextDocument() {
     if (startNode != null) {
       document = new SpiDocumentFromJcr(startNode);
-      return true;
+      startNode = null;
+      return document;
     }
     if (jcrIterator == null) {
-      return false;
+      return null;
     }
-    boolean result = jcrIterator.hasNext();
-    if (result) {
+    if (jcrIterator.hasNext()) {
       document = new SpiDocumentFromJcr(jcrIterator.nextNode());
     }
-    return result;
-  }
-
-  public Document getDocument() {
     return document;
   }
 
   public String checkpoint() throws RepositoryException {
-    String uuid = Value.getSingleValueStringByPropertyName(document,
+    String uuid = Value.getSingleValueString(document,
         SpiConstants.PROPNAME_DOCID);
-    String dateString = Value.getSingleValueStringByPropertyName(document,
+    String dateString = Value.getSingleValueString(document,
         SpiConstants.PROPNAME_LASTMODIFIED);
     String result = null;
     try {

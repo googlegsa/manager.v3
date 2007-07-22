@@ -2,11 +2,13 @@ package com.google.enterprise.connector.spi.old;
 
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
+import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Value;
-import com.google.enterprise.connector.spi.Property;
 
 import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class NewDocumentListAdaptor implements DocumentList, Document, Property {
 
@@ -15,7 +17,7 @@ public class NewDocumentListAdaptor implements DocumentList, Document, Property 
   private Iterator propertyMapListIterator = null;
   private PropertyMap propertyMap = null;
   private com.google.enterprise.connector.spi.old.Property oldProperty = null;
-  private Iterator propertyIterator = null;
+  private Set propertyNames = null;
   private Iterator valueIterator = null;
   private com.google.enterprise.connector.spi.old.Value oldValue = null;
 
@@ -26,16 +28,7 @@ public class NewDocumentListAdaptor implements DocumentList, Document, Property 
     this.oldTraversalManager = oldTraversalManager;
   }
 
-  /**
-   * This constructor is only intended for Pusher tests
-   * 
-   * @param propertyMap
-   */
-  public NewDocumentListAdaptor(PropertyMap propertyMap) {
-    this.propertyMap = propertyMap;
-  }
-
-  public boolean nextDocument() {
+  public Document nextDocument() {
     if (propertyMapListIterator == null) {
       try {
         propertyMapListIterator = propertyMapList.iterator();
@@ -46,9 +39,10 @@ public class NewDocumentListAdaptor implements DocumentList, Document, Property 
     boolean hasNext = propertyMapListIterator.hasNext();
     if (hasNext) {
       propertyMap = (PropertyMap) propertyMapListIterator.next();
-      propertyIterator = null;
+      propertyNames = null;
+      return this;
     }
-    return hasNext;
+    return null;
   }
 
   public String checkpoint() throws RepositoryException {
@@ -57,7 +51,7 @@ public class NewDocumentListAdaptor implements DocumentList, Document, Property 
     return result;
   }
 
-  public boolean findProperty(String name) {
+  public Property findProperty(String name) {
     oldProperty = null;
     valueIterator = null;
     try {
@@ -65,37 +59,25 @@ public class NewDocumentListAdaptor implements DocumentList, Document, Property 
     } catch (RepositoryException e) {
       throw new IllegalStateException();
     }
-    return (oldProperty != null);
+    if (oldProperty != null) {
+      return this;
+    }
+    return null;
   }
 
-  public boolean nextProperty() {
-    oldProperty = null;
-    valueIterator = null;
-    if (propertyIterator == null) {
-      try {
-        propertyIterator = propertyMap.getProperties();
-      } catch (RepositoryException e) {
-        throw new IllegalStateException();
+  public Set getPropertyNames() throws RepositoryException {
+    if (propertyNames == null) {
+      propertyNames = new TreeSet();
+      for (Iterator iter = propertyMap.getProperties(); iter.hasNext(); ) {
+        com.google.enterprise.connector.spi.old.Property oldProp = 
+          (com.google.enterprise.connector.spi.old.Property) iter.next();
+        propertyNames.add(oldProp.getName());
       }
     }
-    boolean hasNext = propertyIterator.hasNext();
-    if (hasNext) {
-      oldProperty = (com.google.enterprise.connector.spi.old.Property) propertyIterator
-          .next();
-    } else {
-      propertyIterator = null;
-    }
-    return hasNext;
+    return propertyNames;
   }
 
-  public String getPropertyName() throws RepositoryException {
-    if (oldProperty == null) {
-      return null;
-    }
-    return oldProperty.getName();
-  }
-
-  public boolean nextValue() {
+  public Value nextValue() throws RepositoryException {
     if (valueIterator == null) {
       try {
         valueIterator = oldProperty.getValues();
@@ -107,17 +89,11 @@ public class NewDocumentListAdaptor implements DocumentList, Document, Property 
     if (hasNext) {
       oldValue = (com.google.enterprise.connector.spi.old.Value) valueIterator
           .next();
+      return newValueAdaptor(oldValue); 
     } else {
       valueIterator = null;
-    }
-    return hasNext;
-  }
-
-  public Value getValue() throws RepositoryException {
-    if (oldValue == null) {
       return null;
     }
-    return newValueAdaptor(oldValue);
   }
 
   private static Value newValueAdaptor(
@@ -139,14 +115,6 @@ public class NewDocumentListAdaptor implements DocumentList, Document, Property 
       return Value.getStringValue(value.getString());
     }
     return null;
-  }
-
-  public Document getDocument() {
-    return this;
-  }
-
-  public Property getProperty() {
-    return this;
   }
 
 }

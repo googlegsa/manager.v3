@@ -13,94 +13,42 @@
 // limitations under the License.
 
 package com.google.enterprise.connector.spi;
+import java.util.Set;
 
 /**
- * Interface that represents a document. A document is a set of Properties that
- * can be explored both as a map and a list. List-like functionality is provided
- * through the <code>nextProperty()</code> and <code>getProperty()</code>
- * methods. Map-like functionality is provided through the
- * <code>{@link #findProperty(String)}</code> method, discussed below. 
+ * Interface that represents a document. A document is a map of String property
+ * names to Property objects. Map-like functionality is provided through the
+ * <code>{@link #findProperty(String)}</code> method. In addition, a method
+ * provides the caller with the Set of all property names, which it can use to
+ * iterate over all properties.
  * <p>
- * Similar to <code>{@link DocumentList}</code> and
- * <code>{@link Property}</code>, the list functionality is based on a
- * "cursor" concept, like that of <code>{@link java.sql.ResultSet}</code>.
- * Initially, the cursor is positioned before the first Property. A call to
- * <code>{@link #nextProperty()}</code> both returns a boolean, indicating
- * whether there are any more properties, and advances the cursor to point at
- * the next one. A call to <code>{@link #getProperty()}</code> returns the
- * Property currently pointed to by the cursor.
- * <p>
- * The consumer of this structure:
- * <ul>
- * <li> Should never call <code>{@link #getProperty()}</code> before first
- * calling <code>{@link #nextProperty()}</code>. The implementor of this
- * interface may throw an IllegalStateException if that happens.
- * <li> Should never refer to a Property object obtained by
- * <code>{@link #getProperty()}</code> after a subsequent call to
- * <code>{@link #nextProperty()}</code> <b>unless</b> that subsequent call
- * returns false. In other words, a Property object becomes invalid as soon as
- * another valid Property is obtained.
- * </ul>
- * <p>
- * Unlike <code>{@link DocumentList}</code> and <code>{@link Property}</code>,
- * which only provide list-like access, this interface also provides map-like
- * access. Map-like access is provided through
- * <code>{@link #findProperty(String)}</code>, with
- * <code>{@link #getProperty()}</code>.
- * <p>
- * A call to <code>{@link #findProperty(String)}</code> returns true or false,
- * depending on whether this document has a property of the specified name. If
- * it returns true, then the next call to <code>{@link #getProperty()}</code>
- * will return that property.
- * <p>
- * The caller must not mix list access with map access. After the first call to
- * <code>{@link #nextProperty()}</code>, the caller may no longer call
- * <code>{@link #findProperty(String)}</code>. In addition, the first call to
- * <code>{@link #nextProperty()}</code> will always return the first
- * property--in particular it will not return the "next" property following the
- * previous one accessed by the last <code>{@link #findProperty(String)}</code>,
- * with <code>{@link #findProperty(String)}</code> call.
+ * Important: a Property object obtained
+ * by calling <code>{@link #findProperty(String)}</code> is invalidated by the next
+ * call to <code>{@link #findProperty(String)}</code>. Typically, the caller will
+ * store the current Property in a loop variabe, so that it is clear that this
+ * rule is observed; see the example code below.
  * <p>
  * The typical pattern for consuming an object that implements this interface is
  * this (disregarding exception handling):
  * 
  * <pre>
  * Document doc = ...
- * Property specialProp;
- * if (doc.findProperty(specialPropName1)) {
- *   specialProp = doc.getProperty();
+ * Property prop = null;
+ * if ((prop = doc.findProperty(specialPropName1)) != null) {
  *   doSomethingSpecial(specialProp);
  * }
- * if (doc.findProperty(specialPropName2)) {
- *   specialProp = doc.getProperty();
+ * if ((prop = doc.findProperty(specialPropName2)) != null) {
  *   doSomethingElseSpecial(specialProp);
  * }
- * ... etc. for other special properties ...
- * Property prop = null;
- * while (doc.nextProperty()) {
- *   prop = doc.getProperty();
- *   handleProp(prop);
+ * ... so on for other special properties as needed ...
+ * for (Iterator i = doc.getPropertyNames().iterator(); i.hasNext(); ) {
+ *   prop = doc.findProperty((String) i.next());
+ *   // assert(prop != null);
+ *   doSomething(prop);
  * }
  * </pre>
  */
 public interface Document {
-
-  /**
-   * Moves the property cursor down one row from its current position. The
-   * property cursor is initially positioned before the first property; the
-   * first call to the method <code>nextProperty</code> makes the first
-   * property the current property; the second call makes the second property
-   * the current property, and so on.
-   * <p>
-   * Calls to <code>{@link #findProperty(String)}</code> are not permitted
-   * after the first call to <code>nextProperty()</code>. The implementor may
-   * throw an IllegalStateException if the caller violates this rule.
-   * 
-   * @return <code>true</code> if the new current property is valid;
-   *         <code>false</code> if there are no more properties
-   * @throws RepositoryException if a repository access error occurs
-   */
-  public boolean nextProperty() throws RepositoryException;
 
   /**
    * Finds a property by name. If the current document has a property with that
@@ -111,17 +59,16 @@ public interface Document {
    * this rule.
    * 
    * @param name The name of the property to find
-   * @return <code>true</code> if the new current document has a valid
-   *         property with the requested name; <code>false</code> if not
+   * @return The Property, if found; <code>null</code> otherwise
    * @throws RepositoryException if a repository access error occurs
    */
-  public boolean findProperty(String name) throws RepositoryException;
+  public Property findProperty(String name) throws RepositoryException;
 
   /**
-   * Returns the current Property
+   * Gets the set of names of all Properties in this Document.
    * 
-   * @return the current Property
-   * @throws RepositoryException
+   * @return The names, as a Set
+   * @throws RepositoryException if a repository access error occurs
    */
-  public Property getProperty() throws RepositoryException;
+  public Set getPropertyNames() throws RepositoryException;
 }

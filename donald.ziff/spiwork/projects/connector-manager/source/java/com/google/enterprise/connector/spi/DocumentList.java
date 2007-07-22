@@ -15,78 +15,67 @@
 package com.google.enterprise.connector.spi;
 
 /**
- * Interface that represents a list of documents to be traversed. This type is
- * the return type of <code>{@link TraversalManager#startTraversal()}</code>
- * and <code>{@link TraversalManager#resumeTraversal(String)}</code>.
- * <p>
- * Documents are accessed through <code>{@link #nextDocument()}</code> and
- * <code>{@link #getDocument()}</code> interfaces, similar to the "cursor"
- * concept of <code>{@link java.sql.ResultSet}</code>. Initially, the cursor
- * is positioned before the first Document. A call to
- * <code>{@link #nextDocument()}</code> both returns a boolean, indicating
- * whether there are any more documents in this list, and advances the cursor to
- * point at the next one. A call to <code>{@link #getDocument()}</code>
- * returns the Document currently pointed to by the cursor.
- * <p>
- * The consumer of this structure:
- * <ul>
- * <li> Should never call <code>{@link #getDocument()}</code> before first
- * calling <code>{@link #nextDocument()}</code>. The implementor of this
- * interface may throw an IllegalStateException if that happens.
- * <li> Should never refer to a Document object obtained by
- * <code>{@link #getDocument()}</code> after a subsequent call to
- * <code>{@link #nextDocument()}</code> <b>unless</b> that subsequent call
- * returns false. In other words, a Document object becomes invalid as soon as
- * another valid Document is obtained.
+ * Interface that represents a list of documents to be traversed. Documents are
+ * accessed through an iterator-like method:
+ * <code>{@link #nextDocument()}</code>, which returns the next available
+ * Document or null if there are no more. Important: a Document object obtained
+ * by calling <code>{@link #nextDocument()}</code> is invalidated by the next
+ * call to <code>{@link #nextDocument()}</code>. Typically, the caller will
+ * store the curent Document in a loop variabe, so that it is clear that this
+ * rule is observed; see the example code below.
  * <p>
  * In addition, a this interface has a special method
  * <code>{@link #checkpoint()}</code>, which produces a String that
- * encapsulates the cursor position, so that if this String is provided to
- * <code>{@link TraversalManager#resumeTraversal(String)}</code>, the
- * traversal will resume from the next document after this one.
+ * encapsulates the traversal state. The consumer may call
+ * <code>{@link #checkpoint()}</code> at any time. The implementation should
+ * return a string that, if supplied to
+ * <code>{@link TraversalManager#resumeTraversal(String)}</code>, would cause
+ * traversal to resume from the next unprocessed document.
+ * </ul>
+ * Boundary cases are important for <code>{@link #checkpoint()}</code>:
+ * <ul>
+ * <li>If <code>{@link #checkpoint()}</code> is called before any calls to
+ * <code>{@link #nextDocument()}</code>, then traversal should resume with
+ * the first Document that would have been returned by the first call to
+ * <code>{@link #nextDocument()}</code>.
+ * <li>If <code>{@link #checkpoint()}</code> is called after a call to
+ * <code>{@link #nextDocument()}</code> that returns a valid document, then
+ * traversal should resume with Document that would have been returned by the
+ * first call to <code>{@link #nextDocument()}</code>.
  * </ul>
  * The typical pattern for consuming an object that implements this interface is
  * this (disregarding exception handling):
  * 
  * <pre>
  * DocumentList docList = ...
- * while (docList.nextDocument()) {
- *   Document doc = docList.getDocument();
+ * Document doc;
+ * while (doc = docList.nextDocument()) {
  *   handleDoc(doc);
  *   if (whatever reason) break;
  * }
  * String check = doclist.checkpoint();
  * </pre>
  * 
- * Note: one possible implementation technique is to provide a single stateful
- * object that implements <code>{link DocumentList}</code>,
- * <code>{link Document}</code> and <code>{link Property}</code>, and
- * returns <code>this</code> to all calls to <code>getDocument</code> and
- * <code>Document.getProperty()</code>. Or, if preferred, the implementor may
- * use separate objects for each of those interfaces.
- * 
+ * Note: because of the restriction that the next call to
+ * <code>nextDocument()</code> invalidates the previous Document, and there
+ * are similar restrictions in the <code>{@link Document}</code> interface, it
+ * is possible to provide a single stateful object that implements
+ * <code>{link DocumentList}</code>, <code>{link Document}</code> and
+ * <code>{link Property}</code>, by returning <code>this</code> (or
+ * <code>null</code>) to all calls to <code>getDocument</code> and
+ * <code>Document.findProperty(String)</code>. However, if preferred, the
+ * implementor may also use separate objects for each of those interfaces.
  */
 public interface DocumentList {
 
   /**
-   * Moves the document cursor down one row from its current position. The
-   * document cursor is initially positioned before the first document; the
-   * first call to this method makes the first document current; the second call
-   * makes the second document current, and so on.
+   * Returns the next Document in this document list, if there is one.
    * 
-   * @return <code>true</code> if the new current document is valid;
-   *         <code>false</code> if there are no more documents
+   * @return The new current document if there is one; <code>null</code>
+   *         otherwise
    * @throws RepositoryException if a repository access error occurs
    */
-  public boolean nextDocument() throws RepositoryException;
-
-  /**
-   * Returns the current document.
-   * 
-   * @return the current document
-   * @throws RepositoryException if a repository access error occurs
-   */
-  public Document getDocument() throws RepositoryException;
+  public Document nextDocument() throws RepositoryException;
 
   /**
    * Provides a checkpoint that can be used to control traversal. The

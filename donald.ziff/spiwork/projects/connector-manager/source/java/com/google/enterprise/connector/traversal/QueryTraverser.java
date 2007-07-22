@@ -17,11 +17,13 @@ package com.google.enterprise.connector.traversal;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.pusher.Pusher;
+import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.HasTimeout;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.Value;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -94,22 +96,22 @@ public class QueryTraverser implements Traverser {
       return 0;
     }
 
+    Document nextDocument = null;
     boolean forceCheckpoint = false;
     try {
-      boolean nextDocument = true;
-      while (true) {
+       while (true) {
         try {
           nextDocument = resultSet.nextDocument();
         } catch (RepositoryException e) {
           LOGGER.log(Level.SEVERE, "Repository Exception during traversal.", e);
         }
-        if (!nextDocument) {
+        if (nextDocument == null) {
           break;
         }
         if (Thread.interrupted()) {
           break;
         }
-        pusher.take(resultSet.getDocument(), connectorName);
+        pusher.take(nextDocument, connectorName);
         counter++;
         if (counter == batchHint) {
           break;
@@ -119,10 +121,7 @@ public class QueryTraverser implements Traverser {
       forceCheckpoint = true;
       String docid = null;
       try {
-        docid = (resultSet.getDocument().findProperty(
-            SpiConstants.PROPNAME_DOCID) && resultSet.getDocument()
-            .getProperty().nextValue()) ? resultSet.getDocument().getProperty()
-            .getValue().toString() : null;
+        docid = Value.getSingleValueString(nextDocument, SpiConstants.PROPNAME_DOCID);
       } catch (IllegalArgumentException e1) {
         // TODO Auto-generated catch block
         e1.printStackTrace();
@@ -134,9 +133,6 @@ public class QueryTraverser implements Traverser {
           + ") is too large.  To fix, increase heap space or reduce size "
           + "of document.");
     } catch (PushException e) {
-      LOGGER.log(Level.WARNING, e.getMessage(), e);
-      e.printStackTrace();
-    } catch (RepositoryException e) {
       LOGGER.log(Level.WARNING, e.getMessage(), e);
       e.printStackTrace();
     } finally {

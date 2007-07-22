@@ -25,6 +25,7 @@ import com.google.enterprise.connector.spiimpl.BinaryValue;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.Iterator;
 
 
 public class MockPusher implements Pusher {
@@ -49,38 +50,32 @@ public class MockPusher implements Pusher {
 
     // first take care of some special attributes
     Property property = null;
+    String name;
 
-    // we just do the DOCID first so it is easy to find
     try {
-      if (!document.findProperty(SpiConstants.PROPNAME_DOCID)) {
+      // we just do the DOCID first so it is easy to find
+      name = SpiConstants.PROPNAME_DOCID;
+      if ((property = document.findProperty(name)) == null) {
         throw new IllegalArgumentException(SpiConstants.PROPNAME_DOCID
             + " is missing");
       }
-      property = document.getProperty();
-    } catch (RepositoryException e) {
-      throw new RuntimeException(e);
-    }
 
-    processProperty(property);
+      processProperty(null, property);
 
-    try {
-      if (!document.findProperty(SpiConstants.PROPNAME_CONTENTURL)) {
-        if (!document.findProperty(SpiConstants.PROPNAME_CONTENT)) {
+      name = SpiConstants.PROPNAME_CONTENTURL;
+      if ((property = document.findProperty(name)) == null) {
+        name = SpiConstants.PROPNAME_CONTENT;
+        if ((property = document.findProperty(name)) == null) {
           throw new IllegalArgumentException("Both "
               + SpiConstants.PROPNAME_CONTENTURL + " and "
               + SpiConstants.PROPNAME_CONTENT + " are missing");
         }
-        property = document.getProperty();
       }
-    } catch (RepositoryException e) {
-      throw new RuntimeException(e);
-    }
-    processProperty(property);
+      processProperty(name, property);
 
-    try {
-      while (document.nextProperty()) {
-        property = document.getProperty();
-        String name = property.getPropertyName();
+      for (Iterator i = document.getPropertyNames().iterator(); i.hasNext();) {
+        name = (String) i.next();
+        property = document.findProperty(name);
         if (name.startsWith("google:")) {
           if (name.equals(SpiConstants.PROPNAME_CONTENT)
               || name.equals(SpiConstants.PROPNAME_CONTENTURL)
@@ -89,22 +84,19 @@ public class MockPusher implements Pusher {
             break;
           }
         }
-        processProperty(property);
+        processProperty(name, property);
       }
-      totalDocs++;
     } catch (RepositoryException e) {
       throw new IllegalArgumentException();
     }
+    totalDocs++;
   }
 
-  private void processProperty(Property property) {
-    String name;
+  private void processProperty(String name, Property property) {
     try {
-      property.nextValue();
-      name = property.getPropertyName();
+      Value v = property.nextValue();
       // if we have a contentfile property, we want to stream the InputStream
       // to demonstrate that we don't blow up memory
-      Value v = property.getValue();
       if (v instanceof BinaryValue) {
         InputStream contentStream = ((BinaryValue) v).getInputStream();
         InputStream encodedContentStream = null;
@@ -131,7 +123,7 @@ public class MockPusher implements Pusher {
         printStream.println("<" + name + ">");
         printStream.println(v.toString());
         printStream.println("</" + name + ">");
-      } while (property.nextValue());
+      } while ((v = property.nextValue()) != null);
     } catch (RepositoryException e) {
       throw new RuntimeException(e);
     }

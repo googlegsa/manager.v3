@@ -21,6 +21,7 @@ import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.servlet.ServletUtil;
+import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
@@ -28,6 +29,7 @@ import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.old.NewDocumentListAdaptor;
 import com.google.enterprise.connector.spi.old.NewTraversalManagerAdaptor;
 import com.google.enterprise.connector.spi.old.PropertyMap;
+import com.google.enterprise.connector.spi.old.SimplePropertyMapList;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -224,10 +226,11 @@ public class DocPusherTest extends TestCase {
     DocumentList documentList = qtm.startTraversal();
 
     int i = 0;
-    while (documentList.nextDocument()) {
+    Document document = null;
+    while ((document = documentList.nextDocument()) != null) {
       System.out.println("Test " + i + " output");
       Assert.assertFalse(i == expectedXml.length);
-      dpusher.take(documentList.getDocument(), "junit");
+      dpusher.take(document, "junit");
       System.out.println("Test " + i + " assertions");
       String resultXML = mockFeedConnection.getFeed();
       gsaActualResponse = dpusher.getGsaResponse();
@@ -249,11 +252,13 @@ public class DocPusherTest extends TestCase {
         + "}\r\n" + "";
     PropertyMap propertyMap = SpiPropertyMapFromJcrTest
         .makePropertyMapFromJson(json1);
-    DocumentList documentList = new NewDocumentListAdaptor(propertyMap);
+    SimplePropertyMapList simplePropertyMapList = new SimplePropertyMapList();
+    simplePropertyMapList.add(propertyMap);
+    DocumentList documentList = new NewDocumentListAdaptor(simplePropertyMapList, null);
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
-    dpusher.take(documentList.getDocument(), "junit");
+    dpusher.take(documentList.nextDocument(), "junit");
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
@@ -276,11 +281,13 @@ public class DocPusherTest extends TestCase {
         + "}\r\n" + "";
     PropertyMap propertyMap = SpiPropertyMapFromJcrTest
         .makePropertyMapFromJson(json1);
-    DocumentList documentList = new NewDocumentListAdaptor(propertyMap);
+    SimplePropertyMapList simplePropertyMapList = new SimplePropertyMapList();
+    simplePropertyMapList.add(propertyMap);
+    DocumentList documentList = new NewDocumentListAdaptor(simplePropertyMapList, null);
  
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
-    dpusher.take(documentList.getDocument(), "junit");
+    dpusher.take(documentList.nextDocument(), "junit");
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
@@ -302,11 +309,13 @@ public class DocPusherTest extends TestCase {
         + ",\"chinese\":\"\u5317\u4eac\u5e02\"" + "}\r\n" + "";
     PropertyMap propertyMap = SpiPropertyMapFromJcrTest
         .makePropertyMapFromJson(json1);
-    DocumentList documentList = new NewDocumentListAdaptor(propertyMap);
+    SimplePropertyMapList simplePropertyMapList = new SimplePropertyMapList();
+    simplePropertyMapList.add(propertyMap);
+    DocumentList documentList = new NewDocumentListAdaptor(simplePropertyMapList, null);
  
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
-    dpusher.take(documentList.getDocument(), "junit");
+    dpusher.take(documentList.nextDocument(), "junit");
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("<meta name=\"special\" " +
@@ -340,11 +349,13 @@ public class DocPusherTest extends TestCase {
         + "}\r\n" + "";
     PropertyMap propertyMap = SpiPropertyMapFromJcrTest
         .makePropertyMapFromJson(json1);
-    DocumentList documentList = new NewDocumentListAdaptor(propertyMap);
+    SimplePropertyMapList simplePropertyMapList = new SimplePropertyMapList();
+    simplePropertyMapList.add(propertyMap);
+    DocumentList documentList = new NewDocumentListAdaptor(simplePropertyMapList, null);
  
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
-    dpusher.take(documentList.getDocument(), "junit");
+    dpusher.take(documentList.nextDocument(), "junit");
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
