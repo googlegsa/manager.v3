@@ -1,23 +1,9 @@
-// Copyright (C) 2006 Google Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+package com.google.enterprise.connector.jcradaptor;
 
-package com.google.enterprise.connector.jcradaptor.old;
-
+import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.spi.old.Property;
-import com.google.enterprise.connector.spi.old.PropertyMap;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,18 +15,13 @@ import java.util.Map.Entry;
 
 import javax.jcr.PropertyIterator;
 
-/**
- * Google SPI PropertyMap adaptor using JCR node. Part of an implementation of
- * the complete Google connector SPI using JCR. This class may need to be
- * revisited when look at queries that return things other than nodes.
- */
-public class SpiPropertyMapFromJcr implements PropertyMap {
+public class JcrDocument implements Document {
 
   private javax.jcr.Node node;
   private static Map aliasMap;
   private Map aliasedPropertyNames = null;
-  private Map aliasedPropertyMap = new TreeMap();
-
+  private Property property;
+  
   static {
     aliasMap = new HashMap();
     aliasMap.put(SpiConstants.PROPNAME_DOCID, "jcr:uuid");
@@ -60,6 +41,16 @@ public class SpiPropertyMapFromJcr implements PropertyMap {
       }
     }
     return originalNames;
+  }
+
+  private PropertyIterator getJCRProperties() throws RepositoryException {
+    PropertyIterator propertyIterator = null;
+    try {
+      propertyIterator = node.getProperties();
+    } catch (javax.jcr.RepositoryException e) {
+      throw new RepositoryException(e);
+    }
+    return propertyIterator;
   }
 
   private void setupAliases() throws RepositoryException {
@@ -86,7 +77,7 @@ public class SpiPropertyMapFromJcr implements PropertyMap {
     }
     // then alias all the remaining names to themselves
     // note: this has the effect of overriding any aliases with the native
-    // value, if they have the same name.  For example, if a node has both
+    // value, if they have the same name. For example, if a node has both
     // "google:docid" (PROPNAME_DOCID) and "jcr:uuid" (normal jcr id) then
     // the explicitly supplied "google:docid" beats out the aliased
     for (Iterator i = originalNames.iterator(); i.hasNext();) {
@@ -95,25 +86,22 @@ public class SpiPropertyMapFromJcr implements PropertyMap {
     }
   }
 
-  public SpiPropertyMapFromJcr(javax.jcr.Node n) {
+  public JcrDocument(javax.jcr.Node n) {
     this.node = n;
+    this.property = null;
   }
 
-  public Property getProperty(String name) throws RepositoryException {
+  public Property findProperty(String name) throws RepositoryException {
     setupAliases();
-    // we use a lazily constructed map - if there's an entry, we're done
-    Property property = (Property) aliasedPropertyMap.get(name);
-    if (property != null) {
-      return property;
-    }
-    // otherwise, we create an entry
     // first, we check whether there is a JCR property with this name
     String originalName = (String) aliasedPropertyNames.get(name);
     if (originalName == null) {
       return null;
     }
     // now we believe there is a JCR property with this name,
-    // so we construct the SPI property and cache it
+    // so we construct the SPI property -
+    // if this is the second time someone hs asked for this property, we 
+    // re-construct it
     javax.jcr.Property jcrProperty = null;
     try {
       jcrProperty = node.getProperty(originalName);
@@ -125,44 +113,13 @@ public class SpiPropertyMapFromJcr implements PropertyMap {
     if (jcrProperty == null) {
       throw new RepositoryException();
     }
-    property = new SpiPropertyFromJcr(jcrProperty, name);
-    aliasedPropertyMap.put(name, property);
+    property = new JcrProperty(jcrProperty, name);
     return property;
   }
 
-  public Iterator getProperties() throws RepositoryException {
+  public Set getPropertyNames() throws RepositoryException {
     setupAliases();
-    final Iterator propertyIterator = aliasedPropertyNames.keySet().iterator();
-    return new Iterator() {
-
-      public boolean hasNext() {
-        return propertyIterator.hasNext();
-      }
-
-      public Object next() {
-        String name = (String) propertyIterator.next();
-        Object result;
-        try {
-          result = getProperty(name);
-        } catch (RepositoryException e) {
-          throw new RuntimeException(e);
-        }
-        return result;
-      }
-
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-    };
+    return aliasedPropertyNames.keySet();
   }
 
-  private PropertyIterator getJCRProperties() throws RepositoryException {
-    PropertyIterator propertyIterator = null;
-    try {
-      propertyIterator = node.getProperties();
-    } catch (javax.jcr.RepositoryException e) {
-      throw new RepositoryException(e);
-    }
-    return propertyIterator;
-  }
 }

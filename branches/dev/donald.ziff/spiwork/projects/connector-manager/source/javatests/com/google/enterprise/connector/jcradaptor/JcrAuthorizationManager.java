@@ -35,11 +35,11 @@ import javax.jcr.SimpleCredentials;
  * be the best performing implementation for some JCR-compliant
  * repositories.
  */
-public class SpiAuthorizationManagerFromJcr implements AuthorizationManager {
+public class JcrAuthorizationManager implements AuthorizationManager {
 
   private Session sess;
 
-  public SpiAuthorizationManagerFromJcr(Session sess) {
+  public JcrAuthorizationManager(Session sess) {
     this.sess = sess;
   }
 

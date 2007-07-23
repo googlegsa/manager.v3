@@ -14,13 +14,11 @@
 
 package com.google.enterprise.connector.jcradaptor;
 
-import com.google.enterprise.connector.jcradaptor.old.SpiTraversalManagerFromJcr;
-import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
-import com.google.enterprise.connector.spi.old.NewTraversalManagerAdaptor;
+import com.google.enterprise.connector.spi.TraversalManager;
 
 import javax.jcr.Workspace;
 import javax.jcr.query.QueryManager;
@@ -28,11 +26,11 @@ import javax.jcr.query.QueryManager;
 /**
  * Adaptor to JCR class of the same name
  */
-public class SpiSessionFromJcr implements Session {
+public class JcrSession implements Session {
 
   javax.jcr.Session session;
 
-  public SpiSessionFromJcr(javax.jcr.Session session) {
+  public JcrSession(javax.jcr.Session session) {
     this.session = session;
   }
 
@@ -45,17 +43,17 @@ public class SpiSessionFromJcr implements Session {
     } catch (javax.jcr.RepositoryException e) {
       throw new RepositoryException(e);
     }
-    return new NewTraversalManagerAdaptor(new SpiTraversalManagerFromJcr(queryManager));
+    return new JcrTraversalManager(queryManager);
   }
 
   public AuthenticationManager getAuthenticationManager()
       throws RepositoryException {
-    return new SpiAuthenticationManagerFromJcr(session);
+    return new JcrAuthenticationManager(session);
   }
 
   public AuthorizationManager getAuthorizationManager()
       throws RepositoryException {
-    return new SpiAuthorizationManagerFromJcr(session);
+    return new JcrAuthorizationManager(session);
   }
 
 }

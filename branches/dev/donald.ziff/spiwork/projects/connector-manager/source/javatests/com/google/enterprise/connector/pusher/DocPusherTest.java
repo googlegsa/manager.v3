@@ -15,8 +15,8 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.jcradaptor.old.SpiPropertyMapFromJcrTest;
-import com.google.enterprise.connector.jcradaptor.old.SpiTraversalManagerFromJcr;
+import com.google.enterprise.connector.jcradaptor.JcrDocumentTest;
+import com.google.enterprise.connector.jcradaptor.JcrTraversalManager;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
@@ -26,10 +26,6 @@ import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
-import com.google.enterprise.connector.spi.old.NewDocumentListAdaptor;
-import com.google.enterprise.connector.spi.old.NewTraversalManagerAdaptor;
-import com.google.enterprise.connector.spi.old.PropertyMap;
-import com.google.enterprise.connector.spi.old.SimplePropertyMapList;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -217,8 +213,7 @@ public class DocPusherTest extends TestCase {
     MockRepositoryEventList mrel = new MockRepositoryEventList(repository);
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
-    TraversalManager qtm = new NewTraversalManagerAdaptor(
-        new SpiTraversalManagerFromJcr(qm));
+    TraversalManager qtm = new JcrTraversalManager(qm);
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
@@ -243,22 +238,17 @@ public class DocPusherTest extends TestCase {
 
   /**
    * Test basic metadata representation.
-   * @throws RepositoryException 
    */
-  public void testSimpleDoc() throws PushException, RepositoryException {
+  public void testSimpleDoc() throws PushException {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
         + "}\r\n" + "";
-    PropertyMap propertyMap = SpiPropertyMapFromJcrTest
-        .makePropertyMapFromJson(json1);
-    SimplePropertyMapList simplePropertyMapList = new SimplePropertyMapList();
-    simplePropertyMapList.add(propertyMap);
-    DocumentList documentList = new NewDocumentListAdaptor(simplePropertyMapList, null);
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
-    dpusher.take(documentList.nextDocument(), "junit");
+    dpusher.take(document, "junit");
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
@@ -272,22 +262,17 @@ public class DocPusherTest extends TestCase {
   /**
    * Test displayurl.
    * @throws PushException 
-   * @throws RepositoryException 
    */
-  public void testDisplayUrl() throws PushException, RepositoryException {
+  public void testDisplayUrl() throws PushException {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
         + "}\r\n" + "";
-    PropertyMap propertyMap = SpiPropertyMapFromJcrTest
-        .makePropertyMapFromJson(json1);
-    SimplePropertyMapList simplePropertyMapList = new SimplePropertyMapList();
-    simplePropertyMapList.add(propertyMap);
-    DocumentList documentList = new NewDocumentListAdaptor(simplePropertyMapList, null);
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
  
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
-    dpusher.take(documentList.nextDocument(), "junit");
+    dpusher.take(document, "junit");
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
@@ -298,24 +283,19 @@ public class DocPusherTest extends TestCase {
   /**
    * Test special characters in metadata values.
    * @throws PushException 
-   * @throws RepositoryException 
    */
-  public void testSpecials() throws PushException, RepositoryException {
+  public void testSpecials() throws PushException {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\""
         // note double escaping in the line below, since this is a json string
         + ",\"special\":\"`~!@#$%^&*()_+-={}[]|\\\\:\\\";'<>?,./\""
         + ",\"japanese\":\"\u5317\u6d77\u9053\""
         + ",\"chinese\":\"\u5317\u4eac\u5e02\"" + "}\r\n" + "";
-    PropertyMap propertyMap = SpiPropertyMapFromJcrTest
-        .makePropertyMapFromJson(json1);
-    SimplePropertyMapList simplePropertyMapList = new SimplePropertyMapList();
-    simplePropertyMapList.add(propertyMap);
-    DocumentList documentList = new NewDocumentListAdaptor(simplePropertyMapList, null);
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
  
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
-    dpusher.take(documentList.nextDocument(), "junit");
+    dpusher.take(document, "junit");
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("<meta name=\"special\" " +
@@ -338,24 +318,19 @@ public class DocPusherTest extends TestCase {
 
   /**
    * Tests a word document.
-   * @throws RepositoryException 
    */
-  public void testWordDoc() throws PushException, RepositoryException {
+  public void testWordDoc() throws PushException {
     final String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"google:mimetype\":\"application/msword\""
         + ",\"contentfile\":\"testdata/mocktestdata/test.doc\""
         + ",\"author\":\"ziff\""
         + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
         + "}\r\n" + "";
-    PropertyMap propertyMap = SpiPropertyMapFromJcrTest
-        .makePropertyMapFromJson(json1);
-    SimplePropertyMapList simplePropertyMapList = new SimplePropertyMapList();
-    simplePropertyMapList.add(propertyMap);
-    DocumentList documentList = new NewDocumentListAdaptor(simplePropertyMapList, null);
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
  
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
-    dpusher.take(documentList.nextDocument(), "junit");
+    dpusher.take(document, "junit");
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",

@@ -15,7 +15,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 
-public class SpiAuthenticationManagerFromJcrTest extends TestCase {
+public class JcrAuthenticationManagerTest extends TestCase {
 
   public final void testAuthenticate() throws LoginException,
       RepositoryException, com.google.enterprise.connector.spi.RepositoryLoginException,
@@ -27,7 +27,7 @@ public class SpiAuthenticationManagerFromJcrTest extends TestCase {
     Credentials creds = new SimpleCredentials("admin", "admin".toCharArray());
     Session session = repo.login(creds);
     AuthenticationManager authenticationManager =
-        new SpiAuthenticationManagerFromJcr(session);
+        new JcrAuthenticationManager(session);
 
     Assert.assertFalse(authenticationManager.authenticate(new UserPassIdentity("jimbo","jimbo")).isValid());
     Assert.assertFalse(authenticationManager.authenticate(new UserPassIdentity("admin","admin1")).isValid());

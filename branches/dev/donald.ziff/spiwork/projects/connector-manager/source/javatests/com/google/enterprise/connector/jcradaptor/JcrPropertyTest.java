@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.jcradaptor.old;
+package com.google.enterprise.connector.jcradaptor;
 
 import com.google.enterprise.connector.mock.MockRepositoryProperty;
 import com.google.enterprise.connector.mock.MockRepositoryPropertyList;
 import com.google.enterprise.connector.mock.jcr.MockJcrProperty;
+import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.old.Property;
-import com.google.enterprise.connector.spi.old.Value;
-import com.google.enterprise.connector.spi.old.ValueType;
+import com.google.enterprise.connector.spi.Value;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -28,13 +27,10 @@ import junit.framework.TestCase;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Calendar;
-import java.util.Iterator;
-
 /**
- * Simple test fr SpiPropertyFromJcr
+ * Simple test fr JcrProperty
  */
-public class SpiPropertyFromJcrTest extends TestCase {
+public class JcrPropertyTest extends TestCase {
 
   public void testSimple() throws RepositoryException {
     String input = "{" + "baz: 42, " + "xyzzy: {type:string, value:skeedle}, "
@@ -52,45 +48,42 @@ public class SpiPropertyFromJcrTest extends TestCase {
     {
       MockRepositoryProperty testProp = pl.getProperty("xyzzy");
       MockJcrProperty testJCRProp = new MockJcrProperty(testProp);
-      Property p = new SpiPropertyFromJcr(testJCRProp);
-      Value v = p.getValue();
-      Assert.assertEquals("skeedle", v.getString());
-      Assert.assertEquals(ValueType.STRING, v.getType());
+      Property p = new JcrProperty(testJCRProp);
+      Value v = p.nextValue();
+      Assert.assertEquals("skeedle", v.toString());
     }
 
     {
       MockRepositoryProperty testProp = pl.getProperty("baz");
       MockJcrProperty testJCRProp = new MockJcrProperty(testProp);
-      Property p = new SpiPropertyFromJcr(testJCRProp);
-      Value v = p.getValue();
-      Assert.assertEquals(42, v.getLong());
-      Assert.assertEquals(ValueType.LONG, v.getType());
+      Property p = new JcrProperty(testJCRProp);
+      Value v = p.nextValue();
+      Assert.assertEquals("42", v.toString());
     }
 
     {
       MockRepositoryProperty testProp = pl.getProperty("abc");
       MockJcrProperty testJCRProp = new MockJcrProperty(testProp);
-      Property p = new SpiPropertyFromJcr(testJCRProp);
+      Property p = new JcrProperty(testJCRProp);
       int counter = 0;
-      for (Iterator i = p.getValues(); i.hasNext();) {
-        Value v = (Value) i.next();
-        long res = v.getLong();
-        Assert.assertEquals(ValueType.LONG, v.getType());
+      Value v = null;
+      while ((v = p.nextValue()) != null) {
+        String res = v.toString();
         switch (counter) {
         case 0:
-          Assert.assertEquals(2, res);
+          Assert.assertEquals("2", res);
           break;
         case 1:
-          Assert.assertEquals(3, res);
+          Assert.assertEquals("3", res);
           break;
         case 2:
-          Assert.assertEquals(5, res);
+          Assert.assertEquals("5", res);
           break;
         case 3:
-          Assert.assertEquals(7, res);
+          Assert.assertEquals("7", res);
           break;
         case 4:
-          Assert.assertEquals(11, res);
+          Assert.assertEquals("11", res);
           break;
         }
         counter++;
@@ -99,28 +92,15 @@ public class SpiPropertyFromJcrTest extends TestCase {
     }
 
     {
-      MockRepositoryProperty testProp = pl.getProperty("def");
-      MockJcrProperty testJCRProp = new MockJcrProperty(testProp);
-      Property p = new SpiPropertyFromJcr(testJCRProp);
-      int counter = 0;
-      for (Iterator i = p.getValues(); i.hasNext();) {
-        Value v = (Value) i.next();
-        Calendar d = v.getDate();
-        Assert.assertEquals(ValueType.DATE, v.getType());
-        Calendar expected = Calendar.getInstance();
-        expected.setTimeInMillis((counter + 1) * 10 * 1000);
-        Assert.assertEquals(expected, d);
-        counter++;
-      }
-      Assert.assertEquals(3, counter);
+      // TODO: date test
     }
 
     {
       MockRepositoryProperty testProp = pl.getProperty("ghi");
       MockJcrProperty testJCRProp = new MockJcrProperty(testProp);
-      Property p = new SpiPropertyFromJcr(testJCRProp);
-      Iterator i = p.getValues();
-      Assert.assertFalse(i.hasNext());
+      Property p = new JcrProperty(testJCRProp);
+      Value v = p.nextValue();
+      Assert.assertNull(v);
     }
 
   }
