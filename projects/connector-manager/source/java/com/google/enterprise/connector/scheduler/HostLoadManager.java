@@ -30,6 +30,8 @@ public class HostLoadManager {
   private static final long MINUTE_IN_MILLIS = 60 * 1000;
   private long startTimeInMillis;
   private Map connectorNameToNumDocsTraversed;
+  private Map connectorNameToFinishTime;
+  
   /**
    * Number of milliseconds before we ignore previously fed documents.  In
    * particular, we limit our feed rate during the duration
@@ -62,6 +64,7 @@ public class HostLoadManager {
     
     startTimeInMillis = System.currentTimeMillis();
     connectorNameToNumDocsTraversed = new HashMap();
+    connectorNameToFinishTime = new HashMap();
   }
   
   private int getMaxLoad(String connectorName) {
@@ -118,6 +121,16 @@ public class HostLoadManager {
   }
   
   /**
+   * Let HostLoadManager know that a connector has just completed a traversal,
+   * (whether it was a failure or natural completion is irrelevant).
+   * @param connectorName name of the connector instance
+   */
+  public void connectorFinishedTraversal(String connectorName) {
+    long now = System.currentTimeMillis();
+    connectorNameToFinishTime.put(connectorName, now);
+  }
+  
+  /**
    * Determine how many documents to be recommended to be traversed.  This
    * number is based on the max feed rate for the connector instance as well
    * as the load determined based on calls to updateNumDocsTraversed(). 
@@ -136,6 +149,20 @@ public class HostLoadManager {
       return remainingDocsToTraverse;
     } else {
       return 0;
+    }
+  }
+  
+  public boolean shouldDelay(String connectorName) {
+    if (connectorNameToFinishTime.containsKey(connectorName)) {
+      Object value = connectorNameToFinishTime.get(connectorName);
+      long finishTime = ((Long)value).longValue();
+      String schedStr = scheduleStore.getConnectorSchedule(connectorName);
+      Schedule schedule = new Schedule(schedStr);
+      int retryDelayMillis = schedule.getRetryDelayMillis();
+      long now = System.currentTimeMillis();
+      return now < finishTime + retryDelayMillis;
+    } else {
+      return false;
     }
   }
 }

@@ -161,13 +161,15 @@ public interface Manager {
    * 
    * @param connectorName
    * @param load The hostload (in docs per minute) as an integer
+   * @param retryDelayMillis Time to wait before next traversal (milliseconds)
    * @param timeIntervals Time intervals in the format of 1-2:3-8
    * @throws ConnectorNotFoundException If the named connector is not known to
    *         this manager.
    * @throws PersistentStoreException If there was a problem storing the
    *         configuration
    */
-  public void setSchedule(String connectorName, int load, String timeIntervals)
+  public void setSchedule(String connectorName, int load, int retryDelayMillis,
+      String timeIntervals)
       throws ConnectorNotFoundException, PersistentStoreException;
 
   /*

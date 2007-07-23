@@ -109,6 +109,7 @@ public class ServletUtil {
   public static final String XMLTAG_CONNECTOR_SCHEDULES = "ConnectorSchedules";
   public static final String XMLTAG_CONNECTOR_SCHEDULE = "ConnectorSchedule";
   public static final String XMLTAG_LOAD = "load";
+  public static final String XMLTAG_DELAY = "RetryDelayMillis";
   public static final String XMLTAG_TIME_INTERVALS = "TimeIntervals";
 
   public static final String LOG_RESPONSE_EMPTY_REQUEST = "Empty request";

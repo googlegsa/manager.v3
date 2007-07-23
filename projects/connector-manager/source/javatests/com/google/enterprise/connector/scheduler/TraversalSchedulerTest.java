@@ -103,18 +103,23 @@ public class TraversalSchedulerTest extends TestCase {
   /**
    * Retrieve a schedule that will always run the particular traverser.
    * @param traverserName name of the traverser
+   * @param (optional) retry delay milliseconds
    * @return a List of Schedule objects
    */
-  private List getSchedules(String traverserName) {
+  private List getSchedules(String traverserName, int delay) {
     List schedules = new ArrayList();
     List intervals = new ArrayList();
     intervals.add(new ScheduleTimeInterval(
       new ScheduleTime(0),
       new ScheduleTime(0)));
-    Schedule schedule = new Schedule(traverserName, 60, intervals);
+    Schedule schedule = new Schedule(traverserName, 60, delay, intervals);
     schedules.add(schedule);
     
     return schedules;
+  }
+  
+  private List getSchedules(String traverserName) {
+    return getSchedules(traverserName, 0);
   }
   
   public void testRemoveConnector() {
@@ -170,7 +175,7 @@ public class TraversalSchedulerTest extends TestCase {
         MockInstantiator.TRAVERSER_NAME_REQUESTS_MORE_TIME);
     runWithSchedules(schedules, createMockInstantiator());
   }
-  
+
   /**
    * Test that tests two mock Traverser objects.
    */

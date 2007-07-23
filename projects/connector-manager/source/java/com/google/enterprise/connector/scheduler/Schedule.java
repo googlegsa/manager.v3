@@ -25,14 +25,16 @@ import java.util.List;
 public class Schedule {
   private String connectorName;
   private int load;
+  private int retryDelayMillis; // maximum of ~24 days
   private List timeIntervals;
 
-  public Schedule(String connectorName, int load, List timeIntervals) {
+  public Schedule(String connectorName, int load, int retryDelayMillis, List timeIntervals) {
     if (null == timeIntervals) {
       throw new IllegalArgumentException();
     }
     this.connectorName = connectorName;
     this.load = load;
+    this.retryDelayMillis = retryDelayMillis;
     this.timeIntervals = timeIntervals;
   }
 
@@ -48,17 +50,29 @@ public class Schedule {
   /**
    * Populate a schedule.
    * 
-   * @param schedule String of the form: <connectorName>:<load>:<timeIntervals>
-   * e.g. "connector1:60:1-2:3-5"
-   * 
+   * @param schedule String of the form:
+   *    <connectorName>:<load>:<retryDelayMillis>:<timeIntervals>
+   *    OR
+   *    <connectorName>:<load>:<timeIntervals>
+   * e.g. "connector1:60:86400000:1-2:3-5", "connector1:60:1-2:3-5" 
+   *  
    */
   public void readString(String schedule) {
-    String[] strs = schedule.split(":");
-    if (strs.length >= 3) {  // must have at least one time interval
+    String exceptionReason = "Invalid schedule string format: " + schedule;
+    try {
+      String[] strs = schedule.split(":");
       connectorName = strs[0];
       load = Integer.parseInt(strs[1]);
-      timeIntervals = new ArrayList();
-      for (int i = 2; i < strs.length; i++) {
+      int intervalsStart = -1;
+      if(strs[2].indexOf('-') < 0) {
+        retryDelayMillis = Integer.parseInt(strs[2]);
+        intervalsStart = 3;
+      } else {
+        intervalsStart = 2;
+      }
+      timeIntervals = new ArrayList(); 
+          
+      for (int i = intervalsStart; i < strs.length; i++) {
         String[] strs2 = strs[i].split("-");
         String startTime = strs2[0];
         String endTime = strs2[1];
@@ -67,9 +81,11 @@ public class Schedule {
         ScheduleTimeInterval interval = new ScheduleTimeInterval(t1, t2);
         timeIntervals.add(interval);
       }
-    } else {
-      throw new IllegalArgumentException("Schedule should have at least one " +
-            "time interval: " + schedule);
+      if (timeIntervals.size() < 1) {
+        throw new IllegalArgumentException(exceptionReason);
+      }
+    } catch(ArrayIndexOutOfBoundsException aioobe) {
+      throw new IllegalArgumentException(exceptionReason);
     }
   }
 
@@ -80,6 +96,7 @@ public class Schedule {
     StringBuffer buf = new StringBuffer();
     buf.append(connectorName);
     buf.append(":" + load);
+    buf.append(":" + retryDelayMillis);
     buf.append(":" + getTimeIntervalsAsString());
     return buf.toString();
   }
@@ -90,6 +107,10 @@ public class Schedule {
 
   public int getLoad() {
     return load;
+  }
+  
+  public int getRetryDelayMillis() {
+    return retryDelayMillis;
   }
 
   public List getTimeIntervals() {

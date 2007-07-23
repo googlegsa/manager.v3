@@ -284,10 +284,12 @@ public class ProductionManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#setSchedule(
    *      java.lang.String, int, java.lang.String)
    */
-  public void setSchedule(String connectorName, int load, String timeIntervals) {
+  public void setSchedule(String connectorName, int load, int retryDelayMillis,
+      String timeIntervals) {
 
     Schedule schedule =
-        new Schedule(connectorName + ":" + load + ":" + timeIntervals);
+        new Schedule(connectorName + ":" + load + ":" + retryDelayMillis + ":" 
+            + timeIntervals);
     String connectorSchedule = schedule.toString();
     connectorScheduleStore.storeConnectorSchedule(connectorName,
         connectorSchedule);
