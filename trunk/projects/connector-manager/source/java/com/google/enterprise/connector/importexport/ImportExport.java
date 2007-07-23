@@ -133,7 +133,8 @@ public class ImportExport {
         // set schedule
         try {
           manager.setSchedule(
-              name, schedule.getLoad(), schedule.getTimeIntervalsAsString());
+              name, schedule.getLoad(), schedule.getRetryDelayMillis(),
+              schedule.getTimeIntervalsAsString());
         } catch (ConnectorNotFoundException e) {
           // should never happen
           LOGGER.log(Level.WARNING, e.getMessage(), e);

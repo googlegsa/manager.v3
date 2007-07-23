@@ -157,7 +157,11 @@ public class TraversalScheduler implements Scheduler {
         endHour = 24;
       }
       if ((hour >= startHour) && (hour < endHour)) {
-        return true;
+        if (hostLoadManager.shouldDelay(schedule.getConnectorName())) {
+          return false;
+        } else {
+          return true;
+        }
       }
     }
     return false;
@@ -272,7 +276,7 @@ public class TraversalScheduler implements Scheduler {
       }
     }
   }
-
+  
   private class TraversalWorkQueueItem extends WorkQueueItem {
     private String connectorName;
     private Traverser traverser;
@@ -344,11 +348,11 @@ public class TraversalScheduler implements Scheduler {
     public long getTimeOfFirstFailure() {
       return timeOfFirstFailure;
     }
-    
+
     public void doWork() {
+      int batchHint = hostLoadManager.determineBatchHint(connectorName);
       if (null != traverser) {
         LOGGER.finer("Begin runBatch");
-        int batchHint = hostLoadManager.determineBatchHint(connectorName); 
         if (0 == batchHint) {
           numDocsTraversed = 0;
         } else {
@@ -361,6 +365,9 @@ public class TraversalScheduler implements Scheduler {
         failure();
       }
       isFinished = true;
+      if (numDocsTraversed < batchHint) {
+        hostLoadManager.connectorFinishedTraversal(connectorName);
+      }
       synchronized(this) {
         notifyAll();
       }

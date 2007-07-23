@@ -33,7 +33,7 @@ public class HostLoadManagerTest extends TestCase {
   
   private static void addLoad(ConnectorScheduleStore scheduleStore, 
       String connectorName, int load) {
-    Schedule schedule = new Schedule(connectorName + ":" + load + ":0-0");
+    Schedule schedule = new Schedule(connectorName + ":" + load + ":0:0-0");
     String connectorSchedule = schedule.toString();
     scheduleStore.storeConnectorSchedule(connectorName, connectorSchedule);
   }
@@ -94,5 +94,26 @@ public class HostLoadManagerTest extends TestCase {
     hostLoadManager.updateNumDocsTraversed(connectorName, 15);
     Assert.assertEquals(45, hostLoadManager.determineBatchHint(connectorName));
     
+  }
+  
+  public void testRetryDelay() {
+    final long periodInMillis = 1000;
+    final String connectorName = "cn1";
+    ConnectorScheduleStore scheduleStore = getScheduleStore();
+    HostLoadManager hostLoadManager = 
+      new HostLoadManager(periodInMillis, scheduleStore);
+    Assert.assertEquals(false,hostLoadManager.shouldDelay(connectorName));
+    hostLoadManager.connectorFinishedTraversal(connectorName);
+    Assert.assertEquals(true,hostLoadManager.shouldDelay(connectorName));
+    // sleep more than 100ms the time set in MockConnectorSchedule
+    // so that this connector can be allowed to run again without delay
+    try {
+      final long sleepTime = 250;  
+      Thread.sleep(sleepTime);
+    } catch (InterruptedException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    Assert.assertEquals(false,hostLoadManager.shouldDelay(connectorName));
   }
 }
