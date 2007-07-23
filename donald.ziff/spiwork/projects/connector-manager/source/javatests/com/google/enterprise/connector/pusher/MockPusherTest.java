@@ -14,7 +14,7 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.jcradaptor.old.SpiTraversalManagerFromJcr;
+import com.google.enterprise.connector.jcradaptor.JcrTraversalManager;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
@@ -22,7 +22,6 @@ import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.TraversalManager;
-import com.google.enterprise.connector.spi.old.NewTraversalManagerAdaptor;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -35,8 +34,7 @@ public class MockPusherTest extends TestCase {
         "MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
-    TraversalManager qtm = new NewTraversalManagerAdaptor(
-        new SpiTraversalManagerFromJcr(qm));
+    TraversalManager qtm = new JcrTraversalManager(qm);
 
     MockPusher pusher = new MockPusher(System.out);
 

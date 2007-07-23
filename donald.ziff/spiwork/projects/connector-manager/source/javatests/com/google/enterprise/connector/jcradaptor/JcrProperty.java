@@ -9,7 +9,7 @@ import java.util.Iterator;
 
 import javax.jcr.ValueFormatException;
 
-public class SpiPropertyFromJcr implements Property {
+public class JcrProperty implements Property {
 
   private javax.jcr.Property property;
   private String name;
@@ -18,7 +18,7 @@ public class SpiPropertyFromJcr implements Property {
   private Iterator iterator;
 
   
-  public SpiPropertyFromJcr(javax.jcr.Property p) {
+  public JcrProperty(javax.jcr.Property p) {
     if (p == null) {
       throw new IllegalArgumentException();
     }
@@ -27,7 +27,7 @@ public class SpiPropertyFromJcr implements Property {
     this.alias = null;
   }
 
-  public SpiPropertyFromJcr(javax.jcr.Property p, String alias) {
+  public JcrProperty(javax.jcr.Property p, String alias) {
     if (p == null) {
       throw new IllegalArgumentException();
     }

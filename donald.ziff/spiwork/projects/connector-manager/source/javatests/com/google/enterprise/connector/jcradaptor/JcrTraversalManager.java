@@ -35,7 +35,7 @@ import javax.jcr.query.QueryResult;
 /**
  * Adaptor to JCR class of the same name
  */
-public class SpiTraversalManagerFromJcr implements TraversalManager {
+public class JcrTraversalManager implements TraversalManager {
 
   javax.jcr.query.QueryManager queryManager;
 
@@ -63,7 +63,7 @@ public class SpiTraversalManagerFromJcr implements TraversalManager {
     this.xpathUnboundedTraversalQuery = xpathUnboundedTraversalQuery;
   }
 
-  public SpiTraversalManagerFromJcr(QueryManager queryManager) {
+  public JcrTraversalManager(QueryManager queryManager) {
     this.queryManager = queryManager;
     this.xpathUnboundedTraversalQuery = XPATH_QUERY_STRING_UNBOUNDED_DEFAULT;
     this.xpathBoundedTraversalQuery = XPATH_QUERY_STRING_BOUNDED_DEFAULT;
@@ -114,11 +114,11 @@ public class SpiTraversalManagerFromJcr implements TraversalManager {
     }
 
     if (useThisNode) {
-      DocumentList result = new SpiDocumentListFromJcr(thisNode, nodes);
+      DocumentList result = new JcrDocumentList(thisNode, nodes);
       return result;
     }
 
-    DocumentList result = new SpiDocumentListFromJcr(nodes);
+    DocumentList result = new JcrDocumentList(nodes);
     return result;
   }
 
@@ -135,8 +135,7 @@ public class SpiTraversalManagerFromJcr implements TraversalManager {
     return query;
   }
 
-  private String makeCheckpointQueryString(String uuid, Calendar c)
-      throws RepositoryException {
+  private String makeCheckpointQueryString(String uuid, Calendar c) {
 
     String time = Value.calendarToIso8601(c);
     Object[] arguments = { time };
@@ -191,7 +190,7 @@ public class SpiTraversalManagerFromJcr implements TraversalManager {
     } catch (javax.jcr.RepositoryException e) {
       throw new RepositoryException(e);
     }
-    DocumentList result = new SpiDocumentListFromJcr(nodes);
+    DocumentList result = new JcrDocumentList(nodes);
     return result;
   }
 

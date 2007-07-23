@@ -28,11 +28,11 @@ import javax.jcr.SimpleCredentials;
  * Simple JCR implementation of the spi.AuthenticationManager. This may not be
  * the best performing implementation for some JCR-compliant repositories.
  */
-public class SpiAuthenticationManagerFromJcr implements AuthenticationManager {
+public class JcrAuthenticationManager implements AuthenticationManager {
 
   private Session sess;
 
-  SpiAuthenticationManagerFromJcr(Session sess) {
+  JcrAuthenticationManager(Session sess) {
     this.sess = sess;
   }
 

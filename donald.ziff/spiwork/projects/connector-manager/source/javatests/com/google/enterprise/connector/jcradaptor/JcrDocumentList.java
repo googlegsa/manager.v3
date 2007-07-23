@@ -12,25 +12,25 @@ import org.json.JSONObject;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 
-public class SpiDocumentListFromJcr implements DocumentList {
+public class JcrDocumentList implements DocumentList {
 
   private Node startNode;
   private final NodeIterator jcrIterator;
   private Document document = null;
 
-  public SpiDocumentListFromJcr(final Node thisNode, final NodeIterator nodes) {
+  public JcrDocumentList(final Node thisNode, final NodeIterator nodes) {
     startNode = thisNode;
     jcrIterator = nodes;
   }
 
-  public SpiDocumentListFromJcr(final NodeIterator nodes) {
+  public JcrDocumentList(final NodeIterator nodes) {
     startNode = null;
     jcrIterator = nodes;
   }
 
   public Document nextDocument() {
     if (startNode != null) {
-      document = new SpiDocumentFromJcr(startNode);
+      document = new JcrDocument(startNode);
       startNode = null;
       return document;
     }
@@ -38,12 +38,13 @@ public class SpiDocumentListFromJcr implements DocumentList {
       return null;
     }
     if (jcrIterator.hasNext()) {
-      document = new SpiDocumentFromJcr(jcrIterator.nextNode());
+      document = new JcrDocument(jcrIterator.nextNode());
+      return document;
     }
-    return document;
+    return null;
   }
 
-  public String checkpoint() throws RepositoryException {
+  public static String checkpoint(Document document) throws RepositoryException {
     String uuid = Value.getSingleValueString(document,
         SpiConstants.PROPNAME_DOCID);
     String dateString = Value.getSingleValueString(document,
@@ -58,6 +59,10 @@ public class SpiDocumentListFromJcr implements DocumentList {
       throw new RepositoryException("Unexpected JSON problem", e);
     }
     return result;
+  }
+
+  public String checkpoint() throws RepositoryException {
+    return checkpoint(document);
   }
 
 }

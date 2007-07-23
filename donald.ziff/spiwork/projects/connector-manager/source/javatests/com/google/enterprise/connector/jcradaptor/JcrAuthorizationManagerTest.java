@@ -37,7 +37,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 
-public class SpiAuthorizationManagerFromJcrTest extends TestCase {
+public class JcrAuthorizationManagerTest extends TestCase {
 
   public final void testAuthorizeDocids() throws LoginException,
       RepositoryException,
@@ -50,7 +50,7 @@ public class SpiAuthorizationManagerFromJcrTest extends TestCase {
     Credentials creds = new SimpleCredentials("admin", "admin".toCharArray());
     Session session = repo.login(creds);
     AuthorizationManager authorizationManager =
-        new SpiAuthorizationManagerFromJcr(session);
+        new JcrAuthorizationManager(session);
 
     {
       String username = "joe";
