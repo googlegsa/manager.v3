@@ -21,7 +21,7 @@ package com.google.enterprise.connector.spi;
  * Document or null if there are no more. Important: a Document object obtained
  * by calling <code>{@link #nextDocument()}</code> is invalidated by the next
  * call to <code>{@link #nextDocument()}</code>. Typically, the caller will
- * store the curent Document in a loop variabe, so that it is clear that this
+ * store the current Document in a loop variable, so that it is clear that this
  * rule is observed; see the example code below.
  * <p>
  * In addition, a this interface has a special method

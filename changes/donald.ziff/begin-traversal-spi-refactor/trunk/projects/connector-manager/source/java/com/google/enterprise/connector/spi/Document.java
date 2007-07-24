@@ -13,23 +13,24 @@
 // limitations under the License.
 
 package com.google.enterprise.connector.spi;
+
 import java.util.Set;
 
 /**
- * Interface that represents a document. A document is a map of String property
- * names to Property objects. Map-like functionality is provided through the
- * <code>{@link #findProperty(String)}</code> method. In addition, a method
- * provides the caller with the Set of all property names, which it can use to
- * iterate over all properties.
+ * Interface that represents a document. A document is a map of String
+ * property names to Property objects. Map-like functionality is provided
+ * through the <code>{@link #findProperty(String)}</code> method. In
+ * addition, a method provides the caller with the Set of all property
+ * names, which it can use to iterate over all properties.
  * <p>
- * Important: a Property object obtained
- * by calling <code>{@link #findProperty(String)}</code> is invalidated by the next
- * call to <code>{@link #findProperty(String)}</code>. Typically, the caller will
- * store the current Property in a loop variabe, so that it is clear that this
- * rule is observed; see the example code below.
+ * Important: a Property object obtained by calling
+ * <code>{@link #findProperty(String)}</code> is invalidated by the next
+ * call to <code>{@link #findProperty(String)}</code>. Typically, the
+ * caller will store the current Property in a loop variable, so that it is
+ * clear that this rule is observed; see the example code below.
  * <p>
- * The typical pattern for consuming an object that implements this interface is
- * this (disregarding exception handling):
+ * The typical pattern for consuming an object that implements this
+ * interface is this (disregarding exception handling):
  * 
  * <pre>
  * Document doc = ...
@@ -51,12 +52,8 @@ import java.util.Set;
 public interface Document {
 
   /**
-   * Finds a property by name. If the current document has a property with that
-   * name, then it becomes the current property: that is, the next call to
-   * <code>getProperty</code> will return the named property. All calls to
-   * this method must be done before the first call to <code>nextProperty</code>;
-   * the implementor may throw an IllegalStateException if the caller violates
-   * this rule.
+   * Finds a property by name. If the current document has a property then
+   * that property is returned.
    * 
    * @param name The name of the property to find
    * @return The Property, if found; <code>null</code> otherwise

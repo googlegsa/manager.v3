@@ -53,18 +53,18 @@ package com.google.enterprise.connector.spi;
  * <code>
  * select documentid, lastmodifydate from documents order by lastmodifydate
  * </code>
- * <li><code>checkpoint(PropertyMap pm)</code> Extract the lastmodifydate
- * from the document that the caller passes in to you as a property map, encode
- * it as a string, and return it
  * <li><code>resumeTraversal(String checkpoint)</code> Run a query that
  * resumes traversal from the supplied checkpoint
  * </ul>
+ * Checkpoints are supplied by the 
+ * <code>{@link DocumentList#checkpoint()}</code> method.
+ * <p>
  * Please observe that the Connector Manager (the caller) makes no guarantee to
- * consume the entire PropertyMapList returned by either the startTraversal or
+ * consume the entire DocumentList returned by either the startTraversal or
  * resumeTraversal calls. The Connector Manager will consume as many it chooses,
  * depending on load, schedule and other factors. The Connector Manager
  * guarantees to call checkpoint() supplying the last document it has
- * successfully processed from the PropertyMapList it was using. Thus, the
+ * successfully processed from the DocumentList it was using. Thus, the
  * implementor is free to use a query that only returns a small number of
  * results, if that gets better performance.
  * <p>
@@ -77,7 +77,7 @@ package com.google.enterprise.connector.spi;
  * The <code>setBatchHint</code> method is provided so that the Connector
  * Manager can tell the implementation that it only wants that many results per
  * call. This is a hint - the implementation need not observe it. The
- * implementation is free to return a PropertyMapList with fewer or more
+ * implementation is free to return a DocumentList with fewer or more
  * results. For example, the traversal may be completely up to date, so perhaps
  * there are no results to return. Or, for internal reasons, the implementation
  * may not want to return the full batchHint number of results. Probably,
@@ -133,7 +133,8 @@ package com.google.enterprise.connector.spi;
  * </p>
  * <p>
  * The developer can achieve this by following these steps. In the property map
- * returned by the traversal methods, specify the {@link SpiConstants}.PROPNAME_SEARCHURL
+ * returned by the traversal methods, specify the 
+ * {@link SpiConstants}.PROPNAME_SEARCHURL
  * property. The value should be a URL. If this property is specified, the
  * Connector Manager will use a "URL Feed" rather than a "Content Feed" for that
  * document. In this case, the implementor should NOT supply the content of the
@@ -142,10 +143,10 @@ package com.google.enterprise.connector.spi;
  * authorization for that document. For more details, see the documentation on
  * Metadata and URL Feeds.
  * <p>
- * <b>Note on property maps returned by traversal calls</b>
+ * <b>Note on Documents returned by traversal calls</b>
  * <p>
- * The property maps returned by the queries defined here represent documents.
- * They must contain special properties according to the following rules:
+ * The <code>Document</code> objects returned by the queries defined here 
+ * must contain special properties according to the following rules:
  * <ul>
  * <li> {@link SpiConstants}.PROPNAME_DOCID This property must be present.
  * <li> {@link SpiConstants}.PROPNAME_SEARCHURL If present, this means that the
@@ -182,7 +183,7 @@ public interface TraversalManager {
    * Continues traversal from a supplied checkpoint. The checkPoint parameter
    * will have been created by a call to the
    * <code>{@link DocumentList#checkpoint()}</code> method. The
-   * PropertyMapList object returns objects from the repository in natural order
+   * DocumentList object returns objects from the repository in natural order
    * starting just after the document that was used to create the checkpoint
    * string.
    * 

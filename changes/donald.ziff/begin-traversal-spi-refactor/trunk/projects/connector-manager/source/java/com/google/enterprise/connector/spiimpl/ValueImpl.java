@@ -53,8 +53,16 @@ public abstract class ValueImpl extends Value {
     return BooleanValue.makeBooleanValue(s);
   }
 
+  /**
+   * Creates a string representation to be used in a feed document.
+   * @return String representation for use in a feed document
+   */
   public abstract String toFeedXml();
   
+  /**
+   * Converts to boolean if possible
+   * @return boolean representation of the Value
+   */
   public abstract boolean toBoolean();
 
 }
