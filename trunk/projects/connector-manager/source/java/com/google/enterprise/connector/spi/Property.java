@@ -1,10 +1,10 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,40 +14,33 @@
 
 package com.google.enterprise.connector.spi;
 
-import java.util.Iterator;
-
 /**
- * A named, typed data item. Properties have a list of values. 
- * Most often, there is exactly one value,
- * however some CMS's allow multiple values, so the general case is addressed
- * here by an iterator.
+ * Interface that represents a property. A property is a list of Values. Values
+ * are accessed through an iterator-like method:
+ * <code>{@link #nextValue()}</code>, which returns the next available Value
+ * or null if there are no more. Note: Value objects are immutable, unlike
+ * <code>{@link DocumentList}</code> and <code>{@link Document}</code>
+ * objects.
+ * <p>
+ * The typical pattern for consuming an object that implements this interface is
+ * this (disregarding exception handling):
+ * 
+ * <pre>
+ * Property prop = ...
+ * Value v;
+ * while ((v = prop.nextValue()) != null) {
+ *   doSomething(v);
+ * }
+ * </pre>
  */
 public interface Property {
 
   /**
-   * Gets the property's name
-   * @return String name
-   * @throws RepositoryException if there is connectivity or other Repository
-   *           access problems
+   * Returns the next Value in this property, if there is one.
+   * 
+   * @return The new current value, if there is one; <code>null</code>
+   *         otherwise
+   * @throws RepositoryException if a repository access error occurs
    */
-  public String getName() throws RepositoryException;
-
-  /**
-   * Gets a single value, either
-   * <ul>
-   * <li> the first value that would have been obtained through 
-   * the iterator getValues(), if it is non-null, or
-   * <li> null
-   * </ul>
-   * @return A single value, which may be null
-   * @throws RepositoryException
-   */
-  public Value getValue() throws RepositoryException;
-  
-  /**
-   * Gets the values, as an iterator of {@link Value} objects
-   * @return Iterator of {@link Value} objects
-   * @throws RepositoryException
-   */
-  public Iterator getValues() throws RepositoryException;
+  public Value nextValue() throws RepositoryException;
 }

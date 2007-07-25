@@ -18,7 +18,7 @@ import com.google.enterprise.connector.mock.MockRepositoryDocumentStore;
 import com.google.enterprise.connector.mock.MockRepositoryEvent;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.MockRepositoryPropertyTest;
-import com.google.enterprise.connector.spi.SimpleValue;
+import com.google.enterprise.connector.spi.old.SimpleValue;
 
 import junit.framework.TestCase;
 

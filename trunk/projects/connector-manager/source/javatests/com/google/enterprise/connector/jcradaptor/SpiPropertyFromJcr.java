@@ -14,9 +14,9 @@
 
 package com.google.enterprise.connector.jcradaptor;
 
-import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.spi.old.Property;
+import com.google.enterprise.connector.spi.old.Value;
 
 import java.util.Iterator;
 

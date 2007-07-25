@@ -14,14 +14,14 @@
 
 package com.google.enterprise.connector.test;
 
-import com.google.enterprise.connector.spi.Property;
-import com.google.enterprise.connector.spi.PropertyMap;
-import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.PropertyMapList;
 import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.spi.Value;
-import com.google.enterprise.connector.spi.ValueType;
+import com.google.enterprise.connector.spi.old.Property;
+import com.google.enterprise.connector.spi.old.PropertyMap;
+import com.google.enterprise.connector.spi.old.PropertyMapList;
+import com.google.enterprise.connector.spi.old.TraversalManager;
+import com.google.enterprise.connector.spi.old.Value;
+import com.google.enterprise.connector.spi.old.ValueType;
 
 import java.util.Iterator;
 

@@ -21,11 +21,11 @@ import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.servlet.ServletUtil;
-import com.google.enterprise.connector.spi.PropertyMap;
-import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.PropertyMapList;
 import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.old.PropertyMap;
+import com.google.enterprise.connector.spi.old.PropertyMapList;
+import com.google.enterprise.connector.spi.old.TraversalManager;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;

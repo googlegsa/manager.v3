@@ -14,6 +14,9 @@
 
 package com.google.enterprise.connector.spi;
 
+import com.google.enterprise.connector.spi.old.PropertyMapList;
+import com.google.enterprise.connector.spi.old.TraversalManager;
+
 import java.util.List;
 
 /**

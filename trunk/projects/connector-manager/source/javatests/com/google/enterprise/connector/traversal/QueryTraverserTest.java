@@ -21,7 +21,7 @@ import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
-import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.old.TraversalManager;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;

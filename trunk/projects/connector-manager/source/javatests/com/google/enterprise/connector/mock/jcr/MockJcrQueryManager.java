@@ -16,7 +16,8 @@ package com.google.enterprise.connector.mock.jcr;
 
 import com.google.enterprise.connector.mock.MockRepositoryDateTime;
 import com.google.enterprise.connector.mock.MockRepositoryDocumentStore;
-import com.google.enterprise.connector.spi.SimpleValue;
+import com.google.enterprise.connector.spi.old.SimpleValue;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 

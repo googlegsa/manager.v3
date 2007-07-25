@@ -15,6 +15,8 @@
 package com.google.enterprise.connector.spi;
 
 import com.google.enterprise.connector.common.StringUtils;
+import com.google.enterprise.connector.spi.old.SimpleValue;
+import com.google.enterprise.connector.spi.old.ValueType;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -30,7 +32,7 @@ public class SimpleValueTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.enterprise.connector.spi.SimpleValue#getBoolean()}.
+   * {@link com.google.enterprise.connector.spi.old.SimpleValue#getBoolean()}.
    * 
    * @throws RepositoryException
    * @throws IllegalArgumentException
@@ -53,7 +55,7 @@ public class SimpleValueTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.enterprise.connector.spi.SimpleValue#getDate()}.
+   * {@link com.google.enterprise.connector.spi.old.SimpleValue#getDate()}.
    * 
    * @throws RepositoryException
    * @throws IllegalArgumentException
@@ -68,7 +70,7 @@ public class SimpleValueTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.enterprise.connector.spi.SimpleValue#getDouble()}.
+   * {@link com.google.enterprise.connector.spi.old.SimpleValue#getDouble()}.
    * 
    * @throws RepositoryException
    * @throws IllegalArgumentException
@@ -83,7 +85,7 @@ public class SimpleValueTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.enterprise.connector.spi.SimpleValue#getLong()}.
+   * {@link com.google.enterprise.connector.spi.old.SimpleValue#getLong()}.
    * 
    * @throws RepositoryException
    * @throws IllegalArgumentException
@@ -106,7 +108,7 @@ public class SimpleValueTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.enterprise.connector.spi.SimpleValue#getStream()}.
+   * {@link com.google.enterprise.connector.spi.old.SimpleValue#getStream()}.
    * 
    * @throws RepositoryException
    * @throws IllegalStateException
@@ -134,7 +136,7 @@ public class SimpleValueTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.enterprise.connector.spi.SimpleValue#getString()}.
+   * {@link com.google.enterprise.connector.spi.old.SimpleValue#getString()}.
    * 
    * @throws RepositoryException
    * @throws IllegalArgumentException
@@ -155,7 +157,7 @@ public class SimpleValueTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.enterprise.connector.spi.SimpleValue#toString()}.
+   * {@link com.google.enterprise.connector.spi.old.SimpleValue#toString()}.
    * 
    * @throws RepositoryException
    * @throws IllegalArgumentException
@@ -180,7 +182,7 @@ public class SimpleValueTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.enterprise.connector.spi.SimpleValue#getType()}.
+   * {@link com.google.enterprise.connector.spi.old.SimpleValue#getType()}.
    * 
    * @throws RepositoryException
    * @throws IllegalArgumentException
