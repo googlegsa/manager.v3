@@ -14,7 +14,7 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.spi.PropertyMap;
+import com.google.enterprise.connector.spi.old.PropertyMap;
 
 /**
  * Interface for a pusher - something that takes spi documents

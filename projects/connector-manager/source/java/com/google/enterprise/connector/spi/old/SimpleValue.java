@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.spi;
+package com.google.enterprise.connector.spi.old;
 
+
+import com.google.enterprise.connector.spi.RepositoryException;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;

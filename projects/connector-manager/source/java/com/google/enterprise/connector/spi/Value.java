@@ -1,10 +1,10 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,94 +14,238 @@
 
 package com.google.enterprise.connector.spi;
 
+import com.google.enterprise.connector.spiimpl.ValueImpl;
+
 import java.io.InputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.TimeZone;
 
 /**
- * A single, typed data item.  The
- * type can be obtained through the getType() call. Depending on the type, the
- * appropriately typed getter should be called, as follows:
+ * Wrapper class for all data items from a repository. Connector implementors
+ * create instances of this class by calling the appropriate static factory
+ * method. The factory methods are named to reflect the type data they carry,
+ * thus:
  * <ul>
- * <li> ValueType.STRING - getString() or getStream()
- * <li> ValueType.BINARY - getStream()
- * <li> ValueType.LONG - getLong()
- * <li> ValueType.DOUBLE - getDouble()
- * <li> ValueType.DATE - getDate()
- * <li> ValueType.BOOLEAN - getBoolean()
+ * <li> <code>getStringValue</code> creates an object carrying a string
+ * <li> <code>getBinaryValue</code> creates an object carrying binary data
+ * (stream or byte array)
+ * <li> <code>getLongValue</code> creates an object carrying an integer
+ * <li> <code>getDoubleValue</code> creates an object carrying a
+ * floating-point value
+ * <li> <code>getDateValue</code> creates an object carrying a date
+ * <li> <code>getBooleanValue</code> creates an object carrying a boolean
  * </ul>
- * If the type of the getter does not match the ValueType, then the
- * implementation will attempt a conversion. If conversion is impossible, an
- * IllegalArgumentException is thrown.
+ * In addition, some of the factory methods are overloaded for the convenience
+ * of the connector developer. The implementations attempt to convert from the
+ * parameter type to the base type indicated in the factory method's name.
  */
-public interface Value {
+public abstract class Value {
 
   /**
-   * Get the value as a String.  If the type is not ValueType.STRING, 
-   * then conversion is attempted.
-   * @return The value as a String
-   * @throws IllegalArgumentException If conversion is impossible
-   * @throws RepositoryException
+   * Creates a value carrying a String.
+   * 
+   * @param stringValue The String value
+   * @return a Value instance carrying this value
    */
-  public String getString() throws IllegalArgumentException,
-      RepositoryException;
+  public static Value getStringValue(String stringValue) {
+    return ValueImpl.getStringValue(stringValue);
+  }
 
   /**
-   * Get the value as a Stream.  This is expected to be used with values
-   * of type ValueType.BINARY (particularly, for content).  It will also 
-   * work naturally for ValueType.STRING.  Conversion is attempted for 
-   * other types.
-   * @return The value as a Stream
-   * @throws IllegalArgumentException If conversion is impossible
-   * @throws IllegalStateException If getStream has already been called
-   * @throws RepositoryException
+   * Creates a value carrying binary data.
+   * 
+   * @param inputStreamValue An <code>InputStream</code> containing the data
+   * @return a Value instance carrying this data
    */
-  public InputStream getStream() throws IllegalArgumentException,
-    IllegalStateException, RepositoryException;
+  public static Value getBinaryValue(InputStream inputStreamValue) {
+    return ValueImpl.getBinaryValue(inputStreamValue);
+  }
 
   /**
-   * Get the value as a long.  If the type is not ValueType.LONG, 
-   * then conversion is attempted.
-   * @return The value as a long
-   * @throws IllegalArgumentException If conversion is impossible
-   * @throws RepositoryException
+   * Creates a value carrying binary data.
+   * 
+   * @param byteArrayValue An <code>byte</code> array containing the data
+   * @return a Value instance carrying this data
    */
-  public long getLong() throws IllegalArgumentException,
-      RepositoryException;
+  public static Value getBinaryValue(byte[] byteArrayValue) {
+    return ValueImpl.getBinaryValue(byteArrayValue);
+  }
 
   /**
-   * Get the value as a double.  If the type is not ValueType.DOUBLE, 
-   * then conversion is attempted.
-   * @return The value as a double
-   * @throws IllegalArgumentException If conversion is impossible
-   * @throws RepositoryException
+   * Creates a value carrying an integer.
+   * 
+   * @param longValue A <code>long</code> containing the data
+   * @return a Value instance carrying this data
    */
-  public double getDouble() throws IllegalArgumentException,
-      RepositoryException;
+  public static Value getLongValue(long longValue) {
+    return ValueImpl.getLongValue(longValue);
+  }
 
   /**
-   * Get the value as a Calendar.  If the type is not ValueType.DATE, 
-   * then conversion is attempted.
-   * @return The value as a Calendar
-   * @throws IllegalArgumentException If conversion is impossible
-   * @throws RepositoryException
+   * Creates a value carrying an integer.
+   * 
+   * @param doubleValue A <code>double</code> containing the data
+   * @return a Value instance carrying this data
    */
-  public Calendar getDate() throws IllegalArgumentException,
-      RepositoryException;
+  public static Value getDoubleValue(double doubleValue) {
+    return ValueImpl.getDoubleValue(doubleValue);
+  }
 
   /**
-   * Get the value as a boolean.  If the type is not ValueType.BOOLEAN, 
-   * then conversion is attempted.
-   * @return The value as a boolean
-   * @throws IllegalArgumentException If conversion is impossible
-   * @throws RepositoryException
+   * Creates a value carrying a date.
+   * 
+   * @param calendarValue A <code>Calendar</code> object containing the data
+   * @return a Value instance carrying this data
    */
-  public boolean getBoolean() throws IllegalArgumentException,
-      RepositoryException;
+  public static Value getDateValue(Calendar calendarValue) {
+    return ValueImpl.getDateValue(calendarValue);
+  }
 
   /**
-   * Gets the property's type
-   * @return The appropriate ValueType
+   * Creates a value carrying a boolean.
+   * 
+   * @param booleanValue A <code>boolean</code> containing the data
+   * @return a Value instance carrying this data
+   */
+  public static Value getBooleanValue(boolean booleanValue) {
+    return ValueImpl.getBooleanValue(booleanValue);
+  }
+
+  /**
+   * Creates a value carrying a boolean.
+   * 
+   * @param stringValue A <code>String</code> containing the data. The String
+   *        is converted as follows:
+   *        <ul>
+   *        <li> Any case variant of the strings "t" and "true" return
+   *        <code>true</code>
+   *        <li> All other strings (including <code>null</code> and the empty
+   *        string) return <code>false<code>
+   *        </ul>
+   * @return a Value instance carrying this data.
+   */
+  public static Value getBooleanValue(String stringValue) {
+    return ValueImpl.getBooleanValue(stringValue);
+  }
+
+  /**
+   * Convenience function for access to a single named value from a DocumentList
+   * 
+   * @param document the Document List from which to extract the Value
+   * @param propertyName the name of the Property
+   * @return The first Value of that named property, if there is one -
+   *         <code>null</code> otherwise
    * @throws RepositoryException
    */
-  public ValueType getType() throws RepositoryException;
+  public static Value getSingleValue(Document document,
+      String propertyName) throws RepositoryException {
+    Property p = document.findProperty(propertyName);
+    if (p == null) {
+      return null;
+    }
+    return p.nextValue();
+  }
+  
+  /**
+   * Convenience function for access to a single string value from a DocumentList
+   * 
+   * @param document the Document List from which to extract the Value
+   * @param propertyName the name of the Property
+   * @return The string Value of that named property, if there is one -
+   *         <code>null</code> otherwise
+   * @throws RepositoryException
+   */
+  public static String getSingleValueString(Document document,
+      String propertyName) throws RepositoryException {
+    Value v = getSingleValue(document, propertyName);
+    if (v == null) {
+      return null;
+    }
+    return v.toString();
+  }
+
+  /**
+   * Returns a string representation of the Value. Connector developers may
+   * count on this for debugging.
+   * 
+   * @return a string representation of the Value.
+   */
+  public abstract String toString();
+
+  private static final TimeZone TIME_ZONE_GMT = TimeZone.getTimeZone("GMT+0");
+  private static final Calendar GMT_CALENDAR = Calendar
+      .getInstance(TIME_ZONE_GMT);
+  private static final SimpleDateFormat ISO8601_DATE_FORMAT_MILLIS = new SimpleDateFormat(
+      "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+  private static final SimpleDateFormat ISO8601_DATE_FORMAT_SECS = new SimpleDateFormat(
+      "yyyy-MM-dd'T'HH:mm:ss'Z'");
+  public static final SimpleDateFormat RFC822_DATE_FORMAT = new SimpleDateFormat(
+      "EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss z");
+
+  static {
+    ISO8601_DATE_FORMAT_MILLIS.setCalendar(GMT_CALENDAR);
+    ISO8601_DATE_FORMAT_MILLIS.setLenient(true);
+    ISO8601_DATE_FORMAT_SECS.setCalendar(GMT_CALENDAR);
+    ISO8601_DATE_FORMAT_SECS.setLenient(true);
+    RFC822_DATE_FORMAT.setCalendar(GMT_CALENDAR);
+    RFC822_DATE_FORMAT.setLenient(true);
+    RFC822_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+  }
+
+  /**
+   * Formats a calendar object as RFC 822.
+   * 
+   * @param c
+   * @return a String in RFC 822 format - always in GMT zone
+   */
+  public static synchronized String calendarToRfc822(Calendar c) {
+    Date d = c.getTime();
+    String isoString = RFC822_DATE_FORMAT.format(d);
+    return isoString;
+  }
+
+  /**
+   * Formats a calendar object as ISO-8601.
+   * 
+   * @param c
+   * @return a String in ISO-8601 format - always in GMT zone
+   */
+  public static synchronized String calendarToIso8601(Calendar c) {
+    Date d = c.getTime();
+    String isoString = ISO8601_DATE_FORMAT_MILLIS.format(d);
+    return isoString;
+  }
+
+  private static synchronized Date iso8601ToDate(String s)
+      throws ParseException {
+    Date d = null;
+    try {
+      d = ISO8601_DATE_FORMAT_MILLIS.parse(s);
+      return d;
+    } catch (ParseException e) {
+      // this is just here so we can try another format
+    }
+    d = ISO8601_DATE_FORMAT_SECS.parse(s);
+    return d;
+  }
+
+  /**
+   * Parses a String in ISO-8601 format (GMT zone) and returns an equivalent
+   * java.util.Calendar object.
+   * 
+   * @param s
+   * @return a Calendar object
+   * @throws ParseException if the the String can not be parsed
+   */
+  public static synchronized Calendar iso8601ToCalendar(String s)
+      throws ParseException {
+    Date d = iso8601ToDate(s);
+    Calendar c = Calendar.getInstance();
+    c.setTime(d);
+    return c;
+  }
+
 }

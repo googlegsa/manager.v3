@@ -18,12 +18,12 @@ import com.google.enterprise.connector.common.Base64FilterInputStream;
 import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.servlet.ServletUtil;
-import com.google.enterprise.connector.spi.Property;
-import com.google.enterprise.connector.spi.PropertyMap;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.SimpleValue;
 import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.spi.old.Property;
+import com.google.enterprise.connector.spi.old.PropertyMap;
+import com.google.enterprise.connector.spi.old.SimpleValue;
+import com.google.enterprise.connector.spi.old.Value;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;

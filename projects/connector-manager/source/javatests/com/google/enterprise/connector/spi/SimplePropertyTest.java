@@ -14,6 +14,11 @@
 
 package com.google.enterprise.connector.spi;
 
+import com.google.enterprise.connector.spi.old.SimpleProperty;
+import com.google.enterprise.connector.spi.old.SimpleValue;
+import com.google.enterprise.connector.spi.old.Value;
+import com.google.enterprise.connector.spi.old.ValueType;
+
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -29,7 +34,7 @@ public class SimplePropertyTest extends TestCase {
 
 	/**
 	 * Test method for
-	 * {@link com.google.enterprise.connector.spi.SimpleProperty#getName()}.
+	 * {@link com.google.enterprise.connector.spi.old.SimpleProperty#getName()}.
 	 * 
 	 * @throws RepositoryException
 	 */
@@ -40,7 +45,7 @@ public class SimplePropertyTest extends TestCase {
 
 	/**
 	 * Test method for
-	 * {@link com.google.enterprise.connector.spi.SimpleProperty#getValue()}.
+	 * {@link com.google.enterprise.connector.spi.old.SimpleProperty#getValue()}.
 	 * 
 	 * @throws RepositoryException
 	 * @throws IllegalArgumentException
@@ -57,7 +62,7 @@ public class SimplePropertyTest extends TestCase {
 
 	/**
 	 * Test method for
-	 * {@link com.google.enterprise.connector.spi.SimpleProperty#getValues()}.
+	 * {@link com.google.enterprise.connector.spi.old.SimpleProperty#getValues()}.
 	 * 
 	 * @throws RepositoryException
 	 * @throws IllegalArgumentException

@@ -17,7 +17,7 @@ package com.google.enterprise.connector.mock.jcr;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.mock.MockRepositoryProperty;
 import com.google.enterprise.connector.mock.MockRepositoryProperty.PropertyType;
-import com.google.enterprise.connector.spi.SimpleValue;
+import com.google.enterprise.connector.spi.old.SimpleValue;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;

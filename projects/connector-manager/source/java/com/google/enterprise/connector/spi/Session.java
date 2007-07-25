@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.spi;
 
+import com.google.enterprise.connector.spi.old.TraversalManager;
+
 /**
  * The primary access point to information from the
  * repository.  In the future, we may add access to the root

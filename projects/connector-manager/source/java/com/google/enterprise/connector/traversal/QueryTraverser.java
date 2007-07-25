@@ -18,11 +18,11 @@ import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.HasTimeout;
-import com.google.enterprise.connector.spi.PropertyMap;
-import com.google.enterprise.connector.spi.PropertyMapList;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.old.PropertyMap;
+import com.google.enterprise.connector.spi.old.PropertyMapList;
+import com.google.enterprise.connector.spi.old.TraversalManager;
 
 import java.util.Iterator;
 import java.util.logging.Level;
