@@ -102,17 +102,11 @@ package com.google.enterprise.connector.spi;
  * <ul>
  * <li><code>startTraversal()</code> Clear the internal state. Return the
  * first few documents
- * <li><code>checkpoint(PropertyMap pm)</code> This can be taken as a signal
- * from the Connector Manager that documents have been successfully processed,
- * up to the last one reported. The implementation can now commit a change to
- * external store bringing it up to that document. A null String may be
- * returned, which signals to the Connector Manager that it need not bother to
- * store any state on the implementation's behalf. Or the implementation may
- * return a diagnostic string.
  * <li><code>resumeTraversal(String checkpoint)</code> Resume traversal
  * according to the internal state of the implementation. The Connector Manager
  * will pass in whatever checkpoint String was returned by the last call to
- * checkpoint - but the implementation is free to ignore this and use its
+ * <code>{@link DocumentList#checkpoint()}</code> 
+ * but the implementation is free to ignore this and use its
  * internal state.
  * </ul>
  * The implementation must be careful about when and how it commits its internal
@@ -132,7 +126,7 @@ package com.google.enterprise.connector.spi;
  * web mechanisms for these tasks.
  * </p>
  * <p>
- * The developer can achieve this by following these steps. In the property map
+ * The developer can achieve this by following these steps. In the document list
  * returned by the traversal methods, specify the 
  * {@link SpiConstants}.PROPNAME_SEARCHURL
  * property. The value should be a URL. If this property is specified, the
