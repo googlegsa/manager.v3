@@ -24,10 +24,10 @@
 	<property name="tests.classes" value="${tests.build}/classes" />
 	<property name="tests.todir" value="tests_outdir" />
 	<property name="jar.dir" value="${dist}/jarfile" />
-	<property name="spi.jarfile" value="${jar.dir}/connector_spi.jar" />
-	<property name="util.jarfile" value="${jar.dir}/connector_util.jar" />
+	<property name="spi.jarfile" value="${jar.dir}/connector-spi.jar" />
+	<property name="util.jarfile" value="${jar.dir}/connector-util.jar" />
 	<property name="connector.jarfile" value="${jar.dir}/connector.jar" />
-	<property name="tests.jarfile" value="${jar.dir}/connector_tests.jar" />
+	<property name="tests.jarfile" value="${jar.dir}/connector-tests.jar" />
 	<property name="thirdparty.prod.jars" value="third-party/prod" />
 	<property name="thirdparty.tests.jars" value="third-party/tests" />
 	<property name="junit.jarfile" value="${thirdparty.prod.jars}/junit.jar" />
