@@ -46,13 +46,11 @@ public class JcrSession implements Session {
     return new JcrTraversalManager(queryManager);
   }
 
-  public AuthenticationManager getAuthenticationManager()
-      throws RepositoryException {
+  public AuthenticationManager getAuthenticationManager() {
     return new JcrAuthenticationManager(session);
   }
 
-  public AuthorizationManager getAuthorizationManager()
-      throws RepositoryException {
+  public AuthorizationManager getAuthorizationManager() {
     return new JcrAuthorizationManager(session);
   }
 

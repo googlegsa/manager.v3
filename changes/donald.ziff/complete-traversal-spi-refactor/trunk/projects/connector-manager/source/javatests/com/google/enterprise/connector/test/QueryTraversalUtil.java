@@ -73,7 +73,7 @@ public class QueryTraversalUtil {
       String checkPointString = documentList.checkpoint();
       documentList = queryTraversalManager.resumeTraversal(checkPointString);
       // the real connector manager will call checkpoint (as here) as soon
-      // as possible after processing the last property map it wants to process.
+      // as possible after processing the last document it wants to process.
       // It would then store the checkpoint string it received in persistent
       // store.
       // Unlike here, it might not then immediately turn around and call
