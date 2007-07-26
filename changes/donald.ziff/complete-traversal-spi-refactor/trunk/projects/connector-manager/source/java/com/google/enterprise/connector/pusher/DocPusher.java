@@ -49,7 +49,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Class to generate xml feed for a document from the Property Map and send it
+ * Class to generate xml feed for a document from the Document and send it
  * to GSA.
  */
 
@@ -277,7 +277,7 @@ public class DocPusher implements Pusher {
    * properties are not appended.
    * 
    * @param buf string buffer
-   * @param document property map
+   * @param document Document
    */
   private static void xmlWrapMetadata(StringBuffer buf, Document document) {
 
@@ -506,7 +506,7 @@ public class DocPusher implements Pusher {
   }
 
   /*
-   * Builds the xml string for a given property map.
+   * Builds the xml string for a given document.
    */
   protected InputStream buildXmlData(Document document, String connectorName) {
     // build prefix
@@ -680,9 +680,9 @@ public class DocPusher implements Pusher {
   }
 
   /**
-   * Takes a property map and sends a the feed to the GSA.
+   * Takes a Document and sends a the feed to the GSA.
    * 
-   * @param document DocumentList corresponding to the document.
+   * @param document Document corresponding to the document.
    * @param connectorName The connector name that fed this document
    */
   public void take(Document document, String connectorName)
