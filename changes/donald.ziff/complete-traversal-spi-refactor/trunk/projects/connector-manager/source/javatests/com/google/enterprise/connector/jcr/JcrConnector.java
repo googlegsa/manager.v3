@@ -33,7 +33,6 @@ public class JcrConnector implements Connector {
   javax.jcr.Repository repo;
 
   public JcrConnector() {
-    ;
   }
 
   /**
