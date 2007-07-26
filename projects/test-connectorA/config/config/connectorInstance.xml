@@ -2,7 +2,7 @@
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 <beans>
 	<bean id="TestConnectorAInstance"
-		class="com.google.enterprise.connector.jcradaptor.SpiConnectorFromJcr">
+		class="com.google.enterprise.connector.jcr.JcrConnector">
 		<constructor-arg>
 			<bean
 				class="com.google.enterprise.connector.mock.jcr.MockJcrRepository">

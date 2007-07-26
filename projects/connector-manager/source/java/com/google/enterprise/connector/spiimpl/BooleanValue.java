@@ -38,8 +38,8 @@ public class BooleanValue extends ValueImpl {
   }
 
   public static BooleanValue makeBooleanValue(String s) {
-    return makeBooleanValue("true".equalsIgnoreCase(s)
-        || "t".equalsIgnoreCase(s));
+    boolean b = !("false".equalsIgnoreCase(s) || "f".equalsIgnoreCase(s));
+    return makeBooleanValue(b);
   }
 
   public boolean toBoolean() {

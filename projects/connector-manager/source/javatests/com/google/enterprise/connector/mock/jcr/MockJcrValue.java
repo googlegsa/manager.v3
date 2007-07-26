@@ -17,7 +17,6 @@ package com.google.enterprise.connector.mock.jcr;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.mock.MockRepositoryProperty;
 import com.google.enterprise.connector.mock.MockRepositoryProperty.PropertyType;
-import com.google.enterprise.connector.spi.old.SimpleValue;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -55,7 +54,7 @@ public class MockJcrValue implements Value {
     String result;
     if (type.equals(PropertyType.DATE)) {
       Calendar c = getDate();
-      result = SimpleValue.calendarToIso8601(c);
+      result = com.google.enterprise.connector.spi.Value.calendarToIso8601(c);
     } else if (type.equals(PropertyType.STREAM)) {
       if (null == val) {
         val = StringUtils.streamToString(streamVal);

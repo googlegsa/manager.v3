@@ -14,9 +14,6 @@
 
 package com.google.enterprise.connector.spi;
 
-import com.google.enterprise.connector.spi.old.PropertyMapList;
-import com.google.enterprise.connector.spi.old.TraversalManager;
-
 import java.util.List;
 
 /**
@@ -34,7 +31,7 @@ public interface AuthorizationManager {
    *        appliance, from documents that this connector submitted for
    *        indexing via traversal. Thus the docids should have started as
    *        {@link SpiConstants}.PROPNAME_DOCID properties that were part
-   *        of an {@link PropertyMapList} returned from a
+   *        of an {@link DocumentList} returned from a
    *        {@link TraversalManager}.startTraversal or
    *        {@link TraversalManager}.resumeTraversal call.
    * @param identity The user's identity, as an

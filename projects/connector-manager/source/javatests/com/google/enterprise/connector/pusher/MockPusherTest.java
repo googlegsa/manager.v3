@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,39 +14,37 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.jcradaptor.SpiTraversalManagerFromJcr;
+import com.google.enterprise.connector.jcr.JcrTraversalManager;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
+import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.old.PropertyMap;
-import com.google.enterprise.connector.spi.old.PropertyMapList;
-import com.google.enterprise.connector.spi.old.TraversalManager;
+import com.google.enterprise.connector.spi.TraversalManager;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
-
-import java.util.Iterator;
 
 import javax.jcr.query.QueryManager;
 
 public class MockPusherTest extends TestCase {
   public void testSimple() throws RepositoryException {
-    MockRepositoryEventList mrel =
-        new MockRepositoryEventList("MockRepositoryEventLog1.txt");
+    MockRepositoryEventList mrel = new MockRepositoryEventList(
+        "MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
-    TraversalManager qtm = new SpiTraversalManagerFromJcr(qm);
-    
+    TraversalManager qtm = new JcrTraversalManager(qm);
+
     MockPusher pusher = new MockPusher(System.out);
 
     {
-      PropertyMapList propertyMapList = qtm.startTraversal();
+      DocumentList propertyMapList = qtm.startTraversal();
 
       int counter = 0;
-      for (Iterator iter = propertyMapList.iterator(); iter.hasNext();) {
-        PropertyMap propertyMap = (PropertyMap) iter.next();
-        pusher.take(propertyMap, "junit");
+      Document document = null;
+      while ((document = propertyMapList.nextDocument()) != null) {
+        pusher.take(document, "junit");
         counter++;
       }
       Assert.assertEquals(4, counter);

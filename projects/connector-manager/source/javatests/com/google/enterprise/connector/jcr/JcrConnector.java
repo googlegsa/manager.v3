@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.jcradaptor;
+package com.google.enterprise.connector.jcr;
 
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
@@ -28,12 +28,11 @@ import javax.jcr.SimpleCredentials;
  * credentials must be supplied externally (to the SPIRepository constructor and
  * login method). All other JCR objects are produced from these.
  */
-public class SpiConnectorFromJcr implements Connector {
+public class JcrConnector implements Connector {
 
   javax.jcr.Repository repo;
 
-  public SpiConnectorFromJcr() {
-    ;
+  public JcrConnector() {
   }
 
   /**
@@ -41,7 +40,7 @@ public class SpiConnectorFromJcr implements Connector {
    * 
    * @param repo
    */
-  public SpiConnectorFromJcr(javax.jcr.Repository repo) {
+  public JcrConnector(javax.jcr.Repository repo) {
     this.repo = repo;
   }
 
@@ -68,7 +67,7 @@ public class SpiConnectorFromJcr implements Connector {
       Credentials simpleCredentials = new SimpleCredentials(username, password
           .toCharArray());
       javax.jcr.Session session = repo.login(simpleCredentials);
-      return new SpiSessionFromJcr(session);
+      return new JcrSession(session);
     } catch (javax.jcr.LoginException e) {
       throw new RepositoryLoginException(e);
     } catch (javax.jcr.RepositoryException e) {

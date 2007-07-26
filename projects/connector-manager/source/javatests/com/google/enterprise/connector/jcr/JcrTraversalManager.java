@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.jcradaptor;
+package com.google.enterprise.connector.jcr;
 
+import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.SpiConstants;
-import com.google.enterprise.connector.spi.old.Property;
-import com.google.enterprise.connector.spi.old.PropertyMap;
-import com.google.enterprise.connector.spi.old.PropertyMapList;
-import com.google.enterprise.connector.spi.old.SimpleValue;
-import com.google.enterprise.connector.spi.old.TraversalManager;
-import com.google.enterprise.connector.spi.old.Value;
+import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.Value;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,7 +35,7 @@ import javax.jcr.query.QueryResult;
 /**
  * Adaptor to JCR class of the same name
  */
-public class SpiTraversalManagerFromJcr implements TraversalManager {
+public class JcrTraversalManager implements TraversalManager {
 
   javax.jcr.query.QueryManager queryManager;
 
@@ -67,48 +63,13 @@ public class SpiTraversalManagerFromJcr implements TraversalManager {
     this.xpathUnboundedTraversalQuery = xpathUnboundedTraversalQuery;
   }
 
-  public SpiTraversalManagerFromJcr(QueryManager queryManager) {
+  public JcrTraversalManager(QueryManager queryManager) {
     this.queryManager = queryManager;
     this.xpathUnboundedTraversalQuery = XPATH_QUERY_STRING_UNBOUNDED_DEFAULT;
     this.xpathBoundedTraversalQuery = XPATH_QUERY_STRING_BOUNDED_DEFAULT;
   }
 
-  public String checkpoint(PropertyMap pm) throws RepositoryException {
-    String uuid =
-        fetchAndVerifyValueForCheckpoint(pm, SpiConstants.PROPNAME_DOCID)
-            .getString();
-    Calendar c =
-        fetchAndVerifyValueForCheckpoint(pm, SpiConstants.PROPNAME_LASTMODIFIED)
-            .getDate();
-    String dateString = SimpleValue.calendarToIso8601(c);
-    String result = null;
-    try {
-      JSONObject jo = new JSONObject();
-      jo.put("uuid", uuid);
-      jo.put("lastModified", dateString);
-      result = jo.toString();
-    } catch (JSONException e) {
-      throw new RepositoryException("Unexpected JSON problem", e);
-    }
-    return result;
-  }
-
-  private Value fetchAndVerifyValueForCheckpoint(PropertyMap pm, String pName)
-      throws RepositoryException {
-    Property property = pm.getProperty(pName);
-    if (property == null) {
-      throw new IllegalArgumentException("checkpoint must have a " + pName
-          + " property");
-    }
-    Value value = property.getValue();
-    if (value == null) {
-      throw new IllegalArgumentException("checkpoint " + pName
-          + " property must have a non-null value");
-    }
-    return value;
-  }
-
-  public PropertyMapList resumeTraversal(String checkPoint)
+  public DocumentList resumeTraversal(String checkPoint)
       throws RepositoryException {
     JSONObject jo = null;
     try {
@@ -153,11 +114,11 @@ public class SpiTraversalManagerFromJcr implements TraversalManager {
     }
 
     if (useThisNode) {
-      PropertyMapList result = new SpiPropertyMapListFromJcr(thisNode, nodes);
+      DocumentList result = new JcrDocumentList(thisNode, nodes);
       return result;
     }
 
-    PropertyMapList result = new SpiPropertyMapListFromJcr(nodes);
+    DocumentList result = new JcrDocumentList(nodes);
     return result;
   }
 
@@ -174,10 +135,9 @@ public class SpiTraversalManagerFromJcr implements TraversalManager {
     return query;
   }
 
-  private String makeCheckpointQueryString(String uuid, Calendar c)
-      throws RepositoryException {
+  private String makeCheckpointQueryString(String uuid, Calendar c) {
 
-    String time = SimpleValue.calendarToIso8601(c);
+    String time = Value.calendarToIso8601(c);
     Object[] arguments = { time };
     String statement = MessageFormat.format(
         xpathBoundedTraversalQuery,
@@ -206,7 +166,7 @@ public class SpiTraversalManagerFromJcr implements TraversalManager {
     }
     Calendar c = null;
     try {
-      c = SimpleValue.iso8601ToCalendar(dateString);
+      c = Value.iso8601ToCalendar(dateString);
     } catch (ParseException e) {
       throw new IllegalArgumentException(
           "could not parse date string from checkPoint string: " + dateString);
@@ -214,7 +174,7 @@ public class SpiTraversalManagerFromJcr implements TraversalManager {
     return c;
   }
 
-  public PropertyMapList startTraversal() throws RepositoryException {
+  public DocumentList startTraversal() throws RepositoryException {
     String lang = Query.XPATH;
     javax.jcr.query.Query query = 
       makeCheckpointQuery(xpathUnboundedTraversalQuery, lang);
@@ -230,7 +190,7 @@ public class SpiTraversalManagerFromJcr implements TraversalManager {
     } catch (javax.jcr.RepositoryException e) {
       throw new RepositoryException(e);
     }
-    PropertyMapList result = new SpiPropertyMapListFromJcr(nodes);
+    DocumentList result = new JcrDocumentList(nodes);
     return result;
   }
 
