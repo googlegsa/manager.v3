@@ -26,7 +26,8 @@ import java.util.List;
  */
 public class ScheduleTest extends TestCase {
   public void testSerialization() {
-    final String str = "connector1:60:1-2:3-5";
+    final String str = "connector1:60:0:1-2:3-5";
+    final String strNoDelay = "connector1:60:1-2:3-5";
     
     List intervals = new ArrayList();
     ScheduleTimeInterval interval1 = 
@@ -35,14 +36,18 @@ public class ScheduleTest extends TestCase {
       new ScheduleTimeInterval(new ScheduleTime(3), new ScheduleTime(5));
     intervals.add(interval1);
     intervals.add(interval2);
-    Schedule schedule = new Schedule("connector1", 60, intervals);
+    Schedule schedule = new Schedule("connector1", 60, 0, intervals);
     Assert.assertEquals(str, schedule.toString());
     
-    Schedule schedule2 = new Schedule("whatever", 30, Collections.EMPTY_LIST);
+    Schedule schedule2 = new Schedule("whatever", 30, 42, 
+        Collections.EMPTY_LIST);
     schedule2.readString(str);
     Assert.assertEquals(str, schedule2.toString());
     
     Schedule schedule3 = new Schedule(str);
     Assert.assertEquals(str, schedule3.toString());
+    
+    Schedule schedule4 = new Schedule(strNoDelay);
+    Assert.assertEquals(str,schedule3.toString()); // missing delay becomes 0
   }
 }

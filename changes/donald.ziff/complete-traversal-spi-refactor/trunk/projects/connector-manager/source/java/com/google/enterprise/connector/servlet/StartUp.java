@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer;
 import com.google.enterprise.connector.manager.Context;
 
 import java.io.IOException;
@@ -72,6 +73,20 @@ public class StartUp extends HttpServlet {
 
   public static void doConnectorManagerStartup(ServletContext servletContext)
       throws IOException {
+
+    // read in and set initialization parameters
+    String kp = servletContext.getInitParameter("keystore_passwd_file");
+    EncryptedPropertyPlaceholderConfigurer.setKeyStorePasswdPath(kp);
+    
+    String ks = servletContext.getInitParameter("keystore_file");
+    EncryptedPropertyPlaceholderConfigurer.setKeyStorePath(ks);
+
+    String kt = servletContext.getInitParameter("keystore_type");
+    EncryptedPropertyPlaceholderConfigurer.setKeyStoreType(kt);
+
+    String ka = servletContext.getInitParameter("keystore_crypto_algo");
+    EncryptedPropertyPlaceholderConfigurer.setKeyStoreCryptoAlgo(ka);
+
     Context context = Context.getInstance(servletContext);
     context.start();
   }

@@ -202,7 +202,7 @@ public class MockManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#setSchedule(
    *      java.lang.String, int, java.lang.String)
    */
-  public void setSchedule(String connectorName, int load, String timeIntervals) {
+  public void setSchedule(String connectorName, int load, int retryDelayMillis, String timeIntervals) {
     // TODO Auto-generated method stub
 
   }

@@ -38,8 +38,8 @@ public class MockConnectorScheduleStore implements ConnectorScheduleStore {
     String scheduleStr = (String) store.get(connectorName);
     if (null == scheduleStr) {
       // if we get an unknown connectorName (i.e. one without known schedule),
-      // we default to always run at 60 docs per minute
-      scheduleStr = connectorName + ":60:0-0";
+      // we default to always run at 60 docs per minute, 100ms retry delay
+      scheduleStr = connectorName + ":60:100:0-0";
     }
     return scheduleStr;
   }

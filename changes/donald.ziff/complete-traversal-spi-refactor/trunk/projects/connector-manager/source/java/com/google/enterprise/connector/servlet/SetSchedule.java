@@ -66,11 +66,17 @@ public class SetSchedule extends ConnectorManagerServlet {
         root, ServletUtil.XMLTAG_CONNECTOR_NAME);
     int load = Integer.parseInt(ServletUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_LOAD));
+    int retryDelayMillis = 0; // no delay unless one is specified
+    String delayStr = ServletUtil.getFirstElementByTagName(root, 
+        ServletUtil.XMLTAG_DELAY);
+    if (delayStr != null) {
+      retryDelayMillis = Integer.parseInt(delayStr);
+    }
     String timeIntervals = ServletUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_TIME_INTERVALS);
 
     try {
-      manager.setSchedule(connectorName, load, timeIntervals);
+      manager.setSchedule(connectorName, load, retryDelayMillis, timeIntervals);
     } catch (ConnectorNotFoundException e) {
       status = new ConnectorMessageCode(
           ConnectorMessageCode.EXCEPTION_CONNECTOR_NOT_FOUND, connectorName);
