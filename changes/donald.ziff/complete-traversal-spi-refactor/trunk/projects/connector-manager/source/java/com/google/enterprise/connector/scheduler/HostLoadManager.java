@@ -126,7 +126,7 @@ public class HostLoadManager {
    * @param connectorName name of the connector instance
    */
   public void connectorFinishedTraversal(String connectorName) {
-    Long now = new Long(System.currentTimeMillis());
+    long now = System.currentTimeMillis();
     connectorNameToFinishTime.put(connectorName, now);
   }
   
