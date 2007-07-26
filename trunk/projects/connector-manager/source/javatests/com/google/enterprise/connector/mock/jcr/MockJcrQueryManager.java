@@ -16,7 +16,7 @@ package com.google.enterprise.connector.mock.jcr;
 
 import com.google.enterprise.connector.mock.MockRepositoryDateTime;
 import com.google.enterprise.connector.mock.MockRepositoryDocumentStore;
-import com.google.enterprise.connector.spi.old.SimpleValue;
+import com.google.enterprise.connector.spi.Value;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -159,7 +159,7 @@ public class MockJcrQueryManager implements QueryManager {
 
     Calendar c = null;
     try {
-      c = SimpleValue.iso8601ToCalendar(dateString);
+      c = Value.iso8601ToCalendar(dateString);
     } catch (ParseException e) {
       throw new InvalidQueryException("Invalid query: " + statement + ".  "
           + "Can't parse date.", e);

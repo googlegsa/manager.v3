@@ -14,7 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.jcradaptor.SpiConnectorFromJcr;
+import com.google.enterprise.connector.jcr.JcrConnector;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
@@ -32,9 +32,9 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
+import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
-import com.google.enterprise.connector.spi.old.TraversalManager;
 import com.google.enterprise.connector.traversal.InterruptibleQueryTraverser;
 import com.google.enterprise.connector.traversal.LongRunningQueryTraverser;
 import com.google.enterprise.connector.traversal.NeverEndingQueryTraverser;
@@ -108,7 +108,7 @@ public class MockInstantiator implements Instantiator {
     MockRepositoryEventList mrel = new MockRepositoryEventList(resourceName);
     MockRepository mockRepository = new MockRepository(mrel);
     Repository repository = new MockJcrRepository(mockRepository);
-    Connector connector = new SpiConnectorFromJcr(repository);
+    Connector connector = new JcrConnector(repository);
 
     TraversalManager qtm;
     AuthenticationManager authenticationManager;

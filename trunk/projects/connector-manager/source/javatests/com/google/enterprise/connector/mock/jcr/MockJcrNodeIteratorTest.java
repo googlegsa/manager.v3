@@ -18,7 +18,7 @@ import com.google.enterprise.connector.mock.MockRepositoryDocumentStore;
 import com.google.enterprise.connector.mock.MockRepositoryEvent;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.MockRepositoryPropertyTest;
-import com.google.enterprise.connector.spi.old.SimpleValue;
+import com.google.enterprise.connector.spi.Value;
 
 import junit.framework.TestCase;
 
@@ -65,7 +65,7 @@ public class MockJcrNodeIteratorTest extends TestCase {
       Property lastModifiedProperty = n.getProperty(JCR_LAST_MODIFIED);
       Calendar lastModifiedCalendar = lastModifiedProperty.getDate();
       String lastModifiedDateISO8601 =
-        SimpleValue.calendarToIso8601(lastModifiedCalendar);
+        Value.calendarToIso8601(lastModifiedCalendar);
       logger.info(JCR_LAST_MODIFIED + " " + lastModifiedDateISO8601);
 
       Property p;
