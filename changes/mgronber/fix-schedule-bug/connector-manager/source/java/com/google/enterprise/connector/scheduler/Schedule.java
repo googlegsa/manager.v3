@@ -59,7 +59,6 @@ public class Schedule {
    */
   public static String toLegacyString(String schedule) {
     String[] fields = schedule.split(":");
-    // ["connector1", "60", "86400000", "1-2", "3-5"]
     if (fields[2].indexOf('-') < 0) {
       // It's a delay, get rid of it
       StringBuffer result = new StringBuffer();
