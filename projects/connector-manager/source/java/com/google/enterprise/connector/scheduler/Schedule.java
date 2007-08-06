@@ -48,6 +48,32 @@ public class Schedule {
   }
 
   /**
+   * Utility method to parse out the delay field.  Currently only used when
+   * sending the schedule string back to a GSA that has not been updated to
+   * parse the delay field from the schedule.
+   * 
+   * Done in a safe manner so it won't mangle a given legacy schedule.
+   * 
+   * @param schedule a schedule string that contains a delay field.
+   * @return a schedule string without the delay field.
+   */
+  public static String toLegacyString(String schedule) {
+    String[] fields = schedule.split(":");
+    if (fields[2].indexOf('-') < 0) {
+      // It's a delay, get rid of it
+      StringBuffer result = new StringBuffer();
+      result.append(fields[0]);
+      result.append(":").append(fields[1]);
+      for (int i = 3; i < fields.length; i++) {
+        result.append(":").append(fields[i]);
+      }
+      return result.toString();
+    }
+    // else, it's already legacy
+    return schedule;
+  }
+
+  /**
    * Populate a schedule.
    * 
    * @param schedule String of the form:

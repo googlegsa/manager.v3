@@ -18,6 +18,7 @@ package com.google.enterprise.connector.servlet;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.scheduler.Schedule;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -104,7 +105,8 @@ public class GetConnectorInstanceList extends HttpServlet {
       ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_STATUS, Integer
           .toString(connectorStatus.getStatus()));
       ServletUtil.writeXMLElement(out, 3,
-          ServletUtil.XMLTAG_CONNECTOR_SCHEDULE, connectorStatus.getSchedule());
+          ServletUtil.XMLTAG_CONNECTOR_SCHEDULE, 
+          Schedule.toLegacyString(connectorStatus.getSchedule()));
       ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_CONNECTOR_INSTANCE,
           true);
     }
