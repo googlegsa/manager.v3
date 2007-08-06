@@ -25,10 +25,11 @@ import java.util.List;
  * Test Schedule class.
  */
 public class ScheduleTest extends TestCase {
+
+  final String strWithDelay = "connector1:60:0:1-2:3-5";
+  final String strNoDelay = "connector1:60:1-2:3-5";
+  
   public void testSerialization() {
-    final String str = "connector1:60:0:1-2:3-5";
-    final String strNoDelay = "connector1:60:1-2:3-5";
-    
     List intervals = new ArrayList();
     ScheduleTimeInterval interval1 = 
       new ScheduleTimeInterval(new ScheduleTime(1), new ScheduleTime(2));
@@ -37,17 +38,22 @@ public class ScheduleTest extends TestCase {
     intervals.add(interval1);
     intervals.add(interval2);
     Schedule schedule = new Schedule("connector1", 60, 0, intervals);
-    Assert.assertEquals(str, schedule.toString());
+    Assert.assertEquals(strWithDelay, schedule.toString());
     
     Schedule schedule2 = new Schedule("whatever", 30, 42, 
         Collections.EMPTY_LIST);
-    schedule2.readString(str);
-    Assert.assertEquals(str, schedule2.toString());
+    schedule2.readString(strWithDelay);
+    Assert.assertEquals(strWithDelay, schedule2.toString());
     
-    Schedule schedule3 = new Schedule(str);
-    Assert.assertEquals(str, schedule3.toString());
+    Schedule schedule3 = new Schedule(strWithDelay);
+    Assert.assertEquals(strWithDelay, schedule3.toString());
     
     Schedule schedule4 = new Schedule(strNoDelay);
-    Assert.assertEquals(str,schedule3.toString()); // missing delay becomes 0
+    Assert.assertEquals(strWithDelay,schedule3.toString()); // missing delay becomes 0
+  }
+
+  public void testToLegacyString() {
+    Assert.assertEquals(strNoDelay, Schedule.toLegacyString(strWithDelay));
+    Assert.assertEquals(strNoDelay, Schedule.toLegacyString(strNoDelay));
   }
 }
