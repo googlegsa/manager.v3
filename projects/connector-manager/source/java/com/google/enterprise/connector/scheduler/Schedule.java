@@ -28,8 +28,9 @@ public class Schedule {
   private int retryDelayMillis; // maximum of ~24 days
   private List timeIntervals;
 
-  public Schedule(String connectorName, int load, int retryDelayMillis, List timeIntervals) {
-    if (null == timeIntervals) {
+  public Schedule(String connectorName, int load, int retryDelayMillis,
+      List timeIntervals) {
+    if ((null == timeIntervals) || (timeIntervals.isEmpty())) {
       throw new IllegalArgumentException();
     }
     this.connectorName = connectorName;
@@ -59,18 +60,27 @@ public class Schedule {
    */
   public static String toLegacyString(String schedule) {
     String[] fields = schedule.split(":");
-    if (fields[2].indexOf('-') < 0) {
-      // It's a delay, get rid of it
-      StringBuffer result = new StringBuffer();
-      result.append(fields[0]);
-      result.append(":").append(fields[1]);
-      for (int i = 3; i < fields.length; i++) {
-        result.append(":").append(fields[i]);
+    try {
+      if (fields[2].indexOf('-') < 0) {
+        // It's a delay, get rid of it
+        StringBuffer result = new StringBuffer();
+        result.append(fields[0]);
+        result.append(":").append(fields[1]);
+
+        if (fields.length == 3) {
+          throw new IllegalArgumentException();
+        } else {
+          for (int i = 3; i < fields.length; i++) {
+            result.append(":").append(fields[i]);
+          }
+        }
+        return result.toString();
       }
-      return result.toString();
+      // else, it's already legacy
+      return schedule;
+    } catch(ArrayIndexOutOfBoundsException aioobe) {
+      throw new IllegalArgumentException();
     }
-    // else, it's already legacy
-    return schedule;
   }
 
   /**
