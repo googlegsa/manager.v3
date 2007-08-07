@@ -28,6 +28,8 @@ public class ScheduleTest extends TestCase {
 
   final String strWithDelay = "connector1:60:0:1-2:3-5";
   final String strNoDelay = "connector1:60:1-2:3-5";
+  final String illegalStrWithDelay = "connector2:60:0:";
+  final String illegalStrNoDelay = "connector2:60:";
   
   public void testSerialization() {
     List intervals = new ArrayList();
@@ -40,20 +42,64 @@ public class ScheduleTest extends TestCase {
     Schedule schedule = new Schedule("connector1", 60, 0, intervals);
     Assert.assertEquals(strWithDelay, schedule.toString());
     
-    Schedule schedule2 = new Schedule("whatever", 30, 42, 
-        Collections.EMPTY_LIST);
+    Schedule schedule2 = new Schedule("whatever", 30, 42, intervals);
     schedule2.readString(strWithDelay);
     Assert.assertEquals(strWithDelay, schedule2.toString());
-    
+    schedule2.readString(strNoDelay);
+    Assert.assertEquals(strWithDelay, schedule2.toString());
+
     Schedule schedule3 = new Schedule(strWithDelay);
     Assert.assertEquals(strWithDelay, schedule3.toString());
-    
+
+    // missing delay becomes 0
     Schedule schedule4 = new Schedule(strNoDelay);
-    Assert.assertEquals(strWithDelay,schedule3.toString()); // missing delay becomes 0
+    Assert.assertEquals(strWithDelay, schedule4.toString());
+
+    try {
+      Schedule schedule5 = new Schedule("connector2", 60, 0, 
+          Collections.EMPTY_LIST);
+      fail("IllegalArgumentException expected");
+    } catch (IllegalArgumentException e) {
+      // expected exception occurred
+    }
+
+    try {
+      Schedule schedule6 = new Schedule("whatever", 30, 42, intervals);
+      schedule6.readString(illegalStrWithDelay);
+      fail("IllegalArgumentException expected");
+    } catch (IllegalArgumentException e) {
+      // expected exception occurred
+    }
+
+    try {
+      Schedule schedule7 = new Schedule(illegalStrWithDelay);
+      fail("IllegalArgumentException expected");
+    } catch (IllegalArgumentException e) {
+      // expected exception occurred
+    }
+
+    try {
+      Schedule schedule8 = new Schedule(illegalStrNoDelay);
+      fail("IllegalArgumentException expected");
+    } catch (IllegalArgumentException e) {
+      // expected exception occurred
+    }
   }
 
   public void testToLegacyString() {
     Assert.assertEquals(strNoDelay, Schedule.toLegacyString(strWithDelay));
     Assert.assertEquals(strNoDelay, Schedule.toLegacyString(strNoDelay));
+    try {
+      Schedule.toLegacyString(illegalStrWithDelay);
+      fail("IllegalArgumentException expected");
+    } catch (IllegalArgumentException e) {
+      // expected exception occurred
+    }
+    try {
+      Schedule.toLegacyString(illegalStrNoDelay);
+      fail("IllegalArgumentException expected");
+    } catch (IllegalArgumentException e) {
+      // expected exception occurred
+    }
   }
 }
