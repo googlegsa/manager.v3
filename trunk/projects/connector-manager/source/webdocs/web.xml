@@ -60,7 +60,11 @@
       <param-name>keystore_file</param-name>
       <param-value>connector_manager.keystore</param-value>
       <description>
-        Filename of keystore. Will be created if it does not exist.
+        Filename of keystore.  This file will be created if it does not exist.
+        If the StandardContext is being used and the 'unpackWAR' is defaulted to
+        'true' then the Web App will search for this file under its WEB-INF
+        directory.  If the Servlet container cannot translate this path to a
+        real path, then it will be treated as a virtual path.
       </description>
     </context-param>
 

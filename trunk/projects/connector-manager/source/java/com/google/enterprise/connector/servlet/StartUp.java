@@ -79,7 +79,14 @@ public class StartUp extends HttpServlet {
     EncryptedPropertyPlaceholderConfigurer.setKeyStorePasswdPath(kp);
     
     String ks = servletContext.getInitParameter("keystore_file");
-    EncryptedPropertyPlaceholderConfigurer.setKeyStorePath(ks);
+    String realks = servletContext.getRealPath("/WEB-INF/" + ks);
+    if (null == realks) {
+      // Servlet container cannot translated the virtual path to a
+      // real path, so use the given path.
+      EncryptedPropertyPlaceholderConfigurer.setKeyStorePath(ks);
+    } else {
+      EncryptedPropertyPlaceholderConfigurer.setKeyStorePath(realks);
+    }
 
     String kt = servletContext.getInitParameter("keystore_type");
     EncryptedPropertyPlaceholderConfigurer.setKeyStoreType(kt);
