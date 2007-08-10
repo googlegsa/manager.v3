@@ -118,6 +118,8 @@ public class ServletUtil {
       "Null connector name";
   public static final String LOG_RESPONSE_NULL_CONNECTOR_TYPE =
       "Null connector type name";
+  public static final String LOG_RESPONSE_NULL_SCHEDULE =
+      "Null connector schedule";
 
   public static final String LOG_EXCEPTION_CONNECTOR_TYPE_NOT_FOUND =
       "Exception: the connector type is not found";
@@ -407,6 +409,19 @@ public class ServletUtil {
                                      String elemName, String elemValue) {
     out.append(indentStr(indentLevel)).append("<").append(elemName).append(">");
     out.append(elemValue).append("</").append(elemName).append(">");
+  }
+
+  /**
+   * Write a name as an empty XML element to a PrintWriter.
+   *
+   * @param out where PrintWriter to be written to
+   * @param indentLevel the depth of indentation.
+   * @param elemName element name
+   */
+  public static void writeEmptyXMLElement(PrintWriter out, int indentLevel,
+                                          String elemName) {
+    out.println(indentStr(indentLevel)
+        + "<" + elemName + "></" + elemName + ">");
   }
 
   /**

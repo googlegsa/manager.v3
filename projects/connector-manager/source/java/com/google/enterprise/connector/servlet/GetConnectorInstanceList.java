@@ -104,9 +104,16 @@ public class GetConnectorInstanceList extends HttpServlet {
           connectorStatus.getType());
       ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_STATUS, Integer
           .toString(connectorStatus.getStatus()));
-      ServletUtil.writeXMLElement(out, 3,
-          ServletUtil.XMLTAG_CONNECTOR_SCHEDULE, 
-          Schedule.toLegacyString(connectorStatus.getSchedule()));
+      if (connectorStatus.getSchedule() == null) {
+        LOGGER.log(Level.WARNING, connectorStatus.getName() + ": " + 
+            ServletUtil.LOG_RESPONSE_NULL_SCHEDULE);
+        ServletUtil.writeEmptyXMLElement(out, 3,
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
+      } else {
+        ServletUtil.writeXMLElement(out, 3,
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULE, 
+            Schedule.toLegacyString(connectorStatus.getSchedule()));
+      }
       ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_CONNECTOR_INSTANCE,
           true);
     }

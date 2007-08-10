@@ -114,7 +114,10 @@ public class ImportExport {
       String name = connector.getName();
       String type = connector.getType();
       Map config = connector.getConfig();
-      Schedule schedule = new Schedule(connector.getScheduleString());
+      Schedule schedule = null;
+      if (connector.getScheduleString() != null) {
+        schedule = new Schedule(connector.getScheduleString());
+      }
 
       try {
         String language = "en";
@@ -130,15 +133,17 @@ public class ImportExport {
           continue;
         }
 
-        // set schedule
-        try {
-          manager.setSchedule(
-              name, schedule.getLoad(), schedule.getRetryDelayMillis(),
-              schedule.getTimeIntervalsAsString());
-        } catch (ConnectorNotFoundException e) {
-          // should never happen
-          LOGGER.log(Level.WARNING, e.getMessage(), e);
-          throw new RuntimeException(e);
+        // set schedule, if given
+        if (schedule != null ) {
+          try {
+            manager.setSchedule(name, schedule.getLoad(), 
+                schedule.getRetryDelayMillis(),
+                schedule.getTimeIntervalsAsString());
+          } catch (ConnectorNotFoundException e) {
+            // should never happen
+            LOGGER.log(Level.WARNING, e.getMessage(), e);
+            throw new RuntimeException(e);
+          }
         }
 
         previousConnectorNames.remove(name);
