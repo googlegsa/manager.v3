@@ -20,6 +20,7 @@ import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.scheduler.Schedule;
 
 import java.io.PrintWriter;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -76,9 +77,14 @@ public class GetConnectorStatus extends ConnectorManagerGetServlet {
           connectorStatus.getType());
       ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_STATUS, Integer
           .toString(connectorStatus.getStatus()));
-      ServletUtil.writeXMLElement(out, 2,
-          ServletUtil.XMLTAG_CONNECTOR_SCHEDULE, 
-          Schedule.toLegacyString(connectorStatus.getSchedule()));
+      if (connectorStatus.getSchedule() == null) {
+        ServletUtil.writeEmptyXMLElement(out, 2,
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
+      } else {
+        ServletUtil.writeXMLElement(out, 2,
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULE, 
+            Schedule.toLegacyString(connectorStatus.getSchedule()));
+      }
       ServletUtil
           .writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_STATUS, true);
     }
