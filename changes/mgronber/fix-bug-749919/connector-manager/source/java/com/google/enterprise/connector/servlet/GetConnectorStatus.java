@@ -78,8 +78,6 @@ public class GetConnectorStatus extends ConnectorManagerGetServlet {
       ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_STATUS, Integer
           .toString(connectorStatus.getStatus()));
       if (connectorStatus.getSchedule() == null) {
-        LOGGER.log(Level.WARNING, connectorStatus.getName() + ": " + 
-            ServletUtil.LOG_RESPONSE_NULL_SCHEDULE);
         ServletUtil.writeEmptyXMLElement(out, 2,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
       } else {
