@@ -22,7 +22,6 @@ import java.io.PrintWriter;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,11 +39,7 @@ public class StartUp extends HttpServlet {
   public void init() {
     LOGGER.info("init");
     ServletContext servletContext = this.getServletContext();
-    try {
-      doConnectorManagerStartup(servletContext);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    doConnectorManagerStartup(servletContext);
     LOGGER.info("init done");
   }
 
@@ -54,12 +49,12 @@ public class StartUp extends HttpServlet {
   }
   
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
     doPost(req, res);
   }
 
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
     ServletContext servletContext = this.getServletContext();
     doConnectorManagerStartup(servletContext);
     res.setContentType(ServletUtil.MIMETYPE_HTML);
@@ -71,8 +66,7 @@ public class StartUp extends HttpServlet {
     LOGGER.info("Connector Manager started.");
   }
 
-  public static void doConnectorManagerStartup(ServletContext servletContext)
-      throws IOException {
+  public static void doConnectorManagerStartup(ServletContext servletContext) {
 
     // read in and set initialization parameters
     String kp = servletContext.getInitParameter("keystore_passwd_file");
