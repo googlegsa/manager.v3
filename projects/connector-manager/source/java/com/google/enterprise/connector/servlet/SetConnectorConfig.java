@@ -26,7 +26,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -43,13 +42,12 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
    * doGet just call doPost.
    * @param req 
    * @param res 
-   * @throws ServletException 
    * @throws IOException 
    * 
    */
   protected void doGet(HttpServletRequest req,
                        HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
     ConnectorMessageCode status = new ConnectorMessageCode();
     String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
     String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);

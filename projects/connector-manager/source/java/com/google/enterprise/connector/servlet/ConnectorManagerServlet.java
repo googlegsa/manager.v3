@@ -25,7 +25,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -56,12 +55,11 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
    * 
    * @param req
    * @param res
-   * @throws ServletException
    * @throws IOException
    *
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
     doPost(req, res);
   }
 
@@ -70,12 +68,11 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
    * the HTTP POST request.
    * @param req
    * @param res
-   * @throws ServletException
    * @throws IOException
    *
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
     for (java.util.Enumeration headerNames = req.getHeaderNames(); headerNames.hasMoreElements(); ) {
       String name = (String) headerNames.nextElement();
       LOGGER.log(Level.INFO, "HEADER " + name + ": " + req.getHeader(name));

@@ -302,8 +302,7 @@ public class ProductionManager implements Manager {
    *      java.lang.String)
    */
   public void removeConnector(String connectorName)
-      throws ConnectorNotFoundException, PersistentStoreException,
-      InstantiatorException {
+      throws InstantiatorException {
     instantiator.dropConnector(connectorName);
     connectorScheduleStore.removeConnectorSchedule(connectorName);
     connectorStateStore.removeConnectorState(connectorName);

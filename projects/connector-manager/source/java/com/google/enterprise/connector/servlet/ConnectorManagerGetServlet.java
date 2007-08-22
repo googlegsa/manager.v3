@@ -23,7 +23,6 @@ import java.io.PrintWriter;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -56,12 +55,11 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
    * 
    * @param req
    * @param res
-   * @throws ServletException
    * @throws IOException
    * 
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
     res.setContentType(ServletUtil.MIMETYPE_XML);
     res.setCharacterEncoding("UTF-8");
     PrintWriter out = res.getWriter();
@@ -92,11 +90,10 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
    * 
    * @param req
    * @param res
-   * @throws ServletException
    * @throws IOException
    * 
    */
-  protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+  protected void doPost(HttpServletRequest req, HttpServletResponse res) throws IOException {
     doGet(req, res);
   }
 
