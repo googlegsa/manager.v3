@@ -77,7 +77,8 @@ public class MockInstantiator implements Instantiator {
         };
 
     AuthorizationManager nullAuthorizationManager = new AuthorizationManager() {
-      public Collection authorizeDocids(Collection docidList, AuthenticationIdentity identity) {
+      public Collection authorizeDocids(Collection docids,
+          AuthenticationIdentity identity) {
         throw new UnsupportedOperationException();
       }
     };

@@ -65,7 +65,8 @@ public class SimpleConnectorTypeTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.enterprise.connector.spi.SimpleConnectorType#validateConfig(java.util.Map, Locale, ConnectorFactory)}.
+   * {@link com.google.enterprise.connector.spi.SimpleConnectorType#
+   * validateConfig(java.util.Map, Locale, ConnectorFactory)}.
    * 
    * @throws JSONException
    */
