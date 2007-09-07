@@ -21,7 +21,7 @@ import com.google.enterprise.connector.spi.RepositoryException;
 
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
+import java.util.Collection;
 
 import javax.jcr.Credentials;
 import javax.jcr.ItemNotFoundException;
@@ -49,7 +49,7 @@ public class JcrAuthorizationManager implements AuthorizationManager {
    * @see com.google.enterprise.connector.spi.AuthorizationManager
    *      #authorizeDocids(java.util.List, java.lang.String)
    */
-  public List authorizeDocids(List docidList, AuthenticationIdentity identity)
+  public Collection authorizeDocids(Collection docids, AuthenticationIdentity identity)
       throws RepositoryException {
     // we rely on the ability of the current session to impersonate any
     // other user
@@ -68,7 +68,7 @@ public class JcrAuthorizationManager implements AuthorizationManager {
       // iterate through the docids, try to fetch each one, and determine
       // this user's access by whether the fetch succeeds
       LinkedList result = new LinkedList();
-      for (Iterator i = docidList.iterator(); i.hasNext();) {
+      for (Iterator i = docids.iterator(); i.hasNext();) {
         String uuid = (String) i.next();
         boolean readPrivilege = false;
         try {

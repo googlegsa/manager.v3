@@ -15,8 +15,8 @@
 package com.google.enterprise.connector.spi;
 
 /**
- * The carrier type of the list returned by the
- * {@link AuthorizationManager}.authorizeDocids method.
+ * The carrier type of the list returned by the {@link AuthorizationManager}.authorizeDocids
+ * method.
  */
 public class AuthorizationResponse {
 
@@ -27,10 +27,13 @@ public class AuthorizationResponse {
    * Makes an AuthorizationResponse.
    * 
    * @param valid Indicates that authorization was successful (valid)
-   * @param docid The docid for which authorization succeeded - should not
-   *        be null or empty
+   * @param docid The docid for which authorization succeeded - should not be
+   *        null or empty
    */
   public AuthorizationResponse(boolean valid, String docid) {
+    if (docid == null) {
+      throw new IllegalArgumentException();
+    }
     this.valid = valid;
     this.docid = docid;
   }
@@ -51,5 +54,36 @@ public class AuthorizationResponse {
    */
   public String getDocid() {
     return docid;
+  }
+
+  /**
+   * Returns a hash code value for the object. The hashcode returned is the
+   * hashcode for the docid string - the rest of the object is ignored.
+   * 
+   * @return a hash code value for this object.
+   */
+  public int hashCode() {
+    if (docid == null) {
+      throw new IllegalStateException();
+    }
+    return docid.hashCode();
+  }
+
+  /**
+   * Indicates whether some other object is "equal to" this one. Implemented by
+   * running equals on the docid string.
+   * 
+   * @return true if this object is the same as the obj argument; false
+   *         otherwise.
+   */
+  public boolean equals(Object obj) {
+    if (docid == null) {
+      throw new IllegalStateException();
+    }
+    if (!(obj instanceof AuthorizationResponse)) {
+      return false;
+    }
+    AuthorizationResponse other = (AuthorizationResponse) obj;
+    return this.docid.equals(other.getDocid());
   }
 }

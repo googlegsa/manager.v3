@@ -65,7 +65,8 @@ public class SimpleConnectorTypeTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.enterprise.connector.spi.SimpleConnectorType#validateConfig(java.util.Map, Locale)}.
+   * {@link com.google.enterprise.connector.spi.SimpleConnectorType#
+   * validateConfig(java.util.Map, Locale, ConnectorFactory)}.
    * 
    * @throws JSONException
    */
@@ -77,7 +78,7 @@ public class SimpleConnectorTypeTest extends TestCase {
           "{user:max, dog:snickers, destination:heaven}");
       Map map = new JsonObjectAsMap(jo);
       ConfigureResponse configureResponse = simpleConnectorType.validateConfig(
-          map, null);
+          map, null, null);
       String configForm = configureResponse.getFormSnippet();
       String expectedResult = 
     	  "<tr>\r\n"
@@ -101,7 +102,7 @@ public class SimpleConnectorTypeTest extends TestCase {
       JSONObject jo = new JSONObject("{user:max, password:xyzzy, dog:snickers}");      
       Map map = new JsonObjectAsMap(jo);
       ConfigureResponse configureResponse = simpleConnectorType.validateConfig(
-          map, null);
+          map, null, null);
       Assert.assertNull(configureResponse);
     }
     
@@ -111,7 +112,7 @@ public class SimpleConnectorTypeTest extends TestCase {
       JSONObject jo = new JSONObject("{user:max, password:xyzzy}");      
       Map map = new JsonObjectAsMap(jo);
       ConfigureResponse configureResponse = testConnectorType.validateConfig(
-          map, null);
+          map, null, null);
       String configForm = configureResponse.getFormSnippet();
       String expectedResult = 
         "<tr>\r\n"

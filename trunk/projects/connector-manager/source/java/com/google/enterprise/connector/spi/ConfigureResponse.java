@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.spi;
 
+import java.util.Map;
+
 /**
  * The response for most configuration methods, such as @link{ConnectorType}.getConfigForm()
  * and @link{ConnectorType}.validateConfig().
@@ -23,9 +25,10 @@ public class ConfigureResponse {
 
   private final String message;
   private final String formSnippet;
+  private final Map configData;
 
   /**
-   * The primary constructor.
+   * Simple constructor.
    * 
    * @param message
    *          A message to be included to the user along with the form. This
@@ -42,6 +45,32 @@ public class ConfigureResponse {
     super();
     this.message = message;
     this.formSnippet = formSnippet;
+    this.configData = null;
+  }
+
+  /**
+   * Complete constructor.
+   * 
+   * @param message
+   *          A message to be included to the user along with the form. This
+   *          message may be null or empty - no distinction is made between
+   *          those cases. The message should be plain text - may not contain
+   *          script directives.
+   * @param formSnippet
+   *          A sequence of &lt;tr&gt; elements, each of which should contain
+   *          two &lt;td&gt; fields, first is the description of configuration
+   *          element, second is an HTML input field. The snippet may be null or
+   *          empty. Again, there may be no script elements.
+   * @param configData
+   *          A map of name, value pairs (String, String) of
+   *          configuration data.  If supplied, where appropriate, the Connector
+   *          Manager will use this data
+   */
+  public ConfigureResponse(String message, String formSnippet, Map configData) {
+    super();
+    this.message = message;
+    this.formSnippet = formSnippet;
+    this.configData = configData;
   }
 
   /**
@@ -60,6 +89,15 @@ public class ConfigureResponse {
    */
   public String getFormSnippet() {
     return formSnippet;
+  }
+
+  /**
+   * Gets the config data.
+   * 
+   * @return the config data - may be null or empty
+   */
+  public Map getConfigData() {
+    return configData;
   }
 
 }

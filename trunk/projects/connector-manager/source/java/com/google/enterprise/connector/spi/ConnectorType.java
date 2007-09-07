@@ -56,11 +56,16 @@ public interface ConnectorType {
    *        configuration data
    * @param locale A java.util.Locale which the implementation may use to 
    *        produce appropriate descriptions and messages
+   * @param connectorFactory A Connector Factory object that can be used by the
+   *        ConnectorType to obtain a Connector instance, instantiated by the 
+   *        Connector Manager in exactly the same way as it would if this
+   *        config were valid and persisted
    * @return a ConfigureResponse object. If the returned object is null, this
    *         means that the configuration is acceptable. If the return is
    *         non-null, then the response contains a new form snippet (and
    *         message, as appropriate)
    */
-  public ConfigureResponse validateConfig(Map configData, Locale locale);
+  public ConfigureResponse validateConfig(Map configData, Locale locale, 
+      ConnectorFactory connectorFactory);
 
 }

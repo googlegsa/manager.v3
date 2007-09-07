@@ -20,7 +20,6 @@ import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
-import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.pusher.Pusher;
@@ -31,10 +30,8 @@ import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.RepositoryLoginException;
-import com.google.enterprise.connector.spi.TraversalManager;
-import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
+import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.InterruptibleQueryTraverser;
 import com.google.enterprise.connector.traversal.LongRunningQueryTraverser;
 import com.google.enterprise.connector.traversal.NeverEndingQueryTraverser;
@@ -42,9 +39,9 @@ import com.google.enterprise.connector.traversal.NoopQueryTraverser;
 import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.Traverser;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -74,15 +71,14 @@ public class MockInstantiator implements Instantiator {
 
     AuthenticationManager nullAuthenticationManager =
         new AuthenticationManager() {
-          public AuthenticationResponse authenticate(AuthenticationIdentity identity)
-              throws RepositoryLoginException, RepositoryException {
+          public AuthenticationResponse authenticate(AuthenticationIdentity identity) {
             throw new UnsupportedOperationException();
           }
         };
 
     AuthorizationManager nullAuthorizationManager = new AuthorizationManager() {
-      public List authorizeDocids(List docidList, AuthenticationIdentity identity)
-          throws RepositoryException {
+      public Collection authorizeDocids(Collection docids,
+          AuthenticationIdentity identity) {
         throw new UnsupportedOperationException();
       }
     };
@@ -141,8 +137,7 @@ public class MockInstantiator implements Instantiator {
    * @see com.google.enterprise.connector.instantiator.Instantiator
    *      #getConfigurer(java.lang.String)
    */
-  public ConnectorType getConnectorType(String connectorTypeName)
-      throws ConnectorTypeNotFoundException {
+  public ConnectorType getConnectorType(String connectorTypeName) {
     return CONNECTOR_TYPE;
   }
 
@@ -163,8 +158,7 @@ public class MockInstantiator implements Instantiator {
     }
   }
 
-  public String getConnectorInstancePrototype(String connectorTypeName)
-      throws ConnectorTypeNotFoundException {
+  public String getConnectorInstancePrototype(String connectorTypeName) {
     return "";
   }
 
@@ -174,13 +168,11 @@ public class MockInstantiator implements Instantiator {
 
   public ConfigureResponse setConnectorConfig(String connectorName,
       String connectorTypeName, Map configKeys, Locale locale,
-      boolean update)
-      throws ConnectorNotFoundException, ConnectorTypeNotFoundException,
-      InstantiatorException {
+      boolean update) {
 	  return null;
   }
 
-  public void dropConnector(String connectorName) throws InstantiatorException {
+  public void dropConnector(String connectorName) {
   }
 
   public AuthenticationManager getAuthenticationManager(String connectorName)
@@ -206,8 +198,7 @@ public class MockInstantiator implements Instantiator {
   }
 
   public ConfigureResponse getConfigFormForConnector(String connectorName,
-      String connectorTypeName, Locale locale)
-      throws ConnectorNotFoundException {
+      String connectorTypeName, Locale locale) {
     throw new UnsupportedOperationException();
   }
 
@@ -215,7 +206,7 @@ public class MockInstantiator implements Instantiator {
     return connectorMap.keySet().iterator();
   }
 
-  public String getConnectorTypeName(String connectorName) throws ConnectorNotFoundException {
+  public String getConnectorTypeName(String connectorName) {
     return "";
   }
 
