@@ -25,6 +25,7 @@ import com.google.enterprise.connector.spi.AuthorizationResponse;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -112,7 +113,7 @@ public class JcrAuthorizationManagerTest extends TestCase {
     List docids = new LinkedList(expectedResults.keySet());
 
     AuthenticationIdentity identity = new UserPassIdentity(username, null);
-    List results = authorizationManager.authorizeDocids(docids, identity);
+    Collection results = authorizationManager.authorizeDocids(docids, identity);
 
     for (Iterator i = results.iterator(); i.hasNext();) {
       AuthorizationResponse response = (AuthorizationResponse) i.next();
