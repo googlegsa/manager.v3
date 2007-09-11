@@ -1,0 +1,87 @@
+#summary Naming convention and policy for Connector Framework downloads.
+#labels Phase-Implementation
+
+*QUESTIONS*:
+
+  # Should we have *both* zip files and tar.gz files?  If not, which one - zip?
+  # Do we want to combine binary with source or should the source distributions only contain source files (basically in addition to the binary archives)?
+  # Does source need to be differentiated into English Only and All Languages?
+
+= Introduction =
+
+This document discusses the naming and archiving conventions that will be observed for the download packages prepared for the Google Connector Framework projects.
+
+= Details =
+
+This policy will be used for naming and labeling the files to be downloaded.  In most cases, the files contained in the Downloads Tab will be archives.  In each case, the file will contain the following:
+
+  * Summary: This is a one-line summary of the file.
+
+  * File: For the Connectors, there will be three types of files in the Downloads area and for each type, there will be a ZIP archive and a TAR.GZ archive:
+    # Archive containing the binary files for all languages
+    # Archive containing the binary files for just English
+    # Archive containing the source files
+
+  * Labels: A series of labels can be attached to each file.
+
+The following policy will be used to name the file:
+
+   == `<name>-<version>[-src][_en].<extension>` ==
+
+Where:
+
+  * name = Connector Name (i.e. connector-otex, connector-dctm, ...)
+  * version = major.minor.micro (i.e. 1.0.1, ...)
+  * *`-src`* = added for source distributions
+  * *`_en`* = added for English only distributions.  A similar convention can be used if we distribute for other languages separately.  If the *`_en`* is not present then it is assumed to support all languages.
+  * extension = *`zip`* for zip files and *`tar.gz`* for gzip tar files
+
+
+Initially, each archive will be labeled with 3 labels:
+
+  # Featured - This means the download should be listed on the project home page.
+  # Type-Archive - This means the user should download, unarchive, and follow directions.
+  # OpSys-All - Since this is java, it should work for all operating systems.
+
+== Examples: ==
+
+  # connector-otex-1.0.0.tar.gz - OpenText Connector 1.0.0 binary all language gzipped tar file.
+  # connector-otex-1.0.0-src.tar.gz - OpenText Connector 1.0.0 source only gzipped tar file.
+  # connector-dctm-1.0.1_en.zip - Documentum Connector 1.0.1 binary English only zip file.
+  # connector-file-1.0.1.zip - FileNet Connector 1.0.1 binary all language zip file.
+
+= Signature =
+
+When the file is uploaded to the Code Site it should present a SHA1 signature for the file.  This signature should be copied and recored on the Project Home page so users can check the signature of their downloads.
+
+= Notes =
+
+Possible Labels:
+
+  * Featured = Listed on project home page
+  * Deprecated = Most users should NOT download this
+
+  * Type-Executable = Executable application
+  * Type-Installer = Download and run to install application
+  * Type-Package = Your OS package manager installs this
+  * Type-Archive = Download, unarchive, then follow directions
+  * Type-Source = Source code archive
+  * Type-Docs = This file contains documentation
+
+  * OpSys-All = Works for all operating systems
+  * OpSys-Windows = Works with Windows
+  * OpSys-Linux = Works with Linux
+  * OpSys-OSX = Works with Mac OS X
+
+
+
+
+
+
+
+
+
+
+
+
+
