@@ -14,7 +14,7 @@
 
 package com.google.enterprise.connector.spi;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * Authorization Manager. All calls related to authorizing particular users
@@ -25,8 +25,9 @@ public interface AuthorizationManager {
   /**
    * Gets authorization from the repository for a set of documents by ID.
    * 
-   * @param docidList The document set represented as a list of Strings:
-   *        the docid for each document. The docid strings which the
+   * @param docids The document set represented as a Collection of Strings:
+   *        the docid for each document. The Connector Manager will ensure that
+   *        no docid is repeated in this collection.  The docid strings which the
    *        connector manager will pass in should have come from the search
    *        appliance, from documents that this connector submitted for
    *        indexing via traversal. Thus the docids should have started as
@@ -36,11 +37,11 @@ public interface AuthorizationManager {
    *        {@link TraversalManager}.resumeTraversal call.
    * @param identity The user's identity, as an
    *        {@link AuthenticationIdentity}
-   * @return A List of {@link AuthorizationResponse} objects, one for each
+   * @return A Collection of {@link AuthorizationResponse} objects, one for each
    *         docid in the docidList parameter; however, this list does not
    *         need to be in the same order.
    * @throws RepositoryException
    */
-  List authorizeDocids(List docidList, AuthenticationIdentity identity)
+  Collection authorizeDocids(Collection docids, AuthenticationIdentity identity)
       throws RepositoryException;
 }

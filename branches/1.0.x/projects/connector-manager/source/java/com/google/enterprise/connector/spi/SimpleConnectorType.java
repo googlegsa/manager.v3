@@ -283,7 +283,7 @@ public class SimpleConnectorType implements ConnectorType {
    *      java.util.Locale)
    */
   public ConfigureResponse validateConfig(Map configData,
-      Locale locale) {
+      Locale locale, ConnectorFactory connectorFactory) {
     if (validateConfigMap(configData)) {
       // all is ok
       return null;

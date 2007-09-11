@@ -35,6 +35,7 @@ import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.RepositoryException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -139,7 +140,7 @@ public class ProductionManager implements Manager {
       AuthorizationManager authzManager =
           instantiator.getAuthorizationManager(connectorName);
       AuthenticationIdentity identity = new UserPassIdentity(username, null);
-      List results = authzManager.authorizeDocids(docidList, identity);
+      Collection results = authzManager.authorizeDocids(docidList, identity);
       Iterator iter = results.iterator();
       while (iter.hasNext()) {
         AuthorizationResponse response = (AuthorizationResponse) iter.next();
