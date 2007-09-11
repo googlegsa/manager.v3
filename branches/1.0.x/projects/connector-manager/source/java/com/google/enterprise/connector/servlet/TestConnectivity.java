@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -37,12 +36,11 @@ public class TestConnectivity extends HttpServlet {
    * 
    * @param req
    * @param res
-   * @throws ServletException
    * @throws IOException
    * 
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
     LOGGER.info("Hello from the TestConnectivity servlet!");
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
@@ -55,12 +53,11 @@ public class TestConnectivity extends HttpServlet {
    * 
    * @param req
    * @param res
-   * @throws ServletException
    * @throws IOException
    * 
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
     doGet(req, res);
   }
 

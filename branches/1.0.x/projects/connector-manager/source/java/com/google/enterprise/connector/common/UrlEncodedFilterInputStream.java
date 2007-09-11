@@ -17,7 +17,6 @@ package com.google.enterprise.connector.common;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.net.URLEncoder;
 
 /**

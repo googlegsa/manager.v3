@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Map.Entry;
-import java.util.logging.Logger;
 
 /**
  * This class does the real work for the authorization servlet
@@ -34,9 +33,6 @@ public class AuthorizationHandler {
   String xmlBody;
   Manager manager;
   PrintWriter out;
-  private static final Logger LOGGER = Logger
-      .getLogger(AuthorizationHandler.class.getName());
-
   int status;
   int numDocs;
   private Map parseMap;

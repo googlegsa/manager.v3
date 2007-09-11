@@ -74,7 +74,7 @@ public class ConnectorInterfaces {
   ConnectorInterfaces(String connectorName, Traverser traverser, AuthenticationManager authenticationManager,
       AuthorizationManager authorizationManager) {
     this.connectorName = connectorName;
-    this.connector = null;;
+    this.connector = null;
     this.pusher = null;
     this.connectorStateStore = null;
     this.traverser = traverser;
