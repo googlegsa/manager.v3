@@ -47,7 +47,6 @@ public class HostLoadManager {
   /**
    * By default, the HostLoadManager will use a one minute period for
    * calculating the batchHint.
-   * @param maxFeedRate
    */
   public HostLoadManager(ConnectorScheduleStore scheduleStore) {
     this(MINUTE_IN_MILLIS, scheduleStore);
@@ -55,7 +54,6 @@ public class HostLoadManager {
   
   /**
    * @param periodInMillis time period in which we enforce the maxFeedRate
-   * @param maxFeedRate
    */
   public HostLoadManager(long periodInMillis, 
       ConnectorScheduleStore scheduleStore) {

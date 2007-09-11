@@ -58,8 +58,7 @@ public class Base64Encoder {
    * @param len length to encode
    * @param outBuf output character array, outBuf.length >= ceil(len/3)*4
    */
-  private static int encodeImpl(byte data[], int off, int len, char outBuf[])
-    throws IOException {
+  private static int encodeImpl(byte data[], int off, int len, char outBuf[]) {
     int outLen = 0;
     byte a, b, c;
     while (len >= 3) {

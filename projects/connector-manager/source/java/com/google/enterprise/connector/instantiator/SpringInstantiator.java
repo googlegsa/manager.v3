@@ -70,7 +70,7 @@ public class SpringInstantiator implements Instantiator {
    * @see com.google.enterprise.connector.instantiator.Instantiator
    *      #dropConnector(java.lang.String)
    */
-  public void dropConnector(String connectorName) throws InstantiatorException {
+  public void dropConnector(String connectorName) {
     initialize();
     instanceMap.dropConnector(connectorName);
   }
@@ -127,7 +127,7 @@ public class SpringInstantiator implements Instantiator {
    */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String connectorTypeName, Locale locale)
-      throws ConnectorNotFoundException, InstantiatorException {
+      throws ConnectorNotFoundException {
     initialize();
     InstanceInfo instanceInfo = (InstanceInfo) instanceMap.get(connectorName);
     if (instanceInfo == null) {
@@ -146,8 +146,7 @@ public class SpringInstantiator implements Instantiator {
    * 
    * @see com.google.enterprise.connector.instantiator.Instantiator#getConnectorInstancePrototype(java.lang.String)
    */
-  public String getConnectorInstancePrototype(String connectorTypeName)
-      throws ConnectorTypeNotFoundException {
+  public String getConnectorInstancePrototype(String connectorTypeName) {
     throw new UnsupportedOperationException();
   }
 
@@ -199,7 +198,7 @@ public class SpringInstantiator implements Instantiator {
       String connectorTypeName, Map configKeys, Locale locale,
       boolean update)
       throws ConnectorNotFoundException, ConnectorExistsException,
-      ConnectorTypeNotFoundException, InstantiatorException {
+      InstantiatorException {
     initialize();
     return instanceMap.updateConnector(
         connectorName, connectorTypeName, configKeys, locale, update);
