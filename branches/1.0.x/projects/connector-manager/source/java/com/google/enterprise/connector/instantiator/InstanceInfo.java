@@ -216,7 +216,7 @@ public final class InstanceInfo {
 
   private static Object getRequiredBean(Resource connectorInstancePrototype,
       String connectorName, XmlBeanFactory factory, Class clazz)
-      throws NoBeansFoundException, BeanInstantiationFailureException {
+      throws BeanInstantiationFailureException {
     Object result;
     // get the list of beans defined in the bean factory of the required type
     String[] beanList;
