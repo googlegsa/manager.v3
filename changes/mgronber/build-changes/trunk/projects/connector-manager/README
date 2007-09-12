@@ -1,0 +1,21 @@
+Welcome to the Google Enterprise Connector Manager project!
+
+The Connector Manager is the central part of the connector framework
+for Google search appliances. The Connector Manager itself is a server
+that manages creation, instantiation, scheduling and monitoring of
+connector plug-ins that supply content and provide authentication and
+authorization services to the Google Search Appliance. 
+
+Some important disclaimers:
+
+    * This system depends on a future version 5.0 of the Google Search
+      Appliance. 
+    * Plug-ins developed for this framework will NOT work with
+      previously released Google Search Appliances! 
+    * Google makes NO commitments at this time to support the APIs in
+      this project. 
+
+Documentation Links
+
+    * Developer Introduction to the Google Enterprise Connector Framework 
+      http://code.google.com/apis/searchappliance/documentation/46/connector_dev/connector-framework.html
