@@ -7,16 +7,16 @@ This document discusses the naming and archiving conventions that will be observ
 
 = Details =
 
-This policy will be used for naming and labeling the files to be downloaded.  In most cases, the files contained in the Downloads Tab will be archives.  In each case, the file will contain the following:
+This policy will be used for naming and labeling the files to be downloaded.  In most cases, the files contained in the Downloads Tab will be archives.  Adding a file to the Downloads Tab will require the declaration of the following:
 
   * Summary: This is a one-line summary of the file.
-
-  * File: For the Connectors, there will be three types of files in the Downloads area.  For each type, there will be both a ZIP archive and a TAR.GZ archive.  The three types of archives are as follows:
+  * File: For the Connectors, there will be three types of files in the Downloads area.  For each type, there will be both a ZIP archive and a TAR.GZ archive.  *Important:* Each file must have a distinct name and file contents cannot be changed, so be sure to include release numbers in each file name.  The three types of archives are as follows:
     # Archive containing the binary files for all languages
     # Archive containing the binary files for just English
     # Archive containing the source files only
-
   * Labels: A series of labels can be attached to each file.
+
+See discussion related to the Installer for information about what goes into the archive and how it should be structured.
 
 The following policy will be used to name the file:
 
@@ -25,10 +25,12 @@ The following policy will be used to name the file:
 Where:
 
   * name = Connector Name (i.e. connector-otex, connector-dctm, ...)
-  * version = major.minor.micro (i.e. 1.0.1, ...).  'Major' will coincide with releases of the Enterprise Search Appliance release.  Right now major=1 is schedule to work with Google Search Appliance major=5.  Each partner can control the 'minor' and 'micro' parts, however, it is recommended that they be integers for easy integration with the Installer.  'Minor' should change when there are new features, new ECMS versions are supported, or compatibility with other modules has changed.  'Micro' should change when there are bug fixes. 
+  * version = major.minor.micro (i.e. 1.0.1, ...).  Each released version should have a representative tag directory in the *`tags/`* section of the repository.  'Major' will coincide with releases of the Enterprise Search Appliance release.  Right now *`major=1`* is schedule to work with Google Search Appliance *`major=5`*.  Each partner can control the 'minor' and 'micro' parts.  'Minor' should change when there are new features, new ECMS versions are supported, or compatibility with other modules has changed.  'Micro' should change when there are bug fixes.
   * *`-src`* = added for source distributions
   * *`_en`* = added for English only distributions.  A similar convention can be used if we distribute for other languages separately.  If the *`_en`* is not present then it is assumed to support all languages.
   * extension = *`zip`* for zip files and *`tar.gz`* for gzip tar files
+
+Note, in order to be able track versions and changes, please add the version information to the manifest file in connector-xxx.jar, and connector-manager-xxx.war.
 
 Initially, each archive will be labeled with 3 labels:
 
@@ -48,6 +50,11 @@ Initially, each archive will be labeled with 3 labels:
 = Signature =
 
 When the file is uploaded to the Code Site it should present a SHA1 signature for the file.
+
+
+
+
+
 
 
 
