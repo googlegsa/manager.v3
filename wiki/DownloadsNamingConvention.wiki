@@ -1,12 +1,6 @@
 #summary Naming convention and policy for Connector Framework downloads.
 #labels Phase-Implementation
 
-*QUESTIONS*:
-
-  # Should we have *both* zip files and tar.gz files?  If not, which one - zip?
-  # Do we want to combine binary with source or should the source distributions only contain source files (basically in addition to the binary archives)?
-  # Does source need to be differentiated into English Only and All Languages?
-
 = Introduction =
 
 This document discusses the naming and archiving conventions that will be observed for the download packages prepared for the Google Connector Framework projects.
@@ -17,10 +11,10 @@ This policy will be used for naming and labeling the files to be downloaded.  In
 
   * Summary: This is a one-line summary of the file.
 
-  * File: For the Connectors, there will be three types of files in the Downloads area and for each type, there will be a ZIP archive and a TAR.GZ archive:
+  * File: For the Connectors, there will be three types of files in the Downloads area.  For each type, there will be both a ZIP archive and a TAR.GZ archive.  The three types of archives are as follows:
     # Archive containing the binary files for all languages
     # Archive containing the binary files for just English
-    # Archive containing the source files
+    # Archive containing the source files only
 
   * Labels: A series of labels can be attached to each file.
 
@@ -31,11 +25,10 @@ The following policy will be used to name the file:
 Where:
 
   * name = Connector Name (i.e. connector-otex, connector-dctm, ...)
-  * version = major.minor.micro (i.e. 1.0.1, ...)
+  * version = major.minor.micro (i.e. 1.0.1, ...).  'Major' will coincide with releases of the Enterprise Search Appliance release.  Right now major=1 is schedule to work with Google Search Appliance major=5.  Each partner can control the 'minor' and 'micro' parts, however, it is recommended that they be integers for easy integration with the Installer.  'Minor' should change when there are new features, new ECMS versions are supported, or compatibility with other modules has changed.  'Micro' should change when there are bug fixes. 
   * *`-src`* = added for source distributions
   * *`_en`* = added for English only distributions.  A similar convention can be used if we distribute for other languages separately.  If the *`_en`* is not present then it is assumed to support all languages.
   * extension = *`zip`* for zip files and *`tar.gz`* for gzip tar files
-
 
 Initially, each archive will be labeled with 3 labels:
 
@@ -45,6 +38,8 @@ Initially, each archive will be labeled with 3 labels:
 
 == Examples: ==
 
+  # connector-manager-1.0.1_en.tar.gz - Connector Manager 1.0.1 binary English only gzipped tar file.
+  # connector-manager-1.0.1-src.zip - Connector Manager 1.0.1 source files in zip archive.
   # connector-otex-1.0.0.tar.gz - OpenText Connector 1.0.0 binary all language gzipped tar file.
   # connector-otex-1.0.0-src.tar.gz - OpenText Connector 1.0.0 source only gzipped tar file.
   # connector-dctm-1.0.1_en.zip - Documentum Connector 1.0.1 binary English only zip file.
@@ -52,30 +47,7 @@ Initially, each archive will be labeled with 3 labels:
 
 = Signature =
 
-When the file is uploaded to the Code Site it should present a SHA1 signature for the file.  This signature should be copied and recored on the Project Home page so users can check the signature of their downloads.
-
-= Notes =
-
-Possible Labels:
-
-  * Featured = Listed on project home page
-  * Deprecated = Most users should NOT download this
-
-  * Type-Executable = Executable application
-  * Type-Installer = Download and run to install application
-  * Type-Package = Your OS package manager installs this
-  * Type-Archive = Download, unarchive, then follow directions
-  * Type-Source = Source code archive
-  * Type-Docs = This file contains documentation
-
-  * OpSys-All = Works for all operating systems
-  * OpSys-Windows = Works with Windows
-  * OpSys-Linux = Works with Linux
-  * OpSys-OSX = Works with Mac OS X
-
-
-
-
+When the file is uploaded to the Code Site it should present a SHA1 signature for the file.
 
 
 
