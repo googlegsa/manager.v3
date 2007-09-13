@@ -36,7 +36,7 @@ Initially, each archive will be labeled with 3 labels:
 
   # Featured - This means the download should be listed on the project home page.
   # Type-Archive - This means the user should download, unarchive, and follow directions.
-  # OpSys-All - Since this is java, it should work for all operating systems.
+  # !OpSys-All - Since this is java, it should work for all operating systems.
 
 == Examples: ==
 
