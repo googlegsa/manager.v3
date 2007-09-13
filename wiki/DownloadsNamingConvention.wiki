@@ -42,15 +42,14 @@ Initially, each archive will be labeled with 3 labels:
 
   # connector-manager-1.0.1_en.tar.gz - Connector Manager 1.0.1 binary English only gzipped tar file.
   # connector-manager-1.0.1-src.zip - Connector Manager 1.0.1 source files in zip archive.
-  # connector-otex-1.0.0.tar.gz - OpenText Connector 1.0.0 binary all language gzipped tar file.
-  # connector-otex-1.0.0-src.tar.gz - OpenText Connector 1.0.0 source only gzipped tar file.
+  # connector-otex-1.0.0.tar.gz - !OpenText Connector 1.0.0 binary all language gzipped tar file.
+  # connector-otex-1.0.0-src.tar.gz - !OpenText Connector 1.0.0 source only gzipped tar file.
   # connector-dctm-1.0.1_en.zip - Documentum Connector 1.0.1 binary English only zip file.
-  # connector-file-1.0.1.zip - FileNet Connector 1.0.1 binary all language zip file.
+  # connector-file-1.0.1.zip - !FileNet Connector 1.0.1 binary all language zip file.
 
 = Signature =
 
 When the file is uploaded to the Code Site it should present a SHA1 signature for the file.
-
 
 
 
