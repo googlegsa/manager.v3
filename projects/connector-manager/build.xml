@@ -70,7 +70,9 @@
 
 	<target name="compile" depends="init">
 		<!-- compile java source files -->
-		<javac srcdir="${src}" destdir="${classes}" debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
+		<javac srcdir="${src}" destdir="${classes}" 
+			debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
+			target="1.4" source="1.4">
 			<classpath>
 				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
 			</classpath>
@@ -79,7 +81,9 @@
 
 	<target name="compile_tests" depends="init,compile">
 		<!-- compile java source files for tests -->
-		<javac srcdir="${tests.src}" destdir="${tests.classes}" debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
+		<javac srcdir="${tests.src}" destdir="${tests.classes}" 
+			debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
+			target="1.4" source="1.4">
 			<classpath>
 				<pathelement location="${classes}" />
 				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
@@ -114,8 +118,14 @@
 	<target name="jar" depends="jar-prod,jar-tests" description="Create jars for the Connector SPI project"/>
 
 	<target name="jar-prod" depends="compile" description="Create production jars for the Connector SPI project">
+		<tstamp />
 		<jar jarfile="${spi.jarfile}">
 			<fileset dir="${classes}" includes="**/spi/**" excludes="**/javatests/**" />
+			<manifest>
+			        <attribute name="Implementation-Title" value="Connector Manager SPI"/>
+			        <attribute name="Implementation-Version" value="${version} ${TODAY}"/>
+			        <attribute name="Implementation-Vendor" value="Google Inc."/>
+			</manifest>
 		</jar>
 		<jar jarfile="${util.jarfile}">
 			<fileset dir="${classes}">
@@ -123,15 +133,31 @@
 				<include name="**/servlet/ServletUtil.class" />
 				<include name="**/servlet/SAXParseErrorHandler.class" />
 			</fileset>
+			<manifest>
+			        <attribute name="Implementation-Title" value="Connector Manager Utility"/>
+			        <attribute name="Implementation-Version" value="${version} ${TODAY}"/>
+			        <attribute name="Implementation-Vendor" value="Google Inc."/>
+			</manifest>
 		</jar>
 		<jar jarfile="${connector.jarfile}">
 			<fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**" />
+			<manifest>
+			        <attribute name="Implementation-Title" value="Connector Manager Impl"/>
+			        <attribute name="Implementation-Version" value="${version} ${TODAY}"/>
+			        <attribute name="Implementation-Vendor" value="Google Inc."/>
+			</manifest>
 		</jar>
 	</target>
 
 	<target name="jar-tests" depends="compile,compile_tests" description="Create test jars for the Connector SPI project">
+		<tstamp />
 		<jar jarfile="${tests.jarfile}">
 			<fileset dir="${tests.classes}" includes="**/*.class" />
+			<manifest>
+			        <attribute name="Implementation-Title" value="Connector Manager Tests"/>
+			        <attribute name="Implementation-Version" value="${version} ${TODAY}"/>
+			        <attribute name="Implementation-Vendor" value="Google Inc."/>
+			</manifest>
 		</jar>
 	</target>
 
@@ -158,7 +184,7 @@
 
 		<tstamp />
 		<war warfile="${war.dir}/${ant.project.name}.war" webxml="${webdocs}/web.xml">
-			<lib dir="${jar.dir}" includes="*.jar" excludes="connector_tests.jar" />
+			<lib dir="${jar.dir}" includes="*.jar" excludes="connector-tests.jar" />
 			<lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
 			<webinf dir="etc" includes="**" />
 			<manifest>

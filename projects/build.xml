@@ -2,7 +2,7 @@
 <project name="google-enterprise-connector-manager" default="everything" basedir=".">
 
 	<!-- ========================= PROPERTIES ============================= -->
-	<property name="version" value="1.0" />
+        <property file="version.properties"/>
 
 	<!-- Define Directories. -->
 	<property name="connector-manager.dir" value="connector-manager" />
@@ -23,19 +23,19 @@
 
 	<target name="connector-manager">
 		<ant dir="${connector-manager.dir}" target="all">
-			<reference refid="version" />
+			<property name="version" value="${version}" />
 		</ant>
 	</target>
 
 	<target name="test-connectorA">
 		<ant dir="${test-connectorA.dir}">
-			<reference refid="version" />
+			<property name="version" value="${version}" />
 		</ant>
 	</target>
 
 	<target name="test-connectorB">
 		<ant dir="${test-connectorB.dir}">
-			<reference refid="version" />
+			<property name="version" value="${version}" />
 		</ant>
 	</target>
 
@@ -58,7 +58,7 @@
   
 	<target name="connector-manager-war-prod" >
 		<ant dir="${connector-manager.dir}" target="war-prod">
-            		<reference refid="version" />
+			<property name="version" value="${version}" />
         	</ant>		
 	</target>	
 
@@ -69,18 +69,20 @@
 			</tarfileset>
 			<tarfileset dir="${connector-manager.dir}">
 				<include name="README"/>
+				<include name="RELEASE_NOTES"/>
 				<include name="LICENSE"/>
 			</tarfileset>
 		</tar>
 		<gzip zipfile="${downloads.dir}/connector-manager-${version}.tar.gz"
-			 src="${downloads.dir}/connector-manager-${version}.tar"/> 
+			src="${downloads.dir}/connector-manager-${version}.tar"/> 
+		<delete file="${downloads.dir}/connector-manager-${version}.tar"/>
 		<zip destfile="${downloads.dir}/connector-manager-${version}.zip">
 			<zipfileset dir="${connector-manager.dir}/dist/connector-manager" includes="connector-manager.war"/>
-			<zipfileset dir="${connector-manager.dir}" includes="README,LICENSE"/>
+			<zipfileset dir="${connector-manager.dir}" includes="README,RELEASE_NOTES,LICENSE"/>
 		</zip>
 		<checksum file="${downloads.dir}/connector-manager-${version}.tar.gz"/>
 		<checksum file="${downloads.dir}/connector-manager-${version}.zip"/>		
-		<tar destfile="${downloads.dir}/connector-manager-dev-${version}.tar">
+		<tar destfile="${downloads.dir}/connector-manager-${version}-src.tar">
 			<tarfileset dir=".">
 				<include name="build.xml"/>
 			</tarfileset>
@@ -88,6 +90,7 @@
 				prefix="${connector-manager.dir}">
 				<include name="LICENSE"/>
 				<include name="README"/>
+				<include name="RELEASE_NOTES"/>
 				<include name="build.xml"/>
 				<include name="doc/**/*"/>
 				<include name="etc/**/*"/>
@@ -114,12 +117,13 @@
 				<include name=".project"/>
 			</tarfileset>
 		</tar>
-		<gzip zipfile="${downloads.dir}/connector-manager-dev-${version}.tar.gz" 
-			src="${downloads.dir}/connector-manager-dev-${version}.tar"/>		
-		<zip destfile="${downloads.dir}/connector-manager-dev-${version}.zip">
+		<gzip zipfile="${downloads.dir}/connector-manager-${version}-src.tar.gz" 
+			src="${downloads.dir}/connector-manager-${version}-src.tar"/>		
+		<delete file="${downloads.dir}/connector-manager-${version}-src.tar"/>
+		<zip destfile="${downloads.dir}/connector-manager-${version}-src.zip">
 			<zipfileset dir="." includes="build.xml"/>
 			<zipfileset dir="${connector-manager.dir}" 
-				includes="LICENSE,README,build.xml,doc/**/*,etc/**/*,
+				includes="LICENSE,README,RELEASE_NOTES,build.xml,doc/**/*,etc/**/*,
 				source/**/*,testdata/**/*,third-party/**/*,
 				.classpath,.project"
 				prefix="${connector-manager.dir}"/>
@@ -132,8 +136,8 @@
 				.classpath,.project" 
 				prefix="${test-connectorB.dir}"/>
 		</zip>
-		<checksum file="${downloads.dir}/connector-manager-dev-${version}.tar.gz"/>
-		<checksum file="${downloads.dir}/connector-manager-dev-${version}.zip"/>
+		<checksum file="${downloads.dir}/connector-manager-${version}-src.tar.gz"/>
+		<checksum file="${downloads.dir}/connector-manager-${version}-src.zip"/>
 	</target>
 
 	<target name="install-test-connectorA" depends="test-connectorA,make-install-dir">
