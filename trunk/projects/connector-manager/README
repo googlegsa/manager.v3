@@ -1,0 +1,40 @@
+Welcome to the Google Enterprise Connector Manager project!
+
+The Google Enterprise connector framework enables Google search
+appliances to search and serve documents stored in non-Web
+repositories, such as enterprise content management systems.  An
+enterprise content management (ECM) system provides a central
+repository for large numbers of documents.
+
+The Connector Manager is the central part of the connector framework
+for Google search appliances.   It is responsible for hosting and
+running connectors built with this framework.  The connector manager
+also manages all communications between search appliances and
+connectors.
+
+A connector communicates with an ECM system in response to requests
+from the connector manager.  To manage your connectors, you'll run the
+connector manager on any application server that provides a servlet
+interface, such as Apache Tomcat.  The Google search appliance
+communicates with the connector manager running on your application
+server using a servlet interface.
+
+The Connector Manager itself manages creation, instantiation,
+scheduling and monitoring of connectors that supply content and
+provide authentication and authorization services to the Google search
+appliance.  The connector manager calls the SPI methods at stated
+intervals to perform the tasks of authentication, authorization, and
+traversal of content at the repository.
+
+
+Some important disclaimers:
+
+    * This system depends on a future version of the Google search appliance.
+    * Connectors developed for this framework will NOT work with
+      previously released Google search appliances!
+
+Documentation Links
+
+    * Developer Introduction to the Google Enterprise Connector Framework
+      http://code.google.com/apis/searchappliance/documentation/46/connector_dev/connector-framework.html
+
