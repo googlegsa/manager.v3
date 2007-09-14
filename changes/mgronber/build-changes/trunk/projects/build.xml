@@ -24,9 +24,6 @@
 	<target name="connector-manager">
 		<ant dir="${connector-manager.dir}" target="all">
 			<property name="version" value="${version}" />
-<!--
-			<reference refid="version" />
--->
 		</ant>
 	</target>
 
