@@ -24,6 +24,7 @@ import com.google.enterprise.connector.instantiator.InstanceInfo.NullDirectoryEx
 import com.google.enterprise.connector.instantiator.InstanceInfo.NullTypeInfoException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.PropertyProcessingFailureException;
 import com.google.enterprise.connector.instantiator.TypeInfo.TypeInfoException;
+import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -32,6 +33,8 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -170,6 +173,48 @@ public class InstanceInfoTest extends TestCase {
     }
     Assert.assertTrue(correctExceptionThrown);
     Assert.assertNull(instanceInfo);
+  }
+
+  public final void testFromDirectoryAndThrowEncrypted() {
+    // test encrypted property
+    String resourceName =
+        "testdata/connectorTypeTests/positive/connectorType.xml";
+    TypeInfo typeInfo = makeValidTypeInfo(resourceName);
+    Properties props = new Properties();
+    props.setProperty("RepositoryFile", "MockRepositoryEventLog3.txt");
+    props.setProperty("Password", "password_test");
+    InstanceInfo instanceInfo = null;
+    boolean exceptionThrown = false;
+
+    String testDirName = "testdata/tempInstantiatorTests";
+    // Make sure that the test directory does not exist
+    File connectorDir = new File(testDirName);
+    Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(connectorDir));
+    // Then recreate it empty
+    Assert.assertTrue(connectorDir.mkdirs());
+
+    try {
+      // Write properties out to temp file
+      File temp = new File(connectorDir + File.separator + "fred.properties");
+      InstanceInfo.writePropertiesToFile(props, temp);
+
+      instanceInfo =
+          InstanceInfo.fromDirectoryAndThrow("fred", connectorDir, typeInfo);
+    } catch (InstanceInfoException e) {
+      exceptionThrown = true;
+      LOGGER.log(Level.WARNING,
+          "unexpected exception during instance info creation", e);
+    }
+    Assert.assertFalse(exceptionThrown);
+
+    // Check properties
+    Properties instanceProps = instanceInfo.getProperties();
+    Assert.assertEquals("password_test", instanceProps.getProperty("Password"));
+    Assert.assertEquals("MockRepositoryEventLog3.txt",
+        instanceProps.getProperty("RepositoryFile"));
+
+    // Clean up temp directory and files
+    Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(connectorDir));
   }
 
   private TypeInfo makeValidTypeInfo(String resourceName) {
