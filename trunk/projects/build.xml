@@ -72,8 +72,6 @@
 			</tarfileset>
 			<tarfileset dir="${trunk.dir}" prefix="connector-manager-${version}">
 				<include name="LICENSE"/>
-			</tarfileset>
-			<tarfileset dir="${connector-manager.dir}" prefix="connector-manager-${version}">
 				<include name="README"/>
 				<include name="RELEASE_NOTES"/>
 			</tarfileset>
@@ -84,8 +82,7 @@
 		<zip destfile="${downloads.dir}/connector-manager-${version}.zip">
 			<zipfileset dir="${connector-manager.dir}/dist/connector-manager" includes="connector-manager.war"
 				prefix="connector-manager-${version}"/>
-			<zipfileset dir="${trunk.dir}" includes="LICENSE" prefix="connector-manager-${version}"/>
-			<zipfileset dir="${connector-manager.dir}" includes="README,RELEASE_NOTES"
+			<zipfileset dir="${trunk.dir}" includes="LICENSE,README,RELEASE_NOTES"
 				prefix="connector-manager-${version}"/>
 		</zip>
 		<checksum file="${downloads.dir}/connector-manager-${version}.tar.gz"/>
@@ -96,11 +93,11 @@
 			</tarfileset>
 			<tarfileset dir="${trunk.dir}" prefix="connector-manager-${version}-src">
 				<include name="LICENSE"/>
+				<include name="README"/>
+				<include name="RELEASE_NOTES"/>
 			</tarfileset>
 			<tarfileset dir="${connector-manager.dir}"
 				prefix="connector-manager-${version}-src/${connector-manager.dir}">
-				<include name="README"/>
-				<include name="RELEASE_NOTES"/>
 				<include name="build.xml"/>
 				<include name="doc/**/*"/>
 				<include name="etc/**/*"/>
@@ -133,9 +130,9 @@
 		<zip destfile="${downloads.dir}/connector-manager-${version}-src.zip">
 			<zipfileset dir="." includes="build.xml" prefix="connector-manager-${version}-src"/>
 			<zipfileset dir="${trunk.dir}" prefix="connector-manager-${version}-src"
-				includes="LICENSE" />
+				includes="LICENSE,README,RELEASE_NOTES" />
 			<zipfileset dir="${connector-manager.dir}"
-				includes="README,RELEASE_NOTES,build.xml,doc/**/*,etc/**/*,
+				includes="build.xml,doc/**/*,etc/**/*,
 				source/**/*,testdata/**/*,third-party/**/*,
 				.classpath,.project"
 				prefix="connector-manager-${version}-src/${connector-manager.dir}"/>
