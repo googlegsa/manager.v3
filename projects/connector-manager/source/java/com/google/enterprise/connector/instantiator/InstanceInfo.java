@@ -265,6 +265,7 @@ public final class InstanceInfo {
       properties = new Properties();
       try {
         properties.load(fileInputStream);
+        decryptSensitiveProperties(properties);
       } catch (IOException e) {
         LOGGER
             .log(Level.WARNING, "Problem loading properties file "
@@ -331,6 +332,15 @@ public final class InstanceInfo {
       String encryptedPassword = 
           EncryptedPropertyPlaceholderConfigurer.encryptString(plainPassword);
       properties.setProperty("Password", encryptedPassword);
+    }
+  }
+
+  private static void decryptSensitiveProperties(Properties properties) {
+    String encryptedPassword = properties.getProperty("Password");
+    if (encryptedPassword != null) {
+      String plainPassword =
+          EncryptedPropertyPlaceholderConfigurer.decryptString(encryptedPassword);
+      properties.setProperty("Password", plainPassword);
     }
   }
 
