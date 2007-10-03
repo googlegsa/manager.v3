@@ -47,19 +47,27 @@ Initially, each archive will be labeled with 3 labels:
   # connector-dctm-1.0.1_en.zip - Documentum Connector 1.0.1 binary English only zip file.
   # connector-file-1.0.1.zip - !FileNet Connector 1.0.1 binary all language zip file.
 
+== Deleting Downloads ==
+
+Any officially supported releases should not be deleted unless they have reach end of life and we need to make room for new releases.  Developer releases and early access releases can be deleted when they are replaced with a final release.
+
+Before deleting a download it should be marked as _Deprecated_:
+
+  # Go to the Downloads Tab
+  # Search until you find the download you want to deprecate.
+  # Select the download Summary link
+  # In the lower left hand corner you should see a "Click to edit download" link.  Click on this.
+  # In the *Labels:* section look for the label edit box containing the current status and change it to _Deprecated_.
+  # Click the "Submit Changes" button
+
+To delete a download:
+
+  # Go to the Downloads Tab
+  # Search the "Deprecated Downloads" for the download to be deleted.
+  # Select the download Summary link
+  # At the top next to the "Search" button you should see a "Delete" link - click that link
+  # Click the "Delete Download" button
+
 = Signature =
 
-When the file is uploaded to the Code Site it should present a SHA1 signature for the file.
-
-
-
-
-
-
-
-
-
-
-
-
-
+There's no need to add a signature file to the Downloads Tab.  When the file is uploaded to the Code Site it should present a SHA1 signature for the file.  Users that download the file can click on the Summary to view the SHA1 checksum.
