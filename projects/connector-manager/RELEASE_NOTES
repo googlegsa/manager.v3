@@ -1,16 +1,63 @@
 
-
-	      Google Enterprise Connector Manager 1.0.x
+		 Google Enterprise Connector Manager
 			    Release Notes
 
+This document contains the release notes for Google Enterprise
+Connector Manager.  The following sections describe the release in
+detail and provide information that supplements the main
+documentation.  See the Issues Tab on the Code Site for the current
+list of known issues and workarounds.
 
-See on-line documentation for latest information:
-
-  * http://code.google.com/apis/searchappliance/documentation/
+Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-KNOWN ISSUES IN THIS RELEASE:
-=============================
+Release 1.0.2, Oct 03, 2007
+===========================
 
-  * http://code.google.com/p/google-enterprise-connector-manager/issues/list
+Introduction
+------------
+This is the first full release of this product. See the product
+website for a complete description.
 
+Summary of Changes
+------------------
+
+  * FIX Issue 50 Password encryption reencrypts strings multiple times
+  * Moved and updated README and RELEASE_NOTES files
+
+Version Compatibility
+---------------------
+Connectors created using version 1.0.1 of this product may be used
+with this version.
+
+
+Release 1.0.1, Sep 25, 2007
+===========================
+
+Introduction
+------------
+This is an early access release for wide evaluation and usage.  Your
+feedback is important to us.  Keep in mind that we are continuing to
+work on the Connector Manager and things may change in the future.
+
+Summary of Changes
+------------------
+
+  * Two SPI changes
+  * Some code cleanup
+  * Changed build files to compile for 1.4
+  * FIX 749919 AdminConsole GUI: Connector error message
+
+Version Compatibility
+---------------------
+Since the SPI has changed for this release, Connectors written to the
+previous SPI available in Release 1.0.0 will have to be recompiled.
+
+
+Release 1.0.0, Aug 16, 2007
+===========================
+
+Introduction
+------------
+This is an early access release for evaluation and usage by select
+partners.  Your feedback is important to us.

@@ -10,6 +10,7 @@
 	<property name="test-connectorB.dir" value="test-connectorB" />
 	<property name="install.dir" value="install" />
 	<property name="downloads.dir" value="downloads" />
+	<property name="trunk.dir" value=".." />
 
 	<!-- =========================== TASKS =============================== -->
 
@@ -63,32 +64,41 @@
 	</target>	
 
 	<target name="download-connector-manager" depends="connector-manager-war-prod,make-downloads-dir">
+		<copy file="${trunk.dir}/COPYING" tofile="${trunk.dir}/LICENSE"/>
 		<tar destfile="${downloads.dir}/connector-manager-${version}.tar">
-			<tarfileset dir="${connector-manager.dir}/dist/connector-manager">
+			<tarfileset dir="${connector-manager.dir}/dist/connector-manager"
+				prefix="connector-manager-${version}">
 				<include name="connector-manager.war"/>
 			</tarfileset>
-			<tarfileset dir="${connector-manager.dir}">
+			<tarfileset dir="${trunk.dir}" prefix="connector-manager-${version}">
+				<include name="LICENSE"/>
+			</tarfileset>
+			<tarfileset dir="${connector-manager.dir}" prefix="connector-manager-${version}">
 				<include name="README"/>
 				<include name="RELEASE_NOTES"/>
-				<include name="LICENSE"/>
 			</tarfileset>
 		</tar>
 		<gzip zipfile="${downloads.dir}/connector-manager-${version}.tar.gz"
 			src="${downloads.dir}/connector-manager-${version}.tar"/> 
 		<delete file="${downloads.dir}/connector-manager-${version}.tar"/>
 		<zip destfile="${downloads.dir}/connector-manager-${version}.zip">
-			<zipfileset dir="${connector-manager.dir}/dist/connector-manager" includes="connector-manager.war"/>
-			<zipfileset dir="${connector-manager.dir}" includes="README,RELEASE_NOTES,LICENSE"/>
+			<zipfileset dir="${connector-manager.dir}/dist/connector-manager" includes="connector-manager.war"
+				prefix="connector-manager-${version}"/>
+			<zipfileset dir="${trunk.dir}" includes="LICENSE" prefix="connector-manager-${version}"/>
+			<zipfileset dir="${connector-manager.dir}" includes="README,RELEASE_NOTES"
+				prefix="connector-manager-${version}"/>
 		</zip>
 		<checksum file="${downloads.dir}/connector-manager-${version}.tar.gz"/>
 		<checksum file="${downloads.dir}/connector-manager-${version}.zip"/>		
 		<tar destfile="${downloads.dir}/connector-manager-${version}-src.tar">
-			<tarfileset dir=".">
+			<tarfileset dir="." prefix="connector-manager-${version}-src">
 				<include name="build.xml"/>
 			</tarfileset>
-			<tarfileset dir="${connector-manager.dir}"
-				prefix="${connector-manager.dir}">
+			<tarfileset dir="${trunk.dir}" prefix="connector-manager-${version}-src">
 				<include name="LICENSE"/>
+			</tarfileset>
+			<tarfileset dir="${connector-manager.dir}"
+				prefix="connector-manager-${version}-src/${connector-manager.dir}">
 				<include name="README"/>
 				<include name="RELEASE_NOTES"/>
 				<include name="build.xml"/>
@@ -101,7 +111,7 @@
 				<include name=".project"/> 
 			</tarfileset>
 			<tarfileset dir="${test-connectorA.dir}"
-				prefix="${test-connectorA.dir}">
+				prefix="connector-manager-${version}-src/${test-connectorA.dir}">
 				<include name="config/**/*"/>
 				<include name="source/**/*"/>
 				<include name="build.xml"/>
@@ -109,7 +119,7 @@
 				<include name=".project"/>
 			</tarfileset>
 			<tarfileset dir="${test-connectorB.dir}"
-				prefix="${test-connectorB.dir}">
+				prefix="connector-manager-${version}-src/${test-connectorB.dir}">
 				<include name="config/**/*"/>
 				<include name="source/**/*"/>
 				<include name="build.xml"/>
@@ -121,23 +131,26 @@
 			src="${downloads.dir}/connector-manager-${version}-src.tar"/>		
 		<delete file="${downloads.dir}/connector-manager-${version}-src.tar"/>
 		<zip destfile="${downloads.dir}/connector-manager-${version}-src.zip">
-			<zipfileset dir="." includes="build.xml"/>
-			<zipfileset dir="${connector-manager.dir}" 
-				includes="LICENSE,README,RELEASE_NOTES,build.xml,doc/**/*,etc/**/*,
+			<zipfileset dir="." includes="build.xml" prefix="connector-manager-${version}-src"/>
+			<zipfileset dir="${trunk.dir}" prefix="connector-manager-${version}-src"
+				includes="LICENSE" />
+			<zipfileset dir="${connector-manager.dir}"
+				includes="README,RELEASE_NOTES,build.xml,doc/**/*,etc/**/*,
 				source/**/*,testdata/**/*,third-party/**/*,
 				.classpath,.project"
-				prefix="${connector-manager.dir}"/>
+				prefix="connector-manager-${version}-src/${connector-manager.dir}"/>
 			<zipfileset dir="${test-connectorA.dir}" 
 				includes="config/**/,source/**/,build.xml
 				.classpath,.project" 
-				prefix="${test-connectorA.dir}"/>
+				prefix="connector-manager-${version}-src/${test-connectorA.dir}"/>
 			<zipfileset dir="${test-connectorB.dir}" 
 				includes="config/**/,source/**/,build.xml
 				.classpath,.project" 
-				prefix="${test-connectorB.dir}"/>
+				prefix="connector-manager-${version}-src/${test-connectorB.dir}"/>
 		</zip>
 		<checksum file="${downloads.dir}/connector-manager-${version}-src.tar.gz"/>
 		<checksum file="${downloads.dir}/connector-manager-${version}-src.zip"/>
+		<delete file="${trunk.dir}/LICENSE"/>
 	</target>
 
 	<target name="install-test-connectorA" depends="test-connectorA,make-install-dir">
