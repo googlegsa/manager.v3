@@ -9,7 +9,7 @@ This document discusses the naming and archiving conventions that will be observ
 
 This policy will be used for naming and labeling the files to be downloaded.  In most cases, the files contained in the Downloads Tab will be archives.  Adding a file to the Downloads Tab will require the declaration of the following:
 
-  * Summary: This is a one-line summary of the file.
+  * Summary: This is a one-line summary of the file.  Something like "Google Connector Manager Binary Distribution - English Only".
   * File: For the Connectors, there will be three types of files in the Downloads area.  For each type, there will be both a ZIP archive and a TAR.GZ archive.  *Important:* Each file must have a distinct name and file contents cannot be changed, so be sure to include release numbers in each file name.  The three types of archives are as follows:
     # Archive containing the binary files for all languages
     # Archive containing the binary files for just English
