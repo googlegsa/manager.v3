@@ -32,10 +32,11 @@ Where:
 
 Note, in order to be able track versions and changes, please add the version information to the manifest file in connector-xxx.jar, and connector-manager-xxx.war.
 
-Initially, each archive will be labeled with 3 labels:
+Initially, each archive will be labeled with 3 of the following labels:
 
   # Featured - This means the download should be listed on the project home page.
-  # Type-Archive - This means the user should download, unarchive, and follow directions.
+  # Type-Archive - Use this with Binary distributions.  This means the user should download, unarchive, and follow directions.
+  # Type-Source - Use this with Source Code distributions.  This indicates it is a source code archive.
   # !OpSys-All - Since this is java, it should work for all operating systems.
 
 == Examples: ==
