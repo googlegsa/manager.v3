@@ -354,7 +354,7 @@ public class Context {
   public String getCommonDirPath() {
     initApplicationContext();
     if (isServletContext) {
-      return servletContext.getRealPath("/") + File.separator + "WEB-INF";
+      return servletContext.getRealPath("/WEB-INF");
     } else {
       return standaloneCommonDirPath;
     }
