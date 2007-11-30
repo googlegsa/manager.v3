@@ -109,8 +109,14 @@ public class ProductionManager implements Manager {
           instantiator.getAuthenticationManager(connectorName);
       AuthenticationIdentity identity =
           new UserPassIdentity(username, password);
-      AuthenticationResponse authenticationResponse =
-          authnManager.authenticate(identity);
+      AuthenticationResponse authenticationResponse;
+      // Some connectors don't implement the AuthenticationManager interface so
+      // we need to check.
+      if (authnManager != null) {
+        authenticationResponse = authnManager.authenticate(identity);
+      } else {
+        authenticationResponse = new AuthenticationResponse(false, null);
+      }
       result = authenticationResponse.isValid();
     } catch (ConnectorNotFoundException e) {
       LOGGER.log(Level.WARNING, "Connector " + connectorName + " Not Found: ",
