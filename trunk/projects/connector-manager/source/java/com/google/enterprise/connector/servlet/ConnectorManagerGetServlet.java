@@ -80,7 +80,7 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
   
-    processDoGet(connectorName, null, manager, out);
+    processDoGet(connectorName, lang, manager, out);
     out.close();
   }
 
