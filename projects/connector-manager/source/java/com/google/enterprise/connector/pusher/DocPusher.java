@@ -662,14 +662,6 @@ public class DocPusher implements Pusher {
       return retval;
     }
 
-    public int read(byte[] b) throws IOException {
-      int retval = super.read(b);
-      if (retval != -1) {
-        out.write(b, 0, retval);
-      }
-      return retval;
-    }
-
     public int read(byte[] b, int off, int len) throws IOException {
       int retval = super.read(b, off, len);
       if (retval != -1) {
