@@ -11,6 +11,30 @@ list of known issues and workarounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
+Release 1.0.3, Dec 07, 2007
+===========================
+
+Introduction
+------------
+This is a maintenance release that improves quality, reliability, and
+performance without adding any new functionality.  All users of
+previous 1.0.x releases should upgrade to this release.
+
+Summary of Changes
+------------------
+
+  * Fix Issue 64 where the googleWorkDir property has an extra file separator
+  * Fix Issue 65 added code to ProductionManager to check for
+    AuthenticationManager before using 
+  * Fix Bug 922427 two copies of feed appearing in Teed Feed File
+  * Fix Issue 40 pass language parameter down to getPopulatedConfigForm()
+
+Version Compatibility
+---------------------
+Connectors created using version 1.0.1 or 1.0.2 of this product may be used
+with this version.
+
+
 Release 1.0.2, Oct 03, 2007
 ===========================
 
