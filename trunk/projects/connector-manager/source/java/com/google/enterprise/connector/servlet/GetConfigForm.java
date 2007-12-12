@@ -54,6 +54,7 @@ public class GetConfigForm extends HttpServlet {
     String connectorTypeName =
         req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
     res.setContentType(ServletUtil.MIMETYPE_XML);
+    res.setCharacterEncoding("UTF-8");
     PrintWriter out = res.getWriter();
 
     if (connectorTypeName == null || connectorTypeName.length() < 1) {
