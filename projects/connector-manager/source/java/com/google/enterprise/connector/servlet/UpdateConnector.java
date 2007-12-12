@@ -61,6 +61,7 @@ public class UpdateConnector extends HttpServlet {
     BufferedReader reader = req.getReader();
     PrintWriter out = res.getWriter();
     res.setContentType(ServletUtil.MIMETYPE_HTML);
+    res.setCharacterEncoding("UTF-8");
     String xmlBody = StringUtils.readAllToString(reader);
     if (xmlBody == null || xmlBody.length() < 1) {
       ServletUtil.writeResponse(
@@ -98,6 +99,7 @@ public class UpdateConnector extends HttpServlet {
     }
 
     res.setContentType(ServletUtil.MIMETYPE_XML);
+    res.setCharacterEncoding("UTF-8");
     PrintWriter out = res.getWriter();
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
