@@ -24,8 +24,8 @@ public class PrefsStoreTest extends TestCase {
   protected PrefsStore store;
   
   protected void setUp() {
-    store = new PrefsStore();
-    store.clear();
+    // Only testing use of userRoot
+    store = new PrefsStore(true);
   }
   
   protected void tearDown() {
@@ -38,6 +38,7 @@ public class PrefsStoreTest extends TestCase {
     String expectedSchedule = "schedule of connectorA";
     String connectorName = "connectorA";
     store.storeConnectorSchedule(connectorName, expectedSchedule);
+    Assert.assertTrue(store.flush());
     String resultSchedule = store.getConnectorSchedule(connectorName);
     Assert.assertTrue(resultSchedule.equals(expectedSchedule));
   }
@@ -79,6 +80,7 @@ public class PrefsStoreTest extends TestCase {
     String expectedState = "state of connectorA";
     String connectorName = "connectorA";
     store.storeConnectorState(connectorName, expectedState);
+    Assert.assertTrue(store.flush());
     String resultState = store.getConnectorState(connectorName);
     Assert.assertTrue(resultState.equals(expectedState));
   }
