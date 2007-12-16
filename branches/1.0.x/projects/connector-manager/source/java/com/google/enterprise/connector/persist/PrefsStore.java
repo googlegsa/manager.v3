@@ -27,15 +27,24 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
   private static final Logger LOGGER =
     Logger.getLogger(PrefsStore.class.getName());
 
-  private static Preferences prefs = 
-    Preferences.userNodeForPackage(PrefsStore.class);
-  private static Preferences prefsSchedule = prefs.node("schedule");
-  private static Preferences prefsState = prefs.node("state");
-  
+  private static Preferences prefs;
+  private static Preferences prefsSchedule;
+  private static Preferences prefsState;
+
   public PrefsStore() {
-  
+    this(true);
   }
-  
+
+  public PrefsStore(boolean useUserRoot) {
+    if (useUserRoot) {
+      prefs = Preferences.userNodeForPackage(PrefsStore.class);
+    } else {
+      prefs = Preferences.systemNodeForPackage(PrefsStore.class);
+    }
+    prefsSchedule = prefs.node("schedule");
+    prefsState = prefs.node("state");
+  }
+
   /**
    * Retrieves connector schedule.
    * @param connectorName connector name
@@ -109,6 +118,25 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
       prefsState.clear();
     } catch (BackingStoreException e) {
       LOGGER.log(Level.WARNING, "Could not clear state store.", e);
+      result = false;
+    }
+    return result;
+  }
+  
+  /**
+   * Forces any changes in the contents of this preference node and its 
+   * descendants to the persistent store. Once this method returns successfully,
+   * it is safe to assume that all changes made in the subtree rooted at this 
+   * node prior to the method invocation have become permanent.
+   * @return true if successful.
+   */
+  public boolean flush() {
+    boolean result = true;
+    try {
+      prefsState.flush();
+    } catch (BackingStoreException e) {
+      LOGGER.log(Level.WARNING, 
+          "Could not flush contents to persistent store.", e);
       result = false;
     }
     return result;
