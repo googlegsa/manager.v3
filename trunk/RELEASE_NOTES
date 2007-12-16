@@ -28,6 +28,10 @@ Summary of Changes
     AuthenticationManager before using 
   * Fix Bug 922427 two copies of feed appearing in Teed Feed File
   * Fix Issue 40 pass language parameter down to getPopulatedConfigForm()
+  * Fix Bug 950013 where Unicode characters did not display correctly (????)
+    when adding a new connector.
+  * Added argument to PrefsStore constructor to enable use of systemNode rather
+    than userNode as the root node.
 
 Version Compatibility
 ---------------------
