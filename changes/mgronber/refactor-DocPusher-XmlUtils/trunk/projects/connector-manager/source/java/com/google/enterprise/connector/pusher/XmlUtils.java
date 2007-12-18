@@ -17,8 +17,6 @@ package com.google.enterprise.connector.pusher;
 /**
  * Utility class containing methods used to encode and construct XML for the 
  * Connector Manager.
- * 
- * @author martyg@google.com (Martin Gronberg)
  */
 public class XmlUtils {
 
