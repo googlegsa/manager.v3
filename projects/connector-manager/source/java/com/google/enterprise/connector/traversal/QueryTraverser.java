@@ -78,6 +78,7 @@ public class QueryTraverser implements Traverser {
     DocumentList resultSet = null;
     if (connectorState == null) {
       try {
+        LOGGER.finer("Starting traversal...");
         resultSet = queryTraversalManager.startTraversal();
       } catch (RepositoryException e) {
         // TODO:ziff Auto-generated catch block
@@ -85,6 +86,7 @@ public class QueryTraverser implements Traverser {
       }
     } else {
       try {
+        LOGGER.finer("Resuming traversal...");
         resultSet = queryTraversalManager.resumeTraversal(connectorState);
       } catch (RepositoryException e) {
         // TODO:ziff Auto-generated catch block
@@ -93,6 +95,7 @@ public class QueryTraverser implements Traverser {
     }
 
     if (resultSet == null) {
+      LOGGER.finer("Result set is NULL, no documents returned for traversal");
       return 0;
     }
 
@@ -101,6 +104,7 @@ public class QueryTraverser implements Traverser {
     try {
        while (true) {
         try {
+          LOGGER.finer("Pulling next document from connector " + connectorName);
           nextDocument = resultSet.nextDocument();
         } catch (RepositoryException e) {
           LOGGER.log(Level.SEVERE, "Repository Exception during traversal.", e);
@@ -111,6 +115,8 @@ public class QueryTraverser implements Traverser {
         if (Thread.interrupted()) {
           break;
         }
+        LOGGER.finer("Sending document (" + nextDocument + ") from connector " + 
+            connectorName + " to DocPusher");
         pusher.take(nextDocument, connectorName);
         counter++;
         if (counter == batchHint) {
