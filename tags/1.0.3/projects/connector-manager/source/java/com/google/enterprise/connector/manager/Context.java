@@ -399,6 +399,9 @@ public class Context {
     props.put(GSA_FEED_HOST_PROPERTY_KEY, feederGateHost);
     props.put(GSA_FEED_PORT_PROPERTY_KEY, Integer.toString(feederGatePort));
     InstanceInfo.writePropertiesToFile(props, propFile);
+    LOGGER.info("Updated Connector Manager Config: " + 
+        GSA_FEED_HOST_PROPERTY_KEY + "=" + feederGateHost + "; " +
+        GSA_FEED_PORT_PROPERTY_KEY + "=" + feederGatePort);
     shutdown(true);  // force shutdown
     reInitApplicationContext();
     restart();
