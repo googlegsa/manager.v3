@@ -55,41 +55,6 @@ import java.util.logging.Logger;
 
 public class DocPusher implements Pusher {
 
-  private static final String XML_LESS_THAN = "&lt;";
-  private static final String XML_AMPERSAND = "&amp;";
-  private static final String XML_QUOTE = "&quot;";
-  private static final String XML_APOSTROPHE = "&apos;";
-
-  private static void XmlEncodeAttrValue(String val, StringBuffer buf) {
-    for (int i = 0; i < val.length(); i++) {
-      char c = val.charAt(i);
-      /**
-       * Only these characters need to be encoded, according to
-       * http://www.w3.org/TR/REC-xml/#NT-AttValue. Actually, we could only
-       * encode one of the quote characters if we knew that that was the one
-       * used to wrap the value, but we'll play it safe and encode both. TODO:
-       * what happens to white-space?
-       */
-      switch (c) {
-      case '<':
-        buf.append(XML_LESS_THAN);
-        break;
-      case '&':
-        buf.append(XML_AMPERSAND);
-        break;
-      case '"':
-        buf.append(XML_QUOTE);
-        break;
-      case '\'':
-        buf.append(XML_APOSTROPHE);
-        break;
-      default:
-        buf.append(c);
-        break;
-      }
-    }
-  }
-
   private static Set propertySkipSet;
 
   static {
@@ -158,28 +123,6 @@ public class DocPusher implements Pusher {
     return gsaResponse;
   }
 
-  /*
-   * Wraps an xm tag with < and >.
-   */
-  private static String xmlWrapStart(String str) {
-    StringBuffer buf = new StringBuffer();
-    buf.append("<");
-    buf.append(str);
-    buf.append(">");
-    return buf.toString();
-  }
-
-  /*
-   * Wraps an xml tag with </ and >.
-   */
-  private static String xmlWrapEnd(String str) {
-    StringBuffer buf = new StringBuffer();
-    buf.append("</");
-    buf.append(str);
-    buf.append(">\n");
-    return buf.toString();
-  }
-
   private static InputStream stringWrappedInputStream(String prefix,
       InputStream is, String suffix) {
     InputStream result = null;
@@ -216,15 +159,15 @@ public class DocPusher implements Pusher {
     prefix.append("<");
     prefix.append(XML_RECORD);
     prefix.append(" ");
-    appendAttrValuePair(XML_URL, searchUrl, prefix);
+    XmlUtils.xmlAppendAttrValuePair(XML_URL, searchUrl, prefix);
     if (displayUrl != null && displayUrl.length() > 0) {
-      appendAttrValuePair(XML_DISPLAY_URL, displayUrl, prefix);
+      XmlUtils.xmlAppendAttrValuePair(XML_DISPLAY_URL, displayUrl, prefix);
     }
     if (mimetype != null) {
-      appendAttrValuePair(XML_MIMETYPE, mimetype, prefix);
+      XmlUtils.xmlAppendAttrValuePair(XML_MIMETYPE, mimetype, prefix);
     }
     if (lastModified != null) {
-      appendAttrValuePair(XML_LAST_MODIFIED, lastModified, prefix);
+      XmlUtils.xmlAppendAttrValuePair(XML_LAST_MODIFIED, lastModified, prefix);
     }
     try {
       ValueImpl v = (ValueImpl) Value.getSingleValue(document,
@@ -232,7 +175,8 @@ public class DocPusher implements Pusher {
       if (v != null) {
         boolean isPublic = v.toBoolean();
         if (!isPublic) {
-          appendAttrValuePair(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD, prefix);
+          XmlUtils.xmlAppendAttrValuePair(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD,
+              prefix);
         }
       }
     } catch (RepositoryException e) {
@@ -247,29 +191,21 @@ public class DocPusher implements Pusher {
       prefix.append("<");
       prefix.append(XML_CONTENT);
       prefix.append(" ");
-      appendAttrValuePair(XML_ENCODING, "base64binary", prefix);
+      XmlUtils.xmlAppendAttrValuePair(XML_ENCODING, "base64binary", prefix);
       prefix.append(">");
     }
 
     // build suffix
     StringBuffer suffix = new StringBuffer();
     if (feedType != XML_FEED_METADATA_AND_URL) {
-      suffix.append(xmlWrapEnd(XML_CONTENT));
+      suffix.append(XmlUtils.xmlWrapEnd(XML_CONTENT));
     }
-    suffix.append(xmlWrapEnd(XML_RECORD));
+    suffix.append(XmlUtils.xmlWrapEnd(XML_RECORD));
 
 
     InputStream is = stringWrappedInputStream(prefix.toString(), content,
         suffix.toString());
     return is;
-  }
-
-  private static void appendAttrValuePair(String attrName, String value,
-      StringBuffer buf) {
-    buf.append(attrName);
-    buf.append("=\"");
-    XmlEncodeAttrValue(value, buf);
-    buf.append("\" ");
   }
 
   /**
@@ -298,7 +234,7 @@ public class DocPusher implements Pusher {
       return;
     }
 
-    buf.append(xmlWrapStart(XML_METADATA));
+    buf.append(XmlUtils.xmlWrapStart(XML_METADATA));
     buf.append("\n");
 
     for (Iterator iter = propertyNames.iterator(); iter.hasNext();) {
@@ -317,7 +253,7 @@ public class DocPusher implements Pusher {
       }
       wrapOneProperty(buf, name, property);
     }
-    buf.append(xmlWrapEnd(XML_METADATA));
+    buf.append(XmlUtils.xmlWrapEnd(XML_METADATA));
   }
 
   /**
@@ -340,7 +276,7 @@ public class DocPusher implements Pusher {
     buf.append("<");
     buf.append(XML_META);
     buf.append(" ");
-    appendAttrValuePair("name", name, buf);
+    XmlUtils.xmlAppendAttrValuePair("name", name, buf);
     buf.append("content=\"");
     String delimiter = "";
 
@@ -352,7 +288,8 @@ public class DocPusher implements Pusher {
         value = (ValueImpl) property.nextValue();
       } catch (RepositoryException e) {
         LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
-            "Swallowing exception while scanning values for property " + name, e);
+            "Swallowing exception while scanning values for property " + name,
+            e);
         continue;
       }
       if (value == null) {
@@ -380,7 +317,7 @@ public class DocPusher implements Pusher {
       return;
     }
     buf.append(delimiter);
-    XmlEncodeAttrValue(valString, buf);
+    XmlUtils.XmlEncodeAttrValue(valString, buf);
   }
 
   /*
@@ -512,22 +449,22 @@ public class DocPusher implements Pusher {
     // build prefix
     StringBuffer prefix = new StringBuffer();
     prefix.append(XML_START);
-    prefix.append(xmlWrapStart(XML_GSAFEED));
-    prefix.append(xmlWrapStart(XML_HEADER));
-    prefix.append(xmlWrapStart(XML_DATASOURCE));
+    prefix.append(XmlUtils.xmlWrapStart(XML_GSAFEED));
+    prefix.append(XmlUtils.xmlWrapStart(XML_HEADER));
+    prefix.append(XmlUtils.xmlWrapStart(XML_DATASOURCE));
     prefix.append(this.dataSource);
-    prefix.append(xmlWrapEnd(XML_DATASOURCE));
-    prefix.append(xmlWrapStart(XML_FEEDTYPE));
+    prefix.append(XmlUtils.xmlWrapEnd(XML_DATASOURCE));
+    prefix.append(XmlUtils.xmlWrapStart(XML_FEEDTYPE));
     prefix.append(this.feedType);
-    prefix.append(xmlWrapEnd(XML_FEEDTYPE));
-    prefix.append(xmlWrapEnd(XML_HEADER));
-    prefix.append(xmlWrapStart(XML_GROUP));
+    prefix.append(XmlUtils.xmlWrapEnd(XML_FEEDTYPE));
+    prefix.append(XmlUtils.xmlWrapEnd(XML_HEADER));
+    prefix.append(XmlUtils.xmlWrapStart(XML_GROUP));
     prefix.append("\n");
 
     // build suffix
     StringBuffer suffix = new StringBuffer();
-    suffix.append(xmlWrapEnd(XML_GROUP));
-    suffix.append(xmlWrapEnd(XML_GSAFEED));
+    suffix.append(XmlUtils.xmlWrapEnd(XML_GROUP));
+    suffix.append(XmlUtils.xmlWrapEnd(XML_GSAFEED));
 
     // build record
     String searchurl = null;
