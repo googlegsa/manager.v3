@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.common.Base64FilterInputStream;
-import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
@@ -63,7 +62,7 @@ public class DocPusher implements Pusher {
     propertySkipSet.add(SpiConstants.PROPNAME_DOCID);
   }
 
-  private static final Logger LOGGER = Logger.getLogger(WorkQueue.class
+  private static final Logger LOGGER = Logger.getLogger(DocPusher.class
       .getName());
 
   // Strings for XML tags.
@@ -221,13 +220,12 @@ public class DocPusher implements Pusher {
     try {
       propertyNames = document.getPropertyNames();
     } catch (RepositoryException e) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
+      LOGGER.log(Level.WARNING, 
           "Swallowing exception while starting getting property names", e);
     }
 
     if (propertyNames == null) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
-          "Property names set is empty");
+      LOGGER.log(Level.WARNING, "Property names set is empty");
       return;
     }
     if (propertyNames.isEmpty()) {
@@ -246,9 +244,8 @@ public class DocPusher implements Pusher {
       try {
         property = document.findProperty(name);
       } catch (RepositoryException e) {
-        LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
-            "xmlWrapMetadata", "Swallowing exception while reading properties",
-            e);
+        LOGGER.log(Level.WARNING, 
+            "Swallowing exception while reading properties", e);
         continue;
       }
       wrapOneProperty(buf, name, property);
@@ -287,7 +284,7 @@ public class DocPusher implements Pusher {
       try {
         value = (ValueImpl) property.nextValue();
       } catch (RepositoryException e) {
-        LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "xmlWrapMetadata",
+        LOGGER.log(Level.WARNING,
             "Swallowing exception while scanning values for property " + name,
             e);
         continue;
@@ -391,12 +388,10 @@ public class DocPusher implements Pusher {
     try {
       result = getStringAndThrow(document, name);
     } catch (IllegalArgumentException e) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
-          "getOptionalString", "Swallowing exception while accessing " + name,
+      LOGGER.log(Level.WARNING, "Swallowing exception while accessing " + name,
           e);
     } catch (RepositoryException e) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
-          "getOptionalString", "Swallowing exception while accessing " + name,
+      LOGGER.log(Level.WARNING, "Swallowing exception while accessing " + name,
           e);
     }
     return result;
@@ -410,13 +405,11 @@ public class DocPusher implements Pusher {
     try {
       result = getStringAndThrow(document, name);
     } catch (IllegalArgumentException e) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
-          "getRequiredString",
+      LOGGER.log(Level.WARNING,
           "Catching exception, rethrowing as RuntimeException", e);
       throw new RuntimeException(e);
     } catch (RepositoryException e) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
-          "getRequiredString",
+      LOGGER.log(Level.WARNING, 
           "Catching exception, rethrowing as RuntimeException", e);
       throw new RuntimeException(e);
     }
@@ -431,12 +424,10 @@ public class DocPusher implements Pusher {
     try {
       result = getStreamAndThrow(document, name);
     } catch (IllegalArgumentException e) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
-          "getOptionalStream", "Swallowing exception while accessing " + name,
+      LOGGER.log(Level.WARNING, "Swallowing exception while accessing " + name,
           e);
     } catch (RepositoryException e) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(),
-          "getOptionalStream", "Swallowing exception while accessing " + name,
+      LOGGER.log(Level.WARNING, "Swallowing exception while accessing " + name,
           e);
     }
     return result;
@@ -498,13 +489,11 @@ public class DocPusher implements Pusher {
       lastModified = getCalendarAndThrow(document,
           SpiConstants.PROPNAME_LASTMODIFIED);
     } catch (IllegalArgumentException e) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "buildXmlData",
-          "Swallowing exception while getting "
-              + SpiConstants.PROPNAME_LASTMODIFIED, e);
+      LOGGER.log(Level.WARNING, "Swallowing exception while getting "
+          + SpiConstants.PROPNAME_LASTMODIFIED, e);
     } catch (RepositoryException e) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "buildXmlData",
-          "Swallowing exception while getting "
-              + SpiConstants.PROPNAME_LASTMODIFIED, e);
+      LOGGER.log(Level.WARNING, "Swallowing exception while getting "
+          + SpiConstants.PROPNAME_LASTMODIFIED, e);
     }
 
     String mimetype = getOptionalString(document,
@@ -620,7 +609,7 @@ public class DocPusher implements Pusher {
     setFeedType(document);
     this.xmlData = buildXmlData(document, connectorName);
     if (this.xmlData == null) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
+      LOGGER.log(Level.WARNING, 
           "Skipped this document for feeding, continuing");
       return;
     }
@@ -636,8 +625,8 @@ public class DocPusher implements Pusher {
           os = new BufferedOutputStream(new FileOutputStream(osFile, true));
           is = new TeeInputStream(xmlData, os);
         } catch (IOException e) {
-          LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
-              "cannot write file: " + osFile.getAbsolutePath(), e);
+          LOGGER.log(Level.WARNING, "cannot write file: " + 
+              osFile.getAbsolutePath(), e);
         }
       }
     }
@@ -646,28 +635,28 @@ public class DocPusher implements Pusher {
       if (!gsaResponse.equals(GsaFeedConnection.SUCCESS_RESPONSE)) {
         throw new PushException("gsaResponse=" + gsaResponse);
       }
+      LOGGER.finer("Document (" + document + ") from connector " + 
+          connectorName + " sent.");
     } catch (MalformedURLException e) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
+      LOGGER.log(Level.WARNING, 
           "Rethrowing MalformedURLException as PushException", e);
       throw new PushException("MalformedURLException: " + e.getMessage(), e);
     } catch (IOException e) {
-      LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
-          "Rethrowing IOException as PushException", e);
+      LOGGER.log(Level.WARNING, "Rethrowing IOException as PushException", e);
       throw new PushException("IOException: " + e.getMessage(), e);
     } finally {
       try {
         xmlData.close();
       } catch (IOException e) {
-        LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
-            "Rethrowing IOException as PushException", e);
+        LOGGER.log(Level.WARNING, "Rethrowing IOException as PushException", e);
         throw new PushException("IOException: " + e.getMessage(), e);
       }
       if (os != null) {
         try {
           os.close();
         } catch (IOException e) {
-          LOGGER.logp(Level.WARNING, DocPusher.class.getName(), "take",
-              "cannot close file: " + osFile.getAbsolutePath());
+          LOGGER.log(Level.WARNING, "cannot close file: " + 
+              osFile.getAbsolutePath());
         }
       }
     }

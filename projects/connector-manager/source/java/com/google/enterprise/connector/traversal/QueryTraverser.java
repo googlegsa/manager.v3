@@ -116,7 +116,7 @@ public class QueryTraverser implements Traverser {
           break;
         }
         LOGGER.finer("Sending document (" + nextDocument + ") from connector " + 
-            connectorName + " to DocPusher");
+            connectorName + " to Pusher");
         pusher.take(nextDocument, connectorName);
         counter++;
         if (counter == batchHint) {
