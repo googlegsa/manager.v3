@@ -48,6 +48,11 @@ Initially, each archive will be labeled with 3 of the following labels:
   # connector-dctm-1.0.1_en.zip - Documentum Connector 1.0.1 binary English only zip file.
   # connector-file-1.0.1.zip - !FileNet Connector 1.0.1 binary all language zip file.
 
+== Maintaining Releases ==
+
+  * Case 1: The new release is a compatible bug fix release.  In this case, the new release should be tagged as _Featured_ and the previous release should be tagged as _Deprecated_.  See instructions below.
+  * Case 2: The new release contains new functionality that is not backward compatible.  In this case, the new release should be tagged as _Featured_ and the previous release should not be tagged.  Simply remove the _Featured_ tag from the old release, however, do not tag it as _Deprecated_.
+
 == Deleting Downloads ==
 
 Any officially supported releases should not be deleted unless they have reach end of life and we need to make room for new releases.  Developer releases and early access releases can be deleted when they are replaced with a final release.
