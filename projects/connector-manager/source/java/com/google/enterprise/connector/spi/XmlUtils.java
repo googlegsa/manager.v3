@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.pusher;
+package com.google.enterprise.connector.spi;
 
 /**
  * Utility class containing methods used to encode and construct XML for the 
@@ -29,7 +29,7 @@ public class XmlUtils {
     // prevents instantiation
   }
 
-  static void XmlEncodeAttrValue(String val, StringBuffer buf) {
+  public static void XmlEncodeAttrValue(String val, StringBuffer buf) {
     for (int i = 0; i < val.length(); i++) {
       char c = val.charAt(i);
       /**
@@ -62,7 +62,7 @@ public class XmlUtils {
   /*
    * Wraps an xm tag with < and >.
    */
-  static String xmlWrapStart(String str) {
+  public static String xmlWrapStart(String str) {
     StringBuffer buf = new StringBuffer();
     buf.append("<");
     buf.append(str);
@@ -73,7 +73,7 @@ public class XmlUtils {
   /*
    * Wraps an xml tag with </ and >.
    */
-  static String xmlWrapEnd(String str) {
+  public static String xmlWrapEnd(String str) {
     StringBuffer buf = new StringBuffer();
     buf.append("</");
     buf.append(str);
@@ -81,12 +81,23 @@ public class XmlUtils {
     return buf.toString();
   }
 
-  static void xmlAppendAttrValuePair(String attrName, String value,
+  /**
+   * Used to write out an attribute for an element.  Surrounding whitespace will
+   * not be added to the buffer.  The given value will be XML Encoded before 
+   * appending to the buffer.
+   * 
+   * <p>For example, given attrName="foo" and attrValue="val&lt;bar" writes out:
+   * <pre>foo="val&amp;lt;bar"</pre>
+   * @param attrName the attribute name.
+   * @param attrValue the attribute value.
+   * @param buf the StringBuffer to append the attribute.
+   */
+  public static void xmlAppendAttrValuePair(String attrName, String attrValue,
       StringBuffer buf) {
     buf.append(attrName);
     buf.append("=\"");
-    XmlEncodeAttrValue(value, buf);
-    buf.append("\" ");
+    XmlEncodeAttrValue(attrValue, buf);
+    buf.append("\"");
   }
 
 }

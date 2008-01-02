@@ -144,11 +144,7 @@ public class SimpleConnectorType implements ConnectorType {
   private void appendAttribute(StringBuffer buf, String attrName,
       String attrValue) {
     buf.append(" ");
-    buf.append(attrName);
-    buf.append("=\"");
-    // TODO xml-encode the special characters (< > " etc.)
-    buf.append(attrValue);
-    buf.append("\"");
+    XmlUtils.xmlAppendAttrValuePair(attrName, attrValue, buf);
   }
 
   /**

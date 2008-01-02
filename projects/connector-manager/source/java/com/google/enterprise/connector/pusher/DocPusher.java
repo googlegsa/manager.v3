@@ -22,6 +22,7 @@ import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
 import com.google.enterprise.connector.spiimpl.DateValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
@@ -160,12 +161,15 @@ public class DocPusher implements Pusher {
     prefix.append(" ");
     XmlUtils.xmlAppendAttrValuePair(XML_URL, searchUrl, prefix);
     if (displayUrl != null && displayUrl.length() > 0) {
+      prefix.append(" ");
       XmlUtils.xmlAppendAttrValuePair(XML_DISPLAY_URL, displayUrl, prefix);
     }
     if (mimetype != null) {
+      prefix.append(" ");
       XmlUtils.xmlAppendAttrValuePair(XML_MIMETYPE, mimetype, prefix);
     }
     if (lastModified != null) {
+      prefix.append(" ");
       XmlUtils.xmlAppendAttrValuePair(XML_LAST_MODIFIED, lastModified, prefix);
     }
     try {
@@ -174,6 +178,7 @@ public class DocPusher implements Pusher {
       if (v != null) {
         boolean isPublic = v.toBoolean();
         if (!isPublic) {
+          prefix.append(" ");
           XmlUtils.xmlAppendAttrValuePair(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD,
               prefix);
         }
@@ -274,7 +279,7 @@ public class DocPusher implements Pusher {
     buf.append(XML_META);
     buf.append(" ");
     XmlUtils.xmlAppendAttrValuePair("name", name, buf);
-    buf.append("content=\"");
+    buf.append(" content=\"");
     String delimiter = "";
 
     // mark the beginning of the values:
