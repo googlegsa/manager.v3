@@ -31,14 +31,15 @@ Inside the connector-manager directory, you will find the following directories 
         * {{{java/}}}
         * {{{javatests/}}}
       * {{{testdata/}}}
+      * {{{third-party/}}}
+        * {{{prod/}}}
+        * {{{test/}}}
     * {{{test-connectorA/}}}
     * {{{test-connectorB/}}}
-    * {{{third_party/}}}
-      * {{{lib/}}}
 
 == Copy the JCR Jar to the Right Place ==
 
-IMPORTANT: Copy the jcr-1.0.jar to {{{connector-manager/projects/third_party/lib}}}.
+IMPORTANT: Copy the jcr-1.0.jar to {{{connector-manager/projects/connector-manager/third-party/test/}}}.
 
 == Verify that the Connector Manager Builds ==
 
