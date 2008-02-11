@@ -23,6 +23,7 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.XmlUtils;
+import com.google.enterprise.connector.spi.SpiConstants.ActionType;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
 import com.google.enterprise.connector.spiimpl.DateValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
@@ -80,7 +81,7 @@ public class DocPusher implements Pusher {
   private static final String XML_METADATA = "metadata";
   private static final String XML_META = "meta";
   private static final String XML_CONTENT = "content";
-  // private static final String XML_ACTION = "action";
+  private static final String XML_ACTION = "action";
   private static final String XML_URL = "url";
   private static final String XML_DISPLAY_URL = "displayurl";
   private static final String XML_MIMETYPE = "mimetype";
@@ -153,7 +154,7 @@ public class DocPusher implements Pusher {
    */
   private InputStream xmlWrapRecord(String searchUrl, String displayUrl,
       String lastModified, InputStream content, String mimetype,
-      Document document) {
+      ActionType actionType, Document document) {
     // build prefix
     StringBuffer prefix = new StringBuffer();
     prefix.append("<");
@@ -163,6 +164,11 @@ public class DocPusher implements Pusher {
     if (displayUrl != null && displayUrl.length() > 0) {
       prefix.append(" ");
       XmlUtils.xmlAppendAttrValuePair(XML_DISPLAY_URL, displayUrl, prefix);
+    }
+    if (actionType != null) {
+      prefix.append(" ");
+      XmlUtils.xmlAppendAttrValuePair(XML_ACTION, actionType.toString(), 
+          prefix);
     }
     if (mimetype != null) {
       prefix.append(" ");
@@ -268,7 +274,6 @@ public class DocPusher implements Pusher {
    */
   private static void wrapOneProperty(StringBuffer buf, String name,
       Property property) {
-    Value v = null;
     /*
      * in case there are only null values, we want to "roll back" the XML_META
      * tag. So save our current length:
@@ -297,7 +302,7 @@ public class DocPusher implements Pusher {
       if (value == null) {
         break;
       }
-      wrapOneValue(buf, value, name, delimiter);
+      wrapOneValue(buf, value, delimiter);
       delimiter = ", ";
     }
     /*
@@ -312,7 +317,7 @@ public class DocPusher implements Pusher {
   }
 
   private static void wrapOneValue(StringBuffer buf, ValueImpl value,
-      String name, String delimiter) {
+      String delimiter) {
     String valString = "";
     valString = value.toFeedXml();
     if (valString.length() == 0) {
@@ -468,7 +473,7 @@ public class DocPusher implements Pusher {
       searchurl = getOptionalString(document, SpiConstants.PROPNAME_SEARCHURL);
       // check that this looks like a URL
       try {
-        URL url = new URL(searchurl);
+        new URL(searchurl);
       } catch (MalformedURLException e) {
         LOGGER.warning("Supplied search url " + searchurl + " is malformed: "
             + e.getMessage());
@@ -510,8 +515,19 @@ public class DocPusher implements Pusher {
     String displayUrl = getOptionalString(document,
         SpiConstants.PROPNAME_DISPLAYURL);
 
+    ActionType actionType = null;
+    String action = getOptionalString(document, SpiConstants.PROPNAME_ACTION);
+    if (action != null) {
+      // Compare to legal action types.
+      actionType = ActionType.findActionType(action);
+      if (actionType == ActionType.ERROR) {
+        LOGGER.log(Level.WARNING, "Illegal tag used for ActionType: " + action);
+        actionType = null;
+      }
+    }
+
     InputStream recordInputStream = xmlWrapRecord(searchurl, displayUrl,
-        lastModified, encodedContentStream, mimetype, document);
+        lastModified, encodedContentStream, mimetype, actionType, document);
 
     InputStream is = stringWrappedInputStream(prefix.toString(),
         recordInputStream, suffix.toString());
@@ -618,7 +634,6 @@ public class DocPusher implements Pusher {
           "Skipped this document for feeding, continuing");
       return;
     }
-    InputStream message = null;
     InputStream is = xmlData;
     String osFilename = Context.getInstance().getTeedFeedFile();
     File osFile = null;
