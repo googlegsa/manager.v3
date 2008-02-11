@@ -124,4 +124,58 @@ public class SpiConstants {
    * Value: google:ispublic
    */
   public static final String PROPNAME_ISPUBLIC = "google:ispublic";
+
+  /**
+   * Identifies an optional, single-valued property that specifies the action
+   * associated with the document.  If not specified, then the system will
+   * not specify the action and the default behavior will be observed.
+   * <p>
+   * Value: google:action
+   */
+  public static final String PROPNAME_ACTION = "google:action";
+  
+  /**
+   * Ordinal-base typesafe enum for action types.
+   */
+  public static class ActionType implements Comparable {
+    private static int nextOrdinal = 0;
+    private final int ordinal = nextOrdinal++;
+
+    public static final ActionType ADD = new ActionType("add");
+    public static final ActionType DELETE = new ActionType("delete");
+    public static final ActionType ERROR = new ActionType("error");
+
+    private static final ActionType[] PRIVATE_VALUES = {ADD, DELETE, ERROR};
+
+    private String tag;
+
+    ActionType(String m) {
+        tag = m;
+    }
+
+    public String toString() {
+      return tag;
+    }
+
+    /**
+     * @return The enum matching the given <code>tag</code>.
+     * <code>ActionType.ERROR</code> will be returned if the given
+     * <code>tag</code> does not match a known <code>ActionType</code>.
+     */
+    public static ActionType findActionType(String tag) {
+        if (tag == null) {
+          return ERROR;
+        }
+        for (int i = 0; i < PRIVATE_VALUES.length; i++) {
+          if (PRIVATE_VALUES[i].tag.equals(tag)) {
+            return PRIVATE_VALUES[i];
+          }
+        }
+        return ERROR;
+      }
+
+    public int compareTo(Object o) {
+        return ordinal - ((ActionType)o).ordinal;
+    }
+  }
 }
