@@ -95,8 +95,8 @@ public class DocPusher implements Pusher {
   private static final String XML_FEED_METADATA_AND_URL = "metadata-and-url";
   private static final String XML_FEED_INCREMENTAL = "incremental";
   // private static final String XML_BASE64BINARY = "base64binary";
-  // private static final String XML_ADD = "add";
-  // private static final String XML_DELETE = "delete";
+  private static final String XML_ADD = "add";
+  private static final String XML_DELETE = "delete";
 
   private static final String CONNECTOR_AUTHMETHOD = "httpbasic";
 
@@ -155,6 +155,8 @@ public class DocPusher implements Pusher {
   private InputStream xmlWrapRecord(String searchUrl, String displayUrl,
       String lastModified, InputStream content, String mimetype,
       ActionType actionType, Document document) {
+    boolean metadataAllowed = true;
+    boolean contentAllowed = true;
     // build prefix
     StringBuffer prefix = new StringBuffer();
     prefix.append("<");
@@ -167,8 +169,13 @@ public class DocPusher implements Pusher {
     }
     if (actionType != null) {
       prefix.append(" ");
-      XmlUtils.xmlAppendAttrValuePair(XML_ACTION, actionType.toString(), 
-          prefix);
+      if (actionType == ActionType.ADD) {
+        XmlUtils.xmlAppendAttrValuePair(XML_ACTION, XML_ADD, prefix);
+      } else if (actionType == ActionType.DELETE) {
+        XmlUtils.xmlAppendAttrValuePair(XML_ACTION, XML_DELETE, prefix);
+        metadataAllowed = false;
+        contentAllowed = false;
+      }
     }
     if (mimetype != null) {
       prefix.append(" ");
@@ -196,8 +203,10 @@ public class DocPusher implements Pusher {
           + " Treat as a public doc", e);
     }
     prefix.append(">\n");
-    xmlWrapMetadata(prefix, document);
-    if (feedType != XML_FEED_METADATA_AND_URL) {
+    if (metadataAllowed) {
+      xmlWrapMetadata(prefix, document);
+    }
+    if (feedType != XML_FEED_METADATA_AND_URL  && contentAllowed) {
       prefix.append("<");
       prefix.append(XML_CONTENT);
       prefix.append(" ");
@@ -207,14 +216,19 @@ public class DocPusher implements Pusher {
 
     // build suffix
     StringBuffer suffix = new StringBuffer();
-    if (feedType != XML_FEED_METADATA_AND_URL) {
+    if (feedType != XML_FEED_METADATA_AND_URL && contentAllowed) {
       suffix.append(XmlUtils.xmlWrapEnd(XML_CONTENT));
     }
     suffix.append(XmlUtils.xmlWrapEnd(XML_RECORD));
 
-
-    InputStream is = stringWrappedInputStream(prefix.toString(), content,
-        suffix.toString());
+    InputStream is = null;
+    if (contentAllowed) {
+      is = stringWrappedInputStream(prefix.toString(), content,
+          suffix.toString());
+    } else {
+      is = stringWrappedInputStream(prefix.toString(), null,
+          suffix.toString());
+    }
     return is;
   }
 

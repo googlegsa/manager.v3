@@ -14,8 +14,8 @@
 
 package com.google.enterprise.connector.mock.jcr;
 
+import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryDateTime;
-import com.google.enterprise.connector.mock.MockRepositoryDocumentStore;
 import com.google.enterprise.connector.spi.Value;
 
 import org.json.JSONException;
@@ -63,17 +63,15 @@ public class MockJcrQueryManager implements QueryManager {
     this.xpathUnboundedTraversalQuery = xpathUnboundedTraversalQuery;
   }
 
-  MockRepositoryDocumentStore store;
+  MockRepository repo;
   static final String[] SUPPORTED_LANGUAGES = new String[] {
       "mockQueryLanguage", Query.XPATH};
 
   /**
-   * Creates a MockJcrQueryManager from a MockRepositoryDocumentStore
-   * 
-   * @param store
+   * Creates a MockJcrQueryManager from a MockRepository
    */
-  public MockJcrQueryManager(MockRepositoryDocumentStore store) {
-    this.store = store;
+  public MockJcrQueryManager(MockRepository repo) {
+    this.repo = repo;
     this.xpathUnboundedTraversalQuery = XPATH_QUERY_STRING_UNBOUNDED_DEFAULT;
     this.xpathBoundedTraversalQuery = XPATH_QUERY_STRING_BOUNDED_DEFAULT;
   }
@@ -128,7 +126,7 @@ public class MockJcrQueryManager implements QueryManager {
     MockRepositoryDateTime from = new MockRepositoryDateTime(fromInt);
     MockRepositoryDateTime to = new MockRepositoryDateTime(toInt);
 
-    return new MockJcrQuery(from, to, store);
+    return new MockJcrQuery(from, to, repo);
   }
 
   private Query createXpathQuery(String statement)
@@ -151,7 +149,7 @@ public class MockJcrQueryManager implements QueryManager {
 
   private Query createXpathQueryNoBound() {
     MockRepositoryDateTime from = new MockRepositoryDateTime(0);
-    return new MockJcrQuery(from, store);
+    return new MockJcrQuery(from, repo);
   }
 
   private Query createXpathQueryWithBound(String statement, String dateString)
@@ -170,7 +168,7 @@ public class MockJcrQueryManager implements QueryManager {
 
     MockRepositoryDateTime from = new MockRepositoryDateTime(fromInt);
 
-    return new MockJcrQuery(from, store);
+    return new MockJcrQuery(from, repo);
   }
 
   /**

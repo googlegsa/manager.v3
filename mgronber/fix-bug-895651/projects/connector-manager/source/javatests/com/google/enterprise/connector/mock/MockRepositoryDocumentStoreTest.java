@@ -28,10 +28,29 @@ import java.util.logging.Logger;
 public class MockRepositoryDocumentStoreTest extends TestCase {
   private static final Logger logger = 
     Logger.getLogger(MockRepositoryDocumentStoreTest.class.getName());
-/**
- * Adds and deletes a few documents, checking integrity, size and content
- * along the way
- */  
+
+  private class TestListener implements MockRepositoryEventListener {
+    private MockRepositoryEvent expectedEvent;
+    private String name;
+
+    public TestListener(String name) {
+      this.name = name;
+    }
+
+    public void setExpectedEvent(MockRepositoryEvent event) {
+      this.expectedEvent = event;
+    }
+
+    public void onEvent(MockRepositoryEvent event) {
+      logger.info(name + " received event:  " + event);
+      assertEquals(expectedEvent.toString(), event.toString());
+    }
+  }
+
+  /**
+   * Adds and deletes a few documents, checking integrity, size and content
+   * along the way
+   */  
   public void testIntegrity() {
     int expectedSize = 0;
 
@@ -68,7 +87,7 @@ public class MockRepositoryDocumentStoreTest extends TestCase {
       new MockRepositoryEvent(EventType.DELETE,
                               "doc2", 
                               null, 
-                              null, 
+                              new MockRepositoryPropertyList(), 
                               new MockRepositoryDateTime(4));
     doDocumentTest(s, "doc1", "now is the time", 1, e4);
   }
@@ -214,5 +233,75 @@ public class MockRepositoryDocumentStoreTest extends TestCase {
                                               "now was the time",
                                               new MockRepositoryPropertyList(), 
                                               new MockRepositoryDateTime(1)));
+  }
+
+  /**
+   * Attaches an event listener to the store and adds and deletes a few
+   * documents, checking to make sure the listener is notified along the way.
+   */  
+  public void testListeners() {
+    MockRepositoryDocumentStore s = new MockRepositoryDocumentStore();
+    TestListener listenerOne = new TestListener("listenerOne");
+    TestListener listenerTwo = new TestListener("listenerTwo");
+
+    // Add listeners
+    s.addEventListener(listenerOne);
+    s.addEventListener(listenerTwo);
+
+    MockRepositoryEvent dummy = 
+      new MockRepositoryEvent(EventType.SAVE, 
+                              "docX", 
+                              "dummy",
+                              new MockRepositoryPropertyList(), 
+                              new MockRepositoryDateTime(0));
+    MockRepositoryEvent e1 = 
+      new MockRepositoryEvent(EventType.SAVE, 
+                              "doc1", 
+                              "now is the time",
+                              new MockRepositoryPropertyList(), 
+                              new MockRepositoryDateTime(1));
+    listenerOne.setExpectedEvent(e1);
+    listenerTwo.setExpectedEvent(e1);
+    doDocumentTest(s, "doc1", "now is the time", 1, e1);
+
+    // Remove listenerTwo
+    s.removeEventListener(listenerTwo);
+
+    MockRepositoryEvent e2 = 
+      new MockRepositoryEvent(EventType.SAVE, 
+                              "doc2", 
+                              "now was the time",
+                              new MockRepositoryPropertyList(), 
+                              new MockRepositoryDateTime(2));
+    listenerOne.setExpectedEvent(e2);
+    listenerTwo.setExpectedEvent(dummy);
+    doDocumentTest(s, "doc2", "now was the time", 2, e2);
+
+    // Remove listenerOne, add listenerTwo
+    s.removeEventListener(listenerOne);
+    s.addEventListener(listenerTwo);
+
+    MockRepositoryEvent e3 = 
+      new MockRepositoryEvent(EventType.SAVE, 
+                              "doc2", 
+                              "the time is now",
+                              new MockRepositoryPropertyList(), 
+                              new MockRepositoryDateTime(3));
+    listenerOne.setExpectedEvent(dummy);
+    listenerTwo.setExpectedEvent(e3);
+    doDocumentTest(s, "doc2", "the time is now", 2, e3);
+
+    // Add listenerOne back again
+    s.addEventListener(listenerOne);
+
+    MockRepositoryEvent e4 = 
+      new MockRepositoryEvent(EventType.DELETE,
+                              "doc2", 
+                              null, 
+                              new MockRepositoryPropertyList(), 
+                              new MockRepositoryDateTime(4));
+    listenerOne.setExpectedEvent(e4);
+    listenerTwo.setExpectedEvent(e4);
+    doDocumentTest(s, "doc1", "now is the time", 1, e4);
   }
 }

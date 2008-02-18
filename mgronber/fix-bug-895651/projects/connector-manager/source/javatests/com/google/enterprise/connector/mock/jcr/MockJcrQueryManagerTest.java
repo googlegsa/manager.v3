@@ -15,19 +15,20 @@
 package com.google.enterprise.connector.mock.jcr;
 
 import com.google.enterprise.connector.mock.MockRepository;
+import com.google.enterprise.connector.mock.MockRepositoryDateTime;
+import com.google.enterprise.connector.mock.MockRepositoryDocument;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.MockRepositoryPropertyTest;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.text.MessageFormat;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.logging.Logger;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
@@ -48,31 +49,19 @@ public class MockJcrQueryManagerTest extends TestCase {
     MockRepositoryEventList mrel = new MockRepositoryEventList(
         "MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
-
-    QueryManager qm = new MockJcrQueryManager(r.getStore());
+    QueryManager qm = new MockJcrQueryManager(r);
 
     String statement = "{from:10, to:21}";
     String language = "mockQueryLanguage";
+    // Important to do this before the query is created since the constructor
+    // can mutate the store.
+    List docs = r.getStore().dateRange(new MockRepositoryDateTime(10),
+        new MockRepositoryDateTime(21));
 
     Query query = qm.createQuery(statement, language);
-
     QueryResult qr = query.execute();
 
-    NodeIterator ni = qr.getNodes();
-
-    Node n;
-    while (ni.hasNext()) {
-      n = ni.nextNode();
-      logger.info("docid " + n.getProperty("jcr:uuid").getString());
-
-      Property p;
-      PropertyIterator pi = n.getProperties();
-      String indent = "  ";
-      while (pi.hasNext()) {
-        p = pi.nextProperty();
-        logger.info(indent + p.getName() + " " + p.getString());
-      }
-    }
+    assertQueryResultContainsOnlyDocs(qr, docs);
   }
 
   public void testXpathQuery() throws RepositoryException {
@@ -80,7 +69,7 @@ public class MockJcrQueryManagerTest extends TestCase {
         "MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
 
-    QueryManager qm = new MockJcrQueryManager(r.getStore());
+    QueryManager qm = new MockJcrQueryManager(r);
 
     String messagePattern = 
       "//*[@jcr:primaryType = 'nt:resource' and @jcr:lastModified >= " +
@@ -94,22 +83,78 @@ public class MockJcrQueryManagerTest extends TestCase {
     String statement = MessageFormat.format(
         messagePattern,
         arguments);
-    System.out.println(statement);
+    logger.info(statement);
+    List docs = r.getStore().dateRange(new MockRepositoryDateTime(50));
 
     Query query = qm.createQuery(statement, language);
-
     QueryResult qr = query.execute();
 
-    NodeIterator ni = qr.getNodes();
-
-    Node n;
-
-    int count = 0;
-    while (ni.hasNext()) {
-      n = ni.nextNode();
-      count++;
-    }
-    Assert.assertEquals(2, count);
+    assertQueryResultContainsOnlyDocs(qr, docs);
   }
 
+  public void testXpathQueryWithPause() throws RepositoryException {
+    MockRepositoryEventList mrel = new MockRepositoryEventList(
+        "MockRepositoryEventLog9.txt");
+    MockRepository r = new MockRepository(mrel);
+    QueryManager qm = new MockJcrQueryManager(r);
+    String messagePattern = 
+      "//*[@jcr:primaryType = 'nt:resource' and @jcr:lastModified >= " +
+      "''{0}''] order by @jcr:lastModified, @jcr:uuid";
+    String time = "1970-01-01T00:00:00Z";
+    String language = Query.XPATH;
+
+    Object[] arguments = { time };
+    String statement = MessageFormat.format(messagePattern, arguments);
+    logger.info(statement);
+    List docs = r.getStore().dateRange(new MockRepositoryDateTime(0));
+
+    Query query = qm.createQuery(statement, language);
+    QueryResult qr = query.execute();
+
+    assertEquals(3, docs.size());
+    assertQueryResultContainsOnlyDocs(qr, docs);
+
+    // Try again after pause 
+    docs = r.getStore().dateRange(new MockRepositoryDateTime(0));
+    query = qm.createQuery(statement, language);
+    qr = query.execute();
+
+    assertEquals(2, docs.size());
+    assertQueryResultContainsOnlyDocs(qr, docs);
+
+    // And again
+    docs = r.getStore().dateRange(new MockRepositoryDateTime(0));
+    query = qm.createQuery(statement, language);
+    qr = query.execute();
+
+    assertEquals(4, docs.size());
+    assertQueryResultContainsOnlyDocs(qr, docs);
+  }
+
+  /*
+   * Helper method to make sure the given QueryResult only contains docs from
+   * the given list of MockRepositoryDocument objects.  Equality is determined
+   * by matching the Node "jcr:uuid" property to the MockRepositoryDocument
+   * docId.
+   */
+  private void assertQueryResultContainsOnlyDocs(QueryResult qr, List docs) 
+      throws RepositoryException {
+    int count = 0;
+    int target = docs.size();
+    NodeIterator ni = qr.getNodes();
+
+    while (ni.hasNext()) {
+      Node n = ni.nextNode();
+      for (ListIterator iter = docs.listIterator(); iter.hasNext(); ) {
+        MockRepositoryDocument doc = (MockRepositoryDocument) iter.next();
+        if (n.getProperty("jcr:uuid").getString().equals(doc.getDocID())) {
+          logger.info("Found document where docid=" + doc.getDocID());
+          iter.remove();
+          count++;
+          break;
+        }
+      }
+    }
+    assertEquals(target, count);
+  }
 }

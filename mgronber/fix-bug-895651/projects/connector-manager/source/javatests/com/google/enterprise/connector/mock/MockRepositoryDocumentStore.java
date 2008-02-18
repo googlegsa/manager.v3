@@ -68,7 +68,6 @@ import com.google.enterprise.connector.mock.MockRepositoryEvent.EventType;
  * <p>
  * TODO(ziff):
  * <ul>
- * <li>add event call-back
  * <li>add textual dump/load so bigger test cases can be built easily
  * </ul>
  */
@@ -76,6 +75,7 @@ public class MockRepositoryDocumentStore {
   private static final Logger logger = Logger
       .getLogger(MockRepositoryDocumentStore.class.getName());
   Map store = null;
+  private List eventListeners = new LinkedList();
 
   /**
    * Makes an empty store
@@ -132,6 +132,7 @@ public class MockRepositoryDocumentStore {
       return;
     }
     store.remove(docID);
+    notifyListeners(event);
   }
 
   /**
@@ -164,7 +165,8 @@ public class MockRepositoryDocumentStore {
       store.remove(docid);
       store.put(docid, modifiedDoc);
     }
-  }
+    notifyListeners(event);
+}
 
   /**
    * Looks up a document in the store by ID
@@ -305,5 +307,27 @@ public class MockRepositoryDocumentStore {
       result = false;
     }
     return result;
+  }
+
+  /**
+   * Adds a <code>MockRepositoryEventListener</code> to this store.
+   */
+  public void addEventListener(MockRepositoryEventListener listener) {
+    eventListeners.add(listener);
+  }
+
+  /**
+   * Removes a <code>MockRepositoryEventListener</code> from this store.
+   */
+  public void removeEventListener(MockRepositoryEventListener listener) {
+    eventListeners.remove(listener);
+  }
+
+  private void notifyListeners(MockRepositoryEvent event) {
+    for (Iterator iter = eventListeners.listIterator(); iter.hasNext(); ) {
+      MockRepositoryEventListener listener = 
+        (MockRepositoryEventListener)iter.next();
+      listener.onEvent(event);
+    }
   }
 }

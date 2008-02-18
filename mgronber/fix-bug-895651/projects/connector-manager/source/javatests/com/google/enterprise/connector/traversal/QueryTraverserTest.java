@@ -17,6 +17,7 @@ package com.google.enterprise.connector.traversal;
 import com.google.enterprise.connector.jcr.JcrTraversalManager;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
+import com.google.enterprise.connector.mock.jcr.MockJcrObservationManager;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.MockConnectorStateStore;
@@ -26,6 +27,7 @@ import com.google.enterprise.connector.spi.TraversalManager;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import javax.jcr.observation.ObservationManager;
 import javax.jcr.query.QueryManager;
 
 /**
@@ -90,14 +92,14 @@ public class QueryTraverserTest extends TestCase {
    * @param mrel
    * @param connectorName
    * @param connectorStateStore
-   * @return
+   * @return A new QueryTraverser.
    */
   private Traverser createTraverser(MockRepositoryEventList mrel,
       String connectorName, ConnectorStateStore connectorStateStore) {
     MockRepository r = new MockRepository(mrel);
-    QueryManager qm = new MockJcrQueryManager(r.getStore());
-
-    TraversalManager qtm = new JcrTraversalManager(qm);
+    QueryManager qm = new MockJcrQueryManager(r);
+    ObservationManager om = new MockJcrObservationManager(r);
+    TraversalManager qtm = new JcrTraversalManager(qm, om);
     MockPusher pusher = new MockPusher(System.out);
 
     Traverser traverser =

@@ -19,6 +19,7 @@ import com.google.enterprise.connector.jcr.JcrDocumentTest;
 import com.google.enterprise.connector.jcr.JcrTraversalManager;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
+import com.google.enterprise.connector.mock.jcr.MockJcrObservationManager;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
@@ -26,16 +27,22 @@ import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.SpiConstants.ActionType;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import java.util.logging.Logger;
+
+import javax.jcr.observation.ObservationManager;
 import javax.jcr.query.QueryManager;
 
 /**
  * Tests DocPusher.
  */
 public class DocPusherTest extends TestCase {
+  private static final Logger logger =
+      Logger.getLogger(DocPusherTest.class.getName());
 
   /**
    * Test Take for a URL/metadata feed when google.searchurl exists.
@@ -212,13 +219,78 @@ public class DocPusherTest extends TestCase {
 
     MockRepositoryEventList mrel = new MockRepositoryEventList(repository);
     MockRepository r = new MockRepository(mrel);
-    QueryManager qm = new MockJcrQueryManager(r.getStore());
-    TraversalManager qtm = new JcrTraversalManager(qm);
+    QueryManager qm = new MockJcrQueryManager(r);
+    ObservationManager om = new MockJcrObservationManager(r);
+    TraversalManager qtm = new JcrTraversalManager(qm, om);
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
 
     DocumentList documentList = qtm.startTraversal();
+
+    int i = 0;
+    Document document = null;
+    while ((document = documentList.nextDocument()) != null) {
+      System.out.println("Test " + i + " output");
+      Assert.assertFalse(i == expectedXml.length);
+      dpusher.take(document, "junit");
+      System.out.println("Test " + i + " assertions");
+      String resultXML = mockFeedConnection.getFeed();
+      gsaActualResponse = dpusher.getGsaResponse();
+      Assert.assertEquals(expectedXml[i], resultXML);
+      Assert.assertEquals(gsaExpectedResponse, gsaActualResponse);
+      System.out.println("Test " + i + " done");
+      ++i;
+    }
+  }
+
+  /**
+   * Tests if the DocPusher creates valid feeds given a Document wrapping a
+   * delete event.
+   */
+  public void testDeleteFeed() throws PushException, RepositoryException {
+    String[] expectedXml = new String[1];
+    String feedType = "incremental";
+    String record = "<record url=\""
+        + ServletUtil.PROTOCOL
+        + "junit.localhost"
+        + ServletUtil.DOCID
+        + "doc2\""
+        + " action=\""
+        + ActionType.DELETE
+        + "\""
+        + " mimetype=\""
+        + SpiConstants.DEFAULT_MIMETYPE
+        + "\""
+        + " last-modified=\"Thu, 01 Jan 1970 00:01:10 GMT\">\n"
+        + "</record>\n";
+
+    expectedXml[0] = buildExpectedXML(feedType, record);
+    takePausedFeed(expectedXml, "MockRepositoryEventLog11.txt");
+  }
+
+  private void takePausedFeed(String[] expectedXml, String repository)
+      throws PushException, RepositoryException {
+    String gsaExpectedResponse = GsaFeedConnection.SUCCESS_RESPONSE;
+    String gsaActualResponse;
+
+    MockRepositoryEventList mrel = new MockRepositoryEventList(repository);
+    MockRepository r = new MockRepository(mrel);
+    QueryManager qm = new MockJcrQueryManager(r);
+    ObservationManager om = new MockJcrObservationManager(r);
+    TraversalManager qtm = new JcrTraversalManager(qm, om);
+
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection);
+
+    DocumentList documentList = qtm.startTraversal();
+    // Consume the documents to set the checkpoint
+    while (documentList.nextDocument() != null) {
+      logger.info("Skipping document");
+    }
+
+    String checkpointString = documentList.checkpoint();
+    documentList = qtm.resumeTraversal(checkpointString);
 
     int i = 0;
     Document document = null;
@@ -393,7 +465,7 @@ public class DocPusherTest extends TestCase {
     resultXML = mockFeedConnection.getFeed();
 
     assertStringNotContains("action=", resultXML);
-}
+  }
 
   public static void assertStringContains(String expected, String actual) {
     Assert.assertTrue("Expected:\n" + expected + "\nDid not appear in\n"
