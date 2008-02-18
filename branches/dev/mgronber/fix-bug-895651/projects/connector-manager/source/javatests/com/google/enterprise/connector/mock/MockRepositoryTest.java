@@ -62,6 +62,48 @@ public class MockRepositoryTest extends TestCase {
   }
 
   /**
+   * Test pause.
+   */
+  public void testRepositoryPause() {
+    // TODO(ziff): change this file access to use TestUtil
+    MockRepositoryEventList mrel =
+        new MockRepositoryEventList("MockRepositoryEventLog9.txt");
+    MockRepository r = new MockRepository(mrel, new MockRepositoryDateTime(0));
+    MockRepositoryDateTime targetTime = new MockRepositoryDateTime(60);
+
+    assertEquals(0, r.getStore().size());
+
+    // Edge case
+    r.setTimeToTarget();
+    assertEquals(0, r.getStore().size());
+
+    r.setTime(targetTime);
+    assertEquals(3, r.getStore().size());
+    assertEquals(new MockRepositoryDateTime(35), r.getCurrentTime());
+
+    r.setTimeToTarget();
+    assertEquals(2, r.getStore().size());
+    assertEquals(new MockRepositoryDateTime(45), r.getCurrentTime());
+
+    r.setTimeToTarget();
+    assertEquals(4, r.getStore().size());
+    assertEquals(targetTime, r.getCurrentTime());
+
+    // Test constructor that doesn't not specify the time
+    r = new MockRepository(mrel);
+    assertEquals(3, r.getStore().size());
+    assertEquals(new MockRepositoryDateTime(35), r.getCurrentTime());
+
+    r.setTimeToTarget();
+    assertEquals(2, r.getStore().size());
+    assertEquals(new MockRepositoryDateTime(45), r.getCurrentTime());
+
+    r.setTimeToTarget();
+    assertEquals(4, r.getStore().size());
+    assertEquals(targetTime, r.getCurrentTime());
+}
+
+  /**
    * Make sure documents have exactly the attributes they should
    */
   public void testDocumentIntegrity() {
@@ -74,7 +116,7 @@ public class MockRepositoryTest extends TestCase {
     MockRepositoryPropertyList proplist = doc.getProplist();
     int counter = 0;
     for (Iterator i = proplist.iterator(); i.hasNext();) {
-      MockRepositoryProperty property = (MockRepositoryProperty) i.next();;
+      MockRepositoryProperty property = (MockRepositoryProperty) i.next();
       System.out.print(property.toString());
       System.out.println();
       counter++;

@@ -42,7 +42,7 @@ public class MockJcrNodeIterator implements NodeIterator {
   Iterator iter;
   Iterator internalIterator;
   
-  MockJcrNodeIterator(Iterator iter) {
+  public MockJcrNodeIterator(Iterator iter) {
     internalIterator = iter;
     this.iter = new Iterator() {
 

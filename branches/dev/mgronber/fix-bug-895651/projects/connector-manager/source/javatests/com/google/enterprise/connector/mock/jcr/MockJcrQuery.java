@@ -28,8 +28,8 @@ import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
 import javax.jcr.version.VersionException;
 
+import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryDateTime;
-import com.google.enterprise.connector.mock.MockRepositoryDocumentStore;
 
 /**
  * MockJcrQuery implements the corresponding JCR interface.  This implementation
@@ -43,7 +43,7 @@ public class MockJcrQuery implements Query {
 
   MockRepositoryDateTime from;
   MockRepositoryDateTime to;
-  MockRepositoryDocumentStore store;
+  MockRepository repo;
   String statement = null;
 
   List internalQuery;
@@ -55,33 +55,34 @@ public class MockJcrQuery implements Query {
    * as we go along.
    * @param from    Beginning point of range
    * @param to  End point of range
-   * @param store   MockRepositoryDocumentStore from which documents are 
-   * returned
+   * @param repo  MockRepository from which documents are returned
    */
   public MockJcrQuery(MockRepositoryDateTime from, MockRepositoryDateTime to,
-      MockRepositoryDocumentStore store) {
+      MockRepository repo) {
     this.from = from;
     this.to = to;
-    this.store = store;
+    this.repo = repo;
     this.statement = "Query for documents between " + from.toString() + " and "
         + to.toString();
-    this.internalQuery = store.dateRange(from, to);
+    this.internalQuery = repo.getStore().dateRange(from, to);
+    // After pulling results above make sure the repo is current
+    repo.setTimeToTarget();
   }
 
   /**
    * Creates a MockJcrQuery object from a single date.  This is intended to be 
    * used for query traversal.  
    * @param from    Beginning point of range
-   * @param store   MockRepositoryDocumentStore from which documents are 
-   * returned
+   * @param repo  MockRepository from which documents are returned
    */
   public MockJcrQuery(MockRepositoryDateTime from,
-      MockRepositoryDocumentStore store) {
+      MockRepository repo) {
     this.from = from;
     this.to = null;
-    this.store = store;
+    this.repo = repo;
     this.statement = "Query for documents from " + from.toString();
-    this.internalQuery = store.dateRange(from);
+    this.internalQuery = repo.getStore().dateRange(from);
+    repo.setTimeToTarget();
   }
 
   /**

@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.mock;
 
+import com.google.enterprise.connector.mock.MockRepositoryEvent.EventType;
+
 import java.util.List;
 import java.util.ListIterator;
 
@@ -28,12 +30,14 @@ import java.util.ListIterator;
 public class MockRepository {
   MockRepositoryDocumentStore store;
   MockRepositoryDateTime currentTime;
+  MockRepositoryDateTime targetTime;
   MockRepositoryEventList eventList;
   ListIterator internalIterator;
 
   private void init() {
     store = new MockRepositoryDocumentStore();
     this.currentTime = new MockRepositoryDateTime(0);
+    this.targetTime = new MockRepositoryDateTime(0);
     this.internalIterator = this.eventList.getEventList().listIterator();
   }
 
@@ -52,7 +56,7 @@ public class MockRepository {
   }
 
   /**
-   * Creates a repository from a suppiled event list and sets the time to the
+   * Creates a repository from a supplied event list and sets the time to the
    * time of the last event.  
    * @param eventList Should be in increasing time order
    */
@@ -73,14 +77,20 @@ public class MockRepository {
   }
 
   /**
-   * Sets the time and applies all events that have timestamp less than or
-   * equal to the supplied time
+   * Sets the time and applies all events that have timestamp less than or equal
+   * to the supplied time.  If there is a PAUSE event it will stop, consume the
+   * pause event and not apply any later events.
    * @param newTime
    */
   public void setTime(MockRepositoryDateTime newTime) {
+    targetTime = newTime;
     if (newTime.compareTo(currentTime) > 0) {
       while (internalIterator.hasNext()) {
         MockRepositoryEvent e = (MockRepositoryEvent) internalIterator.next();
+        if (e.getType() == EventType.PAUSE) {
+          currentTime = e.getTimeStamp();
+          return;
+        }
         if (e.getTimeStamp().compareTo(newTime) > 0) {
           internalIterator.previous();
           break;
@@ -88,6 +98,18 @@ public class MockRepository {
         store.applyEvent(e);
       }
       currentTime = newTime;
+    }
+  }
+
+  /**
+   * In the case where the events may contain a PAUSE event, the 
+   * <code>setTime()</code> method may leave the store in a state earlier than
+   * the given target time.  If this is the case, this method will call
+   * <code>setTime()</code> again with the previously given target time.
+   */
+  public void setTimeToTarget() {
+    if (targetTime.compareTo(currentTime) > 0) {
+      setTime(targetTime);
     }
   }
 

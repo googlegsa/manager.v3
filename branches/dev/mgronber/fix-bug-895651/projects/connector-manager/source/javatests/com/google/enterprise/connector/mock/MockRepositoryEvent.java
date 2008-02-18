@@ -42,11 +42,13 @@ public class MockRepositoryEvent {
 	    	new EventType("delete");
 	    public static final EventType METADATA_ONLY_SAVE = 
 	    	new EventType("metadata_only_save");
+	    public static final EventType PAUSE =
+	        new EventType("pause");
 	    public static final EventType ERROR = 
 	    	new EventType("error");
 
 		private static final EventType[] PRIVATE_VALUES =
-		  {SAVE, DELETE, METADATA_ONLY_SAVE, ERROR};
+		  {SAVE, DELETE, METADATA_ONLY_SAVE, PAUSE, ERROR};
 		public static final List Values = 
 			Collections.unmodifiableList(Arrays.asList(PRIVATE_VALUES));
 
@@ -85,7 +87,7 @@ public class MockRepositoryEvent {
   
   public String toString() {
     String displayContent = 
-      ((content != null) ? (" content:\"" + content + "\" ") : "null");
+      ((content != null) ? (" content:\"" + content + "\" ") : " null ");
     return "{" + timeStamp.toString() + " " + type + " " + docID + 
       displayContent + propertyList.toString() + "}";
   }

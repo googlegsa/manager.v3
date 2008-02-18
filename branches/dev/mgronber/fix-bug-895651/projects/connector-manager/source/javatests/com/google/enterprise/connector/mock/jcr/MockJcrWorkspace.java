@@ -91,19 +91,18 @@ public class MockJcrWorkspace implements Workspace {
    * @throws RepositoryException 
    */
   public QueryManager getQueryManager() throws RepositoryException {
-    return new MockJcrQueryManager(repo.getRepo().getStore());
+    return new MockJcrQueryManager(repo.getRepo());
   }
 
   /**
-   * Throws UnsupportedOperationException
-   * @return nothing
+   * Gets an ObservationManager for this Workspace.
+   * @return ObservationManager
    * @throws UnsupportedRepositoryOperationException 
    * @throws RepositoryException 
    */
   public ObservationManager getObservationManager()
       throws UnsupportedRepositoryOperationException, RepositoryException {
-    // TODO(ziff): this will be needed later
-    throw new UnsupportedOperationException();
+    return new MockJcrObservationManager(repo.getRepo());
   }
 
   /**

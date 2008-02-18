@@ -21,6 +21,7 @@ import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
 
 import javax.jcr.Workspace;
+import javax.jcr.observation.ObservationManager;
 import javax.jcr.query.QueryManager;
 
 /**
@@ -38,12 +39,14 @@ public class JcrSession implements Session {
       throws RepositoryException {
     Workspace workspace = session.getWorkspace();
     QueryManager queryManager = null;
+    ObservationManager observationManager = null;
     try {
       queryManager = workspace.getQueryManager();
+      observationManager = workspace.getObservationManager();
     } catch (javax.jcr.RepositoryException e) {
       throw new RepositoryException(e);
     }
-    return new JcrTraversalManager(queryManager);
+    return new JcrTraversalManager(queryManager, observationManager);
   }
 
   public AuthenticationManager getAuthenticationManager() {

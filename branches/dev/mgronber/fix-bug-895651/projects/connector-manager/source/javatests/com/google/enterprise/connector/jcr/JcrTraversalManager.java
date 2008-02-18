@@ -25,9 +25,23 @@ import org.json.JSONObject;
 import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
+import javax.jcr.Property;
+import javax.jcr.observation.Event;
+import javax.jcr.observation.EventIterator;
+import javax.jcr.observation.EventListener;
+import javax.jcr.observation.ObservationManager;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
@@ -36,19 +50,73 @@ import javax.jcr.query.QueryResult;
  * Adaptor to JCR class of the same name
  */
 public class JcrTraversalManager implements TraversalManager {
+  private static final Logger logger = Logger
+      .getLogger(JcrTraversalManager.class.getName());
 
-  javax.jcr.query.QueryManager queryManager;
+  private javax.jcr.query.QueryManager queryManager;
+  private javax.jcr.observation.ObservationManager observationManager;
+  private RepositoryListener repoListener = null;
 
   private static final String XPATH_QUERY_STRING_UNBOUNDED_DEFAULT = 
     "//*[@jcr:primaryType='nt:resource'] order by @jcr:lastModified, @jcr:uuid";
-  
+
   private static final String XPATH_QUERY_STRING_BOUNDED_DEFAULT = 
     "//*[@jcr:primaryType = 'nt:resource' and @jcr:lastModified >= " +
     "''{0}''] order by @jcr:lastModified, @jcr:uuid";
- 
+
   private String xpathUnboundedTraversalQuery;
   private String xpathBoundedTraversalQuery;
-  
+
+  private class RepositoryListener implements EventListener {
+    private Map addEventStore = Collections.synchronizedMap(new HashMap());
+    private Map deleteEventStore = Collections.synchronizedMap(new HashMap());
+
+    public void onEvent(EventIterator eventIter) {
+      while (eventIter.hasNext()) {
+        Event event = (Event) eventIter.next();
+        processEvent(event);
+      }
+    }
+
+    public List getDeleteEvents() {
+      return new LinkedList(deleteEventStore.values());
+    }
+
+    public void clearEventStore() {
+      addEventStore.clear();
+      deleteEventStore.clear();
+    }
+
+    /**
+     * Used to process the event.  This listener is mainly concerned with
+     * maintaining a good list of delete events.
+     */
+    private void processEvent(Event event) {
+      int type = event.getType();
+      String docid;
+      try {
+        docid = event.getPath();
+        logger.finer("Received event: docid=" + docid + ", type=" + type);
+
+        if (type == Event.NODE_ADDED) {
+          if (deleteEventStore.containsKey(docid)) {
+            deleteEventStore.remove(docid);
+          } else {
+            addEventStore.put(docid, event);
+          }
+        } else if (type == Event.NODE_REMOVED) {
+          if (addEventStore.containsKey(docid)) {
+            addEventStore.remove(docid);
+          } else {
+            deleteEventStore.put(docid, event);
+          }
+        }
+      } catch (javax.jcr.RepositoryException e) {
+        logger.log(Level.SEVERE, "Unable to access the event path", e);
+      }
+    }
+  }
+
   /**
    * @param xpathBoundedTraversalQuery the xpathBoundedTraversalQuery to set
    */
@@ -63,8 +131,10 @@ public class JcrTraversalManager implements TraversalManager {
     this.xpathUnboundedTraversalQuery = xpathUnboundedTraversalQuery;
   }
 
-  public JcrTraversalManager(QueryManager queryManager) {
+  public JcrTraversalManager(QueryManager queryManager, 
+      ObservationManager observationManager) {
     this.queryManager = queryManager;
+    this.observationManager = observationManager;
     this.xpathUnboundedTraversalQuery = XPATH_QUERY_STRING_UNBOUNDED_DEFAULT;
     this.xpathBoundedTraversalQuery = XPATH_QUERY_STRING_BOUNDED_DEFAULT;
   }
@@ -81,6 +151,13 @@ public class JcrTraversalManager implements TraversalManager {
     String uuid = extractDocidFromCheckpoint(jo, checkPoint);
     Calendar c = extractCalendarFromCheckpoint(jo, checkPoint);
     String queryString = makeCheckpointQueryString(uuid, c);
+
+    // Pull the list of events from the observed delete store and reset the
+    // observer before the next query.
+    registerListener();
+    Collection deleteEvents = repoListener.getDeleteEvents();
+    repoListener.clearEventStore();
+
     String lang = Query.XPATH;
     javax.jcr.query.Query query = makeCheckpointQuery(queryString, lang);
     // now iterate past the last document processed
@@ -102,23 +179,29 @@ public class JcrTraversalManager implements TraversalManager {
           // we have passed the last document we processed
           break;
         }
-        String thisUuid = thisNode.getUUID();
-        if (thisUuid.compareTo(uuid) > 0) {
-          // we have passed the last document we processed
-          break;
-        }
         useThisNode = false;
       }
     } catch (javax.jcr.RepositoryException e) {
       throw new RepositoryException(e);
     }
 
+    JcrDocumentList result = null;
     if (useThisNode) {
-      DocumentList result = new JcrDocumentList(thisNode, nodes);
-      return result;
+      result = new JcrDocumentList(thisNode, nodes);
+    } else {
+      result = new JcrDocumentList(nodes);
     }
-
-    DocumentList result = new JcrDocumentList(nodes);
+    // If there are delete events we need to inject them as documents in the
+    // DocumentList result.
+    if (deleteEvents.size() > 0) {
+      for (Iterator iter = deleteEvents.iterator(); iter.hasNext();) {
+        Event event = (Event) iter.next();
+        // Use the checkpoint calendar time as last modified
+        JcrEventDocument deleteDocument = 
+            new JcrEventDocument(event, c);
+        result.insert(deleteDocument);
+      }
+    }
     return result;
   }
 
@@ -136,7 +219,6 @@ public class JcrTraversalManager implements TraversalManager {
   }
 
   private String makeCheckpointQueryString(String uuid, Calendar c) {
-
     String time = Value.calendarToIso8601(c);
     Object[] arguments = { time };
     String statement = MessageFormat.format(
@@ -174,7 +256,26 @@ public class JcrTraversalManager implements TraversalManager {
     return c;
   }
 
+  /**
+   * Used to try to attach as observer.  It's important to do this before the
+   *  query is constructed.
+   *
+   * @throws RepositoryException
+   */
+  private void registerListener() throws RepositoryException {
+    if (repoListener == null) {
+      try {
+        repoListener = new RepositoryListener();
+        observationManager.addEventListener(repoListener, 0, null, true,
+            null, null, false);
+      } catch (javax.jcr.RepositoryException e) {
+        throw new RepositoryException("Unable to attach as observer.", e);
+      }
+    }
+  }
+
   public DocumentList startTraversal() throws RepositoryException {
+    registerListener();
     String lang = Query.XPATH;
     javax.jcr.query.Query query = 
       makeCheckpointQuery(xpathUnboundedTraversalQuery, lang);
@@ -196,5 +297,4 @@ public class JcrTraversalManager implements TraversalManager {
 
   public void setBatchHint(int batchHint) throws RepositoryException {
   }
-
 }
