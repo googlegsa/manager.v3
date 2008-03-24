@@ -340,9 +340,69 @@ public class DocPusherTest extends TestCase {
         + ServletUtil.DOCID + "doc1\"", resultXML);
   }
 
+  /**
+   * Test action.
+   * @throws PushException 
+   */
+  public void testAction() throws PushException {
+    String defaultActionJson = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+      + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+      + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+      + "}\r\n" + "";
+    Document document = JcrDocumentTest.makeDocumentFromJson(defaultActionJson);
+
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection);
+    dpusher.take(document, "junit");
+    String resultXML = mockFeedConnection.getFeed();
+
+    assertStringNotContains("action=\"add\"", resultXML);
+
+    String addActionJson = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+      + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+      + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+      + ",\"google:action\":\"add\""
+      + "}\r\n" + "";
+
+    document = JcrDocumentTest.makeDocumentFromJson(addActionJson);
+    dpusher.take(document, "junit");
+    resultXML = mockFeedConnection.getFeed();
+
+    assertStringContains("action=\"add\"", resultXML);
+
+    String deleteActionJson = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+      + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+      + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+      + ",\"google:action\":\"delete\""
+      + "}\r\n" + "";
+
+    document = JcrDocumentTest.makeDocumentFromJson(deleteActionJson);
+    dpusher.take(document, "junit");
+    resultXML = mockFeedConnection.getFeed();
+
+    assertStringContains("action=\"delete\"", resultXML);
+
+    String bogusActionJson = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+      + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+      + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+      + ",\"google:action\":\"bogus\""
+      + "}\r\n" + "";
+
+    document = JcrDocumentTest.makeDocumentFromJson(bogusActionJson);
+    dpusher.take(document, "junit");
+    resultXML = mockFeedConnection.getFeed();
+
+    assertStringNotContains("action=", resultXML);
+  }
+
   public static void assertStringContains(String expected, String actual) {
     Assert.assertTrue("Expected:\n" + expected + "\nDid not appear in\n"
         + actual, actual.indexOf(expected) > 0);
+  }
+
+  public static void assertStringNotContains(String expected, String actual) {
+    Assert.assertTrue("Expected:\n" + expected + "\nDid appear in\n" + actual,
+        actual.indexOf(expected) == -1);
   }
 
   private String buildExpectedXML(String feedType, String record) {
