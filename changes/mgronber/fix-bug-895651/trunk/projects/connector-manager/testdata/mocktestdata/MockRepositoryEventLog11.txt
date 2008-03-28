@@ -1,5 +1,0 @@
-# Testing pushing the delete action
-{"timestamp":"20","type":"save","docid":"doc2","content":"original content for doc2"}
-{"timestamp":"70","type":"save","docid":"doc3","content":"new content for doc3","name":"foo"}
-{"timestamp":"75","type":"pause","docid":"bogus"}
-{"timestamp":"80","type":"delete","docid":"doc2"}
