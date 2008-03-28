@@ -60,7 +60,7 @@ public class MockPusher implements Pusher {
             + " is missing");
       }
 
-      processProperty(null, property);
+      processProperty(name, property);
 
       name = SpiConstants.PROPNAME_CONTENTURL;
       if ((property = document.findProperty(name)) == null) {
