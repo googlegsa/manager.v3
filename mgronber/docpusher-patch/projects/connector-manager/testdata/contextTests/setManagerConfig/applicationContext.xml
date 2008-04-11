@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+
+	<bean id="ApplicationContextProperties" 
+		class="java.lang.String">
+		<constructor-arg value="testdata/contextTests/setManagerConfig/applicationContext.properties"/>
+	</bean>
+
+	<bean id="PropertyPlaceholderConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" >
+		<property name="location" ref="ApplicationContextProperties"/>
+	</bean>	
+
+	<bean id="FeedConnection"
+		class="com.google.enterprise.connector.pusher.MockFeedConnection"/>
+
+	<bean id="Pusher"
+		class="com.google.enterprise.connector.pusher.MockPusher"/>
+
+	<bean id="ConnectorScheduleStore"
+		class="com.google.enterprise.connector.persist.MockConnectorScheduleStore"/>
+
+	<bean id="ConnectorStateStore"
+		class="com.google.enterprise.connector.persist.MockConnectorStateStore" />
+
+	<bean id="Instantiator"
+		class="com.google.enterprise.connector.instantiator.MockInstantiator"/>
+
+	<bean id="Monitor"
+		class="com.google.enterprise.connector.monitor.HashMapMonitor" />
+
+	<bean id="Manager"
+		class="com.google.enterprise.connector.manager.MockManager"/>
+
+</beans>
