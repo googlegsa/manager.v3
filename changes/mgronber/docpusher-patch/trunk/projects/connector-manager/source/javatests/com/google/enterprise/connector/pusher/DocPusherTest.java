@@ -303,9 +303,7 @@ public class DocPusherTest extends TestCase {
     assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
         + ServletUtil.DOCID + "doc1\"", resultXML);
     assertStringContains("action=\"delete\"", resultXML);
-    assertStringNotContains(
-        "<content encoding=\"base64binary\">bm93IGlzIHRoZSB0aW1l</content>",
-        resultXML);
+    assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
 
     // Now document without URL or content
     props.clear();
@@ -345,6 +343,7 @@ public class DocPusherTest extends TestCase {
     assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
         + ServletUtil.DOCID + "doc1\"", resultXML);
     assertStringContains("action=\"delete\"", resultXML);
+    assertStringNotContains("last-modified=", resultXML);
   }
 
   /**
@@ -361,6 +360,8 @@ public class DocPusherTest extends TestCase {
         val = ValueImpl.getStringValue((String) obj);
       } else if (obj instanceof Calendar) {
         val = ValueImpl.getDateValue((Calendar) obj);
+      } else {
+        throw new AssertionError(obj);
       }
       List values = new ArrayList();
       values.add(val);
