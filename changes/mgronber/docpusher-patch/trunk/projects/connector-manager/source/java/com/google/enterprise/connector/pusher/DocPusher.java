@@ -430,6 +430,11 @@ public class DocPusher implements Pusher {
     String result = null;
     try {
       result = getStringAndThrow(document, name);
+      if (result == null) {
+        LOGGER.log(Level.WARNING, "Document missing required property " + name);
+        throw new RuntimeException("Document missing required property " 
+            + name);
+      }
     } catch (IllegalArgumentException e) {
       LOGGER.log(Level.WARNING,
           "Catching exception, rethrowing as RuntimeException", e);
@@ -515,7 +520,7 @@ public class DocPusher implements Pusher {
       lastModified = getCalendarAndThrow(document,
           SpiConstants.PROPNAME_LASTMODIFIED);
       if (lastModified == null) {
-        LOGGER.log(Level.WARNING, "Document missing expected "
+        LOGGER.log(Level.FINEST, "Document does not contain "
             + SpiConstants.PROPNAME_LASTMODIFIED);
       }
     } catch (IllegalArgumentException e) {
