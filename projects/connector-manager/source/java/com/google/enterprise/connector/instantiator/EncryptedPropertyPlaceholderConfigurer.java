@@ -148,7 +148,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       String passwd = in.readLine();
       return passwd;
     } catch (FileNotFoundException e) {
-      LOGGER.log(Level.WARNING, "Keystore passwd file does not exist");
+      LOGGER.log(Level.FINE, "Keystore passwd file does not exist");
     } catch (IOException e) {
       LOGGER.log(Level.WARNING, "Could not open keystore passwd file");
     }
