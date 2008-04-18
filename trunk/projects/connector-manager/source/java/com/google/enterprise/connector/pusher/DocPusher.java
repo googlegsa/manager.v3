@@ -348,7 +348,9 @@ public class DocPusher implements Pusher {
       throws IllegalArgumentException, RepositoryException {
     String result = null;
     ValueImpl v = getValueAndThrow(document, name);
-    if (v instanceof DateValue) {
+    if (v == null) {
+      result = null;
+    } else if (v instanceof DateValue) {
       result = ((DateValue) v).toRfc822();
     } else {
       result = v.toFeedXml();
@@ -428,6 +430,11 @@ public class DocPusher implements Pusher {
     String result = null;
     try {
       result = getStringAndThrow(document, name);
+      if (result == null) {
+        LOGGER.log(Level.WARNING, "Document missing required property " + name);
+        throw new RuntimeException("Document missing required property " 
+            + name);
+      }
     } catch (IllegalArgumentException e) {
       LOGGER.log(Level.WARNING,
           "Catching exception, rethrowing as RuntimeException", e);
@@ -512,6 +519,10 @@ public class DocPusher implements Pusher {
     try {
       lastModified = getCalendarAndThrow(document,
           SpiConstants.PROPNAME_LASTMODIFIED);
+      if (lastModified == null) {
+        LOGGER.log(Level.FINEST, "Document does not contain "
+            + SpiConstants.PROPNAME_LASTMODIFIED);
+      }
     } catch (IllegalArgumentException e) {
       LOGGER.log(Level.WARNING, "Swallowing exception while getting "
           + SpiConstants.PROPNAME_LASTMODIFIED, e);
