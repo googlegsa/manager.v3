@@ -19,7 +19,7 @@ package com.google.enterprise.connector.spi;
  * documents their meanings.
  * <p>
  * All constants whose names begin with PROPNAME are reserved names for
- * properties that may be accessed from a PropertyMap returned as a query
+ * properties that may be accessed from a Document returned as a query
  * result. The actual values of these property name constants all begin
  * with "google:". For future compatibility, all property names beginning
  * with "google:" are reserved.
@@ -33,18 +33,20 @@ public class SpiConstants {
    * Identifies a single-valued, string property that uniquely identifies a
    * document to this connector. The internal structure of this string is
    * opaque to the Search Appliance. Only printable, non-whitespace, ASCII
-   * characters are permitted in a DOCID. The connector implementor is
+   * characters are permitted in a DOCID.
+   * <p>
+   * This property is required on all Documents. The connector implementor is
    * encouraged to implement this by using the natural ID in the foreign
    * repository.
    * <p>
    * Value: google:docid
-   * 
    */
   public static final String PROPNAME_DOCID = "google:docid";
 
   /**
    * Identifies a single-valued, date property that gives the last modified
-   * date of a document.
+   * date of a document.  This property is optional but strongly recommended in
+   * order to associate a specific date to the document.
    * <p>
    * Value: google:lastmodify
    */

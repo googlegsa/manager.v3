@@ -33,16 +33,16 @@ public class JcrDocumentTest extends TestCase {
               + "}\r\n" + "";
       String date1 = "1970-01-01T00:00:10.000Z";
       String date2 = "Tue, 15 Nov 1994 12:45:26 GMT";
-      Document propertyMap = makeDocumentFromJson(json1);
+      Document document = makeDocumentFromJson(json1);
     
-      validateProperty(propertyMap, SpiConstants.PROPNAME_LASTMODIFIED, date2);
-      validateProperty(propertyMap, "jcr:lastModified", date1);
-      validateProperty(propertyMap, SpiConstants.PROPNAME_CONTENT,
+      validateProperty(document, SpiConstants.PROPNAME_LASTMODIFIED, date2);
+      validateProperty(document, "jcr:lastModified", date1);
+      validateProperty(document, SpiConstants.PROPNAME_CONTENT,
           "now is the time");
-      validateProperty(propertyMap, SpiConstants.PROPNAME_CONTENTURL,
+      validateProperty(document, SpiConstants.PROPNAME_CONTENTURL,
           "http://www.sometesturl.com/test");
       
-      int count = countProperties(propertyMap);
+      int count = countProperties(document);
       Assert.assertEquals(5, count);
     }
     {
@@ -52,14 +52,14 @@ public class JcrDocumentTest extends TestCase {
               + "\"google:contenturl\":\"http://www.sometesturl.com/test\""
               + "}\r\n" + "";
       String date1 = "1970-01-01T00:00:10.000Z";
-      Document propertyMap = makeDocumentFromJson(json1);
-      validateProperty(propertyMap, SpiConstants.PROPNAME_LASTMODIFIED, date1);
-      validateProperty(propertyMap, SpiConstants.PROPNAME_CONTENT,
+      Document document = makeDocumentFromJson(json1);
+      validateProperty(document, SpiConstants.PROPNAME_LASTMODIFIED, date1);
+      validateProperty(document, SpiConstants.PROPNAME_CONTENT,
           "now is the time");
-      validateProperty(propertyMap, SpiConstants.PROPNAME_CONTENTURL,
+      validateProperty(document, SpiConstants.PROPNAME_CONTENTURL,
           "http://www.sometesturl.com/test");
       
-      int count = countProperties(propertyMap);
+      int count = countProperties(document);
       Assert.assertEquals(4, count);
     }
   }

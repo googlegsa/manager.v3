@@ -39,11 +39,11 @@ public class MockPusherTest extends TestCase {
     MockPusher pusher = new MockPusher(System.out);
 
     {
-      DocumentList propertyMapList = qtm.startTraversal();
+      DocumentList documentList = qtm.startTraversal();
 
       int counter = 0;
       Document document = null;
-      while ((document = propertyMapList.nextDocument()) != null) {
+      while ((document = documentList.nextDocument()) != null) {
         pusher.take(document, "junit");
         counter++;
       }

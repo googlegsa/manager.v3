@@ -23,12 +23,24 @@ import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
+import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.SimpleDocument;
+import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.spiimpl.ValueImpl;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import javax.jcr.query.QueryManager;
 
@@ -257,6 +269,106 @@ public class DocPusherTest extends TestCase {
     assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
         + ServletUtil.DOCID + "doc1\"", resultXML);
 
+  }
+
+  /**
+   * Test minimal properties allowed for delete document.
+   */
+  public void testSimpleDeleteDoc() {
+    Map props = new HashMap();
+    Calendar cal = Calendar.getInstance();
+    cal.setTimeInMillis(10 * 1000);
+
+    // Test normal document as delete document
+    props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
+    props.put(SpiConstants.PROPNAME_ACTION,
+        SpiConstants.ActionType.DELETE.toString());
+    props.put(SpiConstants.PROPNAME_DOCID, "doc1");
+    props.put(SpiConstants.PROPNAME_CONTENT, "now is the time");
+    props.put(SpiConstants.PROPNAME_CONTENTURL,
+        "http://www.comtesturl.com/test");
+    Document document = createSimpleDocument(props); 
+
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection);
+    try {
+      dpusher.take(document, "junit");
+    } catch (PushException e) {
+      fail("Full document take");
+    }
+    String resultXML = mockFeedConnection.getFeed();
+
+    assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
+        resultXML);
+    assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
+        + ServletUtil.DOCID + "doc1\"", resultXML);
+    assertStringContains("action=\"delete\"", resultXML);
+    assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
+
+    // Now document without URL or content
+    props.clear();
+    props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
+    props.put(SpiConstants.PROPNAME_ACTION, 
+        SpiConstants.ActionType.DELETE.toString());
+    props.put(SpiConstants.PROPNAME_DOCID, "doc1");
+    document = createSimpleDocument(props); 
+
+    try {
+      dpusher.take(document, "junit");
+    } catch (PushException e) {
+      fail("No content document take");
+    }
+    resultXML = mockFeedConnection.getFeed();
+
+    assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
+        resultXML);
+    assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
+        + ServletUtil.DOCID + "doc1\"", resultXML);
+    assertStringContains("action=\"delete\"", resultXML);
+
+    // Now document without last-modified
+    props.clear();
+    props.put(SpiConstants.PROPNAME_ACTION, 
+        SpiConstants.ActionType.DELETE.toString());
+    props.put(SpiConstants.PROPNAME_DOCID, "doc1");
+    document = createSimpleDocument(props); 
+
+    try {
+      dpusher.take(document, "junit");
+    } catch (Exception e) {
+      fail("No last-modified document take");
+    }
+    resultXML = mockFeedConnection.getFeed();
+
+    assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
+        + ServletUtil.DOCID + "doc1\"", resultXML);
+    assertStringContains("action=\"delete\"", resultXML);
+    assertStringNotContains("last-modified=", resultXML);
+  }
+
+  /**
+   * Utility method to convert {@link Map} of Java Objects into a
+   * {@link SimpleDocument}.
+   */
+  private Document createSimpleDocument(Map props) {
+    Map spiProps = new HashMap();
+    for (Iterator iter = props.keySet().iterator(); iter.hasNext();) {
+      String key = (String) iter.next();
+      Object obj = props.get(key);
+      Value val = null;
+      if (obj instanceof String) {
+        val = ValueImpl.getStringValue((String) obj);
+      } else if (obj instanceof Calendar) {
+        val = ValueImpl.getDateValue((Calendar) obj);
+      } else {
+        throw new AssertionError(obj);
+      }
+      List values = new ArrayList();
+      values.add(val);
+      Property spiProp = new SimpleProperty(values); 
+      spiProps.put(key, spiProp);
+    }
+    return new SimpleDocument(spiProps);
   }
 
   /**
