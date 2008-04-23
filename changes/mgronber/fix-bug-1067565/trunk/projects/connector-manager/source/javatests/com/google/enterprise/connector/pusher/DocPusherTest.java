@@ -528,57 +528,59 @@ public class DocPusherTest extends TestCase {
     // Delete the Log file it it exists.
     (new File(TEST_LOG_FILE)).delete();
 
-    // Setup logging on the DocPusher class
-    FileHandler fh = new FileHandler(TEST_LOG_FILE, 10000, 1, true);
-    SimpleFormatter sf = new SimpleFormatter();
-    fh.setFormatter(sf);
-    DocPusher.FEED_LOGGER.addHandler(fh);
-    DocPusher.FEED_LOGGER.setLevel(Level.FINER);
+    try {
+      // Setup logging on the DocPusher class.
+      FileHandler fh = new FileHandler(TEST_LOG_FILE, 10000, 1);
+      SimpleFormatter sf = new SimpleFormatter();
+      fh.setFormatter(sf);
+      DocPusher.getFeedLogger().addHandler(fh);
+      DocPusher.getFeedLogger().setLevel(Level.FINER);
 
-    // Setup DocPusher
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection);
-    Document document;
-    String resultXML;
+      // Setup the DocPusher.
+      MockFeedConnection mockFeedConnection = new MockFeedConnection();
+      DocPusher dpusher = new DocPusher(mockFeedConnection);
+      Document document;
+      String resultXML;
 
-    // Test incremental feed with content
-    final String jsonIncremental =
-        "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-            + ",\"content\":\"now is the time\""
-            + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
-            + "}\r\n" + "";
-    document = JcrDocumentTest.makeDocumentFromJson(jsonIncremental);
-    dpusher.take(document, "junit");
-    resultXML = mockFeedConnection.getFeed();
-    assertFeedInLog(resultXML, TEST_LOG_FILE);
+      // Test incremental feed with content.
+      final String jsonIncremental =
+          "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+              + ",\"content\":\"now is the time\""
+              + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
+              + "}\r\n" + "";
+      document = JcrDocumentTest.makeDocumentFromJson(jsonIncremental);
+      dpusher.take(document, "junit");
+      resultXML = mockFeedConnection.getFeed();
+      assertFeedInLog(resultXML, TEST_LOG_FILE);
 
-    // Test metadata-url feed with content
-    final String jsonMetaAndUrl =
-        "{\"timestamp\":\"10\",\"docid\":\"doc2\""
-            + ",\"content\":\"now is the time\""
-            + ",\"google:searchurl\":\"http://www.sometesturl.com/test\""
-            + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
-            + "}\r\n" + "";
-    document = JcrDocumentTest.makeDocumentFromJson(jsonMetaAndUrl);
-    dpusher.take(document, "junit");
-    resultXML = mockFeedConnection.getFeed();
-    assertFeedInLog(resultXML, TEST_LOG_FILE);
+      // Test metadata-url feed with content.
+      final String jsonMetaAndUrl =
+          "{\"timestamp\":\"10\",\"docid\":\"doc2\""
+              + ",\"content\":\"now is the time\""
+              + ",\"google:searchurl\":\"http://www.sometesturl.com/test\""
+              + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
+              + "}\r\n" + "";
+      document = JcrDocumentTest.makeDocumentFromJson(jsonMetaAndUrl);
+      dpusher.take(document, "junit");
+      resultXML = mockFeedConnection.getFeed();
+      assertFeedInLog(resultXML, TEST_LOG_FILE);
 
-    // Test MSWord Document
-    final String jsonMsWord =
-        "{\"timestamp\":\"10\",\"docid\":\"msword\""
-            + ",\"google:mimetype\":\"application/msword\""
-            + ",\"contentfile\":\"testdata/mocktestdata/test.doc\""
-            + ",\"author\":\"ziff\""
-            + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
-            + "}\r\n" + "";
-    document = JcrDocumentTest.makeDocumentFromJson(jsonMsWord);
-    dpusher.take(document, "junit");
-    resultXML = mockFeedConnection.getFeed();
-    assertFeedInLog(resultXML, TEST_LOG_FILE);
-
-    // Clean up
-    (new File(TEST_LOG_FILE)).delete();
+      // Test MSWord Document.
+      final String jsonMsWord =
+          "{\"timestamp\":\"10\",\"docid\":\"msword\""
+              + ",\"google:mimetype\":\"application/msword\""
+              + ",\"contentfile\":\"testdata/mocktestdata/test.doc\""
+              + ",\"author\":\"ziff\""
+              + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
+              + "}\r\n" + "";
+      document = JcrDocumentTest.makeDocumentFromJson(jsonMsWord);
+      dpusher.take(document, "junit");
+      resultXML = mockFeedConnection.getFeed();
+      assertFeedInLog(resultXML, TEST_LOG_FILE);
+    } finally {
+      // Clean up the log file.
+      (new File(TEST_LOG_FILE)).delete();
+    }
   }
 
   private void assertFeedInLog(String resultXML, String logFileName)
@@ -630,7 +632,7 @@ public class DocPusherTest extends TestCase {
    * Test using teed feed file.
    */
   public void testTeedFeed() throws IOException, PushException {
-    // Setup context where the teedFeedFile is set
+    // Setup context where the teedFeedFile is set.
     Context.refresh();
     Context context = Context.getInstance();
     context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
@@ -645,27 +647,29 @@ public class DocPusherTest extends TestCase {
     // Make sure the teed feed file does not exist
     (new File(tffName)).delete();
 
-    // Create Document
+    // Create the Document.
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
       + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
       + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
       + "}\r\n" + "";
     Document document = JcrDocumentTest.makeDocumentFromJson(json1);
 
-    // Create DocPusher
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection);
-    dpusher.take(document, "junit");
-    String resultXML = mockFeedConnection.getFeed();
-    assertFeedTeed(resultXML, tffName);
+    try {
+      // Create DocPusher and send feed.
+      MockFeedConnection mockFeedConnection = new MockFeedConnection();
+      DocPusher dpusher = new DocPusher(mockFeedConnection);
+      dpusher.take(document, "junit");
+      String resultXML = mockFeedConnection.getFeed();
+      assertFeedTeed(resultXML, tffName);
 
-    // Now send the feed again and compare with existing teed feed file
-    dpusher.take(document, "junit");
-    String secondResultXML = mockFeedConnection.getFeed();
-    assertFeedTeed(resultXML + secondResultXML, tffName);
-
-    // Clean up teed feed file
-    (new File(tffName)).delete();
+      // Now send the feed again and compare with existing teed feed file.
+      dpusher.take(document, "junit");
+      String secondResultXML = mockFeedConnection.getFeed();
+      assertFeedTeed(resultXML + secondResultXML, tffName);
+    } finally {
+      // Clean up teed feed file.
+      (new File(tffName)).delete();
+    }
   }
 
   private void assertFeedTeed(String resultXML, String tffName) 

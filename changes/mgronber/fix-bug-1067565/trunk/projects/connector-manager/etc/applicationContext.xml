@@ -25,6 +25,48 @@
 		<constructor-arg index="0" ref="FeedConnection" />
 	</bean>
 
+	<!-- Create a Handler for the Feed Logger and add it to the logger -->
+	<bean id="FeedFormatter" class="java.util.logging.SimpleFormatter" />
+
+	<bean id="FeedHandler" class="java.util.logging.FileHandler">
+		<constructor-arg index="0" value="${catalina.base}/logs/DocPusher.FEED.log" />
+		<constructor-arg index="1" value="52428800" />
+		<constructor-arg index="2" value="10" />
+		<property name="level" value="FINER" />
+		<property name="encoding" value="UTF-8" />
+		<property name="formatter" ref="FeedFormatter" />
+	</bean>
+
+	<bean id="FeedLogger" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+		<property name="staticMethod"
+			value="com.google.enterprise.connector.pusher.DocPusher.getFeedLogger" />
+	</bean>
+
+	<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+		<property name="targetObject" ref="FeedLogger" />
+		<property name="targetMethod" value="addHandler" />
+		<property name="arguments">
+			<list>
+				<ref bean="FeedHandler" />
+			</list>
+		</property>
+	</bean>
+
+	<!-- Uncomment the following bean if you want to turn on Feed Logging -->
+	<!-- without the use of a separate logging.properties file.  You must -->
+	<!-- restart Tomcat if you change this.                               -->
+	<!--
+	<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+		<property name="targetObject" ref="FeedLogger" />
+		<property name="targetMethod" value="setLevel" />
+		<property name="arguments">
+			<list>
+				<value>FINER</value>
+			</list>
+		</property>
+	</bean>
+	-->
+
 	<bean id="ConnectorScheduleStore"
 		class="com.google.enterprise.connector.persist.PrefsStore">
 	</bean>

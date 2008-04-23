@@ -55,6 +55,20 @@ import java.util.logging.Logger;
  */
 
 public class DocPusher implements Pusher {
+  private static final Logger LOGGER =
+      Logger.getLogger(DocPusher.class.getName());
+  private static final Logger FEED_LOGGER =
+      Logger.getLogger(DocPusher.class.getName() + ".FEED");
+  private static final Level FEED_LOG_LEVEL = Level.FINER;
+
+  /**
+   * This field is used to construct a feed record in parallel to the main feed
+   * InputStream construction.  It is only used if the feed logging level is set
+   * to the appropriate level.  It only exists during the time the main feed is
+   * being constructed.  Once sufficient information has been appended to this
+   * buffer its contents will be logged and it will be nulled.
+   */
+  private StringBuffer feedLogRecord;
 
   private static Set propertySkipSet;
 
@@ -62,13 +76,8 @@ public class DocPusher implements Pusher {
     propertySkipSet = new HashSet();
     propertySkipSet.add(SpiConstants.PROPNAME_CONTENT);
     propertySkipSet.add(SpiConstants.PROPNAME_DOCID);
+    FEED_LOGGER.setUseParentHandlers(false);
   }
-
-  private static final Logger LOGGER =
-      Logger.getLogger(DocPusher.class.getName());
-  static final Logger FEED_LOGGER =
-      Logger.getLogger(DocPusher.class.getName() + ".Feeds");
-  private StringBuffer feedLogRecord;
 
   // Strings for XML tags.
   public static final String XML_DEFAULT_ENCODING = "UTF-8";
@@ -116,6 +125,10 @@ public class DocPusher implements Pusher {
    */
   public DocPusher(FeedConnection feedConnection) {
     this.feedConnection = feedConnection;
+  }
+
+  public static Logger getFeedLogger() {
+    return FEED_LOGGER;
   }
 
   /**
@@ -233,7 +246,7 @@ public class DocPusher implements Pusher {
           suffix.toString());
     }
 
-    if (FEED_LOGGER.isLoggable(Level.FINER)) {
+    if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
       feedLogRecord.append(prefix);
       if (contentAllowed && content != null) {
         feedLogRecord.append("...content...");
@@ -563,7 +576,7 @@ public class DocPusher implements Pusher {
       }
     }
 
-    if (FEED_LOGGER.isLoggable(Level.FINER)) {
+    if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
       feedLogRecord = new StringBuffer();
       feedLogRecord.append(prefix);
     }
@@ -574,9 +587,9 @@ public class DocPusher implements Pusher {
     InputStream is = stringWrappedInputStream(prefix.toString(),
         recordInputStream, suffix.toString());
 
-    if (FEED_LOGGER.isLoggable(Level.FINER)) {
+    if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
       feedLogRecord.append(suffix);
-      FEED_LOGGER.log(Level.FINER, feedLogRecord.toString());
+      FEED_LOGGER.log(FEED_LOG_LEVEL, feedLogRecord.toString());
       feedLogRecord = null;
     }
 
@@ -689,23 +702,12 @@ public class DocPusher implements Pusher {
     OutputStream os = null;
     if (osFilename != null) {
       osFile = new File(osFilename);
-      // Try to create it if it doesn't already exist
-      if (!osFile.exists()) {
-        try {
-          osFile.createNewFile();
-        } catch (IOException e) {
-          LOGGER.log(Level.WARNING, "Unable to create teed feed file:"
-              + osFilename, e);
-        }
-      }
-      if (osFile.exists()) {
-        try {
-          os = new BufferedOutputStream(new FileOutputStream(osFile, true));
-          is = new TeeInputStream(xmlData, os);
-        } catch (IOException e) {
-          LOGGER.log(Level.WARNING, "cannot write file: " +
-              osFile.getAbsolutePath(), e);
-        }
+      try {
+        os = new BufferedOutputStream(new FileOutputStream(osFile, true));
+        is = new TeeInputStream(xmlData, os);
+      } catch (IOException e) {
+        LOGGER.log(Level.WARNING, "cannot write file: " +
+            osFile.getAbsolutePath(), e);
       }
     }
     try {
