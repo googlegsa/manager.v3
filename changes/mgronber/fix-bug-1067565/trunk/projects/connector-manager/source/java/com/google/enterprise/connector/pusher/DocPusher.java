@@ -76,7 +76,6 @@ public class DocPusher implements Pusher {
     propertySkipSet = new HashSet();
     propertySkipSet.add(SpiConstants.PROPNAME_CONTENT);
     propertySkipSet.add(SpiConstants.PROPNAME_DOCID);
-    FEED_LOGGER.setUseParentHandlers(false);
   }
 
   // Strings for XML tags.
