@@ -36,6 +36,17 @@ public class GsaFeedConnection implements FeedConnection {
    */
   public static final String SUCCESS_RESPONSE = "Success";
 
+  /**
+   * The GSA's response when the client is not authorized to send feeds.
+   */
+  public static final String UNAUTHORIZED_RESPONSE = 
+      "Error - Unauthorized Request";
+
+  /**
+   * The GSA's response when there was an internal error.
+   */
+  public static final String INTERNAL_ERROR_RESPONSE = "Internal Error";
+
   // multipart/form-data uploads require a boundary to delimit controls.
   // Since we XML-escape or base64-encode all data provided by the connector,
   // the feed XML will never contain "<<".

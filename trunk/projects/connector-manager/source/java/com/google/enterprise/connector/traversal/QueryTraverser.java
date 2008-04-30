@@ -139,8 +139,7 @@ public class QueryTraverser implements Traverser {
           + ") is too large.  To fix, increase heap space or reduce size "
           + "of document.");
     } catch (PushException e) {
-      LOGGER.log(Level.WARNING, e.getMessage(), e);
-      e.printStackTrace();
+      LOGGER.log(Level.SEVERE, e.getMessage(), e);
     } finally {
       // checkpoint completed work as well as skip past troublesome documents
       // (e.g. documents that are too large and will always fail)
