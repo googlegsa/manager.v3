@@ -678,12 +678,12 @@ public class DocPusher implements Pusher {
     try {
       gsaResponse = feedConnection.sendData(dataSource, feedType, is);
       if (!gsaResponse.equals(GsaFeedConnection.SUCCESS_RESPONSE)) {
-        String eMessage = null;
+        String eMessage = gsaResponse;
         if (GsaFeedConnection.UNAUTHORIZED_RESPONSE.equals(gsaResponse)) {
-          eMessage = gsaResponse + ": Client is not authorized to send feeds."
+          eMessage += ": Client is not authorized to send feeds."
               + " Make sure the GSA is configured to trust feeds from your host.";
         } else if (GsaFeedConnection.INTERNAL_ERROR_RESPONSE.equals(gsaResponse)) {
-          eMessage = gsaResponse + ": Check GSA status.";
+          eMessage += ": Check GSA status or feed format.";
         }
         throw new PushException(eMessage);
       }
