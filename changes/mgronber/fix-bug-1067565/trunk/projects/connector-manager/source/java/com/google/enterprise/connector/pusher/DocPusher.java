@@ -53,12 +53,13 @@ import java.util.logging.Logger;
  * Class to generate xml feed for a document from the Document and send it
  * to GSA.
  */
-
 public class DocPusher implements Pusher {
   private static final Logger LOGGER =
       Logger.getLogger(DocPusher.class.getName());
-  private static final Logger FEED_LOGGER =
-      Logger.getLogger(DocPusher.class.getName() + ".FEED");
+  private static final Logger FEED_WRAPPER_LOGGER =
+      Logger.getLogger(LOGGER.getName() + ".FEED_WRAPPER");
+  private static final Logger FEED_LOGGER = 
+      Logger.getLogger(FEED_WRAPPER_LOGGER.getName() + ".FEED");
   private static final Level FEED_LOG_LEVEL = Level.FINER;
 
   /**
@@ -127,7 +128,7 @@ public class DocPusher implements Pusher {
   }
 
   public static Logger getFeedLogger() {
-    return FEED_LOGGER;
+    return FEED_WRAPPER_LOGGER;
   }
 
   /**

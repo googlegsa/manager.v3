@@ -36,13 +36,13 @@
 		<property name="formatter" ref="FeedFormatter" />
 	</bean>
 
-	<bean id="FeedLogger" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+	<bean id="FeedWrapperLogger" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
 		<property name="staticMethod"
 			value="com.google.enterprise.connector.pusher.DocPusher.getFeedLogger" />
 	</bean>
 
 	<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-		<property name="targetObject" ref="FeedLogger" />
+		<property name="targetObject" ref="FeedWrapperLogger" />
 		<property name="targetMethod" value="addHandler" />
 		<property name="arguments">
 			<list>
@@ -52,7 +52,7 @@
 	</bean>
 
 	<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-		<property name="targetObject" ref="FeedLogger" />
+		<property name="targetObject" ref="FeedWrapperLogger" />
 		<property name="targetMethod" value="setUseParentHandlers" />
 		<property name="arguments">
 			<list>
@@ -62,7 +62,7 @@
 	</bean>
 
 	<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-		<property name="targetObject" ref="FeedLogger" />
+		<property name="targetObject" ref="FeedWrapperLogger" />
 		<property name="targetMethod" value="setLevel" />
 		<property name="arguments">
 			<list>
