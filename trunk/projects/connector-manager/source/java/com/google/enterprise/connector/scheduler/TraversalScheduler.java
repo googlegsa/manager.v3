@@ -147,7 +147,6 @@ public class TraversalScheduler implements Scheduler {
   private boolean shouldRun(Schedule schedule) {
     Calendar now = Calendar.getInstance();
     int hour = now.get(Calendar.HOUR_OF_DAY);
-    int minute = now.get(Calendar.MINUTE);
     List timeIntervals = schedule.getTimeIntervals();
     for (Iterator iter = timeIntervals.iterator(); iter.hasNext(); ) {
       ScheduleTimeInterval interval = (ScheduleTimeInterval) iter.next();
@@ -244,13 +243,17 @@ public class TraversalScheduler implements Scheduler {
                   + "done: " + connectorName);
                 continue;
               }
+              // In the case where the work queue item is being reused need to
+              // reset the finished status so the number of documents is reported
+              // after it finishes.
+              runnable.setIsFinished(false);
               workQueue.addWork(runnable);
             }
             int numDocsTraversed = runnable.getNumDocsTraversed();
             if (numDocsTraversed > 0) {
               hostLoadManager.updateNumDocsTraversed(connectorName, 
                 numDocsTraversed);
-            } else {
+            } else if (numDocsTraversed == 0 && runnable.getBatchHint() > 0) {
               // Traversal of 0 documents indicates some type of problem.
               // It may be that runnable is not returning or able to be 
               // interrupted.
@@ -292,6 +295,7 @@ public class TraversalScheduler implements Scheduler {
     private long timeout;
     
     private long timeoutAdditional = 0;
+    private int batchHint = 0;
         
     public TraversalWorkQueueItem(String connectorName) {
       this.connectorName = connectorName;
@@ -302,7 +306,15 @@ public class TraversalScheduler implements Scheduler {
       this.timeOfFirstFailure = 0;
       this.timeout = traverser.getTimeoutMillis();
     }
-    
+
+    public void setIsFinished(boolean isFinished) {
+      this.isFinished = isFinished;
+    }
+
+    public int getBatchHint() {
+      return batchHint;
+    }
+
     public int getNumDocsTraversed() {
       waitTillFinishedOrTimeout();
       return numDocsTraversed;
@@ -350,22 +362,22 @@ public class TraversalScheduler implements Scheduler {
     }
 
     public void doWork() {
-      int batchHint = hostLoadManager.determineBatchHint(connectorName);
+      batchHint = hostLoadManager.determineBatchHint(connectorName);
       if (null != traverser) {
-        LOGGER.finer("Begin runBatch");
-        if (0 == batchHint) {
-          numDocsTraversed = 0;
-        } else {
+        if (batchHint > 0) {
+          LOGGER.log(Level.FINEST, "Begin runBatch; batchHint=" + batchHint);
           numDocsTraversed = traverser.runBatch(batchHint);
+          LOGGER.log(Level.FINEST, "End runBatch");
+        } else {
+          numDocsTraversed = 0;
         }
-        LOGGER.finer("End runBatch");
         numConsecutiveFailures = 0;
         timeOfFirstFailure = 0;
       } else {
         failure();
       }
       isFinished = true;
-      if (numDocsTraversed < batchHint) {
+      if (numDocsTraversed == 0 && batchHint > 0) {
         hostLoadManager.connectorFinishedTraversal(connectorName);
       }
       synchronized(this) {
@@ -381,6 +393,21 @@ public class TraversalScheduler implements Scheduler {
       if (1 == numConsecutiveFailures) {
         timeOfFirstFailure = System.currentTimeMillis();
       }
+    }
+
+    public String toString() {
+      StringBuffer sb = new StringBuffer();
+      sb.append("TraversalWorkQueueItem[");
+      sb.append("this=" + hashCode());
+      sb.append(";connectorName=" + connectorName);
+      sb.append(";traverser=" + traverser);
+      sb.append(";numDocsTraversed=" + numDocsTraversed);
+      sb.append(";isFinished=" + isFinished);
+      sb.append(";numConsecutiveFailures=" + numConsecutiveFailures);
+      sb.append(";timeOfFirstFailure=" + timeOfFirstFailure);
+      sb.append(";timeout=" + timeout);
+      sb.append("]");
+      return (new String(sb));
     }
   }
 }

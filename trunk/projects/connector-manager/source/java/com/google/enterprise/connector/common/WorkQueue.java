@@ -290,6 +290,7 @@ public class WorkQueue {
       // don't add more work if we are shutting down
       return;
     }
+    LOGGER.log(Level.FINEST, "Adding work: " + work);
     workQueue.addLast(work);
     notifyAll();
     
@@ -332,7 +333,9 @@ public class WorkQueue {
    * @return the work item
    */
   WorkQueueItem removeWork() {
-    return (WorkQueueItem) workQueue.removeFirst();
+    WorkQueueItem item = (WorkQueueItem) workQueue.removeFirst();
+    LOGGER.log(Level.FINEST, "Removing work: " + item);
+    return item;
   }
 
   /**
