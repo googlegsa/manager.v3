@@ -18,12 +18,17 @@ import com.google.enterprise.connector.persist.ConnectorScheduleStore;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *  Keeps track of the load for each connector instance as well as supplies
  *  batchHint to indicate how many docs to allow to be traversed by traverser. 
  */
 public class HostLoadManager {
+  private static final Logger LOGGER = 
+      Logger.getLogger(HostLoadManager.class.getName());
+
   // size of batches for traversal
   private static final int BATCH_SIZE = 100;
   
@@ -138,8 +143,11 @@ public class HostLoadManager {
   public int determineBatchHint(String connectorName) {
     int maxDocsPerPeriod = 
       (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
+    LOGGER.log(Level.FINEST, "maxDocsPerPeriod=" + maxDocsPerPeriod);
     int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
+    LOGGER.log(Level.FINEST, "docsTraversed=" + docsTraversed);
     int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
+    LOGGER.log(Level.FINEST, "remainingDocsToTraverse=" + remainingDocsToTraverse);
     if (remainingDocsToTraverse > BATCH_SIZE) {
       remainingDocsToTraverse = BATCH_SIZE;
     }

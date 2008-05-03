@@ -66,7 +66,8 @@ public class SetSchedule extends ConnectorManagerServlet {
         root, ServletUtil.XMLTAG_CONNECTOR_NAME);
     int load = Integer.parseInt(ServletUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_LOAD));
-    int retryDelayMillis = 0; // no delay unless one is specified
+    // Default to 5 minutes delay unless one is specified
+    int retryDelayMillis = 5 * 60 * 1000;
     String delayStr = ServletUtil.getFirstElementByTagName(root, 
         ServletUtil.XMLTAG_DELAY);
     if (delayStr != null) {
