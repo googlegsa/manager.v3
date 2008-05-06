@@ -25,7 +25,7 @@ The following policy will be used to name the file:
 Where:
 
   * name = Connector Name (i.e. connector-otex, connector-dctm, ...)
-  * version = major.minor.micro (i.e. 1.0.1, ...).  Each released version should have a representative tag directory in the *`tags/`* section of the repository.  'Major' will coincide with releases of the Enterprise Search Appliance release.  Right now *`major=1`* is schedule to work with Google Search Appliance *`major=5`*.  Each partner can control the 'minor' and 'micro' parts.  'Minor' should change when there are new features, new ECMS versions are supported, or compatibility with other modules has changed.  'Micro' should change when there are bug fixes.
+  * version = major.minor.micro (i.e. 1.0.1, ...).  Each released version should have a representative tag directory in the *`tags/`* section of the repository.  'Major' will coincide with releases of the Enterprise Search Appliance release.  Right now *`major=1`* is schedule to work with Google Search Appliance *`major=5`*.  Each partner can control the 'minor' and 'micro' parts.  'Minor' should change when there are new features, new ECMS versions are supported, or compatibility with other modules has changed.  'Micro' should change when there are bug fixes. For example, patch releases that are available from code site's download tab but not included in the installer.
   * *`-src`* = added for source distributions
   * *`_en`* = added for English only distributions.  A similar convention can be used if we distribute for other languages separately.  If the *`_en`* is not present then it is assumed to support all languages.
   * extension = *`zip`* for zip files and *`tar.gz`* for gzip tar files
