@@ -53,8 +53,23 @@ import java.util.logging.Logger;
  * Class to generate xml feed for a document from the Document and send it
  * to GSA.
  */
-
 public class DocPusher implements Pusher {
+  private static final Logger LOGGER =
+      Logger.getLogger(DocPusher.class.getName());
+  private static final Logger FEED_WRAPPER_LOGGER =
+      Logger.getLogger(LOGGER.getName() + ".FEED_WRAPPER");
+  private static final Logger FEED_LOGGER = 
+      Logger.getLogger(FEED_WRAPPER_LOGGER.getName() + ".FEED");
+  private static final Level FEED_LOG_LEVEL = Level.FINER;
+
+  /**
+   * This field is used to construct a feed record in parallel to the main feed
+   * InputStream construction.  It is only used if the feed logging level is set
+   * to the appropriate level.  It only exists during the time the main feed is
+   * being constructed.  Once sufficient information has been appended to this
+   * buffer its contents will be logged and it will be nulled.
+   */
+  private StringBuffer feedLogRecord;
 
   private static Set propertySkipSet;
 
@@ -63,9 +78,6 @@ public class DocPusher implements Pusher {
     propertySkipSet.add(SpiConstants.PROPNAME_CONTENT);
     propertySkipSet.add(SpiConstants.PROPNAME_DOCID);
   }
-
-  private static final Logger LOGGER = Logger.getLogger(DocPusher.class
-      .getName());
 
   // Strings for XML tags.
   public static final String XML_DEFAULT_ENCODING = "UTF-8";
@@ -108,16 +120,20 @@ public class DocPusher implements Pusher {
   private InputStream xmlData;
 
   /**
-   * 
+   *
    * @param feedConnection a connection
    */
   public DocPusher(FeedConnection feedConnection) {
     this.feedConnection = feedConnection;
   }
 
+  public static Logger getFeedLogger() {
+    return FEED_WRAPPER_LOGGER;
+  }
+
   /**
    * Gets the response from GSA when the feed is sent. For testing only.
-   * 
+   *
    * @return gsaResponse response from GSA.
    */
   protected String getGsaResponse() {
@@ -229,13 +245,22 @@ public class DocPusher implements Pusher {
       is = stringWrappedInputStream(prefix.toString(), null,
           suffix.toString());
     }
+
+    if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
+      feedLogRecord.append(prefix);
+      if (contentAllowed && content != null) {
+        feedLogRecord.append("...content...");
+      }
+      feedLogRecord.append(suffix);
+    }
+
     return is;
   }
 
   /**
    * Wrap the metadata and append it to the string buffer. Empty metadata
    * properties are not appended.
-   * 
+   *
    * @param buf string buffer
    * @param document Document
    */
@@ -245,7 +270,7 @@ public class DocPusher implements Pusher {
     try {
       propertyNames = document.getPropertyNames();
     } catch (RepositoryException e) {
-      LOGGER.log(Level.WARNING, 
+      LOGGER.log(Level.WARNING,
           "Swallowing exception while starting getting property names", e);
     }
 
@@ -269,7 +294,7 @@ public class DocPusher implements Pusher {
       try {
         property = document.findProperty(name);
       } catch (RepositoryException e) {
-        LOGGER.log(Level.WARNING, 
+        LOGGER.log(Level.WARNING,
             "Swallowing exception while reading properties", e);
         continue;
       }
@@ -281,7 +306,7 @@ public class DocPusher implements Pusher {
   /**
    * Wrap a single Property and append to string buffer. Does nothing if the
    * Property's value is null or zero-length.
-   * 
+   *
    * @param buf string buffer
    * @param name the property's name
    * @param property Property
@@ -440,7 +465,7 @@ public class DocPusher implements Pusher {
           "Catching exception, rethrowing as RuntimeException", e);
       throw new RuntimeException(e);
     } catch (RepositoryException e) {
-      LOGGER.log(Level.WARNING, 
+      LOGGER.log(Level.WARNING,
           "Catching exception, rethrowing as RuntimeException", e);
       throw new RuntimeException(e);
     }
@@ -551,11 +576,22 @@ public class DocPusher implements Pusher {
       }
     }
 
+    if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
+      feedLogRecord = new StringBuffer();
+      feedLogRecord.append(prefix);
+    }
+
     InputStream recordInputStream = xmlWrapRecord(searchurl, displayUrl,
         lastModified, encodedContentStream, mimetype, actionType, document);
 
     InputStream is = stringWrappedInputStream(prefix.toString(),
         recordInputStream, suffix.toString());
+
+    if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
+      feedLogRecord.append(suffix);
+      FEED_LOGGER.log(FEED_LOG_LEVEL, feedLogRecord.toString());
+      feedLogRecord = null;
+    }
 
     return is;
   }
@@ -570,7 +606,7 @@ public class DocPusher implements Pusher {
    * Inspect the content stream for a feed item, and if it's null or empty,
    * substitute a string which will insure that the feed items gets indexed by
    * the GSA
-   * 
+   *
    * @param contentStream from the feed item
    * @return an InputStream which is guaranteed to be non-null.
    * @throws RuntimeException if the DEFAULT_CONTENT string above cannot be
@@ -592,7 +628,7 @@ public class DocPusher implements Pusher {
 
   /**
    * Form a Google connector URL.
-   * 
+   *
    * @param connectorName
    * @param docid
    * @return the connector url
@@ -645,7 +681,7 @@ public class DocPusher implements Pusher {
 
   /**
    * Takes a Document and sends a the feed to the GSA.
-   * 
+   *
    * @param document Document corresponding to the document.
    * @param connectorName The connector name that fed this document
    */
@@ -655,24 +691,23 @@ public class DocPusher implements Pusher {
     setFeedType(document);
     this.xmlData = buildXmlData(document, connectorName);
     if (this.xmlData == null) {
-      LOGGER.log(Level.WARNING, 
+      LOGGER.log(Level.WARNING,
           "Skipped this document for feeding, continuing");
       return;
     }
+    // Setup the teedFeedFile if declared
     InputStream is = xmlData;
     String osFilename = Context.getInstance().getTeedFeedFile();
     File osFile = null;
     OutputStream os = null;
     if (osFilename != null) {
       osFile = new File(osFilename);
-      if (osFile.exists()) {
-        try {
-          os = new BufferedOutputStream(new FileOutputStream(osFile, true));
-          is = new TeeInputStream(xmlData, os);
-        } catch (IOException e) {
-          LOGGER.log(Level.WARNING, "cannot write file: " + 
-              osFile.getAbsolutePath(), e);
-        }
+      try {
+        os = new BufferedOutputStream(new FileOutputStream(osFile, true));
+        is = new TeeInputStream(xmlData, os);
+      } catch (IOException e) {
+        LOGGER.log(Level.WARNING, "cannot write file: " +
+            osFile.getAbsolutePath(), e);
       }
     }
     try {
@@ -687,10 +722,10 @@ public class DocPusher implements Pusher {
         }
         throw new PushException(eMessage);
       }
-      LOGGER.finer("Document (" + document + ") from connector " + 
+      LOGGER.finer("Document (" + document + ") from connector " +
           connectorName + " sent.");
     } catch (MalformedURLException e) {
-      LOGGER.log(Level.WARNING, 
+      LOGGER.log(Level.WARNING,
           "Rethrowing MalformedURLException as PushException", e);
       throw new PushException("MalformedURLException: " + e.getMessage(), e);
     } catch (IOException e) {
@@ -707,7 +742,7 @@ public class DocPusher implements Pusher {
         try {
           os.close();
         } catch (IOException e) {
-          LOGGER.log(Level.WARNING, "cannot close file: " + 
+          LOGGER.log(Level.WARNING, "cannot close file: " +
               osFile.getAbsolutePath());
         }
       }
