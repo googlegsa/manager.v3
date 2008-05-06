@@ -12,7 +12,6 @@
 		<property name="location" ref="ApplicationContextProperties"/>
 	</bean>	
 
-
 	<bean id="FeedConnection"
 		class="com.google.enterprise.connector.pusher.GsaFeedConnection">
 		<constructor-arg index="0" type="java.lang.String"
@@ -23,6 +22,53 @@
 	<bean id="Pusher"
 		class="com.google.enterprise.connector.pusher.DocPusher">
 		<constructor-arg index="0" ref="FeedConnection" />
+	</bean>
+
+	<!-- Create a Handler for the Feed Logger and add it to the logger -->
+	<bean id="FeedFormatter" class="java.util.logging.SimpleFormatter" />
+
+	<bean id="FeedHandler" class="java.util.logging.FileHandler">
+		<constructor-arg index="0" value="${catalina.base}/logs/google-connectors.feed%g.log" />
+		<constructor-arg index="1" value="52428800" />
+		<constructor-arg index="2" value="10" />
+		<property name="level" value="FINER" />
+		<property name="encoding" value="UTF-8" />
+		<property name="formatter" ref="FeedFormatter" />
+	</bean>
+
+	<bean id="FeedWrapperLogger" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+		<property name="staticMethod"
+			value="com.google.enterprise.connector.pusher.DocPusher.getFeedLogger" />
+	</bean>
+
+	<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+		<property name="targetObject" ref="FeedWrapperLogger" />
+		<property name="targetMethod" value="addHandler" />
+		<property name="arguments">
+			<list>
+				<ref bean="FeedHandler" />
+			</list>
+		</property>
+	</bean>
+
+	<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+		<property name="targetObject" ref="FeedWrapperLogger" />
+		<property name="targetMethod" value="setUseParentHandlers" />
+		<property name="arguments">
+			<list>
+				<value>false</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+		<property name="targetObject" ref="FeedWrapperLogger" />
+		<property name="targetMethod" value="setLevel" />
+		<property name="arguments">
+			<list>
+				<value>${feedLoggingLevel}</value>
+			</list>
+		</property>
 	</bean>
 
 	<bean id="ConnectorScheduleStore"

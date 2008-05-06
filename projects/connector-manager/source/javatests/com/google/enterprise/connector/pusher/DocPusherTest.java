@@ -17,6 +17,7 @@ package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.jcr.JcrDocumentTest;
 import com.google.enterprise.connector.jcr.JcrTraversalManager;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
@@ -35,12 +36,23 @@ import com.google.enterprise.connector.spiimpl.ValueImpl;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.SimpleFormatter;
 
 import javax.jcr.query.QueryManager;
 
@@ -505,6 +517,175 @@ public class DocPusherTest extends TestCase {
     resultXML = mockFeedConnection.getFeed();
 
     assertStringNotContains("action=", resultXML);
+  }
+
+  private static final String TEST_LOG_FILE = "testdata/FeedLogFile";
+
+  /**
+   * Test separate feed logging.
+   */
+  public void testFeedLogging() throws Exception {
+    // Delete the Log file it it exists.
+    (new File(TEST_LOG_FILE)).delete();
+
+    try {
+      // Setup logging on the DocPusher class.
+      FileHandler fh = new FileHandler(TEST_LOG_FILE, 10000, 1);
+      SimpleFormatter sf = new SimpleFormatter();
+      fh.setFormatter(sf);
+      DocPusher.getFeedLogger().addHandler(fh);
+      DocPusher.getFeedLogger().setLevel(Level.FINER);
+
+      // Setup the DocPusher.
+      MockFeedConnection mockFeedConnection = new MockFeedConnection();
+      DocPusher dpusher = new DocPusher(mockFeedConnection);
+      Document document;
+      String resultXML;
+
+      // Test incremental feed with content.
+      final String jsonIncremental =
+          "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+              + ",\"content\":\"now is the time\""
+              + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
+              + "}\r\n" + "";
+      document = JcrDocumentTest.makeDocumentFromJson(jsonIncremental);
+      dpusher.take(document, "junit");
+      resultXML = mockFeedConnection.getFeed();
+      assertFeedInLog(resultXML, TEST_LOG_FILE);
+
+      // Test metadata-url feed with content.
+      final String jsonMetaAndUrl =
+          "{\"timestamp\":\"10\",\"docid\":\"doc2\""
+              + ",\"content\":\"now is the time\""
+              + ",\"google:searchurl\":\"http://www.sometesturl.com/test\""
+              + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
+              + "}\r\n" + "";
+      document = JcrDocumentTest.makeDocumentFromJson(jsonMetaAndUrl);
+      dpusher.take(document, "junit");
+      resultXML = mockFeedConnection.getFeed();
+      assertFeedInLog(resultXML, TEST_LOG_FILE);
+
+      // Test MSWord Document.
+      final String jsonMsWord =
+          "{\"timestamp\":\"10\",\"docid\":\"msword\""
+              + ",\"google:mimetype\":\"application/msword\""
+              + ",\"contentfile\":\"testdata/mocktestdata/test.doc\""
+              + ",\"author\":\"ziff\""
+              + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
+              + "}\r\n" + "";
+      document = JcrDocumentTest.makeDocumentFromJson(jsonMsWord);
+      dpusher.take(document, "junit");
+      resultXML = mockFeedConnection.getFeed();
+      assertFeedInLog(resultXML, TEST_LOG_FILE);
+    } finally {
+      // Clean up the log file.
+      (new File(TEST_LOG_FILE)).delete();
+    }
+  }
+
+  private void assertFeedInLog(String resultXML, String logFileName)
+      throws IOException {
+    BufferedReader logIn = new BufferedReader(new FileReader(logFileName));
+    BufferedReader xmlIn = new BufferedReader(new StringReader(resultXML));
+
+    xmlIn.mark(resultXML.length());
+    String xmlLine = xmlIn.readLine();
+    String logLine;
+    boolean isMatch = false;
+    while ((logLine = logIn.readLine()) != null) {
+      if (logLine.contains(xmlLine)) {
+        assertEquals(xmlLine, logLine.substring(7));
+        // We match the first line - start comparing record
+        isMatch = true;
+        while ((xmlLine = xmlIn.readLine()) != null) {
+          logLine = logIn.readLine();
+          if (xmlLine.contains("<content")) {
+            if (!"<content encoding=\"base64binary\">...content...</content>".equals(logLine)) {
+              isMatch = false;
+              break;
+            }
+          } else if (!xmlLine.equals(logLine)) {
+            isMatch = false;
+            break;
+          }
+        }
+        if (isMatch) {
+          break;
+        } else {
+          // Need to reset the xmlIn and reload the xmlLine
+          xmlIn.reset();
+          xmlLine = xmlIn.readLine();
+        }
+      } else {
+        continue;
+      }
+    }
+    assertTrue("Overall match", isMatch);
+  }
+
+  private static final String TEST_DIR = "testdata/contextTests/docPusher/";
+  private static final String APPLICATION_CONTEXT = "applicationContext.xml";
+  private static final String APPLICATION_PROPERTIES =
+      "applicationContext.properties";
+
+  /**
+   * Test using teed feed file.
+   */
+  public void testTeedFeed() throws IOException, PushException {
+    // Setup context where the teedFeedFile is set.
+    Context.refresh();
+    Context context = Context.getInstance();
+    context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
+        "testdata/mocktestdata/");
+
+    // Get properties from file so the teed feed file can be checked.
+    String propFileName = TEST_DIR + APPLICATION_PROPERTIES;
+    Properties props = new Properties();
+    InputStream inStream = new FileInputStream(propFileName);
+    props.load(inStream);
+    String tffName = (String) props.get(Context.TEED_FEED_FILE_PROPERTY_KEY);
+    // Make sure the teed feed file does not exist
+    (new File(tffName)).delete();
+
+    // Create the Document.
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+      + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+      + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
+      + "}\r\n" + "";
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
+
+    try {
+      // Create DocPusher and send feed.
+      MockFeedConnection mockFeedConnection = new MockFeedConnection();
+      DocPusher dpusher = new DocPusher(mockFeedConnection);
+      dpusher.take(document, "junit");
+      String resultXML = mockFeedConnection.getFeed();
+      assertFeedTeed(resultXML, tffName);
+
+      // Now send the feed again and compare with existing teed feed file.
+      dpusher.take(document, "junit");
+      String secondResultXML = mockFeedConnection.getFeed();
+      assertFeedTeed(resultXML + secondResultXML, tffName);
+    } finally {
+      // Clean up teed feed file.
+      (new File(tffName)).delete();
+    }
+  }
+
+  private void assertFeedTeed(String resultXML, String tffName) 
+      throws IOException {
+    BufferedReader tffIn = new BufferedReader(new FileReader(tffName));
+    StringReader xmlIn = new StringReader(resultXML);
+    int tffChar;
+    int xmlChar;
+    while (true) {
+      tffChar = tffIn.read();
+      xmlChar = xmlIn.read();
+      if (tffChar == -1 && xmlChar == -1) {
+        return;
+      }
+      assertEquals(tffChar, xmlChar);
+    }
   }
 
   public static void assertStringContains(String expected, String actual) {
