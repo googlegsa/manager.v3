@@ -53,24 +53,12 @@ public class GsaFeedConnection implements FeedConnection {
   private static final String BOUNDARY = "<<";
 
   private URL url = null;
-  private String host;
-  private int port;
   
   private static final Logger LOGGER =
       Logger.getLogger(GsaFeedConnection.class.getName());
   
-  public GsaFeedConnection(String host, int port) {
-    this.host = host;
-    this.port = port;
-  }
-
-  /*
-   * Generates the feed url for a given GSA host.
-   */
-  private URL getFeedUrl() throws MalformedURLException{
-    String feedUrl = "http://" + host + ":" + port + "/xmlfeed";
-    URL url = new URL(feedUrl);
-    return url;
+  public GsaFeedConnection(String host, int port) throws MalformedURLException {
+    url = new URL("http", host, port, "/xmlfeed");
   }
 
   private static final void writeMultipartControlHeader(
@@ -87,9 +75,6 @@ public class GsaFeedConnection implements FeedConnection {
 
   public String sendData(String dataSource, String feedType, InputStream data)
       throws IOException {
-    if (url == null) {
-      url = getFeedUrl();
-    }
     URLConnection uc = url.openConnection();
     uc.setDoInput(true);
     uc.setDoOutput(true);
