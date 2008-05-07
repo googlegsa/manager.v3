@@ -58,8 +58,7 @@ public class GsaFeedConnection implements FeedConnection {
       Logger.getLogger(GsaFeedConnection.class.getName());
   
   public GsaFeedConnection(String host, int port) throws MalformedURLException {
-    String feedUrl = "http://" + host + ":" + port + "/xmlfeed";
-    url = new URL(feedUrl);
+    url = new URL("http", host, port, "/xmlfeed");
   }
 
   private static final void writeMultipartControlHeader(
