@@ -69,7 +69,7 @@ public class DocPusher implements Pusher {
    * being constructed.  Once sufficient information has been appended to this
    * buffer its contents will be logged and it will be nulled.
    */
-  private StringBuffer feedLogRecord;
+  private ThreadLocal feedLogRecord = new ThreadLocal();
 
   private static Set propertySkipSet;
 
@@ -114,10 +114,6 @@ public class DocPusher implements Pusher {
 
   private FeedConnection feedConnection;
   private String gsaResponse;
-
-  private String dataSource;
-  private String feedType;
-  private InputStream xmlData;
 
   /**
    *
@@ -170,7 +166,7 @@ public class DocPusher implements Pusher {
    */
   private InputStream xmlWrapRecord(String searchUrl, String displayUrl,
       String lastModified, InputStream content, String mimetype,
-      ActionType actionType, Document document) {
+      ActionType actionType, Document document, String feedType) {
     boolean metadataAllowed = true;
     boolean contentAllowed = true;
     // build prefix
@@ -247,11 +243,11 @@ public class DocPusher implements Pusher {
     }
 
     if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-      feedLogRecord.append(prefix);
+      ((StringBuffer) feedLogRecord.get()).append(prefix);
       if (contentAllowed && content != null) {
-        feedLogRecord.append("...content...");
+        ((StringBuffer) feedLogRecord.get()).append("...content...");
       }
-      feedLogRecord.append(suffix);
+      ((StringBuffer) feedLogRecord.get()).append(suffix);
     }
 
     return is;
@@ -492,17 +488,18 @@ public class DocPusher implements Pusher {
   /*
    * Builds the xml string for a given document.
    */
-  protected InputStream buildXmlData(Document document, String connectorName) {
+  protected InputStream buildXmlData(Document document, String connectorName,
+      String feedType) {
     // build prefix
     StringBuffer prefix = new StringBuffer();
     prefix.append(XML_START);
     prefix.append(XmlUtils.xmlWrapStart(XML_GSAFEED));
     prefix.append(XmlUtils.xmlWrapStart(XML_HEADER));
     prefix.append(XmlUtils.xmlWrapStart(XML_DATASOURCE));
-    prefix.append(this.dataSource);
+    prefix.append(connectorName);
     prefix.append(XmlUtils.xmlWrapEnd(XML_DATASOURCE));
     prefix.append(XmlUtils.xmlWrapStart(XML_FEEDTYPE));
-    prefix.append(this.feedType);
+    prefix.append(feedType);
     prefix.append(XmlUtils.xmlWrapEnd(XML_FEEDTYPE));
     prefix.append(XmlUtils.xmlWrapEnd(XML_HEADER));
     prefix.append(XmlUtils.xmlWrapStart(XML_GROUP));
@@ -515,7 +512,7 @@ public class DocPusher implements Pusher {
 
     // build record
     String searchurl = null;
-    if (this.feedType == XML_FEED_METADATA_AND_URL) {
+    if (feedType == XML_FEED_METADATA_AND_URL) {
       searchurl = getOptionalString(document, SpiConstants.PROPNAME_SEARCHURL);
       // check that this looks like a URL
       try {
@@ -531,7 +528,7 @@ public class DocPusher implements Pusher {
     }
 
     InputStream encodedContentStream = null;
-    if (this.feedType != XML_FEED_METADATA_AND_URL) {
+    if (feedType != XML_FEED_METADATA_AND_URL) {
       InputStream contentStream = getNonNullContentStream(getOptionalStream(
           document, SpiConstants.PROPNAME_CONTENT));
 
@@ -577,20 +574,22 @@ public class DocPusher implements Pusher {
     }
 
     if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-      feedLogRecord = new StringBuffer();
-      feedLogRecord.append(prefix);
+      feedLogRecord.set(new StringBuffer());
+      ((StringBuffer) feedLogRecord.get()).append(prefix);
     }
 
     InputStream recordInputStream = xmlWrapRecord(searchurl, displayUrl,
-        lastModified, encodedContentStream, mimetype, actionType, document);
+        lastModified, encodedContentStream, mimetype, actionType, document,
+        feedType);
 
     InputStream is = stringWrappedInputStream(prefix.toString(),
         recordInputStream, suffix.toString());
 
     if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-      feedLogRecord.append(suffix);
-      FEED_LOGGER.log(FEED_LOG_LEVEL, feedLogRecord.toString());
-      feedLogRecord = null;
+      ((StringBuffer) feedLogRecord.get()).append(suffix);
+      FEED_LOGGER.log(FEED_LOG_LEVEL, 
+          ((StringBuffer) feedLogRecord.get()).toString());
+      feedLogRecord.set(null);
     }
 
     return is;
@@ -644,11 +643,11 @@ public class DocPusher implements Pusher {
     return searchurl;
   }
 
-  private void setFeedType(Document document) {
+  private String getFeedType(Document document) {
     if (getOptionalString(document, SpiConstants.PROPNAME_SEARCHURL) != null) {
-      this.feedType = XML_FEED_METADATA_AND_URL;
+      return XML_FEED_METADATA_AND_URL;
     } else {
-      this.feedType = XML_FEED_INCREMENTAL;
+      return XML_FEED_INCREMENTAL;
     }
   }
 
@@ -687,10 +686,9 @@ public class DocPusher implements Pusher {
    */
   public void take(Document document, String connectorName)
       throws PushException {
-    this.dataSource = connectorName;
-    setFeedType(document);
-    this.xmlData = buildXmlData(document, connectorName);
-    if (this.xmlData == null) {
+    String feedType = getFeedType(document);
+    InputStream xmlData = buildXmlData(document, connectorName, feedType);
+    if (xmlData == null) {
       LOGGER.log(Level.WARNING,
           "Skipped this document for feeding, continuing");
       return;
@@ -711,7 +709,7 @@ public class DocPusher implements Pusher {
       }
     }
     try {
-      gsaResponse = feedConnection.sendData(dataSource, feedType, is);
+      gsaResponse = feedConnection.sendData(connectorName, feedType, is);
       if (!gsaResponse.equals(GsaFeedConnection.SUCCESS_RESPONSE)) {
         String eMessage = gsaResponse;
         if (GsaFeedConnection.UNAUTHORIZED_RESPONSE.equals(gsaResponse)) {
