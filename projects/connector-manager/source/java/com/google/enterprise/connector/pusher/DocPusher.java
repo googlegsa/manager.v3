@@ -720,8 +720,11 @@ public class DocPusher implements Pusher {
         }
         throw new PushException(eMessage);
       }
-      LOGGER.finer("Document (" + document + ") from connector " +
-          connectorName + " sent.");
+      if (LOGGER.isLoggable(Level.FINER)) {
+        LOGGER.finer("Document "
+            + getRequiredString(document, SpiConstants.PROPNAME_DOCID) 
+            + " from connector " + connectorName + " sent.");
+      }
     } catch (MalformedURLException e) {
       LOGGER.log(Level.WARNING,
           "Rethrowing MalformedURLException as PushException", e);
