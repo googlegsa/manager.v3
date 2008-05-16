@@ -292,9 +292,8 @@ public class TraversalScheduler implements Scheduler {
     private long timeOfFirstFailure;
     
     // time allowed for doing a traversal before we give up
-    private long timeout;
+    private long traversalTimeout;
     
-    private long timeoutAdditional = 0;
     private int batchHint = 0;
         
     public TraversalWorkQueueItem(String connectorName) {
@@ -304,7 +303,7 @@ public class TraversalScheduler implements Scheduler {
       this.isFinished = false;
       this.numConsecutiveFailures = 0;
       this.timeOfFirstFailure = 0;
-      this.timeout = traverser.getTimeoutMillis();
+      this.traversalTimeout = traverser.getTimeoutMillis();
     }
 
     public void setIsFinished(boolean isFinished) {
@@ -328,13 +327,7 @@ public class TraversalScheduler implements Scheduler {
       if (!isFinished) {
         try {
           synchronized(this) {
-            wait(timeout);
-            // if the Connector requested a larger timeout, take it now:
-            if (timeoutAdditional > 0) {
-              long timeoutWait = timeoutAdditional;
-              timeoutAdditional = 0;
-              wait(timeoutWait);
-            }
+            wait(traversalTimeout);
           }
         } catch (InterruptedException e) {
           // TODO Auto-generated catch block
@@ -405,7 +398,7 @@ public class TraversalScheduler implements Scheduler {
       sb.append(";isFinished=" + isFinished);
       sb.append(";numConsecutiveFailures=" + numConsecutiveFailures);
       sb.append(";timeOfFirstFailure=" + timeOfFirstFailure);
-      sb.append(";timeout=" + timeout);
+      sb.append(";traversalTimeout=" + traversalTimeout);
       sb.append("]");
       return (new String(sb));
     }
