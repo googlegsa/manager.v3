@@ -118,7 +118,7 @@ public class WorkQueueThreadTest extends TestCase {
     public void waitForWorkToBeStarted() {
       while (!workIsStarted) {
         try {
-          Thread.sleep(5);
+          Thread.sleep(50);
         } catch (InterruptedException e) {
           fail("Unexpected interruption while waiting for work to be started.");
         }
@@ -128,7 +128,7 @@ public class WorkQueueThreadTest extends TestCase {
     public void waitForWorkToBeDone() {
       while (!workIsDone) {
         try {
-          Thread.sleep(5);
+          Thread.sleep(50);
         } catch (InterruptedException e) {
           fail("Unexpected interruption while waiting for work to be done.");
         }
@@ -138,6 +138,9 @@ public class WorkQueueThreadTest extends TestCase {
     public void waitForWorkToBeInterrupted() {
       while (!workIsInterrupted) {
         try {
+          // Note, sleep time should be short enough to insure the LifeThread
+          // won't have time to restart the WorkQueueThread before it's state
+          // can be checked.
           Thread.sleep(5);
         } catch (InterruptedException e) {
           fail("Unexpected interruption while waiting for interrupt.");
