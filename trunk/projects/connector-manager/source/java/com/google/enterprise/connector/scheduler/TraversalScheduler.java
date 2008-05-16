@@ -327,10 +327,13 @@ public class TraversalScheduler implements Scheduler {
       if (!isFinished) {
         try {
           synchronized(this) {
+            LOGGER.log(Level.FINEST, "Beginning wait (timeout=" + timeout + ")...");
             wait(traversalTimeout);
+            LOGGER.log(Level.FINEST, "...ending wait");
           }
         } catch (InterruptedException e) {
           // TODO Auto-generated catch block
+          LOGGER.log(Level.FINEST, "Interrupted");
           e.printStackTrace();
         }
       }

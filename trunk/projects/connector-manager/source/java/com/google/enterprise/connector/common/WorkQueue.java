@@ -232,16 +232,20 @@ public class WorkQueue {
       Map.Entry entry = (Map.Entry) iter.next();
       Long absTimeout = (Long) entry.getValue();
       if (absTimeout.longValue() <= now) {  // we have a timeout
+        LOGGER.log(Level.FINEST, "A WorkItem timeout has occured...");
         WorkQueueItem item = (WorkQueueItem) entry.getKey();
         // if the wait is too long, then we want to replace the thread
         if (absTimeout.longValue() + killThreadTimeout <= now) {
+          LOGGER.log(Level.FINEST, "...replacing thread");
           iter.remove();
           replaceHangingThread(item);
           item.getWorkQueueThread().interruptAndKill();
         } else {
+          LOGGER.log(Level.FINEST, "...interrupting thread");
           item.getWorkQueueThread().interrupt();
         }
       } else {  // we have a thread that will timeout later
+        LOGGER.log(Level.FINEST, "...waiting until later");
         if ((NO_TIMEOUT == getNextAbsoluteTimeout())
             || (getNextAbsoluteTimeout() > absTimeout.longValue())) {
           nextAbsTimeout = absTimeout.longValue();
@@ -400,7 +404,7 @@ public class WorkQueue {
             }
           }
         } catch (InterruptedException e) {
-          // thread was signalled to determine whether there are new work items
+          // thread was signaled to determine whether there are new work items
           // to be interrupted (this is done under normal operation--e.g. when
           // we add a work item)
         }
