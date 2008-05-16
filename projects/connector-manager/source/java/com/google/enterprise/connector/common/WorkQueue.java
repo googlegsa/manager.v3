@@ -33,16 +33,16 @@ public class WorkQueue {
    */
   public static final int DEFAULT_SHUTDOWN_TIMEOUT = 10 * 1000;
 
-  private static final Logger LOGGER = 
+  private static final Logger LOGGER =
     Logger.getLogger(WorkQueue.class.getName());
-  
+
   // possible value for nextAbsTimeout
-  private static final long NO_TIMEOUT = 0;  
-  
-  // relative timeout that tells us when we should just kill a WorkQueueThread 
+  private static final long NO_TIMEOUT = 0;
+
+  // relative timeout that tells us when we should just kill a WorkQueueThread
   // instead of just trying to interrupt it
   private long killThreadTimeout = 5 * 60 * 1000;
-  
+
   /*
    * Variables that are protected by instance lock
    */
@@ -54,10 +54,10 @@ public class WorkQueue {
 
   private int numThreads;
   private Set threads;  // access is protected by "threads" instance lock
-  
+
   private InterrupterThread interrupterThread;
   private LifeThread lifeThread;
-  
+
   /**
    * Creates a WorkQueue with a default 60 second timeout before a thread is
    * killed after it is interrupted.
@@ -66,12 +66,12 @@ public class WorkQueue {
   public WorkQueue(int numThreads) {
     this(numThreads, 60 * 1000);
   }
-  
+
   /**
    * Creates a WorkQueue with a given number of worker threads.
    * @param numThreads the number of threads to execute work on the WorkQueue.
    * This number should be at least 1.
-   * @param killThreadTimeout 
+   * @param killThreadTimeout
    */
   public WorkQueue(int numThreads, long killThreadTimeout) {
     if (numThreads <= 0) {
@@ -86,7 +86,25 @@ public class WorkQueue {
     this.numThreads = numThreads;
     this.threads = new HashSet();
   }
-  
+
+  /**
+   * Creates a WorkQueue with the given specification and also sets the timeout
+   * of the WorkQueueItem.
+   *
+   * @param numThreads the number of threads to execute work on the WorkQueue.
+   * This number should be at least 1.
+   * @param killThreadTimeout the additional time in milliseconds given over the
+   * {@code workItemTimeout} before the {@code WorkQueueThread} is killed rather
+   * than just interrupted.
+   * @param workItemTimeout time in milliseconds that each {@code WorkQueueItem}
+   * is given before it is interrupted.
+   */
+  public WorkQueue(int numThreads, long killThreadTimeout,
+                   long workItemTimeout) {
+    this(numThreads, killThreadTimeout);
+    WorkQueueItem.timeout = workItemTimeout;
+  }
+
   /**
    * Initialize work queue by starting worker threads.
    */
@@ -99,13 +117,13 @@ public class WorkQueue {
     isInitialized = true;
     shutdown = false;
 
-    // start WorkQueueThreads after initialization since they depend on the 
+    // start WorkQueueThreads after initialization since they depend on the
     // WorkQueue
     synchronized (threads) {
       for (int i = 0; i < numThreads; i++) {
         threads.add(createAndStartWorkQueueThread("WorkQueueThread-" + i));
       }
-    }    
+    }
     lifeThread = new LifeThread("LifeThread");
     lifeThread.start();
   }
@@ -115,12 +133,12 @@ public class WorkQueue {
    * @param name name of the thread
    */
   private WorkQueueThread createAndStartWorkQueueThread(String name) {
-    WorkQueueThread thread = 
-      new WorkQueueThread(name, this);     
+    WorkQueueThread thread =
+      new WorkQueueThread(name, this);
     thread.start();
     return thread;
   }
-  
+
   /**
    * Shutdown the work queue after waiting for 10 seconds.
    *
@@ -129,10 +147,10 @@ public class WorkQueue {
   public synchronized void shutdown(boolean interrupt) {
     shutdown(interrupt, DEFAULT_SHUTDOWN_TIMEOUT);
   }
-  
+
   /**
    * Shutdown the work queue.
-   * 
+   *
    * @param interrupt if true, interrupt threads
    * @param timeoutInMillis wait at least this timeout for threads to complete
    * before just returning
@@ -147,7 +165,7 @@ public class WorkQueue {
             WorkQueueThread thread = (WorkQueueThread) iter.next();
             thread.interruptAndKill();
           }
-        }        
+        }
         try {
           Thread.sleep(timeoutInMillis);
         } catch (InterruptedException e) {
@@ -176,7 +194,7 @@ public class WorkQueue {
       isInitialized = false;
     }
   }
-  
+
   /**
    * Determine whether any WorkQueue thread is working.
    * @return true if any thread in the WorkQueue is doing work.
@@ -192,10 +210,10 @@ public class WorkQueue {
           break;
         }
       }
-    }    
+    }
     return isAnyThreadWorking;
   }
-  
+
   private synchronized long getNextAbsoluteTimeout() {
     return nextAbsTimeout;
   }
@@ -205,7 +223,7 @@ public class WorkQueue {
    */
   private synchronized void interruptAllTimedOutItems() {
     long now;
-    // determine which work threads should be interrupted as well as 
+    // determine which work threads should be interrupted as well as
     // set nextAbsTimeout
     now = System.currentTimeMillis();
     nextAbsTimeout = NO_TIMEOUT;
@@ -241,14 +259,14 @@ public class WorkQueue {
    */
   private void replaceHangingThread(WorkQueueItem item) {
     // replace hanging thread with new thread if timeout is too long
-    WorkQueueThread thread = 
+    WorkQueueThread thread =
       new WorkQueueThread(item.getWorkQueueThread().getName(), this);
     synchronized (threads) {
       threads.remove(item.getWorkQueueThread());
       LOGGER.log(Level.WARNING, "Replacing work queue thread: "
         + item.getWorkQueueThread().getName());
       threads.add(thread);
-    }    
+    }
     thread.start();
   }
 
@@ -257,7 +275,7 @@ public class WorkQueue {
    * @param item
    */
   void preWork(WorkQueueItem item) {
-    Long absTimeout = 
+    Long absTimeout =
       new Long(item.getTimeout() + System.currentTimeMillis());
     synchronized(this) {
       absTimeoutMap.put(item, absTimeout);
@@ -266,7 +284,7 @@ public class WorkQueue {
       interrupterThread.notifyAll();
     }
   }
-  
+
   /**
    * Work to do right after executing an item.
    * @param item
@@ -293,14 +311,14 @@ public class WorkQueue {
     LOGGER.log(Level.FINEST, "Adding work: " + work);
     workQueue.addLast(work);
     notifyAll();
-    
-    // wake up interrupter thread.  this code is not strictly necessary but 
-    // ensures that work item properly gets timed out 
+
+    // wake up interrupter thread.  this code is not strictly necessary but
+    // ensures that work item properly gets timed out
     synchronized (interrupterThread) {
       interrupterThread.interrupt();
     }
   }
-  
+
   /**
    * Cancel a piece of work by interrupting it.
    * @param work the piece of work to be updated.
@@ -314,11 +332,11 @@ public class WorkQueue {
       // if we're shutting down it doesn't matter since work will finish
       return;
     }
-    
+
     if (workQueue.remove(work)) {
       // If the work is in the queue, it means no thread is operating on it
       // so we simply finish.
-      LOGGER.info("Cancelling work by removing unstarted work from work" 
+      LOGGER.info("Cancelling work by removing unstarted work from work"
         + " queue.");
     } else {
       // See if a thread is working on this item.
@@ -327,7 +345,7 @@ public class WorkQueue {
       thread.interrupt();
     }
   }
-  
+
   /**
    * Remove a piece of work.
    * @return the work item
@@ -348,23 +366,23 @@ public class WorkQueue {
     }
     return workQueue.size();
   }
-  
+
 
   /**
    * Interrupts WorkQueueItemThread if it takes too long.
    */
   private class InterrupterThread extends Thread {
-        
+
     public InterrupterThread(String name) {
       super(name);
     }
-        
+
     public void shutdown() {
       synchronized (this) {
         notifyAll();
-      }      
+      }
     }
-    
+
     public void run() {
       while (!shutdown) {
         long now = System.currentTimeMillis();
@@ -372,18 +390,18 @@ public class WorkQueue {
           if (getNextAbsoluteTimeout() == NO_TIMEOUT) {
             synchronized (this) {
               wait(killThreadTimeout);
-            }            
+            }
           } else {
             long timeout = getNextAbsoluteTimeout() - now;
             if (timeout > 0) {
               synchronized (this) {
                 wait(timeout);
-              }              
+              }
             }
           }
         } catch (InterruptedException e) {
           // thread was signalled to determine whether there are new work items
-          // to be interrupted (this is done under normal operation--e.g. when 
+          // to be interrupted (this is done under normal operation--e.g. when
           // we add a work item)
         }
 
@@ -391,7 +409,7 @@ public class WorkQueue {
       }
     }
   }
-  
+
   /**
    * Ensures that WorkQueue does not have any dead WorkQueueThreads.
    */
@@ -402,13 +420,13 @@ public class WorkQueue {
     public LifeThread(String name) {
       super(name);
     }
-    
+
     public void shutdown() {
       synchronized (this) {
         notifyAll();
       }
     }
-    
+
     public void run() {
       while (!shutdown) {
         try {
@@ -429,7 +447,7 @@ public class WorkQueue {
               }
             }
             threads.addAll(replacementThreads);
-          }          
+          }
         } catch (InterruptedException e) {
           LOGGER.log(Level.WARNING, "", e);
         }

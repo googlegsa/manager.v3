@@ -18,7 +18,7 @@ package com.google.enterprise.connector.common;
  * Item that will be run within the WorkQueue.
  */
 public abstract class WorkQueueItem {
-  private static final long timeout = 5 * 60 * 1000;
+  protected static long timeout = 5 * 60 * 1000;
   // the thread that is executing the item (this is used for interrupting work)
   private WorkQueueThread workQueueThread;
   
