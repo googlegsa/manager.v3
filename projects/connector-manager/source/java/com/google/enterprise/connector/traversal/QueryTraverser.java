@@ -103,6 +103,11 @@ public class QueryTraverser implements Traverser {
     boolean forceCheckpoint = false;
     try {
        while (true) {
+         if (Thread.currentThread().isInterrupted()) {
+           LOGGER.log(Level.FINEST, 
+               "Thread has been interrupted...breaking out of batch run.");
+           break;
+         }
         try {
           LOGGER.finer("Pulling next document from connector " + connectorName);
           nextDocument = resultSet.nextDocument();
@@ -110,9 +115,6 @@ public class QueryTraverser implements Traverser {
           LOGGER.log(Level.SEVERE, "Repository Exception during traversal.", e);
         }
         if (nextDocument == null) {
-          break;
-        }
-        if (Thread.interrupted()) {
           break;
         }
         LOGGER.finer("Sending document (" + nextDocument + ") from connector " + 
@@ -156,7 +158,9 @@ public class QueryTraverser implements Traverser {
   private void checkpointAndSave(DocumentList pm) {
     String connectorState = null;
     try {
+      LOGGER.log(Level.FINEST, "Checkpointing...");
       connectorState = pm.checkpoint();
+      LOGGER.log(Level.FINEST, "...checkpoint " + connectorState + " created.");
     } catch (RepositoryException e) {
       // TODO:ziff Auto-generated catch block
       e.printStackTrace();

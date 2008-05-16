@@ -49,7 +49,7 @@ public class WorkQueueThread extends Thread {
   }
 
   public void run() {
-    while (true) {
+    while (!exit) {
       try {
         WorkQueueItem item;
         synchronized (workQueue) {
