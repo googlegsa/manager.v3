@@ -147,9 +147,7 @@ public class ConnectorInterfaces {
         qtm = s.getTraversalManager();
         traverser =
            new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
-      } catch (RepositoryException e) {
-        // TODO(ziff): think about how this could be re-tried
-        // [bjohnson]: It actually gets re-tried at a higher level.
+      } catch (RepositoryException ignore) {
         // By only creating the Traverser after successfully getting
         // a TraversalManager, we avoid caching a Traverser with a
         // null TraversalManager (which lead to a subsequent null-pointer

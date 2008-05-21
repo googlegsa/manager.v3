@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -48,8 +49,8 @@ public class SpringInstantiator implements Instantiator {
   Map connectorCache;
 
   /**
-   * This constructor is the normal constructor.
-   * @param connectorName
+   * Normal constructor.
+   * @param pusher
    * @param connectorStateStore
    */
   public SpringInstantiator(Pusher pusher, 
@@ -62,8 +63,8 @@ public class SpringInstantiator implements Instantiator {
   }
 
   /**
-   * This constructor is used by unit tests.
-   * @param connectorName
+   * Constructor used by unit tests.  Provides a specific test Context.
+   * @param pusher
    * @param connectorStateStore
    * @param typeMap
    */
@@ -74,7 +75,10 @@ public class SpringInstantiator implements Instantiator {
     this.instanceMap = new InstanceMap(typeMap);
   }
 
-  // Object lock must be held to call this method.
+  /*
+   * Initializes the Context, post bean construction.
+   * NOTE: Object lock must be held to call this method.
+   */
   private void initialize() {
     if (typeMap != null) {
       return;
@@ -128,8 +132,9 @@ public class SpringInstantiator implements Instantiator {
     initialize();
     InstanceInfo instanceInfo = (InstanceInfo) instanceMap.get(connectorName);
     if (instanceInfo == null) {
-      throw new ConnectorNotFoundException("Connector not found: " +
-                                           connectorName);
+      throw new ConnectorNotFoundException("Connector not found: "
+          + connectorName);                                   
+         
     }
     return instanceInfo;
   }
@@ -179,8 +184,8 @@ public class SpringInstantiator implements Instantiator {
     initialize();
     TypeInfo typeInfo = typeMap.getTypeInfo(connectorTypeName);
     if (typeInfo == null) {
-      throw new ConnectorTypeNotFoundException("Connector Type not found: " +
-                                               connectorTypeName);
+      throw new ConnectorTypeNotFoundException("Connector Type not found: "
+          + connectorTypeName);
     }
     return typeInfo.getConnectorType();
   }
@@ -192,7 +197,8 @@ public class SpringInstantiator implements Instantiator {
    */
   public synchronized Iterator getConnectorTypeNames() {
     initialize();
-    return Collections.unmodifiableList(new ArrayList(typeMap.keySet())).iterator();
+    List l = Collections.unmodifiableList(new ArrayList(typeMap.keySet()));
+    return l.iterator();
   }
 
   /*
@@ -221,7 +227,6 @@ public class SpringInstantiator implements Instantiator {
     connectorCache.remove(connectorName);
     return instanceMap.updateConnector(
         connectorName, connectorTypeName, configKeys, locale, update);
-
   }
 
   /*
@@ -231,7 +236,8 @@ public class SpringInstantiator implements Instantiator {
    */
   public synchronized Iterator getConnectorNames() {
     initialize();
-    return Collections.unmodifiableList(new ArrayList(instanceMap.keySet())).iterator();
+    List l = Collections.unmodifiableList(new ArrayList(instanceMap.keySet()));
+    return l.iterator();
   }
 
   /*
