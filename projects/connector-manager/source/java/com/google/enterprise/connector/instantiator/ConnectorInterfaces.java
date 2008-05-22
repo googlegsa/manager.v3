@@ -145,11 +145,16 @@ public class ConnectorInterfaces {
       TraversalManager qtm = null;
       try {
         qtm = s.getTraversalManager();
-      } catch (RepositoryException e) {
-        // TODO(ziff): think about how this could be re-tried
+        traverser =
+           new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
+      } catch (RepositoryException ignore) {
+        // By only creating the Traverser after successfully getting
+        // a TraversalManager, we avoid caching a Traverser with a
+        // null TraversalManager (which lead to a subsequent null-pointer
+        // exception).  With a null Traverser, WorkQueueItems do nothing.
+        // And without a cached (but invalid) Traverser, we will try
+        // again on the next call to getTraverser() to get a valid one.
       }
-      traverser =
-          new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
     }
     return traverser;
   }
