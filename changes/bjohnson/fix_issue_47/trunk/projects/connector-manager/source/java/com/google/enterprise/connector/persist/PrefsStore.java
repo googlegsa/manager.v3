@@ -26,7 +26,7 @@ import java.util.prefs.Preferences;
 public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
 
   private static final Logger LOGGER =
-    Logger.getLogger(PrefsStore.class.getName());
+      Logger.getLogger(PrefsStore.class.getName());
 
   private static Preferences prefs;
   private static Preferences prefsSchedule;
@@ -83,16 +83,18 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
    * Retrieves connector state
    * @param connectorName connector name
    * @return connectorState state of the corresponding connector.
-   * @throws IllegalStateException if state store is not enabled for this connector.
+   * @throws IllegalStateException if state store is not enabled for this
+   * connector.
    */
   public String getConnectorState(String connectorName) {
     if (disabledConnectors.contains(connectorName) == false)
-        return prefsState.get(connectorName, null);
+      return prefsState.get(connectorName, null);
     else {
-        LOGGER.fine("Reading from disabled ConnectorStateStore for " + connectorName);
-        throw new IllegalStateException(
-                  "Reading from disabled ConnectorStateStore for connector " +
-                  connectorName);
+      LOGGER.finer("Reading from disabled ConnectorStateStore for connector "
+                   + connectorName);
+      throw new IllegalStateException(
+                   "Reading from disabled ConnectorStateStore for connector "
+                   + connectorName);
     }
   }
   
@@ -104,12 +106,13 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
    */
   public void storeConnectorState(String connectorName, String connectorState) {
     if (disabledConnectors.contains(connectorName) == false)
-       prefsState.put(connectorName, connectorState);    
+      prefsState.put(connectorName, connectorState);    
     else {
-        LOGGER.fine("Writing to disabled ConnectorStateStore for " + connectorName);
-        throw new IllegalStateException(
-                  "Writing to disabled ConnectorStateStore for connector " +
-                  connectorName);
+      LOGGER.finer("Writing to disabled ConnectorStateStore for connector "
+                   + connectorName);
+      throw new IllegalStateException(
+                   "Writing to disabled ConnectorStateStore for connector "
+                   + connectorName);
     }
   }
   
@@ -122,10 +125,6 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
     flush();
   }
   
-   /* [bjohnson] This is all to handle Issue 47 - Traversers writing
-    * out the ConnectorState after a connector has been deleted.
-    * This feels ugly to me, but the alternatives break abstractions.
-    */
   /**
    * Enables the ConnectorStateStore for this connector.
    * This allows the connector state for this connector to be
@@ -136,7 +135,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
    */
   public void enableConnectorState(String connectorName) {
     disabledConnectors.remove(connectorName);
-    LOGGER.fine("Enabling ConnectorStateStore for " + connectorName);
+    LOGGER.finer("Enabling ConnectorStateStore for " + connectorName);
   }
 
   /**
@@ -147,7 +146,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
    */
   public void disableConnectorState(String connectorName) {
     disabledConnectors.add(connectorName);
-    LOGGER.fine("Disabling ConnectorStateStore for " + connectorName);
+    LOGGER.finer("Disabling ConnectorStateStore for " + connectorName);
   }
 
 
@@ -170,7 +169,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
       result = false;
     }
     if (result)
-        result = flush();
+      result = flush();
     return result;
   }
   

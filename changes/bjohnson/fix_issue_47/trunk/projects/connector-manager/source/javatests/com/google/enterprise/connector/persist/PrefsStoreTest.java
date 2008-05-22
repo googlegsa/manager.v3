@@ -115,11 +115,10 @@ public class PrefsStoreTest extends TestCase {
     Assert.assertNull(state);
   }
 
-
   // Test enabling/disabling connector state store.
-  // [Issue 47]  The connector state should not be able
-  // to be read or written in the gap between a connector
-  // being deleted and recreated.
+  //  The connector state should not be able to be 
+  // read or written in the gap between a connector being
+  // deleted and recreated.  Regression tests for Issue 47.
   public void testEnableDisableState() {
     String barName = "bar";
     String barState = "bar's state";
@@ -154,19 +153,19 @@ public class PrefsStoreTest extends TestCase {
     // connector state store should throw an exception.
     boolean exceptionCaught = false;
     try {
-        // This should throw an IllegalStateException.
-        state = store.getConnectorState(barName);
+      // This should throw an IllegalStateException.
+      state = store.getConnectorState(barName);
     } catch (IllegalStateException e) {
-        exceptionCaught = true;
+      exceptionCaught = true;
     }
     Assert.assertTrue(exceptionCaught);
 
     exceptionCaught = false;
     try {
-        // This should throw an IllegalStateException.
-        store.storeConnectorState(barName, barNewState);
+      // This should throw an IllegalStateException.
+      store.storeConnectorState(barName, barNewState);
     } catch (IllegalStateException e1) {
-        exceptionCaught = true;
+      exceptionCaught = true;
     }
     Assert.assertTrue(exceptionCaught);
 
@@ -183,7 +182,7 @@ public class PrefsStoreTest extends TestCase {
     Assert.assertEquals(barNewState, state);
 
     // We should still be able to remove the connector state,
-    // even when disabled.  [Issue 47]
+    // even when disabled.
     store.disableConnectorState(barName);
     store.removeConnectorState(barName);
     store.enableConnectorState(barName);    

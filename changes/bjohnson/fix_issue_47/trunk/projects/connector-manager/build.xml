@@ -93,6 +93,7 @@
 	</target>
 
 	<target name="run_tests" depends="compile_tests">
+		<property name="test.suite" value="*"/>
 		<junit haltonfailure="yes" dir=".">
 			<classpath>
 				<pathelement location="${classes}" />
@@ -110,7 +111,7 @@
 			</classpath>
 			<formatter type="xml" />
 			<batchtest fork="yes" todir="${tests.todir}">
-				<fileset dir="${tests.src}" includes="**/*Test.java" />
+				<fileset dir="${tests.src}" includes="**/${test.suite}Test.java" />
 			</batchtest>
 		</junit>
 	</target>

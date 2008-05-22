@@ -171,13 +171,13 @@ public class MockInstantiator implements Instantiator {
   public ConfigureResponse setConnectorConfig(String connectorName,
       String connectorTypeName, Map configKeys, Locale locale,
       boolean update) {
-	  return null;
+    return null;
   }
 
   public void dropConnector(String connectorName) {
-      connectorStateStore.disableConnectorState(connectorName);
-      connectorStateStore.removeConnectorState(connectorName);
-      connectorMap.remove(connectorName);
+    connectorStateStore.disableConnectorState(connectorName);
+    connectorStateStore.removeConnectorState(connectorName);
+    connectorMap.remove(connectorName);
   }
 
   public AuthenticationManager getAuthenticationManager(String connectorName)

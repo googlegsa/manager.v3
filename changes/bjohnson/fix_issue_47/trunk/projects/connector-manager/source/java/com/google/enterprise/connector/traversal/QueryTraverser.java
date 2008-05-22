@@ -168,7 +168,7 @@ public class QueryTraverser implements Traverser {
         connectorStateStore.storeConnectorState(connectorName, connectorState);
         LOGGER.log(Level.FINEST, "...checkpoint " + connectorState + " created.");
       }
-    } catch (IllegalStateException ise) {
+    } catch (IllegalStateException ignore) {
       // Our connector seems to have been deleted. Don't save checkpoint.
     } catch (RepositoryException e) {
       // TODO:ziff Auto-generated catch block
