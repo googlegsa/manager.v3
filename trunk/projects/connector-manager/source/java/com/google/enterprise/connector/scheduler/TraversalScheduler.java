@@ -125,18 +125,6 @@ public class TraversalScheduler implements Scheduler {
     return schedules;
   }
 
-  private Traverser getTraverser(String connectorName) {
-    Traverser traverser = null;
-    try {
-      traverser = instantiator.getTraverser(connectorName); 
-    } catch (ConnectorNotFoundException cnfe) {
-      cnfe.printStackTrace();
-    } catch (InstantiatorException ie) {
-      ie.printStackTrace();
-    }
-    return traverser;
-  }
-
   private void updateMonitor() {
     // TODO: change this when we figure out what we really want to monitor
     Map vars = new HashMap();
@@ -282,28 +270,21 @@ public class TraversalScheduler implements Scheduler {
   
   private class TraversalWorkQueueItem extends WorkQueueItem {
     private String connectorName;
-    private Traverser traverser;
     private int numDocsTraversed;
     private boolean isFinished;
+    private int batchHint = 0;
     
     private int numConsecutiveFailures;
     // the time in millis of the first consecutive failure given the 
     // numConsecutiveFailures is > 0.
     private long timeOfFirstFailure;
-    
-    // time allowed for doing a traversal before we give up
-    private long traversalTimeout;
-    
-    private int batchHint = 0;
         
     public TraversalWorkQueueItem(String connectorName) {
       this.connectorName = connectorName;
-      this.traverser = getTraverser(connectorName);
       this.numDocsTraversed = 0;
       this.isFinished = false;
       this.numConsecutiveFailures = 0;
       this.timeOfFirstFailure = 0;
-      this.traversalTimeout = traverser.getTimeoutMillis();
     }
 
     public void setIsFinished(boolean isFinished) {
@@ -319,6 +300,22 @@ public class TraversalScheduler implements Scheduler {
       return numDocsTraversed;
     }
 
+    private Traverser getTraverser() {
+      Traverser traverser = null;
+      try {
+        traverser = instantiator.getTraverser(connectorName); 
+      } catch (ConnectorNotFoundException cnfe) {
+        cnfe.printStackTrace();
+      } catch (InstantiatorException ie) {
+        ie.printStackTrace();
+      }
+      return traverser;
+    }
+
+    private long getTraversalTimeout(Traverser traverser) {
+      return (null == traverser) ? 0 : traverser.getTimeoutMillis();
+    }
+
     /**
      * Wait until the run is finished.  Object lock must be held to call this 
      * method.
@@ -327,8 +324,9 @@ public class TraversalScheduler implements Scheduler {
       if (!isFinished) {
         try {
           synchronized(this) {
+            long timeout = getTraversalTimeout(getTraverser());
             LOGGER.log(Level.FINEST, "Beginning wait (timeout=" + timeout + ")...");
-            wait(traversalTimeout);
+            wait(timeout);
             LOGGER.log(Level.FINEST, "...ending wait");
           }
         } catch (InterruptedException e) {
@@ -359,6 +357,7 @@ public class TraversalScheduler implements Scheduler {
 
     public void doWork() {
       batchHint = hostLoadManager.determineBatchHint(connectorName);
+      Traverser traverser = getTraverser();
       if (null != traverser) {
         if (batchHint > 0) {
           LOGGER.log(Level.FINEST, "Begin runBatch; batchHint=" + batchHint);
@@ -369,8 +368,6 @@ public class TraversalScheduler implements Scheduler {
         }
         numConsecutiveFailures = 0;
         timeOfFirstFailure = 0;
-      } else {
-        failure();
       }
       isFinished = true;
       if (numDocsTraversed == 0 && batchHint > 0) {
@@ -393,6 +390,8 @@ public class TraversalScheduler implements Scheduler {
 
     public String toString() {
       StringBuffer sb = new StringBuffer();
+      Traverser traverser = getTraverser();
+      long traversalTimeout = getTraversalTimeout(traverser);
       sb.append("TraversalWorkQueueItem[");
       sb.append("this=" + hashCode());
       sb.append(";connectorName=" + connectorName);
