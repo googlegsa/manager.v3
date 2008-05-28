@@ -151,23 +151,25 @@ public class PrefsStoreTest extends TestCase {
 
     // Attempting to read or write to a disabled
     // connector state store should throw an exception.
-    boolean exceptionCaught = false;
     try {
       // This should throw an IllegalStateException.
       state = store.getConnectorState(barName);
-    } catch (IllegalStateException e) {
-      exceptionCaught = true;
+      fail("getConnectorState() should have thrown IllegalStateException");
+    } catch (IllegalStateException expected) {
+      Assert.assertEquals(
+          "Reading from disabled ConnectorStateStore for connector bar",
+          expected.getMessage());
     }
-    Assert.assertTrue(exceptionCaught);
 
-    exceptionCaught = false;
     try {
       // This should throw an IllegalStateException.
       store.storeConnectorState(barName, barNewState);
-    } catch (IllegalStateException e1) {
-      exceptionCaught = true;
+      fail("storeConnectorState() should have thrown IllegalStateException");
+    } catch (IllegalStateException expected1) {
+      Assert.assertEquals(
+          "Writing to disabled ConnectorStateStore for connector bar",
+           expected1.getMessage());
     }
-    Assert.assertTrue(exceptionCaught);
 
     // Re-enable state store for the connector.
     store.enableConnectorState(barName);

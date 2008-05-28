@@ -27,12 +27,12 @@ public class MockConnectorStateStore extends HashMap implements
    * #getConnectorState(java.lang.String)
    */
   public String getConnectorState(String connectorName) {
-    if (this.containsKey(connectorName + ".isDisabled") == false)
-      return (String) this.get(connectorName);
-    else
+    if (this.containsKey(connectorName + ".isDisabled")) {
       throw new IllegalStateException(
-                    "Reading from disabled ConnectorStateStore for connector "
-                    + connectorName);
+          "Reading from disabled ConnectorStateStore for connector "
+          + connectorName);
+    }
+    return (String) this.get(connectorName);
   }
 
   /* (non-Javadoc)
@@ -40,12 +40,12 @@ public class MockConnectorStateStore extends HashMap implements
    * #storeConnectorState(java.lang.String, java.lang.String)
    */
   public void storeConnectorState(String connectorName, String connectorState) {
-    if (this.containsKey(connectorName + ".isDisabled") == false)
-      this.put(connectorName, connectorState);
-    else
+    if (this.containsKey(connectorName + ".isDisabled")) {
       throw new IllegalStateException(
-                    "Writing to disabled ConnectorStateStore for connector "
-                    + connectorName);
+          "Writing to disabled ConnectorStateStore for connector "
+          + connectorName);
+    }
+    this.put(connectorName, connectorState);
   }
 
   /* (non-Javadoc)

@@ -24,7 +24,7 @@ public interface ConnectorStateStore {
    * 
    * @param connectorName
    * @return the state, or null if no state has been stored for this connector
-   * @throws IllegalStateException if state store is not enabled for this connector.
+   * @throws IllegalStateException if state store is disabled for this connector
    */
   public String getConnectorState(String connectorName);
 
@@ -33,7 +33,7 @@ public interface ConnectorStateStore {
    * 
    * @param connectorName
    * @param connectorState String to store
-   * @throws IllegalStateException if state store is not enabled for this connector.
+   * @throws IllegalStateException if state store is disabled for this connector
    */
   public void storeConnectorState(String connectorName, String connectorState);
 
@@ -55,8 +55,8 @@ public interface ConnectorStateStore {
 
   /**
    * Disables the ConnectorStateStore for this connector.
-   * Attempts to read from a disabled store return null.
-   * Attempts to write to a disabled store does nothing.
+   * Attempts to read from or write to a disabled store 
+   * throws an IllegalStateException.
    * @param connectorName connector name.
    */
   public void disableConnectorState(String connectorName);

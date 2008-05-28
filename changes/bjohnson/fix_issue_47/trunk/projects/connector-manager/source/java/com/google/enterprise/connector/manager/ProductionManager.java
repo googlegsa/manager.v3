@@ -313,7 +313,6 @@ public class ProductionManager implements Manager {
     scheduler.removeConnector(connectorName);
     instantiator.dropConnector(connectorName);
     connectorScheduleStore.removeConnectorSchedule(connectorName);
-    connectorStateStore.disableConnectorState(connectorName);
     connectorStateStore.removeConnectorState(connectorName);
   }
 

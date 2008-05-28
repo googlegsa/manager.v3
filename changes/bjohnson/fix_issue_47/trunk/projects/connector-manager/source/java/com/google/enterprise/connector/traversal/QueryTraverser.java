@@ -32,8 +32,8 @@ import java.util.logging.Logger;
  * Traverser for a repository implemented using a TraversalManager
  */
 public class QueryTraverser implements Traverser {
-  private static final Logger LOGGER = Logger.getLogger(QueryTraverser.class
-      .getName());
+  private static final Logger LOGGER = 
+      Logger.getLogger(QueryTraverser.class.getName());
 
   private Pusher pusher;
   private TraversalManager queryTraversalManager;
@@ -78,7 +78,11 @@ public class QueryTraverser implements Traverser {
     try {
       connectorState = connectorStateStore.getConnectorState(connectorName);
     } catch (IllegalStateException ise) {
-      return 0;	// Our connector seems to have been deleted.
+      // We get here if the ConnectorStateStore for connector is disabled.
+      // That happens if the connector was deleted while we were asleep.
+      // Our connector seems to have been deleted.  Don't process a batch.
+      LOGGER.finer("Halting traversal...");
+      return 0;
     }
 
     if (connectorState == null) {
@@ -109,7 +113,7 @@ public class QueryTraverser implements Traverser {
     try {
        while (true) {
          if (Thread.currentThread().isInterrupted()) {
-           LOGGER.log(Level.FINEST, 
+           LOGGER.finest(
                "Thread has been interrupted...breaking out of batch run.");
            break;
          }
@@ -161,15 +165,19 @@ public class QueryTraverser implements Traverser {
   }
 
   private void checkpointAndSave(DocumentList pm) {
+    String connectorState = null;
     try {
-      LOGGER.log(Level.FINEST, "Checkpointing...");
-      String connectorState = pm.checkpoint();
+      LOGGER.finest("Checkpointing for connector " + connectorName + " ...");
+      connectorState = pm.checkpoint();
       if (connectorState != null) {
         connectorStateStore.storeConnectorState(connectorName, connectorState);
-        LOGGER.log(Level.FINEST, "...checkpoint " + connectorState + " created.");
+        LOGGER.finest("...checkpoint " + connectorState + " created.");
       }
-    } catch (IllegalStateException ignore) {
-      // Our connector seems to have been deleted. Don't save checkpoint.
+    } catch (IllegalStateException ise) {
+      // We get here if the ConnectorStateStore for connector is disabled.
+      // That happens if the connector was deleted while we were working.
+      // Our connector seems to have been deleted.  Don't save a checkpoint.
+      LOGGER.finest("...checkpoint " + connectorState + " discarded.");
     } catch (RepositoryException e) {
       // TODO:ziff Auto-generated catch block
       e.printStackTrace();

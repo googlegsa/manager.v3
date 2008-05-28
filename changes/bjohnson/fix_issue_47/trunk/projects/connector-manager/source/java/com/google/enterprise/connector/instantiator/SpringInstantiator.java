@@ -99,6 +99,7 @@ public class SpringInstantiator implements Instantiator {
     LOGGER.info("Dropping connector: " + connectorName);
     connectorCache.remove(connectorName);
     instanceMap.dropConnector(connectorName);
+    connectorStateStore.disableConnectorState(connectorName);
   }
 
   /*
