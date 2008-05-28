@@ -27,6 +27,11 @@ public class MockConnectorStateStore extends HashMap implements
    * #getConnectorState(java.lang.String)
    */
   public String getConnectorState(String connectorName) {
+    if (this.containsKey(connectorName + ".isDisabled")) {
+      throw new IllegalStateException(
+          "Reading from disabled ConnectorStateStore for connector "
+          + connectorName);
+    }
     return (String) this.get(connectorName);
   }
 
@@ -35,14 +40,35 @@ public class MockConnectorStateStore extends HashMap implements
    * #storeConnectorState(java.lang.String, java.lang.String)
    */
   public void storeConnectorState(String connectorName, String connectorState) {
+    if (this.containsKey(connectorName + ".isDisabled")) {
+      throw new IllegalStateException(
+          "Writing to disabled ConnectorStateStore for connector "
+          + connectorName);
+    }
     this.put(connectorName, connectorState);
   }
 
   /* (non-Javadoc)
-   * @see com.google.enterprise.connector.persist.ConnectorStateStore#removeConnectorState(java.lang.String)
+   * @see com.google.enterprise.connector.persist.ConnectorStateStore
+   * #removeConnectorState(java.lang.String)
    */
   public void removeConnectorState(String connectorName) {
     this.remove(connectorName);
   }
 
+  /* (non-Javadoc)
+   * @see com.google.enterprise.connector.persist.ConnectorStateStore
+   * #enableConnectorState(java.lang.String)
+   */
+  public void enableConnectorState(String connectorName) {
+    this.remove(connectorName + ".isDisabled");
+  }
+
+  /* (non-Javadoc)
+   * @see com.google.enterprise.connector.persist.ConnectorStateStore
+   * #disableConnectorState(java.lang.String)
+   */
+  public void disableConnectorState(String connectorName) {
+    this.put(connectorName + ".isDisabled", "true");
+  }
 }

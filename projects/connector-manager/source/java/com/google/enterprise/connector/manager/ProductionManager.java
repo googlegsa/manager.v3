@@ -310,10 +310,10 @@ public class ProductionManager implements Manager {
    */
   public void removeConnector(String connectorName)
       throws InstantiatorException {
+    scheduler.removeConnector(connectorName);
     instantiator.dropConnector(connectorName);
     connectorScheduleStore.removeConnectorSchedule(connectorName);
     connectorStateStore.removeConnectorState(connectorName);
-    scheduler.removeConnector(connectorName);
   }
 
   /*
