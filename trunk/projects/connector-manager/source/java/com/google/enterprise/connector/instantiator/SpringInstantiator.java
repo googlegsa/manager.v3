@@ -99,6 +99,7 @@ public class SpringInstantiator implements Instantiator {
     LOGGER.info("Dropping connector: " + connectorName);
     connectorCache.remove(connectorName);
     instanceMap.dropConnector(connectorName);
+    connectorStateStore.disableConnectorState(connectorName);
   }
 
   /*
@@ -117,7 +118,7 @@ public class SpringInstantiator implements Instantiator {
         (ConnectorInterfaces) connectorCache.get(connectorName);
     if (connectorInterfaces == null) {
       InstanceInfo instanceInfo = getInstanceInfo(connectorName);
-      // connectorStateStore.enableConnectorState(connectorName); [Uncomment for Issue 47]
+      connectorStateStore.enableConnectorState(connectorName);
       connectorInterfaces =
           new ConnectorInterfaces(connectorName, instanceInfo.getConnector(),
               pusher, connectorStateStore, instanceInfo.getProperties());

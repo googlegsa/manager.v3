@@ -13,6 +13,7 @@
 // limitations under the License.
 package com.google.enterprise.connector.persist;
 
+import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
@@ -25,11 +26,13 @@ import java.util.prefs.Preferences;
 public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
 
   private static final Logger LOGGER =
-    Logger.getLogger(PrefsStore.class.getName());
+      Logger.getLogger(PrefsStore.class.getName());
 
   private static Preferences prefs;
   private static Preferences prefsSchedule;
   private static Preferences prefsState;
+
+  private static HashSet disabledConnectors;
 
   public PrefsStore() {
     this(true);
@@ -43,6 +46,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
     }
     prefsSchedule = prefs.node("schedule");
     prefsState = prefs.node("state");
+    disabledConnectors = new HashSet();
   }
 
   /**
@@ -72,26 +76,37 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
    */
   public void removeConnectorSchedule(String connectorName) {
     prefsSchedule.remove(connectorName);
+    flush();
   }
     
   /**
-   * Retrieves connector state
+   * Gets the stored state of a named connector.
    * @param connectorName connector name
-   * @return connectorState state of the corresponding connector.
+   * @return the state, or null if no state has been stored for this connector
+   * @throws IllegalStateException if state store is disabled for this connector
    */
   public String getConnectorState(String connectorName) {
-    String connectorState;
-    connectorState = prefsState.get(connectorName, null);
-    return connectorState;
+    if (disabledConnectors.contains(connectorName)) {
+      throw new IllegalStateException(
+          "Reading from disabled ConnectorStateStore for connector "
+          + connectorName);
+    }
+    return prefsState.get(connectorName, null);
   }
   
   /**
    * Stores connector state.
    * @param connectorName connector name
-   * @param connectorState state of the corresponding connector.
+   * @param connectorState state of the corresponding connector
+   * @throws IllegalStateException if state store is disabled for this connector
    */
   public void storeConnectorState(String connectorName, String connectorState) {
-    prefsState.put(connectorName, connectorState);    
+    if (disabledConnectors.contains(connectorName)) {
+      throw new IllegalStateException(
+          "Writing to disabled ConnectorStateStore for connector "
+          + connectorName);
+    }
+    prefsState.put(connectorName, connectorState);
   }
   
   /**
@@ -100,8 +115,32 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
    */
   public void removeConnectorState(String connectorName) {
     prefsState.remove(connectorName);
+    flush();
   }
   
+  /**
+   * Enables the ConnectorStateStore for this connector.
+   * This allows the connector state for this connector to be
+   * get and stored.  By default, the connector state store
+   * for a connector is enabled.  It may be disabled when the
+   * connector is deleted.
+   * @param connectorName connector name.
+   */
+  public void enableConnectorState(String connectorName) {
+    disabledConnectors.remove(connectorName);
+  }
+
+  /**
+   * Disables the ConnectorStateStore for this connector.
+   * Attempts to read from a disabled store return null.
+   * Attempts to write to a disabled store does nothing.
+   * @param connectorName connector name.
+   */
+  public void disableConnectorState(String connectorName) {
+    disabledConnectors.add(connectorName);
+  }
+
+
   /**
    * Clear out all persistent state (schedules and state).
    * @return true if successful
@@ -120,6 +159,8 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
       LOGGER.log(Level.WARNING, "Could not clear state store.", e);
       result = false;
     }
+    if (result)
+      result = flush();
     return result;
   }
   

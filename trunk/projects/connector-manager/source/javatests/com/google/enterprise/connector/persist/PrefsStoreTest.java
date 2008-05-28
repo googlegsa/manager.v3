@@ -114,4 +114,83 @@ public class PrefsStoreTest extends TestCase {
     state = store.getConnectorState(connectorName);
     Assert.assertNull(state);
   }
+
+  // Test enabling/disabling connector state store.
+  //  The connector state should not be able to be 
+  // read or written in the gap between a connector being
+  // deleted and recreated.  Regression tests for Issue 47.
+  public void testEnableDisableState() {
+    String barName = "bar";
+    String barState = "bar's state";
+    String barNewState = "bar's new state";
+
+    String bazName = "baz";
+    String bazState = "baz's state";
+    String bazNewState = "baz's new state";
+
+    String state = store.getConnectorState(barName);
+    Assert.assertNull(state);
+    store.storeConnectorState(barName, barState);
+
+    store.storeConnectorState(bazName, bazState);
+
+    state = store.getConnectorState(barName);
+    Assert.assertEquals(barState, state);
+
+    state = store.getConnectorState(bazName);
+    Assert.assertEquals(bazState, state);
+
+    // Disable connector state store for bar.
+    store.disableConnectorState(barName);
+
+    // Although the store is disabled for bar,
+    // we should still be able to get and set baz's state.
+    store.storeConnectorState(bazName, bazNewState);
+    state = store.getConnectorState(bazName);
+    Assert.assertEquals(bazNewState, state);
+
+    // Attempting to read or write to a disabled
+    // connector state store should throw an exception.
+    try {
+      // This should throw an IllegalStateException.
+      state = store.getConnectorState(barName);
+      fail("getConnectorState() should have thrown IllegalStateException");
+    } catch (IllegalStateException expected) {
+      Assert.assertEquals(
+          "Reading from disabled ConnectorStateStore for connector bar",
+          expected.getMessage());
+    }
+
+    try {
+      // This should throw an IllegalStateException.
+      store.storeConnectorState(barName, barNewState);
+      fail("storeConnectorState() should have thrown IllegalStateException");
+    } catch (IllegalStateException expected1) {
+      Assert.assertEquals(
+          "Writing to disabled ConnectorStateStore for connector bar",
+           expected1.getMessage());
+    }
+
+    // Re-enable state store for the connector.
+    store.enableConnectorState(barName);
+
+    // Make sure the new store attempted while disabled didn't take.
+    state = store.getConnectorState(barName);
+    Assert.assertEquals(barState, state);
+
+    // Make sure we can store once re-enabled.
+    store.storeConnectorState(barName, barNewState);
+    state = store.getConnectorState(barName);
+    Assert.assertEquals(barNewState, state);
+
+    // We should still be able to remove the connector state,
+    // even when disabled.
+    store.disableConnectorState(barName);
+    store.removeConnectorState(barName);
+    store.enableConnectorState(barName);    
+    state = store.getConnectorState(barName);
+    Assert.assertNull(state);
+
+    store.removeConnectorState(bazName);
+  }
 }

@@ -61,10 +61,12 @@ public class MockInstantiator implements Instantiator {
 
   private static final ConnectorType CONNECTOR_TYPE;
   private static Map connectorMap;
+  private static ConnectorStateStore connectorStateStore;
 
   static {
     CONNECTOR_TYPE = null;
     connectorMap = new HashMap();
+    connectorStateStore = new MockConnectorStateStore();
 
     setupConnector(TRAVERSER_NAME1, "MockRepositoryEventLog1.txt");
     setupConnector(TRAVERSER_NAME2, "MockRepositoryEventLog1.txt");
@@ -121,7 +123,7 @@ public class MockInstantiator implements Instantiator {
     }
 
     Pusher pusher = new MockPusher(System.out);
-    ConnectorStateStore connectorStateStore = new MockConnectorStateStore();
+    connectorStateStore.enableConnectorState(connectorName);
     QueryTraverser queryTraverser =
         new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
 
@@ -169,10 +171,13 @@ public class MockInstantiator implements Instantiator {
   public ConfigureResponse setConnectorConfig(String connectorName,
       String connectorTypeName, Map configKeys, Locale locale,
       boolean update) {
-	  return null;
+    return null;
   }
 
   public void dropConnector(String connectorName) {
+    connectorStateStore.disableConnectorState(connectorName);
+    connectorStateStore.removeConnectorState(connectorName);
+    connectorMap.remove(connectorName);
   }
 
   public AuthenticationManager getAuthenticationManager(String connectorName)
