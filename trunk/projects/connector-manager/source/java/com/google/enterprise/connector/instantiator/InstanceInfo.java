@@ -157,7 +157,7 @@ public final class InstanceInfo {
       connectorInstancePrototype =
           new FileSystemResource(specialInstancePrototype);
       LOGGER.log(Level.INFO,
-          "Using connector-specific xml config for connector" + connectorName
+          "Using connector-specific xml config for connector " + connectorName
               + " at path " + specialInstancePrototype.getPath());
     } else {
       connectorInstancePrototype = typeInfo.getConnectorInstancePrototype();

@@ -39,7 +39,7 @@ public class MockJcrNodeIteratorTest extends TestCase {
   private static final String JCR_LAST_MODIFIED = "jcr:lastModified";
   private static final String JCR_UUID = "jcr:uuid";
   private static final Logger logger =
-      Logger.getLogger(MockRepositoryPropertyTest.class.getName());
+      Logger.getLogger(MockJcrNodeIteratorTest.class.getName());
 
   /**
    * Sanity test

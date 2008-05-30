@@ -37,8 +37,8 @@ import javax.jcr.query.QueryResult;
  * Unit tests for Mock JCR repository.  
  */
 public class MockJcrQueryManagerTest extends TestCase {
-  private static final Logger logger = Logger
-      .getLogger(MockRepositoryPropertyTest.class.getName());
+  private static final Logger logger = 
+      Logger.getLogger(MockJcrQueryManagerTest.class.getName());
 
   /**
    * Simple query test

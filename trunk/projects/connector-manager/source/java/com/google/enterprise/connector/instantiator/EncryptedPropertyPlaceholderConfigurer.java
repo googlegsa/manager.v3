@@ -63,7 +63,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
   private static final String KEY_NAME = "EXTERNAL_CM_KEY";
   
   private static final Logger LOGGER =
-    Logger.getLogger(InstanceInfo.class.getName());
+    Logger.getLogger(EncryptedPropertyPlaceholderConfigurer.class.getName());
 
   private static String keyStorePath = "external_cm.keystore";
   

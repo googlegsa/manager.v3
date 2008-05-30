@@ -28,7 +28,7 @@ import java.util.logging.Logger;
  */
 public class MockRepositoryPropertyListTest extends TestCase {
   private static final Logger logger = 
-    Logger.getLogger(MockRepositoryPropertyTest.class.getName());
+      Logger.getLogger(MockRepositoryPropertyListTest.class.getName());
   
   /**
    * Basic property tests
