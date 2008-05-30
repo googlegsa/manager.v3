@@ -22,19 +22,28 @@
 		<ant dir="${test-connectorB.dir}" target="clean" />
 	</target>
 
-	<target name="connector-manager">
+	<target name="prebuild">
+		<exec executable="svnversion" spawn="false"
+			failifexecutionfails="false"
+			dir="${basedir}"
+			outputproperty="svnversion">
+			<arg line="."/>
+		</exec>
+	</target>
+
+	<target name="connector-manager" depends="prebuild">
 		<ant dir="${connector-manager.dir}" target="all">
 			<property name="version" value="${version}" />
 		</ant>
 	</target>
 
-	<target name="test-connectorA">
+	<target name="test-connectorA" depends="prebuild">
 		<ant dir="${test-connectorA.dir}">
 			<property name="version" value="${version}" />
 		</ant>
 	</target>
 
-	<target name="test-connectorB">
+	<target name="test-connectorB" depends="prebuild">
 		<ant dir="${test-connectorB.dir}">
 			<property name="version" value="${version}" />
 		</ant>

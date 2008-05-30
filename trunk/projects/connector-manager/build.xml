@@ -124,7 +124,8 @@
 			<fileset dir="${classes}" includes="**/spi/**" excludes="**/javatests/**" />
 			<manifest>
 			        <attribute name="Implementation-Title" value="Connector Manager SPI"/>
-			        <attribute name="Implementation-Version" value="${version} ${TODAY}"/>
+				<attribute name="Implementation-Version"
+					value="${version} (build ${svnversion}  ${TODAY})"/> 
 			        <attribute name="Implementation-Vendor" value="Google Inc."/>
 			</manifest>
 		</jar>
@@ -136,7 +137,8 @@
 			</fileset>
 			<manifest>
 			        <attribute name="Implementation-Title" value="Connector Manager Utility"/>
-			        <attribute name="Implementation-Version" value="${version} ${TODAY}"/>
+				<attribute name="Implementation-Version"
+					value="${version} (build ${svnversion}  ${TODAY})"/> 
 			        <attribute name="Implementation-Vendor" value="Google Inc."/>
 			</manifest>
 		</jar>
@@ -144,7 +146,8 @@
 			<fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**" />
 			<manifest>
 			        <attribute name="Implementation-Title" value="Connector Manager Impl"/>
-			        <attribute name="Implementation-Version" value="${version} ${TODAY}"/>
+				<attribute name="Implementation-Version"
+					value="${version} (build ${svnversion}  ${TODAY})"/> 
 			        <attribute name="Implementation-Vendor" value="Google Inc."/>
 			</manifest>
 		</jar>
@@ -156,7 +159,8 @@
 			<fileset dir="${tests.classes}" includes="**/*.class" />
 			<manifest>
 			        <attribute name="Implementation-Title" value="Connector Manager Tests"/>
-			        <attribute name="Implementation-Version" value="${version} ${TODAY}"/>
+				<attribute name="Implementation-Version"
+					value="${version} (build ${svnversion}  ${TODAY})"/> 
 			        <attribute name="Implementation-Vendor" value="Google Inc."/>
 			</manifest>
 		</jar>
@@ -190,7 +194,8 @@
 			<webinf dir="etc" includes="**" />
 			<manifest>
 				<attribute name="Implementation-Title" value="Connector Manager"/>
-				<attribute name="Implementation-Version" value="${version} ${TODAY}"/> 
+				<attribute name="Implementation-Version"
+					value="${version} (build ${svnversion}  ${TODAY})"/> 
 				<attribute name="Implementation-Vendor" value="Google Inc."/>
 			</manifest>
 		</war>
@@ -213,7 +218,8 @@
 			<webinf dir="testdata/mocktestdata" includes="test.doc" />
 			<manifest>
 				<attribute name="Implementation-Title" value="Connector Manager"/>
-				<attribute name="Implementation-Version" value="${version} ${TODAY}"/> 
+				<attribute name="Implementation-Version"
+					value="${version} (build ${svnversion}  ${TODAY})"/> 
 				<attribute name="Implementation-Vendor" value="Google Inc."/>
 			</manifest>
 		</war>
