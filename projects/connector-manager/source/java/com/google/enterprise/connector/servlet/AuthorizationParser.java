@@ -14,7 +14,7 @@ public class AuthorizationParser {
 
   private String xmlBody;
   private static final Logger LOGGER =
-      Logger.getLogger(AuthorizationHandler.class.getName());
+      Logger.getLogger(AuthorizationParser.class.getName());
 
   private int status;
   private int numDocs;

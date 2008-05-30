@@ -29,7 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * An abstract class for Connector Manager GET servlets.
- * It contains an abstract method "processDoPost".
+ * It contains an abstract method "processDoGet".
  *
  */
 public abstract class ConnectorManagerGetServlet extends HttpServlet {

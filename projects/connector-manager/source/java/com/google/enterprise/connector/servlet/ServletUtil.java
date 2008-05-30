@@ -69,7 +69,7 @@ public class ServletUtil {
   public static final String XMLTAG_STATUS_PARAMS = "CMParams";
   public static final String XMLTAG_STATUS_PARAM_ORDER = "Order";
   public static final String XMLTAG_STATUS_PARAM = "CMParam";
-	  
+
   public static final String XMLTAG_CONNECTOR_INSTANCES = "ConnectorInstances";
   public static final String XMLTAG_CONNECTOR_INSTANCE = "ConnectorInstance";
   public static final String XMLTAG_CONNECTOR_TYPES = "ConnectorTypes";
@@ -162,7 +162,7 @@ public class ServletUtil {
       "              "};
 
   private static DocumentBuilderFactory factory =
-	    DocumentBuilderFactory.newInstance();
+      DocumentBuilderFactory.newInstance();
 
   /**
    * Parse an XML String to a Document.
@@ -198,8 +198,8 @@ public class ServletUtil {
    * @param rootTagName String the root element tag name
    * @return a result Element object if successful, null on error 
    */
-  public static Element parseAndGetRootElement(
-      String xmlBody, String rootTagName) {
+  public static Element parseAndGetRootElement(String xmlBody,
+                                               String rootTagName) {
     SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
     Document document = ServletUtil.parse(xmlBody, errorHandler);
     if (document == null) {
@@ -226,8 +226,8 @@ public class ServletUtil {
    * @param attrName String Attribute name
    * @return String attribute value of named child element
    */
-  public static String getFirstAttribute(
-      Element elem, String name, String attrName) {
+  public static String getFirstAttribute(Element elem, String name,
+                                         String attrName) {
     NodeList nodeList = elem.getElementsByTagName(name);
     if (nodeList.getLength() == 0) {
       return null;
@@ -447,8 +447,8 @@ public class ServletUtil {
    * @param elemName element name
    * @param attributes attributes
    */
-  public static void writeXMLElementWithAttrs(
-      StringBuffer out, int indentLevel, String elemName, String attributes) {
+  public static void writeXMLElementWithAttrs(StringBuffer out,
+      int indentLevel, String elemName, String attributes) {
     out.append(indentStr(indentLevel)).append("<").append(elemName);
     out.append(" ").append(attributes).append("/>");
   }
@@ -462,7 +462,7 @@ public class ServletUtil {
    * an ending tag if false
    */
   public static void writeXMLTag(PrintWriter out, int indentLevel,
-                          String tagName, boolean endingTag) {
+                                 String tagName, boolean endingTag) {
     out.println(indentStr(indentLevel)
         + (endingTag ? "</" : "<") + (tagName) + ">");
   }
@@ -491,11 +491,11 @@ public class ServletUtil {
     }
   }
 
-  private static final Pattern PREPEND_CM_PATTERN = Pattern
-  .compile("\\bname\\b\\s*=\\s*[\"']");
+  private static final Pattern PREPEND_CM_PATTERN = 
+      Pattern.compile("\\bname\\b\\s*=\\s*[\"']");
 
-  private static final Pattern STRIP_CM_PATTERN = Pattern
-  .compile("(\\bname\\b\\s*=\\s*[\"'])CM_");
+  private static final Pattern STRIP_CM_PATTERN = 
+      Pattern.compile("(\\bname\\b\\s*=\\s*[\"'])CM_");
 
   /**
    * Given a String such as:
@@ -508,11 +508,10 @@ public class ServletUtil {
    * @return a result XML string without PREFIX_CM as above
    */
   public static String stripCmPrefix(String str) {
-    StringBuffer buf = new StringBuffer(2 * str.length());
     Matcher matcher = STRIP_CM_PATTERN.matcher(str);
     String result = matcher.replaceAll("$1");
     return result;
- }
+  }
   
   /**
    * Inverse operation for stripCmPrefix.
@@ -521,7 +520,6 @@ public class ServletUtil {
    * @return a result XML string with PREFIX_CM as above
    */
   public static String prependCmPrefix(String str) {
-    StringBuffer buf = new StringBuffer(2 * str.length());
     Matcher matcher = PREPEND_CM_PATTERN.matcher(str);
     String result = matcher.replaceAll("$0CM_");
     return result;

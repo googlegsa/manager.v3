@@ -40,7 +40,7 @@ import javax.jcr.query.QueryManager;
 
 public class JcrTraversalManagerTest extends TestCase {
   private static final Logger logger =
-      Logger.getLogger(MockRepositoryPropertyTest.class.getName());
+      Logger.getLogger(JcrTraversalManagerTest.class.getName());
 
   /**
    * Test generating checkpoints

@@ -26,7 +26,7 @@ import java.util.logging.Logger;
 
 public class ConnectorTestUtilsTest extends TestCase {
   private static final Logger logger = 
-    Logger.getLogger(MockRepositoryPropertyTest.class.getName());
+      Logger.getLogger(ConnectorTestUtilsTest.class.getName());
 
   String expectedContents = "now is the time for all \n"
     + "good men to come to the aid \n" + "of their country \n";

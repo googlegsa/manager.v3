@@ -167,7 +167,7 @@ public class InstanceMap extends TreeMap {
       if (connectorDir.isDirectory()) {
         // we don't know why this directory already exists, but we're ok with it
         LOGGER.warning("Connector directory " + connectorDir.getAbsolutePath()
-            + "; already exists for connector" + name);
+            + "; already exists for connector " + name);
         return connectorDir;
       } else {
         throw new InstantiatorException("Existing file blocks creation of "
