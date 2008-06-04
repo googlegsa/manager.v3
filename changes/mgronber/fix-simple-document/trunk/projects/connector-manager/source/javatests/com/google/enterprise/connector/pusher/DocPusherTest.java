@@ -31,7 +31,6 @@ import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
-import com.google.enterprise.connector.spiimpl.ValueImpl;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -369,9 +368,9 @@ public class DocPusherTest extends TestCase {
       Object obj = props.get(key);
       Value val = null;
       if (obj instanceof String) {
-        val = ValueImpl.getStringValue((String) obj);
+        val = Value.getStringValue((String) obj);
       } else if (obj instanceof Calendar) {
-        val = ValueImpl.getDateValue((Calendar) obj);
+        val = Value.getDateValue((Calendar) obj);
       } else {
         throw new AssertionError(obj);
       }

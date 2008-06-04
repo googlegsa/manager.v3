@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.spi;
 
-import com.google.enterprise.connector.spiimpl.ValueImpl;
-
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
@@ -74,6 +72,10 @@ public class SimpleDocumentTest extends TestCase {
     assertTrue(propNames.contains(SpiConstants.PROPNAME_CONTENTURL));
   }
 
+  /**
+   * Utility method to convert {@link Map} of Java Objects into a
+   * {@link SimpleDocument}.
+   */
   private SimpleDocument createSimpleDocument(Map props) {
     Map spiProps = new HashMap();
     for (Iterator iter = props.keySet().iterator(); iter.hasNext();) {
@@ -81,9 +83,9 @@ public class SimpleDocumentTest extends TestCase {
       Object obj = props.get(key);
       Value val = null;
       if (obj instanceof String) {
-        val = ValueImpl.getStringValue((String) obj);
+        val = Value.getStringValue((String) obj);
       } else if (obj instanceof Calendar) {
-        val = ValueImpl.getDateValue((Calendar) obj);
+        val = Value.getDateValue((Calendar) obj);
       } else {
         throw new AssertionError(obj);
       }
