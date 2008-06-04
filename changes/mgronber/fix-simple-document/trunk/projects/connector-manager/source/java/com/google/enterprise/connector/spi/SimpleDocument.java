@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class SimpleDocument implements Document {
+
   private Map properties;
 
   public SimpleDocument(Map properties) {
