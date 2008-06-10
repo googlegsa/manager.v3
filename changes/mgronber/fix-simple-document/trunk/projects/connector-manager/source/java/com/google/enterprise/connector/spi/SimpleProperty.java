@@ -27,8 +27,9 @@ public class SimpleProperty implements Property {
     this.iterator = null;
   }
 
-  public List getValues() {
-    return values;
+  public SimpleProperty(SimpleProperty object) {
+    this.values = object.values;
+    this.iterator = null;
   }
 
   public Value nextValue() {

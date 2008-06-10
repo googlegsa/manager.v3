@@ -29,7 +29,7 @@ public class SimpleDocument implements Document {
     Property prop = (Property) properties.get(name);
     if (prop != null) {
       if (prop instanceof SimpleProperty) {
-        prop = new SimpleProperty(((SimpleProperty) prop).getValues());
+        prop = new SimpleProperty((SimpleProperty) prop);
       } else {
         throw new RepositoryException("Unknown property type: " + prop);
       }
