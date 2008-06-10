@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.spi;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,14 +26,11 @@ public class SimpleDocument implements Document {
     this.properties = properties;
   }
 
-  public Property findProperty(String name) throws RepositoryException {
-    Property prop = (Property) properties.get(name);
-    if (prop != null) {
-      if (prop instanceof SimpleProperty) {
-        prop = new SimpleProperty((SimpleProperty) prop);
-      } else {
-        throw new RepositoryException("Unknown property type: " + prop);
-      }
+  public Property findProperty(String name) {
+    List list = (List) properties.get(name);
+    Property prop = null;
+    if (list != null) {
+      prop = new SimpleProperty(list);
     }
     return prop;
   }

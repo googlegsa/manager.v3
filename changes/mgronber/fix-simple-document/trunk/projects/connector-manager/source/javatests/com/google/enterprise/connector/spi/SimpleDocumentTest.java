@@ -77,7 +77,7 @@ public class SimpleDocumentTest extends TestCase {
    * {@link SimpleDocument}.
    */
   private SimpleDocument createSimpleDocument(Map props) {
-    Map spiProps = new HashMap();
+    Map spiValues = new HashMap();
     for (Iterator iter = props.keySet().iterator(); iter.hasNext();) {
       String key = (String) iter.next();
       Object obj = props.get(key);
@@ -91,9 +91,8 @@ public class SimpleDocumentTest extends TestCase {
       }
       List values = new ArrayList();
       values.add(val);
-      Property spiProp = new SimpleProperty(values);
-      spiProps.put(key, spiProp);
+      spiValues.put(key, values);
     }
-    return new SimpleDocument(spiProps);
+    return new SimpleDocument(spiValues);
   }
 }
