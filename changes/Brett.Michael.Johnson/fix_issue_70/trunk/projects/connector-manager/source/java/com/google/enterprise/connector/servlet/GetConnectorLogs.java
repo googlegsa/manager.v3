@@ -25,14 +25,16 @@ import java.io.FilenameFilter;
 import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogManager;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -51,7 +53,8 @@ import org.springframework.context.ApplicationContext;
  * An Admin servlet to retrieve the log files from the connector manager.
  * This servlet allows the user to list available log files, fetch individual
  * log files, and fetch a ZIP archive of all the log files.  At this time
- * the user may retrieve either connector log files or feed log files.
+ * the user may retrieve connector log files, feed log files, and teed feed
+ * files.
  *
  * Usage:
  * -----
@@ -70,6 +73,7 @@ import org.springframework.context.ApplicationContext;
  * or
  *   http://[cm_host_addr]/connector_manager/getConnectorLogs/ALL
  *
+ *
  * To list the available feed log files:
  *   http://[cm_host_addr]/connector_manager/getFeedLogs
  *
@@ -85,6 +89,27 @@ import org.springframework.context.ApplicationContext;
  * or
  *   http://[cm_host_addr]/connector_manager/getFeedLogs/ALL
  *
+ *
+ * To list the name and size of the teed feed file:
+ *   http://[cm_host_addr]/connector_manager/getTeedFeedFile
+ *
+ * To view the teed feed file:
+ *   http://[cm_host_addr]/connector_manager/getTeedFeedFile/[teed_feed_name]
+ * where [teed_feed_name] is the base filename of the teed feed file.
+ * WARNING: The teed feed file can be HUGE.  It is suggested you either
+ * request a managable byte range (see below) or fetch the ZIP archive file
+ * (which may still be HUGE).
+ *
+ * To retrieve a ZIP archive of all the feed log files:
+ *   http://[cm_host_addr]/connector_manager/getFeedLogs/*
+ * or
+ *   http://[cm_host_addr]/connector_manager/getFeedLogs/ALL
+ * or
+ *   http://[cm_host_addr]/connector_manager/getFeedLogs/[teed_feed_name].zip
+ * where [teed_feed_name] is the base filename of the teed feed file.
+ *
+ *
+ * TODO: document Byte Range requests here.
  */
 public class GetConnectorLogs extends HttpServlet {
   private static final Logger LOGGER =
@@ -111,18 +136,29 @@ public class GetConnectorLogs extends HttpServlet {
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException, FileNotFoundException {
+    //if (ServletUtil.dumpServletRequest(req, res)) return;
+
     Context context = Context.getInstance(this.getServletContext());
 
-    // Are we retrieving Connector logs or Feed logs?
+    // Only allow incoming connections from the GSA or localhost.
+    if (!allowedRemoteAddr(context, req.getRemoteAddr())) {
+      res.sendError(HttpServletResponse.SC_FORBIDDEN);
+      return;
+    }
+
+    // Are we retrieving Connector logs, Feed logs, or TeedFeed file?
     LogHandler handler;
     String logsTag;
     try {
-      if (req.getServletPath().indexOf("Feed") < 0) {
-        handler = new ConnectorLogHandler();
-        logsTag = ServletUtil.XMLTAG_CONNECTOR_LOGS;
-      } else {
+      if (req.getServletPath().indexOf("Teed") > 0) {
+        handler = new TeedFeedHandler(context);
+        logsTag = ServletUtil.XMLTAG_TEED_FEED;
+      } else if (req.getServletPath().indexOf("Feed") > 0) {
         handler = new FeedLogHandler(context);
         logsTag = ServletUtil.XMLTAG_FEED_LOGS;
+      } else {
+        handler = new ConnectorLogHandler();
+        logsTag = ServletUtil.XMLTAG_CONNECTOR_LOGS;
       }
     } catch (ConnectorManagerException cme) {
       res.setContentType(ServletUtil.MIMETYPE_XML);
@@ -173,10 +209,68 @@ public class GetConnectorLogs extends HttpServlet {
         res.setContentType(ServletUtil.MIMETYPE_XML);
       else
         res.setContentType(ServletUtil.MIMETYPE_TEXT_PLAIN);
-      ServletOutputStream out = res.getOutputStream();
+      OutputStream out = getCompressedOutputStream(req, res);
       fetchLog(logFile, out);
       out.close();
     }
+  }
+
+  /**
+   * Verify the request originated from either the GSA or
+   * localhost.  Since the logs and the feed file may contain
+   * proprietary customer information, we don't want to serve
+   * them up to just anybody.
+   *
+   * @param context the application context
+   * @param remoteAddr the IP address of the caller
+   * @returns true if request came from an acceptable IP address.
+   */
+  public static boolean allowedRemoteAddr(Context context, String remoteAddr) {
+    if ((remoteAddr != null) && (remoteAddr.length() > 0)) {
+      try {
+        InetAddress caller = InetAddress.getByName(remoteAddr);
+        if (remoteAddr.equals("127.0.0.1") || (caller == null) ||
+            caller.equals(InetAddress.getLocalHost())) {
+          return true;  // localhost is allowed access
+        }
+        String gsaHost = context.getGsaFeedHost();
+        InetAddress[] gsaAddrs = InetAddress.getAllByName(gsaHost);
+        for (int i = 0; i < gsaAddrs.length; i++) {
+          if (caller.equals(gsaAddrs[i]))
+            return true;  // GSA is allowed access
+        }
+      } catch (UnknownHostException uhe) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Try to encode the response output stream with a compression mechanism
+   * the client supports.  Returns the standard ServletOutputStream if the
+   * client does not support gzip or deflate encodings.
+   *
+   * BUGS: Does not take into account encoding weights, especially 'q=0'.
+   *
+   * @param req an HttpServletRequest
+   * @param res an HttpServletResponse
+   * @returns outputStream, possibly of a compressed encoding.
+   */
+  private static OutputStream getCompressedOutputStream(HttpServletRequest req,
+      HttpServletResponse res) throws IOException {
+    String encodings = req.getHeader("Accept-Encoding");
+    if ((encodings != null) && (encodings.length() > 0)) {
+      encodings = encodings.toLowerCase();
+      if (encodings.indexOf("gzip") >= 0) {
+        res.setHeader("Content-Encoding", "gzip");
+        return new GZIPOutputStream(res.getOutputStream());
+      } else if (encodings.indexOf("deflate") >= 0) {
+        res.setHeader("Content-Encoding", "deflate");
+        return new ZipOutputStream(res.getOutputStream());
+      }
+    }
+    return res.getOutputStream();
   }
 
   /**
@@ -509,6 +603,51 @@ public class GetConnectorLogs extends HttpServlet {
         throw new ConnectorManagerException(
             "Unable to retrieve Feed Logging configuration: " + be.toString());
       }
+    }
+  }
+
+  // Get Teed Feed File configuration from applicationContext.properties.
+  // At this time, there is only one teedFeedFile is specified (it is not
+  // a logging FileHandler style pattern), so override most of my superclass'
+  // methods with more trivial (single file) implementations.
+  private static class TeedFeedHandler extends LogHandler {
+    public TeedFeedHandler(Context context) throws ConnectorManagerException {
+      String fileName = context.getTeedFeedFile();
+      if ((fileName != null) && (fileName.length() > 0)) {
+        super.pattern = fileName;
+        super.isXMLFormat = true;
+      } else {
+        throw new ConnectorManagerException(
+            "Unable to retrieve Teed Feed File configuration. The teedFeedFile"
+            + " property is not defined in applicationContext.properties.");
+      }
+    }
+
+    public File getLogFile(String logName)
+        throws IOException, FileNotFoundException {
+      File file =  new File(pattern);
+      if (logName.equals(file.getName()))
+        return file;
+      else
+        throw new FileNotFoundException(
+            "The teedFeedFile is not named " + logName);
+    }
+
+    public File getLogDirectory() throws IOException, FileNotFoundException {
+      File parent = (new File(pattern)).getParentFile();
+      if (parent != null)
+        return parent;
+      else
+        throw new FileNotFoundException(
+            "The teedFeedFile does not specify a parent directory.");
+    }
+
+    public String getArchiveName() {
+      return new File(pattern).getName() + ".zip";
+    }
+
+    public File[] listLogs() throws IOException, FileNotFoundException {
+      return new File[] { new File(pattern) };
     }
   }
 }

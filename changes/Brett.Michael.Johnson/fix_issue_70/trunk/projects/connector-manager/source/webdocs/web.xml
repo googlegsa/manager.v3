@@ -201,6 +201,10 @@
         <servlet-name>GetConnectorLogs</servlet-name>
         <url-pattern>/getFeedLogs/*</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetConnectorLogs</servlet-name>
+        <url-pattern>/getTeedFeedFile/*</url-pattern>
+    </servlet-mapping>
 
     <servlet-mapping>
         <servlet-name>GetConnectorStatus</servlet-name>
