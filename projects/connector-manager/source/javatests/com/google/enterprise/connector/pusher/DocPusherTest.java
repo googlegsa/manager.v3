@@ -24,14 +24,11 @@ import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
-import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SimpleDocument;
-import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
-import com.google.enterprise.connector.spiimpl.ValueImpl;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -363,24 +360,23 @@ public class DocPusherTest extends TestCase {
    * {@link SimpleDocument}.
    */
   private Document createSimpleDocument(Map props) {
-    Map spiProps = new HashMap();
+    Map spiValues = new HashMap();
     for (Iterator iter = props.keySet().iterator(); iter.hasNext();) {
       String key = (String) iter.next();
       Object obj = props.get(key);
       Value val = null;
       if (obj instanceof String) {
-        val = ValueImpl.getStringValue((String) obj);
+        val = Value.getStringValue((String) obj);
       } else if (obj instanceof Calendar) {
-        val = ValueImpl.getDateValue((Calendar) obj);
+        val = Value.getDateValue((Calendar) obj);
       } else {
         throw new AssertionError(obj);
       }
       List values = new ArrayList();
       values.add(val);
-      Property spiProp = new SimpleProperty(values); 
-      spiProps.put(key, spiProp);
+      spiValues.put(key, values);
     }
-    return new SimpleDocument(spiProps);
+    return new SimpleDocument(spiValues);
   }
 
   /**
