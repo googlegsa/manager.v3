@@ -20,18 +20,15 @@ import com.google.enterprise.connector.pusher.FeedFileHandler;
 
 import java.io.IOException;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.logging.Formatter;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.logging.LogManager;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
@@ -39,22 +36,20 @@ import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
-import javax.servlet.ServletContext;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-
 
 /**
  * An Admin servlet to retrieve the log files from the connector manager.
  * This servlet allows the user to list available log files, fetch individual
  * log files, and fetch a ZIP archive of all the log files.  At this time
  * the user may retrieve connector log files, feed log files, and teed feed
- * files.
+ * files.  Access to this servlet is restricted to either localhost or
+ * gsa.feed.host, based upon the HTTP RemoteAddress.
  *
  * Usage:
  * -----
@@ -95,9 +90,11 @@ import org.springframework.context.ApplicationContext;
  *
  * To view the teed feed file:
  *   http://[cm_host_addr]/connector_manager/getTeedFeedFile/[teed_feed_name]
+ * or
+ *   http://[cm_host_addr]/connector_manager/getTeedFeedFile/0
  * where [teed_feed_name] is the base filename of the teed feed file.
  * WARNING: The teed feed file can be HUGE.  It is suggested you either
- * request a managable byte range (see below) or fetch the ZIP archive file
+ * request a manageable byte range (see below) or fetch the ZIP archive file
  * (which may still be HUGE).
  *
  * To retrieve a ZIP archive of all the feed log files:
@@ -109,12 +106,44 @@ import org.springframework.context.ApplicationContext;
  * where [teed_feed_name] is the base filename of the teed feed file.
  *
  *
- * TODO: document Byte Range requests here.
+ * Byte Range Support:
+ * This servet supports a subset of the RFC 2616 byte range specification
+ * to retrieve portions of the log files.  Since the connector logs are
+ * 50MB each and the teedFeedFile can be gigabytes, requesting a portion
+ * of the log may be prudent.  This servlet supports byte range specifier
+ * in either the HTTP Range: header or in the Query fragment of the request.
+ * For instance:
+ *   http://[cm_host_addr]/connector_manager/getFeedLogs/0?bytes=0-1000
+ * returns the first 1001 bytes of the current feed log.
+ *
+ *   http://[cm_host_addr]/connector_manager/getFeedLogs/0?bytes=-1000
+ * returns the last 1000 bytes (the tail) of the current feed log.
+ *
+ *   http://[cm_host_addr]/connector_manager/getFeedLogs/0?bytes=1000-
+ * returns everything after the first 1000 bytes of the current feed log.
+ *
+ * Multipart byte ranges are NOT supported (ie bytes=0-100,1000-2000).
+ * Byte range requests for log listing pages and ZIP archive files are
+ * ignored.
+ *
+ *
+ * Redirects and curl:
+ * When using shorthand file specifications, like generation numbers,
+ * 'ALL', or '*', this servlet returns a redirect to the actual filename.
+ * This allows the browser, wget, or curl to pull the true filename off
+ * the redirected URL so that it can name the file when storing locally.
+ * If using curl to retrieve the files, please to use 'curl -L' to tell
+ * curl to follow the redirect.  Unfortunately, when using 'curl -O' to
+ * save the file locally, curl uses the pre-redirected name, rather than
+ * the post-redirected name when naming the local file.  This forces you
+ * to use 'curl -L -o output_filename' anyway, so you might as well
+ * specify the full filename int the URL to begin with.
+ *
+ * Wget handles redirects appropriately without intervention, and names
+ * the saved file as expected.
+ *
  */
 public class GetConnectorLogs extends HttpServlet {
-  private static final Logger LOGGER =
-      Logger.getLogger(GetConnectorLogs.class.getName());
-
   /**
    * Retrieves the log files for a connector instance.
    *
@@ -136,8 +165,6 @@ public class GetConnectorLogs extends HttpServlet {
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException, FileNotFoundException {
-    //if (ServletUtil.dumpServletRequest(req, res)) return;
-
     Context context = Context.getInstance(this.getServletContext());
 
     // Only allow incoming connections from the GSA or localhost.
@@ -164,7 +191,7 @@ public class GetConnectorLogs extends HttpServlet {
       res.setContentType(ServletUtil.MIMETYPE_XML);
       PrintWriter out = res.getWriter();
       ServletUtil.writeResponse(out, new ConnectorMessageCode(
-          ConnectorMessageCode.EXCEPTION_HTTP_SERVLET, cme.getMessage(), null));
+         ConnectorMessageCode.EXCEPTION_HTTP_SERVLET, cme.getMessage(), null));
       out.close();
       return;
     }
@@ -202,15 +229,32 @@ public class GetConnectorLogs extends HttpServlet {
       // the correct name to the file.
       File logFile = handler.getLogFile(logName);
       if (!logName.equals(logFile.getName())) {
-        res.sendRedirect(res.encodeRedirectURL(logFile.getName()));
+        String url = res.encodeRedirectURL(logFile.getName());
+        String query = req.getQueryString();
+        if (query != null && query.length() > 0)
+          url += '?' + query;
+        res.sendRedirect(url);
         return;
       }
+
+      // Did the user ask for a byte range?
+      ByteRange range;
+      try {
+        if ((range = ByteRange.parseByteRange(req)) != null)
+          res.addHeader("Content-Range", range.contentRange(logFile.length()));
+      } catch (IllegalArgumentException iae) {
+        res.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE,
+                      iae.toString());
+        return;
+      }
+
+      // Specify either text/plain or xml content type, based on log format.
       if (handler.isXMLFormat)
         res.setContentType(ServletUtil.MIMETYPE_XML);
       else
         res.setContentType(ServletUtil.MIMETYPE_TEXT_PLAIN);
       OutputStream out = getCompressedOutputStream(req, res);
-      fetchLog(logFile, out);
+      fetchLog(logFile, range, out);
       out.close();
     }
   }
@@ -277,16 +321,32 @@ public class GetConnectorLogs extends HttpServlet {
    * Send the requested log file.
    *
    * @param logFile log File to be retrieved.
+   * @param range ByteRange depicting a portion of file, may be null.
    * @param out OutputStream to which to write the log file.
    * @throws FileNotFoundException, IOException
    */
-  public static void fetchLog(File logFile, OutputStream out)
+  public static void fetchLog(File logFile, ByteRange range, OutputStream out)
       throws FileNotFoundException, IOException {
-    FileInputStream in = new FileInputStream(logFile);
+    long startPos = 0;
+    long length = logFile.length();
+    if (range != null) {
+      startPos = range.actualStartPosition(length);
+      length = range.actualLength(length);
+    }
+
     byte[] buf = new byte[16384];
-    int byteCount;
-    while ((byteCount = in.read(buf)) > 0) {
-      out.write(buf, 0, byteCount);
+    RandomAccessFile in = new RandomAccessFile(logFile, "r");
+    if (startPos > 0)
+      in.seek(startPos);
+
+    while (length > 0) {
+      int byteCount =
+          in.read(buf, 0, (length > buf.length) ? buf.length : (int)length);
+      if (byteCount > 0) {
+        out.write(buf, 0, byteCount);
+        length -= byteCount;
+      } else
+        break;
     }
     in.close();
   }
@@ -308,7 +368,7 @@ public class GetConnectorLogs extends HttpServlet {
         zentry.setSize(logs[i].length());
         zentry.setTime(logs[i].lastModified());
         zout.putNextEntry(zentry);
-        fetchLog(logs[i], zout);
+        fetchLog(logs[i], null, zout);
         zout.closeEntry();
       }
       zout.finish();
@@ -367,6 +427,113 @@ public class GetConnectorLogs extends HttpServlet {
    */
   private static String directoryName(String name) {
     return (name == null) ? null : name.substring(0, name.lastIndexOf('/') + 1);
+  }
+
+
+  /**
+   * This describes a byte range specification, as per RFC2616.
+   */
+  private static class ByteRange {
+    static final long UNSPECIFIED = -1;
+    public long startPosition = UNSPECIFIED;
+    public long endPosition = UNSPECIFIED;
+
+    public ByteRange(long startPosition, long endPosition) {
+      this.startPosition = startPosition;
+      this.endPosition = endPosition;
+    }
+
+    /**
+     * Extract a byte range request from either the HTTP header or the
+     * Query fragment.  The syntax for each is identical:  bytes=start-end
+     * Does not support multi-part ranges.
+     *
+     * @param req  an HttpServletRequest
+     * @throws IllegalArgumentException if the range does not look
+     * like a valid RFC2616 ranges-specifier, or if a multi-part range
+     * was specified.
+     */
+    public static ByteRange parseByteRange(HttpServletRequest req)
+        throws IllegalArgumentException {
+      // First look for byte range specification in the request Query fragment.
+      String bytes = req.getParameter("bytes");
+      if (bytes == null) {
+        // Next, look for byte range specification in the HTTP header.
+        if ((bytes = req.getHeader("Range")) == null)
+          return null;  // no Range header given either.
+        if (bytes.startsWith("bytes="))
+          bytes = bytes.substring(6).trim();
+        else
+          throw new IllegalArgumentException(bytes);
+      }
+      // Now extract the actual start and stop byte values.
+      long startPosition = UNSPECIFIED;
+      long endPosition = UNSPECIFIED;
+      int dash = bytes.indexOf('-');
+      if (dash != -1) {
+        try {
+          if (dash > 0)
+            startPosition = Long.parseLong(bytes.substring(0, dash));
+          if (++dash < bytes.length())
+            endPosition = Long.parseLong(bytes.substring(dash));
+        } catch (NumberFormatException nfe) {
+          throw new IllegalArgumentException(bytes);
+        }
+      }
+      // One or the other may be unspecified, but not both.
+      // If both are specified, start must not exceed end.
+      if (((startPosition == UNSPECIFIED) && (endPosition == UNSPECIFIED)) ||
+          ((endPosition != UNSPECIFIED) && (startPosition > endPosition)))
+        throw new IllegalArgumentException(bytes);
+
+      return new ByteRange(startPosition, endPosition);
+    }
+
+    /**
+     * Return the number of bytes to read.
+     *
+     * @param fileSize total number of bytes in file.
+     * @return actual number of bytes in requested range.
+     */
+    public long actualLength(long fileSize) {
+      if (startPosition == UNSPECIFIED) {
+        // 'tail' request - ie last n bytes of file.
+        return (endPosition < fileSize) ? endPosition : fileSize;
+      } else if (startPosition >= fileSize) {
+        // start position at or after end-of-file.
+        return 0;
+      } else if ((endPosition == UNSPECIFIED) || (endPosition >= fileSize)) {
+        // from startPosition to end-of-file.
+        return fileSize - startPosition;
+      } else {
+        // ranges are inclusive.
+        return endPosition - startPosition + 1;
+      }
+    }
+
+    /**
+     * Return the actual startPosition in the file.
+     *
+     * @param fileSize total number of bytes in file.
+     * @return actual starting location to seek to.
+     */
+    public long actualStartPosition(long fileSize) {
+      if (startPosition == UNSPECIFIED)
+        return (fileSize < endPosition) ? 0 : fileSize - endPosition;
+      else
+        return (startPosition >= fileSize) ? fileSize : startPosition;
+    }
+
+    /**
+     * Return the Content-Range response header value.
+     * @param fileSize total number of bytes in file.
+     * @return actual starting location to seek to.
+     */
+    public String contentRange(long fileSize) {
+      long start = actualStartPosition(fileSize);
+      long end = start + actualLength(fileSize) - 1;
+      return "bytes " + start + '-' + end + '/' + fileSize;
+    }
   }
 
 
@@ -566,7 +733,6 @@ public class GetConnectorLogs extends HttpServlet {
       buf.append(".zip");
       return buf.toString();
     }
-
   }
 
   // Get Connector Log FileHandler configuration from logging.properies.
@@ -615,7 +781,9 @@ public class GetConnectorLogs extends HttpServlet {
       String fileName = context.getTeedFeedFile();
       if ((fileName != null) && (fileName.length() > 0)) {
         super.pattern = fileName;
-        super.isXMLFormat = true;
+        // Even though the teedFeedFile is XML format, it is malformed -
+        // especially when when byte-served.
+        super.isXMLFormat = false;
       } else {
         throw new ConnectorManagerException(
             "Unable to retrieve Teed Feed File configuration. The teedFeedFile"
@@ -625,12 +793,7 @@ public class GetConnectorLogs extends HttpServlet {
 
     public File getLogFile(String logName)
         throws IOException, FileNotFoundException {
-      File file =  new File(pattern);
-      if (logName.equals(file.getName()))
-        return file;
-      else
-        throw new FileNotFoundException(
-            "The teedFeedFile is not named " + logName);
+      return new File(pattern);
     }
 
     public File getLogDirectory() throws IOException, FileNotFoundException {

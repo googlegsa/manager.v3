@@ -490,5 +490,4 @@ public class Context {
     }
     return gsaFeedHost;
   }
-
 }

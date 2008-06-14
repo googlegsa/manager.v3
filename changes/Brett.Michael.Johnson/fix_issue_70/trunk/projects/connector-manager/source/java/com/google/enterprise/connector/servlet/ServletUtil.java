@@ -560,11 +560,13 @@ public class ServletUtil {
     ServletUtil.writeXMLElement(out, 3, "AuthType", req.getAuthType());
     ServletUtil.writeXMLElement(out, 3, "ContextPath", req.getContextPath());
     ServletUtil.writeXMLElement(out, 3, "PathInfo", req.getPathInfo());
-    ServletUtil.writeXMLElement(out, 3, "PathTranslated", req.getPathTranslated());
+    ServletUtil.writeXMLElement(out, 3, "PathTranslated",
+                                req.getPathTranslated());
     ServletUtil.writeXMLElement(out, 3, "QueryString", req.getQueryString());
     ServletUtil.writeXMLElement(out, 3, "RemoteUser", req.getRemoteUser());
     ServletUtil.writeXMLElement(out, 3, "RequestURI", req.getRequestURI());
-    ServletUtil.writeXMLElement(out, 3, "RequestURL", req.getRequestURL().toString());
+    ServletUtil.writeXMLElement(out, 3, "RequestURL",
+                                req.getRequestURL().toString());
     ServletUtil.writeXMLElement(out, 3, "ServletPath", req.getServletPath());
     ServletUtil.writeXMLTag(out, 3, "Headers", false);
     for (Enumeration names = req.getHeaderNames(); names.hasMoreElements(); ) {
@@ -578,14 +580,16 @@ public class ServletUtil {
     ServletUtil.writeXMLElement(out, 3, "Protocol", req.getProtocol());
     ServletUtil.writeXMLElement(out, 3, "Scheme", req.getScheme());
     ServletUtil.writeXMLElement(out, 3, "ServerName", req.getServerName());
-    ServletUtil.writeXMLElement(out, 3, "ServerPort", String.valueOf(req.getServerPort()));
+    ServletUtil.writeXMLElement(out, 3, "ServerPort",
+                                String.valueOf(req.getServerPort()));
     ServletUtil.writeXMLElement(out, 3, "RemoteAddr", req.getRemoteAddr());
     ServletUtil.writeXMLElement(out, 3, "RemoteHost", req.getRemoteHost());
     Enumeration names;
     ServletUtil.writeXMLTag(out, 3, "Attributes", false);
     for (names = req.getAttributeNames(); names.hasMoreElements(); ) {
       String name = (String)(names.nextElement());
-      ServletUtil.writeXMLElement(out, 4, name, req.getAttribute(name).toString());
+      ServletUtil.writeXMLElement(out, 4, name,
+                                  req.getAttribute(name).toString());
     }
     ServletUtil.writeXMLTag(out, 3, "Attributes", true);
     ServletUtil.writeXMLTag(out, 3, "Parameters", false);
@@ -601,5 +605,4 @@ public class ServletUtil {
     out.close();
     return true;
   }
-
 }

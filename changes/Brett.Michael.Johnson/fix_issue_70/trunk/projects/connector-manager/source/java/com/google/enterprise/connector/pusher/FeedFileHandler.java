@@ -17,7 +17,6 @@ package com.google.enterprise.connector.pusher;
 import java.io.IOException;
 import java.util.logging.FileHandler;
 
-
 /**
  * Subclass of the logging FileHandler that allows retrieval of the pattern
  * used to construct log file names.
@@ -30,8 +29,8 @@ public class FeedFileHandler extends FileHandler {
    * Wrapped constructors that save away the supplied pattern.
    */
   public FeedFileHandler() throws IOException, SecurityException {
-    super();
-    this.pattern = "%h/java%u.log"; // Default FileHandler pattern
+    // Default java.util.logging.FileHandler pattern according to the javadoc.
+    this("%h/java%u.log");
   }
 
   public FeedFileHandler(String pattern)
@@ -64,5 +63,4 @@ public class FeedFileHandler extends FileHandler {
   public String getPattern() {
     return pattern;
   }
-
 }
