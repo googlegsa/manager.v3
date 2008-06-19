@@ -27,7 +27,7 @@
 	<!-- Create a Handler for the Feed Logger and add it to the logger -->
 	<bean id="FeedFormatter" class="java.util.logging.SimpleFormatter" />
 
-	<bean id="FeedHandler" class="java.util.logging.FileHandler">
+	<bean id="FeedHandler" class="com.google.enterprise.connector.pusher.FeedFileHandler">
 		<constructor-arg index="0" value="${catalina.base}/logs/google-connectors.feed%g.log" />
 		<constructor-arg index="1" value="52428800" />
 		<constructor-arg index="2" value="10" />

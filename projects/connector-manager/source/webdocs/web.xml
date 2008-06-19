@@ -102,6 +102,10 @@
     </servlet>
 -->
     <servlet>
+        <servlet-name>GetConnectorLogs</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.GetConnectorLogs</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>GetConnectorStatus</servlet-name>
         <servlet-class>com.google.enterprise.connector.servlet.GetConnectorStatus</servlet-class>
     </servlet>
@@ -189,6 +193,19 @@
 	<url-pattern>/getSchema</url-pattern>
     </servlet-mapping>
 -->
+    <servlet-mapping>
+        <servlet-name>GetConnectorLogs</servlet-name>
+        <url-pattern>/getConnectorLogs/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetConnectorLogs</servlet-name>
+        <url-pattern>/getFeedLogs/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetConnectorLogs</servlet-name>
+        <url-pattern>/getTeedFeedFile/*</url-pattern>
+    </servlet-mapping>
+
     <servlet-mapping>
         <servlet-name>GetConnectorStatus</servlet-name>
 	<url-pattern>/getConnectorStatus</url-pattern>
