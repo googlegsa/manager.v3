@@ -44,90 +44,90 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.BeansException;
 
 /**
- * An Admin servlet to retrieve the log files from the connector manager.
+ * <p>Admin servlet to retrieve the log files from the Connector Manager.
  * This servlet allows the user to list available log files, fetch individual
  * log files, and fetch a ZIP archive of all the log files.  At this time
  * the user may retrieve connector log files, feed log files, and teed feed
  * files.  Access to this servlet is restricted to either localhost or
- * gsa.feed.host, based upon the HTTP RemoteAddress.
+ * gsa.feed.host, based upon the HTTP RemoteAddress.</p>
  *
- * Usage:
- * -----
- * To list the available connector log files:
- *   http://[cm_host_addr]/connector_manager/getConnectorLogs
+ * <p><b>Usage:</b>
+ * <br>To list the available connector log files:
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getConnectorLogs</pre>
+ * </p>
+ * <p>To view an individual connector log file:
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getConnectorLogs/[log_file_name]</pre>
+ * <br>where [log_file_name] is the name of one log files returned by
+ * the list.  For instance, 'google-connectors.otex0.log'.  As a convenience,
+ * the log name may be simply the log file generation number, '0' in the above
+ * example, and it gets automatically expanded.</p>
  *
- * To view an individual connector log file:
- *   http://[cm_host_addr]/connector_manager/getConnectorLogs/[log_file_name]
- * where [log_file_name] is the name of one log files returned by the list.
- * For instance, 'google-connectors.otex0.log'.  As a convenience, the log
- * name may be simply the log file generation number, '0' in the above example,
- * and it gets automatically expanded.
+ * <p>To retrieve a ZIP archive of all the connector log files:
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getConnectorLogs/*</pre>
+ * <br>or
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getConnectorLogs/ALL</pre>
+ * </p>
  *
- * To retrieve a ZIP archive of all the connector log files:
- *   http://[cm_host_addr]/connector_manager/getConnectorLogs/*
- * or
- *   http://[cm_host_addr]/connector_manager/getConnectorLogs/ALL
+ * <p><br>To list the available feed log files:
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getFeedLogs</pre></p>
  *
- *
- * To list the available feed log files:
- *   http://[cm_host_addr]/connector_manager/getFeedLogs
- *
- * To view an individual feed log file:
- *   http://[cm_host_addr]/connector_manager/getFeedLogs/[log_file_name]
- * where [log_file_name] is the name of one log files returned by the list.
+ * <p>To view an individual feed log file:
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getFeedLogs/[log_file_name]</pre>
+ * <br>where [log_file_name] is the name of one log files returned by the list.
  * For instance, 'google-connectors.feed0.log'.  As a convenience, the log
  * name may be simply the log file generation number, '0' in the above example,
- * and it gets automatically expanded.
+ * and it gets automatically expanded.</p>
  *
- * To retrieve a ZIP archive of all the feed log files:
- *   http://[cm_host_addr]/connector_manager/getFeedLogs/*
- * or
- *   http://[cm_host_addr]/connector_manager/getFeedLogs/ALL
+ * <p>To retrieve a ZIP archive of all the feed log files:
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getFeedLogs/*</pre>
+ * <br>or
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getFeedLogs/ALL</pre></p>
  *
  *
- * To list the name and size of the teed feed file:
- *   http://[cm_host_addr]/connector_manager/getTeedFeedFile
+ * <p><br>To list the name and size of the teed feed file:
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getTeedFeedFile</pre></p>
  *
- * To view the teed feed file:
- *   http://[cm_host_addr]/connector_manager/getTeedFeedFile/[teed_feed_name]
- * or
- *   http://[cm_host_addr]/connector_manager/getTeedFeedFile/0
- * where [teed_feed_name] is the base filename of the teed feed file.
- * WARNING: The teed feed file can be HUGE.  It is suggested you either
+ * <p>To view the teed feed file:
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getTeedFeedFile/[teed_feed_name]</pre>
+ * <br>or
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getTeedFeedFile/0</pre>
+ * <br>where [teed_feed_name] is the base filename of the teed feed file.
+ * <br>WARNING: The teed feed file can be HUGE.  It is suggested you either
  * request a manageable byte range (see below) or fetch the ZIP archive file
- * (which may still be HUGE).
+ * (which may still be HUGE).</p>
  *
- * To retrieve a ZIP archive of all the feed log files:
- *   http://[cm_host_addr]/connector_manager/getFeedLogs/*
- * or
- *   http://[cm_host_addr]/connector_manager/getFeedLogs/ALL
- * or
- *   http://[cm_host_addr]/connector_manager/getFeedLogs/[teed_feed_name].zip
- * where [teed_feed_name] is the base filename of the teed feed file.
+ * <p>To retrieve a ZIP archive of the teed feed file:
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getTeedFeedFile/*</pre>
+ * <br>or
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getTeedFeedFile/ALL</pre>
+ * <br>or
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getTeedFeedFile/[teed_feed_name].zip</pre>
+ * <br>where [teed_feed_name] is the filename of the teed feed file.</p>
  *
  *
- * Byte Range Support:
+ * <p><br><b>Byte Range Support:</b>
  * This servet supports a subset of the RFC 2616 byte range specification
  * to retrieve portions of the log files.  Since the connector logs are
  * 50MB each and the teedFeedFile can be gigabytes, requesting a portion
  * of the log may be prudent.  This servlet supports byte range specifier
  * in either the HTTP Range: header or in the Query fragment of the request.
- * For instance:
- *   http://[cm_host_addr]/connector_manager/getFeedLogs/0?bytes=0-1000
- * returns the first 1001 bytes of the current feed log.
- *
- *   http://[cm_host_addr]/connector_manager/getFeedLogs/0?bytes=-1000
- * returns the last 1000 bytes (the tail) of the current feed log.
- *
- *   http://[cm_host_addr]/connector_manager/getFeedLogs/0?bytes=1000-
- * returns everything after the first 1000 bytes of the current feed log.
- *
- * Multipart byte ranges are NOT supported (ie bytes=0-100,1000-2000).
+ * </p>
+ * <p>For instance:
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getFeedLogs/0?bytes=0-1000</pre>
+ * <br>returns the first 1001 bytes of the current feed log.</p>
+ * <br>
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getFeedLogs/0?bytes=-1000</pre>
+ * <br>returns the last 1000 bytes (the tail) of the current feed log.
+ * <br>
+ * <br><pre>  http://[cm_host_addr]/connector_manager/getFeedLogs/0?bytes=1000-</pre>
+ * <br>returns everything after the first 1000 bytes of the current feed log.
+ * </p>
+ * <p>Multipart byte ranges are NOT supported (ie bytes=0-100,1000-2000).
  * Byte range requests for log listing pages and ZIP archive files are
- * ignored.
+ * ignored.</p>
  *
  *
- * Redirects and curl:
+ * <p><br><b>Redirects and curl:</b>
  * When using shorthand file specifications, like generation numbers,
  * 'ALL', or '*', this servlet returns a redirect to the actual filename.
  * This allows the browser, wget, or curl to pull the true filename off
@@ -137,12 +137,19 @@ import org.springframework.beans.BeansException;
  * save the file locally, curl uses the pre-redirected name, rather than
  * the post-redirected name when naming the local file.  This forces you
  * to use 'curl -L -o output_filename' anyway, so you might as well
- * specify the full filename int the URL to begin with.
+ * specify the full filename int the URL to begin with.</p>
  *
- * Wget handles redirects appropriately without intervention, and names
- * the saved file as expected.
+ * <p>Wget handles redirects appropriately without intervention, and names
+ * the saved file as expected.</p>
  *
+ *
+ * <p><br><b>Compressed Content-Encodings:</b>
+ * When serving up individual logs, this servlet supports compressing
+ * the output stream using the gzip or deflate Content-Encodings, if
+ * the client accepts them.  When using curl, you can enable compressed
+ * Content-Encoding by specifying 'curl --compressed ...'.</p>
  */
+
 public class GetConnectorLogs extends HttpServlet {
   /**
    * Retrieves the log files for a connector instance.
@@ -199,6 +206,11 @@ public class GetConnectorLogs extends HttpServlet {
     // Fetch the name of the log file to return.  If none is specified,
     // return a list of the available log files.  getPathInfo() returns
     // items with a leading '/', so we want to pull off only the basename.
+    // WARNING: For security reasons, the PathInfo parameter must never
+    // be passed directly to a File() or shell command. We are pulling
+    // of the base filename part of the PathInfo and restricting file
+    // retrievals to the log file directory as configured for the
+    // Connector Manager.
     String logName = baseName(req.getPathInfo());
 
     // If no log file is specified, return a list available logs.
@@ -231,8 +243,9 @@ public class GetConnectorLogs extends HttpServlet {
       if (!logName.equals(logFile.getName())) {
         String url = res.encodeRedirectURL(logFile.getName());
         String query = req.getQueryString();
-        if (query != null && query.length() > 0)
+        if ((query != null) && (query.length() > 0)) {
           url += '?' + query;
+        }
         res.sendRedirect(url);
         return;
       }
@@ -240,8 +253,9 @@ public class GetConnectorLogs extends HttpServlet {
       // Did the user ask for a byte range?
       ByteRange range;
       try {
-        if ((range = ByteRange.parseByteRange(req)) != null)
+        if ((range = ByteRange.parseByteRange(req)) != null) {
           res.addHeader("Content-Range", range.contentRange(logFile.length()));
+        }
       } catch (IllegalArgumentException iae) {
         res.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE,
                       iae.toString());
@@ -249,14 +263,24 @@ public class GetConnectorLogs extends HttpServlet {
       }
 
       // Specify either text/plain or xml content type, based on log format.
-      if (handler.isXMLFormat)
+      if (handler.isXMLFormat) {
         res.setContentType(ServletUtil.MIMETYPE_XML);
-      else
+      } else {
         res.setContentType(ServletUtil.MIMETYPE_TEXT_PLAIN);
+      }
       OutputStream out = getCompressedOutputStream(req, res);
       fetchLog(logFile, range, out);
       out.close();
     }
+  }
+
+  /**
+   * Specialized {@code doTrace} method that constructs an XML representation
+   * of the given request and returns it as the response.
+   */
+  protected void doTrace(HttpServletRequest req, HttpServletResponse res)
+      throws IOException {
+    ServletUtil.dumpServletRequest(req, res);
   }
 
   /**
@@ -295,7 +319,8 @@ public class GetConnectorLogs extends HttpServlet {
    * the client supports.  Returns the standard ServletOutputStream if the
    * client does not support gzip or deflate encodings.
    *
-   * BUGS: Does not take into account encoding weights, especially 'q=0'.
+   * Known Limitations: Does not take into account encoding weights,
+   * especially 'q=0'.
    *
    * @param req an HttpServletRequest
    * @param res an HttpServletResponse
@@ -336,9 +361,9 @@ public class GetConnectorLogs extends HttpServlet {
 
     byte[] buf = new byte[16384];
     RandomAccessFile in = new RandomAccessFile(logFile, "r");
-    if (startPos > 0)
+    if (startPos > 0) {
       in.seek(startPos);
-
+    }
     while (length > 0) {
       int byteCount =
           in.read(buf, 0, (length > buf.length) ? buf.length : (int)length);
@@ -459,12 +484,15 @@ public class GetConnectorLogs extends HttpServlet {
       String bytes = req.getParameter("bytes");
       if (bytes == null) {
         // Next, look for byte range specification in the HTTP header.
-        if ((bytes = req.getHeader("Range")) == null)
-          return null;  // no Range header given either.
-        if (bytes.startsWith("bytes="))
+        if ((bytes = req.getHeader("Range")) == null) {
+          // no Range header given either.
+          return null;
+        }
+        if (bytes.startsWith("bytes=")) {
           bytes = bytes.substring(6).trim();
-        else
+        } else {
           throw new IllegalArgumentException(bytes);
+        }
       }
       // Now extract the actual start and stop byte values.
       long startPosition = UNSPECIFIED;
@@ -472,10 +500,12 @@ public class GetConnectorLogs extends HttpServlet {
       int dash = bytes.indexOf('-');
       if (dash != -1) {
         try {
-          if (dash > 0)
+          if (dash > 0) {
             startPosition = Long.parseLong(bytes.substring(0, dash));
-          if (++dash < bytes.length())
+          }
+          if (++dash < bytes.length()) {
             endPosition = Long.parseLong(bytes.substring(dash));
+          }
         } catch (NumberFormatException nfe) {
           throw new IllegalArgumentException(bytes);
         }
@@ -483,9 +513,9 @@ public class GetConnectorLogs extends HttpServlet {
       // One or the other may be unspecified, but not both.
       // If both are specified, start must not exceed end.
       if (((startPosition == UNSPECIFIED) && (endPosition == UNSPECIFIED)) ||
-          ((endPosition != UNSPECIFIED) && (startPosition > endPosition)))
+          ((endPosition != UNSPECIFIED) && (startPosition > endPosition))) {
         throw new IllegalArgumentException(bytes);
-
+      }
       return new ByteRange(startPosition, endPosition);
     }
 
@@ -518,10 +548,11 @@ public class GetConnectorLogs extends HttpServlet {
      * @return actual starting location to seek to.
      */
     public long actualStartPosition(long fileSize) {
-      if (startPosition == UNSPECIFIED)
+      if (startPosition == UNSPECIFIED) {
         return (fileSize < endPosition) ? 0 : fileSize - endPosition;
-      else
+      } else {
         return (startPosition >= fileSize) ? fileSize : startPosition;
+      }
     }
 
     /**
@@ -560,20 +591,24 @@ public class GetConnectorLogs extends HttpServlet {
         char c = fhPattern.charAt(i);
         // % is the lead-in quote character for FileHandler patterns.
         if (c == '%') {
-          try { c = fhPattern.charAt(++i); }
-          catch (IndexOutOfBoundsException ignored) { } // % at end?
-          if (c == '%')
+          try {
+            c = fhPattern.charAt(++i);
+          } catch (IndexOutOfBoundsException ignored) {
+            // % at end? Just preserve it.
+          }
+          if (c == '%') {
             buf.append(c);
-          else if ((c == 'g') || (c == 'u'))
+          } else if ((c == 'g') || (c == 'u')) {
             buf.append("[0-9]+");
-          else
+          } else {
             buf.append('%').append(c);
-        }
-        // Quote any regex special chars that might appear in the filename.
-        else if ("[](){}-^$*+?.,\\".indexOf(c) >= 0)
+          }
+        } else if ("[](){}-^$*+?.,\\".indexOf(c) >= 0) {
+          // Quote any regex special chars that might appear in the filename.
           buf.append('\\').append(c);
-        else
+        } else {
           buf.append(c);
+        }
       }
       // FileHandler patterns can optionally implicitly add %g and %u,
       // each preceded by dots.  Be generous and look for those too.
@@ -585,7 +620,7 @@ public class GetConnectorLogs extends HttpServlet {
     }
 
     /**
-     * Does this filename match the regexPattern?
+     * Tests if the specified file matches the regexPattern.
      *
      * @param dir the directory containing the file.
      * @param fileName a file in the directory.
@@ -619,9 +654,8 @@ public class GetConnectorLogs extends HttpServlet {
      * Return a File object representing the directory containing the logs.
      * The directory is determined by the path part of the FileHandler pattern.
      *
-     * BUGS: Doesn't handle %u or %g in the directoryName part of the
-     * FileHandler pattern.  I don't think java.util.logging.FileHandler
-     * tolerates it either.
+     * Known Limitations: Doesn't handle %u or %g in the directoryName part
+     * of the FileHandler pattern.
      *
      * @returns File object representing the log directory.
      * @throws IOException, FileNotFoundException
@@ -643,19 +677,23 @@ public class GetConnectorLogs extends HttpServlet {
           // Replace the %h, %t, and %% substitution patterns with their
           // resolved values.
           if (c == '%') {
-            try { c = dirName.charAt(++i); }
-            catch (IndexOutOfBoundsException ignored) {} // % at end?
-            if (c == '%')
+            try {
+              c = dirName.charAt(++i);
+            } catch (IndexOutOfBoundsException ignored) {
+              // % at end? Just preserve it.
+            }
+            if (c == '%') {
               buf.append(c);
-            else if (c == 'h')
+            } else if (c == 'h') {
               buf.append(System.getProperty("user.home"));
-            else if (c == 't')
+            } else if (c == 't') {
               buf.append(System.getProperty("java.io.tmpdir"));
-            else
+            } else {
               buf.append('%').append(c);
-          }
-          else
+            }
+          } else {
             buf.append(c);
+          }
         }
         dirName = buf.toString();
       }
@@ -688,11 +726,11 @@ public class GetConnectorLogs extends HttpServlet {
         basePattern = basePattern.replaceAll("%u", "0");
 
         // Replace the generation placeholder with the supplied number.
-        if (basePattern.indexOf("%g") >= 0)
+        if (basePattern.indexOf("%g") >= 0) {
           logName = basePattern.replaceAll("%g", logName);
-        else
+        } else {
           logName = basePattern + '.' + logName; // implicit %g rule.
-
+        }
       } else {
         // The logName was not a generation number.
         // Assume it is the actual log file name.
@@ -715,20 +753,25 @@ public class GetConnectorLogs extends HttpServlet {
         char c = fhPattern.charAt(i);
         // % is the lead-in quote character for FileHandler patterns.
         if (c == '%') {
-          try { c = fhPattern.charAt(++i); }
-          catch (IndexOutOfBoundsException ignored) { } // % at end?
-          if (c == '%')
+          try {
+            c = fhPattern.charAt(++i);
+          } catch (IndexOutOfBoundsException ignored) {
+            // % at end? Just preserve it.
+          }
+          if (c == '%') {
             buf.append(c);
-          else if ("guth".indexOf(c) < 0) // drop %g, %u, %t, %h
+          } else if ("guth".indexOf(c) < 0) {
+            // drop %g, %u, %t, %h
             buf.append('%').append(c);
-        }
-        else
+          }
+        } else {
           buf.append(c);
+        }
       }
       // Pluralize .log -> -logs as a convenience.
-      if ((i = buf.lastIndexOf(".log")) >= 0)
+      if ((i = buf.lastIndexOf(".log")) >= 0) {
         buf.replace(i, i + 4, "-logs");
-
+      }
       // Add ZIP filename extension.
       buf.append(".zip");
       return buf.toString();
@@ -740,9 +783,9 @@ public class GetConnectorLogs extends HttpServlet {
     public ConnectorLogHandler() throws ConnectorManagerException {
       LogManager logMgr = LogManager.getLogManager();
       String prop = logMgr.getProperty("java.util.logging.FileHandler.pattern");
-      if (prop != null && prop.length() > 0)
+      if (prop != null && prop.length() > 0) {
         super.pattern = prop;
-      else {
+      } else {
         throw new ConnectorManagerException(
             "Unable to retrieve Connector Logging configuration.  Please check"
             + " the FileHandler configuration in logging.properties.");
@@ -759,9 +802,9 @@ public class GetConnectorLogs extends HttpServlet {
         FeedFileHandler ffh = (FeedFileHandler) context.getApplicationContext()
             .getBean("FeedHandler", FeedFileHandler.class);
         String ffhPattern = ffh.getPattern();
-        if (ffhPattern != null && ffhPattern.length() > 0)
+        if (ffhPattern != null && ffhPattern.length() > 0) {
           super.pattern = ffhPattern;
-
+        }
         Formatter formatter = ffh.getFormatter();
         isXMLFormat = (formatter == null ||
                        (formatter.getClass().getName().indexOf("XML") >= 0));
@@ -798,11 +841,12 @@ public class GetConnectorLogs extends HttpServlet {
 
     public File getLogDirectory() throws IOException, FileNotFoundException {
       File parent = (new File(pattern)).getParentFile();
-      if (parent != null)
+      if (parent != null) {
         return parent;
-      else
+      } else {
         throw new FileNotFoundException(
             "The teedFeedFile does not specify a parent directory.");
+      }
     }
 
     public String getArchiveName() {
