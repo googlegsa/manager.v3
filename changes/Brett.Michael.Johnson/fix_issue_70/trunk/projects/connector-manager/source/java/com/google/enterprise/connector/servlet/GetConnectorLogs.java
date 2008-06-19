@@ -53,55 +53,55 @@ import org.springframework.beans.BeansException;
  *
  * <p><b>Usage:</b>
  * <br>To list the available connector log files:
- * <br><pre>  http://[cm_host_addr]/connector_manager/getConnectorLogs</pre>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getConnectorLogs</pre>
  * </p>
  * <p>To view an individual connector log file:
- * <br><pre>  http://[cm_host_addr]/connector_manager/getConnectorLogs/[log_file_name]</pre>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getConnectorLogs/[log_file_name]</pre>
  * <br>where [log_file_name] is the name of one log files returned by
  * the list.  For instance, 'google-connectors.otex0.log'.  As a convenience,
  * the log name may be simply the log file generation number, '0' in the above
  * example, and it gets automatically expanded.</p>
  *
  * <p>To retrieve a ZIP archive of all the connector log files:
- * <br><pre>  http://[cm_host_addr]/connector_manager/getConnectorLogs/*</pre>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getConnectorLogs/*</pre>
  * <br>or
- * <br><pre>  http://[cm_host_addr]/connector_manager/getConnectorLogs/ALL</pre>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getConnectorLogs/ALL</pre>
  * </p>
  *
  * <p><br>To list the available feed log files:
- * <br><pre>  http://[cm_host_addr]/connector_manager/getFeedLogs</pre></p>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getFeedLogs</pre></p>
  *
  * <p>To view an individual feed log file:
- * <br><pre>  http://[cm_host_addr]/connector_manager/getFeedLogs/[log_file_name]</pre>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getFeedLogs/[log_file_name]</pre>
  * <br>where [log_file_name] is the name of one log files returned by the list.
  * For instance, 'google-connectors.feed0.log'.  As a convenience, the log
  * name may be simply the log file generation number, '0' in the above example,
  * and it gets automatically expanded.</p>
  *
  * <p>To retrieve a ZIP archive of all the feed log files:
- * <br><pre>  http://[cm_host_addr]/connector_manager/getFeedLogs/*</pre>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getFeedLogs/*</pre>
  * <br>or
- * <br><pre>  http://[cm_host_addr]/connector_manager/getFeedLogs/ALL</pre></p>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getFeedLogs/ALL</pre></p>
  *
  *
  * <p><br>To list the name and size of the teed feed file:
- * <br><pre>  http://[cm_host_addr]/connector_manager/getTeedFeedFile</pre></p>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getTeedFeedFile</pre></p>
  *
  * <p>To view the teed feed file:
- * <br><pre>  http://[cm_host_addr]/connector_manager/getTeedFeedFile/[teed_feed_name]</pre>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getTeedFeedFile/[teed_feed_name]</pre>
  * <br>or
- * <br><pre>  http://[cm_host_addr]/connector_manager/getTeedFeedFile/0</pre>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getTeedFeedFile/0</pre>
  * <br>where [teed_feed_name] is the base filename of the teed feed file.
  * <br>WARNING: The teed feed file can be HUGE.  It is suggested you either
  * request a manageable byte range (see below) or fetch the ZIP archive file
  * (which may still be HUGE).</p>
  *
  * <p>To retrieve a ZIP archive of the teed feed file:
- * <br><pre>  http://[cm_host_addr]/connector_manager/getTeedFeedFile/*</pre>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getTeedFeedFile/*</pre>
  * <br>or
- * <br><pre>  http://[cm_host_addr]/connector_manager/getTeedFeedFile/ALL</pre>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getTeedFeedFile/ALL</pre>
  * <br>or
- * <br><pre>  http://[cm_host_addr]/connector_manager/getTeedFeedFile/[teed_feed_name].zip</pre>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getTeedFeedFile/[teed_feed_name].zip</pre>
  * <br>where [teed_feed_name] is the filename of the teed feed file.</p>
  *
  *
@@ -113,13 +113,13 @@ import org.springframework.beans.BeansException;
  * in either the HTTP Range: header or in the Query fragment of the request.
  * </p>
  * <p>For instance:
- * <br><pre>  http://[cm_host_addr]/connector_manager/getFeedLogs/0?bytes=0-1000</pre>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getFeedLogs/0?bytes=0-1000</pre>
  * <br>returns the first 1001 bytes of the current feed log.</p>
  * <br>
- * <br><pre>  http://[cm_host_addr]/connector_manager/getFeedLogs/0?bytes=-1000</pre>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getFeedLogs/0?bytes=-1000</pre>
  * <br>returns the last 1000 bytes (the tail) of the current feed log.
  * <br>
- * <br><pre>  http://[cm_host_addr]/connector_manager/getFeedLogs/0?bytes=1000-</pre>
+ * <br><pre>  http://[cm_host_addr]/connector-manager/getFeedLogs/0?bytes=1000-</pre>
  * <br>returns everything after the first 1000 bytes of the current feed log.
  * </p>
  * <p>Multipart byte ranges are NOT supported (ie bytes=0-100,1000-2000).
@@ -137,7 +137,7 @@ import org.springframework.beans.BeansException;
  * save the file locally, curl uses the pre-redirected name, rather than
  * the post-redirected name when naming the local file.  This forces you
  * to use 'curl -L -o output_filename' anyway, so you might as well
- * specify the full filename int the URL to begin with.</p>
+ * specify the full filename in the URL to begin with.</p>
  *
  * <p>Wget handles redirects appropriately without intervention, and names
  * the saved file as expected.</p>
