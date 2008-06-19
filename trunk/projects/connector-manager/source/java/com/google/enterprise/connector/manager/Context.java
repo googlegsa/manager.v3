@@ -91,6 +91,9 @@ public class Context {
   private boolean isTeedFeedFileInitialized = false;
   private String teedFeedFile = null;
 
+  private boolean isGsaFeedHostInitialized = false;
+  private String gsaFeedHost = null;
+
   /**
    * @param feeding to feed or not to feed
    */
@@ -153,7 +156,7 @@ public class Context {
    * Establishes that we are operating from a servlet context. In this case, we
    * use an XmlWebApplicationContext, which finds its config from the servlet
    * context - WEB-INF/applicationContext.xml.
-   * 
+   *
    */
   public void setServletContext() {
     if (applicationContext != null) {
@@ -197,7 +200,7 @@ public class Context {
 
   /**
    * Start up the scheduler.
-   * 
+   *
    */
   private void startScheduler() {
     if (traversalScheduler != null) {
@@ -213,7 +216,7 @@ public class Context {
 
   /**
    * Do everything necessary to start up the application.
-   * 
+   *
    */
   public void start() {
     if (started) {
@@ -232,10 +235,10 @@ public class Context {
     started = false;
     start();
   }
-  
+
   /**
    * Get a bean from the application context that we MUST have to operate.
-   * 
+   *
    * @param beanName the name of the bean we're looking for. Typically, the same
    *        as its most general interface.
    * @param clazz the class of the bean we're looking for.
@@ -283,7 +286,7 @@ public class Context {
 
   /**
    * Gets the singleton Manager.
-   * 
+   *
    * @return the Manager
    */
   public Manager getManager() {
@@ -297,7 +300,7 @@ public class Context {
 
   /**
    * Gets the singleton TraversalContext.
-   * 
+   *
    * @return the TraversalContext
    */
   public TraversalContext getTraversalContext() {
@@ -305,7 +308,7 @@ public class Context {
       return traversalContext;
     }
     try {
-      traversalContext = (TraversalContext) getRequiredBean("TraversalContext", 
+      traversalContext = (TraversalContext) getRequiredBean("TraversalContext",
           TraversalContext.class);
     } catch (IllegalStateException e) {
       LOGGER.warning("Can't find suitable " + TraversalContext.class.getName()
@@ -319,7 +322,7 @@ public class Context {
   /**
    * Throws out the current context instance and gets another one. For testing
    * only. This could really boolux things up if it were used in production!
-   * 
+   *
    */
   public static void refresh() {
     INSTANCE = new Context();
@@ -327,7 +330,7 @@ public class Context {
 
   /**
    * Gets the applicationContext. For testing only.
-   * 
+   *
    * @return the applicationContext
    */
   public ApplicationContext getApplicationContext() {
@@ -348,7 +351,7 @@ public class Context {
   /**
    * Retrieves the prefix for the Common directory file depending on whether its
    * standalone context or servlet context.
-   * 
+   *
    * @return prefix for the Repository file.
    */
   public String getCommonDirPath() {
@@ -399,7 +402,7 @@ public class Context {
     props.put(GSA_FEED_HOST_PROPERTY_KEY, feederGateHost);
     props.put(GSA_FEED_PORT_PROPERTY_KEY, Integer.toString(feederGatePort));
     InstanceInfo.writePropertiesToFile(props, propFile);
-    LOGGER.info("Updated Connector Manager Config: " + 
+    LOGGER.info("Updated Connector Manager Config: " +
         GSA_FEED_HOST_PROPERTY_KEY + "=" + feederGateHost + "; " +
         GSA_FEED_PORT_PROPERTY_KEY + "=" + feederGatePort);
     shutdown(true);  // force shutdown
@@ -462,5 +465,29 @@ public class Context {
       isTeedFeedFileInitialized = true;
     }
     return teedFeedFile;
+  }
+
+  /**
+   * Reads <code>gsa.feed.host</code> from the application context properties file.
+   * See google-enterprise-connector-manager/projects/connector-manager/etc/applicationContext.properties
+   * for additional documentation.
+   */
+  public String getGsaFeedHost() {
+    initApplicationContext();
+    if (!isGsaFeedHostInitialized) {
+      try {
+        String propFileName = getPropFileName();
+        File propFile = getPropFile(propFileName);
+        Properties props =
+            InstanceInfo.initPropertiesFromFile(propFile, propFileName);
+        gsaFeedHost = props.getProperty(GSA_FEED_HOST_PROPERTY_KEY);
+      } catch (InstantiatorException e) {
+        LOGGER.log(Level.WARNING,
+            "Unable to read application context properties file. ", e);
+        return null;
+      }
+      isGsaFeedHostInitialized = true;
+    }
+    return gsaFeedHost;
   }
 }

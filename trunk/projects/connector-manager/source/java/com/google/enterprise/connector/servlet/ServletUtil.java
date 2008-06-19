@@ -25,6 +25,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -33,10 +34,12 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-
 
 /**
  * Servlet constant and utility class.
@@ -56,6 +59,7 @@ public class ServletUtil {
   public static final String MIMETYPE_XML = "text/xml";
   public static final String MIMETYPE_HTML = "text/html";
   public static final String MIMETYPE_TEXT_PLAIN = "text/plain";
+  public static final String MIMETYPE_ZIP = "application/zip";
 
   public static final String PROTOCOL = "googleconnector://";
   public static final String DOCID = "/doc?docid=";
@@ -69,6 +73,14 @@ public class ServletUtil {
   public static final String XMLTAG_STATUS_PARAMS = "CMParams";
   public static final String XMLTAG_STATUS_PARAM_ORDER = "Order";
   public static final String XMLTAG_STATUS_PARAM = "CMParam";
+
+  public static final String XMLTAG_CONNECTOR_LOGS = "ConnectorLogs";
+  public static final String XMLTAG_FEED_LOGS = "FeedLogs";
+  public static final String XMLTAG_TEED_FEED = "TeedFeedFile";
+  public static final String XMLTAG_LOG = "Log";
+  public static final String XMLTAG_NAME = "Name";
+  public static final String XMLTAG_SIZE = "Size";
+  public static final String XMLTAG_LAST_MODIFIED = "LastModified";
 
   public static final String XMLTAG_CONNECTOR_INSTANCES = "ConnectorInstances";
   public static final String XMLTAG_CONNECTOR_INSTANCE = "ConnectorInstance";
@@ -105,7 +117,7 @@ public class ServletUtil {
   public static final String XMLTAG_AUTHZ_RESPONSE = "AuthorizationResponse";
   public static final String XMLTAG_ANSWER = "Answer";
   public static final String XMLTAG_DECISION = "Decision";
-  
+
   public static final String XMLTAG_CONNECTOR_SCHEDULES = "ConnectorSchedules";
   public static final String XMLTAG_CONNECTOR_SCHEDULE = "ConnectorSchedule";
   public static final String XMLTAG_LOAD = "load";
@@ -140,11 +152,11 @@ public class ServletUtil {
       "<CmResponse>\n" + "  <StatusId>0</StatusId>\n" + "</CmResponse>\n";
 
   public static final String DEFAULT_FORM =
-    "<tr><td>Username</td><td>\n" + 
-    "<input type=\"text\" name=\"Username\" /></td></tr>\n" + 
-    "<tr><td>Password</td><td>\n" + 
-    "<input type=\"password\" name=\"Password\" /></td></tr>\n" + 
-    "<tr><td>Repository</td><td>\n" + 
+    "<tr><td>Username</td><td>\n" +
+    "<input type=\"text\" name=\"Username\" /></td></tr>\n" +
+    "<tr><td>Password</td><td>\n" +
+    "<input type=\"password\" name=\"Password\" /></td></tr>\n" +
+    "<tr><td>Repository</td><td>\n" +
     "<input type=\"text\" name=\"Repository\" /></td></tr>\n";
 
   public static final String ATTRIBUTE_NAME = "name=\"";
@@ -193,10 +205,10 @@ public class ServletUtil {
 
   /**
    * Get a root element from the XML request body.
-   * 
+   *
    * @param xmlBody String the XML request body
    * @param rootTagName String the root element tag name
-   * @return a result Element object if successful, null on error 
+   * @return a result Element object if successful, null on error
    */
   public static Element parseAndGetRootElement(String xmlBody,
                                                String rootTagName) {
@@ -243,12 +255,12 @@ public class ServletUtil {
    * @param elem Element The parent XML element
    * @param name String name of the child text element
    * @return attribute name and value map of named child element
-   * 
+   *
    */
   public static Map getAllAttributes(Element elem, String name) {
     Map attributes = new TreeMap();
-    NodeList nodeList = elem.getElementsByTagName(name); 
-    int length = nodeList.getLength(); 
+    NodeList nodeList = elem.getElementsByTagName(name);
+    int length = nodeList.getLength();
     for (int n = 0; n < length; ++n) {
       attributes.put(((Element)nodeList.item(n)).getAttribute("name"),
                      ((Element)nodeList.item(n)).getAttribute("value"));
@@ -491,16 +503,16 @@ public class ServletUtil {
     }
   }
 
-  private static final Pattern PREPEND_CM_PATTERN = 
+  private static final Pattern PREPEND_CM_PATTERN =
       Pattern.compile("\\bname\\b\\s*=\\s*[\"']");
 
-  private static final Pattern STRIP_CM_PATTERN = 
+  private static final Pattern STRIP_CM_PATTERN =
       Pattern.compile("(\\bname\\b\\s*=\\s*[\"'])CM_");
 
   /**
    * Given a String such as:
    * <Param name="CM_Color" value="a"/> <Param name="CM_Password" value="a"/>
-   * 
+   *
    * Return a String such as:
    * <Param name="Color" value="a"/> <Param name="Password" value="a"/>
    *
@@ -512,7 +524,7 @@ public class ServletUtil {
     String result = matcher.replaceAll("$1");
     return result;
   }
-  
+
   /**
    * Inverse operation for stripCmPrefix.
    *
@@ -525,4 +537,72 @@ public class ServletUtil {
     return result;
   }
 
+  /**
+   * For Debugging: Write out the HttpServletRequest information.
+   * This writes an XML stream to the response output that describes
+   * most of the data received in the request structure.  It returns
+   * true, so that you may call it from doGet() like:
+   *   if (dumpServletRequest(req, res)) return;
+   * without javac complaining about unreachable code with a straight
+   * return.
+   *
+   * @param req An HttpServletRequest
+   * @param res An HttpServletResponse
+   * @returns true
+   */
+  public static boolean dumpServletRequest(HttpServletRequest req,
+      HttpServletResponse res) throws IOException {
+    res.setContentType(ServletUtil.MIMETYPE_XML);
+    PrintWriter out = res.getWriter();
+    ServletUtil.writeRootTag(out, false);
+    ServletUtil.writeXMLTag(out, 2, "HttpServletRequest", false);
+    ServletUtil.writeXMLElement(out, 3, "Method", req.getMethod());
+    ServletUtil.writeXMLElement(out, 3, "AuthType", req.getAuthType());
+    ServletUtil.writeXMLElement(out, 3, "ContextPath", req.getContextPath());
+    ServletUtil.writeXMLElement(out, 3, "PathInfo", req.getPathInfo());
+    ServletUtil.writeXMLElement(out, 3, "PathTranslated",
+                                req.getPathTranslated());
+    ServletUtil.writeXMLElement(out, 3, "QueryString", req.getQueryString());
+    ServletUtil.writeXMLElement(out, 3, "RemoteUser", req.getRemoteUser());
+    ServletUtil.writeXMLElement(out, 3, "RequestURI", req.getRequestURI());
+    ServletUtil.writeXMLElement(out, 3, "RequestURL",
+                                req.getRequestURL().toString());
+    ServletUtil.writeXMLElement(out, 3, "ServletPath", req.getServletPath());
+    ServletUtil.writeXMLTag(out, 3, "Headers", false);
+    for (Enumeration names = req.getHeaderNames(); names.hasMoreElements(); ) {
+      String name = (String)(names.nextElement());
+      for (Enumeration e = req.getHeaders(name); e.hasMoreElements(); )
+        ServletUtil.writeXMLElement(out, 4, name, (String)(e.nextElement()));
+    }
+    ServletUtil.writeXMLTag(out, 3, "Headers", true);
+    ServletUtil.writeXMLTag(out, 2, "HttpServletRequest", true);
+    ServletUtil.writeXMLTag(out, 2, "ServletRequest", false);
+    ServletUtil.writeXMLElement(out, 3, "Protocol", req.getProtocol());
+    ServletUtil.writeXMLElement(out, 3, "Scheme", req.getScheme());
+    ServletUtil.writeXMLElement(out, 3, "ServerName", req.getServerName());
+    ServletUtil.writeXMLElement(out, 3, "ServerPort",
+                                String.valueOf(req.getServerPort()));
+    ServletUtil.writeXMLElement(out, 3, "RemoteAddr", req.getRemoteAddr());
+    ServletUtil.writeXMLElement(out, 3, "RemoteHost", req.getRemoteHost());
+    Enumeration names;
+    ServletUtil.writeXMLTag(out, 3, "Attributes", false);
+    for (names = req.getAttributeNames(); names.hasMoreElements(); ) {
+      String name = (String)(names.nextElement());
+      ServletUtil.writeXMLElement(out, 4, name,
+                                  req.getAttribute(name).toString());
+    }
+    ServletUtil.writeXMLTag(out, 3, "Attributes", true);
+    ServletUtil.writeXMLTag(out, 3, "Parameters", false);
+    for (names = req.getParameterNames(); names.hasMoreElements(); ) {
+      String name = (String)(names.nextElement());
+      String[] params = req.getParameterValues(name);
+      for (int i = 0; i < params.length; i++)
+        ServletUtil.writeXMLElement(out, 4, name, params[i]);
+    }
+    ServletUtil.writeXMLTag(out, 3, "Parameters", true);
+    ServletUtil.writeXMLTag(out, 2, "ServletRequest", true);
+    ServletUtil.writeRootTag(out, true);
+    out.close();
+    return true;
+  }
 }
