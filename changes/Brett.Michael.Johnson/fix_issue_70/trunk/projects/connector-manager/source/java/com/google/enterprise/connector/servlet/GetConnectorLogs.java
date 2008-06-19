@@ -149,7 +149,6 @@ import org.springframework.beans.BeansException;
  * the client accepts them.  When using curl, you can enable compressed
  * Content-Encoding by specifying 'curl --compressed ...'.</p>
  */
-
 public class GetConnectorLogs extends HttpServlet {
   /**
    * Retrieves the log files for a connector instance.
