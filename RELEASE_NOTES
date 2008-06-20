@@ -11,6 +11,52 @@ list of known issues and workarounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
+Release 1.1.0, Jun 30, 2008
+===========================
+
+Introduction
+------------
+This is an upgrade release with some enhancements.  Users of previous
+releases are encouraged to upgrade.  It also contains some new features.  Users
+of previous releases should check the "Version Compatibility" section below for
+instructions on how to use existing data with this new release.
+
+Summary of Changes
+------------------
+
+  * Fix Issue 35: Better handling of null QueryTraversalManager
+  * Fix Issue 41: Typo in ConnectorManagerGetServlet documentation
+  * Fix Issue 45: DocPusher uses a logger named WorkQueue
+  * Fix Issue 47: Deleting a connector may leave behind connector state
+  * Fix Issue 53: ServletUtil methods have unused StringBuffers
+  * Fix Issue 60: Connector instances can be used after being deleted
+  * Fix Issue 63: Editing a connector instance has no effect until Tomcat is restarted
+  * Fix Issue 66: TraversalWorkQueueItem.doWork calls connectorFinishedTraversal too often
+  * Fix Issue 67: Scheduler runs traversals faster than configured traversal rate
+  * Fix Issue 69: Remove keystore warning from logs as it is harmless and confuses everyone
+  * Fix Issue 70: Allow GSA to request log files from connector manager
+  * Fix Issue 71: InstanceInfo and InstanceMap are missing spaces in log messages
+  * Fix Issue 74: Log an error if GSA is rejecting feeds from connector(s)
+  * Fix Issue 75: HTTP 400 error thrown for correct feeds
+  * Fix Issue 89: Try to avoid calling Connector classes from an interrupted thread
+  * Fix Issue 90: Enable the WorkQueueItem.timeout to be configurable
+
+  * Added support for deleting documents.  See r757 for details.
+  * Added new feed logger as an alternative to the teedFeedFile.  See r783 for details.
+  * Added support to extracting Connector Manager log files from the GSA.  See r832 for details.
+  * Changed default retry interval.  See r781 for details.
+  * Changed SPI related to SimpleDocument.  See r824 for details.
+  * Improved logging.
+
+Version Compatibility
+---------------------
+Connectors created using previous 1.0.x versions of this product may not be
+compatible with this version.  In particular, if SimpleDocument is used within
+the Connector there are SPI changes that need to be made.  Also, the Connector
+Manager will now check all Document implementations for the new optional
+SpiConstants.PROPNAME_ACTION property and that needs to be handled gracefully.
+
+
 Release 1.0.3, Dec 07, 2007
 ===========================
 
