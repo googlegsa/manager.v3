@@ -31,7 +31,7 @@ package com.google.enterprise.connector.spi;
  * 
  * <pre>
  *        select documentid, lastmodifydate from documents 
- *        where  lastmodifydate &lt; &lt;b&gt;&lt;i&gt;date-constant&lt;/i&gt;&lt;/b&gt; 
+ *        where  lastmodifydate &lt; <b><i>date-constant</i></b> 
  *        order by lastmodifydate
  * </pre>
  * 
