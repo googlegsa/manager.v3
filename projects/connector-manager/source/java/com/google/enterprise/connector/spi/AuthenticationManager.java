@@ -25,7 +25,7 @@ public interface AuthenticationManager {
    * depending on whether authentication was successful. If an exception is
    * thrown, the implementor should provide an explanatory message.
    * 
-   * @param identity A AuthenticationIdentity object that encapsulates the
+   * @param identity An AuthenticationIdentity object that encapsulates the
    *        user's identity
    * @return True means that authentication succeeded, false indicates
    *         failure
