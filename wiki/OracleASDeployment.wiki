@@ -10,15 +10,8 @@ Here you will find instructions about how to deploy Google Connector Manager in 
 
 In order to successfully complete this deployment tutorial, you will need to download the following componentes:
 
-  # Google Connector Manager libraries and source code
+  # Google Connector Manager [http://google-enterprise-connector-manager.googlecode.com/files/connector-manager-1.0.3.zip binaries] and source code
   # Oracle Containers for Java EE (aka OC4J) 10.1.3
   # Oracle JDeveloper 10.1.3
 
 All the instructions explained here has been done for and tested in Windows XP Professional operating system, although because OC4J is a quite portable JEE engine, its behavior is very similar in all platforms so you should be able replicate the deployment in Linux or any other operating systems supported by OC4J.
- 
-= Details =
-
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
