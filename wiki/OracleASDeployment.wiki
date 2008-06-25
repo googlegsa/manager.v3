@@ -1,8 +1,9 @@
 #summary Instructions about how to deploy Connector Manager on Oracle Application Server.
 
 = Introduction =
+*BE AWARE: THIS IS A DRAFT*
 
-Add your content here.
+Here you will find instructions about how to deploy Google Connector Manager in OracleAS 10g and, specifically, in the 10.1.3 version of the standalone J2EE server called OC4J. This deployment has been done only for testing and demo purposes and it is not supported in any way.
 
 
 = Details =
