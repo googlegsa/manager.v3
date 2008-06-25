@@ -65,4 +65,6 @@ http://code.google.com/apis/searchappliance/documentation/50/connector_dev/cdg_b
 
 It should start feeding and serving.
 
-That's all
+= Even easier =
+
+You can download a JDeveloper project from [http://google-enterprise-connector-manager.googlecode.com/files/jdeveloper_connector_manager.zip this link] and simply unzip and use. Remember to change `localhost` by your GSA host name in the `applicationContext.properties` file before deploying.
