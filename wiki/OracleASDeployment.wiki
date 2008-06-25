@@ -59,6 +59,11 @@ After that, find MockRepositoryEventLog1.txt in the connector manager source zip
 
 = GSA Configuration =
 
-Simply follow the Connector configuration for the mock connector described in the following URL:
+Simply follow the Connector configuration for the mock connector described in these steps of the Google Connector Develooper guide:
 
 http://code.google.com/apis/searchappliance/documentation/50/connector_dev/cdg_buildtest.html#runcm
+http://code.google.com/apis/searchappliance/documentation/50/connector_dev/cdg_buildtest.html#testconn
+
+It should start feeding and serving.
+
+That's all
