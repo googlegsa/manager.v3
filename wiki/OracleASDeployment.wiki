@@ -18,6 +18,10 @@ All the instructions explained here has been done for and tested in Windows XP P
 
 JDeveloper and OC4J are really easy to install. Just follow Oracle instructions.
 
+= JDeveloper customization =
+
+In order to successfully compile and deploy the connector manager in OC4J, you need to add  JUnit testing environment to JDevloper. You can easily download it as a JDeveloper plugin, usint the _*Help->Check for Updates...*_ option of JDeveloper.
+
 = Connector Compilation and deployment = 
 
 The easiest way to deploy and test the connector manager in OC4J is to create a war file with:
@@ -26,4 +30,7 @@ The easiest way to deploy and test the connector manager in OC4J is to create a 
   * Mock connector and third party components needed (JSON libraries, for example).
   * Connector configuration files
 
-You can easily create this war file using JDeveloper following the next steps
+You will learn how to easily build that war file using JDeveloper, following the next steps:
+
+  # Copy the following libs somew
+Create a JDeveloper application with an emp
