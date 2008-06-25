@@ -36,3 +36,12 @@ You will learn how to easily build that war file using JDeveloper, following the
   # Create a JDeveloper application with an empty JDeveloper project in it
   # Add the libraries extracted in the 1st step to the project, right-clicking on the project name and choosing "Project Properties...", selecting libraries and clicking on "Add Jar/Directory..." button.
   # Add JUnit Runtime, JCR Common Runtime and Servlet Runtime to the project, using the same procedure than in the previous step, but using "Add Library..." button.
+  # Uncompress the connector manager source file and look for the "javatests" folder. Copy all the following folders under your_jdeveloperproject\src folder:
+    * com\google\enterprise\connector\mock
+    * com\google\enterprise\connector\jcr
+    * com\google\enterprise\connector\pusher
+  # Create the following folders under your_jdeveloperproject\src folder:
+    * config
+    * org\json
+  # Find connectorInstance.xml and connectorType.xml files under test-connectorA folder in the connector manager source zip, and copy them under the "config" folder you created in the previous step.
+  # Find applicationContext.xml and applicationContext.properties under "etc" folder in the connector manager source code zip.
