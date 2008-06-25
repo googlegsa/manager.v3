@@ -32,5 +32,7 @@ The easiest way to deploy and test the connector manager in OC4J is to create a 
 
 You will learn how to easily build that war file using JDeveloper, following the next steps:
 
-  # Copy the following libs somew
-Create a JDeveloper application with an emp
+  # Unzip connector war file and extract the libraries included somewhere accesible from JDeveloper.
+  # Create a JDeveloper application with an empty JDeveloper project in it
+  # Add the libraries extracted in the 1st step to the project, right-clicking on the project name and choosing "Project Properties..."
+  # Add JUnit Runtime, JCR Runtime 
