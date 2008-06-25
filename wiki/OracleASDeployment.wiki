@@ -54,7 +54,7 @@ You will learn how to easily build that war file using JDeveloper, following the
 
 At this point, you should have an OC4J instance up and running, after having followed Oracle instructions for that. The OC4J admin console should be available in: `http://OC4J_HOST:OC4J_PORT/em/console`. Using it, deploy the WAR file created in the previous section. We will assume that you chose connector-manager as web context for that war.
 
-After that, find MockRepositoryEventLog1.txt in the connector manager source zip and copy it under `yourOC4JDirectory\j2ee\home\applications\connector-manager\connector-manager\WEB-INF` directory.
+After that, find `MockRepositoryEventLog1.txt` in the connector manager source zip and copy it under `yourOC4JDirectory\j2ee\home\applications\connector-manager\connector-manager\WEB-INF` directory.
 
 = GSA Configuration =
 
