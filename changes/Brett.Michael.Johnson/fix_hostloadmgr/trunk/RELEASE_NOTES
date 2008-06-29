@@ -1,0 +1,137 @@
+
+		 Google Enterprise Connector Manager
+			    Release Notes
+
+This document contains the release notes for Google Enterprise
+Connector Manager.  The following sections describe the release in
+detail and provide information that supplements the main
+documentation.  See the Issues Tab on the Code Site for the current
+list of known issues and workarounds.
+
+Web Site: http://code.google.com/p/google-enterprise-connector-manager/
+
+
+Release 1.1.0, Jun 30, 2008
+===========================
+
+Introduction
+------------
+This is an upgrade release with some enhancements.  Users of previous
+releases are encouraged to upgrade.  It also contains some new features.  Users
+of previous releases should check the "Version Compatibility" section below for
+instructions on how to use existing data with this new release.
+
+Summary of Changes
+------------------
+
+  * Fix Issue 35: Better handling of null QueryTraversalManager
+  * Fix Issue 41: Typo in ConnectorManagerGetServlet documentation
+  * Fix Issue 45: DocPusher uses a logger named WorkQueue
+  * Fix Issue 47: Deleting a connector may leave behind connector state
+  * Fix Issue 53: ServletUtil methods have unused StringBuffers
+  * Fix Issue 60: Connector instances can be used after being deleted
+  * Fix Issue 63: Editing a connector instance has no effect until Tomcat is restarted
+  * Fix Issue 66: TraversalWorkQueueItem.doWork calls connectorFinishedTraversal too often
+  * Fix Issue 67: Scheduler runs traversals faster than configured traversal rate
+  * Fix Issue 69: Remove keystore warning from logs as it is harmless and confuses everyone
+  * Fix Issue 70: Allow GSA to request log files from connector manager
+  * Fix Issue 71: InstanceInfo and InstanceMap are missing spaces in log messages
+  * Fix Issue 74: Log an error if GSA is rejecting feeds from connector(s)
+  * Fix Issue 75: HTTP 400 error thrown for correct feeds
+  * Fix Issue 89: Try to avoid calling Connector classes from an interrupted thread
+  * Fix Issue 90: Enable the WorkQueueItem.timeout to be configurable
+
+  * Added support for deleting documents.  See r757 for details.
+  * Added new feed logger as an alternative to the teedFeedFile.  See r783 for details.
+  * Added support to extracting Connector Manager log files from the GSA.  See r832 for details.
+  * Changed default retry interval.  See r781 for details.
+  * Changed SPI related to SimpleDocument.  See r824 for details.
+  * Improved logging.
+
+Version Compatibility
+---------------------
+Connectors created using previous 1.0.x versions of this product may not be
+compatible with this version.  In particular, if SimpleDocument is used within
+the Connector there are SPI changes that need to be made.  Also, the Connector
+Manager will now check all Document implementations for the new optional
+SpiConstants.PROPNAME_ACTION property and that needs to be handled gracefully.
+
+
+Release 1.0.3, Dec 07, 2007
+===========================
+
+Introduction
+------------
+This is a maintenance release that improves quality, reliability, and
+performance without adding any new functionality.  All users of
+previous 1.0.x releases should upgrade to this release.
+
+Summary of Changes
+------------------
+
+  * Fix Issue 64 where the googleWorkDir property has an extra file separator
+  * Fix Issue 65 added code to ProductionManager to check for
+    AuthenticationManager before using 
+  * Fix Bug 922427 two copies of feed appearing in Teed Feed File
+  * Fix Issue 40 pass language parameter down to getPopulatedConfigForm()
+  * Fix Bug 950013 where Unicode characters did not display correctly (????)
+    when adding a new connector.
+  * Added argument to PrefsStore constructor to enable use of systemNode rather
+    than userNode as the root node.
+
+Version Compatibility
+---------------------
+Connectors created using version 1.0.1 or 1.0.2 of this product may be used
+with this version.
+
+
+Release 1.0.2, Oct 03, 2007
+===========================
+
+Introduction
+------------
+This is the first full release of this product. See the product
+website for a complete description.
+
+Summary of Changes
+------------------
+
+  * FIX Issue 50 Password encryption reencrypts strings multiple times
+  * Moved and updated README and RELEASE_NOTES files
+
+Version Compatibility
+---------------------
+Connectors created using version 1.0.1 of this product may be used
+with this version.
+
+
+Release 1.0.1, Sep 25, 2007
+===========================
+
+Introduction
+------------
+This is an early access release for wide evaluation and usage.  Your
+feedback is important to us.  Keep in mind that we are continuing to
+work on the Connector Manager and things may change in the future.
+
+Summary of Changes
+------------------
+
+  * Two SPI changes
+  * Some code cleanup
+  * Changed build files to compile for 1.4
+  * FIX 749919 AdminConsole GUI: Connector error message
+
+Version Compatibility
+---------------------
+Since the SPI has changed for this release, Connectors written to the
+previous SPI available in Release 1.0.0 will have to be recompiled.
+
+
+Release 1.0.0, Aug 16, 2007
+===========================
+
+Introduction
+------------
+This is an early access release for evaluation and usage by select
+partners.  Your feedback is important to us.
