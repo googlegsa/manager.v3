@@ -293,22 +293,21 @@ public class GetConnectorLogs extends HttpServlet {
    * @returns true if request came from an acceptable IP address.
    */
   public static boolean allowedRemoteAddr(Context context, String remoteAddr) {
-    if ((remoteAddr != null) && (remoteAddr.length() > 0)) {
-      try {
-        InetAddress caller = InetAddress.getByName(remoteAddr);
-        if (remoteAddr.equals("127.0.0.1") || (caller == null) ||
-            caller.equals(InetAddress.getLocalHost())) {
-          return true;  // localhost is allowed access
-        }
-        String gsaHost = context.getGsaFeedHost();
-        InetAddress[] gsaAddrs = InetAddress.getAllByName(gsaHost);
-        for (int i = 0; i < gsaAddrs.length; i++) {
-          if (caller.equals(gsaAddrs[i]))
-            return true;  // GSA is allowed access
-        }
-      } catch (UnknownHostException uhe) {
-        return false;
+    try {
+      InetAddress caller = InetAddress.getByName(remoteAddr);
+      if (caller.isLoopbackAddress() ||
+          caller.equals(InetAddress.getLocalHost())) {
+        return true;  // localhost is allowed access
       }
+      String gsaHost = context.getGsaFeedHost();
+      InetAddress[] gsaAddrs = InetAddress.getAllByName(gsaHost);
+      for (int i = 0; i < gsaAddrs.length; i++) {
+        if (caller.equals(gsaAddrs[i])) {
+          return true;  // GSA is allowed access
+        }
+      }
+    } catch (UnknownHostException uhe) {
+      // Unknown host - fall through to fail.
     }
     return false;
   }
@@ -439,7 +438,16 @@ public class GetConnectorLogs extends HttpServlet {
    * @return the base filename (may be null or empty)
    */
   private static String baseName(String name) {
-    return (name == null) ? null : name.substring(name.lastIndexOf('/') + 1);
+    if (name != null) {
+      // FileHandler patterns use '/' as separatorChar by default.
+      int sep = name.lastIndexOf('/');
+      // If no '/', then look for system separatorChar.
+      if ((sep == -1) && (File.separatorChar != '/')) {
+        sep = name.lastIndexOf(File.separatorChar);
+      }
+      return name.substring(sep + 1);
+    }
+    return null;
   }
 
   /**
@@ -450,7 +458,16 @@ public class GetConnectorLogs extends HttpServlet {
    * @return the base filename (may be null or empty)
    */
   private static String directoryName(String name) {
-    return (name == null) ? null : name.substring(0, name.lastIndexOf('/') + 1);
+    if (name != null) {
+      // FileHandler patterns use '/' as separatorChar by default.
+      int sep = name.lastIndexOf('/');
+      // If no '/', then look for system separatorChar.
+      if ((sep == -1) && (File.separatorChar != '/')) {
+        sep = name.lastIndexOf(File.separatorChar);
+      }
+      return name.substring(0, sep + 1);
+    }
+    return null;
   }
 
 
