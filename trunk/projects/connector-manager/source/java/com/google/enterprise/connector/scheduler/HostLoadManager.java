@@ -23,32 +23,32 @@ import java.util.logging.Logger;
 
 /**
  *  Keeps track of the load for each connector instance as well as supplies
- *  batchHint to indicate how many docs to allow to be traversed by traverser. 
+ *  batchHint to indicate how many docs to allow to be traversed by traverser.
  */
 public class HostLoadManager {
-  private static final Logger LOGGER = 
+  private static final Logger LOGGER =
       Logger.getLogger(HostLoadManager.class.getName());
 
   // size of batches for traversal
   private static final int BATCH_SIZE = 100;
-  
+
   private static final long MINUTE_IN_MILLIS = 60 * 1000;
   private long startTimeInMillis;
   private Map connectorNameToNumDocsTraversed;
   private Map connectorNameToFinishTime;
-  
+
   /**
    * Number of milliseconds before we ignore previously fed documents.  In
    * particular, we limit our feed rate during the duration
    * [startTimeInMillis, startTimeInMillis + periodInMillis].
    */
   private long periodInMillis;
-  
+
   /**
    * Used for determining the loads of the schedules.
    */
   private ConnectorScheduleStore scheduleStore;
-  
+
   /**
    * By default, the HostLoadManager will use a one minute period for
    * calculating the batchHint.
@@ -56,26 +56,26 @@ public class HostLoadManager {
   public HostLoadManager(ConnectorScheduleStore scheduleStore) {
     this(MINUTE_IN_MILLIS, scheduleStore);
   }
-  
+
   /**
    * @param periodInMillis time period in which we enforce the maxFeedRate
    */
-  public HostLoadManager(long periodInMillis, 
+  public HostLoadManager(long periodInMillis,
       ConnectorScheduleStore scheduleStore) {
     this.periodInMillis = periodInMillis;
     this.scheduleStore = scheduleStore;
-    
+
     startTimeInMillis = System.currentTimeMillis();
     connectorNameToNumDocsTraversed = new HashMap();
     connectorNameToFinishTime = new HashMap();
   }
-  
+
   private int getMaxLoad(String connectorName) {
     String scheduleStr = scheduleStore.getConnectorSchedule(connectorName);
     Schedule schedule = new Schedule(scheduleStr);
     return schedule.getLoad();
   }
-  
+
   /**
    * Update startTimeInMillis and connectorNameToNumDocsFed based on current
    * time.
@@ -87,7 +87,7 @@ public class HostLoadManager {
       connectorNameToNumDocsTraversed.clear();
     }
   }
-  
+
   /**
    * Determine the number of documents traversed since a given time.
    * @param connectorName name of the connector instance
@@ -96,23 +96,23 @@ public class HostLoadManager {
   private int getNumDocsTraversedThisPeriod(String connectorName) {
     updateNumDocsTraversedData();
     if (connectorNameToNumDocsTraversed.containsKey(connectorName)) {
-      Integer numDocs = 
+      Integer numDocs =
         (Integer) connectorNameToNumDocsTraversed.get(connectorName);
       return numDocs.intValue();
     }
     return 0;
   }
-  
+
   /**
    * Let HostLoadManager know how many documents have been traversed so that
    * it can properly enforce the host load.
    * @param connectorName name of the connector instance
    * @param numDocsTraversed number of documents traversed
    */
-  public void updateNumDocsTraversed(String connectorName, 
+  public void updateNumDocsTraversed(String connectorName,
       int numDocsTraversed) {
     updateNumDocsTraversedData();
-    Integer numDocs = 
+    Integer numDocs =
       (Integer) connectorNameToNumDocsTraversed.get(connectorName);
     Integer updatedNumDocs;
     if (null == numDocs) {
@@ -122,7 +122,7 @@ public class HostLoadManager {
     }
     connectorNameToNumDocsTraversed.put(connectorName, updatedNumDocs);
   }
-  
+
   /**
    * Let HostLoadManager know that a connector has just completed a traversal,
    * (whether it was a failure or natural completion is irrelevant).
@@ -132,16 +132,26 @@ public class HostLoadManager {
     Long now = new Long(System.currentTimeMillis());
     connectorNameToFinishTime.put(connectorName, now);
   }
-  
+
+  /**
+   * Remove the connector's statistics from the caches.
+   * This is called when a connector is deleted.
+   * @param connectorName name of the connector instance
+   */
+  public void removeConnector(String connectorName) {
+    connectorNameToFinishTime.remove(connectorName);
+    connectorNameToNumDocsTraversed.remove(connectorName);
+  }
+
   /**
    * Determine how many documents to be recommended to be traversed.  This
    * number is based on the max feed rate for the connector instance as well
-   * as the load determined based on calls to updateNumDocsTraversed(). 
+   * as the load determined based on calls to updateNumDocsTraversed().
    * @param connectorName name of the connector instance
    * @return hint to the number of documents traverser should traverse
    */
   public int determineBatchHint(String connectorName) {
-    int maxDocsPerPeriod = 
+    int maxDocsPerPeriod =
       (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
     LOGGER.log(Level.FINEST, "maxDocsPerPeriod=" + maxDocsPerPeriod);
     int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
@@ -157,7 +167,7 @@ public class HostLoadManager {
       return 0;
     }
   }
-  
+
   public boolean shouldDelay(String connectorName) {
     if (connectorNameToFinishTime.containsKey(connectorName)) {
       Object value = connectorNameToFinishTime.get(connectorName);
