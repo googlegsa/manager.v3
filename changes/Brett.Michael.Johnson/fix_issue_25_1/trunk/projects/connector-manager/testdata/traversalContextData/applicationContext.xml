@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<!-- Simple config for servlet testing using the Mock Manager -->
+<beans>
+	<bean id="TraversalContext"
+		class="com.google.enterprise.connector.traversal.ProductionTraversalContext">
+		<property name="fileSizeLimitInfo" ref="FileSizeLimitInfo" />
+		<property name="mimeTypeMap" ref="MimeTypeMap" />
+	</bean>
+	<bean id="FileSizeLimitInfo"
+		class="com.google.enterprise.connector.traversal.FileSizeLimitInfo">
+		<property name="maxDocumentSize" value="2500000" />
+	</bean>
+	<bean id="MimeTypeMap"
+		class="com.google.enterprise.connector.traversal.MimeTypeMap">
+		<property name="unsupportedMimeTypes">
+			<set>
+				<value>text/plain</value>
+				<value>text/notplain</value>
+			</set>
+		</property>
+	</bean>
+</beans>
