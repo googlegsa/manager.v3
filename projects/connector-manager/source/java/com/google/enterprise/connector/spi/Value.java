@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc.
+// Copyright 2007-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -176,23 +176,46 @@ public abstract class Value {
   public abstract String toString();
 
   private static final TimeZone TIME_ZONE_GMT = TimeZone.getTimeZone("GMT+0");
-  private static final Calendar GMT_CALENDAR = Calendar
-      .getInstance(TIME_ZONE_GMT);
-  private static final SimpleDateFormat ISO8601_DATE_FORMAT_MILLIS = new SimpleDateFormat(
-      "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-  private static final SimpleDateFormat ISO8601_DATE_FORMAT_SECS = new SimpleDateFormat(
-      "yyyy-MM-dd'T'HH:mm:ss'Z'");
-  public static final SimpleDateFormat RFC822_DATE_FORMAT = new SimpleDateFormat(
-      "EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss z");
+  private static final Calendar GMT_CALENDAR =
+      Calendar.getInstance(TIME_ZONE_GMT);
+  private static final SimpleDateFormat ISO8601_DATE_FORMAT_MILLIS =
+      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+  private static final SimpleDateFormat ISO8601_DATE_FORMAT_SECS =
+      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+  private static final SimpleDateFormat ISO8601_DATE_FORMAT_MINS =
+      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+  private static final SimpleDateFormat ISO8601_DATE_FORMAT_DATE =
+      new SimpleDateFormat("yyyy-MM-dd");
+  public static final SimpleDateFormat RFC822_DATE_FORMAT =
+      new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss z");
 
   static {
     ISO8601_DATE_FORMAT_MILLIS.setCalendar(GMT_CALENDAR);
     ISO8601_DATE_FORMAT_MILLIS.setLenient(true);
     ISO8601_DATE_FORMAT_SECS.setCalendar(GMT_CALENDAR);
     ISO8601_DATE_FORMAT_SECS.setLenient(true);
+    ISO8601_DATE_FORMAT_MINS.setCalendar(GMT_CALENDAR);
+    ISO8601_DATE_FORMAT_MINS.setLenient(true);
+    ISO8601_DATE_FORMAT_DATE.setCalendar(GMT_CALENDAR);
+    ISO8601_DATE_FORMAT_DATE.setLenient(true);
     RFC822_DATE_FORMAT.setCalendar(GMT_CALENDAR);
     RFC822_DATE_FORMAT.setLenient(true);
     RFC822_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+  }
+
+  /**
+   * Formats a calendar object for the Feeds Protocol, using the
+   * ISO-8601 format for just the date portion.
+   * 
+   * @param c
+   * @return a String in ISO-8601 date format
+   * @see <a href="http://code.google.com/apis/searchappliance/documentation/50/feedsguide.html">Feeds
+   * Protocol Developer's Guide</a>
+   */
+  public static synchronized String calendarToFeedXml(Calendar c) {
+    Date d = c.getTime();
+    String isoString = ISO8601_DATE_FORMAT_DATE.format(d);
+    return isoString;
   }
 
   /**
@@ -215,7 +238,16 @@ public abstract class Value {
    */
   public static synchronized String calendarToIso8601(Calendar c) {
     Date d = c.getTime();
-    String isoString = ISO8601_DATE_FORMAT_MILLIS.format(d);
+    String isoString;
+    if (c.isSet(Calendar.MILLISECOND)) {
+      isoString = ISO8601_DATE_FORMAT_MILLIS.format(d);
+    } else if (c.isSet(Calendar.SECOND)) {
+      isoString = ISO8601_DATE_FORMAT_SECS.format(d);
+    } else if (c.isSet(Calendar.MINUTE)) {
+      isoString = ISO8601_DATE_FORMAT_MINS.format(d);
+    } else {
+      isoString = ISO8601_DATE_FORMAT_DATE.format(d);
+    }
     return isoString;
   }
 
@@ -224,11 +256,17 @@ public abstract class Value {
     Date d = null;
     try {
       d = ISO8601_DATE_FORMAT_MILLIS.parse(s);
-      return d;
-    } catch (ParseException e) {
-      // this is just here so we can try another format
+    } catch (ParseException e1) {
+      try {
+        d = ISO8601_DATE_FORMAT_SECS.parse(s);
+      } catch (ParseException e2) {
+        try {
+          d = ISO8601_DATE_FORMAT_MINS.parse(s);
+        } catch (ParseException e3) {
+          d = ISO8601_DATE_FORMAT_DATE.parse(s);
+        }
+      }
     }
-    d = ISO8601_DATE_FORMAT_SECS.parse(s);
     return d;
   }
 

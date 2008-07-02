@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class DocPusherTest extends TestCase {
         + "<metadata>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:searchurl\" content=\"http://www.sometesturl.com/test\"/>\n"
-        + "<meta name=\"jcr:lastModified\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
+        + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "</record>\n";
 
     expectedXml[0] = buildExpectedXML(feedType, record);
@@ -96,7 +96,7 @@ public class DocPusherTest extends TestCase {
         + "<metadata>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:searchurl\" content=\"http://www.sometesturl.com/test\"/>\n"
-        + "<meta name=\"jcr:lastModified\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
+        + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "</record>\n";
 
     expectedXml[0] = buildExpectedXML(feedType, record);
@@ -121,7 +121,7 @@ public class DocPusherTest extends TestCase {
         + "\" last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
-        + "<meta name=\"jcr:lastModified\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
+        + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">"
         + "bm93IGlzIHRoZSB0aW1l" + "</content>\n" + "</record>\n";
 
@@ -151,7 +151,7 @@ public class DocPusherTest extends TestCase {
         + "<metadata>\n"
         + "<meta name=\"acl\" content=\"joe, mary, fred, mark, bill, admin\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"false\"/>\n"
-        + "<meta name=\"google:lastmodified\" content=\"1970-01-01T00:00:00.000Z\"/>\n"
+        + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">"
         + "VGhpcyBpcyBhIHNlY3VyZSBkb2N1bWVudA==" + "</content>\n"
         + "</record>\n";
@@ -169,7 +169,7 @@ public class DocPusherTest extends TestCase {
         + "<metadata>\n"
         + "<meta name=\"acl\" content=\"joe, mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
-        + "<meta name=\"google:lastmodified\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
+        + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">"
         + "VGhpcyBpcyB0aGUgcHVibGljIGRvY3VtZW50Lg==" + "</content>\n"
         + "</record>\n";
@@ -189,7 +189,7 @@ public class DocPusherTest extends TestCase {
         + "<metadata>\n"
         + "<meta name=\"acl\" content=\"joe, mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"public\"/>\n"
-        + "<meta name=\"google:lastmodified\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
+        + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">"
         + "VGhpcyBpcyBhIGRvY3VtZW50Lg==" + "</content>\n" + "</record>\n";
     expectedXml[2] = buildExpectedXML(feedType, record);
@@ -218,7 +218,7 @@ public class DocPusherTest extends TestCase {
         + "<meta name=\"contentfile\" content=\"testdata/mocktestdata/i18n.html\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:mimetype\" content=\"text/html\"/>\n"
-        + "<meta name=\"jcr:lastModified\" content=\"1970-01-01T00:00:10.000Z\"/>\n"
+        + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">" + content
         + "</content>\n" + "</record>\n";
 
