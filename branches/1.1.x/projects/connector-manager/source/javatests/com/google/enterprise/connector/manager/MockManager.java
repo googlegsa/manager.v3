@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.manager;
 
+import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -34,7 +35,7 @@ import java.util.logging.Logger;
  * A mock implementation for the Manager interface. This implementation
  * basically hardcodes a bunch of responses and can be used before the actual
  * implementation is complete.
- * 
+ *
  */
 public class MockManager implements Manager {
   private static final MockManager INSTANCE = new MockManager();
@@ -50,7 +51,7 @@ public class MockManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#authenticate(java.lang.String,
    *      java.lang.String, java.lang.String)
    */
@@ -61,7 +62,7 @@ public class MockManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#authorizeDocids(java.lang.String,
    *      java.util.List, java.lang.String)
    */
@@ -74,7 +75,7 @@ public class MockManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#getConnectorTypes()
    */
   public List getConnectorTypes() {
@@ -83,7 +84,7 @@ public class MockManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#getConfigForm(java.lang.String,
    *      java.lang.String)
    */
@@ -105,7 +106,7 @@ public class MockManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#getConfigFormForConnector(java.lang.String,
    *      java.lang.String)
    */
@@ -127,7 +128,7 @@ public class MockManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#getConnectorStatus(java.lang.String)
    */
   public ConnectorStatus getConnectorStatus(String connectorName) {
@@ -140,7 +141,7 @@ public class MockManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#getConnectorStatuses()
    */
   public List getConnectorStatuses() {
@@ -152,7 +153,7 @@ public class MockManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#setConfig(java.lang.String,
    *      java.util.Map, java.lang.String)
    */
@@ -164,7 +165,7 @@ public class MockManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#setConfig(java.lang.String,
    *      java.util.Map, java.lang.String)
    */
@@ -187,7 +188,7 @@ public class MockManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#storeConfig(boolean,
    *      java.lang.String, int, int)
    */
@@ -198,7 +199,7 @@ public class MockManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#setSchedule(
    *      java.lang.String, int, java.lang.String)
    */
@@ -209,7 +210,7 @@ public class MockManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#removeConnector(
    *      java.lang.String)
    */
@@ -223,7 +224,18 @@ public class MockManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
+   * @see com.google.enterprise.connector.manager.Manager#restartConnectorTraversal(
+   *      java.lang.String)
+   */
+  public void restartConnectorTraversal(String connectorName)
+    throws ConnectorNotFoundException, InstantiatorException {
+    // do nothing;
+  }
+
+  /*
+   * (non-Javadoc)
+   *
    * @see com.google.enterprise.connector.manager.Manager#getConnectorConfig(
    *      java.lang.String)
    */

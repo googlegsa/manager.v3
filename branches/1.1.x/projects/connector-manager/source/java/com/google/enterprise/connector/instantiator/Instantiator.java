@@ -34,7 +34,7 @@ public interface Instantiator {
 
   /**
    * gets an AuthenticationManager for a named connector.
-   * 
+   *
    * @param connectorName the String name of the connector for which to get the
    *        Traverser
    * @return the AuthenticationManager, fully instantiated
@@ -48,7 +48,7 @@ public interface Instantiator {
 
   /**
    * gets an AuthorizationManager for a named connector.
-   * 
+   *
    * @param connectorName the String name of the connector for which to get the
    *        Traverser
    * @return the AuthorizationManager, fully instantiated
@@ -62,7 +62,7 @@ public interface Instantiator {
 
   /**
    * Finds a named connector.
-   * 
+   *
    * @param connectorName
    * @return the Connector, fully instantiated
    * @throws ConnectorNotFoundException
@@ -72,8 +72,20 @@ public interface Instantiator {
       throws ConnectorNotFoundException, InstantiatorException;
 
   /**
+   * Restart the Traverser for the named connector.
+   * This resets the Traverser, re-indexing the repository from scratch.
+   *
+   * @param connectorName
+   * @throws ConnectorNotFoundException
+   * @throws InstantiatorException
+   */
+  public void restartConnectorTraversal(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException;
+
+
+  /**
    * Drops a named connector.
-   * 
+   *
    * @param connectorName
    * @throws InstantiatorException
    */
@@ -81,7 +93,7 @@ public interface Instantiator {
 
   /**
    * Finds a named connector type.
-   * 
+   *
    * @param connectorTypeName The connector type to find
    * @return the ConnectorType, fully instantiated
    * @throws ConnectorTypeNotFoundException if the connector type is not found
@@ -91,14 +103,14 @@ public interface Instantiator {
 
   /**
    * Gets all the known connector type names
-   * 
+   *
    * @return an iterator of String names
    */
   public Iterator getConnectorTypeNames();
 
   /**
    * Gets the prototype definition for instances of this type
-   * 
+   *
    * @param connectorTypeName The connector type for which to get the prototype
    * @return prototype String
    * @throws ConnectorTypeNotFoundException if the connector type is not found
@@ -113,7 +125,7 @@ public interface Instantiator {
   /**
    * Sets the configuration for a new connector. This connector should not
    * exist.
-   * 
+   *
    * @param connectorName The connector to create
    * @param connectorTypeName The type for this connector
    * @param configKeys A configuration map for this connector
@@ -122,7 +134,7 @@ public interface Instantiator {
    * @return null if config is valid and accepted, a ConfigureResponse object
    *         if config is invalid.
    * @throws ConnectorNotFoundException
-   * @throws ConnectorExistsException 
+   * @throws ConnectorExistsException
    * @throws ConnectorTypeNotFoundException
    * @throws InstantiatorException
    */
@@ -134,14 +146,14 @@ public interface Instantiator {
 
   /**
    * Get the names of all known connectors
-   * 
+   *
    * @return an Iterator of String names
    */
   public Iterator getConnectorNames();
 
   /**
    * Get the type for a known connector
-   * 
+   *
    * @param connectorName the connector to look up
    * @return its type, as a String
    * @throws ConnectorNotFoundException if the named connector is not found

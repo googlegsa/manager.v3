@@ -20,6 +20,7 @@ import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
+import com.google.enterprise.connector.persist.GenerationalStateStore;
 import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.pusher.Pusher;
@@ -48,7 +49,7 @@ import java.util.Map;
 import javax.jcr.Repository;
 
 /**
- * 
+ *
  */
 public class MockInstantiator implements Instantiator {
   public static final String TRAVERSER_NAME1 = "foo";
@@ -123,9 +124,10 @@ public class MockInstantiator implements Instantiator {
     }
 
     Pusher pusher = new MockPusher(System.out);
-    connectorStateStore.enableConnectorState(connectorName);
     QueryTraverser queryTraverser =
-        new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
+        new QueryTraverser(pusher, qtm,
+            new GenerationalStateStore(connectorStateStore, connectorName),
+            connectorName);
 
     ConnectorInterfaces connectorInterfaces =
         new ConnectorInterfaces(connectorName, queryTraverser,
@@ -135,7 +137,7 @@ public class MockInstantiator implements Instantiator {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.instantiator.Instantiator
    *      #getConfigurer(java.lang.String)
    */
@@ -145,7 +147,7 @@ public class MockInstantiator implements Instantiator {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.instantiator.Instantiator
    *      #getTraverser(java.lang.String)
    */
@@ -158,6 +160,17 @@ public class MockInstantiator implements Instantiator {
       throw new ConnectorNotFoundException("Connector not found: "
           + connectorName);
     }
+  }
+
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator#restartConnectorTraversal(java.lang.String)
+   */
+  public void restartConnectorTraversal(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException {
+    GenerationalStateStore.newGeneration(connectorName);
+    connectorStateStore.removeConnectorState(connectorName);
   }
 
   public String getConnectorInstancePrototype(String connectorTypeName) {
@@ -175,7 +188,7 @@ public class MockInstantiator implements Instantiator {
   }
 
   public void dropConnector(String connectorName) {
-    connectorStateStore.disableConnectorState(connectorName);
+    GenerationalStateStore.newGeneration(connectorName);
     connectorStateStore.removeConnectorState(connectorName);
     connectorMap.remove(connectorName);
   }

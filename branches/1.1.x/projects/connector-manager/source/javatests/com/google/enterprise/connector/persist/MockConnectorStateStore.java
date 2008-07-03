@@ -56,19 +56,4 @@ public class MockConnectorStateStore extends HashMap implements
     this.remove(connectorName);
   }
 
-  /* (non-Javadoc)
-   * @see com.google.enterprise.connector.persist.ConnectorStateStore
-   * #enableConnectorState(java.lang.String)
-   */
-  public void enableConnectorState(String connectorName) {
-    this.remove(connectorName + ".isDisabled");
-  }
-
-  /* (non-Javadoc)
-   * @see com.google.enterprise.connector.persist.ConnectorStateStore
-   * #disableConnectorState(java.lang.String)
-   */
-  public void disableConnectorState(String connectorName) {
-    this.put(connectorName + ".isDisabled", "true");
-  }
 }

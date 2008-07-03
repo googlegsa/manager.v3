@@ -33,7 +33,7 @@ public interface Manager {
 
   /**
    * Stores configuration changes to the Connector Manager itself.
-   * 
+   *
    * @param feederGateHost The GSA host expressed as a String
    * @param feederGatePort The GSA feeder port number
    * @throws PersistentStoreException If there was a problem storing the
@@ -44,7 +44,7 @@ public interface Manager {
 
   /**
    * Returns a list of connector types that this manager knows about.
-   * 
+   *
    * @return A list of Strings - the name of each connector implementation.
    */
   public List getConnectorTypes();
@@ -52,14 +52,14 @@ public interface Manager {
   /**
    * Returns a list of ConnectorStatus objects for each connector that this
    * manager knows about.
-   * 
+   *
    * @return A list of ConnectorStatus objects.
    */
   public List getConnectorStatuses();
 
   /**
    * Returns the status of a particular connector.
-   * 
+   *
    * @param connectorName the name of the connector instance
    * @return Document containing XML configuration - DTD TBD.
    */
@@ -67,7 +67,7 @@ public interface Manager {
 
   /**
    * Get initial configuration form snippet for a connector type.
-   * 
+   *
    * @param connectorTypeName The name of a connector implementation - it should
    *        be one that this manager knows about (one that would be returned by
    *        a call to getConnectorTypes()).
@@ -88,7 +88,7 @@ public interface Manager {
    * is different from getConfigForm because this is used to change the
    * configuration of a saved, configured Connector instance, not to configure a
    * new Connector instance.
-   * 
+   *
    * @param connectorName The connector for which to fetch configuration
    * @param language A locale string, such as "en" or "fr_CA" which the
    *        implementation may use to produce appropriate descriptions and
@@ -106,7 +106,7 @@ public interface Manager {
   /**
    * Set config data for a new Connector or update config data for a running
    * Connector instance
-   * 
+   *
    * @param connectorName The connector to update
    * @param connectorTypeName The connector's type
    * @param configData A map of name, value pairs (String, String) of
@@ -124,7 +124,7 @@ public interface Manager {
    *         this manager.
    * @throws PersistentStoreException If there was a problem storing the
    *         configuration
-   * @throws InstantiatorException If the instantiator cannot store the 
+   * @throws InstantiatorException If the instantiator cannot store the
    *         configuration
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
@@ -135,7 +135,7 @@ public interface Manager {
 
   /**
    * Authenticates a user against a named connector.
-   * 
+   *
    * @param connectorName
    * @param username
    * @param password
@@ -146,7 +146,7 @@ public interface Manager {
 
   /**
    * Gets authorization from a named connector for a set of documents by ID.
-   * 
+   *
    * @param connectorName
    * @param docidList The document set represented as a list of Strings: the
    *        docid for each document
@@ -158,7 +158,7 @@ public interface Manager {
 
   /**
    * Set schedule for a given Connector.
-   * 
+   *
    * @param connectorName
    * @param load The hostload (in docs per minute) as an integer
    * @param retryDelayMillis Time to wait before next traversal (milliseconds)
@@ -174,7 +174,7 @@ public interface Manager {
 
   /*
    * Remove a connector for a given Connector.
-   * 
+   *
    * @param connectorName
    * @throws ConnectorNotFoundException If the named connector is not known to
    *         this manager.
@@ -184,6 +184,17 @@ public interface Manager {
   public void removeConnector(String connectorName)
       throws ConnectorNotFoundException, PersistentStoreException,
       InstantiatorException;
+
+  /**
+   * Restart the Traverser for the named connector.
+   * This resets the Traverser, re-indexing the repository from scratch.
+   *
+   * @param connectorName
+   * @throws ConnectorNotFoundException
+   * @throws InstantiatorException
+   */
+  public void restartConnectorTraversal(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException;
 
   /**
    * Get a connector's ConnectorType-specific configuration data
