@@ -47,7 +47,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * 
+ *
  */
 public class ProductionManager implements Manager {
   private static final Logger LOGGER =
@@ -78,7 +78,7 @@ public class ProductionManager implements Manager {
 
   /**
    * Set the scheduler.
-   * 
+   *
    * @param scheduler the scheduler to set.
    */
   public void setScheduler(Scheduler scheduler) {
@@ -95,7 +95,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager
    *      #authenticate(java.lang.String, java.lang.String,
    *      java.lang.String)
@@ -134,7 +134,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager
    *      #authorizeDocids(java.lang.String, java.util.List,
    *      java.lang.String)
@@ -170,7 +170,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager
    *      #getConfigForm(java.lang.String, java.lang.String)
    */
@@ -184,7 +184,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager
    *      #getConfigFormForConnector(java.lang.String, java.lang.String)
    */
@@ -200,7 +200,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager
    *      #getConnectorStatus(java.lang.String)
    */
@@ -224,7 +224,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#getConnectorStatuses()
    */
   public List getConnectorStatuses() {
@@ -240,7 +240,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#getConnectorTypes()
    */
   public List getConnectorTypes() {
@@ -254,7 +254,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#setConnectorConfig(java.lang.String,
    *      java.util.Map, java.lang.String)
    */
@@ -271,7 +271,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#setConnectorManagerConfig(boolean,
    *      java.lang.String, int, int)
    */
@@ -287,7 +287,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#setSchedule(
    *      java.lang.String, int, java.lang.String)
    */
@@ -295,7 +295,7 @@ public class ProductionManager implements Manager {
       String timeIntervals) {
 
     Schedule schedule =
-        new Schedule(connectorName + ":" + load + ":" + retryDelayMillis + ":" 
+        new Schedule(connectorName + ":" + load + ":" + retryDelayMillis + ":"
             + timeIntervals);
     String connectorSchedule = schedule.toString();
     connectorScheduleStore.storeConnectorSchedule(connectorName,
@@ -304,7 +304,7 @@ public class ProductionManager implements Manager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.manager.Manager#removeConnector(
    *      java.lang.String)
    */
@@ -316,9 +316,22 @@ public class ProductionManager implements Manager {
     connectorStateStore.removeConnectorState(connectorName);
   }
 
+
   /*
    * (non-Javadoc)
-   * 
+   *
+   * @see com.google.enterprise.connector.manager.Manager#restartConnectorTraversal(
+   *      java.lang.String)
+   */
+  public void restartConnectorTraversal(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException {
+    scheduler.removeConnector(connectorName);
+    instantiator.restartConnectorTraversal(connectorName);
+  }
+
+  /*
+   * (non-Javadoc)
+   *
    * @see com.google.enterprise.connector.manager.Manager#getConnectorConfig(
    *      java.lang.String)
    */
