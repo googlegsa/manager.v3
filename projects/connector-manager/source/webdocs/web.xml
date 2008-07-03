@@ -118,6 +118,10 @@
         <servlet-class>com.google.enterprise.connector.servlet.UpdateConnector</servlet-class>
     </servlet>
     <servlet>
+        <servlet-name>RestartConnectorTraversal</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.RestartConnectorTraversal</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>SetSchedule</servlet-name>
         <servlet-class>com.google.enterprise.connector.servlet.SetSchedule</servlet-class>
     </servlet>
@@ -217,6 +221,10 @@
     <servlet-mapping>
         <servlet-name>UpdateConnector</servlet-name>
 	<url-pattern>/updateConnector</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RestartConnectorTraversal</servlet-name>
+        <url-pattern>/restartConnectorTraversal</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>SetSchedule</servlet-name>
