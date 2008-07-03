@@ -416,13 +416,11 @@ public class Context {
 
     // Notify the GsaFeedConnection of new host and port.
     GsaFeedConnection feeder = (GsaFeedConnection)
-        applicationContext.getBean("FeedConnection", GsaFeedConnection.class);
-    if (feeder != null) {
-      try {
-        feeder.setFeedHostAndPort(feederGateHost, feederGatePort);
-      } catch (MalformedURLException e) {
-        throw new InstantiatorException("Invalid GSA Feed specification", e);
-      }
+        getRequiredBean("FeedConnection", GsaFeedConnection.class);
+    try {
+      feeder.setFeedHostAndPort(feederGateHost, feederGatePort);
+    } catch (MalformedURLException e) {
+      throw new InstantiatorException("Invalid GSA Feed specification", e);
     }
   }
 
