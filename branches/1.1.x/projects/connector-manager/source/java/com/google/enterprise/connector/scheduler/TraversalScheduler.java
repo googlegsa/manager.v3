@@ -36,31 +36,31 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Scheduler that schedules connector traversal.  This class is thread safe.  
+ * Scheduler that schedules connector traversal.  This class is thread safe.
  * Must initialize TraversalScheduler before running it.
  */
 public class TraversalScheduler implements Scheduler {
   public static final String SCHEDULER_CURRENT_TIME = "/Scheduler/currentTime";
-  
-  private static final Logger LOGGER = 
+
+  private static final Logger LOGGER =
     Logger.getLogger(TraversalScheduler.class.getName());
-  
+
   private Instantiator instantiator;
   private Monitor monitor;
   private WorkQueue workQueue;
   private ConnectorScheduleStore scheduleStore;
-  
+
   private HostLoadManager hostLoadManager;
-  
+
   private boolean isInitialized;  // Protected by instance lock.
   private boolean isShutdown;  // Protected by instance lock.
-  
+
   // Map of runnables that are currently scheduled.  Protected by instance lock.
   private Map runnables = new HashMap();  // <connectorName, TraverserRunnable>
   // Set of connectors removed.  Needed so that we only schedule connectors
   // that haven't been removed.  Protected by instance lock.
   private Set removedConnectors;
-  
+
   /**
    * Create a scheduler object.
    * @param instantiator
@@ -68,7 +68,7 @@ public class TraversalScheduler implements Scheduler {
    * @param workQueue
    * @param scheduleStore
    */
-  public TraversalScheduler(Instantiator instantiator, Monitor monitor, 
+  public TraversalScheduler(Instantiator instantiator, Monitor monitor,
       WorkQueue workQueue, ConnectorScheduleStore scheduleStore) {
     this.instantiator = instantiator;
     this.monitor = monitor;
@@ -79,7 +79,7 @@ public class TraversalScheduler implements Scheduler {
     this.isShutdown = false;
     this.removedConnectors = new HashSet();
   }
-  
+
   public synchronized void init() {
     if (isInitialized) {
       return;
@@ -88,7 +88,7 @@ public class TraversalScheduler implements Scheduler {
     isInitialized = true;
     isShutdown = false;
   }
-  
+
   public synchronized void shutdown(boolean interrupt, long timeoutInMillis) {
     LOGGER.info("Shutdown initiated...");
     if (isShutdown) {
@@ -98,7 +98,7 @@ public class TraversalScheduler implements Scheduler {
     isInitialized = false;
     isShutdown = true;
   }
-  
+
   /**
    * Return a traversal schedule as store in the configuration and schedule
    * stores.  As a side effect, clear the removedConnectors Set.
@@ -155,7 +155,7 @@ public class TraversalScheduler implements Scheduler {
   }
 
   /**
-   * Determines whether scheduler should run.  Assumes caller holds instance 
+   * Determines whether scheduler should run.  Assumes caller holds instance
    * lock.
    * @return true if we are in a running state and scheduler should run or
    * continue running
@@ -165,8 +165,8 @@ public class TraversalScheduler implements Scheduler {
   }
 
   /**
-   * Call this method when a connector is removed.  Assumes ScheduleStore has 
-   * already been updated to reflect the schedule change.  This causes the 
+   * Call this method when a connector is removed.  Assumes ScheduleStore has
+   * already been updated to reflect the schedule change.  This causes the
    * scheduler to gracefully interrupt any work that is done on this connector.
    * @param connectorName name of the connector instance
    */
@@ -174,22 +174,25 @@ public class TraversalScheduler implements Scheduler {
     synchronized (this) {
       // let scheduler know not to schedule more work for this connector
       removedConnectors.add(connectorName);
-      
+
       // interrupt any work that is already getting done
-      TraversalWorkQueueItem runnable = 
+      TraversalWorkQueueItem runnable =
         (TraversalWorkQueueItem) runnables.remove(connectorName);
       if (null != runnable) {
         workQueue.cancelWork(runnable);
       }
-    }    
+
+      // tell the load manager to forget about this connector.
+      hostLoadManager.removeConnector(connectorName);
+    }
   }
-  
+
   public void run() {
     while (true) {
       try {
         synchronized (this) {
           if (!isRunningState()) {
-            LOGGER.info("TraversalScheduler thread is stopping due to " 
+            LOGGER.info("TraversalScheduler thread is stopping due to "
               + "shutdown or not being initialized.");
             return;
           }
@@ -203,7 +206,7 @@ public class TraversalScheduler implements Scheduler {
             synchronized (this) {
               runnable = (TraversalWorkQueueItem) runnables.get(connectorName);
               if (null == runnable) {
-                runnable = 
+                runnable =
                   new TraversalWorkQueueItem(connectorName);
                 runnables.put(connectorName, runnable);
               }
@@ -211,7 +214,7 @@ public class TraversalScheduler implements Scheduler {
             // we back off if we have received previous failures (e.g. when trying
             // to get a Traverser object)
             if (runnable.getNumConsecutiveFailures() >= 2) {
-              long backoff = 
+              long backoff =
                 1000 * (long) Math.pow(2, runnable.getNumConsecutiveFailures());
               long now = System.currentTimeMillis();
               if (runnable.getTimeOfFirstFailure() + backoff > now) {
@@ -222,12 +225,12 @@ public class TraversalScheduler implements Scheduler {
               + connectorName);
             synchronized (this) {
               if (!isRunningState()) {
-                  LOGGER.info("TraversalScheduler thread is stopping due to " 
+                  LOGGER.info("TraversalScheduler thread is stopping due to "
                     + "shutdown or not being initialized.");
                   return;
               }
               if (removedConnectors.contains(connectorName)) {
-                LOGGER.info("Connector was removed so no work for it will be " 
+                LOGGER.info("Connector was removed so no work for it will be "
                   + "done: " + connectorName);
                 continue;
               }
@@ -239,18 +242,18 @@ public class TraversalScheduler implements Scheduler {
             }
             int numDocsTraversed = runnable.getNumDocsTraversed();
             if (numDocsTraversed > 0) {
-              hostLoadManager.updateNumDocsTraversed(connectorName, 
+              hostLoadManager.updateNumDocsTraversed(connectorName,
                 numDocsTraversed);
             } else if (numDocsTraversed == 0 && runnable.getBatchHint() > 0) {
               // Traversal of 0 documents indicates some type of problem.
-              // It may be that runnable is not returning or able to be 
+              // It may be that runnable is not returning or able to be
               // interrupted.
               runnable.failure();
             }
           }
         }
         updateMonitor();
-        
+
         // Give someone else a chance to run.
         try {
           synchronized (this) {
@@ -262,23 +265,23 @@ public class TraversalScheduler implements Scheduler {
         }
       } catch (Throwable t) {
         t.printStackTrace();
-        LOGGER.log(Level.SEVERE, 
+        LOGGER.log(Level.SEVERE,
           "TraversalScheduler caught unexpected Throwable: ", t);
       }
     }
   }
-  
+
   private class TraversalWorkQueueItem extends WorkQueueItem {
     private String connectorName;
     private int numDocsTraversed;
     private boolean isFinished;
     private int batchHint = 0;
-    
+
     private int numConsecutiveFailures;
-    // the time in millis of the first consecutive failure given the 
+    // the time in millis of the first consecutive failure given the
     // numConsecutiveFailures is > 0.
     private long timeOfFirstFailure;
-        
+
     public TraversalWorkQueueItem(String connectorName) {
       this.connectorName = connectorName;
       this.numDocsTraversed = 0;
@@ -303,7 +306,7 @@ public class TraversalScheduler implements Scheduler {
     private Traverser getTraverser() {
       Traverser traverser = null;
       try {
-        traverser = instantiator.getTraverser(connectorName); 
+        traverser = instantiator.getTraverser(connectorName);
       } catch (ConnectorNotFoundException cnfe) {
         cnfe.printStackTrace();
       } catch (InstantiatorException ie) {
@@ -317,7 +320,7 @@ public class TraversalScheduler implements Scheduler {
     }
 
     /**
-     * Wait until the run is finished.  Object lock must be held to call this 
+     * Wait until the run is finished.  Object lock must be held to call this
      * method.
      */
     private void waitTillFinishedOrTimeout() {
@@ -336,7 +339,7 @@ public class TraversalScheduler implements Scheduler {
         }
       }
     }
-    
+
     /**
      * Retrieve the number of consecutive failures.  A successful run,  resets
      * this count.
@@ -345,9 +348,9 @@ public class TraversalScheduler implements Scheduler {
     public int getNumConsecutiveFailures() {
       return numConsecutiveFailures;
     }
-    
+
     /**
-     * Time of the first consecutive failure given that 
+     * Time of the first consecutive failure given that
      * getNumConsecutiveFailures() is > 0.
      * @return time in millis
      */
