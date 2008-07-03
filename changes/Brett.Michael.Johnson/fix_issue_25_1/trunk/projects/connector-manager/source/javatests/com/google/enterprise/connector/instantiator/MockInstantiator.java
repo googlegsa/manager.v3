@@ -168,7 +168,7 @@ public class MockInstantiator implements Instantiator {
    * @see com.google.enterprise.connector.instantiator.Instantiator#restartConnectorTraversal(java.lang.String)
    */
   public void restartConnectorTraversal(String connectorName)
-    throws ConnectorNotFoundException, InstantiatorException {
+      throws ConnectorNotFoundException, InstantiatorException {
     GenerationalStateStore.newGeneration(connectorName);
     connectorStateStore.removeConnectorState(connectorName);
   }

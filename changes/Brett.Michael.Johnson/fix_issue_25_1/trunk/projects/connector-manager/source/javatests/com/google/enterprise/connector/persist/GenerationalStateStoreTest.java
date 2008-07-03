@@ -67,7 +67,7 @@ public class GenerationalStateStoreTest extends TestCase {
     Assert.assertEquals(connectorState, state);
     Assert.assertTrue(store.myGeneration(connectorName) ==
         GenerationalStateStore.currentGeneration(connectorName));
-    store.newGeneration(connectorName);
+    GenerationalStateStore.newGeneration(connectorName);
     Assert.assertTrue(store.myGeneration(connectorName) !=
         GenerationalStateStore.currentGeneration(connectorName));
   }
@@ -122,7 +122,7 @@ public class GenerationalStateStoreTest extends TestCase {
         GenerationalStateStore.currentGeneration(bazName));
 
     // Bump the generation number for bar.
-    store.newGeneration(barName);
+    GenerationalStateStore.newGeneration(barName);
 
     Assert.assertTrue(store.myGeneration(barName) == barGeneration);
     Assert.assertTrue(barGeneration !=

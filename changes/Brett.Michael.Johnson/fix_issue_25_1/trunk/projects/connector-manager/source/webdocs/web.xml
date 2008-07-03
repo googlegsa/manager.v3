@@ -226,7 +226,6 @@
         <servlet-name>RestartConnectorTraversal</servlet-name>
         <url-pattern>/restartConnectorTraversal</url-pattern>
     </servlet-mapping>
-
     <servlet-mapping>
         <servlet-name>SetSchedule</servlet-name>
         <url-pattern>/setSchedule</url-pattern>
