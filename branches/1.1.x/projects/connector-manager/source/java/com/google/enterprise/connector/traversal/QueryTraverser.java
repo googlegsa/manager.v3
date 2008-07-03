@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -149,6 +149,7 @@ public class QueryTraverser implements Traverser {
       LOGGER.warning("Out of JVM Heap Space.  Most likely document (" + docid
           + ") is too large.  To fix, increase heap space or reduce size "
           + "of document.");
+      LOGGER.log(Level.FINEST, e.getMessage(), e);
     } catch (PushException e) {
       LOGGER.log(Level.SEVERE, e.getMessage(), e);
     } finally {

@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc.
+// Copyright 2007-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ public class DateValue extends ValueImpl {
   }
 
   public String toFeedXml() {
-    return toString();
+    return Value.calendarToFeedXml(calendarValue);
   }
 
   public String toRfc822() {
