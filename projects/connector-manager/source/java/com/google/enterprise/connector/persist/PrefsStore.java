@@ -13,14 +13,13 @@
 // limitations under the License.
 package com.google.enterprise.connector.persist;
 
-import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 /**
- * Class to get and set the schedule and state for a named connector. 
+ * Class to get and set the schedule and state for a named connector.
  *
  */
 public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
@@ -31,8 +30,6 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
   private static Preferences prefs;
   private static Preferences prefsSchedule;
   private static Preferences prefsState;
-
-  private static HashSet disabledConnectors;
 
   public PrefsStore() {
     this(true);
@@ -46,7 +43,6 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
     }
     prefsSchedule = prefs.node("schedule");
     prefsState = prefs.node("state");
-    disabledConnectors = new HashSet();
   }
 
   /**
@@ -66,10 +62,10 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
    * @param connectorSchedule schedule of the corresponding connector.
    */
   public void storeConnectorSchedule(String connectorName,
-      String connectorSchedule)  {    
+      String connectorSchedule)  {
     prefsSchedule.put(connectorName, connectorSchedule);
   }
-  
+
   /**
    * Remove a connector schedule.  If no such connector exists, do nothing.
    * @param connectorName name of the connector.
@@ -78,37 +74,25 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
     prefsSchedule.remove(connectorName);
     flush();
   }
-    
+
   /**
    * Gets the stored state of a named connector.
    * @param connectorName connector name
    * @return the state, or null if no state has been stored for this connector
-   * @throws IllegalStateException if state store is disabled for this connector
    */
   public String getConnectorState(String connectorName) {
-    if (disabledConnectors.contains(connectorName)) {
-      throw new IllegalStateException(
-          "Reading from disabled ConnectorStateStore for connector "
-          + connectorName);
-    }
     return prefsState.get(connectorName, null);
   }
-  
+
   /**
    * Stores connector state.
    * @param connectorName connector name
    * @param connectorState state of the corresponding connector
-   * @throws IllegalStateException if state store is disabled for this connector
    */
   public void storeConnectorState(String connectorName, String connectorState) {
-    if (disabledConnectors.contains(connectorName)) {
-      throw new IllegalStateException(
-          "Writing to disabled ConnectorStateStore for connector "
-          + connectorName);
-    }
     prefsState.put(connectorName, connectorState);
   }
-  
+
   /**
    * Remove connector state.  If no such connector exists, do nothing.
    * @param connectorName name of the connector.
@@ -117,29 +101,6 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
     prefsState.remove(connectorName);
     flush();
   }
-  
-  /**
-   * Enables the ConnectorStateStore for this connector.
-   * This allows the connector state for this connector to be
-   * get and stored.  By default, the connector state store
-   * for a connector is enabled.  It may be disabled when the
-   * connector is deleted.
-   * @param connectorName connector name.
-   */
-  public void enableConnectorState(String connectorName) {
-    disabledConnectors.remove(connectorName);
-  }
-
-  /**
-   * Disables the ConnectorStateStore for this connector.
-   * Attempts to read from a disabled store return null.
-   * Attempts to write to a disabled store does nothing.
-   * @param connectorName connector name.
-   */
-  public void disableConnectorState(String connectorName) {
-    disabledConnectors.add(connectorName);
-  }
-
 
   /**
    * Clear out all persistent state (schedules and state).
@@ -163,11 +124,11 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
       result = flush();
     return result;
   }
-  
+
   /**
-   * Forces any changes in the contents of this preference node and its 
+   * Forces any changes in the contents of this preference node and its
    * descendants to the persistent store. Once this method returns successfully,
-   * it is safe to assume that all changes made in the subtree rooted at this 
+   * it is safe to assume that all changes made in the subtree rooted at this
    * node prior to the method invocation have become permanent.
    * @return true if successful.
    */
@@ -176,7 +137,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore {
     try {
       prefsState.flush();
     } catch (BackingStoreException e) {
-      LOGGER.log(Level.WARNING, 
+      LOGGER.log(Level.WARNING,
           "Could not flush contents to persistent store.", e);
       result = false;
     }
