@@ -39,7 +39,7 @@ public class GsaFeedConnection implements FeedConnection {
   /**
    * The GSA's response when the client is not authorized to send feeds.
    */
-  public static final String UNAUTHORIZED_RESPONSE = 
+  public static final String UNAUTHORIZED_RESPONSE =
       "Error - Unauthorized Request";
 
   /**
@@ -53,11 +53,15 @@ public class GsaFeedConnection implements FeedConnection {
   private static final String BOUNDARY = "<<";
 
   private URL url = null;
-  
+
   private static final Logger LOGGER =
       Logger.getLogger(GsaFeedConnection.class.getName());
-  
+
   public GsaFeedConnection(String host, int port) throws MalformedURLException {
+    this.setFeedHostAndPort(host, port);
+  }
+
+  public synchronized void setFeedHostAndPort(String host, int port) throws MalformedURLException {
     url = new URL("http", host, port, "/xmlfeed");
   }
 
@@ -75,7 +79,10 @@ public class GsaFeedConnection implements FeedConnection {
 
   public String sendData(String dataSource, String feedType, InputStream data)
       throws IOException {
-    URLConnection uc = url.openConnection();
+    URLConnection uc;
+    synchronized(this) {
+      uc = url.openConnection();
+    }
     uc.setDoInput(true);
     uc.setDoOutput(true);
     uc.setRequestProperty("Content-Type",
@@ -122,7 +129,7 @@ public class GsaFeedConnection implements FeedConnection {
 
     StringBuffer buf = new StringBuffer();
     InputStream inputStream = uc.getInputStream();
-	BufferedReader br =
+  BufferedReader br =
       new BufferedReader(new InputStreamReader(inputStream,"UTF8"));
     String line;
     while ((line = br.readLine()) != null) {
