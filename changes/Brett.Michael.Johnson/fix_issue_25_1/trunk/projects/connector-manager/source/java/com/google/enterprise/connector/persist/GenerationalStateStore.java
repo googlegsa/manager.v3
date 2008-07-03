@@ -17,10 +17,9 @@ package com.google.enterprise.connector.persist;
 import java.util.HashMap;
 
 /**
- * Interface describing the persistence needs of a Traverser
- * Wraps GenerationalStore over an instance of ConnectorStateStore.
+ * Wraps GenerationalStore over an instance of {@link ConnectorStateStore}.
  * This provides for "generations" of storage state.  Each
- * time a Traverser for a repositoriy is created, it gets a
+ * time a Traverser for a repository is created, it gets a
  * new generation number.  Reads and writes to older generations
  * will then fail.
  */
@@ -111,6 +110,8 @@ public class GenerationalStateStore implements ConnectorStateStore {
 
   /**
    * Return this instance's generation for the named connector.
+   * If this instance does not yet have a generation for the named
+   * connector, it grabs a snapshot of the most current generation.
    *
    * @param connectorName  the connector name
    * @return the current generation number

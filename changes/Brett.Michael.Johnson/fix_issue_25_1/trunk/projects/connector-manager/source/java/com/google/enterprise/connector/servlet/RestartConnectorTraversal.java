@@ -12,37 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.scheduler.Schedule;
 
 import java.io.PrintWriter;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-
 
 /**
  * Admin servlet to restart repository traversal for a given connector.
  * This will start crawing the repository from the begining, reindexing
  * the contents.
+ *
+ * Usage:
+ * -----
+ * To restart the indexing traversal for a Connector:
+ *   http://[cm_host_addr]/connector-manager/restartConnectorTraversal?ConnectorName=[connector_name]
+ * where [connector_name] is the name of a connector instance.
  */
 public class RestartConnectorTraversal extends ConnectorManagerGetServlet {
   private static final Logger LOGGER =
       Logger.getLogger(RestartConnectorTraversal.class.getName());
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.servlet.ConnectorManagerGetServlet#
-   *      processDoGet(java.lang.String, java.lang.String,
-   *      com.google.enterprise.connector.manager.Manager,
-   *      java.io.PrintWriter)
-   */
+
   protected void processDoGet(String connectorName, String lang,
       Manager manager, PrintWriter out) {
     handleDoGet(connectorName, manager, out);

@@ -44,11 +44,12 @@ public class GenerationalStateStoreTest extends TestCase {
     String resultState = store.getConnectorState(connectorName);
     Assert.assertTrue(resultState.equals(expectedState));
     Assert.assertTrue(myGeneration == store.myGeneration(connectorName));
-    Assert.assertTrue(myGeneration == store.currentGeneration(connectorName));
+    Assert.assertTrue(myGeneration ==
+        GenerationalStateStore.currentGeneration(connectorName));
   }
 
   // Tests getting state for an unknown connector.
-  public void testGetConnectorState1() {
+  public void testGetUnknownConnectorState() {
     String state = store.getConnectorState("some wierd connector name");
     Assert.assertNull(state);
   }
@@ -58,17 +59,17 @@ public class GenerationalStateStoreTest extends TestCase {
     String connectorName = "foobar";
     String connectorState = "foobar's state";
     Assert.assertTrue(store.myGeneration(connectorName) ==
-                      store.currentGeneration(connectorName));
+        GenerationalStateStore.currentGeneration(connectorName));
     String state = store.getConnectorState(connectorName);
     Assert.assertNull(state);
     store.storeConnectorState(connectorName, connectorState);
     state = store.getConnectorState(connectorName);
     Assert.assertEquals(connectorState, state);
     Assert.assertTrue(store.myGeneration(connectorName) ==
-                      store.currentGeneration(connectorName));
+        GenerationalStateStore.currentGeneration(connectorName));
     store.newGeneration(connectorName);
     Assert.assertTrue(store.myGeneration(connectorName) !=
-                      store.currentGeneration(connectorName));
+        GenerationalStateStore.currentGeneration(connectorName));
   }
 
   // Removing state implicitly bumps the generation.
@@ -76,17 +77,17 @@ public class GenerationalStateStoreTest extends TestCase {
     String connectorName = "foo";
     String connectorState = "foo's state";
     Assert.assertTrue(store.myGeneration(connectorName) ==
-                      store.currentGeneration(connectorName));
+        GenerationalStateStore.currentGeneration(connectorName));
     String state = store.getConnectorState(connectorName);
     Assert.assertNull(state);
     store.storeConnectorState(connectorName, connectorState);
     state = store.getConnectorState(connectorName);
     Assert.assertEquals(connectorState, state);
     Assert.assertTrue(store.myGeneration(connectorName) ==
-                      store.currentGeneration(connectorName));
+        GenerationalStateStore.currentGeneration(connectorName));
     store.removeConnectorState(connectorName);
     Assert.assertTrue(store.myGeneration(connectorName) !=
-                      store.currentGeneration(connectorName));
+        GenerationalStateStore.currentGeneration(connectorName));
   }
 
   // The connector state should not be able to be
@@ -116,19 +117,22 @@ public class GenerationalStateStoreTest extends TestCase {
     Assert.assertEquals(bazState, state);
 
     Assert.assertTrue(store.myGeneration(barName) ==
-                      store.currentGeneration(barName));
+        GenerationalStateStore.currentGeneration(barName));
     Assert.assertTrue(store.myGeneration(bazName) ==
-                      store.currentGeneration(bazName));
+        GenerationalStateStore.currentGeneration(bazName));
 
     // Bump the generation number for bar.
     store.newGeneration(barName);
 
+    Assert.assertTrue(store.myGeneration(barName) == barGeneration);
+    Assert.assertTrue(barGeneration !=
+        GenerationalStateStore.currentGeneration(barName));
     Assert.assertTrue(store.myGeneration(barName) !=
-                      store.currentGeneration(barName));
+        GenerationalStateStore.currentGeneration(barName));
     Assert.assertTrue(store.myGeneration(bazName) ==
-                      store.currentGeneration(bazName));
+        GenerationalStateStore.currentGeneration(bazName));
     Assert.assertTrue(bazGeneration ==
-                      store.currentGeneration(bazName));
+        GenerationalStateStore.currentGeneration(bazName));
 
     // Although the store is disabled for bar,
     // we should still be able to get and set baz's state.

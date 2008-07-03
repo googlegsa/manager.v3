@@ -324,7 +324,7 @@ public class ProductionManager implements Manager {
    *      java.lang.String)
    */
   public void restartConnectorTraversal(String connectorName)
-    throws ConnectorNotFoundException, InstantiatorException {
+      throws ConnectorNotFoundException, InstantiatorException {
     scheduler.removeConnector(connectorName);
     instantiator.restartConnectorTraversal(connectorName);
   }
