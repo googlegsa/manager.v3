@@ -255,8 +255,8 @@ public class ProductionManager implements Manager {
   /*
    * (non-Javadoc)
    *
-   * @see com.google.enterprise.connector.manager.Manager#setConnectorConfig(java.lang.String,
-   *      java.util.Map, java.lang.String)
+   * @see com.google.enterprise.connector.manager.Manager#setConnectorConfig(
+   *      java.lang.String, java.util.Map, java.lang.String)
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
       String connectorTypeName, Map configData, String language, boolean update)
@@ -272,8 +272,8 @@ public class ProductionManager implements Manager {
   /*
    * (non-Javadoc)
    *
-   * @see com.google.enterprise.connector.manager.Manager#setConnectorManagerConfig(boolean,
-   *      java.lang.String, int, int)
+   * @see com.google.enterprise.connector.manager.Manager#setConnectorManagerConfig(
+   *      boolean, java.lang.String, int, int)
    */
   public void setConnectorManagerConfig(String feederGateHost,
       int feederGatePort) throws PersistentStoreException {
@@ -310,12 +310,11 @@ public class ProductionManager implements Manager {
    */
   public void removeConnector(String connectorName)
       throws InstantiatorException {
-    scheduler.removeConnector(connectorName);
     instantiator.dropConnector(connectorName);
+    scheduler.removeConnector(connectorName);
     connectorScheduleStore.removeConnectorSchedule(connectorName);
     connectorStateStore.removeConnectorState(connectorName);
   }
-
 
   /*
    * (non-Javadoc)

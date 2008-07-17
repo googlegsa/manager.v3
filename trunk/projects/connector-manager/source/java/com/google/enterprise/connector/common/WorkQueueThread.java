@@ -60,14 +60,14 @@ public class WorkQueueThread extends Thread {
               if (exit) {
                 // thread exits, for example, when shutdown of WorkQueue occurs
                 LOGGER.log(Level.INFO,
-                  "Interrupted WorkQueueThread is exiting due to interrupt "
-                  + "and kill.");
+                  "Interrupted WorkQueueThread is exiting due to interrupt " +
+                  "and kill.");
                 return;
               } else {
                 // if we aren't killing this thread, we go back to wait for more
                 // work
                 LOGGER.log(Level.INFO, "Interrupted WorkQueueThread is fine so" +
-                  " will continue to wait for work.", ie);
+                  " will continue to wait for work.");
                 continue;
               }
             }
