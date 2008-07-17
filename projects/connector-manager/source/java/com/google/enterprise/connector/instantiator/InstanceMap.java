@@ -186,7 +186,7 @@ public class InstanceMap extends TreeMap {
   }
 
   public void dropConnector(String name) {
-    InstanceInfo instanceInfo = this.getInstanceInfo(name);
+    InstanceInfo instanceInfo = (InstanceInfo) this.remove(name);
     if (instanceInfo == null) {
       return;
     }
@@ -208,6 +208,5 @@ public class InstanceMap extends TreeMap {
             + "; this connector may be difficult to delete.");
       }
     }
-    this.remove(name);
   }
 }
