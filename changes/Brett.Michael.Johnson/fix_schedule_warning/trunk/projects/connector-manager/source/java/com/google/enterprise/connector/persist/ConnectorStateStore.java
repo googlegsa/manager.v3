@@ -21,7 +21,7 @@ public interface ConnectorStateStore {
 
   /**
    * Gets the stored state of a named connector.
-   * 
+   *
    * @param connectorName
    * @return the state, or null if no state has been stored for this connector
    * @throws IllegalStateException if state store is disabled for this connector
@@ -30,7 +30,7 @@ public interface ConnectorStateStore {
 
   /**
    * Sets the stored state of a named connector.
-   * 
+   *
    * @param connectorName
    * @param connectorState String to store
    * @throws IllegalStateException if state store is disabled for this connector
@@ -42,23 +42,5 @@ public interface ConnectorStateStore {
    * @param connectorName name of the connector.
    */
   public void removeConnectorState(String connectorName);
-  
-  /**
-   * Enables the ConnectorStateStore for this connector.
-   * This allows the connector state for this connector to be
-   * get and stored.  By default, the connector state store
-   * for a connector is enabled.  It may be disabled when the
-   * connector is deleted.
-   * @param connectorName connector name.
-   */
-  public void enableConnectorState(String connectorName);
-
-  /**
-   * Disables the ConnectorStateStore for this connector.
-   * Attempts to read from or write to a disabled store 
-   * throws an IllegalStateException.
-   * @param connectorName connector name.
-   */
-  public void disableConnectorState(String connectorName);
 
 }

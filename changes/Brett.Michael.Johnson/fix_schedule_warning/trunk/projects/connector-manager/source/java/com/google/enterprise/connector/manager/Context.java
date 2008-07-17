@@ -17,6 +17,7 @@ package com.google.enterprise.connector.manager;
 import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.instantiator.InstanceInfo;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.pusher.GsaFeedConnection;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.traversal.ProductionTraversalContext;
@@ -29,6 +30,7 @@ import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -395,6 +397,8 @@ public class Context {
   public void setConnectorManagerConfig(String feederGateHost,
       int feederGatePort) throws InstantiatorException {
     initApplicationContext();
+
+    // Update the feed host and port in the CM properties file.
     String propFileName = getPropFileName();
     File propFile = getPropFile(propFileName);
     Properties props =
@@ -405,9 +409,22 @@ public class Context {
     LOGGER.info("Updated Connector Manager Config: " +
         GSA_FEED_HOST_PROPERTY_KEY + "=" + feederGateHost + "; " +
         GSA_FEED_PORT_PROPERTY_KEY + "=" + feederGatePort);
-    shutdown(true);  // force shutdown
-    reInitApplicationContext();
-    restart();
+
+    // Update our local cached feed host.
+    gsaFeedHost = feederGateHost;
+    isGsaFeedHostInitialized = true;
+
+    // Notify the GsaFeedConnection of new host and port.
+    try {
+      GsaFeedConnection feeder = (GsaFeedConnection)
+        applicationContext.getBean("FeedConnection", GsaFeedConnection.class);
+      feeder.setFeedHostAndPort(feederGateHost, feederGatePort);
+    } catch (BeansException be) {
+      // The configured FeedConnection isn't a GSA, so it doesn't care
+      // about the GSA host and port.
+    } catch (MalformedURLException e) {
+      throw new InstantiatorException("Invalid GSA Feed specification", e);
+    }
   }
 
   /**
