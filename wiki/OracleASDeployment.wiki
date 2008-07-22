@@ -1,4 +1,4 @@
-#summary Instructions about how to deploy Connector Manager on Oracle Application Server.
+#summary Instructions about how to deploy Connector Manager on Oracle Application Server. THIS IS NOT SUPPORTED BY GOOGLE.
 
 = Introduction =
 
