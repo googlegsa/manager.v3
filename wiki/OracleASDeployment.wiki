@@ -45,7 +45,7 @@ You will learn how to easily build that war file using JDeveloper, following the
   # Download JSON Java classes from [http://www.json.org/java/ here] and copy to the org\json folder created in the previous step.
   # Find `connectorInstance.xml` and `connectorType.xml` files under `test-connectorA` folder in the connector manager source zip, and copy them under the "config" folder you created in the previous step.
   # Find `applicationContext.xml` and `applicationContext.properties` under "etc" folder in the connector manager source code zip.
-  # Copy the these two files under `your_jdeveloperproject\public_html\WEB-INF` folder. Edit `applicationContext.properties` file and substitute "localhost" by your favorite GSA host name or IP address.
+  # Copy these two files under `your_jdeveloperproject\public_html\WEB-INF` folder. Edit `applicationContext.properties` file and substitute "localhost" by your favorite GSA host name or IP address.
   # Extract `web.xml` file from the connector manager war file to `your_jdeveloperproject\public_html\WEB-INF` folder.
   # In this point, you should be able to see all the files in your JDeveloper project. It is time to create a WAR file. Choose "File->New->Deployment Profile" in JDeveloper. Be sure that all the needed libraries are included under "WEB-INF/lib Contributors" section. You should check all of them but the Servlet Runtime.
   # Deploy to war file, right-clicking on the WAR file deployment profile created in the previous step. 
