@@ -19,7 +19,7 @@ JDeveloper and OC4J are really easy to install. Just follow Oracle instructions.
 
 = JDeveloper customization =
 
-In order to successfully compile and deploy the connector manager in OC4J, you need to add  JUnit testing environment to JDevloper. You can easily download it as a JDeveloper plugin, usint the _*Help->Check for Updates...*_ option of JDeveloper.
+In order to successfully compile and deploy the connector manager in OC4J, you need to add  JUnit testing environment to JDeveloper. You can easily download it as a JDeveloper plugin, usint the _*Help->Check for Updates...*_ option of JDeveloper.
 
 = Connector Compilation and deployment = 
 
