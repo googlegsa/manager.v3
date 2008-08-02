@@ -157,8 +157,13 @@ public class WorkQueue {
    */
   public synchronized void shutdown(boolean interrupt, long timeoutInMillis) {
     shutdown = true;
-    interrupterThread.shutdown();
-    lifeThread.shutdown();
+    try {
+      lifeThread.shutdown();
+      lifeThread.join();
+    } catch (InterruptedException e) {
+      LOGGER.log(Level.WARNING,
+          "Interrupted Exception while waiting for lifeThread: ", e);
+    }
     if (isInitialized) {
       if (interrupt) {
         synchronized (threads) {
@@ -190,6 +195,7 @@ public class WorkQueue {
           }
         }
       }
+      interrupterThread.shutdown();
       workQueue.clear();
       isInitialized = false;
     }
@@ -434,9 +440,6 @@ public class WorkQueue {
     public void run() {
       while (!shutdown) {
         try {
-          synchronized (this) {
-            wait(LIFE_THREAD_WAIT_TIMEOUT);
-          }
           Set replacementThreads = new HashSet();
           synchronized (threads) {
             Iterator iter = threads.iterator();
@@ -444,13 +447,16 @@ public class WorkQueue {
               Thread thread = (Thread) iter.next();
               if (!thread.isAlive()) {
                 LOGGER.log(Level.WARNING, "WorkQueueThread was dead and is "
-                  + "restarted by LifeThread: " + thread.getName());
+                    + "restarted by LifeThread: " + thread.getName());
                 iter.remove();
                 replacementThreads.add(
-                  createAndStartWorkQueueThread(thread.getName()));
+                    createAndStartWorkQueueThread(thread.getName()));
               }
             }
             threads.addAll(replacementThreads);
+          }
+          synchronized (this) {
+            wait(LIFE_THREAD_WAIT_TIMEOUT);
           }
         } catch (InterruptedException e) {
           LOGGER.log(Level.WARNING, "", e);
