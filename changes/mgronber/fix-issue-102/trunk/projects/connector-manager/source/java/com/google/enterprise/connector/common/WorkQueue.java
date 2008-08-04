@@ -449,14 +449,16 @@ public class WorkQueue {
                 LOGGER.log(Level.WARNING, "WorkQueueThread was dead and is "
                     + "restarted by LifeThread: " + thread.getName());
                 iter.remove();
-                replacementThreads.add(
+                replacementThreads.add( 
                     createAndStartWorkQueueThread(thread.getName()));
               }
             }
             threads.addAll(replacementThreads);
           }
           synchronized (this) {
-            wait(LIFE_THREAD_WAIT_TIMEOUT);
+            if (!shutdown) {
+              wait(LIFE_THREAD_WAIT_TIMEOUT);
+            }
           }
         } catch (InterruptedException e) {
           LOGGER.log(Level.WARNING, "", e);
