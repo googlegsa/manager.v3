@@ -47,10 +47,9 @@ public final class InstanceInfo {
   private static final String GOOGLE_CONNECTOR_WORK_DIR =
       "googleConnectorWorkDir";
   private static final String GOOGLE_WORK_DIR = "googleWorkDir";
-  public static final String GOOGLE_MANAGER_PROPERTY_VERSION = 
-      "googleConnectorManagerVersion";
-  public static final int GOOGLE_MANAGER_PROPERTY_VERSION_NUMBER = 1;
-
+  public static final String GOOGLE_PROPERTIES_VERSION = 
+      "googlePropertiesVersion";
+  public static final int GOOGLE_PROPERTIES_VERSION_NUMBER = 1;
 
   private final TypeInfo typeInfo;
   private final String name;

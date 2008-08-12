@@ -75,7 +75,8 @@ public class EncryptedPropertyPlaceholderConfigurer extends
 
   /*
    * Overridden from the base class implementation. This looks for a
-   * properties with "password" in their name and decrypts them.
+   * properties with "password" in their name (case insensitive match) 
+   * and decrypts them.
    */
   public void convertProperties(Properties properties) {   
     decryptSensitiveProperties(properties);
@@ -86,8 +87,8 @@ public class EncryptedPropertyPlaceholderConfigurer extends
    * Stamp the Properties set with the current Properties Version.
    */
   public static void stampPropertiesVersion(Properties properties) {
-    properties.put(InstanceInfo.GOOGLE_MANAGER_PROPERTY_VERSION,
-        Integer.toString(InstanceInfo.GOOGLE_MANAGER_PROPERTY_VERSION_NUMBER));
+    properties.put(InstanceInfo.GOOGLE_PROPERTIES_VERSION,
+        Integer.toString(InstanceInfo.GOOGLE_PROPERTIES_VERSION_NUMBER));
   }
 
   /*
@@ -95,11 +96,11 @@ public class EncryptedPropertyPlaceholderConfigurer extends
    */
   public static int getPropertiesVersion(Properties properties) {
     String versionStr = properties.getProperty(
-        InstanceInfo.GOOGLE_MANAGER_PROPERTY_VERSION, "0");
+        InstanceInfo.GOOGLE_PROPERTIES_VERSION, "0");
     int version = 0;
     try {
       version = Integer.parseInt(versionStr);
-      if (version > InstanceInfo.GOOGLE_MANAGER_PROPERTY_VERSION_NUMBER) {
+      if (version > InstanceInfo.GOOGLE_PROPERTIES_VERSION_NUMBER) {
         LOGGER.warning("Properties appear to have been written by a newer "
             + "version of Connector Manager (" + version + ")");
       }
@@ -112,8 +113,8 @@ public class EncryptedPropertyPlaceholderConfigurer extends
   public static void encryptSensitiveProperties(Properties properties) {
     // New style properties file, encrypt any key with 'password' in it.
     stampPropertiesVersion(properties);
-    properties.put(InstanceInfo.GOOGLE_MANAGER_PROPERTY_VERSION,
-       Integer.toString(InstanceInfo.GOOGLE_MANAGER_PROPERTY_VERSION_NUMBER));
+    properties.put(InstanceInfo.GOOGLE_PROPERTIES_VERSION,
+       Integer.toString(InstanceInfo.GOOGLE_PROPERTIES_VERSION_NUMBER));
     Enumeration props = properties.propertyNames();
     while (props.hasMoreElements()) {
       String prop = (String) props.nextElement();

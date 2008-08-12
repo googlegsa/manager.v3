@@ -84,7 +84,7 @@ public class StartUp extends HttpServlet {
     } catch (IOException e) {
       LOGGER.warning("Error accessing Jar Manifest: " + e.getMessage());
     }
-    return "uknown";
+    return "unknown";
   }
 
   public static void doConnectorManagerStartup(ServletContext servletContext) {
