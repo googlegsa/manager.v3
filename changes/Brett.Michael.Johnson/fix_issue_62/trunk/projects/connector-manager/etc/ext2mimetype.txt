@@ -1,16 +1,15 @@
 # This is a mapping of filename extensions to mime types.
 # It was gathered from various sources, including:
 #  - Apache2 mime.types: /etc/apache2/mime.types
-#  - MimeUtil:           http://sourceforge.net/projects/mime-util/
+#  - Tomcat mime-types:  ${catalina_home}/conf/web.xml
 #  - Duke University:    http://www.duke.edu/websrv/file-extensions.html
-#  - Webmaster Toolkit:  http://www.webmaster-toolkit.com/mime-types.shtml
-.3dm	x-world/x-3dmf
-.3dmf	x-world/x-3dmf
+#  - MimeUtil:           http://sourceforge.net/projects/mime-util/
 .a	application/octet-stream
 .aab	application/x-authorware-bin
 .aam	application/x-authorware-map
 .aas	application/x-authorware-seg
 .abc	text/vnd.abc
+.abs	audio/x-mpeg
 .acgi	text/html
 .acx	application/internet-property-stream
 .afl	video/animaflex
@@ -48,6 +47,7 @@
 .avi	video/msvideo
 .avi	video/x-msvideo
 .avs	video/avs-video
+.avx	video/x-rad-screenplay
 .awk	text/plain
 .axa	audio/annodex
 .axs	application/olescript
@@ -70,6 +70,7 @@
 .bmp	image/bmp
 .bmp	image/x-ms-bmp
 .bmp	image/x-windows-bmp
+.body	text/html
 .boo	application/book
 .book	application/book
 .boz	application/x-bzip2
@@ -133,6 +134,7 @@
 .deepv	application/x-deepv
 .def	text/plain
 .der	application/x-x509-ca-cert
+.dib	image/bmp
 .dif	video/x-dv
 .dir	application/x-director
 .dist	application/octet-stream
@@ -148,6 +150,7 @@
 .dot	application/msword
 .dp	application/commonground
 .drw	application/drafting
+.dtd	application/xml-dtd
 .dump	application/octet-stream
 .dv	video/x-dv
 .dvi	application/x-dvi
@@ -276,7 +279,9 @@
 .iv	application/x-inventor
 .ivr	i-world/i-vrml
 .ivy	application/x-livescreen
+.jad	text/vnd.sun.j2me.app-descriptor
 .jam	audio/x-jam
+.jar	application/java-archive
 .jar	application/octet-stream
 .jar	application/x-compressed
 .jav	text/plain
@@ -290,6 +295,7 @@
 .jfif	image/pjpeg
 .jfif-tbnl	image/jpeg
 .jnilib	application/octet-stream
+.jnlp	application/x-java-jnlp-file
 .jpe	image/jpeg
 .jpe	image/pjpeg
 .jpeg	image/jpeg
@@ -300,8 +306,11 @@
 .jpm	video/jpm
 .jps	image/x-jps
 .js	application/x-javascript
+.js	text/javascript
 .js	text/plain
+.jsf	text/plain
 .jsp	text/html
+.jspf	text/plain
 .jut	image/jutvision
 .kar	audio/midi
 .kar	music/x-karaoke
@@ -348,10 +357,12 @@
 .m3u	audio/x-mpequrl
 .m4a	audio/mp4a-latm
 .ma	application/mathematica
+.mac	image/x-macpaint
 .man	application/x-troff-man
 .man	text/troff
 .map	application/x-navimap
 .mar	text/plain
+.mathml	application/mathml+xml
 .mbd	application/mbedlet
 .mc$	application/x-magic-cap-package-10
 .mcd	application/mcad
@@ -396,6 +407,7 @@
 .moov	video/quicktime
 .mov	video/quicktime
 .movie	video/x-sgi-movie
+.mp1	audio/x-mpeg
 .mp2	audio/mpeg
 .mp2	audio/x-mpeg
 .mp2	video/mpeg
@@ -410,10 +422,12 @@
 .mp4	video/mp4
 .mp4v	video/mp4
 .mpa	audio/mpeg
+.mpa	audio/x-mpeg
 .mpa	video/mpeg
 .mpc	application/x-project
 .mpe	video/mpeg
 .mpeg	video/mpeg
+.mpega	audio/x-mpeg
 .mpg	audio/mpeg
 .mpg	video/mpeg
 .mpg4	video/mp4
@@ -422,6 +436,7 @@
 .mpt	application/x-project
 .mpv	application/x-project
 .mpv2	video/mpeg
+.mpv2	video/mpeg2
 .mpx	application/x-project
 .mrc	application/marc
 .ms	application/x-troff-ms
@@ -446,15 +461,30 @@
 .o	application/octet-stream
 .obj	application/octet-stream
 .oda	application/oda
+.odb	application/vnd.oasis.opendocument.database
+.odc	application/vnd.oasis.opendocument.chart
+.odf	application/vnd.oasis.opendocument.formula
+.odg	application/vnd.oasis.opendocument.graphics
+.odi	application/vnd.oasis.opendocument.image
+.odm	application/vnd.oasis.opendocument.text-master
+.odp	application/vnd.oasis.opendocument.presentation
+.ods	application/vnd.oasis.opendocument.spreadsheet
+.odt	application/vnd.oasis.opendocument.text
 .oga	audio/ogg
+.ogg	application/ogg
 .ogg	audio/ogg
 .ogv	video/ogg
 .ogx	application/ogg
 .omc	application/x-omc
 .omcd	application/x-omcdatamaker
 .omcr	application/x-omcregerator
-.p	text/x-pascal
+.otg 	application/vnd.oasis.opendocument.graphics-template
+.oth	application/vnd.oasis.opendocument.text-web
+.otp	application/vnd.oasis.opendocument.presentation-template
+.ots	application/vnd.oasis.opendocument.spreadsheet-template 
+.ott	application/vnd.oasis.opendocument.text-template
 .p	text/pascal
+.p	text/x-pascal
 .p10	application/pkcs10
 .p10	application/x-pkcs10
 .p12	application/pkcs-12
@@ -495,6 +525,7 @@
 .pko	application/yndms-pkipko
 .pl	text/plain
 .pl	text/x-scriptperl
+.pls	audio/x-scpls
 .plx	application/x-pixclscript
 .pm	image/x-xpixmap
 .pm	text/x-scriptperl-module
@@ -533,6 +564,7 @@
 .ps.gz	application/postscript
 .ps.z	application/postscript
 .psd	application/octet-stream
+.psd	image/x-photoshop
 .pub	application/x-mspublisher
 .pvu	paleovu/x-pv
 .pwz	application/vnd.ms-powerpoint
@@ -563,6 +595,7 @@
 .ras	image/cmu-raster
 .ras	image/x-cmu-raster
 .rast	image/cmu-raster
+.rdf	application/rdf+xml
 .rdf	application/xml
 .rexx	text/x-scriptrexx
 .rf	image/vnd.rn-realflash
@@ -635,6 +668,7 @@
 .skt	application/vnd.koan
 .skt	application/x-koan
 .sl	application/x-seelogo
+.smf	audio/x-midi
 .smi	application/smil
 .smi	application/smil+xml
 .smil	application/smil
@@ -668,6 +702,7 @@
 .svf	image/vnd.dwg
 .svf	image/x-dwg
 .svg	image/svg+xml
+.svgz	image/svg+xml
 .svr	application/x-world
 .svr	x-world/x-svr
 .swf	application/x-shockwave-flash
@@ -710,6 +745,7 @@
 .ufd	application/vnd.ufdl
 .uil	text/x-uil
 .uls	text/iuls
+.ulw	audio/basic
 .uni	text/uri-list
 .unis	text/uri-list
 .unv	application/i-deas
@@ -749,6 +785,7 @@
 .vst	application/vnd.visio
 .vst	application/x-visio
 .vsw	application/x-visio
+.vxml	application/voicexml+xml
 .w60	application/wordperfect60
 .w61	application/wordperfect61
 .w6w	application/msword
@@ -758,6 +795,7 @@
 .wav	audio/x-wav
 .wax	audio/x-ms-wax
 .wb1	application/x-qpro
+.wbmp	image/vnd.wap.wbmp
 .wbmp	image/vnd.wapwbmp
 .wcm	application/vnd.ms-works
 .wdb	application/vnd.ms-works
@@ -769,10 +807,14 @@
 .wma	audio/x-ms-wma
 .wmf	application/x-msmetafile
 .wmf	windows/metafile
+.wml	text/vnd.wap.wml
 .wml	text/vnd.wapwml
+.wmlc	application/vnd.wap.wmlc
 .wmlc	application/vnd.wapwmlc
+.wmls	text/vnd.wap.wmlscript
 .wmls	text/vnd.wapwmlscript
 .wmlsc	application/vnd.wapwmlscriptc
+.wmlscriptc	application/vnd.wap.wmlscriptc
 .wmv	video/x-ms-wmv
 .wmx	video/x-ms-wvx
 .word	application/msword
@@ -804,6 +846,7 @@
 .xbm	image/xbm
 .xdr	video/x-amt-demorun
 .xgz	xgl/drawing
+.xht	application/xhtml+xml
 .xhtml	application/xhtml+xml
 .xhvml	application/xv+xml
 .xif	image/vnd.xiff
@@ -854,13 +897,16 @@
 .xsd	text/xml
 .xsl	application/xml
 .xsl	text/xml
+.xslt	application/xslt+xml
 .xspf	application/xspf+xm
 .xsr	video/x-amt-showrun
+.xul	application/vnd.mozilla.xul+xml
 .xul	text/xul
 .xvml	application/xv+xml
 .xwd	image/x-xwd
 .xwd	image/x-xwindowdump
 .xyz	chemical/x-pdb
+.z	application/x-compress
 .z	application/x-compressed
 .zip	application/x-compressed
 .zip	application/x-zip-compressed
