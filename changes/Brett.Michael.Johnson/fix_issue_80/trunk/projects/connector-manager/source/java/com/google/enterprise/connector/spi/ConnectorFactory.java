@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.spi;
 
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -22,7 +23,7 @@ import java.util.Map;
  * may create instances of the connector for the purposes validation.
  * {@link Connector} instances created by the factory are not added to
  * the Connector Manager's list if running connectors and do not have
- * an on-disk represenation.
+ * an on-disk representation.
  */
 public interface ConnectorFactory {
   /**
@@ -35,7 +36,7 @@ public interface ConnectorFactory {
    * @return a {@link Connector} instance, instantiated by the Connector
    *         Manager in exactly the same way as it would if this config
    *         were valid and persisted.
-   * @throws {@link RepositoryException} if the Connector construction
+   * @throws RepositoryException if the Connector construction
    *         fails for any reason.
    */
   Connector makeConnector(Map config) throws RepositoryException;

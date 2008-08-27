@@ -114,7 +114,7 @@ public class TraversalScheduler implements Scheduler {
       }
       String scheduleStr = scheduleStore.getConnectorSchedule(connectorName);
       if (null == scheduleStr) {
-        LOGGER.log(Level.WARNING, "Could not find schedule for connector: " +
+        LOGGER.log(Level.INFO, "Could not find schedule for connector: " +
           connectorName);
         continue;
       }

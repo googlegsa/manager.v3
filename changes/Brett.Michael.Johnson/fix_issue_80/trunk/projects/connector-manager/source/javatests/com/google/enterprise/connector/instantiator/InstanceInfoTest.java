@@ -304,4 +304,32 @@ public class InstanceInfoTest extends TestCase {
     Assert.assertEquals(47, c.getCustomIntProperty());
   }
 
+  /**
+   * Testing case where Connector wants to specify some default properties that
+   * can be overridden.
+   */
+  public final void testDefaultProperties() {
+    String resourceName =
+        "testdata/connectorTypeTests/default/connectorType.xml";
+    File connectorDir =
+        new File("testdata/connectorInstanceTests/default");
+    TypeInfo typeInfo = makeValidTypeInfo(resourceName);
+    InstanceInfo instanceInfo = null;
+    try {
+      instanceInfo =
+          InstanceInfo.fromDirectoryAndThrow("fred", connectorDir, typeInfo);
+    } catch (InstanceInfoException e) {
+      fail("Unexpected exception during instance info creation");
+    }
+    Assert.assertTrue("Connector should be of type SimpleTestConnector",
+        instanceInfo.getConnector() instanceof SimpleTestConnector);
+    SimpleTestConnector c = (SimpleTestConnector)instanceInfo.getConnector();
+    Assert.assertEquals("Checking default - color", "red", c.getColor());
+    Assert.assertEquals("Checking default empty override - repo file",
+        "", c.getRepositoryFileName());
+    Assert.assertEquals("Checking default override - user",
+        "not_default_user", c.getUsername());
+    Assert.assertEquals("Checking setting - work dir name",
+        "/tomcat/webapps/connector-manager/WEB-INF", c.getWorkDirName());
+  }
 }

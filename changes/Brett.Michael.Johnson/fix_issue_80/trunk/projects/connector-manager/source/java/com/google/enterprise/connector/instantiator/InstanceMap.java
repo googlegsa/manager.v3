@@ -238,9 +238,11 @@ public class InstanceMap extends TreeMap {
   }
 
   /**
-   * ConnectorFactory implmentation that uses InstanceInfo to create
-   * an instance of a connector of the specified type.  Instances
-   * created here are not placed in the official InstanceMap.
+   * {@link ConnectorFactory} implementation that uses 
+   * {@link InstanceInfo} to create an instance of a connector of the 
+   * specified type.  Instances created here are not placed in the official
+   * <code>InstanceMap</code>.  This factory is supplied to calls to
+   * {@link com.google.enterprise.connector.spi.ConnectorType#validateConfig(Map, Locale, ConnectorFactory)}.
    *
    * @see com.google.enterprise.connector.spi.ConnectorFactory
    */
@@ -251,13 +253,13 @@ public class InstanceMap extends TreeMap {
     Map origConfig;
 
     /**
-     * Constructor takes the items needed by InstanceInfo, but not
-     * provided via makeConnector().
+     * Constructor takes the items needed by <code>InstanceInfo</code>, 
+     * but not provided via <code>makeConnector</code>.
      *
      * @param connectorName the name of this connector instance.
      * @param connectorDir the directory containing the connector prototype.
      * @param typeInfo the connector type.
-     * @param config the configuration data provided to validateConfig().
+     * @param config the configuration provided to <code>validateConfig</code>.
      */
     public ConnectorInstanceFactory(String connectorName, File connectorDir,
         TypeInfo typeInfo, Map config) {
@@ -269,8 +271,8 @@ public class InstanceMap extends TreeMap {
 
     /**
      * Create an instance of this connector based upon the supplied
-     * configuration data.  If the supplied config Map is null, use the
-     * original configuration.
+     * configuration data.  If the supplied config <code>Map</code> is 
+     * <code>null</code>, use the original configuration.
      *
      * @see com.google.enterprise.connector.spi.ConnectorFactory#makeConnector(Map)
      */

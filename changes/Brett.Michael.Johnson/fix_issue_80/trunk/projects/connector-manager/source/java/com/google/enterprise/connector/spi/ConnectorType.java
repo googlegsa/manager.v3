@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.spi;
 
-
 import java.util.Locale;
 import java.util.Map;
 
@@ -61,10 +60,10 @@ public interface ConnectorType {
    *        instance, instantiated by the Connector Manager in exactly the
    *        same way as it would if this config were valid and persisted.
    * @return a {@link ConfigureResponse} object. If the returned object is null,
-   *         this means that the configuration is acceptable. If the return is
-   *         non-null, then the response contains a new form snippet (and
-   *         message, as appropriate). If the returned object is non-null, and
-   *         the response contains only a Map of configData (but no message
+   *         this means that the configuration is acceptable. If the returned
+   *         object is non-null, then the response contains a new form snippet 
+   *         (and message, as appropriate). If the returned object is non-null,
+   *         and the response contains only a Map of configData (but no message
    *         or form snippet), then the returned configuration is acceptable,
    *         but may be different than the supplied configData.
    */
