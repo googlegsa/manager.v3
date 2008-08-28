@@ -113,8 +113,6 @@ public class EncryptedPropertyPlaceholderConfigurer extends
   public static void encryptSensitiveProperties(Properties properties) {
     // New style properties file, encrypt any key with 'password' in it.
     stampPropertiesVersion(properties);
-    properties.put(InstanceInfo.GOOGLE_PROPERTIES_VERSION,
-       Integer.toString(InstanceInfo.GOOGLE_PROPERTIES_VERSION_NUMBER));
     Enumeration props = properties.propertyNames();
     while (props.hasMoreElements()) {
       String prop = (String) props.nextElement();
