@@ -51,6 +51,9 @@ public final class InstanceInfo {
   private static final String GOOGLE_CONNECTOR_WORK_DIR =
       "googleConnectorWorkDir";
   private static final String GOOGLE_WORK_DIR = "googleWorkDir";
+  public static final String GOOGLE_PROPERTIES_VERSION = 
+      "googlePropertiesVersion";
+  public static final int GOOGLE_PROPERTIES_VERSION_NUMBER = 1;
 
   private final Configuration configuration;
   private final Connector connector;
@@ -297,21 +300,11 @@ public final class InstanceInfo {
   }
 
   private static void encryptSensitiveProperties(Properties properties) {
-    String plainPassword = properties.getProperty("Password");
-    if (plainPassword != null) {
-      String encryptedPassword =
-          EncryptedPropertyPlaceholderConfigurer.encryptString(plainPassword);
-      properties.setProperty("Password", encryptedPassword);
-    }
+    EncryptedPropertyPlaceholderConfigurer.encryptSensitiveProperties(properties);
   }
 
   private static void decryptSensitiveProperties(Properties properties) {
-    String encryptedPassword = properties.getProperty("Password");
-    if (encryptedPassword != null) {
-      String plainPassword =
-          EncryptedPropertyPlaceholderConfigurer.decryptString(encryptedPassword);
-      properties.setProperty("Password", plainPassword);
-    }
+    EncryptedPropertyPlaceholderConfigurer.decryptSensitiveProperties(properties);
   }
 
   private static abstract class Configuration {
