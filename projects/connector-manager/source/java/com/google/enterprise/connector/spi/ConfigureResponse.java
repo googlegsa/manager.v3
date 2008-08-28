@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * The response for most configuration methods, such as @link{ConnectorType}.getConfigForm()
  * and @link{ConnectorType}.validateConfig().
- * 
+ *
  */
 public class ConfigureResponse {
 
@@ -29,7 +29,7 @@ public class ConfigureResponse {
 
   /**
    * Simple constructor.
-   * 
+   *
    * @param message
    *          A message to be included to the user along with the form. This
    *          message may be null or empty - no distinction is made between
@@ -50,7 +50,7 @@ public class ConfigureResponse {
 
   /**
    * Complete constructor.
-   * 
+   *
    * @param message
    *          A message to be included to the user along with the form. This
    *          message may be null or empty - no distinction is made between
@@ -62,9 +62,9 @@ public class ConfigureResponse {
    *          element, second is an HTML input field. The snippet may be null or
    *          empty. Again, there may be no script elements.
    * @param configData
-   *          A map of name, value pairs (String, String) of
+   *          A {@link java.util.Map} of name, value pairs (String, String) of
    *          configuration data.  If supplied, where appropriate, the Connector
-   *          Manager will use this data
+   *          Manager will use this data.
    */
   public ConfigureResponse(String message, String formSnippet, Map configData) {
     super();
@@ -75,7 +75,7 @@ public class ConfigureResponse {
 
   /**
    * Gets the message
-   * 
+   *
    * @return the message - may be null or empty
    */
   public String getMessage() {
@@ -84,7 +84,7 @@ public class ConfigureResponse {
 
   /**
    * Gets the form snippet.
-   * 
+   *
    * @return the form snippet - may be null or empty
    */
   public String getFormSnippet() {
@@ -93,7 +93,7 @@ public class ConfigureResponse {
 
   /**
    * Gets the config data.
-   * 
+   *
    * @return the config data - may be null or empty
    */
   public Map getConfigData() {

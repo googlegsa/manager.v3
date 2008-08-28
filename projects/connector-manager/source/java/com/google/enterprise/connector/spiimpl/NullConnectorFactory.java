@@ -17,12 +17,14 @@ package com.google.enterprise.connector.spiimpl;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorFactory;
 
+import java.util.Map;
+
 public class NullConnectorFactory implements ConnectorFactory {
 
   public NullConnectorFactory() {
   }
-  
-  public Connector makeConnector() {
+
+  public Connector makeConnector(Map config) {
     throw new UnsupportedOperationException();
   }
 
