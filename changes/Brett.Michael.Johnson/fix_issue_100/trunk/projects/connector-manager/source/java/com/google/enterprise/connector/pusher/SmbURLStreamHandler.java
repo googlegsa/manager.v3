@@ -23,18 +23,19 @@ import java.net.InetAddress;
 /**
  * SMB protocol URLStreamHandler used to verify SMB URLs
  * for the DocPusher.  Although the GSA supports SMB URLs,
- * the default Java implemention of <code>java.net.URL</code> does not.
- * This subclass of URLStreamHandler will parse SMB URLs
+ * the default Java implementation of {@link java.net.URL} does not.
+ * This subclass of {@link java.net.URL.URLStreamHandler} will parse SMB URLs
  * (which should look like normal URLs), additionally applying some
- * constraints documented here:
- * {@link http://code.google.com/apis/searchappliance/documentation/50/admin/URL_patterns.html#SMB_patterns}
+ * constraints documented 
+ * <a href="http://code.google.com/apis/searchappliance/documentation/50/admin/URL_patterns.html#SMB_patterns">
+ * here</a>.
  * <p>
  * This "StreamHandler" will not actually allow a caller to open a stream.
  * Attempting to do so will throw an "Unsupported operation" IOException.
  */
 public class SmbURLStreamHandler extends URLStreamHandler {
   private static final int SMB_DEFAULT_PORT = 139;
-  private static SmbURLStreamHandler instance = new SmbURLStreamHandler(); 
+  private static final SmbURLStreamHandler instance = new SmbURLStreamHandler(); 
 
   /**
    * Singleton Constructor.
@@ -66,9 +67,9 @@ public class SmbURLStreamHandler extends URLStreamHandler {
   }
 
   /**
-   * Parse the SMB URL.  At this point the only thing I care about is 
+   * Parse the SMB URL.  At this point the only thing we care about is 
    * if the SMB URL passes the constraints mentioned in the this page:
-   * 
+   * http://code.google.com/apis/searchappliance/documentation/50/admin/URL_patterns.html#SMB_patterns
    */
   protected void parseURL(URL url, String spec, int start, int limit) {
     if (!"smb".equalsIgnoreCase(url.getProtocol())) {

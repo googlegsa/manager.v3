@@ -229,8 +229,5 @@ public class InstanceMapTest extends TestCase {
     String instancePasswd = (String) instanceProps.get("Password");
     String plainPasswd = (String) config.get("Password");
     Assert.assertEquals(instancePasswd, plainPasswd);
-
-    ConnectorTestUtils.compareMaps(config, instanceProps,
-        "input config", "returned config");
   }
 }
