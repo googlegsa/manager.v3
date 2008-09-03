@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -36,12 +37,15 @@ public class SetManagerConfigTest extends TestCase {
   private static final String APPLICATION_CONTEXT = "applicationContext.xml";
   private static final String APPLICATION_PROPERTIES =
       "applicationContext.properties";
+  private static final String TEST_PROPERTIES = "testContext.properties";
 
   public final void testSetConnectorManagerConfig() throws JSONException,
       InstantiatorException, IOException {
-    // TODO(ziff): make a copy of this file first and work from it,
-    // so it doesn't appear that this file is modified every time the test runs
-    String propFileName = TEST_DIR + APPLICATION_PROPERTIES;
+    // Make a copy of the properties file first and work from it, so it
+    // doesn't appear that this file is modified every time the test runs.
+    String origFileName = TEST_DIR + APPLICATION_PROPERTIES;
+    String propFileName = TEST_DIR + TEST_PROPERTIES;
+    ConnectorTestUtils.copyFile(origFileName, propFileName);
     Context.refresh();
     Context context = Context.getInstance();
     context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
@@ -49,17 +53,11 @@ public class SetManagerConfigTest extends TestCase {
     context.setFeeding(false);
     Assert.assertTrue(true);
 
-    String host = null;
-    int port = -1;
+    Properties props = loadProperties(propFileName);
+    String host = (String) props.get(Context.GSA_FEED_HOST_PROPERTY_KEY);
+    int port = Integer.parseInt((String) props.
+                                get(Context.GSA_FEED_PORT_PROPERTY_KEY));
 
-    {
-      Properties props = loadProperties(propFileName);
-      host = (String) props.get(Context.GSA_FEED_HOST_PROPERTY_KEY);
-      port =
-          Integer.valueOf(
-              (String) props.get(Context.GSA_FEED_PORT_PROPERTY_KEY))
-              .intValue();
-    }
     System.out.println("Host = " + host);
     System.out.println("Port = " + port);
 
@@ -69,6 +67,7 @@ public class SetManagerConfigTest extends TestCase {
     context.setConnectorManagerConfig(host, port);
     verifyPropsValues(host, port, propFileName);
     Context.refresh();
+    ConnectorTestUtils.deleteFile(propFileName);
   }
 
   private void verifyPropsValues(String expectedHost, int expectedPort,
