@@ -516,7 +516,12 @@ public class DocPusher implements Pusher {
       searchurl = getOptionalString(document, SpiConstants.PROPNAME_SEARCHURL);
       // check that this looks like a URL
       try {
-        new URL(searchurl);
+        // The GSA supports SMB URLs, but Java does not.
+        if (searchurl != null && searchurl.startsWith("smb:")) {
+          new URL(null, searchurl, SmbURLStreamHandler.getInstance());
+        } else {
+          new URL(searchurl);
+        }
       } catch (MalformedURLException e) {
         LOGGER.warning("Supplied search url " + searchurl + " is malformed: "
             + e.getMessage());

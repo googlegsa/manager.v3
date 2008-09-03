@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package com.google.enterprise.connector.servlet;
 
 import java.io.IOException;
@@ -25,7 +24,6 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Admin servlet to test connectivity.
- *
  */
 public class TestConnectivity extends HttpServlet {
   private static final Logger LOGGER =
@@ -37,7 +35,6 @@ public class TestConnectivity extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -54,7 +51,6 @@ public class TestConnectivity extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -63,8 +59,8 @@ public class TestConnectivity extends HttpServlet {
 
   /**
    * Handler for doGet in order to do unit tests.
-   * @param out
    *
+   * @param out
    */
   public static void handleDoGet(PrintWriter out) {
     ServletUtil.writeRootTag(out, false);

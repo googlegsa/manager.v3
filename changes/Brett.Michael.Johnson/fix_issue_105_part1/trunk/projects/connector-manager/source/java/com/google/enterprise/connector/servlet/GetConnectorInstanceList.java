@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.common.JarUtils;
@@ -38,7 +37,6 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Admin servlet to get a list of connector types.
- *
  */
 public class GetConnectorInstanceList extends HttpServlet {
   private static final Logger LOGGER =
@@ -50,7 +48,6 @@ public class GetConnectorInstanceList extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -63,7 +60,6 @@ public class GetConnectorInstanceList extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -112,6 +108,7 @@ public class GetConnectorInstanceList extends HttpServlet {
         version = JarUtils.getJarVersion(connectorType.getClass());
       } catch (ConnectorTypeNotFoundException e) {
         // The JUnit tests might not have actual ConnectorTypes.
+        LOGGER.warning("Connector type not found: " + typeName);
       }
       if (version != null && version.length() > 0) {
         ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_VERSION,

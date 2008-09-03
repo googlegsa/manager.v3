@@ -91,6 +91,7 @@ public class ServletUtil {
   public static final String XMLTAG_SIZE = "Size";
   public static final String XMLTAG_LAST_MODIFIED = "LastModified";
   public static final String XMLTAG_VERSION = "Version";
+  public static final String XMLTAG_INFO = "Info";
 
   public static final String XMLTAG_CONNECTOR_INSTANCES = "ConnectorInstances";
   public static final String XMLTAG_CONNECTOR_INSTANCE = "ConnectorInstance";
@@ -366,7 +367,7 @@ public class ServletUtil {
    * @param out where PrintWriter to be written to
    */
   public static void writeManagerSplash(PrintWriter out) {
-    writeXMLElement(out, 1, ServletUtil.XMLTAG_MESSAGE, getManagerSplash());
+    writeXMLElement(out, 1, ServletUtil.XMLTAG_INFO, getManagerSplash());
   }
 
   /**

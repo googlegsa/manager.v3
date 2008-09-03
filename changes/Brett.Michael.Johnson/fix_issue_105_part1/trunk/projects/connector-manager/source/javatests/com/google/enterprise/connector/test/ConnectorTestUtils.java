@@ -17,19 +17,17 @@ package com.google.enterprise.connector.test;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.servlet.ServletUtil;
 
-import junit.framework.Assert;
-
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.io.OutputStream;
 
 public class ConnectorTestUtils {
 
@@ -128,7 +126,8 @@ public class ConnectorTestUtils {
    * output to function across versions, jvms, and platforms.
    */
   public static void removeManagerVersion(StringBuffer buffer) {
-    int start = buffer.indexOf("  <message>" + ServletUtil.MANAGER_NAME);
+    int start = buffer.indexOf("  <" + ServletUtil.XMLTAG_INFO + ">"
+                               + ServletUtil.MANAGER_NAME);
     if (start >= 0) {
       buffer.delete(start, buffer.indexOf("\n", start) + 1);
     }
@@ -164,20 +163,6 @@ public class ConnectorTestUtils {
     return path;
   }
 
-  public static void compareMaps(Map map1, Map map2, String map1name, String map2name) {
-    Set set1 = map1.keySet();
-    Set set2 = map2.keySet();
-    Assert.assertTrue("there is a key in " + map2name + " that's not in "
-        + map1name, set1.containsAll(set2));
-    Assert.assertTrue("there is a key in " + map1name + " that's not in "
-        + map2name, set2.containsAll(set1));
-
-    for (Iterator i = set1.iterator(); i.hasNext();) {
-      Object next = i.next();
-      Assert.assertEquals(map1.get(next), map2.get(next));
-    }
-  }
-
   public static boolean deleteAllFiles(File dir) {
     if(!dir.exists()) {
         return true;
@@ -193,5 +178,21 @@ public class ConnectorTestUtils {
         res = dir.delete();
     }
     return res;
+  }
+  
+  public static void copyFile(String source, String dest) throws IOException {
+    InputStream in = new FileInputStream(new File(source));
+    OutputStream out = new FileOutputStream(new File(dest));
+    byte[] buf = new byte[1024];
+    int len;
+    while ((len = in.read(buf)) > 0) {
+      out.write(buf, 0, len);
+    }
+    in.close();
+    out.close();
+  }
+
+  public static void deleteFile(String file) throws IOException {
+    new File(file).delete();
   }
 }

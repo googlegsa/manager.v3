@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.instantiator;
 
-
-
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Iterator;
@@ -28,7 +26,9 @@ import java.util.logging.Logger;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
-import com.google.enterprise.connector.spiimpl.NullConnectorFactory;
+import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.spi.ConnectorFactory;
+import com.google.enterprise.connector.spi.RepositoryException;
 
 /**
  * This class keeps track of the installed connector instances, maintains a
@@ -140,29 +140,56 @@ public class InstanceMap extends TreeMap {
   private ConfigureResponse resetConfig(String name, File connectorDir,
       TypeInfo typeInfo, Map config, Locale locale)
       throws InstantiatorException {
-    InstanceInfo instanceInfo = InstanceInfo.fromNewConfig(name, connectorDir,
-        typeInfo, config);
+    // First, validate the configuration.
+    ConfigureResponse response =
+        typeInfo.getConnectorType().validateConfig(config, locale,
+            new ConnectorInstanceFactory(name, connectorDir, typeInfo, config));
+
+    if (response != null) {
+      // If validateConfig() returns a non-null response with an error message.
+      // or populated config form, then consider it an invalid config that
+      // needs to be corrected.  Return the response so that the config form
+      // may be redisplayed.
+      if ((response.getMessage() != null) ||
+          (response.getFormSnippet() != null)) {
+        LOGGER.warning("A rejected configuration for connector \"" + name
+            + "\" was returned.");
+        return response;
+      }
+
+      // If validateConfig() returns a response with no message or formSnippet,
+      // but does include a configuration Map; then consider it a valid,
+      // but possibly altered configuration and use it.
+      if (response.getConfigData() != null) {
+         LOGGER.config("A modified configuration for connector \"" + name
+             + "\" was returned.");
+        config = response.getConfigData();
+      }
+    }
+
+    // We have an apparently valid configuration.  Create a connector instance
+    // with that configuration.
+    InstanceInfo instanceInfo = 
+        InstanceInfo.fromNewConfig(name, connectorDir, typeInfo, config);
     if (instanceInfo == null) {
-      // we don't expect this, because an InstantiatorException should have been
-      // thrown, but just in case
-      throw new InstantiatorException();
+      // We don't expect this, because an InstantiatorException should have
+      // been thrown, but just in case.
+      throw new InstantiatorException("Failed to create connector " + name);
     }
-    // now, validate the configuration.
-    ConfigureResponse response = typeInfo.getConnectorType().validateConfig(
-        config, locale, new NullConnectorFactory());
-    if (response == null) {
-      this.put(name, instanceInfo);
-    } else {
-      LOGGER.warning("An invalid config for connector \"" + name
-          + "\" was rejected.");
-    }
-    return response;
+
+    // Save the new configuration.
+    instanceInfo.writePropertiesToFile(instanceInfo.getProperties(),
+       instanceInfo.getPropertiesFile());
+    this.put(name, instanceInfo);
+
+    return null;
   }
 
   private File makeConnectorDirectory(String name, TypeInfo typeInfo)
       throws InstantiatorException {
     File connectorTypeDir = typeInfo.getConnectorTypeDir();
     File connectorDir = new File(connectorTypeDir, name);
+
     if (connectorDir.exists()) {
       if (connectorDir.isDirectory()) {
         // we don't know why this directory already exists, but we're ok with it
@@ -206,6 +233,57 @@ public class InstanceMap extends TreeMap {
         LOGGER.warning("Can't delete connector directory "
             + connectorDir.getPath()
             + "; this connector may be difficult to delete.");
+      }
+    }
+  }
+
+  /**
+   * {@link ConnectorFactory} implementation that uses 
+   * {@link InstanceInfo} to create an instance of a connector of the 
+   * specified type.  Instances created here are not placed in the official
+   * <code>InstanceMap</code>.  This factory is supplied to calls to
+   * {@link com.google.enterprise.connector.spi.ConnectorType#validateConfig(Map, Locale, ConnectorFactory)}.
+   *
+   * @see com.google.enterprise.connector.spi.ConnectorFactory
+   */
+  private class ConnectorInstanceFactory implements ConnectorFactory {
+    String connectorName;
+    File connectorDir;
+    TypeInfo typeInfo;
+    Map origConfig;
+
+    /**
+     * Constructor takes the items needed by <code>InstanceInfo</code>, 
+     * but not provided via <code>makeConnector</code>.
+     *
+     * @param connectorName the name of this connector instance.
+     * @param connectorDir the directory containing the connector prototype.
+     * @param typeInfo the connector type.
+     * @param config the configuration provided to <code>validateConfig</code>.
+     */
+    public ConnectorInstanceFactory(String connectorName, File connectorDir,
+        TypeInfo typeInfo, Map config) {
+      this.connectorName = connectorName;
+      this.connectorDir = connectorDir;
+      this.typeInfo = typeInfo;
+      this.origConfig = config;
+    }
+
+    /**
+     * Create an instance of this connector based upon the supplied
+     * configuration data.  If the supplied config <code>Map</code> is 
+     * <code>null</code>, use the original configuration.
+     *
+     * @see com.google.enterprise.connector.spi.ConnectorFactory#makeConnector(Map)
+     */
+    public Connector makeConnector(Map config) throws RepositoryException {
+      try {
+        InstanceInfo info = InstanceInfo.fromNewConfig(connectorName,
+            connectorDir, typeInfo, ((config == null) ? origConfig : config));
+        return (info == null) ? null : info.getConnector();
+      } catch (InstantiatorException e) {
+        throw new RepositoryException(
+            "ConnectorFactory failed to make connector.", e);
       }
     }
   }

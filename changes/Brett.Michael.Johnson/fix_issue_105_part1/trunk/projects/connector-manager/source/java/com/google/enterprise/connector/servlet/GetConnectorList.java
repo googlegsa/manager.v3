@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.common.JarUtils;
@@ -24,7 +23,6 @@ import com.google.enterprise.connector.spi.ConnectorType;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,7 +35,6 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Admin servlet to get a list of connector types.
- *
  */
 public class GetConnectorList extends HttpServlet {
   private static final Logger LOGGER =
@@ -49,7 +46,6 @@ public class GetConnectorList extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -62,7 +58,6 @@ public class GetConnectorList extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -103,6 +98,7 @@ public class GetConnectorList extends HttpServlet {
         version = JarUtils.getJarVersion(connectorType.getClass());
       } catch (ConnectorTypeNotFoundException e) {
         // The JUnit tests might not have actual ConnectorTypes.
+        LOGGER.warning("Connector type not found: " + typeName);
       }
       if (version != null && version.length() > 0) {
         // Write out the Connector version as an attribute on the tag.

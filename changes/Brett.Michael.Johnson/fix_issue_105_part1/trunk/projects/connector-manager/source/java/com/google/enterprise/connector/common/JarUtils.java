@@ -48,15 +48,16 @@ public class JarUtils {
         JarURLConnection connection = (JarURLConnection) url.openConnection();
         Manifest manifest = connection.getManifest();
         Attributes attrs = manifest.getMainAttributes();
-        return attrs.getValue("Implementation-Version");
+        String version = attrs.getValue("Implementation-Version");
+        return (version == null) ? "" : version;
       } catch (ClassCastException cce) {
         // It looks like we are running JUnit tests, pulling classes out
         // of classes directory instead of a Jar file.
+        LOGGER.warning("Unable to access Jar Manifest for " + url);
       }
     } catch (IOException e) {
       LOGGER.log(Level.WARNING, "Error accessing Jar Manifest for " + url, e);
     }
     return "";  // Can't get version string.
   }
-
 }

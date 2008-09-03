@@ -32,7 +32,6 @@ import java.util.logging.Logger;
 
 /**
  * Tests GetConnectorList servlet class.
- *
  */
 public class GetConnectorListTest extends TestCase {
   private static final Logger LOGGER = Logger
@@ -43,10 +42,9 @@ public class GetConnectorListTest extends TestCase {
    * {@link com.google.enterprise.connector.servlet.GetConnectorList
    * #handleDoPost(com.google.enterprise.connector.manager.Manager,
    * java.io.PrintWriter)}
+   * where connectorTypes = null.
    *
    * @throws IOException
-   *
-   * connectorTypes = null
    */
   public void testHandleDoGet1() throws IOException {
     Manager manager = new MockManager() {
@@ -65,10 +63,9 @@ public class GetConnectorListTest extends TestCase {
    * {@link com.google.enterprise.connector.servlet.GetConnectorList
    * #handleDoPost(com.google.enterprise.connector.manager.Manager,
    * java.io.PrintWriter)}
+   * where connectorTypes = {"Documentum", "Filenet", "Sharepoint"}.
    *
    * @throws IOException
-   *
-   * connectorTypes = {"Documentum", "Filenet", "Sharepoint"}
    */
   public void testHandleDoGet2() throws IOException {
     String expectedResult =
@@ -82,7 +79,6 @@ public class GetConnectorListTest extends TestCase {
         + "</CmResponse>\n";
     doTest(MockManager.getInstance(), expectedResult);
   }
-
 
   private void doTest(Manager manager, String expectedResult)
       throws IOException {
