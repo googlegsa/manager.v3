@@ -59,7 +59,7 @@ import javax.jcr.query.QueryManager;
 public class DocPusherTest extends TestCase {
 
   /**
-   * Test Take for a URL/metadata feed when google.searchurl exists.
+   * Test Take for a URL/metadata feed when google:searchurl exists.
    * 
    * @throws RepositoryException
    */
@@ -80,7 +80,7 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
-   * Test Take for a URL/metadata feed when google.searchurl exists, and some of
+   * Test Take for a URL/metadata feed when google:searchurl exists, and some of
    * the metadata is empty. In this case, the MockRepositoryEventLog5null.txt
    * file is almost the same as MockRepositoryEventLog5.txt but has a metadata
    * item with empty content in it
@@ -102,6 +102,30 @@ public class DocPusherTest extends TestCase {
     expectedXml[0] = buildExpectedXML(feedType, record);
     takeFeed(expectedXml, "MockRepositoryEventLog5null.txt");
   }
+
+  /**
+   * Test Take for a URL/metadata feed when google:searchurl exists and
+   * is a SMB URL. 
+   * Regression Test for Connector Manager Issue 100
+   * 
+   * @throws RepositoryException
+   */
+  public void testTakeSmbUrlMeta() throws PushException, RepositoryException {
+    String[] expectedXml = new String[1];
+    String feedType = "metadata-and-url";
+    String record = "<record url=\"smb://localhost/share/test\""
+        + " mimetype=\"text/html\""
+        + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
+        + "<metadata>\n"
+        + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
+        + "<meta name=\"google:searchurl\" content=\"smb://localhost/share/test\"/>\n"
+        + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
+        + "</metadata>\n" + "</record>\n";
+
+    expectedXml[0] = buildExpectedXML(feedType, record);
+    takeFeed(expectedXml, "MockRepositoryEventLog5smb.txt");
+  }
+
 
   /**
    * Test Take for a content feed.
