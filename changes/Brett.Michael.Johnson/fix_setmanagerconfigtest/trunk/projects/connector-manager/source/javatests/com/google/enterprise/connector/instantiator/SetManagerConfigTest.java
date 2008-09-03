@@ -87,5 +87,4 @@ public class SetManagerConfigTest extends TestCase {
     props.load(inStream);
     return props;
   }
-
 }
