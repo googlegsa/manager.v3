@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.manager.Context;
 
 import org.springframework.context.ApplicationContext;
@@ -31,7 +32,7 @@ import java.util.logging.Logger;
 /**
  * This class keeps track of the installed connector types and maintains a
  * corresponding directory structure.
- * 
+ *
  */
 public class TypeMap extends TreeMap {
 
@@ -48,7 +49,7 @@ public class TypeMap extends TreeMap {
   /**
    * For testing only. Either parameter may be null, in which case the default
    * is used.
-   * 
+   *
    * @param connectorTypePattern used instead of normal default
    * @param baseDirPath
    */
@@ -92,7 +93,9 @@ public class TypeMap extends TreeMap {
         continue;
       }
       this.put(typeInfo.getConnectorTypeName(), typeInfo);
-      LOGGER.info("Found connector type: " + typeInfo.getConnectorTypeName());
+      LOGGER.info("Found connector type: " + typeInfo.getConnectorTypeName()
+          + "  version: "
+          + JarUtils.getJarVersion(typeInfo.getConnectorType().getClass()));
     }
   }
 

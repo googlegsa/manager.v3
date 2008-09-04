@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
+import com.google.enterprise.connector.spi.ConnectorType;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,7 +35,6 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Admin servlet to get a list of connector types.
- * 
  */
 public class GetConnectorList extends HttpServlet {
   private static final Logger LOGGER =
@@ -41,11 +42,10 @@ public class GetConnectorList extends HttpServlet {
 
   /**
    * Returns a list of connector types.
-   * 
+   *
    * @param req
    * @param res
    * @throws IOException
-   * 
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -54,11 +54,10 @@ public class GetConnectorList extends HttpServlet {
 
   /**
    * Returns a list of connector types.
-   * 
+   *
    * @param req
    * @param res
    * @throws IOException
-   * 
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -66,32 +65,56 @@ public class GetConnectorList extends HttpServlet {
     PrintWriter out = res.getWriter();
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
-    List connectorTypes = manager.getConnectorTypes();
-    handleDoPost(connectorTypes, out);
+    handleDoPost(manager, out);
     out.close();
   }
 
   /**
    * Handler for doGet in order to do unit tests.
-   * 
-   * @param connectorTypes List a list of connector types
+   *
+   * @param manager a Manager
    * @param out PrintWriter where the response is written
    */
-  public static void handleDoPost(List connectorTypes, PrintWriter out) {
+  public static void handleDoPost(Manager manager, PrintWriter out) {
+    ServletUtil.writeRootTag(out, false);
+    ServletUtil.writeManagerSplash(out);
+
+    Set connectorTypes = manager.getConnectorTypeNames();
     if (connectorTypes == null || connectorTypes.size() == 0) {
-      ServletUtil.writeResponse(
+      ServletUtil.writeStatusId(
           out, ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_TYPE);
+      ServletUtil.writeRootTag(out, true);
       LOGGER.log(Level.WARNING, ServletUtil.LOG_RESPONSE_NULL_CONNECTOR_TYPE);
       return;
     }
 
-    ServletUtil.writeRootTag(out, false);
     ServletUtil.writeStatusId(out, ConnectorMessageCode.SUCCESS);
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_TYPES, false);
-
     for (Iterator iter = connectorTypes.iterator(); iter.hasNext();) {
-      ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_CONNECTOR_TYPE,
-          (String) iter.next());
+      String typeName = (String) iter.next();
+      String version = null;
+      try {
+        ConnectorType connectorType = manager.getConnectorType(typeName);
+        version = JarUtils.getJarVersion(connectorType.getClass());
+      } catch (ConnectorTypeNotFoundException e) {
+        // The JUnit tests might not have actual ConnectorTypes.
+        LOGGER.warning("Connector type not found: " + typeName);
+      }
+      if (version != null && version.length() > 0) {
+        // Write out the Connector version as an attribute on the tag.
+        StringBuffer buffer = new StringBuffer();
+        ServletUtil.writeXMLTagWithAttrs(buffer, 2,
+            ServletUtil.XMLTAG_CONNECTOR_TYPE,
+            ServletUtil.ATTRIBUTE_VERSION + version + ServletUtil.QUOTE,
+            false);
+        buffer.append(typeName);
+        ServletUtil.writeXMLTag(buffer, 0,
+            ServletUtil.XMLTAG_CONNECTOR_TYPE, true);
+        out.println(buffer.toString());
+      } else {
+        ServletUtil.writeXMLElement(out, 2,
+            ServletUtil.XMLTAG_CONNECTOR_TYPE, typeName);
+      }
     }
 
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_TYPES, true);
