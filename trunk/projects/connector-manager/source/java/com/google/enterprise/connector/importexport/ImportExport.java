@@ -136,7 +136,7 @@ public class ImportExport {
         // set schedule, if given
         if (schedule != null ) {
           try {
-            manager.setSchedule(name, schedule.getLoad(), 
+            manager.setSchedule(name, schedule.getLoad(),
                 schedule.getRetryDelayMillis(),
                 schedule.getTimeIntervalsAsString());
           } catch (ConnectorNotFoundException e) {
@@ -244,10 +244,8 @@ public class ImportExport {
             + (String) me.getKey() + ServletUtil.QUOTE
             + ServletUtil.ATTRIBUTE_VALUE + (String) me.getValue()
             + ServletUtil.QUOTE;
-        // explicitly append "/" to close tag
-        attributeString += "/";
-        ServletUtil.writeXMLElementWithAttrs(
-            pw, 3, ServletUtil.XMLTAG_PARAMETERS, attributeString);
+        ServletUtil.writeXMLTagWithAttrs(
+            pw, 3, ServletUtil.XMLTAG_PARAMETERS, attributeString, true);
       }
       ServletUtil.writeXMLTag(
           pw, 2, ServletUtil.XMLTAG_CONNECTOR_CONFIG, true);

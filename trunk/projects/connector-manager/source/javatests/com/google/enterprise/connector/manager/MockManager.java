@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
+import com.google.enterprise.connector.spi.ConnectorType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Logger;
 
 /**
@@ -42,7 +44,8 @@ public class MockManager implements Manager {
   private static final Logger LOGGER =
       Logger.getLogger(MockManager.class.getName());
 
-  private MockManager() {
+  // Protected constructor used by JUnit test subclasses.
+  protected MockManager() {
   }
 
   public static MockManager getInstance() {
@@ -78,8 +81,19 @@ public class MockManager implements Manager {
    *
    * @see com.google.enterprise.connector.manager.Manager#getConnectorTypes()
    */
-  public List getConnectorTypes() {
-    return Arrays.asList(new String[] {"Documentum", "Sharepoint", "Filenet"});
+  public Set getConnectorTypeNames() {
+    return new TreeSet(Arrays.asList(
+        new String[] {"Documentum", "Filenet", "Sharepoint"}));
+  }
+
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.manager.Manager#getConnectorType()
+   */
+  public ConnectorType getConnectorType(String typeName)
+      throws ConnectorTypeNotFoundException {
+    throw new ConnectorTypeNotFoundException("Unsupported Operation");
   }
 
   /*
