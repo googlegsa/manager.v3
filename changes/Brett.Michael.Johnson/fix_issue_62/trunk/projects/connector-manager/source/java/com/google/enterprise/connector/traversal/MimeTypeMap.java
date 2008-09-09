@@ -116,6 +116,9 @@ public class MimeTypeMap {
    * level +/- 1, accordingly.
    */
   private void initMimeTypes(Set mimeTypes, int supportLevel) {
+    if (mimeTypes == null || mimeTypes.size() == 0)
+      return;
+    
     // Adjust the support level so that "/vdn." and "/x-" subtype
     // sorting does not accidentally cross above or below 0.
     if (supportLevel == 0) {
@@ -153,7 +156,10 @@ public class MimeTypeMap {
    *         preferred.
    */
   public int mimeTypeSupportLevel(String mimeType) {
-    Integer result = (Integer) typeMap.get(mimeType.toLowerCase());
+    Integer result = null;
+    if (mimeType != null) {
+      result = (Integer) typeMap.get(mimeType.toLowerCase());
+    }
     int sl = (result == null)? unknownMimeTypeSupportLevel : result.intValue();
     if (LOGGER.isLoggable(Level.FINEST)) {
       LOGGER.finest("Mime type support level for " + mimeType + " is " + sl);

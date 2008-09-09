@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.common.StringUtils;
+import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -29,7 +30,7 @@ import java.io.StringWriter;
 public class TestConnectivityTest extends TestCase {
 
   /**
-   * Test method for 
+   * Test method for
    * {@link com.google.enterprise.connector.servlet.TestConnectivity#handleDoGet(java.io.PrintWriter)}.
    */
   public void testHandleDoGet() {
@@ -39,7 +40,8 @@ public class TestConnectivityTest extends TestCase {
     TestConnectivity.handleDoGet(out);
     out.flush();
     StringBuffer result = writer.getBuffer();
-    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult), 
+    ConnectorTestUtils.removeManagerVersion(result);
+    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult),
         StringUtils.normalizeNewlines(result.toString()));
     out.close();
   }

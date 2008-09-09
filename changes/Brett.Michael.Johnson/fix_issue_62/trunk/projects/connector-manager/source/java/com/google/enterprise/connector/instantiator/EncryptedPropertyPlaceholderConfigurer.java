@@ -14,6 +14,7 @@
 package com.google.enterprise.connector.instantiator;
 
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
+import java.util.Enumeration;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,7 +27,6 @@ import javax.crypto.NoSuchPaddingException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.io.*;
-
 
 
 /**
@@ -75,17 +75,71 @@ public class EncryptedPropertyPlaceholderConfigurer extends
 
   /*
    * Overridden from the base class implementation. This looks for a
-   * property called "Password" and decrypts it.
+   * properties with "password" in their name (case insensitive match) 
+   * and decrypts them.
    */
   public void convertProperties(Properties properties) {   
-    String encPasswd = properties.getProperty("Password");
-    if (encPasswd != null) {
-      String plainPasswd = decryptString(encPasswd);
-      properties.setProperty("Password", plainPasswd);
-    }
+    decryptSensitiveProperties(properties);
     super.convertProperties(properties);
   }
   
+  /*
+   * Stamp the Properties set with the current Properties Version.
+   */
+  public static void stampPropertiesVersion(Properties properties) {
+    properties.put(InstanceInfo.GOOGLE_PROPERTIES_VERSION,
+        Integer.toString(InstanceInfo.GOOGLE_PROPERTIES_VERSION_NUMBER));
+  }
+
+  /*
+   * Retrieve the Properties Version stamp from this Properties set.
+   */
+  public static int getPropertiesVersion(Properties properties) {
+    String versionStr = properties.getProperty(
+        InstanceInfo.GOOGLE_PROPERTIES_VERSION, "0");
+    int version = 0;
+    try {
+      version = Integer.parseInt(versionStr);
+      if (version > InstanceInfo.GOOGLE_PROPERTIES_VERSION_NUMBER) {
+        LOGGER.warning("Properties appear to have been written by a newer "
+            + "version of Connector Manager (" + version + ")");
+      }
+    } catch (NumberFormatException e) {
+      LOGGER.warning("Invalid Properties Version: " + versionStr);
+    }
+    return version;
+  }
+
+  public static void encryptSensitiveProperties(Properties properties) {
+    // New style properties file, encrypt any key with 'password' in it.
+    stampPropertiesVersion(properties);
+    Enumeration props = properties.propertyNames();
+    while (props.hasMoreElements()) {
+      String prop = (String) props.nextElement();
+      if (prop.toLowerCase().indexOf("password") != -1) {
+        properties.setProperty(prop,
+            encryptString(properties.getProperty(prop)));
+      }
+    }
+  }
+
+  public static void decryptSensitiveProperties(Properties properties) {
+    int version = getPropertiesVersion(properties);
+    Enumeration props = properties.propertyNames();
+    while (props.hasMoreElements()) {
+      String prop = (String) props.nextElement();
+      // Older properties files (before we started versioning them) only
+      // encrypted a property called "Password".  Newer property files
+      // encrypt any property with case-insensitive 'password' in the key.
+      boolean doCrypt = (version < 1) ? prop.equals("Password") :
+          (prop.toLowerCase().indexOf("password") != -1);
+      if (doCrypt) {
+        properties.setProperty(prop,
+            decryptString(properties.getProperty(prop)));
+      }
+    }
+  }
+
   public static void setKeyStorePath(String k) {
     keyStorePath = k;
     LOGGER.log(Level.INFO, "Using keystore " + k);
@@ -127,7 +181,8 @@ public class EncryptedPropertyPlaceholderConfigurer extends
     File f = new File(keyStorePath);
     if (f.exists()) {
       fis = new FileInputStream(f);
-      LOGGER.log(Level.INFO, "Using existing keystore at " + f.getAbsolutePath());
+      LOGGER.log(Level.INFO, "Using existing keystore at "
+          + f.getAbsolutePath());
     }
     String keyStorePasswd = getKeyStorePasswd();
     char [] keyPassChars = keyStorePasswd.toCharArray();

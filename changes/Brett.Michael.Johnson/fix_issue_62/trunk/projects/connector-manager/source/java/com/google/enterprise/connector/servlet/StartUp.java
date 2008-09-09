@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletResponse;
  * The main purpose of this servlet is to have its "init" method called when the
  * container starts up. This is by done by means of the web.xml file. But I also
  * gave it a get and post that do the same thing.
- * 
+ *
  */
 public class StartUp extends HttpServlet {
   private static final Logger LOGGER =
@@ -47,7 +47,7 @@ public class StartUp extends HttpServlet {
     LOGGER.info("destroy");
     Context.getInstance().shutdown(true);
   }
-  
+
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     doPost(req, res);
@@ -67,11 +67,12 @@ public class StartUp extends HttpServlet {
   }
 
   public static void doConnectorManagerStartup(ServletContext servletContext) {
+    LOGGER.info(ServletUtil.getManagerSplash());
 
     // read in and set initialization parameters
     String kp = servletContext.getInitParameter("keystore_passwd_file");
     EncryptedPropertyPlaceholderConfigurer.setKeyStorePasswdPath(kp);
-    
+
     String ks = servletContext.getInitParameter("keystore_file");
     String realks = servletContext.getRealPath("/WEB-INF/" + ks);
     if (null == realks) {
