@@ -115,7 +115,7 @@ public class QueryTraverserTest extends TestCase {
    * having giant files checked into the source code repository.
    *
    * @param fname the name of the large file to create (if it
-   * doen't already exist).
+   * doesn't already exist).
    * @throws IOException if creating the large file fails.
    */
   private void makeLargeFile(String fname) throws IOException {
