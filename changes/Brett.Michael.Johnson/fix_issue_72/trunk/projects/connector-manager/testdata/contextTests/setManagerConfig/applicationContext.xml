@@ -4,7 +4,7 @@
 
 	<bean id="ApplicationContextProperties" 
 		class="java.lang.String">
-		<constructor-arg value="testdata/contextTests/setManagerConfig/applicationContext.properties"/>
+		<constructor-arg value="testdata/contextTests/setManagerConfig/testContext.properties"/>
 	</bean>
 
 	<bean id="PropertyPlaceholderConfigurer"

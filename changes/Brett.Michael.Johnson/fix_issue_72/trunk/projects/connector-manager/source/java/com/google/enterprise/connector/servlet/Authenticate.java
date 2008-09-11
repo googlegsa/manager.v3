@@ -48,8 +48,8 @@ public class Authenticate extends ConnectorManagerServlet {
   /**
    * Handler for doPost in order to do unit tests.
    * Writes credentials for connectors.
-   * 
-   * @param xmlBody String the XML request body string 
+   *
+   * @param xmlBody String the XML request body string
    * @param manager Manager
    * @param out PrintWriter where the response is written
    */
@@ -84,17 +84,18 @@ public class Authenticate extends ConnectorManagerServlet {
       String connectorName = ((ConnectorStatus) iter.next()).getName();
       boolean authn = manager.authenticate(connectorName, username, password);
       if (authn) {
-        ServletUtil.writeXMLElementWithAttrs(
+        ServletUtil.writeXMLTagWithAttrs(
             out, 2, ServletUtil.XMLTAG_SUCCESS,
-            ServletUtil.XMLTAG_CONNECTOR_NAME + "=\"" + connectorName + "\"");
+            ServletUtil.XMLTAG_CONNECTOR_NAME + "=\"" + connectorName + "\"",
+            false);
         ServletUtil.writeXMLElement(
             out, 3, ServletUtil.XMLTAG_IDENTITY, username);
         ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_SUCCESS, true);
       } else {
-        ServletUtil.writeXMLElementWithAttrs(
+        ServletUtil.writeXMLTagWithAttrs(
             out, 2, ServletUtil.XMLTAG_FAILURE,
-            ServletUtil.XMLTAG_CONNECTOR_NAME + "=\"" + connectorName + "\"");
-        ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_FAILURE, true);
+            ServletUtil.XMLTAG_CONNECTOR_NAME + "=\"" + connectorName + "\"",
+            true);
       }
     }
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_AUTHN_RESPONSE, true);

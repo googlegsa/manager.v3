@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.common.JarUtils;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -24,11 +26,15 @@ import org.xml.sax.SAXException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.JarURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -56,6 +62,9 @@ public class ServletUtil {
   private ServletUtil() {
   }
 
+  public static final String MANAGER_NAME =
+      "Google Enterprise Connector Manager";
+
   public static final String MIMETYPE_XML = "text/xml";
   public static final String MIMETYPE_HTML = "text/html";
   public static final String MIMETYPE_TEXT_PLAIN = "text/plain";
@@ -81,6 +90,8 @@ public class ServletUtil {
   public static final String XMLTAG_NAME = "Name";
   public static final String XMLTAG_SIZE = "Size";
   public static final String XMLTAG_LAST_MODIFIED = "LastModified";
+  public static final String XMLTAG_VERSION = "Version";
+  public static final String XMLTAG_INFO = "Info";
 
   public static final String XMLTAG_CONNECTOR_INSTANCES = "ConnectorInstances";
   public static final String XMLTAG_CONNECTOR_INSTANCE = "ConnectorInstance";
@@ -161,6 +172,7 @@ public class ServletUtil {
 
   public static final String ATTRIBUTE_NAME = "name=\"";
   public static final String ATTRIBUTE_VALUE = " value=\"";
+  public static final String ATTRIBUTE_VERSION = "version=\"";
   public static final char QUOTE = '"';
 
   private static final String[] XMLIndent = {
@@ -350,6 +362,29 @@ public class ServletUtil {
   }
 
   /**
+   * Write Connector Manager, OS, JVM version information.
+   *
+   * @param out where PrintWriter to be written to
+   */
+  public static void writeManagerSplash(PrintWriter out) {
+    writeXMLElement(out, 1, ServletUtil.XMLTAG_INFO, getManagerSplash());
+  }
+
+  /**
+   * Get Connector Manager, OS, JVM version information.
+   */
+  public static String getManagerSplash() {
+    return ServletUtil.MANAGER_NAME + " "
+      + JarUtils.getJarVersion(ServletUtil.class) + "; "
+      + System.getProperty("java.vendor") + " "
+      + System.getProperty("java.vm.name") + " "
+      + System.getProperty("java.version") + "; "
+      + System.getProperty("os.name") + " "
+      + System.getProperty("os.version") + " ("
+      + System.getProperty("os.arch") + ")";
+  }
+
+  /**
    * Write a statusId response to a PrintWriter.
    *
    * @param out where PrintWriter to be written to
@@ -437,32 +472,33 @@ public class ServletUtil {
   }
 
   /**
-   * Write a name value pair as an XML element to a PrintWriter.
+   * Write an XML tag with attributes out to a PrintWriter.
    *
    * @param out where PrintWriter to be written to
    * @param indentLevel the depth of indentation.
    * @param elemName element name
    * @param attributes attributes
+   * @param closeTag if true, close the tag with '/>'
    */
-  public static void writeXMLElementWithAttrs(
-      PrintWriter out, int indentLevel, String elemName, String attributes) {
+  public static void writeXMLTagWithAttrs(PrintWriter out, int indentLevel,
+      String elemName, String attributes, boolean closeTag) {
     out.println(indentStr(indentLevel)
-        + "<" + elemName + " " + attributes + ">");
+        + "<" + elemName + " " + attributes + ((closeTag)? "/>" : ">"));
   }
 
   /**
-   * Write name value pair(s) as an XML element with attributes only to a
-   * StringBuffer.
+   * Write an XML tag with attributes out to a StringBuffer.
    *
    * @param out where StringBuffer to be written to
    * @param indentLevel the depth of indentation.
    * @param elemName element name
    * @param attributes attributes
+   * @param closeTag if true, close the tag with '/>'
    */
-  public static void writeXMLElementWithAttrs(StringBuffer out,
-      int indentLevel, String elemName, String attributes) {
+  public static void writeXMLTagWithAttrs(StringBuffer out, int indentLevel,
+      String elemName, String attributes, boolean closeTag) {
     out.append(indentStr(indentLevel)).append("<").append(elemName);
-    out.append(" ").append(attributes).append("/>");
+    out.append(" ").append(attributes).append((closeTag)? "/>" : ">");
   }
 
   /** Write an XML tag to a PrintWriter

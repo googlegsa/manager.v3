@@ -89,14 +89,14 @@ public class QueryTraverser implements Traverser {
       try {
         LOGGER.finer("Starting traversal...");
         resultSet = queryTraversalManager.startTraversal();
-      } catch (RepositoryException e) {
+      } catch (Exception e) {
         LOGGER.log(Level.WARNING, "startTraversal threw exception: ", e);
       }
     } else {
       try {
         LOGGER.finer("Resuming traversal...");
         resultSet = queryTraversalManager.resumeTraversal(connectorState);
-      } catch (RepositoryException e) {
+      } catch (Exception e) {
         LOGGER.log(Level.WARNING, "resumeTraversal threw exception: ", e);
       }
     }
@@ -104,7 +104,7 @@ public class QueryTraverser implements Traverser {
     // If the traversal returns null, that means that the repository has
     // no new content to traverse.
     if (resultSet == null) {
-      LOGGER.finer("Result set is NULL, no documents returned for traversal");
+      LOGGER.finer("Result set is NULL, no documents returned for traversal.");
       return Traverser.FORCE_WAIT;
     }
 
@@ -117,14 +117,27 @@ public class QueryTraverser implements Traverser {
         }
 
         Document nextDocument = null;
+        String docid = null;
         try {
           LOGGER.finer("Pulling next document from connector " + connectorName);
           nextDocument = resultSet.nextDocument();
           if (nextDocument == null) {
             break;
+          } else {
+            // Fetch DocId to use in messages.
+            try {
+              docid = Value.getSingleValueString(nextDocument,
+                                                 SpiConstants.PROPNAME_DOCID);
+            } catch (IllegalArgumentException e1) {
+                LOGGER.fine("Unable to get document id for document ("
+                            + nextDocument + "): " + e1.getMessage());
+            } catch (RepositoryException e1) {
+                LOGGER.fine("Unable to get document id for document ("
+                            + nextDocument + "): " + e1.getMessage());
+            }
           }
-          LOGGER.finer("Sending document (" + nextDocument + ") from connector "
-                       + connectorName + " to Pusher");
+          LOGGER.finer("Sending document (" + nextDocument + "):(" + docid 
+              + ") from connector " + connectorName + " to Pusher");
           pusher.take(nextDocument, connectorName);
           counter++;
           if (counter == batchHint) {
@@ -132,30 +145,16 @@ public class QueryTraverser implements Traverser {
           }
         } catch (RepositoryDocumentException e) {
           // Skip individual documents that fail.  Proceed on to the next one.
-          LOGGER.log(Level.WARNING, "Skipping document from connector "
-                     + connectorName, e);
+          LOGGER.log(Level.WARNING, "Skipping document (" + docid 
+              + ") from connector " + connectorName, e);
         } catch (OutOfMemoryError e) {
-          String docid = null;
+          System.gc();
           try {
-            if (nextDocument != null) {
-              docid = Value.getSingleValueString(nextDocument,
-                                                 SpiConstants.PROPNAME_DOCID);
-            }
-          } catch (IllegalArgumentException e1) {
-            try {
-              LOGGER.fine("Unable to get document id for document ("
-                           + nextDocument + "): " + e1.getMessage());
-            } catch (Throwable t) {}
-          } catch (RepositoryException e1) {
-            try {
-              LOGGER.fine("Unable to get document id for document ("
-                          + nextDocument + "): " + e1.getMessage());
-            } catch (Throwable t) {}
-          }
-          LOGGER.warning("Out of JVM Heap Space.  Most likely document ("
-                         + docid + ") is too large.  To fix, increase heap "
-                         + "space or reduce size of document.");
-          LOGGER.log(Level.FINEST, e.getMessage(), e);
+            LOGGER.warning("Out of JVM Heap Space.  Most likely document ("
+                           + docid + ") is too large.  To fix, increase heap "
+                           + "space or reduce size of document.");
+            LOGGER.log(Level.FINEST, e.getMessage(), e);
+          } catch (Throwable t) {}
         }
       }
     } catch (RepositoryException e) {
@@ -168,6 +167,13 @@ public class QueryTraverser implements Traverser {
       }
     } catch (PushException e) {
       LOGGER.log(Level.SEVERE, "Push Exception during traversal.", e);
+      // Drop the entire batch on the floor.  Do not call checkpoint
+      // (as there is a discrepency between what the Connector thinks
+      // it has fed, and what actually has been pushed).
+      resultSet = null;
+      counter = Traverser.FORCE_WAIT;
+    } catch (Throwable t) {
+      LOGGER.log(Level.SEVERE, "Uncaught Exception during traversal.", t);
       // Drop the entire batch on the floor.  Do not call checkpoint
       // (as there is a discrepency between what the Connector thinks
       // it has fed, and what actually has been pushed).
@@ -186,9 +192,20 @@ public class QueryTraverser implements Traverser {
 
   private String checkpointAndSave(DocumentList pm) {
     String connectorState = null;
+    LOGGER.finest("Checkpointing for connector " + connectorName + " ...");
     try {
-      LOGGER.finest("Checkpointing for connector " + connectorName + " ...");
       connectorState = pm.checkpoint();
+    } catch (RepositoryException re) {
+      // If checkpoint() throws RepositoryException, it means there is no 
+      // new checkpoint.  
+      return null;
+    } catch (Exception e) {
+      // If checkpoint() throws some general Exception, it is probably
+      // an older connector that doesn't understand the newer empty
+      // DocumentList and Exception handling from runBatch() model.
+      return null;
+    }
+    try {
       if (connectorState != null) {
         connectorStateStore.storeConnectorState(connectorName, connectorState);
         LOGGER.finest("...checkpoint " + connectorState + " created.");
@@ -199,10 +216,6 @@ public class QueryTraverser implements Traverser {
       // That happens if the connector was deleted while we were working.
       // Our connector seems to have been deleted.  Don't save a checkpoint.
       LOGGER.finest("...checkpoint " + connectorState + " discarded.");
-      return null;
-    } catch (RepositoryException e) {
-      // checkpoint throwing RepositoryException means there is no new
-      // checkpoint.
       return null;
     }
   }

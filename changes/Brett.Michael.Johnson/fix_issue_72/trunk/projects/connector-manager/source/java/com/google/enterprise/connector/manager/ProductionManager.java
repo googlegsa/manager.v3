@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -241,15 +241,24 @@ public class ProductionManager implements Manager {
   /*
    * (non-Javadoc)
    *
-   * @see com.google.enterprise.connector.manager.Manager#getConnectorTypes()
+   * @see com.google.enterprise.connector.manager.Manager#getConnectorTypeNames()
    */
-  public List getConnectorTypes() {
-    // TODO this interface should really return a Set
+  public Set getConnectorTypeNames() {
     Set result = new TreeSet();
     for (Iterator i = instantiator.getConnectorTypeNames(); i.hasNext();) {
       result.add(i.next());
     }
-    return new ArrayList(result);
+    return result;
+  }
+
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.manager.Manager#getConnectorType()
+   */
+  public ConnectorType getConnectorType(String typeName)
+      throws ConnectorTypeNotFoundException {
+    return instantiator.getConnectorType(typeName);
   }
 
   /*

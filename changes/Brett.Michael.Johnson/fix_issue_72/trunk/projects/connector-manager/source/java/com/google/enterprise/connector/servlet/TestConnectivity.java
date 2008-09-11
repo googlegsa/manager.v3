@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package com.google.enterprise.connector.servlet;
 
 import java.io.IOException;
@@ -25,7 +24,6 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Admin servlet to test connectivity.
- * 
  */
 public class TestConnectivity extends HttpServlet {
   private static final Logger LOGGER =
@@ -33,11 +31,10 @@ public class TestConnectivity extends HttpServlet {
 
   /**
    * Returns a simple acknowledgement.
-   * 
+   *
    * @param req
    * @param res
    * @throws IOException
-   * 
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -50,11 +47,10 @@ public class TestConnectivity extends HttpServlet {
 
   /**
    * Returns a simple acknowledgement.
-   * 
+   *
    * @param req
    * @param res
    * @throws IOException
-   * 
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -63,10 +59,13 @@ public class TestConnectivity extends HttpServlet {
 
   /**
    * Handler for doGet in order to do unit tests.
+   *
    * @param out
-   *  
    */
   public static void handleDoGet(PrintWriter out) {
-    ServletUtil.writeResponse(out, ConnectorMessageCode.SUCCESS);
+    ServletUtil.writeRootTag(out, false);
+    ServletUtil.writeManagerSplash(out);
+    ServletUtil.writeStatusId(out, ConnectorMessageCode.SUCCESS);
+    ServletUtil.writeRootTag(out, true);
   }
 }

@@ -60,7 +60,7 @@ public class MockPusher implements Pusher {
             + " is missing");
       }
 
-      processProperty(null, property);
+      processProperty(name, property);
 
       name = SpiConstants.PROPNAME_CONTENTURL;
       if ((property = document.findProperty(name)) == null) {
@@ -93,20 +93,21 @@ public class MockPusher implements Pusher {
   }
 
   private void processProperty(String name, Property property) {
+    InputStream contentStream = null;
+    InputStream encodedContentStream = null;
     try {
       Value v = property.nextValue();
       // if we have a contentfile property, we want to stream the InputStream
       // to demonstrate that we don't blow up memory
       if (v instanceof BinaryValue) {
-        InputStream contentStream = ((BinaryValue) v).getInputStream();
-        InputStream encodedContentStream = null;
+        contentStream = ((BinaryValue) v).getInputStream();
         if (null != contentStream) {
           encodedContentStream = new Base64FilterInputStream(contentStream);
         }
         int totalBytesRead = 0;
         if (null != encodedContentStream) {
           int bytesRead = 0;
-          byte[] b = new byte[4096];
+          byte[] b = new byte[16384];
           try {
             while (-1 != (bytesRead = encodedContentStream.read(b))) {
               totalBytesRead += bytesRead;
@@ -126,6 +127,13 @@ public class MockPusher implements Pusher {
       } while ((v = property.nextValue()) != null);
     } catch (RepositoryException e) {
       throw new RuntimeException(e);
+    } finally {
+      if (null != encodedContentStream) {
+        try { encodedContentStream.close(); } catch (IOException e) {}
+      }
+      if (null != contentStream) {
+        try { contentStream.close(); } catch (IOException e) {}
+      }
     }
   }
 
