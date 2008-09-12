@@ -283,8 +283,7 @@
         <value>text/vnd.abc</value>
         <value>text/x-audiosoft-intra</value>
         <value>text/x-asm</value>
-        <!-- Catch-all for mime types that are not explicitly mentioned above. -->
-        <value>application</value> <!-- ??? I don't think this should be here -->
+        <!-- Catch-all for media types that are not explicitly mentioned above. -->
         <value>chemical</value>
         <value>example</value>
         <value>message</value>
@@ -293,6 +292,10 @@
         <value>world</value>
         <value>i-world</value>
         <value>x-world</value>
+        <!-- Comment out the following if you want to classify other application
+              subtypes as 'unknown mimetype' rather than 'unsupported mimetype'.
+        -->
+        <value>application</value> 
       </set>
     </property>
   </bean>

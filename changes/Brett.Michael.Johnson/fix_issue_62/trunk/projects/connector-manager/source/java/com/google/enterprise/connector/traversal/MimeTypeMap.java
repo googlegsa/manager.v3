@@ -139,7 +139,7 @@ public class MimeTypeMap {
         typeMap.put(mimeType, level1);
       } else if (mimeType.indexOf("/vnd.") > 0) {
         typeMap.put(mimeType, level3);
-      } else {
+      } else if (mimeType.length() > 0) {
         typeMap.put(mimeType, level2);
       }
     }
@@ -195,13 +195,13 @@ public class MimeTypeMap {
     int bestLevel = Integer.MIN_VALUE;
     String bestMimeType = null;
     for (Iterator iter = mimeTypes.iterator(); iter.hasNext(); ) {
-      String mimeType = ((String) iter.next()).trim();
+      String mimeType = (String) iter.next();
       int thisLevel = mimeTypeSupportLevel(mimeType);
       if (thisLevel > bestLevel) {
         bestLevel = thisLevel;
         bestMimeType = mimeType;
       } else if (thisLevel == bestLevel) {
-        if (mimeType.length() < bestMimeType.length()) {
+        if (mimeType.trim().length() < bestMimeType.trim().length()) {
           bestMimeType = mimeType;
         }
       }
