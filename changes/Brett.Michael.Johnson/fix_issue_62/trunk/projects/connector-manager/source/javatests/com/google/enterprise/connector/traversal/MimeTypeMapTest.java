@@ -58,6 +58,19 @@ public class MimeTypeMapTest extends TestCase {
     Assert.assertTrue(testMap.mimeTypeSupportLevel(null) <= 0);
   }
 
+  public void testMixedSupportMimeTypes() {
+    MimeTypeMap testMap = new MimeTypeMap();
+    String[] supportedMimeTypes = {"foo/baz", "bar/baz"};
+    String[] unsupportedMimeTypes = {"foo", "bar/cat"};
+    testMap.setSupportedMimeTypes(ArrayAsSet(supportedMimeTypes));
+    testMap.setUnsupportedMimeTypes(ArrayAsSet(unsupportedMimeTypes));
+    Assert.assertEquals(4, testMap.mimeTypeSupportLevel("foo/baz"));
+    Assert.assertTrue(testMap.mimeTypeSupportLevel("foo/rat") <= 0);
+    Assert.assertEquals(4, testMap.mimeTypeSupportLevel("bar/baz"));
+    Assert.assertEquals(2, testMap.mimeTypeSupportLevel("bar/zoo"));
+    Assert.assertTrue(testMap.mimeTypeSupportLevel("bar/cat") <= 0);
+  }
+
   private static Set ArrayAsSet(String[] a) {
     List l = Arrays.asList(a);
     Set result = new HashSet();

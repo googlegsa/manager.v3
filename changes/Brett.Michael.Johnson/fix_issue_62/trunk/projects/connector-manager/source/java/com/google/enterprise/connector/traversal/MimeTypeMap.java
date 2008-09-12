@@ -27,7 +27,6 @@ import java.io.IOException;
 
 import org.springframework.core.io.Resource;
 
-
 /**
  * Provides context to the traversal process on what mime types are acceptable
  * to the GSA. We might think about getting this info dynamically from the GSA
@@ -135,7 +134,7 @@ public class MimeTypeMap {
     // slightly to prefer "vnd." subtypes over others, and prefer
     // any other subtype over "x-" subtypes.
     for (Iterator i = mimeTypes.iterator(); i.hasNext(); ) {
-      String mimeType = ((String) i.next()).toLowerCase();
+      String mimeType = ((String) i.next()).trim().toLowerCase();
       if (mimeType.startsWith("x-") || (mimeType.indexOf("/x-") > 0)) {
         typeMap.put(mimeType, level1);
       } else if (mimeType.indexOf("/vnd.") > 0) {
@@ -158,9 +157,17 @@ public class MimeTypeMap {
   public int mimeTypeSupportLevel(String mimeType) {
     Integer result = null;
     if (mimeType != null) {
-      result = (Integer) typeMap.get(mimeType.toLowerCase());
+      result = (Integer) typeMap.get(mimeType.trim().toLowerCase());
+      if (result == null) {
+        // If exact match not found, look for a match on just the
+        // primary mimetype (sans the subtype).
+        int i = mimeType.indexOf('/');
+        if (i > 0) {
+          result = (Integer) typeMap.get(mimeType.substring(0, i));
+        }
+      } 
     }
-    int sl = (result == null)? unknownMimeTypeSupportLevel : result.intValue();
+    int sl = (result == null) ? unknownMimeTypeSupportLevel : result.intValue();
     if (LOGGER.isLoggable(Level.FINEST)) {
       LOGGER.finest("Mime type support level for " + mimeType + " is " + sl);
     }
@@ -188,18 +195,8 @@ public class MimeTypeMap {
     int bestLevel = Integer.MIN_VALUE;
     String bestMimeType = null;
     for (Iterator iter = mimeTypes.iterator(); iter.hasNext(); ) {
-      String mimeType = ((String) iter.next()).toLowerCase();
-      Integer result = (Integer) typeMap.get(mimeType);
-      if (result == null) {
-        // If exact match not found, look for a match on just the
-        // primary mimetype (sans the subtype).
-        int i = mimeType.indexOf('/');
-        if (i > 0) {
-          result = (Integer) typeMap.get(mimeType.substring(0, i));
-        }
-      } 
-      int thisLevel =
-          (result != null) ? result.intValue() : unknownMimeTypeSupportLevel;
+      String mimeType = ((String) iter.next()).trim();
+      int thisLevel = mimeTypeSupportLevel(mimeType);
       if (thisLevel > bestLevel) {
         bestLevel = thisLevel;
         bestMimeType = mimeType;
@@ -226,14 +223,14 @@ public class MimeTypeMap {
    * non-'x-*' subtypes are preferred over 'x-*' subtypes, and mimetyps
    * with subtypes are preferred over those without.
    *
-   * @param extension a filename extenstion including the leading '.'
+   * @param extension a filename extension including the leading '.'
    * for instance ".doc" or ".tar.gz".
    * @returns the preferred mimetype for this filename extension; or null
    * if no mimetype is known for this extension or if none of the appropriate
    * mimetypes are supported.
    */
   public String preferredMimeTypeForExtension(String extension) {
-    if (extension != null && extension.length() > 0) {
+    if (extension != null && (extension = extension.trim()).length() > 0) {
       // Normalize the file extension (lowercase with leading '.')
       String ext;
       if (extension.startsWith(".")) {
@@ -274,7 +271,8 @@ public class MimeTypeMap {
     LOGGER.config("Loading filename extension to mime type map from " +
                   resource.toString());
     try {
-      reader = new BufferedReader(new InputStreamReader(resource.getInputStream()));
+      reader =
+          new BufferedReader(new InputStreamReader(resource.getInputStream()));
       String line;
       while ((line = reader.readLine()) != null) {
         // Ignore comments.
@@ -282,7 +280,7 @@ public class MimeTypeMap {
           continue;
         }
         // Parse file extension, followed by one or more mimeTypes.
-        String[] tokens = line.split("[ \t,]");
+        String[] tokens = line.split("[ \t,]+");
         if (tokens.length > 0) {
           String ext;
           if (tokens[0].startsWith(".")) {
@@ -290,8 +288,8 @@ public class MimeTypeMap {
           } else {
             ext = '.' + tokens[0].toLowerCase();
           }
-          HashSet mimeTypes = (HashSet) extToMimeTypesMap.get(ext);
           if (tokens.length > 1) {
+            HashSet mimeTypes = (HashSet) extToMimeTypesMap.get(ext);
             if (mimeTypes == null) {
               mimeTypes = new HashSet();
             }
@@ -302,11 +300,14 @@ public class MimeTypeMap {
           }
         }
       }
-      reader.close();
     } catch (IOException e) {
       LOGGER.log(Level.WARNING,
           "Error initializing extToMimeTypes Map from Resource "
           + resource.getDescription() , e);
+    } finally {
+      if (reader != null) {
+        try { reader.close(); } catch (IOException e) {}
+      }
     }
   }
 }

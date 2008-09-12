@@ -60,14 +60,16 @@ public interface TraversalContext {
   String preferredMimeType(Set mimeTypes);
     
   /**
-   * Returns the most preferred mime type for a filename extenstion.
+   * Returns the most preferred mime type for a filename extension.
    * Historically, a specific file type may have several associated
    * or commonly used mime types.
    * This returns the mime type from the set with the highest support level.
    * Mime types with "/vnd.*" subtypes are preferred over others, and
    * mime types registered with IANA are preferred over those with "/x-*" 
    * experimental subtypes.
-   * See file connector-manager/etc/ext2mimetypes.txt.
+   *
+   * The mapping of filename extensions to mime types is configurable
+   * by editing entries in the ext2mimetypes.txt file.
    *
    * @param extension a filename extension (including the leading .)
    * The extension may be a compound extension, like ".tar.gz".
@@ -77,5 +79,4 @@ public interface TraversalContext {
    * a positive support level.
    */
   String preferredMimeTypeForExtension(String extension);
-
 }

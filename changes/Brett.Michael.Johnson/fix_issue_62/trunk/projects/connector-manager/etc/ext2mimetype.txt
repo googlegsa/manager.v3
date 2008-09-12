@@ -478,10 +478,10 @@
 .omc	application/x-omc
 .omcd	application/x-omcdatamaker
 .omcr	application/x-omcregerator
-.otg 	application/vnd.oasis.opendocument.graphics-template
+.otg	application/vnd.oasis.opendocument.graphics-template
 .oth	application/vnd.oasis.opendocument.text-web
 .otp	application/vnd.oasis.opendocument.presentation-template
-.ots	application/vnd.oasis.opendocument.spreadsheet-template 
+.ots	application/vnd.oasis.opendocument.spreadsheet-template
 .ott	application/vnd.oasis.opendocument.text-template
 .p	text/pascal
 .p	text/x-pascal
