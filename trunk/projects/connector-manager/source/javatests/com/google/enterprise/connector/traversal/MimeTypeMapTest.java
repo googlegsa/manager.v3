@@ -29,33 +29,46 @@ public class MimeTypeMapTest extends TestCase {
 
   public void testEmptyMimeTypeMap() {
     MimeTypeMap testMap = new MimeTypeMap();
-    Assert.assertEquals(1, testMap.mimeTypeSupportLevel("foo"));
-    Assert.assertEquals(1, testMap.mimeTypeSupportLevel("ibblefrix"));
-    Assert.assertEquals(1, testMap.mimeTypeSupportLevel(null));
+    Assert.assertEquals(2, testMap.mimeTypeSupportLevel("foo"));
+    Assert.assertEquals(2, testMap.mimeTypeSupportLevel("ibblefrix"));
+    Assert.assertEquals(2, testMap.mimeTypeSupportLevel(null));
   }
 
   public void testUnsupportedMimeTypes() {
     MimeTypeMap testMap = new MimeTypeMap();
     String[] mimeTypes = {"foo", "bar"};
     testMap.setUnsupportedMimeTypes(ArrayAsSet(mimeTypes));
-    Assert.assertEquals(0, testMap.mimeTypeSupportLevel("foo"));
-    Assert.assertEquals(1, testMap.mimeTypeSupportLevel("ibblefrix"));
-    Assert.assertEquals(1, testMap.mimeTypeSupportLevel(null));
+    Assert.assertTrue(testMap.mimeTypeSupportLevel("foo") <= 0);
+    Assert.assertEquals(2, testMap.mimeTypeSupportLevel("ibblefrix"));
+    Assert.assertEquals(2, testMap.mimeTypeSupportLevel(null));
   }
 
   public void testSupportedMimeTypes() {
     MimeTypeMap testMap = new MimeTypeMap();
     String[] mimeTypes = {"foo", "bar"};
-    // default for unspecified mime types is supported (1)
+    // default for unspecified mime types is supported (2)
     testMap.setSupportedMimeTypes(ArrayAsSet(mimeTypes));
-    Assert.assertEquals(1, testMap.mimeTypeSupportLevel("foo"));
-    Assert.assertEquals(1, testMap.mimeTypeSupportLevel("ibblefrix"));
-    Assert.assertEquals(1, testMap.mimeTypeSupportLevel(null));
+    Assert.assertEquals(4, testMap.mimeTypeSupportLevel("foo"));
+    Assert.assertEquals(2, testMap.mimeTypeSupportLevel("ibblefrix"));
+    Assert.assertEquals(2, testMap.mimeTypeSupportLevel(null));
     testMap.setUnknownMimeTypeSupportLevel(0);
     // new the default is unsupported(0)
-    Assert.assertEquals(1, testMap.mimeTypeSupportLevel("foo"));
-    Assert.assertEquals(0, testMap.mimeTypeSupportLevel("ibblefrix"));
-    Assert.assertEquals(0, testMap.mimeTypeSupportLevel(null));   
+    Assert.assertEquals(4, testMap.mimeTypeSupportLevel("foo"));
+    Assert.assertTrue(testMap.mimeTypeSupportLevel("ibblefrix") <= 0);
+    Assert.assertTrue(testMap.mimeTypeSupportLevel(null) <= 0);
+  }
+
+  public void testMixedSupportMimeTypes() {
+    MimeTypeMap testMap = new MimeTypeMap();
+    String[] supportedMimeTypes = {"foo/baz", "bar/baz"};
+    String[] unsupportedMimeTypes = {"foo", "bar/cat"};
+    testMap.setSupportedMimeTypes(ArrayAsSet(supportedMimeTypes));
+    testMap.setUnsupportedMimeTypes(ArrayAsSet(unsupportedMimeTypes));
+    Assert.assertEquals(4, testMap.mimeTypeSupportLevel("foo/baz"));
+    Assert.assertTrue(testMap.mimeTypeSupportLevel("foo/rat") <= 0);
+    Assert.assertEquals(4, testMap.mimeTypeSupportLevel("bar/baz"));
+    Assert.assertEquals(2, testMap.mimeTypeSupportLevel("bar/zoo"));
+    Assert.assertTrue(testMap.mimeTypeSupportLevel("bar/cat") <= 0);
   }
 
   private static Set ArrayAsSet(String[] a) {

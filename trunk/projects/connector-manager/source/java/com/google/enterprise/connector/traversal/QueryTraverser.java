@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.traversal;
 
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.pusher.Pusher;
@@ -22,6 +23,8 @@ import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.HasTimeout;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.TraversalContext;
+import com.google.enterprise.connector.spi.TraversalContextAware;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 
@@ -53,6 +56,10 @@ public class QueryTraverser implements Traverser {
       int requestedTimeout = ((HasTimeout) queryTraversalManager)
           .getTimeoutMillis();
       this.timeout = Math.max(requestedTimeout, TRAVERSAL_TIMEOUT);
+    }
+    if (this.queryTraversalManager instanceof TraversalContextAware) {
+      TraversalContext tc = Context.getInstance().getTraversalContext();
+      ((TraversalContextAware)this.queryTraversalManager).setTraversalContext(tc);
     }
   }
 

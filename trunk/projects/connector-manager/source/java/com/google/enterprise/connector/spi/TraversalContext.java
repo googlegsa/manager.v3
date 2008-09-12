@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.spi;
 
+import java.util.Set;
+
 /**
  * TraversalContext.  This is an interface to a callback object that 
  * the Connector Manager will pass in to a TraversalManager, which 
@@ -35,10 +37,46 @@ public interface TraversalContext {
   
   /**
    * Gets information about whether a mime type is supported.  Non-positive
-   * numbers mean that there is no support for this mime type.  At present,
-   * supported mimetypes will return 1, but larger numbers are reserved to
-   * indicate preferred types.
+   * numbers mean that there is no support for this mime type.  Positive
+   * values indicate possible support for this mime type, with larger
+   * values indicating better support or preference.
    * @return The support level - non-positive means no support
    */  
   int mimeTypeSupportLevel(String mimeType);
+
+  /**
+   * Returns the most preferred mime type from the supplied set.
+   * This returns the mime type from the set with the highest support level.
+   * Mime types with "/vnd.*" subtypes are preferred over others, and
+   * mime types registered with IANA are preferred over those with "/x-*" 
+   * experimental subtypes.
+   * If a repository contains multiple renditions of a particular item,
+   * it may use this to select the best rendition to supply for indexing.
+   *
+   * @param mimeTypes a set of mime types.
+   * @returns the most preferred mime type from the set, or null if
+   * none of the mime types have positive support level.
+   */
+  String preferredMimeType(Set mimeTypes);
+    
+  /**
+   * Returns the most preferred mime type for a filename extension.
+   * Historically, a specific file type may have several associated
+   * or commonly used mime types.
+   * This returns the mime type from the set with the highest support level.
+   * Mime types with "/vnd.*" subtypes are preferred over others, and
+   * mime types registered with IANA are preferred over those with "/x-*" 
+   * experimental subtypes.
+   *
+   * The mapping of filename extensions to mime types is configurable
+   * by editing entries in the ext2mimetypes.txt file.
+   *
+   * @param extension a filename extension (including the leading .)
+   * The extension may be a compound extension, like ".tar.gz".
+   * @returns the most preferred mime type from those commonly used
+   * for extension.  Returns null if no mime type is known for the
+   * filename extension or if none of the associated mime types have
+   * a positive support level.
+   */
+  String preferredMimeTypeForExtension(String extension);
 }
