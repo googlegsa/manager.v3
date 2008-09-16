@@ -33,8 +33,7 @@ import junit.framework.TestCase;
 import javax.jcr.query.QueryManager;
 
 /**
- * @author ziff@google.com (Your Name Here)
- * 
+ * Tests for {@link com.google.enterprise.connector.traversal.QueryTraverser}.
  */
 public class QueryTraverserTest extends TestCase {
 

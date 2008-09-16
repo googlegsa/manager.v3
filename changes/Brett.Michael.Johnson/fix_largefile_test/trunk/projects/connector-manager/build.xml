@@ -65,8 +65,8 @@
 		<mkdir dir="${classes}" />
 		<mkdir dir="${tests.build}" />
 		<mkdir dir="${tests.classes}" />
-    <mkdir dir="${tests.todir}" />
-    <mkdir dir="${tests.data}/tmp" />
+		<mkdir dir="${tests.todir}" />
+		<mkdir dir="${tests.data}/tmp" />
 		<mkdir dir="${jar.dir}" />
 	</target>
 
