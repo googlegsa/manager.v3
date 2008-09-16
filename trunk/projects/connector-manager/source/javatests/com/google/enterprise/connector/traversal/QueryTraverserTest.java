@@ -23,14 +23,17 @@ import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.spi.TraversalManager;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import javax.jcr.query.QueryManager;
 
 /**
- * @author ziff@google.com (Your Name Here)
- * 
+ * Tests for {@link com.google.enterprise.connector.traversal.QueryTraverser}.
  */
 public class QueryTraverserTest extends TestCase {
 
@@ -107,9 +110,37 @@ public class QueryTraverserTest extends TestCase {
   }
   
   /**
+   * Initialize a large file used for tests.  This is to avoid
+   * having giant files checked into the source code repository.
+   *
+   * @param fname the name of the large file to create (if it
+   * doesn't already exist).
+   * @throws IOException if creating the large file fails.
+   */
+  private void makeLargeFile(String fname) throws IOException {
+    File largeFile = new File(fname);
+    if (!largeFile.exists()) {
+      byte[] text = "abcdefghijklmnopqrstuvwxyz\n".getBytes();
+      FileOutputStream os = new FileOutputStream(largeFile);
+      for (int i = 0; i < 1000000; i++) {
+        os.write(text);
+      }
+      os.close();
+    }
+  }
+
+  /**
    * Test that we are indeed streaming the file.
    */
   public final void testLargeFileStream() {
+    try {
+      // This has internal knowledge of the contents of 
+      // MockRepositoryEventLogLargeFile.txt used below.
+      makeLargeFile("testdata/tmp/largefile.txt");
+    } catch (IOException e) {
+      Assert.fail("Unable to initialize largefile.txt: " + e.toString());
+    }
+
     MockRepositoryEventList mrel =
       new MockRepositoryEventList("MockRepositoryEventLogLargeFile.txt");
     String connectorName = "foo";
@@ -122,5 +153,4 @@ public class QueryTraverserTest extends TestCase {
     }
 
   }
-  
 }
