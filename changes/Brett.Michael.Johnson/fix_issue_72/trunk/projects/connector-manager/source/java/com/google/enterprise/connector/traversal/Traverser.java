@@ -21,14 +21,14 @@ public interface Traverser {
 
   /**
    * Signal to the TraversalManager that it should wait before calling
-   * runbatch() again for the Connector.
+   * {@link #runbatch(int)} again for the Connector.
    */
   public static final int FORCE_WAIT = -1;
 
   /**
    * Signal to the TraversalManager that it need not wait before calling
-   * runbatch() again for the Connector, even if the Connector returned no
-   * Documents in the previous batch.
+   * {@link #runbatch(int)} again for the Connector, even if the Connector 
+   * returned no Documents in the previous batch.
    */
   public static final int NO_WAIT = 0;
 
@@ -53,13 +53,13 @@ public interface Traverser {
    *         document errors or qualified documents are sparsely distributed in
    *         the repository).  Try another batch as soon as possible.
    *         A return value greater than 0 represents the actual number of
-   *         douments traversed and pushed into the feed.  There are likely
+   *         documents traversed and pushed into the feed.  There are likely
    *         more documents available for traversal, so try another batch as
    *         soon as possible.
    *
    * @throws IllegalArgumentException if a non-positive batchHint is supplied.
-   *
-   * TODO: Perhaps we should return a more complicated structure that allows
+   */
+  /* TODO: Perhaps we should return a more complicated structure that allows
    *       for more interesting monitoring: number of successful docs,
    *       number failed, average size, etc.
    */

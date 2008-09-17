@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.traversal;
 
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.pusher.Pusher;
@@ -23,6 +24,8 @@ import com.google.enterprise.connector.spi.HasTimeout;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.TraversalContext;
+import com.google.enterprise.connector.spi.TraversalContextAware;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 
@@ -54,6 +57,10 @@ public class QueryTraverser implements Traverser {
       int requestedTimeout = ((HasTimeout) queryTraversalManager)
           .getTimeoutMillis();
       this.timeout = Math.max(requestedTimeout, TRAVERSAL_TIMEOUT);
+    }
+    if (this.queryTraversalManager instanceof TraversalContextAware) {
+      TraversalContext tc = Context.getInstance().getTraversalContext();
+      ((TraversalContextAware)this.queryTraversalManager).setTraversalContext(tc);
     }
   }
 
@@ -136,8 +143,8 @@ public class QueryTraverser implements Traverser {
                             + nextDocument + "): " + e1.getMessage());
             }
           }
-          LOGGER.finer("Sending document (" + nextDocument + "):(" + docid 
-              + ") from connector " + connectorName + " to Pusher");
+          LOGGER.finer("Sending document (" + docid + ") from connector "
+              + connectorName + " to Pusher");
           pusher.take(nextDocument, connectorName);
           counter++;
           if (counter == batchHint) {
@@ -148,13 +155,12 @@ public class QueryTraverser implements Traverser {
           LOGGER.log(Level.WARNING, "Skipping document (" + docid 
               + ") from connector " + connectorName, e);
         } catch (OutOfMemoryError e) {
+          System.runFinalization();
           System.gc();
-          try {
-            LOGGER.warning("Out of JVM Heap Space.  Most likely document ("
-                           + docid + ") is too large.  To fix, increase heap "
-                           + "space or reduce size of document.");
-            LOGGER.log(Level.FINEST, e.getMessage(), e);
-          } catch (Throwable t) {}
+          LOGGER.warning("Out of JVM Heap Space.  Most likely document ("
+                         + docid + ") is too large.  To fix, increase heap "
+                         + "space or reduce size of document.");
+          LOGGER.log(Level.FINEST, e.getMessage(), e);
         }
       }
     } catch (RepositoryException e) {
@@ -168,14 +174,14 @@ public class QueryTraverser implements Traverser {
     } catch (PushException e) {
       LOGGER.log(Level.SEVERE, "Push Exception during traversal.", e);
       // Drop the entire batch on the floor.  Do not call checkpoint
-      // (as there is a discrepency between what the Connector thinks
+      // (as there is a discrepancy between what the Connector thinks
       // it has fed, and what actually has been pushed).
       resultSet = null;
       counter = Traverser.FORCE_WAIT;
     } catch (Throwable t) {
       LOGGER.log(Level.SEVERE, "Uncaught Exception during traversal.", t);
       // Drop the entire batch on the floor.  Do not call checkpoint
-      // (as there is a discrepency between what the Connector thinks
+      // (as there is a discrepancy between what the Connector thinks
       // it has fed, and what actually has been pushed).
       resultSet = null;
       counter = Traverser.FORCE_WAIT;

@@ -22,8 +22,8 @@ package com.google.enterprise.connector.spi;
  * Important: a <code>Document</code> object obtained by calling 
  * <code>{@link #nextDocument()}</code> is invalidated by the next
  * call to <code>{@link #nextDocument()}</code>. Typically, the caller will
- * store the current Document in a loop variable, so that it is clear that this
- * rule is observed; see the example code below.
+ * store the current Document in a loop variable, so that it is clear that 
+ * this rule is observed; see the example code below.
  * <p>
  * In addition, a this interface has a special method
  * <code>{@link #checkpoint()}</code>, which produces a String that
@@ -37,15 +37,15 @@ package com.google.enterprise.connector.spi;
  * <ul>
  * <li>If <code>{@link #checkpoint()}</code> is called before any calls to
  * <code>{@link #nextDocument()}</code>, then traversal should resume with
- * the first Document that would have been returned by the first call to
+ * the Document that would have been returned by the first call to
  * <code>{@link #nextDocument()}</code>.
  * <li>If <code>{@link #checkpoint()}</code> is called after a call to
  * <code>{@link #nextDocument()}</code> that returns a valid document, then
- * traversal should resume with Document that would have been returned by the
- * first call to <code>{@link #nextDocument()}</code>.
+ * traversal should resume with the Document that would have been returned by
+ * the next call to <code>{@link #nextDocument()}</code>.
  * </ul>
- * The typical pattern for consuming an object that implements this interface is
- * this (disregarding exception handling):
+ * The typical pattern for consuming an object that implements this interface
+ * is this (disregarding exception handling):
  * 
  * <pre>
  * DocumentList docList = ...
@@ -59,8 +59,8 @@ package com.google.enterprise.connector.spi;
  * 
  * Note: because of the restriction that the next call to
  * <code>nextDocument()</code> invalidates the previous Document, and there
- * are similar restrictions in the <code>{@link Document}</code> interface, it
- * is possible to provide a single stateful object that implements
+ * are similar restrictions in the <code>{@link Document}</code> interface, 
+ * it is possible to provide a single stateful object that implements
  * <code>{@link DocumentList}</code>, <code>{@link Document}</code> and
  * <code>{@link Property}</code>, by returning <code>this</code> (or
  * <code>null</code>) to all calls to <code>nextDocument()</code> and
@@ -96,8 +96,8 @@ public interface DocumentList {
    * supply this string in a call to
    * <code>{@link TraversalManager#resumeTraversal(String)}</code>.
    * 
-   * @return A non-<code>null</code> <code>String</code> that can be used by a
-   *         subsequent call to {@link TraversalManager#resumeTraversal(String)}
+   * @return A non-<code>null</code> <code>String</code> that can be supplied
+   *         subsequently to {@link TraversalManager#resumeTraversal(String)}.
    * @throws RepositoryException if a repository access error occurs of if
    *         there is insufficient information to create a checkpoint string.
    *         If <code>checkpoint()<code> throws an exception, a subsequent

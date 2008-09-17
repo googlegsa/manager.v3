@@ -97,7 +97,7 @@ package com.google.enterprise.connector.spi;
  * Returning an empty DocumentList will probably not have an impact on
  * scheduling.  The Connector Manager will call <code>checkpoint</code>, 
  * and will likely call <code>resumeTraversal</code> again immediately.
- * Returning an empty DocumentList is not appropriate a traversal is 
+ * Returning an empty DocumentList is not appropriate a if a traversal is 
  * completely up to date, as it would effectively induce a spin, constantly
  * calling <code>resumeTraversal</code> when it has no work to do.
  * Returning an empty DocumentList is a convenient way to indicate to the

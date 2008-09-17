@@ -43,12 +43,10 @@ public class MockPusher implements Pusher {
   }
 
   public void take(Document document, String connectorName) {
-
-    String docid = null;
-
     printStream.println("<document>");
 
     // first take care of some special attributes
+    String docid = null;
     Property property = null;
     String name;
 
@@ -59,36 +57,21 @@ public class MockPusher implements Pusher {
         throw new IllegalArgumentException(SpiConstants.PROPNAME_DOCID
             + " is missing");
       }
-
-      processProperty(name, property);
-
-      name = SpiConstants.PROPNAME_CONTENTURL;
-      if ((property = document.findProperty(name)) == null) {
-        name = SpiConstants.PROPNAME_CONTENT;
-        if ((property = document.findProperty(name)) == null) {
-          throw new IllegalArgumentException("Both "
-              + SpiConstants.PROPNAME_CONTENTURL + " and "
-              + SpiConstants.PROPNAME_CONTENT + " are missing");
-        }
-      }
       processProperty(name, property);
 
       for (Iterator i = document.getPropertyNames().iterator(); i.hasNext();) {
         name = (String) i.next();
-        property = document.findProperty(name);
-        if (name.startsWith("google:")) {
-          if (name.equals(SpiConstants.PROPNAME_CONTENT)
-              || name.equals(SpiConstants.PROPNAME_CONTENTURL)
-              || name.equals(SpiConstants.PROPNAME_DOCID)) {
-            // we already dealt with these
-            break;
-          }
+        if (name.equals(SpiConstants.PROPNAME_DOCID)) {
+          // we already dealt with these
+          continue;
         }
+        property = document.findProperty(name);
         processProperty(name, property);
       }
     } catch (RepositoryException e) {
       throw new IllegalArgumentException();
     }
+    printStream.println("</document>");
     totalDocs++;
   }
 

@@ -17,7 +17,7 @@ package com.google.enterprise.connector.spi;
 /**
  * Thrown for problems accessing individual documents in a repository.
  * By default, the Connector Manager skips over documents that throw
- * RepositoryDocumentExceptions, proceding onto the next document.
+ * RepositoryDocumentExceptions, proceeding on to the next document.
  * It is the responsibility of the Connector to construct a checkpoint
  * that skips over the offending Document if DocumentList.checkpoint()
  * is called after RepositoryDocumentException is thrown.
