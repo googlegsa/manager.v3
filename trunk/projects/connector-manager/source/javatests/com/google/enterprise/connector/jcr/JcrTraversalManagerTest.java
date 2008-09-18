@@ -127,12 +127,16 @@ public class JcrTraversalManagerTest extends TestCase {
     }
   }
 
-  private int countDocuments(DocumentList documentList) throws RepositoryException {
+  private int countDocuments(DocumentList documentList) 
+      throws RepositoryException {
     int counter = 0;
-    Document document = null;
-    while ((document = documentList.nextDocument()) != null) {
-      logger.info(Value.getSingleValueString(document, SpiConstants.PROPNAME_DOCID));
-      counter++;
+    if (documentList != null) {
+      Document document = null;
+      while ((document = documentList.nextDocument()) != null) {
+        logger.info(Value.getSingleValueString(document, 
+            SpiConstants.PROPNAME_DOCID));
+        counter++;
+      }
     }
     return counter;
   }

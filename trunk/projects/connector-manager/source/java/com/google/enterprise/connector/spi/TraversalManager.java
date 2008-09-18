@@ -59,14 +59,15 @@ package com.google.enterprise.connector.spi;
  * Checkpoints are supplied by the 
  * <code>{@link DocumentList#checkpoint()}</code> method.
  * <p>
- * Please observe that the Connector Manager (the caller) makes no guarantee to
- * consume the entire DocumentList returned by either the startTraversal or
- * resumeTraversal calls. The Connector Manager will consume as many it chooses,
- * depending on load, schedule and other factors. The Connector Manager
- * guarantees to call checkpoint() supplying the last document it has
- * successfully processed from the DocumentList it was using. Thus, the
- * implementor is free to use a query that only returns a small number of
- * results, if that gets better performance.
+ * Please observe that the Connector Manager (the caller) makes no guarantee 
+ * to consume the entire <code>DocumentList</code> returned by either the
+ * <code>startTraversal</code> or <code>resumeTraversal</code> calls. 
+ * The Connector Manager will consume as many it chooses, depending on load, 
+ * schedule and other factors. The Connector Manager guarantees to call 
+ * <code>checkpoint</code> after handling the last document it has
+ * successfully processed from the <code>DocumentList</code> it was using. 
+ * Thus, the implementor is free to use a query that only returns a small 
+ * number of results, if that gets better performance.
  * <p>
  * For example, to continue the SQL analogy, a query like this could be used:
  * 
@@ -80,12 +81,36 @@ package com.google.enterprise.connector.spi;
  * implementation is free to return a DocumentList with fewer or more
  * results. For example, the traversal may be completely up to date, so perhaps
  * there are no results to return. Or, for internal reasons, the implementation
- * may not want to return the full batchHint number of results. Probably,
- * returning zero results will have impact on scheduling - the Connector Manager
- * may choose to wait longer after receiving zero results before it calls again.
- * But implementations are free to return zero results if they choose. Also, if
- * zero results are returned, the Connector Manager will probably not call
- * <code>checkpoint</code> before calling start or resume traversal again.
+ * may not want to return the full batchHint number of results.  When returning
+ * more results than the hint, those in excess of the hint will be ignored.
+ * <p>
+ * The Connector Manager makes a distinction between the return of a null
+ * DocumentList and an empty DocumentList (a DocumentList with zero entries).
+ * Returning a null DocumentList will have impact on scheduling - the Connector
+ * Manager may choose to wait longer after receiving a null result before it 
+ * calls again.  Also, if a null result is returned, the Connector Manager will
+ * not [indeed, cannot] call <code>checkpoint</code> before calling start or 
+ * resume traversal again.  Returning a null DocumentList is suitable when 
+ * a traversal is completely up to date, with no new documents available and
+ * no new checkpoint state.
+ * <p>
+ * Returning an empty DocumentList will probably not have an impact on
+ * scheduling.  The Connector Manager will call <code>checkpoint</code>, 
+ * and will likely call <code>resumeTraversal</code> again immediately.
+ * Returning an empty DocumentList is not appropriate if a traversal is 
+ * completely up to date, as it would effectively induce a spin, constantly
+ * calling <code>resumeTraversal</code> when it has no work to do.
+ * Returning an empty DocumentList is a convenient way to indicate to the
+ * Connector Manager, that although no documents were provided in this 
+ * batch, the Connector wishes to continue searching the repository for
+ * suitable content.  The call to <code>checkpoint</code> allows the
+ * Connector to record its progress through the repository.  This mechanism
+ * is suitable for cases when the search for suitable content may exceed
+ * the <code>{@link Traverser}</code> timeout.
+ * <p> 
+ * If the Connector returns a non-null <code>DocumentList</code>, even
+ * one with zero entries, the Connector Manager will nearly always call
+ * <code>checkpoint</code> when it has finished processing the DocumentList.
  * <p>
  * An implementation need not let the Connector Manager store the traversal
  * state, it may choose to store the state itself. Implementors are discouraged
@@ -107,13 +132,14 @@ package com.google.enterprise.connector.spi;
  * will pass in whatever checkpoint String was returned by the last call to
  * <code>{@link DocumentList#checkpoint()}</code> 
  * but the implementation is free to ignore this and use its
- * internal state.
+ * internal state.  However, even in this case, <code>checkpoint</code> must 
+ * not return a null String.
  * </ul>
  * The implementation must be careful about when and how it commits its internal
  * state to external storage. Remember again that the Connector Manager makes no
  * guarantee to consume the entire result set return by a traversal call. So the
- * implementation should wait until the checkpoint call, examine the parameter
- * passed in and only commit the state up to that document.
+ * implementation should wait until the checkpoint call, and only commit the 
+ * state up to the last document returned.
  * <p>
  * <b> Note on "Metadata and URL" feeds vs. Content feeds </b>
  * <p>

@@ -50,7 +50,6 @@ public class QueryTraverserTest extends TestCase {
     runTestBatches(3);
     runTestBatches(4);
     runTestBatches(5);
-    
   }
 
   private void runTestBatches(int batchSize) throws InterruptedException {
@@ -64,13 +63,16 @@ public class QueryTraverserTest extends TestCase {
     System.out.println();
     System.out.println("Running batch test batchsize " + batchSize);
     
-    int docsProcessed = -1;
     int totalDocsProcessed = 0;
     int batchNumber = 0;
-    while (docsProcessed != 0) {
+    while (true) {
+      int docsProcessed = 0;
       boolean exceptionThrown = false;
       try {
         docsProcessed = traverser.runBatch(batchSize);
+        if (docsProcessed <= 0) {
+          break;
+        }
       } catch (IllegalArgumentException e) {
         exceptionThrown = true;
         Assert.assertTrue("Batch size = " + batchSize + "; " + e,
@@ -147,10 +149,9 @@ public class QueryTraverserTest extends TestCase {
     ConnectorStateStore connectorStateStore = new MockConnectorStateStore();
     Traverser traverser = 
       createTraverser(mrel, connectorName, connectorStateStore);
-    int docsProcessed = -1;
-    while (docsProcessed != 0) {
+    int docsProcessed = 0;
+    do {
       docsProcessed = traverser.runBatch(1);
-    }
-
+    } while (docsProcessed > 0);
   }
 }

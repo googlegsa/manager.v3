@@ -43,12 +43,10 @@ public class MockPusher implements Pusher {
   }
 
   public void take(Document document, String connectorName) {
-
-    String docid = null;
-
     printStream.println("<document>");
 
     // first take care of some special attributes
+    String docid = null;
     Property property = null;
     String name;
 
@@ -59,54 +57,40 @@ public class MockPusher implements Pusher {
         throw new IllegalArgumentException(SpiConstants.PROPNAME_DOCID
             + " is missing");
       }
-
-      processProperty(null, property);
-
-      name = SpiConstants.PROPNAME_CONTENTURL;
-      if ((property = document.findProperty(name)) == null) {
-        name = SpiConstants.PROPNAME_CONTENT;
-        if ((property = document.findProperty(name)) == null) {
-          throw new IllegalArgumentException("Both "
-              + SpiConstants.PROPNAME_CONTENTURL + " and "
-              + SpiConstants.PROPNAME_CONTENT + " are missing");
-        }
-      }
       processProperty(name, property);
 
       for (Iterator i = document.getPropertyNames().iterator(); i.hasNext();) {
         name = (String) i.next();
-        property = document.findProperty(name);
-        if (name.startsWith("google:")) {
-          if (name.equals(SpiConstants.PROPNAME_CONTENT)
-              || name.equals(SpiConstants.PROPNAME_CONTENTURL)
-              || name.equals(SpiConstants.PROPNAME_DOCID)) {
-            // we already dealt with these
-            break;
-          }
+        if (name.equals(SpiConstants.PROPNAME_DOCID)) {
+          // we already dealt with these
+          continue;
         }
+        property = document.findProperty(name);
         processProperty(name, property);
       }
     } catch (RepositoryException e) {
       throw new IllegalArgumentException();
     }
+    printStream.println("</document>");
     totalDocs++;
   }
 
   private void processProperty(String name, Property property) {
+    InputStream contentStream = null;
+    InputStream encodedContentStream = null;
     try {
       Value v = property.nextValue();
       // if we have a contentfile property, we want to stream the InputStream
       // to demonstrate that we don't blow up memory
       if (v instanceof BinaryValue) {
-        InputStream contentStream = ((BinaryValue) v).getInputStream();
-        InputStream encodedContentStream = null;
+        contentStream = ((BinaryValue) v).getInputStream();
         if (null != contentStream) {
           encodedContentStream = new Base64FilterInputStream(contentStream);
         }
         int totalBytesRead = 0;
         if (null != encodedContentStream) {
           int bytesRead = 0;
-          byte[] b = new byte[4096];
+          byte[] b = new byte[16384];
           try {
             while (-1 != (bytesRead = encodedContentStream.read(b))) {
               totalBytesRead += bytesRead;
@@ -126,6 +110,13 @@ public class MockPusher implements Pusher {
       } while ((v = property.nextValue()) != null);
     } catch (RepositoryException e) {
       throw new RuntimeException(e);
+    } finally {
+      if (null != encodedContentStream) {
+        try { encodedContentStream.close(); } catch (IOException e) {}
+      }
+      if (null != contentStream) {
+        try { contentStream.close(); } catch (IOException e) {}
+      }
     }
   }
 

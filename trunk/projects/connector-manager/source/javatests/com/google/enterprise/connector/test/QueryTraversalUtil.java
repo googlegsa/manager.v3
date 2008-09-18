@@ -44,13 +44,8 @@ public class QueryTraversalUtil {
     // the connector. If it can find no stored checkpoint, it assumes that
     // it has never run this connector before and starts from the beginning,
     // as here.
-    if (documentList == null) {
-      // in this test program, we will stop in this situation. The real
-      // connector manager might wait for a while, then try again
-      return;
-    }
 
-    while (true) {
+    while (documentList != null) {
       int counter = 0;
       Document document = null;
       while ((document = documentList.nextDocument()) != null) {
@@ -64,13 +59,14 @@ public class QueryTraversalUtil {
         }
       }
 
+      String checkPointString = documentList.checkpoint();
+
       if (counter == 0) {
         // this test program stops if it receives zero results in a resultSet.
         // the real connector Manager might wait a while, then try again
         break;
       }
 
-      String checkPointString = documentList.checkpoint();
       documentList = queryTraversalManager.resumeTraversal(checkPointString);
       // the real connector manager will call checkpoint (as here) as soon
       // as possible after processing the last document it wants to process.
