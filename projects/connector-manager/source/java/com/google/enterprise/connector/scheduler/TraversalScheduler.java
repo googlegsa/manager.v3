@@ -360,12 +360,14 @@ public class TraversalScheduler implements Scheduler {
 
     public void doWork() {
       batchHint = hostLoadManager.determineBatchHint(connectorName);
+      int batchDone = Traverser.FORCE_WAIT;
       Traverser traverser = getTraverser();
       if (null != traverser) {
         if (batchHint > 0) {
-          LOGGER.log(Level.FINEST, "Begin runBatch; batchHint=" + batchHint);
-          numDocsTraversed = traverser.runBatch(batchHint);
-          LOGGER.log(Level.FINEST, "End runBatch");
+          LOGGER.log(Level.FINEST, "Begin runBatch; batchHint = " + batchHint);
+          batchDone = traverser.runBatch(batchHint);
+          numDocsTraversed = (batchDone == Traverser.FORCE_WAIT)? 0 : batchDone;
+          LOGGER.log(Level.FINEST, "End runBatch; batchDone = " + batchDone);
         } else {
           numDocsTraversed = 0;
         }
@@ -373,7 +375,7 @@ public class TraversalScheduler implements Scheduler {
         timeOfFirstFailure = 0;
       }
       isFinished = true;
-      if (numDocsTraversed == 0 && batchHint > 0) {
+      if (batchDone == Traverser.FORCE_WAIT && batchHint > 0) {
         hostLoadManager.connectorFinishedTraversal(connectorName);
       }
       synchronized(this) {

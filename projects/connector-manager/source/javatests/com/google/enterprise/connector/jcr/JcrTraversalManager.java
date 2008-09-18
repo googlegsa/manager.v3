@@ -118,8 +118,7 @@ public class JcrTraversalManager implements TraversalManager {
       return result;
     }
 
-    DocumentList result = new JcrDocumentList(nodes);
-    return result;
+    return (nodes.hasNext()) ? new JcrDocumentList(nodes) : null;
   }
 
   private javax.jcr.query.Query makeCheckpointQuery(String queryString,
@@ -190,8 +189,7 @@ public class JcrTraversalManager implements TraversalManager {
     } catch (javax.jcr.RepositoryException e) {
       throw new RepositoryException(e);
     }
-    DocumentList result = new JcrDocumentList(nodes);
-    return result;
+    return (nodes.hasNext()) ? new JcrDocumentList(nodes) : null;
   }
 
   public void setBatchHint(int batchHint) throws RepositoryException {
