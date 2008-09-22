@@ -1,8 +1,0 @@
-{"timestamp":"10",
- "type"     :"save",
- "docid"    :"doc1",
- "content"  :"now is the time",
- "answer"   :42,
- "foo"      :[{"type": "INT",
-                "vals": [1, 2, 3]}]
-}
