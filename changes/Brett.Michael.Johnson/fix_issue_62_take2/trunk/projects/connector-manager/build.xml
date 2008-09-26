@@ -23,6 +23,7 @@
 	<property name="tests.build" value="${build}/tests" />
 	<property name="tests.classes" value="${tests.build}/classes" />
 	<property name="tests.todir" value="tests_outdir" />
+	<property name="tests.data" value="testdata" />
 	<property name="jar.dir" value="${dist}/jarfile" />
 	<property name="spi.jarfile" value="${jar.dir}/connector-spi.jar" />
 	<property name="util.jarfile" value="${jar.dir}/connector-util.jar" />
@@ -65,6 +66,7 @@
 		<mkdir dir="${tests.build}" />
 		<mkdir dir="${tests.classes}" />
 		<mkdir dir="${tests.todir}" />
+		<mkdir dir="${tests.data}/tmp" />
 		<mkdir dir="${jar.dir}" />
 	</target>
 
@@ -170,6 +172,8 @@
 		<delete dir="${build}" />
 		<delete dir="${dist}" />
 		<delete dir="${tests.todir}" />
+		<delete dir="${tests.todir}" />
+		<delete dir="${tests.data}/tmp" />
 	</target>
 
 	<!-- ======================Installation targets====================== -->
@@ -214,8 +218,8 @@
 			<lib dir="${thirdparty.tests.jars}" includes="*.jar" />
 			<lib dir="${projects.dir}/test-connectorA/dist/jar" includes="*.jar" />
 			<lib dir="${projects.dir}/test-connectorB/dist/jar" includes="*.jar" />
-			<webinf dir="testdata/mocktestdata" includes="MockRepositoryEventLog*.txt" />
-			<webinf dir="testdata/mocktestdata" includes="test.doc" />
+			<webinf dir="${tests.data}/mocktestdata" includes="MockRepositoryEventLog*.txt" />
+			<webinf dir="${tests.data}/mocktestdata" includes="test.doc" />
 			<manifest>
 				<attribute name="Implementation-Title" value="Connector Manager"/>
 				<attribute name="Implementation-Version"

@@ -34,12 +34,10 @@ public class MimeTypeMap {
 
   private Map typeMap;
   private int unknownMimeTypeSupportLevel;
-  private static HashMap extToMimeTypesMap;
 
   public MimeTypeMap() {
     // if no setters are called, then all mime types are supported
     typeMap = new HashMap();
-    extToMimeTypesMap = new HashMap();
     unknownMimeTypeSupportLevel = 2;
   }
 

@@ -35,9 +35,10 @@ public class SpringBasedProductionTraversalContextTest extends TestCase {
         .getBean("TraversalContext");
     Assert.assertNotNull(traversalContext);
     Assert.assertEquals(2500000, traversalContext.maxDocumentSize());
-    Assert.assertEquals(0, traversalContext.mimeTypeSupportLevel("text/plain"));
-    Assert.assertEquals(0, traversalContext.mimeTypeSupportLevel("text/notplain"));
-    Assert.assertEquals(1, traversalContext.mimeTypeSupportLevel("ibblefrix"));
+    Assert.assertTrue(traversalContext.mimeTypeSupportLevel("text/plain") <= 0);
+    Assert.assertTrue(traversalContext.mimeTypeSupportLevel("text/notplain")
+                      <= 0);
+    Assert.assertEquals(2, traversalContext.mimeTypeSupportLevel("ibblefrix"));
   }
 
   public final void testContextBasedTraversalContext() {
