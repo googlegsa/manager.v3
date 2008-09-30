@@ -32,10 +32,6 @@ public interface TraversalContext {
    * would save the developer the cost of fetching a content that is too 
    * big to be used.
    *
-   * The maximum document size limit may be configured by adjusting the
-   * maxDocumentSize property of the FileSizeLimitInfo bean definition in
-   * applicationContext.xml.
-   *
    * @return The size limit in bytes
    */
   long maxDocumentSize();
@@ -45,9 +41,6 @@ public interface TraversalContext {
    * numbers mean that there is no support for this mime type.  Positive
    * values indicate possible support for this mime type, with larger
    * values indicating better support or preference.
-   *
-   * The support level values for mime types are defined in the MimeTypeMap
-   * bean definition in applicationContext.xml.
    *
    * @return The support level - non-positive means no support
    */  
@@ -59,12 +52,9 @@ public interface TraversalContext {
    * Mime types with "/vnd.*" subtypes are preferred over others, and
    * mime types registered with IANA are preferred over those with "/x-*" 
    * experimental subtypes.
-   *
+   * <p>
    * If a repository contains multiple renditions of a particular item,
    * it may use this to select the best rendition to supply for indexing.
-   *
-   * The support level values for mime types are defined in the MimeTypeMap
-   * bean definition in applicationContext.xml.
    *
    * @param mimeTypes a set of mime types.
    * @returns the most preferred mime type from the Set.

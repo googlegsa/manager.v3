@@ -139,7 +139,7 @@
          would force more mime types to become "unknown".
          The default value of 2 ranks "unknown" mime types below supported
          mime types (levels 3,4,5) and preferred mime types (levels 7,8,9), but
-         above unsupported mimetypes (0 and below).
+         above unsupported mime types (0 and below).
     -->
     <property name="unknownMimeTypeSupportLevel" value="2" />
 
@@ -147,7 +147,7 @@
          classes - preferred, supported, and unsupported.  Connectors may
          use this information to optimize their feeds, supplying preferred
          formats over simply supported formats (if both are available), and
-         skipping unsupported formats. The entries or each of these three
+         skipping unsupported formats. The entries of each of these three
          classes are a list of content types that may or may not include
          subtypes.  Exact (case-insensitive) matches are attempted first.
          If a match is not found, a match is attempted using just the base
@@ -335,7 +335,7 @@
         <value>i-world</value>
         <value>x-world</value>
         <!-- Comment out the following if you want to classify other application
-              subtypes as 'unknown mimetype' rather than 'unsupported mimetype'.
+              subtypes as 'unknown mime type' rather than 'unsupported mime type'.
         -->
         <value>application</value> 
       </set>
