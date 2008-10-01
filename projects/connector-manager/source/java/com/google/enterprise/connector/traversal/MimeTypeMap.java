@@ -16,16 +16,10 @@ package com.google.enterprise.connector.traversal;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.IOException;
-
-import org.springframework.core.io.Resource;
 
 /**
  * Provides context to the traversal process on what mime types are acceptable
@@ -39,12 +33,10 @@ public class MimeTypeMap {
 
   private Map typeMap;
   private int unknownMimeTypeSupportLevel;
-  private static HashMap extToMimeTypesMap;
 
   public MimeTypeMap() {
     // if no setters are called, then all mime types are supported
     typeMap = new HashMap();
-    extToMimeTypesMap = new HashMap();
     unknownMimeTypeSupportLevel = 2;
   }
 
@@ -180,12 +172,10 @@ public class MimeTypeMap {
    * Mime types with higher support levels are preferred over those
    * with lower support levels.  For those with equal support levels,
    * non-'x-*' subtypes are preferred over 'x-*' subtypes, and mimetyps
-   * with subtypes are preferred over those without.  If all the mime
-   * types are unsupported, null is returned.
+   * with subtypes are preferred over those without.
    *
    * @param mimeTypes a Set of mime type Strings.
-   * @return the most preferred mime type from the set, or null if
-   * none are supported.
+   * @return the most preferred mime type from the Set.
    */
   public String preferredMimeType(Set mimeTypes) {
     if (mimeTypes == null || mimeTypes.size() == 0)
@@ -212,102 +202,6 @@ public class MimeTypeMap {
                     + " is " + bestMimeType);
     }
 
-    return (bestLevel > 0) ? bestMimeType : null;
-  }
-
-
-  /**
-   * Return the preferred mime type for a file, given its filename extension.
-   * Mime types with higher support levels are preferred over those
-   * with lower support levels.  For those with equal support levels,
-   * non-'x-*' subtypes are preferred over 'x-*' subtypes, and mimetyps
-   * with subtypes are preferred over those without.
-   *
-   * @param extension a filename extension including the leading '.'
-   * for instance ".doc" or ".tar.gz".
-   * @returns the preferred mimetype for this filename extension; or null
-   * if no mimetype is known for this extension or if none of the appropriate
-   * mimetypes are supported.
-   */
-  public String preferredMimeTypeForExtension(String extension) {
-    if (extension != null && (extension = extension.trim()).length() > 0) {
-      // Normalize the file extension (lowercase with leading '.')
-      String ext;
-      if (extension.startsWith(".")) {
-        ext = extension.toLowerCase();
-      } else {
-        ext = '.' + extension.toLowerCase();
-      }
-      
-      // If we have an exact match for this extension, return it.
-      Set mimetypes = (Set) extToMimeTypesMap.get(ext);
-      if (mimetypes != null) {
-        String mimetype = preferredMimeType(mimetypes);
-        if (LOGGER.isLoggable(Level.FINEST)) {
-          LOGGER.finest("Preferred mime type for " + ext + " is " + mimetype);
-        }
-        return mimetype;
-      }
-      
-      // If we don't have an exact match, but do have a compound extension
-      // (like ".tar.gz"), then look for a match on the less complex suffixes.
-      int i = ext.indexOf('.', 1);
-      if (i != -1) {
-        return (preferredMimeTypeForExtension(ext.substring(i)));
-      }
-      LOGGER.finest("Preferred mime type for " + ext + " is unknown.");
-    }
-    return null;
-  }
-
-
-  /**
-   * Set the Resource location for the extensionToMimetype table.
-   *
-   * @param resource Resource location of the ext2mimetype file.
-   */
-  public void setExtensionToMimeType(Resource resource) {
-    BufferedReader reader = null;
-    LOGGER.config("Loading filename extension to mime type map from " +
-                  resource.toString());
-    try {
-      reader =
-          new BufferedReader(new InputStreamReader(resource.getInputStream()));
-      String line;
-      while ((line = reader.readLine()) != null) {
-        // Ignore comments.
-        if (line.startsWith("#")) {
-          continue;
-        }
-        // Parse file extension, followed by one or more mimeTypes.
-        String[] tokens = line.split("[ \t,]+");
-        if (tokens.length > 0) {
-          String ext;
-          if (tokens[0].startsWith(".")) {
-            ext = tokens[0].toLowerCase();
-          } else {
-            ext = '.' + tokens[0].toLowerCase();
-          }
-          if (tokens.length > 1) {
-            HashSet mimeTypes = (HashSet) extToMimeTypesMap.get(ext);
-            if (mimeTypes == null) {
-              mimeTypes = new HashSet();
-            }
-            for (int i = 1; i < tokens.length; i++) {
-              mimeTypes.add(tokens[i].toLowerCase());
-            }
-            extToMimeTypesMap.put(ext, mimeTypes);
-          }
-        }
-      }
-    } catch (IOException e) {
-      LOGGER.log(Level.WARNING,
-          "Error initializing extToMimeTypes Map from Resource "
-          + resource.getDescription() , e);
-    } finally {
-      if (reader != null) {
-        try { reader.close(); } catch (IOException e) {}
-      }
-    }
+    return bestMimeType;
   }
 }
