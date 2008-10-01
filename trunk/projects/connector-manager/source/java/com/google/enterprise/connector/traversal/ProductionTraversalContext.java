@@ -48,8 +48,4 @@ public class ProductionTraversalContext implements TraversalContext {
   public String preferredMimeType(Set mimeTypes) {
     return mimeTypeMap.preferredMimeType(mimeTypes);
   }
-
-  public String preferredMimeTypeForExtension(String extension) {
-    return mimeTypeMap.preferredMimeTypeForExtension(extension);
-  }
 }

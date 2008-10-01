@@ -125,13 +125,53 @@
 
   <bean id="MimeTypeMap"
 		 class="com.google.enterprise.connector.traversal.MimeTypeMap">
+    <!-- Setting unknownMimeTypeSupportLevel to a positive value will allow
+         the GSA to attempt to index the document contents of documents with
+         unrecognized content types.  Set unknownMimeTypeSupportLevel to zero
+         (or any other non-positive value) to disable sending document content
+         for unknown content types to the GSA.  See unsupportedMimeTypes below.
+         Note that unknownMimeTypeSupportLevel (from an earlier design) overlaps
+         in functionality with the content types (sans subtypes) entries in the 
+         preferred/supported/unsupported mime types below.  This is only because
+         all of the IANA recognized content type classes are well represented
+         in the tables below, so very few mime types should end up as "unknown".
+         Removing content type (sans subtype) entries from the following sets
+         would force more mime types to become "unknown".
+         The default value of 2 ranks "unknown" mime types below supported
+         mime types (levels 3,4,5) and preferred mime types (levels 7,8,9), but
+         above unsupported mime types (0 and below).
+    -->
     <property name="unknownMimeTypeSupportLevel" value="2" />
-    <property name="extensionToMimeType" value="/WEB-INF/ext2mimetype.txt" />
+
+    <!-- These three properties group most known mime types into three broad
+         classes - preferred, supported, and unsupported.  Connectors may
+         use this information to optimize their feeds, supplying preferred
+         formats over simply supported formats (if both are available), and
+         skipping unsupported formats. The entries of each of these three
+         classes are a list of content types that may or may not include
+         subtypes.  Exact (case-insensitive) matches are attempted first.
+         If a match is not found, a match is attempted using just the base
+         type without the subtype.
+         For instance, suppose these properties were as follows:
+         preferredMimeTypes={} (empty), supportedMimeTypes={"foo/bar"},
+         unsupportedMimeTypes={"foo", "cat"}.  "Foo/Bar" matches (case-
+         insensitively) "foo/bar", so it would be considered supported.
+         "Foo/baz" does not have an exact match, but its content type
+         (sans subtype) "foo" does have a match in the unsupported table,
+         so it should be considered unsupported. Similarly, "cat/persian"
+         would be considered unsupported.  "Xyzzy/bar" lacks an exact
+         match, and its content type (sans subtype), "xyzzy", is also not
+         present, so it would be assigned the unknownMimeTypeSupportLevel.
+         Note that modifying entries in these properties may require
+         corresponding modifications to the Google Search Appliance Crawl 
+         and Index administration page.  Similarly, modifications to the
+         Crawl and Index page may also require changes to these entries.
+    -->
+    <!-- Sets the preferred mime types to index.
+         These mime types require little or no preprocessing
+         or file format conversion to extract text and metadata.
+    -->
     <property name="preferredMimeTypes">
-      <!-- Sets the preferred mime types to index.
-           These mime types require little or no preprocessing
-           or file format conversion to extract text and metadata.
-      -->
       <set>
         <!-- Prefer plain text, html, sgml, & xml types  -->
         <value>application/plain</value>
@@ -152,12 +192,13 @@
         <value>message/news</value>
       </set>
     </property>
+
+    <!--  Sets the supported mime types to index.
+          These mime types may require some preprocessing or
+          file format conversion to extract text and metadata.
+          Some information may be lost or discarded.
+    -->
     <property name="supportedMimeTypes">
-      <!--  Sets the supported mime types to index.
-            These mime types may require some preprocessing or
-            file format conversion to extract text and metadata.
-            Some information may be lost or discarded.
-      -->
       <set>
         <!-- Support various well-known document formats -->
         <value>text/richtext</value>
@@ -223,13 +264,14 @@
         <value>text</value>
       </set>
     </property>
+
+    <!-- Sets the unsupported mime types whose content should not be indexed.
+         These mime types provide little or no textual content, or are data
+         formats that are either unknown or do not have a format converter.
+         The connector may still provide meta-data describing the content,
+         but the content itself should not be pushed.
+    -->
     <property name="unsupportedMimeTypes">
-      <!-- Sets the unsupported mime types whose content cannot be indexed.
-           These mime types provide little or no textual content, or are 
-           data formats that are either unknown or do not have a format converter.
-           The connector may still provide meta-data describing the content,
-           but the content itself should not be pushed.
-      -->
       <set>
         <!-- Don't feed non-text media types -->
         <value>audio</value>
@@ -293,7 +335,7 @@
         <value>i-world</value>
         <value>x-world</value>
         <!-- Comment out the following if you want to classify other application
-              subtypes as 'unknown mimetype' rather than 'unsupported mimetype'.
+              subtypes as 'unknown mime type' rather than 'unsupported mime type'.
         -->
         <value>application</value> 
       </set>
