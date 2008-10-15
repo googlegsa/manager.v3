@@ -25,13 +25,15 @@ import com.google.enterprise.connector.persist.GenerationalStateStore;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.xml.XmlBeanFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -57,6 +59,10 @@ public final class InstanceInfo {
   private final ConnectorConfigStore configStore;
   private final ConnectorScheduleStore schedStore;
   private final ConnectorStateStore stateStore;
+
+  private final Collection legacyConfigStores;
+  private final Collection legacyScheduleStores;
+  private final Collection legacyStateStores;
 
   private Properties properties;
   private Connector connector;
@@ -105,6 +111,7 @@ public final class InstanceInfo {
     this.connectorName = connectorName;
     this.connectorDir = connectorDir;
     this.typeInfo = typeInfo;
+
     Context context = Context.getInstance();
     this.configStore = (ConnectorConfigStore) context.getRequiredBean(
         "ConnectorConfigStore", ConnectorConfigStore.class);
@@ -113,6 +120,13 @@ public final class InstanceInfo {
     this.stateStore = new GenerationalStateStore(
         (ConnectorStateStore) context.getRequiredBean(
         "ConnectorStateStore", ConnectorStateStore.class));
+
+    this.legacyConfigStores = getLegacyStores("LegacyConnectorConfigStores",
+                                              ConnectorConfigStore.class);
+    this.legacyScheduleStores = getLegacyStores("LegacyConnectorScheduleStores",
+                                                ConnectorScheduleStore.class);
+    this.legacyStateStores = getLegacyStores("LegacyConnectorStateStores",
+                                             ConnectorStateStore.class);
   }
 
   public void removeConnector() {
@@ -126,9 +140,28 @@ public final class InstanceInfo {
   public static InstanceInfo fromDirectory(String connectorName,
       File connectorDir, TypeInfo typeInfo) throws InstanceInfoException {
     InstanceInfo info = new InstanceInfo(connectorName, connectorDir, typeInfo);
-    // TODO: [bmj] upgrade legacy stores here.
-    info.properties = info.configStore.getConnectorConfiguration(typeInfo,
-                                                                 connectorName);
+    info.properties =
+        info.configStore.getConnectorConfiguration(typeInfo, connectorName);
+
+    // Upgrade from Legacy Configuration Data Stores. This method is
+    // called to instantiate Connectors that were created by some 
+    // other (possibly older) instance of the Connector Manager.
+    // If the various stored instance data is not found in the
+    // expected locations, the connector may have been previously
+    // created by an older version of the Connector Manager and may 
+    // have its instance data stored in the older legacy locations.
+    // Move the data from the legacy stores to the expected locations
+    // before launching the connector instance.
+    if (info.properties == null) {
+      upgradeConfigStore(info);
+    }
+    if (info.schedStore.getConnectorSchedule(typeInfo, connectorName) == null) {
+      upgradeScheduleStore(info);
+    }
+    if (info.stateStore.getConnectorState(typeInfo, connectorName) == null) {
+      upgradeStateStore(info);
+    }
+
     info.connector = makeConnectorWithSpring(info);
     return info;
   }
@@ -340,6 +373,121 @@ public final class InstanceInfo {
     return stateStore.getConnectorState(typeInfo, connectorName);
   }
 
+
+  /**
+   * Retrieve the bean description for legacy connector configuration,
+   * schedule, and state stores.  The Legacy store bean may be specified
+   * as an individual class of the expected type, or a Collection of
+   * legacy stores.
+   *
+   * @param beanName the name of the legacy store bean
+   * @param clazz the expected Class for the legacy store
+   * @return Collection of legacy stores, or null if none found.
+   */
+  private static Collection getLegacyStores(String beanName, Class clazz) {
+    try {
+      Object bean = 
+          Context.getInstance().getApplicationContext().getBean(beanName);
+      if (bean == null) {
+        return null;
+      } else if (clazz.isInstance(bean)) {
+        ArrayList list = new ArrayList(1);
+        list.add(bean);
+        return list;
+      } else if (bean instanceof Collection) {
+        return (Collection)(((Collection)bean).isEmpty() ? null : bean);
+      }
+    } catch (BeansException e) {
+      LOGGER.log(Level.WARNING, "Unable to process Legacy Connector Store bean "
+                 + beanName, e);
+    }
+    return null;
+  }
+
+  /**
+   * Upgrade ConnectorConfigStore.  If the ConnectorConfigStore has
+   * no stored configuration data for this connector, look in the
+   * Legacy stores (those used in earlier versions of the product).
+   * If a configuration was found in a Legacy store, move it to the
+   * new store.
+   *
+   * @param info a partially constructed InstanceInfo describing the
+   * connector.
+   */
+  private static void upgradeConfigStore(InstanceInfo info) {
+    if (info.legacyConfigStores != null) {
+      Iterator iter = info.legacyConfigStores.iterator();
+      while (iter.hasNext()) {
+        ConnectorConfigStore legacyStore = (ConnectorConfigStore)iter.next();
+        Properties properties = legacyStore.getConnectorConfiguration(
+            info.typeInfo, info.connectorName);
+        if (properties != null) {
+          info.properties = properties;
+          info.configStore.storeConnectorConfiguration(
+              info.typeInfo, info.connectorName, properties);
+          legacyStore.removeConnectorConfiguration(
+              info.typeInfo, info.connectorName);          
+          return;
+        }
+      }
+    }
+  }    
+
+  /**
+   * Upgrade ConnectorScheduleStore.  If the ConnectorScheduleStore has
+   * no stored schedule data for this connector, look in the
+   * Legacy stores (those used in earlier versions of the product).
+   * If a schedule was found in a Legacy store, move it to the
+   * new store.
+   *
+   * @param info a partially constructed InstanceInfo describing the
+   * connector.
+   */
+  private static void upgradeScheduleStore(InstanceInfo info) {
+    if (info.legacyScheduleStores != null) {
+      Iterator iter = info.legacyScheduleStores.iterator();
+      while (iter.hasNext()) {
+        ConnectorScheduleStore legacyStore = (ConnectorScheduleStore)iter.next();
+        String schedule = legacyStore.getConnectorSchedule(
+            info.typeInfo, info.connectorName);
+        if (schedule != null) {
+          info.schedStore.storeConnectorSchedule(
+              info.typeInfo, info.connectorName, schedule);
+          legacyStore.removeConnectorSchedule(
+              info.typeInfo, info.connectorName);          
+          return;
+        }
+      }
+    }
+  }    
+
+  /**
+   * Upgrade ConnectorStateStore.  If the ConnectorStateStore has
+   * no stored traversal state data for this connector, look in the
+   * Legacy stores (those used in earlier versions of the product).
+   * If a traversal state was found in a Legacy store, move it to the
+   * new store.
+   *
+   * @param info a partially constructed InstanceInfo describing the
+   * connector.
+   */
+  private static void upgradeStateStore(InstanceInfo info) {
+    if (info.legacyStateStores != null) {
+      Iterator iter = info.legacyStateStores.iterator();
+      while (iter.hasNext()) {
+        ConnectorStateStore legacyStore = (ConnectorStateStore)iter.next();
+        String state = legacyStore.getConnectorState(
+            info.typeInfo, info.connectorName);
+        if (state != null) {
+          info.stateStore.storeConnectorState(
+              info.typeInfo, info.connectorName, state);
+          legacyStore.removeConnectorState(
+              info.typeInfo, info.connectorName);          
+          return;
+        }
+      }
+    }
+  }    
 
   static class InstanceInfoException extends InstantiatorException {
     InstanceInfoException(String message, Throwable cause) {
