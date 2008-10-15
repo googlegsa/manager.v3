@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.pusher;
 
-import java.io.IOException;
-
 /**
  * Interface for a feed connection. This takes in a data source name and a data
  * source object that contains the data to be sent.  The actual connection to
@@ -34,8 +32,8 @@ public interface FeedConnection {
    * @param feedData an object that encapsulates the feed data that needs to be
    *    sent by the <code>FeedConnection</code>.
    * @return response from the feed server.
-   * @throws IOException
+   * @throws FeedException if problem extracting the data or sending it.
    */
-  public String sendData(String dataSource, Object feedData)
-      throws IOException;
+  public String sendData(String dataSource, FeedData feedData)
+      throws FeedException;
 }

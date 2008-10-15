@@ -41,7 +41,7 @@ public class MockFeedConnection implements FeedConnection {
     buf = new StringBuffer(2048);
   }
 
-  public String sendData(String dataSource, Object feedData) {
+  public String sendData(String dataSource, FeedData feedData) {
     InputStream data = ((GsaFeedData)feedData).getData();
     String dataStr = StringUtils.streamToString(data);
     buf.append(dataStr);

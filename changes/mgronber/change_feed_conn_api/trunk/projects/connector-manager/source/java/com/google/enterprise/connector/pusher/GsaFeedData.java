@@ -20,7 +20,7 @@ import java.io.InputStream;
  * Class used to encapsulate the feed data to be sent using the
  * <code>GsaFeedConnection</code>.
  */
-public class GsaFeedData {
+public class GsaFeedData implements FeedData {
   private String feedType;
   private InputStream data;
 
