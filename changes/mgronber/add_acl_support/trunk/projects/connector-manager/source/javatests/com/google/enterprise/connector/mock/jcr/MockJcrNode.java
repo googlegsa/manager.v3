@@ -22,10 +22,13 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.InvalidItemStateException;
@@ -73,8 +76,15 @@ import javax.jcr.version.VersionHistory;
  * </ul>
  */
 public class MockJcrNode implements Node {
-  MockRepositoryDocument doc;
-  List propList = null;
+  private static Set propertySkipSet;
+
+  static {
+    propertySkipSet = new HashSet();
+    propertySkipSet.add("acl");
+  }
+
+  private MockRepositoryDocument doc;
+  private List propList = null;
 
   private Property findProperty(String name) throws RepositoryException {
     for (Iterator iter = propList.iterator(); iter.hasNext();) {
@@ -116,10 +126,16 @@ public class MockJcrNode implements Node {
       addAclProperty(MockRepositoryProperty.GROUP_SCOPE, aclProp, propList,
           SpiConstants.PROPNAME_ACLGROUPS);
     }
-    // Now push all the other properties onto the list
+    // Now push all the other properties onto the list.
+    List privateRepoProps = new ArrayList();
     for (Iterator iter = doc.getProplist().iterator(); iter.hasNext();) {
       MockRepositoryProperty prop = (MockRepositoryProperty) iter.next();
-      propList.add(new MockJcrProperty(prop));
+      // Don't pass on the some of the special MockRepoDocument properties so
+      // they don't clutter the meta-data.  Shouldn't delete them from the
+      // MockRepoDocument because they could be used by the MockRepo.
+      if (!propertySkipSet.contains(prop.getName())) {
+        propList.add(new MockJcrProperty(prop));
+      }
     }
   }
 
@@ -141,7 +157,7 @@ public class MockJcrNode implements Node {
   private void addAclProperty(String scopeType,
       MockRepositoryProperty repoAclProp, List propList, String propName) {
     String[] values = repoAclProp.getValues();
-    List newAclEntries = new ArrayList();
+    List newAclScopes = new ArrayList();
     for (int i = 0; i < values.length; i++) {
       String aclEntry = values[i];
       // Strip the scope type if present and continue to process the entries
@@ -164,33 +180,41 @@ public class MockJcrNode implements Node {
       // Separate the scope identity from the role list if present.
       int roleTokPos = aclEntry.indexOf(MockRepositoryProperty.SCOPE_ROLE_SEP);
       String scopeId;
-      String roles = null;
+      String rolesStr = null;
       if (roleTokPos != -1) {
         scopeId = aclEntry.substring(0, roleTokPos);
-        roles = aclEntry.substring(roleTokPos + 1);
+        rolesStr = aclEntry.substring(roleTokPos + 1);
       } else {
         scopeId = aclEntry;
       }
 
-      // At this point we have an ACL Entry.  Add it to the list surrounded by
-      // double quotes to hide the separator character from the JSON parser and
-      // preserve any commas within the list of roles.
-      StringBuffer aclEntryBuf = new StringBuffer("\"");
-      aclEntryBuf.append(scopeId);
-      if (roles != null) {
-        aclEntryBuf.append(SpiConstants.SCOPE_ROLE_SEPARATOR).append(roles);
+      // At this point we have the scope and list of roles that make up an ACL
+      // Entry.  Add the scope to the list and, if there are roles specified,
+      // create an associated "<scope>::roles" property and add it to the
+      // propList.  In all cases double-quote the scope.
+      StringBuffer aclScopeId = new StringBuffer("\"").append(scopeId).
+          append("\"");
+      newAclScopes.add(aclScopeId.toString());
+      if (rolesStr != null) {
+        // Create a multi-value property for the scope's roles.  The only way to
+        // create a multi-value entry is with a JSON object or a JSON string -
+        // {type:string, value:[one, two, three]}.
+        List rolesList = Arrays.asList(rolesStr.split(",", 0));
+        StringBuffer scopeRolesNameBuf =
+            new StringBuffer(SpiConstants.ROLES_PROPNAME_PREFIX).
+            append(scopeId);
+        StringBuffer scopeRolesBuf = new StringBuffer("{type:string, value:").
+            append(rolesList.toString()).append("}");
+        MockRepositoryProperty newRolesProp = new MockRepositoryProperty(
+            scopeRolesNameBuf.toString(), scopeRolesBuf.toString());
+        propList.add(new MockJcrProperty(newRolesProp));
       }
-      aclEntryBuf.append("\"");
-      newAclEntries.add(aclEntryBuf.toString());
     }
 
-    if (newAclEntries.size() > 0) {
-      // The only way to create a multi-value entry is with a JSON object or a
-      // JSON string - {type:string, value:[one, two, three]}.
+    if (newAclScopes.size() > 0) {
       StringBuffer jsonBuf = new StringBuffer();
       jsonBuf.append("{type:string, value:");
-      // List.toString() should do a nice job here.
-      jsonBuf.append(newAclEntries.toString());
+      jsonBuf.append(newAclScopes.toString());
       jsonBuf.append("}");
       String jsonString = jsonBuf.toString();
       MockRepositoryProperty newAclProp =

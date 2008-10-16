@@ -17,7 +17,6 @@ package com.google.enterprise.connector.jcr;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryDocument;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
-import com.google.enterprise.connector.mock.MockRepositoryProperty;
 import com.google.enterprise.connector.mock.jcr.MockJcrNode;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
@@ -164,38 +163,70 @@ public class JcrDocumentTest extends TestCase {
     doc = r.getStore().getDocByID("user_role_acl");
     node = new MockJcrNode(doc);
     document = new JcrDocument(node);
+    // joe=reder
     property =
         (JcrProperty) document.findProperty(SpiConstants.PROPNAME_ACLUSERS);
     assertNotNull(property);
-    assertScopeHasRole("joe", "reader", property);
+    assertContainsScope("joe", property);
+    JcrProperty scopeRoles = (JcrProperty) document.findProperty(
+        SpiConstants.ROLES_PROPNAME_PREFIX + "joe");
+    assertNotNull(scopeRoles);
+    assertContainsRole("reader", scopeRoles);
+    // mary=reader,writer
     property =
         (JcrProperty) document.findProperty(SpiConstants.PROPNAME_ACLUSERS);
-    assertScopeHasRole("mary", "reader", property);
+    assertContainsScope("mary", property);
+    scopeRoles = (JcrProperty) document.findProperty(
+        SpiConstants.ROLES_PROPNAME_PREFIX + "mary");
+    assertNotNull(scopeRoles);
+    assertContainsRole("reader", scopeRoles);
+    scopeRoles = (JcrProperty) document.findProperty(
+        SpiConstants.ROLES_PROPNAME_PREFIX + "mary");
+    assertContainsRole("writer", scopeRoles);
+    // admin=owner
     property =
         (JcrProperty) document.findProperty(SpiConstants.PROPNAME_ACLUSERS);
-    assertScopeHasRole("mary", "writer", property);
-    property =
-        (JcrProperty) document.findProperty(SpiConstants.PROPNAME_ACLUSERS);
-    assertScopeHasRole("admin", "owner", property);
+    assertContainsScope("admin", property);
+    scopeRoles = (JcrProperty) document.findProperty(
+        SpiConstants.ROLES_PROPNAME_PREFIX + "admin");
+    assertNotNull(scopeRoles);
+    assertContainsRole("owner", scopeRoles);
+    // No groups.
     assertNull(document.findProperty(SpiConstants.PROPNAME_ACLGROUPS));
 
     // ACL=["user:joe=reader","user:mary=reader,writer","user:admin=owner"]
     doc = r.getStore().getDocByID("user_scoped_role_acl");
     node = new MockJcrNode(doc);
     document = new JcrDocument(node);
+    // user:joe=reader
     property =
-        (JcrProperty) document.findProperty(SpiConstants.PROPNAME_ACLUSERS);
+      (JcrProperty) document.findProperty(SpiConstants.PROPNAME_ACLUSERS);
     assertNotNull(property);
-    assertScopeHasRole("joe", "reader", property);
+    assertContainsScope("joe", property);
+    scopeRoles = (JcrProperty) document.findProperty(
+        SpiConstants.ROLES_PROPNAME_PREFIX + "joe");
+    assertNotNull(scopeRoles);
+    assertContainsRole("reader", scopeRoles);
+    // user:mary=reader,writer
     property =
         (JcrProperty) document.findProperty(SpiConstants.PROPNAME_ACLUSERS);
-    assertScopeHasRole("mary", "reader", property);
+    assertContainsScope("mary", property);
+    scopeRoles = (JcrProperty) document.findProperty(
+        SpiConstants.ROLES_PROPNAME_PREFIX + "mary");
+    assertNotNull(scopeRoles);
+    assertContainsRole("reader", scopeRoles);
+    scopeRoles = (JcrProperty) document.findProperty(
+        SpiConstants.ROLES_PROPNAME_PREFIX + "mary");
+    assertContainsRole("writer", scopeRoles);
+    // user:admin=owner
     property =
         (JcrProperty) document.findProperty(SpiConstants.PROPNAME_ACLUSERS);
-    assertScopeHasRole("mary", "writer", property);
-    property =
-        (JcrProperty) document.findProperty(SpiConstants.PROPNAME_ACLUSERS);
-    assertScopeHasRole("admin", "owner", property);
+    assertContainsScope("admin", property);
+    scopeRoles = (JcrProperty) document.findProperty(
+        SpiConstants.ROLES_PROPNAME_PREFIX + "admin");
+    assertNotNull(scopeRoles);
+    assertContainsRole("owner", scopeRoles);
+    // No groups.
     assertNull(document.findProperty(SpiConstants.PROPNAME_ACLGROUPS));
 
     // ACL=["user:joe","user:mary","group:eng"]
@@ -218,20 +249,35 @@ public class JcrDocumentTest extends TestCase {
     doc = r.getStore().getDocByID("user_group_role_acl");
     node = new MockJcrNode(doc);
     document = new JcrDocument(node);
+    // user:joe=reader
     property =
         (JcrProperty) document.findProperty(SpiConstants.PROPNAME_ACLUSERS);
     assertNotNull(property);
-    assertScopeHasRole("joe", "reader", property);
+    assertContainsScope("joe", property);
+    scopeRoles = (JcrProperty) document.findProperty(
+        SpiConstants.ROLES_PROPNAME_PREFIX + "joe");
+    assertNotNull(scopeRoles);
+    assertContainsRole("reader", scopeRoles);
+    // user:mary=reader,writer
     property =
         (JcrProperty) document.findProperty(SpiConstants.PROPNAME_ACLUSERS);
-    assertScopeHasRole("mary", "reader", property);
-    property =
-        (JcrProperty) document.findProperty(SpiConstants.PROPNAME_ACLUSERS);
-    assertScopeHasRole("mary", "writer", property);
+    assertContainsScope("mary", property);
+    scopeRoles = (JcrProperty) document.findProperty(
+        SpiConstants.ROLES_PROPNAME_PREFIX + "mary");
+    assertNotNull(scopeRoles);
+    assertContainsRole("reader", scopeRoles);
+    scopeRoles = (JcrProperty) document.findProperty(
+        SpiConstants.ROLES_PROPNAME_PREFIX + "mary");
+    assertContainsRole("writer", scopeRoles);
+    // group:eng=reader
     property =
         (JcrProperty) document.findProperty(SpiConstants.PROPNAME_ACLGROUPS);
     assertNotNull(property);
-    assertScopeHasRole("eng", "reader", property);
+    assertContainsScope("eng", property);
+    scopeRoles = (JcrProperty) document.findProperty(
+        SpiConstants.ROLES_PROPNAME_PREFIX + "eng");
+    assertNotNull(scopeRoles);
+    assertContainsRole("reader", scopeRoles);
 
     // ACL=joe
     doc = r.getStore().getDocByID("user_reader_acl");
@@ -250,7 +296,11 @@ public class JcrDocumentTest extends TestCase {
     property =
         (JcrProperty) document.findProperty(SpiConstants.PROPNAME_ACLUSERS);
     assertNotNull(property);
-    assertScopeHasRole("joe", "owner", property);
+    assertContainsScope("joe", property);
+    scopeRoles = (JcrProperty) document.findProperty(
+        SpiConstants.ROLES_PROPNAME_PREFIX + "joe");
+    assertNotNull(scopeRoles);
+    assertContainsRole("owner", scopeRoles);
     assertNull(document.findProperty(SpiConstants.PROPNAME_ACLGROUPS));
 
     // ACL = user:joe=owner
@@ -260,7 +310,11 @@ public class JcrDocumentTest extends TestCase {
     property =
         (JcrProperty) document.findProperty(SpiConstants.PROPNAME_ACLUSERS);
     assertNotNull(property);
-    assertScopeHasRole("joe", "owner", property);
+    assertContainsScope("joe", property);
+    scopeRoles = (JcrProperty) document.findProperty(
+        SpiConstants.ROLES_PROPNAME_PREFIX + "joe");
+    assertNotNull(scopeRoles);
+    assertContainsRole("owner", scopeRoles);
     assertNull(document.findProperty(SpiConstants.PROPNAME_ACLGROUPS));
   }
 
@@ -268,43 +322,24 @@ public class JcrDocumentTest extends TestCase {
       throws RepositoryException {
     Value v = null;
     while ((v = aclProp.nextValue()) != null) {
-      String aclEntry = v.toString();
-      int roleTokPos = aclEntry.indexOf(MockRepositoryProperty.SCOPE_ROLE_SEP);
-      if (roleTokPos != -1) {
-        if (scopeId.equals(aclEntry.substring(0, roleTokPos))) {
-          return;
-        }
-      } else {
-        if (scopeId.equals(aclEntry)) {
-          return;
-        }
+      String aclScopeId = v.toString();
+      if (scopeId.equals(aclScopeId)) {
+        return;
       }
     }
     fail("aclProp does not contain scope (" + scopeId + ")");
   }
 
-  private void assertScopeHasRole(String scopeId, String role,
-      JcrProperty aclProp) throws RepositoryException {
+  private void assertContainsRole(String role, JcrProperty rolesProp)
+      throws RepositoryException {
     Value v = null;
-    while ((v = aclProp.nextValue()) != null) {
-      String aclEntry = v.toString();
-      // Don't assume any default roles so separate the scope identity from the
-      // role list and check.
-      int roleTokPos = aclEntry.indexOf(SpiConstants.SCOPE_ROLE_SEPARATOR);
-      if (roleTokPos != -1) {
-        if (scopeId.equals(aclEntry.substring(0, roleTokPos))) {
-          // Assert the role list contains the given role
-          String rolesStr = aclEntry.substring(roleTokPos +
-              SpiConstants.SCOPE_ROLE_SEPARATOR.length());
-          String[] roles = rolesStr.split(",", 0);
-          for (int j = 0; j < roles.length; j++) {
-            if (role.equals(roles[j])) {
-              return;
-            }
-          }
-        }
+    // Don't assume any default roles.
+    while ((v = rolesProp.nextValue()) != null) {
+      String aclRole = v.toString();
+      if (role.equals(aclRole)) {
+        return;
       }
     }
-    fail("aclProp does not contain scope (" + scopeId + ") with role=" + role);
+    fail("rolesProp does not contain role=" + role);
   }
 }

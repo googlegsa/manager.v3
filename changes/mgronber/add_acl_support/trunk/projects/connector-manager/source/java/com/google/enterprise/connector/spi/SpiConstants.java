@@ -129,21 +129,26 @@ public class SpiConstants {
 
   /**
    * Identifies a multiple-valued String property that gives the list of
-   * group ACL Entries that are permitted access to this document. If either of
-   * the PROPNAME_ACLGROUPS and PROPNAME_ACLUSERS properties are non-null,
-   * then the GSA will grant or deny access to this document for a given user
-   * on the basis of whether the user's name appears as one of the users
-   * in the PROPNAME_ACLUSERS list or one of the user's groups appears
-   * as one of the groups in the PROPNAME_ACLGROUPS list.
+   * group ACL Scope IDs that are permitted RoleType.READER access to this
+   * document. If either of the PROPNAME_ACLGROUPS and PROPNAME_ACLUSERS
+   * properties are non-null, then the GSA will grant or deny access to this
+   * document for a given user on the basis of whether the user's name appears
+   * as one of the Scope IDs in the PROPNAME_ACLUSERS list or one of the user's
+   * groups appears as one of the Scope IDs in the PROPNAME_ACLGROUPS list.
    * <p>
-   * User ACL Entries are of the form
-   * "&lt;userid&gt;[&lt;SR_SEP&gt;RoleType[,...]]" where &lt;userid&gt; is the
-   * user's name within the scope of the Connector, &lt;SR_SEP&gt; is the
-   * {@link #SCOPE_ROLE_SEPARATOR}, and RoleType is one of the possible RoleType
-   * values.  If no RoleType is given, it can be assumed that that the
-   * &lt;userid&gt; will be treated as having a RoleType.READER access to the
-   * document.  Group ACL Entries are of the same form except the &lt;userid&gt;
-   * will be a &lt;groupid&gt;. 
+   * ACL Scope ID is a group or user name within the scope of the Connector.
+   * <p>
+   * To specify more than just RoleType.READER access to the document, the
+   * Connector must add additional multi-value role properties to the document.
+   * These entries are of the form:
+   * <pre>
+   *   Name = &lt;PROPNAME_PREFIX&gt; + &lt;scopeId&gt;
+   *   Value = [RoleType[, ...]]
+   * </pre>
+   * where &lt;scopeId&gt; is the group ACL Scope ID, &lt;PROPNAME_PREFIX&gt; is
+   * the {@link #ROLES_PROPNAME_PREFIX}, and RoleType is one of the possible
+   * RoleType values.  User ACL Roles are of the same form except the
+   * &lt;scopeId&gt; will be the user ACL Scope ID.
    * <p>
    * If the PROPNAME_ISPUBLIC is missing or is true, then this property
    * is ignored, since the document is public.
@@ -179,10 +184,21 @@ public class SpiConstants {
   public static final String PROPNAME_ACTION = "google:action";
 
   /**
-   * Separator used within and ACL Entry to separate the Scope (user id or group
-   * id) from the list of Roles for that Scope.
+   * Prefix added to the front of the ACL Scope ID when creating a roles
+   * property name.  If the Connector wants to define specific roles associated
+   * with an ACL Scope ID related to a document they should be stored in a
+   * multi-valued property named:
+   * <pre>
+   *   ROLES_PROPNAME_PREFIX + &lt;scopeId&gt;
+   * </pre>
+   * For example, given an ACL Entry of "joe=reader,writer" the roles for "joe"
+   * would be stored in a property as follows:
+   * <pre>
+   * Name = "google:roles:joe"
+   * Value = [reader, writer]
+   * </pre>
    */
-  public static final String SCOPE_ROLE_SEPARATOR = "::";
+  public static final String ROLES_PROPNAME_PREFIX = "google:roles:";
 
   /**
    * Ordinal-base typesafe enum for action types.

@@ -172,7 +172,6 @@ public class DocPusherTest extends TestCase {
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:00 GMT\""
         + " authmethod=\"httpbasic\">\n"
         + "<metadata>\n"
-        + "<meta name=\"acl\" content=\"joe, mary, fred, mark, bill, admin\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe, mary, fred, mark, bill, admin\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"false\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
@@ -191,7 +190,6 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"acl\" content=\"joe, mary\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe, mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
@@ -212,7 +210,6 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
-        + "<meta name=\"acl\" content=\"joe, mary\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe, mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"public\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
@@ -545,7 +542,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
 
-    String userAcl = "{\"timestamp\":\"20\",\"type\":\"save\""
+    String userAcl = "{\"timestamp\":\"20\""
         + ",\"docid\":\"user_acl\""
         + ",\"content\":\"this document has user only ACL\""
         + ",\"acl\":{type:string, value:[joe,mary,admin]}"
@@ -556,9 +553,9 @@ public class DocPusherTest extends TestCase {
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
     assertStringContains("<meta name=\"google:aclusers\""
         + " content=\"joe, mary, admin\"/>", resultXML);
+    assertStringNotContains("<meta name=\"acl\"", resultXML);
 
     String userRoleAcl = "{\"timestamp\":\"30\""
-        + ",\"type\":\"save\""
         + ",\"docid\":\"user_role_acl\""
         + ",\"content\":\"this document has user with role ACL\""
         + ",\"acl\":{type:string, value:[\"joe=reader\",\"mary=reader,writer\""
@@ -569,10 +566,19 @@ public class DocPusherTest extends TestCase {
     resultXML = mockFeedConnection.getFeed();
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
     assertStringContains("<meta name=\"google:aclusers\""
-        + " content=\"joe::reader, mary::reader,writer, admin::owner\"/>", resultXML);
+        + " content=\"joe=reader, mary=reader, mary=writer, admin=owner\"/>",
+        resultXML);
+    assertStringNotContains(
+        "<meta name=\"" + SpiConstants.ROLES_PROPNAME_PREFIX + "joe\"",
+        resultXML);
+    assertStringNotContains(
+        "<meta name=\"" + SpiConstants.ROLES_PROPNAME_PREFIX + "mary\"",
+        resultXML);
+    assertStringNotContains(
+        "<meta name=\"" + SpiConstants.ROLES_PROPNAME_PREFIX + "admin\"",
+        resultXML);
 
     String userScopedRoleAcl = "{\"timestamp\":\"40\""
-        + ",\"type\":\"save\""
         + ",\"docid\":\"user_scoped_role_acl\""
         + ",\"content\":\"this document has scoped user with role ACL\""
         + ",\"acl\":{type:string, value:[\"user:joe=reader\""
@@ -583,10 +589,19 @@ public class DocPusherTest extends TestCase {
     resultXML = mockFeedConnection.getFeed();
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
     assertStringContains("<meta name=\"google:aclusers\""
-        + " content=\"joe::reader, mary::reader,writer, admin::owner\"/>", resultXML);
+        + " content=\"joe=reader, mary=reader, mary=writer, admin=owner\"/>",
+        resultXML);
+    assertStringNotContains(
+        "<meta name=\"" + SpiConstants.ROLES_PROPNAME_PREFIX + "joe\"",
+        resultXML);
+    assertStringNotContains(
+        "<meta name=\"" + SpiConstants.ROLES_PROPNAME_PREFIX + "mary\"",
+        resultXML);
+    assertStringNotContains(
+        "<meta name=\"" + SpiConstants.ROLES_PROPNAME_PREFIX + "admin\"",
+        resultXML);
 
     String userGroupAcl = "{\"timestamp\":\"50\""
-        + ",\"type\":\"save\""
         + ",\"docid\":\"user_group_acl\""
         + ",\"content\":\"this document has scoped user and group ACL\""
         + ",\"acl\":{type:string, value:[\"user:joe\",\"user:mary\""
@@ -602,7 +617,6 @@ public class DocPusherTest extends TestCase {
         + " content=\"eng\"/>", resultXML);
 
     String userGroupRoleAcl = "{\"timestamp\":\"60\""
-        + ",\"type\":\"save\""
         + ",\"docid\":\"user_group_role_acl\""
         + ",\"content\":\"this document has scoped user and group role ACL\""
         + ",\"acl\":{type:string, value:[\"user:joe=reader\""
@@ -613,12 +627,20 @@ public class DocPusherTest extends TestCase {
     resultXML = mockFeedConnection.getFeed();
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
     assertStringContains("<meta name=\"google:aclusers\""
-        + " content=\"joe::reader, mary::reader,writer\"/>", resultXML);
+        + " content=\"joe=reader, mary=reader, mary=writer\"/>", resultXML);
+    assertStringNotContains(
+        "<meta name=\"" + SpiConstants.ROLES_PROPNAME_PREFIX + "joe\"",
+        resultXML);
+    assertStringNotContains(
+        "<meta name=\"" + SpiConstants.ROLES_PROPNAME_PREFIX + "mary\"",
+        resultXML);
     assertStringContains("<meta name=\"google:aclgroups\""
-        + " content=\"eng::reader\"/>", resultXML);
+        + " content=\"eng=reader\"/>", resultXML);
+    assertStringNotContains(
+        "<meta name=\"" + SpiConstants.ROLES_PROPNAME_PREFIX + "eng\"",
+        resultXML);
 
     String userReaderAcl = "{\"timestamp\":\"70\""
-        + ",\"type\":\"save\""
         + ",\"docid\":\"user_reader_acl\""
         + ",\"content\":\"this document has one reader\",acl:joe"
         + ",\"google:ispublic\":\"false\"}";
@@ -630,7 +652,6 @@ public class DocPusherTest extends TestCase {
         + " content=\"joe\"/>", resultXML);
 
     String userOwnerAcl = "{\"timestamp\":\"80\""
-        + ",\"type\":\"save\""
         + ",\"docid\":\"user_owner_acl\""
         + ",\"content\":\"this document has one owner\""
         + ",\"acl\":\"joe=owner\""
@@ -640,10 +661,12 @@ public class DocPusherTest extends TestCase {
     resultXML = mockFeedConnection.getFeed();
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
     assertStringContains("<meta name=\"google:aclusers\""
-        + " content=\"joe::owner\"/>", resultXML);
+        + " content=\"joe=owner\"/>", resultXML);
+    assertStringNotContains(
+        "<meta name=\"" + SpiConstants.ROLES_PROPNAME_PREFIX + "joe\"",
+        resultXML);
 
     String userScopedOwnerAcl = "{\"timestamp\":\"90\""
-        + ",\"type\":\"save\""
         + ",\"docid\":\"user_scoped_owner_acl\""
         + ",\"content\":\"this document has one owner\""
         + ",\"acl\":\"user:joe=owner\""
@@ -653,7 +676,30 @@ public class DocPusherTest extends TestCase {
     resultXML = mockFeedConnection.getFeed();
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
     assertStringContains("<meta name=\"google:aclusers\""
-        + " content=\"joe::owner\"/>", resultXML);
+        + " content=\"joe=owner\"/>", resultXML);
+    assertStringNotContains(
+        "<meta name=\"" + SpiConstants.ROLES_PROPNAME_PREFIX + "joe\"",
+        resultXML);
+  }
+
+  public void testAclSomeRoles() throws Exception {
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection);
+    String userRoleAcl = "{\"timestamp\":\"30\""
+        + ",\"docid\":\"user_role_acl\""
+        + ",\"content\":\"this document has user with role ACL\""
+        + ",\"acl\":{type:string, value:[\"joe\",\"mary=reader,writer\""
+        + ",\"admin\"]}"
+        + ",\"google:ispublic\":\"false\"}";
+    Document document = JcrDocumentTest.makeDocumentFromJson(userRoleAcl);
+    dpusher.take(document, "junit");
+    String resultXML = mockFeedConnection.getFeed();
+    assertStringContains("<meta name=\"google:aclusers\""
+        + " content=\"joe, mary=reader, mary=writer, admin\"/>",
+        resultXML);
+    assertStringNotContains(
+        "<meta name=\"" + SpiConstants.ROLES_PROPNAME_PREFIX + "mary\"",
+        resultXML);
   }
 
   private static final String TEST_LOG_FILE = "testdata/FeedLogFile";
