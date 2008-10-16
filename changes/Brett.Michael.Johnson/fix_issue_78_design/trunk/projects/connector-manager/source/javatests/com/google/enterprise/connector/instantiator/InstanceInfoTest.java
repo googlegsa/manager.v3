@@ -198,11 +198,15 @@ public class InstanceInfoTest extends TestCase {
     try {
       // Write properties out to temp file
       File temp = new File(connectorDir + File.separator + "fred.properties");
-      PropertiesUtils.storeToFile(props, temp);
+      PropertiesUtils.storeToFile(props, temp, null);
 
       instanceInfo =
           InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
     } catch (InstanceInfoException e) {
+      exceptionThrown = true;
+      LOGGER.log(Level.WARNING,
+          "unexpected exception during instance info creation", e);
+    } catch (PropertiesException e) {
       exceptionThrown = true;
       LOGGER.log(Level.WARNING,
           "unexpected exception during instance info creation", e);

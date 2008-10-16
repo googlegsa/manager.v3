@@ -14,6 +14,9 @@
 
 package com.google.enterprise.connector.scheduler;
 
+import com.google.enterprise.connector.instantiator.Instantiator;
+import com.google.enterprise.connector.instantiator.MockInstantiator;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorScheduleStore;
 import com.google.enterprise.connector.persist.MockConnectorScheduleStore;
 
@@ -27,31 +30,31 @@ import java.util.List;
  * Test HostLoadManager class.
  */
 public class HostLoadManagerTest extends TestCase {
-  private ConnectorScheduleStore getScheduleStore() {
-    return new MockConnectorScheduleStore();
-  }
-  
-  private static void addLoad(ConnectorScheduleStore scheduleStore, 
-      String connectorName, int load) {
+
+  private Instantiator instantiator = new MockInstantiator();
+
+  private void addLoad(String connectorName, int load) {
     Schedule schedule = new Schedule(connectorName + ":" + load + ":0:0-0");
     String connectorSchedule = schedule.toString();
-    scheduleStore.storeConnectorSchedule(connectorName, connectorSchedule);
+    try {
+      instantiator.setConnectorSchedule(connectorName, connectorSchedule);
+    } catch (ConnectorNotFoundException e) {
+      Assert.fail("Unexpected ConnectorNotFoundException : " + e.toString());
+    }
   }
   
   public void testMaxFeedRateLimit() {
     final String connectorName = "cn1";
-    ConnectorScheduleStore scheduleStore = getScheduleStore();
-    addLoad(scheduleStore, connectorName, 60);
-    HostLoadManager hostLoadManager = new HostLoadManager(scheduleStore);
+    addLoad(connectorName, 60);
+    HostLoadManager hostLoadManager = new HostLoadManager(instantiator);
     hostLoadManager.updateNumDocsTraversed(connectorName, 60);
     Assert.assertEquals(0, hostLoadManager.determineBatchHint(connectorName));
   }
   
   public void testMultipleUpdates() {
     final String connectorName = "cn1";
-    ConnectorScheduleStore scheduleStore = getScheduleStore();
-    addLoad(scheduleStore, connectorName, 60);
-    HostLoadManager hostLoadManager = new HostLoadManager(scheduleStore);
+    addLoad(connectorName, 60);
+    HostLoadManager hostLoadManager = new HostLoadManager(instantiator);
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
@@ -61,10 +64,9 @@ public class HostLoadManagerTest extends TestCase {
   public void testMultipleConnectors() {
     final String connectorName1 = "cn1";
     final String connectorName2 = "cn2";
-    ConnectorScheduleStore scheduleStore = getScheduleStore();
-    addLoad(scheduleStore, connectorName1, 60);
-    addLoad(scheduleStore, connectorName2, 60);
-    HostLoadManager hostLoadManager = new HostLoadManager(scheduleStore);
+    addLoad(connectorName1, 60);
+    addLoad(connectorName2, 60);
+    HostLoadManager hostLoadManager = new HostLoadManager(instantiator);
     hostLoadManager.updateNumDocsTraversed(connectorName1, 60);
     Assert.assertEquals(0, hostLoadManager.determineBatchHint(connectorName1));
 
@@ -75,10 +77,9 @@ public class HostLoadManagerTest extends TestCase {
   public void testPeriod() {
     final long periodInMillis = 1000;
     final String connectorName = "cn1";
-    ConnectorScheduleStore scheduleStore = getScheduleStore();
-    addLoad(scheduleStore, connectorName, 3600);
+    addLoad(connectorName, 3600);
     HostLoadManager hostLoadManager = 
-      new HostLoadManager(periodInMillis, scheduleStore);
+      new HostLoadManager(instantiator, periodInMillis);
     hostLoadManager.updateNumDocsTraversed(connectorName, 55);
     Assert.assertEquals(5, hostLoadManager.determineBatchHint(connectorName));
     // sleep a period (and then some) so that batchHint is reset 
@@ -99,9 +100,8 @@ public class HostLoadManagerTest extends TestCase {
   public void testRetryDelay() {
     final long periodInMillis = 1000;
     final String connectorName = "cn1";
-    ConnectorScheduleStore scheduleStore = getScheduleStore();
     HostLoadManager hostLoadManager = 
-      new HostLoadManager(periodInMillis, scheduleStore);
+      new HostLoadManager(instantiator, periodInMillis);
     Assert.assertEquals(false,hostLoadManager.shouldDelay(connectorName));
     hostLoadManager.connectorFinishedTraversal(connectorName);
     Assert.assertEquals(true,hostLoadManager.shouldDelay(connectorName));

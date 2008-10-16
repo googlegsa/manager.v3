@@ -59,7 +59,6 @@ public class InstantiatorTest extends TestCase {
     Assert.assertTrue(baseDirectory.mkdirs());
 
     instantiator = new SpringInstantiator(new MockPusher(),
-        new MockConnectorStateStore(),
         new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
     Assert.assertEquals(0, connectorCount());
   }

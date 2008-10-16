@@ -14,13 +14,19 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.common.PropertiesUtils;
+import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.jcr.JcrConnector;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.persist.ConnectorConfigStore;
+import com.google.enterprise.connector.persist.ConnectorScheduleStore;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.GenerationalStateStore;
+import com.google.enterprise.connector.persist.MockConnectorConfigStore;
+import com.google.enterprise.connector.persist.MockConnectorScheduleStore;
 import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.pusher.Pusher;
@@ -45,6 +51,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.jcr.Repository;
 
@@ -60,50 +67,53 @@ public class MockInstantiator implements Instantiator {
   public static final String TRAVERSER_NAME_INTERRUPTIBLE = "interruptible";
   public static final String TRAVERSER_NAME_REQUESTS_MORE_TIME = "requestsMore";
 
-  private static final ConnectorType CONNECTOR_TYPE;
-  private static Map connectorMap;
-  private static ConnectorStateStore connectorStateStore;
+  private static final ConnectorType CONNECTOR_TYPE = null;
+  private static final ConnectorConfigStore connectorConfigStore =
+      new MockConnectorConfigStore();
+  private static final ConnectorScheduleStore connectorScheduleStore =
+      new MockConnectorScheduleStore();
+  private static final ConnectorStateStore connectorStateStore =
+      new MockConnectorStateStore();
 
-  static {
-    CONNECTOR_TYPE = null;
+  private static final AuthenticationManager nullAuthenticationManager =
+      new AuthenticationManager() {
+        public AuthenticationResponse authenticate(
+            AuthenticationIdentity identity) {
+          throw new UnsupportedOperationException();
+        }
+      };
+
+  private static final AuthorizationManager nullAuthorizationManager =
+      new AuthorizationManager() {
+        public Collection authorizeDocids(Collection docids,
+            AuthenticationIdentity identity) {
+          throw new UnsupportedOperationException();
+        }
+      };
+
+  private Map connectorMap;
+
+  public MockInstantiator() {
+
     connectorMap = new HashMap();
-    connectorStateStore = new MockConnectorStateStore();
 
     setupConnector(TRAVERSER_NAME1, "MockRepositoryEventLog1.txt");
     setupConnector(TRAVERSER_NAME2, "MockRepositoryEventLog1.txt");
 
-    AuthenticationManager nullAuthenticationManager =
-        new AuthenticationManager() {
-          public AuthenticationResponse authenticate(AuthenticationIdentity identity) {
-            throw new UnsupportedOperationException();
-          }
-        };
-
-    AuthorizationManager nullAuthorizationManager = new AuthorizationManager() {
-      public Collection authorizeDocids(Collection docids,
-          AuthenticationIdentity identity) {
-        throw new UnsupportedOperationException();
-      }
-    };
-
-    connectorMap.put(TRAVERSER_NAME_NOOP, new ConnectorInterfaces(
-        TRAVERSER_NAME_NOOP, new NoopQueryTraverser(),
-        nullAuthenticationManager, nullAuthorizationManager));
-
-    connectorMap.put(TRAVERSER_NAME_LONG_RUNNING, new ConnectorInterfaces(
-        TRAVERSER_NAME_LONG_RUNNING, new LongRunningQueryTraverser(),
-        nullAuthenticationManager, nullAuthorizationManager));
-
-    connectorMap.put(TRAVERSER_NAME_NEVER_ENDING, new ConnectorInterfaces(
-        TRAVERSER_NAME_NEVER_ENDING, new NeverEndingQueryTraverser(),
-        nullAuthenticationManager, nullAuthorizationManager));
-
-    connectorMap.put(TRAVERSER_NAME_INTERRUPTIBLE, new ConnectorInterfaces(
-        TRAVERSER_NAME_INTERRUPTIBLE, new InterruptibleQueryTraverser(),
-        nullAuthenticationManager, nullAuthorizationManager));
+    setupTraverser(TRAVERSER_NAME_NOOP, new NoopQueryTraverser());
+    setupTraverser(TRAVERSER_NAME_LONG_RUNNING, new LongRunningQueryTraverser());
+    setupTraverser(TRAVERSER_NAME_NEVER_ENDING, new NeverEndingQueryTraverser());
+    setupTraverser(TRAVERSER_NAME_INTERRUPTIBLE, new InterruptibleQueryTraverser());
   }
 
-  private static void setupConnector(String connectorName, String resourceName) {
+  public void setupTraverser(String traverserName, Traverser traverser) {
+    connectorMap.put(traverserName, new ConnectorInstance(
+        new ConnectorInterfaces(traverserName, traverser,
+            nullAuthenticationManager, nullAuthorizationManager),
+        new GenerationalStateStore(connectorStateStore, traverserName)));
+  }
+
+  public void setupConnector(String connectorName, String resourceName) {
     MockRepositoryEventList mrel = new MockRepositoryEventList(resourceName);
     MockRepository mockRepository = new MockRepository(mrel);
     Repository repository = new MockJcrRepository(mockRepository);
@@ -125,14 +135,12 @@ public class MockInstantiator implements Instantiator {
 
     Pusher pusher = new MockPusher(System.out);
     QueryTraverser queryTraverser =
-        new QueryTraverser(pusher, qtm,
-            new GenerationalStateStore(connectorStateStore, connectorName),
-            connectorName);
+        new QueryTraverser(pusher, qtm, this, connectorName);
 
-    ConnectorInterfaces connectorInterfaces =
+    connectorMap.put(connectorName, new ConnectorInstance(
         new ConnectorInterfaces(connectorName, queryTraverser,
-            authenticationManager, authorizationManager);
-    connectorMap.put(connectorName, connectorInterfaces);
+                                authenticationManager, authorizationManager),
+        new GenerationalStateStore(connectorStateStore, connectorName)));
   }
 
   /*
@@ -153,24 +161,20 @@ public class MockInstantiator implements Instantiator {
    */
   public Traverser getTraverser(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
-    if (connectorMap.containsKey(connectorName)) {
-      return ((ConnectorInterfaces) connectorMap.get(connectorName))
-          .getTraverser();
-    } else {
-      throw new ConnectorNotFoundException("Connector not found: "
-          + connectorName);
-    }
+    return getConnectorInstance(connectorName)
+        .getConnectorInterfaces().getTraverser();
   }
 
   /*
    * (non-Javadoc)
    *
-   * @see com.google.enterprise.connector.instantiator.Instantiator#restartConnectorTraversal(java.lang.String)
+   * @see com.google.enterprise.connector.instantiator.Instantiator
+   *      #restartConnectorTraversal(java.lang.String)
    */
   public void restartConnectorTraversal(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
-    GenerationalStateStore.newGeneration(connectorName);
-    connectorStateStore.removeConnectorState(connectorName);
+    getConnectorInstance(connectorName).getStateStore()
+        .removeConnectorState(null, connectorName);
   }
 
   public String getConnectorInstancePrototype(String connectorTypeName) {
@@ -181,38 +185,24 @@ public class MockInstantiator implements Instantiator {
     return connectorMap.keySet().iterator();
   }
 
-  public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configKeys, Locale locale,
-      boolean update) {
-    return null;
-  }
-
   public void removeConnector(String connectorName) {
-    GenerationalStateStore.newGeneration(connectorName);
-    connectorStateStore.removeConnectorState(connectorName);
-    connectorMap.remove(connectorName);
+    ConnectorInstance inst = 
+        (ConnectorInstance) connectorMap.remove(connectorName);
+    if (inst != null) {
+      inst.getStateStore().removeConnectorState(null, connectorName);
+    }
+    connectorScheduleStore.removeConnectorSchedule(null, connectorName);
+    connectorConfigStore.removeConnectorConfiguration(null, connectorName);
   }
 
   public AuthenticationManager getAuthenticationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
-    if (connectorMap.containsKey(connectorName)) {
-      return ((ConnectorInterfaces) connectorMap.get(connectorName))
-          .getAuthenticationManager();
-    } else {
-      throw new ConnectorNotFoundException("Connector not found: "
-          + connectorName);
-    }
+    return getConnectorInterfaces(connectorName).getAuthenticationManager();
   }
 
   public AuthorizationManager getAuthorizationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
-    if (connectorMap.containsKey(connectorName)) {
-      return ((ConnectorInterfaces) connectorMap.get(connectorName))
-          .getAuthorizationManager();
-    } else {
-      throw new ConnectorNotFoundException("Connector not found: "
-          + connectorName);
-    }
+    return getConnectorInterfaces(connectorName).getAuthorizationManager();
   }
 
   public ConfigureResponse getConfigFormForConnector(String connectorName,
@@ -224,11 +214,86 @@ public class MockInstantiator implements Instantiator {
     return connectorMap.keySet().iterator();
   }
 
-  public String getConnectorTypeName(String connectorName) {
-    return "";
+  public String getConnectorTypeName(String connectorName)
+      throws ConnectorNotFoundException {
+    return getConnectorInstance(connectorName).getTypeName();
+  }
+
+  public ConfigureResponse setConnectorConfig(String connectorName,
+      String typeName, Map configKeys, Locale locale, boolean update)
+      throws ConnectorNotFoundException {
+    getConnectorInstance(connectorName).setTypeName(typeName);
+    connectorConfigStore.storeConnectorConfiguration(null, connectorName,
+        PropertiesUtils.fromMap(configKeys));
+    return null;
   }
 
   public Map getConnectorConfig(String connectorName) {
-    return new HashMap();
+    Properties props = 
+        connectorConfigStore.getConnectorConfiguration(null, connectorName);
+    return (props == null) ? (Map) new HashMap() : (Map) props;
+  }
+
+  public void setConnectorSchedule(String connectorName,
+      String connectorSchedule) throws ConnectorNotFoundException {
+    connectorScheduleStore.storeConnectorSchedule(null, connectorName,
+                                                  connectorSchedule);
+  }
+
+  public String getConnectorSchedule(String connectorName)
+      throws ConnectorNotFoundException {
+    return connectorScheduleStore.getConnectorSchedule(null, connectorName);
+  }
+
+  public void setConnectorState(String connectorName, String connectorState)
+      throws ConnectorNotFoundException {
+    getConnectorInstance(connectorName).getStateStore()
+        .storeConnectorState(null, connectorName, connectorState);
+  }
+
+  public String getConnectorState(String connectorName)
+      throws ConnectorNotFoundException {
+    return getConnectorInstance(connectorName).getStateStore()
+        .getConnectorState(null, connectorName);
+  }
+
+  private ConnectorInstance getConnectorInstance(String connectorName)
+      throws ConnectorNotFoundException {
+    if (connectorMap.containsKey(connectorName)) {
+      return (ConnectorInstance) connectorMap.get(connectorName);
+    } else {
+      throw new ConnectorNotFoundException("Connector not found: "
+          + connectorName);
+    }
+  }
+
+  private ConnectorInterfaces getConnectorInterfaces(String connectorName)
+      throws ConnectorNotFoundException {
+    return getConnectorInstance(connectorName).getConnectorInterfaces();
+  }
+
+
+  static class ConnectorInstance {
+    private final ConnectorInterfaces connectorInterfaces;
+    private final GenerationalStateStore stateStore;
+    private String typeName;
+    public ConnectorInstance(ConnectorInterfaces connectorInterfaces,
+                             GenerationalStateStore stateStore) {
+      this.connectorInterfaces = connectorInterfaces;
+      this.stateStore = stateStore;
+      this.typeName = "";
+    }
+    public GenerationalStateStore getStateStore() {
+      return this.stateStore;
+    }
+    public ConnectorInterfaces getConnectorInterfaces() {
+      return this.connectorInterfaces;
+    }
+    public void setTypeName(String typeName) {
+      this.typeName = typeName;
+    }
+    public String getTypeName() {
+      return this.typeName;
+    }
   }
 }

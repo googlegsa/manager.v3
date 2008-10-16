@@ -14,10 +14,12 @@
 
 package com.google.enterprise.connector.traversal;
 
+import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.jcr.JcrTraversalManager;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
@@ -56,9 +58,9 @@ public class QueryTraverserTest extends TestCase {
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     String connectorName = "foo";
-    ConnectorStateStore connectorStateStore = new MockConnectorStateStore();
+    MockInstantiator instantiator = new MockInstantiator();
     Traverser traverser = 
-      createTraverser(mrel, connectorName, connectorStateStore);
+      createTraverser(mrel, connectorName, instantiator);
 
     System.out.println();
     System.out.println("Running batch test batchsize " + batchSize);
@@ -84,8 +86,15 @@ public class QueryTraverserTest extends TestCase {
         }
       }
       totalDocsProcessed += docsProcessed;
+      String state = "";
+      try {
+        state = instantiator.getConnectorState(connectorName);
+      } catch (ConnectorNotFoundException e) {
+        Assert.fail("Connector " + connectorName + " Not Found: "
+                    + e.toString());
+      }
       System.out.println("Batch# " + batchNumber + " docs " + docsProcessed +
-          " checkpoint " + connectorStateStore.getConnectorState(connectorName));
+                         " checkpoint " + state);
       batchNumber++;
     }
     Assert.assertEquals(4,totalDocsProcessed);
@@ -95,11 +104,11 @@ public class QueryTraverserTest extends TestCase {
    * Create a Traverser.
    * @param mrel
    * @param connectorName
-   * @param connectorStateStore
+   * @param instantiator
    * @return
    */
   private Traverser createTraverser(MockRepositoryEventList mrel,
-      String connectorName, ConnectorStateStore connectorStateStore) {
+      String connectorName, MockInstantiator instantiator) {
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
 
@@ -107,7 +116,8 @@ public class QueryTraverserTest extends TestCase {
     MockPusher pusher = new MockPusher(System.out);
 
     Traverser traverser =
-        new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
+        new QueryTraverser(pusher, qtm, instantiator, connectorName);
+    instantiator.setupTraverser(connectorName, traverser);
     return traverser;
   }
   
@@ -146,9 +156,8 @@ public class QueryTraverserTest extends TestCase {
     MockRepositoryEventList mrel =
       new MockRepositoryEventList("MockRepositoryEventLogLargeFile.txt");
     String connectorName = "foo";
-    ConnectorStateStore connectorStateStore = new MockConnectorStateStore();
-    Traverser traverser = 
-      createTraverser(mrel, connectorName, connectorStateStore);
+    MockInstantiator instantiator = new MockInstantiator();
+    Traverser traverser = createTraverser(mrel, connectorName, instantiator);
     int docsProcessed = 0;
     do {
       docsProcessed = traverser.runBatch(1);

@@ -19,9 +19,7 @@ import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.monitor.HashMapMonitor;
-import com.google.enterprise.connector.persist.ConnectorScheduleStore;
-import com.google.enterprise.connector.persist.MockConnectorScheduleStore;
-import com.google.enterprise.connector.persist.MockConnectorStateStore;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.MockPusher;
 
 import junit.framework.Assert;
@@ -38,12 +36,10 @@ import java.util.List;
 public class TraversalSchedulerTest extends TestCase {
   private TraversalScheduler runWithSchedules(List schedules, 
       Instantiator instantiator, boolean shutdown) {
+    storeSchedules(schedules, instantiator);
     WorkQueue workQueue = new WorkQueue(2, 5000);
-    ConnectorScheduleStore scheduleStore = 
-      createConnectorScheduleStore(schedules);
     TraversalScheduler scheduler = 
-      new TraversalScheduler(instantiator, new HashMapMonitor(),
-        workQueue, scheduleStore);
+      new TraversalScheduler(instantiator, new HashMapMonitor(), workQueue);
     scheduler.init();
     Thread thread = new Thread(scheduler, "TraversalScheduler");
     thread.start();
@@ -71,16 +67,19 @@ public class TraversalSchedulerTest extends TestCase {
    * MockInstantiator.
    * @return the ConnectorConfigStore
    */
-  private ConnectorScheduleStore createConnectorScheduleStore(List schedules) {
-    ConnectorScheduleStore store = new MockConnectorScheduleStore();
+  private void storeSchedules(List schedules, Instantiator instantiator) {
     Iterator iter = schedules.iterator();
     while (iter.hasNext()) {
       Schedule schedule = (Schedule) iter.next();
       String connectorName = schedule.getConnectorName();
       String connectorSchedule = schedule.toString();
-      store.storeConnectorSchedule(connectorName, connectorSchedule);
+      try {
+        instantiator.setConnectorSchedule(connectorName, connectorSchedule);
+      } catch (ConnectorNotFoundException e) {
+        Assert.fail("Connector " + connectorName + " Not Found: "
+                    + e.toString());
+      }
     }
-    return store;
   }
   
   private Instantiator createMockInstantiator() {
@@ -91,11 +90,8 @@ public class TraversalSchedulerTest extends TestCase {
     // set up a pusher
     MockPusher pusher = new MockPusher(System.out);
 
-    // set up a ConnectorStateStore
-    MockConnectorStateStore css = new MockConnectorStateStore();
-
     Instantiator instantiator =
-      new SpringInstantiator(pusher, css);
+      new SpringInstantiator(pusher);
     
     return instantiator;
   }

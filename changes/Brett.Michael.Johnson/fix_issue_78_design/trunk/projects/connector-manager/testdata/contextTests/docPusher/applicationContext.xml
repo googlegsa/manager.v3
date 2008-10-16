@@ -18,6 +18,9 @@
 	<bean id="Pusher"
 		class="com.google.enterprise.connector.pusher.MockPusher"/>
 
+	<bean id="ConnectorConfigStore"
+		class="com.google.enterprise.connector.persist.MockConnectorConfigStore"/>
+
 	<bean id="ConnectorScheduleStore"
 		class="com.google.enterprise.connector.persist.MockConnectorScheduleStore"/>
 

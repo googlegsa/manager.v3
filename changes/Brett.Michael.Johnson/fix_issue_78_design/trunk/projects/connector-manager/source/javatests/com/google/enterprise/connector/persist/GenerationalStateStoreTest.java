@@ -40,8 +40,8 @@ public class GenerationalStateStoreTest extends TestCase {
     String expectedState = "state of connectorA";
     String connectorName = "connectorA";
     long myGeneration = store.myGeneration(connectorName);
-    store.storeConnectorState(connectorName, expectedState);
-    String resultState = store.getConnectorState(connectorName);
+    store.storeConnectorState(null, connectorName, expectedState);
+    String resultState = store.getConnectorState(null, connectorName);
     Assert.assertTrue(resultState.equals(expectedState));
     Assert.assertTrue(myGeneration == store.myGeneration(connectorName));
     Assert.assertTrue(myGeneration ==
@@ -50,7 +50,7 @@ public class GenerationalStateStoreTest extends TestCase {
 
   // Tests getting state for an unknown connector.
   public void testGetUnknownConnectorState() {
-    String state = store.getConnectorState("some wierd connector name");
+    String state = store.getConnectorState(null, "some wierd connector name");
     Assert.assertNull(state);
   }
 
@@ -60,10 +60,10 @@ public class GenerationalStateStoreTest extends TestCase {
     String connectorState = "foobar's state";
     Assert.assertTrue(store.myGeneration(connectorName) ==
         GenerationalStateStore.currentGeneration(connectorName));
-    String state = store.getConnectorState(connectorName);
+    String state = store.getConnectorState(null, connectorName);
     Assert.assertNull(state);
-    store.storeConnectorState(connectorName, connectorState);
-    state = store.getConnectorState(connectorName);
+    store.storeConnectorState(null, connectorName, connectorState);
+    state = store.getConnectorState(null, connectorName);
     Assert.assertEquals(connectorState, state);
     Assert.assertTrue(store.myGeneration(connectorName) ==
         GenerationalStateStore.currentGeneration(connectorName));
@@ -78,14 +78,14 @@ public class GenerationalStateStoreTest extends TestCase {
     String connectorState = "foo's state";
     Assert.assertTrue(store.myGeneration(connectorName) ==
         GenerationalStateStore.currentGeneration(connectorName));
-    String state = store.getConnectorState(connectorName);
+    String state = store.getConnectorState(null, connectorName);
     Assert.assertNull(state);
-    store.storeConnectorState(connectorName, connectorState);
-    state = store.getConnectorState(connectorName);
+    store.storeConnectorState(null, connectorName, connectorState);
+    state = store.getConnectorState(null, connectorName);
     Assert.assertEquals(connectorState, state);
     Assert.assertTrue(store.myGeneration(connectorName) ==
         GenerationalStateStore.currentGeneration(connectorName));
-    store.removeConnectorState(connectorName);
+    store.removeConnectorState(null, connectorName);
     Assert.assertTrue(store.myGeneration(connectorName) !=
         GenerationalStateStore.currentGeneration(connectorName));
   }
@@ -104,16 +104,16 @@ public class GenerationalStateStoreTest extends TestCase {
     String bazNewState = "baz's new state";
     long bazGeneration = store.myGeneration(bazName);
 
-    String state = store.getConnectorState(barName);
+    String state = store.getConnectorState(null, barName);
     Assert.assertNull(state);
-    store.storeConnectorState(barName, barState);
+    store.storeConnectorState(null, barName, barState);
 
-    store.storeConnectorState(bazName, bazState);
+    store.storeConnectorState(null, bazName, bazState);
 
-    state = store.getConnectorState(barName);
+    state = store.getConnectorState(null, barName);
     Assert.assertEquals(barState, state);
 
-    state = store.getConnectorState(bazName);
+    state = store.getConnectorState(null, bazName);
     Assert.assertEquals(bazState, state);
 
     Assert.assertTrue(store.myGeneration(barName) ==
@@ -136,15 +136,15 @@ public class GenerationalStateStoreTest extends TestCase {
 
     // Although the store is disabled for bar,
     // we should still be able to get and set baz's state.
-    store.storeConnectorState(bazName, bazNewState);
-    state = store.getConnectorState(bazName);
+    store.storeConnectorState(null, bazName, bazNewState);
+    state = store.getConnectorState(null, bazName);
     Assert.assertEquals(bazNewState, state);
 
     // Attempting to read or write to a disabled
     // connector state store should throw an exception.
     try {
       // This should throw an IllegalStateException.
-      state = store.getConnectorState(barName);
+      state = store.getConnectorState(null, barName);
       fail("getConnectorState() should have thrown IllegalStateException");
     } catch (IllegalStateException expected) {
       Assert.assertEquals(
@@ -154,7 +154,7 @@ public class GenerationalStateStoreTest extends TestCase {
 
     try {
       // This should throw an IllegalStateException.
-      store.storeConnectorState(barName, barNewState);
+      store.storeConnectorState(null, barName, barNewState);
       fail("storeConnectorState() should have thrown IllegalStateException");
     } catch (IllegalStateException expected1) {
       Assert.assertEquals(
@@ -167,21 +167,21 @@ public class GenerationalStateStoreTest extends TestCase {
     GenerationalStateStore newStore = new GenerationalStateStore(prefsStore);
 
     // Make sure the new store attempted while disabled didn't take.
-    state = newStore.getConnectorState(barName);
+    state = newStore.getConnectorState(null, barName);
     Assert.assertEquals(barState, state);
 
     // Make sure we can store using the new generation.
-    newStore.storeConnectorState(barName, barNewState);
-    state = newStore.getConnectorState(barName);
+    newStore.storeConnectorState(null, barName, barNewState);
+    state = newStore.getConnectorState(null, barName);
     Assert.assertEquals(barNewState, state);
 
     // We should still be able to remove the connector state,
     // even when disabled.
-    store.removeConnectorState(barName);
+    store.removeConnectorState(null, barName);
     newStore = new GenerationalStateStore(prefsStore);
-    state = newStore.getConnectorState(barName);
+    state = newStore.getConnectorState(null, barName);
     Assert.assertNull(state);
 
-    newStore.removeConnectorState(bazName);
+    newStore.removeConnectorState(null, bazName);
   }
 }
