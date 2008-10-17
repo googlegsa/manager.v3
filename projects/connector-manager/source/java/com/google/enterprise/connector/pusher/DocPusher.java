@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -714,7 +714,8 @@ public class DocPusher implements Pusher {
       }
     }
     try {
-      gsaResponse = feedConnection.sendData(connectorName, feedType, is);
+      GsaFeedData feedData = new GsaFeedData(feedType, is);
+      gsaResponse = feedConnection.sendData(connectorName, feedData);
       if (!gsaResponse.equals(GsaFeedConnection.SUCCESS_RESPONSE)) {
         String eMessage = gsaResponse;
         if (GsaFeedConnection.UNAUTHORIZED_RESPONSE.equals(gsaResponse)) {
@@ -730,13 +731,9 @@ public class DocPusher implements Pusher {
             + getRequiredString(document, SpiConstants.PROPNAME_DOCID) 
             + " from connector " + connectorName + " sent.");
       }
-    } catch (MalformedURLException e) {
-      LOGGER.log(Level.WARNING,
-          "Rethrowing MalformedURLException as PushException", e);
-      throw new PushException("MalformedURLException: " + e.getMessage(), e);
-    } catch (IOException e) {
-      LOGGER.log(Level.WARNING, "Rethrowing IOException as PushException", e);
-      throw new PushException("IOException: " + e.getMessage(), e);
+    } catch (FeedException e) {
+      LOGGER.log(Level.WARNING, "Rethrowing FeedException as PushException", e);
+      throw new PushException("FeedException: " + e.getMessage(), e);
     } finally {
       try {
         xmlData.close();
