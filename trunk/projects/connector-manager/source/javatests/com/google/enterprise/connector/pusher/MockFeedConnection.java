@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,17 +11,22 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.common.StringUtils;
 
-import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Mock <code>GsaFeedConnection</code> that expects to be given a
+ * <code>GsaFeedData</code> data object.  Stores the associated data stream into
+ * an internal buffer for later comparison.
+ */
 public class MockFeedConnection implements FeedConnection {
 
   StringBuffer buf = null;
-  
+
   public String getFeed() {
     String result;
     if (buf == null) {
@@ -36,12 +41,11 @@ public class MockFeedConnection implements FeedConnection {
     buf = new StringBuffer(2048);
   }
 
-  public String sendData(String datasource, String feedtype, InputStream data)
-      throws IOException {
+  public String sendData(String dataSource, FeedData feedData) {
+    InputStream data = ((GsaFeedData)feedData).getData();
     String dataStr = StringUtils.streamToString(data);
     buf.append(dataStr);
     System.out.println(dataStr);
     return GsaFeedConnection.SUCCESS_RESPONSE;
   }
-
 }
