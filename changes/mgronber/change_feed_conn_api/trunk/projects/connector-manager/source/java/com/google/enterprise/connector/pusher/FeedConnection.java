@@ -17,7 +17,7 @@ package com.google.enterprise.connector.pusher;
 /**
  * Interface for a feed connection. This takes in a data source name and a data
  * source object that contains the data to be sent.  The actual connection to
- * the feed server should be established by the implementation during\
+ * the feed server should be established by the implementation during
  * construction or initialization.
  */
 public interface FeedConnection {
