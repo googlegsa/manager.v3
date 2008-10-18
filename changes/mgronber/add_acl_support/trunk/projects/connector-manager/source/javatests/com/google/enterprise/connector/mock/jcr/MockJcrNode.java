@@ -129,7 +129,6 @@ public class MockJcrNode implements Node {
           SpiConstants.GROUP_ROLES_PROPNAME_PREFIX);
     }
     // Now push all the other properties onto the list.
-    List privateRepoProps = new ArrayList();
     for (Iterator iter = doc.getProplist().iterator(); iter.hasNext();) {
       MockRepositoryProperty prop = (MockRepositoryProperty) iter.next();
       // Don't pass on the some of the special MockRepoDocument properties so
@@ -195,15 +194,13 @@ public class MockJcrNode implements Node {
 
       // At this point we have the scope and list of roles that make up an ACL
       // Entry.  Add the scope to the list and, if there are roles specified,
-      // create an associated "<scope>::roles" property and add it to the
-      // propList.  In all cases double-quote the scope.
+      // create an associated "<rolesPrefix><scopeId>" property and add it to
+      // the propList.
       StringBuffer aclScopeId = new StringBuffer("\"").append(scopeId).
           append("\"");
       newAclScopes.add(aclScopeId.toString());
       if (rolesStr != null) {
-        // Create a multi-value property for the scope's roles.  The only way to
-        // create a multi-value entry is with a JSON object or a JSON string -
-        // {type:string, value:[one, two, three]}.
+        // Create a multi-value property for the scope's roles.
         List rolesList = Arrays.asList(rolesStr.split(",", 0));
         StringBuffer scopeRolesNameBuf =
             new StringBuffer(rolesPrefix).
