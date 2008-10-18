@@ -130,7 +130,7 @@ public class SpiConstants {
   /**
    * Identifies a multiple-valued String property that gives the list of
    * group ACL Scope IDs that are permitted RoleType.READER access to this
-   * document. If either of the PROPNAME_ACLGROUPS and PROPNAME_ACLUSERS
+   * document. If either of the PROPNAME_ACLGROUPS or PROPNAME_ACLUSERS
    * properties are non-null, then the GSA will grant or deny access to this
    * document for a given user on the basis of whether the user's name appears
    * as one of the Scope IDs in the PROPNAME_ACLUSERS list or one of the user's
@@ -142,13 +142,17 @@ public class SpiConstants {
    * Connector must add additional multi-value role properties to the document.
    * These entries are of the form:
    * <pre>
-   *   Name = &lt;PROPNAME_PREFIX&gt; + &lt;scopeId&gt;
+   *   Name = &lt;GROUP_ROLES_PROPNAME_PREFIX&gt; + &lt;scopeId&gt;
    *   Value = [RoleType[, ...]]
    * </pre>
    * where &lt;scopeId&gt; is the group ACL Scope ID, &lt;PROPNAME_PREFIX&gt; is
-   * the {@link #ROLES_PROPNAME_PREFIX}, and RoleType is one of the possible
-   * RoleType values.  User ACL Roles are of the same form except the
-   * &lt;scopeId&gt; will be the user ACL Scope ID.
+   * the {@link #GROUP_ROLES_PROPNAME_PREFIX}, and RoleType is one of the
+   * possible RoleType values.  User ACL Roles are of the form:
+   * <pre>
+   *   Name = &lt;USER_ROLES_PROPNAME_PREFIX&gt; + &lt;scopeId&gt;
+   *   Value = [RoleType[, ...]]
+   * </pre>
+   * where the &lt;scopeId&gt; will be the user ACL Scope ID.
    * <p>
    * If the PROPNAME_ISPUBLIC is missing or is true, then this property
    * is ignored, since the document is public.
@@ -168,11 +172,46 @@ public class SpiConstants {
   /**
    * Identifies a multiple-valued String property that gives the list of
    * users that are permitted access to this document. For details, see
-   * the PROPNAME_ACLGROUPS.
+   * the {@link #PROPNAME_ACLGROUPS}.
    * <p>
    * Value: google:aclusers
    */
   public static final String PROPNAME_ACLUSERS = "google:aclusers";
+
+  /**
+   * Prefix added to the front of the group ACL Scope ID when creating a group
+   * roles property name.  If the Connector wants to define specific roles
+   * associated with a group ACL Scope ID related to a document they should be
+   * stored in a multi-valued property named:
+   * <pre>
+   *   GROUP_ROLES_PROPNAME_PREFIX + &lt;scopeId&gt;
+   * </pre>
+   * For example, given a group ACL Entry of "eng=reader,writer" the roles for
+   * "eng" would be stored in a property as follows:
+   * <pre>
+   * Name = "google:group:roles:eng"
+   * Value = [reader, writer]
+   * </pre>
+   */
+  public static final String GROUP_ROLES_PROPNAME_PREFIX =
+      "google:group:roles:";
+
+  /**
+   * Prefix added to the front of the user ACL Scope ID when creating a user
+   * roles property name.  If the Connector wants to define specific roles
+   * associated with a user ACL Scope ID related to a document they should be
+   * stored in a multi-valued property named:
+   * <pre>
+   *   USER_ROLES_PROPNAME_PREFIX + &lt;scopeId&gt;
+   * </pre>
+   * For example, given a user ACL Entry of "joe=reader,writer" the roles for
+   * "joe" would be stored in a property as follows:
+   * <pre>
+   * Name = "google:user:roles:joe"
+   * Value = [reader, writer]
+   * </pre>
+   */
+  public static final String USER_ROLES_PROPNAME_PREFIX = "google:user:roles:";
 
   /**
    * Identifies an optional, single-valued property that specifies the action
@@ -182,23 +221,6 @@ public class SpiConstants {
    * Value: google:action
    */
   public static final String PROPNAME_ACTION = "google:action";
-
-  /**
-   * Prefix added to the front of the ACL Scope ID when creating a roles
-   * property name.  If the Connector wants to define specific roles associated
-   * with an ACL Scope ID related to a document they should be stored in a
-   * multi-valued property named:
-   * <pre>
-   *   ROLES_PROPNAME_PREFIX + &lt;scopeId&gt;
-   * </pre>
-   * For example, given an ACL Entry of "joe=reader,writer" the roles for "joe"
-   * would be stored in a property as follows:
-   * <pre>
-   * Name = "google:roles:joe"
-   * Value = [reader, writer]
-   * </pre>
-   */
-  public static final String ROLES_PROPNAME_PREFIX = "google:roles:";
 
   /**
    * Ordinal-base typesafe enum for action types.

@@ -122,9 +122,11 @@ public class MockJcrNode implements Node {
     MockRepositoryProperty aclProp = doc.getProplist().getProperty("acl");
     if (aclProp != null) {
       addAclProperty(MockRepositoryProperty.USER_SCOPE, aclProp, propList,
-          SpiConstants.PROPNAME_ACLUSERS);
+          SpiConstants.PROPNAME_ACLUSERS,
+          SpiConstants.USER_ROLES_PROPNAME_PREFIX);
       addAclProperty(MockRepositoryProperty.GROUP_SCOPE, aclProp, propList,
-          SpiConstants.PROPNAME_ACLGROUPS);
+          SpiConstants.PROPNAME_ACLGROUPS,
+          SpiConstants.GROUP_ROLES_PROPNAME_PREFIX);
     }
     // Now push all the other properties onto the list.
     List privateRepoProps = new ArrayList();
@@ -153,9 +155,12 @@ public class MockJcrNode implements Node {
    *     <code>repoAclProp</code>.
    * @param propName the key or property named to be used to store the ACL
    *     Entries in the given <code>propList</code>.
+   * @param rolesPrefix the prefix to use to add a property to define specific
+   *     roles for a ACL Entry.
    */
   private void addAclProperty(String scopeType,
-      MockRepositoryProperty repoAclProp, List propList, String propName) {
+      MockRepositoryProperty repoAclProp, List propList, String propName,
+      String rolesPrefix) {
     String[] values = repoAclProp.getValues();
     List newAclScopes = new ArrayList();
     for (int i = 0; i < values.length; i++) {
@@ -201,7 +206,7 @@ public class MockJcrNode implements Node {
         // {type:string, value:[one, two, three]}.
         List rolesList = Arrays.asList(rolesStr.split(",", 0));
         StringBuffer scopeRolesNameBuf =
-            new StringBuffer(SpiConstants.ROLES_PROPNAME_PREFIX).
+            new StringBuffer(rolesPrefix).
             append(scopeId);
         StringBuffer scopeRolesBuf = new StringBuffer("{type:string, value:").
             append(rolesList.toString()).append("}");

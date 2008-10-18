@@ -11,3 +11,6 @@
 {"timestamp":"70","type":"save","docid":"user_reader_acl","content":"this document has one reader",acl:joe,"google:ispublic":"false"}
 {"timestamp":"80","type":"save","docid":"user_owner_acl","content":"this document has one owner","acl":"joe=owner","google:ispublic":"false"}
 {"timestamp":"90","type":"save","docid":"user_scoped_owner_acl","content":"this document has one owner","acl":"user:joe=owner","google:ispublic":"false"}
+{"timestamp":"100","type":"save","docid":"same_user_group_acl","content":"this document has a user id and group id the same with different roles","acl":{type:string, value:["user:root=owner","group:root=reader,writer"]},"google:ispublic":"false"}
+{"timestamp":"110","type":"save","docid":"some_user_role_acl","content":"this document has one user with extra roles","acl":{type:string, value:["user:joe","user:mary=reader,writer","group:eng","group:root"]},"google:ispublic":"false"}
+{"timestamp":"120","type":"save","docid":"some_group_role_acl","content":"this document has one group with extra roles","acl":{type:string, value:["user:joe","user:mary","group:eng=reader,writer","group:root"]},"google:ispublic":"false"}
