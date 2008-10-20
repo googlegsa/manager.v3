@@ -613,13 +613,13 @@ public class DocPusherTest extends TestCase {
     String logLine;
     boolean isMatch = false;
     while ((logLine = logIn.readLine()) != null) {
-      if (logLine.contains(xmlLine)) {
+      if (logLine.indexOf(xmlLine) >= 0) {
         assertEquals(xmlLine, logLine.substring(7));
         // We match the first line - start comparing record
         isMatch = true;
         while ((xmlLine = xmlIn.readLine()) != null) {
           logLine = logIn.readLine();
-          if (xmlLine.contains("<content")) {
+          if (xmlLine.indexOf("<content") >= 0) {
             if (!"<content encoding=\"base64binary\">...content...</content>".equals(logLine)) {
               isMatch = false;
               break;
