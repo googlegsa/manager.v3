@@ -116,6 +116,12 @@
 				<fileset dir="${tests.src}" includes="**/${test.suite}Test.java" />
 			</batchtest>
 		</junit>
+                <junitreport todir="${tests.todir}">
+                    <fileset dir="${tests.todir}">
+                        <include name ="*.xml"/>
+                    </fileset>
+                    <report format="frames" todir="${tests.todir}"/>
+                </junitreport>
 	</target>
 
 	<target name="jar" depends="jar-prod,jar-tests" description="Create jars for the Connector SPI project"/>
