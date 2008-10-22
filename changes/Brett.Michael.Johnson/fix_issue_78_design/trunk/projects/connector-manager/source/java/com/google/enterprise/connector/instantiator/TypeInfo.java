@@ -41,35 +41,35 @@ public class TypeInfo {
   /**
    * @return the connectorInstancePrototype
    */
-  public Resource getConnectorInstancePrototype() {
+  Resource getConnectorInstancePrototype() {
     return connectorInstancePrototype;
   }
 
   /**
    * @return the connectorType
    */
-  public ConnectorType getConnectorType() {
+  ConnectorType getConnectorType() {
     return connectorType;
   }
 
   /**
    * @return the connectorTypeName
    */
-  public String getConnectorTypeName() {
+  String getConnectorTypeName() {
     return connectorTypeName;
   }
 
   /**
    * @return the connectorTypeDir
    */
-  public File getConnectorTypeDir() {
+  File getConnectorTypeDir() {
     return connectorTypeDir;
   }
 
   /**
    * @param connectorTypeDir the connectorTypeDir to set
    */
-  public void setConnectorTypeDir(File connectorTypeDir) {
+  void setConnectorTypeDir(File connectorTypeDir) {
     this.connectorTypeDir = connectorTypeDir;
   }
 
