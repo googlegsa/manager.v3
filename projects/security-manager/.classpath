@@ -6,7 +6,7 @@
 	<classpathentry kind="lib" path="/connector-manager/third-party/prod/servlet-api.jar"/>
 	<classpathentry kind="lib" path="third-party/prod/google-collect-snapshot-20080820.jar"/>
 	<classpathentry kind="lib" path="/connector-manager/dist/jarfile/connector.jar" sourcepath="/connector-manager/source/java"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry kind="lib" path="/connector-manager/dist/jarfile/connector-spi.jar" sourcepath="/connector-manager/source"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
