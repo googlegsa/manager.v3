@@ -169,6 +169,9 @@ public class PropertiesUtils {
    */
   public static Properties loadProperties(InputStream inputStream) 
       throws PropertiesException {
+    if (inputStream == null) {
+      return null;
+    }
     if (!inputStream.markSupported()) {
       throw new PropertiesException(
           "Properties InputStream must support mark() and reset() methods.");
@@ -216,6 +219,9 @@ public class PropertiesUtils {
    */
   public static void storeProperties(Properties properties,
       OutputStream outputStream, String comment) throws PropertiesException {
+    if (properties == null) {
+      return;
+    }
     try {
       // Make a copy of the Properties before munging them.
       Properties props = copy(properties);
@@ -240,6 +246,9 @@ public class PropertiesUtils {
    * the source properties.
    */
   public static Properties fromMap(Map sourceMap) {
+    if (sourceMap == null) {
+      return null;
+    }
     Properties properties = new Properties();
     properties.putAll(sourceMap);
     return properties;

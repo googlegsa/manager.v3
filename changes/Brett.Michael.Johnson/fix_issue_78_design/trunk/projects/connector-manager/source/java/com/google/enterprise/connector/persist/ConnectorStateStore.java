@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.persist;
 
-import com.google.enterprise.connector.instantiator.TypeInfo;
-
 /**
  * Interface describing the persistence needs of a Traverser.
  */
@@ -23,29 +21,25 @@ public interface ConnectorStateStore {
   /**
    * Gets the stored state of a named connector.
    *
-   * @param typeInfo connector type information
-   * @param connectorName name of the connector
+   * @param context a StoreContext
    * @return the state, or null if no state has been stored for this connector
    * @throws IllegalStateException if state store is disabled for this connector
    */
-  public String getConnectorState(TypeInfo typeInfo, String connectorName);
+  public String getConnectorState(StoreContext context);
 
   /**
    * Sets the stored state of a named connector.
    *
-   * @param typeInfo connector type information
-   * @param connectorName name of the connector
+   * @param context a StoreContext
    * @param connectorState String to store
    * @throws IllegalStateException if state store is disabled for this connector
    */
-  public void storeConnectorState(TypeInfo typeInfo, String connectorName, 
-      String connectorState);
+  public void storeConnectorState(StoreContext context, String connectorState);
 
   /**
    * Remove connector state.  If no such connector exists, do nothing.
    *
-   * @param typeInfo connector type information
-   * @param connectorName name of the connector
+   * @param context a StoreContext
    */
-  public void removeConnectorState(TypeInfo typeInfo, String connectorName);
+  public void removeConnectorState(StoreContext context);
 }

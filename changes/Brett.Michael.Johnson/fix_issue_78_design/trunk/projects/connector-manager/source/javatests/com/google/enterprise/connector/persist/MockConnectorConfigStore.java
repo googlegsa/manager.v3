@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.persist;
 
-import com.google.enterprise.connector.instantiator.TypeInfo;
-
 import java.util.HashMap;
 import java.util.Properties;
 
@@ -27,28 +25,26 @@ public class MockConnectorConfigStore extends HashMap
 
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.persist.ConnectorConfigStore
-   * #getConnectorConfig(TypeInfo, java.lang.String)
+   * #getConnectorConfig(StoreContext)
    */
-  public Properties getConnectorConfiguration(TypeInfo typeInfo, 
-      String connectorName) {
-    return (Properties) this.get(connectorName);
+  public Properties getConnectorConfiguration(StoreContext context) {
+    return (Properties) this.get(context.getConnectorName());
   }
 
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.persist.ConnectorConfigStore
-   * #storeConnectorConfig(TypeInfo, java.lang.String, java.util.Properties)
+   * #storeConnectorConfig(StoreContext, java.util.Properties)
    */
-  public void storeConnectorConfiguration(TypeInfo typeInfo, 
-      String connectorName, Properties connectorConfig) {
-    this.put(connectorName, connectorConfig);
+  public void storeConnectorConfiguration(StoreContext context,
+      Properties connectorConfig) {
+    this.put(context.getConnectorName(), connectorConfig);
   }
 
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.persist.ConnectorConfigStore
-   * #removeConnectorConfig(TypeInfo, java.lang.String)
+   * #removeConnectorConfig(StoreContext)
    */
-  public void removeConnectorConfiguration(TypeInfo typeInfo,
-      String connectorName) {
-    this.remove(connectorName);
+  public void removeConnectorConfiguration(StoreContext context) {
+    this.remove(context.getConnectorName());
   }
 }

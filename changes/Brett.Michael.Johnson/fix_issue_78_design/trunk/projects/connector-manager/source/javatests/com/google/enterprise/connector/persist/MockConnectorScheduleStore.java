@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.persist;
 
-import com.google.enterprise.connector.instantiator.TypeInfo;
-
 import java.util.HashMap;
 
 /**
@@ -26,32 +24,32 @@ public class MockConnectorScheduleStore extends HashMap
 
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.persist.ConnectorScheduleStore
-   * #getConnectorSchedule(TypeInfo, java.lang.String)
+   * #getConnectorSchedule(StoreContext)
    */
-  public String getConnectorSchedule(TypeInfo typeInfo, String connectorName) {
-    String scheduleStr = (String) this.get(connectorName);
+  public String getConnectorSchedule(StoreContext context) {
+    String scheduleStr = (String) this.get(context.getConnectorName());
     if (null == scheduleStr) {
       // if we get an unknown connectorName (i.e. one without known schedule),
       // we default to always run at 60 docs per minute, 100ms retry delay
-      scheduleStr = connectorName + ":60:100:0-0";
+      scheduleStr = context.getConnectorName() + ":60:100:0-0";
     }
     return scheduleStr;
   }
 
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.persist.ConnectorScheduleStore
-   * #storeConnectorSchedule(TypeInfo, java.lang.String, java.lang.String)
+   * #storeConnectorSchedule(StoreContext, java.lang.String)
    */
-  public void storeConnectorSchedule(TypeInfo typeInfo, String connectorName,
+  public void storeConnectorSchedule(StoreContext context,
       String connectorSchedule) {
-    this.put(connectorName, connectorSchedule);
+    this.put(context.getConnectorName(), connectorSchedule);
   }
 
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.persist.ConnectorScheduleStore
-   * #removeConnectorSchedule(TypeInfo, java.lang.String)
+   * #removeConnectorSchedule(StoreContext)
    */
-  public void removeConnectorSchedule(TypeInfo typeInfo, String connectorName) {
-    this.remove(connectorName);
+  public void removeConnectorSchedule(StoreContext context) {
+    this.remove(context.getConnectorName());
   }
 }

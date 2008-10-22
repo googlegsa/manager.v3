@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.persist;
 
-import com.google.enterprise.connector.instantiator.TypeInfo;
-
 /**
  * Interface describing the persistence needs of a Scheduler.
  */
@@ -23,28 +21,25 @@ public interface ConnectorScheduleStore {
   /**
    * Gets the stored schedule of a named connector.
    * 
-   * @param typeInfo connector type information
-   * @param connectorName name of the connector
+   * @param context a StoreContext
    * @return the schedule String, or null if no schedule has been stored for
    * this connector
    */
-  public String getConnectorSchedule(TypeInfo typeInfo, String connectorName);
+  public String getConnectorSchedule(StoreContext context);
 
   /**
    * Sets the stored schedule of a named connector.
    * 
-   * @param typeInfo connector type information
-   * @param connectorName name of the connector
+   * @param context a StoreContext
    * @param connectorSchedule String to store
    */
-  public void storeConnectorSchedule(TypeInfo typeInfo, String connectorName,
-      String connectorSchedule);
+  public void storeConnectorSchedule(StoreContext context,
+                                     String connectorSchedule);
   
   /**
    * Remove a connector schedule.  If no such connector exists, do nothing.
    *
-   * @param typeInfo connector type information
-   * @param connectorName name of the connector
+   * @param context a StoreContext
    */
-  public void removeConnectorSchedule(TypeInfo typeInfo, String connectorName);
+  public void removeConnectorSchedule(StoreContext context);
 }

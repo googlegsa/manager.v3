@@ -13,7 +13,6 @@
 // limitations under the License.
 package com.google.enterprise.connector.persist;
 
-import com.google.enterprise.connector.instantiator.TypeInfo;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.PropertiesException;
 
@@ -56,78 +55,76 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
 
   /**
    * Retrieves connector schedule.
-   * @param connectorName connector name
+   * @param context a StoreContext
    * @return connectorSchedule schedule of the corresponding connector.
    */
-  public String getConnectorSchedule(TypeInfo typeInfo, String connectorName) {
+  public String getConnectorSchedule(StoreContext context) {
     String connectorSchedule;
-    connectorSchedule = prefsSchedule.get(connectorName, null);
+    connectorSchedule = prefsSchedule.get(context.getConnectorName(), null);
     return connectorSchedule;
   }
 
   /**
    * Stores connector schedule.
-   * @param connectorName connector name
+   * @param context a StoreContext
    * @param connectorSchedule schedule of the corresponding connector.
    */
-  public void storeConnectorSchedule(TypeInfo typeInfo, String connectorName,
+  public void storeConnectorSchedule(StoreContext context,
       String connectorSchedule)  {
-    prefsSchedule.put(connectorName, connectorSchedule);
+    prefsSchedule.put(context.getConnectorName(), connectorSchedule);
   }
 
   /**
    * Remove a connector schedule.  If no such connector exists, do nothing.
-   * @param connectorName name of the connector.
+   * @param context a StoreContext
    */
-  public void removeConnectorSchedule(TypeInfo typeInfo, String connectorName) {
-    prefsSchedule.remove(connectorName);
+  public void removeConnectorSchedule(StoreContext context) {
+    prefsSchedule.remove(context.getConnectorName());
     flush();
   }
 
   /**
    * Gets the stored state of a named connector.
-   * @param connectorName connector name
+   * @param context a StoreContext
    * @return the state, or null if no state has been stored for this connector
    */
-  public String getConnectorState(TypeInfo typeInfo, String connectorName) {
-    return prefsState.get(connectorName, null);
+  public String getConnectorState(StoreContext context) {
+    return prefsState.get(context.getConnectorName(), null);
   }
 
   /**
    * Stores connector state.
-   * @param connectorName connector name
+   * @param context a StoreContext
    * @param connectorState state of the corresponding connector
    */
-  public void storeConnectorState(TypeInfo typeInfo, String connectorName, 
+  public void storeConnectorState(StoreContext context, 
       String connectorState) {
-    prefsState.put(connectorName, connectorState);
+    prefsState.put(context.getConnectorName(), connectorState);
   }
 
   /**
    * Remove connector state.  If no such connector exists, do nothing.
-   * @param connectorName name of the connector.
+   * @param context a StoreContext
    */
-  public void removeConnectorState(TypeInfo typeInfo, String connectorName) {
-    prefsState.remove(connectorName);
+  public void removeConnectorState(StoreContext context) {
+    prefsState.remove(context.getConnectorName());
     flush();
   }
 
   /**
    * Gets the stored configuration of a named connector.
    *
-   * @param typeInfo connector type information
-   * @param connectorName
-   * @return the configuration Properties, or null if no configuration has 
-   * been stored for this connector
+   * @param context a StoreContext
+   * @return the configuration Properties, or null if no configuration 
+   * has been stored for this connector
    */
-  public Properties getConnectorConfiguration(TypeInfo typeInfo, 
-      String connectorName) {
+  public Properties getConnectorConfiguration(StoreContext context) {
     try {
-      String propStr = prefsConfig.get(connectorName, null);
+      String propStr = prefsConfig.get(context.getConnectorName(), null);
       return PropertiesUtils.loadFromString(propStr);
     } catch (PropertiesException e) {
       LOGGER.log(Level.WARNING, "Failed to read connector configuration for "
-                 + connectorName, e);
+                 + context.getConnectorName(), e);
     }
     return null;
   }
@@ -135,20 +132,19 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
   /**
    * Stores the configuration of a named connector.
    * 
-   * @param typeInfo connector type information
-   * @param connectorName
+   * @param context a StoreContext
    * @param configuration Properties to store
    */
-  public void storeConnectorConfiguration(TypeInfo typeInfo, 
-      String connectorName, Properties configuration) {
+  public void storeConnectorConfiguration(StoreContext context,
+      Properties configuration) {
     try {
-      String header = "Configuration for " + typeInfo.getConnectorTypeName()
-          + " Connector " + connectorName;
+      String header = "Configuration for Connector " 
+          + context.getConnectorName();
       String propStr = PropertiesUtils.storeToString(configuration, header);
-      prefsConfig.put(connectorName, propStr);
+      prefsConfig.put(context.getConnectorName(), propStr);
     } catch (PropertiesException e) {
       LOGGER.log(Level.WARNING, "Failed to store connector configuration for "
-                 + connectorName, e);
+                 + context.getConnectorName(), e);
     }
   }
   
@@ -156,12 +152,10 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    * Remove a stored connector configuration.  If no such connector exists,
    * do nothing.
    *
-   * @param typeInfo connector type information
-   * @param connectorName name of the connector.
+   * @param context a StoreContext
    */
-  public void removeConnectorConfiguration(TypeInfo typeInfo,
-      String connectorName) {
-    prefsConfig.remove(connectorName);
+  public void removeConnectorConfiguration(StoreContext context) {
+    prefsConfig.remove(context.getConnectorName());
   }
 
   /**

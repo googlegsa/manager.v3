@@ -22,8 +22,10 @@ import com.google.enterprise.connector.persist.ConnectorConfigStore;
 import com.google.enterprise.connector.persist.ConnectorScheduleStore;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.GenerationalStateStore;
+import com.google.enterprise.connector.persist.StoreContext;
 
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.xml.XmlBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.ByteArrayResource;
@@ -55,6 +57,7 @@ public final class InstanceInfo {
   private final TypeInfo typeInfo;
   private final File connectorDir;
   private final String connectorName;
+  private final StoreContext storeContext;
 
   private final ConnectorConfigStore configStore;
   private final ConnectorScheduleStore schedStore;
@@ -86,8 +89,7 @@ public final class InstanceInfo {
    */
   Map getConfigMap() {
     if (properties == null) {
-      properties = 
-          configStore.getConnectorConfiguration(typeInfo, connectorName);
+      properties = configStore.getConnectorConfiguration(storeContext);
     }
     return properties;
   }
@@ -111,6 +113,8 @@ public final class InstanceInfo {
     this.connectorName = connectorName;
     this.connectorDir = connectorDir;
     this.typeInfo = typeInfo;
+    this.storeContext = new StoreContext(connectorName, connectorDir,
+                                         typeInfo.getConnectorTypeName());
 
     Context context = Context.getInstance();
     this.configStore = (ConnectorConfigStore) context.getRequiredBean(
@@ -132,16 +136,16 @@ public final class InstanceInfo {
   public void removeConnector() {
     // Side effect of GenerationalStateStore.removeConnectorState() 
     // is a new generation.
-    stateStore.removeConnectorState(typeInfo, connectorName);
-    schedStore.removeConnectorSchedule(typeInfo, connectorName);
-    configStore.removeConnectorConfiguration(typeInfo, connectorName);
+    stateStore.removeConnectorState(storeContext);
+    schedStore.removeConnectorSchedule(storeContext);
+    configStore.removeConnectorConfiguration(storeContext);
   }
 
   public static InstanceInfo fromDirectory(String connectorName,
       File connectorDir, TypeInfo typeInfo) throws InstanceInfoException {
     InstanceInfo info = new InstanceInfo(connectorName, connectorDir, typeInfo);
     info.properties =
-        info.configStore.getConnectorConfiguration(typeInfo, connectorName);
+        info.configStore.getConnectorConfiguration(info.storeContext);
 
     // Upgrade from Legacy Configuration Data Stores. This method is
     // called to instantiate Connectors that were created by some 
@@ -155,10 +159,10 @@ public final class InstanceInfo {
     if (info.properties == null) {
       upgradeConfigStore(info);
     }
-    if (info.schedStore.getConnectorSchedule(typeInfo, connectorName) == null) {
+    if (info.schedStore.getConnectorSchedule(info.storeContext) == null) {
       upgradeScheduleStore(info);
     }
-    if (info.stateStore.getConnectorState(typeInfo, connectorName) == null) {
+    if (info.stateStore.getConnectorState(info.storeContext) == null) {
       upgradeStateStore(info);
     }
 
@@ -277,11 +281,14 @@ public final class InstanceInfo {
    */
   private static Resource getPropertiesResource(InstanceInfo info)
       throws InstanceInfoException {
+    Properties properties =
+        (info.properties == null) ? new Properties() : info.properties;
     try {
       return new ByteArrayResourceHack(
-          PropertiesUtils.storeToString(info.properties, null).getBytes());
+          PropertiesUtils.storeToString(properties, null).getBytes());
     } catch (PropertiesException e) {
-      throw new PropertyProcessingInternalFailureException(e, info.connectorName);
+      throw new PropertyProcessingInternalFailureException(e,
+          info.connectorName);
     }
   }
 
@@ -311,14 +318,14 @@ public final class InstanceInfo {
    * configuration data, or null if no configuration is stored.
    */
   public Map getConnectorConfig() {
-    return configStore.getConnectorConfiguration(typeInfo, connectorName);
+    return configStore.getConnectorConfiguration(storeContext);
   }
 
   public void setConnectorConfig(Map configMap) {
     if (configMap == null) {
-      configStore.removeConnectorConfiguration(typeInfo, connectorName);
+      configStore.removeConnectorConfiguration(storeContext);
     } else {
-      configStore.storeConnectorConfiguration(typeInfo, connectorName,
+      configStore.storeConnectorConfiguration(storeContext,
           PropertiesUtils.fromMap(configMap));
     }
   }
@@ -331,9 +338,9 @@ public final class InstanceInfo {
    */
   public void setConnectorSchedule(String connectorSchedule) {
     if (connectorSchedule == null) {
-      schedStore.removeConnectorSchedule(typeInfo, connectorName);
+      schedStore.removeConnectorSchedule(storeContext);
     } else {
-      schedStore.storeConnectorSchedule(typeInfo, connectorName,
+      schedStore.storeConnectorSchedule(storeContext,
                                         connectorSchedule);
     }
   }
@@ -345,7 +352,7 @@ public final class InstanceInfo {
    * for this connector
    */
   public String getConnectorSchedule() {
-    return schedStore.getConnectorSchedule(typeInfo, connectorName);
+    return schedStore.getConnectorSchedule(storeContext);
   }
 
   /**
@@ -357,9 +364,9 @@ public final class InstanceInfo {
    */
   public void setConnectorState(String connectorState) {
     if (connectorState == null) {
-      stateStore.removeConnectorState(typeInfo, connectorName);
+      stateStore.removeConnectorState(storeContext);
     } else {
-      stateStore.storeConnectorState(typeInfo, connectorName, connectorState);
+      stateStore.storeConnectorState(storeContext, connectorState);
     }
   }
 
@@ -370,7 +377,7 @@ public final class InstanceInfo {
    * @throws IllegalStateException if state store is disabled for this connector
    */
   public String getConnectorState() {
-    return stateStore.getConnectorState(typeInfo, connectorName);
+    return stateStore.getConnectorState(storeContext);
   }
 
 
@@ -397,6 +404,8 @@ public final class InstanceInfo {
       } else if (bean instanceof Collection) {
         return (Collection)(((Collection)bean).isEmpty() ? null : bean);
       }
+    } catch (NoSuchBeanDefinitionException e) {
+      // These are optional, so they need not be defined.
     } catch (BeansException e) {
       LOGGER.log(Level.WARNING, "Unable to process Legacy Connector Store bean "
                  + beanName, e);
@@ -419,14 +428,13 @@ public final class InstanceInfo {
       Iterator iter = info.legacyConfigStores.iterator();
       while (iter.hasNext()) {
         ConnectorConfigStore legacyStore = (ConnectorConfigStore)iter.next();
-        Properties properties = legacyStore.getConnectorConfiguration(
-            info.typeInfo, info.connectorName);
+        Properties properties =
+            legacyStore.getConnectorConfiguration(info.storeContext);
         if (properties != null) {
           info.properties = properties;
-          info.configStore.storeConnectorConfiguration(
-              info.typeInfo, info.connectorName, properties);
-          legacyStore.removeConnectorConfiguration(
-              info.typeInfo, info.connectorName);          
+          info.configStore.storeConnectorConfiguration(info.storeContext,
+                                                       properties);
+          legacyStore.removeConnectorConfiguration(info.storeContext);
           return;
         }
       }
@@ -448,13 +456,10 @@ public final class InstanceInfo {
       Iterator iter = info.legacyScheduleStores.iterator();
       while (iter.hasNext()) {
         ConnectorScheduleStore legacyStore = (ConnectorScheduleStore)iter.next();
-        String schedule = legacyStore.getConnectorSchedule(
-            info.typeInfo, info.connectorName);
+        String schedule = legacyStore.getConnectorSchedule(info.storeContext);
         if (schedule != null) {
-          info.schedStore.storeConnectorSchedule(
-              info.typeInfo, info.connectorName, schedule);
-          legacyStore.removeConnectorSchedule(
-              info.typeInfo, info.connectorName);          
+          info.schedStore.storeConnectorSchedule(info.storeContext, schedule);
+          legacyStore.removeConnectorSchedule(info.storeContext);
           return;
         }
       }
@@ -476,13 +481,10 @@ public final class InstanceInfo {
       Iterator iter = info.legacyStateStores.iterator();
       while (iter.hasNext()) {
         ConnectorStateStore legacyStore = (ConnectorStateStore)iter.next();
-        String state = legacyStore.getConnectorState(
-            info.typeInfo, info.connectorName);
+        String state = legacyStore.getConnectorState(info.storeContext);
         if (state != null) {
-          info.stateStore.storeConnectorState(
-              info.typeInfo, info.connectorName, state);
-          legacyStore.removeConnectorState(
-              info.typeInfo, info.connectorName);          
+          info.stateStore.storeConnectorState(info.storeContext, state);
+          legacyStore.removeConnectorState(info.storeContext);
           return;
         }
       }

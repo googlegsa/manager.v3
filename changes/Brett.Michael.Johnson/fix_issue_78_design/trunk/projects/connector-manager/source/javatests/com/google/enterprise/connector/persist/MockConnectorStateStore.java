@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.persist;
 
-import com.google.enterprise.connector.instantiator.TypeInfo;
-
 import java.util.HashMap;
 
 /**
@@ -26,26 +24,25 @@ public class MockConnectorStateStore extends HashMap
 
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.persist.ConnectorStateStore
-   * #getConnectorState(TypeInfo, java.lang.String)
+   * #getConnectorState(StoreContext)
    */
-  public String getConnectorState(TypeInfo typeInfo, String connectorName) {
-    return (String) this.get(connectorName);
+  public String getConnectorState(StoreContext context) {
+    return (String) this.get(context.getConnectorName());
   }
 
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.persist.ConnectorStateStore
-   * #storeConnectorState(TypeInfo, java.lang.String, java.lang.String)
+   * #storeConnectorState(StoreContext, java.lang.String)
    */
-  public void storeConnectorState(TypeInfo typeInfo, String connectorName, 
-      String connectorState) {
-    this.put(connectorName, connectorState);
+  public void storeConnectorState(StoreContext context, String connectorState) {
+    this.put(context.getConnectorName(), connectorState);
   }
 
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.persist.ConnectorStateStore
-   * #removeConnectorState(TypeInfo, java.lang.String)
+   * #removeConnectorState(StoreContext)
    */
-  public void removeConnectorState(TypeInfo typeInfo, String connectorName) {
-    this.remove(connectorName);
+  public void removeConnectorState(StoreContext context) {
+    this.remove(context.getConnectorName());
   }
 }

@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.persist;
 
-import com.google.enterprise.connector.instantiator.TypeInfo;
-
 import java.util.Properties;
 
 /**
@@ -25,28 +23,26 @@ public interface ConnectorConfigStore {
   /**
    * Gets the stored configuration of a named connector.
    * 
-   * @param connectorName
+   * @param context a StoreContext
    * @return the configuration Properties, or null if no configuration has 
    * been stored for this connector
    */
-  public Properties getConnectorConfiguration(TypeInfo typeInfo,
-      String connectorName);
+  public Properties getConnectorConfiguration(StoreContext context);
 
   /**
    * Sets the stored configuration of a named connector.
    * 
-   * @param connectorName
+   * @param context a StoreContext
    * @param configuration Properties to store
    */
-  public void storeConnectorConfiguration(TypeInfo typeInfo, 
-      String connectorName, Properties configuration);
+  public void storeConnectorConfiguration(StoreContext context,
+      Properties configuration);
   
   /**
    * Remove a stored connector configuration.  If no such connector exists,
    * do nothing.
    *
-   * @param connectorName name of the connector.
+   * @param context a StoreContext
    */
-  public void removeConnectorConfiguration(TypeInfo typeInfo, 
-      String connectorName);
+  public void removeConnectorConfiguration(StoreContext context);
 }
