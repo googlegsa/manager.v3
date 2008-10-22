@@ -20,15 +20,13 @@ import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
 
 import junit.framework.Assert;
-
-import org.junit.Test;
+import junit.framework.TestCase;
 
 import java.util.Collection;
 import java.util.List;
 
-public class SimpleMockAuthorizationManagerTest {
+public class SimpleMockAuthorizationManagerTest extends TestCase {
 
-  @Test
   public void testAuthorizeDocids() throws RepositoryException {
     AuthorizationManager am = new SimpleMockAuthorizationManager();
     Assert.assertTrue(runOneTest(am, "http://foo.com/bar"));

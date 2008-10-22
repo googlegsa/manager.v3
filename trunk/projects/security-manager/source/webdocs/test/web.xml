@@ -35,8 +35,8 @@
     </servlet>
  
     <servlet>
-        <servlet-name>AuthorizationTest</servlet-name>
-        <servlet-class>com.google.enterprise.connector.servlet.AuthorizationTest</servlet-class>
+        <servlet-name>TestAuthorization</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.TestAuthorization</servlet-class>
     </servlet>
  
     <servlet-mapping>
@@ -45,7 +45,7 @@
     </servlet-mapping>
 
     <servlet-mapping>
-        <servlet-name>AuthorizationTest</servlet-name>
-	<url-pattern>/authorizationTest/*</url-pattern>
+        <servlet-name>TestAuthorization</servlet-name>
+	<url-pattern>/testAuthorization/*</url-pattern>
     </servlet-mapping>
 </web-app>
