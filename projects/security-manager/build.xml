@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<project name="security-manager" default="security_manager" basedir=".">
+
+	<!-- ========================= PROPERTIES ============================= -->
+	<property name="version" value="1.0" />
+
+	<!-- Define Directories. -->
+	<property name="projects.dir" value=".." />
+
+	<property name="COMPILE_DEBUG_FLAG" value="true" />
+	<property name="COMPILE_DEBUG_LEVEL" value="source,lines,vars" />
+
+	<property name="build" value="build" />
+	<property name="prod" value="${build}/prod" />
+	<property name="dist" value="dist" />
+	<property name="src" value="source/java" />
+	<property name="classes" value="${prod}/classes" />
+	<property name="webdocs" value="source/webdocs" />
+
+	<property name="connector-thirdparty.dir" value="${projects.dir}/connector-manager/third-party" />
+	<property name="connector-dist.dir" value="${projects.dir}/connector-manager/dist/jarfile" />
+	<property name="tests.src" value="source/javatests" />
+	<property name="tests.build" value="${build}/tests" />
+	<property name="tests.classes" value="${tests.build}/classes" />
+	<property name="tests.todir" value="tests_outdir" />
+	<property name="tests.data" value="testdata" />
+	<property name="jar.dir" value="${dist}/jarfile" />
+	<property name="security.jarfile" value="${jar.dir}/security.jar" />
+	<property name="tests.jarfile" value="${jar.dir}/security-tests.jar" />
+	<property name="thirdparty.prod.jars" value="third-party/prod" />
+	<property name="thirdparty.tests.jars" value="third-party/tests" />
+	<property name="junit.jarfile" value="${thirdparty.prod.jars}/junit.jar" />
+
+	<!-- The directory where all war-files are collected -->
+	<property name="war.dir" value="${dist}/${ant.project.name}" />
+
+	<!-- =========================== TASKS =============================== -->
+	<target name="security_manager" description="Google Enterprise Security Manager" depends="war-prod" />
+
+	<target name="all" depends="war" />
+
+	<target name="everything" depends="all,run_tests" />
+
+	<target name="init">
+		<mkdir dir="${build}" />
+		<mkdir dir="${prod}" />
+		<mkdir dir="${dist}" />
+		<mkdir dir="${classes}" />
+		<mkdir dir="${tests.build}" />
+		<mkdir dir="${tests.classes}" />
+		<mkdir dir="${tests.todir}" />
+		<mkdir dir="${tests.data}/tmp" />
+		<mkdir dir="${jar.dir}" />
+	</target>
+
+	<target name="compile" depends="init">
+		<!-- compile java source files -->
+		<javac srcdir="${src}" destdir="${classes}" debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
+			<classpath>
+				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+				<fileset dir="${connector-dist.dir}" includes="**/*.jar" />
+				<pathelement location="${connector-thirdparty.dir}/prod/servlet-api.jar" />
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="compile_tests" depends="init,compile">
+		<!-- compile java source files for tests -->
+		<javac srcdir="${tests.src}" destdir="${tests.classes}" debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
+			<classpath>
+				<pathelement location="${classes}" />
+				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+				<fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
+				<fileset dir="${connector-dist.dir}" includes="**/*.jar" />
+				<pathelement location="${connector-thirdparty.dir}/prod/servlet-api.jar" />
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="run_tests" depends="compile_tests">
+		<property name="test.suite" value="*" />
+		<junit haltonfailure="yes" dir=".">
+			<classpath>
+				<pathelement location="${classes}" />
+				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+				<fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
+				<fileset dir="${connector-dist.dir}" includes="**/*.jar" />
+				<pathelement location="${tests.classes}" />
+				<pathelement path="${java.class.path}" />
+			</classpath>
+			<formatter type="xml" />
+			<batchtest fork="yes" todir="${tests.todir}">
+				<fileset dir="${tests.src}" includes="**/${test.suite}Test.java" />
+			</batchtest>
+		</junit>
+		<junitreport todir="${tests.todir}">
+			<fileset dir="${tests.todir}">
+				<include name="*.xml" />
+			</fileset>
+			<report format="frames" todir="${tests.todir}" />
+		</junitreport>
+	</target>
+
+	<target name="jar" depends="jar-prod,jar-tests" description="Create jars for the Security Manager project" />
+
+	<target name="jar-prod" depends="compile" description="Create production jars for the Security Manager project">
+		<tstamp />
+		<jar jarfile="${security.jarfile}">
+			<fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**" />
+			<manifest>
+				<attribute name="Implementation-Title" value="Security Manager Impl" />
+				<attribute name="Implementation-Version" value="${version} (build ${svnversion}  ${TODAY})" />
+				<attribute name="Implementation-Vendor" value="Google Inc." />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="jar-tests" depends="compile,compile_tests" description="Create test jars for the Security Manager project">
+		<tstamp />
+		<jar jarfile="${tests.jarfile}">
+			<fileset dir="${tests.classes}" includes="**/*.class" />
+			<manifest>
+				<attribute name="Implementation-Title" value="Security Manager Tests" />
+				<attribute name="Implementation-Version" value="${version} (build ${svnversion}  ${TODAY})" />
+				<attribute name="Implementation-Vendor" value="Google Inc." />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="clean" description="Deletes all build files.">
+		<delete dir="${build}" />
+		<delete dir="${dist}" />
+		<delete dir="${tests.todir}" />
+		<delete dir="${tests.todir}" />
+		<delete dir="${tests.data}/tmp" />
+	</target>
+
+	<!-- ======================Installation targets====================== -->
+
+	<target name="install_init">
+		<mkdir dir="${war.dir}" />
+	</target>
+
+	<!--  Builds a Web Archive - basically a JAR file which
+	also contains all and can be deployed as-is.
+	-->
+
+	<target name="war" depends="war-prod,war-tests" description="Builds the Production WAR file." />
+
+	<target name="war-prod" depends="install_init,jar-prod" description="Builds the Production WAR file for installation.">
+		<echo> The production war file dir is located at ${war.dir}</echo>
+
+		<tstamp />
+		<war warfile="${war.dir}/${ant.project.name}.war" webxml="${webdocs}/prod/web.xml">
+			<lib dir="${jar.dir}" includes="*.jar" excludes="security-tests.jar" />
+			<lib file="${connector-dist.dir}/connector-spi.jar" />
+			<lib file="${connector-dist.dir}/connector.jar" />
+			<lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
+			<lib dir="${connector-thirdparty.dir}/prod" includes="*.jar" excludes="servlet-api.jar" />
+			<manifest>
+				<attribute name="Implementation-Title" value="Security Manager" />
+				<attribute name="Implementation-Version" value="${version} (build ${svnversion}  ${TODAY})" />
+				<attribute name="Implementation-Vendor" value="Google Inc." />
+			</manifest>
+		</war>
+	</target>
+
+	<target name="war-tests" depends="install_init,jar" description="Builds the Test WAR file for installation.">
+		<echo> The test war file dir is located at ${war.dir}</echo>
+
+		<tstamp />
+		<war warfile="${war.dir}/${ant.project.name}_debug.war" webxml="${webdocs}/test/web.xml">
+      <lib dir="${jar.dir}" includes="*.jar" />
+      <lib file="${connector-dist.dir}/connector-spi.jar" />
+      <lib file="${connector-dist.dir}/connector.jar" />
+      <lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
+      <lib dir="${connector-thirdparty.dir}/prod" includes="*.jar" excludes="servlet-api.jar" />
+			<webinf dir="etc" includes="**" />
+			<!-- above this line is all the stuff that goes in the normal prod jar, 
+	        below is the stuff that is only needed for testing -->
+			<lib dir="${thirdparty.tests.jars}" includes="*.jar" />
+			<manifest>
+				<attribute name="Implementation-Title" value="Connector Manager" />
+				<attribute name="Implementation-Version" value="${version} (build ${svnversion}  ${TODAY})" />
+				<attribute name="Implementation-Vendor" value="Google Inc." />
+			</manifest>
+		</war>
+
+	</target>
+
+
+</project>
