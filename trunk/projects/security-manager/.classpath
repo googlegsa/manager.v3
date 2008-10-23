@@ -4,7 +4,31 @@
 	<classpathentry excluding="**/.svn/**" kind="src" path="source/javatests"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre1.6.0_03"/>
 	<classpathentry kind="lib" path="/connector-manager/third-party/prod/servlet-api.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/third-party/prod/axis-ant.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/axis.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/bcprov-ext-jdk15-1.40.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/commons-codec-1.3.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/commons-collections-3.1.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/commons-discovery-0.2.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/commons-httpclient-3.1.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/commons-lang-2.1.jar"/>
 	<classpathentry kind="lib" path="third-party/prod/google-collect-snapshot-20080820.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/jargs-1.0.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/jaxrpc.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/jcl-over-slf4j-1.5.5.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/joda-time-1.5.2.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/not-yet-commons-ssl-0.3.9.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/opensaml-2.2.0.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/openws-1.2.0.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/saaj.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/slf4j-api-1.5.5.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/slf4j-simple-1.5.5.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/spring.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/velocity-1.5.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/xercesImpl.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/xml-apis.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/xmlsec-1.4.2.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/xmltooling-1.1.0.jar"/>
 	<classpathentry kind="lib" path="/connector-manager/dist/jarfile/connector.jar" sourcepath="/connector-manager/source/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry kind="lib" path="/connector-manager/dist/jarfile/connector-spi.jar" sourcepath="/connector-manager/source"/>
