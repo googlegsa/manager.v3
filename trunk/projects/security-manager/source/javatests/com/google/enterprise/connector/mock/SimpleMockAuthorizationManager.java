@@ -26,7 +26,6 @@ import java.util.List;
 
 public class SimpleMockAuthorizationManager implements AuthorizationManager {
 
-  @Override
   @SuppressWarnings("unchecked")
   public Collection authorizeDocids(Collection docids, AuthenticationIdentity identity) {
     return typedAuthorizeDocids(docids, identity);
