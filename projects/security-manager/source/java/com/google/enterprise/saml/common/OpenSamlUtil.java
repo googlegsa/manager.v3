@@ -48,6 +48,8 @@ import org.opensaml.saml2.metadata.SingleSignOnService;
 import org.opensaml.xml.ConfigurationException;
 import org.opensaml.xml.XMLObjectBuilderFactory;
 
+// TODO(cph): The result of objectBuilderFactory.getBuilder() must be cast to the correct type, but
+// this generates an unchecked warning.
 @SuppressWarnings("unchecked")
 public class OpenSamlUtil {
 
@@ -86,8 +88,7 @@ public class OpenSamlUtil {
     objectBuilderFactory = Configuration.getBuilderFactory();
     artifactBuilderFactory = Configuration.getSAML2ArtifactBuilderFactory();
 
-    // This block of statements is what requires the
-    // @SuppressWarnings("unchecked") above.
+    // This block of statements is what requires the @SuppressWarnings("unchecked") above.
     artifactResponseBuilder = (SAMLObjectBuilder<ArtifactResponse>) objectBuilderFactory
         .getBuilder(ArtifactResponse.DEFAULT_ELEMENT_NAME);
     assertionBuilder = (SAMLObjectBuilder<Assertion>) objectBuilderFactory
