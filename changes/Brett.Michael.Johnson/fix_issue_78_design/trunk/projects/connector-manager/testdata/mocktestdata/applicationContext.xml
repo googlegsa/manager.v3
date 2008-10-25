@@ -3,8 +3,7 @@
 <beans>
 
 	<bean id="FeedConnection"
-		class="com.google.enterprise.connector.pusher.MockFeedConnection">
-	</bean>
+		class="com.google.enterprise.connector.pusher.MockFeedConnection" />
 
 	<bean id="Pusher"
 		class="com.google.enterprise.connector.pusher.DocPusher">
@@ -12,8 +11,7 @@
 	</bean>
 
 	<bean id="ConnectorScheduleStore"
-		class="com.google.enterprise.connector.persist.MockConnectorScheduleStore">
-	</bean>
+		class="com.google.enterprise.connector.persist.MockConnectorScheduleStore" />
 
 	<bean id="ConnectorStateStore"
 		class="com.google.enterprise.connector.persist.MockConnectorStateStore" />

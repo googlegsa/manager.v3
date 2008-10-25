@@ -25,7 +25,7 @@ public interface ConnectorConfigStore {
    * 
    * @param context a StoreContext
    * @return the configuration Properties, or null if no configuration has 
-   * been stored for this connector
+   *         been stored for this connector.
    */
   public Properties getConnectorConfiguration(StoreContext context);
 

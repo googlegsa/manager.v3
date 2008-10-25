@@ -66,15 +66,8 @@ public class MockInstantiator implements Instantiator {
   public static final String TRAVERSER_NAME_LONG_RUNNING = "longrunning";
   public static final String TRAVERSER_NAME_NEVER_ENDING = "neverending";
   public static final String TRAVERSER_NAME_INTERRUPTIBLE = "interruptible";
-  public static final String TRAVERSER_NAME_REQUESTS_MORE_TIME = "requestsMore";
 
   private static final ConnectorType CONNECTOR_TYPE = null;
-  private static final ConnectorConfigStore connectorConfigStore =
-      new MockConnectorConfigStore();
-  private static final ConnectorScheduleStore connectorScheduleStore =
-      new MockConnectorScheduleStore();
-  private static final ConnectorStateStore connectorStateStore =
-      new MockConnectorStateStore();
 
   private static final AuthenticationManager nullAuthenticationManager =
       new AuthenticationManager() {
@@ -93,14 +86,26 @@ public class MockInstantiator implements Instantiator {
       };
 
   private Map connectorMap;
+  private ConnectorConfigStore connectorConfigStore;
+  private ConnectorScheduleStore connectorScheduleStore;
+  private ConnectorStateStore connectorStateStore;
 
   public MockInstantiator() {
+    this(new MockConnectorConfigStore(), new MockConnectorScheduleStore(),
+         new MockConnectorStateStore());
+  }
+  
+  public MockInstantiator(ConnectorConfigStore configStore, 
+      ConnectorScheduleStore schedStore, ConnectorStateStore stateStore) {
+    this.connectorConfigStore = configStore;
+    this.connectorScheduleStore = schedStore;
+    this.connectorStateStore = stateStore;
+    this.connectorMap = new HashMap();
+  }
 
-    connectorMap = new HashMap();
-
+  public void setupTestTraversers() {
     setupConnector(TRAVERSER_NAME1, "MockRepositoryEventLog1.txt");
     setupConnector(TRAVERSER_NAME2, "MockRepositoryEventLog1.txt");
-
     setupTraverser(TRAVERSER_NAME_NOOP, new NoopQueryTraverser());
     setupTraverser(TRAVERSER_NAME_LONG_RUNNING, new LongRunningQueryTraverser());
     setupTraverser(TRAVERSER_NAME_NEVER_ENDING, new NeverEndingQueryTraverser());
@@ -133,7 +138,6 @@ public class MockInstantiator implements Instantiator {
       e.printStackTrace();
       throw new RuntimeException();
     }
-
     Pusher pusher = new MockPusher(System.out);
     QueryTraverser queryTraverser =
         new QueryTraverser(pusher, qtm, this, connectorName);

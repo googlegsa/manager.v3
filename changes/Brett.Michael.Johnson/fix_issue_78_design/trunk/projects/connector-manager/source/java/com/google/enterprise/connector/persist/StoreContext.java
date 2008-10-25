@@ -25,20 +25,14 @@ public class StoreContext {
 
   private String connectorName;
   private File connectorDir;
-  private String typeName;
 
   public StoreContext(String connectorName) {
-    this(connectorName, null, null);
+    this(connectorName, null);
   }
 
   public StoreContext(String connectorName, File connectorDir) {
-    this(connectorName, connectorDir, null);
-  }
-
-  public StoreContext(String connectorName, File connectorDir, String typeName) {
     this.connectorName = connectorName;
     this.connectorDir = connectorDir;
-    this.typeName = typeName;
   }
 
   public void setConnectorName(String connectorName) {
@@ -53,19 +47,11 @@ public class StoreContext {
     this.connectorDir = connectorDir;
   }
 
-  public void setTypeName(String typeName) {
-    this.typeName = typeName;
-  }
-
   public String getConnectorName() {
     return connectorName;
   }
 
   public File getConnectorDir() {
     return connectorDir;
-  }
-
-  public String getTypeName() {
-    return typeName;
   }
 }

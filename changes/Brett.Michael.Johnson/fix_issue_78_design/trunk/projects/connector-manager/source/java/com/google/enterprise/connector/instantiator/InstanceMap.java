@@ -82,7 +82,7 @@ public class InstanceMap extends TreeMap {
       if (!name.startsWith(".")) {
         try {
           InstanceInfo instanceInfo = 
-            InstanceInfo.fromDirectory(name, directory, typeInfo);
+              InstanceInfo.fromDirectory(name, directory, typeInfo);
           if (instanceInfo != null) {
             this.put(name, instanceInfo);
           }
@@ -182,7 +182,7 @@ public class InstanceMap extends TreeMap {
     }
 
     // Save the new configuration.
-    instanceInfo.setConnectorConfig(config);  // ??? [bmj] dont like this.
+    instanceInfo.setConnectorConfig(config);  // TODO: [bmj] dont like this.
     this.put(name, instanceInfo);
 
     return null;

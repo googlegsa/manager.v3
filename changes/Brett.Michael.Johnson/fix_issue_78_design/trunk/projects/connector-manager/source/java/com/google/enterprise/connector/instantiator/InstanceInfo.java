@@ -25,7 +25,6 @@ import com.google.enterprise.connector.persist.GenerationalStateStore;
 import com.google.enterprise.connector.persist.StoreContext;
 
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.xml.XmlBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.ByteArrayResource;
@@ -109,12 +108,21 @@ public final class InstanceInfo {
   }
 
   private InstanceInfo(String connectorName, File connectorDir, 
-      TypeInfo typeInfo) {
+      TypeInfo typeInfo) throws InstanceInfoException {
+    if (connectorName == null || connectorName.length() < 1) {
+      throw new NullConnectorNameException();
+    }
+    if (connectorDir == null || connectorDir.length() < 1) {
+      throw new NullDirectoryException();
+    }
+    if (typeInfo == null) {
+      throw new NullTypeInfoException();
+    }
+
     this.connectorName = connectorName;
     this.connectorDir = connectorDir;
     this.typeInfo = typeInfo;
-    this.storeContext = new StoreContext(connectorName, connectorDir,
-                                         typeInfo.getConnectorTypeName());
+    this.storeContext = new StoreContext(connectorName, connectorDir);
 
     Context context = Context.getInstance();
     this.configStore = (ConnectorConfigStore) context.getRequiredBean(
@@ -185,13 +193,7 @@ public final class InstanceInfo {
 
   private static Connector makeConnectorWithSpring(InstanceInfo info)
       throws InstanceInfoException {
-    if (info.connectorName == null || info.connectorName.length() < 1) {
-      throw new NullConnectorNameException();
-    }
-    if (info.typeInfo == null) {
-      throw new NullTypeInfoException();
-    }
-
+    Context context = Context.getInstance();
     Resource prototype = null;
     if (info.connectorDir != null) {
       // If this file exists, we use this it in preference to the default
@@ -216,10 +218,16 @@ public final class InstanceInfo {
       throw new FactoryCreationFailureException(e, prototype, 
           info.connectorName);
     }
-    EncryptedPropertyPlaceholderConfigurer cfg =
-        (EncryptedPropertyPlaceholderConfigurer) getBean(
-            prototype, info.connectorName, factory,
-            EncryptedPropertyPlaceholderConfigurer.class);
+
+    EncryptedPropertyPlaceholderConfigurer cfg = null;
+    try {
+        cfg = (EncryptedPropertyPlaceholderConfigurer) context.getBean(
+            factory, null, EncryptedPropertyPlaceholderConfigurer.class);
+    } catch (BeansException e) {
+      throw new BeanInstantiationFailureException(e, prototype, 
+          info.connectorName, 
+          EncryptedPropertyPlaceholderConfigurer.class.getName());
+    }
     if (cfg == null) {
       cfg = new EncryptedPropertyPlaceholderConfigurer();
     }
@@ -228,51 +236,22 @@ public final class InstanceInfo {
       cfg.setLocation(getPropertiesResource(info));
       cfg.postProcessBeanFactory(factory);
     } catch (BeansException e) {
-      throw new PropertyProcessingFailureException(e, prototype, info.connectorName);
+      throw new PropertyProcessingFailureException(e, prototype,
+          info.connectorName);
     }
 
-    Connector connector = (Connector) getBean(prototype,
-        info.connectorName, factory, Connector.class);
+    Connector connector = null;
+    try {
+      connector = (Connector) context.getBean(factory, null, Connector.class);
+    } catch (BeansException e) {
+      throw new BeanInstantiationFailureException(e, prototype, 
+          info.connectorName, Connector.class.getName());
+    }
     if (connector == null) {
       throw new NoBeansFoundException(prototype,
           info.connectorName, Connector.class);
     }
     return connector;
-  }
-
-  private static Object getBean(Resource prototype, String connectorName, 
-      XmlBeanFactory factory, Class clazz)
-      throws BeanInstantiationFailureException {
-    Object result;
-    // get the list of beans defined in the bean factory of the required type
-    String[] beanList;
-    beanList = factory.getBeanNamesForType(clazz);
-
-    // make sure there is at least one
-    if (beanList.length < 1) {
-      return null;
-    }
-
-    // remember the name of the first one found, and instantiate it
-    String beanName = beanList[0];
-    try {
-      result = factory.getBean(beanName);
-    } catch (BeansException e) {
-      throw new BeanInstantiationFailureException(e,
-          prototype, connectorName, beanName);
-    }
-
-    // if more beans were found issue a warning
-    if (beanList.length > 1) {
-      StringBuffer buf = new StringBuffer();
-      for (int i = 1; i < beanList.length; i++) {
-        buf.append(" ");
-        buf.append(beanList[i]);
-      }
-      LOGGER.warning("Resource contains multiple " + clazz.getName() +
-          " definitions. Using the first: " + beanName + ". Skipping:" + buf);
-    }
-    return result;
   }
 
   /**
@@ -283,6 +262,7 @@ public final class InstanceInfo {
       throws InstanceInfoException {
     Properties properties =
         (info.properties == null) ? new Properties() : info.properties;
+    LOGGER.info("Properties Resource: " + properties.toString());
     try {
       return new ByteArrayResourceHack(
           PropertiesUtils.storeToString(properties, null).getBytes());
@@ -380,7 +360,6 @@ public final class InstanceInfo {
     return stateStore.getConnectorState(storeContext);
   }
 
-
   /**
    * Retrieve the bean description for legacy connector configuration,
    * schedule, and state stores.  The Legacy store bean may be specified
@@ -393,9 +372,9 @@ public final class InstanceInfo {
    */
   private static Collection getLegacyStores(String beanName, Class clazz) {
     try {
-      Object bean = 
-          Context.getInstance().getApplicationContext().getBean(beanName);
+      Object bean = Context.getInstance().getBean(beanName, null);
       if (bean == null) {
+        // These are optional, so they need not be defined.
         return null;
       } else if (clazz.isInstance(bean)) {
         ArrayList list = new ArrayList(1);
@@ -404,11 +383,9 @@ public final class InstanceInfo {
       } else if (bean instanceof Collection) {
         return (Collection)(((Collection)bean).isEmpty() ? null : bean);
       }
-    } catch (NoSuchBeanDefinitionException e) {
-      // These are optional, so they need not be defined.
     } catch (BeansException e) {
-      LOGGER.log(Level.WARNING, "Unable to process Legacy Connector Store bean "
-                 + beanName, e);
+      LOGGER.log(Level.WARNING, 
+          "Unable to process Legacy Connector Store bean " + beanName, e);
     }
     return null;
   }

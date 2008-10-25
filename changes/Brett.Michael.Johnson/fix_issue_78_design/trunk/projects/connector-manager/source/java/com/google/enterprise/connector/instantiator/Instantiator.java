@@ -14,9 +14,6 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.persist.ConnectorConfigStore;
-import com.google.enterprise.connector.persist.ConnectorScheduleStore;
-import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -169,7 +166,7 @@ public interface Instantiator {
    *
    * @param connectorName the connector to look up
    * @return a Map&lt;String, String&gt; of its ConnectorType-specific
-   * configuration data
+   *         configuration data
    * @throws ConnectorNotFoundException if the named connector is not found
    */
   public Map getConnectorConfig(String connectorName)
@@ -180,7 +177,7 @@ public interface Instantiator {
    * 
    * @param connectorName
    * @param connectorSchedule String to store or null unset any existing
-   * schedule.
+   *        schedule.
    * @throws ConnectorNotFoundException if the named connector is not found
    */
   public void setConnectorSchedule(String connectorName, 
@@ -190,8 +187,8 @@ public interface Instantiator {
    * Gets the schedule of a named connector.
    * 
    * @param connectorName
-   * @return the schedule String, or null to erase any previously set schedule.
-   * for this connector
+   * @return the schedule String, or null to erase any previously set schedule
+   *         for this connector.
    * @throws ConnectorNotFoundException if the named connector is not found
    */
   public String getConnectorSchedule(String connectorName)                             
@@ -202,7 +199,7 @@ public interface Instantiator {
    *
    * @param connectorName
    * @param connectorState String to store or null to erase any previously
-   * saved traversal state.
+   *        saved traversal state.
    * @throws ConnectorNotFoundException if the named connector is not found
    * @throws IllegalStateException if state store is disabled for this connector
    */

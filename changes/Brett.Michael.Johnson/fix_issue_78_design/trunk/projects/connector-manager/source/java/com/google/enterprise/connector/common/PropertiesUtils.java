@@ -22,11 +22,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Map;
 import java.util.Properties;
@@ -103,7 +101,7 @@ public class PropertiesUtils {
   /**
    * Store a set of Properties to a String.  This is effectively
    * java.util.Properties.store(StringOutputStream), if there were
-   * such a thing as StringOutPutStream.  The returned string is
+   * such a thing as StringOutputStream.  The returned string is
    * suitable for loading back into as set of Properties using
    * fromString(String).
    *
@@ -163,8 +161,8 @@ public class PropertiesUtils {
    * support mark() and reset().  Supports both XML and
    * traditional Properties file formats.  Decrypt passwords.
    *
-   * @param propertiesFile Properties File to read
-   * @return Properties as read from file
+   * @param inputStream InputStream to read Properties from
+   * @return Properties as read from inputStream
    * @throws PropertiesException
    */
   public static Properties loadProperties(InputStream inputStream) 
@@ -200,10 +198,6 @@ public class PropertiesUtils {
     // Decrypt stored passwords.
     decryptSensitiveProperties(properties);
     
-    // TODO: Why is this done?  I think the ConnectorFactory
-    // changes make this obsolete.
-    properties.remove(GOOGLE_WORK_DIR);
-    properties.remove(GOOGLE_CONNECTOR_WORK_DIR);
     return properties;
   }
 
@@ -243,7 +237,7 @@ public class PropertiesUtils {
    * 
    * @param sourceMap a Map representing properties key-value map
    * @returns new Properties object that may be modified without altering
-   * the source properties.
+   *          the source properties.
    */
   public static Properties fromMap(Map sourceMap) {
     if (sourceMap == null) {

@@ -146,7 +146,7 @@ public class InstanceInfoTest extends TestCase {
           InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
     } catch (PropertyProcessingFailureException e) {
       correctExceptionThrown = true;
-      LOGGER.log(Level.WARNING, "Null directory exception", e);
+      LOGGER.log(Level.WARNING, "Property processing exception", e);
     } catch (InstanceInfoException e) {
       LOGGER.log(Level.WARNING,
           "unexpected exception during instance info creation", e);
@@ -326,7 +326,9 @@ public class InstanceInfoTest extends TestCase {
       instanceInfo =
           InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
     } catch (InstanceInfoException e) {
-      fail("Unexpected exception during instance info creation");
+      LOGGER.log(Level.WARNING,
+          "unexpected exception during instance info creation", e);
+      fail(e.getMessage());
     }
     Assert.assertTrue("Connector should be of type SimpleTestConnector",
         instanceInfo.getConnector() instanceof SimpleTestConnector);

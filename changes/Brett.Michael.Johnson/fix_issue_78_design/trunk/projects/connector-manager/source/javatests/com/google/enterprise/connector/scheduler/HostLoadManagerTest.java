@@ -31,15 +31,22 @@ import java.util.List;
  */
 public class HostLoadManagerTest extends TestCase {
 
-  private Instantiator instantiator = new MockInstantiator();
+  private MockInstantiator instantiator = new MockInstantiator();
 
   private void addLoad(String connectorName, int load) {
     Schedule schedule = new Schedule(connectorName + ":" + load + ":0:0-0");
     String connectorSchedule = schedule.toString();
     try {
       instantiator.setConnectorSchedule(connectorName, connectorSchedule);
-    } catch (ConnectorNotFoundException e) {
-      Assert.fail("Unexpected ConnectorNotFoundException : " + e.toString());
+    } catch (ConnectorNotFoundException cnfe) {
+      // This test attempts to add schedules to connectors that do not exist.
+      // If there is not yet a connector with this name, create a dummy one.
+      try {
+        instantiator.setupTraverser(connectorName, null);
+        instantiator.setConnectorSchedule(connectorName, connectorSchedule);
+      } catch (ConnectorNotFoundException e) {
+        Assert.fail("Unexpected ConnectorNotFoundException : " + e.toString());
+      }
     }
   }
   
@@ -100,8 +107,10 @@ public class HostLoadManagerTest extends TestCase {
   public void testRetryDelay() {
     final long periodInMillis = 1000;
     final String connectorName = "cn1";
+    addLoad(connectorName, 60);
     HostLoadManager hostLoadManager = 
       new HostLoadManager(instantiator, periodInMillis);
+
     Assert.assertEquals(false,hostLoadManager.shouldDelay(connectorName));
     hostLoadManager.connectorFinishedTraversal(connectorName);
     Assert.assertEquals(true,hostLoadManager.shouldDelay(connectorName));

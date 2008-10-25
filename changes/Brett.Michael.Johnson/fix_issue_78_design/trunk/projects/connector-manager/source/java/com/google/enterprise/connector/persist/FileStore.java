@@ -15,17 +15,15 @@ package com.google.enterprise.connector.persist;
 
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.PropertiesException;
-import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 
 /**
  * Manage persistence for schedule and state and configuration 
@@ -38,7 +36,7 @@ public class FileStore implements ConnectorScheduleStore,
   private static final Logger LOGGER =
       Logger.getLogger(FileStore.class.getName());
 
-  private HashMap cacheMap = new HashMap();
+  private Hashtable cacheMap = new Hashtable();
   private static final String schedName = "_schedule.txt";
   private static final String stateName = "_state.txt";
   private static final String configName = ".properties";
@@ -83,7 +81,7 @@ public class FileStore implements ConnectorScheduleStore,
    * Gets the stored state of a named connector.
    *
    * @param context a StoreContext
-   * @return the state, or null if no state has been stored for this connector
+   * @return the state, or null if no state has been stored for this connector.
    */
   public String getConnectorState(StoreContext context) {
     String key = context.getConnectorName() + stateName;
@@ -111,7 +109,7 @@ public class FileStore implements ConnectorScheduleStore,
    */
   public void removeConnectorState(StoreContext context) {
     cacheMap.remove(context.getConnectorName() + stateName);
-    getStoreFile(context, stateName).delete();
+    deleteStoreFile(context, stateName);
   }
 
 
@@ -120,7 +118,7 @@ public class FileStore implements ConnectorScheduleStore,
    *
    * @param context a StoreContext
    * @return the configuration Properties, or null if no configuration 
-   * has been stored for this connector
+   *         has been stored for this connector.
    */
   public Properties getConnectorConfiguration(StoreContext context) {
     Properties props = null;
@@ -166,7 +164,7 @@ public class FileStore implements ConnectorScheduleStore,
 
 
   /**
-   * Return a File object represting the on-disk store.
+   * Return a File object representing the on-disk store.
    *
    * @param context a StoreContext
    * @param suffix String to append to file name
@@ -200,11 +198,18 @@ public class FileStore implements ConnectorScheduleStore,
       storeFile = getStoreFile(context, suffix);
       fos = new FileOutputStream(storeFile);
       fos.write(data.getBytes());
-      fos.close();
     } catch (IOException e) {
       LOGGER.log(Level.WARNING, "Cannot write store file "
           + storeFile + " for connector " + context.getConnectorName(), e);
-      try { if (fos != null) fos.close(); } catch (IOException e1) {}
+    } finally {
+      if (fos != null) {
+        try {
+          fos.close();
+        } catch (IOException e) {
+          LOGGER.log(Level.WARNING, "Error closing store file "
+              + storeFile + " for connector " + context.getConnectorName(), e);
+        }
+      }
     }
   }
 
@@ -213,7 +218,7 @@ public class FileStore implements ConnectorScheduleStore,
    *
    * @param context a StoreContext
    * @param suffix String to append to file name
-   * @return String containing store file contents or null if none exists
+   * @return String containing store file contents or null if none exists.
    */
   private String readStoreFile(StoreContext context, String suffix) {
     FileInputStream fis = null;

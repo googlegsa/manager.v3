@@ -26,6 +26,8 @@ import java.util.Properties;
  * Manage persistence for schedule and state and configuration 
  * for a named connector. The persistent store for these data items
  * is via Java Preferences.
+ *
+ * @deprecated  Replaced by FileStore
  */
 public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
     ConnectorConfigStore {
@@ -116,7 +118,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    *
    * @param context a StoreContext
    * @return the configuration Properties, or null if no configuration 
-   * has been stored for this connector
+   *         has been stored for this connector.
    */
   public Properties getConnectorConfiguration(StoreContext context) {
     try {
@@ -192,6 +194,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    * descendants to the persistent store. Once this method returns successfully,
    * it is safe to assume that all changes made in the subtree rooted at this
    * node prior to the method invocation have become permanent.
+   *
    * @return true if successful.
    */
   public boolean flush() {
