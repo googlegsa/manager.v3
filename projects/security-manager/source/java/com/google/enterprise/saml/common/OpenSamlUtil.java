@@ -14,8 +14,6 @@
 
 package com.google.enterprise.saml.common;
 
-import java.security.NoSuchAlgorithmException;
-
 import org.joda.time.DateTime;
 import org.opensaml.Configuration;
 import org.opensaml.DefaultBootstrap;
@@ -23,11 +21,15 @@ import org.opensaml.common.IdentifierGenerator;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
+import org.opensaml.common.binding.BasicSAMLMessageContext;
 import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
-import org.opensaml.saml2.binding.artifact.SAML2ArtifactBuilder;
+import org.opensaml.saml2.binding.artifact.AbstractSAML2Artifact;
 import org.opensaml.saml2.binding.artifact.SAML2ArtifactBuilderFactory;
 import org.opensaml.saml2.binding.artifact.SAML2ArtifactType0004;
+import org.opensaml.saml2.binding.artifact.SAML2ArtifactType0004Builder;
+import org.opensaml.saml2.core.Artifact;
+import org.opensaml.saml2.core.ArtifactResolve;
 import org.opensaml.saml2.core.ArtifactResponse;
 import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.AuthnContext;
@@ -43,40 +45,20 @@ import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.StatusResponseType;
 import org.opensaml.saml2.core.Subject;
+import org.opensaml.saml2.metadata.ArtifactResolutionService;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.SingleSignOnService;
 import org.opensaml.xml.ConfigurationException;
 import org.opensaml.xml.XMLObjectBuilderFactory;
 
-// TODO(cph): The result of objectBuilderFactory.getBuilder() must be cast to the correct type, but
-// this generates an unchecked warning.
-@SuppressWarnings("unchecked")
+import java.security.NoSuchAlgorithmException;
+
+import javax.xml.namespace.QName;
+
 public class OpenSamlUtil {
 
   public static final String GOOGLE_PROVIDER_NAME = "Google Search Appliance";
   public static final String GOOGLE_ISSUER = "google.com";
-
-  private static final XMLObjectBuilderFactory objectBuilderFactory;
-  private static final SAML2ArtifactBuilderFactory artifactBuilderFactory;
-
-  private static final SAMLObjectBuilder<ArtifactResponse> artifactResponseBuilder;
-  private static final SAMLObjectBuilder<Assertion> assertionBuilder;
-  private static final SAMLObjectBuilder<AuthnContext> authnContextBuilder;
-  private static final SAMLObjectBuilder<AuthnContextClassRef> authnContextClassRefBuilder;
-  private static final SAMLObjectBuilder<AuthnRequest> authnRequestBuilder;
-  private static final SAMLObjectBuilder<AuthnStatement> authnStatementBuilder;
-  private static final SAMLObjectBuilder<Issuer> issuerBuilder;
-  private static final SAMLObjectBuilder<NameID> nameIDBuilder;
-  private static final SAMLObjectBuilder<NameIDPolicy> nameIdPolicyBuilder;
-  private static final SAMLObjectBuilder<Response> responseBuilder;
-  private static final SAMLObjectBuilder<SingleSignOnService> singleSignOnServiceBuilder;
-  private static final SAMLObjectBuilder<Status> statusBuilder;
-  private static final SAMLObjectBuilder<StatusCode> statusCodeBuilder;
-  private static final SAMLObjectBuilder<Subject> subjectBuilder;
-
-  private static final SAML2ArtifactBuilder<SAML2ArtifactType0004> artifactBuilder;
-
-  private static final IdentifierGenerator idGenerator;
 
   static {
     try {
@@ -84,43 +66,61 @@ public class OpenSamlUtil {
     } catch (ConfigurationException e) {
       throw new IllegalStateException(e);
     }
+  }
 
-    objectBuilderFactory = Configuration.getBuilderFactory();
-    artifactBuilderFactory = Configuration.getSAML2ArtifactBuilderFactory();
+  private static final XMLObjectBuilderFactory objectBuilderFactory =
+      Configuration.getBuilderFactory();
+  private static final SAML2ArtifactBuilderFactory artifactObjectBuilderFactory =
+      Configuration.getSAML2ArtifactBuilderFactory();
 
-    // This block of statements is what requires the @SuppressWarnings("unchecked") above.
-    artifactResponseBuilder = (SAMLObjectBuilder<ArtifactResponse>) objectBuilderFactory
-        .getBuilder(ArtifactResponse.DEFAULT_ELEMENT_NAME);
-    assertionBuilder = (SAMLObjectBuilder<Assertion>) objectBuilderFactory
-        .getBuilder(Assertion.DEFAULT_ELEMENT_NAME);
-    authnContextBuilder = (SAMLObjectBuilder<AuthnContext>) objectBuilderFactory
-        .getBuilder(AuthnContext.DEFAULT_ELEMENT_NAME);
-    authnContextClassRefBuilder = (SAMLObjectBuilder<AuthnContextClassRef>) objectBuilderFactory
-        .getBuilder(AuthnContextClassRef.DEFAULT_ELEMENT_NAME);
-    authnRequestBuilder = (SAMLObjectBuilder<AuthnRequest>) objectBuilderFactory
-        .getBuilder(AuthnRequest.DEFAULT_ELEMENT_NAME);
-    authnStatementBuilder = (SAMLObjectBuilder<AuthnStatement>) objectBuilderFactory
-        .getBuilder(AuthnStatement.DEFAULT_ELEMENT_NAME);
-    issuerBuilder = (SAMLObjectBuilder<Issuer>) objectBuilderFactory
-        .getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
-    nameIDBuilder = (SAMLObjectBuilder<NameID>) objectBuilderFactory
-        .getBuilder(NameID.DEFAULT_ELEMENT_NAME);
-    nameIdPolicyBuilder = (SAMLObjectBuilder<NameIDPolicy>) objectBuilderFactory
-        .getBuilder(NameIDPolicy.DEFAULT_ELEMENT_NAME);
-    responseBuilder = (SAMLObjectBuilder<Response>) objectBuilderFactory
-        .getBuilder(Response.DEFAULT_ELEMENT_NAME);
-    singleSignOnServiceBuilder = (SAMLObjectBuilder<SingleSignOnService>) objectBuilderFactory
-        .getBuilder(SingleSignOnService.DEFAULT_ELEMENT_NAME);
-    statusBuilder = (SAMLObjectBuilder<Status>) objectBuilderFactory
-        .getBuilder(Status.DEFAULT_ELEMENT_NAME);
-    statusCodeBuilder = (SAMLObjectBuilder<StatusCode>) objectBuilderFactory
-        .getBuilder(StatusCode.DEFAULT_ELEMENT_NAME);
-    subjectBuilder = (SAMLObjectBuilder<Subject>) objectBuilderFactory
-        .getBuilder(Subject.DEFAULT_ELEMENT_NAME);
+  // TODO(cph): @SuppressWarnings is needed because objectBuilderFactory.getBuilder() returns a
+  // supertype of the actual type.
+  @SuppressWarnings("unchecked")
+  private static <T extends SAMLObject> SAMLObjectBuilder<T> makeSamlObjectBuilder(QName name) {
+    return (SAMLObjectBuilder<T>) objectBuilderFactory.getBuilder(name);
+  }
 
-    artifactBuilder = artifactBuilderFactory
-        .getArtifactBuilder(SAML2ArtifactType0004.TYPE_CODE);
+  private static final SAMLObjectBuilder<Artifact> artifactBuilder =
+      makeSamlObjectBuilder(Artifact.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<ArtifactResolutionService> artifactResolutionServiceBuilder =
+      makeSamlObjectBuilder(ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<ArtifactResolve> artifactResolveBuilder =
+      makeSamlObjectBuilder(ArtifactResolve.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<ArtifactResponse> artifactResponseBuilder =
+      makeSamlObjectBuilder(ArtifactResponse.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<Assertion> assertionBuilder =
+      makeSamlObjectBuilder(Assertion.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<AuthnContext> authnContextBuilder =
+      makeSamlObjectBuilder(AuthnContext.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<AuthnContextClassRef> authnContextClassRefBuilder =
+      makeSamlObjectBuilder(AuthnContextClassRef.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<AuthnRequest> authnRequestBuilder =
+      makeSamlObjectBuilder(AuthnRequest.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<AuthnStatement> authnStatementBuilder =
+      makeSamlObjectBuilder(AuthnStatement.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<Issuer> issuerBuilder =
+      makeSamlObjectBuilder(Issuer.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<NameID> nameIDBuilder =
+      makeSamlObjectBuilder(NameID.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<NameIDPolicy> nameIdPolicyBuilder =
+      makeSamlObjectBuilder(NameIDPolicy.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<Response> responseBuilder =
+      makeSamlObjectBuilder(Response.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<SingleSignOnService> singleSignOnServiceBuilder =
+      makeSamlObjectBuilder(SingleSignOnService.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<Status> statusBuilder =
+      makeSamlObjectBuilder(Status.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<StatusCode> statusCodeBuilder =
+      makeSamlObjectBuilder(StatusCode.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<Subject> subjectBuilder =
+      makeSamlObjectBuilder(Subject.DEFAULT_ELEMENT_NAME);
 
+  private static final SAML2ArtifactType0004Builder artifactObjectBuilder =
+      (SAML2ArtifactType0004Builder) artifactObjectBuilderFactory
+          .getArtifactBuilder(SAML2ArtifactType0004.TYPE_CODE);
+
+  private static final IdentifierGenerator idGenerator;
+  static {
     try {
       idGenerator = new SecureRandomIdentifierGenerator();
     } catch (NoSuchAlgorithmException e) {
@@ -138,8 +138,8 @@ public class OpenSamlUtil {
     request.setIssueInstant(new DateTime());
   }
 
-  private static void initializeResponse(StatusResponseType response,
-      Status status, RequestAbstractType request) {
+  private static void initializeResponse(StatusResponseType response, Status status,
+      RequestAbstractType request) {
     response.setID(generateIdentifier());
     response.setVersion(SAMLVersion.VERSION_20);
     response.setIssueInstant(new DateTime());
@@ -149,8 +149,39 @@ public class OpenSamlUtil {
     }
   }
 
-  public static ArtifactResponse makeArtifactResponse(
-      RequestAbstractType request, Status status, SAMLObject message) {
+  public static Artifact makeArtifact(String value) {
+    Artifact element = artifactBuilder.buildObject();
+    element.setArtifact(value);
+    return element;
+  }
+
+  public static Endpoint makeArtifactResolutionService(String binding, String location) {
+    Endpoint endpoint = artifactResolutionServiceBuilder.buildObject();
+    endpoint.setBinding(binding);
+    endpoint.setLocation(location);
+    return endpoint;
+  }
+
+  public static Endpoint makeArtifactResolutionService(String binding, String location,
+      String responseLocation) {
+    Endpoint endpoint = makeArtifactResolutionService(binding, location);
+    endpoint.setResponseLocation(responseLocation);
+    return endpoint;
+  }
+
+  public static ArtifactResolve makeArtifactResolve(Artifact artifact) {
+    ArtifactResolve request = artifactResolveBuilder.buildObject();
+    initializeRequest(request);
+    request.setArtifact(artifact);
+    return request;
+  }
+
+  public static ArtifactResolve makeArtifactResolve(String value) {
+    return makeArtifactResolve(makeArtifact(value));
+  }
+
+  public static ArtifactResponse makeArtifactResponse(RequestAbstractType request, Status status,
+      SAMLObject message) {
     ArtifactResponse artifactResponse = artifactResponseBuilder.buildObject();
     initializeResponse(artifactResponse, status, request);
     artifactResponse.setMessage(message);
@@ -202,8 +233,7 @@ public class OpenSamlUtil {
     return makeAuthnStatement(context, new DateTime());
   }
 
-  public static AuthnStatement makeAuthnStatement(AuthnContext context,
-      DateTime authnInstant) {
+  public static AuthnStatement makeAuthnStatement(AuthnContext context, DateTime authnInstant) {
     AuthnStatement statement = authnStatementBuilder.buildObject();
     statement.setAuthnContext(context);
     statement.setAuthnInstant(authnInstant);
@@ -241,8 +271,8 @@ public class OpenSamlUtil {
     return endpoint;
   }
 
-  public static Endpoint makeSingleSignOnService(String binding,
-      String location, String responseLocation) {
+  public static Endpoint makeSingleSignOnService(String binding, String location,
+      String responseLocation) {
     Endpoint endpoint = makeSingleSignOnService(binding, location);
     endpoint.setResponseLocation(responseLocation);
     return endpoint;
@@ -278,16 +308,16 @@ public class OpenSamlUtil {
     return makeSubject(makeNameId(name));
   }
 
-  public static SAML2ArtifactType0004 makeArtifact(byte[] artifact) {
-    return artifactBuilder.buildArtifact(artifact);
-  }
-
-  public static SAML2ArtifactType0004 makeArtifact(
-      SAMLMessageContext requestContext) {
-    return artifactBuilder.buildArtifact(requestContext);
+  public static AbstractSAML2Artifact newArtifactObject(
+      SAMLMessageContext<SAMLObject, SAMLObject, NameID> requestContext) {
+    return artifactObjectBuilder.buildArtifact(requestContext);
   }
 
   public static String generateIdentifier() {
     return idGenerator.generateIdentifier();
+  }
+
+  public static <TI extends SAMLObject, TO extends SAMLObject, TN extends SAMLObject> SAMLMessageContext<TI, TO, TN> makeSamlMessageContext() {
+    return new BasicSAMLMessageContext<TI, TO, TN>();
   }
 }
