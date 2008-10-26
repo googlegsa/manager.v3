@@ -41,7 +41,7 @@ import javax.servlet.http.HttpServletResponse;
 public class MockServiceProvider extends HttpServlet {
   // private static final Logger LOGGER = Logger.getLogger(MockServiceProvider.class.getName());
   private static final long serialVersionUID = 1L;
-  private String idpUrl;
+  private final String idpUrl;
 
   public MockServiceProvider(String idpUrl) {
     this.idpUrl = idpUrl;
