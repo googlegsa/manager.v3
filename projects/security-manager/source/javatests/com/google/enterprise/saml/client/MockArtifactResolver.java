@@ -19,10 +19,12 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.io.IOException;
 
+import javax.servlet.ServletException;
+
 /**
  * The MockArtifactResolver interface models an artifact resolution service.  MockArtifactConsumer
  * communicates with an object of this type.
  */
 public interface MockArtifactResolver {
-  public MockHttpServletResponse resolve(MockHttpServletRequest request) throws IOException;
+  public MockHttpServletResponse resolve(MockHttpServletRequest request) throws ServletException, IOException;
 }
