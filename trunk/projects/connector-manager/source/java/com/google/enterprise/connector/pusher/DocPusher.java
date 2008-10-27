@@ -20,6 +20,7 @@ import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.XmlUtils;
@@ -40,11 +41,13 @@ import java.io.SequenceInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -203,6 +206,9 @@ public class DocPusher implements Pusher {
       if (v != null) {
         boolean isPublic = v.toBoolean();
         if (!isPublic) {
+          // TODO(martyg): When the GSA is ready to take ACLUSERS and ACLGROUPS,
+          // this is the place where those properties should be pulled out of
+          // meta data and into the proper ACL Entry element.
           prefix.append(" ");
           XmlUtils.xmlAppendAttrValuePair(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD,
               prefix);
@@ -286,9 +292,17 @@ public class DocPusher implements Pusher {
       String name = (String) iter.next();
       if (propertySkipSet.contains(name)) {
         continue;
+      } else if (name.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX) ||
+                 name.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX)) {
+        continue;
       }
       try {
-        property = document.findProperty(name);
+        if (SpiConstants.PROPNAME_ACLGROUPS.equals(name) || 
+            SpiConstants.PROPNAME_ACLUSERS.equals(name)) {
+          property = processAclProperty(name, document);
+        } else {
+          property = document.findProperty(name);
+        }
       } catch (RepositoryException e) {
         LOGGER.log(Level.WARNING,
             "Swallowing exception while reading properties", e);
@@ -297,6 +311,68 @@ public class DocPusher implements Pusher {
       wrapOneProperty(buf, name, property);
     }
     buf.append(XmlUtils.xmlWrapEnd(XML_METADATA));
+  }
+
+  /**
+   * Utility function to convert a set of document properties that look like:
+   * <pre> 
+   *   google:aclusers=[joe, mary, admin]
+   *   google:user:roles:joe=[reader]
+   *   google:user:roles:mary=[reader, writer]
+   *   google:user:roles:admin=[owner]
+   * </pre>
+   * into one property that looks like:
+   * <pre>
+   *   google:aclusers=[joe=reader, mary=reader, mary=writer, admin=owner]
+   * </pre>
+   *
+   * @param aclPropName the name of the property being processed.  Should be one
+   *    of {@link SpiConstants#PROPNAME_ACLGROUPS} or
+   *    {@link SpiConstants#PROPNAME_ACLUSERS}.
+   * @param document the document being processed.
+   * @return either the original property if no conversion was necessary or a
+   *    new converted property containing ACL Entries.
+   * @throws RepositoryException if there was a problem extracting properties.
+   */
+  private static Property processAclProperty(String aclPropName,
+      Document document) throws RepositoryException {
+    Property scopeProp = document.findProperty(aclPropName);
+    List aclEntryList = new ArrayList();
+    boolean aclPropWasModified = false;
+    Value scopeVal = null;
+    while ((scopeVal = scopeProp.nextValue()) != null) {
+      String aclScope = scopeVal.toString();
+      Property scopeRoleProp = null;
+      if (SpiConstants.PROPNAME_ACLGROUPS.equals(aclPropName)) {
+        scopeRoleProp = document.findProperty(
+            SpiConstants.GROUP_ROLES_PROPNAME_PREFIX + aclScope);
+      } else if (SpiConstants.PROPNAME_ACLUSERS.equals(aclPropName)) {
+        scopeRoleProp = document.findProperty(
+            SpiConstants.USER_ROLES_PROPNAME_PREFIX + aclScope);
+      }
+      if (scopeRoleProp != null) {
+        // Add ACL Entry (scope=role pair) to the list.
+        Value roleVal = null;
+        while ((roleVal = scopeRoleProp.nextValue()) != null) {
+          String aclRole = roleVal.toString();
+          StringBuffer aclEntry = new StringBuffer(aclScope).append("=").
+              append(aclRole);
+          aclEntryList.add(Value.getStringValue(aclEntry.toString()));
+          aclPropWasModified = true;
+        }
+      } else {
+        // Just add scope to the list.
+        aclEntryList.add(Value.getStringValue(aclScope));
+      }
+    }
+
+    if (aclPropWasModified) {
+      // Need to create a new Property.
+      return new SimpleProperty(aclEntryList);
+    } else {
+      // Have to return a fresh property so next values can be retrieved.
+      return document.findProperty(aclPropName);
+    }
   }
 
   /**

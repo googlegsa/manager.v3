@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -104,7 +104,69 @@ public class JcrAuthorizationManagerTest extends TestCase {
 
       testAuthorization(authorizationManager, expectedResults, username);
     }
+  }
 
+  public final void testAuthorizeNewFormat()
+      throws LoginException, RepositoryException,
+      com.google.enterprise.connector.spi.RepositoryException {
+    MockRepositoryEventList mrel = 
+        new MockRepositoryEventList("MockRepositoryEventLogAcl.txt");
+    MockRepository r = new MockRepository(mrel);
+    MockJcrRepository repo = new MockJcrRepository(r);
+    Credentials creds = new SimpleCredentials("admin", "admin".toCharArray());
+    Session session = repo.login(creds);
+    AuthorizationManager authorizationManager =
+        new JcrAuthorizationManager(session);
+    {
+      String username = "joe";
+      Map expectedResults = new HashMap();
+      
+      expectedResults.put("no_acl", Boolean.TRUE);
+      expectedResults.put("user_acl", Boolean.TRUE);
+      expectedResults.put("user_role_acl", Boolean.TRUE);
+      expectedResults.put("user_scoped_role_acl", Boolean.TRUE);
+      expectedResults.put("user_group_acl", Boolean.TRUE);
+      expectedResults.put("user_group_role_acl", Boolean.TRUE);
+      expectedResults.put("user_reader_acl", Boolean.TRUE);
+      expectedResults.put("user_owner_acl", Boolean.TRUE);
+      expectedResults.put("user_scoped_owner_acl", Boolean.TRUE);
+
+      testAuthorization(authorizationManager, expectedResults, username);
+    }
+
+    {
+      String username = "mary";
+      Map expectedResults = new HashMap();
+
+      expectedResults.put("no_acl", Boolean.TRUE);
+      expectedResults.put("user_acl", Boolean.TRUE);
+      expectedResults.put("user_role_acl", Boolean.TRUE);
+      expectedResults.put("user_scoped_role_acl", Boolean.TRUE);
+      expectedResults.put("user_group_acl", Boolean.TRUE);
+      expectedResults.put("user_group_role_acl", Boolean.TRUE);
+      expectedResults.put("user_reader_acl", Boolean.FALSE);
+      expectedResults.put("user_owner_acl", Boolean.FALSE);
+      expectedResults.put("user_scoped_owner_acl", Boolean.FALSE);
+
+      testAuthorization(authorizationManager, expectedResults, username);
+    }
+
+    {
+      String username = "eng";
+      Map expectedResults = new HashMap();
+
+      expectedResults.put("no_acl", Boolean.TRUE);
+      expectedResults.put("user_acl", Boolean.FALSE);
+      expectedResults.put("user_role_acl", Boolean.FALSE);
+      expectedResults.put("user_scoped_role_acl", Boolean.FALSE);
+      expectedResults.put("user_group_acl", Boolean.FALSE);
+      expectedResults.put("user_group_role_acl", Boolean.FALSE);
+      expectedResults.put("user_reader_acl", Boolean.FALSE);
+      expectedResults.put("user_owner_acl", Boolean.FALSE);
+      expectedResults.put("user_scoped_owner_acl", Boolean.FALSE);
+
+      testAuthorization(authorizationManager, expectedResults, username);
+    }
   }
 
   private void testAuthorization(AuthorizationManager authorizationManager,
