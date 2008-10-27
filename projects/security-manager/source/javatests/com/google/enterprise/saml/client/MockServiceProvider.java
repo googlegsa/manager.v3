@@ -34,9 +34,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * The MockServiceProvider class implements a servlet that pretends to be an SAML Service
- * Provider (in our case, it pretends to be the GSA SAML AuthN client).  This is part of a test
- * harness for the security manager's SAML front end.
+ * The MockServiceProvider class implements a servlet pretending to be the part of a SAML Service
+ * Provider that receives a service request from the user agent and initiates an authn request from
+ * an identity provider.
  */
 public class MockServiceProvider extends HttpServlet {
   // private static final Logger LOGGER = Logger.getLogger(MockServiceProvider.class.getName());
@@ -52,40 +52,63 @@ public class MockServiceProvider extends HttpServlet {
   @Override
   public void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    if (req.getSession().getAttribute("isAuthenticated") == null) {
-      SAMLMessageContext<SAMLObject, AuthnRequest, NameID> context =
-          OpenSamlUtil.makeSamlMessageContext();
-      {
-        AuthnRequest request = OpenSamlUtil.makeAuthnRequest();
-        request.setProtocolBinding(SAMLConstants.SAML2_ARTIFACT_BINDING_URI);
-        request.setProviderName(OpenSamlUtil.GOOGLE_PROVIDER_NAME);
-        request.setIssuer(OpenSamlUtil.makeIssuer(OpenSamlUtil.GOOGLE_ISSUER));
-        request.setIsPassive(false);
-        request.setAssertionConsumerServiceURL(idpUrl);
-        context.setOutboundSAMLMessage(request);
-      }
-      context.setOutboundSAMLProtocol("http");
-      context.setPeerEntityEndpoint(OpenSamlUtil.makeSingleSignOnService(
-          SAMLConstants.SAML2_REDIRECT_BINDING_URI, idpUrl));
-      // context.setRelayState("relayState");
-      context.setOutboundMessageTransport(new HttpServletResponseAdapter(resp, true));
-
-      HTTPRedirectDeflateEncoder encoder = new HTTPRedirectDeflateEncoder();
-      try {
-        encoder.encode(context);
-      } catch (MessageEncodingException e) {
-        throw new ServletException(e);
-      }
+    Object isAuthenticated = req.getSession().getAttribute("isAuthenticated");
+    if (isAuthenticated == Boolean.TRUE) {
+      ifAllowed(resp);
+    } else if (isAuthenticated == Boolean.FALSE) {
+      ifDenied(resp);
     } else {
-      resp.setContentType("text/html");
-      resp.setCharacterEncoding("UTF-8");
-      resp.setBufferSize(0x1000);
-      PrintWriter writer = resp.getWriter();
-      writer.print("<html><head><title>What you need</title></head>");
-      writer.print("<body><h1>What you need...</h1><p>...is what we've got!</p></body></html>");
-      writer.println("");
-      writer.close();
-      resp.setStatus(200);
+      ifUnknown(req, resp);
     }
+  }
+
+  private void ifAllowed(HttpServletResponse resp) throws IOException {
+    resp.setStatus(HttpServletResponse.SC_OK);
+    resp.setContentType("text/html");
+    resp.setCharacterEncoding("UTF-8");
+    resp.setBufferSize(0x1000);
+    PrintWriter writer = resp.getWriter();
+    writer.print("<html><head><title>What you need</title></head>");
+    writer.print("<body><h1>What you need...</h1><p>...is what we've got!</p></body></html>");
+    writer.close();
+  }
+
+  private void ifDenied(HttpServletResponse resp) throws IOException {
+    resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    resp.setContentType("text/html");
+    resp.setCharacterEncoding("UTF-8");
+    resp.setBufferSize(0x1000);
+    PrintWriter writer = resp.getWriter();
+    writer.print("<html><head><title>Access Denied</title></head>");
+    writer.print("<body><h1>Access Denied</h1></body></html>");
+    writer.close();
+  }
+
+  private void ifUnknown(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+    SAMLMessageContext<SAMLObject, AuthnRequest, NameID> context =
+        OpenSamlUtil.makeSamlMessageContext();
+    context.setOutboundSAMLMessage(buildRequest());
+    context.setOutboundSAMLProtocol("http");
+    context.setPeerEntityEndpoint(OpenSamlUtil.makeSingleSignOnService(
+        SAMLConstants.SAML2_REDIRECT_BINDING_URI, idpUrl));
+    context.setRelayState(req.getRequestURL() + req.getQueryString());
+    context.setOutboundMessageTransport(new HttpServletResponseAdapter(resp, true));
+
+    HTTPRedirectDeflateEncoder encoder = new HTTPRedirectDeflateEncoder();
+    try {
+      encoder.encode(context);
+    } catch (MessageEncodingException e) {
+      throw new ServletException(e);
+    }
+  }
+
+  private AuthnRequest buildRequest() {
+    AuthnRequest request = OpenSamlUtil.makeAuthnRequest();
+    request.setProtocolBinding(SAMLConstants.SAML2_ARTIFACT_BINDING_URI);
+    request.setProviderName(OpenSamlUtil.GOOGLE_PROVIDER_NAME);
+    request.setIssuer(OpenSamlUtil.makeIssuer(OpenSamlUtil.GOOGLE_ISSUER));
+    request.setIsPassive(false);
+    request.setAssertionConsumerServiceURL(idpUrl);
+    return request;
   }
 }
