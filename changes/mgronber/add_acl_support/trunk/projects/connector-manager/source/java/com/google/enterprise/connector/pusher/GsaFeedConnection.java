@@ -1,4 +1,4 @@
-// Copyright 2006-2008 Google Inc.  All Rights Reserved.
+// Copyright 2006 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.servlet.ServletUtil;
@@ -62,8 +61,7 @@ public class GsaFeedConnection implements FeedConnection {
     this.setFeedHostAndPort(host, port);
   }
 
-  public synchronized void setFeedHostAndPort(String host, int port)
-      throws MalformedURLException {
+  public synchronized void setFeedHostAndPort(String host, int port) throws MalformedURLException {
     url = new URL("http", host, port, "/xmlfeed");
   }
 
@@ -79,24 +77,17 @@ public class GsaFeedConnection implements FeedConnection {
     outputStream.write("\n".getBytes());
   }
 
-  public String sendData(String dataSource, FeedData feedData)
-      throws FeedException {
-    String feedType = ((GsaFeedData)feedData).getFeedType();
-    InputStream data = ((GsaFeedData)feedData).getData();
-    OutputStream outputStream;
+  public String sendData(String dataSource, String feedType, InputStream data)
+      throws IOException {
     URLConnection uc;
-    try {
-      synchronized (this) {
-        uc = url.openConnection();
-      }
-      uc.setDoInput(true);
-      uc.setDoOutput(true);
-      uc.setRequestProperty("Content-Type", "multipart/form-data; boundary="
-          + BOUNDARY);
-      outputStream = uc.getOutputStream();
-    } catch (IOException ioe) {
-      throw new FeedException(ioe);
+    synchronized(this) {
+      uc = url.openConnection();
     }
+    uc.setDoInput(true);
+    uc.setDoOutput(true);
+    uc.setRequestProperty("Content-Type",
+                          "multipart/form-data; boundary=" + BOUNDARY);
+    OutputStream outputStream = uc.getOutputStream();
 
     byte[] bytebuf = new byte[2048];
     int val;
@@ -137,26 +128,15 @@ public class GsaFeedConnection implements FeedConnection {
     }
 
     StringBuffer buf = new StringBuffer();
-    BufferedReader br = null;
-    try {
-      InputStream inputStream = uc.getInputStream();
-      br = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
-      String line;
-      while ((line = br.readLine()) != null) {
-        buf.append(line);
-      }
-    } catch (IOException ioe) {
-      throw new FeedException(ioe);
-    } finally {
-      try {
-        if (br != null) {
-          br.close();
-        }
-      } catch (IOException e) {
-        LOGGER.log(Level.SEVERE,
-            "IOException while closing after post: continuing", e);
-      }
+    InputStream inputStream = uc.getInputStream();
+  BufferedReader br =
+      new BufferedReader(new InputStreamReader(inputStream,"UTF8"));
+    String line;
+    while ((line = br.readLine()) != null) {
+      buf.append(line);
     }
+    br.close();
     return buf.toString();
   }
+
 }
