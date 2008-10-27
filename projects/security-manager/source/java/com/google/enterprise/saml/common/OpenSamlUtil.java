@@ -28,26 +28,14 @@ import org.opensaml.saml2.binding.artifact.AbstractSAML2Artifact;
 import org.opensaml.saml2.binding.artifact.SAML2ArtifactBuilderFactory;
 import org.opensaml.saml2.binding.artifact.SAML2ArtifactType0004;
 import org.opensaml.saml2.binding.artifact.SAML2ArtifactType0004Builder;
-import org.opensaml.saml2.core.Artifact;
-import org.opensaml.saml2.core.ArtifactResolve;
-import org.opensaml.saml2.core.ArtifactResponse;
-import org.opensaml.saml2.core.Assertion;
-import org.opensaml.saml2.core.AuthnContext;
-import org.opensaml.saml2.core.AuthnContextClassRef;
-import org.opensaml.saml2.core.AuthnRequest;
-import org.opensaml.saml2.core.AuthnStatement;
-import org.opensaml.saml2.core.Issuer;
-import org.opensaml.saml2.core.NameID;
-import org.opensaml.saml2.core.NameIDPolicy;
-import org.opensaml.saml2.core.RequestAbstractType;
-import org.opensaml.saml2.core.Response;
-import org.opensaml.saml2.core.Status;
-import org.opensaml.saml2.core.StatusCode;
-import org.opensaml.saml2.core.StatusResponseType;
-import org.opensaml.saml2.core.Subject;
+import org.opensaml.saml2.core.*;
 import org.opensaml.saml2.metadata.ArtifactResolutionService;
-import org.opensaml.saml2.metadata.Endpoint;
+import org.opensaml.saml2.metadata.AuthzService;
 import org.opensaml.saml2.metadata.SingleSignOnService;
+import org.opensaml.ws.soap.common.SOAPObject;
+import org.opensaml.ws.soap.common.SOAPObjectBuilder;
+import org.opensaml.ws.soap.soap11.Body;
+import org.opensaml.ws.soap.soap11.Envelope;
 import org.opensaml.xml.ConfigurationException;
 import org.opensaml.xml.XMLObjectBuilderFactory;
 
@@ -80,6 +68,8 @@ public class OpenSamlUtil {
     return (SAMLObjectBuilder<T>) objectBuilderFactory.getBuilder(name);
   }
 
+  private static final SAMLObjectBuilder<Action> actionBuilder =
+      makeSamlObjectBuilder(Action.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<Artifact> artifactBuilder =
       makeSamlObjectBuilder(Artifact.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<ArtifactResolutionService> artifactResolutionServiceBuilder =
@@ -98,6 +88,12 @@ public class OpenSamlUtil {
       makeSamlObjectBuilder(AuthnRequest.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<AuthnStatement> authnStatementBuilder =
       makeSamlObjectBuilder(AuthnStatement.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<AuthzDecisionQuery> authzDecisionQueryBuilder =
+      makeSamlObjectBuilder(AuthzDecisionQuery.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<AuthzDecisionStatement> authzDecisionStatementBuilder =
+      makeSamlObjectBuilder(AuthzDecisionStatement.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<AuthzService> authzServiceBuilder =
+      makeSamlObjectBuilder(AuthzService.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<Issuer> issuerBuilder =
       makeSamlObjectBuilder(Issuer.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<NameID> nameIDBuilder =
@@ -114,6 +110,18 @@ public class OpenSamlUtil {
       makeSamlObjectBuilder(StatusCode.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<Subject> subjectBuilder =
       makeSamlObjectBuilder(Subject.DEFAULT_ELEMENT_NAME);
+
+  // TODO(cph): @SuppressWarnings is needed because objectBuilderFactory.getBuilder() returns a
+  // supertype of the actual type.
+  @SuppressWarnings("unchecked")
+  private static <T extends SOAPObject> SOAPObjectBuilder<T> makeSoapObjectBuilder(QName name) {
+    return (SOAPObjectBuilder<T>) objectBuilderFactory.getBuilder(name);
+  }
+
+  private static final SOAPObjectBuilder<Body> soapBodyBuilder =
+      makeSoapObjectBuilder(Body.DEFAULT_ELEMENT_NAME);
+  private static final SOAPObjectBuilder<Envelope> soapEnvelopeBuilder =
+      makeSoapObjectBuilder(Envelope.DEFAULT_ELEMENT_NAME);
 
   private static final SAML2ArtifactType0004Builder artifactObjectBuilder =
       (SAML2ArtifactType0004Builder) artifactObjectBuilderFactory
@@ -149,24 +157,31 @@ public class OpenSamlUtil {
     }
   }
 
+  public static Action makeAction(String name) {
+    Action action = actionBuilder.buildObject();
+    action.setAction(name);
+    return action;
+  }
+
   public static Artifact makeArtifact(String value) {
     Artifact element = artifactBuilder.buildObject();
     element.setArtifact(value);
     return element;
   }
 
-  public static Endpoint makeArtifactResolutionService(String binding, String location) {
-    Endpoint endpoint = artifactResolutionServiceBuilder.buildObject();
-    endpoint.setBinding(binding);
-    endpoint.setLocation(location);
-    return endpoint;
+  public static ArtifactResolutionService makeArtifactResolutionService(String binding,
+      String location) {
+    ArtifactResolutionService service = artifactResolutionServiceBuilder.buildObject();
+    service.setBinding(binding);
+    service.setLocation(location);
+    return service;
   }
 
-  public static Endpoint makeArtifactResolutionService(String binding, String location,
-      String responseLocation) {
-    Endpoint endpoint = makeArtifactResolutionService(binding, location);
-    endpoint.setResponseLocation(responseLocation);
-    return endpoint;
+  public static ArtifactResolutionService makeArtifactResolutionService(String binding,
+      String location, String responseLocation) {
+    ArtifactResolutionService service = makeArtifactResolutionService(binding, location);
+    service.setResponseLocation(responseLocation);
+    return service;
   }
 
   public static ArtifactResolve makeArtifactResolve(Artifact artifact) {
@@ -240,6 +255,48 @@ public class OpenSamlUtil {
     return statement;
   }
 
+  public static AuthzDecisionQuery makeAuthzDecisionQuery(Subject subject, String resource,
+      Action action) {
+    AuthzDecisionQuery query = authzDecisionQueryBuilder.buildObject();
+    query.setSubject(subject);
+    query.setResource(resource);
+    query.getActions().add(action);
+    return query;
+  }
+
+  public static AuthzDecisionQuery makeAuthzDecisionQuery(String name, String resource,
+      String action) {
+    return makeAuthzDecisionQuery(makeSubject(name), resource, makeAction(action));
+  }
+
+  public static AuthzDecisionStatement makeAuthzDecisionStatement(String resource,
+      DecisionTypeEnumeration decision, Action action) {
+    AuthzDecisionStatement statement = authzDecisionStatementBuilder.buildObject();
+    statement.setResource(resource);
+    statement.setDecision(decision);
+    statement.getActions().add(action);
+    return statement;
+  }
+
+  public static AuthzDecisionStatement makeAuthzDecisionStatement(String resource,
+      DecisionTypeEnumeration decision, String action) {
+    return makeAuthzDecisionStatement(resource, decision, makeAction(action));
+  }
+
+  public static AuthzService makeAuthzService(String binding, String location) {
+    AuthzService service = authzServiceBuilder.buildObject();
+    service.setBinding(binding);
+    service.setLocation(location);
+    return service;
+  }
+
+  public static AuthzService makeAuthzService(String binding, String location,
+      String responseLocation) {
+    AuthzService service = makeAuthzService(binding, location);
+    service.setResponseLocation(responseLocation);
+    return service;
+  }
+
   public static Issuer makeIssuer(String name) {
     Issuer issuer = issuerBuilder.buildObject();
     issuer.setValue(name);
@@ -264,18 +321,18 @@ public class OpenSamlUtil {
     return response;
   }
 
-  public static Endpoint makeSingleSignOnService(String binding, String location) {
-    Endpoint endpoint = singleSignOnServiceBuilder.buildObject();
-    endpoint.setBinding(binding);
-    endpoint.setLocation(location);
-    return endpoint;
+  public static SingleSignOnService makeSingleSignOnService(String binding, String location) {
+    SingleSignOnService service = singleSignOnServiceBuilder.buildObject();
+    service.setBinding(binding);
+    service.setLocation(location);
+    return service;
   }
 
-  public static Endpoint makeSingleSignOnService(String binding, String location,
+  public static SingleSignOnService makeSingleSignOnService(String binding, String location,
       String responseLocation) {
-    Endpoint endpoint = makeSingleSignOnService(binding, location);
-    endpoint.setResponseLocation(responseLocation);
-    return endpoint;
+    SingleSignOnService service = makeSingleSignOnService(binding, location);
+    service.setResponseLocation(responseLocation);
+    return service;
   }
 
   public static Status makeStatus(StatusCode code) {
@@ -306,6 +363,14 @@ public class OpenSamlUtil {
 
   public static Subject makeSubject(String name) {
     return makeSubject(makeNameId(name));
+  }
+
+  public static Body makeSoapBody() {
+    return soapBodyBuilder.buildObject();
+  }
+
+  public static Envelope makeSoapEnvelope() {
+    return soapEnvelopeBuilder.buildObject();
   }
 
   public static AbstractSAML2Artifact newArtifactObject(
