@@ -20,6 +20,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
@@ -220,5 +221,22 @@ public class Context {
     initApplicationContext();
     return applicationContext;
   }
+
+  /**
+   * Do everything necessary to start up the application.
+   */
+  public void start() {
+    if (applicationContext == null) {
+      setServletContext();
+    }
+  }
+
+  /**
+   * Do everything necessary to shut down the application.
+   */
+  public void shutdown(boolean force) {
+    LOGGER.log(Level.INFO, "shutdown");
+  }
+
 
 }

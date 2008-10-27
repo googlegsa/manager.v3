@@ -1,14 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
-<beans>
-
-	<bean id="SessionManager"
-		class="com.google.enterprise.sessionmanager.MockSessionManager">
-	</bean>
-
-	<bean id="BackEnd"
-		class="com.google.enterprise.saml.server.MockBackEnd">
-		<constructor-arg index="0" ref="SessionManager" />
-	</bean>
-
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>	<bean id="SessionManager"		class="com.google.enterprise.security.manager.LocalSessionManager">	</bean>
+	<bean id="BackEnd"		class="com.google.enterprise.saml.server.MockBackEnd">		<constructor-arg index="0" ref="SessionManager" />	</bean>
 </beans>

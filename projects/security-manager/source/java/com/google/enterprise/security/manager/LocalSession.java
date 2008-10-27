@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,24 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.sessionmanager;
+package com.google.enterprise.security.manager;
 
 import com.google.common.base.Preconditions;
+import com.google.enterprise.sessionmanager.KeyMaterial;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Simple Mock of the SessionManagerInterface.
+ * Implementation of {@link SessionInterface} for use in the security manager
  */
-public class MockSession implements SessionInterface {
+public class LocalSession implements SessionInterface {
 
   private final Map<String, SessionValue> s;
   private String krb5Identity;
   private String krb5CcacheFilename;
 
-  public MockSession() {
+  public LocalSession() {
     s = new HashMap<String, SessionValue>();
     krb5Identity = null;
     krb5CcacheFilename = null;
@@ -79,6 +80,7 @@ public class MockSession implements SessionInterface {
   }
 
   public KeyMaterial getKrb5TokenForServer(String server) {
+    // todo: implement this
     throw new UnsupportedOperationException();
   }
 
@@ -90,7 +92,11 @@ public class MockSession implements SessionInterface {
     return krb5CcacheFilename;
   }
 
-  static class SessionValue {
+  /**
+   * Container class for values that lets them be fetched either as Strings or
+   * byte arrays.  Conversion is done using UTF-8.
+   */
+  static private class SessionValue {
     private final String s;
     private final byte[] ba;
 

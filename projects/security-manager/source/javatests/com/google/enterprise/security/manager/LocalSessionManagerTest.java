@@ -12,18 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.sessionmanager;
+package com.google.enterprise.security.manager;
+
+import com.google.enterprise.security.manager.LocalSessionManager;
+import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import junit.framework.TestCase;
 
 /**
- * Tests to exercise the MockSessionManager and MockSession classes
+ * Tests to exercise the LocalSessionManager and LocalSession classes
  * 
  */
-public class MockSessionManagerTest extends TestCase {
+public class LocalSessionManagerTest extends TestCase {
 
   public void testBasicFunctionality() {
-    SessionManagerInterface sm = new MockSessionManager();
+    SessionManagerInterface sm = new LocalSessionManager();
     String sessionId = sm.createSession();
     assertNotNull(sessionId);
     assertTrue(sm.sessionExists(sessionId));

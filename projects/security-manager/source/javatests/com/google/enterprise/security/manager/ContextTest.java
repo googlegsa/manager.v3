@@ -16,7 +16,6 @@ package com.google.enterprise.security.manager;
 
 import com.google.enterprise.saml.server.BackEnd;
 import com.google.enterprise.saml.server.MockBackEnd;
-import com.google.enterprise.sessionmanager.MockSessionManager;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import junit.framework.TestCase;
@@ -41,7 +40,7 @@ public class ContextTest extends TestCase {
     BackEnd backEnd = context.getBackEnd();
     assertTrue(backEnd instanceof MockBackEnd);
     SessionManagerInterface sessionManager = backEnd.getSessionManager();
-    assertTrue(sessionManager instanceof MockSessionManager);
+    assertTrue(sessionManager instanceof LocalSessionManager);
     Context.refresh();
   }
 }
