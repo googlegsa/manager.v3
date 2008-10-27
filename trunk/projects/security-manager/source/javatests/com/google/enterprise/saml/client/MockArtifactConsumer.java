@@ -86,6 +86,7 @@ public class MockArtifactConsumer extends HttpServlet {
     } else if (StatusCode.REQUEST_DENIED_URI.equals(code)) {
       session.setAttribute("isAuthenticated", false);
     } else if (StatusCode.AUTHN_FAILED_URI.equals(code)) {
+      // Do nothing.  The service provider will restart the authentication.
     } else {
       throw new ServletException("Bad <Response>:" + code);
     }
