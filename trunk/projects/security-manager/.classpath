@@ -32,5 +32,6 @@
 	<classpathentry kind="lib" path="/connector-manager/dist/jarfile/connector.jar" sourcepath="/connector-manager/source/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry kind="lib" path="/connector-manager/dist/jarfile/connector-spi.jar" sourcepath="/connector-manager/source"/>
+	<classpathentry kind="lib" path="third-party/tests/spring-mock.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

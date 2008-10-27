@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,25 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.sessionmanager;
+package com.google.enterprise.security.manager;
+
+
+import com.google.enterprise.sessionmanager.KeyMaterial;
+import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Simple Mock of the SessionManagerInterface.
+ * Implementation of {@link SessionManagerInterface} for use in the security
+ * manager
  */
-public class MockSessionManager implements SessionManagerInterface {
-  
+public class LocalSessionManager implements SessionManagerInterface {
+
   private AtomicInteger sessionCounter;
-  private Map<String,SessionInterface> sessions;
-  
+  private Map<String, SessionInterface> sessions;
+
   private static final String SESSION_PREFIX = "s";
-  
-  public MockSessionManager() {
+
+  public LocalSessionManager() {
     sessionCounter = new AtomicInteger();
-    sessions = new HashMap<String,SessionInterface>();
+    sessions = new HashMap<String, SessionInterface>();
   }
 
   public String createSession() {
@@ -42,7 +47,7 @@ public class MockSessionManager implements SessionManagerInterface {
     if (sessions.containsKey(sessionId)) {
       throw new IllegalStateException();
     }
-    sessions.put(sessionId, new MockSession());
+    sessions.put(sessionId, new LocalSession());
     return sessionId;
   }
 
@@ -56,7 +61,7 @@ public class MockSessionManager implements SessionManagerInterface {
   public String getKrb5CcacheFilename(String sessionId) throws IndexOutOfBoundsException {
     SessionInterface s = sessions.get(sessionId);
     if (s == null) {
-      throw new IndexOutOfBoundsException();      
+      throw new IndexOutOfBoundsException();
     }
     return s.getKrb5CcacheFilename();
   }
@@ -64,12 +69,13 @@ public class MockSessionManager implements SessionManagerInterface {
   public String getKrb5Identity(String sessionId) throws IndexOutOfBoundsException {
     SessionInterface s = sessions.get(sessionId);
     if (s == null) {
-      throw new IndexOutOfBoundsException();      
+      throw new IndexOutOfBoundsException();
     }
     return s.getKrb5Identity();
   }
 
   public String getKrb5ServerNameIfEnabled() {
+    // todo: implement this
     throw new UnsupportedOperationException();
   }
 
@@ -77,7 +83,7 @@ public class MockSessionManager implements SessionManagerInterface {
       throws IndexOutOfBoundsException {
     SessionInterface s = sessions.get(sessionId);
     if (s == null) {
-      throw new IndexOutOfBoundsException();      
+      throw new IndexOutOfBoundsException();
     }
     throw new UnsupportedOperationException();
   }
@@ -85,7 +91,7 @@ public class MockSessionManager implements SessionManagerInterface {
   public String getValue(String sessionId, String key) throws IndexOutOfBoundsException {
     SessionInterface s = sessions.get(sessionId);
     if (s == null) {
-      throw new IndexOutOfBoundsException();      
+      throw new IndexOutOfBoundsException();
     }
     return s.getValue(key);
   }
@@ -93,7 +99,7 @@ public class MockSessionManager implements SessionManagerInterface {
   public byte[] getValueBin(String sessionId, String key) throws IndexOutOfBoundsException {
     SessionInterface s = sessions.get(sessionId);
     if (s == null) {
-      throw new IndexOutOfBoundsException();      
+      throw new IndexOutOfBoundsException();
     }
     return s.getValueBin(key);
   }
@@ -101,7 +107,7 @@ public class MockSessionManager implements SessionManagerInterface {
   public boolean keyExists(String sessionId, String key) {
     SessionInterface s = sessions.get(sessionId);
     if (s == null) {
-      throw new IndexOutOfBoundsException();      
+      throw new IndexOutOfBoundsException();
     }
     return s.keyExists(key);
   }
@@ -111,7 +117,8 @@ public class MockSessionManager implements SessionManagerInterface {
   }
 
   public long sessionAge(String sessionId) {
-    return 0;
+    // todo: implement this
+    throw new UnsupportedOperationException();
   }
 
   public boolean sessionExists(String sessionId) {
@@ -122,7 +129,7 @@ public class MockSessionManager implements SessionManagerInterface {
       throws IndexOutOfBoundsException {
     SessionInterface s = sessions.get(sessionId);
     if (s == null) {
-      throw new IndexOutOfBoundsException();      
+      throw new IndexOutOfBoundsException();
     }
     s.setValue(key, newValue);
   }
@@ -131,7 +138,7 @@ public class MockSessionManager implements SessionManagerInterface {
       throws IndexOutOfBoundsException {
     SessionInterface s = sessions.get(sessionId);
     if (s == null) {
-      throw new IndexOutOfBoundsException();      
+      throw new IndexOutOfBoundsException();
     }
     s.setValueBin(key, newValue);
   }
@@ -140,7 +147,7 @@ public class MockSessionManager implements SessionManagerInterface {
       throws IndexOutOfBoundsException {
     SessionInterface s = sessions.get(sessionId);
     if (s == null) {
-      throw new IndexOutOfBoundsException();      
+      throw new IndexOutOfBoundsException();
     }
     return s.storeKrb5Identity(spnegoBlob);
   }
