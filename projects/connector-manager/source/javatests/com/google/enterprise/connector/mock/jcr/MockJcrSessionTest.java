@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import junit.framework.TestCase;
 import javax.jcr.Credentials;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.LoginException;
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
@@ -32,7 +31,6 @@ public class MockJcrSessionTest extends TestCase {
 
   public final void testGetNodeByUUID() throws LoginException,
       RepositoryException {
-
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog2.txt");
     MockRepository r = new MockRepository(mrel);
@@ -51,7 +49,34 @@ public class MockJcrSessionTest extends TestCase {
     testAccess(session, "fred", "doc2", false);
     testAccess(session, "fred", "doc3", true);
     testAccess(session, "bill", "doc4", true);
-    
+  }
+
+  public final void testGetNodeByUUIDNewFormat()
+      throws LoginException, RepositoryException {
+    MockRepositoryEventList mrel =
+        new MockRepositoryEventList("MockRepositoryEventLogAcl.txt");
+    MockRepository r = new MockRepository(mrel);
+    MockJcrRepository repo = new MockJcrRepository(r);
+    Credentials creds = new SimpleCredentials("admin", "admin".toCharArray());
+
+    Session session = repo.login(creds);
+    Assert.assertTrue(session != null);
+    Assert.assertEquals("admin", session.getUserID());
+
+    testAccess(session, "admin", "no_acl", true);
+    testAccess(session, "joe", "no_acl", true);
+    testAccess(session, "mary", "no_acl", true);
+    testAccess(session, "murgatroyd", "no_acl", true);
+
+    testAccess(session, "admin", "user_group_role_acl", true);
+    testAccess(session, "joe", "user_group_role_acl", true);
+    testAccess(session, "mary", "user_group_role_acl", true);
+    testAccess(session, "eng", "user_group_role_acl", false);
+    testAccess(session, "murgatroyd", "user_group_role_acl", false);
+
+    testAccess(session, "admin", "user_scoped_owner_acl", true);
+    testAccess(session, "joe", "user_scoped_owner_acl", true);
+    testAccess(session, "mary", "user_scoped_owner_acl", false);
   }
 
   private void testAccess(Session session, String username, String uuid,
@@ -62,7 +87,7 @@ public class MockJcrSessionTest extends TestCase {
     Assert.assertEquals(username, userSession.getUserID());
     boolean found = false;
     try {
-      Node n = userSession.getNodeByUUID(uuid);
+      userSession.getNodeByUUID(uuid);
       found = true;
     } catch (ItemNotFoundException e) {
       found = false;

@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import javax.jcr.InvalidSerializedDataException;
 import javax.jcr.Item;
 import javax.jcr.ItemExistsException;
 import javax.jcr.ItemNotFoundException;
-import javax.jcr.LoginException;
 import javax.jcr.NamespaceException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -76,7 +75,7 @@ public class MockJcrSession implements Session {
     this.repo = repo;
     workspace = new MockJcrWorkspace(repo, this);
   }
-  
+
   /**
    * Set the credentials used by this session - not yet used by the framework
    * @param creds   a Credentials object
@@ -86,10 +85,10 @@ public class MockJcrSession implements Session {
   }
 
   /**
-   * Get the Repository for this session - 
+   * Get the Repository for this session -
    * in this implementation, there is only one.
    * @return MockJcrRepository
-   */ 
+   */
   public Repository getRepository() {
     if (repo == null) {
       throw new RuntimeException("Session has null repo");
@@ -109,7 +108,7 @@ public class MockJcrSession implements Session {
   }
 
   /**
-   * Gets the Workspace associated with this Session - 
+   * Gets the Workspace associated with this Session -
    * in this implementation, there is only one.
    * @return MockJcrWorkspace
    */
@@ -117,8 +116,7 @@ public class MockJcrSession implements Session {
     return new MockJcrWorkspace(repo, this);
   }
 
-  public Session impersonate(Credentials creds) throws LoginException,
-      RepositoryException {
+  public Session impersonate(Credentials creds) {
     if (!(creds instanceof SimpleCredentials)) {
       throw new IllegalArgumentException();
     }
@@ -142,22 +140,54 @@ public class MockJcrSession implements Session {
     if ("admin".equals(userID)) {
       return result;
     }
-    MockRepositoryProperty property = doc.getProplist().getProperty("acl");
-    if (property == null) {
-      return result; 
+    try {
+      checkPermission(userID, doc);
+    } catch (AccessControlException e) {
+      throw new ItemNotFoundException();
     }
-    String[] values = property.getValues();
-    for (int i=0; i<values.length; i++) {
-      if (values[i].equals(userID)) {
-        return result;
-      }
-    }
-    throw new ItemNotFoundException();
+    return result;
   }
 
-  public void logout() {
-    ;
+  /**
+   * Determines whether the given user has permission to read the specified
+   * document.  This method quietly returns if the access request is permitted,
+   * or throws a suitable <code>java.security.AccessControlException</code>
+   * otherwise.
+   */
+  private void checkPermission(String userId, MockRepositoryDocument doc)
+      throws AccessControlException {
+    MockRepositoryProperty property = doc.getProplist().getProperty("acl");
+    if (property == null) {
+      return;
+    }
+    String[] values = property.getValues();
+    for (int i = 0; i < values.length; i++) {
+      String aclEntry = values[i];
+      // Extract the scope type and compare.
+      int scopeTokPos = aclEntry.indexOf(MockRepositoryProperty.SCOPE_TYPE_SEP);
+      if (scopeTokPos != -1) {
+        if ("user".equals(aclEntry.substring(0, scopeTokPos))) {
+          aclEntry = aclEntry.substring(scopeTokPos + 1);
+        } else {
+          continue;
+        }
+      }
+      int roleTokPos = aclEntry.indexOf(MockRepositoryProperty.SCOPE_ROLE_SEP);
+      if (roleTokPos != -1) {
+        if (userId.equals(aclEntry.substring(0, roleTokPos))) {
+          return;
+        }
+      } else {
+        if (userId.equals(aclEntry)) {
+          return;
+        }
+      }
+    }
+    throw new AccessControlException("User(" + userId + ") does not have "
+        + "premission to read document(" + doc.getDocID() + ").");
   }
+
+  public void logout() { }
 
   // The following methods may be needed later but are temporarily
   // unimplemented
@@ -165,7 +195,7 @@ public class MockJcrSession implements Session {
   /**
    * Throws UnsupportedOperationException
    * @return nothing
-   * @throws RepositoryException 
+   * @throws RepositoryException
    */
   public Node getRootNode() throws RepositoryException {
     // TODO(ziff): we may need this later for tree traversal
@@ -174,9 +204,9 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
+   * @param arg0
    * @return nothing
-   * @throws PathNotFoundException 
+   * @throws PathNotFoundException
    * @throws RepositoryException
    */
   public Item getItem(String arg0) throws PathNotFoundException,
@@ -187,9 +217,9 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
+   * @param arg0
    * @return nothing
-   * @throws RepositoryException 
+   * @throws RepositoryException
    */
   public boolean itemExists(String arg0) throws RepositoryException {
     // TODO(ziff): we may need this later for tree traversal
@@ -198,10 +228,10 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @param arg1 
-   * @throws AccessControlException 
-   * @throws RepositoryException 
+   * @param arg0
+   * @param arg1
+   * @throws AccessControlException
+   * @throws RepositoryException
    */
   public void checkPermission(String arg0, String arg1)
       throws AccessControlException, RepositoryException {
@@ -222,7 +252,7 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
+   * @param arg0
    * @return nothing
    */
   public Object getAttribute(String arg0) {
@@ -240,8 +270,8 @@ public class MockJcrSession implements Session {
   /**
    * Throws UnsupportedOperationException
    * @return nothing
-   * @throws UnsupportedRepositoryOperationException 
-   * @throws RepositoryException 
+   * @throws UnsupportedRepositoryOperationException
+   * @throws RepositoryException
    */
   public ValueFactory getValueFactory()
       throws UnsupportedRepositoryOperationException, RepositoryException {
@@ -250,13 +280,13 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @param arg1 
-   * @param arg2 
-   * @param arg3 
-   * @throws PathNotFoundException 
-   * @throws SAXException 
-   * @throws RepositoryException 
+   * @param arg0
+   * @param arg1
+   * @param arg2
+   * @param arg3
+   * @throws PathNotFoundException
+   * @throws SAXException
+   * @throws RepositoryException
    */
   public void exportSystemView(String arg0, ContentHandler arg1, boolean arg2,
       boolean arg3) throws PathNotFoundException, SAXException,
@@ -266,13 +296,13 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @param arg1 
-   * @param arg2 
-   * @param arg3 
-   * @throws IOException 
-   * @throws PathNotFoundException 
-   * @throws RepositoryException 
+   * @param arg0
+   * @param arg1
+   * @param arg2
+   * @param arg3
+   * @throws IOException
+   * @throws PathNotFoundException
+   * @throws RepositoryException
    */
   public void exportSystemView(String arg0, OutputStream arg1, boolean arg2,
       boolean arg3) throws IOException, PathNotFoundException,
@@ -282,13 +312,13 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @param arg1 
-   * @param arg2 
-   * @param arg3 
-   * @throws PathNotFoundException 
-   * @throws SAXException 
-   * @throws RepositoryException 
+   * @param arg0
+   * @param arg1
+   * @param arg2
+   * @param arg3
+   * @throws PathNotFoundException
+   * @throws SAXException
+   * @throws RepositoryException
    */
   public void exportDocumentView(String arg0, ContentHandler arg1,
       boolean arg2, boolean arg3) throws PathNotFoundException, SAXException,
@@ -298,13 +328,13 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @param arg1 
-   * @param arg2 
-   * @param arg3 
-   * @throws IOException 
-   * @throws PathNotFoundException 
-   * @throws RepositoryException 
+   * @param arg0
+   * @param arg1
+   * @param arg2
+   * @param arg3
+   * @throws IOException
+   * @throws PathNotFoundException
+   * @throws RepositoryException
    */
   public void exportDocumentView(String arg0, OutputStream arg1, boolean arg2,
       boolean arg3) throws IOException, PathNotFoundException,
@@ -314,10 +344,10 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @param arg1 
-   * @throws NamespaceException 
-   * @throws RepositoryException 
+   * @param arg0
+   * @param arg1
+   * @throws NamespaceException
+   * @throws RepositoryException
    */
   public void setNamespacePrefix(String arg0, String arg1)
       throws NamespaceException, RepositoryException {
@@ -327,7 +357,7 @@ public class MockJcrSession implements Session {
   /**
    * Throws UnsupportedOperationException
    * @return nothing
-   * @throws RepositoryException 
+   * @throws RepositoryException
    */
   public String[] getNamespacePrefixes() throws RepositoryException {
     throw new UnsupportedOperationException();
@@ -335,10 +365,10 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
+   * @param arg0
    * @return nothing
-   * @throws NamespaceException 
-   * @throws RepositoryException 
+   * @throws NamespaceException
+   * @throws RepositoryException
    */
   public String getNamespaceURI(String arg0) throws NamespaceException,
       RepositoryException {
@@ -347,10 +377,10 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
+   * @param arg0
    * @return nothing
-   * @throws NamespaceException 
-   * @throws RepositoryException 
+   * @throws NamespaceException
+   * @throws RepositoryException
    */
   public String getNamespacePrefix(String arg0) throws NamespaceException,
       RepositoryException {
@@ -361,7 +391,7 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
+   * @param arg0
    */
   public void addLockToken(String arg0) {
     // All side-effecting calls throw an UnsupportedOperationException
@@ -370,14 +400,14 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @param arg1 
-   * @throws ItemExistsException 
-   * @throws PathNotFoundException 
-   * @throws VersionException 
-   * @throws ConstraintViolationException 
-   * @throws LockException 
-   * @throws RepositoryException 
+   * @param arg0
+   * @param arg1
+   * @throws ItemExistsException
+   * @throws PathNotFoundException
+   * @throws VersionException
+   * @throws ConstraintViolationException
+   * @throws LockException
+   * @throws RepositoryException
    */
   public void move(String arg0, String arg1) throws ItemExistsException,
       PathNotFoundException, VersionException, ConstraintViolationException,
@@ -388,14 +418,14 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @throws AccessDeniedException 
-   * @throws ItemExistsException 
-   * @throws ConstraintViolationException 
-   * @throws InvalidItemStateException 
-   * @throws VersionException 
-   * @throws LockException 
-   * @throws NoSuchNodeTypeException 
-   * @throws RepositoryException 
+   * @throws AccessDeniedException
+   * @throws ItemExistsException
+   * @throws ConstraintViolationException
+   * @throws InvalidItemStateException
+   * @throws VersionException
+   * @throws LockException
+   * @throws NoSuchNodeTypeException
+   * @throws RepositoryException
    */
   public void save() throws AccessDeniedException, ItemExistsException,
       ConstraintViolationException, InvalidItemStateException,
@@ -407,8 +437,8 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @throws RepositoryException 
+   * @param arg0
+   * @throws RepositoryException
    */
   public void refresh(boolean arg0) throws RepositoryException {
     // All side-effecting calls throw an UnsupportedOperationException
@@ -418,7 +448,7 @@ public class MockJcrSession implements Session {
   /**
    * Throws UnsupportedOperationException
    * @return nothing
-   * @throws RepositoryException 
+   * @throws RepositoryException
    */
   public boolean hasPendingChanges() throws RepositoryException {
     // All side-effecting calls throw an UnsupportedOperationException
@@ -427,14 +457,14 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @param arg1 
+   * @param arg0
+   * @param arg1
    * @return nothing
-   * @throws PathNotFoundException 
-   * @throws ConstraintViolationException 
-   * @throws VersionException 
-   * @throws LockException 
-   * @throws RepositoryException 
+   * @throws PathNotFoundException
+   * @throws ConstraintViolationException
+   * @throws VersionException
+   * @throws LockException
+   * @throws RepositoryException
    */
   public ContentHandler getImportContentHandler(String arg0, int arg1)
       throws PathNotFoundException, ConstraintViolationException,
@@ -445,17 +475,17 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @param arg1 
-   * @param arg2 
-   * @throws IOException 
-   * @throws PathNotFoundException 
-   * @throws ItemExistsException 
-   * @throws ConstraintViolationException 
-   * @throws VersionException 
-   * @throws InvalidSerializedDataException 
-   * @throws LockException 
-   * @throws RepositoryException 
+   * @param arg0
+   * @param arg1
+   * @param arg2
+   * @throws IOException
+   * @throws PathNotFoundException
+   * @throws ItemExistsException
+   * @throws ConstraintViolationException
+   * @throws VersionException
+   * @throws InvalidSerializedDataException
+   * @throws LockException
+   * @throws RepositoryException
    */
   public void importXML(String arg0, InputStream arg1, int arg2)
       throws IOException, PathNotFoundException, ItemExistsException,
@@ -476,7 +506,7 @@ public class MockJcrSession implements Session {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
+   * @param arg0
    */
   public void removeLockToken(String arg0) {
     // All side-effecting calls throw an UnsupportedOperationException

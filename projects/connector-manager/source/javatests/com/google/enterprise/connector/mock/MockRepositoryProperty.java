@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,12 +22,13 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Mock document property object. This encapsulates a typed name-value pair: the
@@ -38,6 +39,16 @@ import java.util.List;
  * TODO(ziff): add a typed getter for the value
  */
 public class MockRepositoryProperty {
+  private static Logger LOGGER =
+      Logger.getLogger(MockRepositoryProperty.class.getName());
+
+  // Constants used within raw ACL properties to delimit sections and label
+  // scope.
+  public static final String USER_SCOPE = "user";
+  public static final String GROUP_SCOPE = "group";
+  public static final int SCOPE_TYPE_SEP = ':';
+  public static final int SCOPE_ROLE_SEP = '=';
+
   /**
    * Enumeration for property carrier types
    */
@@ -111,8 +122,10 @@ public class MockRepositoryProperty {
         } catch (IllegalArgumentException e) {
           // it was a json object, but not the right kind to initialize a
           // property
+          LOGGER.log(Level.FINEST, "Unable to initialize JSON String", e);
         } catch (JSONException e) {
           // it wasn't anything like a json object. it must be a regular string
+          LOGGER.log(Level.FINEST, "Unable to parse as JSON String", e);
         }
       }
       init(name, PropertyType.STRING, value);
