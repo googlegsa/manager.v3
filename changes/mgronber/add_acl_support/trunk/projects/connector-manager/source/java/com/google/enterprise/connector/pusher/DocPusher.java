@@ -317,9 +317,9 @@ public class DocPusher implements Pusher {
    * Utility function to convert a set of document properties that look like:
    * <pre> 
    *   google:aclusers=[joe, mary, admin]
-   *   google:roles:admin=[owner]
-   *   google:roles:joe=[reader]
-   *   google:roles:mary=[reader, writer]
+   *   google:user:roles:joe=[reader]
+   *   google:user:roles:mary=[reader, writer]
+   *   google:user:roles:admin=[owner]
    * </pre>
    * into one property that looks like:
    * <pre>

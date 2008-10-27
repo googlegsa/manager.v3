@@ -538,6 +538,10 @@ public class DocPusherTest extends TestCase {
     assertStringNotContains("action=", resultXML);
   }
 
+  /**
+   * Test ACL related properties.  See the 'content' of the document for details
+   * on what is being tested.
+   */
   public void testUserAcl() throws PushException {
     String userAcl = "{\"timestamp\":\"20\""
         + ",\"docid\":\"user_acl\""

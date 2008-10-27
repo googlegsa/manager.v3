@@ -23,7 +23,6 @@ import junit.framework.TestCase;
 import javax.jcr.Credentials;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.LoginException;
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
@@ -74,7 +73,7 @@ public class MockJcrSessionTest extends TestCase {
     testAccess(session, "mary", "user_group_role_acl", true);
     testAccess(session, "eng", "user_group_role_acl", false);
     testAccess(session, "murgatroyd", "user_group_role_acl", false);
-    
+
     testAccess(session, "admin", "user_scoped_owner_acl", true);
     testAccess(session, "joe", "user_scoped_owner_acl", true);
     testAccess(session, "mary", "user_scoped_owner_acl", false);
@@ -88,7 +87,7 @@ public class MockJcrSessionTest extends TestCase {
     Assert.assertEquals(username, userSession.getUserID());
     boolean found = false;
     try {
-      Node n = userSession.getNodeByUUID(uuid);
+      userSession.getNodeByUUID(uuid);
       found = true;
     } catch (ItemNotFoundException e) {
       found = false;

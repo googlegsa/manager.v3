@@ -145,9 +145,10 @@ public class SpiConstants {
    *   Name = &lt;GROUP_ROLES_PROPNAME_PREFIX&gt; + &lt;scopeId&gt;
    *   Value = [RoleType[, ...]]
    * </pre>
-   * where &lt;scopeId&gt; is the group ACL Scope ID, &lt;PROPNAME_PREFIX&gt; is
-   * the {@link #GROUP_ROLES_PROPNAME_PREFIX}, and RoleType is one of the
-   * possible RoleType values.  User ACL Roles are of the form:
+   * where &lt;GROUP_ROLES_PROPNAME_PREFIX&gt; is the
+   * {@link #GROUP_ROLES_PROPNAME_PREFIX}, &lt;scopeId&gt; is the group ACL
+   * Scope ID, and RoleType is one of the possible RoleType values.  User ACL
+   * Roles are of the form:
    * <pre>
    *   Name = &lt;USER_ROLES_PROPNAME_PREFIX&gt; + &lt;scopeId&gt;
    *   Value = [RoleType[, ...]]
@@ -233,7 +234,7 @@ public class SpiConstants {
     public static final ActionType DELETE = new ActionType("delete");
     public static final ActionType ERROR = new ActionType("error");
 
-    private static final ActionType[] PRIVATE_VALUES = {ADD, DELETE, ERROR};
+    private static final ActionType[] PRIVATE_VALUES = {ADD, DELETE};
 
     private String tag;
 
@@ -281,7 +282,7 @@ public class SpiConstants {
     public static final RoleType ERROR = new RoleType("error");
 
     private static final RoleType[] PRIVATE_VALUES =
-        {PEEKER, READER, WRITER, OWNER, ERROR};
+        {PEEKER, READER, WRITER, OWNER};
 
     private String tag;
 

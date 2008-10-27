@@ -126,7 +126,7 @@ public class JcrDocumentTest extends TestCase {
     MockRepositoryDocument doc = r.getStore().getDocByID("doc1");
     Node node = new MockJcrNode(doc);
     Document document = new JcrDocument(node);
-    int count = countProperties(document);
+    countProperties(document);
   }
 
   public void testNoAcl() throws RepositoryException {
