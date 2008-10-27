@@ -29,23 +29,46 @@
 
     <!-- Define servlets that are included in the Connector application -->
 
-    <servlet>
-        <servlet-name>HelloWorld</servlet-name>
-        <servlet-class>com.google.enterprise.connector.servlet.HelloWorld</servlet-class>
-    </servlet>
- 
-    <servlet>
-        <servlet-name>TestAuthorization</servlet-name>
-        <servlet-class>com.google.enterprise.connector.servlet.TestAuthorization</servlet-class>
-    </servlet>
- 
-    <servlet-mapping>
-        <servlet-name>HelloWorld</servlet-name>
-	<url-pattern>/helloWorld</url-pattern>
-    </servlet-mapping>
+  <servlet>
+      <servlet-name>HelloWorld</servlet-name>
+      <servlet-class>com.google.enterprise.connector.servlet.HelloWorld</servlet-class>
+  </servlet>
+  <servlet>
+      <servlet-name>TestAuthorization</servlet-name>
+      <servlet-class>com.google.enterprise.connector.servlet.TestAuthorization</servlet-class>
+  </servlet>
+  <servlet>
+      <servlet-name>SamlAuthN</servlet-name>
+      <servlet-class>com.google.enterprise.connector.servlet.SamlAuthN</servlet-class>
+  </servlet>
+  <servlet>
+      <servlet-name>SamlArtifactResolve</servlet-name>
+      <servlet-class>com.google.enterprise.connector.servlet.SamlArtifactResolve</servlet-class>
+  </servlet>
+  <servlet>
+      <servlet-name>SamlAuthz</servlet-name>
+      <servlet-class>com.google.enterprise.connector.servlet.SamlAuthz</servlet-class>
+  </servlet>
 
-    <servlet-mapping>
-        <servlet-name>TestAuthorization</servlet-name>
-	<url-pattern>/testAuthorization/*</url-pattern>
-    </servlet-mapping>
+  <servlet-mapping>
+      <servlet-name>HelloWorld</servlet-name>
+	    <url-pattern>/helloWorld</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+      <servlet-name>TestAuthorization</servlet-name>
+	    <url-pattern>/testAuthorization/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+      <servlet-name>SamlAuthN</servlet-name>
+	    <url-pattern>/samlauthn</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+      <servlet-name>SamlArtifactResolve</servlet-name>
+	    <url-pattern>/samlartifact</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+      <servlet-name>SamlAuthz</servlet-name>
+	    <url-pattern>/samlauthz</url-pattern>
+  </servlet-mapping>
+  
 </web-app>
