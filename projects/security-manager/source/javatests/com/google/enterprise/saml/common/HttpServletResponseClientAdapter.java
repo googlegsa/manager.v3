@@ -38,11 +38,11 @@ public class HttpServletResponseClientAdapter implements HTTPInTransport {
   }
 
   public String getPeerAddress() {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public String getPeerDomainName() {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public InputStream getIncomingStream() {
@@ -50,7 +50,7 @@ public class HttpServletResponseClientAdapter implements HTTPInTransport {
   }
 
   public Object getAttribute(String name) {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public String getCharacterEncoding() {
@@ -66,49 +66,48 @@ public class HttpServletResponseClientAdapter implements HTTPInTransport {
   }
 
   public boolean isAuthenticated() {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public boolean isConfidential() {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public boolean isIntegrityProtected() {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public void setAuthenticated(boolean value) {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public void setConfidential(boolean value) {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public void setIntegrityProtected(boolean value) {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public String getHTTPMethod() {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public String getHeaderValue(String name) {
-    if (name.equalsIgnoreCase("Content-Type")) {
-      return response.getContentType();
-    } else if (name.equalsIgnoreCase("Content-Length")) {
-      return Integer.toString(response.getContentLength());
-    } else {
-      return (String) response.getHeader(name);
-    }
+    return
+        (name.equalsIgnoreCase("Content-Type"))
+        ? response.getContentType()
+        : (name.equalsIgnoreCase("Content-Length"))
+        ? Integer.toString(response.getContentLength())
+        : (String) response.getHeader(name);
   }
 
   public String getParameterValue(String name) {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public List<String> getParameterValues(String name) {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public int getStatusCode() {
@@ -116,6 +115,6 @@ public class HttpServletResponseClientAdapter implements HTTPInTransport {
   }
 
   public HTTP_VERSION getVersion() {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 }

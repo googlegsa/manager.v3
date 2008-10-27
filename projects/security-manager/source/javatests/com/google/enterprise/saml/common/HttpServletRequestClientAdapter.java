@@ -62,11 +62,11 @@ public class HttpServletRequestClientAdapter implements HTTPOutTransport {
   }
 
   public int getStatusCode() {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public HTTP_VERSION getVersion() {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public void setHeader(String name, String value) {
@@ -74,11 +74,11 @@ public class HttpServletRequestClientAdapter implements HTTPOutTransport {
   }
 
   public void setStatusCode(int status) {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public void setVersion(HTTP_VERSION version) {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public OutputStream getOutgoingStream() {
@@ -96,7 +96,7 @@ public class HttpServletRequestClientAdapter implements HTTPOutTransport {
       s.write("</p></body></html>\n");
       s.close();
     } catch (IOException e) {
-      throw new IllegalStateException(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -155,7 +155,7 @@ public class HttpServletRequestClientAdapter implements HTTPOutTransport {
   }
 
   public boolean isAuthenticated() {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public boolean isConfidential() {
@@ -167,14 +167,14 @@ public class HttpServletRequestClientAdapter implements HTTPOutTransport {
   }
 
   public void setAuthenticated(boolean value) {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public void setConfidential(boolean isConfidential) {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 
   public void setIntegrityProtected(boolean isIntegrityProtected) {
-    throw new IllegalStateException();
+    throw new UnsupportedOperationException();
   }
 }
