@@ -39,15 +39,15 @@
   </servlet>
   <servlet>
       <servlet-name>SamlAuthN</servlet-name>
-      <servlet-class>com.google.enterprise.connector.servlet.SamlAuthN</servlet-class>
+      <servlet-class>com.google.enterprise.saml.server.SamlAuthN</servlet-class>
   </servlet>
   <servlet>
       <servlet-name>SamlArtifactResolve</servlet-name>
-      <servlet-class>com.google.enterprise.connector.servlet.SamlArtifactResolve</servlet-class>
+      <servlet-class>com.google.enterprise.saml.server.SamlArtifactResolve</servlet-class>
   </servlet>
   <servlet>
       <servlet-name>SamlAuthz</servlet-name>
-      <servlet-class>com.google.enterprise.connector.servlet.SamlAuthz</servlet-class>
+      <servlet-class>com.google.enterprise.saml.server.SamlAuthz</servlet-class>
   </servlet>
 
   <servlet-mapping>
