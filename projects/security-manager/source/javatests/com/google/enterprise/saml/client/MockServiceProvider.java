@@ -27,6 +27,8 @@ import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -39,7 +41,7 @@ import javax.servlet.http.HttpServletResponse;
  * an identity provider.
  */
 public class MockServiceProvider extends HttpServlet {
-  // private static final Logger LOGGER = Logger.getLogger(MockServiceProvider.class.getName());
+  private static final Logger logger = Logger.getLogger(MockServiceProvider.class.getName());
   private static final long serialVersionUID = 1L;
   private final String idpUrl;
 
@@ -53,11 +55,15 @@ public class MockServiceProvider extends HttpServlet {
   public void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
     Object isAuthenticated = req.getSession().getAttribute("isAuthenticated");
+    logger.log(Level.FINE, "isAuthenticate = " + isAuthenticated);
     if (isAuthenticated == Boolean.TRUE) {
+      logger.log(Level.FINE, "run ifAllowed");
       ifAllowed(resp);
     } else if (isAuthenticated == Boolean.FALSE) {
+      logger.log(Level.FINE, "run ifDenied");
       ifDenied(resp);
     } else {
+      logger.log(Level.FINE, "run ifUnknown");
       ifUnknown(req, resp);
     }
   }
@@ -91,7 +97,13 @@ public class MockServiceProvider extends HttpServlet {
     context.setOutboundSAMLProtocol("http");
     context.setPeerEntityEndpoint(OpenSamlUtil.makeSingleSignOnService(
         SAMLConstants.SAML2_REDIRECT_BINDING_URI, idpUrl));
-    context.setRelayState(req.getRequestURL() + req.getQueryString());
+    {
+      String url = req.getHeader("Referer");
+      if (url != null) {
+        logger.log(Level.INFO, "Referer = " + url);
+        context.setRelayState(url);
+      }
+    }
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(resp, true));
 
     HTTPRedirectDeflateEncoder encoder = new HTTPRedirectDeflateEncoder();
