@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.servlet;
+package com.google.enterprise.saml.server;
 
 import junit.framework.TestCase;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -20,6 +20,8 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+
+import com.google.enterprise.saml.server.SamlAuthz;
 
 /**
  * Unit test for SamlAuthz handler.
