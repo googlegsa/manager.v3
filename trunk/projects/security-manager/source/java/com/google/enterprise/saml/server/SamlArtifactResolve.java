@@ -113,10 +113,15 @@ public class SamlArtifactResolve extends HttpServlet {
    * @param authnContext a context string as defined in the AuthnContext class
    * @return an ArtifactResponse object that contains the specified information
    */
-   private ArtifactResponse buildArtifactResponse(String statusCode, String issuer,
+  private ArtifactResponse buildArtifactResponse(String statusCode,
+                                                 String issuer,
                                                  String nameId,
                                                  String authnContext) {
-    ArtifactResponse artifactResp = OpenSamlUtil.makeArtifactResponse(null, OpenSamlUtil.makeStatus(statusCode), buildResponse(statusCode, issuer, nameId, authnContext));
+    ArtifactResponse artifactResp =
+        OpenSamlUtil.makeArtifactResponse(null,
+                                          OpenSamlUtil.makeStatus(statusCode),
+                                          buildResponse(statusCode, issuer,
+                                                        nameId, authnContext));
     artifactResp.setIssuer(OpenSamlUtil.makeIssuer(issuer));
     return artifactResp;
   }
@@ -125,8 +130,9 @@ public class SamlArtifactResolve extends HttpServlet {
    * Builds a Response object out of the specified parameters.
    */
   private Response buildResponse(String statusCode, String issuer,
-                                     String nameId, String authnContext) {
-    Response resp = OpenSamlUtil.makeResponse(null, OpenSamlUtil.makeStatus(statusCode));
+                                 String nameId, String authnContext) {
+    Response resp =
+        OpenSamlUtil.makeResponse(null, OpenSamlUtil.makeStatus(statusCode));
     resp.getAssertions().add(buildAssertion(issuer, nameId, authnContext));
     return resp;
   }
@@ -136,8 +142,11 @@ public class SamlArtifactResolve extends HttpServlet {
    */
   private Assertion buildAssertion(String issuer, String nameId,
                                    String authnContext) {
-    Assertion assertion = OpenSamlUtil.makeAssertion(OpenSamlUtil.makeIssuer(issuer), OpenSamlUtil.makeSubject(nameId));
-    assertion.getAuthnStatements().add(OpenSamlUtil.makeAuthnStatement(authnContext));
+    Assertion assertion =
+        OpenSamlUtil.makeAssertion(OpenSamlUtil.makeIssuer(issuer),
+                                   OpenSamlUtil.makeSubject(nameId));
+    assertion.getAuthnStatements()
+        .add(OpenSamlUtil.makeAuthnStatement(authnContext));
     return assertion;
   }
 
