@@ -3,6 +3,7 @@
 	<name>security-manager</name>
 	<comment></comment>
 	<projects>
+		<project>connector-manager</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
