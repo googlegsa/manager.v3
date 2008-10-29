@@ -15,6 +15,7 @@
 package com.google.enterprise.saml.client;
 
 import com.google.enterprise.saml.common.OpenSamlUtil;
+import com.google.enterprise.saml.common.SamlTestUtil;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -22,6 +23,7 @@ import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.binding.encoding.HTTPRedirectDeflateEncoder;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.NameID;
+import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.ws.message.encoder.MessageEncodingException;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
@@ -41,12 +43,15 @@ import javax.servlet.http.HttpServletResponse;
  * an identity provider.
  */
 public class MockServiceProvider extends HttpServlet {
-  private static final Logger logger = Logger.getLogger(MockServiceProvider.class.getName());
+  private static final String className = MockServiceProvider.class.getName();
+  private static final Logger logger = Logger.getLogger(className);
   private static final long serialVersionUID = 1L;
-  private final String idpUrl;
+
+  private final Endpoint idpEndpoint;
 
   public MockServiceProvider(String idpUrl) {
-    this.idpUrl = idpUrl;
+    idpEndpoint =
+        OpenSamlUtil.makeSingleSignOnService(SAMLConstants.SAML2_REDIRECT_BINDING_URI, idpUrl);
   }
 
   // This method is normally declared "protected", but the testing harness will need to be able to
@@ -54,21 +59,21 @@ public class MockServiceProvider extends HttpServlet {
   @Override
   public void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
+    logger.entering(className, "doGet");
     Object isAuthenticated = req.getSession().getAttribute("isAuthenticated");
     logger.log(Level.FINE, "isAuthenticate = " + isAuthenticated);
     if (isAuthenticated == Boolean.TRUE) {
-      logger.log(Level.FINE, "run ifAllowed");
       ifAllowed(resp);
     } else if (isAuthenticated == Boolean.FALSE) {
-      logger.log(Level.FINE, "run ifDenied");
       ifDenied(resp);
     } else {
-      logger.log(Level.FINE, "run ifUnknown");
       ifUnknown(req, resp);
     }
+    logger.exiting(className, "doGet");
   }
 
   private void ifAllowed(HttpServletResponse resp) throws IOException {
+    logger.entering(className, "ifAllowed");
     resp.setStatus(HttpServletResponse.SC_OK);
     resp.setContentType("text/html");
     resp.setCharacterEncoding("UTF-8");
@@ -77,9 +82,11 @@ public class MockServiceProvider extends HttpServlet {
     writer.print("<html><head><title>What you need</title></head>");
     writer.print("<body><h1>What you need...</h1><p>...is what we've got!</p></body></html>");
     writer.close();
+    logger.exiting(className, "ifAllowed");
   }
 
   private void ifDenied(HttpServletResponse resp) throws IOException {
+    logger.entering(className, "ifDenied");
     resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     resp.setContentType("text/html");
     resp.setCharacterEncoding("UTF-8");
@@ -88,22 +95,18 @@ public class MockServiceProvider extends HttpServlet {
     writer.print("<html><head><title>Access Denied</title></head>");
     writer.print("<body><h1>Access Denied</h1></body></html>");
     writer.close();
+    logger.exiting(className, "ifDenied");
   }
 
   private void ifUnknown(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+    logger.entering(className, "ifUnknown");
+    SamlTestUtil.initializeServletResponse(resp);
     SAMLMessageContext<SAMLObject, AuthnRequest, NameID> context =
         OpenSamlUtil.makeSamlMessageContext();
-    context.setOutboundSAMLMessage(buildRequest());
+    context.setOutboundSAMLMessage(buildRequest(req));
     context.setOutboundSAMLProtocol("http");
-    context.setPeerEntityEndpoint(OpenSamlUtil.makeSingleSignOnService(
-        SAMLConstants.SAML2_REDIRECT_BINDING_URI, idpUrl));
-    {
-      String url = req.getHeader("Referer");
-      if (url != null) {
-        logger.log(Level.INFO, "Referer = " + url);
-        context.setRelayState(url);
-      }
-    }
+    context.setPeerEntityEndpoint(idpEndpoint);
+    context.setRelayState(req.getRequestURI());
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(resp, true));
 
     HTTPRedirectDeflateEncoder encoder = new HTTPRedirectDeflateEncoder();
@@ -112,15 +115,16 @@ public class MockServiceProvider extends HttpServlet {
     } catch (MessageEncodingException e) {
       throw new ServletException(e);
     }
+    logger.exiting(className, "ifUnknown");
   }
 
-  private AuthnRequest buildRequest() {
+  private AuthnRequest buildRequest(HttpServletRequest req) {
     AuthnRequest request = OpenSamlUtil.makeAuthnRequest();
     request.setProtocolBinding(SAMLConstants.SAML2_ARTIFACT_BINDING_URI);
     request.setProviderName(OpenSamlUtil.GOOGLE_PROVIDER_NAME);
     request.setIssuer(OpenSamlUtil.makeIssuer(OpenSamlUtil.GOOGLE_ISSUER));
     request.setIsPassive(false);
-    request.setAssertionConsumerServiceURL(idpUrl);
+    request.setAssertionConsumerServiceURL(req.getRequestURL().toString());
     return request;
   }
 }
