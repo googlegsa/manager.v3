@@ -36,7 +36,6 @@ public class ConnectorInterfaces {
   final Connector connector;
   final Pusher pusher;
   final Instantiator instantiator;
-  final Map configMap;
 
   // these are lazily constructed
   Traverser traverser = null;
@@ -52,15 +51,13 @@ public class ConnectorInterfaces {
    * @param connector
    * @param pusher
    * @param instantiator
-   * @param configMap the configuration map
    */
   ConnectorInterfaces(String connectorName, Connector connector, Pusher pusher,
-      Instantiator instantiator, Map configMap) {
+      Instantiator instantiator) {
     this.connectorName = connectorName;
     this.connector = connector;
     this.pusher = pusher;
     this.instantiator = instantiator;
-    this.configMap = configMap;
   }
 
   /**
@@ -79,7 +76,6 @@ public class ConnectorInterfaces {
     this.traverser = traverser;
     this.authenticationManager = authenticationManager;
     this.authorizationManager = authorizationManager;
-    this.configMap = null;
   }
 
   /**
@@ -114,10 +110,6 @@ public class ConnectorInterfaces {
       }
     }
     return authorizationManager;
-  }
-
-  public Map getConfigMap() {
-    return configMap;
   }
 
   /**

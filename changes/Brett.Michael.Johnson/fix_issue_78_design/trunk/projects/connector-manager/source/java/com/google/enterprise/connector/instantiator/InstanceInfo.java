@@ -84,16 +84,6 @@ public final class InstanceInfo {
   }
 
   /**
-   * @return the connector configuration Map.
-   */
-  Map getConfigMap() {
-    if (properties == null) {
-      properties = configStore.getConnectorConfiguration(storeContext);
-    }
-    return properties;
-  }
-
-  /**
    * @return the typeInfo
    */
   TypeInfo getTypeInfo() {
@@ -187,6 +177,7 @@ public final class InstanceInfo {
                         connectorDir.getPath());
     info.properties.put(PropertiesUtils.GOOGLE_WORK_DIR,
                         Context.getInstance().getCommonDirPath());
+    // Don't write properties file to disk yet.
     info.connector = makeConnectorWithSpring(info);
     return info;
   }
@@ -298,20 +289,31 @@ public final class InstanceInfo {
    * configuration data, or null if no configuration is stored.
    */
   public Map getConnectorConfig() {
-    return configStore.getConnectorConfiguration(storeContext);
+    if (properties == null) {
+      properties = configStore.getConnectorConfiguration(storeContext);
+    }
+    return properties;
   }
 
+  /**
+   * Set the configuration data for this connector instance.
+   * Writes the supplied configuration through to the persistent store.
+   *
+   * @param configMap a Map&lt;String, String&gt; of its ConnectorType-specific
+   * configuration data, or null if no configuration is stored.
+   */
   public void setConnectorConfig(Map configMap) {
+    properties = PropertiesUtils.fromMap(configMap);
     if (configMap == null) {
       configStore.removeConnectorConfiguration(storeContext);
     } else {
-      configStore.storeConnectorConfiguration(storeContext,
-          PropertiesUtils.fromMap(configMap));
+      configStore.storeConnectorConfiguration(storeContext, properties);
     }
   }
 
   /**
    * Sets the schedule for this connector instance.
+   * Writes the modified schedule through to the persistent store.
    * 
    * @param connectorSchedule String to store or null unset any existing
    * schedule.
@@ -337,6 +339,7 @@ public final class InstanceInfo {
 
   /**
    * Sets the remembered traversal state for this connector instance.
+   * Writes the modified state through to the persistent store.
    *
    * @param connectorState String to store or null to erase any previously
    * saved traversal state.

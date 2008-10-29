@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,27 +14,26 @@
 
 package com.google.enterprise.connector.pusher;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 /**
- * Interface for a url connection. This takes in data and url to which the 
- * data needs to be sent.
+ * Interface for a feed connection. This takes in a data source name and a data
+ * source object that contains the data to be sent.  The actual connection to
+ * the feed server should be established by the implementation during
+ * construction or initialization.
  */
 public interface FeedConnection {
 
   /**
-   * Open a connection to this url and sends data.
-   * @param dataSource see
-   * http://code.google.com/enterprise/documentation/feedsguide.html
-   * @param feedType see
-   * http://code.google.com/enterprise/documentation/feedsguide.html
-   * @param data see
-   * http://code.google.com/enterprise/documentation/feedsguide.html
-   * @return response from the server.
-   * @throws IOException
+   * Sends data contained in the given data object identified as the given data
+   * source name.
+   * @param dataSource the name of the data source.  The data source name should
+   *    match the regex [a-zA-Z_][a-zA-Z0-9_-]*, the first character must be a
+   *    letter or underscore, the rest of the characters can be alphanumeric,
+   *    dash, or underscore.
+   * @param feedData an object that encapsulates the feed data that needs to be
+   *    sent by the <code>FeedConnection</code>.
+   * @return response from the feed server.
+   * @throws FeedException if problem extracting the data or sending it.
    */
-  public String sendData(String dataSource, String feedType, InputStream data)
-      throws IOException;
-  
+  public String sendData(String dataSource, FeedData feedData)
+      throws FeedException;
 }

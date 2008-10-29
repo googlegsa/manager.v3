@@ -215,7 +215,7 @@ public class InstanceInfoTest extends TestCase {
 
     // Check properties
     Properties instanceProps = 
-       PropertiesUtils.fromMap(instanceInfo.getConfigMap());
+       PropertiesUtils.fromMap(instanceInfo.getConnectorConfig());
     Assert.assertEquals("password_test", instanceProps.getProperty("Password"));
     Assert.assertEquals("MockRepositoryEventLog3.txt",
         instanceProps.getProperty("RepositoryFile"));

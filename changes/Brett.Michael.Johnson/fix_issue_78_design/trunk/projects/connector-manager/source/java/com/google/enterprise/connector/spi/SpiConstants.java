@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -128,6 +128,93 @@ public class SpiConstants {
   public static final String PROPNAME_ISPUBLIC = "google:ispublic";
 
   /**
+   * Identifies a multiple-valued String property that gives the list of
+   * group ACL Scope IDs that are permitted RoleType.READER access to this
+   * document. If either of the PROPNAME_ACLGROUPS or PROPNAME_ACLUSERS
+   * properties are non-null, then the GSA will grant or deny access to this
+   * document for a given user on the basis of whether the user's name appears
+   * as one of the Scope IDs in the PROPNAME_ACLUSERS list or one of the user's
+   * groups appears as one of the Scope IDs in the PROPNAME_ACLGROUPS list.
+   * <p>
+   * ACL Scope ID is a group or user name within the scope of the Connector.
+   * <p>
+   * To specify more than just RoleType.READER access to the document, the
+   * Connector must add additional multi-value role properties to the document.
+   * These entries are of the form:
+   * <pre>
+   *   Name = &lt;GROUP_ROLES_PROPNAME_PREFIX&gt; + &lt;scopeId&gt;
+   *   Value = [RoleType[, ...]]
+   * </pre>
+   * where &lt;GROUP_ROLES_PROPNAME_PREFIX&gt; is the
+   * {@link #GROUP_ROLES_PROPNAME_PREFIX}, &lt;scopeId&gt; is the group ACL
+   * Scope ID, and RoleType is one of the possible RoleType values.  User ACL
+   * Roles are of the form:
+   * <pre>
+   *   Name = &lt;USER_ROLES_PROPNAME_PREFIX&gt; + &lt;scopeId&gt;
+   *   Value = [RoleType[, ...]]
+   * </pre>
+   * where the &lt;scopeId&gt; will be the user ACL Scope ID.
+   * <p>
+   * If the PROPNAME_ISPUBLIC is missing or is true, then this property
+   * is ignored, since the document is public.
+   * <p>
+   * If both the PROPNAME_ACLGROUPS and PROPNAME_ACLUSERS properties are
+   * null or empty, then the GSA will use the authorization SPI to grant
+   * or deny access to this document.
+   * <p>
+   * The GSA may be configured to bypass on-board authorization, in which
+   * case these properties will be ignored, and the GSA will use the
+   * authorization SPI to grant or deny access to this document.
+   * <p>
+   * Value: google:aclgroups
+   */
+  public static final String PROPNAME_ACLGROUPS = "google:aclgroups";
+
+  /**
+   * Identifies a multiple-valued String property that gives the list of
+   * users that are permitted access to this document. For details, see
+   * the {@link #PROPNAME_ACLGROUPS}.
+   * <p>
+   * Value: google:aclusers
+   */
+  public static final String PROPNAME_ACLUSERS = "google:aclusers";
+
+  /**
+   * Prefix added to the front of the group ACL Scope ID when creating a group
+   * roles property name.  If the Connector wants to define specific roles
+   * associated with a group ACL Scope ID related to a document they should be
+   * stored in a multi-valued property named:
+   * <pre>
+   *   GROUP_ROLES_PROPNAME_PREFIX + &lt;scopeId&gt;
+   * </pre>
+   * For example, given a group ACL Entry of "eng=reader,writer" the roles for
+   * "eng" would be stored in a property as follows:
+   * <pre>
+   * Name = "google:group:roles:eng"
+   * Value = [reader, writer]
+   * </pre>
+   */
+  public static final String GROUP_ROLES_PROPNAME_PREFIX =
+      "google:group:roles:";
+
+  /**
+   * Prefix added to the front of the user ACL Scope ID when creating a user
+   * roles property name.  If the Connector wants to define specific roles
+   * associated with a user ACL Scope ID related to a document they should be
+   * stored in a multi-valued property named:
+   * <pre>
+   *   USER_ROLES_PROPNAME_PREFIX + &lt;scopeId&gt;
+   * </pre>
+   * For example, given a user ACL Entry of "joe=reader,writer" the roles for
+   * "joe" would be stored in a property as follows:
+   * <pre>
+   * Name = "google:user:roles:joe"
+   * Value = [reader, writer]
+   * </pre>
+   */
+  public static final String USER_ROLES_PROPNAME_PREFIX = "google:user:roles:";
+
+  /**
    * Identifies an optional, single-valued property that specifies the action
    * associated with the document.  If not specified, then the system will
    * not specify the action and the default behavior will be observed.
@@ -135,7 +222,7 @@ public class SpiConstants {
    * Value: google:action
    */
   public static final String PROPNAME_ACTION = "google:action";
-  
+
   /**
    * Ordinal-base typesafe enum for action types.
    */
@@ -147,7 +234,7 @@ public class SpiConstants {
     public static final ActionType DELETE = new ActionType("delete");
     public static final ActionType ERROR = new ActionType("error");
 
-    private static final ActionType[] PRIVATE_VALUES = {ADD, DELETE, ERROR};
+    private static final ActionType[] PRIVATE_VALUES = {ADD, DELETE};
 
     private String tag;
 
@@ -178,6 +265,54 @@ public class SpiConstants {
 
     public int compareTo(Object o) {
         return ordinal - ((ActionType)o).ordinal;
+    }
+  }
+
+  /**
+   * Ordinal-base typesafe enum for known role types.
+   */
+  public static class RoleType implements Comparable {
+    private static int nextOrdinal = 0;
+    private final int ordinal = nextOrdinal++;
+
+    public static final RoleType PEEKER = new RoleType("peeker");
+    public static final RoleType READER = new RoleType("reader");
+    public static final RoleType WRITER = new RoleType("writer");
+    public static final RoleType OWNER = new RoleType("owner");
+    public static final RoleType ERROR = new RoleType("error");
+
+    private static final RoleType[] PRIVATE_VALUES =
+        {PEEKER, READER, WRITER, OWNER};
+
+    private String tag;
+
+    RoleType(String m) {
+        tag = m;
+    }
+
+    public String toString() {
+      return tag;
+    }
+
+    /**
+     * @return The enum matching the given <code>tag</code>.
+     * <code>RoleType.ERROR</code> will be returned if the given
+     * <code>tag</code> does not match a known <code>RoleType</code>.
+     */
+    public static RoleType findRoleType(String tag) {
+        if (tag == null) {
+          return ERROR;
+        }
+        for (int i = 0; i < PRIVATE_VALUES.length; i++) {
+          if (PRIVATE_VALUES[i].tag.equals(tag)) {
+            return PRIVATE_VALUES[i];
+          }
+        }
+        return ERROR;
+      }
+
+    public int compareTo(Object o) {
+        return ordinal - ((RoleType)o).ordinal;
     }
   }
 }

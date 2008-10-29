@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -109,15 +109,12 @@ public class SpringInstantiator implements Instantiator {
     ConnectorInterfaces connectorInterfaces =
         (ConnectorInterfaces) connectorCache.get(connectorName);
     if (connectorInterfaces == null) {
-      InstanceInfo instanceInfo = getInstanceInfo(connectorName);
-      connectorInterfaces =
-          new ConnectorInterfaces(connectorName, instanceInfo.getConnector(),
-                                  pusher, this, instanceInfo.getConfigMap());
+      connectorInterfaces = new ConnectorInterfaces(connectorName,
+          getInstanceInfo(connectorName).getConnector(), pusher, this);
       connectorCache.put(connectorName, connectorInterfaces);
     }
     return connectorInterfaces;
   }
-
 
   private synchronized InstanceInfo getInstanceInfo(String connectorName)
       throws ConnectorNotFoundException {
@@ -152,7 +149,7 @@ public class SpringInstantiator implements Instantiator {
     InstanceInfo instanceInfo = getInstanceInfo(connectorName);
     TypeInfo typeInfo = instanceInfo.getTypeInfo();
     ConnectorType connectorType = typeInfo.getConnectorType();
-    Map configMap = instanceInfo.getConfigMap();
+    Map configMap = instanceInfo.getConnectorConfig();
     return connectorType.getPopulatedConfigForm(configMap, locale);
   }
 
@@ -261,7 +258,7 @@ public class SpringInstantiator implements Instantiator {
    */
   public Map getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException {
-    return getInstanceInfo(connectorName).getConfigMap();
+    return getInstanceInfo(connectorName).getConnectorConfig();
   }
 
   /*

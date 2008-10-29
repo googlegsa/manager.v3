@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryDateTime;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import javax.jcr.Credentials;
@@ -27,7 +26,7 @@ import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 
 /**
- * Unit tests for Mock JCR repository.  
+ * Unit tests for Mock JCR repository.
  */
 public class MockJcrRepositoryTest extends TestCase {
 
@@ -36,16 +35,42 @@ public class MockJcrRepositoryTest extends TestCase {
    * @throws RepositoryException
    */
   public void testSimpleRepository() throws RepositoryException {
-    MockRepositoryEventList mrel = 
-      new MockRepositoryEventList("MockRepositoryEventLog1.txt");
+    MockRepositoryEventList mrel =
+        new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
-    Assert.assertTrue
-    (r.getCurrentTime().compareTo(new MockRepositoryDateTime(60)) == 0);
+    assertTrue
+        (r.getCurrentTime().compareTo(new MockRepositoryDateTime(60)) == 0);
 
     MockJcrRepository repo = new MockJcrRepository(r);
     Credentials creds = new SimpleCredentials("admin", "admin".toCharArray());
-    
+
     Session session = repo.login(creds);
-    Assert.assertTrue(session != null);  
+    assertTrue(session != null);
+  }
+
+  /**
+   * Test session with "users" document and "acl" properties.
+   * @throws RepositoryException 
+   */
+  public void testAuthnRepository() throws RepositoryException {
+    MockRepositoryEventList mrel =
+        new MockRepositoryEventList("MockRepositoryEventLog2.txt");
+    MockRepository r = new MockRepository(mrel);
+    MockJcrRepository repo = new MockJcrRepository(r);
+    Credentials creds = new SimpleCredentials("admin", "admin".toCharArray());
+    Session session = repo.login(creds);
+    assertTrue(session != null);
+    // Test non-admin user
+    creds = new SimpleCredentials("fred", "fred".toCharArray());
+    session = repo.login(creds);
+    assertTrue(session != null);
+    // Test bad login
+    creds = new SimpleCredentials("fred", "freddy".toCharArray());
+    session = repo.login(creds);
+    assertTrue(session == null);
+    // Test bad user
+    creds = new SimpleCredentials("rat", "rat".toCharArray());
+    session = repo.login(creds);
+    assertTrue(session == null);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -125,12 +125,12 @@ public class MockInstantiator implements Instantiator {
     Repository repository = new MockJcrRepository(mockRepository);
     Connector connector = new JcrConnector(repository);
 
-    TraversalManager qtm;
+    TraversalManager traversalManager;
     AuthenticationManager authenticationManager;
     AuthorizationManager authorizationManager;
     try {
       Session session = connector.login();
-      qtm = session.getTraversalManager();
+      traversalManager = session.getTraversalManager();
       authenticationManager = session.getAuthenticationManager();
       authorizationManager = session.getAuthorizationManager();
     } catch (Exception e) {
@@ -140,11 +140,11 @@ public class MockInstantiator implements Instantiator {
     }
     Pusher pusher = new MockPusher(System.out);
     QueryTraverser queryTraverser =
-        new QueryTraverser(pusher, qtm, this, connectorName);
+        new QueryTraverser(pusher, traversalManager, this, connectorName);
 
     connectorMap.put(connectorName, new ConnectorInstance(
         new ConnectorInterfaces(connectorName, queryTraverser,
-                                authenticationManager, authorizationManager),
+            authenticationManager, authorizationManager),
         connectorStateStore));
   }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -209,7 +209,6 @@ public class InstanceMapTest extends TestCase {
     instanceMap.removeConnector("connector3");
 
     Assert.assertEquals(0, instanceMap.size());
-
   }
 
   private void updateConnectorTest(InstanceMap instanceMap, String name,
@@ -225,7 +224,7 @@ public class InstanceMapTest extends TestCase {
     Assert.assertEquals(name, instanceInfo.getName());
 
     // the password will be decrypted in the InstanceInfo
-    Map instanceProps = instanceInfo.getConfigMap();
+    Map instanceProps = instanceInfo.getConnectorConfig();
     String instancePasswd = (String) instanceProps.get("Password");
     String plainPasswd = (String) config.get("Password");
     Assert.assertEquals(instancePasswd, plainPasswd);

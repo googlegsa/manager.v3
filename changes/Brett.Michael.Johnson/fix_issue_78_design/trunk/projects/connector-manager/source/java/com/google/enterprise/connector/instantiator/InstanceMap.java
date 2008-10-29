@@ -181,8 +181,9 @@ public class InstanceMap extends TreeMap {
       throw new InstantiatorException("Failed to create connector " + name);
     }
 
-    // Save the new configuration.
-    instanceInfo.setConnectorConfig(config);  // TODO: [bmj] dont like this.
+    // Only after validateConfig and instantiation succeeds do we
+    // save the new configuration to persistent store.
+    instanceInfo.setConnectorConfig(config);
     this.put(name, instanceInfo);
 
     return null;
