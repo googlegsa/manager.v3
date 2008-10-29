@@ -47,8 +47,16 @@ public class MockServiceProvider extends HttpServlet {
   private static final Logger logger = Logger.getLogger(className);
   private static final long serialVersionUID = 1L;
 
+  /**
+   * The endpoint representing the identity provider.
+   */
   private final Endpoint idpEndpoint;
 
+  /**
+   * Creates a new mock SAML service provider with the given identity provider.
+   *
+   * @param idpUrl The URL for the identity provider.
+   */
   public MockServiceProvider(String idpUrl) {
     idpEndpoint =
         OpenSamlUtil.makeSingleSignOnService(SAMLConstants.SAML2_REDIRECT_BINDING_URI, idpUrl);
