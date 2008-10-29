@@ -160,11 +160,14 @@ public class HostLoadManager {
   public int determineBatchHint(String connectorName) {
     int maxDocsPerPeriod =
       (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
-    LOGGER.log(Level.FINEST, "maxDocsPerPeriod=" + maxDocsPerPeriod);
     int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
-    LOGGER.log(Level.FINEST, "docsTraversed=" + docsTraversed);
     int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
-    LOGGER.log(Level.FINEST, "remainingDocsToTraverse=" + remainingDocsToTraverse);
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.finest("connectorName = " + connectorName
+          + "  maxDocsPerPeriod = " + maxDocsPerPeriod
+          + "  docsTraversed = " + docsTraversed
+          + "  remainingDocsToTraverse = " + remainingDocsToTraverse);
+    }
     if (remainingDocsToTraverse > BATCH_SIZE) {
       remainingDocsToTraverse = BATCH_SIZE;
     }

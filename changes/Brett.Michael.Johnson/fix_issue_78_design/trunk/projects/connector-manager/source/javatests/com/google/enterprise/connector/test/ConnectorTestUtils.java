@@ -20,6 +20,8 @@ import com.google.enterprise.connector.servlet.ServletUtil;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 
+import junit.framework.Assert;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,6 +30,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 public class ConnectorTestUtils {
 
@@ -161,6 +166,26 @@ public class ConnectorTestUtils {
     File file = resource.getFile();
     String path = file.getAbsolutePath();
     return path;
+  }
+
+  /**
+   * Compare two maps.  The maps need not be identical, but map1 
+   * should be a subset of map2.  Note that this is slightly different
+   * behaviour than earlier versions of compareMaps.
+   *
+   * @param map1 a Map that should be a subset of map2
+   * @param map2 a Map that should be a superset of map1
+   */
+  public static void compareMaps(Map map1, Map map2) {
+    Set set1 = map1.keySet();
+    Set set2 = map2.keySet();
+    Assert.assertTrue("there is a key in map1 that's not in map2",
+        set2.containsAll(set1));
+
+    for (Iterator i = set1.iterator(); i.hasNext();) {
+      Object next = i.next();
+      Assert.assertEquals(map1.get(next), map2.get(next));
+    }
   }
 
   public static boolean deleteAllFiles(File dir) {

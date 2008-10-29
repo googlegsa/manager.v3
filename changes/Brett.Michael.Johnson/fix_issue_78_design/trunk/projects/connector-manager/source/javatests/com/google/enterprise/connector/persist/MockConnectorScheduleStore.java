@@ -27,13 +27,7 @@ public class MockConnectorScheduleStore extends HashMap
    * #getConnectorSchedule(StoreContext)
    */
   public String getConnectorSchedule(StoreContext context) {
-    String scheduleStr = (String) this.get(context.getConnectorName());
-    if (null == scheduleStr) {
-      // if we get an unknown connectorName (i.e. one without known schedule),
-      // we default to always run at 60 docs per minute, 100ms retry delay
-      scheduleStr = context.getConnectorName() + ":60:100:0-0";
-    }
-    return scheduleStr;
+    return (String) this.get(context.getConnectorName());
   }
 
   /* (non-Javadoc)

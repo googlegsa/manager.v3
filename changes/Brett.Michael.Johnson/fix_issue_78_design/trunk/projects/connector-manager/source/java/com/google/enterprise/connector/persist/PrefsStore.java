@@ -35,24 +35,58 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
   private static final Logger LOGGER =
       Logger.getLogger(PrefsStore.class.getName());
 
-  private static Preferences prefs;
-  private static Preferences prefsSchedule;
-  private static Preferences prefsState;
-  private static Preferences prefsConfig;
+  private static Preferences prefs = null;
+  private static String prefsPrefix = null;
+  private static Preferences prefsSchedule = null;
+  private static Preferences prefsState = null;
+  private static Preferences prefsConfig = null;
+  private static boolean useUserRoot = true;
 
   public PrefsStore() {
-    this(true);
+    this(true, null);
   }
 
   public PrefsStore(boolean useUserRoot) {
-    if (useUserRoot) {
-      prefs = Preferences.userNodeForPackage(PrefsStore.class);
-    } else {
-      prefs = Preferences.systemNodeForPackage(PrefsStore.class);
+    this(useUserRoot, null);
+  }
+
+  public PrefsStore(boolean useUserRoot, String prefix) {
+    this.useUserRoot = useUserRoot;
+    this.prefsPrefix = prefix;
+  }
+
+  private synchronized void initPrefs() {
+    if (prefs == null) {
+      if (useUserRoot) {
+        prefs = Preferences.userNodeForPackage(PrefsStore.class);
+      } else {
+        prefs = Preferences.systemNodeForPackage(PrefsStore.class);
+      }
+      if (prefsPrefix != null) {
+        prefs = prefs.node(prefsPrefix);
+      }
     }
-    prefsSchedule = prefs.node("schedule");
-    prefsState = prefs.node("state");
-    prefsConfig = prefs.node("configuration");
+  }
+
+  private synchronized void initPrefsSchedule() {
+    if (prefsSchedule == null) {
+      initPrefs();
+      prefsSchedule = prefs.node("schedule");
+    }    
+  }
+
+  private synchronized void initPrefsState() {
+    if (prefsState == null) {
+      initPrefs();
+      prefsState = prefs.node("state");
+    }    
+  }
+
+  private synchronized void initPrefsConfig() {
+    if (prefsConfig == null) {
+      initPrefs();
+      prefsConfig = prefs.node("configuration");
+    }    
   }
 
   /**
@@ -61,6 +95,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    * @return connectorSchedule schedule of the corresponding connector.
    */
   public String getConnectorSchedule(StoreContext context) {
+    initPrefsSchedule();
     String connectorSchedule;
     connectorSchedule = prefsSchedule.get(context.getConnectorName(), null);
     return connectorSchedule;
@@ -73,6 +108,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    */
   public void storeConnectorSchedule(StoreContext context,
       String connectorSchedule)  {
+    initPrefsSchedule();
     prefsSchedule.put(context.getConnectorName(), connectorSchedule);
   }
 
@@ -81,6 +117,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    * @param context a StoreContext
    */
   public void removeConnectorSchedule(StoreContext context) {
+    initPrefsSchedule();
     prefsSchedule.remove(context.getConnectorName());
     flush();
   }
@@ -91,6 +128,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    * @return the state, or null if no state has been stored for this connector
    */
   public String getConnectorState(StoreContext context) {
+    initPrefsState();
     return prefsState.get(context.getConnectorName(), null);
   }
 
@@ -101,6 +139,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    */
   public void storeConnectorState(StoreContext context, 
       String connectorState) {
+    initPrefsState();
     prefsState.put(context.getConnectorName(), connectorState);
   }
 
@@ -109,6 +148,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    * @param context a StoreContext
    */
   public void removeConnectorState(StoreContext context) {
+    initPrefsState();
     prefsState.remove(context.getConnectorName());
     flush();
   }
@@ -121,6 +161,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    *         has been stored for this connector.
    */
   public Properties getConnectorConfiguration(StoreContext context) {
+    initPrefsConfig();
     try {
       String propStr = prefsConfig.get(context.getConnectorName(), null);
       return PropertiesUtils.loadFromString(propStr);
@@ -139,6 +180,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    */
   public void storeConnectorConfiguration(StoreContext context,
       Properties configuration) {
+    initPrefsConfig();
     try {
       String header = "Configuration for Connector " 
           + context.getConnectorName();
@@ -157,6 +199,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    * @param context a StoreContext
    */
   public void removeConnectorConfiguration(StoreContext context) {
+    initPrefsConfig();
     prefsConfig.remove(context.getConnectorName());
   }
 
@@ -166,26 +209,18 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    */
   public boolean clear() {
     boolean result = true;
-    try {
-      prefsSchedule.clear();
-    } catch (BackingStoreException e) {
-      LOGGER.log(Level.WARNING, "Could not clear schedule store.", e);
-      result = false;
+    if (prefs != null) {
+      try {
+        prefs.removeNode();
+      } catch (BackingStoreException e) {
+        LOGGER.log(Level.WARNING, "Could not clear preferences store.", e);
+        result = false;
+      }
+      prefs = null;
+      prefsConfig = null;
+      prefsState = null;
+      prefsSchedule = null;
     }
-    try {
-      prefsState.clear();
-    } catch (BackingStoreException e) {
-      LOGGER.log(Level.WARNING, "Could not clear state store.", e);
-      result = false;
-    }
-    try {
-      prefsConfig.clear();
-    } catch (BackingStoreException e) {
-      LOGGER.log(Level.WARNING, "Could not clear configuration store.", e);
-      result = false;
-    }
-    if (result)
-      result = flush();
     return result;
   }
 
@@ -199,12 +234,14 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    */
   public boolean flush() {
     boolean result = true;
-    try {
-      prefsState.flush();
-    } catch (BackingStoreException e) {
-      LOGGER.log(Level.WARNING,
-          "Could not flush contents to persistent store.", e);
-      result = false;
+    if (prefsState != null) {
+      try {
+        prefsState.flush();
+      } catch (BackingStoreException e) {
+        LOGGER.log(Level.WARNING,
+                   "Could not flush contents to persistent store.", e);
+        result = false;
+      }
     }
     return result;
   }

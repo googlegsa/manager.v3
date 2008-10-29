@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,31 +18,34 @@ import com.google.enterprise.connector.test.ConnectorTestUtils;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Properties;
 
 /**
  * Class to test ScheduleStore.
  */
-public class PrefsStoreTest extends TestCase {
+public class FileStoreTest extends TestCase {
 
-  protected PrefsStore store;
+  protected FileStore store;
+  protected File storeDir;
 
-  protected void setUp() {
-    // Only testing use of userRoot
-    store = new PrefsStore(true, "testing");
+  protected void setUp() throws IOException {
+    storeDir = new File("testdata/tmp/filestore");
+    storeDir.mkdirs();
+    store = new FileStore();
   }
 
-  protected void tearDown() {
-    store.clear();
+  protected void tearDown() throws IOException {
+    ConnectorTestUtils.deleteAllFiles(storeDir);
   }
 
   // Tests getting and setting for a valid connector name and schedule.
   public void testGetandSetConnectorSchedule() {
     String expectedSchedule = "schedule of connectorA";
     String connectorName = "connectorA";
-    StoreContext storeContext = new StoreContext(connectorName);
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
     store.storeConnectorSchedule(storeContext, expectedSchedule);
-    Assert.assertTrue(store.flush());
     String resultSchedule = store.getConnectorSchedule(storeContext);
     Assert.assertTrue(resultSchedule.equals(expectedSchedule));
   }
@@ -50,7 +53,7 @@ public class PrefsStoreTest extends TestCase {
   // Tests getting schedule for an unknown connector
   public void testGetConnectorSchedule1() {
     String schedule = store.getConnectorSchedule(
-        new StoreContext("some wierd connector name"));
+        new StoreContext("some wierd connector name", storeDir));
     Assert.assertNull(schedule);
   }
 
@@ -59,8 +62,8 @@ public class PrefsStoreTest extends TestCase {
     boolean exceptionCaught = false;
     String schedule = null;
     try {
-      schedule = store.getConnectorSchedule(new StoreContext(null));
-    } catch (NullPointerException e) {
+      schedule = store.getConnectorSchedule(new StoreContext(null, storeDir));
+    } catch (IllegalArgumentException e) {
         exceptionCaught = true;
     }
     Assert.assertTrue(exceptionCaught);
@@ -71,7 +74,7 @@ public class PrefsStoreTest extends TestCase {
   public void testRemoveConnectorSchedule() {
     String connectorName = "foo";
     String connectorSchedule = "foo's schedule";
-    StoreContext storeContext = new StoreContext(connectorName);
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
     String schedule = store.getConnectorSchedule(storeContext);
     Assert.assertNull(schedule);
     store.storeConnectorSchedule(storeContext, connectorSchedule);
@@ -86,9 +89,8 @@ public class PrefsStoreTest extends TestCase {
   public void testGetandSetConnectorState() {
     String expectedState = "state of connectorA";
     String connectorName = "connectorA";
-    StoreContext storeContext = new StoreContext(connectorName);
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
     store.storeConnectorState(storeContext, expectedState);
-    Assert.assertTrue(store.flush());
     String resultState = store.getConnectorState(storeContext);
     Assert.assertTrue(resultState.equals(expectedState));
   }
@@ -96,7 +98,7 @@ public class PrefsStoreTest extends TestCase {
   //Tests getting state for an unknown connector.
   public void testGetConnectorState1() {
     String state = store.getConnectorState(
-        new StoreContext("some wierd connector name"));
+        new StoreContext("some wierd connector name", storeDir));
     Assert.assertNull(state);
   }
 
@@ -104,8 +106,8 @@ public class PrefsStoreTest extends TestCase {
   public void testGetConnectorState2() {
     boolean exceptionCaught = false;
     try {
-      String state = store.getConnectorState(new StoreContext(null));
-    } catch (NullPointerException e) {
+      String state = store.getConnectorState(new StoreContext(null, storeDir));
+    } catch (IllegalArgumentException e) {
         exceptionCaught = true;
     }
     Assert.assertTrue(exceptionCaught);
@@ -115,7 +117,7 @@ public class PrefsStoreTest extends TestCase {
   public void testRemoveConnectorState() {
     String connectorName = "foo";
     String connectorState = "foo's state";
-    StoreContext storeContext = new StoreContext(connectorName);
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
     String state = store.getConnectorState(storeContext);
     Assert.assertNull(state);
     store.storeConnectorState(storeContext, connectorState);
@@ -133,9 +135,8 @@ public class PrefsStoreTest extends TestCase {
     expectedConfig.setProperty("property2", "2");
     expectedConfig.setProperty("property3", "true");
     String connectorName = "connectorA";
-    StoreContext storeContext = new StoreContext(connectorName);
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
     store.storeConnectorConfiguration(storeContext, expectedConfig);
-    Assert.assertTrue(store.flush());
     Properties resultConfig = store.getConnectorConfiguration(storeContext);
     ConnectorTestUtils.compareMaps(expectedConfig, resultConfig);
   }
@@ -150,10 +151,9 @@ public class PrefsStoreTest extends TestCase {
     expectedConfig.setProperty("password", "fred");
     expectedConfig.setProperty("PASSWORDS", "fred");
     expectedConfig.setProperty("xyzpasswordzy", "fred");
-    String connectorName = "connectorA";
-    StoreContext storeContext = new StoreContext(connectorName);
+    String connectorName = "connectorB";
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
     store.storeConnectorConfiguration(storeContext, expectedConfig);
-    Assert.assertTrue(store.flush());
     Properties resultConfig = store.getConnectorConfiguration(storeContext);
     ConnectorTestUtils.compareMaps(expectedConfig, resultConfig);
   }
@@ -162,7 +162,7 @@ public class PrefsStoreTest extends TestCase {
   // Tests getting configuration for an unknown connector.
   public void testGetConnectorConfiguration1() {
     Properties config = store.getConnectorConfiguration(
-        new StoreContext("some wierd connector name"));
+        new StoreContext("some wierd connector name", storeDir));
     // Should return null, not an empty Properties object.
     Assert.assertNull(config);
   }
@@ -170,10 +170,10 @@ public class PrefsStoreTest extends TestCase {
   // Tests if the exception is thrown correctly when the connector name is null.
   public void testGetConnectorConfiguration2() {
     boolean exceptionCaught = false;
-    StoreContext storeContext = new StoreContext(null);
+    StoreContext storeContext = new StoreContext(null, storeDir);
     try {
       Properties config = store.getConnectorConfiguration(storeContext);
-    } catch (NullPointerException e) {
+    } catch (IllegalArgumentException e) {
         exceptionCaught = true;
     }
     Assert.assertTrue(exceptionCaught);
@@ -186,7 +186,7 @@ public class PrefsStoreTest extends TestCase {
     expectedConfig.setProperty("property1", "value1");
     expectedConfig.setProperty("property2", "2");
     expectedConfig.setProperty("property3", "true");
-    StoreContext storeContext = new StoreContext(connectorName);
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
     Properties config = store.getConnectorConfiguration(storeContext);
     Assert.assertNull(config);
     store.storeConnectorConfiguration(storeContext, expectedConfig);

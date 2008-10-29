@@ -34,7 +34,7 @@ public class HostLoadManagerTest extends TestCase {
   private MockInstantiator instantiator = new MockInstantiator();
 
   private void addLoad(String connectorName, int load) {
-    Schedule schedule = new Schedule(connectorName + ":" + load + ":0:0-0");
+    Schedule schedule = new Schedule(connectorName + ":" + load + ":100:0-0");
     String connectorSchedule = schedule.toString();
     try {
       instantiator.setConnectorSchedule(connectorName, connectorSchedule);
@@ -110,10 +110,9 @@ public class HostLoadManagerTest extends TestCase {
     addLoad(connectorName, 60);
     HostLoadManager hostLoadManager = 
       new HostLoadManager(instantiator, periodInMillis);
-
-    Assert.assertEquals(false,hostLoadManager.shouldDelay(connectorName));
+    Assert.assertEquals(false, hostLoadManager.shouldDelay(connectorName));
     hostLoadManager.connectorFinishedTraversal(connectorName);
-    Assert.assertEquals(true,hostLoadManager.shouldDelay(connectorName));
+    Assert.assertEquals(true, hostLoadManager.shouldDelay(connectorName));
     // sleep more than 100ms the time set in MockConnectorSchedule
     // so that this connector can be allowed to run again without delay
     try {
@@ -123,6 +122,6 @@ public class HostLoadManagerTest extends TestCase {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    Assert.assertEquals(false,hostLoadManager.shouldDelay(connectorName));
+    Assert.assertEquals(false, hostLoadManager.shouldDelay(connectorName));
   }
 }

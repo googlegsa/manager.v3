@@ -87,25 +87,24 @@
        upgrading existing connectors created by previous versions of
        the Connector Manager.
   -->
-  <bean id="PrefsStore"
-    class="com.google.enterprise.connector.persist.PrefsStore">
+  <bean id="LegacyConnectorScheduleStores" class="java.util.ArrayList">
+    <constructor-arg>
+      <list>
+        <bean class="com.google.enterprise.connector.persist.PrefsStore"/>
+      </list>
+    </constructor-arg>
   </bean>
 
-  <bean id="LegacyConnectorScheduleStores"
-    <list>
-      <ref bean="PrefsStore" />
-    </list>
+  <bean id="LegacyConnectorStateStores" class="java.util.ArrayList">
+    <constructor-arg>
+      <list>
+        <bean class="com.google.enterprise.connector.persist.PrefsStore"/>
+      </list>
+    </constructor-arg>
   </bean>
 
-  <bean id="LegacyConnectorStateStores"
-    <list>
-      <ref bean="PrefsStore" />
-    </list>
-  </bean>
-
-  <bean id="LegacyConnectorConfigStores"
-    <list>
-    </list>
+  <bean id="LegacyConnectorConfigStores" class="java.util.ArrayList">
+    <!-- No Legacy ConnectorConfigStores at this time -->
   </bean>
 
 	<bean id="Instantiator"

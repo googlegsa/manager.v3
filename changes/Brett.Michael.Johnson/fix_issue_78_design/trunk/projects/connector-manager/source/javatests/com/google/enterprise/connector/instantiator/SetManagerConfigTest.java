@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ public class SetManagerConfigTest extends TestCase {
     String origFileName = TEST_DIR + APPLICATION_PROPERTIES;
     String propFileName = TEST_DIR + TEST_PROPERTIES;
     ConnectorTestUtils.copyFile(origFileName, propFileName);
+
     Context.refresh();
     Context context = Context.getInstance();
     context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,

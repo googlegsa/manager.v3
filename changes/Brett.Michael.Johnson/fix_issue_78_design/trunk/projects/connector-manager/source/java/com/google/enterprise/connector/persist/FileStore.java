@@ -48,11 +48,16 @@ public class FileStore implements ConnectorScheduleStore,
    * @return connectorSchedule schedule of the corresponding connector.
    */
   public String getConnectorSchedule(StoreContext context) {
+    testStoreContext(context);
     String key = context.getConnectorName() + schedName;
-    if (!cacheMap.containsKey(key)) {
-      cacheMap.put(key, readStoreFile(context, schedName));
+    if (cacheMap.containsKey(key)) {
+      return (String) cacheMap.get(key);
     }
-    return (String) cacheMap.get(key);
+    String schedule = readStoreFile(context, schedName);
+    if (schedule != null) {
+      cacheMap.put(key, schedule);
+    }
+    return schedule;
   }
 
   /**
@@ -63,6 +68,12 @@ public class FileStore implements ConnectorScheduleStore,
    */
   public void storeConnectorSchedule(StoreContext context,
                                      String connectorSchedule) {
+    if (connectorSchedule == null) {
+      // We can't write null state to file, so just remove it.
+      removeConnectorSchedule(context);
+      return;
+    }
+    testStoreContext(context);
     cacheMap.put(context.getConnectorName() + schedName, connectorSchedule);
     writeStoreFile(context, schedName, connectorSchedule);
   }
@@ -73,8 +84,9 @@ public class FileStore implements ConnectorScheduleStore,
    * @param context a StoreContext
    */
   public void removeConnectorSchedule(StoreContext context) {
-    cacheMap.remove(context.getConnectorName() + schedName);
+    testStoreContext(context);
     deleteStoreFile(context, schedName);
+    cacheMap.remove(context.getConnectorName() + schedName);
   }
 
   /**
@@ -84,11 +96,16 @@ public class FileStore implements ConnectorScheduleStore,
    * @return the state, or null if no state has been stored for this connector.
    */
   public String getConnectorState(StoreContext context) {
+    testStoreContext(context);
     String key = context.getConnectorName() + stateName;
-    if (!cacheMap.containsKey(key)) {
-      cacheMap.put(key, readStoreFile(context, stateName));
+    if (cacheMap.containsKey(key)) {
+      return (String) cacheMap.get(key);
     }
-    return (String) cacheMap.get(key);
+    String state = readStoreFile(context, stateName);
+    if (state != null) {
+      cacheMap.put(key, state);
+    }
+    return state;
   }
 
   /**
@@ -98,6 +115,12 @@ public class FileStore implements ConnectorScheduleStore,
    * @param connectorState state of the corresponding connector
    */
   public void storeConnectorState(StoreContext context, String connectorState) {
+    if (connectorState == null) {
+      // We can't write null state to file, so just remove it.
+      removeConnectorState(context);
+      return;
+    }
+    testStoreContext(context);
     cacheMap.put(context.getConnectorName() + stateName, connectorState);
     writeStoreFile(context, stateName, connectorState);
   }
@@ -108,8 +131,9 @@ public class FileStore implements ConnectorScheduleStore,
    * @param context a StoreContext
    */
   public void removeConnectorState(StoreContext context) {
-    cacheMap.remove(context.getConnectorName() + stateName);
+    testStoreContext(context);
     deleteStoreFile(context, stateName);
+    cacheMap.remove(context.getConnectorName() + stateName);
   }
 
 
@@ -121,6 +145,7 @@ public class FileStore implements ConnectorScheduleStore,
    *         has been stored for this connector.
    */
   public Properties getConnectorConfiguration(StoreContext context) {
+    testStoreContext(context);
     Properties props = null;
     File propFile = getStoreFile(context, configName);
     if (propFile.exists()) {
@@ -142,6 +167,11 @@ public class FileStore implements ConnectorScheduleStore,
    */
   public void storeConnectorConfiguration(StoreContext context, 
       Properties configuration) {
+    if (configuration == null) {
+      removeConnectorConfiguration(context);      
+      return;
+    }
+    testStoreContext(context);
     File propFile = getStoreFile(context, configName);
     String header = "Configuration for Connector " + context.getConnectorName();
     try {
@@ -159,9 +189,34 @@ public class FileStore implements ConnectorScheduleStore,
    * @param context a StoreContext
    */
   public void removeConnectorConfiguration(StoreContext context) {
+    testStoreContext(context);
     deleteStoreFile(context, configName);
   }
 
+  /**
+   * Test the StoreContext to make sure it is sane.
+   *
+   * @param context a StoreContext
+   */
+  private static void testStoreContext(StoreContext context) {
+    if (context == null) {
+      throw new IllegalArgumentException("StoreContext may not be null.");
+    }
+    String connectorName = context.getConnectorName();
+    if (connectorName == null || connectorName.length() < 1) {
+      throw new IllegalArgumentException(
+          "StoreContext.connectorName may not be null or empty.");
+    }
+    File connectorDir = context.getConnectorDir();
+    if (connectorDir == null) {
+      throw new IllegalArgumentException(
+          "StoreContext.connectorDir may not be null.");
+    }
+    if (!connectorDir.exists() || !connectorDir.isDirectory()) {
+      throw new IllegalArgumentException(
+          "StoreContext.connectorDir directory must exist.");
+    }
+  }
 
   /**
    * Return a File object representing the on-disk store.
@@ -169,7 +224,7 @@ public class FileStore implements ConnectorScheduleStore,
    * @param context a StoreContext
    * @param suffix String to append to file name
    */
-  private File getStoreFile(StoreContext context, String suffix) {
+  private static File getStoreFile(StoreContext context, String suffix) {
     return new File(context.getConnectorDir(),
                     context.getConnectorName() + suffix);
   }
@@ -180,7 +235,7 @@ public class FileStore implements ConnectorScheduleStore,
    * @param context a StoreContext
    * @param suffix String to append to file name
    */
-  private void deleteStoreFile(StoreContext context, String suffix) {
+  private static void deleteStoreFile(StoreContext context, String suffix) {
     getStoreFile(context, suffix).delete();
   }
 
@@ -190,7 +245,7 @@ public class FileStore implements ConnectorScheduleStore,
    * @param context a StoreContext
    * @param data to write to file
    */
-  private void writeStoreFile(StoreContext context, String suffix,
+  private static void writeStoreFile(StoreContext context, String suffix,
       String data) {
     FileOutputStream fos = null;
     File storeFile = null;
@@ -220,7 +275,7 @@ public class FileStore implements ConnectorScheduleStore,
    * @param suffix String to append to file name
    * @return String containing store file contents or null if none exists.
    */
-  private String readStoreFile(StoreContext context, String suffix) {
+  private static String readStoreFile(StoreContext context, String suffix) {
     FileInputStream fis = null;
     File storeFile = null;
     try {
@@ -231,8 +286,8 @@ public class FileStore implements ConnectorScheduleStore,
       }
       byte[] buffer = new byte[length];
       fis = new FileInputStream(storeFile);
-      fis.read();
-      return new String(buffer);
+      int bytesRead = fis.read(buffer);
+      return new String(buffer, 0, bytesRead);
     } catch (IOException e) {
       LOGGER.log(Level.WARNING, "Cannot read store file "
           + storeFile + " for connector " + context.getConnectorName(), e);
