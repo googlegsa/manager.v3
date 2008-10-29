@@ -48,12 +48,26 @@ import javax.servlet.http.HttpSession;
 public class MockArtifactConsumer extends HttpServlet {
   // private static final Logger LOGGER = Logger.getLogger(MockArtifactConsumer.class.getName());
   private static final long serialVersionUID = 1L;
+
+  /**
+   * The endpoint for the artifact-resolution service.
+   */
   private final Endpoint endpoint;
+
+  /**
+   * The artifact resolver that will process the artifact-resolution messages.
+   */
   private final MockArtifactResolver resolver;
 
-  public MockArtifactConsumer(String idpUrl, MockArtifactResolver resolver) {
+  /**
+   * Creates a mock artifact consumer that communicates with the given artifact resolver.
+   *
+   * @param resolverUrl The URL of the artifact-resolution service.
+   * @param resolver The artifact resolver that will process the artifact-resolution messages.
+   */
+  public MockArtifactConsumer(String resolverUrl, MockArtifactResolver resolver) {
     this.endpoint =
-        OpenSamlUtil.makeArtifactResolutionService(SAMLConstants.SAML2_SOAP11_BINDING_URI, idpUrl);
+        OpenSamlUtil.makeArtifactResolutionService(SAMLConstants.SAML2_SOAP11_BINDING_URI, resolverUrl);
     this.resolver = resolver;
   }
 
