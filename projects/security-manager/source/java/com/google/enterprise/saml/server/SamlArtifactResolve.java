@@ -77,6 +77,11 @@ public class SamlArtifactResolve extends HttpServlet {
   public void doPost(HttpServletRequest request,
                      HttpServletResponse response)
       throws ServletException, IOException {
+  }
+
+  protected void handlePost(HttpServletRequest request,
+                     HttpServletResponse response)
+      throws IOException {
 
     ArtifactResponse artifactResp =
         buildArtifactResponse(StatusCode.SUCCESS_URI, hostname, "ruth_test1",
