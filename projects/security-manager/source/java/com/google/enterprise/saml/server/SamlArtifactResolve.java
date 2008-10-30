@@ -67,6 +67,7 @@ public class SamlArtifactResolve extends HttpServlet {
   public void doPost(HttpServletRequest request,
                      HttpServletResponse response)
       throws ServletException, IOException {
+    handlePost(request, response);
   }
 
   protected void handlePost(HttpServletRequest request,
