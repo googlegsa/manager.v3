@@ -18,12 +18,17 @@ import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Currently this does nothing because I haven't figured out a way to
  * separate the Authz logic that I wrote just yet...
  */
 public class AuthzResponderImpl implements AuthzResponder {
+
+  private static final Logger LOGGER =
+      Logger.getLogger(AuthzResponderImpl.class.getName());
+
   public Response authorize(AuthzDecisionQuery query) {
     return null;
   }

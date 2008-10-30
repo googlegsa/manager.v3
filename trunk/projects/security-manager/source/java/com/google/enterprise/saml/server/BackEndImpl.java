@@ -21,7 +21,7 @@ import org.opensaml.saml2.core.AuthzDecisionQuery;
  */
 public class BackEndImpl implements BackEnd {
     private static final Logger LOGGER =
-      Logger.getLogger(SamlAuthN.class.getName());
+      Logger.getLogger(BackEndImpl.class.getName());
 
   private SessionManagerInterface sm;
 
