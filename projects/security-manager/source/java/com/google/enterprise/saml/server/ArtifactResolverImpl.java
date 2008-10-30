@@ -19,6 +19,7 @@ import com.google.enterprise.saml.common.OpenSamlUtil;
 
 import java.net.UnknownHostException;
 import java.net.InetAddress;
+import java.util.logging.Logger;
 
 /**
  * Artifact resolver for the AuthN on the Security Manager.
@@ -27,6 +28,9 @@ import java.net.InetAddress;
  * identity.
  */
 public class ArtifactResolverImpl implements ArtifactResolver {
+
+  private static final Logger LOGGER =
+      Logger.getLogger(ArtifactResolverImpl.class.getName());
 
   private String hostname;
 

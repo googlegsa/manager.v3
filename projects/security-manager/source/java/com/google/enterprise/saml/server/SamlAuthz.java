@@ -51,7 +51,7 @@ public class SamlAuthz extends HttpServlet {
   public static final String HARDCODED_AUTHZ_NAMESPACE = "urn:oasis:names:tc:SAML:1.0:action:ghpp";
 
   private static final Logger LOGGER =
-      Logger.getLogger(SamlAuthN.class.getName());
+      Logger.getLogger(SamlAuthz.class.getName());
 
   private BackEnd backend;
 
