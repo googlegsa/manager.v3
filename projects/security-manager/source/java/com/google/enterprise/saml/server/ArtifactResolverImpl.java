@@ -19,7 +19,6 @@ import com.google.enterprise.saml.common.OpenSamlUtil;
 
 import java.net.UnknownHostException;
 import java.net.InetAddress;
-import java.util.List;
 
 /**
  * Artifact resolver for the AuthN on the Security Manager.
