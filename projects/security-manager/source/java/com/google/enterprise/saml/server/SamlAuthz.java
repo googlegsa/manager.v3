@@ -44,9 +44,6 @@ import java.util.logging.Logger;
  * performs authz on each query with a designated backend, and replies with
  * a SOAP-bound batch of SAML Responses that each contain an
  * AuthzDecisionStatement.
- * <p/>
- * At present, there is no backend and the handler simply returns PERMIT for
- * all URL requests with a hard-coded subject.
  */
 public class SamlAuthz extends HttpServlet {
 
@@ -55,6 +52,21 @@ public class SamlAuthz extends HttpServlet {
 
   private static final Logger LOGGER =
       Logger.getLogger(SamlAuthN.class.getName());
+
+  private BackEnd backend;
+
+  public SamlAuthz() {
+    this(BackEndImpl.getInstance());
+  }
+
+  /**
+   * Available for testing.
+   * @param backend
+   */
+  protected SamlAuthz(BackEnd backend) {
+    super();
+    this.backend = backend;
+  }
 
   /**
    * For now, responds with "yes" for all AuthzDecisionQueries with a

@@ -14,6 +14,8 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.saml.common.GsaConstants;
+
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.logging.Logger;
@@ -28,14 +30,23 @@ import javax.servlet.ServletException;
  */
 public class SamlAuthN extends HttpServlet {
 
-  private static final String GSA_ARTIFACT_HANDLER_NAME =
-      "SamlArtifactConsumer";
-  private static final String GSA_ARTIFACT_PARAM_NAME = "SAMLart";
-  private static final String GSA_RELAY_STATE_PARAM_NAME = "RelayState";
-
   private static final Logger LOGGER =
       Logger.getLogger(SamlAuthN.class.getName());
 
+  private BackEnd backend;
+
+  public SamlAuthN() {
+    this(BackEndImpl.getInstance());
+  }
+
+  /**
+   * Available for testing.
+   * @param backend
+   */
+  protected SamlAuthN(BackEnd backend) {
+    super();
+    this.backend = backend;
+  }
 
   /**
    * Eventually this method will generate a login form for the user
@@ -57,34 +68,19 @@ public class SamlAuthN extends HttpServlet {
    */
   private void handleGet(HttpServletRequest request,
                          HttpServletResponse response) throws IOException {
-    String referer = request.getHeader("Referer");
-    String relayState = request.getParameter(GSA_RELAY_STATE_PARAM_NAME);
-    String urlEncodedRelayState = URLEncoder.encode(relayState, "UTF-8");
-    String gsaUrl = referer.substring(0, referer.indexOf("search?"));
-    String redirectUrl =
-        gsaUrl + GSA_ARTIFACT_HANDLER_NAME
-        + "?" + GSA_ARTIFACT_PARAM_NAME + "=" + generateArtifactString() 
-        + "&" + GSA_RELAY_STATE_PARAM_NAME + "=" + urlEncodedRelayState;
 
-    LOGGER.info("Referer: " + referer);
-    LOGGER.info("RelayState: " + relayState);
-    LOGGER.info("URLEncoded RelayState: " + urlEncodedRelayState);
-    LOGGER.info("GSA URL: " + gsaUrl);
-    LOGGER.info("Redirect URL: " + redirectUrl);
+    String redirectUrl = backend.loginRedirect(request.getHeader("Referer"),
+        request.getParameter(GsaConstants.GSA_RELAY_STATE_PARAM_NAME));
 
+    if (redirectUrl == null) {
+      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+      response.sendError(404);
+      return;
+    }
+    
     response.setStatus(HttpServletResponse.SC_FOUND);
     response.sendRedirect(redirectUrl);
-  }
 
-  /**
-   * This method should return a randomly generated artifact string that will be
-   * used to reference an AuthNRequest later on.  At the moment we just hardcode
-   * this since we have no real AuthN backend yet.
-   *
-   * @return an artifact string
-   */
-  private String generateArtifactString() {
-    return "foo";
   }
-
+  
 }
