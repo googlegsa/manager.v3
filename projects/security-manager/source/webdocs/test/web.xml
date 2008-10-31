@@ -39,7 +39,7 @@
   </servlet>
   <servlet>
       <servlet-name>SamlAuthN</servlet-name>
-      <servlet-class>com.google.enterprise.saml.server.SamlAuthN</servlet-class>
+      <servlet-class>com.google.enterprise.saml.server.SamlAuthn</servlet-class>
   </servlet>
   <servlet>
       <servlet-name>SamlArtifactResolve</servlet-name>
