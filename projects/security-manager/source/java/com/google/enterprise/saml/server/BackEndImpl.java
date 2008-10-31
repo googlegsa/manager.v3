@@ -59,22 +59,20 @@ public class BackEndImpl implements BackEnd {
       LOGGER.warning("Could not encode RelayState");
     }
 
-    String gsaUrl = referer.substring(0, referer.indexOf("search?"));
-    String redirectUrl = gsaUrl + GsaConstants.GSA_ARTIFACT_HANDLER_NAME
+    String redirectUrl = referer + GsaConstants.GSA_ARTIFACT_HANDLER_NAME
         + "?" + GsaConstants.GSA_ARTIFACT_PARAM_NAME + "=" + "foo"
         + "&" + GsaConstants.GSA_RELAY_STATE_PARAM_NAME + "=" + urlEncodedRelayState;
 
     LOGGER.info("Referer: " + referer);
     LOGGER.info("RelayState: " + relayState);
     LOGGER.info("URLEncoded RelayState: " + urlEncodedRelayState);
-    LOGGER.info("GSA URL: " + gsaUrl);
     LOGGER.info("Redirect URL: " + redirectUrl);
 
     return redirectUrl;
   }
 
   public ArtifactResponse resolveArtifact(ArtifactResolve artifactResolve) {
-    return artifactResolver.resolve(null);
+    return artifactResolver.resolve(artifactResolve);
   }
 
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
