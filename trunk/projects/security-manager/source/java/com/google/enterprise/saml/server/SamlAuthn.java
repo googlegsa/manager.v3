@@ -18,7 +18,6 @@ import com.google.enterprise.saml.common.GsaConstants;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URL;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
@@ -29,14 +28,14 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Handler for SAML login from the Google Search Appliance.
  */
-public class SamlAuthN extends HttpServlet {
+public class SamlAuthn extends HttpServlet {
 
   private static final Logger LOGGER =
-      Logger.getLogger(SamlAuthN.class.getName());
+      Logger.getLogger(SamlAuthn.class.getName());
 
   private BackEnd backend;
 
-  public SamlAuthN() {
+  public SamlAuthn() {
     this(BackEndImpl.getInstance());
   }
 
@@ -44,7 +43,7 @@ public class SamlAuthN extends HttpServlet {
    * Available for testing.
    * @param backend
    */
-  protected SamlAuthN(BackEnd backend) {
+  protected SamlAuthn(BackEnd backend) {
     super();
     this.backend = backend;
   }
@@ -61,33 +60,21 @@ public class SamlAuthN extends HttpServlet {
   public void doGet(HttpServletRequest request,
                     HttpServletResponse response)
       throws IOException, ServletException {
+    String gsaUrlString = request.getHeader("Referer").substring(
+        0, request.getHeader("Referer").indexOf("search?"));    
     response.setContentType("text/html");
-    PrintWriter out = response.getWriter();
-    out.println("<html>");
-    out.println("<head>");
-    out.println("<title>Please Login</title>");
-    out.println("</head>");
-    out.println("<body>");
-    out.print("<form action=\"");
-    out.print(request.getRequestURI());
-    out.print("?Referer=");
-    // Carve out the base URL - POST handler will use this parameter to
-    // construct the URL of Artifact Consumer.
-    String referer = request.getHeader("Referer");
-    out.print(referer.substring(0, referer.indexOf("search")));
-    out.print("&");
-    out.print(request.getQueryString());
-    out.println("\" method=POST>");
-    out.println("User Name:");
-    out.println("<input type=text size=20 name=username>");
-    out.println("<br>");
-    out.println("Password:");
-    out.println("<input type=text size=20 name=password>");
-    out.println("<br>");
-    out.println("<input type=submit>");
-    out.println("</form>");
-    out.println("</body>");
-    out.println("</html>");
+
+    LOGGER.info("gsaUrlString: " + gsaUrlString);
+
+    String formHtml = "<html>\n<head>\n"
+        +  "<title>Please Login</title>\n</head>\n" + "<body>\n"
+        + "<form action=\"" + request.getRequestURI() + "?Referer="
+        + gsaUrlString + "&" + request.getQueryString() +"\" method=POST>\n"
+        + "User Name: " + "<input type=text size=20 name=username><br>\n"
+        + "Password: " + "<input type=text size=20 name=password><br>\n"
+        + "<input type=submit>\n" + "</form>\n</body>\n</html>";
+
+    response.getWriter().print(formHtml);
   }
 
   /**
