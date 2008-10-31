@@ -14,6 +14,11 @@
 
 package com.google.enterprise.security.manager;
 
+import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.persist.ConnectorExistsException;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.saml.server.BackEnd;
 import com.google.enterprise.saml.server.MockBackEnd;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
@@ -38,9 +43,26 @@ public class ContextTest extends TestCase {
     Context context = Context.getInstance();
     context.setStandaloneContext(CONTEXT_LOCATION);
     BackEnd backEnd = context.getBackEnd();
-    assertTrue(backEnd instanceof MockBackEnd);
     SessionManagerInterface sessionManager = backEnd.getSessionManager();
     assertTrue(sessionManager instanceof LocalSessionManager);
+    assertTrue(backEnd instanceof MockBackEnd);
+    MockBackEnd mockBackEnd = (MockBackEnd) backEnd;
+    Manager connectorManager = mockBackEnd.getConnectorManager();
+    try {
+      connectorManager.setConnectorConfig("joetheplumber", "", null, null, true);
+    } catch (ConnectorNotFoundException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (ConnectorExistsException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (PersistentStoreException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (InstantiatorException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
     Context.refresh();
   }
 }
