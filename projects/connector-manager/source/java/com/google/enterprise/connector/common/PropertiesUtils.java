@@ -34,10 +34,6 @@ public class PropertiesUtils {
   private static final Logger LOGGER =
       Logger.getLogger(PropertiesUtils.class.getName());
 
-  public static final String GOOGLE_PROPERTIES_FORMAT =
-      "googlePropertiesFileFormat";
-  public static final String GOOGLE_PROPERTIES_FORMAT_XML = "XML";
-
   public static final String GOOGLE_CONNECTOR_WORK_DIR =
       "googleConnectorWorkDir";
   public static final String GOOGLE_WORK_DIR = "googleWorkDir";
@@ -50,8 +46,7 @@ public class PropertiesUtils {
   }
 
   /**
-   * Read Properties from a file.  Supports both XML and
-   * traditional Properties file formats.  Decrypt passwords.
+   * Read Properties from a file.  Decrypt passwords.
    *
    * @param propertiesFile Properties File to read
    * @return Properties as read from file
@@ -76,7 +71,7 @@ public class PropertiesUtils {
   /**
    * Write the properties to a file.  Encrypt passwords, 
    * version the properties, and try write them out in the
-   * the same format they were read (XML or traditional).
+   * the same format they were read.
    *
    * @param properties Properties to write
    * @param propertiesFile File to write properties to
@@ -157,9 +152,7 @@ public class PropertiesUtils {
   }
 
   /**
-   * Read Properties from an InputStream.  The InputStream must 
-   * support mark() and reset().  Supports both XML and
-   * traditional Properties file formats.  Decrypt passwords.
+   * Read Properties from an InputStream.  Decrypt passwords.
    *
    * @param inputStream InputStream to read Properties from
    * @return Properties as read from inputStream
@@ -176,21 +169,7 @@ public class PropertiesUtils {
     }
     Properties properties = new Properties();
     try {
-      // Peek at the head of the Properties file to determine 
-      // if it is in XML format or Traditional format.
-      inputStream.mark(1024);
-      byte[] buffer = new byte[512];
-      int bytesRead = inputStream.read(buffer, 0, buffer.length);
-      String propHeader = new String(buffer, 0, bytesRead);
-      inputStream.reset();
-    
-      // Determine which Properties loader method to use.
-      if (propHeader.indexOf("<?xml ") >= 0) {
-        properties.loadFromXML(inputStream);
-        properties.put(GOOGLE_PROPERTIES_FORMAT, GOOGLE_PROPERTIES_FORMAT_XML);
-      } else {
-        properties.load(inputStream);
-      }
+      properties.load(inputStream);
     } catch (Exception e) {
       throw new PropertiesException("Error loading properties from stream", e);
     }
@@ -204,7 +183,7 @@ public class PropertiesUtils {
   /**
    * Write the properties to an OutputStream.  Encrypt passwords, 
    * version the properties, and try write them out in the
-   * the same format they were read (XML or traditional).
+   * the same format they were read.
    *
    * @param properties Properties to write
    * @param outputStream OutputStream to write properties to
@@ -221,12 +200,7 @@ public class PropertiesUtils {
       Properties props = copy(properties);
       stampPropertiesVersion(props);
       encryptSensitiveProperties(props);
-      if (GOOGLE_PROPERTIES_FORMAT_XML.equalsIgnoreCase(
-          (String) props.remove(GOOGLE_PROPERTIES_FORMAT))) {
-        props.storeToXML(outputStream, comment);
-      } else {
-        props.store(outputStream, comment);
-      }
+      props.store(outputStream, comment);
     } catch (Exception e) {
       throw new PropertiesException("Error storing properties to stream", e);
     }
