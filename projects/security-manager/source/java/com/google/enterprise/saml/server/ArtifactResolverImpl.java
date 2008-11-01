@@ -14,12 +14,17 @@
 
 package com.google.enterprise.saml.server;
 
-import org.opensaml.saml2.core.*;
 import com.google.enterprise.saml.common.OpenSamlUtil;
 
-import java.net.UnknownHostException;
+import org.opensaml.saml2.core.ArtifactResolve;
+import org.opensaml.saml2.core.ArtifactResponse;
+import org.opensaml.saml2.core.Assertion;
+import org.opensaml.saml2.core.AuthnContext;
+import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.core.StatusCode;
+
 import java.net.InetAddress;
-import java.util.logging.Logger;
+import java.net.UnknownHostException;
 
 /**
  * Artifact resolver for the AuthN on the Security Manager.
@@ -28,9 +33,6 @@ import java.util.logging.Logger;
  * identity.
  */
 public class ArtifactResolverImpl implements ArtifactResolver {
-
-  private static final Logger LOGGER =
-      Logger.getLogger(ArtifactResolverImpl.class.getName());
 
   private String hostname;
 

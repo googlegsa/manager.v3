@@ -90,13 +90,12 @@ public class MockAuthzRequester {
       }
     }
 
-    public boolean providesMessageConfidentiality(MessageContext arg0)
-        throws MessageEncodingException {
+    public boolean providesMessageConfidentiality(MessageContext arg0) {
       // TODO Auto-generated method stub
       return false;
     }
 
-    public boolean providesMessageIntegrity(MessageContext arg0) throws MessageEncodingException {
+    public boolean providesMessageIntegrity(MessageContext arg0) {
       // TODO Auto-generated method stub
       return false;
     }
@@ -107,6 +106,7 @@ public class MockAuthzRequester {
       super();
     }
 
+    @Override
     protected void doDecode(MessageContext context) throws MessageDecodingException {
       InTransport transport = context.getInboundMessageTransport();
       XMLObject message = unmarshallMessage(transport.getIncomingStream());

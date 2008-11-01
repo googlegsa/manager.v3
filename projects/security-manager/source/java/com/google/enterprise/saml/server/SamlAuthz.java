@@ -15,21 +15,23 @@
 package com.google.enterprise.saml.server;
 
 import com.google.enterprise.saml.common.OpenSamlUtil;
+
 import org.apache.xerces.parsers.SAXParser;
 import org.opensaml.common.SAMLObject;
-import org.opensaml.saml2.core.*;
+import org.opensaml.saml2.core.Assertion;
+import org.opensaml.saml2.core.AuthzDecisionStatement;
+import org.opensaml.saml2.core.DecisionTypeEnumeration;
+import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallerFactory;
 import org.w3c.dom.Element;
-import org.xml.sax.*;
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.xml.soap.MessageFactory;
-import javax.xml.soap.SOAPException;
-import javax.xml.soap.SOAPMessage;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,6 +40,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.xml.soap.MessageFactory;
+import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPMessage;
 
 /**
  * SamlAuthz handler.  Accepts a SOAP-bound batch of SAML AuthzDecisionQueries,
@@ -53,29 +62,15 @@ public class SamlAuthz extends HttpServlet {
   private static final Logger LOGGER =
       Logger.getLogger(SamlAuthz.class.getName());
 
-  private BackEnd backend;
-
-  public SamlAuthz() {
-    this(BackEndImpl.getInstance());
-  }
-
-  /**
-   * Available for testing.
-   * @param backend
-   */
-  protected SamlAuthz(BackEnd backend) {
-    super();
-    this.backend = backend;
-  }
-
   /**
    * For now, responds with "yes" for all AuthzDecisionQueries with a
    * SOAP-bound batch of SAML Responses compliant to the GSA AuthZ SPI
    * (with in batched Authz mode).
    */
+  @Override
   public void doPost(HttpServletRequest request,
                      HttpServletResponse response)
-      throws ServletException, IOException {
+      throws IOException {
     handleDoPost(request, response);
   }
 
@@ -207,19 +202,19 @@ public class SamlAuthz extends HttpServlet {
     public void setDocumentLocator(Locator locator) {
     }
 
-    public void startDocument() throws SAXException {
+    public void startDocument() {
     }
 
-    public void endDocument() throws SAXException {
+    public void endDocument() {
     }
 
-    public void startPrefixMapping(String prefix, String uri) throws SAXException {
+    public void startPrefixMapping(String prefix, String uri) {
     }
 
-    public void endPrefixMapping(String prefix) throws SAXException {
+    public void endPrefixMapping(String prefix) {
     }
 
-    public void startElement(String namespaceUri, String localName, String qName, Attributes attributes) throws SAXException {
+    public void startElement(String namespaceUri, String localName, String qName, Attributes attributes) {
       if (localName.equals("AuthzDecisionQuery")) {
         String url = attributes.getValue("", "Resource");
         String id = attributes.getValue("", "ID");
@@ -227,19 +222,19 @@ public class SamlAuthz extends HttpServlet {
       }
     }
 
-    public void endElement(String namespaceUri, String localName, String qName) throws SAXException {
+    public void endElement(String namespaceUri, String localName, String qName) {
     }
 
-    public void characters(char[] ch, int start, int length) throws SAXException {
+    public void characters(char[] ch, int start, int length) {
     }
 
-    public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
+    public void ignorableWhitespace(char[] ch, int start, int length) {
     }
 
-    public void processingInstruction(String target, String data) throws SAXException {
+    public void processingInstruction(String target, String data) {
     }
 
-    public void skippedEntity(String name) throws SAXException {
+    public void skippedEntity(String name) {
     }
 
   }

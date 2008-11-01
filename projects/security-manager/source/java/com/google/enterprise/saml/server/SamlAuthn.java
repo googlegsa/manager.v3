@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -59,7 +58,7 @@ public class SamlAuthn extends HttpServlet {
   @Override
   public void doGet(HttpServletRequest request,
                     HttpServletResponse response)
-      throws IOException, ServletException {
+      throws IOException {
     String gsaUrlString = request.getHeader("Referer").substring(
         0, request.getHeader("Referer").indexOf("search?"));    
     response.setContentType("text/html");
@@ -84,7 +83,7 @@ public class SamlAuthn extends HttpServlet {
   @Override
   public void doPost(HttpServletRequest request,
                      HttpServletResponse response)
-      throws IOException, ServletException {
+      throws IOException {
     handlePost(request, response);
   }
   

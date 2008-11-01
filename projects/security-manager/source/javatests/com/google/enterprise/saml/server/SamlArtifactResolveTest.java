@@ -28,6 +28,7 @@ public class SamlArtifactResolveTest extends TestCase {
 
   SamlArtifactResolve samlArtifactResolveInstance;
 
+  @Override
   public void setUp() {
     samlArtifactResolveInstance = new SamlArtifactResolve();
   }
