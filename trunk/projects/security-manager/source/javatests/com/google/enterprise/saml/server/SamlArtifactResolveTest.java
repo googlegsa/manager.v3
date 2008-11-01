@@ -14,6 +14,8 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.security.manager.Context;
+
 import junit.framework.TestCase;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -43,8 +45,10 @@ public class SamlArtifactResolveTest extends TestCase {
     MockHttpServletRequest mockRequest = new MockHttpServletRequest();
     MockHttpServletResponse mockResponse = new MockHttpServletResponse();
 
+    Context context = Context.getInstance();
+
     try {
-      samlArtifactResolveInstance.handlePost(mockRequest, mockResponse);
+      samlArtifactResolveInstance.handlePost(mockRequest, mockResponse, context);
     } catch (IOException e) {
       assertTrue(false);
     }
