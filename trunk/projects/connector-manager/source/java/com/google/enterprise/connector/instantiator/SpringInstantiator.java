@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
-import com.google.enterprise.connector.persist.GenerationalStateStore;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
@@ -46,18 +44,14 @@ public class SpringInstantiator implements Instantiator {
   TypeMap typeMap = null;
   InstanceMap instanceMap = null;
   Pusher pusher;
-  ConnectorStateStore connectorStateStore;
   Map connectorCache;
 
   /**
    * Normal constructor.
    * @param pusher
-   * @param connectorStateStore
    */
-  public SpringInstantiator(Pusher pusher,
-      ConnectorStateStore connectorStateStore) {
+  public SpringInstantiator(Pusher pusher) {
     this.pusher = pusher;
-    this.connectorStateStore = connectorStateStore;
     connectorCache = new HashMap();
     // NOTE: we can't call initialize() here because then there would be a
     // circular dependency on the Context, which hasn't been constructed yet
@@ -66,12 +60,10 @@ public class SpringInstantiator implements Instantiator {
   /**
    * Constructor used by unit tests.  Provides a specific test Context.
    * @param pusher
-   * @param connectorStateStore
    * @param typeMap
    */
-  public SpringInstantiator(Pusher pusher,
-      ConnectorStateStore connectorStateStore, TypeMap typeMap) {
-    this(pusher, connectorStateStore);
+  public SpringInstantiator(Pusher pusher, TypeMap typeMap) {
+    this(pusher);
     this.typeMap = typeMap;
     this.instanceMap = new InstanceMap(typeMap);
   }
@@ -93,14 +85,13 @@ public class SpringInstantiator implements Instantiator {
    * (non-Javadoc)
    *
    * @see com.google.enterprise.connector.instantiator.Instantiator
-   *      #dropConnector(java.lang.String)
+   *      #removeConnector(java.lang.String)
    */
-  public synchronized void dropConnector(String connectorName) {
+  public synchronized void removeConnector(String connectorName) {
     initialize();
     LOGGER.info("Dropping connector: " + connectorName);
     connectorCache.remove(connectorName);
-    instanceMap.dropConnector(connectorName);
-    GenerationalStateStore.newGeneration(connectorName);
+    instanceMap.removeConnector(connectorName);
   }
 
   /*
@@ -118,17 +109,12 @@ public class SpringInstantiator implements Instantiator {
     ConnectorInterfaces connectorInterfaces =
         (ConnectorInterfaces) connectorCache.get(connectorName);
     if (connectorInterfaces == null) {
-      InstanceInfo instanceInfo = getInstanceInfo(connectorName);
-      GenerationalStateStore gss =
-          new GenerationalStateStore(connectorStateStore, connectorName);
-      connectorInterfaces =
-          new ConnectorInterfaces(connectorName, instanceInfo.getConnector(),
-                                  pusher, gss, instanceInfo.getProperties());
+      connectorInterfaces = new ConnectorInterfaces(connectorName,
+          getInstanceInfo(connectorName).getConnector(), pusher, this);
       connectorCache.put(connectorName, connectorInterfaces);
     }
     return connectorInterfaces;
   }
-
 
   private synchronized InstanceInfo getInstanceInfo(String connectorName)
       throws ConnectorNotFoundException {
@@ -163,7 +149,7 @@ public class SpringInstantiator implements Instantiator {
     InstanceInfo instanceInfo = getInstanceInfo(connectorName);
     TypeInfo typeInfo = instanceInfo.getTypeInfo();
     ConnectorType connectorType = typeInfo.getConnectorType();
-    Map configMap = instanceInfo.getProperties();
+    Map configMap = instanceInfo.getConnectorConfig();
     return connectorType.getPopulatedConfigForm(configMap, locale);
   }
 
@@ -223,27 +209,7 @@ public class SpringInstantiator implements Instantiator {
     initialize();
     LOGGER.info("Restarting traversal for Connector: " + connectorName);
     connectorCache.remove(connectorName);
-    GenerationalStateStore.newGeneration(connectorName);
-    connectorStateStore.removeConnectorState(connectorName);
-  }
-
-
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.instantiator.Instantiator#setConnectorConfig(java.lang.String,
-   *      java.lang.String, java.util.Map)
-   */
-  public synchronized ConfigureResponse setConnectorConfig(
-      String connectorName, String connectorTypeName, Map configKeys,
-      Locale locale, boolean update)
-      throws ConnectorNotFoundException, ConnectorExistsException,
-      InstantiatorException {
-    initialize();
-    LOGGER.info("Configuring connector: " + connectorName);
-    connectorCache.remove(connectorName);
-    return instanceMap.updateConnector(
-        connectorName, connectorTypeName, configKeys, locale, update);
+    setConnectorState(connectorName, null);
   }
 
   /*
@@ -270,10 +236,72 @@ public class SpringInstantiator implements Instantiator {
   /*
    * (non-Javadoc)
    *
+   * @see com.google.enterprise.connector.instantiator.Instantiator#setConnectorConfig(java.lang.String,
+   *      java.lang.String, java.util.Map)
+   */
+  public synchronized ConfigureResponse setConnectorConfig(
+      String connectorName, String connectorTypeName, Map configMap,
+      Locale locale, boolean update)
+      throws ConnectorNotFoundException, ConnectorExistsException,
+      InstantiatorException {
+    initialize();
+    LOGGER.info("Configuring connector: " + connectorName);
+    connectorCache.remove(connectorName);
+    return instanceMap.updateConnector(
+        connectorName, connectorTypeName, configMap, locale, update);
+  }
+
+  /*
+   * (non-Javadoc)
+   *
    * @see com.google.enterprise.connector.instantiator.Instantiator#getConnectorConfig(java.lang.String)
    */
   public Map getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException {
-    return getInstanceInfo(connectorName).getProperties();
+    return getInstanceInfo(connectorName).getConnectorConfig();
+  }
+
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator#setConnectorSchedule(
+   *      java.lang.String, java.lang.String)
+   */
+  public void setConnectorSchedule(String connectorName,
+      String connectorSchedule) throws ConnectorNotFoundException {
+    getInstanceInfo(connectorName).setConnectorSchedule(connectorSchedule);
+  }
+
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator#getConnectorSchedule(
+   *      java.lang.String)
+   */
+  public String getConnectorSchedule(String connectorName)
+     throws ConnectorNotFoundException {
+    return getInstanceInfo(connectorName).getConnectorSchedule();
+  }
+
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator#setConnectorState(
+   *      java.lang.String, java.lang.String)
+   */
+  public void setConnectorState(String connectorName, String connectorState)
+     throws ConnectorNotFoundException {
+    getInstanceInfo(connectorName).setConnectorState(connectorState);
+  }
+
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator#getConnectorState(
+   *      java.lang.String)
+   */
+  public String getConnectorState(String connectorName)
+     throws ConnectorNotFoundException {
+    return getInstanceInfo(connectorName).getConnectorState();
   }
 }

@@ -15,47 +15,35 @@
 package com.google.enterprise.connector.persist;
 
 import java.util.HashMap;
-import java.util.Map;
 
 /**
- * Mock Schedule Store
+ * Mock Schedule Store - doesn't actually persist, just uses memory.
  */
-public class MockConnectorScheduleStore implements ConnectorScheduleStore {
+public class MockConnectorScheduleStore extends HashMap
+    implements ConnectorScheduleStore {
 
-  private Map store;
-  
-  /**
-   * Create a Mock Schedule store with all known connectors to be run 24x7
-   */
-  public MockConnectorScheduleStore() {
-    store = new HashMap();
-  }
-  
   /* (non-Javadoc)
-   * @see com.google.enterprise.connector.persist.ConnectorScheduleStore#getConnectorSchedule(java.lang.String)
+   * @see com.google.enterprise.connector.persist.ConnectorScheduleStore
+   * #getConnectorSchedule(StoreContext)
    */
-  public String getConnectorSchedule(String connectorName) {
-    String scheduleStr = (String) store.get(connectorName);
-    if (null == scheduleStr) {
-      // if we get an unknown connectorName (i.e. one without known schedule),
-      // we default to always run at 60 docs per minute, 100ms retry delay
-      scheduleStr = connectorName + ":60:100:0-0";
-    }
-    return scheduleStr;
+  public String getConnectorSchedule(StoreContext context) {
+    return (String) this.get(context.getConnectorName());
   }
 
   /* (non-Javadoc)
-   * @see com.google.enterprise.connector.persist.ConnectorScheduleStore#storeConnectorSchedule(java.lang.String, java.lang.String)
+   * @see com.google.enterprise.connector.persist.ConnectorScheduleStore
+   * #storeConnectorSchedule(StoreContext, java.lang.String)
    */
-  public void storeConnectorSchedule(String connectorName,
+  public void storeConnectorSchedule(StoreContext context,
       String connectorSchedule) {
-    store.put(connectorName, connectorSchedule);
+    this.put(context.getConnectorName(), connectorSchedule);
   }
 
   /* (non-Javadoc)
-   * @see com.google.enterprise.connector.persist.ConnectorScheduleStore#removeConnectorSchedule(java.lang.String)
+   * @see com.google.enterprise.connector.persist.ConnectorScheduleStore
+   * #removeConnectorSchedule(StoreContext)
    */
-  public void removeConnectorSchedule(String connectorName) {
-    store.remove(connectorName);
+  public void removeConnectorSchedule(StoreContext context) {
+    this.remove(context.getConnectorName());
   }
 }

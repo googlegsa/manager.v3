@@ -14,7 +14,8 @@
 
 package com.google.enterprise.connector.scheduler;
 
-import com.google.enterprise.connector.persist.ConnectorScheduleStore;
+import com.google.enterprise.connector.instantiator.Instantiator;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,23 +48,25 @@ public class HostLoadManager {
   /**
    * Used for determining the loads of the schedules.
    */
-  private ConnectorScheduleStore scheduleStore;
+  private Instantiator instantiator;
 
   /**
    * By default, the HostLoadManager will use a one minute period for
    * calculating the batchHint.
+   *
+   * @param instantiator used to get schedule for connector instances
    */
-  public HostLoadManager(ConnectorScheduleStore scheduleStore) {
-    this(MINUTE_IN_MILLIS, scheduleStore);
+  public HostLoadManager(Instantiator instantiator) {
+    this(instantiator, MINUTE_IN_MILLIS);
   }
 
   /**
+   * @param instantiator used to get schedule for connector instances
    * @param periodInMillis time period in which we enforce the maxFeedRate
    */
-  public HostLoadManager(long periodInMillis,
-      ConnectorScheduleStore scheduleStore) {
+  public HostLoadManager(Instantiator instantiator, long periodInMillis) {
+    this.instantiator = instantiator;
     this.periodInMillis = periodInMillis;
-    this.scheduleStore = scheduleStore;
 
     startTimeInMillis = System.currentTimeMillis();
     connectorNameToNumDocsTraversed = new HashMap();
@@ -71,9 +74,13 @@ public class HostLoadManager {
   }
 
   private int getMaxLoad(String connectorName) {
-    String scheduleStr = scheduleStore.getConnectorSchedule(connectorName);
-    Schedule schedule = new Schedule(scheduleStr);
-    return schedule.getLoad();
+    String scheduleStr = null;
+    try {
+      scheduleStr = instantiator.getConnectorSchedule(connectorName);
+    } catch (ConnectorNotFoundException e) {
+      // Connector seems to have been deleted.
+    }
+    return (scheduleStr == null) ? 0 : new Schedule(scheduleStr).getLoad();
   }
 
   /**
@@ -153,11 +160,14 @@ public class HostLoadManager {
   public int determineBatchHint(String connectorName) {
     int maxDocsPerPeriod =
       (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
-    LOGGER.log(Level.FINEST, "maxDocsPerPeriod=" + maxDocsPerPeriod);
     int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
-    LOGGER.log(Level.FINEST, "docsTraversed=" + docsTraversed);
     int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
-    LOGGER.log(Level.FINEST, "remainingDocsToTraverse=" + remainingDocsToTraverse);
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.finest("connectorName = " + connectorName
+          + "  maxDocsPerPeriod = " + maxDocsPerPeriod
+          + "  docsTraversed = " + docsTraversed
+          + "  remainingDocsToTraverse = " + remainingDocsToTraverse);
+    }
     if (remainingDocsToTraverse > BATCH_SIZE) {
       remainingDocsToTraverse = BATCH_SIZE;
     }
@@ -170,15 +180,19 @@ public class HostLoadManager {
 
   public boolean shouldDelay(String connectorName) {
     if (connectorNameToFinishTime.containsKey(connectorName)) {
-      Object value = connectorNameToFinishTime.get(connectorName);
-      long finishTime = ((Long)value).longValue();
-      String schedStr = scheduleStore.getConnectorSchedule(connectorName);
-      Schedule schedule = new Schedule(schedStr);
-      int retryDelayMillis = schedule.getRetryDelayMillis();
-      long now = System.currentTimeMillis();
-      return now < finishTime + retryDelayMillis;
-    } else {
-      return false;
+      try {
+        Object value = connectorNameToFinishTime.get(connectorName);
+        long finishTime = ((Long)value).longValue();
+        String schedStr = instantiator.getConnectorSchedule(connectorName);
+        Schedule schedule = new Schedule(schedStr);
+        int retryDelayMillis = schedule.getRetryDelayMillis();
+        long now = System.currentTimeMillis();
+        return now < finishTime + retryDelayMillis;
+      } catch (ConnectorNotFoundException e) {
+        // Connector seems to have been deleted.
+        removeConnector(connectorName);
+      }
     }
+    return false;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,43 +17,32 @@ package com.google.enterprise.connector.persist;
 import java.util.HashMap;
 
 /**
- * MockConnectorStateStore - doesn't actually persist, just uses memory
+ * MockConnectorStateStore - doesn't actually persist, just uses memory.
  */
-public class MockConnectorStateStore extends HashMap implements
-    ConnectorStateStore {
+public class MockConnectorStateStore extends HashMap 
+    implements ConnectorStateStore {
 
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.persist.ConnectorStateStore
-   * #getConnectorState(java.lang.String)
+   * #getConnectorState(StoreContext)
    */
-  public String getConnectorState(String connectorName) {
-    if (this.containsKey(connectorName + ".isDisabled")) {
-      throw new IllegalStateException(
-          "Reading from disabled ConnectorStateStore for connector "
-          + connectorName);
-    }
-    return (String) this.get(connectorName);
+  public String getConnectorState(StoreContext context) {
+    return (String) this.get(context.getConnectorName());
   }
 
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.persist.ConnectorStateStore
-   * #storeConnectorState(java.lang.String, java.lang.String)
+   * #storeConnectorState(StoreContext, java.lang.String)
    */
-  public void storeConnectorState(String connectorName, String connectorState) {
-    if (this.containsKey(connectorName + ".isDisabled")) {
-      throw new IllegalStateException(
-          "Writing to disabled ConnectorStateStore for connector "
-          + connectorName);
-    }
-    this.put(connectorName, connectorState);
+  public void storeConnectorState(StoreContext context, String connectorState) {
+    this.put(context.getConnectorName(), connectorState);
   }
 
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.persist.ConnectorStateStore
-   * #removeConnectorState(java.lang.String)
+   * #removeConnectorState(StoreContext)
    */
-  public void removeConnectorState(String connectorName) {
-    this.remove(connectorName);
+  public void removeConnectorState(StoreContext context) {
+    this.remove(context.getConnectorName());
   }
-
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,32 +15,29 @@
 package com.google.enterprise.connector.persist;
 
 /**
- * Interface describing the persistence needs of a Traverser
+ * Interface describing the persistence needs of a Traverser.
  */
 public interface ConnectorStateStore {
-
   /**
    * Gets the stored state of a named connector.
    *
-   * @param connectorName
+   * @param context a StoreContext
    * @return the state, or null if no state has been stored for this connector
-   * @throws IllegalStateException if state store is disabled for this connector
    */
-  public String getConnectorState(String connectorName);
+  public String getConnectorState(StoreContext context);
 
   /**
    * Sets the stored state of a named connector.
    *
-   * @param connectorName
+   * @param context a StoreContext
    * @param connectorState String to store
-   * @throws IllegalStateException if state store is disabled for this connector
    */
-  public void storeConnectorState(String connectorName, String connectorState);
+  public void storeConnectorState(StoreContext context, String connectorState);
 
   /**
    * Remove connector state.  If no such connector exists, do nothing.
-   * @param connectorName name of the connector.
+   *
+   * @param context a StoreContext
    */
-  public void removeConnectorState(String connectorName);
-
+  public void removeConnectorState(StoreContext context);
 }

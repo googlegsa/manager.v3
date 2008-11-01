@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc.
+// Copyright 2007-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.common.PropertiesUtils;
+import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.instantiator.InstanceInfo;
 import com.google.enterprise.connector.instantiator.TypeInfo;
 import com.google.enterprise.connector.instantiator.InstanceInfo.FactoryCreationFailureException;
@@ -33,7 +35,6 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -49,28 +50,26 @@ public class InstanceInfoTest extends TestCase {
   /**
    * Test method for
    * {@link com.google.enterprise.connector.instantiator.InstanceInfo
-   * #fromDirectoryAndThrow(java.lang.String, java.io.File,
+   * #fromDirectory(java.lang.String, java.io.File,
    * com.google.enterprise.connector.instantiator.TypeInfo)}.
    */
-  public final void testFromDirectoryAndThrowPositive() {
+  public final void testFromDirectoryPositive() {
     String resourceName =
         "testdata/connectorTypeTests/positive/connectorType.xml";
     File connectorDir = new File("testdata/connectorInstanceTests/positive");
     TypeInfo typeInfo = makeValidTypeInfo(resourceName);
-    InstanceInfo instanceInfo = null;
     boolean exceptionThrown = false;
     try {
-      instanceInfo =
-          InstanceInfo.fromDirectoryAndThrow("fred", connectorDir, typeInfo);
+      InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
     } catch (InstanceInfoException e) {
       exceptionThrown = true;
       LOGGER.log(Level.WARNING,
           "unexpected exception during instance info creation", e);
     }
-    Assert.assertFalse(exceptionThrown);
+    assertFalse(exceptionThrown);
   }
 
-  public final void testFromDirectoryAndThrowNegative0() {
+  public final void testFromDirectoryNegative0() {
     // test null directory argument
     String resourceName =
         "testdata/connectorTypeTests/positive/connectorType.xml";
@@ -78,7 +77,7 @@ public class InstanceInfoTest extends TestCase {
     InstanceInfo instanceInfo = null;
     boolean correctExceptionThrown = false;
     try {
-      instanceInfo = InstanceInfo.fromDirectoryAndThrow("fred", null, typeInfo);
+      instanceInfo = InstanceInfo.fromDirectory("fred", null, typeInfo);
     } catch (NullDirectoryException e) {
       correctExceptionThrown = true;
       LOGGER.log(Level.WARNING, "Null directory exception", e);
@@ -86,18 +85,18 @@ public class InstanceInfoTest extends TestCase {
       LOGGER.log(Level.WARNING,
           "unexpected exception during instance info creation", e);
     }
-    Assert.assertTrue(correctExceptionThrown);
-    Assert.assertNull(instanceInfo);
+    assertTrue(correctExceptionThrown);
+    assertNull(instanceInfo);
   }
 
-  public final void testFromDirectoryAndThrowNegative1() {
+  public final void testFromDirectoryNegative1() {
     // test null TypeInfo argument
     InstanceInfo instanceInfo = null;
     File connectorDir = new File("testdata/connectorInstanceTests/positive");
     boolean correctExceptionThrown = false;
     try {
       instanceInfo =
-          InstanceInfo.fromDirectoryAndThrow("fred", connectorDir, null);
+          InstanceInfo.fromDirectory("fred", connectorDir, null);
     } catch (NullTypeInfoException e) {
       correctExceptionThrown = true;
       LOGGER.log(Level.WARNING, "Null directory exception", e);
@@ -105,11 +104,11 @@ public class InstanceInfoTest extends TestCase {
       LOGGER.log(Level.WARNING,
           "unexpected exception during instance info creation", e);
     }
-    Assert.assertTrue(correctExceptionThrown);
-    Assert.assertNull(instanceInfo);
+    assertTrue(correctExceptionThrown);
+    assertNull(instanceInfo);
   }
 
-  public final void testFromDirectoryAndThrowNegative2() {
+  public final void testFromDirectoryNegative2() {
     // test null connector name argument
     String resourceName =
         "testdata/connectorTypeTests/positive/connectorType.xml";
@@ -119,7 +118,7 @@ public class InstanceInfoTest extends TestCase {
     boolean correctExceptionThrown = false;
     try {
       instanceInfo =
-          InstanceInfo.fromDirectoryAndThrow(null, connectorDir, typeInfo);
+          InstanceInfo.fromDirectory(null, connectorDir, typeInfo);
     } catch (NullConnectorNameException e) {
       correctExceptionThrown = true;
       LOGGER.log(Level.WARNING, "Null directory exception", e);
@@ -127,11 +126,11 @@ public class InstanceInfoTest extends TestCase {
       LOGGER.log(Level.WARNING,
           "unexpected exception during instance info creation", e);
     }
-    Assert.assertTrue(correctExceptionThrown);
-    Assert.assertNull(instanceInfo);
+    assertTrue(correctExceptionThrown);
+    assertNull(instanceInfo);
   }
 
-  public final void testFromDirectoryAndThrowNegative3() {
+  public final void testFromDirectoryNegative3() {
     // test properties file doesn't fill in all properties
     String resourceName =
         "testdata/connectorTypeTests/positive/connectorType.xml";
@@ -141,19 +140,19 @@ public class InstanceInfoTest extends TestCase {
     boolean correctExceptionThrown = false;
     try {
       instanceInfo =
-          InstanceInfo.fromDirectoryAndThrow("fred", connectorDir, typeInfo);
+          InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
     } catch (PropertyProcessingFailureException e) {
       correctExceptionThrown = true;
-      LOGGER.log(Level.WARNING, "Null directory exception", e);
+      LOGGER.log(Level.WARNING, "Property processing exception", e);
     } catch (InstanceInfoException e) {
       LOGGER.log(Level.WARNING,
           "unexpected exception during instance info creation", e);
     }
-    Assert.assertTrue(correctExceptionThrown);
-    Assert.assertNull(instanceInfo);
+    assertTrue(correctExceptionThrown);
+    assertNull(instanceInfo);
   }
 
-  public final void testFromDirectoryAndThrowNegative4() {
+  public final void testFromDirectoryNegative4() {
     // test connectorInstance.xml that doesn't implement Connector
     String resourceName =
         "testdata/connectorInstanceTests/badConnectorType1/connectorType.xml";
@@ -163,7 +162,7 @@ public class InstanceInfoTest extends TestCase {
     boolean correctExceptionThrown = false;
     try {
       instanceInfo =
-          InstanceInfo.fromDirectoryAndThrow("fred", connectorDir, typeInfo);
+          InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
     } catch (NoBeansFoundException e) {
       correctExceptionThrown = true;
       LOGGER.log(Level.WARNING, "Null directory exception", e);
@@ -171,11 +170,11 @@ public class InstanceInfoTest extends TestCase {
       LOGGER.log(Level.WARNING,
           "unexpected exception during instance info creation", e);
     }
-    Assert.assertTrue(correctExceptionThrown);
-    Assert.assertNull(instanceInfo);
+    assertTrue(correctExceptionThrown);
+    assertNull(instanceInfo);
   }
 
-  public final void testFromDirectoryAndThrowEncrypted() {
+  public final void testFromDirectoryEncrypted() {
     // test encrypted property
     String resourceName =
         "testdata/connectorTypeTests/positive/connectorType.xml";
@@ -189,32 +188,37 @@ public class InstanceInfoTest extends TestCase {
     String testDirName = "testdata/tempInstantiatorTests";
     // Make sure that the test directory does not exist
     File connectorDir = new File(testDirName);
-    Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(connectorDir));
+    assertTrue(ConnectorTestUtils.deleteAllFiles(connectorDir));
     // Then recreate it empty
-    Assert.assertTrue(connectorDir.mkdirs());
+    assertTrue(connectorDir.mkdirs());
 
     try {
       // Write properties out to temp file
       File temp = new File(connectorDir + File.separator + "fred.properties");
-      InstanceInfo.writePropertiesToFile(props, temp);
+      PropertiesUtils.storeToFile(props, temp, null);
 
       instanceInfo =
-          InstanceInfo.fromDirectoryAndThrow("fred", connectorDir, typeInfo);
+          InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
     } catch (InstanceInfoException e) {
       exceptionThrown = true;
       LOGGER.log(Level.WARNING,
           "unexpected exception during instance info creation", e);
+    } catch (PropertiesException e) {
+      exceptionThrown = true;
+      LOGGER.log(Level.WARNING,
+          "unexpected exception during instance info creation", e);
     }
-    Assert.assertFalse(exceptionThrown);
+    assertFalse(exceptionThrown);
 
     // Check properties
-    Properties instanceProps = instanceInfo.getProperties();
-    Assert.assertEquals("password_test", instanceProps.getProperty("Password"));
-    Assert.assertEquals("MockRepositoryEventLog3.txt",
+    Properties instanceProps = 
+       PropertiesUtils.fromMap(instanceInfo.getConnectorConfig());
+    assertEquals("password_test", instanceProps.getProperty("Password"));
+    assertEquals("MockRepositoryEventLog3.txt",
         instanceProps.getProperty("RepositoryFile"));
 
     // Clean up temp directory and files
-    Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(connectorDir));
+    assertTrue(ConnectorTestUtils.deleteAllFiles(connectorDir));
   }
 
   private TypeInfo makeValidTypeInfo(String resourceName) {
@@ -227,8 +231,8 @@ public class InstanceInfoTest extends TestCase {
       exceptionThrown = true;
       LOGGER.log(Level.WARNING, "Type Info Creation Problem", e);
     }
-    Assert.assertFalse(exceptionThrown);
-    Assert.assertNotNull(typeInfo);
+    assertFalse(exceptionThrown);
+    assertNotNull(typeInfo);
     return typeInfo;
   }
 
@@ -241,18 +245,18 @@ public class InstanceInfoTest extends TestCase {
     boolean exceptionThrown = false;
     try {
       instanceInfo =
-          InstanceInfo.fromDirectoryAndThrow("fred", connectorDir, typeInfo);
+          InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
     } catch (InstanceInfoException e) {
       exceptionThrown = true;
       LOGGER.log(Level.WARNING,
           "unexpected exception during instance info creation", e);
     }
-    Assert.assertFalse(exceptionThrown);
-    Assert.assertTrue("Connector should be of type CustomProtoTestConnector",
+    assertFalse(exceptionThrown);
+    assertTrue("Connector should be of type CustomProtoTestConnector",
         instanceInfo.getConnector() instanceof CustomProtoTestConnector);
     CustomProtoTestConnector c =
         (CustomProtoTestConnector) instanceInfo.getConnector();
-    Assert.assertEquals("oogabooga", c.getCustomProperty());
+    assertEquals("oogabooga", c.getCustomProperty());
   }
 
   public final void testBadCustomInstancePrototype() {
@@ -260,23 +264,21 @@ public class InstanceInfoTest extends TestCase {
         "testdata/connectorTypeTests/positive/connectorType.xml";
     File connectorDir = new File("testdata/connectorInstanceTests/custom2");
     TypeInfo typeInfo = makeValidTypeInfo(resourceName);
-    InstanceInfo instanceInfo = null;
     boolean exceptionThrown = false;
     try {
-      instanceInfo =
-          InstanceInfo.fromDirectoryAndThrow("fred", connectorDir, typeInfo);
+      InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
     } catch (InstanceInfoException e) {
       exceptionThrown = true;
-      Assert.assertTrue("Expected InstanceInfoException",
+      assertTrue("Expected InstanceInfoException",
           e instanceof FactoryCreationFailureException);
     }
-    Assert.assertTrue(exceptionThrown);
+    assertTrue(exceptionThrown);
   }
 
   /**
    * Test method for
    * {@link com.google.enterprise.connector.instantiator.InstanceInfo
-   * #fromDirectoryAndThrow(java.lang.String, java.io.File,
+   * #fromDirectory(java.lang.String, java.io.File,
    * com.google.enterprise.connector.instantiator.TypeInfo)}.
    */
   public final void testOverspecifiedProperties() {
@@ -289,19 +291,19 @@ public class InstanceInfoTest extends TestCase {
     boolean exceptionThrown = false;
     try {
       instanceInfo =
-          InstanceInfo.fromDirectoryAndThrow("fred", connectorDir, typeInfo);
+          InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
     } catch (InstanceInfoException e) {
       exceptionThrown = true;
       LOGGER.log(Level.WARNING,
           "unexpected exception during instance info creation", e);
     }
-    Assert.assertFalse(exceptionThrown);
-    Assert.assertTrue("Connector should be of type CustomProtoTestConnector",
+    assertFalse(exceptionThrown);
+    assertTrue("Connector should be of type CustomProtoTestConnector",
         instanceInfo.getConnector() instanceof CustomProtoTestConnector);
     CustomProtoTestConnector c =
         (CustomProtoTestConnector) instanceInfo.getConnector();
-    Assert.assertEquals("hungadunga", c.getCustomProperty());
-    Assert.assertEquals(47, c.getCustomIntProperty());
+    assertEquals("hungadunga", c.getCustomProperty());
+    assertEquals(47, c.getCustomIntProperty());
   }
 
   /**
@@ -317,19 +319,21 @@ public class InstanceInfoTest extends TestCase {
     InstanceInfo instanceInfo = null;
     try {
       instanceInfo =
-          InstanceInfo.fromDirectoryAndThrow("fred", connectorDir, typeInfo);
+          InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
     } catch (InstanceInfoException e) {
-      fail("Unexpected exception during instance info creation");
+      LOGGER.log(Level.WARNING,
+          "unexpected exception during instance info creation", e);
+      fail(e.getMessage());
     }
-    Assert.assertTrue("Connector should be of type SimpleTestConnector",
+    assertTrue("Connector should be of type SimpleTestConnector",
         instanceInfo.getConnector() instanceof SimpleTestConnector);
     SimpleTestConnector c = (SimpleTestConnector)instanceInfo.getConnector();
-    Assert.assertEquals("Checking default - color", "red", c.getColor());
-    Assert.assertEquals("Checking default empty override - repo file",
+    assertEquals("Checking default - color", "red", c.getColor());
+    assertEquals("Checking default empty override - repo file",
         "", c.getRepositoryFileName());
-    Assert.assertEquals("Checking default override - user",
+    assertEquals("Checking default override - user",
         "not_default_user", c.getUsername());
-    Assert.assertEquals("Checking setting - work dir name",
+    assertEquals("Checking setting - work dir name",
         "/tomcat/webapps/connector-manager/WEB-INF", c.getWorkDirName());
   }
 }

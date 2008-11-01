@@ -14,8 +14,15 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.common.PropertiesUtils;
+import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.persist.ConnectorConfigStore;
+import com.google.enterprise.connector.persist.ConnectorScheduleStore;
+import com.google.enterprise.connector.persist.ConnectorStateStore;
+import com.google.enterprise.connector.persist.GenerationalStateStore;
+import com.google.enterprise.connector.persist.StoreContext;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.xml.XmlBeanFactory;
@@ -23,14 +30,10 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -45,18 +48,24 @@ public final class InstanceInfo {
   private static final Logger LOGGER =
       Logger.getLogger(InstanceInfo.class.getName());
 
-  private static final String PROPERTIES_SUFFIX = ".properties";
   private static final String SPECIAL_INSTANCE_CONFIG_FILE_NAME =
       "connectorInstance.xml";
-  private static final String GOOGLE_CONNECTOR_WORK_DIR =
-      "googleConnectorWorkDir";
-  private static final String GOOGLE_WORK_DIR = "googleWorkDir";
-  public static final String GOOGLE_PROPERTIES_VERSION = 
-      "googlePropertiesVersion";
-  public static final int GOOGLE_PROPERTIES_VERSION_NUMBER = 1;
 
-  private final Configuration configuration;
-  private final Connector connector;
+  private final TypeInfo typeInfo;
+  private final File connectorDir;
+  private final String connectorName;
+  private final StoreContext storeContext;
+
+  private final ConnectorConfigStore configStore;
+  private final ConnectorScheduleStore schedStore;
+  private final ConnectorStateStore stateStore;
+
+  private final Collection legacyConfigStores;
+  private final Collection legacyScheduleStores;
+  private final Collection legacyStateStores;
+
+  private Properties properties;
+  private Connector connector;
 
   /**
    * @return the connector
@@ -69,304 +78,186 @@ public final class InstanceInfo {
    * @return the name
    */
   String getName() {
-    return configuration.getConnectorName();
-  }
-
-  /**
-   * @return the properties
-   */
-  Properties getProperties() {
-    try {
-      return configuration.getProperties();
-    } catch (InstanceInfoException e) {
-      LOGGER.log(Level.WARNING, "Failed to get configuration Properties "
-          + "for connector " + getName(), e);
-      return new Properties();
-    }
-  }
-
-  /**
-   * @return the propertiesFile
-   */
-  File getPropertiesFile() {
-    return new File(getConnectorDir(), getName() + PROPERTIES_SUFFIX);
+    return connectorName;
   }
 
   /**
    * @return the typeInfo
    */
   TypeInfo getTypeInfo() {
-    return configuration.getTypeInfo();
+    return typeInfo;
   }
 
   /**
    * @return the connectorDir
    */
   File getConnectorDir() {
-    return configuration.getConnectorDir();
+    return connectorDir;
   }
 
-  private InstanceInfo(Connector connector, Configuration config) {
-    this.connector = connector;
-    this.configuration = config;
+  private InstanceInfo(String connectorName, File connectorDir, 
+      TypeInfo typeInfo) throws InstanceInfoException {
+    if (connectorName == null || connectorName.length() < 1) {
+      throw new NullConnectorNameException();
+    }
+    if (connectorDir == null || connectorDir.length() < 1) {
+      throw new NullDirectoryException();
+    }
+    if (typeInfo == null) {
+      throw new NullTypeInfoException();
+    }
+
+    this.connectorName = connectorName;
+    this.connectorDir = connectorDir;
+    this.typeInfo = typeInfo;
+    this.storeContext = new StoreContext(connectorName, connectorDir);
+
+    Context context = Context.getInstance();
+    this.configStore = (ConnectorConfigStore) context.getRequiredBean(
+        "ConnectorConfigStore", ConnectorConfigStore.class);
+    this.schedStore = (ConnectorScheduleStore) context.getRequiredBean(
+        "ConnectorScheduleStore", ConnectorScheduleStore.class);
+    this.stateStore = new GenerationalStateStore(
+        (ConnectorStateStore) context.getRequiredBean(
+        "ConnectorStateStore", ConnectorStateStore.class));
+
+    this.legacyConfigStores = getLegacyStores("LegacyConnectorConfigStores",
+                                              ConnectorConfigStore.class);
+    this.legacyScheduleStores = getLegacyStores("LegacyConnectorScheduleStores",
+                                                ConnectorScheduleStore.class);
+    this.legacyStateStores = getLegacyStores("LegacyConnectorStateStores",
+                                             ConnectorStateStore.class);
+  }
+
+  public void removeConnector() {
+    // Side effect of GenerationalStateStore.removeConnectorState() 
+    // is a new generation.
+    stateStore.removeConnectorState(storeContext);
+    schedStore.removeConnectorSchedule(storeContext);
+    configStore.removeConnectorConfiguration(storeContext);
   }
 
   public static InstanceInfo fromDirectory(String connectorName,
-      File connectorDir, TypeInfo typeInfo) {
-    InstanceInfo result = null;
-    try {
-      result = fromDirectoryAndThrow(connectorName, connectorDir, typeInfo);
-    } catch (InstanceInfoException e) {
-      LOGGER.log(Level.WARNING, "Problem creating connector info", e);
-    }
-    return result;
-  }
-
-  public static InstanceInfo fromDirectoryAndThrow(String connectorName,
       File connectorDir, TypeInfo typeInfo) throws InstanceInfoException {
-    return fromConfiguration(
-        new FileConfiguration(connectorName, connectorDir, typeInfo));
+    InstanceInfo info = new InstanceInfo(connectorName, connectorDir, typeInfo);
+    info.properties =
+        info.configStore.getConnectorConfiguration(info.storeContext);
+
+    // Upgrade from Legacy Configuration Data Stores. This method is
+    // called to instantiate Connectors that were created by some 
+    // other (possibly older) instance of the Connector Manager.
+    // If the various stored instance data is not found in the
+    // expected locations, the connector may have been previously
+    // created by an older version of the Connector Manager and may 
+    // have its instance data stored in the older legacy locations.
+    // Move the data from the legacy stores to the expected locations
+    // before launching the connector instance.
+    if (info.properties == null) {
+      upgradeConfigStore(info);
+    }
+    if (info.schedStore.getConnectorSchedule(info.storeContext) == null) {
+      upgradeScheduleStore(info);
+    }
+    if (info.stateStore.getConnectorState(info.storeContext) == null) {
+      upgradeStateStore(info);
+    }
+
+    info.connector = makeConnectorWithSpring(info);
+    return info;
   }
 
   public static InstanceInfo fromNewConfig(String connectorName,
       File connectorDir, TypeInfo typeInfo, Map configMap)
       throws InstanceInfoException {
-    return fromConfiguration(
-        new MapConfiguration(connectorName, connectorDir, typeInfo, configMap));
+    InstanceInfo info = new InstanceInfo(connectorName, connectorDir, typeInfo);
+    info.properties = PropertiesUtils.fromMap(configMap);
+    info.properties.put(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR,
+                        connectorDir.getPath());
+    info.properties.put(PropertiesUtils.GOOGLE_WORK_DIR,
+                        Context.getInstance().getCommonDirPath());
+    // Don't write properties file to disk yet.
+    info.connector = makeConnectorWithSpring(info);
+    return info;
   }
 
-  private static InstanceInfo fromConfiguration(Configuration config)
+  private static Connector makeConnectorWithSpring(InstanceInfo info)
       throws InstanceInfoException {
-    if (config.connectorName == null || config.connectorName.length() < 1) {
-      throw new NullConnectorNameException();
-    }
-    if (config.connectorDir == null) {
-      throw new NullDirectoryException();
-    }
-    if (config.typeInfo == null) {
-      throw new NullTypeInfoException();
-    }
-
+    Context context = Context.getInstance();
     Resource prototype = null;
-    File specialInstancePrototype =
-        new File(config.connectorDir, SPECIAL_INSTANCE_CONFIG_FILE_NAME);
-    if (specialInstancePrototype.exists()) {
+    if (info.connectorDir != null) {
       // If this file exists, we use this it in preference to the default
       // prototype associated with the type. This allows customers to supply
       // their own per-instance config xml.
-      prototype = new FileSystemResource(specialInstancePrototype);
-      LOGGER.log(Level.INFO,
-          "Using connector-specific xml config for connector "
-          + config.connectorName + " at path "
-          + specialInstancePrototype.getPath());
-    } else {
-      prototype = config.typeInfo.getConnectorInstancePrototype();
+      File customPrototype =
+          new File(info.connectorDir, SPECIAL_INSTANCE_CONFIG_FILE_NAME);
+      if (customPrototype.exists()) {
+        prototype = new FileSystemResource(customPrototype);
+        LOGGER.info("Using connector-specific xml config for connector "
+            + info.connectorName + " at path " + customPrototype.getPath());
+      } 
+    }
+    if (prototype == null) {
+      prototype = info.typeInfo.getConnectorInstancePrototype();
     }
 
-    Connector connector = makeConnectorWithSpring(prototype, config);
-    return new InstanceInfo(connector, config);
-  }
-
-  private static Connector makeConnectorWithSpring(Resource prototype,
-      Configuration config) throws InstanceInfoException {
     XmlBeanFactory factory;
     try {
       factory = new XmlBeanFactory(prototype);
     } catch (BeansException e) {
-      throw new FactoryCreationFailureException(e, prototype,
-          config.connectorName);
+      throw new FactoryCreationFailureException(e, prototype, 
+          info.connectorName);
     }
 
-    EncryptedPropertyPlaceholderConfigurer cfg =
-        (EncryptedPropertyPlaceholderConfigurer) getRequiredBean(
-            prototype, config.connectorName, factory,
-            EncryptedPropertyPlaceholderConfigurer.class);
+    EncryptedPropertyPlaceholderConfigurer cfg = null;
+    try {
+        cfg = (EncryptedPropertyPlaceholderConfigurer) context.getBean(
+            factory, null, EncryptedPropertyPlaceholderConfigurer.class);
+    } catch (BeansException e) {
+      throw new BeanInstantiationFailureException(e, prototype, 
+          info.connectorName, 
+          EncryptedPropertyPlaceholderConfigurer.class.getName());
+    }
     if (cfg == null) {
       cfg = new EncryptedPropertyPlaceholderConfigurer();
     }
 
     try {
-      cfg.setLocation(config.getResource());
+      cfg.setLocation(getPropertiesResource(info));
       cfg.postProcessBeanFactory(factory);
     } catch (BeansException e) {
-      throw new PropertyProcessingFailureException(e, prototype, config);
+      throw new PropertyProcessingFailureException(e, prototype,
+          info.connectorName);
     }
 
-    Connector connector = (Connector) getRequiredBean(prototype,
-        config.connectorName, factory, Connector.class);
-
+    Connector connector = null;
+    try {
+      connector = (Connector) context.getBean(factory, null, Connector.class);
+    } catch (BeansException e) {
+      throw new BeanInstantiationFailureException(e, prototype, 
+          info.connectorName, Connector.class.getName());
+    }
     if (connector == null) {
       throw new NoBeansFoundException(prototype,
-          config.connectorName, Connector.class);
+          info.connectorName, Connector.class);
     }
     return connector;
   }
 
-  private static Object getRequiredBean(Resource prototype,
-      String connectorName, XmlBeanFactory factory, Class clazz)
-      throws BeanInstantiationFailureException {
-    Object result;
-    // get the list of beans defined in the bean factory of the required type
-    String[] beanList;
-    beanList = factory.getBeanNamesForType(clazz);
-
-    // make sure there is at least one
-    if (beanList.length < 1) {
-      return null;
-    }
-
-    // remember the name of the first one found, and instantiate it
-    String beanName = beanList[0];
+  /**
+   * Return a Spring Resource containing the InstanceInfo 
+   * configuration Properties.
+   */
+  private static Resource getPropertiesResource(InstanceInfo info)
+      throws InstanceInfoException {
+    Properties properties =
+        (info.properties == null) ? new Properties() : info.properties;
+    LOGGER.info("Properties Resource: " + properties.toString());
     try {
-      result = factory.getBean(beanName);
-    } catch (BeansException e) {
-      throw new BeanInstantiationFailureException(e,
-          prototype, connectorName, beanName);
-    }
-
-    // if more beans were found issue a warning
-    if (beanList.length > 1) {
-      StringBuffer buf = new StringBuffer();
-      for (int i = 1; i < beanList.length; i++) {
-        buf.append(" ");
-        buf.append(beanList[i]);
-      }
-      LOGGER.log(Level.WARNING, "Resource contains multiple " + clazz.getName()
-          + " definitions.  " + "Using the first: " + beanName + ".  Skipping:"
-          + buf);
-    }
-    return result;
-  }
-
-  public static Properties initPropertiesFromFile(File propertiesFile,
-      String propertiesFileName) {
-    Properties properties = null;
-    FileInputStream fileInputStream;
-    try {
-      fileInputStream = new FileInputStream(propertiesFile);
-    } catch (FileNotFoundException e) {
-      LOGGER.warning("No properties file " + propertiesFileName
-          + "; attempting instantiation stand-alone.");
-      fileInputStream = null;
-    }
-    if (fileInputStream != null) {
-      properties = new Properties();
-      try {
-        properties.load(fileInputStream);
-        decryptSensitiveProperties(properties);
-      } catch (IOException e) {
-        LOGGER.log(Level.WARNING, "Problem loading properties file " +
-            propertiesFileName + "; attempting instantiation stand-alone.", e);
-        fileInputStream = null;
-        properties = null;
-      } finally {
-        try {
-          fileInputStream.close();
-        } catch (IOException e) {
-          e.printStackTrace();
-          LOGGER.log(Level.WARNING,
-              "Problem closing properties file input stream "
-                  + propertiesFileName, e);
-        }
-      }
-    }
-    if (null != properties) {
-      properties.remove(GOOGLE_WORK_DIR);
-      properties.remove(GOOGLE_CONNECTOR_WORK_DIR);
-    }
-    return properties;
-  }
-
-  public static void writePropertiesToFile(Properties properties,
-      File propertiesFile) throws PropertyFileCreationFailureException {
-    FileOutputStream fos;
-    try {
-      fos = new FileOutputStream(propertiesFile);
-    } catch (FileNotFoundException e) {
-      throw new PropertyFileCreationFailureException(e, propertiesFile);
-    }
-    try {
-      encryptSensitiveProperties(properties);
-      properties.store(fos, null);
-    } catch (IOException e) {
-      throw new PropertyFileCreationFailureException(e, propertiesFile);
-    } finally {
-      try {
-        fos.close();
-      } catch (IOException e) {
-        LOGGER.log(Level.WARNING, "Trouble closing properties file stream", e);
-      }
-    }
-  }
-
-  private static void encryptSensitiveProperties(Properties properties) {
-    EncryptedPropertyPlaceholderConfigurer.encryptSensitiveProperties(properties);
-  }
-
-  private static void decryptSensitiveProperties(Properties properties) {
-    EncryptedPropertyPlaceholderConfigurer.decryptSensitiveProperties(properties);
-  }
-
-  private static abstract class Configuration {
-    protected String connectorName;
-    protected File connectorDir;
-    protected TypeInfo typeInfo;
-
-    public Configuration(String connectorName, File connectorDir,
-        TypeInfo typeInfo) {
-      this.connectorName = connectorName;
-      this.connectorDir = connectorDir;
-      this.typeInfo = typeInfo;
-    }
-    public String getConnectorName() { return connectorName; }  
-    public File getConnectorDir() { return connectorDir; }
-    public TypeInfo getTypeInfo() { return typeInfo; }
-    public abstract Properties getProperties() throws InstanceInfoException;
-    public abstract Resource getResource() throws InstanceInfoException;
-    public abstract String getDescription();
-  }
-
-  private static class MapConfiguration extends Configuration {
-    private Map config;
-
-    public MapConfiguration(String connectorName, File connectorDir,
-        TypeInfo typeInfo, Map config) {
-      super(connectorName, connectorDir, typeInfo);
-      this.config = config;
-    }
-
-    public Properties getProperties() throws InstanceInfoException {
-      Properties properties = new Properties();
-      properties.putAll(config);
-      properties.put(GOOGLE_CONNECTOR_WORK_DIR, connectorDir.getPath());
-      properties.put(GOOGLE_WORK_DIR, Context.getInstance().getCommonDirPath());
-      return properties;
-    }
-
-    public Resource getResource() throws InstanceInfoException {
-      try {
-        Properties properties = getProperties();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream(8192);
-        encryptSensitiveProperties(properties);
-        properties.store(baos, null);
-        return new ByteArrayResourceHack(baos.toByteArray());
-      } catch (IOException e) {
-        throw new PropertyProcessingInternalFailureException(e, this);
-      } catch (ClassCastException e) {
-        throw new PropertyProcessingInternalFailureException(e, this);
-      }
-    }
-
-    public String getDescription() {
-      try {
-        Properties properties = getProperties();
-        StringWriter sw = new StringWriter();
-        properties.list(new PrintWriter(sw));
-        return "{ " + sw.toString() + " }";
-      } catch (Exception e) {
-        // This is called when throwing exceptions. Don't throw another.
-        return "[ " + e.toString() + " ]";
-      }
+      return new ByteArrayResourceHack(
+          PropertiesUtils.storeToString(properties, null).getBytes());
+    } catch (PropertiesException e) {
+      throw new PropertyProcessingInternalFailureException(e,
+          info.connectorName);
     }
   }
 
@@ -389,34 +280,194 @@ public final class InstanceInfo {
     }
   }
 
-
-  private static class FileConfiguration extends Configuration {
-    private File configFile;
-    private Properties properties;
-
-    public FileConfiguration(String connectorName, File connectorDir, 
-        TypeInfo typeInfo) {
-      super(connectorName, connectorDir, typeInfo);
-      this.configFile =
-          new File(connectorDir, connectorName + PROPERTIES_SUFFIX);
-      this.properties = null;
+  /**
+   * Get the configuration data for this connector instance.
+   *
+   * @return a Map&lt;String, String&gt; of its ConnectorType-specific
+   * configuration data, or null if no configuration is stored.
+   */
+  public Map getConnectorConfig() {
+    if (properties == null) {
+      properties = configStore.getConnectorConfiguration(storeContext);
     }
+    return properties;
+  }
 
-    public Properties getProperties() throws InstanceInfoException {
-      if (properties == null) {
-        properties = initPropertiesFromFile(configFile, configFile.getName());
-      }
-      return properties;
-    }
-
-    public Resource getResource() throws InstanceInfoException {
-      return new FileSystemResource(configFile);
-    }
-
-    public String getDescription() {
-      return "file " + configFile.getPath();
+  /**
+   * Set the configuration data for this connector instance.
+   * Writes the supplied configuration through to the persistent store.
+   *
+   * @param configMap a Map&lt;String, String&gt; of its ConnectorType-specific
+   *        configuration data, or null if no configuration is stored.
+   */
+  public void setConnectorConfig(Map configMap) {
+    properties = PropertiesUtils.fromMap(configMap);
+    if (configMap == null) {
+      configStore.removeConnectorConfiguration(storeContext);
+    } else {
+      configStore.storeConnectorConfiguration(storeContext, properties);
     }
   }
+
+  /**
+   * Sets the schedule for this connector instance.
+   * Writes the modified schedule through to the persistent store.
+   * 
+   * @param connectorSchedule String to store or null unset any existing
+   * schedule.
+   */
+  public void setConnectorSchedule(String connectorSchedule) {
+    if (connectorSchedule == null) {
+      schedStore.removeConnectorSchedule(storeContext);
+    } else {
+      schedStore.storeConnectorSchedule(storeContext,
+                                        connectorSchedule);
+    }
+  }
+
+  /**
+   * Gets the schedule for this connector instance.
+   * 
+   * @return the schedule String, or null to erase any previously set schedule.
+   * for this connector
+   */
+  public String getConnectorSchedule() {
+    return schedStore.getConnectorSchedule(storeContext);
+  }
+
+  /**
+   * Sets the remembered traversal state for this connector instance.
+   * Writes the modified state through to the persistent store.
+   *
+   * @param connectorState String to store or null to erase any previously
+   * saved traversal state.
+   * @throws IllegalStateException if state store is disabled for this connector
+   */
+  public void setConnectorState(String connectorState) {
+    if (connectorState == null) {
+      stateStore.removeConnectorState(storeContext);
+    } else {
+      stateStore.storeConnectorState(storeContext, connectorState);
+    }
+  }
+
+  /**
+   * Gets the remembered traversal state for this connector instance.
+   *
+   * @return the state, or null if no state has been stored for this connector
+   * @throws IllegalStateException if state store is disabled for this connector
+   */
+  public String getConnectorState() {
+    return stateStore.getConnectorState(storeContext);
+  }
+
+  /**
+   * Retrieve the bean description for legacy connector configuration,
+   * schedule, and state stores.  The Legacy store bean may be specified
+   * as an individual class of the expected type, or a Collection of
+   * legacy stores.
+   *
+   * @param beanName the name of the legacy store bean
+   * @param clazz the expected Class for the legacy store
+   * @return Collection of legacy stores, or null if none found.
+   */
+  private static Collection getLegacyStores(String beanName, Class clazz) {
+    try {
+      Object bean = Context.getInstance().getBean(beanName, null);
+      if (bean == null) {
+        // These are optional, so they need not be defined.
+        return null;
+      } else if (clazz.isInstance(bean)) {
+        ArrayList list = new ArrayList(1);
+        list.add(bean);
+        return list;
+      } else if (bean instanceof Collection) {
+        return (Collection)(((Collection)bean).isEmpty() ? null : bean);
+      }
+    } catch (BeansException e) {
+      LOGGER.log(Level.WARNING, 
+          "Unable to process Legacy Connector Store bean " + beanName, e);
+    }
+    return null;
+  }
+
+  /**
+   * Upgrade ConnectorConfigStore.  If the ConnectorConfigStore has
+   * no stored configuration data for this connector, look in the
+   * Legacy stores (those used in earlier versions of the product).
+   * If a configuration was found in a Legacy store, move it to the
+   * new store.
+   *
+   * @param info a partially constructed InstanceInfo describing the
+   * connector.
+   */
+  private static void upgradeConfigStore(InstanceInfo info) {
+    if (info.legacyConfigStores != null) {
+      Iterator iter = info.legacyConfigStores.iterator();
+      while (iter.hasNext()) {
+        ConnectorConfigStore legacyStore = (ConnectorConfigStore)iter.next();
+        Properties properties =
+            legacyStore.getConnectorConfiguration(info.storeContext);
+        if (properties != null) {
+          info.properties = properties;
+          info.configStore.storeConnectorConfiguration(info.storeContext,
+                                                       properties);
+          legacyStore.removeConnectorConfiguration(info.storeContext);
+          return;
+        }
+      }
+    }
+  }    
+
+  /**
+   * Upgrade ConnectorScheduleStore.  If the ConnectorScheduleStore has
+   * no stored schedule data for this connector, look in the
+   * Legacy stores (those used in earlier versions of the product).
+   * If a schedule was found in a Legacy store, move it to the
+   * new store.
+   *
+   * @param info a partially constructed InstanceInfo describing the
+   * connector.
+   */
+  private static void upgradeScheduleStore(InstanceInfo info) {
+    if (info.legacyScheduleStores != null) {
+      Iterator iter = info.legacyScheduleStores.iterator();
+      while (iter.hasNext()) {
+        ConnectorScheduleStore legacyStore = (ConnectorScheduleStore)iter.next();
+        String schedule = legacyStore.getConnectorSchedule(info.storeContext);
+        if (schedule != null) {
+          info.schedStore.storeConnectorSchedule(info.storeContext, schedule);
+          legacyStore.removeConnectorSchedule(info.storeContext);
+          return;
+        }
+      }
+    }
+  }    
+
+  /**
+   * Upgrade ConnectorStateStore.  If the ConnectorStateStore has
+   * no stored traversal state data for this connector, look in the
+   * Legacy stores (those used in earlier versions of the product).
+   * If a traversal state was found in a Legacy store, move it to the
+   * new store.
+   *
+   * @param info a partially constructed InstanceInfo describing the
+   * connector.
+   */
+  private static void upgradeStateStore(InstanceInfo info) {
+    if (info.legacyStateStores != null) {
+      Iterator iter = info.legacyStateStores.iterator();
+      while (iter.hasNext()) {
+        ConnectorStateStore legacyStore = (ConnectorStateStore)iter.next();
+        String state = legacyStore.getConnectorState(info.storeContext);
+        if (state != null) {
+          info.stateStore.storeConnectorState(info.storeContext, state);
+          legacyStore.removeConnectorState(info.storeContext);
+          return;
+        }
+      }
+    }
+  }    
 
   static class InstanceInfoException extends InstantiatorException {
     InstanceInfoException(String message, Throwable cause) {
@@ -468,24 +519,17 @@ public final class InstanceInfo {
   static class PropertyProcessingInternalFailureException extends
       InstanceInfoException {
     PropertyProcessingInternalFailureException(Throwable cause,
-        Configuration config) {
-      super("Spring internal failure while processing properties "
-            + config.getDescription() + " for connector "
-            + config.connectorName, cause);
+        String connectorName) {
+      super("Spring internal failure while processing configuration properties"
+            + " for connector " + connectorName, cause);
     }
   }
   static class PropertyProcessingFailureException extends InstanceInfoException {
     PropertyProcessingFailureException(Throwable cause, Resource prototype,
-        Configuration config) {
-      super("Problem while processing properties " + config.getDescription()
-            + " for connector " + config.connectorName + " using resource "
+        String connectorName) {
+      super("Problem while processing configuration properties for connector "
+            + connectorName + " using resource "
             + prototype.getDescription(), cause);
-    }
-  }
-  static class PropertyFileCreationFailureException extends
-      InstanceInfoException {
-    PropertyFileCreationFailureException(Throwable cause, File propertiesFile) {
-      super("Problem creating property file " + propertiesFile.getPath(), cause);
     }
   }
 }

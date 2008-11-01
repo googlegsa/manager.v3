@@ -13,7 +13,10 @@
 // limitations under the License.
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.common.PropertiesUtils;
+
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
+
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -83,36 +86,9 @@ public class EncryptedPropertyPlaceholderConfigurer extends
     super.convertProperties(properties);
   }
   
-  /*
-   * Stamp the Properties set with the current Properties Version.
-   */
-  public static void stampPropertiesVersion(Properties properties) {
-    properties.put(InstanceInfo.GOOGLE_PROPERTIES_VERSION,
-        Integer.toString(InstanceInfo.GOOGLE_PROPERTIES_VERSION_NUMBER));
-  }
-
-  /*
-   * Retrieve the Properties Version stamp from this Properties set.
-   */
-  public static int getPropertiesVersion(Properties properties) {
-    String versionStr = properties.getProperty(
-        InstanceInfo.GOOGLE_PROPERTIES_VERSION, "0");
-    int version = 0;
-    try {
-      version = Integer.parseInt(versionStr);
-      if (version > InstanceInfo.GOOGLE_PROPERTIES_VERSION_NUMBER) {
-        LOGGER.warning("Properties appear to have been written by a newer "
-            + "version of Connector Manager (" + version + ")");
-      }
-    } catch (NumberFormatException e) {
-      LOGGER.warning("Invalid Properties Version: " + versionStr);
-    }
-    return version;
-  }
-
   public static void encryptSensitiveProperties(Properties properties) {
     // New style properties file, encrypt any key with 'password' in it.
-    stampPropertiesVersion(properties);
+    PropertiesUtils.stampPropertiesVersion(properties);
     Enumeration props = properties.propertyNames();
     while (props.hasMoreElements()) {
       String prop = (String) props.nextElement();
@@ -124,7 +100,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
   }
 
   public static void decryptSensitiveProperties(Properties properties) {
-    int version = getPropertiesVersion(properties);
+    int version = PropertiesUtils.getPropertiesVersion(properties);
     Enumeration props = properties.propertyNames();
     while (props.hasMoreElements()) {
       String prop = (String) props.nextElement();

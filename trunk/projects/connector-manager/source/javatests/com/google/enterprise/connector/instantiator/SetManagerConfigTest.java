@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.io.InputStream;
 import java.util.Properties;
 
 /**
- * 
+ * Tests for {@link com.google.enterprise.connector.manager.Context#setManagerConfig(String, int)}.
  */
 public class SetManagerConfigTest extends TestCase {
 
@@ -46,20 +46,20 @@ public class SetManagerConfigTest extends TestCase {
     String origFileName = TEST_DIR + APPLICATION_PROPERTIES;
     String propFileName = TEST_DIR + TEST_PROPERTIES;
     ConnectorTestUtils.copyFile(origFileName, propFileName);
+
     Context.refresh();
     Context context = Context.getInstance();
     context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
                                  "testdata/mocktestdata/");
     context.setFeeding(false);
-    Assert.assertTrue(true);
 
     Properties props = loadProperties(propFileName);
     String host = (String) props.get(Context.GSA_FEED_HOST_PROPERTY_KEY);
     int port = Integer.parseInt((String) props.
                                 get(Context.GSA_FEED_PORT_PROPERTY_KEY));
 
-    System.out.println("Host = " + host);
-    System.out.println("Port = " + port);
+    assertEquals("fubar", host);
+    assertEquals(25, port);
 
     context.setConnectorManagerConfig("shme", 14);
     verifyPropsValues("shme", 14, propFileName);
@@ -77,8 +77,8 @@ public class SetManagerConfigTest extends TestCase {
     int actualPort =
         Integer.valueOf((String) props.get(Context.GSA_FEED_PORT_PROPERTY_KEY))
             .intValue();
-    Assert.assertEquals(expectedHost, actualHost);
-    Assert.assertEquals(expectedPort, actualPort);
+    assertEquals(expectedHost, actualHost);
+    assertEquals(expectedPort, actualPort);
   }
 
   private Properties loadProperties(String propFileName) throws IOException {

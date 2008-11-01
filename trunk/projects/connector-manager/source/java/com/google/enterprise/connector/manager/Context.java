@@ -14,8 +14,9 @@
 
 package com.google.enterprise.connector.manager;
 
+import com.google.enterprise.connector.common.PropertiesUtils;
+import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.WorkQueue;
-import com.google.enterprise.connector.instantiator.InstanceInfo;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.pusher.GsaFeedConnection;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
@@ -23,8 +24,11 @@ import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.traversal.ProductionTraversalContext;
 
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.ListableBeanFactory;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
+import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
@@ -67,6 +71,9 @@ public class Context {
 
   private static final Logger LOGGER =
       Logger.getLogger(Context.class.getName());
+
+  private static final GenericApplicationContext genericApplicationContext =
+      new GenericApplicationContext();
 
   private static Context INSTANCE = new Context();
 
@@ -127,6 +134,8 @@ public class Context {
       return;
     }
 
+    applicationContext = genericApplicationContext; // avoid recursion
+
     if (standaloneContextLocation == null) {
       standaloneContextLocation = DEFAULT_JUNIT_CONTEXT_LOCATION;
     }
@@ -134,6 +143,8 @@ public class Context {
     if (standaloneCommonDirPath == null) {
       standaloneCommonDirPath = DEFAULT_JUNIT_COMMON_DIR_PATH;
     }
+    LOGGER.info("context file: " + standaloneContextLocation);
+    LOGGER.info("common dir path: " + standaloneCommonDirPath);
 
     applicationContext =
         new FileSystemXmlApplicationContext(standaloneContextLocation);
@@ -169,6 +180,8 @@ public class Context {
       // method
       return;
     }
+    applicationContext = genericApplicationContext; // avoid recursion
+
     // Note: default context location is /WEB-INF/applicationContext.xml
     LOGGER.info("Making an XmlWebApplicationContext");
     XmlWebApplicationContext ac = new XmlWebApplicationContext();
@@ -193,11 +206,6 @@ public class Context {
     if (applicationContext == null) {
       throw new IllegalStateException("Spring failure - no application context");
     }
-  }
-
-  private void reInitApplicationContext() {
-    applicationContext = null;
-    initApplicationContext();
   }
 
   /**
@@ -233,11 +241,6 @@ public class Context {
     started = true;
   }
 
-  private void restart() {
-    started = false;
-    start();
-  }
-
   /**
    * Get a bean from the application context that we MUST have to operate.
    *
@@ -251,39 +254,97 @@ public class Context {
    * @throws IllegalStateException if there are no beans of the right type, or
    *         if there is an instantiation problem.
    */
-  private Object getRequiredBean(String beanName, Class clazz) {
-    initApplicationContext();
-    String beanList[] = applicationContext.getBeanNamesForType(clazz);
-    if (beanList.length < 1) {
-      throw new IllegalStateException("The context has no " + beanName);
-    }
-    Object result = null;
-    if (beanList.length == 1) {
-      // we use this bean, whatever it may be named
-      result = applicationContext.getBean(beanList[0]);
-      if (result == null) {
-        throw new IllegalStateException("Spring failure - can't instantiate "
-            + beanName);
+  public Object getRequiredBean(String beanName, Class clazz) {
+    try {
+      Object object = getBean(beanName, clazz);
+      if (object != null) {
+        return object;
       }
-      return result;
-    }
-    // there are multiple beans of this type in the context. this is unexpected
-    // but maybe some testing is going on. so try to find one with the right
-    // name
-    result = applicationContext.getBean(beanName, clazz);
-    if (result != null) {
-      return result;
-    }
-    // otherwise, just return the first one found
-    LOGGER.warning("Multiple beans found of type " + clazz.getName()
-        + ", but no beans named " + beanName + ".  Instantiating bean: "
-        + beanList[0]);
-    result = applicationContext.getBean(beanList[0]);
-    if (result == null) {
+      throw new IllegalStateException("The context has no " + beanName);
+    } catch (BeansException e) {
       throw new IllegalStateException("Spring failure - can't instantiate "
-          + beanName);
+          + beanName + ": (" + e.toString() + ")");
     }
-    return result;
+  }
+
+  /**
+   * Get an optional bean from the application context.
+   *
+   * @param beanName the name of the bean we're looking for. Typically, the same
+   *        as its most general interface.
+   * @param clazz the class of the bean we're looking for.
+   * @return if there is a single bean of the required type, we return it,
+   *         regardless of name. If there are multiple beans of the required
+   *         type, we return the one with the required name, if present, or the
+   *         first one we find, if there is none of the right name.  Returns
+   *         null if no bean of the appropriate name or type is found.
+   * @throws BeansException if there is an instantiation problem.
+   */
+  public Object getBean(String beanName, Class clazz) throws BeansException {
+    initApplicationContext();
+    return getBean(applicationContext, beanName, clazz);
+  }
+
+  /**
+   * Get a bean from the supplied BeanFactory.  First look for a bean with
+   * the given name and type.  If none is found, look for the first bean
+   * of the specified type.
+   *
+   * @param factory a ListableBeanFactory
+   * @param beanName the name of the bean we're looking for. Typically, the same
+   *        as its most general interface.  If null, return the first bean
+   *        of the requested type.
+   * @param clazz the class of the bean we're looking for.  If null, return
+   *        any bean of the specified name.
+   * @return if there is a single bean of the required type, we return it,
+   *         regardless of name. If there are multiple beans of the required
+   *         type, we return the one with the required name, if present, or the
+   *         first one we find, if there is none of the right name.  Returns
+   *         null if no bean of the appropriate name or type is found.
+   * @throws BeansException if there is an instantiation problem.
+   */
+  public Object getBean(ListableBeanFactory factory, String beanName, 
+      Class clazz) throws BeansException {
+    Object result = null;
+
+    // First, look for a bean with the specified name and type.
+    try {
+      if (beanName != null && beanName.length() > 0) {
+        result = factory.getBean(beanName, clazz);
+        if (result != null) {
+          return result;
+        }
+      }
+    } catch (NoSuchBeanDefinitionException e) {
+      // Not a problem yet.  Look for any bean of the appropriate type.
+    }
+
+    // If no bean type was specified, we are done.
+    if (clazz == null) {
+      return null;
+    }
+
+    // Get the list of beans defined in the bean factory of the required type.
+    String[] beanList = factory.getBeanNamesForType(clazz);
+      
+    // Make sure there is at least one
+    if (beanList.length < 1) {
+      return null;
+    }
+
+    // If more beans were found issue a warning.
+    if (beanList.length > 1) {
+      StringBuffer buf = new StringBuffer();
+      for (int i = 1; i < beanList.length; i++) {
+        buf.append(" ");
+        buf.append(beanList[i]);
+      }
+      LOGGER.warning("Resource contains multiple " + clazz.getName() +
+          " definitions. Using the first: " + beanList[0] +
+          ". Skipping: " + buf);
+    }
+
+    return factory.getBean(beanList[0]);
   }
 
   /**
@@ -401,11 +462,25 @@ public class Context {
     // Update the feed host and port in the CM properties file.
     String propFileName = getPropFileName();
     File propFile = getPropFile(propFileName);
-    Properties props =
-        InstanceInfo.initPropertiesFromFile(propFile, propFileName);
+    Properties props;
+    try {
+      props = PropertiesUtils.loadFromFile(propFile);
+    } catch (PropertiesException e) {
+      LOGGER.log(Level.WARNING, "Unable to read application context properties"
+          + " file "+ propFileName + "; attempting instantiation stand-alone.",
+          e);
+      props = new Properties();
+    }
     props.put(GSA_FEED_HOST_PROPERTY_KEY, feederGateHost);
     props.put(GSA_FEED_PORT_PROPERTY_KEY, Integer.toString(feederGatePort));
-    InstanceInfo.writePropertiesToFile(props, propFile);
+    try {
+      PropertiesUtils.storeToFile(props, propFile, 
+          "Google Enterprise Connector Manager Configuration");
+    } catch (PropertiesException e) {
+      LOGGER.log(Level.WARNING, "Unable to save application context properties"
+          + " file " + propFileName + ". ", e);
+      throw new InstantiatorException(e);      
+    }
     LOGGER.info("Updated Connector Manager Config: " +
         GSA_FEED_HOST_PROPERTY_KEY + "=" + feederGateHost + "; " +
         GSA_FEED_PORT_PROPERTY_KEY + "=" + feederGatePort);
@@ -439,22 +514,10 @@ public class Context {
   public boolean gsaAdminRequiresPrefix() {
     initApplicationContext();
     if (gsaAdminRequiresPrefix == null) {
-      try {
-        String propFileName = getPropFileName();
-        File propFile = getPropFile(propFileName);
-        Properties props =
-            InstanceInfo.initPropertiesFromFile(propFile, propFileName);
-        String prop = props.getProperty(
+        String prop = getProperty(
             GSA_ADMIN_REQUIRES_PREFIX_KEY,
             GSA_ADMIN_REQUIRES_PREFIX_DEFAULT.toString());
         gsaAdminRequiresPrefix = Boolean.valueOf(prop);
-      } catch (InstantiatorException e) {
-        LOGGER.log(Level.WARNING,
-                   "Unable to read application context properties file. " +
-                   "Using default value for Context.gsaAdminRequiresPrefix().",
-                   e);
-        gsaAdminRequiresPrefix = GSA_ADMIN_REQUIRES_PREFIX_DEFAULT;
-      }
     }
     return gsaAdminRequiresPrefix.booleanValue();
   }
@@ -467,18 +530,7 @@ public class Context {
   public String getTeedFeedFile() {
     initApplicationContext();
     if (!isTeedFeedFileInitialized) {
-      try {
-        String propFileName = getPropFileName();
-        File propFile = getPropFile(propFileName);
-        Properties props =
-            InstanceInfo.initPropertiesFromFile(propFile, propFileName);
-        teedFeedFile = props.getProperty(TEED_FEED_FILE_PROPERTY_KEY);
-      } catch (InstantiatorException e) {
-        LOGGER.log(Level.WARNING,
-                   "Unable to read application context properties file. " +
-                   "Using default value for Context.getTeedFeedFile().",
-                   e);
-      }
+      teedFeedFile = getProperty(TEED_FEED_FILE_PROPERTY_KEY, null);
       isTeedFeedFileInitialized = true;
     }
     return teedFeedFile;
@@ -492,19 +544,33 @@ public class Context {
   public String getGsaFeedHost() {
     initApplicationContext();
     if (!isGsaFeedHostInitialized) {
-      try {
-        String propFileName = getPropFileName();
-        File propFile = getPropFile(propFileName);
-        Properties props =
-            InstanceInfo.initPropertiesFromFile(propFile, propFileName);
-        gsaFeedHost = props.getProperty(GSA_FEED_HOST_PROPERTY_KEY);
-      } catch (InstantiatorException e) {
-        LOGGER.log(Level.WARNING,
-            "Unable to read application context properties file. ", e);
-        return null;
-      }
+      gsaFeedHost = getProperty(GSA_FEED_HOST_PROPERTY_KEY, null);
       isGsaFeedHostInitialized = true;
     }
     return gsaFeedHost;
+  }
+
+  /**
+   * Reads a property from the application context properties file.
+   *
+   * @param key the property name
+   * @param defaultValue if property does not exist
+   */
+  private String getProperty(String key, String defaultValue) {
+    try {
+      String propFileName = getPropFileName();
+      File propFile = getPropFile(propFileName);
+      try {
+        Properties props = PropertiesUtils.loadFromFile(propFile);
+        return props.getProperty(key, defaultValue);
+      } catch (PropertiesException e) {
+        LOGGER.log(Level.WARNING, "Unable to read application context "
+                   + "properties file " + propFileName, e);
+      }
+    } catch (InstantiatorException ie) {
+      LOGGER.log(Level.WARNING, "Unable to read application context "
+                 + "properties file.", ie);
+    }
+    return defaultValue;
   }
 }
