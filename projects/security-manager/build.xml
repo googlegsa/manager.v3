@@ -158,6 +158,7 @@
 			<lib file="${connector-dist.dir}/connector-spi.jar" />
 			<lib file="${connector-dist.dir}/connector.jar" />
 			<lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
+      <webinf dir="source/webdocs/prod" includes="applicationContext.xml" />
 			<manifest>
 				<attribute name="Implementation-Title" value="Security Manager" />
 				<attribute name="Implementation-Version" value="${version} (build ${svnversion}  ${TODAY})" />
@@ -175,9 +176,9 @@
       <lib file="${connector-dist.dir}/connector-spi.jar" />
       <lib file="${connector-dist.dir}/connector.jar" />
       <lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
-			<webinf dir="etc" includes="**" />
 			<!-- above this line is all the stuff that goes in the normal prod jar, 
 	        below is the stuff that is only needed for testing -->
+      <webinf dir="source/webdocs/test" includes="applicationContext.xml" />
 			<lib dir="${thirdparty.tests.jars}" includes="*.jar" />
 			<manifest>
 				<attribute name="Implementation-Title" value="Connector Manager" />
