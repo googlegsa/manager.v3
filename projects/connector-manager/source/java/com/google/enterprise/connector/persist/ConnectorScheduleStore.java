@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,30 +16,30 @@ package com.google.enterprise.connector.persist;
 
 /**
  * Interface describing the persistence needs of a Scheduler.
- *
  */
 public interface ConnectorScheduleStore {
   /**
    * Gets the stored schedule of a named connector.
    * 
-   * @param connectorName
-   * @return the schedule String, or null if no schedule has been stored for this connector
+   * @param context a StoreContext
+   * @return the schedule String, or null if no schedule has been stored for
+   * this connector
    */
-  public String getConnectorSchedule(String connectorName);
+  public String getConnectorSchedule(StoreContext context);
 
   /**
    * Sets the stored schedule of a named connector.
    * 
-   * @param connectorName
+   * @param context a StoreContext
    * @param connectorSchedule String to store
    */
-  public void storeConnectorSchedule(String connectorName, 
-      String connectorSchedule);
+  public void storeConnectorSchedule(StoreContext context,
+                                     String connectorSchedule);
   
   /**
    * Remove a connector schedule.  If no such connector exists, do nothing.
-   * @param connectorName name of the connector.
+   *
+   * @param context a StoreContext
    */
-  public void removeConnectorSchedule(String connectorName);
-  
+  public void removeConnectorSchedule(StoreContext context);
 }

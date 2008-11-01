@@ -71,17 +71,45 @@
 		</property>
 	</bean>
 
-	<bean id="ConnectorScheduleStore"
-		class="com.google.enterprise.connector.persist.PrefsStore">
-	</bean>
+  <bean id="ConnectorConfigStore"
+    class="com.google.enterprise.connector.persist.FileStore">
+  </bean>
 
-	<bean id="ConnectorStateStore"
-		class="com.google.enterprise.connector.persist.PrefsStore" />
+  <bean id="ConnectorScheduleStore"
+    class="com.google.enterprise.connector.persist.FileStore">
+  </bean>
+
+  <bean id="ConnectorStateStore"
+    class="com.google.enterprise.connector.persist.FileStore">
+  </bean>
+
+  <!-- Legacy ConnectorStateStore and ConnectorScheduleStore used for
+       upgrading existing connectors created by previous versions of
+       the Connector Manager.
+  -->
+  <bean id="LegacyConnectorScheduleStores" class="java.util.ArrayList">
+    <constructor-arg>
+      <list>
+        <bean class="com.google.enterprise.connector.persist.PrefsStore"/>
+      </list>
+    </constructor-arg>
+  </bean>
+
+  <bean id="LegacyConnectorStateStores" class="java.util.ArrayList">
+    <constructor-arg>
+      <list>
+        <bean class="com.google.enterprise.connector.persist.PrefsStore"/>
+      </list>
+    </constructor-arg>
+  </bean>
+
+  <bean id="LegacyConnectorConfigStores" class="java.util.ArrayList">
+    <!-- No Legacy ConnectorConfigStores at this time -->
+  </bean>
 
 	<bean id="Instantiator"
 		class="com.google.enterprise.connector.instantiator.SpringInstantiator">
 		<constructor-arg ref="Pusher" />
-		<constructor-arg ref="ConnectorStateStore" />
 	</bean>
 
 	<bean id="Monitor"
@@ -92,23 +120,17 @@
 		<constructor-arg index="0" type="int" value="20" />
 	</bean>
 
-	<bean id="Manager"
-		class="com.google.enterprise.connector.manager.ProductionManager">
-		<property name="connectorScheduleStore"
-			ref="ConnectorScheduleStore" />
-		<property name="connectorStateStore"
-			ref="ConnectorStateStore" />
-		<property name="scheduler"
-			ref="TraversalScheduler" />
-		<property name="instantiator" ref="Instantiator" />
-	</bean>
+  <bean id="Manager"
+    class="com.google.enterprise.connector.manager.ProductionManager">
+    <property name="scheduler" ref="TraversalScheduler" />
+    <property name="instantiator" ref="Instantiator" />
+  </bean>
 
 	<bean id="TraversalScheduler"
 		class="com.google.enterprise.connector.scheduler.TraversalScheduler">
 		<constructor-arg index="0" ref="Instantiator" />
 		<constructor-arg index="1" ref="Monitor" />
 		<constructor-arg index="2" ref="WorkQueue" />
-		<constructor-arg index="3" ref="ConnectorScheduleStore" />
 	</bean>
 
   <bean id="TraversalContext"

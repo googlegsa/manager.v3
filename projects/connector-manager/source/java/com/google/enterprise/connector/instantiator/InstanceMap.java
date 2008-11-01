@@ -80,10 +80,14 @@ public class InstanceMap extends TreeMap {
       File directory = directories[i];
       String name = directory.getName();
       if (!name.startsWith(".")) {
-        InstanceInfo instanceInfo = InstanceInfo.fromDirectory(name, directory,
-            typeInfo);
-        if (instanceInfo != null) {
-          this.put(name, instanceInfo);
+        try {
+          InstanceInfo instanceInfo = 
+              InstanceInfo.fromDirectory(name, directory, typeInfo);
+          if (instanceInfo != null) {
+            this.put(name, instanceInfo);
+          }
+        } catch (InstantiatorException e) {
+          LOGGER.log(Level.WARNING, "Problem creating connector instance", e);
         }
       }
     }
@@ -114,7 +118,7 @@ public class InstanceMap extends TreeMap {
         response = resetConfig(name, connectorDir, typeInfo, config, locale);
       } else {
         // an existing connector is being given a new type - drop then add
-        dropConnector(name);
+        removeConnector(name);
         response = createNewConnector(name, typeName, config, locale);
         if (response != null) {
           // TODO: We need to restore original Connector config. This is
@@ -177,9 +181,9 @@ public class InstanceMap extends TreeMap {
       throw new InstantiatorException("Failed to create connector " + name);
     }
 
-    // Save the new configuration.
-    instanceInfo.writePropertiesToFile(instanceInfo.getProperties(),
-       instanceInfo.getPropertiesFile());
+    // Only after validateConfig and instantiation succeeds do we
+    // save the new configuration to persistent store.
+    instanceInfo.setConnectorConfig(config);
     this.put(name, instanceInfo);
 
     return null;
@@ -212,22 +216,13 @@ public class InstanceMap extends TreeMap {
     return connectorDir;
   }
 
-  public void dropConnector(String name) {
+  public void removeConnector(String name) {
     InstanceInfo instanceInfo = (InstanceInfo) this.remove(name);
     if (instanceInfo == null) {
       return;
     }
-    File propertiesFile = instanceInfo.getPropertiesFile();
-    if (propertiesFile.exists()) {
-      if (!propertiesFile.delete()) {
-        LOGGER.warning("Can't delete properties file "
-            + propertiesFile.getPath()
-            + "; this connector may be difficult to delete.");
-        // we're unlikely to succeed in deleting the containing directory, but
-        // we'll try anyway
-      }
-    }
     File connectorDir = instanceInfo.getConnectorDir();
+    instanceInfo.removeConnector();
     if (connectorDir.exists()) {
       if (!connectorDir.delete()) {
         LOGGER.warning("Can't delete connector directory "

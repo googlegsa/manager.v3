@@ -84,12 +84,12 @@ public interface Instantiator {
 
 
   /**
-   * Drops a named connector.
+   * Removes a named connector.
    *
    * @param connectorName
    * @throws InstantiatorException
    */
-  public void dropConnector(String connectorName) throws InstantiatorException;
+  public void removeConnector(String connectorName) throws InstantiatorException;
 
   /**
    * Finds a named connector type.
@@ -123,6 +123,23 @@ public interface Instantiator {
       throws ConnectorNotFoundException, InstantiatorException;
 
   /**
+   * Get the names of all known connectors
+   *
+   * @return an Iterator of String names
+   */
+  public Iterator getConnectorNames();
+
+  /**
+   * Get the type for a known connector
+   *
+   * @param connectorName the connector to look up
+   * @return its type, as a String
+   * @throws ConnectorNotFoundException if the named connector is not found
+   */
+  public String getConnectorTypeName(String connectorName)
+      throws ConnectorNotFoundException;
+
+  /**
    * Sets the configuration for a new connector. This connector should not
    * exist.
    *
@@ -145,31 +162,58 @@ public interface Instantiator {
       ConnectorTypeNotFoundException, InstantiatorException;
 
   /**
-   * Get the names of all known connectors
-   *
-   * @return an Iterator of String names
-   */
-  public Iterator getConnectorNames();
-
-  /**
-   * Get the type for a known connector
-   *
-   * @param connectorName the connector to look up
-   * @return its type, as a String
-   * @throws ConnectorNotFoundException if the named connector is not found
-   */
-  public String getConnectorTypeName(String connectorName)
-      throws ConnectorNotFoundException;
-
-
-  /**
    * Get a connector's ConnectorType-specific configuration data
    *
    * @param connectorName the connector to look up
    * @return a Map&lt;String, String&gt; of its ConnectorType-specific
-   * configuration data
+   *         configuration data
    * @throws ConnectorNotFoundException if the named connector is not found
    */
   public Map getConnectorConfig(String connectorName)
+      throws ConnectorNotFoundException;
+
+  /**
+   * Sets the schedule of a named connector.
+   * 
+   * @param connectorName
+   * @param connectorSchedule String to store or null unset any existing
+   *        schedule.
+   * @throws ConnectorNotFoundException if the named connector is not found
+   */
+  public void setConnectorSchedule(String connectorName, 
+      String connectorSchedule) throws ConnectorNotFoundException;
+
+  /**
+   * Gets the schedule of a named connector.
+   * 
+   * @param connectorName
+   * @return the schedule String, or null to erase any previously set schedule
+   *         for this connector.
+   * @throws ConnectorNotFoundException if the named connector is not found
+   */
+  public String getConnectorSchedule(String connectorName)                             
+      throws ConnectorNotFoundException;
+
+  /**
+   * Sets the remembered traversal state of a named connector.
+   *
+   * @param connectorName
+   * @param connectorState String to store or null to erase any previously
+   *        saved traversal state.
+   * @throws ConnectorNotFoundException if the named connector is not found
+   * @throws IllegalStateException if state store is disabled for this connector
+   */
+  public void setConnectorState(String connectorName, String connectorState)
+      throws ConnectorNotFoundException;
+
+  /**
+   * Gets the remembered traversal state of a named connector.
+   *
+   * @param connectorName
+   * @return the state, or null if no state has been stored for this connector
+   * @throws ConnectorNotFoundException if the named connector is not found
+   * @throws IllegalStateException if state store is disabled for this connector
+   */
+  public String getConnectorState(String connectorName)
       throws ConnectorNotFoundException;
 }

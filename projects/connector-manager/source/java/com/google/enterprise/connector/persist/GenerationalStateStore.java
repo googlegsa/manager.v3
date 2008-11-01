@@ -50,109 +50,110 @@ public class GenerationalStateStore implements ConnectorStateStore {
    * and caches the current generation for the named connector.
    *
    * @param baseStore The underlying ConnectorStateStore to wrap.
-   * @param connectorName
+   * @param context a StoreContext
    */
   public GenerationalStateStore(ConnectorStateStore baseStore,
-                                String connectorName) {
+      StoreContext context) {
     this(baseStore);
-    myGeneration(connectorName);
+    myGeneration(context);
   }
 
   /**
    * Gets the stored state of a named connector.
    *
-   * @param connectorName
+   * @param context a StoreContext
    * @return the state, or null if no state has been stored for this connector
    * @throws IllegalStateException if state store is disabled for this generation
    */
-  public String getConnectorState(String connectorName) {
-    testGeneration(connectorName);
-    return baseStore.getConnectorState(connectorName);
+  public String getConnectorState(StoreContext context) {
+    testGeneration(context);
+    return baseStore.getConnectorState(context);
   }
 
   /**
    * Sets the stored state of a named connector.
    *
-   * @param connectorName
+   * @param context a StoreContext
    * @param connectorState String to store
    * @throws IllegalStateException if state store is disabled for this generation
    */
-  public void storeConnectorState(String connectorName, String connectorState) {
-    testGeneration(connectorName);
-    baseStore.storeConnectorState(connectorName, connectorState);
+  public void storeConnectorState(StoreContext context, 
+      String connectorState) {
+    testGeneration(context);
+    baseStore.storeConnectorState(context, connectorState);
   }
 
   /**
    * Remove connector state.  If no such connector exists, do nothing.
    * As as side-effect, bump the current generation.
    *
-   * @param connectorName name of the connector.
+   * @param context a StoreContext
    */
-  public void removeConnectorState(String connectorName) {
-    newGeneration(connectorName);
-    baseStore.removeConnectorState(connectorName);
+  public void removeConnectorState(StoreContext context) {
+    newGeneration(context);
+    baseStore.removeConnectorState(context);
   }
 
   /**
    * Test if my generation is the most recent generation for this connector.
    * If not, throw and IllegalStateException.
    *
-   * @param connectorName the name of the connector
+   * @param context a StoreContext
    * @throws IllegalStateException if my generation is not current
    */
-  private void testGeneration(String connectorName) {
-    if (myGeneration(connectorName) != currentGeneration(connectorName)) {
+  private void testGeneration(StoreContext context) {
+    if (myGeneration(context) != currentGeneration(context)) {
       // Why don't you all just f-f-f-fade away.
-      throw new IllegalStateException("Attempt to access disabled "
-          + "Connector State Store for connector: " + connectorName);
+      throw new IllegalStateException("Attempt to access disabled Connector "
+          + "State Store for connector: " + context.getConnectorName());
     }
   }
 
   /**
-   * Return this instance's generation for the named connector.
-   * If this instance does not yet have a generation for the named
+   * Return this instance's generation for this connector.
+   * If this instance does not yet have a generation for the 
    * connector, it grabs a snapshot of the most current generation.
    *
-   * @param connectorName  the connector name
+   * @param context a StoreContext
    * @return the current generation number
    */
-  protected synchronized long myGeneration(String connectorName) {
+  protected synchronized long myGeneration(StoreContext context) {
+    String connectorName = context.getConnectorName();
     Long generation = (Long)myGenerations.get(connectorName);
     if (generation == null) {
       // If we have no generation yet, get the most current one.
-      generation = new Long(currentGeneration(connectorName));
+      generation = new Long(currentGeneration(context));
       myGenerations.put(connectorName, generation);
     }
     return generation.longValue();
   }
 
   /**
-   * Return the current generation for the named connector.
+   * Return the current generation for this connector.
    *
-   * @param connectorName  the connector name
+   * @param context a StoreContext
    * @return the current generation number
    */
-  protected static long currentGeneration(String connectorName) {
+  protected static long currentGeneration(StoreContext context) {
     synchronized (generations) {
-      Long generation = (Long)generations.get(connectorName);
+      Long generation = (Long)generations.get(context.getConnectorName());
       return (generation == null) ? 0 : generation.longValue();
     }
   }
 
   /**
-   * Increment the current generation for the named connector.
+   * Increment the current generation for this connector.
    * Bumps the current generation number of the connector state for
    * this connector.  Subsequent reads or writes to older generations
    * will fail.
    *
-   * @param connectorName  the connector name
+   * @param context a StoreContext
    */
-  public static void newGeneration(String connectorName) {
+  public static void newGeneration(StoreContext context) {
     synchronized (generations) {
-      Long generation = (Long)generations.get(connectorName);
-      generations.put(connectorName,
+      Long generation = (Long)generations.get(context.getConnectorName());
+      generations.put(context.getConnectorName(),
           new Long((generation == null) ? 1 : generation.longValue() + 1));
     }
   }
-
 }

@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
@@ -36,8 +35,7 @@ public class ConnectorInterfaces {
   final String connectorName;
   final Connector connector;
   final Pusher pusher;
-  final ConnectorStateStore connectorStateStore;
-  final Map configMap;
+  final Instantiator instantiator;
 
   // these are lazily constructed
   Traverser traverser = null;
@@ -52,16 +50,14 @@ public class ConnectorInterfaces {
    * @param connectorName
    * @param connector
    * @param pusher
-   * @param connectorStateStore
-   * @param configMap the configuration map
+   * @param instantiator
    */
   ConnectorInterfaces(String connectorName, Connector connector, Pusher pusher,
-      ConnectorStateStore connectorStateStore, Map configMap) {
+      Instantiator instantiator) {
     this.connectorName = connectorName;
     this.connector = connector;
     this.pusher = pusher;
-    this.connectorStateStore = connectorStateStore;
-    this.configMap = configMap;
+    this.instantiator = instantiator;
   }
 
   /**
@@ -76,11 +72,10 @@ public class ConnectorInterfaces {
     this.connectorName = connectorName;
     this.connector = null;
     this.pusher = null;
-    this.connectorStateStore = null;
+    this.instantiator = null;
     this.traverser = traverser;
     this.authenticationManager = authenticationManager;
     this.authorizationManager = authorizationManager;
-    this.configMap = null;
   }
 
   /**
@@ -117,10 +112,6 @@ public class ConnectorInterfaces {
     return authorizationManager;
   }
 
-  public Map getConfigMap() {
-    return configMap;
-  }
-
   /**
    * @return the connector
    */
@@ -146,7 +137,7 @@ public class ConnectorInterfaces {
       try {
         qtm = s.getTraversalManager();
         traverser =
-           new QueryTraverser(pusher, qtm, connectorStateStore, connectorName);
+           new QueryTraverser(pusher, qtm, instantiator, connectorName);
       } catch (RepositoryException ignore) {
         // By only creating the Traverser after successfully getting
         // a TraversalManager, we avoid caching a Traverser with a

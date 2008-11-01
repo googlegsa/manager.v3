@@ -18,6 +18,9 @@
 	<bean id="Pusher"
 		class="com.google.enterprise.connector.pusher.MockPusher"/>
 
+	<bean id="ConnectorConfigStore"
+		class="com.google.enterprise.connector.persist.FileStore"/>
+
 	<bean id="ConnectorScheduleStore"
 		class="com.google.enterprise.connector.persist.MockConnectorScheduleStore"/>
 
@@ -25,7 +28,11 @@
 		class="com.google.enterprise.connector.persist.MockConnectorStateStore" />
 
 	<bean id="Instantiator"
-		class="com.google.enterprise.connector.instantiator.MockInstantiator"/>
+		class="com.google.enterprise.connector.instantiator.MockInstantiator">
+		<constructor-arg index="0" ref="ConnectorConfigStore" />
+		<constructor-arg index="1" ref="ConnectorScheduleStore" />
+		<constructor-arg index="2" ref="ConnectorStateStore" />
+	</bean>
 
 	<bean id="Monitor"
 		class="com.google.enterprise.connector.monitor.HashMapMonitor" />

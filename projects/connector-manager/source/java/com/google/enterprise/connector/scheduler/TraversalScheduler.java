@@ -20,7 +20,6 @@ import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.monitor.Monitor;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.ConnectorScheduleStore;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.ArrayList;
@@ -48,8 +47,6 @@ public class TraversalScheduler implements Scheduler {
   private Instantiator instantiator;
   private Monitor monitor;
   private WorkQueue workQueue;
-  private ConnectorScheduleStore scheduleStore;
-
   private HostLoadManager hostLoadManager;
 
   private boolean isInitialized;  // Protected by instance lock.
@@ -66,15 +63,13 @@ public class TraversalScheduler implements Scheduler {
    * @param instantiator
    * @param monitor
    * @param workQueue
-   * @param scheduleStore
    */
   public TraversalScheduler(Instantiator instantiator, Monitor monitor,
-      WorkQueue workQueue, ConnectorScheduleStore scheduleStore) {
+      WorkQueue workQueue) {
     this.instantiator = instantiator;
     this.monitor = monitor;
     this.workQueue = workQueue;
-    this.scheduleStore = scheduleStore;
-    this.hostLoadManager = new HostLoadManager(scheduleStore);
+    this.hostLoadManager = new HostLoadManager(instantiator);
     this.isInitialized = false;
     this.isShutdown = false;
     this.removedConnectors = new HashSet();
@@ -112,10 +107,16 @@ public class TraversalScheduler implements Scheduler {
       if (removedConnectors.contains(connectorName)) {
         continue;
       }
-      String scheduleStr = scheduleStore.getConnectorSchedule(connectorName);
+      String scheduleStr = null;
+      try {
+        scheduleStr = instantiator.getConnectorSchedule(connectorName);
+      } catch (ConnectorNotFoundException e) {
+        // Looks like the connector just got deleted.  Don't schedule it.
+        continue;
+      }
       if (null == scheduleStr) {
         LOGGER.log(Level.INFO, "Could not find schedule for connector: " +
-          connectorName);
+                   connectorName);
         continue;
       }
       Schedule schedule = new Schedule(scheduleStr);

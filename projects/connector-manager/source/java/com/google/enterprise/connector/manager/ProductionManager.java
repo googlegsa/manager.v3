@@ -62,21 +62,6 @@ public class ProductionManager implements Manager {
   }
 
   /**
-   * @param connectorScheduleStore the connectorScheduleStore to set
-   */
-  public void setConnectorScheduleStore(
-      ConnectorScheduleStore connectorScheduleStore) {
-    this.connectorScheduleStore = connectorScheduleStore;
-  }
-
-  /**
-   * @param connectorStateStore the connectorStateStore to set
-   */
-  public void setConnectorStateStore(ConnectorStateStore connectorStateStore) {
-    this.connectorStateStore = connectorStateStore;
-  }
-
-  /**
    * Set the scheduler.
    *
    * @param scheduler the scheduler to set.
@@ -208,6 +193,9 @@ public class ProductionManager implements Manager {
     String connectorTypeName = null;
     try {
       connectorTypeName = instantiator.getConnectorTypeName(connectorName);
+      String schedule = instantiator.getConnectorSchedule(connectorName);
+      // TODO: resolve the third parameter - we need to give status a meaning
+      return new ConnectorStatus(connectorName, connectorTypeName, 0, schedule);
     } catch (ConnectorNotFoundException e) {
       // TODO: this should become part of the signature - so we should just
       // let this exception bubble up
@@ -215,11 +203,6 @@ public class ProductionManager implements Manager {
           + " Not Found: ", e);
       throw new IllegalArgumentException();
     }
-    String schedule =
-        connectorScheduleStore.getConnectorSchedule(connectorName);
-    // TODO: resolve the third parameter - we need to give the status a
-    // meaning
-    return new ConnectorStatus(connectorName, connectorTypeName, 0, schedule);
   }
 
   /*
@@ -301,14 +284,12 @@ public class ProductionManager implements Manager {
    *      java.lang.String, int, java.lang.String)
    */
   public void setSchedule(String connectorName, int load, int retryDelayMillis,
-      String timeIntervals) {
-
-    Schedule schedule =
-        new Schedule(connectorName + ":" + load + ":" + retryDelayMillis + ":"
-            + timeIntervals);
+      String timeIntervals)
+      throws ConnectorNotFoundException, PersistentStoreException {
+    Schedule schedule = new Schedule(connectorName + ":" + load + ":" 
+            + retryDelayMillis + ":" + timeIntervals);
     String connectorSchedule = schedule.toString();
-    connectorScheduleStore.storeConnectorSchedule(connectorName,
-        connectorSchedule);
+    instantiator.setConnectorSchedule(connectorName, connectorSchedule);
   }
 
   /*
@@ -319,10 +300,8 @@ public class ProductionManager implements Manager {
    */
   public void removeConnector(String connectorName)
       throws InstantiatorException {
-    instantiator.dropConnector(connectorName);
+    instantiator.removeConnector(connectorName);
     scheduler.removeConnector(connectorName);
-    connectorScheduleStore.removeConnectorSchedule(connectorName);
-    connectorStateStore.removeConnectorState(connectorName);
   }
 
   /*
