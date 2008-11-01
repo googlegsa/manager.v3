@@ -14,6 +14,8 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.security.manager.Context;
+
 import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.saml2.core.ArtifactResponse;
@@ -40,21 +42,6 @@ public class SamlArtifactResolve extends HttpServlet {
   private static final Logger LOGGER =
       Logger.getLogger(SamlArtifactResolve.class.getName());
 
-  private BackEnd backend;
-
-  public SamlArtifactResolve() {
-    this(BackEndImpl.getInstance());
-  }
-
-  /**
-   * Available for testing.
-   * @param backend
-   */
-  public SamlArtifactResolve(BackEnd backend) {
-    super();
-    this.backend = backend;
-  }
-
   /**
    * For testing.
    */
@@ -76,6 +63,9 @@ public class SamlArtifactResolve extends HttpServlet {
                      HttpServletResponse response)
       throws IOException {
 
+    Context context = Context.getInstance(getServletContext());
+    BackEnd backend = context.getBackEnd();
+    
     ArtifactResponse artifactResp = backend.resolveArtifact(null);
 
     SOAPMessage soapMsg = soapify(artifactResp);

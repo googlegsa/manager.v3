@@ -15,6 +15,7 @@
 package com.google.enterprise.saml.server;
 
 import com.google.enterprise.saml.common.GsaConstants;
+import com.google.enterprise.security.manager.Context;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -31,21 +32,6 @@ public class SamlAuthn extends HttpServlet {
 
   private static final Logger LOGGER =
       Logger.getLogger(SamlAuthn.class.getName());
-
-  private BackEnd backend;
-
-  public SamlAuthn() {
-    this(BackEndImpl.getInstance());
-  }
-
-  /**
-   * Available for testing.
-   * @param backend
-   */
-  protected SamlAuthn(BackEnd backend) {
-    super();
-    this.backend = backend;
-  }
 
   /**
    * Eventually this method will generate a login form for the user
@@ -105,7 +91,10 @@ public class SamlAuthn extends HttpServlet {
       out.close();
       return;
     }
-    
+
+    Context context = Context.getInstance(getServletContext());
+    BackEnd backend = context.getBackEnd();
+
     // TODO: implement user look-up
     String redirectUrl = backend.loginRedirect(
         request.getParameter("Referer"),

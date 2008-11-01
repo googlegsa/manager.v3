@@ -24,24 +24,8 @@ public class BackEndImpl implements BackEnd {
       Logger.getLogger(BackEndImpl.class.getName());
 
   private SessionManagerInterface sm;
-
-  private static BackEnd backendInstance;
   private ArtifactResolver artifactResolver;
   private AuthzResponder authzResponder;
-
-  private BackEndImpl() {
-    artifactResolver = new ArtifactResolverImpl();
-    authzResponder = new AuthzResponderImpl();
-  }
-
-  public static BackEnd getInstance() {
-    if (backendInstance != null) {
-      return backendInstance;
-    }
-
-    backendInstance = new BackEndImpl();
-    return backendInstance;
-  }
 
   public void setSessionManager(SessionManagerInterface sm) {
     this.sm = sm;
@@ -49,6 +33,14 @@ public class BackEndImpl implements BackEnd {
 
   public SessionManagerInterface getSessionManager() {
     return sm;
+  }
+
+  public void setArtifactResolver(ArtifactResolver artifactResolver) {
+    this.artifactResolver = artifactResolver;
+  }
+
+  public void setAuthzResponder(AuthzResponder authzResponder) {
+    this.authzResponder = authzResponder;
   }
 
   public String loginRedirect(String referer, String relayState) {
