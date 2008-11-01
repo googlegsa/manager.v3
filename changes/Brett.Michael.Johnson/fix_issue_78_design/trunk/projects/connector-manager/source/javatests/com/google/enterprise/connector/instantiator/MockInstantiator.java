@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.common.PropertiesUtils;
-import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.jcr.JcrConnector;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;

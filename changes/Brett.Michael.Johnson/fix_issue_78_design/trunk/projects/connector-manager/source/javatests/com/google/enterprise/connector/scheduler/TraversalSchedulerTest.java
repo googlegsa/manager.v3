@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -54,13 +54,13 @@ public class TraversalSchedulerTest extends TestCase {
   protected void setUp() throws Exception {
     // Make sure that the test directory does not exist
     baseDirectory = new File(TEST_DIR_NAME);
-    Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
     // Then recreate it empty
-    Assert.assertTrue(baseDirectory.mkdirs());
+    assertTrue(baseDirectory.mkdirs());
   }
 
   protected void tearDown() throws Exception {
-    Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
   }
 
 
@@ -79,7 +79,7 @@ public class TraversalSchedulerTest extends TestCase {
         Thread.sleep(200);
       } catch (InterruptedException ie) {
         ie.printStackTrace();
-        Assert.fail(ie.toString());
+        fail(ie.toString());
       }
       scheduler.shutdown(false, 5000);
     }
@@ -95,7 +95,6 @@ public class TraversalSchedulerTest extends TestCase {
   /**
    * Create an object that can return all connector instances referenced in 
    * MockInstantiator.
-   * @return the ConnectorConfigStore
    */
   private void storeSchedules(List schedules, Instantiator instantiator) {
     Iterator iter = schedules.iterator();
@@ -106,8 +105,7 @@ public class TraversalSchedulerTest extends TestCase {
       try {
         instantiator.setConnectorSchedule(connectorName, connectorSchedule);
       } catch (ConnectorNotFoundException e) {
-        Assert.fail("Connector " + connectorName + " Not Found: "
-                    + e.toString());
+        fail("Connector " + connectorName + " Not Found: " + e.toString());
       }
     }
   }
@@ -139,22 +137,22 @@ public class TraversalSchedulerTest extends TestCase {
           new JsonObjectAsMap(new JSONObject(configString)),
           I18NUtil.getLocaleFromStandardLocaleString("en"), false);
     } catch (ConnectorExistsException cee) {
-      Assert.fail(cee.toString());
+      fail(cee.toString());
     } catch (ConnectorNotFoundException cnfe) {
-      Assert.fail(cnfe.toString());
+      fail(cnfe.toString());
     } catch (ConnectorTypeNotFoundException ctnfe) {
-      Assert.fail(ctnfe.toString());
+      fail(ctnfe.toString());
     } catch (InstantiatorException ie) {
-      Assert.fail(ie.toString());
+      fail(ie.toString());
     } catch (JSONException je) {
-      Assert.fail(je.toString());
+      fail(je.toString());
     }
   }
   
   /**
    * Retrieve a schedule that will always run the particular traverser.
    * @param traverserName name of the traverser
-   * @param (optional) retry delay milliseconds
+   * @param delay retry delay in milliseconds
    * @return a List of Schedule objects
    */
   private List getSchedules(String traverserName, int delay) {
@@ -184,7 +182,7 @@ public class TraversalSchedulerTest extends TestCase {
       Thread.sleep(100);
     } catch (InterruptedException ie) {
       ie.printStackTrace();
-      Assert.fail(ie.toString());
+      fail(ie.toString());
     }
 
     scheduler.removeConnector(connectorName);   

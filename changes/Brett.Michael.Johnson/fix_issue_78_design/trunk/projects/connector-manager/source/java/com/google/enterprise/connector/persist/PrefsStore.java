@@ -72,21 +72,21 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
     if (prefsSchedule == null) {
       initPrefs();
       prefsSchedule = prefs.node("schedule");
-    }    
+    }
   }
 
   private synchronized void initPrefsState() {
     if (prefsState == null) {
       initPrefs();
       prefsState = prefs.node("state");
-    }    
+    }
   }
 
   private synchronized void initPrefsConfig() {
     if (prefsConfig == null) {
       initPrefs();
       prefsConfig = prefs.node("configuration");
-    }    
+    }
   }
 
   /**

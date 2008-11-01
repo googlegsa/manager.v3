@@ -20,8 +20,6 @@ import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.ConnectorStateStore;
-import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.spi.TraversalManager;
 
@@ -77,12 +75,11 @@ public class QueryTraverserTest extends TestCase {
         }
       } catch (IllegalArgumentException e) {
         exceptionThrown = true;
-        Assert.assertTrue("Batch size = " + batchSize + "; " + e,
-            batchSize <= 0);
+        assertTrue("Batch size = " + batchSize + "; " + e, batchSize <= 0);
         return;
       } finally {
         if (!exceptionThrown) {
-          Assert.assertTrue(batchSize > 0);
+          assertTrue(batchSize > 0);
         }
       }
       totalDocsProcessed += docsProcessed;
@@ -90,14 +87,13 @@ public class QueryTraverserTest extends TestCase {
       try {
         state = instantiator.getConnectorState(connectorName);
       } catch (ConnectorNotFoundException e) {
-        Assert.fail("Connector " + connectorName + " Not Found: "
-                    + e.toString());
+        fail("Connector " + connectorName + " Not Found: " + e.toString());
       }
       System.out.println("Batch# " + batchNumber + " docs " + docsProcessed +
                          " checkpoint " + state);
       batchNumber++;
     }
-    Assert.assertEquals(4,totalDocsProcessed);
+    assertEquals(4, totalDocsProcessed);
   }
 
   /**
@@ -105,7 +101,7 @@ public class QueryTraverserTest extends TestCase {
    * @param mrel
    * @param connectorName
    * @param instantiator
-   * @return
+   * @return a Traverser instance
    */
   private Traverser createTraverser(MockRepositoryEventList mrel,
       String connectorName, MockInstantiator instantiator) {
@@ -150,7 +146,7 @@ public class QueryTraverserTest extends TestCase {
       // MockRepositoryEventLogLargeFile.txt used below.
       makeLargeFile("testdata/tmp/largefile.txt");
     } catch (IOException e) {
-      Assert.fail("Unable to initialize largefile.txt: " + e.toString());
+      fail("Unable to initialize largefile.txt: " + e.toString());
     }
 
     MockRepositoryEventList mrel =

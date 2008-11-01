@@ -23,7 +23,6 @@ public interface ConnectorStateStore {
    *
    * @param context a StoreContext
    * @return the state, or null if no state has been stored for this connector
-   * @throws IllegalStateException if state store is disabled for this connector
    */
   public String getConnectorState(StoreContext context);
 
@@ -32,7 +31,6 @@ public interface ConnectorStateStore {
    *
    * @param context a StoreContext
    * @param connectorState String to store
-   * @throws IllegalStateException if state store is disabled for this connector
    */
   public void storeConnectorState(StoreContext context, String connectorState);
 

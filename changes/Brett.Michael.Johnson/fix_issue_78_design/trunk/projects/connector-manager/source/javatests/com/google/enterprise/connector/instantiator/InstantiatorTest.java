@@ -21,7 +21,6 @@ import com.google.enterprise.connector.manager.ConnectorManagerException;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
-import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
@@ -54,17 +53,17 @@ public class InstantiatorTest extends TestCase {
   protected void setUp() throws Exception {
     // Make sure that the test directory does not exist
     baseDirectory = new File(TEST_DIR_NAME);
-    Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
     // Then recreate it empty
-    Assert.assertTrue(baseDirectory.mkdirs());
+    assertTrue(baseDirectory.mkdirs());
 
     instantiator = new SpringInstantiator(new MockPusher(),
         new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
-    Assert.assertEquals(0, connectorCount());
+    assertEquals(0, connectorCount());
   }
 
   protected void tearDown() throws Exception {
-    Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
   }
 
 
@@ -111,7 +110,7 @@ public class InstantiatorTest extends TestCase {
                           false, jsonConfigString);
     }
 
-    Assert.assertEquals(2, connectorCount());
+    assertEquals(2, connectorCount());
 
     {
       /*
@@ -128,7 +127,7 @@ public class InstantiatorTest extends TestCase {
                           true, jsonConfigString);
     }
 
-    Assert.assertEquals(2, connectorCount());
+    assertEquals(2, connectorCount());
 
     {
       /*
@@ -144,7 +143,7 @@ public class InstantiatorTest extends TestCase {
                           false, jsonConfigString);
     }
 
-    Assert.assertEquals(3, connectorCount());
+    assertEquals(3, connectorCount());
 
     {
       /*
@@ -161,7 +160,7 @@ public class InstantiatorTest extends TestCase {
                           true, jsonConfigString);
     }
 
-    Assert.assertEquals(3, connectorCount());
+    assertEquals(3, connectorCount());
 
     {
       /*
@@ -178,13 +177,13 @@ public class InstantiatorTest extends TestCase {
         updateConnectorTest(instantiator, name, typeName, language,
                             false, jsonConfigString);
       } catch (ConnectorExistsException e) {
-        Assert.assertTrue(true);
+        assertTrue(true);
       } catch (ConnectorManagerException e) {
-        Assert.assertTrue(false);
+        assertTrue(false);
       }
     }
 
-    Assert.assertEquals(3, connectorCount());
+    assertEquals(3, connectorCount());
 
     {
       /*
@@ -201,13 +200,13 @@ public class InstantiatorTest extends TestCase {
         updateConnectorTest(instantiator, name, typeName, language,
                             true, jsonConfigString);
       } catch (ConnectorNotFoundException e) {
-        Assert.assertTrue(true);
+        assertTrue(true);
       } catch (ConnectorManagerException e) {
-        Assert.assertTrue(false);
+        assertTrue(false);
       }
     }
 
-    Assert.assertEquals(3, connectorCount());
+    assertEquals(3, connectorCount());
 
     /*
      * Test dropping connectors.  Once dropped, I should not be able to 
@@ -217,32 +216,32 @@ public class InstantiatorTest extends TestCase {
     try {
       AuthorizationManager authz =
           instantiator.getAuthorizationManager("connector1");
-      Assert.assertNull(authz);
+      assertNull(authz);
     } catch (ConnectorNotFoundException e1) {
-      Assert.assertTrue(true);
+      assertTrue(true);
     }
-    Assert.assertFalse(connectorExists("connector1"));
+    assertFalse(connectorExists("connector1"));
 
     instantiator.removeConnector("connector2");
     try {
       AuthenticationManager authn =
           instantiator.getAuthenticationManager("connector2");
-      Assert.assertNull(authn);
+      assertNull(authn);
     } catch (ConnectorNotFoundException e2) {
-      Assert.assertTrue(true);
+      assertTrue(true);
     }
-    Assert.assertFalse(connectorExists("connector2"));
+    assertFalse(connectorExists("connector2"));
 
     instantiator.removeConnector("connector3");
     try {
       Traverser traverser = instantiator.getTraverser("connector3");
-      Assert.assertNull(traverser);
+      assertNull(traverser);
     } catch (ConnectorNotFoundException e3) {
-      Assert.assertTrue(true);
+      assertTrue(true);
     }
-    Assert.assertFalse(connectorExists("connector3"));
+    assertFalse(connectorExists("connector3"));
 
-    Assert.assertEquals(0, connectorCount());
+    assertEquals(0, connectorCount());
   }
 
 
@@ -254,7 +253,7 @@ public class InstantiatorTest extends TestCase {
         // Get the Traverser for our connector instance.
         oldTraverser = instantiator.getTraverser("connector1");
         newTraverser = instantiator.getTraverser("connector1");
-        Assert.assertSame(oldTraverser, newTraverser);
+        assertSame(oldTraverser, newTraverser);
 
         // Sleep for a few seconds, allowing the test thread time 
         // to update the connector.
@@ -267,7 +266,7 @@ public class InstantiatorTest extends TestCase {
         // Get the Traverser for our connector instance.
         // It should be a new traverser reflecting the updated connector.
         newTraverser = instantiator.getTraverser("connector1");
-        Assert.assertNotSame(oldTraverser, newTraverser);          
+        assertNotSame(oldTraverser, newTraverser);          
       } catch (Exception e) {
         fail(e.getMessage());
       }
@@ -321,7 +320,7 @@ public class InstantiatorTest extends TestCase {
     } catch (InterruptedException e) {
       fail("Unexpected thread interruption.");        
     }
-    Assert.assertTrue(child.didFinish);
+    assertTrue(child.didFinish);
 
     instantiator.removeConnector(name);
   }
@@ -363,29 +362,29 @@ public class InstantiatorTest extends TestCase {
     instantiator.setConnectorConfig(name, typeName, config, locale, update);
 
     // Make sure that this connector now exists.
-    Assert.assertTrue(connectorExists(name));
+    assertTrue(connectorExists(name));
 
     // Make sure that this connector has the correct type associated.
-    Assert.assertEquals(typeName, instantiator.getConnectorTypeName(name));
+    assertEquals(typeName, instantiator.getConnectorTypeName(name));
 
     AuthorizationManager authz = instantiator.getAuthorizationManager(name);
-    Assert.assertNotNull(authz);
+    assertNotNull(authz);
 
     AuthenticationManager authn = instantiator.getAuthenticationManager(name);
-    Assert.assertNotNull(authn);
+    assertNotNull(authn);
 
     Traverser traverser = instantiator.getTraverser(name);
-    Assert.assertNotNull(traverser);
+    assertNotNull(traverser);
 
     // If this is an update, make sure that we get a different traverser.
     // Regression test for Issues 35, 63.
     if (update)
-      Assert.assertNotSame(oldTraverser, traverser);
+      assertNotSame(oldTraverser, traverser);
 
     // the password will be decrypted in the InstanceInfo
     Map instanceProps = instantiator.getConnectorConfig(name);
     String instancePasswd = (String) instanceProps.get("Password");
     String plainPasswd = (String) config.get("Password");
-    Assert.assertEquals(instancePasswd, plainPasswd);
+    assertEquals(instancePasswd, plainPasswd);
   }
 }

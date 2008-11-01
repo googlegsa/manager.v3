@@ -26,7 +26,6 @@ import com.google.enterprise.connector.persist.StoreContext;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.xml.XmlBeanFactory;
-import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -49,7 +48,6 @@ public final class InstanceInfo {
   private static final Logger LOGGER =
       Logger.getLogger(InstanceInfo.class.getName());
 
-  private static final String PROPERTIES_SUFFIX = ".properties";
   private static final String SPECIAL_INSTANCE_CONFIG_FILE_NAME =
       "connectorInstance.xml";
 
@@ -300,7 +298,7 @@ public final class InstanceInfo {
    * Writes the supplied configuration through to the persistent store.
    *
    * @param configMap a Map&lt;String, String&gt; of its ConnectorType-specific
-   * configuration data, or null if no configuration is stored.
+   *        configuration data, or null if no configuration is stored.
    */
   public void setConnectorConfig(Map configMap) {
     properties = PropertiesUtils.fromMap(configMap);

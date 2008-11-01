@@ -34,8 +34,8 @@
       <servlet-class>com.google.enterprise.connector.servlet.HelloWorld</servlet-class>
   </servlet>
   <servlet>
-      <servlet-name>SamlAuthN</servlet-name>
-      <servlet-class>com.google.enterprise.saml.server.SamlAuthN</servlet-class>
+      <servlet-name>SamlAuthn</servlet-name>
+      <servlet-class>com.google.enterprise.saml.server.SamlAuthn</servlet-class>
   </servlet>
   <servlet>
       <servlet-name>SamlArtifactResolve</servlet-name>
@@ -51,7 +51,7 @@
       <url-pattern>/helloWorld</url-pattern>
   </servlet-mapping>
   <servlet-mapping>
-      <servlet-name>SamlAuthN</servlet-name>
+      <servlet-name>SamlAuthn</servlet-name>
       <url-pattern>/samlauthn</url-pattern>
   </servlet-mapping>
   <servlet-mapping>

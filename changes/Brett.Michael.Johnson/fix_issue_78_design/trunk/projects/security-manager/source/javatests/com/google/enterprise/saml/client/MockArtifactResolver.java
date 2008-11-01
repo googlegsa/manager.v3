@@ -22,9 +22,15 @@ import java.io.IOException;
 import javax.servlet.ServletException;
 
 /**
- * The MockArtifactResolver interface models an artifact resolution service.  MockArtifactConsumer
- * communicates with an object of this type.
+ * The MockArtifactResolver interface models a SAML artifact-resolution service.
+ * MockArtifactConsumer communicates with an object of this type.
  */
 public interface MockArtifactResolver {
+  /**
+   * Processes a SAML ArtifactResolve message.
+   *
+   * @param request The ArtifactResolve message to be processed.
+   * @returns An ArtifactResponse message.
+   */
   public MockHttpServletResponse resolve(MockHttpServletRequest request) throws ServletException, IOException;
 }

@@ -15,6 +15,12 @@
 package com.google.enterprise.saml.server;
 
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
+import org.opensaml.saml2.core.ArtifactResponse;
+import org.opensaml.saml2.core.ArtifactResolve;
+import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.core.AuthzDecisionQuery;
+
+import java.util.List;
 
 /**
  * Simple mock saml server Backend for testing.
@@ -30,6 +36,18 @@ public class MockBackEnd implements BackEnd {
   public SessionManagerInterface getSessionManager() {
     return sm;
   }
-  
+
+  public String loginRedirect(String referer, String relayState) {
+    throw new UnsupportedOperationException("Unimplemented method.");
+  }
+
+  public ArtifactResponse resolveArtifact(ArtifactResolve artifactResolve) {
+    throw new UnsupportedOperationException("Unimplemented method.");
+  }
+
+  public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
+    throw new UnsupportedOperationException("Unimplemented method.");
+  }
+
 
 }

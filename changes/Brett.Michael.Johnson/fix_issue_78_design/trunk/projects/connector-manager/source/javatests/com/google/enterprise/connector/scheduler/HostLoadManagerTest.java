@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,17 +14,11 @@
 
 package com.google.enterprise.connector.scheduler;
 
-import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.ConnectorScheduleStore;
-import com.google.enterprise.connector.persist.MockConnectorScheduleStore;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Test HostLoadManager class.
@@ -45,7 +39,7 @@ public class HostLoadManagerTest extends TestCase {
         instantiator.setupTraverser(connectorName, null);
         instantiator.setConnectorSchedule(connectorName, connectorSchedule);
       } catch (ConnectorNotFoundException e) {
-        Assert.fail("Unexpected ConnectorNotFoundException : " + e.toString());
+        fail("Unexpected ConnectorNotFoundException : " + e.toString());
       }
     }
   }
@@ -55,7 +49,7 @@ public class HostLoadManagerTest extends TestCase {
     addLoad(connectorName, 60);
     HostLoadManager hostLoadManager = new HostLoadManager(instantiator);
     hostLoadManager.updateNumDocsTraversed(connectorName, 60);
-    Assert.assertEquals(0, hostLoadManager.determineBatchHint(connectorName));
+    assertEquals(0, hostLoadManager.determineBatchHint(connectorName));
   }
   
   public void testMultipleUpdates() {
@@ -65,7 +59,7 @@ public class HostLoadManagerTest extends TestCase {
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
-    Assert.assertEquals(30, hostLoadManager.determineBatchHint(connectorName));    
+    assertEquals(30, hostLoadManager.determineBatchHint(connectorName));    
   }
   
   public void testMultipleConnectors() {
@@ -75,10 +69,10 @@ public class HostLoadManagerTest extends TestCase {
     addLoad(connectorName2, 60);
     HostLoadManager hostLoadManager = new HostLoadManager(instantiator);
     hostLoadManager.updateNumDocsTraversed(connectorName1, 60);
-    Assert.assertEquals(0, hostLoadManager.determineBatchHint(connectorName1));
+    assertEquals(0, hostLoadManager.determineBatchHint(connectorName1));
 
     hostLoadManager.updateNumDocsTraversed(connectorName2, 50);
-    Assert.assertEquals(10, hostLoadManager.determineBatchHint(connectorName2));
+    assertEquals(10, hostLoadManager.determineBatchHint(connectorName2));
   }
   
   public void testPeriod() {
@@ -88,7 +82,7 @@ public class HostLoadManagerTest extends TestCase {
     HostLoadManager hostLoadManager = 
       new HostLoadManager(instantiator, periodInMillis);
     hostLoadManager.updateNumDocsTraversed(connectorName, 55);
-    Assert.assertEquals(5, hostLoadManager.determineBatchHint(connectorName));
+    assertEquals(5, hostLoadManager.determineBatchHint(connectorName));
     // sleep a period (and then some) so that batchHint is reset 
     try {
       // extra time in ms in case sleeping the period is not long enough
@@ -98,9 +92,9 @@ public class HostLoadManagerTest extends TestCase {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    Assert.assertEquals(60, hostLoadManager.determineBatchHint(connectorName));
+    assertEquals(60, hostLoadManager.determineBatchHint(connectorName));
     hostLoadManager.updateNumDocsTraversed(connectorName, 15);
-    Assert.assertEquals(45, hostLoadManager.determineBatchHint(connectorName));
+    assertEquals(45, hostLoadManager.determineBatchHint(connectorName));
     
   }
   
@@ -110,9 +104,9 @@ public class HostLoadManagerTest extends TestCase {
     addLoad(connectorName, 60);
     HostLoadManager hostLoadManager = 
       new HostLoadManager(instantiator, periodInMillis);
-    Assert.assertEquals(false, hostLoadManager.shouldDelay(connectorName));
+    assertEquals(false, hostLoadManager.shouldDelay(connectorName));
     hostLoadManager.connectorFinishedTraversal(connectorName);
-    Assert.assertEquals(true, hostLoadManager.shouldDelay(connectorName));
+    assertEquals(true, hostLoadManager.shouldDelay(connectorName));
     // sleep more than 100ms the time set in MockConnectorSchedule
     // so that this connector can be allowed to run again without delay
     try {
@@ -122,6 +116,6 @@ public class HostLoadManagerTest extends TestCase {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    Assert.assertEquals(false, hostLoadManager.shouldDelay(connectorName));
+    assertEquals(false, hostLoadManager.shouldDelay(connectorName));
   }
 }
