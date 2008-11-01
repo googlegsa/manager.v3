@@ -72,6 +72,7 @@ public class SamlAuthzTest extends TestCase {
 
   private SamlAuthz samlAuthzInstance;
 
+  @Override
   public void setUp() {
     samlAuthzInstance = new SamlAuthz();
   }

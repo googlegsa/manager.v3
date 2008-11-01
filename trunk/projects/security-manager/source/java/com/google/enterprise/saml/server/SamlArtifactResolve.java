@@ -21,16 +21,16 @@ import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallerFactory;
 import org.w3c.dom.Element;
 
-import javax.servlet.ServletException;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.soap.MessageFactory;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Handler for SAML ArtifactResolve requests.
@@ -58,15 +58,17 @@ public class SamlArtifactResolve extends HttpServlet {
   /**
    * For testing.
    */
+  @Override
   public void doGet(HttpServletRequest request,
                     HttpServletResponse response)
-      throws ServletException, IOException {
+      throws IOException {
     doPost(request, response);
   }
 
+  @Override
   public void doPost(HttpServletRequest request,
                      HttpServletResponse response)
-      throws ServletException, IOException {
+      throws IOException {
     handlePost(request, response);
   }
 
