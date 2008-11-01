@@ -36,7 +36,7 @@ import javax.servlet.ServletContext;
 public class Context {
 
   public static final String DEFAULT_JUNIT_CONTEXT_LOCATION =
-      "testdata/mocktestdata/applicationContext.xml";
+      "source/webdocs/prod/applicationContext.xml";
 
   private static final Logger LOGGER = Logger.getLogger(Context.class.getName());
 

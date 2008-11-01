@@ -56,14 +56,15 @@ public class SamlArtifactResolve extends HttpServlet {
   public void doPost(HttpServletRequest request,
                      HttpServletResponse response)
       throws IOException {
-    handlePost(request, response);
+    Context context = Context.getInstance(getServletContext());
+    handlePost(request, response, context);
   }
 
   protected void handlePost(HttpServletRequest request,
-                     HttpServletResponse response)
+                     HttpServletResponse response,
+                     Context context)
       throws IOException {
 
-    Context context = Context.getInstance(getServletContext());
     BackEnd backend = context.getBackEnd();
     
     ArtifactResponse artifactResp = backend.resolveArtifact(null);
