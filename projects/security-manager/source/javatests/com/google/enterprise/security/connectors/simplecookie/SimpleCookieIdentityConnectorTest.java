@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.security.connectors;
+package com.google.enterprise.security.connectors.simplecookie;
 
 import com.google.enterprise.connector.manager.UserPassIdentity;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
