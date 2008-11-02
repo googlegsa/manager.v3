@@ -14,7 +14,8 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.security.manager.Context;
+import com.google.enterprise.connector.manager.ConnectorManager;
+import com.google.enterprise.connector.manager.Context;
 
 import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObject;
@@ -65,7 +66,8 @@ public class SamlArtifactResolve extends HttpServlet {
                      Context context)
       throws IOException {
 
-    BackEnd backend = context.getBackEnd();
+    ConnectorManager manager = (ConnectorManager) context.getManager();
+    BackEnd backend = manager.getBackEnd();
     
     ArtifactResponse artifactResp = backend.resolveArtifact(null);
 

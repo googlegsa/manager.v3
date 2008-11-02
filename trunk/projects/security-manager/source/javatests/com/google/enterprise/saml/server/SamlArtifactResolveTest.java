@@ -14,7 +14,7 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.security.manager.Context;
+import com.google.enterprise.connector.manager.Context;
 
 import junit.framework.TestCase;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -45,6 +45,9 @@ public class SamlArtifactResolveTest extends TestCase {
     MockHttpServletRequest mockRequest = new MockHttpServletRequest();
     MockHttpServletResponse mockResponse = new MockHttpServletResponse();
 
+    Context.getInstance().setStandaloneContext(
+        "source/webdocs/prod/applicationContext.xml",
+        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
     Context context = Context.getInstance();
 
     try {

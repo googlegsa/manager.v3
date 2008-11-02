@@ -15,10 +15,11 @@
 package com.google.enterprise.saml.server;
 
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
-import org.opensaml.saml2.core.ArtifactResponse;
+
 import org.opensaml.saml2.core.ArtifactResolve;
-import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.core.ArtifactResponse;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
+import org.opensaml.saml2.core.Response;
 
 import java.util.List;
 

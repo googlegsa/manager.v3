@@ -14,13 +14,15 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.connector.manager.ConnectorManager;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.common.GsaConstants;
-import com.google.enterprise.security.manager.Context;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.logging.Logger;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -92,8 +94,9 @@ public class SamlAuthn extends HttpServlet {
       return;
     }
 
-    Context context = Context.getInstance(getServletContext());
-    BackEnd backend = context.getBackEnd();
+    ServletContext servletContext = this.getServletContext();
+    ConnectorManager manager = (ConnectorManager) Context.getInstance(servletContext).getManager();
+    BackEnd backend = manager.getBackEnd();
 
     // TODO: implement user look-up
     String redirectUrl = backend.loginRedirect(

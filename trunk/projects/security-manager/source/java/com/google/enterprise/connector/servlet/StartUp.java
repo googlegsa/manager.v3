@@ -15,7 +15,7 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.common.JarUtils;
-import com.google.enterprise.security.manager.Context;
+import com.google.enterprise.connector.manager.Context;
 
 import java.io.IOException;
 import java.io.PrintWriter;

@@ -1,5 +1,6 @@
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 import com.google.enterprise.saml.common.GsaConstants;
 
@@ -69,5 +70,10 @@ public class BackEndImpl implements BackEnd {
 
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     return authzResponder.authorizeBatch(authzDecisionQueries);
+  }
+
+  public Manager getConnectorManager() {
+    // TODO Auto-generated method stub
+    return null;
   }
 }
