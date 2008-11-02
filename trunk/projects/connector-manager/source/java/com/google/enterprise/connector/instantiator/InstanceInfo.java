@@ -100,7 +100,7 @@ public final class InstanceInfo {
     if (connectorName == null || connectorName.length() < 1) {
       throw new NullConnectorNameException();
     }
-    if (connectorDir == null || connectorDir.length() < 1) {
+    if (connectorDir == null) {
       throw new NullDirectoryException();
     }
     if (typeInfo == null) {
