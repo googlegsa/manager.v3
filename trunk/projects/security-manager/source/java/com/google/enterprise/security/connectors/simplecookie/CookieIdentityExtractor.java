@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.security.connectors;
+package com.google.enterprise.security.connectors.simplecookie;
 
 /**
  * Interface for use by connectors that extract an identity from a cookie, such
