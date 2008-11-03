@@ -23,8 +23,24 @@
 
 	<bean id="BackEnd"		class="com.google.enterprise.saml.server.MockBackEnd">    <constructor-arg index="0" ref="SessionManager" />
 	</bean>
+  <bean id="Monitor"
+    class="com.google.enterprise.connector.monitor.HashMapMonitor" />
+
+  <bean id="WorkQueue"
+    class="com.google.enterprise.connector.common.WorkQueue">
+    <constructor-arg index="0" type="int" value="20" />
+  </bean>
+
+  <bean id="TraversalScheduler"
+    class="com.google.enterprise.connector.scheduler.TraversalScheduler">
+    <constructor-arg index="0" ref="Instantiator" />
+    <constructor-arg index="1" ref="Monitor" />
+    <constructor-arg index="2" ref="WorkQueue" />
+  </bean>
+
   <bean id="ConnectorManager"
     class="com.google.enterprise.connector.manager.ConnectorManager">
+    <property name="scheduler" ref="TraversalScheduler" />
     <property name="instantiator" ref="Instantiator" />
     <property name="backEnd" ref="BackEnd" />
   </bean>
