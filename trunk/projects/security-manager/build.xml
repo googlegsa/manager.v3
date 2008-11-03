@@ -30,7 +30,7 @@
 	<property name="tests.jarfile" value="${jar.dir}/security-tests.jar" />
 	<property name="thirdparty.prod.jars" value="third-party/prod" />
 	<property name="thirdparty.tests.jars" value="third-party/tests" />
-	<property name="junit.jarfile" value="${thirdparty.prod.jars}/junit.jar" />
+	<property name="junit.jarfile" value="${thirdparty.tests.jars}/junit.jar" />
 
 	<!-- The directory where all war-files are collected -->
 	<property name="war.dir" value="${dist}/${ant.project.name}" />
