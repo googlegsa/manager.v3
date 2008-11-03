@@ -163,10 +163,6 @@ public class PropertiesUtils {
     if (inputStream == null) {
       return null;
     }
-    if (!inputStream.markSupported()) {
-      throw new PropertiesException(
-          "Properties InputStream must support mark() and reset() methods.");
-    }
     Properties properties = new Properties();
     try {
       properties.load(inputStream);
