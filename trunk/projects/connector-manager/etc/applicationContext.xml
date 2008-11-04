@@ -159,11 +159,11 @@
          in the tables below, so very few mime types should end up as "unknown".
          Removing content type (sans subtype) entries from the following sets
          would force more mime types to become "unknown".
-         The default value of 2 ranks "unknown" mime types below supported
-         mime types (levels 3,4,5) and preferred mime types (levels 7,8,9), but
-         above unsupported mime types (0 and below).
+         The default value of 1 ranks "unknown" mime types below supported
+         mime types (levels 2,3,4,5) and preferred mime types (levels 6,7,8,9),
+         but above unsupported mime types (0 and below).
     -->
-    <property name="unknownMimeTypeSupportLevel" value="2" />
+    <property name="unknownMimeTypeSupportLevel" value="1" />
 
     <!-- These three properties group most known mime types into three broad
          classes - preferred, supported, and unsupported.  Connectors may

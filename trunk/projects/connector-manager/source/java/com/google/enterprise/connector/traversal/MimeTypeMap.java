@@ -37,7 +37,7 @@ public class MimeTypeMap {
   public MimeTypeMap() {
     // if no setters are called, then all mime types are supported
     typeMap = new HashMap();
-    unknownMimeTypeSupportLevel = 2;
+    unknownMimeTypeSupportLevel = 1;
   }
 
   /**
@@ -104,7 +104,8 @@ public class MimeTypeMap {
    * Mimetypes with "/vnd.*" subtypes are preferred over others, and
    * mimetypes registered with IANA are preferred over those with "/x-*" 
    * experimental subtypes.  This ranking is done by adjusting the support
-   * level +/- 1, accordingly.
+   * level +/- 1, accordingly.  Content types sans subtypes are preferred
+   * least of all, so their support level is adjusted by -2.
    */
   private void initMimeTypes(Set mimeTypes, int supportLevel) {
     if (mimeTypes == null || mimeTypes.size() == 0)
@@ -114,20 +115,24 @@ public class MimeTypeMap {
     // sorting does not accidentally cross above or below 0.
     if (supportLevel == 0) {
       supportLevel = -1;
-    } else if (supportLevel == 1) {
-      supportLevel = 2;
+    } else if (supportLevel > 0 && supportLevel < 3) {
+      supportLevel = 3;
     }
 
+    Integer level0 = new Integer(supportLevel - 2);
     Integer level1 = new Integer(supportLevel - 1);
     Integer level2 = new Integer(supportLevel);
     Integer level3 = new Integer(supportLevel + 1);
 
     // Add the mimetypes to the map.  We adjust the support levels
     // slightly to prefer "vnd." subtypes over others, and prefer
-    // any other subtype over "x-" subtypes.
+    // any other subtype over "x-" subtypes.  Content types sans
+    // subtypes are ranked below all others.
     for (Iterator i = mimeTypes.iterator(); i.hasNext(); ) {
       String mimeType = ((String) i.next()).trim().toLowerCase();
-      if (mimeType.startsWith("x-") || (mimeType.indexOf("/x-") > 0)) {
+      if (mimeType.indexOf('/') < 0) {
+        typeMap.put(mimeType, level0);
+      } else if (mimeType.startsWith("x-") || (mimeType.indexOf("/x-") > 0)) {
         typeMap.put(mimeType, level1);
       } else if (mimeType.indexOf("/vnd.") > 0) {
         typeMap.put(mimeType, level3);

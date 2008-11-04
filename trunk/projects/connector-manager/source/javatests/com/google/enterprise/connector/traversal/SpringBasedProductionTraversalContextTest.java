@@ -38,7 +38,7 @@ public class SpringBasedProductionTraversalContextTest extends TestCase {
     Assert.assertTrue(traversalContext.mimeTypeSupportLevel("text/plain") <= 0);
     Assert.assertTrue(traversalContext.mimeTypeSupportLevel("text/notplain")
                       <= 0);
-    Assert.assertEquals(2, traversalContext.mimeTypeSupportLevel("ibblefrix"));
+    Assert.assertEquals(1, traversalContext.mimeTypeSupportLevel("ibblefrix"));
   }
 
   public final void testContextBasedTraversalContext() {
