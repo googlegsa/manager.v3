@@ -111,14 +111,4 @@
 		<constructor-arg index="3" ref="ConnectorScheduleStore" />
 	</bean>
 
-  <bean id="FileSizeLimitInfo"
-		 class="com.google.enterprise.connector.traversal.FileSizeLimitInfo">
-    <!-- Maximum file size accepted by the GSA is 30MB -->
-    <property name="maxDocumentSize" value="31457280" />
-  </bean>
-
-  <bean id="MimeTypeMap"
-		 class="com.google.enterprise.connector.traversal.MimeTypeMap">
-    <property name="unknownMimeTypeSupportLevel" value="2" />
-  </bean>
 </beans>
