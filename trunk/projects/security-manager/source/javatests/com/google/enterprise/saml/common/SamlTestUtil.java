@@ -14,17 +14,20 @@
 
 package com.google.enterprise.saml.common;
 
+import org.opensaml.util.URLBuilder;
+import org.opensaml.xml.util.Pair;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.mock.web.MockServletContext;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -34,6 +37,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
 
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -48,28 +52,35 @@ public final class SamlTestUtil {
     httpDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
 
-  public static MockHttpServletRequest makeMockHttpGet(MockServletContext context, URL clientUrl,
-      URL serverUrl) {
-    MockHttpServletRequest request = makeMockHttpRequest(context, "GET", clientUrl, serverUrl);
+  public static MockHttpServletRequest makeMockHttpGet(HttpServlet servlet, String clientUrl, String serverUrl) {
+    MockHttpServletRequest request = makeMockHttpRequest(servlet, "GET", clientUrl, serverUrl);
     request.setContent(new byte[0]);
     return request;
   }
 
-  public static MockHttpServletRequest makeMockHttpPost(MockServletContext context, URL clientUrl,
-      URL serverUrl) {
-    return makeMockHttpRequest(context, "POST", clientUrl, serverUrl);
+  public static MockHttpServletRequest makeMockHttpPost(HttpServlet servlet, String clientUrl, String serverUrl) {
+    MockHttpServletRequest request = makeMockHttpRequest(servlet, "POST", clientUrl, serverUrl);
+    request.setContentType("application/x-www-form-urlencoded");
+    return request;
   }
 
-  private static MockHttpServletRequest makeMockHttpRequest(MockServletContext context,
-      String method, URL clientUrl, URL serverUrl) {
-    MockHttpServletRequest request =
-        new MockHttpServletRequest(context, method, serverUrl.getPath());
-    request.setScheme(serverUrl.getProtocol());
+  private static MockHttpServletRequest makeMockHttpRequest(HttpServlet servlet, String method, String client, String server) {
+    URLBuilder clientUrl = new URLBuilder(client);
+    URLBuilder serverUrl = new URLBuilder(server);
+    MockHttpServletRequest request = new MockHttpServletRequest(servlet.getServletContext(), method, serverUrl.getPath());
+    request.setScheme(serverUrl.getScheme());
     request.setServerName(serverUrl.getHost());
     request.setServerPort(serverUrl.getPort());
+    for (Pair<String, String> binding: serverUrl.getQueryParams()) {
+      request.addParameter(binding.getFirst(), binding.getSecond());
+    }
     request.setRemoteHost(clientUrl.getHost());
     request.setRemotePort(clientUrl.getPort());
-    request.addHeader("Host", urlHostPort(serverUrl));
+    {
+      String host = serverUrl.getHost();
+      int port = serverUrl.getPort();
+      request.addHeader("Host", (port < 0) ? host : String.format("%s:%d", host, port));
+    }
     request.addHeader("Date", httpDateString());
     request.addHeader("Accept", "text/html, text/xhtml;q=0.9, text/plain;q=0.5, text/*;q=0.1");
     request.addHeader("Accept-Charset", "us-ascii, iso-8859-1, utf-8");
@@ -86,14 +97,11 @@ public final class SamlTestUtil {
     return httpDateFormat.format(date);
   }
 
-  public static String urlHostPort(URL url) {
-    String host = url.getHost();
-    int port = url.getPort();
-    return (port < 0) ? host : String.format("%s:%d", host, port);
-  }
-
-  public static String servletRequestToString(HttpServletRequest request) throws IOException {
+  public static String servletRequestToString(HttpServletRequest request, String tag)
+      throws IOException {
     StringWriter out = new StringWriter();
+    out.write(tag);
+    out.write(":\n");
     writeServletRequest(request, out);
     String result = out.toString();
     out.close();
@@ -136,12 +144,29 @@ public final class SamlTestUtil {
     out.write("\n");
   }
 
+  public static PrintWriter htmlServletResponse(HttpServletResponse response) throws IOException {
+    initializeServletResponse(response);
+    response.setStatus(HttpServletResponse.SC_OK);
+    response.setContentType("text/html");
+    response.setCharacterEncoding("UTF-8");
+    response.setBufferSize(0x1000);
+    return response.getWriter();
+  }
+
+  public static void errorServletResponse(HttpServletResponse response, int code) throws IOException {
+    initializeServletResponse(response);
+    response.sendError(code);
+  }
+
   public static void initializeServletResponse(HttpServletResponse response) {
     response.addHeader("Date", httpDateString());
   }
 
-  public static String servletResponseToString(MockHttpServletResponse response) throws IOException {
+  public static String servletResponseToString(MockHttpServletResponse response, String tag)
+      throws IOException {
     StringWriter out = new StringWriter();
+    out.write(tag);
+    out.write(":\n");
     writeServletResponse(response, out);
     String result = out.toString();
     out.close();
@@ -197,4 +222,35 @@ public final class SamlTestUtil {
     }
     in.close();
   }
+
+  public static void generatePostContent(MockHttpServletRequest request) throws IOException {
+    ByteArrayOutputStream bs = new ByteArrayOutputStream();
+    Writer out = new OutputStreamWriter(bs);
+    writePostParams(request, out);
+    byte[] content = bs.toByteArray();
+    out.close();
+    request.setContent(content);
+    request.addHeader("Content-Length", (new Integer(content.length)).toString());
+  }
+
+  private static void writePostParams(HttpServletRequest request, Writer out) throws IOException {
+    @SuppressWarnings("unchecked") Enumeration<String> keys = request.getParameterNames();
+    boolean atStart = true;
+    while (keys.hasMoreElements()) {
+      String key = keys.nextElement();
+      String[] values = request.getParameterValues(key);
+      for (int i = 0; i < values.length; i += 1) {
+        if (atStart) {
+          atStart = false;
+        } else {
+          out.write("&");
+        }
+        out.write(key);
+        out.write("=");
+        out.write(values[i]);
+      }
+    }
+    out.flush();
+  }
+
 }
