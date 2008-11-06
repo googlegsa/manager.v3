@@ -96,6 +96,7 @@ public class MockServiceProvider extends HttpServlet {
    * @param idpEntity The identity provider entity.
    * @param serviceUrl The URL for the provided service.
    * @param acsUrl The URL for the assertion-consumer endpoint.
+   * @param resolver An artifact resolver instance.
    * @throws ServletException
    */
   public MockServiceProvider(EntityDescriptor spEntity, EntityDescriptor idpEntity, String serviceUrl, String acsUrl, MockArtifactResolver resolver) throws ServletException {
