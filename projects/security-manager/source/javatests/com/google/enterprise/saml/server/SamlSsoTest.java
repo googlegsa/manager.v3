@@ -23,6 +23,7 @@ import org.htmlcleaner.TagNode;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -62,7 +63,9 @@ public class SamlSsoTest extends TestCase {
   }
 
   public void testInitialExchange() throws ServletException, IOException, MalformedURLException {
-    MockHttpServletRequest request1 = makeMockHttpGet(serviceProvider, uaUrl, spUrl);
+    MockHttpSession session = new MockHttpSession();
+    MockHttpServletRequest request1 = makeMockHttpGet(serviceProvider, session, uaUrl, spUrl);
+    request1.setSession(session);
     MockHttpServletResponse response1 = new MockHttpServletResponse();
     logRequest(request1, "Initial request to service provider");
     serviceProvider.doGet(request1, response1);
@@ -80,7 +83,8 @@ public class SamlSsoTest extends TestCase {
                    ((q < 0) ? location : location.substring(0, q)));
     }
 
-    MockHttpServletRequest request2 = makeMockHttpGet(identityProvider, uaUrl, location);
+    MockHttpServletRequest request2 = makeMockHttpGet(identityProvider, session, uaUrl, location);
+    request2.setSession(session);
     request2.addHeader("Referer", spUrl);
     MockHttpServletResponse response2 = new MockHttpServletResponse();
     logRequest(request2, "Redirect to identity provider");
@@ -99,7 +103,7 @@ public class SamlSsoTest extends TestCase {
     String action = forms[0].getAttributeByName("action");
     assertNotNull("<form> missing action attribute", action);
 
-    MockHttpServletRequest request3 = makeMockHttpPost(identityProvider, uaUrl, action);
+    MockHttpServletRequest request3 = makeMockHttpPost(identityProvider, session, uaUrl, action);
     request3.addHeader("Referer", location);
     request3.addParameter("username", "joe");
     request3.addParameter("password", "plumber");
