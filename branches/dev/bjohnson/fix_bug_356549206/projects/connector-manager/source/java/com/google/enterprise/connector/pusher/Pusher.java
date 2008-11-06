@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.RepositoryException;
 
 /**
  * Interface for a pusher - something that takes spi documents
@@ -27,6 +28,6 @@ public interface Pusher {
    * @param document A DocumentList
    * @param connectorName The name of the connector sending the document
    */
-  public void take(Document document, String connectorName) throws PushException;
-
+  public void take(Document document, String connectorName)
+      throws PushException, RepositoryException;
 }

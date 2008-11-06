@@ -58,10 +58,6 @@ public class QueryTraverser implements Traverser {
           .getTimeoutMillis();
       this.timeout = Math.max(requestedTimeout, TRAVERSAL_TIMEOUT);
     }
-    if (this.queryTraversalManager instanceof TraversalContextAware) {
-      TraversalContext tc = Context.getInstance().getTraversalContext();
-      ((TraversalContextAware)this.queryTraversalManager).setTraversalContext(tc);
-    }
   }
 
   /*
