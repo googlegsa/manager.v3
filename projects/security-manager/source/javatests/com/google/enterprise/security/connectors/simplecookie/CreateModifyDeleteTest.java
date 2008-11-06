@@ -35,7 +35,6 @@ public class CreateModifyDeleteTest extends TestCase {
    * 
    * @throws Exception
    */
-  @SuppressWarnings("unchecked")
   public final void testBasicFunctionality() throws Exception {
     Context.refresh();
     Context.getInstance().setStandaloneContext(Context.DEFAULT_JUNIT_CONTEXT_LOCATION,

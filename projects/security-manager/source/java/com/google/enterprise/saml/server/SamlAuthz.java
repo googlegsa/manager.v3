@@ -56,6 +56,7 @@ import javax.xml.soap.SOAPMessage;
  */
 public class SamlAuthz extends HttpServlet {
 
+  private static final long serialVersionUID = 1L;
   public static final String HARDCODED_SUBJECT_NAME = "ruth_test1";
   public static final String HARDCODED_AUTHZ_NAMESPACE = "urn:oasis:names:tc:SAML:1.0:action:ghpp";
 

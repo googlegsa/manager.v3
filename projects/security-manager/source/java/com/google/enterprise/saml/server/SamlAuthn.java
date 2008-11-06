@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class SamlAuthn extends HttpServlet {
 
+  private static final long serialVersionUID = 1L;
   private static final Logger LOGGER =
       Logger.getLogger(SamlAuthn.class.getName());
 
