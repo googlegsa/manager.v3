@@ -58,7 +58,7 @@ public class SamlSsoTest extends TestCase {
     super(name);
     spEntity = makeEntityDescriptor("http://google.com/enterprise/saml/common/service-provider");
     idpEntity = makeEntityDescriptor("http://google.com/enterprise/saml/common/identity-provider");
-    identityProvider = new MockIdentityProvider(idpEntity, ssoUrl, formPostUrl, arUrl);
+    identityProvider = new MockIdentityProvider(idpEntity, spEntity, ssoUrl, formPostUrl, arUrl);
     serviceProvider = new MockServiceProvider(spEntity, idpEntity, spUrl, acsUrl, identityProvider);
   }
 
@@ -70,10 +70,7 @@ public class SamlSsoTest extends TestCase {
     logRequest(request1, "Initial request to service provider");
     serviceProvider.doGet(request1, response1);
     logResponse(response1, "Initial response from service provider");
-    {
-      int status = response1.getStatus();
-      assertTrue("Incorrect response status code", (status == 303) || (status == 302));
-    }
+    assertRedirectStatus(response1.getStatus());
 
     String location = (String) response1.getHeader("Location");
     assertNotNull("No Location header in response", location);
@@ -113,9 +110,13 @@ public class SamlSsoTest extends TestCase {
     logRequest(request3, "Submit form to identity provider");
     identityProvider.doPost(request3, response3);
     logResponse(response3, "Identity provider responds");
-    assertEquals("Incorrect response status code", 200, response3.getStatus());
+    assertRedirectStatus(response3.getStatus());
 
     // TODO(cph): write artifact-resolution exchange and response to user agent.
+  }
+
+  private void assertRedirectStatus(int status) {
+    assertTrue("Incorrect response status code", (status == 303) || (status == 302));
   }
 
   private void logRequest(MockHttpServletRequest request, String tag) throws IOException {
