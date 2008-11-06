@@ -32,5 +32,6 @@ public interface MockArtifactResolver {
    * @param request The ArtifactResolve message to be processed.
    * @returns An ArtifactResponse message.
    */
-  public MockHttpServletResponse resolve(MockHttpServletRequest request) throws ServletException, IOException;
+  public MockHttpServletResponse resolve(MockHttpServletRequest request)
+      throws ServletException, IOException;
 }
