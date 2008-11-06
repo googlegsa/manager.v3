@@ -146,8 +146,9 @@ public class MockIdentityProvider extends HttpServlet implements MockArtifactRes
     String username = req.getParameter("username");
     String password = req.getParameter("password");
 
-    if (!formPostUrl.equals(req.getRequestURI())) {
-      requestError(status, "POST to unknown URI.");
+    String url = req.getRequestURL().toString();
+    if (!formPostUrl.equals(url)) {
+      requestError(status, "POST to unknown URL: " + url + ".");
     } else if ((username == null) || (password == null)) {
       requestError(status, "Missing required POST parameter(s).");
     } else if (!authenticate(username, password)) {
