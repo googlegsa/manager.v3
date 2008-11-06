@@ -671,6 +671,7 @@ public final class OpenSamlUtil {
   public static EntityDescriptor makeEntityDescriptor(String id) {
     EntityDescriptor descriptor = entityDescriptorBuilder.buildObject();
     descriptor.setEntityID(id);
+    descriptor.setID(id);
     return descriptor;
   }
 
@@ -820,6 +821,7 @@ public final class OpenSamlUtil {
   public static void initializeLocalEntity(
       SAMLMessageContext<? extends SAMLObject, ? extends SAMLObject, ? extends SAMLObject> context,
       EntityDescriptor entity, RoleDescriptor role, QName endpointType) {
+    context.setLocalEntityId(entity.getID());
     context.setLocalEntityMetadata(entity);
     context.setLocalEntityRole(endpointType);
     context.setLocalEntityRoleMetadata(role);
@@ -828,6 +830,7 @@ public final class OpenSamlUtil {
   public static void initializePeerEntity(
       SAMLMessageContext<? extends SAMLObject, ? extends SAMLObject, ? extends SAMLObject> context,
       EntityDescriptor entity, RoleDescriptor role, QName endpointType) {
+    context.setPeerEntityId(entity.getID());
     context.setPeerEntityMetadata(entity);
     context.setPeerEntityRole(endpointType);
     context.setPeerEntityRoleMetadata(role);
