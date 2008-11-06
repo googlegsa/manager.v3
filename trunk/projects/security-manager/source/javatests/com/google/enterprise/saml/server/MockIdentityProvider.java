@@ -91,12 +91,14 @@ public class MockIdentityProvider extends HttpServlet implements MockArtifactRes
   private final SAMLArtifactMap artifactMap;
   private final SingleSignOnService ssoService;
 
-  public MockIdentityProvider(EntityDescriptor idpEntity, EntityDescriptor spEntity, String ssoUrl, String formPostUrl, String arUrl) throws ServletException {
+  public MockIdentityProvider(EntityDescriptor idpEntity, EntityDescriptor spEntity, String ssoUrl,
+      String formPostUrl, String arUrl) throws ServletException {
     init(new MockServletConfig());
     this.idpEntity = idpEntity;
     this.spEntity = spEntity;
     this.formPostUrl = formPostUrl;
-    artifactMap = new BasicSAMLArtifactMap(null, new MapBasedStorageService<String, SAMLArtifactMapEntry>(), 0);
+    artifactMap = new BasicSAMLArtifactMap(
+        null, new MapBasedStorageService<String, SAMLArtifactMapEntry>(), 0);
     idp = makeIdpSsoDescriptor(idpEntity);
     ssoService = makeSingleSignOnService(idp, SAML2_REDIRECT_BINDING_URI, ssoUrl);
     makeArtifactResolutionService(idp, SAML2_SOAP11_BINDING_URI, arUrl).setIsDefault(true);
@@ -120,7 +122,8 @@ public class MockIdentityProvider extends HttpServlet implements MockArtifactRes
   }
 
   @SuppressWarnings("unchecked")
-  private <TI extends SAMLObject, TO extends SAMLObject, TN extends SAMLObject> SAMLMessageContext<TI, TO, TN> getMessageContext(HttpSession session, String name) {
+  private <TI extends SAMLObject, TO extends SAMLObject, TN extends SAMLObject>
+      SAMLMessageContext<TI, TO, TN> getMessageContext(HttpSession session, String name) {
     return (SAMLMessageContext<TI, TO, TN>) session.getAttribute(name);
   }
 
@@ -173,8 +176,10 @@ public class MockIdentityProvider extends HttpServlet implements MockArtifactRes
     }
     context.setOutboundSAMLMessage(response);
 
-    initializeLocalEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS), SingleSignOnService.DEFAULT_ELEMENT_NAME);
-    initializePeerEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS), AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+    initializeLocalEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS),
+                          SingleSignOnService.DEFAULT_ELEMENT_NAME);
+    initializePeerEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS),
+                         AssertionConsumerService.DEFAULT_ELEMENT_NAME);
     selectPeerEndpoint(context, SAML2_ARTIFACT_BINDING_URI);
 
     initializeServletResponse(resp);
@@ -195,7 +200,9 @@ public class MockIdentityProvider extends HttpServlet implements MockArtifactRes
     return "joe".equals(username) && "plumber".equals(password);
   }
 
-  public MockHttpServletResponse resolve(MockHttpServletRequest request) throws ServletException, IOException {
+  public MockHttpServletResponse resolve(MockHttpServletRequest request)
+      throws ServletException, IOException {
+    // TODO(cph): write this.
     return null;
   }
 }
