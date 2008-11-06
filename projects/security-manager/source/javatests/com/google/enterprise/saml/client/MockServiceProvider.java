@@ -16,11 +16,9 @@ package com.google.enterprise.saml.client;
 
 import com.google.enterprise.saml.common.HttpServletRequestClientAdapter;
 import com.google.enterprise.saml.common.HttpServletResponseClientAdapter;
-import com.google.enterprise.saml.server.MockIdentityProvider;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
-import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.binding.decoding.HTTPSOAP11Decoder;
 import org.opensaml.saml2.binding.encoding.HTTPRedirectDeflateEncoder;
 import org.opensaml.saml2.binding.encoding.HTTPSOAP11Encoder;
@@ -33,6 +31,8 @@ import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.ArtifactResolutionService;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.SingleSignOnService;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -53,15 +53,25 @@ import static com.google.enterprise.saml.common.GsaConstants.GSA_ARTIFACT_PARAM_
 import static com.google.enterprise.saml.common.GsaConstants.GSA_RELAY_STATE_PARAM_NAME;
 import static com.google.enterprise.saml.common.OpenSamlUtil.GOOGLE_ISSUER;
 import static com.google.enterprise.saml.common.OpenSamlUtil.GOOGLE_PROVIDER_NAME;
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResolve;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertionConsumerService;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnRequest;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeSpSsoDescriptor;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
+import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
 import static com.google.enterprise.saml.common.SamlTestUtil.errorServletResponse;
 import static com.google.enterprise.saml.common.SamlTestUtil.htmlServletResponse;
 import static com.google.enterprise.saml.common.SamlTestUtil.initializeServletResponse;
+
+import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
 
 /**
  * The MockServiceProvider class implements a servlet pretending to be the part of a SAML Service
@@ -73,35 +83,30 @@ public class MockServiceProvider extends HttpServlet {
   private static final Logger logger = Logger.getLogger(className);
   private static final long serialVersionUID = 1L;
 
+  private final EntityDescriptor spEntity;
+  private final EntityDescriptor idpEntity;
   private final String serviceUrl;
   private final String acsUrl;
-  private final MockIdentityProvider idp;
   private final MockArtifactResolver resolver;
-  private final int acsIndex;
-  private final ArtifactResolutionService resolutionService;
 
   /**
    * Creates a new mock SAML service provider with the given identity provider.
    *
+   * @param spEntity The entity that this is a role for.
+   * @param idpEntity The identity provider entity.
    * @param serviceUrl The URL for the provided service.
    * @param acsUrl The URL for the assertion-consumer endpoint.
-   * @param idp The identity provider object.
-   * @param resolver The artifact resolver object.
    * @throws ServletException
    */
-  public MockServiceProvider(String serviceUrl, String acsUrl, MockIdentityProvider idp, MockArtifactResolver resolver) throws ServletException {
+  public MockServiceProvider(EntityDescriptor spEntity, EntityDescriptor idpEntity, String serviceUrl, String acsUrl, MockArtifactResolver resolver) throws ServletException {
     init(new MockServletConfig());
+    this.spEntity = spEntity;
+    this.idpEntity = idpEntity;
     this.serviceUrl = serviceUrl;
     this.acsUrl = acsUrl;
-    this.idp = idp;
     this.resolver = resolver;
-    acsIndex = idp.addAssertionConsumerService(SAMLConstants.SAML2_ARTIFACT_BINDING_URI, acsUrl);
-    resolutionService = null;
-    //resolutionService = resolver.getArtifactResolutionService();
-  }
-
-  public String getServiceUrl() {
-    return serviceUrl;
+    makeSpSsoDescriptor(spEntity);
+    makeAssertionConsumerService(spEntity.getSPSSODescriptor(SAML20P_NS), SAML2_ARTIFACT_BINDING_URI, acsUrl).setIsDefault(true);
   }
 
   @Override
@@ -133,8 +138,8 @@ public class MockServiceProvider extends HttpServlet {
   private void ifAllowed(HttpServletResponse resp) throws IOException {
     logger.entering(className, "ifAllowed");
     PrintWriter out = htmlServletResponse(resp);
-    out.print("<html><head><title>What you need</title></head>");
-    out.print("<body><h1>What you need...</h1><p>...is what we've got!</p></body></html>");
+    out.print("<html><head><title>What you need</title></head>" +
+              "<body><h1>What you need...</h1><p>...is what we've got!</p></body></html>");
     out.close();
     logger.exiting(className, "ifAllowed");
   }
@@ -147,13 +152,18 @@ public class MockServiceProvider extends HttpServlet {
       authnRequest.setProviderName(GOOGLE_PROVIDER_NAME);
       authnRequest.setIssuer(makeIssuer(GOOGLE_ISSUER));
       authnRequest.setIsPassive(false);
-      authnRequest.setAssertionConsumerServiceIndex(acsIndex);
+      authnRequest.setAssertionConsumerServiceIndex(spEntity.getSPSSODescriptor(SAML20P_NS).getDefaultAssertionConsumerService().getIndex());
       context.setOutboundSAMLMessage(authnRequest);
     }
     context.setRelayState(relayState);
-    context.setPeerEntityEndpoint(idp.getSingleSignOnService());
-    context.setOutboundMessageTransport(new HttpServletResponseAdapter(resp, true));
+
+    initializeLocalEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS), null);
+    initializePeerEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS), SingleSignOnService.DEFAULT_ELEMENT_NAME);
+    selectPeerEndpoint(context, SAML2_REDIRECT_BINDING_URI);
+
     initializeServletResponse(resp);
+    context.setOutboundMessageTransport(new HttpServletResponseAdapter(resp, true));
+
     runEncoder(new HTTPRedirectDeflateEncoder(), context);
     logger.exiting(className, "ifUnknown");
   }
@@ -197,12 +207,14 @@ public class MockServiceProvider extends HttpServlet {
       throws ServletException {
     SAMLMessageContext<SAMLObject, ArtifactResolve, NameID> context = makeSamlMessageContext();
     HttpServletRequestClientAdapter transport = new HttpServletRequestClientAdapter();
-    context.setPeerEntityEndpoint(resolutionService);
     context.setOutboundMessageTransport(transport);
     context.setOutboundSAMLMessage(request);
-    if (relayState != null) {
-      context.setRelayState(relayState);
-    }
+    context.setRelayState(relayState);
+
+    initializeLocalEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS), null);
+    initializePeerEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS), ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
+    selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
+
     runEncoder(new HTTPSOAP11Encoder(), context);
     return transport.getRequest();
   }
@@ -212,7 +224,11 @@ public class MockServiceProvider extends HttpServlet {
     SAMLMessageContext<ArtifactResponse, SAMLObject, NameID> context = makeSamlMessageContext();
     HttpServletResponseClientAdapter transport = new HttpServletResponseClientAdapter(response);
     context.setInboundMessageTransport(transport);
-    context.setPeerEntityEndpoint(resolutionService);
+
+    initializeLocalEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS), null);
+    initializePeerEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS), ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
+    selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
+
     runDecoder(new HTTPSOAP11Decoder(), context);
     return context.getInboundSAMLMessage();
   }

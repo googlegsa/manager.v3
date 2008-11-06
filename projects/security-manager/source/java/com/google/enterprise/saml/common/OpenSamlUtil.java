@@ -21,13 +21,10 @@ import org.opensaml.common.IdentifierGenerator;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
+import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.common.binding.BasicSAMLMessageContext;
 import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
-import org.opensaml.saml2.binding.artifact.AbstractSAML2Artifact;
-import org.opensaml.saml2.binding.artifact.SAML2ArtifactBuilderFactory;
-import org.opensaml.saml2.binding.artifact.SAML2ArtifactType0004;
-import org.opensaml.saml2.binding.artifact.SAML2ArtifactType0004Builder;
 import org.opensaml.saml2.core.Action;
 import org.opensaml.saml2.core.Artifact;
 import org.opensaml.saml2.core.ArtifactResolve;
@@ -53,6 +50,12 @@ import org.opensaml.saml2.core.Subject;
 import org.opensaml.saml2.metadata.ArtifactResolutionService;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.AuthzService;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.IDPSSODescriptor;
+import org.opensaml.saml2.metadata.PDPDescriptor;
+import org.opensaml.saml2.metadata.RoleDescriptor;
+import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.SSODescriptor;
 import org.opensaml.saml2.metadata.SingleSignOnService;
 import org.opensaml.ws.message.MessageContext;
 import org.opensaml.ws.message.decoder.MessageDecoder;
@@ -68,9 +71,12 @@ import org.opensaml.xml.XMLObjectBuilderFactory;
 import org.opensaml.xml.security.SecurityException;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.xml.namespace.QName;
+
+import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 
 /**
  * A collection of utilities to support OpenSAML programming.
@@ -101,8 +107,6 @@ public final class OpenSamlUtil {
 
   private static final XMLObjectBuilderFactory objectBuilderFactory =
       Configuration.getBuilderFactory();
-  private static final SAML2ArtifactBuilderFactory artifactObjectBuilderFactory =
-      Configuration.getSAML2ArtifactBuilderFactory();
 
   // TODO(cph): @SuppressWarnings is needed because objectBuilderFactory.getBuilder() returns a
   // supertype of the actual type.
@@ -115,16 +119,12 @@ public final class OpenSamlUtil {
       makeSamlObjectBuilder(Action.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<Artifact> artifactBuilder =
       makeSamlObjectBuilder(Artifact.DEFAULT_ELEMENT_NAME);
-  private static final SAMLObjectBuilder<ArtifactResolutionService> artifactResolutionServiceBuilder =
-      makeSamlObjectBuilder(ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<ArtifactResolve> artifactResolveBuilder =
       makeSamlObjectBuilder(ArtifactResolve.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<ArtifactResponse> artifactResponseBuilder =
       makeSamlObjectBuilder(ArtifactResponse.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<Assertion> assertionBuilder =
       makeSamlObjectBuilder(Assertion.DEFAULT_ELEMENT_NAME);
-  private static final SAMLObjectBuilder<AssertionConsumerService> assertionConsumerServiceBuilder =
-      makeSamlObjectBuilder(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<AuthnContext> authnContextBuilder =
       makeSamlObjectBuilder(AuthnContext.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<AuthnContextClassRef> authnContextClassRefBuilder =
@@ -137,8 +137,6 @@ public final class OpenSamlUtil {
       makeSamlObjectBuilder(AuthzDecisionQuery.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<AuthzDecisionStatement> authzDecisionStatementBuilder =
       makeSamlObjectBuilder(AuthzDecisionStatement.DEFAULT_ELEMENT_NAME);
-  private static final SAMLObjectBuilder<AuthzService> authzServiceBuilder =
-      makeSamlObjectBuilder(AuthzService.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<Issuer> issuerBuilder =
       makeSamlObjectBuilder(Issuer.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<NameID> nameIDBuilder =
@@ -147,8 +145,6 @@ public final class OpenSamlUtil {
       makeSamlObjectBuilder(NameIDPolicy.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<Response> responseBuilder =
       makeSamlObjectBuilder(Response.DEFAULT_ELEMENT_NAME);
-  private static final SAMLObjectBuilder<SingleSignOnService> singleSignOnServiceBuilder =
-      makeSamlObjectBuilder(SingleSignOnService.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<Status> statusBuilder =
       makeSamlObjectBuilder(Status.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<StatusCode> statusCodeBuilder =
@@ -157,6 +153,30 @@ public final class OpenSamlUtil {
       makeSamlObjectBuilder(StatusMessage.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<Subject> subjectBuilder =
       makeSamlObjectBuilder(Subject.DEFAULT_ELEMENT_NAME);
+
+  // Metadata builders
+
+  private static final SAMLObjectBuilder<EntityDescriptor> entityDescriptorBuilder =
+      makeSamlObjectBuilder(EntityDescriptor.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<IDPSSODescriptor> idpSsoDescriptorBuilder =
+      makeSamlObjectBuilder(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<PDPDescriptor> pdpDescriptorBuilder =
+      makeSamlObjectBuilder(PDPDescriptor.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<RoleDescriptor> roleDescriptorBuilder =
+      makeSamlObjectBuilder(RoleDescriptor.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<SPSSODescriptor> spSsoDescriptorBuilder =
+      makeSamlObjectBuilder(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+
+  private static final SAMLObjectBuilder<ArtifactResolutionService> artifactResolutionServiceBuilder =
+      makeSamlObjectBuilder(ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<AssertionConsumerService> assertionConsumerServiceBuilder =
+      makeSamlObjectBuilder(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<AuthzService> authzServiceBuilder =
+      makeSamlObjectBuilder(AuthzService.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<SingleSignOnService> singleSignOnServiceBuilder =
+      makeSamlObjectBuilder(SingleSignOnService.DEFAULT_ELEMENT_NAME);
+
+  // SOAP builders
 
   // TODO(cph): @SuppressWarnings is needed because objectBuilderFactory.getBuilder() returns a
   // supertype of the actual type.
@@ -170,9 +190,7 @@ public final class OpenSamlUtil {
   private static final SOAPObjectBuilder<Envelope> soapEnvelopeBuilder =
       makeSoapObjectBuilder(Envelope.DEFAULT_ELEMENT_NAME);
 
-  private static final SAML2ArtifactType0004Builder artifactObjectBuilder =
-      (SAML2ArtifactType0004Builder) artifactObjectBuilderFactory
-          .getArtifactBuilder(SAML2ArtifactType0004.TYPE_CODE);
+  // Identifier generator
 
   private static final IdentifierGenerator idGenerator;
   static {
@@ -226,22 +244,6 @@ public final class OpenSamlUtil {
     Artifact element = artifactBuilder.buildObject();
     element.setArtifact(value);
     return element;
-  }
-
-  /**
-   * Static factory for SAML <code>ArtifactResolutionService</code> objects.
-   *
-   * @param binding The SAML binding implemented by this service.
-   * @param location The URL that the service listens to.
-   * @param index The index number for this endpoint.
-   * @return A new <code>ArtifactResolutionService</code> object.
-   */
-  public static ArtifactResolutionService makeArtifactResolutionService(String binding, String location, int index) {
-    ArtifactResolutionService service = artifactResolutionServiceBuilder.buildObject();
-    service.setBinding(binding);
-    service.setLocation(location);
-    service.setIndex(index);
-    return service;
   }
 
   /**
@@ -323,22 +325,6 @@ public final class OpenSamlUtil {
     Assertion assertion = makeAssertion(issuer);
     assertion.setSubject(subject);
     return assertion;
-  }
-
-  /**
-   * Static factory for SAML <code>AssertionConsumerService</code> objects.
-   *
-   * @param binding The SAML binding implemented by this service.
-   * @param location The URL that the service listens to.
-   * @param index The index number for this endpoint.
-   * @return A new <code>AssertionConsumerService</code> object.
-   */
-  public static AssertionConsumerService makeAssertionConsumerService(String binding, String location, int index) {
-    AssertionConsumerService service = assertionConsumerServiceBuilder.buildObject();
-    service.setBinding(binding);
-    service.setLocation(location);
-    service.setIndex(index);
-    return service;
   }
 
   /**
@@ -492,20 +478,6 @@ public final class OpenSamlUtil {
   }
 
   /**
-   * Static factory for SAML <code>AuthzService</code> objects.
-   *
-   * @param binding The SAML binding implemented by this service.
-   * @param location The URL that the service listens to.
-   * @return A new <code>AuthzService</code> object.
-   */
-  public static AuthzService makeAuthzService(String binding, String location) {
-    AuthzService service = authzServiceBuilder.buildObject();
-    service.setBinding(binding);
-    service.setLocation(location);
-    return service;
-  }
-
-  /**
    * Static factory for SAML <code>Issuer</code> objects.
    *
    * @param name The issuer of a response object.  In the absence of a specific format, this is a
@@ -553,20 +525,6 @@ public final class OpenSamlUtil {
     Response response = responseBuilder.buildObject();
     initializeResponse(response, status, request);
     return response;
-  }
-
-  /**
-   * Static factory for SAML <code>SingleSignOnService</code> objects.
-   *
-   * @param binding The SAML binding implemented by this service.
-   * @param location The URL that the service listens to.
-   * @return A new <code>SingleSignOnService</code> object.
-   */
-  public static SingleSignOnService makeSingleSignOnService(String binding, String location) {
-    SingleSignOnService service = singleSignOnServiceBuilder.buildObject();
-    service.setBinding(binding);
-    service.setLocation(location);
-    return service;
   }
 
   /**
@@ -676,6 +634,10 @@ public final class OpenSamlUtil {
     return makeSubject(makeNameId(name));
   }
 
+  /*
+   * SOAP (needed for client-side operations, which OpenSAML doesn't support well)
+   */
+
   /**
    * Static factory for SOAP <code>Body</code> objects.
    *
@@ -694,16 +656,197 @@ public final class OpenSamlUtil {
     return soapEnvelopeBuilder.buildObject();
   }
 
-  /**
-   * Static factory for SAML artifact objects.
-   *
-   * @param requestContext A SAML message-context object.
-   * @return A new artifact object.
+  /*
+   * Metadata descriptions. 
    */
-  public static AbstractSAML2Artifact newArtifactObject(
-      SAMLMessageContext<SAMLObject, SAMLObject, NameID> requestContext) {
-    return artifactObjectBuilder.buildArtifact(requestContext);
+
+  /**
+   * Static factory for SAML <code>EntityDescriptor</code> objects.
+   *
+   * An entity is something that participates in one or more SAML profiles.  The descriptor for that
+   * entity spells out the roles and profiles played by the entity.
+   *
+   * @return An <code>EntityDescriptor</code> object.
+   */
+  public static EntityDescriptor makeEntityDescriptor(String id) {
+    EntityDescriptor descriptor = entityDescriptorBuilder.buildObject();
+    descriptor.setEntityID(id);
+    return descriptor;
   }
+
+  // Metadata roles
+
+  /**
+   * Static factory for SAML <code>IDPSSODescriptor</code> objects.
+   *
+   * This descriptor represents the Identity Provider role in the Web SSO profile.
+   *
+   * @param entity The entity that this is a role for.
+   * @return An <code>IDPSSODescriptor</code> object.
+   */
+  public static IDPSSODescriptor makeIdpSsoDescriptor(EntityDescriptor entity) {
+    IDPSSODescriptor descriptor = idpSsoDescriptorBuilder.buildObject();
+    initializeRoleDescriptor(descriptor, entity);
+    return descriptor;
+  }
+
+  /**
+   * Static factory for SAML <code>SPSSODescriptor</code> objects.
+   *
+   * This descriptor represents the Service Provider role in the Web SSO profile.
+   *
+   * @param entity The entity that this is a role for.
+   * @return A <code>SPSSODescriptor</code> object.
+   */
+  public static SPSSODescriptor makeSpSsoDescriptor(EntityDescriptor entity) {
+    SPSSODescriptor descriptor = spSsoDescriptorBuilder.buildObject();
+    initializeRoleDescriptor(descriptor, entity);
+    return descriptor;
+  }
+
+  /**
+   * Static factory for SAML <code>makePdpDescriptor</code> objects.
+   *
+   * This descriptor represents the Policy Decision Point role in the Assertion Query/Request
+   * profile.
+   *
+   * @param entity The entity that this is a role for.
+   * @profile A <code>PDPDescriptor</code> object.
+   */
+  public static PDPDescriptor makePdpDescriptor(EntityDescriptor entity) {
+    PDPDescriptor descriptor = pdpDescriptorBuilder.buildObject();
+    initializeRoleDescriptor(descriptor, entity);
+    return descriptor;
+  }
+
+  /**
+   * Static factory for SAML <code>makeRoleDescriptor</code> objects.
+   *
+   * This descriptor represents a role that's a SAML extension.
+   *
+   * @param entity The entity that this is a role for.
+   * @return A <code>RoleDescriptor</code> object.
+   */
+  public static RoleDescriptor makeRoleDescriptor(EntityDescriptor entity) {
+    RoleDescriptor descriptor = roleDescriptorBuilder.buildObject();
+    initializeRoleDescriptor(descriptor, entity);
+    return descriptor;
+  }
+
+  private static void initializeRoleDescriptor(RoleDescriptor descriptor, EntityDescriptor entity) {
+    descriptor.addSupportedProtocol(SAML20P_NS);
+    entity.getRoleDescriptors().add(descriptor);
+  }
+
+  // Metadata services
+
+  /**
+   * Static factory for SAML <code>ArtifactResolutionService</code> objects.
+   *
+   * @param role The SAML SSO role providing this service.
+   * @param binding The SAML binding implemented by this service.
+   * @param location The URL that this service listens to.
+   * @return A new <code>ArtifactResolutionService</code> object.
+   */
+  public static ArtifactResolutionService makeArtifactResolutionService(SSODescriptor role, String binding,
+      String location) {
+    ArtifactResolutionService service = artifactResolutionServiceBuilder.buildObject();
+    service.setBinding(binding);
+    service.setLocation(location);
+    List<ArtifactResolutionService> services = role.getArtifactResolutionServices();
+    // Next two should be atomic.
+    service.setIndex(services.size());
+    services.add(service);
+    return service;
+  }
+
+  /**
+   * Static factory for SAML <code>AssertionConsumerService</code> objects.
+   *
+   * @param role The SAML SSO role providing this service.
+   * @param binding The SAML binding implemented by this service.
+   * @param location The URL that the service listens to.
+   * @return A new <code>AssertionConsumerService</code> object.
+   */
+  public static AssertionConsumerService makeAssertionConsumerService(SPSSODescriptor role, String binding,
+      String location) {
+    AssertionConsumerService service = assertionConsumerServiceBuilder.buildObject();
+    service.setBinding(binding);
+    service.setLocation(location);
+    List<AssertionConsumerService> services = role.getAssertionConsumerServices();
+    // Next two should be atomic.
+    service.setIndex(services.size());
+    services.add(service);
+    return service;
+  }
+
+  /**
+   * Static factory for SAML <code>AuthzService</code> objects.
+   *
+   * @param role The SAML authz query/request role providing this service.
+   * @param binding The SAML binding implemented by this service.
+   * @param location The URL that the service listens to.
+   * @return A new <code>AuthzService</code> object.
+   */
+  public static AuthzService makeAuthzService(PDPDescriptor role, String binding, String location) {
+    AuthzService service = authzServiceBuilder.buildObject();
+    service.setBinding(binding);
+    service.setLocation(location);
+    role.getAuthzServices().add(service);
+    return service;
+  }
+
+  /**
+   * Static factory for SAML <code>SingleSignOnService</code> objects.
+   *
+   * @param role The SAML SSO role providing this service.
+   * @param binding The SAML binding implemented by this service.
+   * @param location The URL that the service listens to.
+   * @return A new <code>SingleSignOnService</code> object.
+   */
+  public static SingleSignOnService makeSingleSignOnService(IDPSSODescriptor role, String binding,
+      String location) {
+    SingleSignOnService service = singleSignOnServiceBuilder.buildObject();
+    service.setBinding(binding);
+    service.setLocation(location);
+    role.getSingleSignOnServices().add(service);
+    return service;
+  }
+
+  /*
+   * Endpoint selection
+   */
+
+  public static void initializeLocalEntity(
+      SAMLMessageContext<? extends SAMLObject, ? extends SAMLObject, ? extends SAMLObject> context,
+      EntityDescriptor entity, RoleDescriptor role, QName endpointType) {
+    context.setLocalEntityMetadata(entity);
+    context.setLocalEntityRole(endpointType);
+    context.setLocalEntityRoleMetadata(role);
+  }
+
+  public static void initializePeerEntity(
+      SAMLMessageContext<? extends SAMLObject, ? extends SAMLObject, ? extends SAMLObject> context,
+      EntityDescriptor entity, RoleDescriptor role, QName endpointType) {
+    context.setPeerEntityMetadata(entity);
+    context.setPeerEntityRole(endpointType);
+    context.setPeerEntityRoleMetadata(role);
+  }
+
+  public static void selectPeerEndpoint(
+      SAMLMessageContext<? extends SAMLObject, ? extends SAMLObject, ? extends SAMLObject> context,
+      String binding) {
+    BasicEndpointSelector selector = new BasicEndpointSelector();
+    selector.setEntityMetadata(context.getPeerEntityMetadata());
+    selector.setEndpointType(context.getPeerEntityRole());
+    selector.setEntityRoleMetadata(context.getPeerEntityRoleMetadata());
+    selector.getSupportedIssuerBindings().add(binding);
+    context.setPeerEntityEndpoint(selector.selectEndpoint());
+  }
+
+  /*
+   * Identifiers
+   */
 
   /**
    * A convenience method for generating a random identifier.
@@ -713,6 +856,10 @@ public final class OpenSamlUtil {
   public static String generateIdentifier() {
     return idGenerator.generateIdentifier();
   }
+
+  /*
+   * Context and codecs
+   */
 
   /**
    * Static factory for OpenSAML message-context objects.

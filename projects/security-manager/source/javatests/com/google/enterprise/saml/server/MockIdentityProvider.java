@@ -14,6 +14,8 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.saml.client.MockArtifactResolver;
+
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
@@ -28,17 +30,18 @@ import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
-import org.opensaml.saml2.metadata.AssertionConsumerService;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleSignOnService;
 import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockServletConfig;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -49,9 +52,10 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.GOOGLE_ISSUER;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResolutionService;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertion;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertionConsumerService;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnStatement;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeIdpSsoDescriptor;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
@@ -65,53 +69,27 @@ import static com.google.enterprise.saml.common.SamlTestUtil.errorServletRespons
 import static com.google.enterprise.saml.common.SamlTestUtil.htmlServletResponse;
 import static com.google.enterprise.saml.common.SamlTestUtil.initializeServletResponse;
 
-import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
-import static org.opensaml.common.xml.SAMLConstants.SAML2_POST_BINDING_URI;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
 
-public class MockIdentityProvider extends HttpServlet {
+public class MockIdentityProvider extends HttpServlet implements MockArtifactResolver {
   private static final String className = MockIdentityProvider.class.getName();
   private static final Logger logger = Logger.getLogger(className);
   private static final long serialVersionUID = 1L;
   private static final String SSO_SAML_CONTEXT = "ssoSamlContext";
 
-  private final SingleSignOnService ssoService;
+  private final IDPSSODescriptor idp;
   private final String formPostUrl;
-  private final List<AssertionConsumerService> assertionConsumers;
-  private int assertionConsumerIndex;
   private final SAMLArtifactMap artifactMap;
+  private final SingleSignOnService ssoService;
 
-  public MockIdentityProvider(String ssoUrl, String formPostUrl) throws ServletException {
+  public MockIdentityProvider(EntityDescriptor entity, String ssoUrl, String formPostUrl, String arUrl) throws ServletException {
     init(new MockServletConfig());
-    ssoService = makeSingleSignOnService(SAML2_REDIRECT_BINDING_URI, ssoUrl);
+    idp = makeIdpSsoDescriptor(entity);
     this.formPostUrl = formPostUrl;
-    assertionConsumers = new ArrayList<AssertionConsumerService>();
-    assertionConsumerIndex = 0;
     artifactMap = new BasicSAMLArtifactMap(null, new MapBasedStorageService<String, SAMLArtifactMapEntry>(), 0);
-  }
-
-  /**
-   * Get the endpoint to which AuthnRequest messages are to be sent.
-   */
-  public SingleSignOnService getSingleSignOnService() {
-    return ssoService;
-  }
-
-  /**
-   * Register an assertion consumer (one of the service provider's roles) with the identity
-   * provider. Returns an endpoint for the use of the caller.
-   */
-  public int addAssertionConsumerService(String binding, String location) {
-    if (SAML2_ARTIFACT_BINDING_URI.equals(binding)) {
-      int index = assertionConsumerIndex++;
-      assertionConsumers.add(makeAssertionConsumerService(binding, location, index));
-      return index;
-    } else if (SAML2_POST_BINDING_URI.equals(binding)) {
-      // TODO(cph): implement this
-      throw new IllegalArgumentException();
-    } else {
-      throw new IllegalArgumentException();
-    }
+    ssoService = makeSingleSignOnService(idp, SAML2_REDIRECT_BINDING_URI, ssoUrl);
+    makeArtifactResolutionService(idp, SAML2_SOAP11_BINDING_URI, arUrl).setIsDefault(true);
   }
 
   @Override
@@ -128,7 +106,7 @@ public class MockIdentityProvider extends HttpServlet {
     HTTPRedirectDeflateDecoder decoder = new HTTPRedirectDeflateDecoder();
     runDecoder(decoder, context);
     req.getSession().setAttribute(SSO_SAML_CONTEXT, context);
-    generateForm(req, resp);
+    generateForm(resp);
   }
 
   @SuppressWarnings("unchecked")
@@ -136,7 +114,7 @@ public class MockIdentityProvider extends HttpServlet {
     return (SAMLMessageContext<TI, TO, TN>) session.getAttribute(name);
   }
 
-  private void generateForm(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+  private void generateForm(HttpServletResponse resp) throws IOException {
     PrintWriter out = htmlServletResponse(resp);
     out.print("<html><head><title>Please Login</title></head><body>\n" +
               "<form action=\"" +
@@ -183,10 +161,12 @@ public class MockIdentityProvider extends HttpServlet {
       response.getAssertions().add(assertion);
     }
 
+    // TODO(cph): how to get arService endpoint into context?
     context.setOutboundSAMLMessage(response);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(resp, true));
     initializeServletResponse(resp);
     HTTPArtifactEncoder encoder = new HTTPArtifactEncoder(null, null, artifactMap);
+    encoder.setPostEncoding(false);
     runEncoder(encoder, context);
   }
 
@@ -198,5 +178,9 @@ public class MockIdentityProvider extends HttpServlet {
 
   private boolean authenticate(String username, String password) {
     return "joe".equals(username) && "plumber".equals(password);
+  }
+
+  public MockHttpServletResponse resolve(MockHttpServletRequest request) throws ServletException, IOException {
+    return null;
   }
 }
