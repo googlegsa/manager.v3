@@ -167,8 +167,9 @@ public final class OpenSamlUtil {
   private static final SAMLObjectBuilder<SPSSODescriptor> spSsoDescriptorBuilder =
       makeSamlObjectBuilder(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
 
-  private static final SAMLObjectBuilder<ArtifactResolutionService> artifactResolutionServiceBuilder =
-      makeSamlObjectBuilder(ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<ArtifactResolutionService>
+      artifactResolutionServiceBuilder =
+        makeSamlObjectBuilder(ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<AssertionConsumerService> assertionConsumerServiceBuilder =
       makeSamlObjectBuilder(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<AuthzService> authzServiceBuilder =
@@ -749,13 +750,13 @@ public final class OpenSamlUtil {
    * @param location The URL that this service listens to.
    * @return A new <code>ArtifactResolutionService</code> object.
    */
-  public static ArtifactResolutionService makeArtifactResolutionService(SSODescriptor role, String binding,
-      String location) {
+  public static ArtifactResolutionService makeArtifactResolutionService(SSODescriptor role,
+      String binding, String location) {
     ArtifactResolutionService service = artifactResolutionServiceBuilder.buildObject();
     service.setBinding(binding);
     service.setLocation(location);
     List<ArtifactResolutionService> services = role.getArtifactResolutionServices();
-    // Next two should be atomic.
+    // TODO(cph): Next two should be atomic.
     service.setIndex(services.size());
     services.add(service);
     return service;
@@ -769,13 +770,13 @@ public final class OpenSamlUtil {
    * @param location The URL that the service listens to.
    * @return A new <code>AssertionConsumerService</code> object.
    */
-  public static AssertionConsumerService makeAssertionConsumerService(SPSSODescriptor role, String binding,
-      String location) {
+  public static AssertionConsumerService makeAssertionConsumerService(SPSSODescriptor role,
+      String binding, String location) {
     AssertionConsumerService service = assertionConsumerServiceBuilder.buildObject();
     service.setBinding(binding);
     service.setLocation(location);
     List<AssertionConsumerService> services = role.getAssertionConsumerServices();
-    // Next two should be atomic.
+    // TODO(cph): Next two should be atomic.
     service.setIndex(services.size());
     services.add(service);
     return service;
