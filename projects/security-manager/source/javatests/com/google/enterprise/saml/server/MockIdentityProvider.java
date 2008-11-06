@@ -30,6 +30,7 @@ import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
+import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleSignOnService;
@@ -52,6 +53,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.GOOGLE_ISSUER;
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResolutionService;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertion;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnStatement;
@@ -65,10 +68,13 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatusMessage;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSubject;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
+import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
 import static com.google.enterprise.saml.common.SamlTestUtil.errorServletResponse;
 import static com.google.enterprise.saml.common.SamlTestUtil.htmlServletResponse;
 import static com.google.enterprise.saml.common.SamlTestUtil.initializeServletResponse;
 
+import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
 
@@ -78,16 +84,20 @@ public class MockIdentityProvider extends HttpServlet implements MockArtifactRes
   private static final long serialVersionUID = 1L;
   private static final String SSO_SAML_CONTEXT = "ssoSamlContext";
 
+  private final EntityDescriptor idpEntity;
+  private final EntityDescriptor spEntity;
   private final IDPSSODescriptor idp;
   private final String formPostUrl;
   private final SAMLArtifactMap artifactMap;
   private final SingleSignOnService ssoService;
 
-  public MockIdentityProvider(EntityDescriptor entity, String ssoUrl, String formPostUrl, String arUrl) throws ServletException {
+  public MockIdentityProvider(EntityDescriptor idpEntity, EntityDescriptor spEntity, String ssoUrl, String formPostUrl, String arUrl) throws ServletException {
     init(new MockServletConfig());
-    idp = makeIdpSsoDescriptor(entity);
+    this.idpEntity = idpEntity;
+    this.spEntity = spEntity;
     this.formPostUrl = formPostUrl;
     artifactMap = new BasicSAMLArtifactMap(null, new MapBasedStorageService<String, SAMLArtifactMapEntry>(), 0);
+    idp = makeIdpSsoDescriptor(idpEntity);
     ssoService = makeSingleSignOnService(idp, SAML2_REDIRECT_BINDING_URI, ssoUrl);
     makeArtifactResolutionService(idp, SAML2_SOAP11_BINDING_URI, arUrl).setIsDefault(true);
   }
@@ -161,11 +171,15 @@ public class MockIdentityProvider extends HttpServlet implements MockArtifactRes
       assertion.getAuthnStatements().add(makeAuthnStatement(AuthnContext.IP_PASSWORD_AUTHN_CTX));
       response.getAssertions().add(assertion);
     }
-
-    // TODO(cph): how to get arService endpoint into context?
     context.setOutboundSAMLMessage(response);
-    context.setOutboundMessageTransport(new HttpServletResponseAdapter(resp, true));
+
+    initializeLocalEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS), SingleSignOnService.DEFAULT_ELEMENT_NAME);
+    initializePeerEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS), AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+    selectPeerEndpoint(context, SAML2_ARTIFACT_BINDING_URI);
+
     initializeServletResponse(resp);
+    context.setOutboundMessageTransport(new HttpServletResponseAdapter(resp, true));
+
     HTTPArtifactEncoder encoder = new HTTPArtifactEncoder(null, null, artifactMap);
     encoder.setPostEncoding(false);
     runEncoder(encoder, context);
