@@ -102,6 +102,7 @@ public class SamlSsoTest extends TestCase {
     }
     String action = forms[0].getAttributeByName("action");
     assertNotNull("<form> missing action attribute", action);
+    logger.log(Level.INFO, "action = " + action);
 
     MockHttpServletRequest request3 = makeMockHttpPost(identityProvider, session, uaUrl, action);
     request3.addHeader("Referer", location);
