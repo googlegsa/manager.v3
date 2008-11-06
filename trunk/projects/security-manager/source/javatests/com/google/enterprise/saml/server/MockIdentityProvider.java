@@ -97,7 +97,7 @@ public class MockIdentityProvider extends HttpServlet implements MockArtifactRes
       throws ServletException, IOException {
     String url = req.getRequestURL().toString();
     if (!ssoService.getLocation().equals(url)) {
-      logger.log(Level.WARNING, "GET to unknown URI.");
+      logger.log(Level.WARNING, "GET to unknown URL: " + url + ".");
       errorServletResponse(resp, HttpServletResponse.SC_NOT_FOUND);
       return;
     }
