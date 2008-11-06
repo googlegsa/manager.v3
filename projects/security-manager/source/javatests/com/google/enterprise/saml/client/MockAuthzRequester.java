@@ -121,8 +121,11 @@ public class MockAuthzRequester {
   private static final ExtendedEncoder multiEncoder = new ExtendedEncoder();
   private static final ExtendedDecoder multiDecoder = new ExtendedDecoder();
 
-  public MockAuthzRequester(EntityDescriptor entity, String serviceUrl, MockAuthzResponder responder) {
-    this.endpoint = makeAuthzService(makePdpDescriptor(entity), SAMLConstants.SAML2_SOAP11_BINDING_URI, serviceUrl);
+  public MockAuthzRequester(EntityDescriptor entity, String serviceUrl,
+      MockAuthzResponder responder) {
+    this.endpoint =
+        makeAuthzService(makePdpDescriptor(entity), SAMLConstants.SAML2_SOAP11_BINDING_URI,
+                         serviceUrl);
     this.responder = responder;
   }
 
