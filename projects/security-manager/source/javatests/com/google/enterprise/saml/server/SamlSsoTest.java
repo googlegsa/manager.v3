@@ -106,9 +106,9 @@ public class SamlSsoTest extends TestCase {
     generatePostContent(request3);
     MockHttpServletResponse response3 = new MockHttpServletResponse();
     logRequest(request3, "Submit form to identity provider");
-    identityProvider.doGet(request3, response3);
+    identityProvider.doPost(request3, response3);
     logResponse(response3, "Identity provider responds");
-    assertEquals("Incorrect response status code", 200, response2.getStatus());
+    assertEquals("Incorrect response status code", 200, response3.getStatus());
 
     // TODO(cph): write artifact-resolution exchange and response to user agent.
   }
