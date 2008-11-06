@@ -99,7 +99,8 @@ public class MockServiceProvider extends HttpServlet {
    * @param resolver An artifact resolver instance.
    * @throws ServletException
    */
-  public MockServiceProvider(EntityDescriptor spEntity, EntityDescriptor idpEntity, String serviceUrl, String acsUrl, MockArtifactResolver resolver) throws ServletException {
+  public MockServiceProvider(EntityDescriptor spEntity, EntityDescriptor idpEntity,
+      String serviceUrl, String acsUrl, MockArtifactResolver resolver) throws ServletException {
     init(new MockServletConfig());
     this.spEntity = spEntity;
     this.idpEntity = idpEntity;
@@ -107,7 +108,9 @@ public class MockServiceProvider extends HttpServlet {
     this.acsUrl = acsUrl;
     this.resolver = resolver;
     makeSpSsoDescriptor(spEntity);
-    makeAssertionConsumerService(spEntity.getSPSSODescriptor(SAML20P_NS), SAML2_ARTIFACT_BINDING_URI, acsUrl).setIsDefault(true);
+    makeAssertionConsumerService(spEntity.getSPSSODescriptor(SAML20P_NS),
+                                 SAML2_ARTIFACT_BINDING_URI, acsUrl)
+        .setIsDefault(true);
   }
 
   @Override
@@ -153,13 +156,15 @@ public class MockServiceProvider extends HttpServlet {
       authnRequest.setProviderName(GOOGLE_PROVIDER_NAME);
       authnRequest.setIssuer(makeIssuer(GOOGLE_ISSUER));
       authnRequest.setIsPassive(false);
-      authnRequest.setAssertionConsumerServiceIndex(spEntity.getSPSSODescriptor(SAML20P_NS).getDefaultAssertionConsumerService().getIndex());
+      authnRequest.setAssertionConsumerServiceIndex(
+          spEntity.getSPSSODescriptor(SAML20P_NS) .getDefaultAssertionConsumerService().getIndex());
       context.setOutboundSAMLMessage(authnRequest);
     }
     context.setRelayState(relayState);
 
     initializeLocalEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS), null);
-    initializePeerEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS), SingleSignOnService.DEFAULT_ELEMENT_NAME);
+    initializePeerEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS),
+                         SingleSignOnService.DEFAULT_ELEMENT_NAME);
     selectPeerEndpoint(context, SAML2_REDIRECT_BINDING_URI);
 
     initializeServletResponse(resp);
@@ -192,7 +197,8 @@ public class MockServiceProvider extends HttpServlet {
         Assertion assertion = response.getAssertions().get(0);
         session.setAttribute("isAuthenticated", true);
         session.setAttribute("verifiedIdentity", assertion.getSubject().getNameID().getValue());
-        session.setAttribute("verificationStatement", assertion.getStatements(AuthnStatement.DEFAULT_ELEMENT_NAME).get(0));
+        session.setAttribute("verificationStatement",
+                             assertion.getStatements(AuthnStatement.DEFAULT_ELEMENT_NAME).get(0));
       } else if (code.equals(StatusCode.REQUEST_DENIED_URI)) {
         session.setAttribute("isAuthenticated", false);
       } else if (code.equals(StatusCode.AUTHN_FAILED_URI)) {
@@ -213,7 +219,8 @@ public class MockServiceProvider extends HttpServlet {
     context.setRelayState(relayState);
 
     initializeLocalEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS), null);
-    initializePeerEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS), ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
+    initializePeerEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS),
+                         ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
     selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
 
     runEncoder(new HTTPSOAP11Encoder(), context);
@@ -227,7 +234,8 @@ public class MockServiceProvider extends HttpServlet {
     context.setInboundMessageTransport(transport);
 
     initializeLocalEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS), null);
-    initializePeerEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS), ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
+    initializePeerEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS),
+                         ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
     selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
 
     runDecoder(new HTTPSOAP11Decoder(), context);
