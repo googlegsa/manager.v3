@@ -53,22 +53,28 @@ public final class SamlTestUtil {
     httpDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
 
-  public static MockHttpServletRequest makeMockHttpGet(HttpServlet servlet, HttpSession session, String clientUrl, String serverUrl) {
-    MockHttpServletRequest request = makeMockHttpRequest(servlet, session, "GET", clientUrl, serverUrl);
+  public static MockHttpServletRequest makeMockHttpGet(HttpServlet servlet, HttpSession session,
+      String clientUrl, String serverUrl) {
+    MockHttpServletRequest request =
+        makeMockHttpRequest(servlet, session, "GET", clientUrl, serverUrl);
     request.setContent(new byte[0]);
     return request;
   }
 
-  public static MockHttpServletRequest makeMockHttpPost(HttpServlet servlet, HttpSession session, String clientUrl, String serverUrl) {
-    MockHttpServletRequest request = makeMockHttpRequest(servlet, session, "POST", clientUrl, serverUrl);
+  public static MockHttpServletRequest makeMockHttpPost(HttpServlet servlet, HttpSession session,
+      String clientUrl, String serverUrl) {
+    MockHttpServletRequest request =
+        makeMockHttpRequest(servlet, session, "POST", clientUrl, serverUrl);
     request.setContentType("application/x-www-form-urlencoded");
     return request;
   }
 
-  private static MockHttpServletRequest makeMockHttpRequest(HttpServlet servlet, HttpSession session, String method, String client, String server) {
+  private static MockHttpServletRequest makeMockHttpRequest(HttpServlet servlet,
+      HttpSession session, String method, String client, String server) {
     URLBuilder clientUrl = new URLBuilder(client);
     URLBuilder serverUrl = new URLBuilder(server);
-    MockHttpServletRequest request = new MockHttpServletRequest(servlet.getServletContext(), method, serverUrl.getPath());
+    MockHttpServletRequest request =
+        new MockHttpServletRequest(servlet.getServletContext(), method, serverUrl.getPath());
     request.setSession(session);
     request.setScheme(serverUrl.getScheme());
     request.setServerName(serverUrl.getHost());
@@ -110,7 +116,8 @@ public final class SamlTestUtil {
     return result;
   }
 
-  public static void writeServletRequest(HttpServletRequest request, Writer out) throws IOException {
+  public static void writeServletRequest(HttpServletRequest request, Writer out)
+      throws IOException {
     writeRequestLine(request, out);
     writeRequestHeaders(request, out);
     copyText(request.getReader(), out);
@@ -155,7 +162,8 @@ public final class SamlTestUtil {
     return response.getWriter();
   }
 
-  public static void errorServletResponse(HttpServletResponse response, int code) throws IOException {
+  public static void errorServletResponse(HttpServletResponse response, int code)
+      throws IOException {
     initializeServletResponse(response);
     response.sendError(code);
   }
@@ -186,7 +194,8 @@ public final class SamlTestUtil {
     }
     writeResponseLine(response, out);
     writeResponseHeaders(response, out);
-    copyText(new InputStreamReader(new ByteArrayInputStream(response.getContentAsByteArray())), out);
+    copyText(new InputStreamReader(new ByteArrayInputStream(response.getContentAsByteArray())),
+             out);
   }
 
   private static void writeResponseLine(MockHttpServletResponse response, Writer out)
