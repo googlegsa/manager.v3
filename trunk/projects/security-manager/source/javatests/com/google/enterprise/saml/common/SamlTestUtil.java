@@ -40,6 +40,7 @@ import java.util.TimeZone;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 /**
  * Useful utilities for SAML testing.
@@ -52,22 +53,23 @@ public final class SamlTestUtil {
     httpDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
 
-  public static MockHttpServletRequest makeMockHttpGet(HttpServlet servlet, String clientUrl, String serverUrl) {
-    MockHttpServletRequest request = makeMockHttpRequest(servlet, "GET", clientUrl, serverUrl);
+  public static MockHttpServletRequest makeMockHttpGet(HttpServlet servlet, HttpSession session, String clientUrl, String serverUrl) {
+    MockHttpServletRequest request = makeMockHttpRequest(servlet, session, "GET", clientUrl, serverUrl);
     request.setContent(new byte[0]);
     return request;
   }
 
-  public static MockHttpServletRequest makeMockHttpPost(HttpServlet servlet, String clientUrl, String serverUrl) {
-    MockHttpServletRequest request = makeMockHttpRequest(servlet, "POST", clientUrl, serverUrl);
+  public static MockHttpServletRequest makeMockHttpPost(HttpServlet servlet, HttpSession session, String clientUrl, String serverUrl) {
+    MockHttpServletRequest request = makeMockHttpRequest(servlet, session, "POST", clientUrl, serverUrl);
     request.setContentType("application/x-www-form-urlencoded");
     return request;
   }
 
-  private static MockHttpServletRequest makeMockHttpRequest(HttpServlet servlet, String method, String client, String server) {
+  private static MockHttpServletRequest makeMockHttpRequest(HttpServlet servlet, HttpSession session, String method, String client, String server) {
     URLBuilder clientUrl = new URLBuilder(client);
     URLBuilder serverUrl = new URLBuilder(server);
     MockHttpServletRequest request = new MockHttpServletRequest(servlet.getServletContext(), method, serverUrl.getPath());
+    request.setSession(session);
     request.setScheme(serverUrl.getScheme());
     request.setServerName(serverUrl.getHost());
     request.setServerPort(serverUrl.getPort());
