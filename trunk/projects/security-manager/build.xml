@@ -7,6 +7,7 @@
 
 	<!-- Define Directories. -->
 	<property name="projects.dir" value=".." />
+  <property name="install.dir" value="${projects.dir}/install" />
 
 	<property name="COMPILE_DEBUG_FLAG" value="true" />
 	<property name="COMPILE_DEBUG_LEVEL" value="source,lines,vars" />
@@ -40,7 +41,7 @@
 
 	<target name="all" depends="war" />
 
-	<target name="everything" depends="all,run_tests" />
+	<target name="everything" depends="all,run_tests,install-security-manager" />
 
 	<target name="init">
 		<mkdir dir="${build}" />
@@ -147,13 +148,13 @@
 
 	<!-- ======================Installation targets====================== -->
 
-	<target name="install_init">
-		<mkdir dir="${war.dir}" />
-	</target>
-
 	<!--  Builds a Web Archive - basically a JAR file which
 	also contains all and can be deployed as-is.
 	-->
+
+  <target name="install_init">
+    <mkdir dir="${war.dir}" />
+  </target>
 
 	<target name="war" depends="war-prod,war-tests" description="Builds the Production WAR file." />
 
@@ -197,5 +198,15 @@
 
 	</target>
 
+  <target name="make-install-dir">
+    <mkdir dir="${install.dir}" />
+  </target>
+
+  <target name="install-security-manager" depends="security_manager,make-install-dir">
+    <mkdir dir="${install.dir}/security-manager" />
+    <copy todir="${install.dir}/security-manager" >
+      <fileset dir="dist"/>
+    </copy>
+  </target>
 
 </project>
