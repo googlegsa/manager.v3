@@ -20,6 +20,7 @@ import junit.framework.TestCase;
 
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
+import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
@@ -30,6 +31,7 @@ import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeEntityDescriptor;
 import static com.google.enterprise.saml.common.SamlTestUtil.generatePostContent;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpGet;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
@@ -44,18 +46,23 @@ public class SamlSsoTest extends TestCase {
   private static final String acsUrl = "http://localhost:1234/consume-artifact";
   private static final String ssoUrl = "http://localhost:5678/authn-request";
   private static final String formPostUrl = "http://localhost:5678/authn-verify";
+  private static final String arUrl = "http://localhost:5678/resolve-artifact";
 
-  private final MockIdentityProvider identityProvider;
+  private final EntityDescriptor spEntity;
+  private final EntityDescriptor idpEntity;
   private final MockServiceProvider serviceProvider;
+  private final MockIdentityProvider identityProvider;
 
   public SamlSsoTest(String name) throws ServletException {
     super(name);
-    identityProvider = new MockIdentityProvider(ssoUrl, formPostUrl);
-    serviceProvider = new MockServiceProvider(spUrl, acsUrl, identityProvider, null);
+    spEntity = makeEntityDescriptor("http://google.com/enterprise/saml/common/service-provider");
+    idpEntity = makeEntityDescriptor("http://google.com/enterprise/saml/common/identity-provider");
+    identityProvider = new MockIdentityProvider(idpEntity, ssoUrl, formPostUrl, arUrl);
+    serviceProvider = new MockServiceProvider(spEntity, idpEntity, spUrl, acsUrl, identityProvider);
   }
 
   public void testInitialExchange() throws ServletException, IOException, MalformedURLException {
-    MockHttpServletRequest request1 = makeMockHttpGet(serviceProvider, uaUrl, serviceProvider.getServiceUrl());
+    MockHttpServletRequest request1 = makeMockHttpGet(serviceProvider, uaUrl, spUrl);
     MockHttpServletResponse response1 = new MockHttpServletResponse();
     logRequest(request1, "Initial request to service provider");
     serviceProvider.doGet(request1, response1);
@@ -74,7 +81,7 @@ public class SamlSsoTest extends TestCase {
     }
 
     MockHttpServletRequest request2 = makeMockHttpGet(identityProvider, uaUrl, location);
-    request2.addHeader("Referer", serviceProvider.getServiceUrl().toString());
+    request2.addHeader("Referer", spUrl);
     MockHttpServletResponse response2 = new MockHttpServletResponse();
     logRequest(request2, "Redirect to identity provider");
     identityProvider.doGet(request2, response2);

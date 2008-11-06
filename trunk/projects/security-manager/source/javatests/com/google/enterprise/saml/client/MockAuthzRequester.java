@@ -32,6 +32,7 @@ import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Subject;
 import org.opensaml.saml2.metadata.Endpoint;
+import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.ws.message.MessageContext;
 import org.opensaml.ws.message.decoder.BaseMessageDecoder;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
@@ -57,6 +58,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.ServletException;
+
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthzService;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makePdpDescriptor;
 
 /**
  * The MockAuthzRequester class implements a servlet pretending to be a SAML authorization
@@ -117,9 +121,8 @@ public class MockAuthzRequester {
   private static final ExtendedEncoder multiEncoder = new ExtendedEncoder();
   private static final ExtendedDecoder multiDecoder = new ExtendedDecoder();
 
-  public MockAuthzRequester(String serviceUrl, MockAuthzResponder responder) {
-    this.endpoint =
-        OpenSamlUtil.makeAuthzService(SAMLConstants.SAML2_SOAP11_BINDING_URI, serviceUrl);
+  public MockAuthzRequester(EntityDescriptor entity, String serviceUrl, MockAuthzResponder responder) {
+    this.endpoint = makeAuthzService(makePdpDescriptor(entity), SAMLConstants.SAML2_SOAP11_BINDING_URI, serviceUrl);
     this.responder = responder;
   }
 

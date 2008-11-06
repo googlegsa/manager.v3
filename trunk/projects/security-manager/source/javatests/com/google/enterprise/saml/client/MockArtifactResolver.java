@@ -14,7 +14,6 @@
 
 package com.google.enterprise.saml.client;
 
-import org.opensaml.saml2.metadata.ArtifactResolutionService;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
@@ -34,6 +33,4 @@ public interface MockArtifactResolver {
    * @returns An ArtifactResponse message.
    */
   public MockHttpServletResponse resolve(MockHttpServletRequest request) throws ServletException, IOException;
-
-  public ArtifactResolutionService getArtifactResolutionService();
 }
