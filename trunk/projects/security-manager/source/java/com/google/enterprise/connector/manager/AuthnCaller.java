@@ -81,7 +81,6 @@ public class AuthnCaller {
    * authentication manager may have made to pre-existing cookies. It only adds
    * the values for new cookies.
    */
-  @SuppressWarnings("unchecked")
   private void reconcileReturnedCookiesWithContext() {
     if (securityContext != null) {
       for (Object o: identity.getCookieNames()) {

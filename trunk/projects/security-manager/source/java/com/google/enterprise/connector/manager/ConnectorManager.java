@@ -33,7 +33,7 @@ import java.util.logging.Logger;
  * This functionality will eventually be merged with the connector manager's
  * {@link ProductionManager}.
  */
-public class ConnectorManager extends ProductionManager implements Manager {
+public class ConnectorManager extends ProductionManager {
 
   private static final Logger LOGGER = Logger.getLogger(ConnectorManager.class.getName());
 
@@ -58,7 +58,6 @@ public class ConnectorManager extends ProductionManager implements Manager {
    */
   public boolean authenticate(String connectorName, String username, String password,
       Map securityContext) {
-    boolean result = false;
     AuthenticationIdentity identity = new UserPassIdentity(username, password);
     AuthenticationManager authnManager = null;
     try {
