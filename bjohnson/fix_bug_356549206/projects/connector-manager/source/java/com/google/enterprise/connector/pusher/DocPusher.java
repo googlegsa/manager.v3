@@ -20,6 +20,7 @@ import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.XmlUtils;
@@ -690,9 +691,15 @@ public class DocPusher implements Pusher {
    * @param connectorName The connector name that fed this document
    */
   public void take(Document document, String connectorName)
-      throws PushException {
+      throws PushException, RepositoryException {
     String feedType = getFeedType(document);
-    InputStream xmlData = buildXmlData(document, connectorName, feedType);
+    InputStream xmlData = null;
+    try {
+      xmlData = buildXmlData(document, connectorName, feedType);
+    } catch (RuntimeException e) {
+      throw new RepositoryDocumentException(e);
+    }
+
     if (xmlData == null) {
       LOGGER.log(Level.WARNING,
           "Skipped this document for feeding, continuing");

@@ -284,7 +284,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test basic metadata representation.
    */
-  public void testSimpleDoc() throws PushException {
+  public void testSimpleDoc() throws PushException, RepositoryException {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
@@ -307,7 +307,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test minimal properties allowed for delete document.
    */
-  public void testSimpleDeleteDoc() {
+  public void testSimpleDeleteDoc() throws PushException, RepositoryException {
     Map props = new HashMap();
     Calendar cal = Calendar.getInstance();
     cal.setTimeInMillis(10 * 1000);
@@ -407,7 +407,7 @@ public class DocPusherTest extends TestCase {
    * Test displayurl.
    * @throws PushException 
    */
-  public void testDisplayUrl() throws PushException {
+  public void testDisplayUrl() throws PushException, RepositoryException {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
@@ -428,7 +428,7 @@ public class DocPusherTest extends TestCase {
    * Test special characters in metadata values.
    * @throws PushException 
    */
-  public void testSpecials() throws PushException {
+  public void testSpecials() throws PushException, RepositoryException {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\""
         // note double escaping in the line below, since this is a json string
@@ -463,7 +463,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Tests a word document.
    */
-  public void testWordDoc() throws PushException {
+  public void testWordDoc() throws PushException, RepositoryException {
     final String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"google:mimetype\":\"application/msword\""
         + ",\"contentfile\":\"testdata/mocktestdata/test.doc\""
@@ -488,7 +488,7 @@ public class DocPusherTest extends TestCase {
    * Test action.
    * @throws PushException 
    */
-  public void testAction() throws PushException {
+  public void testAction() throws PushException, RepositoryException {
     String defaultActionJson = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
       + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
       + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
@@ -651,7 +651,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test using teed feed file.
    */
-  public void testTeedFeed() throws IOException, PushException {
+  public void testTeedFeed() throws IOException, PushException, RepositoryException {
     // Setup context where the teedFeedFile is set.
     Context.refresh();
     Context context = Context.getInstance();
