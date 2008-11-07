@@ -65,7 +65,6 @@ public class SamlSsoTest extends TestCase {
   public void testInitialExchange() throws ServletException, IOException, MalformedURLException {
     MockHttpSession session = new MockHttpSession();
     MockHttpServletRequest request1 = makeMockHttpGet(serviceProvider, session, uaUrl, spUrl);
-    request1.setSession(session);
     MockHttpServletResponse response1 = new MockHttpServletResponse();
     logRequest(request1, "Initial request to service provider");
     serviceProvider.doGet(request1, response1);
@@ -81,7 +80,6 @@ public class SamlSsoTest extends TestCase {
     }
 
     MockHttpServletRequest request2 = makeMockHttpGet(identityProvider, session, uaUrl, location);
-    request2.setSession(session);
     request2.addHeader("Referer", spUrl);
     MockHttpServletResponse response2 = new MockHttpServletResponse();
     logRequest(request2, "Redirect to identity provider");
