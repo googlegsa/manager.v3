@@ -31,6 +31,7 @@ public class HttpServletResponseClientAdapter implements HTTPInTransport {
 
   private final MockHttpServletResponse response;
   private final InputStream entityStream;
+  private String httpMethod;
 
   public HttpServletResponseClientAdapter(MockHttpServletResponse response) {
     this.response = response;
@@ -90,7 +91,11 @@ public class HttpServletResponseClientAdapter implements HTTPInTransport {
   }
 
   public String getHTTPMethod() {
-    throw new UnsupportedOperationException();
+    return httpMethod;
+  }
+
+  public void setHttpMethod(String method) {
+    httpMethod = method;
   }
 
   public String getHeaderValue(String name) {
