@@ -14,6 +14,7 @@
 
 package com.google.enterprise.saml.client;
 
+import com.google.enterprise.saml.common.GettableHttpServlet;
 import com.google.enterprise.saml.common.HttpServletRequestClientAdapter;
 import com.google.enterprise.saml.common.HttpServletResponseClientAdapter;
 
@@ -51,7 +52,6 @@ import javax.servlet.http.HttpSession;
 
 import static com.google.enterprise.saml.common.GsaConstants.GSA_ARTIFACT_PARAM_NAME;
 import static com.google.enterprise.saml.common.GsaConstants.GSA_RELAY_STATE_PARAM_NAME;
-import static com.google.enterprise.saml.common.OpenSamlUtil.GOOGLE_ISSUER;
 import static com.google.enterprise.saml.common.OpenSamlUtil.GOOGLE_PROVIDER_NAME;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
@@ -67,6 +67,11 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
 import static com.google.enterprise.saml.common.SamlTestUtil.errorServletResponse;
 import static com.google.enterprise.saml.common.SamlTestUtil.htmlServletResponse;
 import static com.google.enterprise.saml.common.SamlTestUtil.initializeServletResponse;
+import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
+
+import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
@@ -78,16 +83,17 @@ import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
  * Provider that receives a service request from the user agent and initiates an authn request from
  * an identity provider.
  */
-public class MockServiceProvider extends HttpServlet {
+public class MockServiceProvider extends HttpServlet implements GettableHttpServlet {
   private static final String className = MockServiceProvider.class.getName();
   private static final Logger logger = Logger.getLogger(className);
   private static final long serialVersionUID = 1L;
+  private static final String ISSUER = "http://google.com/mock-service-provider";
 
   private final EntityDescriptor spEntity;
   private final EntityDescriptor idpEntity;
   private final String serviceUrl;
   private final String acsUrl;
-  private final MockArtifactResolver resolver;
+  private final GettableHttpServlet clientTransport;
 
   /**
    * Creates a new mock SAML service provider with the given identity provider.
@@ -96,17 +102,17 @@ public class MockServiceProvider extends HttpServlet {
    * @param idpEntity The identity provider entity.
    * @param serviceUrl The URL for the provided service.
    * @param acsUrl The URL for the assertion-consumer endpoint.
-   * @param resolver An artifact resolver instance.
+   * @param clientTransport A message-transport object.
    * @throws ServletException
    */
   public MockServiceProvider(EntityDescriptor spEntity, EntityDescriptor idpEntity,
-      String serviceUrl, String acsUrl, MockArtifactResolver resolver) throws ServletException {
+      String serviceUrl, String acsUrl, GettableHttpServlet clientTransport) throws ServletException {
     init(new MockServletConfig());
     this.spEntity = spEntity;
     this.idpEntity = idpEntity;
     this.serviceUrl = serviceUrl;
     this.acsUrl = acsUrl;
-    this.resolver = resolver;
+    this.clientTransport = clientTransport;
     makeSpSsoDescriptor(spEntity);
     makeAssertionConsumerService(spEntity.getSPSSODescriptor(SAML20P_NS),
                                  SAML2_ARTIFACT_BINDING_URI, acsUrl)
@@ -118,11 +124,11 @@ public class MockServiceProvider extends HttpServlet {
       throws ServletException, IOException {
     String url = req.getRequestURL().toString();
     if (url.startsWith(serviceUrl)) {
-      provideService(req, resp, url.substring(serviceUrl.length()));
-    } else if (url.equals(acsUrl)) {
-      consumeArtifact(req, resp);
+      provideService(req, resp, url);
+    } else if (url.startsWith(acsUrl)) {
+      consumeAssertion(req, resp);
     } else {
-      errorServletResponse(resp, HttpServletResponse.SC_NOT_FOUND);
+      errorServletResponse(resp, SC_NOT_FOUND);
     }
   }
 
@@ -133,7 +139,7 @@ public class MockServiceProvider extends HttpServlet {
     if (isAuthenticated == Boolean.TRUE) {
       ifAllowed(resp);
     } else if (isAuthenticated == Boolean.FALSE) {
-      errorServletResponse(resp, HttpServletResponse.SC_UNAUTHORIZED);
+      errorServletResponse(resp, SC_UNAUTHORIZED);
     } else {
       ifUnknown(resp, relayState);
     }
@@ -154,7 +160,7 @@ public class MockServiceProvider extends HttpServlet {
     {
       AuthnRequest authnRequest = makeAuthnRequest();
       authnRequest.setProviderName(GOOGLE_PROVIDER_NAME);
-      authnRequest.setIssuer(makeIssuer(GOOGLE_ISSUER));
+      authnRequest.setIssuer(makeIssuer(ISSUER));
       authnRequest.setIsPassive(false);
       authnRequest.setAssertionConsumerServiceIndex(
           spEntity.getSPSSODescriptor(SAML20P_NS) .getDefaultAssertionConsumerService().getIndex());
@@ -174,73 +180,82 @@ public class MockServiceProvider extends HttpServlet {
     logger.exiting(className, "ifUnknown");
   }
 
-  private void consumeArtifact(HttpServletRequest req, HttpServletResponse resp)
+  private void consumeAssertion(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
+    initializeServletResponse(resp);
+    HttpServletResponseAdapter result = new HttpServletResponseAdapter(resp, true);
     HttpSession session = req.getSession();
     String artifact = req.getParameter(GSA_ARTIFACT_PARAM_NAME);
     String relayState = req.getParameter(GSA_RELAY_STATE_PARAM_NAME);
     if (artifact == null) {
-      throw new ServletException("No artifact in request.");
+      logger.log(Level.WARNING, "No artifact in message.");
+      errorServletResponse(resp, SC_INTERNAL_SERVER_ERROR);
+      return;
     }
-    ArtifactResponse artifactResponse =
-        receiveArtifactResponse(
-            resolver.resolve(sendArtifactResolve(makeArtifactResolve(artifact),
-                                                 relayState)));
-    HttpServletResponseAdapter result = new HttpServletResponseAdapter(resp, true);
-    SAMLObject message = artifactResponse.getMessage();
+    SAMLObject message = resolveArtifact(artifact, relayState);
     if (! (message instanceof Response)) {
-      errorServletResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-    } else {
-      Response response = (Response) message;
-      String code = response.getStatus().getStatusCode().getValue();
-      if (code.equals(StatusCode.SUCCESS_URI)) {
-        Assertion assertion = response.getAssertions().get(0);
-        session.setAttribute("isAuthenticated", true);
-        session.setAttribute("verifiedIdentity", assertion.getSubject().getNameID().getValue());
-        session.setAttribute("verificationStatement",
-                             assertion.getStatements(AuthnStatement.DEFAULT_ELEMENT_NAME).get(0));
-      } else if (code.equals(StatusCode.REQUEST_DENIED_URI)) {
-        session.setAttribute("isAuthenticated", false);
-      } else if (code.equals(StatusCode.AUTHN_FAILED_URI)) {
-        // Do nothing.  The service provider will restart the authentication.
-      } else {
-        throw new ServletException("Bad <Response>:" + code);
-      }
+      logger.log(Level.WARNING, "Error from artifact resolver.");
+      errorServletResponse(resp, SC_INTERNAL_SERVER_ERROR);
+      return;
     }
-    result.sendRedirect(relayState);
+    Response response = (Response) message;
+    String code = response.getStatus().getStatusCode().getValue();
+    if (code.equals(StatusCode.SUCCESS_URI)) {
+      Assertion assertion = response.getAssertions().get(0);
+      session.setAttribute("isAuthenticated", true);
+      session.setAttribute("verifiedIdentity", assertion.getSubject().getNameID().getValue());
+      session.setAttribute("verificationStatement",
+                           assertion.getStatements(AuthnStatement.DEFAULT_ELEMENT_NAME).get(0));
+      result.sendRedirect(relayState);
+      return;
+    }
+    if (code.equals(StatusCode.REQUEST_DENIED_URI)) {
+      session.setAttribute("isAuthenticated", false);
+      result.sendRedirect(relayState);
+      return;
+    }
+    if (code.equals(StatusCode.AUTHN_FAILED_URI)) {
+      // Do nothing.  The service provider will restart the authentication.
+      result.sendRedirect(relayState);
+      return;
+    }
+    logger.log(Level.WARNING, "Unknown <Response> status: " + code);
+    errorServletResponse(resp, SC_INTERNAL_SERVER_ERROR);
   }
 
-  private MockHttpServletRequest sendArtifactResolve(ArtifactResolve request, String relayState)
-      throws ServletException {
-    SAMLMessageContext<SAMLObject, ArtifactResolve, NameID> context = makeSamlMessageContext();
-    MockHttpServletRequest req = new MockHttpServletRequest();
-    HttpServletRequestClientAdapter transport = new HttpServletRequestClientAdapter(req);
-    context.setOutboundMessageTransport(transport);
-    context.setOutboundSAMLMessage(request);
+  private SAMLObject resolveArtifact(String artifact, String relayState)
+      throws ServletException, IOException {
+    SAMLMessageContext<ArtifactResponse, ArtifactResolve, NameID> context =
+        makeSamlMessageContext();
+
+    // Select endpoint
+    initializeLocalEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS), null);
+    initializePeerEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS),
+                         ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
+    selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
+
+    MockHttpServletRequest req =
+        makeMockHttpPost(acsUrl, context.getPeerEntityEndpoint().getLocation());
+    MockHttpServletResponse resp = new MockHttpServletResponse();
+
+    HttpServletRequestClientAdapter out = new HttpServletRequestClientAdapter(req);
+    context.setOutboundMessageTransport(out);
+    {
+      ArtifactResolve request = makeArtifactResolve(artifact);
+      request.setIssuer(makeIssuer(ISSUER));
+      context.setOutboundSAMLMessage(request);
+    }
     context.setRelayState(relayState);
-
-    initializeLocalEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS), null);
-    initializePeerEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS),
-                         ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
-    selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
-
     runEncoder(new HTTPSOAP11Encoder(), context);
-    transport.finish();
-    return req;
-  }
+    out.finish();
 
-  private ArtifactResponse receiveArtifactResponse(MockHttpServletResponse response)
-      throws ServletException {
-    SAMLMessageContext<ArtifactResponse, SAMLObject, NameID> context = makeSamlMessageContext();
-    HttpServletResponseClientAdapter transport = new HttpServletResponseClientAdapter(response);
-    context.setInboundMessageTransport(transport);
+    clientTransport.doGet(req, resp);
 
-    initializeLocalEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS), null);
-    initializePeerEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS),
-                         ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
-    selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
-
+    HttpServletResponseClientAdapter in = new HttpServletResponseClientAdapter(resp);
+    in.setHttpMethod("POST");
+    context.setInboundMessageTransport(in);
     runDecoder(new HTTPSOAP11Decoder(), context);
-    return context.getInboundSAMLMessage();
+
+    return context.getInboundSAMLMessage().getMessage();
   }
 }
