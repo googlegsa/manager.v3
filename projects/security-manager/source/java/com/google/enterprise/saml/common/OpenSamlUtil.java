@@ -50,6 +50,7 @@ import org.opensaml.saml2.core.Subject;
 import org.opensaml.saml2.metadata.ArtifactResolutionService;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.AuthzService;
+import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.PDPDescriptor;
@@ -824,7 +825,7 @@ public final class OpenSamlUtil {
       EntityDescriptor entity, RoleDescriptor role, QName endpointType) {
     context.setLocalEntityId(entity.getID());
     context.setLocalEntityMetadata(entity);
-    context.setLocalEntityRole(endpointType);
+    context.setLocalEntityRole((endpointType == null) ? Endpoint.DEFAULT_ELEMENT_NAME : endpointType);
     context.setLocalEntityRoleMetadata(role);
   }
 
@@ -833,7 +834,7 @@ public final class OpenSamlUtil {
       EntityDescriptor entity, RoleDescriptor role, QName endpointType) {
     context.setPeerEntityId(entity.getID());
     context.setPeerEntityMetadata(entity);
-    context.setPeerEntityRole(endpointType);
+    context.setPeerEntityRole((endpointType == null) ? Endpoint.DEFAULT_ELEMENT_NAME : endpointType);
     context.setPeerEntityRoleMetadata(role);
   }
 
