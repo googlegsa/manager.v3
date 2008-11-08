@@ -36,14 +36,13 @@ public class HttpServletRequestClientAdapter implements HTTPOutTransport {
   private final MockHttpServletRequest request;
   private final ByteArrayOutputStream entityStream;
 
-  public HttpServletRequestClientAdapter() {
-    request = new MockHttpServletRequest();
+  public HttpServletRequestClientAdapter(MockHttpServletRequest request) {
+    this.request = request;
     entityStream = new ByteArrayOutputStream();
   }
 
-  public MockHttpServletRequest getRequest() {
+  public void finish() {
     request.setContent(entityStream.toByteArray());
-    return request;
   }
 
   public String getHTTPMethod() {
@@ -51,7 +50,6 @@ public class HttpServletRequestClientAdapter implements HTTPOutTransport {
   }
 
   public String getHeaderValue(String name) {
-    // This appears to be necessary for at least some HttpServletRequest implementations.
     if (name.equalsIgnoreCase("Content-Type")) {
       return request.getContentType();
     } else if (name.equalsIgnoreCase("Content-Length")) {
@@ -70,7 +68,11 @@ public class HttpServletRequestClientAdapter implements HTTPOutTransport {
   }
 
   public void setHeader(String name, String value) {
-    request.addHeader(name, value);
+    if (name.equalsIgnoreCase("Content-Type")) {
+      request.setContentType(value);
+    } else {
+      request.addHeader(name, value);
+    }
   }
 
   public void setStatusCode(int status) {

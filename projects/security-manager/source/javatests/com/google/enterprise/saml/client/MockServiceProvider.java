@@ -213,7 +213,8 @@ public class MockServiceProvider extends HttpServlet {
   private MockHttpServletRequest sendArtifactResolve(ArtifactResolve request, String relayState)
       throws ServletException {
     SAMLMessageContext<SAMLObject, ArtifactResolve, NameID> context = makeSamlMessageContext();
-    HttpServletRequestClientAdapter transport = new HttpServletRequestClientAdapter();
+    MockHttpServletRequest req = new MockHttpServletRequest();
+    HttpServletRequestClientAdapter transport = new HttpServletRequestClientAdapter(req);
     context.setOutboundMessageTransport(transport);
     context.setOutboundSAMLMessage(request);
     context.setRelayState(relayState);
@@ -224,7 +225,8 @@ public class MockServiceProvider extends HttpServlet {
     selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
 
     runEncoder(new HTTPSOAP11Encoder(), context);
-    return transport.getRequest();
+    transport.finish();
+    return req;
   }
 
   private ArtifactResponse receiveArtifactResponse(MockHttpServletResponse response)

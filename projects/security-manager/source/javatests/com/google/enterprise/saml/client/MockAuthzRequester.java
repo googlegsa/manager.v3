@@ -146,7 +146,8 @@ public class MockAuthzRequester {
   }
 
   private MockHttpServletRequest encodeSingleRequest(AuthzDecisionQuery request) {
-    HttpServletRequestClientAdapter transport = new HttpServletRequestClientAdapter();
+    MockHttpServletRequest req = new MockHttpServletRequest();
+    HttpServletRequestClientAdapter transport = new HttpServletRequestClientAdapter(req);
     SAMLMessageContext<SAMLObject, AuthzDecisionQuery, NameID> context =
         makeRequestContext(transport);
     context.setOutboundSAMLMessage(request);
@@ -155,7 +156,8 @@ public class MockAuthzRequester {
     } catch (MessageEncodingException e) {
       throw new RuntimeException(e);
     }
-    return transport.getRequest();
+    transport.finish();
+    return req;
   }
 
   private Response decodeSingleResponse(MockHttpServletResponse response) {
@@ -183,7 +185,8 @@ public class MockAuthzRequester {
   }
 
   private MockHttpServletRequest encodeMultipleRequests(List<AuthzDecisionQuery> requests) {
-    HttpServletRequestClientAdapter transport = new HttpServletRequestClientAdapter();
+    MockHttpServletRequest req = new MockHttpServletRequest();
+    HttpServletRequestClientAdapter transport = new HttpServletRequestClientAdapter(req);
     SAMLMessageContext<SAMLObject, AuthzDecisionQuery, NameID> context =
         makeRequestContext(transport);
     Envelope message = envelopeMultipleRequests(requests);
@@ -197,7 +200,8 @@ public class MockAuthzRequester {
     } catch (MessageEncodingException e) {
       throw new RuntimeException(e);
     }
-    return transport.getRequest();
+    transport.finish();
+    return req;
   }
 
   private Envelope envelopeMultipleRequests(List<AuthzDecisionQuery> requests) {
