@@ -22,6 +22,8 @@ import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.xml.security.credential.Credential;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+import static com.google.enterprise.saml.common.SamlTestUtil.initializeServletResponse;
+
 /**
  * HttpServletResponseClientAdapter implements an HTTPInTransport interface that can be used by the
  * OpenSAML decoders.  It takes a MockHttpServletResponse object which represents the message to be
@@ -34,6 +36,7 @@ public class HttpServletResponseClientAdapter implements HTTPInTransport {
   private String httpMethod;
 
   public HttpServletResponseClientAdapter(MockHttpServletResponse response) {
+    initializeServletResponse(response);
     this.response = response;
     entityStream = new ByteArrayInputStream(response.getContentAsByteArray());
   }
