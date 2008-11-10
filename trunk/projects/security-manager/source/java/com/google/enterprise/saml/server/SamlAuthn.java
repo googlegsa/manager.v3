@@ -99,7 +99,7 @@ public class SamlAuthn extends HttpServlet {
     PrintWriter out = htmlServletResponse(response);
     out.print("<html><head><title>Please Login</title></head><body>\n" +
               "<form action=\"" +
-              request.getRequestURL() +
+              request.getRequestURL().toString() +
               "\" method=POST>\n" +
               "User Name:<input type=text name=username><br>\n" +
               "Password:<input type=password name=password><br>\n" +
