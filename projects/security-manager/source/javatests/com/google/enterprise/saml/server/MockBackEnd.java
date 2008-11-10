@@ -31,13 +31,25 @@ import java.util.List;
 public class MockBackEnd implements BackEnd {
   
   private final SessionManagerInterface sessionManager;
+  private ArtifactResolver artifactResolver;
+  private AuthzResponder authzResponder;
 
-  public MockBackEnd(SessionManagerInterface sm) {
+  public MockBackEnd(SessionManagerInterface sm, ArtifactResolver artifactResolver, AuthzResponder authzResponder) {
     this.sessionManager = sm;
+    this.artifactResolver = artifactResolver;
+    this.authzResponder = authzResponder;
   }
 
   public SessionManagerInterface getSessionManager() {
     return sessionManager;
+  }
+
+  public ArtifactResolver getArtifactResolver() {
+    return artifactResolver;
+  }
+
+  public AuthzResponder getAuthzResponder() {
+    return authzResponder;
   }
 
   public SAMLArtifactMap getArtifactMap() {
