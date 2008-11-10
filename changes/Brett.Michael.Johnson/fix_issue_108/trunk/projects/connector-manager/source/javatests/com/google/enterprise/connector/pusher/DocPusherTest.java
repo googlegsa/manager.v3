@@ -24,6 +24,7 @@ import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
@@ -279,7 +280,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test basic metadata representation.
    */
-  public void testSimpleDoc() 
+  public void testSimpleDoc()
       throws FeedException, PushException, RepositoryException {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
@@ -389,6 +390,8 @@ public class DocPusherTest extends TestCase {
         val = Value.getStringValue((String) obj);
       } else if (obj instanceof Calendar) {
         val = Value.getDateValue((Calendar) obj);
+      } else if (obj instanceof InputStream) {
+        val = Value.getBinaryValue((InputStream) obj);
       } else {
         throw new AssertionError(obj);
       }
@@ -460,7 +463,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Tests a word document.
    */
-  public void testWordDoc() 
+  public void testWordDoc()
       throws FeedException, PushException, RepositoryException {
     final String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"google:mimetype\":\"application/msword\""
@@ -485,7 +488,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test action.
    */
-  public void testAction() 
+  public void testAction()
       throws FeedException, PushException, RepositoryException {
     String defaultActionJson = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
       + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
@@ -746,7 +749,7 @@ public class DocPusherTest extends TestCase {
    * Utility method to take the given JSON event string and feed it through a
    * DocPusher and return the resulting XML feed string.
    */
-  private String feedJsonEvent(String jsonEventString) 
+  private String feedJsonEvent(String jsonEventString)
       throws FeedException, PushException, RepositoryException {
     Document document = JcrDocumentTest.makeDocumentFromJson(jsonEventString);
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
@@ -943,4 +946,88 @@ public class DocPusherTest extends TestCase {
         + "</group>\n" + "</gsafeed>\n";
     return rawData;
   }
+
+  /**
+   * Test that lack of a required metadata field, google:docid, throws
+   * a RepositoryDocumentException.
+   */
+  public void testNoDocid()
+      throws IOException, FeedException, PushException, RepositoryException {
+    Map props = new HashMap();
+    Calendar cal = Calendar.getInstance();
+    cal.setTimeInMillis(10 * 1000);
+
+    // Supply lastmodified and content, but no docid
+    props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
+    props.put(SpiConstants.PROPNAME_MIMETYPE, "text/plain");
+    props.put(SpiConstants.PROPNAME_CONTENT, "now is the time");
+    props.put(SpiConstants.PROPNAME_CONTENTURL,
+        "http://www.comtesturl.com/test");
+    Document document = createSimpleDocument(props);
+
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection);
+    // Lack of required metadata should throw RepositoryDocumentException.
+    try {
+      dpusher.take(document, "junit");
+      fail("Expected RepositoryDocumentException, but got none.");
+    } catch (RepositoryDocumentException e) {
+      // Expected.
+    } catch (Throwable t) {
+      fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that read error on the document content stream throws
+   * a RepositoryDocumentException.
+   */
+  /*
+   * TODO: MockFeedConnection converts IOExceptions into RuntimeExceptions.
+   * This test won't work until that is fixed.
+  public void testContentReadError()
+      throws IOException, FeedException, PushException, RepositoryException {
+    Map props = new HashMap();
+    Calendar cal = Calendar.getInstance();
+    cal.setTimeInMillis(10 * 1000);
+
+    props.put(SpiConstants.PROPNAME_DOCID, "doc1");
+    props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
+    props.put(SpiConstants.PROPNAME_MIMETYPE, "text/plain");
+    props.put(SpiConstants.PROPNAME_CONTENT, new BadInputStream());
+    props.put(SpiConstants.PROPNAME_CONTENTURL,
+        "http://www.comtesturl.com/test");
+    Document document = createSimpleDocument(props);
+
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection);
+    // IO error on content should throw RepositoryDocumentException.
+    try {
+      dpusher.take(document, "junit");
+      fail("Expected RepositoryDocumentException, but got none.");
+    } catch (RepositoryDocumentException e) {
+      // Expected.
+    } catch (Throwable t) {
+      fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  // An InputStream that throws IOExceptions when read.
+  private class BadInputStream extends InputStream {
+    // Make it look like there is something to read.
+    public int available() throws IOException {
+      return 69;
+    }
+    // Override read methods, always throwing IOException
+    public int read() throws IOException {
+      throw new IOException("This stream is unreadable");
+    }
+    public int read(byte[] b) throws IOException {
+      throw new IOException("This stream is unreadable");
+    }
+    public int read(byte[] b, int o, int l) throws IOException {
+      throw new IOException("This stream is unreadable");
+    }
+  }
+  */
 }
