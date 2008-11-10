@@ -55,7 +55,6 @@ import static com.google.enterprise.saml.common.ServletUtil.errorServletResponse
 import static com.google.enterprise.saml.common.ServletUtil.htmlServletResponse;
 import static com.google.enterprise.saml.common.ServletUtil.initializeServletResponse;
 
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
@@ -70,12 +69,10 @@ public class SamlAuthn extends HttpServlet {
   private static final Logger LOGGER = Logger.getLogger(SamlAuthn.class.getName());
   private static final String SSO_SAML_CONTEXT = "ssoSamlContext";
 
-  private final String formPostUrl;
   private final EntityDescriptor spEntity;
   private final EntityDescriptor idpEntity;
 
-  public SamlAuthn(String formPostUrl, EntityDescriptor spEntity, EntityDescriptor idpEntity) {
-    this.formPostUrl = formPostUrl;
+  public SamlAuthn(EntityDescriptor spEntity, EntityDescriptor idpEntity) {
     this.spEntity = spEntity;
     this.idpEntity = idpEntity;
   }
@@ -102,7 +99,7 @@ public class SamlAuthn extends HttpServlet {
     PrintWriter out = htmlServletResponse(response);
     out.print("<html><head><title>Please Login</title></head><body>\n" +
               "<form action=\"" +
-              formPostUrl +
+              request.getRequestURL() +
               "\" method=POST>\n" +
               "User Name:<input type=text name=username><br>\n" +
               "Password:<input type=password name=password><br>\n" +
