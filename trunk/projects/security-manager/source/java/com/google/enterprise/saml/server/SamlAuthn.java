@@ -55,6 +55,7 @@ import static com.google.enterprise.saml.common.ServletUtil.errorServletResponse
 import static com.google.enterprise.saml.common.ServletUtil.htmlServletResponse;
 import static com.google.enterprise.saml.common.ServletUtil.initializeServletResponse;
 
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
@@ -66,9 +67,7 @@ import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
 public class SamlAuthn extends HttpServlet {
 
   private static final long serialVersionUID = 1L;
-  private static final Logger LOGGER =
-      Logger.getLogger(SamlAuthn.class.getName());
-  private static final String SSO_REFERRER = "ssoReferrer";
+  private static final Logger LOGGER = Logger.getLogger(SamlAuthn.class.getName());
   private static final String SSO_SAML_CONTEXT = "ssoSamlContext";
 
   private final String formPostUrl;
@@ -81,24 +80,10 @@ public class SamlAuthn extends HttpServlet {
     this.idpEntity = idpEntity;
   }
 
-  /**
-   * Eventually this method will generate a login form for the user
-   * that will then POST to a Submit handler (possibly within this same class)
-   * that then redirects back to the GSA with an artifact and the RelayState.
-   *
-   * For now, we skip the login form and redirect immediately with a dummy
-   * artifact.
-   */
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     HttpSession session = request.getSession();
-    {
-      String referrer = request.getHeader("Referer");
-      if (referrer == null) {
-      }
-      session.setAttribute(SSO_REFERRER, referrer);
-    }
 
     // Establish the SAML message context
     SAMLMessageContext<AuthnRequest, Response, NameID> context = makeSamlMessageContext();
@@ -107,11 +92,11 @@ public class SamlAuthn extends HttpServlet {
     initializePeerEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS),
                          AssertionConsumerService.DEFAULT_ELEMENT_NAME);
     selectPeerEndpoint(context, SAML2_ARTIFACT_BINDING_URI);
+    session.setAttribute(SSO_SAML_CONTEXT, context);
 
     // Decode the request
     context.setInboundMessageTransport(new HttpServletRequestAdapter(request));
     runDecoder(new HTTPRedirectDeflateDecoder(), context);
-    session.setAttribute(SSO_SAML_CONTEXT, context);
 
     // Generate the login form
     PrintWriter out = htmlServletResponse(response);
