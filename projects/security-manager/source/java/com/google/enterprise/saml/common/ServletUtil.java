@@ -14,6 +14,10 @@
 
 package com.google.enterprise.saml.common;
 
+import com.google.enterprise.connector.manager.ConnectorManager;
+import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.saml.server.BackEnd;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -22,6 +26,7 @@ import org.joda.time.format.DateTimeFormatter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -34,6 +39,11 @@ public final class ServletUtil {
 
   public static String httpDateString() {
     return dtFormat.print((new DateTime()).withZone(DateTimeZone.UTC));
+  }
+
+  public static BackEnd getBackEnd(HttpServlet servlet) {
+    return ((ConnectorManager) Context.getInstance(servlet.getServletContext()).getManager())
+        .getBackEnd();
   }
 
   public static PrintWriter htmlServletResponse(HttpServletResponse response) throws IOException {

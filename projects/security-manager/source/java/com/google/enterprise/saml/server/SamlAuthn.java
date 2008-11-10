@@ -14,9 +14,6 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.connector.manager.ConnectorManager;
-import com.google.enterprise.connector.manager.Context;
-
 import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.saml2.binding.decoding.HTTPRedirectDeflateDecoder;
 import org.opensaml.saml2.binding.encoding.HTTPArtifactEncoder;
@@ -52,6 +49,7 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
 import static com.google.enterprise.saml.common.ServletUtil.errorServletResponse;
+import static com.google.enterprise.saml.common.ServletUtil.getBackEnd;
 import static com.google.enterprise.saml.common.ServletUtil.htmlServletResponse;
 import static com.google.enterprise.saml.common.ServletUtil.initializeServletResponse;
 
@@ -117,9 +115,7 @@ public class SamlAuthn extends HttpServlet {
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     HttpSession session = request.getSession();
-    ConnectorManager manager =
-        (ConnectorManager) Context.getInstance(getServletContext()).getManager();
-    BackEnd backend = manager.getBackEnd();
+    BackEnd backend = getBackEnd(this);
 
     // Restore context and signal error if none.
     @SuppressWarnings("unchecked")
