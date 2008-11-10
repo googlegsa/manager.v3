@@ -16,12 +16,22 @@
     class="com.google.enterprise.security.manager.LocalSessionManager">
   </bean>
 
+  <bean id="ArtifactResolver"
+    class="com.google.enterprise.saml.server.ArtifactResolverImpl">
+  </bean>
+
+  <bean id="AuthzResponder"
+    class="com.google.enterprise.saml.server.AuthzResponderImpl">
+  </bean>
+
   <bean id="Instantiator"
     class="com.google.enterprise.connector.instantiator.SpringInstantiator">
     <constructor-arg><null/></constructor-arg>
   </bean>
 
 	<bean id="BackEnd"		class="com.google.enterprise.saml.server.MockBackEnd">    <constructor-arg index="0" ref="SessionManager" />
+    <constructor-arg index="1" ref="ArtifactResolver" />
+    <constructor-arg index="2" ref="AuthzResponder" />
 	</bean>
   <bean id="Monitor"
     class="com.google.enterprise.connector.monitor.HashMapMonitor" />
