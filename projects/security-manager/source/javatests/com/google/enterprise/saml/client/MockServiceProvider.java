@@ -106,7 +106,8 @@ public class MockServiceProvider extends HttpServlet implements GettableHttpServ
    * @throws ServletException
    */
   public MockServiceProvider(EntityDescriptor spEntity, EntityDescriptor idpEntity,
-      String serviceUrl, String acsUrl, GettableHttpServlet clientTransport) throws ServletException {
+      String serviceUrl, String acsUrl, GettableHttpServlet clientTransport)
+      throws ServletException {
     init(new MockServletConfig());
     this.spEntity = spEntity;
     this.idpEntity = idpEntity;

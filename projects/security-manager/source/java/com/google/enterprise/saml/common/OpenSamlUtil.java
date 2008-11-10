@@ -825,7 +825,8 @@ public final class OpenSamlUtil {
       EntityDescriptor entity, RoleDescriptor role, QName endpointType) {
     context.setLocalEntityId(entity.getID());
     context.setLocalEntityMetadata(entity);
-    context.setLocalEntityRole((endpointType == null) ? Endpoint.DEFAULT_ELEMENT_NAME : endpointType);
+    context.setLocalEntityRole(
+        (endpointType == null) ? Endpoint.DEFAULT_ELEMENT_NAME : endpointType);
     context.setLocalEntityRoleMetadata(role);
   }
 
@@ -834,7 +835,8 @@ public final class OpenSamlUtil {
       EntityDescriptor entity, RoleDescriptor role, QName endpointType) {
     context.setPeerEntityId(entity.getID());
     context.setPeerEntityMetadata(entity);
-    context.setPeerEntityRole((endpointType == null) ? Endpoint.DEFAULT_ELEMENT_NAME : endpointType);
+    context.setPeerEntityRole(
+        (endpointType == null) ? Endpoint.DEFAULT_ELEMENT_NAME : endpointType);
     context.setPeerEntityRoleMetadata(role);
   }
 

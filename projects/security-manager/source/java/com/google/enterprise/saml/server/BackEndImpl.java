@@ -60,7 +60,8 @@ public class BackEndImpl implements BackEnd {
   private final AuthzResponder authzResponder;
   private final SAMLArtifactMap artifactMap;
 
-  public BackEndImpl(SessionManagerInterface sm, ArtifactResolver artifactResolver, AuthzResponder authzResponder) {
+  public BackEndImpl(SessionManagerInterface sm, ArtifactResolver artifactResolver,
+      AuthzResponder authzResponder) {
     this.sm = sm;
     this.artifactResolver = artifactResolver;
     this.authzResponder = authzResponder;
