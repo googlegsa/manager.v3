@@ -912,4 +912,12 @@ public final class OpenSamlUtil {
       throw new ServletException(e);
     }
   }
+
+  public static String samlDateString() {
+    return samlDateString(new DateTime());
+  }
+
+  public static String samlDateString(DateTime date) {
+    return Configuration.getSAMLDateFormatter().print(date);
+  }
 }

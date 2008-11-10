@@ -40,12 +40,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeEntityDescriptor;
-import static com.google.enterprise.saml.common.SamlTestUtil.errorServletResponse;
 import static com.google.enterprise.saml.common.SamlTestUtil.generatePostContent;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpGet;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
 import static com.google.enterprise.saml.common.SamlTestUtil.servletRequestToString;
 import static com.google.enterprise.saml.common.SamlTestUtil.servletResponseToString;
+import static com.google.enterprise.saml.common.ServletUtil.errorServletResponse;
 
 import static javax.servlet.http.HttpServletResponse.SC_METHOD_NOT_ALLOWED;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
