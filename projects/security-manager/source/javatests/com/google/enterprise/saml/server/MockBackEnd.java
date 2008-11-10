@@ -34,7 +34,8 @@ public class MockBackEnd implements BackEnd {
   private ArtifactResolver artifactResolver;
   private AuthzResponder authzResponder;
 
-  public MockBackEnd(SessionManagerInterface sm, ArtifactResolver artifactResolver, AuthzResponder authzResponder) {
+  public MockBackEnd(SessionManagerInterface sm, ArtifactResolver artifactResolver,
+      AuthzResponder authzResponder) {
     this.sessionManager = sm;
     this.artifactResolver = artifactResolver;
     this.authzResponder = authzResponder;
