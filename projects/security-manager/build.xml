@@ -7,7 +7,7 @@
 
 	<!-- Define Directories. -->
 	<property name="projects.dir" value=".." />
-  <property name="install.dir" value="${projects.dir}/install" />
+	<property name="install.dir" value="${projects.dir}/install" />
 
 	<property name="COMPILE_DEBUG_FLAG" value="true" />
 	<property name="COMPILE_DEBUG_LEVEL" value="source,lines,vars" />
@@ -26,7 +26,7 @@
 	<property name="tests.todir" value="tests_outdir" />
 	<property name="tests.data" value="testdata" />
 	<property name="jar.dir" value="${dist}/jarfile" />
-  <property name="security.jarfile" value="${jar.dir}/security.jar" />
+	<property name="security.jarfile" value="${jar.dir}/security.jar" />
 	<property name="builtins.jarfile" value="${jar.dir}/builtins.jar" />
 	<property name="tests.jarfile" value="${jar.dir}/security-tests.jar" />
 	<property name="thirdparty.prod.jars" value="third-party/prod" />
@@ -87,8 +87,8 @@
 				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
 				<fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
 				<fileset dir="${connector-dist.dir}" includes="**/*.jar" />
-		    <pathelement location="${jar.dir}/cookieconnector.jar" />
-        <pathelement location="${connector-thirdparty.dir}/prod/servlet-api.jar" />
+				<pathelement location="${jar.dir}/cookieconnector.jar" />
+				<pathelement location="${connector-thirdparty.dir}/prod/servlet-api.jar" />
 				<pathelement location="${tests.classes}" />
 				<pathelement path="${java.class.path}" />
 			</classpath>
@@ -107,24 +107,24 @@
 
 	<target name="jar" depends="jar-prod,jar-tests,jar-builtins" description="Create jars for the Security Manager project" />
 
-  <target name="jar-builtins" description="Create jars for built-in connector configuration">
-    <tstamp />
-    <jar jarfile="${jar.dir}/cookieconnector.jar">
-      <fileset dir="connectorConfig/regexCookieIdentityConnector" includes="**/*.xml" />
-    </jar>
-  </target>
+	<target name="jar-builtins" description="Create jars for built-in connector configuration">
+		<tstamp />
+		<jar jarfile="${jar.dir}/cookieconnector.jar">
+			<fileset dir="connectorConfig/regexCookieIdentityConnector" includes="**/*.xml" />
+		</jar>
+	</target>
 
-  <target name="jar-prod" depends="compile" description="Create production jars for the Security Manager project">
-    <tstamp />
-    <jar jarfile="${security.jarfile}">
-      <fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**" />
-      <manifest>
-        <attribute name="Implementation-Title" value="Security Manager Impl" />
-        <attribute name="Implementation-Version" value="${version} (build ${svnversion}  ${TODAY})" />
-        <attribute name="Implementation-Vendor" value="Google Inc." />
-      </manifest>
-    </jar>
-  </target>
+	<target name="jar-prod" depends="compile" description="Create production jars for the Security Manager project">
+		<tstamp />
+		<jar jarfile="${security.jarfile}">
+			<fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**" />
+			<manifest>
+				<attribute name="Implementation-Title" value="Security Manager Impl" />
+				<attribute name="Implementation-Version" value="${version} (build ${svnversion}  ${TODAY})" />
+				<attribute name="Implementation-Vendor" value="Google Inc." />
+			</manifest>
+		</jar>
+	</target>
 
 	<target name="jar-tests" depends="compile,compile_tests" description="Create test jars for the Security Manager project">
 		<tstamp />
@@ -152,9 +152,9 @@
 	also contains all and can be deployed as-is.
 	-->
 
-  <target name="install_init">
-    <mkdir dir="${war.dir}" />
-  </target>
+	<target name="install_init">
+		<mkdir dir="${war.dir}" />
+	</target>
 
 	<target name="war" depends="war-prod,war-tests" description="Builds the Production WAR file." />
 
@@ -167,7 +167,7 @@
 			<lib file="${connector-dist.dir}/connector-spi.jar" />
 			<lib file="${connector-dist.dir}/connector.jar" />
 			<lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
-      <webinf dir="source/webdocs/prod" includes="applicationContext.xml" />
+			<webinf dir="source/webdocs/prod" includes="applicationContext.xml" />
 			<manifest>
 				<attribute name="Implementation-Title" value="Security Manager" />
 				<attribute name="Implementation-Version" value="${version} (build ${svnversion}  ${TODAY})" />
@@ -181,13 +181,13 @@
 
 		<tstamp />
 		<war warfile="${war.dir}/${ant.project.name}_debug.war" webxml="${webdocs}/test/web.xml">
-      <lib dir="${jar.dir}" includes="*.jar" />
-      <lib file="${connector-dist.dir}/connector-spi.jar" />
-      <lib file="${connector-dist.dir}/connector.jar" />
-      <lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
+			<lib dir="${jar.dir}" includes="*.jar" />
+			<lib file="${connector-dist.dir}/connector-spi.jar" />
+			<lib file="${connector-dist.dir}/connector.jar" />
+			<lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
 			<!-- above this line is all the stuff that goes in the normal prod jar, 
-	        below is the stuff that is only needed for testing -->
-      <webinf dir="source/webdocs/test" includes="applicationContext.xml" />
+			     below is the stuff that is only needed for testing -->
+			<webinf dir="source/webdocs/test" includes="applicationContext.xml" />
 			<lib dir="${thirdparty.tests.jars}" includes="*.jar" />
 			<manifest>
 				<attribute name="Implementation-Title" value="Connector Manager" />
@@ -198,15 +198,15 @@
 
 	</target>
 
-  <target name="make-install-dir">
-    <mkdir dir="${install.dir}" />
-  </target>
+	<target name="make-install-dir">
+		<mkdir dir="${install.dir}" />
+	</target>
 
-  <target name="install-security-manager" depends="security_manager,make-install-dir">
-    <mkdir dir="${install.dir}/security-manager" />
-    <copy todir="${install.dir}/security-manager" >
-      <fileset dir="dist"/>
-    </copy>
-  </target>
+	<target name="install-security-manager" depends="security_manager,make-install-dir">
+		<mkdir dir="${install.dir}/security-manager" />
+		<copy todir="${install.dir}/security-manager" >
+			<fileset dir="dist"/>
+		</copy>
+	</target>
 
 </project>
