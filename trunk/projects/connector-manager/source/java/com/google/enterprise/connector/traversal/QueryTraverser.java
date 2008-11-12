@@ -17,6 +17,7 @@ package com.google.enterprise.connector.traversal;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.pusher.FeedException;
 import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.Document;
@@ -171,6 +172,10 @@ public class QueryTraverser implements Traverser {
             // OutOfMemory state may prevent us from logging the error.
             // Don't make matters worse by rethrowing something meaningless.
           }
+        } catch (RuntimeException e) {
+          // Skip individual documents that fail.  Proceed on to the next one.
+          LOGGER.log(Level.WARNING, "Skipping document (" + docid 
+              + ") from connector " + connectorName, e);
         }
       }
     } catch (RepositoryException e) {
@@ -183,6 +188,13 @@ public class QueryTraverser implements Traverser {
       }
     } catch (PushException e) {
       LOGGER.log(Level.SEVERE, "Push Exception during traversal.", e);
+      // Drop the entire batch on the floor.  Do not call checkpoint
+      // (as there is a discrepancy between what the Connector thinks
+      // it has fed, and what actually has been pushed).
+      resultSet = null;
+      counter = Traverser.FORCE_WAIT;
+    } catch (FeedException e) {
+      LOGGER.log(Level.SEVERE, "Feed Exception during traversal.", e);
       // Drop the entire batch on the floor.  Do not call checkpoint
       // (as there is a discrepancy between what the Connector thinks
       // it has fed, and what actually has been pushed).

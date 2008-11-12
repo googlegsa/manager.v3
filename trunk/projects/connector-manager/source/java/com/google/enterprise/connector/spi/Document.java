@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc.
+// Copyright 2007-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,22 +24,27 @@ import java.util.Set;
  * names, which it can use to iterate over all properties.
  * <p>
  * Important: a Property object obtained by calling
- * <code>{@link #findProperty(String)}</code> is invalidated by the next
- * call to <code>{@link #findProperty(String)}</code>. Typically, the
+ * <code>{@link #findProperty(String)}</code> may be invalidated by the next
+ * call to <code>{@link #findProperty(String)}</code>.  Typically, the
  * caller will store the current Property in a loop variable, so that it is
- * clear that this rule is observed; see the example code below.
+ * clear that this rule is observed; see the example code below.  The
+ * caller may request a specific property multiple times with separate calls
+ * to <code>{@link #findProperty(String)}</code>.  In such a case, the
+ * implementation must return the same set of values associated with that
+ * property name.  If the caller requests a property for which the Document
+ * has no value, <code>null</code> should be returned.
  * <p>
  * The typical pattern for consuming an object that implements this
  * interface is this (disregarding exception handling):
- * 
+ *
  * <pre>
  * Document doc = ...
  * Property prop = null;
  * if ((prop = doc.findProperty(specialPropName1)) != null) {
- *   doSomethingSpecial(specialProp);
+ *   doSomethingSpecial(prop);
  * }
  * if ((prop = doc.findProperty(specialPropName2)) != null) {
- *   doSomethingElseSpecial(specialProp);
+ *   doSomethingElseSpecial(prop);
  * }
  * ... so on for other special properties as needed ...
  * for (Iterator i = doc.getPropertyNames().iterator(); i.hasNext(); ) {
@@ -54,18 +59,22 @@ public interface Document {
   /**
    * Finds a property by name. If the current document has a property then
    * that property is returned.
-   * 
+   *
    * @param name The name of the property to find
    * @return The Property, if found; <code>null</code> otherwise
    * @throws RepositoryException if a repository access error occurs
+   * @throws RepositoryDocumentException if a document has fatal
+   *         processing errors
    */
   public Property findProperty(String name) throws RepositoryException;
 
   /**
    * Gets the set of names of all Properties in this Document.
-   * 
+   *
    * @return The names, as a Set
    * @throws RepositoryException if a repository access error occurs
+   * @throws RepositoryDocumentException if a document has fatal
+   *         processing errors
    */
   public Set getPropertyNames() throws RepositoryException;
 }
