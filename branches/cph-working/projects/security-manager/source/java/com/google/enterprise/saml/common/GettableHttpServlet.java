@@ -12,30 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.security.connectors.simplecookie;
+package com.google.enterprise.saml.common;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.IOException;
 
-public class RegexCookieIdentityExtractor implements CookieIdentityExtractor {
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-  final Pattern pattern;
-  
-  public RegexCookieIdentityExtractor(String pattern) {
-    this.pattern = Pattern.compile(pattern);
-  }
-  
-  public String extract(String s) {
-    Matcher m = pattern.matcher(s);
-    if (!m.find()) {
-      return null;
-    }
-    String result = m.group(1);
-    if (result != null) {
-      return result;
-    }
-    result = m.group();
-    return null;
-  }
-
+public interface GettableHttpServlet {
+  public void doGet(HttpServletRequest req, HttpServletResponse resp)
+      throws ServletException, IOException;
 }

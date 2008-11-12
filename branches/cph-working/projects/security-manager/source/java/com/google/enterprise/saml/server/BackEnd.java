@@ -16,8 +16,10 @@ package com.google.enterprise.saml.server;
 
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
+import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.saml2.core.ArtifactResolve;
 import org.opensaml.saml2.core.ArtifactResponse;
+import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
 
@@ -37,7 +39,9 @@ public interface BackEnd {
    */
   public SessionManagerInterface getSessionManager();
 
-  public String loginRedirect(String referer, String relayState);
+  public Response validateCredentials(AuthnRequest request, String username, String password);
+
+  public SAMLArtifactMap getArtifactMap();
 
   public ArtifactResponse resolveArtifact(ArtifactResolve artifactResolve);
 

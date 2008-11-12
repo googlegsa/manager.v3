@@ -14,18 +14,49 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.connector.manager.ConnectorManager;
-import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.saml.common.GsaConstants;
+import org.opensaml.common.binding.SAMLMessageContext;
+import org.opensaml.saml2.binding.decoding.HTTPRedirectDeflateDecoder;
+import org.opensaml.saml2.binding.encoding.HTTPArtifactEncoder;
+import org.opensaml.saml2.core.AuthnRequest;
+import org.opensaml.saml2.core.NameID;
+import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.core.Status;
+import org.opensaml.saml2.core.StatusCode;
+import org.opensaml.saml2.metadata.AssertionConsumerService;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.SingleSignOnService;
+import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
+import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatusMessage;
+import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
+import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
+import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
+import static com.google.enterprise.saml.common.ServletUtil.errorServletResponse;
+import static com.google.enterprise.saml.common.ServletUtil.getBackEnd;
+import static com.google.enterprise.saml.common.ServletUtil.htmlServletResponse;
+import static com.google.enterprise.saml.common.ServletUtil.initializeServletResponse;
+
+import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+
+import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
 
 /**
  * Handler for SAML login from the Google Search Appliance.
@@ -33,36 +64,47 @@ import javax.servlet.http.HttpServletResponse;
 public class SamlAuthn extends HttpServlet {
 
   private static final long serialVersionUID = 1L;
-  private static final Logger LOGGER =
-      Logger.getLogger(SamlAuthn.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(SamlAuthn.class.getName());
+  private static final String SSO_SAML_CONTEXT = "ssoSamlContext";
 
-  /**
-   * Eventually this method will generate a login form for the user
-   * that will then POST to a Submit handler (possibly within this same class)
-   * that then redirects back to the GSA with an artifact and the RelayState.
-   *
-   * For now, we skip the login form and redirect immediately with a dummy
-   * artifact.
-   */
+  private final EntityDescriptor spEntity;
+  private final EntityDescriptor idpEntity;
+
+  public SamlAuthn(EntityDescriptor spEntity, EntityDescriptor idpEntity) {
+    this.spEntity = spEntity;
+    this.idpEntity = idpEntity;
+  }
+
   @Override
-  public void doGet(HttpServletRequest request,
-                    HttpServletResponse response)
-      throws IOException {
-    String gsaUrlString = request.getHeader("Referer").substring(
-        0, request.getHeader("Referer").indexOf("search?"));    
-    response.setContentType("text/html");
+  public void doGet(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    HttpSession session = request.getSession();
 
-    LOGGER.info("gsaUrlString: " + gsaUrlString);
+    // Establish the SAML message context
+    SAMLMessageContext<AuthnRequest, Response, NameID> context = makeSamlMessageContext();
+    initializeLocalEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS),
+                          SingleSignOnService.DEFAULT_ELEMENT_NAME);
+    initializePeerEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS),
+                         AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+    selectPeerEndpoint(context, SAML2_ARTIFACT_BINDING_URI);
+    session.setAttribute(SSO_SAML_CONTEXT, context);
 
-    String formHtml = "<html>\n<head>\n"
-        +  "<title>Please Login</title>\n</head>\n" + "<body>\n"
-        + "<form action=\"" + request.getRequestURI() + "?Referer="
-        + gsaUrlString + "&" + request.getQueryString() +"\" method=POST>\n"
-        + "User Name: " + "<input type=text size=20 name=username><br>\n"
-        + "Password: " + "<input type=text size=20 name=password><br>\n"
-        + "<input type=submit>\n" + "</form>\n</body>\n</html>";
+    // Decode the request
+    context.setInboundMessageTransport(new HttpServletRequestAdapter(request));
+    runDecoder(new HTTPRedirectDeflateDecoder(), context);
 
-    response.getWriter().print(formHtml);
+    // Generate the login form
+    PrintWriter out = htmlServletResponse(response);
+    out.print("<html><head><title>Please Login</title></head><body>\n" +
+              "<form action=\"" +
+              request.getRequestURL().toString() +
+              "\" method=POST>\n" +
+              "User Name:<input type=text name=username><br>\n" +
+              "Password:<input type=password name=password><br>\n" +
+              "<input type=submit>\n" +
+              "</form>\n" +
+              "</body></html>\n");
+    out.close();
   }
 
   /**
@@ -70,49 +112,39 @@ public class SamlAuthn extends HttpServlet {
    * SAML artifact.
    */
   @Override
-  public void doPost(HttpServletRequest request,
-                     HttpServletResponse response)
-      throws IOException {
-    handlePost(request, response);
-  }
-  
-  /**
-   * Redirect the GETTER back to the referring service with a generated
-   * artifact and the provided RelayState.
-   */
-  private void handlePost(HttpServletRequest request,
-                          HttpServletResponse response) throws IOException {
-    response.setContentType("text/html");
-    response.setCharacterEncoding("UTF-8");
-    PrintWriter out = response.getWriter();
+  public void doPost(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    HttpSession session = request.getSession();
+    BackEnd backend = getBackEnd(this);
 
+    // Restore context and signal error if none.
+    @SuppressWarnings("unchecked")
+    SAMLMessageContext<AuthnRequest, Response, NameID> context =
+        (SAMLMessageContext<AuthnRequest, Response, NameID>) session.getAttribute(SSO_SAML_CONTEXT);
+    if (context == null) {
+      LOGGER.log(Level.WARNING, "Unable to get identity provider message context.");
+      errorServletResponse(response, SC_INTERNAL_SERVER_ERROR);
+      return;
+    }
+
+    // Get credentials and confirm they are present
     String username = request.getParameter("username");
     String password = request.getParameter("password");
-    if (username.length() < 1 || password.length() < 1) {
-      out.println("<title>Error</title>");
-      out.println("No user name or password entered");
-      out.close();
-      return;
+    if ((username == null) || (password == null)) {
+      LOGGER.log(Level.WARNING, "Missing required POST parameter(s)");
+      Status status = makeStatus(StatusCode.REQUESTER_URI);
+      status.setStatusMessage(makeStatusMessage("Missing required POST parameter(s)"));
+      context.setOutboundSAMLMessage(makeResponse(context.getInboundSAMLMessage(), status));
+    } else {
+      context.setOutboundSAMLMessage(
+          backend.validateCredentials(context.getInboundSAMLMessage(), username, password));
     }
 
-    ServletContext servletContext = this.getServletContext();
-    ConnectorManager manager = (ConnectorManager) Context.getInstance(servletContext).getManager();
-    BackEnd backend = manager.getBackEnd();
-
-    // TODO: implement user look-up
-    String redirectUrl = backend.loginRedirect(
-        request.getParameter("Referer"),
-        request.getParameter(GsaConstants.GSA_RELAY_STATE_PARAM_NAME));
-
-    if (redirectUrl == null) {
-      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-      response.sendError(404);
-      return;
-    }
-    
-    response.setStatus(HttpServletResponse.SC_FOUND);
-    response.sendRedirect(redirectUrl);
-
+    // Encode the response message
+    initializeServletResponse(response);
+    context.setOutboundMessageTransport(new HttpServletResponseAdapter(response, true));
+    HTTPArtifactEncoder encoder = new HTTPArtifactEncoder(null, null, backend.getArtifactMap());
+    encoder.setPostEncoding(false);
+    runEncoder(encoder, context);
   }
-  
 }
