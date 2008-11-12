@@ -29,26 +29,21 @@ import junit.framework.TestCase;
 import javax.jcr.query.QueryManager;
 
 public class MockPusherTest extends TestCase {
-  public void testSimple() throws RepositoryException {
+  public void testSimple() throws Exception {
     MockRepositoryEventList mrel = new MockRepositoryEventList(
         "MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
     TraversalManager qtm = new JcrTraversalManager(qm);
-
     MockPusher pusher = new MockPusher(System.out);
-
-    {
-      DocumentList documentList = qtm.startTraversal();
-
-      int counter = 0;
-      Document document = null;
-      while ((document = documentList.nextDocument()) != null) {
-        pusher.take(document, "junit");
-        counter++;
-      }
-      Assert.assertEquals(4, counter);
-      Assert.assertEquals(4, pusher.getTotalDocs());
+    DocumentList documentList = qtm.startTraversal();
+    int counter = 0;
+    Document document = null;
+    while ((document = documentList.nextDocument()) != null) {
+      pusher.take(document, "junit");
+      counter++;
     }
+    Assert.assertEquals(4, counter);
+    Assert.assertEquals(4, pusher.getTotalDocs());
   }
 }

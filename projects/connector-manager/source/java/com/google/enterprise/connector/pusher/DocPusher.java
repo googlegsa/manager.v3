@@ -20,6 +20,7 @@ import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
@@ -61,7 +62,7 @@ public class DocPusher implements Pusher {
       Logger.getLogger(DocPusher.class.getName());
   private static final Logger FEED_WRAPPER_LOGGER =
       Logger.getLogger(LOGGER.getName() + ".FEED_WRAPPER");
-  private static final Logger FEED_LOGGER = 
+  private static final Logger FEED_LOGGER =
       Logger.getLogger(FEED_WRAPPER_LOGGER.getName() + ".FEED");
   private static final Level FEED_LOG_LEVEL = Level.FINER;
 
@@ -140,7 +141,7 @@ public class DocPusher implements Pusher {
   }
 
   private static InputStream stringWrappedInputStream(String prefix,
-      InputStream is, String suffix) {
+      InputStream is, String suffix)  throws RepositoryException {
     InputStream result = null;
 
     try {
@@ -160,6 +161,7 @@ public class DocPusher implements Pusher {
       result = new SequenceInputStream(inputStreamEnum);
     } catch (UnsupportedEncodingException e) {
       LOGGER.log(Level.SEVERE, "Encoding error.", e);
+      throw new RepositoryDocumentException("Encoding error.", e);
     }
     return result;
   }
@@ -169,7 +171,8 @@ public class DocPusher implements Pusher {
    */
   private InputStream xmlWrapRecord(String searchUrl, String displayUrl,
       String lastModified, InputStream content, String mimetype,
-      ActionType actionType, Document document, String feedType) {
+      ActionType actionType, Document document, String feedType)
+      throws RepositoryException {
     boolean metadataAllowed = true;
     boolean contentAllowed = true;
     // build prefix
@@ -297,7 +300,7 @@ public class DocPusher implements Pusher {
         continue;
       }
       try {
-        if (SpiConstants.PROPNAME_ACLGROUPS.equals(name) || 
+        if (SpiConstants.PROPNAME_ACLGROUPS.equals(name) ||
             SpiConstants.PROPNAME_ACLUSERS.equals(name)) {
           property = processAclProperty(name, document);
         } else {
@@ -315,7 +318,7 @@ public class DocPusher implements Pusher {
 
   /**
    * Utility function to convert a set of document properties that look like:
-   * <pre> 
+   * <pre>
    *   google:aclusers=[joe, mary, admin]
    *   google:user:roles:joe=[reader]
    *   google:user:roles:mary=[reader, writer]
@@ -459,7 +462,7 @@ public class DocPusher implements Pusher {
    * Gets the String value for a given property.
    */
   private static String getStringAndThrow(Document document, String name)
-      throws IllegalArgumentException, RepositoryException {
+      throws RepositoryException {
     String result = null;
     ValueImpl v = getValueAndThrow(document, name);
     if (v == null) {
@@ -487,9 +490,7 @@ public class DocPusher implements Pusher {
       try {
         bytes = s.getBytes("UTF-8");
       } catch (UnsupportedEncodingException e) {
-        e.printStackTrace();
-        result = null;
-        return result;
+        throw new RepositoryDocumentException("Encoding error." , e);
       }
       result = new ByteArrayInputStream(bytes);
     }
@@ -498,9 +499,7 @@ public class DocPusher implements Pusher {
 
   private static ValueImpl getValueAndThrow(Document document, String name)
       throws RepositoryException {
-    ValueImpl v = null;
-    v = (ValueImpl) Value.getSingleValue(document, name);
-    return v;
+    return (ValueImpl) Value.getSingleValue(document, name);
   }
 
   /*
@@ -523,23 +522,14 @@ public class DocPusher implements Pusher {
   /*
    * Gets the value for a given property.
    */
-  private static String getRequiredString(Document document, String name) {
+  private static String getRequiredString(Document document, String name)
+      throws RepositoryException {
     String result = null;
-    try {
-      result = getStringAndThrow(document, name);
-      if (result == null) {
-        LOGGER.log(Level.WARNING, "Document missing required property " + name);
-        throw new RuntimeException("Document missing required property " 
-            + name);
-      }
-    } catch (IllegalArgumentException e) {
-      LOGGER.log(Level.WARNING,
-          "Catching exception, rethrowing as RuntimeException", e);
-      throw new RuntimeException(e);
-    } catch (RepositoryException e) {
-      LOGGER.log(Level.WARNING,
-          "Catching exception, rethrowing as RuntimeException", e);
-      throw new RuntimeException(e);
+    result = getStringAndThrow(document, name);
+    if (result == null) {
+      LOGGER.log(Level.WARNING, "Document missing required property " + name);
+      throw new RepositoryDocumentException(
+          "Document missing required property " + name);
     }
     return result;
   }
@@ -565,7 +555,7 @@ public class DocPusher implements Pusher {
    * Builds the xml string for a given document.
    */
   protected InputStream buildXmlData(Document document, String connectorName,
-      String feedType) {
+      String feedType) throws RepositoryException {
     // build prefix
     StringBuffer prefix = new StringBuffer();
     prefix.append(XML_START);
@@ -599,9 +589,8 @@ public class DocPusher implements Pusher {
           new URL(searchurl);
         }
       } catch (MalformedURLException e) {
-        LOGGER.warning("Supplied search url " + searchurl + " is malformed: "
-            + e.getMessage());
-        return null;
+        throw new RepositoryDocumentException(
+            "Supplied search url " + searchurl + " is malformed.", e);
       }
     } else {
       String docid = getRequiredString(document, SpiConstants.PROPNAME_DOCID);
@@ -668,7 +657,7 @@ public class DocPusher implements Pusher {
 
     if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
       ((StringBuffer) feedLogRecord.get()).append(suffix);
-      FEED_LOGGER.log(FEED_LOG_LEVEL, 
+      FEED_LOGGER.log(FEED_LOG_LEVEL,
           ((StringBuffer) feedLogRecord.get()).toString());
       feedLogRecord.set(null);
     }
@@ -689,19 +678,19 @@ public class DocPusher implements Pusher {
    *
    * @param contentStream from the feed item
    * @return an InputStream which is guaranteed to be non-null.
-   * @throws RuntimeException if the DEFAULT_CONTENT string above cannot be
-   *         UTF-8-encoded into a ByteArrayInputStream.
+   * @throws RepositoryDocumentException if the DEFAULT_CONTENT string above
+   *         cannot be UTF-8-encoded into a ByteArrayInputStream.
    */
-  private static InputStream getNonNullContentStream(InputStream contentStream) {
+  private static InputStream getNonNullContentStream(InputStream contentStream)
+    throws RepositoryException {
     InputStream output = contentStream;
     try {
       if (contentStream == null) {
         output = new ByteArrayInputStream(DEFAULT_CONTENT.getBytes("UTF-8"));
       }
     } catch (IOException e) {
-      LOGGER.log(Level.SEVERE, "IO error.", e);
-      throw new RuntimeException("failed to create default content stream:"
-          + e.toString());
+      throw new RepositoryDocumentException(
+          "Failed to create default content stream: " + e.toString());
     }
     return output;
   }
@@ -764,11 +753,21 @@ public class DocPusher implements Pusher {
    *
    * @param document Document corresponding to the document.
    * @param connectorName The connector name that fed this document
+   * @throws PushException if Pusher problem
+   * @throws FeedException if transient Feed problem
+   * @throws RepositoryDocumentException if fatal Document problem
+   * @throws RepositoryException if transient Repository problem
    */
   public void take(Document document, String connectorName)
-      throws PushException {
-    String feedType = getFeedType(document);
-    InputStream xmlData = buildXmlData(document, connectorName, feedType);
+      throws PushException, FeedException, RepositoryException {
+    String feedType = null;
+    InputStream xmlData = null;
+    try {
+      feedType = getFeedType(document);
+      xmlData = buildXmlData(document, connectorName, feedType);
+    } catch (RuntimeException e) {
+      throw new RepositoryDocumentException(e);
+    }
     if (xmlData == null) {
       LOGGER.log(Level.WARNING,
           "Skipped this document for feeding, continuing");
@@ -804,12 +803,9 @@ public class DocPusher implements Pusher {
       }
       if (LOGGER.isLoggable(Level.FINER)) {
         LOGGER.finer("Document "
-            + getRequiredString(document, SpiConstants.PROPNAME_DOCID) 
+            + getRequiredString(document, SpiConstants.PROPNAME_DOCID)
             + " from connector " + connectorName + " sent.");
       }
-    } catch (FeedException e) {
-      LOGGER.log(Level.WARNING, "Rethrowing FeedException as PushException", e);
-      throw new PushException("FeedException: " + e.getMessage(), e);
     } finally {
       try {
         xmlData.close();
