@@ -22,7 +22,7 @@ import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.xml.security.credential.Credential;
 import org.springframework.mock.web.MockHttpServletResponse;
 
-import static com.google.enterprise.saml.common.ServletUtil.initializeServletResponse;
+import static com.google.enterprise.saml.common.SamlTestUtil.initializeServletResponse;
 
 /**
  * HttpServletResponseClientAdapter implements an HTTPInTransport interface that can be used by the

@@ -16,10 +16,8 @@ package com.google.enterprise.saml.server;
 
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
-import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.saml2.core.ArtifactResolve;
 import org.opensaml.saml2.core.ArtifactResponse;
-import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
 
@@ -31,33 +29,16 @@ import java.util.List;
 public class MockBackEnd implements BackEnd {
   
   private final SessionManagerInterface sessionManager;
-  private ArtifactResolver artifactResolver;
-  private AuthzResponder authzResponder;
 
-  public MockBackEnd(SessionManagerInterface sm, ArtifactResolver artifactResolver,
-      AuthzResponder authzResponder) {
+  public MockBackEnd(SessionManagerInterface sm) {
     this.sessionManager = sm;
-    this.artifactResolver = artifactResolver;
-    this.authzResponder = authzResponder;
   }
 
   public SessionManagerInterface getSessionManager() {
     return sessionManager;
   }
 
-  public ArtifactResolver getArtifactResolver() {
-    return artifactResolver;
-  }
-
-  public AuthzResponder getAuthzResponder() {
-    return authzResponder;
-  }
-
-  public SAMLArtifactMap getArtifactMap() {
-    throw new UnsupportedOperationException("Unimplemented method.");
-  }
-
-  public Response validateCredentials(AuthnRequest request, String username, String password) {
+  public String loginRedirect(String referer, String relayState) {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
 
@@ -68,4 +49,6 @@ public class MockBackEnd implements BackEnd {
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
+
+
 }

@@ -26,6 +26,5 @@ import javax.servlet.ServletException;
  * communicates with an object of this type.
  */
 public interface MockAuthzResponder {
-  public MockHttpServletResponse decide(MockHttpServletRequest request)
-      throws ServletException, IOException;
+  public MockHttpServletResponse decide(MockHttpServletRequest request) throws ServletException, IOException;
 }
