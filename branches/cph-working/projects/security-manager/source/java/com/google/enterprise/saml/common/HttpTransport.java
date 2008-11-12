@@ -12,26 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.saml.client;
-
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
+package com.google.enterprise.saml.common;
 
 import java.io.IOException;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-/**
- * The MockArtifactResolver interface models a SAML artifact-resolution service.
- * MockArtifactConsumer communicates with an object of this type.
- */
-public interface MockArtifactResolver {
-  /**
-   * Processes a SAML ArtifactResolve message.
-   *
-   * @param request The ArtifactResolve message to be processed.
-   * @returns An ArtifactResponse message.
-   */
-  public MockHttpServletResponse resolve(MockHttpServletRequest request)
+public interface HttpTransport {
+  public void exchange(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException;
 }

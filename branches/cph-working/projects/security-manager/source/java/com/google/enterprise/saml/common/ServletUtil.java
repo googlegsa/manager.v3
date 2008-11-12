@@ -26,7 +26,7 @@ import org.joda.time.format.DateTimeFormatter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import javax.servlet.http.HttpServlet;
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -41,9 +41,8 @@ public final class ServletUtil {
     return dtFormat.print((new DateTime()).withZone(DateTimeZone.UTC));
   }
 
-  public static BackEnd getBackEnd(HttpServlet servlet) {
-    return ((ConnectorManager) Context.getInstance(servlet.getServletContext()).getManager())
-        .getBackEnd();
+  public static BackEnd getBackEnd(ServletContext sc) {
+    return ((ConnectorManager) Context.getInstance(sc).getManager()).getBackEnd();
   }
 
   public static PrintWriter htmlServletResponse(HttpServletResponse response) throws IOException {

@@ -16,55 +16,90 @@ package com.google.enterprise.saml.server;
 
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
+import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
-import org.opensaml.saml2.core.ArtifactResolve;
-import org.opensaml.saml2.core.ArtifactResponse;
+import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
+import org.opensaml.saml2.core.Assertion;
+import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.core.Status;
+import org.opensaml.saml2.core.StatusCode;
+import org.opensaml.util.storage.MapBasedStorageService;
+import org.opensaml.xml.parse.BasicParserPool;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertion;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnStatement;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatusMessage;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeSubject;
 
 /**
  * Simple mock saml server Backend for testing.
  */
 public class MockBackEnd implements BackEnd {
-  
-  private final SessionManagerInterface sessionManager;
-  private ArtifactResolver artifactResolver;
-  private AuthzResponder authzResponder;
+  private static final Logger LOGGER = Logger.getLogger(MockBackEnd.class.getName());
+  private static final int artifactLifetime = 600000;  // ten minutes
 
-  public MockBackEnd(SessionManagerInterface sm, ArtifactResolver artifactResolver,
-      AuthzResponder authzResponder) {
+  private final SessionManagerInterface sessionManager;
+  private final SAMLArtifactMap artifactMap;
+
+  /**
+   * Create a new backend object.
+   * 
+   * @param sm The session manager to use.
+   * @param authzResponder The authorization responder to use.
+   */
+  public MockBackEnd(SessionManagerInterface sm, AuthzResponder authzResponder) {
     this.sessionManager = sm;
-    this.artifactResolver = artifactResolver;
-    this.authzResponder = authzResponder;
+    artifactMap = new BasicSAMLArtifactMap(
+        new BasicParserPool(),
+        new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
+        artifactLifetime);
   }
 
+  /** {@inheritDoc} */
   public SessionManagerInterface getSessionManager() {
     return sessionManager;
   }
 
-  public ArtifactResolver getArtifactResolver() {
-    return artifactResolver;
-  }
-
-  public AuthzResponder getAuthzResponder() {
-    return authzResponder;
-  }
-
+  /** {@inheritDoc} */
   public SAMLArtifactMap getArtifactMap() {
-    throw new UnsupportedOperationException("Unimplemented method.");
+    return artifactMap;
   }
 
+  /** {@inheritDoc} */
   public Response validateCredentials(AuthnRequest request, String username, String password) {
-    throw new UnsupportedOperationException("Unimplemented method.");
+    Status status = makeStatus();
+    Response response = makeResponse(request, status);
+    if (areCredentialsValid(username, password)) {
+      LOGGER.log(Level.INFO, "Authenticated successfully as " + username);
+      status.getStatusCode().setValue(StatusCode.SUCCESS_URI);
+      Assertion assertion = makeAssertion(makeIssuer(SM_ISSUER), makeSubject(username));
+      assertion.getAuthnStatements().add(makeAuthnStatement(AuthnContext.IP_PASSWORD_AUTHN_CTX));
+      response.getAssertions().add(assertion);
+    } else {
+      LOGGER.log(Level.INFO, "Authentication failed");
+      status.getStatusCode().setValue(StatusCode.REQUEST_DENIED_URI);
+      status.setStatusMessage(makeStatusMessage("Authentication failed"));
+    }
+    return response;
   }
 
-  public ArtifactResponse resolveArtifact(ArtifactResolve artifactResolve) {
-    throw new UnsupportedOperationException("Unimplemented method.");
+  // trivial implementation
+  private boolean areCredentialsValid(String username, String password) {
+    return "joe".equals(username) && "plumber".equals(password);
   }
 
+  /** {@inheritDoc} */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     throw new UnsupportedOperationException("Unimplemented method.");
   }

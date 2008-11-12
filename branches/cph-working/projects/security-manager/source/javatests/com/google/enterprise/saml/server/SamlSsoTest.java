@@ -14,68 +14,82 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.saml.client.MockArtifactConsumer;
 import com.google.enterprise.saml.client.MockServiceProvider;
-import com.google.enterprise.saml.common.GettableHttpServlet;
-import com.google.enterprise.saml.common.PostableHttpServlet;
+import com.google.enterprise.saml.client.MockUserAgent;
+import com.google.enterprise.saml.common.MockHttpTransport;
 
 import junit.framework.TestCase;
 
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.IDPSSODescriptor;
+import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.mock.web.MockHttpSession;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
+import static com.google.enterprise.saml.common.OpenSamlUtil.GSA_ISSUER;
+import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResolutionService;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertionConsumerService;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeEntityDescriptor;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeIdpSsoDescriptor;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeSingleSignOnService;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeSpSsoDescriptor;
 import static com.google.enterprise.saml.common.SamlTestUtil.generatePostContent;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpGet;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
-import static com.google.enterprise.saml.common.SamlTestUtil.servletRequestToString;
-import static com.google.enterprise.saml.common.SamlTestUtil.servletResponseToString;
-import static com.google.enterprise.saml.common.ServletUtil.errorServletResponse;
 
-import static javax.servlet.http.HttpServletResponse.SC_METHOD_NOT_ALLOWED;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
-public class SamlSsoTest extends TestCase implements GettableHttpServlet {
-  private static final Logger logger = Logger.getLogger(SamlSsoTest.class.getName());
+import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
 
-  private static final String uaUrl = "http://localhost/";
+public class SamlSsoTest extends TestCase {
+
   private static final String spUrl = "http://localhost:1234/provide-service";
   private static final String acsUrl = "http://localhost:1234/consume-assertion";
-  private static final String ssoUrl = "http://localhost:5678/authn-request";
-  private static final String formPostUrl = "http://localhost:5678/authn-verify";
+  private static final String ssoUrl = "http://localhost:5678/authn";
   private static final String arUrl = "http://localhost:5678/resolve-artifact";
 
-  private final EntityDescriptor spEntity;
-  private final EntityDescriptor idpEntity;
-  private final MockServiceProvider serviceProvider;
-  private final MockIdentityProvider identityProvider;
-  final DnsResolver dnsResolver;
+  private final MockHttpTransport transport;
+  private final MockUserAgent userAgent;
 
   public SamlSsoTest(String name) throws ServletException {
     super(name);
-    spEntity = makeEntityDescriptor("http://google.com/enterprise/saml/common/service-provider");
-    idpEntity = makeEntityDescriptor("http://google.com/enterprise/saml/common/identity-provider");
-    serviceProvider = new MockServiceProvider(spEntity, idpEntity, spUrl, acsUrl, this);
-    identityProvider = new MockIdentityProvider(idpEntity, spEntity, ssoUrl, formPostUrl, arUrl);
-    dnsResolver = new DnsResolver();
-    dnsResolver.addEntry("localhost:1234", serviceProvider);
-    dnsResolver.addEntry("localhost:5678", identityProvider);
+
+    Context.getInstance().setStandaloneContext(
+        "source/webdocs/prod/applicationContext.xml",
+        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
+
+    // Build metadata for security manager
+    EntityDescriptor smEntity = makeEntityDescriptor(SM_ISSUER);
+    IDPSSODescriptor idp = makeIdpSsoDescriptor(smEntity);
+    makeSingleSignOnService(idp, SAML2_REDIRECT_BINDING_URI, ssoUrl);
+    makeArtifactResolutionService(idp, SAML2_SOAP11_BINDING_URI, arUrl).setIsDefault(true);
+
+    // Build metadata for GSA
+    EntityDescriptor gsaEntity = makeEntityDescriptor(GSA_ISSUER);
+    SPSSODescriptor sp = makeSpSsoDescriptor(gsaEntity);
+    makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI, acsUrl).setIsDefault(true);
+
+    // Initialize transport
+    transport = new MockHttpTransport();
+    userAgent = new MockUserAgent(transport);
+
+    transport.registerServlet(spUrl, new MockServiceProvider(gsaEntity, smEntity));
+    transport.registerServlet(acsUrl, new MockArtifactConsumer(gsaEntity, smEntity, transport));
+    transport.registerServlet(ssoUrl, new SamlAuthn(smEntity, gsaEntity));
+    transport.registerServlet(arUrl, new SamlArtifactResolve(smEntity, gsaEntity));
   }
 
   public void testGoodCredentials() throws ServletException, IOException, MalformedURLException {
@@ -90,114 +104,26 @@ public class SamlSsoTest extends TestCase implements GettableHttpServlet {
 
   private MockHttpServletResponse tryCredentials(String username, String password)
       throws ServletException, IOException, MalformedURLException {
-    UserAgent agent = new UserAgent();
 
     // Initial request to service provider
-    MockHttpServletResponse response1 = agent.send(makeMockHttpGet(uaUrl, spUrl));
+    MockHttpServletResponse response1 = userAgent.exchange(makeMockHttpGet(null, spUrl));
 
     // Parse credentials-gathering form
     assertEquals("Incorrect response status code", SC_OK, response1.getStatus());
     HtmlCleaner cleaner = new HtmlCleaner();
     TagNode[] forms = cleaner.clean(response1.getContentAsString()).getElementsByName("form", true);
     assertEquals("Wrong number of forms in response", 1, forms.length);
-    {
-      String method = forms[0].getAttributeByName("method");
-      assertNotNull("<form> missing method attribute", method);
-      assertTrue("<form> method not POST", "POST".equalsIgnoreCase(method));
-    }
+    String method = forms[0].getAttributeByName("method");
+    assertNotNull("<form> missing method attribute", method);
+    assertTrue("<form> method not POST", "POST".equalsIgnoreCase(method));
     String action = forms[0].getAttributeByName("action");
     assertNotNull("<form> missing action attribute", action);
 
     // Submit credentials-gathering form
-    MockHttpServletRequest request2 = makeMockHttpPost(uaUrl, action);
+    MockHttpServletRequest request2 = makeMockHttpPost(null, action);
     request2.addParameter("username", username);
     request2.addParameter("password", password);
     generatePostContent(request2);
-    return agent.send(request2);
-  }
-
-  private final class UserAgent {
-    private MockHttpSession session;
-    private String referrer;
-
-    UserAgent() {
-      session = new MockHttpSession();
-      referrer = null;
-    }
-
-    MockHttpServletResponse send(MockHttpServletRequest request)
-        throws IOException, ServletException {
-      request.setSession(session);
-      if (referrer != null) {
-        request.addHeader("Referer", referrer);
-      }
-      referrer = request.getRequestURL().toString();
-      MockHttpServletResponse response = new MockHttpServletResponse();
-      doGet(request, response);
-      while (isRedirect(response)) {
-        String location = redirectLocation(response);
-        request = makeMockHttpGet(uaUrl, location);
-        request.setSession(session);
-        request.addHeader("Referer", referrer);
-        response = new MockHttpServletResponse();
-        doGet(request, response);
-        referrer = location;
-      }
-      return response;
-    }
-
-    private boolean isRedirect(MockHttpServletResponse response) {
-      int status = response.getStatus();
-      return (status == 303) || (status == 302);
-    }
-
-    private String redirectLocation(MockHttpServletResponse response) {
-      String location = (String) response.getHeader("Location");
-      assertNotNull("No Location header in response", location);
-      return location;
-    }
-  }
-
-  private final class DnsResolver {
-    private final Map<String, HttpServlet> table;
-
-    DnsResolver() {
-      table = new HashMap<String, HttpServlet>();
-    }
-
-    void addEntry(String hostPort, HttpServlet servlet) {
-      table.put(hostPort, servlet);
-    }
-
-    HttpServlet getServlet(String hostPort) {
-      return table.get(hostPort);
-    }
-    
-  }
-
-  public void doGet(HttpServletRequest req, HttpServletResponse resp)
-      throws IOException, ServletException {
-    String hostPort = req.getHeader("Host");
-    assertNotNull("Request missing Host header.", hostPort);
-    HttpServlet servlet = dnsResolver.getServlet(hostPort);
-    assertNotNull("Unknown host: " + hostPort, servlet);
-    logRequest(req, servlet.getClass().getName());
-    if ("GET".equals(req.getMethod())) {
-      ((GettableHttpServlet) servlet).doGet(req, resp);
-    } else if ("POST".equals(req.getMethod())) {
-      ((PostableHttpServlet) servlet).doPost(req, resp);
-    } else {
-      errorServletResponse(resp, SC_METHOD_NOT_ALLOWED);
-    }
-    logResponse(resp, servlet.getClass().getName());
-  }
-
-  void logRequest(HttpServletRequest request, String tag) throws IOException {
-    logger.log(Level.INFO, "Request: " + servletRequestToString(request, tag));
-  }
-
-  void logResponse(HttpServletResponse response, String tag) throws IOException {
-    logger.log(Level.INFO,
-               "Response: " + servletResponseToString((MockHttpServletResponse) response, tag));
+    return userAgent.exchange(request2);
   }
 }
