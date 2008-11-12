@@ -14,6 +14,8 @@
 
 package com.google.enterprise.saml.common;
 
+import org.joda.time.DateTime;
+import org.opensaml.Configuration;
 import org.opensaml.util.URLBuilder;
 import org.opensaml.xml.util.Pair;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -28,54 +30,41 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
-import java.util.TimeZone;
 
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 /**
  * Useful utilities for SAML testing.
  */
 public final class SamlTestUtil {
 
-  private final static DateFormat httpDateFormat =
-      new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
-  static {
-    httpDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-  }
-
-  public static MockHttpServletRequest makeMockHttpGet(HttpServlet servlet, HttpSession session,
-      String clientUrl, String serverUrl) {
-    MockHttpServletRequest request =
-        makeMockHttpRequest(servlet, session, "GET", clientUrl, serverUrl);
+  public static MockHttpServletRequest makeMockHttpGet(String clientUrl, String serverUrl) {
+    MockHttpServletRequest request = makeMockHttpRequest("GET", clientUrl, serverUrl);
     request.setContent(new byte[0]);
     return request;
   }
 
-  public static MockHttpServletRequest makeMockHttpPost(HttpServlet servlet, HttpSession session,
-      String clientUrl, String serverUrl) {
-    MockHttpServletRequest request =
-        makeMockHttpRequest(servlet, session, "POST", clientUrl, serverUrl);
+  public static MockHttpServletRequest makeMockHttpPost(String clientUrl, String serverUrl) {
+    MockHttpServletRequest request = makeMockHttpRequest("POST", clientUrl, serverUrl);
     request.setContentType("application/x-www-form-urlencoded");
     return request;
   }
 
-  private static MockHttpServletRequest makeMockHttpRequest(HttpServlet servlet,
-      HttpSession session, String method, String client, String server) {
+  private static MockHttpServletRequest makeMockHttpRequest(String method, String client,
+      String server) {
     URLBuilder clientUrl = new URLBuilder(client);
     URLBuilder serverUrl = new URLBuilder(server);
-    MockHttpServletRequest request =
-        new MockHttpServletRequest(servlet.getServletContext(), method, serverUrl.getPath());
-    request.setSession(session);
+    // TODO(cph): figure out how to get servlet context from serverUrl.
+    String uri = serverUrl.getPath();
+    String query = serverUrl.buildQueryString();
+    if (query != null) {
+      uri += "?" + query;
+    }
+    MockHttpServletRequest request = new MockHttpServletRequest(null, method, uri);
     request.setScheme(serverUrl.getScheme());
     request.setServerName(serverUrl.getHost());
     request.setServerPort(serverUrl.getPort());
@@ -98,11 +87,11 @@ public final class SamlTestUtil {
   }
 
   public static String httpDateString() {
-    return httpDateString(new Date());
+    return httpDateString(new DateTime());
   }
 
-  public static String httpDateString(Date date) {
-    return httpDateFormat.format(date);
+  public static String httpDateString(DateTime date) {
+    return Configuration.getSAMLDateFormatter().print(date);
   }
 
   public static String servletRequestToString(HttpServletRequest request, String tag)

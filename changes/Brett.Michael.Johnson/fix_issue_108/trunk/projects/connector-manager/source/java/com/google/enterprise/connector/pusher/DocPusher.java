@@ -62,7 +62,7 @@ public class DocPusher implements Pusher {
       Logger.getLogger(DocPusher.class.getName());
   private static final Logger FEED_WRAPPER_LOGGER =
       Logger.getLogger(LOGGER.getName() + ".FEED_WRAPPER");
-  private static final Logger FEED_LOGGER = 
+  private static final Logger FEED_LOGGER =
       Logger.getLogger(FEED_WRAPPER_LOGGER.getName() + ".FEED");
   private static final Level FEED_LOG_LEVEL = Level.FINER;
 
@@ -300,7 +300,7 @@ public class DocPusher implements Pusher {
         continue;
       }
       try {
-        if (SpiConstants.PROPNAME_ACLGROUPS.equals(name) || 
+        if (SpiConstants.PROPNAME_ACLGROUPS.equals(name) ||
             SpiConstants.PROPNAME_ACLUSERS.equals(name)) {
           property = processAclProperty(name, document);
         } else {
@@ -318,7 +318,7 @@ public class DocPusher implements Pusher {
 
   /**
    * Utility function to convert a set of document properties that look like:
-   * <pre> 
+   * <pre>
    *   google:aclusers=[joe, mary, admin]
    *   google:user:roles:joe=[reader]
    *   google:user:roles:mary=[reader, writer]
@@ -657,7 +657,7 @@ public class DocPusher implements Pusher {
 
     if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
       ((StringBuffer) feedLogRecord.get()).append(suffix);
-      FEED_LOGGER.log(FEED_LOG_LEVEL, 
+      FEED_LOGGER.log(FEED_LOG_LEVEL,
           ((StringBuffer) feedLogRecord.get()).toString());
       feedLogRecord.set(null);
     }
@@ -678,7 +678,7 @@ public class DocPusher implements Pusher {
    *
    * @param contentStream from the feed item
    * @return an InputStream which is guaranteed to be non-null.
-   * @throws RepositoryDocumentException if the DEFAULT_CONTENT string above 
+   * @throws RepositoryDocumentException if the DEFAULT_CONTENT string above
    *         cannot be UTF-8-encoded into a ByteArrayInputStream.
    */
   private static InputStream getNonNullContentStream(InputStream contentStream)
@@ -760,9 +760,10 @@ public class DocPusher implements Pusher {
    */
   public void take(Document document, String connectorName)
       throws PushException, FeedException, RepositoryException {
-    String feedType = getFeedType(document);
+    String feedType = null;
     InputStream xmlData = null;
     try {
+      feedType = getFeedType(document);
       xmlData = buildXmlData(document, connectorName, feedType);
     } catch (RuntimeException e) {
       throw new RepositoryDocumentException(e);
@@ -802,7 +803,7 @@ public class DocPusher implements Pusher {
       }
       if (LOGGER.isLoggable(Level.FINER)) {
         LOGGER.finer("Document "
-            + getRequiredString(document, SpiConstants.PROPNAME_DOCID) 
+            + getRequiredString(document, SpiConstants.PROPNAME_DOCID)
             + " from connector " + connectorName + " sent.");
       }
     } finally {

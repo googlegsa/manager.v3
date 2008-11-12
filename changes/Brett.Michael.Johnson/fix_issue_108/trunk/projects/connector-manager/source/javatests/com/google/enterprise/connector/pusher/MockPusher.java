@@ -48,18 +48,16 @@ public class MockPusher implements Pusher {
     printStream.println("<document>");
 
     // first take care of some special attributes
-    String docid = null;
     Property property = null;
-    String name;
 
     // we just do the DOCID first so it is easy to find
-    name = SpiConstants.PROPNAME_DOCID;
+    String name = SpiConstants.PROPNAME_DOCID;
     if ((property = document.findProperty(name)) == null) {
       throw new RepositoryDocumentException(SpiConstants.PROPNAME_DOCID
                                             + " is missing");
     }
     processProperty(name, property);
-    
+
     for (Iterator i = document.getPropertyNames().iterator(); i.hasNext();) {
       name = (String) i.next();
       if (name.equals(SpiConstants.PROPNAME_DOCID)) {
@@ -69,7 +67,7 @@ public class MockPusher implements Pusher {
       property = document.findProperty(name);
       processProperty(name, property);
     }
-    
+
     printStream.println("</document>");
     totalDocs++;
   }
@@ -96,7 +94,8 @@ public class MockPusher implements Pusher {
               totalBytesRead += bytesRead;
             }
           } catch (IOException e) {
-            throw new PushException("Error reading content stream.", e);
+            throw new RepositoryDocumentException(
+                "Error reading content stream.", e);
           }
         }
         printStream.println("Total bytes read in base64 encoded file: "
@@ -120,5 +119,4 @@ public class MockPusher implements Pusher {
   public int getTotalDocs() {
     return totalDocs;
   }
-
 }

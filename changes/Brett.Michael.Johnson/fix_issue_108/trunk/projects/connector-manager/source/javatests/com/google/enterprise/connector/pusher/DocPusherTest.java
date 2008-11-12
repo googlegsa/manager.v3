@@ -61,8 +61,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test Take for a URL/metadata feed when google:searchurl exists.
    */
-  public void testTakeUrlMeta()
-      throws FeedException, PushException, RepositoryException {
+  public void testTakeUrlMeta() throws Exception {
     String[] expectedXml = new String[1];
     String feedType = "metadata-and-url";
     String record = "<record url=\"http://www.sometesturl.com/test\""
@@ -84,8 +83,7 @@ public class DocPusherTest extends TestCase {
    * file is almost the same as MockRepositoryEventLog5.txt but has a metadata
    * item with empty content in it
    */
-  public void testTakeUrlMetaNulls()
-      throws FeedException, PushException, RepositoryException {
+  public void testTakeUrlMetaNulls() throws Exception {
     String[] expectedXml = new String[1];
     String feedType = "metadata-and-url";
     String record = "<record url=\"http://www.sometesturl.com/test\""
@@ -106,8 +104,7 @@ public class DocPusherTest extends TestCase {
    * is a SMB URL.
    * Regression Test for Connector Manager Issue 100
    */
-  public void testTakeSmbUrlMeta()
-      throws FeedException, PushException, RepositoryException {
+  public void testTakeSmbUrlMeta() throws Exception {
     String[] expectedXml = new String[1];
     String feedType = "metadata-and-url";
     String record = "<record url=\"smb://localhost/share/test\""
@@ -127,8 +124,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test Take for a content feed.
    */
-  public void testTakeContent()
-      throws FeedException, PushException, RepositoryException {
+  public void testTakeContent() throws Exception {
     String[] expectedXml = new String[1];
     String feedType = "incremental";
     String record = "<record url=\""
@@ -152,8 +148,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test Take for isPublic.
    */
-  public void testTakeIsPublic()
-      throws FeedException, PushException, RepositoryException {
+  public void testTakeIsPublic() throws Exception {
     String[] expectedXml = new String[4];
     String feedType = "incremental";
 
@@ -220,8 +215,7 @@ public class DocPusherTest extends TestCase {
    * Test whether MockRepostitoryEventList, MockRepository, and DocPusher can
    * handle I18N'd content.
    */
-  public void testI18N()
-      throws FeedException, PushException, RepositoryException {
+  public void testI18N() throws Exception {
     String[] expectedXml = new String[1];
     String feedType = "incremental";
     String url = ServletUtil.PROTOCOL + "junit.localhost" + ServletUtil.DOCID
@@ -247,7 +241,7 @@ public class DocPusherTest extends TestCase {
   }
 
   private void takeFeed(String[] expectedXml, String repository)
-      throws FeedException, PushException, RepositoryException {
+      throws Exception {
     String gsaExpectedResponse = GsaFeedConnection.SUCCESS_RESPONSE;
     String gsaActualResponse;
 
@@ -280,8 +274,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test basic metadata representation.
    */
-  public void testSimpleDoc()
-      throws FeedException, PushException, RepositoryException {
+  public void testSimpleDoc() throws Exception {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
@@ -404,10 +397,8 @@ public class DocPusherTest extends TestCase {
 
   /**
    * Test displayurl.
-   * @throws PushException
    */
-  public void testDisplayUrl()
-      throws FeedException, PushException, RepositoryException {
+  public void testDisplayUrl() throws Exception {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
@@ -421,14 +412,12 @@ public class DocPusherTest extends TestCase {
 
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
         resultXML);
-
   }
 
   /**
    * Test special characters in metadata values.
    */
-  public void testSpecials()
-      throws FeedException, PushException, RepositoryException {
+  public void testSpecials() throws Exception {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\""
         // note double escaping in the line below, since this is a json string
@@ -463,8 +452,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Tests a word document.
    */
-  public void testWordDoc()
-      throws FeedException, PushException, RepositoryException {
+  public void testWordDoc() throws Exception {
     final String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"google:mimetype\":\"application/msword\""
         + ",\"contentfile\":\"testdata/mocktestdata/test.doc\""
@@ -488,8 +476,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test action.
    */
-  public void testAction()
-      throws FeedException, PushException, RepositoryException {
+  public void testAction() throws Exception {
     String defaultActionJson = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
       + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
       + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
@@ -544,8 +531,7 @@ public class DocPusherTest extends TestCase {
    * Test ACL related properties.  See the 'content' of the document for details
    * on what is being tested.
    */
-  public void testUserAcl()
-     throws FeedException, PushException, RepositoryException {
+  public void testUserAcl() throws Exception {
     String userAcl = "{\"timestamp\":\"20\""
         + ",\"docid\":\"user_acl\""
         + ",\"content\":\"this document has user only ACL\""
@@ -558,8 +544,7 @@ public class DocPusherTest extends TestCase {
     assertStringNotContains("<meta name=\"acl\"", resultXML);
   }
 
-  public void testUserRoleAcl()
-      throws FeedException, PushException, RepositoryException {
+  public void testUserRoleAcl() throws Exception {
     String userRoleAcl = "{\"timestamp\":\"30\""
         + ",\"docid\":\"user_role_acl\""
         + ",\"content\":\"this document has user with role ACL\""
@@ -582,8 +567,7 @@ public class DocPusherTest extends TestCase {
         resultXML);
   }
 
-  public void testUserScopedRoleAcl()
-      throws FeedException, PushException, RepositoryException {
+  public void testUserScopedRoleAcl() throws Exception {
     String userScopedRoleAcl = "{\"timestamp\":\"40\""
         + ",\"docid\":\"user_scoped_role_acl\""
         + ",\"content\":\"this document has scoped user with role ACL\""
@@ -606,8 +590,7 @@ public class DocPusherTest extends TestCase {
         resultXML);
   }
 
-  public void testUserGroupAcl()
-      throws FeedException, PushException, RepositoryException {
+  public void testUserGroupAcl() throws Exception {
     String userGroupAcl = "{\"timestamp\":\"50\""
         + ",\"docid\":\"user_group_acl\""
         + ",\"content\":\"this document has scoped user and group ACL\""
@@ -622,8 +605,7 @@ public class DocPusherTest extends TestCase {
         + " content=\"eng\"/>", resultXML);
   }
 
-  public void testUserGroupRoleAcl()
-      throws FeedException, PushException, RepositoryException {
+  public void testUserGroupRoleAcl() throws Exception {
     String userGroupRoleAcl = "{\"timestamp\":\"60\""
         + ",\"docid\":\"user_group_role_acl\""
         + ",\"content\":\"this document has scoped user and group role ACL\""
@@ -647,8 +629,7 @@ public class DocPusherTest extends TestCase {
         resultXML);
   }
 
-  public void testUserReaderAcl()
-      throws FeedException, PushException, RepositoryException {
+  public void testUserReaderAcl() throws Exception {
     String userReaderAcl = "{\"timestamp\":\"70\""
         + ",\"docid\":\"user_reader_acl\""
         + ",\"content\":\"this document has one reader\",acl:joe"
@@ -659,8 +640,7 @@ public class DocPusherTest extends TestCase {
         + " content=\"joe\"/>", resultXML);
   }
 
-  public void testUserOwnerAcl()
-      throws FeedException, PushException, RepositoryException {
+  public void testUserOwnerAcl() throws Exception {
     String userOwnerAcl = "{\"timestamp\":\"80\""
         + ",\"docid\":\"user_owner_acl\""
         + ",\"content\":\"this document has one owner\""
@@ -675,8 +655,7 @@ public class DocPusherTest extends TestCase {
         resultXML);
   }
 
-  public void testUserScopedOwnerAcl()
-      throws FeedException, PushException, RepositoryException {
+  public void testUserScopedOwnerAcl() throws Exception {
     String userScopedOwnerAcl = "{\"timestamp\":\"90\""
         + ",\"docid\":\"user_scoped_owner_acl\""
         + ",\"content\":\"this document has one owner\""
@@ -691,8 +670,7 @@ public class DocPusherTest extends TestCase {
         resultXML);
   }
 
-  public void testSameUserGroupAcl()
-      throws FeedException, PushException, RepositoryException {
+  public void testSameUserGroupAcl() throws Exception {
     String sameUserGroupAcl = "{\"timestamp\":\"100\""
         + ",\"docid\":\"same_user_group_acl\""
         + ",\"content\":\"this document has a user id and group id the same with different roles\""
@@ -711,8 +689,7 @@ public class DocPusherTest extends TestCase {
         resultXML);
   }
 
-  public void testSomeUserRoleAcl()
-      throws FeedException, PushException, RepositoryException {
+  public void testSomeUserRoleAcl() throws Exception {
     String someUserRoleAcl = "{\"timestamp\":\"110\""
         + ",\"docid\":\"some_user_role_acl\""
         + ",\"content\":\"this document has one user with extra roles\""
@@ -728,8 +705,7 @@ public class DocPusherTest extends TestCase {
         + " content=\"eng, root\"/>", resultXML);
   }
 
-  public void testSomeGroupRoleAcl()
-      throws FeedException, PushException, RepositoryException {
+  public void testSomeGroupRoleAcl() throws Exception {
     String someGroupRoleAcl = "{\"timestamp\":\"120\""
         + ",\"docid\":\"some_group_role_acl\""
         + ",\"content\":\"this document has one group with extra roles\""
@@ -749,8 +725,7 @@ public class DocPusherTest extends TestCase {
    * Utility method to take the given JSON event string and feed it through a
    * DocPusher and return the resulting XML feed string.
    */
-  private String feedJsonEvent(String jsonEventString)
-      throws FeedException, PushException, RepositoryException {
+  private String feedJsonEvent(String jsonEventString) throws Exception {
     Document document = JcrDocumentTest.makeDocumentFromJson(jsonEventString);
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
@@ -870,8 +845,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test using teed feed file.
    */
-  public void testTeedFeed()
-    throws IOException, FeedException, PushException, RepositoryException {
+  public void testTeedFeed() throws Exception {
     // Setup context where the teedFeedFile is set.
     Context.refresh();
     Context context = Context.getInstance();
@@ -950,9 +924,9 @@ public class DocPusherTest extends TestCase {
   /**
    * Test that lack of a required metadata field, google:docid, throws
    * a RepositoryDocumentException.
+   * Regression test for Issue 108.
    */
-  public void testNoDocid()
-      throws IOException, FeedException, PushException, RepositoryException {
+  public void testNoDocid() throws Exception {
     Map props = new HashMap();
     Calendar cal = Calendar.getInstance();
     cal.setTimeInMillis(10 * 1000);
@@ -979,14 +953,15 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
-   * Test that read error on the document content stream throws
-   * a RepositoryDocumentException.
+   * Test that if DocPusher gets a read error on the document content stream,
+   * it throws a RepositoryDocumentException.
+   * Regression test for Issue 108.
    */
   /*
    * TODO: MockFeedConnection converts IOExceptions into RuntimeExceptions.
    * This test won't work until that is fixed.
-  public void testContentReadError()
-      throws IOException, FeedException, PushException, RepositoryException {
+   */
+  public void disabled_testContentReadError() throws Exception {
     Map props = new HashMap();
     Calendar cal = Calendar.getInstance();
     cal.setTimeInMillis(10 * 1000);
@@ -1012,13 +987,15 @@ public class DocPusherTest extends TestCase {
     }
   }
 
-  // An InputStream that throws IOExceptions when read.
+  /**
+   * An InputStream that throws IOExceptions when read.
+   */
   private class BadInputStream extends InputStream {
     // Make it look like there is something to read.
     public int available() throws IOException {
       return 69;
     }
-    // Override read methods, always throwing IOException
+    // Override read methods, always throwing IOException.
     public int read() throws IOException {
       throw new IOException("This stream is unreadable");
     }
@@ -1029,5 +1006,4 @@ public class DocPusherTest extends TestCase {
       throw new IOException("This stream is unreadable");
     }
   }
-  */
 }
