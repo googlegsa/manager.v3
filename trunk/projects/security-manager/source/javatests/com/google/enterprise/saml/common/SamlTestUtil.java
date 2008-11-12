@@ -14,6 +14,8 @@
 
 package com.google.enterprise.saml.common;
 
+import org.joda.time.DateTime;
+import org.opensaml.Configuration;
 import org.opensaml.util.URLBuilder;
 import org.opensaml.xml.util.Pair;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -24,6 +26,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -33,8 +36,6 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import static com.google.enterprise.saml.common.ServletUtil.httpDateString;
 
 /**
  * Useful utilities for SAML testing.
@@ -85,6 +86,14 @@ public final class SamlTestUtil {
     return request;
   }
 
+  public static String httpDateString() {
+    return httpDateString(new DateTime());
+  }
+
+  public static String httpDateString(DateTime date) {
+    return Configuration.getSAMLDateFormatter().print(date);
+  }
+
   public static String servletRequestToString(HttpServletRequest request, String tag)
       throws IOException {
     StringWriter out = new StringWriter();
@@ -131,6 +140,25 @@ public final class SamlTestUtil {
       }
     }
     out.write("\n");
+  }
+
+  public static PrintWriter htmlServletResponse(HttpServletResponse response) throws IOException {
+    initializeServletResponse(response);
+    response.setStatus(HttpServletResponse.SC_OK);
+    response.setContentType("text/html");
+    response.setCharacterEncoding("UTF-8");
+    response.setBufferSize(0x1000);
+    return response.getWriter();
+  }
+
+  public static void errorServletResponse(HttpServletResponse response, int code)
+      throws IOException {
+    initializeServletResponse(response);
+    response.sendError(code);
+  }
+
+  public static void initializeServletResponse(HttpServletResponse response) {
+    response.addHeader("Date", httpDateString());
   }
 
   public static String servletResponseToString(MockHttpServletResponse response, String tag)

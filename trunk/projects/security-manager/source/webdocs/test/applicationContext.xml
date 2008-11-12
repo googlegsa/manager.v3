@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
-<beans>
-  <bean id="EncryptedPropertyPlaceholderConfigurer"
+<beans>  <bean id="EncryptedPropertyPlaceholderConfigurer"
     class="com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer">
   </bean> 
 
@@ -22,17 +21,14 @@
     <constructor-arg><null/></constructor-arg>
   </bean>
 
-  <bean id="BackEnd"
-    class="com.google.enterprise.saml.server.BackEndImpl">
-    <property name="sessionManager" ref="SessionManager"/>
+	<bean id="BackEnd"		class="com.google.enterprise.saml.server.BackEndImpl">    <property name="sessionManager" ref="SessionManager"/>
     <property name="artifactResolver" ref="ArtifactResolver"/>
     <property name="authzResponder" ref="AuthzResponder"/>
-  </bean>
-
+	</bean>
   <bean id="ConnectorManager"
     class="com.google.enterprise.connector.manager.ConnectorManager">
     <property name="instantiator" ref="Instantiator" />
     <property name="backEnd" ref="BackEnd" />
   </bean>
 
-</beans>
+</beans>

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
-<beans>
-  <bean id="ConnectorConfigStore"
+<beans>  <bean id="ConnectorConfigStore"
     class="com.google.enterprise.connector.persist.FileStore">
   </bean>
 
@@ -17,26 +16,13 @@
     class="com.google.enterprise.security.manager.LocalSessionManager">
   </bean>
 
-  <bean id="ArtifactResolver"
-    class="com.google.enterprise.saml.server.ArtifactResolverImpl">
-  </bean>
-
-  <bean id="AuthzResponder"
-    class="com.google.enterprise.saml.server.AuthzResponderImpl">
-  </bean>
-
   <bean id="Instantiator"
     class="com.google.enterprise.connector.instantiator.SpringInstantiator">
     <constructor-arg><null/></constructor-arg>
   </bean>
 
-  <bean id="BackEnd"
-    class="com.google.enterprise.saml.server.MockBackEnd">
-    <constructor-arg index="0" ref="SessionManager" />
-    <constructor-arg index="1" ref="ArtifactResolver" />
-    <constructor-arg index="2" ref="AuthzResponder" />
-  </bean>
-
+	<bean id="BackEnd"		class="com.google.enterprise.saml.server.MockBackEnd">    <constructor-arg index="0" ref="SessionManager" />
+	</bean>
   <bean id="Monitor"
     class="com.google.enterprise.connector.monitor.HashMapMonitor" />
 
@@ -59,4 +45,4 @@
     <property name="backEnd" ref="BackEnd" />
   </bean>
 
-</beans>
+</beans>
