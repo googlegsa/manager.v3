@@ -18,6 +18,7 @@ import com.google.enterprise.saml.common.OpenSamlUtil;
 
 import org.apache.xerces.parsers.SAXParser;
 import org.opensaml.common.SAMLObject;
+import org.opensaml.saml2.core.Action;
 import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.AuthzDecisionStatement;
 import org.opensaml.saml2.core.DecisionTypeEnumeration;
@@ -128,7 +129,8 @@ public class SamlAuthz extends HttpServlet {
         OpenSamlUtil.makeIssuer("localhost"),
         OpenSamlUtil.makeSubject(subject));
     AuthzDecisionStatement decisionStmt =
-        OpenSamlUtil.makeAuthzDecisionStatement("GET", decision, url);
+        OpenSamlUtil.makeAuthzDecisionStatement(
+            url, decision, OpenSamlUtil.makeAction(Action.HTTP_GET_ACTION, Action.GHPP_NS_URI));
     decisionStmt.getActions().get(0).setNamespace(HARDCODED_AUTHZ_NAMESPACE);
     assertion.getAuthzDecisionStatements().add(decisionStmt);
     response.getAssertions().add(assertion);

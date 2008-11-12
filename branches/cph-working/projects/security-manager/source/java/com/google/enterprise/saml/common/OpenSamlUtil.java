@@ -235,9 +235,10 @@ public final class OpenSamlUtil {
    * @param name A URI identifying the represented action.
    * @return A new <code>Action</code> object.
    */
-  public static Action makeAction(String name) {
+  public static Action makeAction(String name, String namespace) {
     Action action = actionBuilder.buildObject();
     action.setAction(name);
+    action.setNamespace(namespace);
     return action;
   }
 
@@ -438,21 +439,6 @@ public final class OpenSamlUtil {
   }
 
   /**
-   * Static factory for SAML <code>AuthzDecisionQuery</code> objects.
-   *
-   * A convenience method that wraps the given name and action in the appropriate SAML objects.
-   *
-   * @param name The name of the subject requesting access to a resource.
-   * @param resource The resource for which access is being requested.
-   * @param action A URI for the action on the resource for which access is being requested.
-   * @return A new <code>AuthzDecisionQuery</code> object.
-   */
-  public static AuthzDecisionQuery makeAuthzDecisionQuery(String name, String resource,
-      String action) {
-    return makeAuthzDecisionQuery(makeSubject(name), resource, makeAction(action));
-  }
-
-  /**
    * Static factory for SAML <code>AuthzDecisionStatement</code> objects.
    *
    * @param resource The resource referred to by this access decision.
@@ -467,21 +453,6 @@ public final class OpenSamlUtil {
     statement.setDecision(decision);
     statement.getActions().add(action);
     return statement;
-  }
-
-  /**
-   * Static factory for SAML <code>AuthzDecisionStatement</code> objects.
-   *
-   * A convenience method that wraps the given action in an <code>Action</code> object.
-   *
-   * @param resource The resource referred to by this access decision.
-   * @param decision The access decision made by the authorization service.
-   * @param action The action granted on the given resource.
-   * @return A new <code>AuthzDecisionStatement</code> object.
-   */
-  public static AuthzDecisionStatement makeAuthzDecisionStatement(String resource,
-      DecisionTypeEnumeration decision, String action) {
-    return makeAuthzDecisionStatement(resource, decision, makeAction(action));
   }
 
   /**
