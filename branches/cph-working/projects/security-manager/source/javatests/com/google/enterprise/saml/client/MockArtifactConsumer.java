@@ -98,7 +98,6 @@ public class MockArtifactConsumer extends HttpServlet implements GettableHttpSer
   @Override
   public void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    initializeServletResponse(resp);
     HttpServletResponseAdapter result = new HttpServletResponseAdapter(resp, true);
     HttpSession session = req.getSession();
     String artifact = req.getParameter(GSA_ARTIFACT_PARAM_NAME);
@@ -122,16 +121,19 @@ public class MockArtifactConsumer extends HttpServlet implements GettableHttpSer
       session.setAttribute("verifiedIdentity", assertion.getSubject().getNameID().getValue());
       session.setAttribute("verificationStatement",
                            assertion.getStatements(AuthnStatement.DEFAULT_ELEMENT_NAME).get(0));
+      initializeServletResponse(resp);
       result.sendRedirect(relayState);
       return;
     }
     if (code.equals(StatusCode.REQUEST_DENIED_URI)) {
       session.setAttribute("isAuthenticated", false);
+      initializeServletResponse(resp);
       result.sendRedirect(relayState);
       return;
     }
     if (code.equals(StatusCode.AUTHN_FAILED_URI)) {
       // Do nothing.  The service provider will restart the authentication.
+      initializeServletResponse(resp);
       result.sendRedirect(relayState);
       return;
     }
