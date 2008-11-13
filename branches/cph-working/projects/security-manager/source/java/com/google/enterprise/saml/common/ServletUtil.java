@@ -41,8 +41,12 @@ public final class ServletUtil {
     return dtFormat.print((new DateTime()).withZone(DateTimeZone.UTC));
   }
 
+  public static ConnectorManager getConnectorManager(ServletContext sc) {
+    return (ConnectorManager) Context.getInstance(sc).getManager();
+  }
+
   public static BackEnd getBackEnd(ServletContext sc) {
-    return ((ConnectorManager) Context.getInstance(sc).getManager()).getBackEnd();
+    return getConnectorManager(sc).getBackEnd();
   }
 
   public static PrintWriter htmlServletResponse(HttpServletResponse response) throws IOException {

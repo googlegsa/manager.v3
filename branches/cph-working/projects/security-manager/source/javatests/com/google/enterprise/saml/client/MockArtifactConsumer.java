@@ -113,6 +113,7 @@ public class MockArtifactConsumer extends HttpServlet implements GettableHttpSer
       errorServletResponse(resp, SC_INTERNAL_SERVER_ERROR);
       return;
     }
+    initializeServletResponse(resp);
     Response response = (Response) message;
     String code = response.getStatus().getStatusCode().getValue();
     if (code.equals(StatusCode.SUCCESS_URI)) {
@@ -121,24 +122,12 @@ public class MockArtifactConsumer extends HttpServlet implements GettableHttpSer
       session.setAttribute("verifiedIdentity", assertion.getSubject().getNameID().getValue());
       session.setAttribute("verificationStatement",
                            assertion.getStatements(AuthnStatement.DEFAULT_ELEMENT_NAME).get(0));
-      initializeServletResponse(resp);
-      result.sendRedirect(relayState);
-      return;
-    }
-    if (code.equals(StatusCode.REQUEST_DENIED_URI)) {
+    } else if (code.equals(StatusCode.REQUEST_DENIED_URI)) {
       session.setAttribute("isAuthenticated", false);
-      initializeServletResponse(resp);
-      result.sendRedirect(relayState);
-      return;
-    }
-    if (code.equals(StatusCode.AUTHN_FAILED_URI)) {
+    } else {
       // Do nothing.  The service provider will restart the authentication.
-      initializeServletResponse(resp);
-      result.sendRedirect(relayState);
-      return;
     }
-    LOGGER.log(Level.WARNING, "Unknown <Response> status: " + code);
-    errorServletResponse(resp, SC_INTERNAL_SERVER_ERROR);
+    result.sendRedirect(relayState);
   }
 
   private SAMLObject resolveArtifact(String artifact, String relayState, String clientUrl)
