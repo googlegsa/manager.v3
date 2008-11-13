@@ -38,7 +38,7 @@ public class MockBackEnd implements BackEnd {
     return sessionManager;
   }
 
-  public String loginRedirect(String referer, String relayState) {
+  public String loginRedirect(String referer, String relayState, String subject) {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
 

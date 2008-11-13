@@ -14,18 +14,30 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.connector.manager.ConnectorManager;
+import com.google.common.collect.ImmutableMap;
+
+import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.manager.ConnectorStatus;
+import com.google.enterprise.connector.manager.ConnectorManager;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.persist.PersistentStoreException;
+import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.common.GsaConstants;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Iterator;
+import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Cookie;
 
 /**
  * Handler for SAML login from the Google Search Appliance.
@@ -54,6 +66,23 @@ public class SamlAuthn extends HttpServlet {
 
     LOGGER.info("gsaUrlString: " + gsaUrlString);
 
+    /**
+     * If this request carries cookie, we use registered security connectors to
+     * figure out user identity from the cookie.
+     */
+    Cookie[] jar = request.getCookies();
+    if (jar != null) {
+      HashMap cookieJar = new HashMap(jar.length);
+      for (int i = 0; i < jar.length; i++) {
+        cookieJar.put(jar[i].getName(), jar[i].getValue());
+      }
+ 
+      if (handleAuthn(response, gsaUrlString,
+                      request.getParameter(GsaConstants.GSA_RELAY_STATE_PARAM_NAME),
+                      null, null, cookieJar) != null)
+        return;
+    }
+    
     String formHtml = "<html>\n<head>\n"
         +  "<title>Please Login</title>\n</head>\n" + "<body>\n"
         + "<form action=\"" + request.getRequestURI() + "?Referer="
@@ -65,6 +94,46 @@ public class SamlAuthn extends HttpServlet {
     response.getWriter().print(formHtml);
   }
 
+  private HttpServletResponse handleAuthn(HttpServletResponse response,
+      String gsaUrlString, String relay, String username, String password,
+      HashMap cookieJar) throws IOException {
+    
+    ServletContext servletContext = this.getServletContext();
+    ConnectorManager manager = (ConnectorManager) 
+      Context.getInstance(servletContext).getManager();
+    BackEnd backend = manager.getBackEnd();
+    List connList = manager.getConnectorStatuses();
+    if (connList == null || connList.isEmpty()) {
+      instantiateConnector(manager);
+      connList = manager.getConnectorStatuses();
+    }
+    for (Iterator iter = connList.iterator(); iter.hasNext();) {
+      String connectorName = ((ConnectorStatus) iter.next()).getName();
+      LOGGER.info("Got security plug-in " + connectorName);
+      
+      AuthenticationResponse authnResponse = 
+        manager.authenticate(connectorName, username, password, cookieJar);
+      if ((authnResponse != null) && authnResponse.isValid()) {
+        // TODO make sure authnResponse has subject in BackEnd
+        String subject = (authnResponse.getData() == null) ? username :
+          authnResponse.getData();
+        String redirectUrl = backend.loginRedirect(gsaUrlString, relay, subject);           
+
+        if (redirectUrl == null) {
+          response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+          response.sendError(404);
+          return response;
+        }
+        
+        response.setStatus(HttpServletResponse.SC_FOUND);
+        response.sendRedirect(redirectUrl);
+        return response;
+      }
+    }
+    
+    return null;
+  }
+
   /**
    * Extract username/password from login form, lookup the user then generate
    * SAML artifact.
@@ -73,46 +142,50 @@ public class SamlAuthn extends HttpServlet {
   public void doPost(HttpServletRequest request,
                      HttpServletResponse response)
       throws IOException {
-    handlePost(request, response);
-  }
-  
-  /**
-   * Redirect the GETTER back to the referring service with a generated
-   * artifact and the provided RelayState.
-   */
-  private void handlePost(HttpServletRequest request,
-                          HttpServletResponse response) throws IOException {
     response.setContentType("text/html");
     response.setCharacterEncoding("UTF-8");
-    PrintWriter out = response.getWriter();
 
     String username = request.getParameter("username");
     String password = request.getParameter("password");
     if (username.length() < 1 || password.length() < 1) {
+      PrintWriter out = response.getWriter();
       out.println("<title>Error</title>");
       out.println("No user name or password entered");
       out.close();
       return;
     }
 
-    ServletContext servletContext = this.getServletContext();
-    ConnectorManager manager = (ConnectorManager) Context.getInstance(servletContext).getManager();
-    BackEnd backend = manager.getBackEnd();
-
-    // TODO: implement user look-up
-    String redirectUrl = backend.loginRedirect(
-        request.getParameter("Referer"),
-        request.getParameter(GsaConstants.GSA_RELAY_STATE_PARAM_NAME));
-
-    if (redirectUrl == null) {
+    LOGGER.info("gsaUrlString: " + request.getParameter("Referer"));
+    if (handleAuthn(response, 
+          request.getParameter("Referer"),
+          request.getParameter(GsaConstants.GSA_RELAY_STATE_PARAM_NAME),
+          username, password, null) == null) {
+      // The user is not authenticated, respond with DENY
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
       response.sendError(404);
-      return;
     }
-    
-    response.setStatus(HttpServletResponse.SC_FOUND);
-    response.sendRedirect(redirectUrl);
+  }
 
+  // TODO get rid of this when we have a way of configuring plug-ins
+  private void instantiateConnector(ConnectorManager manager) {
+    String connectorName = "Lei";
+    String connectorType = "CookieConnector";
+    String language = "en";
+    
+    Map<String, String> configData;   
+    configData = ImmutableMap.of("CookieName", "SMSESSION",
+        "ServerUrl", "http://gama.corp.google.com/user1/ssoAgent.asp",
+        "HttpHeaderName", "User-Name");
+    try {
+      manager.setConnectorConfig(connectorName, connectorType,
+                                 configData, language, false);
+    } catch (ConnectorNotFoundException e) {
+      LOGGER.info("ConnectorNotFound: " + e.toString());
+    } catch (InstantiatorException e) {
+      LOGGER.info("Instantiator: " + e.toString());
+    } catch (PersistentStoreException e) {
+      LOGGER.info("PersistentStore: " + e.toString());
+    }
   }
   
 }
