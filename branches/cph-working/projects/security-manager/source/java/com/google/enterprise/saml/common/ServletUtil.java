@@ -22,12 +22,18 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.opensaml.common.SAMLObject;
+import org.opensaml.common.binding.SAMLMessageContext;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 
 import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
 
 /**
  * Useful utilities for writing servlets.
@@ -36,6 +42,9 @@ public final class ServletUtil {
 
   private static final DateTimeFormatter dtFormat =
       DateTimeFormat.forPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'");
+
+  /** Name of the session attribute that holds the SAML message context. */
+  private static final String SAML_CONTEXT = "samlMessageContext";
 
   public static String httpDateString() {
     return dtFormat.print((new DateTime()).withZone(DateTimeZone.UTC));
@@ -47,6 +56,39 @@ public final class ServletUtil {
 
   public static BackEnd getBackEnd(ServletContext sc) {
     return getConnectorManager(sc).getBackEnd();
+  }
+
+  /**
+   * Create a new SAML message context and associate it with this session.
+   *
+   * @param session The current session object.
+   * @return A new message context.
+   */
+  public static <TI extends SAMLObject, TO extends SAMLObject, TN extends SAMLObject>
+        SAMLMessageContext<TI, TO, TN> newSamlMessageContext(HttpSession session) {
+    SAMLMessageContext<TI, TO, TN> context = makeSamlMessageContext();
+    session.setAttribute(SAML_CONTEXT, context);
+    return context;
+  }
+
+  /**
+   * Fetch a SAML message context from a session.
+   *
+   * @param session The current session object.
+   * @return A new message context.
+   * @throws ServletException if there's no context in the session.
+   */
+  public static <TI extends SAMLObject, TO extends SAMLObject, TN extends SAMLObject>
+        SAMLMessageContext<TI, TO, TN> existingSamlMessageContext(HttpSession session)
+      throws ServletException {
+    // Restore context and signal error if none.
+    @SuppressWarnings("unchecked")
+    SAMLMessageContext<TI, TO, TN> context =
+        (SAMLMessageContext<TI, TO, TN>) session.getAttribute(SAML_CONTEXT);
+    if (context == null) {
+      throw new ServletException("Unable to get SAML message context.");
+    }
+    return context;
   }
 
   public static PrintWriter htmlServletResponse(HttpServletResponse response) throws IOException {
