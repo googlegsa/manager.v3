@@ -8,5 +8,5 @@ import org.opensaml.saml2.core.ArtifactResolve;
  */
 public interface ArtifactResolver {
 
-  public ArtifactResponse resolve(ArtifactResolve request);
+  public ArtifactResponse resolve(ArtifactResolve request, ArtifactStore arts);
 }

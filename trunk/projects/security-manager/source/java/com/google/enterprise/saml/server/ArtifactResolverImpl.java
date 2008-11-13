@@ -25,6 +25,7 @@ import org.opensaml.saml2.core.StatusCode;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.logging.Logger;
 
 /**
  * Artifact resolver for the AuthN on the Security Manager.
@@ -33,17 +34,23 @@ import java.net.UnknownHostException;
  * identity.
  */
 public class ArtifactResolverImpl implements ArtifactResolver {
+  private static final Logger LOGGER =
+    Logger.getLogger(ArtifactResolverImpl.class.getName());
 
   private String hostname;
 
-  public ArtifactResponse resolve(ArtifactResolve request) {
+  public ArtifactResponse resolve(ArtifactResolve request, ArtifactStore arts) {
     try {
       resolveHostname();
     } catch (UnknownHostException e) {
       e.printStackTrace();
     }
 
-    return buildArtifactResponse(StatusCode.SUCCESS_URI, hostname, "ruth_test1",
+    // TODO extract artifact from the request
+    String artifact = "foo";
+    String subject = arts.getSubject(artifact);
+    LOGGER.info("Artifact " + artifact + " is resolved to " + subject);
+    return buildArtifactResponse(StatusCode.SUCCESS_URI, hostname, subject,
         AuthnContext.PPT_AUTHN_CTX);
   }
 

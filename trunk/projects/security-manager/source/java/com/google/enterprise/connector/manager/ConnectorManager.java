@@ -18,6 +18,7 @@ import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
+import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.server.BackEnd;
 
 import java.util.Map;
@@ -49,14 +50,19 @@ public class ConnectorManager extends ProductionManager {
 
   @Override
   public boolean authenticate(String connectorName, String username, String password) {
-    return authenticate(connectorName, username, password, null);
+    AuthenticationResponse authnResponse =
+      authenticate(connectorName, username, password, null);
+    if (authnResponse == null || !authnResponse.isValid()) {
+      return false;
+    }
+    return true;
   }
 
   @SuppressWarnings("unchecked")
   /**
    * This method will become part of the {@link Manager} interface
    */
-  public boolean authenticate(String connectorName, String username, String password,
+  public AuthenticationResponse authenticate(String connectorName, String username, String password,
       Map securityContext) {
     AuthenticationIdentity identity = new UserPassIdentity(username, password);
     AuthenticationManager authnManager = null;
@@ -71,7 +77,7 @@ public class ConnectorManager extends ProductionManager {
     // Some connectors don't implement the AuthenticationManager interface, or
     // there may been an instantiation problem.
     if (authnManager == null) {
-      return false;
+      return null;
     }
 
     AuthnCaller authnCaller = new AuthnCaller(authnManager, identity, securityContext);

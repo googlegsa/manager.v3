@@ -37,7 +37,7 @@ public interface BackEnd {
    */
   public SessionManagerInterface getSessionManager();
 
-  public String loginRedirect(String referer, String relayState);
+  public String loginRedirect(String referer, String relayState, String subject);
 
   public ArtifactResponse resolveArtifact(ArtifactResolve artifactResolve);
 

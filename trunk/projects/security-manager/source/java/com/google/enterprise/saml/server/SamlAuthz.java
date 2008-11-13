@@ -94,6 +94,7 @@ public class SamlAuthz extends HttpServlet {
     }
 
     List<SAMLObject> responses = new ArrayList<SAMLObject>();
+    // TODO get Subject for each query
     for (String url : ch.getUrls()) {
       LOGGER.info("url found: " + url);
       LOGGER.info("with id: " + ch.getIdForUrl(url));
@@ -125,7 +126,7 @@ public class SamlAuthz extends HttpServlet {
         OpenSamlUtil.makeIssuer("localhost"),
         OpenSamlUtil.makeSubject(subject));
     AuthzDecisionStatement decisionStmt =
-        OpenSamlUtil.makeAuthzDecisionStatement("GET", decision, url);
+        OpenSamlUtil.makeAuthzDecisionStatement(url, decision, "GET");
     decisionStmt.getActions().get(0).setNamespace(HARDCODED_AUTHZ_NAMESPACE);
     assertion.getAuthzDecisionStatements().add(decisionStmt);
     response.getAssertions().add(assertion);
@@ -183,10 +184,10 @@ public class SamlAuthz extends HttpServlet {
    */
   class MultiAuthzQueryDecisionHandler implements ContentHandler {
 
-    private HashMap<String, String> urlToId;
-
+    private HashMap<String, ArrayList<String>> urlToId;
+     
     public MultiAuthzQueryDecisionHandler() {
-      urlToId = new HashMap<String, String>();
+      urlToId = new HashMap<String, ArrayList<String>>();
     }
 
     public Set<String> getUrls() {
@@ -195,11 +196,20 @@ public class SamlAuthz extends HttpServlet {
 
     public String getIdForUrl(String url) {
       if (urlToId.containsKey(url)) {
-        return urlToId.get(url);
+        ArrayList<String> foo = urlToId.get(url);
+        return foo.get(0);
       }
       return null;
     }
 
+    public String getSubjectForUrl(String url) {
+      if (urlToId.containsKey(url)) {
+        ArrayList<String> foo = urlToId.get(url);
+        return foo.get(1);
+      }
+      return null;
+    }
+    
     public void setDocumentLocator(Locator locator) {
     }
 
@@ -219,7 +229,9 @@ public class SamlAuthz extends HttpServlet {
       if (localName.equals("AuthzDecisionQuery")) {
         String url = attributes.getValue("", "Resource");
         String id = attributes.getValue("", "ID");
-        urlToId.put(url, id);
+        ArrayList<String> foo = new ArrayList<String>(2);
+        foo.add(0, id);
+        urlToId.put(url, foo);
       }
     }
 
@@ -227,6 +239,7 @@ public class SamlAuthz extends HttpServlet {
     }
 
     public void characters(char[] ch, int start, int length) {
+      // TODO I want to figure out the subject
     }
 
     public void ignorableWhitespace(char[] ch, int start, int length) {

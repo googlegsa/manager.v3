@@ -47,9 +47,9 @@ public class AuthnCaller {
     this.securityContext = securityContext;
   }
 
-  public boolean authenticate() {
+  public AuthenticationResponse authenticate() {
     if (authnManager == null) {
-      return false;
+      return null;
     }
     initializeCookiesFromContext();
     AuthenticationResponse authenticationResponse = null;
@@ -61,11 +61,8 @@ public class AuthnCaller {
       LOGGER.log(Level.WARNING, "Repository: ", e);
     }
 
-    if (authenticationResponse == null) {
-      return false;
-    }
     reconcileReturnedCookiesWithContext();
-    return authenticationResponse.isValid();
+    return authenticationResponse;
   }
 
   private void initializeCookiesFromContext() {

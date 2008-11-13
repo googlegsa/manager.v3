@@ -21,13 +21,17 @@ import org.opensaml.saml2.core.AuthzDecisionQuery;
  * for almost everything.
  */
 public class BackEndImpl implements BackEnd {
-    private static final Logger LOGGER =
+  private static final Logger LOGGER =
       Logger.getLogger(BackEndImpl.class.getName());
 
   private SessionManagerInterface sm;
   private ArtifactResolver artifactResolver;
   private AuthzResponder authzResponder;
+  private ArtifactStore artifacts;
 
+  public BackEndImpl() {
+    artifacts = new ArtifactStore();
+  }
   public void setSessionManager(SessionManagerInterface sm) {
     this.sm = sm;
   }
@@ -44,7 +48,7 @@ public class BackEndImpl implements BackEnd {
     this.authzResponder = authzResponder;
   }
 
-  public String loginRedirect(String referer, String relayState) {
+  public String loginRedirect(String referer, String relayState, String subject) {
     String urlEncodedRelayState = "";
     try {
       urlEncodedRelayState = URLEncoder.encode(relayState, "UTF-8");
@@ -52,8 +56,10 @@ public class BackEndImpl implements BackEnd {
       LOGGER.warning("Could not encode RelayState");
     }
 
+    String artifact = "foo";
+    artifacts.put(artifact, subject);
     String redirectUrl = referer + GsaConstants.GSA_ARTIFACT_HANDLER_NAME
-        + "?" + GsaConstants.GSA_ARTIFACT_PARAM_NAME + "=" + "foo"
+        + "?" + GsaConstants.GSA_ARTIFACT_PARAM_NAME + "=" + artifact
         + "&" + GsaConstants.GSA_RELAY_STATE_PARAM_NAME + "=" + urlEncodedRelayState;
 
     LOGGER.info("Referer: " + referer);
@@ -65,7 +71,7 @@ public class BackEndImpl implements BackEnd {
   }
 
   public ArtifactResponse resolveArtifact(ArtifactResolve artifactResolve) {
-    return artifactResolver.resolve(artifactResolve);
+    return artifactResolver.resolve(artifactResolve, artifacts);
   }
 
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
