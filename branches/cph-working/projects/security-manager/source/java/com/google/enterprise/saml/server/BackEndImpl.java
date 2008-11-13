@@ -52,6 +52,7 @@ public class BackEndImpl implements BackEnd {
   private final SessionManagerInterface sm;
   private final AuthzResponder authzResponder;
   private final SAMLArtifactMap artifactMap;
+  private ArtifactStore artifacts;
 
   /**
    * Create a new backend object.

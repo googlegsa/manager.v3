@@ -60,7 +60,8 @@ public class AuthnCallerTest extends TestCase {
   private void runIdentityTest(AuthenticationManager authenticationManager, boolean expected,
       AuthenticationIdentity identity, Map<String,String> context) {
     AuthnCaller authnCaller = new AuthnCaller(authenticationManager, identity, context);
-    boolean result = authnCaller.authenticate();
+    AuthenticationResponse response = authnCaller.authenticate();
+    boolean result = ((response != null) && response.isValid());
     assertEquals(expected, result);
   }
 

@@ -18,6 +18,10 @@
     <constructor-arg><null/></constructor-arg>
   </bean>
 
+  <bean id="ConnectorConfigStore"
+    class="com.google.enterprise.connector.persist.FileStore">
+  </bean>
+
   <bean id="BackEnd"
     class="com.google.enterprise.saml.server.BackEndImpl">
     <constructor-arg index="0" ref="SessionManager" />
