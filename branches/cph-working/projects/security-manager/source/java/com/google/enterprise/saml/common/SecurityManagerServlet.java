@@ -43,7 +43,7 @@ public abstract class SecurityManagerServlet extends HttpServlet {
 
   private static final long serialVersionUID = 1L;
 
-  private static final DateTimeFormatter dtFormat =
+  protected static final DateTimeFormatter dtFormat =
       DateTimeFormat.forPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'");
 
   /** Name of the session attribute that holds the SAML message context. */
