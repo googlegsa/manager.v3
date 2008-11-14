@@ -18,6 +18,7 @@ import com.google.enterprise.saml.common.OpenSamlUtil;
 
 import org.apache.xerces.parsers.SAXParser;
 import org.opensaml.common.SAMLObject;
+import org.opensaml.saml2.core.Action;
 import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.AuthzDecisionStatement;
 import org.opensaml.saml2.core.DecisionTypeEnumeration;
@@ -98,7 +99,8 @@ public class SamlAuthz extends HttpServlet {
     for (String url : ch.getUrls()) {
       LOGGER.info("url found: " + url);
       LOGGER.info("with id: " + ch.getIdForUrl(url));
-      responses.add(generateDecisionResponse(url, ch.getIdForUrl(url), HARDCODED_SUBJECT_NAME, DecisionTypeEnumeration.PERMIT));
+      responses.add(generateDecisionResponse(url, ch.getIdForUrl(url), HARDCODED_SUBJECT_NAME,
+                                             DecisionTypeEnumeration.PERMIT));
     }
 
     SOAPMessage soapMsg = soapify(responses);
@@ -106,7 +108,7 @@ public class SamlAuthz extends HttpServlet {
     try {
       soapMsg.writeTo(res.getOutputStream());
     } catch (SOAPException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      e.printStackTrace();
     }
 
   }
@@ -119,14 +121,17 @@ public class SamlAuthz extends HttpServlet {
    *
    * @return a Response SAMLObject
    */
-  private Response generateDecisionResponse(String url, String id, String subject, DecisionTypeEnumeration decision) {
-    Response response = OpenSamlUtil.makeResponse(null, OpenSamlUtil.makeStatus(StatusCode.SUCCESS_URI));
+  private Response generateDecisionResponse(String url, String id, String subject,
+      DecisionTypeEnumeration decision) {
+    Response response =
+        OpenSamlUtil.makeResponse(null, OpenSamlUtil.makeStatus(StatusCode.SUCCESS_URI));
     response.setID(id);
     Assertion assertion = OpenSamlUtil.makeAssertion(
         OpenSamlUtil.makeIssuer("localhost"),
         OpenSamlUtil.makeSubject(subject));
     AuthzDecisionStatement decisionStmt =
-        OpenSamlUtil.makeAuthzDecisionStatement(url, decision, "GET");
+        OpenSamlUtil.makeAuthzDecisionStatement(
+            url, decision, OpenSamlUtil.makeAction(Action.HTTP_GET_ACTION, Action.GHPP_NS_URI));
     decisionStmt.getActions().get(0).setNamespace(HARDCODED_AUTHZ_NAMESPACE);
     assertion.getAuthzDecisionStatements().add(decisionStmt);
     response.getAssertions().add(assertion);
@@ -225,7 +230,8 @@ public class SamlAuthz extends HttpServlet {
     public void endPrefixMapping(String prefix) {
     }
 
-    public void startElement(String namespaceUri, String localName, String qName, Attributes attributes) {
+    public void startElement(String namespaceUri, String localName, String qName,
+        Attributes attributes) {
       if (localName.equals("AuthzDecisionQuery")) {
         String url = attributes.getValue("", "Resource");
         String id = attributes.getValue("", "ID");
