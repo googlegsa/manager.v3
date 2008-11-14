@@ -53,7 +53,6 @@ public final class SamlTestUtil {
 
   private static MockHttpServletRequest makeMockHttpRequest(String method, String client,
       String server) {
-    URLBuilder clientUrl = new URLBuilder(client);
     URLBuilder serverUrl = new URLBuilder(server);
     // TODO(cph): figure out how to get servlet context from serverUrl.
     String uri = serverUrl.getPath();
@@ -68,8 +67,11 @@ public final class SamlTestUtil {
     for (Pair<String, String> binding: serverUrl.getQueryParams()) {
       request.addParameter(binding.getFirst(), binding.getSecond());
     }
-    request.setRemoteHost(clientUrl.getHost());
-    request.setRemotePort(clientUrl.getPort());
+    if (client != null) {
+      URLBuilder clientUrl = new URLBuilder(client);
+      request.setRemoteHost(clientUrl.getHost());
+      request.setRemotePort(clientUrl.getPort());
+    }
     {
       String host = serverUrl.getHost();
       int port = serverUrl.getPort();
