@@ -38,6 +38,7 @@ import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.ArtifactResolutionService;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
+import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleSignOnService;
@@ -241,7 +242,8 @@ public class MockIdentityProvider
     // Select endpoint
     initializeLocalEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS),
                           ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
-    initializePeerEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS), null);
+    initializePeerEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS),
+                         Endpoint.DEFAULT_ELEMENT_NAME);
     selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
 
     // Decode request

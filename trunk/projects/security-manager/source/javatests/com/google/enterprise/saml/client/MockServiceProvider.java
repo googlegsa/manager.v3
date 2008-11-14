@@ -32,6 +32,7 @@ import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.ArtifactResolutionService;
+import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SingleSignOnService;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
@@ -168,7 +169,8 @@ public class MockServiceProvider extends HttpServlet implements GettableHttpServ
     }
     context.setRelayState(relayState);
 
-    initializeLocalEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS), null);
+    initializeLocalEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS),
+                          Endpoint.DEFAULT_ELEMENT_NAME);
     initializePeerEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS),
                          SingleSignOnService.DEFAULT_ELEMENT_NAME);
     selectPeerEndpoint(context, SAML2_REDIRECT_BINDING_URI);
@@ -229,7 +231,8 @@ public class MockServiceProvider extends HttpServlet implements GettableHttpServ
         makeSamlMessageContext();
 
     // Select endpoint
-    initializeLocalEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS), null);
+    initializeLocalEntity(context, spEntity, spEntity.getSPSSODescriptor(SAML20P_NS),
+                          Endpoint.DEFAULT_ELEMENT_NAME);
     initializePeerEntity(context, idpEntity, idpEntity.getIDPSSODescriptor(SAML20P_NS),
                          ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
     selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
