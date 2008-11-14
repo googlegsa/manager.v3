@@ -65,10 +65,10 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeSpSsoDescriptor
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
-import static com.google.enterprise.saml.common.SamlTestUtil.errorServletResponse;
-import static com.google.enterprise.saml.common.SamlTestUtil.htmlServletResponse;
-import static com.google.enterprise.saml.common.SamlTestUtil.initializeServletResponse;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
+import static com.google.enterprise.saml.common.ServletUtil.errorServletResponse;
+import static com.google.enterprise.saml.common.ServletUtil.htmlServletResponse;
+import static com.google.enterprise.saml.common.ServletUtil.initializeServletResponse;
 
 import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
