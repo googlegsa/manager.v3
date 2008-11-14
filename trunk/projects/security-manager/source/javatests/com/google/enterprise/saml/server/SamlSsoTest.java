@@ -17,6 +17,7 @@ package com.google.enterprise.saml.server;
 import com.google.enterprise.saml.client.MockServiceProvider;
 import com.google.enterprise.saml.common.GettableHttpServlet;
 import com.google.enterprise.saml.common.PostableHttpServlet;
+import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import junit.framework.TestCase;
 
@@ -45,7 +46,6 @@ import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpGet;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
 import static com.google.enterprise.saml.common.SamlTestUtil.servletRequestToString;
 import static com.google.enterprise.saml.common.SamlTestUtil.servletResponseToString;
-import static com.google.enterprise.saml.common.ServletUtil.errorServletResponse;
 
 import static javax.servlet.http.HttpServletResponse.SC_METHOD_NOT_ALLOWED;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
@@ -187,7 +187,7 @@ public class SamlSsoTest extends TestCase implements GettableHttpServlet {
     } else if ("POST".equals(req.getMethod())) {
       ((PostableHttpServlet) servlet).doPost(req, resp);
     } else {
-      errorServletResponse(resp, SC_METHOD_NOT_ALLOWED);
+      SecurityManagerServlet.initErrorResponse(resp, SC_METHOD_NOT_ALLOWED);
     }
     logResponse(resp, servlet.getClass().getName());
   }

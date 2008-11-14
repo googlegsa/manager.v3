@@ -16,6 +16,7 @@ package com.google.enterprise.saml.server;
 
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObject;
@@ -28,7 +29,6 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.soap.MessageFactory;
@@ -38,7 +38,7 @@ import javax.xml.soap.SOAPMessage;
 /**
  * Handler for SAML ArtifactResolve requests.
  */
-public class SamlArtifactResolve extends HttpServlet {
+public class SamlArtifactResolve extends SecurityManagerServlet {
 
   private static final long serialVersionUID = 1L;
   private static final Logger LOGGER =

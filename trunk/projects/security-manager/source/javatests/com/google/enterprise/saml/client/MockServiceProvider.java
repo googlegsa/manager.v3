@@ -17,6 +17,7 @@ package com.google.enterprise.saml.client;
 import com.google.enterprise.saml.common.GettableHttpServlet;
 import com.google.enterprise.saml.common.HttpServletRequestClientAdapter;
 import com.google.enterprise.saml.common.HttpServletResponseClientAdapter;
+import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -46,7 +47,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -66,9 +66,6 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
-import static com.google.enterprise.saml.common.ServletUtil.errorServletResponse;
-import static com.google.enterprise.saml.common.ServletUtil.htmlServletResponse;
-import static com.google.enterprise.saml.common.ServletUtil.initializeServletResponse;
 
 import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
@@ -84,7 +81,7 @@ import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
  * Provider that receives a service request from the user agent and initiates an authn request from
  * an identity provider.
  */
-public class MockServiceProvider extends HttpServlet implements GettableHttpServlet {
+public class MockServiceProvider extends SecurityManagerServlet implements GettableHttpServlet {
   private static final String className = MockServiceProvider.class.getName();
   private static final Logger logger = Logger.getLogger(className);
   private static final long serialVersionUID = 1L;
@@ -129,7 +126,7 @@ public class MockServiceProvider extends HttpServlet implements GettableHttpServ
     } else if (url.startsWith(acsUrl)) {
       consumeAssertion(req, resp);
     } else {
-      errorServletResponse(resp, SC_NOT_FOUND);
+      initErrorResponse(resp, SC_NOT_FOUND);
     }
   }
 
@@ -140,7 +137,7 @@ public class MockServiceProvider extends HttpServlet implements GettableHttpServ
     if (isAuthenticated == Boolean.TRUE) {
       ifAllowed(resp);
     } else if (isAuthenticated == Boolean.FALSE) {
-      errorServletResponse(resp, SC_UNAUTHORIZED);
+      initErrorResponse(resp, SC_UNAUTHORIZED);
     } else {
       ifUnknown(resp, relayState);
     }
@@ -148,7 +145,7 @@ public class MockServiceProvider extends HttpServlet implements GettableHttpServ
 
   private void ifAllowed(HttpServletResponse resp) throws IOException {
     logger.entering(className, "ifAllowed");
-    PrintWriter out = htmlServletResponse(resp);
+    PrintWriter out = initNormalResponse(resp);
     out.print("<html><head><title>What you need</title></head>" +
               "<body><h1>What you need...</h1><p>...is what we've got!</p></body></html>");
     out.close();
@@ -175,7 +172,7 @@ public class MockServiceProvider extends HttpServlet implements GettableHttpServ
                          SingleSignOnService.DEFAULT_ELEMENT_NAME);
     selectPeerEndpoint(context, SAML2_REDIRECT_BINDING_URI);
 
-    initializeServletResponse(resp);
+    initResponse(resp);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(resp, true));
 
     runEncoder(new HTTPRedirectDeflateEncoder(), context);
@@ -184,20 +181,20 @@ public class MockServiceProvider extends HttpServlet implements GettableHttpServ
 
   private void consumeAssertion(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    initializeServletResponse(resp);
+    initResponse(resp);
     HttpServletResponseAdapter result = new HttpServletResponseAdapter(resp, true);
     HttpSession session = req.getSession();
     String artifact = req.getParameter(GSA_ARTIFACT_PARAM_NAME);
     String relayState = req.getParameter(GSA_RELAY_STATE_PARAM_NAME);
     if (artifact == null) {
       logger.log(Level.WARNING, "No artifact in message.");
-      errorServletResponse(resp, SC_INTERNAL_SERVER_ERROR);
+      initErrorResponse(resp, SC_INTERNAL_SERVER_ERROR);
       return;
     }
     SAMLObject message = resolveArtifact(artifact, relayState);
     if (! (message instanceof Response)) {
       logger.log(Level.WARNING, "Error from artifact resolver.");
-      errorServletResponse(resp, SC_INTERNAL_SERVER_ERROR);
+      initErrorResponse(resp, SC_INTERNAL_SERVER_ERROR);
       return;
     }
     Response response = (Response) message;
@@ -222,7 +219,7 @@ public class MockServiceProvider extends HttpServlet implements GettableHttpServ
       return;
     }
     logger.log(Level.WARNING, "Unknown <Response> status: " + code);
-    errorServletResponse(resp, SC_INTERNAL_SERVER_ERROR);
+    initErrorResponse(resp, SC_INTERNAL_SERVER_ERROR);
   }
 
   private SAMLObject resolveArtifact(String artifact, String relayState)

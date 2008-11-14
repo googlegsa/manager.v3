@@ -16,6 +16,7 @@ package com.google.enterprise.saml.server;
 
 import com.google.enterprise.saml.common.GettableHttpServlet;
 import com.google.enterprise.saml.common.PostableHttpServlet;
+import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -54,7 +55,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -76,9 +76,6 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeSubject;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
-import static com.google.enterprise.saml.common.ServletUtil.errorServletResponse;
-import static com.google.enterprise.saml.common.ServletUtil.htmlServletResponse;
-import static com.google.enterprise.saml.common.ServletUtil.initializeServletResponse;
 
 import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
@@ -88,8 +85,7 @@ import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
 
-public class MockIdentityProvider
-    extends HttpServlet
+public class MockIdentityProvider extends SecurityManagerServlet
     implements GettableHttpServlet, PostableHttpServlet {
   private static final String className = MockIdentityProvider.class.getName();
   private static final Logger logger = Logger.getLogger(className);
@@ -130,7 +126,7 @@ public class MockIdentityProvider
       requestCredentials(req, resp);
     } else {
       logger.log(Level.WARNING, "GET unknown URL: " + url);
-      errorServletResponse(resp, SC_NOT_FOUND);
+      initErrorResponse(resp, SC_NOT_FOUND);
     }
   }
 
@@ -144,7 +140,7 @@ public class MockIdentityProvider
       resolveArtifact(req, resp);
     } else {
       logger.log(Level.WARNING, "POST unknown URL: " + url);
-      errorServletResponse(resp, SC_NOT_FOUND);
+      initErrorResponse(resp, SC_NOT_FOUND);
     }
   }
 
@@ -155,7 +151,7 @@ public class MockIdentityProvider
     HTTPRedirectDeflateDecoder decoder = new HTTPRedirectDeflateDecoder();
     runDecoder(decoder, context);
     req.getSession().setAttribute(SSO_SAML_CONTEXT, context);
-    PrintWriter out = htmlServletResponse(resp);
+    PrintWriter out = initNormalResponse(resp);
     out.print("<html><head><title>Please Login</title></head><body>\n" +
               "<form action=\"" +
               formPostUrl +
@@ -175,7 +171,7 @@ public class MockIdentityProvider
         getMessageContext(session, SSO_SAML_CONTEXT);
     if (context == null) {
       logger.log(Level.WARNING, "Unable to get identity provider message context.");
-      errorServletResponse(resp, SC_INTERNAL_SERVER_ERROR);
+      initErrorResponse(resp, SC_INTERNAL_SERVER_ERROR);
       return;
     }
 
@@ -214,7 +210,7 @@ public class MockIdentityProvider
     selectPeerEndpoint(context, SAML2_ARTIFACT_BINDING_URI);
 
     // Do encoding
-    initializeServletResponse(resp);
+    initResponse(resp);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(resp, true));
     HTTPArtifactEncoder encoder = new HTTPArtifactEncoder(null, null, artifactMap);
     encoder.setPostEncoding(false);
@@ -236,7 +232,7 @@ public class MockIdentityProvider
     SAMLMessageContext<ArtifactResolve, ArtifactResponse, NameID> context =
         makeSamlMessageContext();
     context.setInboundMessageTransport(new HttpServletRequestAdapter(req));
-    initializeServletResponse(resp);
+    initResponse(resp);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(resp, true));
 
     // Select endpoint
