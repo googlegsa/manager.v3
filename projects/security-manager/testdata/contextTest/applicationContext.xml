@@ -15,11 +15,9 @@
     <property name="instantiator" ref="Instantiator" />
   </bean>
 
-	<bean id="BackEnd"
-		class="com.google.enterprise.saml.server.MockBackEnd">
+  <bean id="BackEnd"
+    class="com.google.enterprise.saml.server.MockBackEnd">
     <constructor-arg index="0" ref="SessionManager" />
     <constructor-arg index="1" ref="ConnectorManager" />
-	</bean>
-
+  </bean>
 </beans>
-

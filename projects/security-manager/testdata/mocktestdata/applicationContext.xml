@@ -22,10 +22,10 @@
     <constructor-arg><null/></constructor-arg>
   </bean>
 
-	<bean id="BackEnd"
-		class="com.google.enterprise.saml.server.MockBackEnd">
+  <bean id="BackEnd"
+    class="com.google.enterprise.saml.server.MockBackEnd">
     <constructor-arg index="0" ref="SessionManager" />
-	</bean>
+  </bean>
 
   <bean id="Monitor"
     class="com.google.enterprise.connector.monitor.HashMapMonitor" />
@@ -48,6 +48,4 @@
     <property name="instantiator" ref="Instantiator" />
     <property name="backEnd" ref="BackEnd" />
   </bean>
-
 </beans>
-
