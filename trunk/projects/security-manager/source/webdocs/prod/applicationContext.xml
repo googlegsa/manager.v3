@@ -26,18 +26,16 @@
     class="com.google.enterprise.connector.persist.FileStore">
   </bean>
 
-	<bean id="BackEnd"
-		class="com.google.enterprise.saml.server.BackEndImpl">
+  <bean id="BackEnd"
+    class="com.google.enterprise.saml.server.BackEndImpl">
     <property name="sessionManager" ref="SessionManager"/>
     <property name="artifactResolver" ref="ArtifactResolver"/>
     <property name="authzResponder" ref="AuthzResponder"/>
-	</bean>
+  </bean>
 
   <bean id="ConnectorManager"
     class="com.google.enterprise.connector.manager.ConnectorManager">
     <property name="instantiator" ref="Instantiator" />
     <property name="backEnd" ref="BackEnd" />
   </bean>
-
 </beans>
-
