@@ -23,6 +23,7 @@ import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.common.GettableHttpServlet;
 import com.google.enterprise.saml.common.PostableHttpServlet;
+import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.saml2.binding.decoding.HTTPRedirectDeflateDecoder;
@@ -50,7 +51,6 @@ import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -68,12 +68,6 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeSubject;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
-import static com.google.enterprise.saml.common.ServletUtil.existingSamlMessageContext;
-import static com.google.enterprise.saml.common.ServletUtil.getBackEnd;
-import static com.google.enterprise.saml.common.ServletUtil.getConnectorManager;
-import static com.google.enterprise.saml.common.ServletUtil.htmlServletResponse;
-import static com.google.enterprise.saml.common.ServletUtil.initializeServletResponse;
-import static com.google.enterprise.saml.common.ServletUtil.newSamlMessageContext;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
@@ -82,7 +76,7 @@ import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
  * Handler for SAML authentication requests.  These requests are sent by a service provider, in our
  * case the Google Search Appliance.  This is one part of the security manager's identity provider.
  */
-public class SamlAuthn extends HttpServlet
+public class SamlAuthn extends SecurityManagerServlet
     implements GettableHttpServlet, PostableHttpServlet {
 
   /** Required for serializable classes. */
@@ -140,7 +134,7 @@ public class SamlAuthn extends HttpServlet
     }
 
     // Otherwise, query the user
-    PrintWriter out = htmlServletResponse(response);
+    PrintWriter out = initNormalResponse(response);
     out.print("<html><head><title>Please Login</title></head><body>\n" +
               "<form action=\"" +
               request.getRequestURL().toString() +
@@ -294,7 +288,7 @@ public class SamlAuthn extends HttpServlet
       BackEnd backend, HttpServletResponse response)
       throws ServletException {
     // Encode the response message
-    initializeServletResponse(response);
+    initResponse(response);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(response, true));
     HTTPArtifactEncoder encoder = new HTTPArtifactEncoder(null, null, backend.getArtifactMap());
     encoder.setPostEncoding(false);

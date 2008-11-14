@@ -18,6 +18,7 @@ import com.google.enterprise.saml.common.GettableHttpServlet;
 import com.google.enterprise.saml.common.HttpServletRequestClientAdapter;
 import com.google.enterprise.saml.common.HttpServletResponseClientAdapter;
 import com.google.enterprise.saml.common.HttpTransport;
+import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -42,7 +43,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -58,8 +58,6 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
-import static com.google.enterprise.saml.common.ServletUtil.errorServletResponse;
-import static com.google.enterprise.saml.common.ServletUtil.initializeServletResponse;
 
 import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 
@@ -71,7 +69,7 @@ import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
  * Provider that receives a service request from the user agent and initiates an authn request from
  * an identity provider.
  */
-public class MockArtifactConsumer extends HttpServlet implements GettableHttpServlet {
+public class MockArtifactConsumer extends SecurityManagerServlet implements GettableHttpServlet {
   private static final Logger LOGGER = Logger.getLogger(MockArtifactConsumer.class.getName());
   private static final long serialVersionUID = 1L;
 
@@ -104,16 +102,16 @@ public class MockArtifactConsumer extends HttpServlet implements GettableHttpSer
     String relayState = req.getParameter(GSA_RELAY_STATE_PARAM_NAME);
     if (artifact == null) {
       LOGGER.log(Level.WARNING, "No artifact in message.");
-      errorServletResponse(resp, SC_INTERNAL_SERVER_ERROR);
+      initErrorResponse(resp, SC_INTERNAL_SERVER_ERROR);
       return;
     }
     SAMLObject message = resolveArtifact(artifact, relayState, req.getRequestURL().toString());
     if (! (message instanceof Response)) {
       LOGGER.log(Level.WARNING, "Error from artifact resolver.");
-      errorServletResponse(resp, SC_INTERNAL_SERVER_ERROR);
+      initErrorResponse(resp, SC_INTERNAL_SERVER_ERROR);
       return;
     }
-    initializeServletResponse(resp);
+    initResponse(resp);
     Response response = (Response) message;
     String code = response.getStatus().getStatusCode().getValue();
     if (code.equals(StatusCode.SUCCESS_URI)) {

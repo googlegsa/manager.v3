@@ -15,6 +15,7 @@
 package com.google.enterprise.saml.server;
 
 import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import junit.framework.TestCase;
 
@@ -32,7 +33,6 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeEntityDescripto
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
-import static com.google.enterprise.saml.common.ServletUtil.getBackEnd;
 
 /**
  * Unit test for SamlArtifactResolve handler.
@@ -82,7 +82,7 @@ public class SamlArtifactResolveTest extends TestCase {
         "source/webdocs/prod/applicationContext.xml",
         Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
 
-    BackEnd backend = getBackEnd(null);
+    BackEnd backend = SecurityManagerServlet.getBackEnd(null);
     backend.getArtifactMap().put(encodedArtifact,
                                  "http://foobar.com/",
                                  artifactIssuer,

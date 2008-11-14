@@ -30,6 +30,7 @@ import java.io.PrintWriter;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
@@ -38,7 +39,9 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageCont
 /**
  * Useful utilities for writing servlets.
  */
-public final class ServletUtil {
+public abstract class SecurityManagerServlet extends HttpServlet {
+
+  private static final long serialVersionUID = 1L;
 
   private static final DateTimeFormatter dtFormat =
       DateTimeFormat.forPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'");
@@ -91,8 +94,8 @@ public final class ServletUtil {
     return context;
   }
 
-  public static PrintWriter htmlServletResponse(HttpServletResponse response) throws IOException {
-    initializeServletResponse(response);
+  public static PrintWriter initNormalResponse(HttpServletResponse response) throws IOException {
+    initResponse(response);
     response.setStatus(HttpServletResponse.SC_OK);
     response.setContentType("text/html");
     response.setCharacterEncoding("UTF-8");
@@ -100,13 +103,13 @@ public final class ServletUtil {
     return response.getWriter();
   }
 
-  public static void errorServletResponse(HttpServletResponse response, int code)
+  public static void initErrorResponse(HttpServletResponse response, int code)
       throws IOException {
-    initializeServletResponse(response);
+    initResponse(response);
     response.sendError(code);
   }
 
-  public static void initializeServletResponse(HttpServletResponse response) {
+  public static void initResponse(HttpServletResponse response) {
     response.addHeader("Date", httpDateString());
   }
 }

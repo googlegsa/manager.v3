@@ -15,6 +15,7 @@
 package com.google.enterprise.saml.client;
 
 import com.google.enterprise.saml.common.GettableHttpServlet;
+import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -32,7 +33,6 @@ import java.io.PrintWriter;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -44,9 +44,6 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
-import static com.google.enterprise.saml.common.ServletUtil.errorServletResponse;
-import static com.google.enterprise.saml.common.ServletUtil.htmlServletResponse;
-import static com.google.enterprise.saml.common.ServletUtil.initializeServletResponse;
 
 import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
@@ -58,7 +55,7 @@ import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
  * Provider that receives a service request from a user agent and initiates an authn request to
  * an identity provider.
  */
-public class MockServiceProvider extends HttpServlet implements GettableHttpServlet {
+public class MockServiceProvider extends SecurityManagerServlet implements GettableHttpServlet {
   private static final String className = MockServiceProvider.class.getName();
   private static final Logger LOGGER = Logger.getLogger(className);
   private static final long serialVersionUID = 1L;
@@ -87,7 +84,7 @@ public class MockServiceProvider extends HttpServlet implements GettableHttpServ
     if (isAuthenticated == Boolean.TRUE) {
       ifAllowed(resp);
     } else if (isAuthenticated == Boolean.FALSE) {
-      errorServletResponse(resp, SC_UNAUTHORIZED);
+      initErrorResponse(resp, SC_UNAUTHORIZED);
     } else {
       ifUnknown(resp, req.getRequestURL().toString());
     }
@@ -95,7 +92,7 @@ public class MockServiceProvider extends HttpServlet implements GettableHttpServ
 
   private void ifAllowed(HttpServletResponse resp) throws IOException {
     LOGGER.entering(className, "ifAllowed");
-    PrintWriter out = htmlServletResponse(resp);
+    PrintWriter out = initNormalResponse(resp);
     out.print("<html><head><title>What you need</title></head>" +
               "<body><h1>What you need...</h1><p>...is what we've got!</p></body></html>");
     out.close();
@@ -122,7 +119,7 @@ public class MockServiceProvider extends HttpServlet implements GettableHttpServ
                          SingleSignOnService.DEFAULT_ELEMENT_NAME);
     selectPeerEndpoint(context, SAML2_REDIRECT_BINDING_URI);
 
-    initializeServletResponse(resp);
+    initResponse(resp);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(resp, true));
 
     runEncoder(new HTTPRedirectDeflateEncoder(), context);

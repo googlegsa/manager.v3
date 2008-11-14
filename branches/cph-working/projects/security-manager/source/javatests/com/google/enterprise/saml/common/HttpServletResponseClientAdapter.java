@@ -14,15 +14,13 @@
 
 package com.google.enterprise.saml.common;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.List;
-
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.xml.security.credential.Credential;
 import org.springframework.mock.web.MockHttpServletResponse;
 
-import static com.google.enterprise.saml.common.ServletUtil.initializeServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.List;
 
 /**
  * HttpServletResponseClientAdapter implements an HTTPInTransport interface that can be used by the
@@ -36,7 +34,7 @@ public class HttpServletResponseClientAdapter implements HTTPInTransport {
   private String httpMethod;
 
   public HttpServletResponseClientAdapter(MockHttpServletResponse response) {
-    initializeServletResponse(response);
+    SecurityManagerServlet.initResponse(response);
     this.response = response;
     entityStream = new ByteArrayInputStream(response.getContentAsByteArray());
   }
