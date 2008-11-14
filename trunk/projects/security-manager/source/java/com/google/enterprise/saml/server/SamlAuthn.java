@@ -15,11 +15,10 @@
 package com.google.enterprise.saml.server;
 
 import com.google.common.collect.ImmutableMap;
-
 import com.google.enterprise.connector.instantiator.InstantiatorException;
-import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.ConnectorManager;
+import com.google.enterprise.connector.manager.ConnectorStatus;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
@@ -27,17 +26,16 @@ import com.google.enterprise.saml.common.GsaConstants;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Iterator;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.Cookie;
 
 /**
  * Handler for SAML login from the Google Search Appliance.
@@ -72,7 +70,7 @@ public class SamlAuthn extends HttpServlet {
      */
     Cookie[] jar = request.getCookies();
     if (jar != null) {
-      HashMap cookieJar = new HashMap(jar.length);
+      Map<String, String> cookieJar = new HashMap<String, String>(jar.length);
       for (int i = 0; i < jar.length; i++) {
         cookieJar.put(jar[i].getName(), jar[i].getValue());
       }
@@ -94,21 +92,22 @@ public class SamlAuthn extends HttpServlet {
     response.getWriter().print(formHtml);
   }
 
+  @SuppressWarnings("unchecked")
   private HttpServletResponse handleAuthn(HttpServletResponse response,
       String gsaUrlString, String relay, String username, String password,
-      HashMap cookieJar) throws IOException {
+      Map<String, String> cookieJar) throws IOException {
     
     ServletContext servletContext = this.getServletContext();
     ConnectorManager manager = (ConnectorManager) 
       Context.getInstance(servletContext).getManager();
     BackEnd backend = manager.getBackEnd();
-    List connList = manager.getConnectorStatuses();
+    List<ConnectorStatus> connList = manager.getConnectorStatuses();
     if (connList == null || connList.isEmpty()) {
       instantiateConnector(manager);
       connList = manager.getConnectorStatuses();
     }
-    for (Iterator iter = connList.iterator(); iter.hasNext();) {
-      String connectorName = ((ConnectorStatus) iter.next()).getName();
+    for (ConnectorStatus connStatus: connList) {
+      String connectorName = connStatus.getName();
       LOGGER.info("Got security plug-in " + connectorName);
       
       AuthenticationResponse authnResponse = 
