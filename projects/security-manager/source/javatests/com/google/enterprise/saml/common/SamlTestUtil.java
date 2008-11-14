@@ -34,8 +34,6 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static com.google.enterprise.saml.common.ServletUtil.httpDateString;
-
 /**
  * Useful utilities for SAML testing.
  */
@@ -77,7 +75,7 @@ public final class SamlTestUtil {
       int port = serverUrl.getPort();
       request.addHeader("Host", (port < 0) ? host : String.format("%s:%d", host, port));
     }
-    request.addHeader("Date", httpDateString());
+    request.addHeader("Date", SecurityManagerServlet.httpDateString());
     request.addHeader("Accept", "text/html, text/xhtml;q=0.9, text/plain;q=0.5, text/*;q=0.1");
     request.addHeader("Accept-Charset", "us-ascii, iso-8859-1, utf-8");
     request.addHeader("Accept-Encoding", "identity");
