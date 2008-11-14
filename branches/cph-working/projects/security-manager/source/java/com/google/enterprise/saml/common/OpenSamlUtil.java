@@ -233,6 +233,7 @@ public final class OpenSamlUtil {
    * Static factory for SAML <code>Action</code> objects.
    *
    * @param name A URI identifying the represented action.
+   * @param namespace A URI identifying the class of names being specified.
    * @return A new <code>Action</code> object.
    */
   public static Action makeAction(String name, String namespace) {
