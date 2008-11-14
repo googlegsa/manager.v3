@@ -14,21 +14,17 @@
 
 package com.google.enterprise.security.connectors.simplecookie;
 
-import com.google.enterprise.security.connectors.simplecookie.CookieIdentityExtractor;
-
-import java.io.IOException;
-import java.net.URL;
-import java.net.MalformedURLException;
-import java.util.logging.Logger;
-
-import javax.xml.ws.http.HTTPException;
-
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
-import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
+
+import java.io.IOException;
+import java.util.logging.Logger;
+
+import javax.xml.ws.http.HTTPException;
 
 /**
  * Extract identity from a web site protected by a SSO system.
@@ -42,9 +38,7 @@ public class SsoCookieIdentityExtractor implements CookieIdentityExtractor {
   private static final Logger LOGGER =
     Logger.getLogger(SsoCookieIdentityExtractor.class.getName());
  
-  public SsoCookieIdentityExtractor(String strUrl, String headerName)
-      throws MalformedURLException {
-    URL url = new URL(strUrl);
+  public SsoCookieIdentityExtractor(String strUrl, String headerName) {
     this.serverUri = strUrl;
     this.httpHeaderName = headerName;
   }
