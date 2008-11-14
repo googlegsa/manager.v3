@@ -53,5 +53,4 @@
     <property name="instantiator" ref="Instantiator" />
     <property name="backEnd" ref="BackEnd" />
   </bean>
-
 </beans>
