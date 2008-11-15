@@ -61,7 +61,6 @@ public class SamlSsoTest extends TestCase {
   private static final String ssoUrl = "http://localhost:5678/authn";
   private static final String arUrl = "http://localhost:5678/resolve-artifact";
 
-  private final MockHttpTransport transport;
   private final MockUserAgent userAgent;
 
   public SamlSsoTest(String name) throws ServletException {
@@ -83,7 +82,7 @@ public class SamlSsoTest extends TestCase {
     makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI, acsUrl).setIsDefault(true);
 
     // Initialize transport
-    transport = new MockHttpTransport();
+    MockHttpTransport transport = new MockHttpTransport();
     userAgent = new MockUserAgent(transport);
 
     transport.registerServlet(spUrl, new MockServiceProvider(gsaEntity, smEntity));
