@@ -161,6 +161,7 @@
 		<delete dir="${tests.todir}" />
 		<delete dir="${tests.todir}" />
 		<delete dir="${tests.data}/tmp" />
+		<delete dir="${catalina.base}" />
 	</target>
 
 	<!-- ======================Installation targets====================== -->
