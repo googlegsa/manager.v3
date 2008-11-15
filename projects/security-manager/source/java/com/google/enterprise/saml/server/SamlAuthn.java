@@ -22,7 +22,9 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.saml.common.GettableHttpServlet;
 import com.google.enterprise.saml.common.GsaConstants;
+import com.google.enterprise.saml.common.PostableHttpServlet;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import java.io.IOException;
@@ -40,7 +42,8 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Handler for SAML login from the Google Search Appliance.
  */
-public class SamlAuthn extends SecurityManagerServlet {
+public class SamlAuthn extends SecurityManagerServlet
+    implements GettableHttpServlet, PostableHttpServlet {
 
   private static final long serialVersionUID = 1L;
   private static final Logger LOGGER =
