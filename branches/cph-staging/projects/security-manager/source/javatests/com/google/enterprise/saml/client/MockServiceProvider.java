@@ -17,6 +17,7 @@ package com.google.enterprise.saml.client;
 import com.google.enterprise.saml.common.GettableHttpServlet;
 import com.google.enterprise.saml.common.HttpServletRequestClientAdapter;
 import com.google.enterprise.saml.common.HttpServletResponseClientAdapter;
+import com.google.enterprise.saml.common.HttpTransport;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import org.opensaml.common.SAMLObject;
@@ -91,7 +92,7 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
   private final EntityDescriptor idpEntity;
   private final String serviceUrl;
   private final String acsUrl;
-  private final GettableHttpServlet clientTransport;
+  private final HttpTransport clientTransport;
 
   /**
    * Creates a new mock SAML service provider with the given identity provider.
@@ -104,7 +105,7 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
    * @throws ServletException
    */
   public MockServiceProvider(EntityDescriptor spEntity, EntityDescriptor idpEntity,
-      String serviceUrl, String acsUrl, GettableHttpServlet clientTransport) throws ServletException {
+      String serviceUrl, String acsUrl, HttpTransport clientTransport) throws ServletException {
     init(new MockServletConfig());
     this.spEntity = spEntity;
     this.idpEntity = idpEntity;
@@ -249,7 +250,7 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
     runEncoder(new HTTPSOAP11Encoder(), context);
     out.finish();
 
-    clientTransport.doGet(req, resp);
+    clientTransport.exchange(req, resp);
 
     HttpServletResponseClientAdapter in = new HttpServletResponseClientAdapter(resp);
     in.setHttpMethod("POST");

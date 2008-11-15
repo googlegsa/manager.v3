@@ -15,9 +15,8 @@
 package com.google.enterprise.saml.server;
 
 import com.google.enterprise.saml.client.MockServiceProvider;
-import com.google.enterprise.saml.common.GettableHttpServlet;
-import com.google.enterprise.saml.common.PostableHttpServlet;
-import com.google.enterprise.saml.common.SecurityManagerServlet;
+import com.google.enterprise.saml.client.MockUserAgent;
+import com.google.enterprise.saml.common.MockHttpTransport;
 
 import junit.framework.TestCase;
 
@@ -26,17 +25,13 @@ import org.htmlcleaner.TagNode;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.mock.web.MockHttpSession;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -47,11 +42,10 @@ import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
 import static com.google.enterprise.saml.common.SamlTestUtil.servletRequestToString;
 import static com.google.enterprise.saml.common.SamlTestUtil.servletResponseToString;
 
-import static javax.servlet.http.HttpServletResponse.SC_METHOD_NOT_ALLOWED;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
-public class SamlSsoTest extends TestCase implements GettableHttpServlet {
+public class SamlSsoTest extends TestCase {
   private static final Logger logger = Logger.getLogger(SamlSsoTest.class.getName());
 
   private static final String uaUrl = "http://localhost/";
@@ -61,21 +55,28 @@ public class SamlSsoTest extends TestCase implements GettableHttpServlet {
   private static final String formPostUrl = "http://localhost:5678/authn-verify";
   private static final String arUrl = "http://localhost:5678/resolve-artifact";
 
-  private final EntityDescriptor spEntity;
-  private final EntityDescriptor idpEntity;
-  private final MockServiceProvider serviceProvider;
-  private final MockIdentityProvider identityProvider;
-  final DnsResolver dnsResolver;
+  private final MockUserAgent userAgent;
 
   public SamlSsoTest(String name) throws ServletException {
     super(name);
-    spEntity = makeEntityDescriptor("http://google.com/enterprise/saml/common/service-provider");
-    idpEntity = makeEntityDescriptor("http://google.com/enterprise/saml/common/identity-provider");
-    serviceProvider = new MockServiceProvider(spEntity, idpEntity, spUrl, acsUrl, this);
-    identityProvider = new MockIdentityProvider(idpEntity, spEntity, ssoUrl, formPostUrl, arUrl);
-    dnsResolver = new DnsResolver();
-    dnsResolver.addEntry("localhost:1234", serviceProvider);
-    dnsResolver.addEntry("localhost:5678", identityProvider);
+
+    EntityDescriptor spEntity =
+        makeEntityDescriptor("http://google.com/enterprise/saml/common/service-provider");
+    EntityDescriptor idpEntity =
+        makeEntityDescriptor("http://google.com/enterprise/saml/common/identity-provider");
+
+    // Initialize transport
+    MockHttpTransport transport = new MockHttpTransport();
+    userAgent = new MockUserAgent(transport);
+
+    MockServiceProvider sp = new MockServiceProvider(spEntity, idpEntity, spUrl, acsUrl, transport);
+    transport.registerServlet(spUrl, sp);
+    transport.registerServlet(acsUrl, sp);
+
+    MockIdentityProvider idp = new MockIdentityProvider(idpEntity, spEntity, ssoUrl, formPostUrl, arUrl);
+    transport.registerServlet(ssoUrl, idp);
+    transport.registerServlet(formPostUrl, idp);
+    transport.registerServlet(arUrl, idp);
   }
 
   public void testGoodCredentials() throws ServletException, IOException, MalformedURLException {
@@ -90,10 +91,9 @@ public class SamlSsoTest extends TestCase implements GettableHttpServlet {
 
   private MockHttpServletResponse tryCredentials(String username, String password)
       throws ServletException, IOException, MalformedURLException {
-    UserAgent agent = new UserAgent();
 
     // Initial request to service provider
-    MockHttpServletResponse response1 = agent.send(makeMockHttpGet(uaUrl, spUrl));
+    MockHttpServletResponse response1 = userAgent.exchange(makeMockHttpGet(uaUrl, spUrl));
 
     // Parse credentials-gathering form
     assertEquals("Incorrect response status code", SC_OK, response1.getStatus());
@@ -113,83 +113,7 @@ public class SamlSsoTest extends TestCase implements GettableHttpServlet {
     request2.addParameter("username", username);
     request2.addParameter("password", password);
     generatePostContent(request2);
-    return agent.send(request2);
-  }
-
-  private final class UserAgent {
-    private MockHttpSession session;
-    private String referrer;
-
-    UserAgent() {
-      session = new MockHttpSession();
-      referrer = null;
-    }
-
-    MockHttpServletResponse send(MockHttpServletRequest request)
-        throws IOException, ServletException {
-      request.setSession(session);
-      if (referrer != null) {
-        request.addHeader("Referer", referrer);
-      }
-      referrer = request.getRequestURL().toString();
-      MockHttpServletResponse response = new MockHttpServletResponse();
-      doGet(request, response);
-      while (isRedirect(response)) {
-        String location = redirectLocation(response);
-        request = makeMockHttpGet(uaUrl, location);
-        request.setSession(session);
-        request.addHeader("Referer", referrer);
-        response = new MockHttpServletResponse();
-        doGet(request, response);
-        referrer = location;
-      }
-      return response;
-    }
-
-    private boolean isRedirect(MockHttpServletResponse response) {
-      int status = response.getStatus();
-      return (status == 303) || (status == 302);
-    }
-
-    private String redirectLocation(MockHttpServletResponse response) {
-      String location = (String) response.getHeader("Location");
-      assertNotNull("No Location header in response", location);
-      return location;
-    }
-  }
-
-  private final class DnsResolver {
-    private final Map<String, HttpServlet> table;
-
-    DnsResolver() {
-      table = new HashMap<String, HttpServlet>();
-    }
-
-    void addEntry(String hostPort, HttpServlet servlet) {
-      table.put(hostPort, servlet);
-    }
-
-    HttpServlet getServlet(String hostPort) {
-      return table.get(hostPort);
-    }
-    
-  }
-
-  public void doGet(HttpServletRequest req, HttpServletResponse resp)
-      throws IOException, ServletException {
-    String hostPort = req.getHeader("Host");
-    assertNotNull("Request missing Host header.", hostPort);
-    HttpServlet servlet = dnsResolver.getServlet(hostPort);
-    assertNotNull("Unknown host: " + hostPort, servlet);
-    logRequest(req, servlet.getClass().getName());
-    if ("GET".equals(req.getMethod())) {
-      ((GettableHttpServlet) servlet).doGet(req, resp);
-    } else if ("POST".equals(req.getMethod())) {
-      ((PostableHttpServlet) servlet).doPost(req, resp);
-    } else {
-      SecurityManagerServlet.initErrorResponse(resp, SC_METHOD_NOT_ALLOWED);
-    }
-    logResponse(resp, servlet.getClass().getName());
+    return userAgent.exchange(request2);
   }
 
   void logRequest(HttpServletRequest request, String tag) throws IOException {
