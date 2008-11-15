@@ -95,6 +95,11 @@
         <servlet-name>GetConfigForm</servlet-name>
         <servlet-class>com.google.enterprise.connector.servlet.GetConfigForm</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>GetConfig</servlet-name>
+        <servlet-class>com.google.enterprise.connector.servlet.GetConfig</servlet-class>
+    </servlet>
+
 <!--
     <servlet>
         <servlet-name>GetSchema</servlet-name>
@@ -190,6 +195,14 @@
     <servlet-mapping>
         <servlet-name>GetConfigForm</servlet-name>
 	<url-pattern>/getConfigForm</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetConfig</servlet-name>
+        <url-pattern>/getConfig/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetConfig</servlet-name>
+        <url-pattern>/getConfiguration/*</url-pattern>
     </servlet-mapping>
 <!--
     <servlet-mapping>
