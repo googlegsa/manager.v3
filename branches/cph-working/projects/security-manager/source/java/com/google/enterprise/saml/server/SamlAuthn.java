@@ -53,7 +53,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
@@ -112,10 +111,10 @@ public class SamlAuthn extends SecurityManagerServlet
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    HttpSession session = request.getSession();
 
     // Establish the SAML message context
-    SAMLMessageContext<AuthnRequest, Response, NameID> context = newSamlMessageContext(session);
+    SAMLMessageContext<AuthnRequest, Response, NameID> context =
+        newSamlMessageContext(request.getSession());
     initializeLocalEntity(context, localEntity, localEntity.getIDPSSODescriptor(SAML20P_NS),
                           SingleSignOnService.DEFAULT_ELEMENT_NAME);
     initializePeerEntity(context, peerEntity, peerEntity.getSPSSODescriptor(SAML20P_NS),
@@ -139,8 +138,8 @@ public class SamlAuthn extends SecurityManagerServlet
               "<form action=\"" +
               request.getRequestURL().toString() +
               "\" method=POST>\n" +
-              "User Name:<input type=text name=username><br>\n" +
-              "Password:<input type=password name=password><br>\n" +
+              "User Name:<input type=text size=20 name=username><br>\n" +
+              "Password:<input type=password size=20 name=password><br>\n" +
               "<input type=submit>\n" +
               "</form>\n" +
               "</body></html>\n");
@@ -157,30 +156,9 @@ public class SamlAuthn extends SecurityManagerServlet
   private boolean tryCookies(HttpServletRequest request, HttpServletResponse response)
       throws ServletException {
     Map<String, String> cookieJar = getCookieJar(request);
-    if (cookieJar == null) {
-      return false;
-    }
-    ConnectorManager manager = getConnectorManager(getServletContext());
-    List<ConnectorStatus> connList = getConnectorStatuses(manager);
-    for (ConnectorStatus status: connList) {
-      String connectorName = status.getName();
-      LOGGER.info("Got security plug-in " + connectorName);
-      AuthenticationResponse authnResponse =
-          manager.authenticate(connectorName, null, null, cookieJar);
-      if ((authnResponse != null) && authnResponse.isValid()) {
-        // TODO make sure authnResponse has subject in BackEnd
-        String username = authnResponse.getData();
-        if (username != null) {
-          SAMLMessageContext<AuthnRequest, Response, NameID> context =
-              existingSamlMessageContext(request.getSession());
-          context.setOutboundSAMLMessage(
-              makeSuccessfulResponse(context.getInboundSAMLMessage(), username));
-          doRedirect(context, manager.getBackEnd(), response);
-          return true;
-        }
-      }
-    }
-    return false;
+    return
+        (cookieJar != null) &&
+        handleAuthn(request, response, cookieJar);
   }
 
   /**
@@ -202,6 +180,30 @@ public class SamlAuthn extends SecurityManagerServlet
     return cookieJar;
   }
 
+  private boolean handleAuthn(HttpServletRequest request, HttpServletResponse response,
+      Map<String, String> cookieJar) throws ServletException {
+    ConnectorManager manager = getConnectorManager(getServletContext());
+    for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
+      String connectorName = connStatus.getName();
+      LOGGER.info("Got security plug-in " + connectorName);
+      AuthenticationResponse authnResponse =
+          manager.authenticate(connectorName, null, null, cookieJar);
+      if ((authnResponse != null) && authnResponse.isValid()) {
+        // TODO make sure authnResponse has subject in BackEnd
+        String username = authnResponse.getData();
+        if (username != null) {
+          SAMLMessageContext<AuthnRequest, Response, NameID> context =
+              existingSamlMessageContext(request.getSession());
+          context.setOutboundSAMLMessage(
+              makeSuccessfulResponse(context.getInboundSAMLMessage(), username));
+          doRedirect(context, manager.getBackEnd(), response);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   @SuppressWarnings("unchecked")
   private List<ConnectorStatus> getConnectorStatuses(ConnectorManager manager) {
     List<ConnectorStatus> connList = manager.getConnectorStatuses();
@@ -210,29 +212,6 @@ public class SamlAuthn extends SecurityManagerServlet
       connList = manager.getConnectorStatuses();
     }
     return connList;
-  }
-
-  // TODO get rid of this when we have a way of configuring plug-ins
-  private void instantiateConnector(ConnectorManager manager) {
-    String connectorName = "Lei";
-    String connectorType = "CookieConnector";
-    String language = "en";
-
-    Map<String, String> configData =
-        ImmutableMap.of(
-            "CookieName", "SMSESSION",
-            "ServerUrl", "http://gama.corp.google.com/user1/ssoAgent.asp",
-            "HttpHeaderName", "User-Name");
-    try {
-      manager.setConnectorConfig(connectorName, connectorType,
-                                 configData, language, false);
-    } catch (ConnectorNotFoundException e) {
-      LOGGER.info("ConnectorNotFound: " + e.toString());
-    } catch (InstantiatorException e) {
-      LOGGER.info("Instantiator: " + e.toString());
-    } catch (PersistentStoreException e) {
-      LOGGER.info("PersistentStore: " + e.toString());
-    }
   }
 
   /**
@@ -293,5 +272,28 @@ public class SamlAuthn extends SecurityManagerServlet
     HTTPArtifactEncoder encoder = new HTTPArtifactEncoder(null, null, backend.getArtifactMap());
     encoder.setPostEncoding(false);
     runEncoder(encoder, context);
+  }
+
+  // TODO get rid of this when we have a way of configuring plug-ins
+  private void instantiateConnector(ConnectorManager manager) {
+    String connectorName = "Lei";
+    String connectorType = "CookieConnector";
+    String language = "en";
+
+    Map<String, String> configData =
+        ImmutableMap.of(
+            "CookieName", "SMSESSION",
+            "ServerUrl", "http://gama.corp.google.com/user1/ssoAgent.asp",
+            "HttpHeaderName", "User-Name");
+    try {
+      manager.setConnectorConfig(connectorName, connectorType,
+                                 configData, language, false);
+    } catch (ConnectorNotFoundException e) {
+      LOGGER.info("ConnectorNotFound: " + e.toString());
+    } catch (InstantiatorException e) {
+      LOGGER.info("Instantiator: " + e.toString());
+    } catch (PersistentStoreException e) {
+      LOGGER.info("PersistentStore: " + e.toString());
+    }
   }
 }
