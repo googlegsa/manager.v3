@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc.
+// Copyright 2007-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public class JcrTraversalManager implements TraversalManager {
     }
     String uuid = extractDocidFromCheckpoint(jo, checkPoint);
     Calendar c = extractCalendarFromCheckpoint(jo, checkPoint);
-    String queryString = makeCheckpointQueryString(uuid, c);
+    String queryString = makeCheckpointQueryString(c);
     String lang = Query.XPATH;
     javax.jcr.query.Query query = makeCheckpointQuery(queryString, lang);
     // now iterate past the last document processed
@@ -134,7 +134,7 @@ public class JcrTraversalManager implements TraversalManager {
     return query;
   }
 
-  private String makeCheckpointQueryString(String uuid, Calendar c) {
+  private String makeCheckpointQueryString(Calendar c) {
 
     String time = Value.calendarToIso8601(c);
     Object[] arguments = { time };
@@ -192,7 +192,7 @@ public class JcrTraversalManager implements TraversalManager {
     return (nodes.hasNext()) ? new JcrDocumentList(nodes) : null;
   }
 
-  public void setBatchHint(int batchHint) throws RepositoryException {
+  public void setBatchHint(int batchHint) {
   }
 
 }

@@ -205,7 +205,7 @@ public class SpringInstantiator implements Instantiator {
    * @see com.google.enterprise.connector.instantiator.Instantiator#restartConnectorTraversal(java.lang.String)
    */
   public void restartConnectorTraversal(String connectorName)
-      throws ConnectorNotFoundException, InstantiatorException {
+      throws ConnectorNotFoundException {
     initialize();
     LOGGER.info("Restarting traversal for Connector: " + connectorName);
     connectorCache.remove(connectorName);

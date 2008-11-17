@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.google.enterprise.connector.test.ConnectorTestUtils;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Set;
@@ -41,10 +40,8 @@ public class GetConnectorListTest extends TestCase {
    * #handleDoPost(com.google.enterprise.connector.manager.Manager,
    * java.io.PrintWriter)}
    * where connectorTypes = null.
-   *
-   * @throws IOException
    */
-  public void testHandleDoGet1() throws IOException {
+  public void testHandleDoGet1() {
     Manager manager = new MockManager() {
         public Set getConnectorTypeNames() { return null; }
       };
@@ -62,10 +59,8 @@ public class GetConnectorListTest extends TestCase {
    * #handleDoPost(com.google.enterprise.connector.manager.Manager,
    * java.io.PrintWriter)}
    * where connectorTypes = {"Documentum", "Filenet", "Sharepoint"}.
-   *
-   * @throws IOException
    */
-  public void testHandleDoGet2() throws IOException {
+  public void testHandleDoGet2() {
     String expectedResult =
         "<CmResponse>\n"
         + "  <StatusId>0</StatusId>\n"
@@ -78,8 +73,7 @@ public class GetConnectorListTest extends TestCase {
     doTest(MockManager.getInstance(), expectedResult);
   }
 
-  private void doTest(Manager manager, String expectedResult)
-      throws IOException {
+  private void doTest(Manager manager, String expectedResult) {
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
     GetConnectorList.handleDoPost(manager, out);

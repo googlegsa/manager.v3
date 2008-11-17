@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+// Copyright 2006-2008 Google Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -50,12 +49,11 @@ public class UpdateConnectorNoGSA extends HttpServlet {
    * 
    * @param req
    * @param res
-   * @throws ServletException
    * @throws IOException
    * 
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
     String language = null;
     String connectorName = null;
     StringWriter writer = new StringWriter();
@@ -98,12 +96,11 @@ public class UpdateConnectorNoGSA extends HttpServlet {
    * 
    * @param req
    * @param res
-   * @throws ServletException
    * @throws IOException
    * 
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
     ConnectorMessageCode status = new ConnectorMessageCode();
     String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
     Map configData = new TreeMap();

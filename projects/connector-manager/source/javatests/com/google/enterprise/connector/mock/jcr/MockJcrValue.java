@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,9 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Calendar;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Value;
-import javax.jcr.ValueFormatException;
 
 /**
  * MockJcrValue implements the corresponding JCR interface.
@@ -49,8 +47,7 @@ public class MockJcrValue implements Value {
     this.type = type;    
   }
 
-  public String getString() throws ValueFormatException, IllegalStateException,
-      RepositoryException {
+  public String getString() throws IllegalStateException {
     String result;
     if (type.equals(PropertyType.DATE)) {
       Calendar c = getDate();
@@ -66,8 +63,7 @@ public class MockJcrValue implements Value {
     return result;
   }
 
-  public InputStream getStream() throws IllegalStateException,
-      RepositoryException {
+  public InputStream getStream() throws IllegalStateException {
       if (null == streamVal) {
         // Convert non-stream values into a stream
         InputStream is = new ByteArrayInputStream(val.getBytes());
@@ -78,19 +74,15 @@ public class MockJcrValue implements Value {
       }
   }
 
-  public long getLong() throws ValueFormatException, IllegalStateException,
-      RepositoryException {
+  public long getLong() throws IllegalStateException {
     return Long.parseLong(val);
   }
 
-  public double getDouble() throws ValueFormatException, IllegalStateException,
-      RepositoryException {
-    // TODO(ziff): will be needed later for full testing
+  public double getDouble() {
     throw new UnsupportedOperationException();
   }
 
-  public Calendar getDate() throws ValueFormatException, IllegalStateException,
-      RepositoryException {
+  public Calendar getDate() throws IllegalStateException {
     // TODO: must fix this where sometimes we get the date value as a long but
     // sometimes we get the value in the format "Tue, 15 Nov 1994 12:45:26 GMT".
     long ticks = getLong();
@@ -99,8 +91,7 @@ public class MockJcrValue implements Value {
     return result;
   }
 
-  public boolean getBoolean() throws ValueFormatException,
-      IllegalStateException, RepositoryException {
+  public boolean getBoolean() {
     if (val.equalsIgnoreCase("t") || val.equalsIgnoreCase("true")) {
       return true;
     }
@@ -126,7 +117,6 @@ public class MockJcrValue implements Value {
   // public static final int UNDEFINED = 0;
 
   protected static int mockRepositoryTypeToJCRType(PropertyType t) {
-    // TODO(ziff): maintain this along with MockRepositoryProperty.PropertyType
     int result = javax.jcr.PropertyType.UNDEFINED;
     if (t == PropertyType.STRING) {
         result = javax.jcr.PropertyType.STRING;

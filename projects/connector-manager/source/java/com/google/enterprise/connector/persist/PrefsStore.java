@@ -35,12 +35,12 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
   private static final Logger LOGGER =
       Logger.getLogger(PrefsStore.class.getName());
 
-  private static Preferences prefs = null;
-  private static String prefsPrefix = null;
-  private static Preferences prefsSchedule = null;
-  private static Preferences prefsState = null;
-  private static Preferences prefsConfig = null;
-  private static boolean useUserRoot = true;
+  private Preferences prefs = null;
+  private String prefsPrefix = null;
+  private Preferences prefsSchedule = null;
+  private Preferences prefsState = null;
+  private Preferences prefsConfig = null;
+  private boolean useUserRoot = true;
 
   public PrefsStore() {
     this(true, null);

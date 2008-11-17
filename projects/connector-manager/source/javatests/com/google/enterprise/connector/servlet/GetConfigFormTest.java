@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class GetConfigFormTest extends TestCase {
   .getLogger(GetConfigFormTest.class.getName());
 
   /**
-   * Test method for {@link com.google.enterprise.connector.servlet.GetConfigForm#handleDoGet(java.io.PrintWriter, com.google.enterprise.connector.spi.ConfigureResponse)}.
+   * Test method for {@link com.google.enterprise.connector.servlet.GetConfigForm#handleDoGet(ConfigureResponse, ConnectorMessageCode, PrintWriter)}.
    */
   public void testHandleDoGet1() {
     String expectedResult =
@@ -45,7 +45,7 @@ public class GetConfigFormTest extends TestCase {
   }
 
   /**
-   * Test method for {@link com.google.enterprise.connector.servlet.GetConfigForm#handleDoGet(java.io.PrintWriter, com.google.enterprise.connector.spi.ConfigureResponse)}.
+   * Test method for {@link com.google.enterprise.connector.servlet.GetConfigForm#handleDoGet(ConfigureResponse, ConnectorMessageCode, PrintWriter)}.
    */
   public void testHandleDoGet2() {
     String expectedResult =
@@ -61,7 +61,7 @@ public class GetConfigFormTest extends TestCase {
   }
 
   /**
-   * Test method for {@link com.google.enterprise.connector.servlet.GetConfigForm#handleDoGet(java.io.PrintWriter, com.google.enterprise.connector.spi.ConfigureResponse)}.
+   * Test method for {@link com.google.enterprise.connector.servlet.GetConfigForm#handleDoGet(ConfigureResponse, ConnectorMessageCode, PrintWriter)}.
    */
   public void testHandleDoGet3() {
     String message = "Sample form";

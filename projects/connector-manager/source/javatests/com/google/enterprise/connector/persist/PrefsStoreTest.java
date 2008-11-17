@@ -15,7 +15,6 @@ package com.google.enterprise.connector.persist;
 
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.util.Properties;

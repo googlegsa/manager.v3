@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,17 +14,16 @@
 
 package com.google.enterprise.connector.servlet;
 
-import junit.framework.Assert;
-import junit.framework.TestCase;
-
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.logging.Logger;
-
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.manager.MockManager;
+
+import junit.framework.Assert;
+import junit.framework.TestCase;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.logging.Logger;
 
 
 /**
@@ -37,37 +36,36 @@ public class GetConnectorStatusTest extends TestCase {
 
   /**
    * Test method for {@link com.google.enterprise.connector.servlet.GetConnectorStatus
-   * #handleDoGet(java.io.PrintWriter, com.google.enterprise.connector.manager.ConnectorStatus)}.
+   * #handleDoGet(String, Manager, PrintWriter)}.
    *
    * connectorStatus = null
-   * @throws IOException 
    * 
    */
-  public void testHandleDoGet2() throws IOException {
+  public void testHandleDoGet2() {
     String name = null;
     int status = 0;
     doTestStatus(name, status);
   }
 
-  public void testHandleDoGet3() throws IOException {
+  public void testHandleDoGet3() {
     String name = "connectorName";
     int status = 0;
     doTestStatus(name, status);
   }
 
-  public void testHandleDoGet4() throws IOException {
+  public void testHandleDoGet4() {
     String name = "";
     int status = 0;
     doTestStatus(name, status);
   }
  
-  public void testHandleDoGet5() throws IOException {
+  public void testHandleDoGet5() {
     String name = "connectorName";
     int status = 0;
     doTestStatus(name, status);
   }
 
-  private void doTestStatus(String name, int status) throws IOException {
+  private void doTestStatus(String name, int status) {
     String type = "Documentum";
     String expectedResult =
         "<CmResponse>\n" +
@@ -83,8 +81,7 @@ public class GetConnectorStatusTest extends TestCase {
   }
 
   private void doTest(String connectorName,
-                      String expectedResult)
-      throws IOException {
+                      String expectedResult) {
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
     Manager manager = MockManager.getInstance();

@@ -13,7 +13,6 @@
 // limitations under the License.
 package com.google.enterprise.connector.persist;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 /**

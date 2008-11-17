@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,29 +14,17 @@
 
 package com.google.enterprise.connector.mock.jcr;
 
-import java.io.IOException;
+import org.xml.sax.ContentHandler;
+
 import java.io.InputStream;
 
-import javax.jcr.AccessDeniedException;
-import javax.jcr.InvalidItemStateException;
-import javax.jcr.InvalidSerializedDataException;
-import javax.jcr.ItemExistsException;
 import javax.jcr.NamespaceRegistry;
-import javax.jcr.NoSuchWorkspaceException;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.Workspace;
-import javax.jcr.lock.LockException;
-import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.observation.ObservationManager;
 import javax.jcr.query.QueryManager;
 import javax.jcr.version.Version;
-import javax.jcr.version.VersionException;
-
-import org.xml.sax.ContentHandler;
 
 /**
  * MockJcrWorkspace implements the corresponding JCR interface, with these
@@ -88,21 +76,16 @@ public class MockJcrWorkspace implements Workspace {
   /**
    * Gets a QueryManager for this Workspace
    * @return MockJcrQueryManager
-   * @throws RepositoryException 
    */
-  public QueryManager getQueryManager() throws RepositoryException {
+  public QueryManager getQueryManager() {
     return new MockJcrQueryManager(repo.getRepo().getStore());
   }
 
   /**
    * Throws UnsupportedOperationException
    * @return nothing
-   * @throws UnsupportedRepositoryOperationException 
-   * @throws RepositoryException 
    */
-  public ObservationManager getObservationManager()
-      throws UnsupportedRepositoryOperationException, RepositoryException {
-    // TODO(ziff): this will be needed later
+  public ObservationManager getObservationManager() {
     throw new UnsupportedOperationException();
   }
 
@@ -113,27 +96,24 @@ public class MockJcrWorkspace implements Workspace {
   /**
    * Throws UnsupportedOperationException
    * @return nothing
-   * @throws RepositoryException 
    */
-  public NamespaceRegistry getNamespaceRegistry() throws RepositoryException {
+  public NamespaceRegistry getNamespaceRegistry() {
     throw new UnsupportedOperationException();
   }
 
   /**
    * Throws UnsupportedOperationException
    * @return nothing
-   * @throws RepositoryException 
    */
-  public NodeTypeManager getNodeTypeManager() throws RepositoryException {
+  public NodeTypeManager getNodeTypeManager() {
     throw new UnsupportedOperationException();
   }
 
   /**
    * Throws UnsupportedOperationException
    * @return nothing
-   * @throws RepositoryException 
    */
-  public String[] getAccessibleWorkspaceNames() throws RepositoryException {
+  public String[] getAccessibleWorkspaceNames() {
     throw new UnsupportedOperationException();
   }
 
@@ -144,18 +124,8 @@ public class MockJcrWorkspace implements Workspace {
    * Throws UnsupportedOperationException
    * @param arg0 
    * @param arg1 
-   * @throws ConstraintViolationException 
-   * @throws VersionException 
-   * @throws AccessDeniedException 
-   * @throws PathNotFoundException 
-   * @throws ItemExistsException 
-   * @throws LockException 
-   * @throws RepositoryException 
    */
-  public void copy(String arg0, String arg1)
-      throws ConstraintViolationException, VersionException,
-      AccessDeniedException, PathNotFoundException, ItemExistsException,
-      LockException, RepositoryException {
+  public void copy(String arg0, String arg1){
     throw new UnsupportedOperationException();
   }
 
@@ -164,19 +134,8 @@ public class MockJcrWorkspace implements Workspace {
    * @param arg0 
    * @param arg1 
    * @param arg2 
-   * @throws NoSuchWorkspaceException 
-   * @throws ConstraintViolationException 
-   * @throws VersionException 
-   * @throws AccessDeniedException 
-   * @throws PathNotFoundException 
-   * @throws ItemExistsException 
-   * @throws LockException 
-   * @throws RepositoryException 
    */
-  public void copy(String arg0, String arg1, String arg2)
-      throws NoSuchWorkspaceException, ConstraintViolationException,
-      VersionException, AccessDeniedException, PathNotFoundException,
-      ItemExistsException, LockException, RepositoryException {
+  public void copy(String arg0, String arg1, String arg2) {
     throw new UnsupportedOperationException();
   }
 
@@ -186,19 +145,8 @@ public class MockJcrWorkspace implements Workspace {
    * @param arg1 
    * @param arg2 
    * @param arg3 
-   * @throws NoSuchWorkspaceException 
-   * @throws ConstraintViolationException 
-   * @throws VersionException 
-   * @throws AccessDeniedException 
-   * @throws PathNotFoundException 
-   * @throws ItemExistsException 
-   * @throws LockException 
-   * @throws RepositoryException 
    */
-  public void clone(String arg0, String arg1, String arg2, boolean arg3)
-      throws NoSuchWorkspaceException, ConstraintViolationException,
-      VersionException, AccessDeniedException, PathNotFoundException,
-      ItemExistsException, LockException, RepositoryException {
+  public void clone(String arg0, String arg1, String arg2, boolean arg3) {
     throw new UnsupportedOperationException();
   }
 
@@ -206,18 +154,8 @@ public class MockJcrWorkspace implements Workspace {
    * Throws UnsupportedOperationException
    * @param arg0 
    * @param arg1 
-   * @throws ConstraintViolationException 
-   * @throws VersionException 
-   * @throws AccessDeniedException 
-   * @throws PathNotFoundException 
-   * @throws ItemExistsException 
-   * @throws LockException 
-   * @throws RepositoryException 
    */
-  public void move(String arg0, String arg1)
-      throws ConstraintViolationException, VersionException,
-      AccessDeniedException, PathNotFoundException, ItemExistsException,
-      LockException, RepositoryException {
+  public void move(String arg0, String arg1) {
     throw new UnsupportedOperationException();
   }
 
@@ -225,16 +163,8 @@ public class MockJcrWorkspace implements Workspace {
    * Throws UnsupportedOperationException
    * @param arg0 
    * @param arg1 
-   * @throws ItemExistsException 
-   * @throws UnsupportedRepositoryOperationException 
-   * @throws VersionException 
-   * @throws LockException 
-   * @throws InvalidItemStateException 
-   * @throws RepositoryException 
    */
-  public void restore(Version[] arg0, boolean arg1) throws ItemExistsException,
-      UnsupportedRepositoryOperationException, VersionException, LockException,
-      InvalidItemStateException, RepositoryException {
+  public void restore(Version[] arg0, boolean arg1) {
     throw new UnsupportedOperationException();
   }
 
@@ -243,17 +173,8 @@ public class MockJcrWorkspace implements Workspace {
    * @param arg0 
    * @param arg1 
    * @return nothing
-   * @throws PathNotFoundException 
-   * @throws ConstraintViolationException 
-   * @throws VersionException 
-   * @throws LockException 
-   * @throws AccessDeniedException 
-   * @throws RepositoryException 
    */
-  public ContentHandler getImportContentHandler(String arg0, int arg1)
-      throws PathNotFoundException, ConstraintViolationException,
-      VersionException, LockException, AccessDeniedException,
-      RepositoryException {
+  public ContentHandler getImportContentHandler(String arg0, int arg1) {
     throw new UnsupportedOperationException();
   }
 
@@ -262,19 +183,8 @@ public class MockJcrWorkspace implements Workspace {
    * @param arg0 
    * @param arg1 
    * @param arg2 
-   * @throws IOException 
-   * @throws PathNotFoundException 
-   * @throws ItemExistsException 
-   * @throws ConstraintViolationException 
-   * @throws InvalidSerializedDataException 
-   * @throws LockException 
-   * @throws AccessDeniedException 
-   * @throws RepositoryException 
    */
-  public void importXML(String arg0, InputStream arg1, int arg2)
-      throws IOException, PathNotFoundException, ItemExistsException,
-      ConstraintViolationException, InvalidSerializedDataException,
-      LockException, AccessDeniedException, RepositoryException {
+  public void importXML(String arg0, InputStream arg1, int arg2) {
     throw new UnsupportedOperationException();
   }
 }

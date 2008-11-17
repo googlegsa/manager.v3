@@ -23,12 +23,11 @@ import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.spi.TraversalManager;
 
+import junit.framework.TestCase;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
-import junit.framework.Assert;
-import junit.framework.TestCase;
 
 import javax.jcr.query.QueryManager;
 
@@ -41,9 +40,8 @@ public class QueryTraverserTest extends TestCase {
    * Test method for
    * {@link com.google.enterprise.connector.traversal.QueryTraverser
    * #runBatch(int)}.
-   * @throws InterruptedException 
    */
-  public final void testRunBatch() throws InterruptedException {
+  public final void testRunBatch() {
     runTestBatches(0);
     runTestBatches(1);
     runTestBatches(2);
@@ -52,7 +50,7 @@ public class QueryTraverserTest extends TestCase {
     runTestBatches(5);
   }
 
-  private void runTestBatches(int batchSize) throws InterruptedException {
+  private void runTestBatches(int batchSize) {
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     String connectorName = "foo";

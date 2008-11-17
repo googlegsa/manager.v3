@@ -217,7 +217,7 @@ public class ConnectorTestUtils {
     out.close();
   }
 
-  public static void deleteFile(String file) throws IOException {
+  public static void deleteFile(String file) {
     new File(file).delete();
   }
 }

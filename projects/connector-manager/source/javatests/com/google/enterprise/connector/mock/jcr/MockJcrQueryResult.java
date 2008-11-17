@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.google.enterprise.connector.mock.jcr;
 import java.util.List;
 
 import javax.jcr.NodeIterator;
-import javax.jcr.RepositoryException;
 import javax.jcr.query.QueryResult;
 import javax.jcr.query.RowIterator;
 
@@ -54,9 +53,8 @@ public class MockJcrQueryResult implements QueryResult {
    * Returns the result as a NodeIterator.  At present, this is the only 
    * supported operation.
    * @return MockJcrNodeIterator
-   * @throws RepositoryException 
    */
-  public NodeIterator getNodes() throws RepositoryException {
+  public NodeIterator getNodes() {
     return new MockJcrNodeIterator(result.iterator());
   }
 
@@ -66,18 +64,16 @@ public class MockJcrQueryResult implements QueryResult {
   /**
    * Throws UnsupportedOperationException
    * @return nothing
-   * @throws RepositoryException 
    */
-  public String[] getColumnNames() throws RepositoryException {
+  public String[] getColumnNames() {
     throw new UnsupportedOperationException();
   }
 
   /**
    * Throws UnsupportedOperationException
    * @return nothing
-   * @throws RepositoryException 
    */
-  public RowIterator getRows() throws RepositoryException {
+  public RowIterator getRows() {
     throw new UnsupportedOperationException();
   }
 }

@@ -26,15 +26,13 @@ import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.pusher.MockPusher;
-
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
 
+import junit.framework.TestCase;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import junit.framework.Assert;
-import junit.framework.TestCase;
 
 import java.io.File;
 import java.util.ArrayList;

@@ -17,7 +17,6 @@ package com.google.enterprise.connector.scheduler;
 import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 /**

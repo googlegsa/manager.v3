@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.manager;
 
-import com.google.enterprise.connector.instantiator.InstantiatorException;
-import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
@@ -103,7 +101,7 @@ public class MockManager implements Manager {
    *      java.lang.String)
    */
   public ConfigureResponse getConfigForm(String connectorTypeName,
-      String language) throws ConnectorTypeNotFoundException {
+      String language) {
     String message =
         "Sample form for " + connectorTypeName + "lang " + language;
     String formSnippet =
@@ -125,7 +123,7 @@ public class MockManager implements Manager {
    *      java.lang.String)
    */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
-      String language) throws ConnectorNotFoundException {
+      String language) {
     String message = "Sample form for " + connectorName + "lang " + language;
     String formSnippet =
         "<tr>\n" + "<td>Username</td>\n" + "<td>\n"
@@ -172,8 +170,7 @@ public class MockManager implements Manager {
    *      java.util.Map, java.lang.String)
    */
   public ConfigureResponse setConfig(String connectorName, Map configData,
-      String language) throws ConnectorNotFoundException,
-      ConnectorManagerException {
+      String language) {
     return null;
   }
 
@@ -184,9 +181,8 @@ public class MockManager implements Manager {
    *      java.util.Map, java.lang.String)
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configData, String language, boolean update)
-      throws ConnectorNotFoundException, ConnectorExistsException,
-      PersistentStoreException {
+      String connectorTypeName, Map configData, String language, 
+      boolean update) {
     LOGGER.info("setConnectorConfig() connectorName: " + connectorName);
     LOGGER.info("setConnectorConfig() update: " + update);
     LOGGER.info("configData: ");
@@ -207,7 +203,7 @@ public class MockManager implements Manager {
    *      java.lang.String, int, int)
    */
   public void setConnectorManagerConfig(String feederGateHost,
-      int feederGatePort) throws PersistentStoreException {
+      int feederGatePort) {
     // do nothing
   }
 
@@ -217,9 +213,9 @@ public class MockManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#setSchedule(
    *      java.lang.String, int, java.lang.String)
    */
-  public void setSchedule(String connectorName, int load, int retryDelayMillis, String timeIntervals) {
-    // TODO Auto-generated method stub
-
+  public void setSchedule(String connectorName, int load, int retryDelayMillis, 
+      String timeIntervals) {
+    // do nothing
   }
 
   /*
@@ -242,8 +238,7 @@ public class MockManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#restartConnectorTraversal(
    *      java.lang.String)
    */
-  public void restartConnectorTraversal(String connectorName)
-    throws ConnectorNotFoundException, InstantiatorException {
+  public void restartConnectorTraversal(String connectorName) {
     // do nothing;
   }
 
@@ -253,8 +248,7 @@ public class MockManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#getConnectorConfig(
    *      java.lang.String)
    */
-  public Map getConnectorConfig(String connectorName)
-      throws ConnectorNotFoundException {
+  public Map getConnectorConfig(String connectorName) {
     return new HashMap();
   }
 }

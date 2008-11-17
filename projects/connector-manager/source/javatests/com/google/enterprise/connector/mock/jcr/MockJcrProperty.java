@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,24 +20,15 @@ import com.google.enterprise.connector.mock.MockRepositoryProperty.PropertyType;
 import java.io.InputStream;
 import java.util.Calendar;
 
-import javax.jcr.AccessDeniedException;
-import javax.jcr.InvalidItemStateException;
 import javax.jcr.Item;
-import javax.jcr.ItemExistsException;
-import javax.jcr.ItemNotFoundException;
 import javax.jcr.ItemVisitor;
 import javax.jcr.Node;
 import javax.jcr.Property;
-import javax.jcr.ReferentialIntegrityException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
-import javax.jcr.lock.LockException;
-import javax.jcr.nodetype.ConstraintViolationException;
-import javax.jcr.nodetype.NoSuchNodeTypeException;
 import javax.jcr.nodetype.PropertyDefinition;
-import javax.jcr.version.VersionException;
 
 /**
  * MockJcrProperty implements the corresponding JCR interface, with
@@ -63,7 +54,7 @@ public class MockJcrProperty implements Property {
     this.p = p;
   }
 
-  public String getName() throws RepositoryException {
+  public String getName() {
     return p.getName();
   }
 
@@ -75,7 +66,7 @@ public class MockJcrProperty implements Property {
     return new MockJcrValue(p);
   }
 
-  public String getString() throws ValueFormatException, RepositoryException {
+  public String getString() {
     return p.getValue();
   }
 
@@ -99,7 +90,7 @@ public class MockJcrProperty implements Property {
     return v.getBoolean();
   }
 
-  public Value[] getValues() throws ValueFormatException, RepositoryException {
+  public Value[] getValues() {
     String[] values = p.getValues();
     Value[] vs = makeValueArray(p.getType(), values);
     return vs;
@@ -111,52 +102,45 @@ public class MockJcrProperty implements Property {
     return v.getStream();
   }
 
-  public Node getNode() throws ValueFormatException, RepositoryException {
-    // TODO(ziff): perhaps implement this later
+  public Node getNode() {
     throw new UnsupportedOperationException();
   }
 
-  public long getLength() throws ValueFormatException, RepositoryException {
-    // TODO(ziff): perhaps implement this later
+  public long getLength() {
     throw new UnsupportedOperationException();
   }
 
-  public long[] getLengths() throws ValueFormatException, RepositoryException {
-    // TODO(ziff): perhaps implement this later
+  public long[] getLengths() {
     throw new UnsupportedOperationException();
   }
 
-  public PropertyDefinition getDefinition() throws RepositoryException {
-    // TODO(ziff): perhaps implement this later
+  public PropertyDefinition getDefinition() {
     throw new UnsupportedOperationException();
   }
 
-  public int getType() throws RepositoryException {
+  public int getType() {
     return MockJcrValue.mockRepositoryTypeToJCRType(p.getType());
   }
 
-  public String getPath() throws RepositoryException {
-    // TODO(ziff): perhaps implement this later
+  public String getPath() {
     throw new UnsupportedOperationException();
   }
 
   // The following methods are JCR level 1 - but we do not anticipate using them
 
-  public Item getAncestor(int arg0) throws ItemNotFoundException,
-      AccessDeniedException, RepositoryException {
+  public Item getAncestor(int arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public Node getParent() throws ItemNotFoundException, AccessDeniedException,
-      RepositoryException {
+  public Node getParent() {
     throw new UnsupportedOperationException();
   }
 
-  public int getDepth() throws RepositoryException {
+  public int getDepth() {
     throw new UnsupportedOperationException();
   }
 
-  public Session getSession() throws RepositoryException {
+  public Session getSession() {
     throw new UnsupportedOperationException();
   }
 
@@ -172,90 +156,65 @@ public class MockJcrProperty implements Property {
     throw new UnsupportedOperationException();
   }
 
-  public boolean isSame(Item arg0) throws RepositoryException {
+  public boolean isSame(Item arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void accept(ItemVisitor arg0) throws RepositoryException {
+  public void accept(ItemVisitor arg0) {
     throw new UnsupportedOperationException();
   }
 
   // The following methods are JCR level 2 - these would never be needed
 
-  public void setValue(Value arg0) throws ValueFormatException,
-      VersionException, LockException, ConstraintViolationException,
-      RepositoryException {
+  public void setValue(Value arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void setValue(Value[] arg0) throws ValueFormatException,
-      VersionException, LockException, ConstraintViolationException,
-      RepositoryException {
+  public void setValue(Value[] arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void setValue(String arg0) throws ValueFormatException,
-      VersionException, LockException, ConstraintViolationException,
-      RepositoryException {
+  public void setValue(String arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void setValue(String[] arg0) throws ValueFormatException,
-      VersionException, LockException, ConstraintViolationException,
-      RepositoryException {
+  public void setValue(String[] arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void setValue(InputStream arg0) throws ValueFormatException,
-      VersionException, LockException, ConstraintViolationException,
-      RepositoryException {
+  public void setValue(InputStream arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void setValue(long arg0) throws ValueFormatException,
-      VersionException, LockException, ConstraintViolationException,
-      RepositoryException {
+  public void setValue(long arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void setValue(double arg0) throws ValueFormatException,
-      VersionException, LockException, ConstraintViolationException,
-      RepositoryException {
+  public void setValue(double arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void setValue(Calendar arg0) throws ValueFormatException,
-      VersionException, LockException, ConstraintViolationException,
-      RepositoryException {
+  public void setValue(Calendar arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void setValue(boolean arg0) throws ValueFormatException,
-      VersionException, LockException, ConstraintViolationException,
-      RepositoryException {
+  public void setValue(boolean arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void setValue(Node arg0) throws ValueFormatException,
-      VersionException, LockException, ConstraintViolationException,
-      RepositoryException {
+  public void setValue(Node arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void save() throws AccessDeniedException, ItemExistsException,
-      ConstraintViolationException, InvalidItemStateException,
-      ReferentialIntegrityException, VersionException, LockException,
-      NoSuchNodeTypeException, RepositoryException {
+  public void save() {
     throw new UnsupportedOperationException();
   }
 
-  public void refresh(boolean arg0) throws InvalidItemStateException,
-      RepositoryException {
+  public void refresh(boolean arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void remove() throws VersionException, LockException,
-      ConstraintViolationException, RepositoryException {
+  public void remove() {
     throw new UnsupportedOperationException();
   }
 

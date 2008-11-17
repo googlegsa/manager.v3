@@ -21,6 +21,7 @@ import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
+import com.google.enterprise.connector.spi.RepositoryException;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -33,16 +34,12 @@ import java.util.List;
 import java.util.Map;
 
 import javax.jcr.Credentials;
-import javax.jcr.LoginException;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 
 public class JcrAuthorizationManagerTest extends TestCase {
 
-  public final void testAuthorizeDocids() throws LoginException,
-      RepositoryException,
-      com.google.enterprise.connector.spi.RepositoryException {
+  public final void testAuthorizeDocids() throws RepositoryException {
 
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog2.txt");
@@ -106,9 +103,7 @@ public class JcrAuthorizationManagerTest extends TestCase {
     }
   }
 
-  public final void testAuthorizeNewFormat()
-      throws LoginException, RepositoryException,
-      com.google.enterprise.connector.spi.RepositoryException {
+  public final void testAuthorizeNewFormat() throws RepositoryException {
     MockRepositoryEventList mrel = 
         new MockRepositoryEventList("MockRepositoryEventLogAcl.txt");
     MockRepository r = new MockRepository(mrel);

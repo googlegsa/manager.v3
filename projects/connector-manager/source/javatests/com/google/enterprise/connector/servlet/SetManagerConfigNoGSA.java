@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import java.io.StringWriter;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -37,13 +36,12 @@ public class SetManagerConfigNoGSA extends HttpServlet {
    * Returns the manager config (form) for now.
    * @param req 
    * @param res 
-   * @throws ServletException 
    * @throws IOException 
    * 
    */
   protected void doGet(HttpServletRequest req,
                        HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
     res.setContentType(ServletUtil.MIMETYPE_HTML);
     PrintWriter out = res.getWriter();
     out.print("<HTML><HEAD><TITLE>Set Manager Config</TITLE></HEAD>");
@@ -66,13 +64,12 @@ public class SetManagerConfigNoGSA extends HttpServlet {
    * Returns the simple response if successfully setting the manager config.
    * @param req 
    * @param res 
-   * @throws ServletException 
    * @throws IOException 
    * 
    */
   protected void doPost(HttpServletRequest req,
                         HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
     StringWriter writer = new StringWriter();
     writer.write("<" + ServletUtil.XMLTAG_MANAGER_CONFIG + ">");
     writer.write("<" + ServletUtil.XMLTAG_FEEDERGATE + " "

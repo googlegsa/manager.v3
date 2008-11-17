@@ -205,12 +205,12 @@ public abstract class Value {
 
   /**
    * Formats a calendar object for the Feeds Protocol, using the
-   * ISO-8601 format for just the date portion.
+   * ISO-8601 format for just the date portion.  See 
+   * <a href="http://code.google.com/apis/searchappliance/documentation/50/feedsguide.html">
+   * Feeds Protocol Developer's Guide</a>
    * 
    * @param c
    * @return a String in ISO-8601 date format
-   * @see <a href="http://code.google.com/apis/searchappliance/documentation/50/feedsguide.html">Feeds
-   * Protocol Developer's Guide</a>
    */
   public static synchronized String calendarToFeedXml(Calendar c) {
     Date d = c.getTime();

@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -43,13 +42,12 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
    * Returns the connector config form for given connector type.
    * @param req 
    * @param res 
-   * @throws ServletException 
    * @throws IOException 
    * 
    */
   protected void doGet(HttpServletRequest req,
                        HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
     String connectorTypeName = req.getParameter(
         ServletUtil.XMLTAG_CONNECTOR_TYPE);
     String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
@@ -100,13 +98,12 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
    * Returns the simple response if successfully setting the connector config.
    * @param req 
    * @param res 
-   * @throws ServletException 
    * @throws IOException 
    * 
    */
   protected void doPost(HttpServletRequest req,
                         HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
     String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
     String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);

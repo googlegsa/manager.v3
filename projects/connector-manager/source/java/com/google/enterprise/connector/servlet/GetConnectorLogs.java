@@ -404,10 +404,9 @@ public class GetConnectorLogs extends HttpServlet {
    * @param handler LogHandler access to either Connector logs or Feed logs.
    * @param tag xml tag to put around list of logs.
    * @param out PrintWriter where the response is written
-   * @throws IOException, FileNotFoundException
    */
   public static void showLogNames(LogHandler handler, String tag,
-      PrintWriter out) throws IOException, FileNotFoundException {
+      PrintWriter out) {
     ServletUtil.writeRootTag(out, false);
     ServletUtil.writeMessageCode(out, new ConnectorMessageCode());
     ServletUtil.writeXMLTag(out, 1, tag, false);
@@ -662,7 +661,7 @@ public class GetConnectorLogs extends HttpServlet {
     /**
      * Return an array of all the existing log Files for this LogHandler.
      */
-    public File[] listLogs() throws IOException, FileNotFoundException {
+    public File[] listLogs() {
       return getLogDirectory().listFiles(new LogFilenameFilter(pattern));
     }
 
@@ -674,9 +673,8 @@ public class GetConnectorLogs extends HttpServlet {
      * of the FileHandler pattern.
      *
      * @returns File object representing the log directory.
-     * @throws IOException, FileNotFoundException
      */
-    public File getLogDirectory() throws IOException, FileNotFoundException {
+    public File getLogDirectory() {
       if (logDirectory != null)
         return logDirectory;
 
@@ -727,10 +725,8 @@ public class GetConnectorLogs extends HttpServlet {
      *
      * @param logName
      * @returns File object representing the named  Log File.
-     * @throws IOException, FileNotFoundException
      */
-    public File getLogFile(String logName)
-        throws IOException, FileNotFoundException {
+    public File getLogFile(String logName) {
       // The caller may specify simply the log generation number
       // (the value of %g for the specific file).  If so, build
       // a logName from that.
@@ -850,17 +846,16 @@ public class GetConnectorLogs extends HttpServlet {
       }
     }
 
-    public File getLogFile(String logName)
-        throws IOException, FileNotFoundException {
+    public File getLogFile(String logName) {
       return new File(pattern);
     }
 
-    public File getLogDirectory() throws IOException, FileNotFoundException {
+    public File getLogDirectory() {
       File parent = (new File(pattern)).getParentFile();
       if (parent != null) {
         return parent;
       } else {
-        throw new FileNotFoundException(
+        throw new IllegalStateException(
             "The teedFeedFile does not specify a parent directory.");
       }
     }
@@ -869,7 +864,7 @@ public class GetConnectorLogs extends HttpServlet {
       return new File(pattern).getName() + ".zip";
     }
 
-    public File[] listLogs() throws IOException, FileNotFoundException {
+    public File[] listLogs() {
       return new File[] { new File(pattern) };
     }
   }

@@ -21,7 +21,6 @@ import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import junit.framework.TestCase;
 
 import javax.jcr.Credentials;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 
@@ -32,9 +31,8 @@ public class MockJcrRepositoryTest extends TestCase {
 
   /**
    * Basic sanity test
-   * @throws RepositoryException
    */
-  public void testSimpleRepository() throws RepositoryException {
+  public void testSimpleRepository() {
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
@@ -50,9 +48,8 @@ public class MockJcrRepositoryTest extends TestCase {
 
   /**
    * Test session with "users" document and "acl" properties.
-   * @throws RepositoryException 
    */
-  public void testAuthnRepository() throws RepositoryException {
+  public void testAuthnRepository() {
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog2.txt");
     MockRepository r = new MockRepository(mrel);

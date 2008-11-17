@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.test;
 
 import com.google.enterprise.connector.common.StringUtils;
-import com.google.enterprise.connector.mock.MockRepositoryPropertyTest;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
