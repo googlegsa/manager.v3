@@ -77,9 +77,4 @@ public class BackEndImpl implements BackEnd {
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     return authzResponder.authorizeBatch(authzDecisionQueries);
   }
-
-  public Manager getConnectorManager() {
-    // TODO Auto-generated method stub
-    return null;
-  }
 }
