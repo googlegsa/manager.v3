@@ -17,11 +17,15 @@ package com.google.enterprise.saml.server;
 import com.google.enterprise.connector.manager.Context;
 
 import junit.framework.TestCase;
+
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockServletConfig;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+
+import javax.servlet.ServletException;
 
 /**
  * Unit test for SamlArtifactResolve handler.
@@ -31,8 +35,9 @@ public class SamlArtifactResolveTest extends TestCase {
   SamlArtifactResolve samlArtifactResolveInstance;
 
   @Override
-  public void setUp() {
+  public void setUp() throws ServletException {
     samlArtifactResolveInstance = new SamlArtifactResolve();
+    samlArtifactResolveInstance.init(new MockServletConfig());
   }
 
   /**
@@ -48,10 +53,9 @@ public class SamlArtifactResolveTest extends TestCase {
     Context.getInstance().setStandaloneContext(
         "source/webdocs/prod/applicationContext.xml",
         Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
-    Context context = Context.getInstance();
 
     try {
-      samlArtifactResolveInstance.handlePost(mockRequest, mockResponse, context);
+      samlArtifactResolveInstance.doPost(mockRequest, mockResponse);
     } catch (IOException e) {
       assertTrue(false);
     }
