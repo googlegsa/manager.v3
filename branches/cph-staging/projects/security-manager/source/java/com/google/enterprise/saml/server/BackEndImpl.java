@@ -14,19 +14,18 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.connector.manager.Manager;
-import com.google.enterprise.sessionmanager.SessionManagerInterface;
 import com.google.enterprise.saml.common.GsaConstants;
+import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
-import java.util.logging.Logger;
-import java.util.List;
-import java.net.URLEncoder;
-import java.io.UnsupportedEncodingException;
-
-import org.opensaml.saml2.core.ArtifactResponse;
 import org.opensaml.saml2.core.ArtifactResolve;
-import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.core.ArtifactResponse;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
+import org.opensaml.saml2.core.Response;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * The implementation of the BackEnd interface for the Security Manager.
