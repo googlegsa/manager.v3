@@ -57,6 +57,12 @@ public class MockRepositoryEventList {
    */
   public void setWorkDirName(String workDirName) {
     this.workDirName = workDirName;
+  } 
+  
+  /**
+   * This default constructor is currently used in Spring-based tests
+   */
+  public MockRepositoryEventList() {
   }
 
   /**
