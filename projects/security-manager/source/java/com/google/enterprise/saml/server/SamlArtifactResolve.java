@@ -44,15 +44,6 @@ public class SamlArtifactResolve extends SecurityManagerServlet implements Posta
   private static final long serialVersionUID = 1L;
   private static final Logger LOGGER = Logger.getLogger(SamlArtifactResolve.class.getName());
 
-  /**
-   * For testing.
-   */
-  @Override
-  public void doGet(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-    doPost(request, response);
-  }
-
   @Override
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
