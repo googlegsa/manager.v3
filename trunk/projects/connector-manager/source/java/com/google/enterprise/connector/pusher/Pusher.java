@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
 
 /**

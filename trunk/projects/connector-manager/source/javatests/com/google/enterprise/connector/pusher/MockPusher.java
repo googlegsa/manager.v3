@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class MockPusher implements Pusher {
   }
 
   public void take(Document document, String connectorName)
-      throws PushException, RepositoryException {
+      throws RepositoryException {
     printStream.println("<document>");
 
     // first take care of some special attributes
@@ -73,7 +73,7 @@ public class MockPusher implements Pusher {
   }
 
   private void processProperty(String name, Property property)
-      throws PushException, RepositoryException {
+      throws RepositoryException {
     InputStream contentStream = null;
     InputStream encodedContentStream = null;
     try {

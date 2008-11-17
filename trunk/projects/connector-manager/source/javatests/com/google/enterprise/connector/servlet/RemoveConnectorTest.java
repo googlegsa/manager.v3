@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class RemoveConnectorTest extends TestCase {
 
   /**
    * Test method for {@link com.google.enterprise.connector.servlet.RemoveConnector#
-   * handleDoGet(java.io.PrintWriter, com.google.enterprise.connector.manager.Manager, java.lang.String)}.
+   * handleDoGet(String, Manager, PrintWriter)}.
    */
   public void testHandleDoGet1() {
     String expectedResult =

@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.common.I18NUtil;
-import com.google.enterprise.connector.instantiator.InstantiatorException;
-import com.google.enterprise.connector.instantiator.TypeMap;
 import com.google.enterprise.connector.manager.ConnectorManagerException;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
@@ -24,12 +22,10 @@ import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
-import com.google.enterprise.connector.traversal.Traverser;
-
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
+import com.google.enterprise.connector.traversal.Traverser;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import org.json.JSONException;
@@ -331,7 +327,9 @@ public class InstantiatorTest extends TestCase {
   private int connectorCount() {
     Iterator iter = instantiator.getConnectorNames();
     int count;
-    for (count = 0; iter.hasNext(); count++, iter.next()) ;
+    for (count = 0; iter.hasNext(); iter.next()) {
+      count++;
+    }
     return count;
   }
 

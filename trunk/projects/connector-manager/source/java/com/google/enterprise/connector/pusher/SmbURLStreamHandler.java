@@ -24,7 +24,7 @@ import java.net.InetAddress;
  * SMB protocol URLStreamHandler used to verify SMB URLs
  * for the DocPusher.  Although the GSA supports SMB URLs,
  * the default Java implementation of {@link java.net.URL} does not.
- * This subclass of {@link java.net.URL.URLStreamHandler} will parse SMB URLs
+ * This subclass of {@link java.net.URLStreamHandler} will parse SMB URLs
  * (which should look like normal URLs), additionally applying some
  * constraints documented 
  * <a href="http://code.google.com/apis/searchappliance/documentation/50/admin/URL_patterns.html#SMB_patterns">

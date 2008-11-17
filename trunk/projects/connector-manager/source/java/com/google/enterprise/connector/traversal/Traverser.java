@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@ public interface Traverser {
 
   /**
    * Signal to the TraversalManager that it should wait before calling
-   * {@link #runbatch(int)} again for the Connector.
+   * {@link #runBatch(int)} again for the Connector.
    */
   public static final int FORCE_WAIT = -1;
 
   /**
    * Signal to the TraversalManager that it need not wait before calling
-   * {@link #runbatch(int)} again for the Connector, even if the Connector 
+   * {@link #runBatch(int)} again for the Connector, even if the Connector 
    * returned no Documents in the previous batch.
    */
   public static final int NO_WAIT = 0;

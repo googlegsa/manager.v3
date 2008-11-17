@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -105,8 +105,7 @@ public class MockJcrQueryManager implements QueryManager {
     throw new IllegalArgumentException("Unsupported language: " + language);
   }
 
-  private Query createMockQueryLanguageQuery(String statement)
-      throws InvalidQueryException, RepositoryException {
+  private Query createMockQueryLanguageQuery(String statement) {
 
     JSONObject jo;
     try {
@@ -178,9 +177,8 @@ public class MockJcrQueryManager implements QueryManager {
    * language "mockQueryLanguage".
    * 
    * @return {"mockQueryLanguage"}
-   * @throws RepositoryException
    */
-  public String[] getSupportedQueryLanguages() throws RepositoryException {
+  public String[] getSupportedQueryLanguages() {
     return SUPPORTED_LANGUAGES;
   }
 
@@ -191,11 +189,8 @@ public class MockJcrQueryManager implements QueryManager {
    * 
    * @param arg0
    * @return nothing
-   * @throws InvalidQueryException
-   * @throws RepositoryException
    */
-  public Query getQuery(Node arg0) throws InvalidQueryException,
-      RepositoryException {
+  public Query getQuery(Node arg0) {
     throw new UnsupportedOperationException();
   }
 

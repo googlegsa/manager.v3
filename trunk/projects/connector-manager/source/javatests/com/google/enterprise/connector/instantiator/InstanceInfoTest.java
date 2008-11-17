@@ -14,10 +14,8 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.PropertiesException;
-import com.google.enterprise.connector.instantiator.InstanceInfo;
-import com.google.enterprise.connector.instantiator.TypeInfo;
+import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.InstanceInfo.FactoryCreationFailureException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.InstanceInfoException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.NoBeansFoundException;
@@ -28,7 +26,6 @@ import com.google.enterprise.connector.instantiator.InstanceInfo.PropertyProcess
 import com.google.enterprise.connector.instantiator.TypeInfo.TypeInfoException;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import org.springframework.core.io.FileSystemResource;

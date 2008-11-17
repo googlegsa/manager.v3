@@ -17,10 +17,7 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
-
-import org.json.JSONException;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -28,7 +25,7 @@ import java.io.InputStream;
 import java.util.Properties;
 
 /**
- * Tests for {@link com.google.enterprise.connector.manager.Context#setManagerConfig(String, int)}.
+ * Tests for {@link Context#setConnectorManagerConfig(String, int)}.
  */
 public class SetManagerConfigTest extends TestCase {
 
@@ -39,8 +36,8 @@ public class SetManagerConfigTest extends TestCase {
       "applicationContext.properties";
   private static final String TEST_PROPERTIES = "testContext.properties";
 
-  public final void testSetConnectorManagerConfig() throws JSONException,
-      InstantiatorException, IOException {
+  public final void testSetConnectorManagerConfig() throws InstantiatorException, 
+      IOException {
     // Make a copy of the properties file first and work from it, so it
     // doesn't appear that this file is modified every time the test runs.
     String origFileName = TEST_DIR + APPLICATION_PROPERTIES;

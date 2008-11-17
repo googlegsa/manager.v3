@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,10 +19,7 @@ import com.google.enterprise.connector.mock.MockRepositoryDocument;
 import com.google.enterprise.connector.mock.MockRepositoryProperty;
 
 import javax.jcr.Credentials;
-import javax.jcr.LoginException;
-import javax.jcr.NoSuchWorkspaceException;
 import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 
@@ -66,8 +63,7 @@ public class MockJcrRepository implements Repository {
     return repo;
   }
 
-  public Session login(Credentials creds) throws LoginException,
-      RepositoryException {
+  public Session login(Credentials creds) {
     return makeSession(creds);
   }
 
@@ -75,17 +71,15 @@ public class MockJcrRepository implements Repository {
 // The following methods are JCR level 1 - but we do not anticipate using them
 //
 
-  public Session login(Credentials arg0, String arg1) throws LoginException,
-      NoSuchWorkspaceException, RepositoryException {
+  public Session login(Credentials arg0, String arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public Session login(String arg0) throws LoginException,
-      NoSuchWorkspaceException, RepositoryException {
+  public Session login(String arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public Session login() throws LoginException, RepositoryException {
+  public Session login() {
     throw new UnsupportedOperationException();
   }
 

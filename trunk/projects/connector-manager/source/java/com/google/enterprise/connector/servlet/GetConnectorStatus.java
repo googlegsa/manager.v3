@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.scheduler.Schedule;
 
 import java.io.PrintWriter;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 

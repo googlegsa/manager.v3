@@ -29,34 +29,23 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
-import javax.jcr.AccessDeniedException;
-import javax.jcr.InvalidItemStateException;
 import javax.jcr.Item;
-import javax.jcr.ItemExistsException;
-import javax.jcr.ItemNotFoundException;
 import javax.jcr.ItemVisitor;
-import javax.jcr.MergeException;
-import javax.jcr.NoSuchWorkspaceException;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
-import javax.jcr.ReferentialIntegrityException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.Value;
-import javax.jcr.ValueFormatException;
 import javax.jcr.lock.Lock;
-import javax.jcr.lock.LockException;
-import javax.jcr.nodetype.ConstraintViolationException;
-import javax.jcr.nodetype.NoSuchNodeTypeException;
 import javax.jcr.nodetype.NodeDefinition;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
-import javax.jcr.version.VersionException;
 import javax.jcr.version.VersionHistory;
 
 /**
@@ -77,6 +66,9 @@ import javax.jcr.version.VersionHistory;
  */
 public class MockJcrNode implements Node {
   private static Set propertySkipSet;
+
+  private static Logger LOGGER =
+    Logger.getLogger(MockJcrNode.class.getName());
 
   static {
     propertySkipSet = new HashSet();
@@ -104,8 +96,7 @@ public class MockJcrNode implements Node {
     try {
       p = new MockRepositoryProperty("jcr:content", doc.getContentStream());
     } catch (FileNotFoundException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOGGER.severe(e.toString());
     }
     if (p != null) {
       propList.add(new MockJcrProperty(p));
@@ -235,7 +226,7 @@ public class MockJcrNode implements Node {
     return findProperty(arg0);
   }
 
-  public PropertyIterator getProperties() throws RepositoryException {
+  public PropertyIterator getProperties() {
     return new MockJcrPropertyIterator(propList);
   }
 
@@ -256,98 +247,89 @@ public class MockJcrNode implements Node {
   // The following methods may be needed later but are temporarily
   // unimplemented
 
-  public Node getNode(String arg0) throws PathNotFoundException,
-      RepositoryException {
-    // TODO(ziff): needed for tree traversal - possibly add this later
+  public Node getNode(String arg0) {
     throw new UnsupportedOperationException();
   }
 
-  // TODO(ziff): needed for tree traversal - possibly add this later
-  public NodeIterator getNodes() throws RepositoryException {
+  public NodeIterator getNodes() {
     throw new UnsupportedOperationException();
   }
 
-  // TODO(ziff): needed for tree traversal - possibly add this later
-  public NodeIterator getNodes(String arg0) throws RepositoryException {
+  public NodeIterator getNodes(String arg0) {
     throw new UnsupportedOperationException();
   }
 
   // The following methods are JCR level 1 - but we do not anticipate using them
 
-  public PropertyIterator getProperties(String s) throws RepositoryException {
+  public PropertyIterator getProperties(String s) {
     throw new UnsupportedOperationException();
   }
 
-  public Item getPrimaryItem() throws ItemNotFoundException,
-      RepositoryException {
+  public Item getPrimaryItem() {
     throw new UnsupportedOperationException();
   }
 
-  public int getIndex() throws RepositoryException {
+  public int getIndex() {
     throw new UnsupportedOperationException();
   }
 
-  public PropertyIterator getReferences() throws RepositoryException {
+  public PropertyIterator getReferences() {
     throw new UnsupportedOperationException();
   }
 
-  public boolean hasNode(String arg0) throws RepositoryException {
+  public boolean hasNode(String arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public boolean hasNodes() throws RepositoryException {
+  public boolean hasNodes() {
     throw new UnsupportedOperationException();
   }
 
-  public boolean hasProperties() throws RepositoryException {
+  public boolean hasProperties() {
     throw new UnsupportedOperationException();
   }
 
-  public NodeType getPrimaryNodeType() throws RepositoryException {
+  public NodeType getPrimaryNodeType() {
     throw new UnsupportedOperationException();
   }
 
-  public NodeType[] getMixinNodeTypes() throws RepositoryException {
+  public NodeType[] getMixinNodeTypes() {
     throw new UnsupportedOperationException();
   }
 
-  public boolean isNodeType(String arg0) throws RepositoryException {
+  public boolean isNodeType(String arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public NodeDefinition getDefinition() throws RepositoryException {
+  public NodeDefinition getDefinition() {
     throw new UnsupportedOperationException();
   }
 
-  public String getCorrespondingNodePath(String arg0)
-      throws ItemNotFoundException, NoSuchWorkspaceException,
-      AccessDeniedException, RepositoryException {
+  public String getCorrespondingNodePath(String arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public String getPath() throws RepositoryException {
+  public String getPath() {
     throw new UnsupportedOperationException();
   }
 
-  public String getName() throws RepositoryException {
+  public String getName() {
     throw new UnsupportedOperationException();
   }
 
-  public Item getAncestor(int arg0) throws ItemNotFoundException,
-      AccessDeniedException, RepositoryException {
+  public Item getAncestor(int arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public Node getParent() throws ItemNotFoundException, AccessDeniedException,
-      RepositoryException {
+  public Node getParent() {
     throw new UnsupportedOperationException();
   }
 
-  public int getDepth() throws RepositoryException {
+  public int getDepth() {
     throw new UnsupportedOperationException();
   }
 
-  public Session getSession() throws RepositoryException {
+  public Session getSession() {
     throw new UnsupportedOperationException();
   }
 
@@ -363,250 +345,177 @@ public class MockJcrNode implements Node {
     throw new UnsupportedOperationException();
   }
 
-  public boolean isSame(Item arg0) throws RepositoryException {
+  public boolean isSame(Item arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void accept(ItemVisitor arg0) throws RepositoryException {
+  public void accept(ItemVisitor arg0) {
     throw new UnsupportedOperationException();
   }
 
   // The following methods are JCR level 2 - these would never be needed
 
-  public void addMixin(String arg0) throws NoSuchNodeTypeException,
-      VersionException, ConstraintViolationException, LockException,
-      RepositoryException {
+  public void addMixin(String arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void removeMixin(String arg0) throws NoSuchNodeTypeException,
-      VersionException, ConstraintViolationException, LockException,
-      RepositoryException {
+  public void removeMixin(String arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public boolean canAddMixin(String arg0) throws NoSuchNodeTypeException,
-      RepositoryException {
+  public boolean canAddMixin(String arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public Version checkin() throws VersionException,
-      UnsupportedRepositoryOperationException, InvalidItemStateException,
-      LockException, RepositoryException {
+  public Version checkin() {
     throw new UnsupportedOperationException();
   }
 
-  public void checkout() throws UnsupportedRepositoryOperationException,
-      LockException, RepositoryException {
+  public void checkout() {
     throw new UnsupportedOperationException();
   }
 
-  public void doneMerge(Version arg0) throws VersionException,
-      InvalidItemStateException, UnsupportedRepositoryOperationException,
-      RepositoryException {
+  public void doneMerge(Version arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void cancelMerge(Version arg0) throws VersionException,
-      InvalidItemStateException, UnsupportedRepositoryOperationException,
-      RepositoryException {
+  public void cancelMerge(Version arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void update(String arg0) throws NoSuchWorkspaceException,
-      AccessDeniedException, LockException, InvalidItemStateException,
-      RepositoryException {
+  public void update(String arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public NodeIterator merge(String arg0, boolean arg1)
-      throws NoSuchWorkspaceException, AccessDeniedException, MergeException,
-      LockException, InvalidItemStateException, RepositoryException {
+  public NodeIterator merge(String arg0, boolean arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public boolean isCheckedOut() throws RepositoryException {
+  public boolean isCheckedOut() {
     throw new UnsupportedOperationException();
   }
 
-  public void restore(String arg0, boolean arg1) throws VersionException,
-      ItemExistsException, UnsupportedRepositoryOperationException,
-      LockException, InvalidItemStateException, RepositoryException {
+  public void restore(String arg0, boolean arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public void restore(Version arg0, boolean arg1) throws VersionException,
-      ItemExistsException, UnsupportedRepositoryOperationException,
-      LockException, RepositoryException {
+  public void restore(Version arg0, boolean arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public void restore(Version arg0, String arg1, boolean arg2)
-      throws PathNotFoundException, ItemExistsException, VersionException,
-      ConstraintViolationException, UnsupportedRepositoryOperationException,
-      LockException, InvalidItemStateException, RepositoryException {
+  public void restore(Version arg0, String arg1, boolean arg2) {
     throw new UnsupportedOperationException();
   }
 
-  public void restoreByLabel(String arg0, boolean arg1)
-      throws VersionException, ItemExistsException,
-      UnsupportedRepositoryOperationException, LockException,
-      InvalidItemStateException, RepositoryException {
+  public void restoreByLabel(String arg0, boolean arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public VersionHistory getVersionHistory()
-      throws UnsupportedRepositoryOperationException, RepositoryException {
+  public VersionHistory getVersionHistory() {
     throw new UnsupportedOperationException();
   }
 
-  public Version getBaseVersion()
-      throws UnsupportedRepositoryOperationException, RepositoryException {
+  public Version getBaseVersion() {
     throw new UnsupportedOperationException();
   }
 
-  public Lock lock(boolean arg0, boolean arg1)
-      throws UnsupportedRepositoryOperationException, LockException,
-      AccessDeniedException, InvalidItemStateException, RepositoryException {
+  public Lock lock(boolean arg0, boolean arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public Lock getLock() throws UnsupportedRepositoryOperationException,
-      LockException, AccessDeniedException, RepositoryException {
+  public Lock getLock() {
     throw new UnsupportedOperationException();
   }
 
-  public void unlock() throws UnsupportedRepositoryOperationException,
-      LockException, AccessDeniedException, InvalidItemStateException,
-      RepositoryException {
+  public void unlock() {
     throw new UnsupportedOperationException();
   }
 
-  public boolean holdsLock() throws RepositoryException {
+  public boolean holdsLock() {
     throw new UnsupportedOperationException();
   }
 
-  public boolean isLocked() throws RepositoryException {
+  public boolean isLocked() {
     throw new UnsupportedOperationException();
   }
 
-  public Node addNode(String arg0) throws ItemExistsException,
-      PathNotFoundException, VersionException, ConstraintViolationException,
-      LockException, RepositoryException {
+  public Node addNode(String arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public Node addNode(String arg0, String arg1) throws ItemExistsException,
-      PathNotFoundException, NoSuchNodeTypeException, LockException,
-      VersionException, ConstraintViolationException, RepositoryException {
+  public Node addNode(String arg0, String arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public void orderBefore(String arg0, String arg1)
-      throws UnsupportedRepositoryOperationException, VersionException,
-      ConstraintViolationException, ItemNotFoundException, LockException,
-      RepositoryException {
+  public void orderBefore(String arg0, String arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public Property setProperty(String arg0, Value arg1)
-      throws ValueFormatException, VersionException, LockException,
-      ConstraintViolationException, RepositoryException {
+  public Property setProperty(String arg0, Value arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public Property setProperty(String arg0, Value arg1, int arg2)
-      throws ValueFormatException, VersionException, LockException,
-      ConstraintViolationException, RepositoryException {
+  public Property setProperty(String arg0, Value arg1, int arg2) {
     throw new UnsupportedOperationException();
   }
 
-  public Property setProperty(String arg0, Value[] arg1)
-      throws ValueFormatException, VersionException, LockException,
-      ConstraintViolationException, RepositoryException {
+  public Property setProperty(String arg0, Value[] arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public Property setProperty(String arg0, Value[] arg1, int arg2)
-      throws ValueFormatException, VersionException, LockException,
-      ConstraintViolationException, RepositoryException {
+  public Property setProperty(String arg0, Value[] arg1, int arg2) {
     throw new UnsupportedOperationException();
   }
 
-  public Property setProperty(String arg0, String[] arg1)
-      throws ValueFormatException, VersionException, LockException,
-      ConstraintViolationException, RepositoryException {
+  public Property setProperty(String arg0, String[] arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public Property setProperty(String arg0, String[] arg1, int arg2)
-      throws ValueFormatException, VersionException, LockException,
-      ConstraintViolationException, RepositoryException {
+  public Property setProperty(String arg0, String[] arg1, int arg2) {
     throw new UnsupportedOperationException();
   }
 
-  public Property setProperty(String arg0, String arg1)
-      throws ValueFormatException, VersionException, LockException,
-      ConstraintViolationException, RepositoryException {
+  public Property setProperty(String arg0, String arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public Property setProperty(String arg0, String arg1, int arg2)
-      throws ValueFormatException, VersionException, LockException,
-      ConstraintViolationException, RepositoryException {
+  public Property setProperty(String arg0, String arg1, int arg2) {
     throw new UnsupportedOperationException();
   }
 
-  public Property setProperty(String arg0, InputStream arg1)
-      throws ValueFormatException, VersionException, LockException,
-      ConstraintViolationException, RepositoryException {
+  public Property setProperty(String arg0, InputStream arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public Property setProperty(String arg0, boolean arg1)
-      throws ValueFormatException, VersionException, LockException,
-      ConstraintViolationException, RepositoryException {
+  public Property setProperty(String arg0, boolean arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public Property setProperty(String arg0, double arg1)
-      throws ValueFormatException, VersionException, LockException,
-      ConstraintViolationException, RepositoryException {
+  public Property setProperty(String arg0, double arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public Property setProperty(String arg0, long arg1)
-      throws ValueFormatException, VersionException, LockException,
-      ConstraintViolationException, RepositoryException {
+  public Property setProperty(String arg0, long arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public Property setProperty(String arg0, Calendar arg1)
-      throws ValueFormatException, VersionException, LockException,
-      ConstraintViolationException, RepositoryException {
+  public Property setProperty(String arg0, Calendar arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public Property setProperty(String arg0, Node arg1)
-      throws ValueFormatException, VersionException, LockException,
-      ConstraintViolationException, RepositoryException {
+  public Property setProperty(String arg0, Node arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public void save() throws AccessDeniedException, ItemExistsException,
-      ConstraintViolationException, InvalidItemStateException,
-      ReferentialIntegrityException, VersionException, LockException,
-      NoSuchNodeTypeException, RepositoryException {
+  public void save() {
     throw new UnsupportedOperationException();
   }
 
-  public void refresh(boolean arg0) throws InvalidItemStateException,
-      RepositoryException {
+  public void refresh(boolean arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public void remove() throws VersionException, LockException,
-      ConstraintViolationException, RepositoryException {
+  public void remove() {
     throw new UnsupportedOperationException();
   }
 

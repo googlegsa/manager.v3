@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,22 +14,14 @@
 
 package com.google.enterprise.connector.mock.jcr;
 
-import java.util.List;
-
-import javax.jcr.ItemExistsException;
-import javax.jcr.ItemNotFoundException;
-import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.RepositoryException;
-import javax.jcr.UnsupportedRepositoryOperationException;
-import javax.jcr.lock.LockException;
-import javax.jcr.nodetype.ConstraintViolationException;
-import javax.jcr.query.Query;
-import javax.jcr.query.QueryResult;
-import javax.jcr.version.VersionException;
-
 import com.google.enterprise.connector.mock.MockRepositoryDateTime;
 import com.google.enterprise.connector.mock.MockRepositoryDocumentStore;
+
+import java.util.List;
+
+import javax.jcr.Node;
+import javax.jcr.query.Query;
+import javax.jcr.query.QueryResult;
 
 /**
  * MockJcrQuery implements the corresponding JCR interface.  This implementation
@@ -88,9 +80,8 @@ public class MockJcrQuery implements Query {
    * Returns the result list from executing the query. Clients may consume as
    * much or little of the result as they need.
    * @return MockJcrQueryResult
-   * @throws RepositoryException 
    */
-  public QueryResult execute() throws RepositoryException {
+  public QueryResult execute() {
     return new MockJcrQueryResult(this.internalQuery);
   }
 
@@ -117,11 +108,8 @@ public class MockJcrQuery implements Query {
   /**
    * Throws UnsupportedOperationException
    * @return nothing
-   * @throws ItemNotFoundException 
-   * @throws RepositoryException 
    */
-  public String getStoredQueryPath() throws ItemNotFoundException,
-      RepositoryException {
+  public String getStoredQueryPath() {
     throw new UnsupportedOperationException();
   }
 
@@ -131,18 +119,8 @@ public class MockJcrQuery implements Query {
    * Throws UnsupportedOperationException
    * @param arg0 
    * @return nothing
-   * @throws ItemExistsException 
-   * @throws PathNotFoundException 
-   * @throws VersionException 
-   * @throws ConstraintViolationException 
-   * @throws LockException 
-   * @throws UnsupportedRepositoryOperationException 
-   * @throws RepositoryException 
    */
-  public Node storeAsNode(String arg0) throws ItemExistsException,
-      PathNotFoundException, VersionException, ConstraintViolationException,
-      LockException, UnsupportedRepositoryOperationException,
-      RepositoryException {
+  public Node storeAsNode(String arg0) {
     throw new UnsupportedOperationException();
   }
 

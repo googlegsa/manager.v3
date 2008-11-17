@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.google.enterprise.connector.servlet;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,16 +29,15 @@ import javax.servlet.http.HttpServletResponse;
 public class HelloClientFromGSA extends HttpServlet
 {
     /**
-     * Generates a "Hello world" rsponse.
+     * Generates a "Hello world" response.
      * @param req 
      * @param res 
-     * @throws ServletException 
      * @throws IOException 
      * 
      */
     protected void doGet(HttpServletRequest req,
                          HttpServletResponse res)
-              throws ServletException, IOException
+              throws IOException
     {
       res.setContentType("text/html");
       PrintWriter out = res.getWriter();

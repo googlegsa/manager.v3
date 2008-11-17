@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 // limitations under the License.
 
 package com.google.enterprise.connector.spi;
-
 
 /**
  * Interface for implementing query-based traversal.
@@ -106,7 +105,7 @@ package com.google.enterprise.connector.spi;
  * suitable content.  The call to <code>checkpoint</code> allows the
  * Connector to record its progress through the repository.  This mechanism
  * is suitable for cases when the search for suitable content may exceed
- * the <code>{@link Traverser}</code> timeout.
+ * the Connector Manager's timeout.
  * <p> 
  * If the Connector returns a non-null <code>DocumentList</code>, even
  * one with zero entries, the Connector Manager will nearly always call

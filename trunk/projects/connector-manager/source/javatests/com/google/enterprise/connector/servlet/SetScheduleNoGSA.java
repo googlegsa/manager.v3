@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,19 +14,18 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.manager.Manager;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.manager.Manager;
 
 public class SetScheduleNoGSA extends HttpServlet {
   private static final Logger LOG =
@@ -36,13 +35,12 @@ public class SetScheduleNoGSA extends HttpServlet {
    * Returns the manager config (form) for now.
    * @param req 
    * @param res 
-   * @throws ServletException 
    * @throws IOException 
    * 
    */
   protected void doGet(HttpServletRequest req,
                        HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
     res.setContentType(ServletUtil.MIMETYPE_HTML);
     PrintWriter out = res.getWriter();
     out.print("<HTML><HEAD><TITLE>Set Schedule</TITLE></HEAD>");
@@ -68,13 +66,12 @@ public class SetScheduleNoGSA extends HttpServlet {
    * Returns the simple response if successfully setting the manager config.
    * @param req 
    * @param res 
-   * @throws ServletException 
    * @throws IOException 
    * 
    */
   protected void doPost(HttpServletRequest req,
                         HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
     String forTime = req.getParameter("forTime");
     String timeIntervals = null;
     if (forTime.equalsIgnoreCase("some")) {

@@ -23,7 +23,6 @@ import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
-import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.SpiConstants;
@@ -992,7 +991,7 @@ public class DocPusherTest extends TestCase {
    */
   private class BadInputStream extends InputStream {
     // Make it look like there is something to read.
-    public int available() throws IOException {
+    public int available() {
       return 69;
     }
     // Override read methods, always throwing IOException.
