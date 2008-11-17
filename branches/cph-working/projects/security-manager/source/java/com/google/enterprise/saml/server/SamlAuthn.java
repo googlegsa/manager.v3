@@ -156,9 +156,34 @@ public class SamlAuthn extends SecurityManagerServlet
   private boolean tryCookies(HttpServletRequest request, HttpServletResponse response)
       throws ServletException {
     Map<String, String> cookieJar = getCookieJar(request);
-    return
-        (cookieJar != null) &&
-        handleAuthn(request, response, cookieJar);
+    if (cookieJar == null) {
+      return false;
+    }
+
+    ConnectorManager manager = getConnectorManager(getServletContext());
+    for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
+      String connectorName = connStatus.getName();
+      LOGGER.info("Got security plug-in " + connectorName);
+
+      // Does this connector know how to crack any of our cookies?
+      AuthenticationResponse authnResponse =
+          manager.authenticate(connectorName, null, null, cookieJar);
+      if ((authnResponse != null) && authnResponse.isValid()) {
+
+        // Yes, it does.  No need to gather credentials; just generate a successful response.
+        // TODO make sure authnResponse has subject in BackEnd
+        String username = authnResponse.getData();
+        if (username != null) {
+          SAMLMessageContext<AuthnRequest, Response, NameID> context =
+              existingSamlMessageContext(request.getSession());
+          context.setOutboundSAMLMessage(
+              makeSuccessfulResponse(context.getInboundSAMLMessage(), username));
+          doRedirect(context, manager.getBackEnd(), response);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
@@ -178,30 +203,6 @@ public class SamlAuthn extends SecurityManagerServlet
       cookieJar.put(jar[i].getName(), jar[i].getValue());
     }
     return cookieJar;
-  }
-
-  private boolean handleAuthn(HttpServletRequest request, HttpServletResponse response,
-      Map<String, String> cookieJar) throws ServletException {
-    ConnectorManager manager = getConnectorManager(getServletContext());
-    for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
-      String connectorName = connStatus.getName();
-      LOGGER.info("Got security plug-in " + connectorName);
-      AuthenticationResponse authnResponse =
-          manager.authenticate(connectorName, null, null, cookieJar);
-      if ((authnResponse != null) && authnResponse.isValid()) {
-        // TODO make sure authnResponse has subject in BackEnd
-        String username = authnResponse.getData();
-        if (username != null) {
-          SAMLMessageContext<AuthnRequest, Response, NameID> context =
-              existingSamlMessageContext(request.getSession());
-          context.setOutboundSAMLMessage(
-              makeSuccessfulResponse(context.getInboundSAMLMessage(), username));
-          doRedirect(context, manager.getBackEnd(), response);
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   @SuppressWarnings("unchecked")
