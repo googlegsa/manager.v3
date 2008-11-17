@@ -123,8 +123,8 @@ public class SamlAuthn extends SecurityManagerServlet
       return null;
     }
     Map<String, String> cookieJar = new HashMap<String, String>(jar.length);
-    for (int i = 0; i < jar.length; i++) {
-      cookieJar.put(jar[i].getName(), jar[i].getValue());
+    for (Cookie c: jar) {
+      cookieJar.put(c.getName(), c.getValue());
     }
     return cookieJar;
   }
@@ -132,13 +132,18 @@ public class SamlAuthn extends SecurityManagerServlet
   private boolean handleAuthn(HttpServletResponse response,
       String gsaUrlString, String relay, String username, String password,
       Map<String, String> cookieJar) throws IOException {
+
     ConnectorManager manager = getConnectorManager(getServletContext());
     for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
       String connectorName = connStatus.getName();
       LOGGER.info("Got security plug-in " + connectorName);
+
+      // Does this connector know how to crack any of our cookies?
       AuthenticationResponse authnResponse =
         manager.authenticate(connectorName, username, password, cookieJar);
       if ((authnResponse != null) && authnResponse.isValid()) {
+
+        // Yes, it does.  No need to gather credentials; just generate a successful response.
         // TODO make sure authnResponse has subject in BackEnd
         String subject = (authnResponse.getData() == null) ? username :
           authnResponse.getData();
