@@ -199,8 +199,8 @@ public class SamlAuthn extends SecurityManagerServlet
       return null;
     }
     Map<String, String> cookieJar = new HashMap<String, String>(jar.length);
-    for (int i = 0; i < jar.length; i++) {
-      cookieJar.put(jar[i].getName(), jar[i].getValue());
+    for (Cookie c: jar) {
+      cookieJar.put(c.getName(), c.getValue());
     }
     return cookieJar;
   }
