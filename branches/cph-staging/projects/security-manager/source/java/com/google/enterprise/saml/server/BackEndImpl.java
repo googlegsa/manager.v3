@@ -14,79 +14,70 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
-import org.opensaml.saml2.core.ArtifactResolve;
-import org.opensaml.saml2.core.ArtifactResponse;
+import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
+import org.opensaml.common.binding.artifact.SAMLArtifactMap;
+import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
+import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.core.StatusCode;
+import org.opensaml.util.storage.MapBasedStorageService;
+import org.opensaml.xml.parse.BasicParserPool;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
- * The implementation of the BackEnd interface for the Security Manager.
- *
- * At present, this implementation is very shallow and returns canned responses
- * for almost everything.
+ * An implementation of the BackEnd interface for the Security Manager.
  */
 public class BackEndImpl implements BackEnd {
-  private static final Logger LOGGER =
-      Logger.getLogger(BackEndImpl.class.getName());
+  private static final int artifactLifetime = 600000;  // ten minutes
 
-  private SessionManagerInterface sm;
-  private ArtifactResolver artifactResolver;
-  private AuthzResponder authzResponder;
-  private ArtifactStore artifacts;
+  private final SessionManagerInterface sm;
+  private final AuthzResponder authzResponder;
+  private final SAMLArtifactMap artifactMap;
 
-  public BackEndImpl() {
-    artifacts = new ArtifactStore();
-  }
-  public void setSessionManager(SessionManagerInterface sm) {
+  /**
+   * Create a new backend object.
+   * 
+   * @param sm The session manager to use.
+   * @param authzResponder The authorization responder to use.
+   */
+  public BackEndImpl(SessionManagerInterface sm, AuthzResponder authzResponder) {
     this.sm = sm;
+    this.authzResponder = authzResponder;
+    artifactMap = new BasicSAMLArtifactMap(
+        new BasicParserPool(),
+        new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
+        artifactLifetime);
   }
 
+  /** {@inheritDoc} */
   public SessionManagerInterface getSessionManager() {
     return sm;
   }
 
-  public void setArtifactResolver(ArtifactResolver artifactResolver) {
-    this.artifactResolver = artifactResolver;
+  /** {@inheritDoc} */
+  public Response validateCredentials(AuthnRequest request, String username, String password) {
+    return
+        (areCredentialsValid(username, password))
+        ? SamlAuthn.makeSuccessfulResponse(request, username)
+        : SamlAuthn.makeUnsuccessfulResponse(
+            request, StatusCode.REQUEST_DENIED_URI, "Authentication failed");
   }
 
-  public void setAuthzResponder(AuthzResponder authzResponder) {
-    this.authzResponder = authzResponder;
+  // TODO(cph): replace this with something real.
+  private boolean areCredentialsValid(String username, String password) {
+    return "joe".equals(username) && "plumber".equals(password);
   }
 
-  public String loginRedirect(String referer, String relayState, String subject) {
-    String urlEncodedRelayState = "";
-    try {
-      urlEncodedRelayState = URLEncoder.encode(relayState, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      LOGGER.warning("Could not encode RelayState");
-    }
-
-    String artifact = "foo";
-    artifacts.put(artifact, subject);
-    String redirectUrl = referer + GsaConstants.GSA_ARTIFACT_HANDLER_NAME
-        + "?" + GsaConstants.GSA_ARTIFACT_PARAM_NAME + "=" + artifact
-        + "&" + GsaConstants.GSA_RELAY_STATE_PARAM_NAME + "=" + urlEncodedRelayState;
-
-    LOGGER.info("Referer: " + referer);
-    LOGGER.info("RelayState: " + relayState);
-    LOGGER.info("URLEncoded RelayState: " + urlEncodedRelayState);
-    LOGGER.info("Redirect URL: " + redirectUrl);
-
-    return redirectUrl;
+  /** {@inheritDoc} */
+  public SAMLArtifactMap getArtifactMap() {
+    return artifactMap;
   }
 
-  public ArtifactResponse resolveArtifact(ArtifactResolve artifactResolve) {
-    return artifactResolver.resolve(artifactResolve, artifacts);
-  }
-
+  /** {@inheritDoc} */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     return authzResponder.authorizeBatch(authzDecisionQueries);
   }
