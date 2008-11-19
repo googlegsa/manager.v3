@@ -22,21 +22,54 @@ import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.common.GettableHttpServlet;
-import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.PostableHttpServlet;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
+
+import org.opensaml.common.binding.SAMLMessageContext;
+import org.opensaml.saml2.binding.decoding.HTTPRedirectDeflateDecoder;
+import org.opensaml.saml2.binding.encoding.HTTPArtifactEncoder;
+import org.opensaml.saml2.core.Assertion;
+import org.opensaml.saml2.core.AuthnContext;
+import org.opensaml.saml2.core.AuthnRequest;
+import org.opensaml.saml2.core.NameID;
+import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.core.Status;
+import org.opensaml.saml2.core.StatusCode;
+import org.opensaml.saml2.metadata.AssertionConsumerService;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.SingleSignOnService;
+import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
+import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertion;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnStatement;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatusMessage;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeSubject;
+import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
+import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
+import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
+
+import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
 
 /**
  * Handler for SAML authentication requests.  These requests are sent by a service provider, in our
@@ -63,10 +96,28 @@ public class SamlAuthn extends SecurityManagerServlet
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    String gsaUrlString = getGsaUrlString(request);
-    response.setContentType("text/html");
+    BackEnd backend = getBackEnd(getServletContext());
 
-    LOGGER.info("gsaUrlString: " + gsaUrlString);
+    // Establish the SAML message context
+    SAMLMessageContext<AuthnRequest, Response, NameID> context =
+        newSamlMessageContext(request.getSession());
+    {
+      EntityDescriptor localEntity = backend.getSecurityManagerEntity();
+      initializeLocalEntity(context, localEntity, localEntity.getIDPSSODescriptor(SAML20P_NS),
+                            SingleSignOnService.DEFAULT_ELEMENT_NAME);
+      context.setOutboundMessageIssuer(localEntity.getEntityID());
+    }
+    {
+      EntityDescriptor peerEntity = backend.getGsaEntity();
+      initializePeerEntity(context, peerEntity, peerEntity.getSPSSODescriptor(SAML20P_NS),
+                           AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+      selectPeerEndpoint(context, SAML2_ARTIFACT_BINDING_URI);
+      context.setInboundMessageIssuer(peerEntity.getEntityID());
+    }
+
+    // Decode the request
+    context.setInboundMessageTransport(new HttpServletRequestAdapter(request));
+    runDecoder(new HTTPRedirectDeflateDecoder(), context);
 
     // If there's a cookie we can decode, use that
     if (tryCookies(request, response)) {
@@ -77,8 +128,7 @@ public class SamlAuthn extends SecurityManagerServlet
     PrintWriter out = initNormalResponse(response);
     out.print("<html><head><title>Please Login</title></head><body>\n" +
               "<form action=\"" +
-              request.getRequestURI() + "?Referer=" + gsaUrlString +
-              "&" + request.getQueryString() +
+              request.getRequestURL().toString() +
               "\" method=POST>\n" +
               "User Name:<input type=text size=20 name=username><br>\n" +
               "Password:<input type=password size=20 name=password><br>\n" +
@@ -96,18 +146,36 @@ public class SamlAuthn extends SecurityManagerServlet
    * @return Whether or not a usable cookie was found.
    */
   private boolean tryCookies(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
+      throws ServletException {
     Map<String, String> cookieJar = getCookieJar(request);
-    return
-        (cookieJar != null) &&
-        handleAuthn(response, getGsaUrlString(request),
-                    request.getParameter(GsaConstants.GSA_RELAY_STATE_PARAM_NAME),
-                    null, null, cookieJar);
-  }
+    if (cookieJar == null) {
+      return false;
+    }
 
-  private String getGsaUrlString(HttpServletRequest request) {
-    return request.getHeader("Referer")
-        .substring(0, request.getHeader("Referer").indexOf("search?"));
+    ConnectorManager manager = getConnectorManager(getServletContext());
+    for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
+      String connectorName = connStatus.getName();
+      LOGGER.info("Got security plug-in " + connectorName);
+
+      // Does this connector know how to crack any of our cookies?
+      AuthenticationResponse authnResponse =
+          manager.authenticate(connectorName, null, null, cookieJar);
+      if ((authnResponse != null) && authnResponse.isValid()) {
+
+        // Yes, it does.  No need to gather credentials; just generate a successful response.
+        // TODO make sure authnResponse has subject in BackEnd
+        String username = authnResponse.getData();
+        if (username != null) {
+          SAMLMessageContext<AuthnRequest, Response, NameID> context =
+              existingSamlMessageContext(request.getSession());
+          context.setOutboundSAMLMessage(
+              makeSuccessfulResponse(context.getInboundSAMLMessage(), username));
+          doRedirect(context, manager.getBackEnd(), response);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
@@ -127,41 +195,6 @@ public class SamlAuthn extends SecurityManagerServlet
       cookieJar.put(c.getName(), c.getValue());
     }
     return cookieJar;
-  }
-
-  private boolean handleAuthn(HttpServletResponse response,
-      String gsaUrlString, String relay, String username, String password,
-      Map<String, String> cookieJar) throws IOException {
-
-    ConnectorManager manager = getConnectorManager(getServletContext());
-    for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
-      String connectorName = connStatus.getName();
-      LOGGER.info("Got security plug-in " + connectorName);
-
-      // Does this connector know how to crack any of our cookies?
-      AuthenticationResponse authnResponse =
-        manager.authenticate(connectorName, username, password, cookieJar);
-      if ((authnResponse != null) && authnResponse.isValid()) {
-
-        // Yes, it does.  No need to gather credentials; just generate a successful response.
-        // TODO make sure authnResponse has subject in BackEnd
-        String subject = (authnResponse.getData() == null) ? username :
-          authnResponse.getData();
-        String redirectUrl = manager.getBackEnd().loginRedirect(gsaUrlString, relay, subject);
-
-        if (redirectUrl == null) {
-          response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-          response.sendError(404);
-          return true;
-        }
-
-        response.setStatus(HttpServletResponse.SC_FOUND);
-        response.sendRedirect(redirectUrl);
-        return true;
-      }
-    }
-
-    return false;
   }
 
   @SuppressWarnings("unchecked")
@@ -184,29 +217,54 @@ public class SamlAuthn extends SecurityManagerServlet
    */
   @Override
   public void doPost(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-    response.setContentType("text/html");
-    response.setCharacterEncoding("UTF-8");
+      throws ServletException, IOException {
+    BackEnd backend = getBackEnd(getServletContext());
 
+    SAMLMessageContext<AuthnRequest, Response, NameID> context =
+        existingSamlMessageContext(request.getSession());
+
+    // Get credentials and confirm they are present
     String username = request.getParameter("username");
     String password = request.getParameter("password");
-    if (username.length() < 1 || password.length() < 1) {
-      PrintWriter out = response.getWriter();
-      out.println("<title>Error</title>");
-      out.println("No user name or password entered");
-      out.close();
-      return;
+    if ((username == null) || (password == null)) {
+      context.setOutboundSAMLMessage(
+          makeUnsuccessfulResponse(context.getInboundSAMLMessage(),
+                                   StatusCode.REQUESTER_URI,
+                                   "Missing required POST parameter(s)"));
+    } else {
+      context.setOutboundSAMLMessage(
+          backend.validateCredentials(context.getInboundSAMLMessage(), username, password));
     }
 
-    LOGGER.info("gsaUrlString: " + request.getParameter("Referer"));
-    if (!handleAuthn(response,
-          request.getParameter("Referer"),
-          request.getParameter(GsaConstants.GSA_RELAY_STATE_PARAM_NAME),
-          username, password, null)) {
-      // The user is not authenticated, respond with DENY
-      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-      response.sendError(404);
-    }
+    doRedirect(context, backend, response);
+  }
+
+  public static Response makeSuccessfulResponse(AuthnRequest request, String username) {
+    LOGGER.log(Level.INFO, "Authenticated successfully as " + username);
+    Response response = makeResponse(request, makeStatus(StatusCode.SUCCESS_URI));
+    Assertion assertion = makeAssertion(makeIssuer(SM_ISSUER), makeSubject(username));
+    assertion.getAuthnStatements().add(makeAuthnStatement(AuthnContext.IP_PASSWORD_AUTHN_CTX));
+    response.getAssertions().add(assertion);
+    return response;
+  }
+
+  public static Response makeUnsuccessfulResponse(AuthnRequest request, String code,
+                                                  String message) {
+    LOGGER.log(Level.WARNING, message);
+    Status status = makeStatus(code);
+    status.setStatusMessage(makeStatusMessage(message));
+    return makeResponse(request, status);
+  }
+
+  private void doRedirect(SAMLMessageContext<AuthnRequest, Response, NameID> context,
+      BackEnd backend, HttpServletResponse response)
+      throws ServletException {
+    // Encode the response message
+    initResponse(response);
+    context.setOutboundMessageTransport(new HttpServletResponseAdapter(response, true));
+    HTTPArtifactEncoder encoder = new HTTPArtifactEncoder(null, null, backend.getArtifactMap());
+    encoder.setPostEncoding(false);
+    runEncoder(encoder, context);
   }
 
   // TODO get rid of this when we have a way of configuring plug-ins

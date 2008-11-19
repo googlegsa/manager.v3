@@ -14,6 +14,7 @@
 
 package com.google.enterprise.saml.common;
 
+import org.opensaml.saml2.metadata.Endpoint;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockServletConfig;
 
@@ -53,6 +54,10 @@ public final class MockHttpTransport implements HttpTransport {
     if (servlet instanceof PostableHttpServlet) {
       postMap.put(url, (PostableHttpServlet) servlet);
     }
+  }
+
+  public void registerServlet(Endpoint endpoint, HttpServlet servlet) throws ServletException {
+    registerServlet(endpoint.getLocation(), servlet);
   }
 
   public void exchange(HttpServletRequest request, HttpServletResponse response)

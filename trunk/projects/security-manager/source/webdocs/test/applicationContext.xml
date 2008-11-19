@@ -9,10 +9,6 @@
     class="com.google.enterprise.security.manager.LocalSessionManager">
   </bean>
 
-  <bean id="ArtifactResolver"
-    class="com.google.enterprise.saml.server.ArtifactResolverImpl">
-  </bean>
-
   <bean id="AuthzResponder"
     class="com.google.enterprise.saml.server.AuthzResponderImpl">
   </bean>
@@ -28,9 +24,11 @@
 
   <bean id="BackEnd"
     class="com.google.enterprise.saml.server.BackEndImpl">
-    <property name="sessionManager" ref="SessionManager"/>
-    <property name="artifactResolver" ref="ArtifactResolver"/>
-    <property name="authzResponder" ref="AuthzResponder"/>
+    <constructor-arg index="0" ref="SessionManager" />
+    <constructor-arg index="1" ref="AuthzResponder" />
+    <constructor-arg index="2" value="http://localhost:8973/gsa/consume-assertion" />
+    <constructor-arg index="3" value="http://localhost:8973/security-manager/samlauthn" />
+    <constructor-arg index="4" value="http://localhost:8973/security-manager/samlartifact"/>
   </bean>
 
   <bean id="ConnectorManager"
