@@ -26,6 +26,7 @@ import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
+import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
@@ -69,6 +70,16 @@ public class MockBackEnd implements BackEnd {
   /** {@inheritDoc} */
   public SessionManagerInterface getSessionManager() {
     return sessionManager;
+  }
+
+  /** {@inheritDoc} */
+  public EntityDescriptor getSecurityManagerEntity() {
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  public EntityDescriptor getGsaEntity() {
+    return null;
   }
 
   /** {@inheritDoc} */
