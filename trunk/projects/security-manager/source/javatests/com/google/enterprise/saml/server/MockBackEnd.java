@@ -59,7 +59,8 @@ public class MockBackEnd implements BackEnd {
    * @param sm The session manager to use.
    * @param authzResponder The authorization responder to use.
    */
-  public MockBackEnd(SessionManagerInterface sm, AuthzResponder authzResponder) {
+  public MockBackEnd(SessionManagerInterface sm, AuthzResponder authzResponder,
+                     String acsUrl, String ssoUrl, String arUrl) {
     this.sessionManager = sm;
     artifactMap = new BasicSAMLArtifactMap(
         new BasicParserPool(),
