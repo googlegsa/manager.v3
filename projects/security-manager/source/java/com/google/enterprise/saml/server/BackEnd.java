@@ -16,10 +16,11 @@ package com.google.enterprise.saml.server;
 
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
-import org.opensaml.saml2.core.ArtifactResolve;
-import org.opensaml.saml2.core.ArtifactResponse;
+import org.opensaml.common.binding.artifact.SAMLArtifactMap;
+import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.metadata.EntityDescriptor;
 
 import java.util.List;
 
@@ -32,14 +33,55 @@ import java.util.List;
 public interface BackEnd {
 
   /**
-   * Get a SessionManagerInstance. This may migrate to the next inner layer.
-   * @return a SessionManagerInstance
+   * Get the session manager used by this backend.
+   *
+   * This may migrate to the next inner layer.
+   *
+   * @returns A session manager object.
    */
   public SessionManagerInterface getSessionManager();
 
-  public String loginRedirect(String referer, String relayState, String subject);
+  // TODO(cph): The metadata doesn't belong in the back end.
 
-  public ArtifactResponse resolveArtifact(ArtifactResolve artifactResolve);
+  /**
+   * Get the SAML metadata description for the security manager.
+   *
+   * @returns An initialized SAML entity descriptor
+   */
+  public EntityDescriptor getSecurityManagerEntity();
 
+  /**
+   * Get the SAML metadata description for the GSA.
+   *
+   * @returns An initialized SAML entity descriptor
+   */
+  public EntityDescriptor getGsaEntity();
+
+  /**
+   * Validate username/password credentials.
+   *
+   * @param request The SAML authentication request being served.
+   * @param username The username credential.
+   * @param password The password credential.
+   * @returns A SAML Response with the validation result.
+   */
+  public Response validateCredentials(AuthnRequest request, String username, String password);
+
+  /**
+   * Get the SAML artifact map.
+   *
+   * The backend holds onto this map but doesn't use it.  The map is used by the servlets comprising
+   * the SAML identity provider.
+   * 
+   * @returns The unique artifact map for the security manager.
+   */
+  public SAMLArtifactMap getArtifactMap();
+
+  /**
+   * Process a set of SAML authorization queries.
+   * 
+   * @param authzDecisionQueries A list of authorization queries to be processed.
+   * @returns A list of responses, corresponding to the argument.
+   */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries);
 }

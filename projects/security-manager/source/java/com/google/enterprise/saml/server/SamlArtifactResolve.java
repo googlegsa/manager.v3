@@ -17,22 +17,39 @@ package com.google.enterprise.saml.server;
 import com.google.enterprise.saml.common.PostableHttpServlet;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
-import org.opensaml.Configuration;
-import org.opensaml.common.SAMLObject;
+import org.opensaml.common.binding.SAMLMessageContext;
+import org.opensaml.common.binding.artifact.SAMLArtifactMap;
+import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
+import org.opensaml.saml2.binding.decoding.HTTPSOAP11Decoder;
+import org.opensaml.saml2.binding.encoding.HTTPSOAP11Encoder;
+import org.opensaml.saml2.core.ArtifactResolve;
 import org.opensaml.saml2.core.ArtifactResponse;
-import org.opensaml.xml.io.Marshaller;
-import org.opensaml.xml.io.MarshallerFactory;
-import org.w3c.dom.Element;
+import org.opensaml.saml2.core.NameID;
+import org.opensaml.saml2.core.StatusCode;
+import org.opensaml.saml2.metadata.ArtifactResolutionService;
+import org.opensaml.saml2.metadata.Endpoint;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
+import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.soap.MessageFactory;
-import javax.xml.soap.SOAPException;
-import javax.xml.soap.SOAPMessage;
+
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResponse;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
+import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
+import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
+import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
+
+import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
 
 /**
  * Servlet to handle SAML artifact-resolution requests.  This is one part of the security manager's
@@ -42,54 +59,56 @@ public class SamlArtifactResolve extends SecurityManagerServlet implements Posta
 
   /** Required for serializable classes. */
   private static final long serialVersionUID = 1L;
-  private static final Logger LOGGER = Logger.getLogger(SamlArtifactResolve.class.getName());
+  // private static final Logger LOGGER = Logger.getLogger(SamlArtifactResolve.class.getName());
 
   @Override
-  public void doPost(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
+  public void doPost(HttpServletRequest req, HttpServletResponse resp)
+      throws ServletException, IOException {
     BackEnd backend = getBackEnd(getServletContext());
-    ArtifactResponse artifactResp = backend.resolveArtifact(null);
 
-    SOAPMessage soapMsg = soapify(artifactResp);
-    if (null == soapMsg) {
-      LOGGER.severe("Error in constructing SOAP message, no response will be sent");
-      return;
+    // Establish the SAML message context
+    SAMLMessageContext<ArtifactResolve, ArtifactResponse, NameID> context =
+        makeSamlMessageContext();
+
+    EntityDescriptor localEntity = backend.getSecurityManagerEntity();
+    initializeLocalEntity(context, localEntity, localEntity.getIDPSSODescriptor(SAML20P_NS),
+                          ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
+    context.setOutboundMessageIssuer(localEntity.getEntityID());
+
+    EntityDescriptor peerEntity = backend.getGsaEntity();
+    initializePeerEntity(context, peerEntity, peerEntity.getSPSSODescriptor(SAML20P_NS),
+                         Endpoint.DEFAULT_ELEMENT_NAME);
+    selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
+    context.setInboundMessageIssuer(peerEntity.getEntityID());
+
+    // Decode the request
+    context.setInboundMessageTransport(new HttpServletRequestAdapter(req));
+    runDecoder(new HTTPSOAP11Decoder(), context);
+    ArtifactResolve artifactResolve = context.getInboundSAMLMessage();
+
+    // Create response
+    ArtifactResponse artifactResponse =
+        makeArtifactResponse(artifactResolve, makeStatus(StatusCode.SUCCESS_URI));
+    artifactResponse.setIssuer(makeIssuer(localEntity.getEntityID()));
+
+    // Look up artifact and add any resulting object to response
+    String encodedArtifact = artifactResolve.getArtifact().getArtifact();
+    SAMLArtifactMap artifactMap = backend.getArtifactMap();
+    if (artifactMap.contains(encodedArtifact)) {
+      SAMLArtifactMapEntry entry = artifactMap.get(encodedArtifact);
+      if ((!entry.isExpired())
+          && localEntity.getEntityID().equals(entry.getIssuerId())
+          && peerEntity.getEntityID().equals(entry.getRelyingPartyId())) {
+        artifactResponse.setMessage(entry.getSamlMessage());
+      }
+      // Always remove the artifact after use
+      artifactMap.remove(encodedArtifact);
     }
 
-    try {
-      soapMsg.writeTo(response.getOutputStream());
-    } catch (SOAPException e) {
-      LOGGER.log(Level.SEVERE, "Error writing out SOAP message.", e);
-    }
-  }
-
-  /**
-   * For a given SAMLObject, generate a SOAP message that envelopes the
-   * SAMLObject.
-   *
-   * @param samlObject a SAMLObject
-   * @return a SOAPMessage, or null on failure
-   */
-  private SOAPMessage soapify(SAMLObject samlObject) {
-    // Get the marshaller factory
-    MarshallerFactory marshallerFactory = Configuration.getMarshallerFactory();
-
-    // Get the Subject marshaller
-    Marshaller marshaller = marshallerFactory.getMarshaller(samlObject);
-
-    // Marshall the Subject
-    Element artifactRespElement = null;
-    try {
-      artifactRespElement = marshaller.marshall(samlObject);
-      MessageFactory msgFactory = MessageFactory.newInstance();
-      SOAPMessage soapMessage = msgFactory.createMessage();
-      soapMessage.getSOAPPart().getEnvelope().getBody()
-          .addDocument(artifactRespElement.getOwnerDocument());
-      return soapMessage;
-    } catch (Exception e) {
-      LOGGER.log(Level.SEVERE,
-                 "Failed to convert SAML object to a SOAP message:\n", e);
-    }
-    return null;
+    // Encode response
+    context.setOutboundSAMLMessage(artifactResponse);
+    initResponse(resp);
+    context.setOutboundMessageTransport(new HttpServletResponseAdapter(resp, true));
+    runEncoder(new HTTPSOAP11Encoder(), context);
   }
 }
