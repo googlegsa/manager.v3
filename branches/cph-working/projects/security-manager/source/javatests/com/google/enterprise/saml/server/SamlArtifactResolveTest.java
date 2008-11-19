@@ -29,7 +29,6 @@ import java.io.IOException;
 
 import javax.servlet.ServletException;
 
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeEntityDescriptor;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
@@ -43,10 +42,7 @@ public class SamlArtifactResolveTest extends TestCase {
 
   @Override
   public void setUp() throws ServletException {
-    samlArtifactResolveInstance =
-        new SamlArtifactResolve(
-            makeEntityDescriptor("http://google.com/enterprise/saml/common/identity-provider"),
-            makeEntityDescriptor("http://google.com/enterprise/saml/common/service-provider"));
+    samlArtifactResolveInstance = new SamlArtifactResolve();
     samlArtifactResolveInstance.init(new MockServletConfig());
   }
 

@@ -19,6 +19,7 @@ import com.google.enterprise.saml.common.HttpServletRequestClientAdapter;
 import com.google.enterprise.saml.common.HttpServletResponseClientAdapter;
 import com.google.enterprise.saml.common.HttpTransport;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
+import com.google.enterprise.saml.server.BackEnd;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -70,26 +71,20 @@ import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
  * an identity provider.
  */
 public class MockArtifactConsumer extends SecurityManagerServlet implements GettableHttpServlet {
-  private static final Logger LOGGER = Logger.getLogger(MockArtifactConsumer.class.getName());
-  private static final long serialVersionUID = 1L;
 
-  private final EntityDescriptor localEntity;
-  private final EntityDescriptor peerEntity;
+  /** Required for serializable classes. */
+  private static final long serialVersionUID = 1L;
+  private static final Logger LOGGER = Logger.getLogger(MockArtifactConsumer.class.getName());
+
   private final HttpTransport transport;
 
   /**
    * Creates a new mock SAML service provider with the given identity provider.
    *
-   * @param localEntity The entity that this is a role for.
-   * @param peerEntity The identity provider entity.
    * @param transport A message-transport provider.
    * @throws ServletException
    */
-  public MockArtifactConsumer(EntityDescriptor localEntity, EntityDescriptor peerEntity,
-      HttpTransport transport)
-      throws ServletException {
-    this.localEntity = localEntity;
-    this.peerEntity = peerEntity;
+  public MockArtifactConsumer(HttpTransport transport) throws ServletException {
     this.transport = transport;
   }
 
@@ -130,38 +125,51 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
 
   private SAMLObject resolveArtifact(String artifact, String relayState, String clientUrl)
       throws ServletException, IOException {
+    BackEnd backend = getBackEnd(getServletContext());
+
+    // Establish the SAML message context
     SAMLMessageContext<ArtifactResponse, ArtifactResolve, NameID> context =
         makeSamlMessageContext();
 
-    // Select endpoint
+    EntityDescriptor localEntity = backend.getGsaEntity();
     initializeLocalEntity(context, localEntity, localEntity.getSPSSODescriptor(SAML20P_NS),
                           Endpoint.DEFAULT_ELEMENT_NAME);
-    initializePeerEntity(context, peerEntity, peerEntity.getIDPSSODescriptor(SAML20P_NS),
-                         ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
-    selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
+    context.setOutboundMessageIssuer(localEntity.getEntityID());
+    {
+      EntityDescriptor peerEntity = backend.getSecurityManagerEntity();
+      initializePeerEntity(context, peerEntity, peerEntity.getIDPSSODescriptor(SAML20P_NS),
+                           ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
+      selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
+      context.setInboundMessageIssuer(peerEntity.getEntityID());
+    }
 
-    MockHttpServletRequest req =
-        makeMockHttpPost(clientUrl, context.getPeerEntityEndpoint().getLocation());
-    MockHttpServletResponse resp = new MockHttpServletResponse();
-
-    HttpServletRequestClientAdapter out = new HttpServletRequestClientAdapter(req);
-    context.setOutboundMessageTransport(out);
+    // Generate the request
     {
       ArtifactResolve request = makeArtifactResolve(artifact);
       request.setIssuer(makeIssuer(localEntity.getEntityID()));
       context.setOutboundSAMLMessage(request);
     }
     context.setRelayState(relayState);
+
+    // Encode the request
+    MockHttpServletRequest request =
+        makeMockHttpPost(null, context.getPeerEntityEndpoint().getLocation());
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    HttpServletRequestClientAdapter out = new HttpServletRequestClientAdapter(request);
+    context.setOutboundMessageTransport(out);
     runEncoder(new HTTPSOAP11Encoder(), context);
     out.finish();
 
-    transport.exchange(req, resp);
+    // Do HTTP exchange
+    transport.exchange(request, response);
 
-    HttpServletResponseClientAdapter in = new HttpServletResponseClientAdapter(resp);
+    // Decode the response
+    HttpServletResponseClientAdapter in = new HttpServletResponseClientAdapter(response);
     in.setHttpMethod("POST");
     context.setInboundMessageTransport(in);
     runDecoder(new HTTPSOAP11Decoder(), context);
 
+    // Return the decoded response
     return context.getInboundSAMLMessage().getMessage();
   }
 }

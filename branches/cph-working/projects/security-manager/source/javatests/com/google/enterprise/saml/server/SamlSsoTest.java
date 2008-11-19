@@ -14,6 +14,7 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.client.MockArtifactConsumer;
 import com.google.enterprise.saml.client.MockServiceProvider;
@@ -35,60 +36,44 @@ import java.net.MalformedURLException;
 
 import javax.servlet.ServletException;
 
-import static com.google.enterprise.saml.common.OpenSamlUtil.GSA_ISSUER;
-import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResolutionService;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertionConsumerService;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeEntityDescriptor;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeIdpSsoDescriptor;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeSingleSignOnService;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeSpSsoDescriptor;
 import static com.google.enterprise.saml.common.SamlTestUtil.generatePostContent;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpGet;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
 
+import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
+
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
-import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
-import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
-import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
-
 public class SamlSsoTest extends TestCase {
 
-  private static final String spUrl = "http://localhost:1234/provide-service";
-  private static final String acsUrl = "http://localhost:1234/consume-assertion";
-  private static final String ssoUrl = "http://localhost:5678/authn";
-  private static final String arUrl = "http://localhost:5678/resolve-artifact";
+  private static final String spUrl = "http://localhost:8973/gsa/provide-service";
 
   private final MockUserAgent userAgent;
 
   public SamlSsoTest(String name) throws ServletException {
     super(name);
 
-    Context.getInstance().setStandaloneContext(
-        "source/webdocs/prod/applicationContext.xml",
-        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
-
-    // Build metadata for security manager
-    EntityDescriptor smEntity = makeEntityDescriptor(SM_ISSUER);
-    IDPSSODescriptor idp = makeIdpSsoDescriptor(smEntity);
-    makeSingleSignOnService(idp, SAML2_REDIRECT_BINDING_URI, ssoUrl);
-    makeArtifactResolutionService(idp, SAML2_SOAP11_BINDING_URI, arUrl).setIsDefault(true);
-
-    // Build metadata for GSA
-    EntityDescriptor gsaEntity = makeEntityDescriptor(GSA_ISSUER);
-    SPSSODescriptor sp = makeSpSsoDescriptor(gsaEntity);
-    makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI, acsUrl).setIsDefault(true);
+    Context ctx = Context.getInstance();
+    ctx.setStandaloneContext("source/webdocs/prod/applicationContext.xml",
+                             Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
+    BackEnd backend = ((ConnectorManager) ctx.getManager()).getBackEnd();
 
     // Initialize transport
     MockHttpTransport transport = new MockHttpTransport();
     userAgent = new MockUserAgent(transport);
 
-    transport.registerServlet(spUrl, new MockServiceProvider(gsaEntity, smEntity));
-    transport.registerServlet(acsUrl, new MockArtifactConsumer(gsaEntity, smEntity, transport));
-    transport.registerServlet(ssoUrl, new SamlAuthn(smEntity, gsaEntity));
-    transport.registerServlet(arUrl, new SamlArtifactResolve(smEntity, gsaEntity));
+    EntityDescriptor gsaEntity = backend.getGsaEntity();
+    SPSSODescriptor sp = gsaEntity.getSPSSODescriptor(SAML20P_NS);
+    transport.registerServlet(sp.getDefaultAssertionConsumerService(),
+                              new MockArtifactConsumer(transport));
+
+    EntityDescriptor smEntity = backend.getSecurityManagerEntity();
+    IDPSSODescriptor idp = smEntity.getIDPSSODescriptor(SAML20P_NS);
+    transport.registerServlet(idp.getSingleSignOnServices().get(0), new SamlAuthn());
+    transport.registerServlet(idp.getDefaultArtificateResolutionService(), new SamlArtifactResolve());
+
+    transport.registerServlet(spUrl, new MockServiceProvider());
   }
 
   public void testGoodCredentials() throws ServletException, IOException, MalformedURLException {

@@ -61,21 +61,6 @@ public class SamlArtifactResolve extends SecurityManagerServlet implements Posta
   private static final long serialVersionUID = 1L;
   // private static final Logger LOGGER = Logger.getLogger(SamlArtifactResolve.class.getName());
 
-  private final EntityDescriptor localEntity;
-  private final EntityDescriptor peerEntity;
-
-  /**
-   * Create a new SAML artifact resolver.
-   *
-   * @param localEntity Metadata descriptor for the identity provider this servlet is a part of.
-   * @param peerEntity Metadata descriptor for the service provider this servlet accepts requests
-   * from.
-   */
-  public SamlArtifactResolve(EntityDescriptor localEntity, EntityDescriptor peerEntity) {
-    this.localEntity = localEntity;
-    this.peerEntity = peerEntity;
-  }
-
   @Override
   public void doPost(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
@@ -84,13 +69,17 @@ public class SamlArtifactResolve extends SecurityManagerServlet implements Posta
     // Establish the SAML message context
     SAMLMessageContext<ArtifactResolve, ArtifactResponse, NameID> context =
         makeSamlMessageContext();
+
+    EntityDescriptor localEntity = backend.getSecurityManagerEntity();
     initializeLocalEntity(context, localEntity, localEntity.getIDPSSODescriptor(SAML20P_NS),
                           ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
+    context.setOutboundMessageIssuer(localEntity.getEntityID());
+
+    EntityDescriptor peerEntity = backend.getGsaEntity();
     initializePeerEntity(context, peerEntity, peerEntity.getSPSSODescriptor(SAML20P_NS),
                          Endpoint.DEFAULT_ELEMENT_NAME);
     selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
     context.setInboundMessageIssuer(peerEntity.getEntityID());
-    context.setOutboundMessageIssuer(localEntity.getEntityID());
 
     // Decode the request
     context.setInboundMessageTransport(new HttpServletRequestAdapter(req));

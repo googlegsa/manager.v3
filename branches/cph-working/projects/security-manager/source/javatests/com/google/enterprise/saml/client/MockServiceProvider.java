@@ -16,6 +16,7 @@ package com.google.enterprise.saml.client;
 
 import com.google.enterprise.saml.common.GettableHttpServlet;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
+import com.google.enterprise.saml.server.BackEnd;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -24,13 +25,13 @@ import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleSignOnService;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.springframework.mock.web.MockServletConfig;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -56,25 +57,10 @@ import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
  * an identity provider.
  */
 public class MockServiceProvider extends SecurityManagerServlet implements GettableHttpServlet {
-  private static final String className = MockServiceProvider.class.getName();
-  private static final Logger LOGGER = Logger.getLogger(className);
   private static final long serialVersionUID = 1L;
 
-  private final EntityDescriptor localEntity;
-  private final EntityDescriptor peerEntity;
-
-  /**
-   * Creates a new mock SAML service provider with the given identity provider.
-   *
-   * @param localEntity The entity that this is a role for.
-   * @param peerEntity The identity provider entity.
-   * @throws ServletException
-   */
-  public MockServiceProvider(EntityDescriptor localEntity, EntityDescriptor peerEntity)
-      throws ServletException {
+  public MockServiceProvider() throws ServletException {
     init(new MockServletConfig());
-    this.localEntity = localEntity;
-    this.peerEntity = peerEntity;
   }
 
   @Override
@@ -91,38 +77,44 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
   }
 
   private void ifAllowed(HttpServletResponse resp) throws IOException {
-    LOGGER.entering(className, "ifAllowed");
     PrintWriter out = initNormalResponse(resp);
     out.print("<html><head><title>What you need</title></head>" +
               "<body><h1>What you need...</h1><p>...is what we've got!</p></body></html>");
     out.close();
-    LOGGER.exiting(className, "ifAllowed");
   }
 
   private void ifUnknown(HttpServletResponse resp, String relayState) throws ServletException {
-    LOGGER.entering(className, "ifUnknown");
+    BackEnd backend = getBackEnd(getServletContext());
+
     SAMLMessageContext<SAMLObject, AuthnRequest, NameID> context = makeSamlMessageContext();
+    
+    EntityDescriptor localEntity = backend.getGsaEntity();
+    SPSSODescriptor sp = localEntity.getSPSSODescriptor(SAML20P_NS);
+    initializeLocalEntity(context, localEntity, sp, Endpoint.DEFAULT_ELEMENT_NAME);
+    context.setOutboundMessageIssuer(localEntity.getEntityID());
+    {
+      EntityDescriptor peerEntity = backend.getSecurityManagerEntity();
+      initializePeerEntity(context, peerEntity, peerEntity.getIDPSSODescriptor(SAML20P_NS),
+                           SingleSignOnService.DEFAULT_ELEMENT_NAME);
+      selectPeerEndpoint(context, SAML2_REDIRECT_BINDING_URI);
+      context.setInboundMessageIssuer(peerEntity.getEntityID());
+    }
+
+    // Generate the request
     {
       AuthnRequest authnRequest = makeAuthnRequest();
       authnRequest.setProviderName(GOOGLE_PROVIDER_NAME);
       authnRequest.setIssuer(makeIssuer(localEntity.getEntityID()));
       authnRequest.setIsPassive(false);
       authnRequest.setAssertionConsumerServiceIndex(
-          localEntity.getSPSSODescriptor(SAML20P_NS) .getDefaultAssertionConsumerService().getIndex());
+          sp.getDefaultAssertionConsumerService().getIndex());
       context.setOutboundSAMLMessage(authnRequest);
     }
     context.setRelayState(relayState);
 
-    initializeLocalEntity(context, localEntity, localEntity.getSPSSODescriptor(SAML20P_NS),
-                          Endpoint.DEFAULT_ELEMENT_NAME);
-    initializePeerEntity(context, peerEntity, peerEntity.getIDPSSODescriptor(SAML20P_NS),
-                         SingleSignOnService.DEFAULT_ELEMENT_NAME);
-    selectPeerEndpoint(context, SAML2_REDIRECT_BINDING_URI);
-
+    // Send the request via redirect to the user agent
     initResponse(resp);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(resp, true));
-
     runEncoder(new HTTPRedirectDeflateEncoder(), context);
-    LOGGER.exiting(className, "ifUnknown");
   }
 }
