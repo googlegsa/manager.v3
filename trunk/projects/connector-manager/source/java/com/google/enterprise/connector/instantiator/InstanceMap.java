@@ -19,10 +19,13 @@ import java.io.FileFilter;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.enterprise.connector.common.PropertiesUtils;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -81,7 +84,7 @@ public class InstanceMap extends TreeMap {
       String name = directory.getName();
       if (!name.startsWith(".")) {
         try {
-          InstanceInfo instanceInfo = 
+          InstanceInfo instanceInfo =
               InstanceInfo.fromDirectory(name, directory, typeInfo);
           if (instanceInfo != null) {
             this.put(name, instanceInfo);
@@ -142,9 +145,19 @@ public class InstanceMap extends TreeMap {
   }
 
   private ConfigureResponse resetConfig(String name, File connectorDir,
-      TypeInfo typeInfo, Map config, Locale locale)
+      TypeInfo typeInfo, Map configMap, Locale locale)
       throws InstantiatorException {
-    // First, validate the configuration.
+
+    // Copy the configuration map, adding a couple of additional
+    // context properties.  validateConfig() may also alter this map.
+    Map config = new HashMap();
+    config.putAll(configMap);
+    config.put(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR,
+               connectorDir.getPath());
+    config.put(PropertiesUtils.GOOGLE_WORK_DIR,
+               Context.getInstance().getCommonDirPath());
+
+    // Validate the configuration.
     ConfigureResponse response =
         typeInfo.getConnectorType().validateConfig(config, locale,
             new ConnectorInstanceFactory(name, connectorDir, typeInfo, config));
@@ -173,7 +186,7 @@ public class InstanceMap extends TreeMap {
 
     // We have an apparently valid configuration.  Create a connector instance
     // with that configuration.
-    InstanceInfo instanceInfo = 
+    InstanceInfo instanceInfo =
         InstanceInfo.fromNewConfig(name, connectorDir, typeInfo, config);
     if (instanceInfo == null) {
       // We don't expect this, because an InstantiatorException should have
@@ -233,8 +246,8 @@ public class InstanceMap extends TreeMap {
   }
 
   /**
-   * {@link ConnectorFactory} implementation that uses 
-   * {@link InstanceInfo} to create an instance of a connector of the 
+   * {@link ConnectorFactory} implementation that uses
+   * {@link InstanceInfo} to create an instance of a connector of the
    * specified type.  Instances created here are not placed in the official
    * <code>InstanceMap</code>.  This factory is supplied to calls to
    * {@link com.google.enterprise.connector.spi.ConnectorType#validateConfig(Map, Locale, ConnectorFactory)}.
@@ -248,7 +261,7 @@ public class InstanceMap extends TreeMap {
     Map origConfig;
 
     /**
-     * Constructor takes the items needed by <code>InstanceInfo</code>, 
+     * Constructor takes the items needed by <code>InstanceInfo</code>,
      * but not provided via <code>makeConnector</code>.
      *
      * @param connectorName the name of this connector instance.
@@ -266,7 +279,7 @@ public class InstanceMap extends TreeMap {
 
     /**
      * Create an instance of this connector based upon the supplied
-     * configuration data.  If the supplied config <code>Map</code> is 
+     * configuration data.  If the supplied config <code>Map</code> is
      * <code>null</code>, use the original configuration.
      *
      * @see com.google.enterprise.connector.spi.ConnectorFactory#makeConnector(Map)

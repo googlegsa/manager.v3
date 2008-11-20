@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.common.I18NUtil;
+import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.InstanceInfo;
 import com.google.enterprise.connector.instantiator.InstanceMap;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
@@ -36,10 +37,10 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * 
+ *
  */
 public class InstanceMapTest extends TestCase {
-  
+
   private static final String TEST_DIR_NAME = "testdata/tempInstantiatorTests";
   private File baseDirectory;
 
@@ -62,11 +63,11 @@ public class InstanceMapTest extends TestCase {
    * Test method for
    * {@link com.google.enterprise.connector.instantiator.InstanceMap
    * #getInstanceInfo(java.lang.String)}.
-   * 
+   *
    * @throws JSONException
    * @throws InstantiatorException
-   * @throws ConnectorExistsException 
-   * @throws ConnectorNotFoundException 
+   * @throws ConnectorExistsException
+   * @throws ConnectorNotFoundException
    */
   public final void testGetInstanceInfo() throws JSONException,
       InstantiatorException, ConnectorNotFoundException, ConnectorExistsException {
@@ -228,5 +229,10 @@ public class InstanceMapTest extends TestCase {
     String instancePasswd = (String) instanceProps.get("Password");
     String plainPasswd = (String) config.get("Password");
     Assert.assertEquals(instancePasswd, plainPasswd);
+
+    // verify that the google*WorkDir properties are intact.
+    assertTrue(instanceProps.containsKey(PropertiesUtils.GOOGLE_WORK_DIR));
+    assertTrue(
+        instanceProps.containsKey(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR));
   }
 }

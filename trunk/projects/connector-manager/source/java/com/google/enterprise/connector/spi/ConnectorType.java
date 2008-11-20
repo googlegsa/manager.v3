@@ -39,7 +39,9 @@ public interface ConnectorType {
    * Get populated configuration form snippet.
    *
    * @param configMap A map of name, value pairs (String, String) of
-   *        configuration data
+   *        configuration data.  Note that configuration Map key names
+   *        beginning with "google" are reserved for use by the Connector
+   *        Manager.
    * @param locale A java.util.Locale which the implementation may use to
    *        produce appropriate descriptions and messages
    * @return a ConfigureResponse object. The form must be prepopulated with the
@@ -51,8 +53,11 @@ public interface ConnectorType {
    * Validates config data and returns a new form snippet and error message if
    * needed.
    *
-   * @param configData A {@link java.util.Map} of name, value pairs 
-   *        (String, String) of configuration data.
+   * @param configData A {@link java.util.Map} of name, value pairs
+   *        (String, String) of configuration data.  The configData map may
+   *        contain configuration data items that did not originate from the
+   *        original configForm, specifically, additional entries with names
+   *        that begin with "google".
    * @param locale A {@link java.util.Locale} which the implementation may use
    *        to produce appropriate descriptions and messages.
    * @param connectorFactory A {@link ConnectorFactory} object that can be used
@@ -61,11 +66,13 @@ public interface ConnectorType {
    *        same way as it would if this config were valid and persisted.
    * @return a {@link ConfigureResponse} object. If the returned object is null,
    *         this means that the configuration is acceptable. If the returned
-   *         object is non-null, then the response contains a new form snippet 
+   *         object is non-null, then the response contains a new form snippet
    *         (and message, as appropriate). If the returned object is non-null,
    *         and the response contains only a Map of configData (but no message
    *         or form snippet), then the returned configuration is acceptable,
-   *         but may be different than the supplied configData.
+   *         but may be different than the supplied configData.  If a modified
+   *         configuration map is returned, it must preserve configuration
+   *         items with names beginning with "google".
    */
   public ConfigureResponse validateConfig(Map configData, Locale locale,
       ConnectorFactory connectorFactory);

@@ -95,7 +95,7 @@ public final class InstanceInfo {
     return connectorDir;
   }
 
-  private InstanceInfo(String connectorName, File connectorDir, 
+  private InstanceInfo(String connectorName, File connectorDir,
       TypeInfo typeInfo) throws InstanceInfoException {
     if (connectorName == null || connectorName.length() < 1) {
       throw new NullConnectorNameException();
@@ -130,7 +130,7 @@ public final class InstanceInfo {
   }
 
   public void removeConnector() {
-    // Side effect of GenerationalStateStore.removeConnectorState() 
+    // Side effect of GenerationalStateStore.removeConnectorState()
     // is a new generation.
     stateStore.removeConnectorState(storeContext);
     schedStore.removeConnectorSchedule(storeContext);
@@ -144,11 +144,11 @@ public final class InstanceInfo {
         info.configStore.getConnectorConfiguration(info.storeContext);
 
     // Upgrade from Legacy Configuration Data Stores. This method is
-    // called to instantiate Connectors that were created by some 
+    // called to instantiate Connectors that were created by some
     // other (possibly older) instance of the Connector Manager.
     // If the various stored instance data is not found in the
     // expected locations, the connector may have been previously
-    // created by an older version of the Connector Manager and may 
+    // created by an older version of the Connector Manager and may
     // have its instance data stored in the older legacy locations.
     // Move the data from the legacy stores to the expected locations
     // before launching the connector instance.
@@ -171,10 +171,6 @@ public final class InstanceInfo {
       throws InstanceInfoException {
     InstanceInfo info = new InstanceInfo(connectorName, connectorDir, typeInfo);
     info.properties = PropertiesUtils.fromMap(configMap);
-    info.properties.put(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR,
-                        connectorDir.getPath());
-    info.properties.put(PropertiesUtils.GOOGLE_WORK_DIR,
-                        Context.getInstance().getCommonDirPath());
     // Don't write properties file to disk yet.
     info.connector = makeConnectorWithSpring(info);
     return info;
@@ -194,7 +190,7 @@ public final class InstanceInfo {
         prototype = new FileSystemResource(customPrototype);
         LOGGER.info("Using connector-specific xml config for connector "
             + info.connectorName + " at path " + customPrototype.getPath());
-      } 
+      }
     }
     if (prototype == null) {
       prototype = info.typeInfo.getConnectorInstancePrototype();
@@ -204,7 +200,7 @@ public final class InstanceInfo {
     try {
       factory = new XmlBeanFactory(prototype);
     } catch (BeansException e) {
-      throw new FactoryCreationFailureException(e, prototype, 
+      throw new FactoryCreationFailureException(e, prototype,
           info.connectorName);
     }
 
@@ -213,8 +209,8 @@ public final class InstanceInfo {
         cfg = (EncryptedPropertyPlaceholderConfigurer) context.getBean(
             factory, null, EncryptedPropertyPlaceholderConfigurer.class);
     } catch (BeansException e) {
-      throw new BeanInstantiationFailureException(e, prototype, 
-          info.connectorName, 
+      throw new BeanInstantiationFailureException(e, prototype,
+          info.connectorName,
           EncryptedPropertyPlaceholderConfigurer.class.getName());
     }
     if (cfg == null) {
@@ -233,7 +229,7 @@ public final class InstanceInfo {
     try {
       connector = (Connector) context.getBean(factory, null, Connector.class);
     } catch (BeansException e) {
-      throw new BeanInstantiationFailureException(e, prototype, 
+      throw new BeanInstantiationFailureException(e, prototype,
           info.connectorName, Connector.class.getName());
     }
     if (connector == null) {
@@ -244,7 +240,7 @@ public final class InstanceInfo {
   }
 
   /**
-   * Return a Spring Resource containing the InstanceInfo 
+   * Return a Spring Resource containing the InstanceInfo
    * configuration Properties.
    */
   private static Resource getPropertiesResource(InstanceInfo info)
@@ -312,7 +308,7 @@ public final class InstanceInfo {
   /**
    * Sets the schedule for this connector instance.
    * Writes the modified schedule through to the persistent store.
-   * 
+   *
    * @param connectorSchedule String to store or null unset any existing
    * schedule.
    */
@@ -327,7 +323,7 @@ public final class InstanceInfo {
 
   /**
    * Gets the schedule for this connector instance.
-   * 
+   *
    * @return the schedule String, or null to erase any previously set schedule.
    * for this connector
    */
@@ -385,7 +381,7 @@ public final class InstanceInfo {
         return (Collection)(((Collection)bean).isEmpty() ? null : bean);
       }
     } catch (BeansException e) {
-      LOGGER.log(Level.WARNING, 
+      LOGGER.log(Level.WARNING,
           "Unable to process Legacy Connector Store bean " + beanName, e);
     }
     return null;
@@ -417,7 +413,7 @@ public final class InstanceInfo {
         }
       }
     }
-  }    
+  }
 
   /**
    * Upgrade ConnectorScheduleStore.  If the ConnectorScheduleStore has
@@ -442,7 +438,7 @@ public final class InstanceInfo {
         }
       }
     }
-  }    
+  }
 
   /**
    * Upgrade ConnectorStateStore.  If the ConnectorStateStore has
@@ -467,7 +463,7 @@ public final class InstanceInfo {
         }
       }
     }
-  }    
+  }
 
   static class InstanceInfoException extends InstantiatorException {
     InstanceInfoException(String message, Throwable cause) {
