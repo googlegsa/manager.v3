@@ -26,8 +26,7 @@
 	<property name="tests.todir" value="tests_outdir" />
 	<property name="tests.data" value="testdata" />
 	<property name="jar.dir" value="${dist}/jarfile" />
-	<property name="security.jarfile" value="${jar.dir}/security.jar" />
-	<property name="builtins.jarfile" value="${jar.dir}/builtins.jar" />
+	<property name="prod.jarfile" value="${jar.dir}/security.jar" />
 	<property name="tests.jarfile" value="${jar.dir}/security-tests.jar" />
 	<property name="thirdparty.prod.jars" value="third-party/prod" />
 	<property name="thirdparty.tests.jars" value="third-party/tests" />
@@ -39,6 +38,8 @@
 
 	<!-- The directory where all war-files are collected -->
 	<property name="war.dir" value="${dist}/${ant.project.name}" />
+	<property name="prod.warfile" value="${war.dir}/${ant.project.name}.war" />
+	<property name="tests.warfile" value="${war.dir}/${ant.project.name}_debug.war" />
 
 	<!-- =========================== TASKS =============================== -->
 	<target name="security_manager" description="Google Enterprise Security Manager" depends="war,regressions,junit-report" />
@@ -72,7 +73,7 @@
 		</javac>
 	</target>
 
-	<target name="compile_tests" depends="init,compile">
+	<target name="compile_tests" depends="compile">
 		<!-- compile java source files for tests -->
 		<javac srcdir="${tests.src}" destdir="${tests.classes}" debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
 			<classpath>
@@ -85,7 +86,7 @@
 		</javac>
 	</target>
 
-	<target name="compile_regressions" depends="init,compile">
+	<target name="compile_regressions" depends="compile_tests">
 		<!-- compile java source files for tests -->
 		<javac srcdir="${regressions.src}" destdir="${regressions.classes}" debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
 			<classpath>
@@ -133,7 +134,7 @@
 
 	<target name="jar-prod" depends="compile" description="Create production jars for the Security Manager project">
 		<tstamp />
-		<jar jarfile="${security.jarfile}">
+		<jar jarfile="${prod.jarfile}">
 			<fileset dir="${classes}" includes="**/*.class" />
 			<manifest>
 				<attribute name="Implementation-Title" value="Security Manager Impl" />
@@ -143,7 +144,7 @@
 		</jar>
 	</target>
 
-	<target name="jar-tests" depends="compile,compile_tests" description="Create test jars for the Security Manager project">
+	<target name="jar-tests" depends="compile_tests" description="Create test jars for the Security Manager project">
 		<tstamp />
 		<jar jarfile="${tests.jarfile}">
 			<fileset dir="${tests.classes}" includes="**/*.class" />
@@ -158,7 +159,6 @@
 	<target name="clean" description="Deletes all build files.">
 		<delete dir="${build}" />
 		<delete dir="${dist}" />
-		<delete dir="${tests.todir}" />
 		<delete dir="${tests.todir}" />
 		<delete dir="${tests.data}/tmp" />
 		<delete dir="${catalina.base}" />
@@ -176,11 +176,11 @@
 
 	<target name="war" depends="war-prod,war-tests" description="Builds the Production WAR file." />
 
-	<target name="war-prod" depends="install_init,jar-prod" description="Builds the Production WAR file for installation.">
+	<target name="war-prod" depends="install_init,jar" description="Builds the Production WAR file for installation.">
 		<echo> The production war file dir is located at ${war.dir}</echo>
 
 		<tstamp />
-		<war warfile="${war.dir}/${ant.project.name}.war" webxml="${webdocs}/prod/web.xml">
+		<war warfile="${prod.warfile}" webxml="${webdocs}/prod/web.xml">
 			<lib dir="${jar.dir}" includes="*.jar" excludes="security-tests.jar" />
 			<lib file="${connector-dist.dir}/connector-spi.jar" />
 			<lib file="${connector-dist.dir}/connector.jar" />
@@ -198,7 +198,7 @@
 		<echo> The test war file dir is located at ${war.dir}</echo>
 
 		<tstamp />
-		<war warfile="${war.dir}/${ant.project.name}_debug.war" webxml="${webdocs}/test/web.xml">
+		<war warfile="${tests.warfile}" webxml="${webdocs}/test/web.xml">
 			<lib dir="${jar.dir}" includes="*.jar" />
 			<lib file="${connector-dist.dir}/connector-spi.jar" />
 			<lib file="${connector-dist.dir}/connector.jar" />
@@ -208,12 +208,11 @@
 			<webinf dir="source/webdocs/test" includes="applicationContext.xml" />
 			<lib dir="${thirdparty.tests.jars}" includes="*.jar" />
 			<manifest>
-				<attribute name="Implementation-Title" value="Connector Manager" />
+				<attribute name="Implementation-Title" value="Security Manager" />
 				<attribute name="Implementation-Version" value="${version} (build ${svnversion}  ${TODAY})" />
 				<attribute name="Implementation-Vendor" value="Google Inc." />
 			</manifest>
 		</war>
-
 	</target>
 
 	<target name="make-install-dir">
@@ -245,15 +244,21 @@
 	<property name="catalina.home" value="${env.CATALINA_HOME}" />
 	<property name="catalina.base" value="catalina-base" />
 
-	<property name="war-prod" value="${basedir}/dist/security-manager/security-manager.war" />
-
-	<path id="prod.war.path">
-		<pathelement location="${war-prod}" />
-	</path>
-
 	<target name="make-full-prod-war-path">
 		<pathconvert property="war.prod.full.path" refid="prod.war.path" />
 	</target>
+
+	<path id="prod.war.path">
+		<pathelement location="${prod.warfile}" />
+	</path>
+
+	<target name="make-full-tests-war-path">
+		<pathconvert property="war.tests.full.path" refid="tests.war.path" />
+	</target>
+
+	<path id="tests.war.path">
+		<pathelement location="${tests.warfile}" />
+	</path>
 
 	<target name="setup-catalina-base">
 		<mkdir dir="${catalina.base}" />
@@ -355,7 +360,7 @@
 		<antcall target="tomcat-stop" />
 	</target>
 
-	<target name="junit-report" >
+	<target name="junit-report">
 		<junitreport todir="${tests.todir}">
 			<fileset dir="${tests.todir}">
 				<include name="*.xml" />
