@@ -57,8 +57,8 @@
 		<mkdir dir="${tests.todir}" />
 		<mkdir dir="${tests.data}/tmp" />
 		<mkdir dir="${jar.dir}" />
-    <mkdir dir="${regressions.build}" />
-    <mkdir dir="${regressions.classes}" />
+		<mkdir dir="${regressions.build}" />
+		<mkdir dir="${regressions.classes}" />
 	</target>
 
 	<target name="compile" depends="init">
@@ -85,19 +85,19 @@
 		</javac>
 	</target>
 
-  <target name="compile_regressions" depends="init,compile">
-    <!-- compile java source files for tests -->
-    <javac srcdir="${regressions.src}" destdir="${regressions.classes}" debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
-      <classpath>
-        <pathelement location="${classes}" />
-        <pathelement location="${tests.classes}" />
-        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-        <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
-        <fileset dir="${connector-dist.dir}" includes="**/*.jar" />
-        <pathelement location="${connector-thirdparty.dir}/prod/servlet-api.jar" />
-      </classpath>
-    </javac>
-  </target>
+	<target name="compile_regressions" depends="init,compile">
+		<!-- compile java source files for tests -->
+		<javac srcdir="${regressions.src}" destdir="${regressions.classes}" debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}">
+			<classpath>
+				<pathelement location="${classes}" />
+				<pathelement location="${tests.classes}" />
+				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+				<fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
+				<fileset dir="${connector-dist.dir}" includes="**/*.jar" />
+				<pathelement location="${connector-thirdparty.dir}/prod/servlet-api.jar" />
+			</classpath>
+		</javac>
+	</target>
 
 	<target name="run_tests" depends="compile_tests,jar-builtins">
 		<property name="test.suite" value="*" />
@@ -166,7 +166,7 @@
 
 	<!-- ======================Installation targets====================== -->
 
-	<!--  Builds a Web Archive - basically a JAR file which
+	<!-- Builds a Web Archive - basically a JAR file which
 	     also contains all and can be deployed as-is.
 	-->
 
@@ -227,141 +227,141 @@
 		</copy>
 	</target>
 
-	 <!-- Regressions Targets -->
+	<!-- Regressions Targets -->
 
-	  <property name="catalina-ant.jar" value="third-party/tests/catalina-ant.jar" />
+	<property name="catalina-ant.jar" value="third-party/tests/catalina-ant.jar" />
 
-	  <!-- Configure the custom Ant tasks for the Manager application -->
-	  <taskdef name="deploy" classname="org.apache.catalina.ant.DeployTask" classpath="${catalina-ant.jar}" />
-	  <taskdef name="list" classname="org.apache.catalina.ant.ListTask" classpath="${catalina-ant.jar}" />
-	  <taskdef name="reload" classname="org.apache.catalina.ant.ReloadTask" classpath="${catalina-ant.jar}" />
-	  <taskdef name="resources" classname="org.apache.catalina.ant.ResourcesTask" classpath="${catalina-ant.jar}" />
-	  <taskdef name="roles" classname="org.apache.catalina.ant.RolesTask" classpath="${catalina-ant.jar}" />
-	  <taskdef name="start" classname="org.apache.catalina.ant.StartTask" classpath="${catalina-ant.jar}" />
-	  <taskdef name="stop" classname="org.apache.catalina.ant.StopTask" classpath="${catalina-ant.jar}" />
-	  <taskdef name="undeploy" classname="org.apache.catalina.ant.UndeployTask" classpath="${catalina-ant.jar}" />
+	<!-- Configure the custom Ant tasks for the Manager application -->
+	<taskdef name="deploy" classname="org.apache.catalina.ant.DeployTask" classpath="${catalina-ant.jar}" />
+	<taskdef name="list" classname="org.apache.catalina.ant.ListTask" classpath="${catalina-ant.jar}" />
+	<taskdef name="reload" classname="org.apache.catalina.ant.ReloadTask" classpath="${catalina-ant.jar}" />
+	<taskdef name="resources" classname="org.apache.catalina.ant.ResourcesTask" classpath="${catalina-ant.jar}" />
+	<taskdef name="roles" classname="org.apache.catalina.ant.RolesTask" classpath="${catalina-ant.jar}" />
+	<taskdef name="start" classname="org.apache.catalina.ant.StartTask" classpath="${catalina-ant.jar}" />
+	<taskdef name="stop" classname="org.apache.catalina.ant.StopTask" classpath="${catalina-ant.jar}" />
+	<taskdef name="undeploy" classname="org.apache.catalina.ant.UndeployTask" classpath="${catalina-ant.jar}" />
 
-	  <property environment="env" />
-	  <property name="catalina.home" value="${env.CATALINA_HOME}" />
-	  <property name="catalina.base" value="catalina-base" />
+	<property environment="env" />
+	<property name="catalina.home" value="${env.CATALINA_HOME}" />
+	<property name="catalina.base" value="catalina-base" />
 
-	  <property name="war-prod" value="${basedir}/dist/security-manager/security-manager.war" />
+	<property name="war-prod" value="${basedir}/dist/security-manager/security-manager.war" />
 
-	  <path id="prod.war.path">
-	    <pathelement location="${war-prod}" />
-	  </path>
+	<path id="prod.war.path">
+		<pathelement location="${war-prod}" />
+	</path>
 
-	  <target name="make-full-prod-war-path">
-	    <pathconvert property="war.prod.full.path" refid="prod.war.path" />
-	  </target>
+	<target name="make-full-prod-war-path">
+		<pathconvert property="war.prod.full.path" refid="prod.war.path" />
+	</target>
 
-	  <target name="setup-catalina-base">
-	    <mkdir dir="${catalina.base}" />
-	    <mkdir dir="${catalina.base}/logs" />
-	    <mkdir dir="${catalina.base}/work" />
-	    <mkdir dir="${catalina.base}/temp" />
-	    <mkdir dir="${catalina.base}/conf" />
-	    <copy todir="${catalina.base}/conf">
-	      <fileset dir="${catalina.home}/conf" />
-	    </copy>
-	    <copy file="testdata/tomcat-conf/tomcat-users.xml" tofile="${catalina.base}/conf/tomcat-users.xml" overwrite="true" />
-	    <copy file="testdata/tomcat-conf/server.xml" tofile="${catalina.base}/conf/server.xml" overwrite="true" />
-	    <mkdir dir="${catalina.base}/webapps" />
-	    <copy todir="${catalina.base}/webapps">
-	      <fileset dir="${catalina.home}/webapps" />
-	    </copy>
-	  </target>
+	<target name="setup-catalina-base">
+		<mkdir dir="${catalina.base}" />
+		<mkdir dir="${catalina.base}/logs" />
+		<mkdir dir="${catalina.base}/work" />
+		<mkdir dir="${catalina.base}/temp" />
+		<mkdir dir="${catalina.base}/conf" />
+		<copy todir="${catalina.base}/conf">
+			<fileset dir="${catalina.home}/conf" />
+		</copy>
+		<copy file="testdata/tomcat-conf/tomcat-users.xml" tofile="${catalina.base}/conf/tomcat-users.xml" overwrite="true" />
+		<copy file="testdata/tomcat-conf/server.xml" tofile="${catalina.base}/conf/server.xml" overwrite="true" />
+		<mkdir dir="${catalina.base}/webapps" />
+		<copy todir="${catalina.base}/webapps">
+			<fileset dir="${catalina.home}/webapps" />
+		</copy>
+	</target>
 
-	  <property name="catalina.logging.manager" value="org.apache.juli.ClassLoaderLogManager" />
-	  <property name="catalina.logging.config.file" value="${catalina.base}/conf/logging.properties" />
+	<property name="catalina.logging.manager" value="org.apache.juli.ClassLoaderLogManager" />
+	<property name="catalina.logging.config.file" value="${catalina.base}/conf/logging.properties" />
 
-	  <target name="tomcat-start">
-	    <java jar="${catalina.home}/bin/bootstrap.jar" fork="true" spawn="true">
-	      <jvmarg value="-Dcatalina.home=${catalina.home}" />
-	      <jvmarg value="-Dcatalina.base=${catalina.base}" />
-	      <jvmarg value="-Djava.io.tmpdir=${catalina.base}/temp" />
-	      <jvmarg value="-Djava.io.tmpdir=${catalina.base}/temp" /> 
-	      <jvmarg value="-Djava.util.logging.manager=${catalina.logging.manager}" />
-	      <jvmarg value="-Djava.util.logging.config.file=${catalina.logging.config.file}" />  
-	      <arg line="start" />
-	    </java>
-	    <sleep seconds="20" />
-	  </target>
+	<target name="tomcat-start">
+		<java jar="${catalina.home}/bin/bootstrap.jar" fork="true" spawn="true">
+			<jvmarg value="-Dcatalina.home=${catalina.home}" />
+			<jvmarg value="-Dcatalina.base=${catalina.base}" />
+			<jvmarg value="-Djava.io.tmpdir=${catalina.base}/temp" />
+			<jvmarg value="-Djava.io.tmpdir=${catalina.base}/temp" />
+			<jvmarg value="-Djava.util.logging.manager=${catalina.logging.manager}" />
+			<jvmarg value="-Djava.util.logging.config.file=${catalina.logging.config.file}" />
+			<arg line="start" />
+		</java>
+		<sleep seconds="20" />
+	</target>
 
-	  <target name="tomcat-stop">
-	    <java jar="${catalina.home}/bin/bootstrap.jar" fork="true">
-	      <jvmarg value="-Dcatalina.home=${catalina.home}" />
-	      <jvmarg value="-Dcatalina.base=${catalina.base}" />
-	      <jvmarg value="-Djava.io.tmpdir=${catalina.base}/temp" />
-	      <jvmarg value="-Djava.util.logging.manager=${catalina.logging.manager}" />
-	      <jvmarg value="-Djava.util.logging.config.file=${catalina.logging.config.file}" />  
-	      <arg line="stop" />
-	    </java>
-	  </target>
+	<target name="tomcat-stop">
+		<java jar="${catalina.home}/bin/bootstrap.jar" fork="true">
+			<jvmarg value="-Dcatalina.home=${catalina.home}" />
+			<jvmarg value="-Dcatalina.base=${catalina.base}" />
+			<jvmarg value="-Djava.io.tmpdir=${catalina.base}/temp" />
+			<jvmarg value="-Djava.util.logging.manager=${catalina.logging.manager}" />
+			<jvmarg value="-Djava.util.logging.config.file=${catalina.logging.config.file}" />
+			<arg line="stop" />
+		</java>
+	</target>
 
-	  <!-- Configure properties to access the Manager application -->
-	  <property name="url" value="http://localhost:8973/manager" />
-	  <property name="username" value="admin" />
-	  <property name="password" value="tomcat" />
-	  <property name="path" value="/security-manager" />
+	<!-- Configure properties to access the Manager application -->
+	<property name="url" value="http://localhost:8973/manager" />
+	<property name="username" value="admin" />
+	<property name="password" value="tomcat" />
+	<property name="path" value="/security-manager" />
 
-	  <target name="deploy" description="Install security-manager" depends="war,make-full-prod-war-path">
-	    <echo message="file:${war.prod.full.path}" />
-	    <deploy url="${url}" username="${username}" password="${password}" path="${path}" war="file:${war.prod.full.path}" />
-	  </target>
+	<target name="deploy" description="Install security-manager" depends="war,make-full-prod-war-path">
+		<echo message="file:${war.prod.full.path}" />
+		<deploy url="${url}" username="${username}" password="${password}" path="${path}" war="file:${war.prod.full.path}" />
+	</target>
 
-	  <target name="reload" description="Reload security-manager" depends="war">
-	    <reload url="${url}" username="${username}" password="${password}" path="${path}" />
-	  </target>
+	<target name="reload" description="Reload security-manager" depends="war">
+		<reload url="${url}" username="${username}" password="${password}" path="${path}" />
+	</target>
 
-	  <target name="undeploy" description="Remove security-manager">
-	    <undeploy url="${url}" username="${username}" password="${password}" path="${path}" />
-	  </target>
+	<target name="undeploy" description="Remove security-manager">
+		<undeploy url="${url}" username="${username}" password="${password}" path="${path}" />
+	</target>
 
-	  <target name="start" description="Start Tomcat application">
-	    <start url="${url}" username="${username}" password="${password}" path="${path}" />
-	  </target>
+	<target name="start" description="Start Tomcat application">
+		<start url="${url}" username="${username}" password="${password}" path="${path}" />
+	</target>
 
-	  <target name="stop" description="Stop Tomcat application">
-	    <stop url="${url}" username="${username}" password="${password}" path="${path}" />
-	  </target>
+	<target name="stop" description="Stop Tomcat application">
+		<stop url="${url}" username="${username}" password="${password}" path="${path}" />
+	</target>
 
-	  <target name="setup_regressions" depends="compile_regressions,setup-catalina-base,war,make-full-prod-war-path" />
+	<target name="setup_regressions" depends="compile_regressions,setup-catalina-base,war,make-full-prod-war-path" />
 
-	  <target name="run_regressions">
-	    <property name="test.suite" value="*" />
-	    <junit haltonfailure="yes" dir=".">
-	      <classpath>
-	        <pathelement location="${classes}" />
-	        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-	        <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
-	        <fileset dir="${connector-dist.dir}" includes="**/*.jar" />
-	        <pathelement location="${regressions.classes}" />
-	        <pathelement location="${tests.classes}" />
-	        <pathelement path="${java.class.path}" />
-	      </classpath>
-	      <formatter type="xml" />
-	      <batchtest fork="yes" todir="${tests.todir}">
-	        <fileset dir="${regressions.src}" includes="**/${test.suite}Test.java" />
-	      </batchtest>
-	    </junit>
-	  </target>
+	<target name="run_regressions">
+		<property name="test.suite" value="*" />
+		<junit haltonfailure="yes" dir=".">
+			<classpath>
+				<pathelement location="${classes}" />
+				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+				<fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
+				<fileset dir="${connector-dist.dir}" includes="**/*.jar" />
+				<pathelement location="${regressions.classes}" />
+				<pathelement location="${tests.classes}" />
+				<pathelement path="${java.class.path}" />
+			</classpath>
+			<formatter type="xml" />
+			<batchtest fork="yes" todir="${tests.todir}">
+				<fileset dir="${regressions.src}" includes="**/${test.suite}Test.java" />
+			</batchtest>
+		</junit>
+	</target>
 
-	  <target name="regressions" description="Run Tomcat regression tests" depends="setup_regressions">
-	    <antcall target="tomcat-start" />
-	    <antcall target="deploy" />
-	    <antcall target="run_regressions" />
-	    <antcall target="undeploy" />
-	    <antcall target="tomcat-stop" />
-	  </target>
+	<target name="regressions" description="Run Tomcat regression tests" depends="setup_regressions">
+		<antcall target="tomcat-start" />
+		<antcall target="deploy" />
+		<antcall target="run_regressions" />
+		<antcall target="undeploy" />
+		<antcall target="tomcat-stop" />
+	</target>
 
-	  <target name="junit-report" >  
-	    <junitreport todir="${tests.todir}">
-	       <fileset dir="${tests.todir}">
-	         <include name="*.xml" />
-	       </fileset>
-	       <report format="frames" todir="${tests.todir}" />
-	     </junitreport>
-	    </target>
+	<target name="junit-report" >
+		<junitreport todir="${tests.todir}">
+			<fileset dir="${tests.todir}">
+				<include name="*.xml" />
+			</fileset>
+			<report format="frames" todir="${tests.todir}" />
+		</junitreport>
+	</target>
 
 </project>
