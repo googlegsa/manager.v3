@@ -79,12 +79,12 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
   private final HttpTransport transport;
 
   /**
-   * Creates a new mock SAML service provider with the given identity provider.
+   * Creates a new mock SAML service provider with the given message transport.
    *
    * @param transport A message-transport provider.
-   * @throws ServletException
    */
-  public MockArtifactConsumer(HttpTransport transport) throws ServletException {
+  public MockArtifactConsumer(HttpTransport transport) {
+    super();
     this.transport = transport;
   }
 
