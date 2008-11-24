@@ -36,17 +36,4 @@
     <property name="instantiator" ref="Instantiator" />
     <property name="backEnd" ref="BackEnd" />
   </bean>
-
-  <bean id="MockServiceProvider"
-	class="com.google.enterprise.saml.client.MockServiceProvider">
-  </bean>
-
-  <bean id="MockArtifactConsumer"
-	class="com.google.enterprise.saml.client.MockArtifactConsumer">
-    <constructor-arg index="0" ref="HttpTransport"/>
-  </bean>
-
-  <bean id="HttpTransport"
-	class="com.google.enterprise.saml.client.HttpClientTransport">
-  </bean>
 </beans>
