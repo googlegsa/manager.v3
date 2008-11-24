@@ -310,9 +310,9 @@
 	<property name="password" value="tomcat" />
 	<property name="path" value="/security-manager" />
 
-	<target name="deploy" description="Install security-manager" depends="war,make-full-prod-war-path">
-		<echo message="file:${war.prod.full.path}" />
-		<deploy url="${url}" username="${username}" password="${password}" path="${path}" war="file:${war.prod.full.path}" />
+	<target name="deploy" description="Install security-manager" depends="war,make-full-tests-war-path">
+		<echo message="file:${war.tests.full.path}" />
+		<deploy url="${url}" username="${username}" password="${password}" path="${path}" war="file:${war.tests.full.path}" />
 	</target>
 
 	<target name="reload" description="Reload security-manager" depends="war">
@@ -331,7 +331,7 @@
 		<stop url="${url}" username="${username}" password="${password}" path="${path}" />
 	</target>
 
-	<target name="setup_regressions" depends="compile_regressions,setup-catalina-base,war,make-full-prod-war-path" />
+	<target name="setup_regressions" depends="compile_regressions,setup-catalina-base,war,make-full-tests-war-path" />
 
 	<target name="run_regressions">
 		<property name="test.suite" value="*" />

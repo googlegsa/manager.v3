@@ -338,6 +338,23 @@
       <servlet-name>HelloWorld</servlet-name>
       <url-pattern>/helloWorld</url-pattern>
   </servlet-mapping>
+
+  <servlet>
+      <servlet-name>MockServiceProvider</servlet-name>
+      <servlet-class>com.google.enterprise.saml.client.MockServiceProvider</servlet-class>
+  </servlet>
+  <servlet-mapping>
+      <servlet-name>MockServiceProvider</servlet-name>
+      <url-pattern>/mockserviceprovider</url-pattern>
+  </servlet-mapping>
+ 
+  <servlet>
+      <servlet-name>MockArtifactConsumer</servlet-name>
+      <servlet-class>com.google.enterprise.saml.client.MockArtifactConsumer</servlet-class>
+  </servlet>
+  <servlet-mapping>
+      <servlet-name>MockArtifactConsumer</servlet-name>
+      <url-pattern>/mockartifactconsumer</url-pattern>
+  </servlet-mapping>
  
 </web-app>
-
