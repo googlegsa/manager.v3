@@ -88,6 +88,14 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
     this.transport = transport;
   }
 
+  /**
+   * Creates a new mock SAML service provider with default message transport.
+   */
+  public MockArtifactConsumer() {
+    super();
+    this.transport = new HttpClientTransport();
+  }
+
   @Override
   public void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {

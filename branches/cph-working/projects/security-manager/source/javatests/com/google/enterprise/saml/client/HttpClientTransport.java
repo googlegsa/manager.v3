@@ -23,17 +23,24 @@ import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Enumeration;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static com.google.enterprise.saml.common.SamlTestUtil.servletRequestToString;
+import static com.google.enterprise.saml.common.SamlTestUtil.servletResponseToString;
+
 public final class HttpClientTransport implements HttpTransport {
+  private static final Logger LOGGER = Logger.getLogger(HttpClientTransport.class.getName());
 
   private final HttpClient userAgent;
 
@@ -56,6 +63,7 @@ public final class HttpClientTransport implements HttpTransport {
   private void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     GetMethod method = new GetMethod(requestUrl(request));
+    method.setFollowRedirects(true);
     doExchange(request, response, method);
   }
 
@@ -75,6 +83,7 @@ public final class HttpClientTransport implements HttpTransport {
   private void doExchange(HttpServletRequest request, HttpServletResponse response,
                           HttpMethodBase method)
       throws ServletException, IOException {
+    LOGGER.log(Level.INFO, servletRequestToString(request, "Request"));
     try {
       @SuppressWarnings("unchecked") Enumeration<String> names = request.getHeaderNames();
       while (names.hasMoreElements()) {
@@ -82,7 +91,6 @@ public final class HttpClientTransport implements HttpTransport {
         String value = request.getHeader(name);
         method.addRequestHeader(name, value);
       }
-      method.setFollowRedirects(true);
       response.setStatus(userAgent.executeMethod(method));
       for (Header h: method.getResponseHeaders()) {
         response.addHeader(h.getName(), h.getValue());
@@ -105,5 +113,7 @@ public final class HttpClientTransport implements HttpTransport {
     } finally {
       method.releaseConnection();
     }
+    LOGGER.log(Level.INFO,
+               servletResponseToString((MockHttpServletResponse) response, "Response"));
   }
 }
