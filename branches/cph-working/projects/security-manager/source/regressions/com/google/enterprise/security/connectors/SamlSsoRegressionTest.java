@@ -21,11 +21,14 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.RequestEntity;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -45,26 +48,33 @@ public class SamlSsoRegressionTest extends TestCase {
   }
 
   public void testGoodCredentials() throws HttpException, IOException {
-    tryCredentials("joe", "plumber");
+    tryCredentials("joe", "plumber", HttpStatus.SC_OK);
   }
 
-  private void tryCredentials(String username, String password) throws HttpException, IOException {
+  public void testBadCredentials() throws HttpException, IOException {
+    tryCredentials("joe", "biden", HttpStatus.SC_UNAUTHORIZED);
+  }
+
+  private void tryCredentials(String username, String password, int expectedStatus)
+      throws HttpException, IOException {
+
     // Initial request to service provider
-    String action = parseForm(tryGet(spUrl));
+    String action = parseForm(tryGet(spUrl, HttpStatus.SC_OK));
 
     // Submit credentials-gathering form
-    PostMethod method = new PostMethod(action);
-    method.addParameter("username", username);
-    method.addParameter("password", password);
-    tryPost(method);
+    PostMethod method2 = new PostMethod(action);
+    method2.addParameter("username", username);
+    method2.addParameter("password", password);
+    tryPost(method2, expectedStatus);
   }
 
-  private String tryGet(String url) throws HttpException, IOException {
+  private String tryGet(String url, int expectedStatus) throws HttpException, IOException {
     GetMethod method = new GetMethod(url);
     method.setFollowRedirects(true);
+    logRequest(method);
     int status = userAgent.executeMethod(method);
     logResponse(method);
-    assertEquals("Incorrect response status code", HttpStatus.SC_OK, status);
+    assertEquals("Incorrect response status code", expectedStatus, status);
     String body = method.getResponseBodyAsString();
     method.releaseConnection();
     return body;
@@ -85,8 +95,9 @@ public class SamlSsoRegressionTest extends TestCase {
     return action;
   }
 
-  private String tryPost(PostMethod method) throws HttpException, IOException {
+  private String tryPost(PostMethod method, int expectedStatus) throws HttpException, IOException {
     method.setRequestBody(method.getParameters());
+    logRequest(method);
     int status = userAgent.executeMethod(method);
     logResponse(method);
     assertTrue("Incorrect response status code",
@@ -96,7 +107,38 @@ public class SamlSsoRegressionTest extends TestCase {
     assertNotNull("Missing Location header in redirect", location);
     method.getResponseBody();
     method.releaseConnection();
-    return tryGet(location.getValue());
+    return tryGet(location.getValue(), expectedStatus);
+  }
+
+  private static void logRequest(HttpMethodBase method) throws IOException {
+    StringWriter out = new StringWriter();
+    out.write("Request:\n");
+    writeRequest(method, out);
+    String message = out.toString();
+    out.close();
+    LOGGER.log(Level.INFO, message);
+  }
+
+  private static void writeRequest(HttpMethodBase method, Writer out)  throws IOException {
+    out.write(method.getName());
+    out.write(" ");
+    out.write(method.getURI().toString());
+    out.write(" ");
+    out.write(method.getParams().getVersion().toString());
+    out.write("\n");
+    for (Header h: method.getRequestHeaders()) {
+      out.write(h.toString());
+    }
+    out.write("\n");
+    if (method instanceof EntityEnclosingMethod) {
+      EntityEnclosingMethod eem = (EntityEnclosingMethod) method;
+      RequestEntity re = eem.getRequestEntity();
+      if (re.isRepeatable()) {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        re.writeRequest(os);
+        out.write(os.toString("UTF-8"));
+      }
+    }
   }
 
   private static void logResponse(HttpMethodBase method) throws IOException {
