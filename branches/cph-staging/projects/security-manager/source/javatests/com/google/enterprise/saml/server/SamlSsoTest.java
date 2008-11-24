@@ -47,7 +47,7 @@ import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 public class SamlSsoTest extends TestCase {
 
-  private static final String spUrl = "http://localhost:8973/gsa/provide-service";
+  private static final String spUrl = "http://localhost:8973/security-manager/mockserviceprovider";
 
   private final MockUserAgent userAgent;
 

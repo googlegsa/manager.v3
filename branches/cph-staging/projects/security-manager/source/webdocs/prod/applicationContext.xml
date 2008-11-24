@@ -26,7 +26,7 @@
     class="com.google.enterprise.saml.server.BackEndImpl">
     <constructor-arg index="0" ref="SessionManager" />
     <constructor-arg index="1" ref="AuthzResponder" />
-    <constructor-arg index="2" value="http://localhost:8973/gsa/consume-assertion" />
+    <constructor-arg index="2" value="http://localhost:8973/security-manager/mockartifactconsumer" />
     <constructor-arg index="3" value="http://localhost:8973/security-manager/samlauthn" />
     <constructor-arg index="4" value="http://localhost:8973/security-manager/samlartifact"/>
   </bean>
