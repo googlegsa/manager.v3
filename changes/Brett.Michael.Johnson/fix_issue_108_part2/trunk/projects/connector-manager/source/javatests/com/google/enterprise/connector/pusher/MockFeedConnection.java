@@ -45,7 +45,7 @@ public class MockFeedConnection implements FeedConnection {
   }
 
   public String sendData(String dataSource, FeedData feedData)
-      throws FeedException, RepositoryException {
+      throws RepositoryException {
     try {
       InputStream data = ((GsaFeedData)feedData).getData();
       String dataStr = StringUtils.streamToStringAndThrow(data);

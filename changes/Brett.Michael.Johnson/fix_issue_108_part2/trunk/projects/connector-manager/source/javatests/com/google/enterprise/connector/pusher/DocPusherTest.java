@@ -41,6 +41,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -940,8 +942,9 @@ public class DocPusherTest extends TestCase {
     try {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Document missing required property "
+                   + SpiConstants.PROPNAME_DOCID, expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -954,14 +957,16 @@ public class DocPusherTest extends TestCase {
    */
   public void testBadDocid1() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
-    doc.failProperty(SpiConstants.PROPNAME_DOCID, IllegalArgumentException.class);
+    doc.failProperty(SpiConstants.PROPNAME_DOCID,
+                     IllegalArgumentException.class);
 
     // Failure to get required metadata should throw RepositoryDocumentException
     try {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_DOCID,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -980,8 +985,9 @@ public class DocPusherTest extends TestCase {
     try {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_DOCID,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -994,14 +1000,16 @@ public class DocPusherTest extends TestCase {
    */
   public void testBadDocid3() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
-    doc.failProperty(SpiConstants.PROPNAME_DOCID, RepositoryDocumentException.class);
+    doc.failProperty(SpiConstants.PROPNAME_DOCID,
+                     RepositoryDocumentException.class);
 
     // Failure to get required metadata should throw RepositoryDocumentException
     try {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_DOCID,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -1021,8 +1029,9 @@ public class DocPusherTest extends TestCase {
       fail("Expected RepositoryException, but got none.");
     } catch (RepositoryDocumentException e) {
       fail("RepositoryException was replaced with RepositoryDocumentException");
-    } catch (RepositoryException e) {
-      // Expected.
+    } catch (RepositoryException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_DOCID,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryException, but got " + t.toString());
     }
@@ -1058,8 +1067,9 @@ public class DocPusherTest extends TestCase {
     try {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_LASTMODIFIED,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -1078,8 +1088,9 @@ public class DocPusherTest extends TestCase {
     try {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_LASTMODIFIED,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -1100,8 +1111,9 @@ public class DocPusherTest extends TestCase {
       fail("Expected RepositoryException, but got none.");
     } catch (RepositoryDocumentException e) {
       fail("RepositoryException was replaced with RepositoryDocumentException");
-    } catch (RepositoryException e) {
-      // Expected.
+    } catch (RepositoryException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_LASTMODIFIED,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryException, but got " + t.toString());
     }
@@ -1136,8 +1148,8 @@ public class DocPusherTest extends TestCase {
     try {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail foo", expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -1155,8 +1167,8 @@ public class DocPusherTest extends TestCase {
     try {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail foo", expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -1176,8 +1188,8 @@ public class DocPusherTest extends TestCase {
       fail("Expected RepositoryException, but got none.");
     } catch (RepositoryDocumentException e) {
       fail("RepositoryException was replaced with RepositoryDocumentException");
-    } catch (RepositoryException e) {
-      // Expected.
+    } catch (RepositoryException expected) {
+      assertEquals("Fail foo", expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryException, but got " + t.toString());
     }
@@ -1199,8 +1211,8 @@ public class DocPusherTest extends TestCase {
     try {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertStringContains("malformed", expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -1220,8 +1232,9 @@ public class DocPusherTest extends TestCase {
     try {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_SEARCHURL,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -1242,8 +1255,9 @@ public class DocPusherTest extends TestCase {
     try {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_SEARCHURL,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -1266,8 +1280,9 @@ public class DocPusherTest extends TestCase {
       fail("Expected RepositoryException, but got none.");
     } catch (RepositoryDocumentException e) {
       fail("RepositoryException was replaced with RepositoryDocumentException");
-    } catch (RepositoryException e) {
-      // Expected.
+    } catch (RepositoryException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_SEARCHURL,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryException, but got " + t.toString());
     }
@@ -1299,8 +1314,9 @@ public class DocPusherTest extends TestCase {
     try {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_DISPLAYURL,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -1320,8 +1336,9 @@ public class DocPusherTest extends TestCase {
     try {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_DISPLAYURL,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -1343,8 +1360,9 @@ public class DocPusherTest extends TestCase {
       fail("Expected RepositoryException, but got none.");
     } catch (RepositoryDocumentException e) {
       fail("RepositoryException was replaced with RepositoryDocumentException");
-    } catch (RepositoryException e) {
-      // Expected.
+    } catch (RepositoryException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_DISPLAYURL,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryException, but got " + t.toString());
     }
@@ -1375,8 +1393,9 @@ public class DocPusherTest extends TestCase {
     try {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_CONTENT,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -1396,8 +1415,9 @@ public class DocPusherTest extends TestCase {
     try {
       feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_CONTENT,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -1419,8 +1439,9 @@ public class DocPusherTest extends TestCase {
       fail("Expected RepositoryException, but got none.");
     } catch (RepositoryDocumentException e) {
       fail("RepositoryException was replaced with RepositoryDocumentException");
-    } catch (RepositoryException e) {
-      // Expected.
+    } catch (RepositoryException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_CONTENT,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryException, but got " + t.toString());
     }
@@ -1439,8 +1460,9 @@ public class DocPusherTest extends TestCase {
     try {
       feedDocument(document);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("I/O error reading data: This stream is unreadable",
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
@@ -1457,8 +1479,8 @@ public class DocPusherTest extends TestCase {
       DocPusher dpusher = new DocPusher(badFeedConnection);
       dpusher.take(document, "junit");
       fail("Expected FeedException, but got none.");
-    } catch (FeedException e) {
-      // Expected.
+    } catch (FeedException expected) {
+      assertEquals("Anorexic FeedConnection", expected.getMessage());
     } catch (Throwable t) {
       fail("Expected FeedException, but got " + t.toString());
     }
@@ -1475,8 +1497,8 @@ public class DocPusherTest extends TestCase {
       DocPusher dpusher = new DocPusher(badFeedConnection);
       dpusher.take(document, "junit");
       fail("Expected PushException, but got none.");
-    } catch (PushException e) {
-      // Expected.
+    } catch (PushException expected) {
+      assertEquals("Bulimic FeedConnection", expected.getMessage());
     } catch (Throwable t) {
       fail("Expected PushException, but got " + t.toString());
     }
@@ -1485,9 +1507,9 @@ public class DocPusherTest extends TestCase {
   /**
    * A FeedConnection that throws FeedException when fed.
    */
-  private class BadFeedConnection1 extends MockFeedConnection {
+  private class BadFeedConnection1 implements FeedConnection {
     public String sendData(String dataSource, FeedData feedData)
-        throws FeedException, RepositoryException {
+        throws FeedException {
       throw new FeedException("Anorexic FeedConnection");
     }
   }
@@ -1497,7 +1519,7 @@ public class DocPusherTest extends TestCase {
    */
   private class BadFeedConnection2 extends MockFeedConnection {
     public String sendData(String dataSource, FeedData feedData)
-        throws FeedException, RepositoryException {
+        throws RepositoryException {
       super.sendData(dataSource, feedData);
       return "Bulimic FeedConnection";
     }
@@ -1598,21 +1620,36 @@ public class DocPusherTest extends TestCase {
         Class throwable = (Class) badProperties.get(propertyName);
         if (throwable == null) {
           return null;
-        } else if (RuntimeException.class.isAssignableFrom(throwable)) {
+        }
+
+        Class[] parameterTypes = { String.class };
+        String[] parameters = { "Fail " + propertyName };
+        Constructor constructor;
+        try {
+          constructor = throwable.getConstructor(parameterTypes);
+        } catch (NoSuchMethodException e) {
+          throw new IllegalArgumentException(e);
+        }
+
+        if (RuntimeException.class.isAssignableFrom(throwable)) {
           // RuntimeExceptions don't have to be declared.
           try {
-            throw (RuntimeException) throwable.newInstance();
+            throw (RuntimeException) constructor.newInstance(parameters);
           } catch (IllegalAccessException e) {
             throw new IllegalArgumentException(e);
           } catch (InstantiationException e) {
+            throw new IllegalArgumentException(e);
+          } catch (InvocationTargetException e) {
             throw new IllegalArgumentException(e);
           }
         } else if (RepositoryException.class.isAssignableFrom(throwable)) {
           try {
-            throw (RepositoryException) throwable.newInstance();
+            throw (RepositoryException) constructor.newInstance(parameters);
           } catch (IllegalAccessException e) {
             throw new IllegalArgumentException(e);
           } catch (InstantiationException e) {
+            throw new IllegalArgumentException(e);
+          } catch (InvocationTargetException e) {
             throw new IllegalArgumentException(e);
           }
         }
