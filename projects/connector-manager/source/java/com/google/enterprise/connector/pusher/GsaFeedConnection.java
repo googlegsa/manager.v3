@@ -15,6 +15,8 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.servlet.ServletUtil;
+import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.RepositoryDocumentException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -80,7 +82,7 @@ public class GsaFeedConnection implements FeedConnection {
   }
 
   public String sendData(String dataSource, FeedData feedData)
-      throws FeedException {
+      throws FeedException, RepositoryException {
     String feedType = ((GsaFeedData)feedData).getFeedType();
     InputStream data = ((GsaFeedData)feedData).getData();
     OutputStream outputStream;
@@ -98,63 +100,87 @@ public class GsaFeedConnection implements FeedConnection {
       throw new FeedException(ioe);
     }
 
-    byte[] bytebuf = new byte[2048];
-    int val;
-
-    try {
-      // if there is an exception during this read/write, we do our
-      // best to close the url connection and read the result
-
-      writeMultipartControlHeader(outputStream,
-                                  "datasource",
-                                  ServletUtil.MIMETYPE_TEXT_PLAIN);
-      outputStream.write((dataSource + "\n").getBytes());
-
-      writeMultipartControlHeader(outputStream,
-                                  "feedtype",
-                                  ServletUtil.MIMETYPE_TEXT_PLAIN);
-      outputStream.write((feedType + "\n").getBytes());
-
-      writeMultipartControlHeader(outputStream,
-                                  "data",
-                                  ServletUtil.MIMETYPE_XML);
-      while (-1 != (val = data.read(bytebuf))) {
-        outputStream.write(bytebuf, 0, val);
-      }
-      outputStream.write("\n".getBytes());
-
-      outputStream.write(("--" + BOUNDARY + "--\n").getBytes());
-      outputStream.flush();
-    } catch (IOException e) {
-      LOGGER.log(Level.SEVERE, "IOException while posting: continuing", e);
-    } finally {
-      try {
-        outputStream.close();
-      } catch (IOException e) {
-        LOGGER.log(Level.SEVERE,
-            "IOException while closing after post: continuing", e);
-      }
-    }
-
+    boolean isThrowing = false;
     StringBuffer buf = new StringBuffer();
-    BufferedReader br = null;
     try {
-      InputStream inputStream = uc.getInputStream();
-      br = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
-      String line;
-      while ((line = br.readLine()) != null) {
-        buf.append(line);
-      }
-    } catch (IOException ioe) {
-      throw new FeedException(ioe);
-    } finally {
+      // If there is an exception during this read/write, we do our
+      // best to close the url connection and read the result.
       try {
-        if (br != null) {
-          br.close();
+        writeMultipartControlHeader(outputStream,
+                                    "datasource",
+                                    ServletUtil.MIMETYPE_TEXT_PLAIN);
+        outputStream.write((dataSource + "\n").getBytes());
+
+        writeMultipartControlHeader(outputStream,
+                                    "feedtype",
+                                    ServletUtil.MIMETYPE_TEXT_PLAIN);
+        outputStream.write((feedType + "\n").getBytes());
+
+        writeMultipartControlHeader(outputStream,
+                                    "data",
+                                    ServletUtil.MIMETYPE_XML);
+        byte[] bytebuf = new byte[2048];
+        int val;
+        while (true) {
+          // Handle input exceptions differently than output exceptions.
+          try {
+            if ((val = data.read(bytebuf)) == -1) {
+              break;
+            }
+          } catch (IOException ioe) {
+            LOGGER.log(Level.SEVERE,
+                       "IOException while reading: skipping", ioe);
+            Throwable t = ioe.getCause();
+            isThrowing = true;
+            if (t != null && (t instanceof RepositoryException)) {
+              throw (RepositoryException) t;
+            } else {
+              throw new RepositoryDocumentException(ioe);
+            }
+          }
+          outputStream.write(bytebuf, 0, val);
         }
+        outputStream.write(("\n--" + BOUNDARY + "--\n").getBytes());
+        outputStream.flush();
       } catch (IOException e) {
         LOGGER.log(Level.SEVERE,
-            "IOException while closing after post: continuing", e);
+            "IOException while posting: will retry later", e);
+        isThrowing = true;
+        throw new FeedException(e);
+      } finally {
+        try {
+          outputStream.close();
+        } catch (IOException e) {
+          LOGGER.log(Level.SEVERE,
+              "IOException while closing after post: will retry later", e);
+          if (!isThrowing) {
+            isThrowing = true;
+            throw new FeedException(e);
+          }
+        }
+      }
+    } finally {
+      BufferedReader br = null;
+      try {
+        InputStream inputStream = uc.getInputStream();
+        br = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
+        String line;
+        while ((line = br.readLine()) != null) {
+          buf.append(line);
+        }
+      } catch (IOException ioe) {
+        if (!isThrowing) {
+          throw new FeedException(ioe);
+        }
+      } finally {
+        try {
+          if (br != null) {
+            br.close();
+          }
+        } catch (IOException e) {
+          LOGGER.log(Level.SEVERE,
+                     "IOException while closing after post: continuing", e);
+        }
       }
     }
     return buf.toString();

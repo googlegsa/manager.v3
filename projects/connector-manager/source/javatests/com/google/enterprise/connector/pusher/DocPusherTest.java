@@ -23,6 +23,8 @@ import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
+import com.google.enterprise.connector.spi.Property;
+import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.SpiConstants;
@@ -39,12 +41,16 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Properties;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -118,7 +124,6 @@ public class DocPusherTest extends TestCase {
     expectedXml[0] = buildExpectedXML(feedType, record);
     takeFeed(expectedXml, "MockRepositoryEventLog5smb.txt");
   }
-
 
   /**
    * Test Take for a content feed.
@@ -297,75 +302,56 @@ public class DocPusherTest extends TestCase {
    * Test minimal properties allowed for delete document.
    */
   public void testSimpleDeleteDoc() {
-    Map props = new HashMap();
-    Calendar cal = Calendar.getInstance();
-    cal.setTimeInMillis(10 * 1000);
-
-    // Test normal document as delete document
-    props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
+    Map props = getTestDocumentConfig();
     props.put(SpiConstants.PROPNAME_ACTION,
         SpiConstants.ActionType.DELETE.toString());
-    props.put(SpiConstants.PROPNAME_DOCID, "doc1");
-    props.put(SpiConstants.PROPNAME_CONTENT, "now is the time");
-    props.put(SpiConstants.PROPNAME_CONTENTURL,
-        "http://www.comtesturl.com/test");
     Document document = createSimpleDocument(props);
 
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection);
     try {
-      dpusher.take(document, "junit");
+      String resultXML = feedDocument(document);
+      assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
+                           resultXML);
+      assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
+                           + ServletUtil.DOCID + "doc1\"", resultXML);
+      assertStringContains("action=\"delete\"", resultXML);
+      assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
     } catch (Exception e) {
       fail("Full document take");
     }
-    String resultXML = mockFeedConnection.getFeed();
 
-    assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
-        resultXML);
-    assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
-        + ServletUtil.DOCID + "doc1\"", resultXML);
-    assertStringContains("action=\"delete\"", resultXML);
-    assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
-
-    // Now document without URL or content
-    props.clear();
-    props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
-    props.put(SpiConstants.PROPNAME_ACTION,
-        SpiConstants.ActionType.DELETE.toString());
-    props.put(SpiConstants.PROPNAME_DOCID, "doc1");
-    document = createSimpleDocument(props);
+    // Now document with only DocId and Delete Action.
+    Map minProps = new HashMap();
+    minProps.put(SpiConstants.PROPNAME_DOCID,
+                 props.get(SpiConstants.PROPNAME_DOCID));
+    minProps.put(SpiConstants.PROPNAME_ACTION,
+                 props.get(SpiConstants.PROPNAME_ACTION));
+    document = createSimpleDocument(minProps);
 
     try {
-      dpusher.take(document, "junit");
-    } catch (Exception e) {
-      fail("No content document take");
-    }
-    resultXML = mockFeedConnection.getFeed();
-
-    assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
-        resultXML);
-    assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
-        + ServletUtil.DOCID + "doc1\"", resultXML);
-    assertStringContains("action=\"delete\"", resultXML);
-
-    // Now document without last-modified
-    props.clear();
-    props.put(SpiConstants.PROPNAME_ACTION,
-        SpiConstants.ActionType.DELETE.toString());
-    props.put(SpiConstants.PROPNAME_DOCID, "doc1");
-    document = createSimpleDocument(props);
-
-    try {
-      dpusher.take(document, "junit");
+      String resultXML = feedDocument(document);
+      assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
+                           + ServletUtil.DOCID + "doc1\"", resultXML);
+      assertStringContains("action=\"delete\"", resultXML);
+      assertStringNotContains("last-modified=", resultXML);
     } catch (Exception e) {
       fail("No last-modified document take");
     }
-    resultXML = mockFeedConnection.getFeed();
 
-    assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
-        + ServletUtil.DOCID + "doc1\"", resultXML);
-    assertStringContains("action=\"delete\"", resultXML);
-    assertStringNotContains("last-modified=", resultXML);
+    // Now include optional last-modified.
+    minProps.put(SpiConstants.PROPNAME_LASTMODIFIED,
+                 props.get(SpiConstants.PROPNAME_LASTMODIFIED));
+    document = createSimpleDocument(minProps);
+
+    try {
+      String resultXML = feedDocument(document);
+      assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
+                           resultXML);
+      assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
+                           + ServletUtil.DOCID + "doc1\"", resultXML);
+      assertStringContains("action=\"delete\"", resultXML);
+    } catch (Exception e) {
+      fail("No content document take");
+    }
   }
 
   /**
@@ -725,18 +711,24 @@ public class DocPusherTest extends TestCase {
    * DocPusher and return the resulting XML feed string.
    */
   private String feedJsonEvent(String jsonEventString) throws Exception {
-    Document document = JcrDocumentTest.makeDocumentFromJson(jsonEventString);
+    return feedDocument(JcrDocumentTest.makeDocumentFromJson(jsonEventString));
+  }
+
+  /**
+   * Utility method to take the given Document and feed it through a
+   * DocPusher and return the resulting XML feed string.
+   */
+  private String feedDocument(Document document) throws Exception {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(document, "junit");
     return mockFeedConnection.getFeed();
   }
 
-  private static final String TEST_LOG_FILE = "testdata/FeedLogFile";
-
   /**
    * Test separate feed logging.
    */
+  private static final String TEST_LOG_FILE = "testdata/FeedLogFile";
   public void testFeedLogging() throws Exception {
     // Delete the Log file it it exists.
     (new File(TEST_LOG_FILE)).delete();
@@ -920,69 +912,616 @@ public class DocPusherTest extends TestCase {
     return rawData;
   }
 
+  private Document getTestDocument() {
+    return createSimpleDocument(getTestDocumentConfig());
+  }
+
+  private Map getTestDocumentConfig() {
+    Map props = new HashMap();
+    Calendar cal = Calendar.getInstance();
+    cal.setTimeInMillis(10 * 1000);
+    props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
+    props.put(SpiConstants.PROPNAME_DOCID, "doc1");
+    props.put(SpiConstants.PROPNAME_MIMETYPE, "text/plain");
+    props.put(SpiConstants.PROPNAME_CONTENT, "now is the time");
+    props.put(SpiConstants.PROPNAME_DISPLAYURL,
+        "http://www.comtesturl.com/test");
+    return props;
+  }
+
   /**
    * Test that lack of a required metadata field, google:docid, throws
    * a RepositoryDocumentException.
    * Regression test for Issue 108.
    */
   public void testNoDocid() throws Exception {
-    Map props = new HashMap();
-    Calendar cal = Calendar.getInstance();
-    cal.setTimeInMillis(10 * 1000);
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_DOCID, null);
 
-    // Supply lastmodified and content, but no docid
-    props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
-    props.put(SpiConstants.PROPNAME_MIMETYPE, "text/plain");
-    props.put(SpiConstants.PROPNAME_CONTENT, "now is the time");
-    props.put(SpiConstants.PROPNAME_CONTENTURL,
-        "http://www.comtesturl.com/test");
-    Document document = createSimpleDocument(props);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection);
     // Lack of required metadata should throw RepositoryDocumentException.
     try {
-      dpusher.take(document, "junit");
+      feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Document missing required property "
+                   + SpiConstants.PROPNAME_DOCID, expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
     }
   }
 
   /**
-   * Test that if DocPusher gets a read error on the document content stream,
-   * it throws a RepositoryDocumentException.
+   * Test that failure to retrieve a required metadata field, google:docid,
+   * throws a RepositoryDocumentException.
    * Regression test for Issue 108.
    */
-  /*
-   * TODO: MockFeedConnection converts IOExceptions into RuntimeExceptions.
-   * This test won't work until that is fixed.
-   */
-  public void disabled_testContentReadError() throws Exception {
-    Map props = new HashMap();
-    Calendar cal = Calendar.getInstance();
-    cal.setTimeInMillis(10 * 1000);
+  public void testBadDocid1() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_DOCID,
+                     IllegalArgumentException.class);
 
-    props.put(SpiConstants.PROPNAME_DOCID, "doc1");
-    props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
-    props.put(SpiConstants.PROPNAME_MIMETYPE, "text/plain");
-    props.put(SpiConstants.PROPNAME_CONTENT, new BadInputStream());
-    props.put(SpiConstants.PROPNAME_CONTENTURL,
-        "http://www.comtesturl.com/test");
-    Document document = createSimpleDocument(props);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection);
-    // IO error on content should throw RepositoryDocumentException.
+    // Failure to get required metadata should throw RepositoryDocumentException
     try {
-      dpusher.take(document, "junit");
+      feedDocument(doc);
       fail("Expected RepositoryDocumentException, but got none.");
-    } catch (RepositoryDocumentException e) {
-      // Expected.
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_DOCID,
+                   expected.getMessage());
     } catch (Throwable t) {
       fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to retrieve a required metadata field, google:docid,
+   * throws a RepositoryDocumentException.
+   * Regression test for Issue 108.
+   */
+  public void testBadDocid2() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_DOCID, RuntimeException.class);
+
+    // Failure to get required metadata should throw RepositoryDocumentException
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryDocumentException, but got none.");
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_DOCID,
+                   expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to retrieve a required metadata field, google:docid,
+   * throws a RepositoryDocumentException.
+   * Regression test for Issue 108.
+   */
+  public void testBadDocid3() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_DOCID,
+                     RepositoryDocumentException.class);
+
+    // Failure to get required metadata should throw RepositoryDocumentException
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryDocumentException, but got none.");
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_DOCID,
+                   expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to retrieve a required metadata field, google:docid,
+   * propagates a thrown RepositoryException.
+   */
+  public void testBadDocid4() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_DOCID, RepositoryException.class);
+
+    // RepositoryExceptions should be passed through unmolested.
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryException, but got none.");
+    } catch (RepositoryDocumentException e) {
+      fail("RepositoryException was replaced with RepositoryDocumentException");
+    } catch (RepositoryException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_DOCID,
+                   expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that lack of a optional metadata field, google:lastmodified,
+   * does not throw an Exception, and also does not appear in the feed.
+   */
+  public void testNoLastModified() throws Exception, Throwable {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_LASTMODIFIED, null);
+
+    // Lack of optional metadata should not throw an Exception.
+    try {
+      String resultXML = feedDocument(doc);
+      assertStringNotContains("last-modified=", resultXML);
+    } catch (Throwable t) {
+      fail("Missing LastModified threw " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to retrieve a optional metadata field,
+   * google:lastmodified, throws a RepositoryDocumentException.
+   */
+  public void testBadLastModified2() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_LASTMODIFIED,
+                     RuntimeException.class);
+
+    // Failure to get optional metadata should throw RepositoryDocumentException
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryDocumentException, but got none.");
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_LASTMODIFIED,
+                   expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to retrieve a optional metadata field,
+   * google:lastmodified, throws a RepositoryDocumentException.
+   */
+  public void testBadLastModified3() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_LASTMODIFIED,
+                     RepositoryDocumentException.class);
+
+    // Failure to get optional metadata should throw RepositoryDocumentException
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryDocumentException, but got none.");
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_LASTMODIFIED,
+                   expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to retrieve a optional metadata field,
+   * google:lastmodified, propagates a thrown RepositoryException.
+   */
+  public void testBadLastModified4() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_LASTMODIFIED,
+                     RepositoryException.class);
+
+    // RepositoryExceptions should be passed through unmolested.
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryException, but got none.");
+    } catch (RepositoryDocumentException e) {
+      fail("RepositoryException was replaced with RepositoryDocumentException");
+    } catch (RepositoryException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_LASTMODIFIED,
+                   expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that lack of an arbitrary repository metadata field, foo,
+   * does not throw an Exception, and also does not appear in the feed.
+   */
+  public void testNoFooProperty() throws Exception, Throwable {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty("foo", null);
+
+    // Lack of optional metadata should not throw an Exception.
+    try {
+      String resultXML = feedDocument(doc);
+      assertStringNotContains("\"foo\"", resultXML);
+    } catch (Throwable t) {
+      fail("Missing foo Property threw " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to retrieve a repository metadata field,
+   * foo, throws a RepositoryDocumentException.
+   */
+  public void testBadFoo1() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty("foo", RuntimeException.class);
+
+    // Failure to get metadata should throw RepositoryDocumentException
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryDocumentException, but got none.");
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail foo", expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to retrieve a optional metadata field,
+   * foo, throws a RepositoryDocumentException.
+   */
+  public void testBadFoo2() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty("foo", RepositoryDocumentException.class);
+
+    // Failure to get metadata should throw RepositoryDocumentException
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryDocumentException, but got none.");
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail foo", expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to retrieve a optional metadata field,
+   * foo, propagates a thrown RepositoryException.
+   */
+  public void testBadFoo3() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty("foo", RepositoryException.class);
+
+    // RepositoryExceptions should be passed through unmolested.
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryException, but got none.");
+    } catch (RepositoryDocumentException e) {
+      fail("RepositoryException was replaced with RepositoryDocumentException");
+    } catch (RepositoryException expected) {
+      assertEquals("Fail foo", expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to specify a valid URL for
+   * google:searchurl, throws a RepositoryDocumentException.
+   * The searchUrl is looked at pretty early in DocPusher.take()
+   * and handled specially.
+   */
+  public void testBadSearchUrl1() throws Exception {
+    Map config = getTestDocumentConfig();
+    config.put(SpiConstants.PROPNAME_SEARCHURL,
+               "Not even remotely a \\ valid % URL");
+    Document doc = createSimpleDocument(config);
+
+    // Failure to get metadata should throw RepositoryDocumentException
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryDocumentException, but got none.");
+    } catch (RepositoryDocumentException expected) {
+      assertStringContains("malformed", expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to retrieve a optional metadata field,
+   * google:searchurl, throws a RepositoryDocumentException.
+   * The searchUrl is looked at pretty early in DocPusher.take()
+   * and handled specially.
+   */
+  public void testBadSearchUrl2() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_SEARCHURL, RuntimeException.class);
+
+    // Failure to get metadata should throw RepositoryDocumentException
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryDocumentException, but got none.");
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_SEARCHURL,
+                   expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to retrieve a optional metadata field,
+   * google:searchurl, throws a RepositoryDocumentException.
+   * The searchUrl is looked at pretty early in DocPusher.take()
+   * and handled specially.
+   */
+  public void testBadSearchUrl3() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_SEARCHURL,
+                     RepositoryDocumentException.class);
+
+    // Failure to get metadata should throw RepositoryDocumentException
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryDocumentException, but got none.");
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_SEARCHURL,
+                   expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to retrieve a optional metadata field,
+   * google:searchurl, propagates a thrown RepositoryException.
+   * The searchUrl is looked at pretty early in DocPusher.take()
+   * and handled specially.
+   */
+  public void testBadSearchUrl4() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_SEARCHURL,
+                     RepositoryException.class);
+
+    // RepositoryExceptions should be passed through unmolested.
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryException, but got none.");
+    } catch (RepositoryDocumentException e) {
+      fail("RepositoryException was replaced with RepositoryDocumentException");
+    } catch (RepositoryException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_SEARCHURL,
+                   expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to specify a Display URL is not fatal.
+   * The displayUrl is handled specially in DocPusher.take().
+   */
+  public void testNoDisplayUrl1() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_DISPLAYURL, null);
+
+    // DisplayURL is optional, and may be missing.
+    String resultXML = feedDocument(doc);
+    assertStringNotContains("\"google:displayurl\"", resultXML);
+  }
+
+  /**
+   * Test that failure to retrieve a optional metadata field,
+   * google:displayurl, throws a RepositoryDocumentException.
+   * The displayUrl is handled specially in DocPusher.take().
+   */
+  public void testBadDisplayUrl2() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_DISPLAYURL, RuntimeException.class);
+
+    // Failure to get metadata should throw RepositoryDocumentException
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryDocumentException, but got none.");
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_DISPLAYURL,
+                   expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to retrieve a optional metadata field,
+   * google:displayurl, throws a RepositoryDocumentException.
+   * The displayUrl is handled specially in DocPusher.take().
+   */
+  public void testBadDisplayUrl3() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_DISPLAYURL,
+                     RepositoryDocumentException.class);
+
+    // Failure to get metadata should throw RepositoryDocumentException
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryDocumentException, but got none.");
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_DISPLAYURL,
+                   expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to retrieve a optional metadata field,
+   * google:displayurl, propagates a thrown RepositoryException.
+   * The displayUrl is handled specially in DocPusher.take().
+   */
+  public void testBadDisplayUrl4() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_DISPLAYURL,
+                     RepositoryException.class);
+
+    // RepositoryExceptions should be passed through unmolested.
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryException, but got none.");
+    } catch (RepositoryDocumentException e) {
+      fail("RepositoryException was replaced with RepositoryDocumentException");
+    } catch (RepositoryException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_DISPLAYURL,
+                   expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to specify document Content is not fatal.
+   * The Content is handled specially in DocPusher.take().
+   */
+  public void testNoContent() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_CONTENT, null);
+
+    // Content is optional, and may be missing.
+    feedDocument(doc);
+  }
+
+  /**
+   * Test that failure to retrieve the document content property,
+   * google:content, throws a RepositoryDocumentException.
+   * The content stream is handled specially in DocPusher.take().
+   */
+  public void testBadContent2() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_CONTENT, RuntimeException.class);
+
+    // Failure to get metadata should throw RepositoryDocumentException
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryDocumentException, but got none.");
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_CONTENT,
+                   expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to retrieve the document content property,
+   * google:content, throws a RepositoryDocumentException.
+   * The content is handled specially in DocPusher.take().
+   */
+  public void testBadContent3() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_CONTENT,
+                     RepositoryDocumentException.class);
+
+    // Failure to get metadata should throw RepositoryDocumentException
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryDocumentException, but got none.");
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_CONTENT,
+                   expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that failure to retrieve the document content property,
+   * google:content, propagates a thrown RepositoryException.
+   * The content is handled specially in DocPusher.take().
+   */
+  public void testBadContent4() throws Exception {
+    BadDocument doc = new BadDocument(getTestDocument());
+    doc.failProperty(SpiConstants.PROPNAME_CONTENT,
+                     RepositoryException.class);
+
+    // RepositoryExceptions should be passed through unmolested.
+    try {
+      feedDocument(doc);
+      fail("Expected RepositoryException, but got none.");
+    } catch (RepositoryDocumentException e) {
+      fail("RepositoryException was replaced with RepositoryDocumentException");
+    } catch (RepositoryException expected) {
+      assertEquals("Fail " + SpiConstants.PROPNAME_CONTENT,
+                   expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that if DocPusher gets a read error on the document content stream,
+   * it throws a RepositoryDocumentException.
+   */
+  public void testContentReadError() throws Exception {
+    Map props = getTestDocumentConfig();
+    props.put(SpiConstants.PROPNAME_CONTENT, new BadInputStream());
+    Document document = createSimpleDocument(props);
+
+    // IO error on content should throw RepositoryDocumentException.
+    try {
+      feedDocument(document);
+      fail("Expected RepositoryDocumentException, but got none.");
+    } catch (RepositoryDocumentException expected) {
+      assertEquals("I/O error reading data: This stream is unreadable",
+                   expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected RepositoryDocumentException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that if DocPusher gets a FeedException, it propagates
+   * unimpeded.
+   */
+  public void testBadFeed1() throws Exception {
+    Document document = getTestDocument();
+    try {
+      FeedConnection badFeedConnection = new BadFeedConnection1();
+      DocPusher dpusher = new DocPusher(badFeedConnection);
+      dpusher.take(document, "junit");
+      fail("Expected FeedException, but got none.");
+    } catch (FeedException expected) {
+      assertEquals("Anorexic FeedConnection", expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected FeedException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * Test that if DocPusher gets a bad response from the
+   * feed, it throws a PushException.
+   */
+  public void testBadFeed2() throws Exception {
+    Document document = getTestDocument();
+    try {
+      FeedConnection badFeedConnection = new BadFeedConnection2();
+      DocPusher dpusher = new DocPusher(badFeedConnection);
+      dpusher.take(document, "junit");
+      fail("Expected PushException, but got none.");
+    } catch (PushException expected) {
+      assertEquals("Bulimic FeedConnection", expected.getMessage());
+    } catch (Throwable t) {
+      fail("Expected PushException, but got " + t.toString());
+    }
+  }
+
+  /**
+   * A FeedConnection that throws FeedException when fed.
+   */
+  private class BadFeedConnection1 implements FeedConnection {
+    public String sendData(String dataSource, FeedData feedData)
+        throws FeedException {
+      throw new FeedException("Anorexic FeedConnection");
+    }
+  }
+
+  /**
+   * A FeedConnection that returns a bad response.
+   */
+  private class BadFeedConnection2 extends MockFeedConnection {
+    public String sendData(String dataSource, FeedData feedData)
+        throws RepositoryException {
+      super.sendData(dataSource, feedData);
+      return "Bulimic FeedConnection";
     }
   }
 
@@ -1003,6 +1542,119 @@ public class DocPusherTest extends TestCase {
     }
     public int read(byte[] b, int o, int l) throws IOException {
       throw new IOException("This stream is unreadable");
+    }
+  }
+
+  /**
+   * A Document with Properties that fail.
+   */
+  private class BadDocument implements Document {
+
+    // The wrapped Document.
+    private Document baseDocument;
+
+    // Map of bad Properties.
+    private HashMap badProperties;
+
+    /**
+     * Constructor wraps an existing Document.
+     */
+    public BadDocument(Document document) {
+      baseDocument = document;
+      badProperties = new HashMap();
+    }
+
+    /**
+     * Specify a property to fail and how to fail it.
+     *
+     * @param propertyName name of a Property.
+     * @param exception Class indicating which Exception to throw if accessed.
+     *        If null, findProperty() will return null rather than throw an
+     *        Exception.
+     */
+    public void failProperty(String propertyName, Class exception) {
+      if (exception != null &&
+          !(RuntimeException.class.isAssignableFrom(exception) ||
+            RepositoryException.class.isAssignableFrom(exception))) {
+        throw new IllegalArgumentException("Wrong kind of Exception");
+      }
+      badProperties.put(propertyName, exception);
+    }
+
+    /**
+     * Specify a properties to fail and how to fail them.
+     *
+     * @param propertyNames an Array of Property names.
+     * @param exception Class indicating which Exception to throw if accessed.
+     *        If null, findProperty() will return null rather than throw an
+     *        Exception.
+     */
+    public void failProperties(String[] propertyNames, Class exception) {
+      for (int i = 0; i < propertyNames.length; i++) {
+        failProperty(propertyNames[i], exception);
+      }
+    }
+
+    /**
+     * Return the Set of Property names available for this Document.
+     */
+    public Set getPropertyNames() throws RepositoryException {
+      // Get all the property names of the base Document.
+      HashSet names = new HashSet(baseDocument.getPropertyNames());
+      // Add my additional bad properties.
+      names.addAll(badProperties.keySet());
+      // Return the union.
+      return names;
+    }
+
+    /**
+     * Find the requested Property.  If the requested property
+     * is one of our specified fail Properties, then fail in
+     * the appropriate manner.
+     *
+     * @param propertyName a Property name.
+     */
+    public Property findProperty(String propertyName)
+        throws RepositoryException {
+      if (badProperties.containsKey(propertyName)) {
+        Class throwable = (Class) badProperties.get(propertyName);
+        if (throwable == null) {
+          return null;
+        }
+
+        Class[] parameterTypes = { String.class };
+        String[] parameters = { "Fail " + propertyName };
+        Constructor constructor;
+        try {
+          constructor = throwable.getConstructor(parameterTypes);
+        } catch (NoSuchMethodException e) {
+          throw new IllegalArgumentException(e);
+        }
+
+        if (RuntimeException.class.isAssignableFrom(throwable)) {
+          // RuntimeExceptions don't have to be declared.
+          try {
+            throw (RuntimeException) constructor.newInstance(parameters);
+          } catch (IllegalAccessException e) {
+            throw new IllegalArgumentException(e);
+          } catch (InstantiationException e) {
+            throw new IllegalArgumentException(e);
+          } catch (InvocationTargetException e) {
+            throw new IllegalArgumentException(e);
+          }
+        } else if (RepositoryException.class.isAssignableFrom(throwable)) {
+          try {
+            throw (RepositoryException) constructor.newInstance(parameters);
+          } catch (IllegalAccessException e) {
+            throw new IllegalArgumentException(e);
+          } catch (InstantiationException e) {
+            throw new IllegalArgumentException(e);
+          } catch (InvocationTargetException e) {
+            throw new IllegalArgumentException(e);
+          }
+        }
+      }
+      return baseDocument.findProperty(propertyName);
     }
   }
 }

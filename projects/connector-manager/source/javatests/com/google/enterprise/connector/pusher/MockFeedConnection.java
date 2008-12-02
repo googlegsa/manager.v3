@@ -15,8 +15,11 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.common.StringUtils;
+import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.RepositoryDocumentException;
 
 import java.io.InputStream;
+import java.io.IOException;
 
 /**
  * Mock <code>GsaFeedConnection</code> that expects to be given a
@@ -41,11 +44,16 @@ public class MockFeedConnection implements FeedConnection {
     buf = new StringBuffer(2048);
   }
 
-  public String sendData(String dataSource, FeedData feedData) {
-    InputStream data = ((GsaFeedData)feedData).getData();
-    String dataStr = StringUtils.streamToString(data);
-    buf.append(dataStr);
-    System.out.println(dataStr);
+  public String sendData(String dataSource, FeedData feedData)
+      throws RepositoryException {
+    try {
+      InputStream data = ((GsaFeedData)feedData).getData();
+      String dataStr = StringUtils.streamToStringAndThrow(data);
+      buf.append(dataStr);
+      System.out.println(dataStr);
+    } catch (IOException e) {
+      throw new RepositoryDocumentException("I/O error reading data", e);
+    }
     return GsaFeedConnection.SUCCESS_RESPONSE;
   }
 }
