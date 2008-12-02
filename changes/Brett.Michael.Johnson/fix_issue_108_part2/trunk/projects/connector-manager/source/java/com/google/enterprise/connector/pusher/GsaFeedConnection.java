@@ -143,7 +143,8 @@ public class GsaFeedConnection implements FeedConnection {
         outputStream.write(("\n--" + BOUNDARY + "--\n").getBytes());
         outputStream.flush();
       } catch (IOException e) {
-        LOGGER.log(Level.SEVERE, "IOException while posting: will retry later", e);
+        LOGGER.log(Level.SEVERE,
+            "IOException while posting: will retry later", e);
         isThrowing = true;
         throw new FeedException(e);
       } finally {
@@ -151,7 +152,7 @@ public class GsaFeedConnection implements FeedConnection {
           outputStream.close();
         } catch (IOException e) {
           LOGGER.log(Level.SEVERE,
-                     "IOException while closing after post: will retry later", e);
+              "IOException while closing after post: will retry later", e);
           if (!isThrowing) {
             isThrowing = true;
             throw new FeedException(e);
