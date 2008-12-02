@@ -217,8 +217,6 @@ public class DocPusher implements Pusher {
               prefix);
         }
       }
-    } catch (RepositoryException e) {
-      LOGGER.log(Level.WARNING, "Problem getting ispublic property.", e);
     } catch (IllegalArgumentException e) {
       LOGGER.log(Level.WARNING, "Illegal value for ispublic property."
           + " Treat as a public doc", e);
@@ -269,16 +267,9 @@ public class DocPusher implements Pusher {
    * @param buf string buffer
    * @param document Document
    */
-  private static void xmlWrapMetadata(StringBuffer buf, Document document) {
-
-    Set propertyNames = null;
-    try {
-      propertyNames = document.getPropertyNames();
-    } catch (RepositoryException e) {
-      LOGGER.log(Level.WARNING,
-          "Swallowing exception while starting getting property names", e);
-    }
-
+  private static void xmlWrapMetadata(StringBuffer buf, Document document)
+      throws RepositoryException {
+    Set propertyNames = document.getPropertyNames();
     if (propertyNames == null) {
       LOGGER.log(Level.WARNING, "Property names set is empty");
       return;
@@ -293,25 +284,20 @@ public class DocPusher implements Pusher {
     for (Iterator iter = propertyNames.iterator(); iter.hasNext();) {
       Property property = null;
       String name = (String) iter.next();
-      if (propertySkipSet.contains(name)) {
-        continue;
-      } else if (name.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX) ||
-                 name.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX)) {
-        continue;
-      }
-      try {
-        if (SpiConstants.PROPNAME_ACLGROUPS.equals(name) ||
-            SpiConstants.PROPNAME_ACLUSERS.equals(name)) {
-          property = processAclProperty(name, document);
-        } else {
-          property = document.findProperty(name);
-        }
-      } catch (RepositoryException e) {
-        LOGGER.log(Level.WARNING,
-            "Swallowing exception while reading properties", e);
+      if (propertySkipSet.contains(name) ||
+          name.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX) ||
+          name.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX)) {
         continue;
       }
-      wrapOneProperty(buf, name, property);
+      if (SpiConstants.PROPNAME_ACLGROUPS.equals(name) ||
+          SpiConstants.PROPNAME_ACLUSERS.equals(name)) {
+        property = processAclProperty(name, document);
+      } else {
+        property = document.findProperty(name);
+      }
+      if (property != null) {
+        wrapOneProperty(buf, name, property);
+      }
     }
     buf.append(XmlUtils.xmlWrapEnd(XML_METADATA));
   }
@@ -387,11 +373,9 @@ public class DocPusher implements Pusher {
    * @param property Property
    */
   private static void wrapOneProperty(StringBuffer buf, String name,
-      Property property) {
-    /*
-     * in case there are only null values, we want to "roll back" the XML_META
-     * tag. So save our current length:
-     */
+      Property property) throws RepositoryException {
+    // In case there are only null values, we want to "roll back" the
+    // XML_META tag. So save our current length:
     int indexMetaStart = buf.length();
 
     buf.append("<");
@@ -399,30 +383,18 @@ public class DocPusher implements Pusher {
     buf.append(" ");
     XmlUtils.xmlAppendAttrValuePair("name", name, buf);
     buf.append(" content=\"");
-    String delimiter = "";
 
-    // mark the beginning of the values:
+    // Mark the beginning of the values:
     int indexValuesStart = buf.length();
+    String delimiter = "";
     ValueImpl value = null;
-    while (true) {
-      try {
-        value = (ValueImpl) property.nextValue();
-      } catch (RepositoryException e) {
-        LOGGER.log(Level.WARNING,
-            "Swallowing exception while scanning values for property " + name,
-            e);
-        continue;
-      }
-      if (value == null) {
-        break;
-      }
+    while ((value = (ValueImpl) property.nextValue()) != null) {
       wrapOneValue(buf, value, delimiter);
       delimiter = ", ";
     }
-    /*
-     * If there were no additions to buf (because of empty values), roll back to
-     * before the XML_META tag
-     */
+
+    // If there were no additions to buf (because of empty values),
+    // roll back to before the XML_META tag.
     if (buf.length() > indexValuesStart) {
       buf.append("\"/>\n");
     } else {
@@ -505,14 +477,12 @@ public class DocPusher implements Pusher {
   /*
    * Gets the value for a given property.
    */
-  private static String getOptionalString(Document document, String name) {
+  private static String getOptionalString(Document document, String name)
+      throws RepositoryException {
     String result = null;
     try {
       result = getStringAndThrow(document, name);
     } catch (IllegalArgumentException e) {
-      LOGGER.log(Level.WARNING, "Swallowing exception while accessing " + name,
-          e);
-    } catch (RepositoryException e) {
       LOGGER.log(Level.WARNING, "Swallowing exception while accessing " + name,
           e);
     }
@@ -537,14 +507,12 @@ public class DocPusher implements Pusher {
   /*
    * Gets the value for a given property.
    */
-  private static InputStream getOptionalStream(Document document, String name) {
+  private static InputStream getOptionalStream(Document document, String name)
+      throws RepositoryException {
     InputStream result = null;
     try {
       result = getStreamAndThrow(document, name);
     } catch (IllegalArgumentException e) {
-      LOGGER.log(Level.WARNING, "Swallowing exception while accessing " + name,
-          e);
-    } catch (RepositoryException e) {
       LOGGER.log(Level.WARNING, "Swallowing exception while accessing " + name,
           e);
     }
@@ -616,9 +584,6 @@ public class DocPusher implements Pusher {
             + SpiConstants.PROPNAME_LASTMODIFIED);
       }
     } catch (IllegalArgumentException e) {
-      LOGGER.log(Level.WARNING, "Swallowing exception while getting "
-          + SpiConstants.PROPNAME_LASTMODIFIED, e);
-    } catch (RepositoryException e) {
       LOGGER.log(Level.WARNING, "Swallowing exception while getting "
           + SpiConstants.PROPNAME_LASTMODIFIED, e);
     }
@@ -713,7 +678,7 @@ public class DocPusher implements Pusher {
     return searchurl;
   }
 
-  private String getFeedType(Document document) {
+  private String getFeedType(Document document) throws RepositoryException {
     if (getOptionalString(document, SpiConstants.PROPNAME_SEARCHURL) != null) {
       return XML_FEED_METADATA_AND_URL;
     } else {
@@ -766,6 +731,8 @@ public class DocPusher implements Pusher {
       feedType = getFeedType(document);
       xmlData = buildXmlData(document, connectorName, feedType);
     } catch (RuntimeException e) {
+      LOGGER.log(Level.WARNING,
+          "Rethrowing RuntimeException as RepositoryDocumentException", e);
       throw new RepositoryDocumentException(e);
     }
     if (xmlData == null) {

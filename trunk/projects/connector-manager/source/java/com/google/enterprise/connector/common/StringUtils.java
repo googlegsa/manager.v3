@@ -22,16 +22,16 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 
 public class StringUtils {
-  
+
   private StringUtils() {
     // prevents instantiation
   }
 
   /**
-   * Find a named file on the classpath then read the entire content as a 
+   * Find a named file on the classpath then read the entire content as a
    * String, skipping
-   * comment lines (lines that begin with #) and end-line comments 
-   * (from the first occurrence of // to the end). 
+   * comment lines (lines that begin with #) and end-line comments
+   * (from the first occurrence of // to the end).
    * @param filename The name of file on the classpath
    * @return The contents of the reader (skipping comments)
    */
@@ -51,11 +51,11 @@ public class StringUtils {
     BufferedReader br = new BufferedReader(isr);
     return streamToString(br);
   }
-  
+
   /**
    * Read a buffered reader and return the entire contents as a String, skipping
-   * comment lines (lines that begin with #) and end-line comments 
-   * (from the first occurrence of // to the end). 
+   * comment lines (lines that begin with #) and end-line comments
+   * (from the first occurrence of // to the end).
    * @param br  An Buffered Reader ready for reading
    * @return The contents of the reader (skipping comments)
    */
@@ -70,27 +70,46 @@ public class StringUtils {
         }
         int index = line.indexOf("//");
         if (index == -1) {
-          b.append(line);          
+          b.append(line);
         } else {
           b.append(line.subSequence(0, index));
         }
-        b.append('\n');        
+        b.append('\n');
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
     return b.toString();
   }
-  
+
   /**
    * Read an entire InputStream (as UTF-8) and return its contents as a String
    * @param is InputStream to read
    * @return contents as a String
    */
   public static String streamToString(InputStream is) {
+    try {
+      return streamToStringAndThrow(is);
+    } catch (UnsupportedEncodingException e) {
+      // TODO: this is ungraceful - need to plan for recovery
+      throw new RuntimeException("Unsupported Encoding.");
+    } catch (IOException e) {
+      // TODO: this is ungraceful - need to plan for recovery
+      throw new RuntimeException("I/O Problem.");
+    }
+  }
+
+  /**
+   * Read an entire InputStream (as UTF-8) and return its contents as a String
+   * @param is InputStream to read
+   * @return contents as a String
+   * @throws IOException
+   */
+  public static String streamToStringAndThrow(InputStream is)
+      throws IOException {
     int bytesLen = 32768;
     byte[] bytes = new byte[bytesLen];
-    
+
     // Read in the bytes
     int offset = 0;
     int numRead = 0;
@@ -107,27 +126,18 @@ public class StringUtils {
           System.arraycopy(temp, 0, bytes, 0, temp.length);
         }
       }
+    } finally {
       is.close();
-    } catch (IOException e) {
-      // TODO: this is ungraceful - need to plan for recovery
-      throw new RuntimeException("I/O Problem.");
     }
-    
-    String res = null;
-    try {
-      res = new String(bytes,0,offset,"UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-    return res;
+
+    return new String(bytes, 0, offset, "UTF-8");
   }
-  
+
   /**
    * Reads all from a Reader into a String. Close the Reader when finished.
    * @param reader Reader
    * @return the String
-   * @throws IOException 
+   * @throws IOException
    */
   public static String readAllToString(Reader reader) throws IOException {
     char buf[] = new char[4096];

@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.enterprise.connector.spi.RepositoryException;
+
 /**
  * Interface for a feed connection. This takes in a data source name and a data
  * source object that contains the data to be sent.  The actual connection to
@@ -33,7 +35,8 @@ public interface FeedConnection {
    *    sent by the <code>FeedConnection</code>.
    * @return response from the feed server.
    * @throws FeedException if problem extracting the data or sending it.
+   * @throws RepositoryException if problem retrieving data from the Connector.
    */
   public String sendData(String dataSource, FeedData feedData)
-      throws FeedException;
+      throws FeedException, RepositoryException;
 }
