@@ -1628,7 +1628,7 @@ public class DocPusherTest extends TestCase {
         try {
           constructor = throwable.getConstructor(parameterTypes);
         } catch (NoSuchMethodException e) {
-          throw new IllegalArgumentException(e);
+          throw new IllegalArgumentException(e.getMessage());
         }
 
         if (RuntimeException.class.isAssignableFrom(throwable)) {
@@ -1636,21 +1636,21 @@ public class DocPusherTest extends TestCase {
           try {
             throw (RuntimeException) constructor.newInstance(parameters);
           } catch (IllegalAccessException e) {
-            throw new IllegalArgumentException(e);
+            throw new IllegalArgumentException(e.getMessage());
           } catch (InstantiationException e) {
-            throw new IllegalArgumentException(e);
+            throw new IllegalArgumentException(e.getMessage());
           } catch (InvocationTargetException e) {
-            throw new IllegalArgumentException(e);
+            throw new IllegalArgumentException(e.getMessage());
           }
         } else if (RepositoryException.class.isAssignableFrom(throwable)) {
           try {
             throw (RepositoryException) constructor.newInstance(parameters);
           } catch (IllegalAccessException e) {
-            throw new IllegalArgumentException(e);
+            throw new IllegalArgumentException(e.getMessage());
           } catch (InstantiationException e) {
-            throw new IllegalArgumentException(e);
+            throw new IllegalArgumentException(e.getMessage());
           } catch (InvocationTargetException e) {
-            throw new IllegalArgumentException(e);
+            throw new IllegalArgumentException(e.getMessage());
           }
         }
       }
