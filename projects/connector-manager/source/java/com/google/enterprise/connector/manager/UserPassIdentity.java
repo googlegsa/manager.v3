@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import javax.servlet.http.Cookie;
+
 public class UserPassIdentity implements AuthenticationIdentity {
 
   private final String username;
@@ -58,8 +60,17 @@ public class UserPassIdentity implements AuthenticationIdentity {
     return (String) cookieJar.put(cookieName,value);
   }
 
+  public void setCookie(Cookie c) {
+    throw new IllegalArgumentException();
+  }
+  
   public Set getCookieNames() {
     Set result = cookieJar.keySet();
     return result;
   }
+  
+  public String getLoginUrl() {
+    return null;
+  }
+
 }

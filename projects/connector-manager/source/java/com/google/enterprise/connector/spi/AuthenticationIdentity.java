@@ -16,6 +16,8 @@ package com.google.enterprise.connector.spi;
 
 import java.util.Set;
 
+import javax.servlet.http.Cookie;
+
 /**
  * Interface for the identity parameter of the
  * {@link AuthenticationManager}.authenticate method.
@@ -56,10 +58,22 @@ public interface AuthenticationIdentity {
   public String setCookie(String cookieName, String value);
 
   /**
+   * 
+   * @param the cookie, with Name, Value, and optionally Domain, Path, MaxAge
+   */
+  public void setCookie(Cookie c);
+  
+  /**
    * Get the Set of all defined cookies. If none are defined, an empty
    * Set is returned.
    * 
    * @return the Set (of String) of all cookie names for which a value exists
    */
   public Set getCookieNames();
+  
+  /**
+   * Get the login URL from which this user can be authenticated.
+   */
+  public String getLoginUrl();
+
 }

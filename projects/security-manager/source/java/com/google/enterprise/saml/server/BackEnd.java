@@ -14,7 +14,9 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
+import com.google.enterprise.connector.manager.ConnectorManager;
 
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.saml2.core.AuthnRequest;
@@ -23,6 +25,7 @@ import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Interface to SAML server backend. Top-level classes such as servlets should
@@ -32,6 +35,11 @@ import java.util.List;
  */
 public interface BackEnd {
 
+  /**
+   * Set the connector manager used by this backend.
+   */
+  public void setConnectorManager(ConnectorManager cm);
+  
   /**
    * Get the session manager used by this backend.
    *
@@ -65,7 +73,8 @@ public interface BackEnd {
    * @param password The password credential.
    * @returns A SAML Response with the validation result.
    */
-  public Response validateCredentials(AuthnRequest request, String username, String password);
+  public Response validateCredentials(AuthnRequest request, UserIdentity id);
+  public AuthenticationResponse handleCookie(Map<String, String> cookieJar);
 
   /**
    * Get the SAML artifact map.

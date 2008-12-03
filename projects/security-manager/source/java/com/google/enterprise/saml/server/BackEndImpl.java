@@ -14,13 +14,24 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.manager.ConnectorManager;
+import com.google.enterprise.connector.manager.ConnectorStatus;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.persist.PersistentStoreException;
+import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.saml.common.GsaConstants;
+import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
+import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
+import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.EntityDescriptor;
@@ -30,6 +41,8 @@ import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.GSA_ISSUER;
 import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
@@ -51,10 +64,12 @@ public class BackEndImpl implements BackEnd {
   private static final int artifactLifetime = 600000;  // ten minutes
 
   private final SessionManagerInterface sm;
+  private ConnectorManager manager;
   private final AuthzResponder authzResponder;
   private final SAMLArtifactMap artifactMap;
   private final EntityDescriptor smEntity;
   private final EntityDescriptor gsaEntity;
+  private static final Logger LOGGER = Logger.getLogger(BackEndImpl.class.getName());
 
   // TODO(cph): The metadata doesn't belong in the back end.
 
@@ -82,9 +97,13 @@ public class BackEndImpl implements BackEnd {
     // Build metadata for GSA
     gsaEntity = makeEntityDescriptor(GSA_ISSUER);
     SPSSODescriptor sp = makeSpSsoDescriptor(gsaEntity);
-    makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI, acsUrl).setIsDefault(true);
+    // makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI, acsUrl).setIsDefault(true);
   }
 
+  /** {@inheritDoc} */
+  public void setConnectorManager(ConnectorManager cm) {
+    this.manager = cm;
+  }
   /** {@inheritDoc} */
   public SessionManagerInterface getSessionManager() {
     return sm;
@@ -99,17 +118,55 @@ public class BackEndImpl implements BackEnd {
   }
 
   /** {@inheritDoc} */
-  public Response validateCredentials(AuthnRequest request, String username, String password) {
+  public Response validateCredentials(AuthnRequest request, UserIdentity id) {
     return
-        (areCredentialsValid(username, password))
-        ? SamlAuthn.makeSuccessfulResponse(request, username)
+        (handleAuthn(id)
+        ? SamlAuthn.makeSuccessfulResponse(request, id.getUsername())
         : SamlAuthn.makeUnsuccessfulResponse(
-            request, StatusCode.REQUEST_DENIED_URI, "Authentication failed");
+            request, StatusCode.REQUEST_DENIED_URI, "Authentication failed"));
   }
 
-  // TODO(cph): replace this with something real.
-  private boolean areCredentialsValid(String username, String password) {
-    return "joe".equals(username) && "plumber".equals(password);
+  // return true if credentials are checked against Identity provider: either valid or invalid
+  private boolean handleAuthn(UserIdentity id) {
+    AuthSite site = id.getAuthSite();
+    
+    for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
+      String connectorName = connStatus.getName();
+      System.out.println("Got security plug-in " + connectorName);
+
+      // Use connectorName as a clue as to what type of auth mechanism is suitable
+      if (connectorName.startsWith("Basic") && site.getMethod() != AuthNMechanism.BASIC_AUTH)
+        continue;
+      if (connectorName.startsWith("Form") && site.getMethod() != AuthNMechanism.FORMS_AUTH)
+        continue;
+      AuthenticationResponse authnResponse =
+          manager.authenticate(connectorName, id, null);
+      if ((authnResponse != null) && authnResponse.isValid()) {
+        id.setVerified();
+        // TODO deal with cases where id.id != authnResponse.getData();
+      }
+    }
+    return true;
+
+  }
+
+  // some form of authentication has already happened, the user gave us cookies,
+  // see if the cookies reveal who the user is.
+  public AuthenticationResponse handleCookie(Map<String, String> cookieJar) {
+    for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
+      String connectorName = connStatus.getName();
+      LOGGER.info("Got security plug-in " + connectorName);
+
+      // Use connectorName as a clue as to what type of auth mechanism is suitable
+      if (!connectorName.startsWith("FORM-"))
+        continue;
+      AuthenticationResponse authnResponse =
+          manager.authenticate(connectorName, null, cookieJar);
+      if ((authnResponse != null) && authnResponse.isValid())
+        return authnResponse;
+    }
+    
+    return null;
   }
 
   /** {@inheritDoc} */
@@ -121,4 +178,46 @@ public class BackEndImpl implements BackEnd {
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     return authzResponder.authorizeBatch(authzDecisionQueries);
   }
+  
+  @SuppressWarnings("unchecked")
+  private List<ConnectorStatus> getConnectorStatuses(ConnectorManager manager) {
+    List<ConnectorStatus> connList = manager.getConnectorStatuses();
+    if (connList == null || connList.isEmpty()) {
+      instantiateConnector(manager);
+      connList = manager.getConnectorStatuses();
+    }
+    return connList;
+  }
+  
+  // TODO get rid of this when we have a way of configuring plug-ins
+  private void instantiateConnector(ConnectorManager manager) {
+    String connectorName = "FormLei";
+    String connectorType = "CookieConnector";
+    String language = "en";
+
+    Map<String, String> configData =
+        ImmutableMap.of(
+            "CookieName", "SMSESSION",
+            "ServerUrl", "http://gama.corp.google.com/user1/ssoAgent.asp",
+            "HttpHeaderName", "User-Name");
+    Map<String, String> configBasicAuth = ImmutableMap.of(
+            "ServerUrl", "http://leiz.mtv.corp.google.com/basic/");
+    Map<String, String> configFormAuth = ImmutableMap.of(
+            "CookieName", "SMSESSION");
+    try {
+      manager.setConnectorConfig(connectorName, connectorType,
+                                 configData, language, false);
+      manager.setConnectorConfig("BasicAuth", "BasicAuthConnector",
+                                 configBasicAuth, language, false);
+      manager.setConnectorConfig("FormAuth", "FormAuthConnector",
+      		                     configFormAuth, language, false);
+    } catch (ConnectorNotFoundException e) {
+      LOGGER.info("ConnectorNotFound: " + e.toString());
+    } catch (InstantiatorException e) {
+      LOGGER.info("Instantiator: " + e.toString());
+    } catch (PersistentStoreException e) {
+      LOGGER.info("PersistentStore: " + e.toString());
+    }
+  }
+
 }
