@@ -14,6 +14,8 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.connector.manager.ConnectorManager;
+import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
@@ -31,6 +33,7 @@ import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -89,9 +92,11 @@ public class MockBackEnd implements BackEnd {
   }
 
   /** {@inheritDoc} */
-  public Response validateCredentials(AuthnRequest request, String username, String password) {
+  public Response validateCredentials(AuthnRequest request, UserIdentity id) {
     Status status = makeStatus();
     Response response = makeResponse(request, status);
+    String username = id.getUsername();
+    String password = id.getPassword();
     if (areCredentialsValid(username, password)) {
       LOGGER.log(Level.INFO, "Authenticated successfully as " + username);
       status.getStatusCode().setValue(StatusCode.SUCCESS_URI);
@@ -114,5 +119,16 @@ public class MockBackEnd implements BackEnd {
   /** {@inheritDoc} */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     throw new UnsupportedOperationException("Unimplemented method.");
+  }
+
+  @Override
+  public AuthenticationResponse handleCookie(Map<String, String> cookieJar) {
+    throw new UnsupportedOperationException("Unimplemented method.");
+  }
+
+  @Override
+  public void setConnectorManager(ConnectorManager cm) {
+    // TODO Auto-generated method stub
+    
   }
 }

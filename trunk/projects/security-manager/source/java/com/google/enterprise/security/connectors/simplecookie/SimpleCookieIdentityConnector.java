@@ -41,11 +41,12 @@ public class SimpleCookieIdentityConnector implements Connector, Session, Authen
     if (cookie == null) {
       return notfound;
     }
-    String newIdentity = c.extract(cookie);
+    String newIdentity = c.extract(cookieName + "=" + cookie);
     if (newIdentity == null) {
       return notfound;
     }
-    identity.setCookie(idCookieName, newIdentity);
+    if (idCookieName.length() > 0)
+      identity.setCookie(idCookieName, newIdentity);
     return new AuthenticationResponse(true, null);
   }
 
