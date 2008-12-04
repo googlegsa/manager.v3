@@ -13,7 +13,7 @@
     class="com.google.enterprise.security.connectors.simplecookie.SimpleCookieIdentityConnector">
     <constructor-arg index="0" type="java.lang.String"
       value="${CookieName}" />
-    <constructor-arg index="1" type="java.lang.String" value="gsa-knows-me" />
+    <constructor-arg index="1" type="java.lang.String" value="" />
     <constructor-arg index="2" ref="CookieIdentityExtractor" />
   </bean>
 </beans>
