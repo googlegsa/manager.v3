@@ -86,7 +86,7 @@ public class OmniFormTest extends TestCase {
       request.addParameter("u2", "jane");
       request.addParameter("pw2", "jrocks");
       
-      UserIdentity[] ids = formOne.parse(request);
+      UserIdentity[] ids = formOne.parse(request, null);
       assertEquals(ids[1].getUsername(), expIds[0].getUsername());
       assertEquals(ids[1].getPassword(), expIds[0].getPassword());
       

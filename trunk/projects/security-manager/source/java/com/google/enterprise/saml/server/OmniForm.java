@@ -98,7 +98,7 @@ class OmniForm {
   /**
    * Parse the form into an array of credentials awaiting authn decision.
    */
-  public UserIdentity[] parse(HttpServletRequest request) {
+  public UserIdentity[] parse(HttpServletRequest request, UserIdentity[] oldIds) {
     String username;
     String password;
     UserIdentity[] identities = new UserIdentity[sites.size()];
@@ -107,8 +107,10 @@ class OmniForm {
     for (AuthSite site : sites) {
       username = request.getParameter("u" + idx);
       password = request.getParameter("pw" + idx);
-      if (username != null & password != null)
+      if (username != null && username.length() > 0 && password != null && password.length() > 0)
         identities[idx] = new UserIdentity(username, password, site);
+      else
+        identities[idx] = (oldIds == null ? null : oldIds[idx]);
       idx++;
     }
     return identities;
