@@ -121,12 +121,10 @@ public class MockBackEnd implements BackEnd {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
 
-  @Override
   public AuthenticationResponse handleCookie(Map<String, String> cookieJar) {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
 
-  @Override
   public void setConnectorManager(ConnectorManager cm) {
     // TODO Auto-generated method stub
     
