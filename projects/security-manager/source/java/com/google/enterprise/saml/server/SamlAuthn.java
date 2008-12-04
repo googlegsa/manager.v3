@@ -216,16 +216,20 @@ public class SamlAuthn extends SecurityManagerServlet
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         existingSamlMessageContext(request.getSession());
 
-    UserIdentity[] ids = loginForm.parse(request);
+    UserIdentity[] ids = (UserIdentity[]) request.getSession().getAttribute(SecurityManagerServlet.CREDENTIALS);
+    ids = loginForm.parse(request, ids);
     for (UserIdentity id : ids) {
       // TODO make the context keep a queue of response SAMLMessage's
-      context.setOutboundSAMLMessage(
-          backend.validateCredentials(context.getInboundSAMLMessage(), id));
+      Response samlMsg = backend.validateCredentials(context.getInboundSAMLMessage(), id);
+      if (samlMsg != null)
+        context.setOutboundSAMLMessage(samlMsg);    
     }
     
     // if not all identities get verified, repost omniform, with visual cues
     boolean hasInvalidCredential = false;
     for (UserIdentity id : ids) {
+      if (id == null) // Skip auth site for which the user did not provide credentials
+        continue;
       if (id.isVerified()) {
         Vector<Cookie> jar = id.getCookies();
         for (Cookie c : jar) {
@@ -236,12 +240,13 @@ public class SamlAuthn extends SecurityManagerServlet
     }
     
     if (hasInvalidCredential) {
+      request.getSession().setAttribute(SecurityManagerServlet.CREDENTIALS, ids);
       response.getWriter().print(loginForm.writeForm(ids));
       return;
     }
     
     // generate artifact, redirect, plant cookies
-    LOGGER.info("All sets of identities verified");
+    LOGGER.info("All identities verified");
     doRedirect(context, backend, response);
   }
 

@@ -114,6 +114,9 @@ public class BackEndImpl implements BackEnd {
 
   /** {@inheritDoc} */
   public Response validateCredentials(AuthnRequest request, UserIdentity id) {
+    if (id == null || id.isVerified())
+      return null;
+    
     return
         (handleAuthn(id)
         ? SamlAuthn.makeSuccessfulResponse(request, id.getUsername())
