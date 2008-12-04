@@ -33,7 +33,7 @@ package com.google.enterprise.security.connectors.formauth;
  *   p.parse("a")      -> no match, does not end in a digit
  *   p.parse("0")      -> no match, does not start with a letter
  *
- * @see com.google.opengse.parser.Parser
+ * @see Parser
  * @author Peter Mattis
  */
 public class Sequence<T> extends Parser<T> {

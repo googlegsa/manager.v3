@@ -85,11 +85,10 @@ class OmniForm {
    */
   public String writeForm(UserIdentity[] ids) {
     int idx = 0;
-    boolean isRewrite = (ids != null);
 
     writeHeader();
     for (AuthSite site : sites) {
-      writeArea(site, idx, isRewrite ? ids[idx] : null);
+      writeArea(site, idx, (ids != null) ? ids[idx] : null);
       idx++;
     }
     writeFooter();

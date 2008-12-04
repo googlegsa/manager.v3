@@ -45,17 +45,17 @@ import java.io.*;
  *
  * The leaf parsers that are currently defined are:
  *
- * @see com.google.opengse.parser.Chset
- * @see com.google.opengse.parser.Strcaselit
+ * @see Chset
+ * @see Strcaselit
  *
  * The operators which combine 1 or 2 parsers together are:
  *
- * @see com.google.opengse.parser.Action
- * @see com.google.opengse.parser.Alternative
- * @see com.google.opengse.parser.Difference
- * @see com.google.opengse.parser.Intersection
- * @see com.google.opengse.parser.Repeat
- * @see com.google.opengse.parser.Sequence
+ * @see Action
+ * @see Alternative
+ * @see Difference
+ * @see Intersection
+ * @see Repeat
+ * @see Sequence
  *
  * In general, it isn't necessary to create an operator-type parser directly as
  * an appropriate member function usually exists in Parser for creating them.

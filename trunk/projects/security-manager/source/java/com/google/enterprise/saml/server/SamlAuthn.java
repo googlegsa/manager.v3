@@ -37,6 +37,9 @@ import org.opensaml.saml2.metadata.SingleSignOnService;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
@@ -48,10 +51,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-
 import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
@@ -60,7 +59,6 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertionConsum
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnStatement;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeSpSsoDescriptor;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatusMessage;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSubject;

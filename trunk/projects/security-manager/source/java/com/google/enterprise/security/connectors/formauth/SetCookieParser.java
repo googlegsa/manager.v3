@@ -71,7 +71,7 @@ public class SetCookieParser {
     return result.cookies_;
   }
 
-  private static String create(char[] buf, int start, int end) {
+  static String create(char[] buf, int start, int end) {
     if ( (buf[start] == '\"') && (buf[end - 1] == '\"') ) {
       start += 1;
       end -= 1;
@@ -79,26 +79,26 @@ public class SetCookieParser {
     return new String(buf, start, end - start);
   }
 
-  private static class NameAction implements Callback<Result> {
+  static class NameAction implements Callback<Result> {
     public void handle(char[] buf, int start, int end, Result result) {
       result.currentCookie_ = new SetCookie(create(buf, start, end), "");
       result.cookies_.add(result.currentCookie_);
     }
   }
 
-  private static class ValueAction implements Callback<Result> {
+  static class ValueAction implements Callback<Result> {
     public void handle(char[] buf, int start, int end, Result result) {
       result.currentCookie_.setValue(create(buf, start, end));
     }
   }
 
-  private static class CommentAction implements Callback<Result> {
+  static class CommentAction implements Callback<Result> {
     public void handle(char[] buf, int start, int end, Result result) {
       result.currentCookie_.setComment(create(buf, start, end));
     }
   }
 
-  private static class MaxAgeAction implements Callback<Result> {
+  static class MaxAgeAction implements Callback<Result> {
     public void handle(char[] buf, int start, int end, Result result) {
       try {
         result.currentCookie_.setMaxAge(
@@ -107,37 +107,37 @@ public class SetCookieParser {
     }
   }
 
-  private static class PathAction implements Callback<Result> {
+  static class PathAction implements Callback<Result> {
     public void handle(char[] buf, int start, int end, Result result) {
       result.currentCookie_.setPath(create(buf, start, end));
     }
   }
 
-  private static class ExpireAction implements Callback<Result> {
+  static class ExpireAction implements Callback<Result> {
     public void handle(char[] buf, int start, int end, Result result) {
       result.currentCookie_.setExpires(create(buf, start, end));
     }
   }
 
-  private static class SecureAction implements Callback<Result> {
+  static class SecureAction implements Callback<Result> {
     public void handle(char[] buf, int start, int end, Result result) {
       result.currentCookie_.setSecure(true);
     }
   }
 
-  private static class HttpOnlyAction implements Callback<Result> {
+  static class HttpOnlyAction implements Callback<Result> {
     public void handle(char[] buf, int start, int end, Result result) {
       result.currentCookie_.setHttpOnly(true);
     }
   }
 
-  private static class DiscardAction implements Callback<Result> {
+  static class DiscardAction implements Callback<Result> {
     public void handle(char[] buf, int start, int end, Result result) {
       result.currentCookie_.setDiscard(true);
     }
   }
 
-  private static class VersionAction implements Callback<Result> {
+  static class VersionAction implements Callback<Result> {
     public void handle(char[] buf, int start, int end, Result result) {
       try {
         result.currentCookie_.setVersion(
@@ -146,13 +146,13 @@ public class SetCookieParser {
     }
   }
 
-  private static class DomainAction implements Callback<Result> {
+  static class DomainAction implements Callback<Result> {
     public void handle(char[] buf, int start, int end, Result result) {
       result.currentCookie_.setDomain(create(buf, start, end));
     }
   }
 
-  private static class CommentURLAction implements Callback<Result> {
+  static class CommentURLAction implements Callback<Result> {
     public void handle(char[] buf, int start, int end, Result result) {
       if ( buf[start] == '"' && buf[end] == '"' )
         result.currentCookie_.commentURL = create(buf, start+1, end-1);
@@ -161,7 +161,7 @@ public class SetCookieParser {
     }
   }
 
-  private static class PortsAction implements Callback<Result> {
+  static class PortsAction implements Callback<Result> {
     public void handle(char[] buf, int start, int end, Result result) {
       String portStr;
       if ( buf[start] == '"' && buf[end] == '"' )
@@ -187,8 +187,7 @@ public class SetCookieParser {
   }
 
   /** This action is here for debugging only */
-  @SuppressWarnings("unused")
-  private static class DebugAction implements Callback {
+  static class DebugAction implements Callback<Object> {
     private String msg;
     public DebugAction(String msg) {
       this.msg = msg;
@@ -391,7 +390,6 @@ public class SetCookieParser {
   static {
     Chset wsp = Chset.WHITESPACE;
     Chset name_token = Chset.not(Chset.union(wsp, new Chset("=;,")));
-    Chset value_token = Chset.not(Chset.union(wsp, new Chset(";,")));
 
     Parser<Object> value_sep = Parser.sequence(wsp.star(), new Chset(";"));
     value_sep = Parser.sequence(value_sep, wsp.star());
@@ -404,7 +402,9 @@ public class SetCookieParser {
     Parser<Result> maxage  = makeAVParser("max-age", new MaxAgeAction());
     Parser<Result> path    = makeAVParser("path", new PathAction());
     Parser<Result> version = makeAVParser("version", new VersionAction());
+    @SuppressWarnings("unused")
     Parser<Result> ports   = makeAVParser("ports", new PortsAction());
+    @SuppressWarnings("unused")
     Parser<Result> commentURL =
       makeAVParser("commentURL", new CommentURLAction());
 
