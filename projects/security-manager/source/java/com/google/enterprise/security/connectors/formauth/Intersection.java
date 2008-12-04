@@ -35,7 +35,7 @@ package com.google.enterprise.security.connectors.formauth;
  *   j.parse("a1", null) -> no match, because ALNUM+ matches "a1" which doesn't
  *                          match ALPHA+
  *
- * @see com.google.opengse.parser.Parser
+ * @see Parser
  * @author Peter Mattis
  */
 public class Intersection<T> extends Parser<T> {

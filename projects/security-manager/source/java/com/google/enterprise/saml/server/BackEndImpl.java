@@ -21,22 +21,18 @@ import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
-import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
-import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
-import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
@@ -47,13 +43,11 @@ import java.util.logging.Logger;
 import static com.google.enterprise.saml.common.OpenSamlUtil.GSA_ISSUER;
 import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResolutionService;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertionConsumerService;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeEntityDescriptor;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeIdpSsoDescriptor;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSingleSignOnService;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSpSsoDescriptor;
 
-import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
 
@@ -96,7 +90,8 @@ public class BackEndImpl implements BackEnd {
 
     // Build metadata for GSA
     gsaEntity = makeEntityDescriptor(GSA_ISSUER);
-    SPSSODescriptor sp = makeSpSsoDescriptor(gsaEntity);
+    makeSpSsoDescriptor(gsaEntity);
+    // SPSSODescriptor sp = makeSpSsoDescriptor(gsaEntity);
     // makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI, acsUrl).setIsDefault(true);
   }
 

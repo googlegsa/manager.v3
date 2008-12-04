@@ -14,16 +14,15 @@
 
 package com.google.enterprise.saml.server;
 
-import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
-
 import junit.framework.TestCase;
 
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+
+import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
 
 /**
  * Unit test for SamlAuthn handler.
@@ -56,9 +55,6 @@ public class OmniFormTest extends TestCase {
    * @throws UnsupportedEncodingException
    */
   public void testWriteForm() throws UnsupportedEncodingException {
-    MockHttpServletRequest req = new MockHttpServletRequest();
-    MockHttpServletResponse resp = new MockHttpServletResponse();
-
     String form = formOne.writeForm(null);
     System.out.println(form);
   }
@@ -67,8 +63,6 @@ public class OmniFormTest extends TestCase {
    * Make sure login form has slight tweak if we already have some data.
    */
   public void testRewriteForm() {
-    MockHttpServletRequest req = new MockHttpServletRequest();
-    MockHttpServletResponse resp = new MockHttpServletResponse();
     UserIdentity[] ids = new UserIdentity[4];
 
     ids[0] = new UserIdentity("voyager", "foobar", null);

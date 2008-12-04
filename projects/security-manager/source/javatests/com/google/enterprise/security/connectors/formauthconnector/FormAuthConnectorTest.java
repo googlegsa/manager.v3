@@ -102,8 +102,6 @@ public class FormAuthConnectorTest extends TestCase {
   
   public void testAuthenticate() {
     FormAuthConnector conn = new FormAuthConnector("SMSESSION");
-    int idx = 0;
-    Vector<NameValuePair> params;
     
     AuthSite site = new AuthSite("http://gama.corp.google.com", "/secured/", AuthNMechanism.FORMS_AUTH, null);
     UserIdentity id = new UserIdentity("gama1", "gama%%1", site);

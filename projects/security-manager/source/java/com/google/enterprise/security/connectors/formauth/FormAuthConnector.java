@@ -37,6 +37,7 @@ import javax.servlet.http.Cookie;
 
 public class FormAuthConnector implements Connector, Session, AuthenticationManager {
 
+  @SuppressWarnings("unused")
   private final String cookieName;
   
   private static final Logger LOGGER =
@@ -47,7 +48,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
   }
 
   public AuthenticationResponse authenticate(AuthenticationIdentity identity) {
-    String cookieVal = identity.getCookie(cookieName);
+    // String cookieVal = identity.getCookie(cookieName);
     String username = identity.getUsername();
     String password = identity.getPassword();
     
@@ -60,7 +61,6 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       LOGGER.info("Could not authenticate: null URL");
       return null;
     }
-    int status;
     
     // GET siteUri, till we hit a form; fill the form, post it; get the response,
     // remember the cookie returned to us.
@@ -88,6 +88,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       }
     } catch (IOException e) {
       LOGGER.info("Could not parse login form: " + e.toString());
+      return new AuthenticationResponse(false, null);
     }
   
     // submit FORM
@@ -120,17 +121,16 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     String lastRedirect = null;
     String redirected = null;
     StringBuffer redirectBuffer = new StringBuffer();
-    int status = 0;
     int kMaxNumRedirectsToFollow = 4;
     
     while (true) {
-      status =   CookieUtil.fetchPage("GET", url,
-                                      null, // proxy,
-                                      "SecMgr", null, // cookies,
-                                      null, // parameters,
-                                      bodyBuffer,
-                                      redirectBuffer, null,
-                                      null); // LOGGER
+      CookieUtil.fetchPage("GET", url,
+                           null, // proxy,
+                           "SecMgr", null, // cookies,
+                           null, // parameters,
+                           bodyBuffer,
+                           redirectBuffer, null,
+                           null); // LOGGER
 
       lastRedirect = redirected;
       redirected = redirectBuffer.toString();

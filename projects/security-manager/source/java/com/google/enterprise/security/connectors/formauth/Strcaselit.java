@@ -48,7 +48,7 @@ public class Strcaselit extends Parser<Object> {
    * must be a case-insensitive prefix of <code>buf[start,end)</code> for a
    * match to occur.
    *
-   * @see com.google.opengse.parser.Parser#parse
+   * @see Parser#parse
    */
   @Override
   public int parse(char[] buf, int start, int end, Object data) {

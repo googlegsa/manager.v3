@@ -66,11 +66,10 @@ public interface BackEnd {
   public EntityDescriptor getGsaEntity();
 
   /**
-   * Validate username/password credentials.
+   * Validate identity credentials.
    *
    * @param request The SAML authentication request being served.
-   * @param username The username credential.
-   * @param password The password credential.
+   * @param id The identity to validate.
    * @returns A SAML Response with the validation result.
    */
   public Response validateCredentials(AuthnRequest request, UserIdentity id);

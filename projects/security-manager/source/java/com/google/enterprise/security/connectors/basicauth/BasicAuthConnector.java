@@ -33,6 +33,7 @@ import javax.xml.ws.http.HTTPException;
 
 public class BasicAuthConnector implements Connector, Session, AuthenticationManager {
 
+  @SuppressWarnings("unused")
   private final String something;
 
   private static final Logger LOGGER =

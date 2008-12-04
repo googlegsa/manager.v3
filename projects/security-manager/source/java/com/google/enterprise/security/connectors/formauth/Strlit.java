@@ -45,7 +45,7 @@ public class Strlit extends Parser<Object> {
    * parse buffer: <code>buf[start,end)</code>. <code>Strlit.str</code> must be
    * a prefix of <code>buf[start,end)</code> for a match to occur.
    *
-   * @see Parser.parse
+   * @see Parser#parse
    */
   public int parse(char[] buf, int start, int end, Object data) {
     for (int i = 0; i < str.length(); i++) {
