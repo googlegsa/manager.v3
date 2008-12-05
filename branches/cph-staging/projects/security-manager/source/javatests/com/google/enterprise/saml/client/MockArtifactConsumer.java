@@ -18,8 +18,8 @@ import com.google.enterprise.saml.common.GettableHttpServlet;
 import com.google.enterprise.saml.common.HttpServletRequestClientAdapter;
 import com.google.enterprise.saml.common.HttpServletResponseClientAdapter;
 import com.google.enterprise.saml.common.HttpTransport;
+import com.google.enterprise.saml.common.Metadata;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
-import com.google.enterprise.saml.server.BackEnd;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -84,7 +84,7 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
    * @param transport A message-transport provider.
    */
   public MockArtifactConsumer(HttpTransport transport) {
-    super();
+    super(Metadata.MOCK_SP_KEY);
     this.transport = transport;
   }
 
@@ -92,8 +92,7 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
    * Creates a new mock SAML service provider with default message transport.
    */
   public MockArtifactConsumer() {
-    super();
-    this.transport = new HttpClientTransport();
+    this(new HttpClientTransport());
   }
 
   @Override
@@ -108,7 +107,7 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
       initErrorResponse(resp, SC_INTERNAL_SERVER_ERROR);
       return;
     }
-    SAMLObject message = resolveArtifact(artifact, relayState, req.getRequestURL().toString());
+    SAMLObject message = resolveArtifact(artifact, relayState);
     if (! (message instanceof Response)) {
       LOGGER.log(Level.WARNING, "Error from artifact resolver.");
       initErrorResponse(resp, SC_INTERNAL_SERVER_ERROR);
@@ -131,20 +130,21 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
     result.sendRedirect(relayState);
   }
 
-  private SAMLObject resolveArtifact(String artifact, String relayState, String clientUrl)
+  private SAMLObject resolveArtifact(String artifact, String relayState)
       throws ServletException, IOException {
-    BackEnd backend = getBackEnd(getServletContext());
 
     // Establish the SAML message context
     SAMLMessageContext<ArtifactResponse, ArtifactResolve, NameID> context =
         makeSamlMessageContext();
 
-    EntityDescriptor localEntity = backend.getGsaEntity();
+    EntityDescriptor localEntity = getLocalEntity();
     initializeLocalEntity(context, localEntity, localEntity.getSPSSODescriptor(SAML20P_NS),
                           Endpoint.DEFAULT_ELEMENT_NAME);
     context.setOutboundMessageIssuer(localEntity.getEntityID());
     {
-      EntityDescriptor peerEntity = backend.getSecurityManagerEntity();
+      // This call to getPeerEntity() works because the test metadata has only a single peer.
+      // If there were multiple peers it would do the wrong thing.
+      EntityDescriptor peerEntity = getPeerEntity();
       initializePeerEntity(context, peerEntity, peerEntity.getIDPSSODescriptor(SAML20P_NS),
                            ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
       selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);

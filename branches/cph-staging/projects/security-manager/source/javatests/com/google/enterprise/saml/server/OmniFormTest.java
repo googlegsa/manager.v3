@@ -42,7 +42,7 @@ public class OmniFormTest extends TestCase {
     }
 
     try {
-      formOne = new OmniForm(reader);
+      formOne = new OmniForm(reader, "http://localhost/omniform-action");
     } catch (Exception e) {
       System.out.println("CSV parsing problematic: " + e.toString());
     }

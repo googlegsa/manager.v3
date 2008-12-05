@@ -14,15 +14,14 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
-import com.google.enterprise.connector.manager.ConnectorManager;
 
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
-import org.opensaml.saml2.metadata.EntityDescriptor;
 
 import java.util.List;
 import java.util.Map;
@@ -48,22 +47,6 @@ public interface BackEnd {
    * @returns A session manager object.
    */
   public SessionManagerInterface getSessionManager();
-
-  // TODO(cph): The metadata doesn't belong in the back end.
-
-  /**
-   * Get the SAML metadata description for the security manager.
-   *
-   * @returns An initialized SAML entity descriptor
-   */
-  public EntityDescriptor getSecurityManagerEntity();
-
-  /**
-   * Get the SAML metadata description for the GSA.
-   *
-   * @returns An initialized SAML entity descriptor
-   */
-  public EntityDescriptor getGsaEntity();
 
   /**
    * Validate identity credentials.

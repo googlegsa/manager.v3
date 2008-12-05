@@ -14,6 +14,7 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.saml.common.Metadata;
 import com.google.enterprise.saml.common.PostableHttpServlet;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
@@ -27,7 +28,6 @@ import org.opensaml.saml2.core.ArtifactResponse;
 import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.ArtifactResolutionService;
-import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
@@ -40,17 +40,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
-import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResponse;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
-import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
-import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
 
 /**
  * Servlet to handle SAML artifact-resolution requests.  This is one part of the security manager's
@@ -62,6 +59,10 @@ public class SamlArtifactResolve extends SecurityManagerServlet implements Posta
   private static final long serialVersionUID = 1L;
   private static final Logger LOGGER = Logger.getLogger(SamlArtifactResolve.class.getName());
 
+  public SamlArtifactResolve() {
+    super(Metadata.SM_KEY);
+  }
+
   @Override
   public void doPost(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
@@ -71,21 +72,17 @@ public class SamlArtifactResolve extends SecurityManagerServlet implements Posta
     SAMLMessageContext<ArtifactResolve, ArtifactResponse, NameID> context =
         makeSamlMessageContext();
 
-    EntityDescriptor localEntity = backend.getSecurityManagerEntity();
+    EntityDescriptor localEntity = getLocalEntity();
     initializeLocalEntity(context, localEntity, localEntity.getIDPSSODescriptor(SAML20P_NS),
                           ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
     context.setOutboundMessageIssuer(localEntity.getEntityID());
-
-    EntityDescriptor peerEntity = backend.getGsaEntity();
-    initializePeerEntity(context, peerEntity, peerEntity.getSPSSODescriptor(SAML20P_NS),
-                         Endpoint.DEFAULT_ELEMENT_NAME);
-    selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
-    context.setInboundMessageIssuer(peerEntity.getEntityID());
 
     // Decode the request
     context.setInboundMessageTransport(new HttpServletRequestAdapter(req));
     runDecoder(new HTTPSOAP11Decoder(), context);
     ArtifactResolve artifactResolve = context.getInboundSAMLMessage();
+
+    EntityDescriptor peerEntity = getPeerEntity(context.getInboundMessageIssuer());
 
     // Create response
     ArtifactResponse artifactResponse =
