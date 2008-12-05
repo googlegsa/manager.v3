@@ -73,7 +73,7 @@ public class BasicAuthConnector implements Connector, Session, AuthenticationMan
     if (status == 200) {
       return new AuthenticationResponse(true, username);
     }
-    return new AuthenticationResponse(false, null);
+    return notfound;
   }
 
   public Session login() {
