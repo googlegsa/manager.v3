@@ -92,4 +92,5 @@ public interface BackEnd {
    * @returns A list of responses, corresponding to the argument.
    */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries);
+  public String getAuthConfigFile();
 }
