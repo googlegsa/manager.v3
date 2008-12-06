@@ -114,4 +114,7 @@ public interface SessionInterface {
    */
   public abstract String getKrb5CcacheFilename();
 
+  public abstract void cacheOidValue(String oid, SessionObject value);
+  public abstract <T extends SessionObject> T getCachedOidValue(String oid);
+
 }
