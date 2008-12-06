@@ -28,6 +28,7 @@ import org.opensaml.saml2.core.ArtifactResponse;
 import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.ArtifactResolutionService;
+import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
@@ -40,14 +41,17 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResponse;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
+import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
 
 /**
  * Servlet to handle SAML artifact-resolution requests.  This is one part of the security manager's
@@ -88,8 +92,6 @@ public class SamlArtifactResolve extends SecurityManagerServlet implements Posta
     context.setInboundMessageTransport(new HttpServletRequestAdapter(req));
     runDecoder(new HTTPSOAP11Decoder(), context);
     ArtifactResolve artifactResolve = context.getInboundSAMLMessage();
-
-    EntityDescriptor peerEntity = getPeerEntity(context.getInboundMessageIssuer());
 
     // Create response
     ArtifactResponse artifactResponse =
