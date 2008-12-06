@@ -64,6 +64,11 @@ public class SamlSsoTest extends TestCase {
     MockHttpTransport transport = new MockHttpTransport();
     userAgent = new MockUserAgent(transport);
 
+    EntityDescriptor gsaEntity = getMetadata(Metadata.MOCK_SP_KEY).getLocalEntity();
+    SPSSODescriptor sp = gsaEntity.getSPSSODescriptor(SAML20P_NS);
+    transport.registerServlet(sp.getDefaultAssertionConsumerService(),
+                              new MockArtifactConsumer(transport));
+
     EntityDescriptor smEntity = getMetadata(Metadata.SM_KEY).getLocalEntity();
     IDPSSODescriptor idp = smEntity.getIDPSSODescriptor(SAML20P_NS);
     transport.registerServlet(idp.getSingleSignOnServices().get(0),
@@ -72,11 +77,6 @@ public class SamlSsoTest extends TestCase {
                               new SamlArtifactResolve());
 
     transport.registerServlet(getMockSpUrl(), new MockServiceProvider());
-
-    EntityDescriptor spEntity = getMetadata(Metadata.MOCK_SP_KEY).getLocalEntity();
-    SPSSODescriptor sp = spEntity.getSPSSODescriptor(SAML20P_NS);
-    transport.registerServlet(sp.getDefaultAssertionConsumerService(),
-                              new MockArtifactConsumer(transport));
   }
 
   public void testGoodCredentials() throws ServletException, IOException, MalformedURLException {

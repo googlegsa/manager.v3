@@ -111,8 +111,10 @@ public class SamlAuthn extends SecurityManagerServlet
     runDecoder(new HTTPRedirectDeflateDecoder(), context);
 
     {
-      EntityDescriptor peerEntity = getPeerEntity(context.getInboundMessageIssuer());
-      initializePeerEntity(context, peerEntity, peerEntity.getSPSSODescriptor(SAML20P_NS),
+      // TODO(cph): need way to select the correct peer entity.
+      EntityDescriptor peerEntity = getPeerEntity();
+      SPSSODescriptor sp = peerEntity.getSPSSODescriptor(SAML20P_NS);
+      initializePeerEntity(context, peerEntity, sp,
                            AssertionConsumerService.DEFAULT_ELEMENT_NAME);
       selectPeerEndpoint(context, SAML2_ARTIFACT_BINDING_URI);
     }

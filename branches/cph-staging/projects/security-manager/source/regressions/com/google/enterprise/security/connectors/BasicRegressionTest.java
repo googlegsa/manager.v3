@@ -23,6 +23,7 @@ import junit.framework.TestCase;
 import java.io.ByteArrayInputStream;
 
 import static com.google.enterprise.saml.common.TestMetadata.MOCK_GSA_ISSUER;
+import static com.google.enterprise.saml.common.TestMetadata.initializeMetadata;
 
 public class BasicRegressionTest extends TestCase {
 
@@ -43,6 +44,11 @@ public class BasicRegressionTest extends TestCase {
       "</samlp:ArtifactResolve>" +
       "</soap11:Body>" +
       "</soap11:Envelope>\n";
+
+  public BasicRegressionTest() {
+    super();
+    initializeMetadata();
+  }
 
   public void testSamlArtifact() throws Exception {
     WebRequest request =

@@ -77,6 +77,13 @@ public class SamlArtifactResolve extends SecurityManagerServlet implements Posta
                           ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
     context.setOutboundMessageIssuer(localEntity.getEntityID());
 
+    // TODO(cph): need way to select the correct peer entity.
+    EntityDescriptor peerEntity = getPeerEntity();
+    initializePeerEntity(context, peerEntity, peerEntity.getSPSSODescriptor(SAML20P_NS),
+                         Endpoint.DEFAULT_ELEMENT_NAME);
+    selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
+    context.setInboundMessageIssuer(peerEntity.getEntityID());
+
     // Decode the request
     context.setInboundMessageTransport(new HttpServletRequestAdapter(req));
     runDecoder(new HTTPSOAP11Decoder(), context);
