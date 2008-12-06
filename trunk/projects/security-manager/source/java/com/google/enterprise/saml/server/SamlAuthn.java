@@ -112,7 +112,7 @@ public class SamlAuthn extends SecurityManagerServlet
       
       // TODO is there a better way to deduce ACS URL??
       String referer = request.getHeader("Referer");
-      String gsaUrl = referer.substring(0, referer.indexOf("search?"));
+      String gsaUrl = referer.substring(0, referer.indexOf("search"));
       System.out.println("GSA URL is " + gsaUrl);
       makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI,
           gsaUrl + GsaConstants.GSA_ARTIFACT_HANDLER_NAME).setIsDefault(true);
@@ -132,18 +132,25 @@ public class SamlAuthn extends SecurityManagerServlet
       return;
     }
    
-    String formHtml = omniform(request);
+    String formHtml = omniform(backend.getAuthConfigFile(), request);
 
     response.getWriter().print(formHtml);
   }
 
-  private String omniform(HttpServletRequest request)
+  private String getAction(HttpServletRequest request) {
+    String url = request.getRequestURL().toString();
+    int q = url.indexOf("?");
+    
+    return (q < 0) ? url : url.substring(0, q);
+  }
+    
+  private String omniform(String configFile, HttpServletRequest request)
       throws NumberFormatException, IOException {
-    File tmpFile = new File("AuthSites.conf");
+    File tmpFile = new File(configFile);
     LOGGER.info("Opened CSV file " + tmpFile.getAbsolutePath());
     FileReader file = new FileReader(tmpFile);
     CSVReader reader = new CSVReader(file);
-    loginForm = new OmniForm(reader);
+    loginForm = new OmniForm(reader, getAction(request));
     String formHtml = loginForm.writeForm(null);
     
     return formHtml;

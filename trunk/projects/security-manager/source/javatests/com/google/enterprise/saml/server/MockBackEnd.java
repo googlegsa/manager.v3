@@ -129,4 +129,9 @@ public class MockBackEnd implements BackEnd {
     // TODO Auto-generated method stub
     
   }
+
+  public String getAuthConfigFile() {
+    // TODO Auto-generated method stub
+    return null;
+  }
 }
