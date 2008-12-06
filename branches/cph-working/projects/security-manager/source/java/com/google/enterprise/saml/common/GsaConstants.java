@@ -23,5 +23,18 @@ public class GsaConstants {
       "SamlArtifactConsumer";
   public static final String GSA_ARTIFACT_PARAM_NAME = "SAMLart";
   public static final String GSA_RELAY_STATE_PARAM_NAME = "RelayState";
-  
+
+  public static enum AuthNMechanism {
+    BASIC_AUTH,     // aka SekuLite
+    FORMS_AUTH,     // was known as (non-SAML) "SSO"
+    SAML,           // the SAML SPI
+    SSL,            // client-side x.509 certificate authN
+    CONNECTORS,     // connector manager authN logic
+    SPNEGO_KERBEROS // GSSAPI/SPNEGO/Kerberos WWW-Authenticate handshake
+  }
+
+  public static enum AuthNDecision {
+    TBD,            // haven't gone through verification yet
+    VERIFIED        // recognized by one IdP
+  }
 }

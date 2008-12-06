@@ -16,10 +16,10 @@ package com.google.enterprise.connector.manager;
 
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.server.BackEnd;
+import com.google.enterprise.saml.server.UserIdentity;
 
 import java.util.Map;
 import java.util.logging.Level;
@@ -45,13 +45,14 @@ public class ConnectorManager extends ProductionManager {
   }
 
   public void setBackEnd(BackEnd backEnd) {
+    backEnd.setConnectorManager(this);
     this.backEnd = backEnd;
   }
 
   @Override
   public boolean authenticate(String connectorName, String username, String password) {
     AuthenticationResponse authnResponse =
-      authenticate(connectorName, username, password, null);
+      authenticate(connectorName, new UserIdentity(username, password, null), null);
     if (authnResponse == null || !authnResponse.isValid()) {
       return false;
     }
@@ -62,9 +63,7 @@ public class ConnectorManager extends ProductionManager {
   /**
    * This method will become part of the {@link Manager} interface
    */
-  public AuthenticationResponse authenticate(String connectorName, String username, String password,
-      Map securityContext) {
-    AuthenticationIdentity identity = new UserPassIdentity(username, password);
+  public AuthenticationResponse authenticate(String connectorName, UserIdentity id, Map securityContext) {
     AuthenticationManager authnManager = null;
     try {
       authnManager = instantiator.getAuthenticationManager(connectorName);
@@ -80,7 +79,7 @@ public class ConnectorManager extends ProductionManager {
       return null;
     }
 
-    AuthnCaller authnCaller = new AuthnCaller(authnManager, identity, securityContext);
+    AuthnCaller authnCaller = new AuthnCaller(authnManager, id, securityContext);
 
     return authnCaller.authenticate();
   }

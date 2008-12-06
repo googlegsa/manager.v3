@@ -124,6 +124,12 @@
 
 	<target name="jar-builtins" description="Create jars for built-in connector configuration">
 		<tstamp />
+		<jar jarfile="${jar.dir}/basicauthconnector.jar">
+			<fileset dir="connectorConfig/BasicAuthConnector" includes="**/*.xml" />
+		</jar>
+		<jar jarfile="${jar.dir}/formauthconnector.jar">
+			<fileset dir="connectorConfig/FormAuthConnector" includes="**/*.xml" />
+		</jar>
 		<jar jarfile="${jar.dir}/ssocookieconnector.jar">
 			<fileset dir="connectorConfig/SsoCookieIdentityConnector" includes="**/*.xml" />
 		</jar>

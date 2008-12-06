@@ -33,6 +33,7 @@ import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
 import java.io.IOException;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -59,7 +60,7 @@ public class SamlArtifactResolve extends SecurityManagerServlet implements Posta
 
   /** Required for serializable classes. */
   private static final long serialVersionUID = 1L;
-  // private static final Logger LOGGER = Logger.getLogger(SamlArtifactResolve.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(SamlArtifactResolve.class.getName());
 
   @Override
   public void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -95,11 +96,16 @@ public class SamlArtifactResolve extends SecurityManagerServlet implements Posta
     String encodedArtifact = artifactResolve.getArtifact().getArtifact();
     SAMLArtifactMap artifactMap = backend.getArtifactMap();
     if (artifactMap.contains(encodedArtifact)) {
+      LOGGER.info("local Entity ID: " + localEntity.getEntityID());
+      LOGGER.info("peer entity ID: " + peerEntity.getEntityID());
       SAMLArtifactMapEntry entry = artifactMap.get(encodedArtifact);
+      LOGGER.info("artifact issuer: " + entry.getIssuerId());
+      LOGGER.info("artifact relying party: " + entry.getRelyingPartyId());
       if ((!entry.isExpired())
           && localEntity.getEntityID().equals(entry.getIssuerId())
           && peerEntity.getEntityID().equals(entry.getRelyingPartyId())) {
         artifactResponse.setMessage(entry.getSamlMessage());
+        LOGGER.info("Artifact resolved");
       }
       // Always remove the artifact after use
       artifactMap.remove(encodedArtifact);

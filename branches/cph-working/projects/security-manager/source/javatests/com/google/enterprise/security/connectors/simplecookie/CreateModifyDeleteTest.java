@@ -63,7 +63,7 @@ public class CreateModifyDeleteTest extends TestCase {
 
     securityContext = new HashMap<String, String>();
     securityContext.put("in", "username=fred");
-    connectorManager.authenticate(connectorName, "", "", securityContext);
+    connectorManager.authenticate(connectorName, null, securityContext);
     assertEquals("fred", securityContext.get("out"));
 
     configData =
@@ -73,7 +73,7 @@ public class CreateModifyDeleteTest extends TestCase {
 
     securityContext = new HashMap<String, String>();
     securityContext.put("abc", "user=joe");
-    connectorManager.authenticate(connectorName, "", "", securityContext);
+    connectorManager.authenticate(connectorName, null, securityContext);
     assertEquals("joe", securityContext.get("def"));
     
     connectorManager.removeConnector(connectorName);
