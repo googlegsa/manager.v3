@@ -92,8 +92,5 @@ public class OmniFormTest extends TestCase {
       
       assertEquals(ids[2].getUsername(), expIds[1].getUsername());
       assertEquals(ids[2].getPassword(), expIds[1].getPassword());
-   
     }
-
-  }
-
+}
