@@ -19,6 +19,7 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.client.MockArtifactConsumer;
 import com.google.enterprise.saml.client.MockServiceProvider;
 import com.google.enterprise.saml.client.MockUserAgent;
+import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.MockHttpTransport;
 
 import junit.framework.TestCase;
@@ -36,18 +37,20 @@ import java.net.MalformedURLException;
 
 import javax.servlet.ServletException;
 
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertionConsumerService;
 import static com.google.enterprise.saml.common.SamlTestUtil.generatePostContent;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpGet;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
 
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 public class SamlSsoTest extends TestCase {
 
-  private static final String spUrl = "http://localhost:8973/security-manager/mockserviceprovider";
+  private static final String spUrl = "http://localhost:8973/search";
 
   private final MockUserAgent userAgent;
 
@@ -55,7 +58,7 @@ public class SamlSsoTest extends TestCase {
     super(name);
 
     Context ctx = Context.getInstance();
-    ctx.setStandaloneContext("source/webdocs/prod/applicationContext.xml",
+    ctx.setStandaloneContext("source/webdocs/test/applicationContext.xml",
                              Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
     BackEnd backend = ((ConnectorManager) ctx.getManager()).getBackEnd();
 
@@ -65,6 +68,8 @@ public class SamlSsoTest extends TestCase {
 
     EntityDescriptor gsaEntity = backend.getGsaEntity();
     SPSSODescriptor sp = gsaEntity.getSPSSODescriptor(SAML20P_NS);
+    makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI,
+        "http://localhost:8973/" + GsaConstants.GSA_ARTIFACT_HANDLER_NAME).setIsDefault(true);
     transport.registerServlet(sp.getDefaultAssertionConsumerService(),
                               new MockArtifactConsumer(transport));
 
@@ -76,14 +81,9 @@ public class SamlSsoTest extends TestCase {
     transport.registerServlet(spUrl, new MockServiceProvider());
   }
 
-  public void testGoodCredentials() throws ServletException, IOException, MalformedURLException {
+  public void testCredentials() throws ServletException, IOException, MalformedURLException {
     MockHttpServletResponse response = tryCredentials("joe", "plumber");
     assertEquals("Incorrect response status code", SC_OK, response.getStatus());
-  }
-
-  public void testBadCredentials() throws ServletException, IOException, MalformedURLException {
-    MockHttpServletResponse response = tryCredentials("foo", "bar");
-    assertEquals("Incorrect response status code", SC_UNAUTHORIZED, response.getStatus());
   }
 
   private MockHttpServletResponse tryCredentials(String username, String password)
@@ -105,8 +105,8 @@ public class SamlSsoTest extends TestCase {
 
     // Submit credentials-gathering form
     MockHttpServletRequest request2 = makeMockHttpPost(null, action);
-    request2.addParameter("username", username);
-    request2.addParameter("password", password);
+    request2.addParameter("u1", username);
+    request2.addParameter("pw1", password);
     generatePostContent(request2);
     return userAgent.exchange(request2);
   }

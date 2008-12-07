@@ -22,10 +22,11 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 
 class OmniForm {
-  private Vector<AuthSite> sites;
+  private final Vector<AuthSite> sites;
+  private final String actionUrl;
   private StringBuffer formContent;
   
-  public OmniForm(CSVReader reader) throws NumberFormatException, IOException {
+  public OmniForm(CSVReader reader, String actionUrl) throws NumberFormatException, IOException {
     String[] nextLine;
    
     sites = new Vector<AuthSite>();
@@ -41,12 +42,15 @@ class OmniForm {
       sites.add(new AuthSite(nextLine[0], nextLine[1], method,
                              nextLine.length > 3 ? nextLine[3] : null));
     }
+    this.actionUrl = actionUrl;
   }
 
   private void writeHeader() {
     // We expect this form to be posted back to the same URL from which the form
     // was GETed, so skip "action" attribute. 
-    formContent = new StringBuffer("<form method=\"post\" name=\"omni\">\n");
+    formContent = new StringBuffer("<form method=\"post\" name=\"omni\" action=\"" +
+                                   actionUrl +
+                                   "\">\n");
   }
   private void writeFooter() {
     formContent.append("<input type=\"submit\"></form>");
@@ -98,7 +102,7 @@ class OmniForm {
   /**
    * Parse the form into an array of credentials awaiting authn decision.
    */
-  public UserIdentity[] parse(HttpServletRequest request) {
+  public UserIdentity[] parse(HttpServletRequest request, UserIdentity[] oldIds) {
     String username;
     String password;
     UserIdentity[] identities = new UserIdentity[sites.size()];
@@ -107,8 +111,10 @@ class OmniForm {
     for (AuthSite site : sites) {
       username = request.getParameter("u" + idx);
       password = request.getParameter("pw" + idx);
-      if (username != null & password != null)
+      if (username != null && username.length() > 0 && password != null && password.length() > 0)
         identities[idx] = new UserIdentity(username, password, site);
+      else
+        identities[idx] = (oldIds == null ? null : oldIds[idx]);
       idx++;
     }
     return identities;
