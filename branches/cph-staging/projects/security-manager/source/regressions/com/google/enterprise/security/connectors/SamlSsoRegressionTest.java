@@ -35,18 +35,16 @@ import java.io.Writer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.google.enterprise.saml.common.TestMetadata.getMockSpUrl;
-import static com.google.enterprise.saml.common.TestMetadata.initializeMetadata;
-
 public class SamlSsoRegressionTest extends TestCase {
   private static final Logger LOGGER = Logger.getLogger(SamlSsoRegressionTest.class.getName());
+
+  private static final String spUrl = "http://localhost:8973/security-manager/mockserviceprovider";
 
   private final HttpClient userAgent;
 
   public SamlSsoRegressionTest(String name) {
     super(name);
     userAgent = new HttpClient();
-    initializeMetadata();
   }
 
   public void testGoodCredentials() throws HttpException, IOException {
@@ -61,7 +59,7 @@ public class SamlSsoRegressionTest extends TestCase {
       throws HttpException, IOException {
 
     // Initial request to service provider
-    String action = parseForm(tryGet(getMockSpUrl(), HttpStatus.SC_OK));
+    String action = parseForm(tryGet(spUrl, HttpStatus.SC_OK));
 
     // Submit credentials-gathering form
     PostMethod method2 = new PostMethod(action);

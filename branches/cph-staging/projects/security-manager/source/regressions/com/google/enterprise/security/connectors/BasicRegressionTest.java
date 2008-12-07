@@ -22,9 +22,6 @@ import junit.framework.TestCase;
 
 import java.io.ByteArrayInputStream;
 
-import static com.google.enterprise.saml.common.TestMetadata.MOCK_GSA_ISSUER;
-import static com.google.enterprise.saml.common.TestMetadata.initializeMetadata;
-
 public class BasicRegressionTest extends TestCase {
 
   private static final String entity =
@@ -36,7 +33,7 @@ public class BasicRegressionTest extends TestCase {
       " IssueInstant=\"2008-11-15T07:09:41.127Z\" Version=\"2.0\"" +
       " xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\">" +
       "<saml:Issuer xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">" +
-      MOCK_GSA_ISSUER +
+      "http://google.com/enterprise/search-appliance" +
       "</saml:Issuer>" +
       "<samlp:Artifact>" +
       "AAQAAEKQJVvv+M3ofQmBLdUYHuk682uBPl1P6laijlxzGK3/VPXbcLAV9zM=" +
@@ -45,12 +42,7 @@ public class BasicRegressionTest extends TestCase {
       "</soap11:Body>" +
       "</soap11:Envelope>\n";
 
-  public BasicRegressionTest() {
-    super();
-    initializeMetadata();
-  }
-
-  public void testSamlArtifact() throws Exception {
+  public void testSamlartifact() throws Exception {
     WebRequest request =
         new PostMethodWebRequest("http://localhost:8973/security-manager/samlartifact",
                                  new ByteArrayInputStream(entity.getBytes("UTF-8")),

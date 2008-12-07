@@ -14,7 +14,6 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.saml.common.Metadata;
 import com.google.enterprise.saml.common.OpenSamlUtil;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
@@ -64,10 +63,6 @@ public class SamlAuthz extends SecurityManagerServlet {
 
   private static final Logger LOGGER =
       Logger.getLogger(SamlAuthz.class.getName());
-
-  public SamlAuthz() {
-    super(Metadata.SM_KEY);
-  }
 
   /**
    * For now, responds with "yes" for all AuthzDecisionQueries with a

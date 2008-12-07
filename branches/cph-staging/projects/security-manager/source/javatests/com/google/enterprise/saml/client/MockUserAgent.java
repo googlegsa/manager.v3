@@ -55,10 +55,6 @@ public final class MockUserAgent {
       response = new MockHttpServletResponse();
       transport.exchange(request, response);
       referrer = request.getRequestURL().toString();
-      int q = referrer.indexOf("?");
-      if (q >= 0) {
-        referrer = referrer.substring(0, q);
-      }
     }
     return response;
   }
