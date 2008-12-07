@@ -52,6 +52,7 @@ public final class MockUserAgent {
     while (isRedirect(response)) {
       request = makeMockHttpGet(null, (String) response.getHeader("Location"));
       request.setSession(session);
+      request.addHeader("Referer", referrer);
       response = new MockHttpServletResponse();
       transport.exchange(request, response);
       referrer = request.getRequestURL().toString();

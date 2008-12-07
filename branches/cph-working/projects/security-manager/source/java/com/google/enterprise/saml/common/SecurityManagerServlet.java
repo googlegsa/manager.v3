@@ -49,6 +49,9 @@ public abstract class SecurityManagerServlet extends HttpServlet {
   /** Name of the session attribute that holds the SAML message context. */
   private static final String SAML_CONTEXT = "samlMessageContext";
 
+  /** Name of the attribute that holds the username/passwords awaiting verification. */
+  protected static final String CREDENTIALS = "credentials";
+  
   public static String httpDateString() {
     return dtFormat.print((new DateTime()).withZone(DateTimeZone.UTC));
   }

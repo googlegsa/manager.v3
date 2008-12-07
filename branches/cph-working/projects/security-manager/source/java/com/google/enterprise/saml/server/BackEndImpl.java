@@ -63,6 +63,7 @@ public class BackEndImpl implements BackEnd {
   private final SAMLArtifactMap artifactMap;
   private final EntityDescriptor smEntity;
   private final EntityDescriptor gsaEntity;
+  private final String loginFormConfigFile;
   private static final Logger LOGGER = Logger.getLogger(BackEndImpl.class.getName());
 
   // TODO(cph): The metadata doesn't belong in the back end.
@@ -74,9 +75,10 @@ public class BackEndImpl implements BackEnd {
    * @param authzResponder The authorization responder to use.
    */
   public BackEndImpl(SessionManagerInterface sm, AuthzResponder authzResponder,
-                     String acsUrl, String ssoUrl, String arUrl) {
+                     String loginFormConfigFile, String ssoUrl, String arUrl) {
     this.sm = sm;
     this.authzResponder = authzResponder;
+    this.loginFormConfigFile = loginFormConfigFile;
     artifactMap = new BasicSAMLArtifactMap(
         new BasicParserPool(),
         new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
@@ -114,6 +116,9 @@ public class BackEndImpl implements BackEnd {
 
   /** {@inheritDoc} */
   public Response validateCredentials(AuthnRequest request, UserIdentity id) {
+    if (id == null || id.isVerified())
+      return null;
+    
     return
         (handleAuthn(id)
         ? SamlAuthn.makeSuccessfulResponse(request, id.getUsername())
@@ -215,4 +220,7 @@ public class BackEndImpl implements BackEnd {
     }
   }
 
+  public String getAuthConfigFile() {
+    return loginFormConfigFile;
+  }
 }

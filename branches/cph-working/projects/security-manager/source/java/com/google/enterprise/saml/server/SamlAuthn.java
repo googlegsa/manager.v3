@@ -112,7 +112,7 @@ public class SamlAuthn extends SecurityManagerServlet
       
       // TODO is there a better way to deduce ACS URL??
       String referer = request.getHeader("Referer");
-      String gsaUrl = referer.substring(0, referer.indexOf("search?"));
+      String gsaUrl = referer.substring(0, referer.indexOf("search"));
       System.out.println("GSA URL is " + gsaUrl);
       makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI,
           gsaUrl + GsaConstants.GSA_ARTIFACT_HANDLER_NAME).setIsDefault(true);
@@ -132,18 +132,25 @@ public class SamlAuthn extends SecurityManagerServlet
       return;
     }
    
-    String formHtml = omniform(request);
+    String formHtml = omniform(backend.getAuthConfigFile(), request);
 
     response.getWriter().print(formHtml);
   }
 
-  private String omniform(HttpServletRequest request)
+  private String getAction(HttpServletRequest request) {
+    String url = request.getRequestURL().toString();
+    int q = url.indexOf("?");
+    
+    return (q < 0) ? url : url.substring(0, q);
+  }
+    
+  private String omniform(String configFile, HttpServletRequest request)
       throws NumberFormatException, IOException {
-    File tmpFile = new File("AuthSites.conf");
+    File tmpFile = new File(configFile);
     LOGGER.info("Opened CSV file " + tmpFile.getAbsolutePath());
     FileReader file = new FileReader(tmpFile);
     CSVReader reader = new CSVReader(file);
-    loginForm = new OmniForm(reader);
+    loginForm = new OmniForm(reader, getAction(request));
     String formHtml = loginForm.writeForm(null);
     
     return formHtml;
@@ -216,16 +223,20 @@ public class SamlAuthn extends SecurityManagerServlet
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         existingSamlMessageContext(request.getSession());
 
-    UserIdentity[] ids = loginForm.parse(request);
+    UserIdentity[] ids = (UserIdentity[]) request.getSession().getAttribute(SecurityManagerServlet.CREDENTIALS);
+    ids = loginForm.parse(request, ids);
     for (UserIdentity id : ids) {
       // TODO make the context keep a queue of response SAMLMessage's
-      context.setOutboundSAMLMessage(
-          backend.validateCredentials(context.getInboundSAMLMessage(), id));
+      Response samlMsg = backend.validateCredentials(context.getInboundSAMLMessage(), id);
+      if (samlMsg != null)
+        context.setOutboundSAMLMessage(samlMsg);    
     }
     
     // if not all identities get verified, repost omniform, with visual cues
     boolean hasInvalidCredential = false;
     for (UserIdentity id : ids) {
+      if (id == null) // Skip auth site for which the user did not provide credentials
+        continue;
       if (id.isVerified()) {
         Vector<Cookie> jar = id.getCookies();
         for (Cookie c : jar) {
@@ -236,12 +247,13 @@ public class SamlAuthn extends SecurityManagerServlet
     }
     
     if (hasInvalidCredential) {
+      request.getSession().setAttribute(SecurityManagerServlet.CREDENTIALS, ids);
       response.getWriter().print(loginForm.writeForm(ids));
       return;
     }
     
     // generate artifact, redirect, plant cookies
-    LOGGER.info("All sets of identities verified");
+    LOGGER.info("All identities verified");
     doRedirect(context, backend, response);
   }
 
