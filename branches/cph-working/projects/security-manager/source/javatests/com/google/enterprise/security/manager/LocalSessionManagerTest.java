@@ -15,7 +15,7 @@
 package com.google.enterprise.security.manager;
 
 import com.google.enterprise.security.manager.LocalSessionManager;
-import com.google.enterprise.session.manager.SessionManagerInterface;
+import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import junit.framework.TestCase;
 
