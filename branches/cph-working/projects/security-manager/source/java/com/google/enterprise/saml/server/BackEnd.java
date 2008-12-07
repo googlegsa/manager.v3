@@ -15,7 +15,7 @@
 package com.google.enterprise.saml.server;
 
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.sessionmanager.SessionManagerInterface;
+import com.google.enterprise.session.manager.SessionManagerInterface;
 import com.google.enterprise.connector.manager.ConnectorManager;
 
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;

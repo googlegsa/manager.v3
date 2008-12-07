@@ -39,10 +39,10 @@
  * @author kstillson@google.com (Ken Stillson)
  */
 
-package com.google.enterprise.sessionmanager;
+package com.google.enterprise.session.manager;
 
 /**
- * This is the primary interface for interacting with the sessionmanager.
+ * This is the primary interface for interacting with the session manager.
  * It has been separated out to facilitate possible future alternate
  * implementations.
  */

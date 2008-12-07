@@ -15,7 +15,8 @@
 package com.google.enterprise.security.manager;
 
 import com.google.common.base.Preconditions;
-import com.google.enterprise.sessionmanager.KeyMaterial;
+import com.google.enterprise.session.manager.KeyMaterial;
+import com.google.enterprise.session.object.SessionObject;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;

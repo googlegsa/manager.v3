@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.security.manager;
+package com.google.enterprise.session.object;
 
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
+import com.google.enterprise.security.manager.SessionInterface;
 
 public class AuthnDomain extends SessionObject {
 

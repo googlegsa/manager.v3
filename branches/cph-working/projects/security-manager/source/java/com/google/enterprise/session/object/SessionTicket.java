@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.security.manager;
+package com.google.enterprise.session.object;
 
-public class SessionCookie extends SessionObject {
+import com.google.enterprise.security.manager.SessionInterface;
 
-  public SessionCookie(SessionInterface session) {
+public class SessionTicket extends SessionObject {
+
+  public SessionTicket(SessionInterface session) {
     super(session);
   }
 }
