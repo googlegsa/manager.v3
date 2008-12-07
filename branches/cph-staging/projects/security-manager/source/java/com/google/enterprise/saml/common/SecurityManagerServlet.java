@@ -24,6 +24,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
+import org.opensaml.saml2.metadata.EntityDescriptor;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -52,6 +53,12 @@ public abstract class SecurityManagerServlet extends HttpServlet {
   /** Name of the attribute that holds the username/passwords awaiting verification. */
   protected static final String CREDENTIALS = "credentials";
   
+  private final String entityType;
+
+  protected SecurityManagerServlet(String entityType) {
+    this.entityType = entityType;
+  }
+
   public static String httpDateString() {
     return dtFormat.print((new DateTime()).withZone(DateTimeZone.UTC));
   }
@@ -62,6 +69,25 @@ public abstract class SecurityManagerServlet extends HttpServlet {
 
   public static BackEnd getBackEnd(ServletContext sc) {
     return getConnectorManager(sc).getBackEnd();
+  }
+
+  public EntityDescriptor getLocalEntity() {
+    return Metadata.getMetadata(entityType).getLocalEntity();
+  }
+
+  public EntityDescriptor getPeerEntity(String issuer) {
+    /*
+    // TODO is there a better way to deduce ACS URL??
+    String referer = request.getHeader("Referer");
+    String gsaUrl = referer.substring(0, referer.indexOf("search?"));
+    System.out.println("GSA URL is " + gsaUrl);
+    return Metadata.getMetadata(entityType).getPeerEntity(gsaUrl);
+    */
+    return Metadata.getMetadata(entityType).getPeerEntity(issuer);
+  }
+
+  public EntityDescriptor getPeerEntity() {
+    return Metadata.getMetadata(entityType).getPeerEntity();
   }
 
   /**

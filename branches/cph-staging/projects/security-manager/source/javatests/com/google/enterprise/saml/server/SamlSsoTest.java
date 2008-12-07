@@ -14,12 +14,11 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.client.MockArtifactConsumer;
 import com.google.enterprise.saml.client.MockServiceProvider;
 import com.google.enterprise.saml.client.MockUserAgent;
-import com.google.enterprise.saml.common.GsaConstants;
+import com.google.enterprise.saml.common.Metadata;
 import com.google.enterprise.saml.common.MockHttpTransport;
 
 import junit.framework.TestCase;
@@ -37,19 +36,18 @@ import java.net.MalformedURLException;
 
 import javax.servlet.ServletException;
 
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertionConsumerService;
+import static com.google.enterprise.saml.common.Metadata.getMetadata;
 import static com.google.enterprise.saml.common.SamlTestUtil.generatePostContent;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpGet;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
-
-import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
-import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
+import static com.google.enterprise.saml.common.TestMetadata.getMockSpUrl;
+import static com.google.enterprise.saml.common.TestMetadata.initializeMetadata;
 
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 
-public class SamlSsoTest extends TestCase {
+import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 
-  private static final String spUrl = "http://localhost:8973/search";
+public class SamlSsoTest extends TestCase {
 
   private final MockUserAgent userAgent;
 
@@ -59,25 +57,25 @@ public class SamlSsoTest extends TestCase {
     Context ctx = Context.getInstance();
     ctx.setStandaloneContext("source/webdocs/test/applicationContext.xml",
                              Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
-    BackEnd backend = ((ConnectorManager) ctx.getManager()).getBackEnd();
+    initializeMetadata();
 
     // Initialize transport
     MockHttpTransport transport = new MockHttpTransport();
     userAgent = new MockUserAgent(transport);
 
-    EntityDescriptor gsaEntity = backend.getGsaEntity();
+    EntityDescriptor gsaEntity = getMetadata(Metadata.MOCK_SP_KEY).getLocalEntity();
     SPSSODescriptor sp = gsaEntity.getSPSSODescriptor(SAML20P_NS);
-    makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI,
-        "http://localhost:8973/" + GsaConstants.GSA_ARTIFACT_HANDLER_NAME).setIsDefault(true);
     transport.registerServlet(sp.getDefaultAssertionConsumerService(),
                               new MockArtifactConsumer(transport));
 
-    EntityDescriptor smEntity = backend.getSecurityManagerEntity();
+    EntityDescriptor smEntity = getMetadata(Metadata.SM_KEY).getLocalEntity();
     IDPSSODescriptor idp = smEntity.getIDPSSODescriptor(SAML20P_NS);
-    transport.registerServlet(idp.getSingleSignOnServices().get(0), new SamlAuthn());
-    transport.registerServlet(idp.getDefaultArtificateResolutionService(), new SamlArtifactResolve());
+    transport.registerServlet(idp.getSingleSignOnServices().get(0),
+                              new SamlAuthn());
+    transport.registerServlet(idp.getDefaultArtificateResolutionService(),
+                              new SamlArtifactResolve());
 
-    transport.registerServlet(spUrl, new MockServiceProvider());
+    transport.registerServlet(getMockSpUrl(), new MockServiceProvider());
   }
 
   public void testCredentials() throws ServletException, IOException, MalformedURLException {
@@ -89,7 +87,7 @@ public class SamlSsoTest extends TestCase {
       throws ServletException, IOException, MalformedURLException {
 
     // Initial request to service provider
-    MockHttpServletResponse response1 = userAgent.exchange(makeMockHttpGet(null, spUrl));
+    MockHttpServletResponse response1 = userAgent.exchange(makeMockHttpGet(null, getMockSpUrl()));
 
     // Parse credentials-gathering form
     assertEquals("Incorrect response status code", SC_OK, response1.getStatus());

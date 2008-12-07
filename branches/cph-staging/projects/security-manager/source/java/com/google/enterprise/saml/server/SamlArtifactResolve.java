@@ -14,6 +14,7 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.saml.common.Metadata;
 import com.google.enterprise.saml.common.PostableHttpServlet;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
@@ -62,6 +63,10 @@ public class SamlArtifactResolve extends SecurityManagerServlet implements Posta
   private static final long serialVersionUID = 1L;
   private static final Logger LOGGER = Logger.getLogger(SamlArtifactResolve.class.getName());
 
+  public SamlArtifactResolve() {
+    super(Metadata.SM_KEY);
+  }
+
   @Override
   public void doPost(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
@@ -71,12 +76,13 @@ public class SamlArtifactResolve extends SecurityManagerServlet implements Posta
     SAMLMessageContext<ArtifactResolve, ArtifactResponse, NameID> context =
         makeSamlMessageContext();
 
-    EntityDescriptor localEntity = backend.getSecurityManagerEntity();
+    EntityDescriptor localEntity = getLocalEntity();
     initializeLocalEntity(context, localEntity, localEntity.getIDPSSODescriptor(SAML20P_NS),
                           ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
     context.setOutboundMessageIssuer(localEntity.getEntityID());
 
-    EntityDescriptor peerEntity = backend.getGsaEntity();
+    // TODO(cph): need way to select the correct peer entity.
+    EntityDescriptor peerEntity = getPeerEntity();
     initializePeerEntity(context, peerEntity, peerEntity.getSPSSODescriptor(SAML20P_NS),
                          Endpoint.DEFAULT_ELEMENT_NAME);
     selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);

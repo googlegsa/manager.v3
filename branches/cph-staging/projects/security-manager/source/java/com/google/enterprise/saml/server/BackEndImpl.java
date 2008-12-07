@@ -31,25 +31,12 @@ import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.StatusCode;
-import org.opensaml.saml2.metadata.EntityDescriptor;
-import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-
-import static com.google.enterprise.saml.common.OpenSamlUtil.GSA_ISSUER;
-import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResolutionService;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeEntityDescriptor;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeIdpSsoDescriptor;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeSingleSignOnService;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeSpSsoDescriptor;
-
-import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
-import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
 
 /**
  * An implementation of the BackEnd interface for the Security Manager.
@@ -61,12 +48,8 @@ public class BackEndImpl implements BackEnd {
   private ConnectorManager manager;
   private final AuthzResponder authzResponder;
   private final SAMLArtifactMap artifactMap;
-  private final EntityDescriptor smEntity;
-  private final EntityDescriptor gsaEntity;
   private final String loginFormConfigFile;
   private static final Logger LOGGER = Logger.getLogger(BackEndImpl.class.getName());
-
-  // TODO(cph): The metadata doesn't belong in the back end.
 
   /**
    * Create a new backend object.
@@ -75,7 +58,7 @@ public class BackEndImpl implements BackEnd {
    * @param authzResponder The authorization responder to use.
    */
   public BackEndImpl(SessionManagerInterface sm, AuthzResponder authzResponder,
-                     String loginFormConfigFile, String ssoUrl, String arUrl) {
+                     String loginFormConfigFile) {
     this.sm = sm;
     this.authzResponder = authzResponder;
     this.loginFormConfigFile = loginFormConfigFile;
@@ -83,18 +66,6 @@ public class BackEndImpl implements BackEnd {
         new BasicParserPool(),
         new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
         artifactLifetime);
-
-    // Build metadata for security manager
-    smEntity = makeEntityDescriptor(SM_ISSUER);
-    IDPSSODescriptor idp = makeIdpSsoDescriptor(smEntity);
-    makeSingleSignOnService(idp, SAML2_REDIRECT_BINDING_URI, ssoUrl);
-    makeArtifactResolutionService(idp, SAML2_SOAP11_BINDING_URI, arUrl).setIsDefault(true);
-
-    // Build metadata for GSA
-    gsaEntity = makeEntityDescriptor(GSA_ISSUER);
-    makeSpSsoDescriptor(gsaEntity);
-    // SPSSODescriptor sp = makeSpSsoDescriptor(gsaEntity);
-    // makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI, acsUrl).setIsDefault(true);
   }
 
   /** {@inheritDoc} */
@@ -104,14 +75,6 @@ public class BackEndImpl implements BackEnd {
   /** {@inheritDoc} */
   public SessionManagerInterface getSessionManager() {
     return sm;
-  }
-
-  public EntityDescriptor getSecurityManagerEntity() {
-    return smEntity;
-  }
-
-  public EntityDescriptor getGsaEntity() {
-    return gsaEntity;
   }
 
   /** {@inheritDoc} */

@@ -15,8 +15,8 @@
 package com.google.enterprise.saml.client;
 
 import com.google.enterprise.saml.common.GettableHttpServlet;
+import com.google.enterprise.saml.common.Metadata;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
-import com.google.enterprise.saml.server.BackEnd;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -60,6 +60,7 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
   private static final long serialVersionUID = 1L;
 
   public MockServiceProvider() throws ServletException {
+    super(Metadata.MOCK_SP_KEY);
     init(new MockServletConfig());
   }
 
@@ -84,16 +85,16 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
   }
 
   private void ifUnknown(HttpServletResponse resp, String relayState) throws ServletException {
-    BackEnd backend = getBackEnd(getServletContext());
-
     SAMLMessageContext<SAMLObject, AuthnRequest, NameID> context = makeSamlMessageContext();
-    
-    EntityDescriptor localEntity = backend.getGsaEntity();
+
+    EntityDescriptor localEntity = getLocalEntity();
     SPSSODescriptor sp = localEntity.getSPSSODescriptor(SAML20P_NS);
     initializeLocalEntity(context, localEntity, sp, Endpoint.DEFAULT_ELEMENT_NAME);
     context.setOutboundMessageIssuer(localEntity.getEntityID());
     {
-      EntityDescriptor peerEntity = backend.getSecurityManagerEntity();
+      // This call to getPeerEntity() works because the test metadata has only a single peer.
+      // If there were multiple peers it would do the wrong thing.
+      EntityDescriptor peerEntity = getPeerEntity();
       initializePeerEntity(context, peerEntity, peerEntity.getIDPSSODescriptor(SAML20P_NS),
                            SingleSignOnService.DEFAULT_ELEMENT_NAME);
       selectPeerEndpoint(context, SAML2_REDIRECT_BINDING_URI);
