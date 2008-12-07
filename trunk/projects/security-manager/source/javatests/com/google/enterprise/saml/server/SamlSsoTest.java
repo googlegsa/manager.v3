@@ -46,7 +46,6 @@ import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
 
 import static javax.servlet.http.HttpServletResponse.SC_OK;
-import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 public class SamlSsoTest extends TestCase {
 
