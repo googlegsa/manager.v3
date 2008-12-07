@@ -38,13 +38,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.GOOGLE_PROVIDER_NAME;
+import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnRequest;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
-import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
 
 import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
@@ -90,22 +90,18 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
     EntityDescriptor localEntity = getLocalEntity();
     SPSSODescriptor sp = localEntity.getSPSSODescriptor(SAML20P_NS);
     initializeLocalEntity(context, localEntity, sp, Endpoint.DEFAULT_ELEMENT_NAME);
-    context.setOutboundMessageIssuer(localEntity.getEntityID());
     {
-      // This call to getPeerEntity() works because the test metadata has only a single peer.
-      // If there were multiple peers it would do the wrong thing.
-      EntityDescriptor peerEntity = getPeerEntity();
+      EntityDescriptor peerEntity = getPeerEntity(SM_ISSUER);
       initializePeerEntity(context, peerEntity, peerEntity.getIDPSSODescriptor(SAML20P_NS),
-                           SingleSignOnService.DEFAULT_ELEMENT_NAME);
-      selectPeerEndpoint(context, SAML2_REDIRECT_BINDING_URI);
-      context.setInboundMessageIssuer(peerEntity.getEntityID());
+                           SingleSignOnService.DEFAULT_ELEMENT_NAME,
+                           SAML2_REDIRECT_BINDING_URI);
     }
 
     // Generate the request
     {
       AuthnRequest authnRequest = makeAuthnRequest();
       authnRequest.setProviderName(GOOGLE_PROVIDER_NAME);
-      authnRequest.setIssuer(makeIssuer(localEntity.getEntityID()));
+      authnRequest.setIssuer(makeIssuer(context.getOutboundMessageIssuer()));
       authnRequest.setIsPassive(false);
       authnRequest.setAssertionConsumerServiceIndex(
           sp.getDefaultAssertionConsumerService().getIndex());

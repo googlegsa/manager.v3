@@ -57,7 +57,6 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
-import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
 import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
 
 import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
@@ -139,15 +138,13 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
     EntityDescriptor localEntity = getLocalEntity();
     initializeLocalEntity(context, localEntity, localEntity.getSPSSODescriptor(SAML20P_NS),
                           Endpoint.DEFAULT_ELEMENT_NAME);
-    context.setOutboundMessageIssuer(localEntity.getEntityID());
     {
-      // This call to getPeerEntity() works because the test metadata has only a single peer.
-      // If there were multiple peers it would do the wrong thing.
-      EntityDescriptor peerEntity = getPeerEntity();
+      // TODO(cph): extract artifact resolution service entity ID from artifact and use that to get
+      // the peer entity.
+      EntityDescriptor peerEntity = getPeerEntity(null);
       initializePeerEntity(context, peerEntity, peerEntity.getIDPSSODescriptor(SAML20P_NS),
-                           ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
-      selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
-      context.setInboundMessageIssuer(peerEntity.getEntityID());
+                           ArtifactResolutionService.DEFAULT_ELEMENT_NAME,
+                           SAML2_SOAP11_BINDING_URI);
     }
 
     // Generate the request

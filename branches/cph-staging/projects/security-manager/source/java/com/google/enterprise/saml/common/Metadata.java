@@ -49,15 +49,15 @@ public class Metadata {
   }
 
   public EntityDescriptor getPeerEntity(String issuer) {
+    // TODO(cph): remove null case when last caller fixed.
+    if (issuer == null) {
+      return peerEntities.get(0);
+    }
     for (EntityDescriptor entity: peerEntities) {
       if (entity.getEntityID().equals(issuer)) {
         return entity;
       }
     }
     throw new IllegalArgumentException("Unknown issuer: " + issuer);
-  }
-
-  public EntityDescriptor getPeerEntity() {
-    return peerEntities.get(0);
   }
 }

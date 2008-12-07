@@ -76,18 +76,7 @@ public abstract class SecurityManagerServlet extends HttpServlet {
   }
 
   public EntityDescriptor getPeerEntity(String issuer) {
-    /*
-    // TODO is there a better way to deduce ACS URL??
-    String referer = request.getHeader("Referer");
-    String gsaUrl = referer.substring(0, referer.indexOf("search?"));
-    System.out.println("GSA URL is " + gsaUrl);
-    return Metadata.getMetadata(entityType).getPeerEntity(gsaUrl);
-    */
     return Metadata.getMetadata(entityType).getPeerEntity(issuer);
-  }
-
-  public EntityDescriptor getPeerEntity() {
-    return Metadata.getMetadata(entityType).getPeerEntity();
   }
 
   /**

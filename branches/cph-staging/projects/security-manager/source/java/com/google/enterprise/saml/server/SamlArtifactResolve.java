@@ -48,7 +48,6 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageCont
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
-import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
@@ -75,23 +74,20 @@ public class SamlArtifactResolve extends SecurityManagerServlet implements Posta
     // Establish the SAML message context
     SAMLMessageContext<ArtifactResolve, ArtifactResponse, NameID> context =
         makeSamlMessageContext();
-
     EntityDescriptor localEntity = getLocalEntity();
     initializeLocalEntity(context, localEntity, localEntity.getIDPSSODescriptor(SAML20P_NS),
                           ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
-    context.setOutboundMessageIssuer(localEntity.getEntityID());
-
-    // TODO(cph): need way to select the correct peer entity.
-    EntityDescriptor peerEntity = getPeerEntity();
-    initializePeerEntity(context, peerEntity, peerEntity.getSPSSODescriptor(SAML20P_NS),
-                         Endpoint.DEFAULT_ELEMENT_NAME);
-    selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
-    context.setInboundMessageIssuer(peerEntity.getEntityID());
 
     // Decode the request
     context.setInboundMessageTransport(new HttpServletRequestAdapter(req));
     runDecoder(new HTTPSOAP11Decoder(), context);
     ArtifactResolve artifactResolve = context.getInboundSAMLMessage();
+
+    // Select entity for response
+    EntityDescriptor peerEntity = getPeerEntity(context.getInboundMessageIssuer());
+    initializePeerEntity(context, peerEntity, peerEntity.getSPSSODescriptor(SAML20P_NS),
+                         Endpoint.DEFAULT_ELEMENT_NAME,
+                         SAML2_SOAP11_BINDING_URI);
 
     // Create response
     ArtifactResponse artifactResponse =

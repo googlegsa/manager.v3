@@ -63,7 +63,6 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatusMessage;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSubject;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
-import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
@@ -107,21 +106,19 @@ public class SamlAuthn extends SecurityManagerServlet
       EntityDescriptor localEntity = getLocalEntity();
       initializeLocalEntity(context, localEntity, localEntity.getIDPSSODescriptor(SAML20P_NS),
                             SingleSignOnService.DEFAULT_ELEMENT_NAME);
-      context.setOutboundMessageIssuer(localEntity.getEntityID());
-    }
-    {
-      // TODO(cph): need way to select the correct peer entity.
-      EntityDescriptor peerEntity = getPeerEntity();
-      SPSSODescriptor sp = peerEntity.getSPSSODescriptor(SAML20P_NS);
-      initializePeerEntity(context, peerEntity, sp,
-                           AssertionConsumerService.DEFAULT_ELEMENT_NAME);
-      selectPeerEndpoint(context, SAML2_ARTIFACT_BINDING_URI);
-      context.setInboundMessageIssuer(peerEntity.getEntityID());
     }
 
     // Decode the request
     context.setInboundMessageTransport(new HttpServletRequestAdapter(request));
     runDecoder(new HTTPRedirectDeflateDecoder(), context);
+
+    // Select entity for response
+    {
+      EntityDescriptor peerEntity = getPeerEntity(context.getInboundMessageIssuer());
+      initializePeerEntity(context, peerEntity, peerEntity.getSPSSODescriptor(SAML20P_NS),
+                           AssertionConsumerService.DEFAULT_ELEMENT_NAME,
+                           SAML2_ARTIFACT_BINDING_URI);
+    }
 
     // If there's a cookie we can decode, use that
     // TODO fold this nicely into multiple identities
