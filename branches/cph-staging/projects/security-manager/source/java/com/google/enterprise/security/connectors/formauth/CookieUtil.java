@@ -96,7 +96,7 @@ public final class CookieUtil {
    *  @param logger A Logger to log HTTP communication.  Ignored if null.
    *  @return The HTTP status code of the request.
    *  
-   *  TODO(kstillson)- passwordFields is not a good approach;  we cannot predict
+   *  TODO - passwordFields is not a good approach;  we cannot predict
    *  password field names.  It would be much better to scan the html field 
    *  TYPES for a type of "password."  The enum of types is set by the html 
    *  standard, the range of possible password field names is unlimited.
@@ -256,6 +256,8 @@ public final class CookieUtil {
           }
         }
 
+        // TODO what to do with cookies that have no "domain" attribute??
+        
         // Now delete all cookies marked for deletion.
         for (Cookie cookie : cookies) {
           String thisName = cookie.getName();

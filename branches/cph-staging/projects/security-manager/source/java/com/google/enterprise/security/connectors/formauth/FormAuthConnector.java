@@ -163,6 +163,9 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
  
     HtmlCleaner cleaner = new HtmlCleaner();
     TagNode[] forms = cleaner.clean(form.toString()).getElementsByName("form", true);
+    if (forms.length < 1) {
+      return names;
+    }
     System.out.println("Got form " + forms[0].getAttributeByName("name"));
     TagNode[] inputs = forms[0].getElementsByName("input", true);
     System.out.println("Got " + inputs.length + " input fields");
