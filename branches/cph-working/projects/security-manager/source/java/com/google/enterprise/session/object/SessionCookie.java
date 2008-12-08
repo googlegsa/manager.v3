@@ -18,7 +18,79 @@ import com.google.enterprise.security.manager.SessionInterface;
 
 public class SessionCookie extends SessionObject {
 
-  public SessionCookie(SessionInterface session) {
+  private static final String NAME_KEY = "name";
+  private static final String VALUE_KEY = "value";
+  private static final String DOMAIN_KEY = "domain";
+  private static final String PATH_KEY = "path";
+  private static final String COMMENT_KEY = "comment";
+  private static final String IS_SECURE_KEY = "isSecure";
+  private static final String MAX_AGE_KEY = "maxAge";
+  private static final String VERSION_KEY = "version";
+
+  public SessionCookie(SessionInterface session, String name, String value) {
     super(session);
+    setString(NAME_KEY, name);
+    setValue(value);
+    setVersion(0);
+  }
+
+  public String getName() {
+    return getString(NAME_KEY);
+  }
+
+  public String getValue() {
+    return getString(VALUE_KEY);
+  }
+
+  public void setValue(String value) {
+    setString(VALUE_KEY, value);
+  }
+
+  public String getDomain() {
+    return getString(DOMAIN_KEY);
+  }
+
+  public void setDomain(String domain) {
+    setString(DOMAIN_KEY, domain);
+  }
+
+  public String getPath() {
+    return getString(PATH_KEY);
+  }
+
+  public void setPath(String path) {
+    setString(PATH_KEY, path);
+  }
+
+  public String getComment() {
+    return getString(COMMENT_KEY);
+  }
+
+  public void setComment(String comment) {
+    setString(COMMENT_KEY, comment);
+  }
+
+  public boolean getSecure() {
+    return getBoolean(IS_SECURE_KEY);
+  }
+
+  public void setSecure(boolean isSecure) {
+    setBoolean(IS_SECURE_KEY, isSecure);
+  }
+
+  public int getMaxAge() {
+    return getInt(MAX_AGE_KEY);
+  }
+
+  public void setMaxAge(int maxAge) {
+    setInt(MAX_AGE_KEY, maxAge);
+  }
+
+  public int getVersion() {
+    return getInt(VERSION_KEY);
+  }
+
+  public void setVersion(int version) {
+    setInt(VERSION_KEY, version);
   }
 }
