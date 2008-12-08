@@ -18,11 +18,12 @@ import com.google.enterprise.security.manager.SessionInterface;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class SessionObject {
 
   protected static final String SEP = "/";
-  private static int nextIndex = 0;
+  private static AtomicInteger objectIndex = new AtomicInteger();
   private static final Pattern oidPattern =
       Pattern.compile("__OBJ__" + SEP + "([a-zA-Z0-9.]+)" + SEP + "[0-9]+");
 
@@ -34,10 +35,7 @@ public abstract class SessionObject {
 
   protected SessionObject(SessionInterface session) {
     this.session = session;
-    int n;
-    synchronized (SessionObject.class) {
-      n = (nextIndex++);
-    }
+    int n = objectIndex.getAndIncrement();
     oid = "__OBJ__" + SEP + this.getClass().getName() + SEP + n;
     session.cacheOidValue(oid, this);
   }
