@@ -14,8 +14,6 @@
 
 package com.google.enterprise.session.object;
 
-import com.google.enterprise.security.manager.SessionInterface;
-
 public class SessionCookie extends SessionObject {
 
   private static final String NAME_KEY = "name";
@@ -27,11 +25,9 @@ public class SessionCookie extends SessionObject {
   private static final String MAX_AGE_KEY = "maxAge";
   private static final String VERSION_KEY = "version";
 
-  public SessionCookie(SessionInterface session, String name, String value) {
-    super(session);
+  SessionCookie(SessionRoot root, String name) {
+    super(root);
     setString(NAME_KEY, name);
-    setValue(value);
-    setVersion(0);
   }
 
   public String getName() {

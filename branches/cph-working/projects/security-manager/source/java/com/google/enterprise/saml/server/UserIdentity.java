@@ -1,10 +1,12 @@
 package com.google.enterprise.saml.server;
 
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
-import com.google.enterprise.saml.common.GsaConstants.AuthNDecision;
+import com.google.enterprise.session.metadata.AuthnDomainMetadata.AuthnMechanism;
+import com.google.enterprise.session.object.AuthnDomainCredentials;
+import com.google.enterprise.session.object.SessionCookie;
 
+import java.util.HashSet;
 import java.util.Set;
-import java.util.Vector;
 
 import javax.servlet.http.Cookie;
 
@@ -14,69 +16,78 @@ import javax.servlet.http.Cookie;
  */
 public class UserIdentity implements AuthenticationIdentity {
 
-  private final String username;
-  private final String password;
-  private AuthSite site;
-  private AuthNDecision status;
-  
-  private final Vector<Cookie> cookieJar;
+  private final AuthnDomainCredentials credentials;
 
-  public String getPassword() {
-    return password;
+  public UserIdentity(AuthnDomainCredentials credentials) {
+    this.credentials = credentials;
   }
 
+  /** {@inheritDoc} */
   public String getUsername() {
-    return username;
+    return credentials.getUsername();
   }
 
-  public UserIdentity(final String username, final String password, final AuthSite site) {
-    this.username = username;
-    this.password = password;
-    this.site = site;
-    cookieJar = new Vector<Cookie>();
+  /** {@inheritDoc} */
+  public String getPassword() {
+    return credentials.getPassword();
   }
 
+  /** {@inheritDoc} */
   public String getCookie(String cookieName) {
     if (cookieName == null || cookieName.length() < 1) {
       throw new IllegalArgumentException();
     }
-    for (Cookie c : cookieJar) {
+    for (SessionCookie c: credentials.getCookies()) {
       if (cookieName.equals(c.getName()))
         return c.getValue();
     }
     return null;
   }
 
+  /** {@inheritDoc} */
   public String setCookie(String cookieName, String value) {
-    throw new IllegalArgumentException();
+    SessionCookie sc = credentials.getCookie(cookieName);
+    String oldValue = sc.getValue();
+    sc.setValue(value);
+    return oldValue;
   }
-  
+
+  /** {@inheritDoc} */
   public void setCookie(Cookie c) {
-    cookieJar.add(c);
+    SessionCookie sc = credentials.getCookie(c.getName());
+    sc.setValue(c.getValue());
+    sc.setDomain(c.getDomain());
+    sc.setPath(c.getPath());
+    sc.setComment(c.getComment());
+    sc.setSecure(c.getSecure());
+    sc.setMaxAge(c.getMaxAge());
+    sc.setVersion(c.getVersion());
   }
 
   @SuppressWarnings("unchecked")
+  /** {@inheritDoc} */
   public Set getCookieNames() {
-    throw new IllegalArgumentException();
+    Set<String> names = new HashSet<String>();
+    for (SessionCookie c: credentials.getCookies()) {
+      names.add(c.getName());
+    }
+    return names;
   }
-  public Vector<Cookie> getCookies() {
-    return this.cookieJar;
-  }
-  public void setAuthSite(AuthSite site) {
-    this.site = site;
-  }
-  public AuthSite getAuthSite() {
-    return this.site;
-  }
-  
+
+  /** {@inheritDoc} */
   public String getLoginUrl() {
-    return site.getLoginUri();
+    return credentials.getMetadata().getLoginUrl();
   }
   
   public void setVerified() {
-    status = AuthNDecision.VERIFIED;
+    credentials.setVerified(true);
   }
+
   public boolean isVerified() {
-    return(status == AuthNDecision.VERIFIED);
+    return credentials.isVerified();
+  }
+
+  public AuthnMechanism getMechanism() {
+    return credentials.getMetadata().getMechanism();
   }
 }

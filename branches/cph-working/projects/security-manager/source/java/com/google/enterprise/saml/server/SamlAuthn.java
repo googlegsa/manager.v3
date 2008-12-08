@@ -16,7 +16,6 @@ package com.google.enterprise.saml.server;
 
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.common.GettableHttpServlet;
-import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.PostableHttpServlet;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
@@ -115,7 +114,7 @@ public class SamlAuthn extends SecurityManagerServlet
       String gsaUrl = referer.substring(0, referer.indexOf("search"));
       System.out.println("GSA URL is " + gsaUrl);
       makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI,
-          gsaUrl + GsaConstants.GSA_ARTIFACT_HANDLER_NAME).setIsDefault(true);
+          gsaUrl + "SamlArtifactConsumer").setIsDefault(true);
       initializePeerEntity(context, peerEntity, sp,
                            AssertionConsumerService.DEFAULT_ELEMENT_NAME);
       selectPeerEndpoint(context, SAML2_ARTIFACT_BINDING_URI);
@@ -223,7 +222,7 @@ public class SamlAuthn extends SecurityManagerServlet
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         existingSamlMessageContext(request.getSession());
 
-    UserIdentity[] ids = (UserIdentity[]) request.getSession().getAttribute(SecurityManagerServlet.CREDENTIALS);
+    SessionList<AuthnDomainCredentials> credentials = getRoot().getCredentials();
     ids = loginForm.parse(request, ids);
     for (UserIdentity id : ids) {
       // TODO make the context keep a queue of response SAMLMessage's
@@ -238,7 +237,7 @@ public class SamlAuthn extends SecurityManagerServlet
       if (id == null) // Skip auth site for which the user did not provide credentials
         continue;
       if (id.isVerified()) {
-        Vector<Cookie> jar = id.getCookies();
+        List<Cookie> jar = id.getCookies();
         for (Cookie c : jar) {
           response.addCookie(c);
         }

@@ -14,8 +14,6 @@
 
 package com.google.enterprise.session.object;
 
-import com.google.enterprise.security.manager.SessionInterface;
-
 public class SessionPair<A extends SessionObject, D extends SessionObject>
     extends SessionObject {
 
@@ -23,8 +21,8 @@ public class SessionPair<A extends SessionObject, D extends SessionObject>
   private static final String FIRST_KEY = "car";
   private static final String SECOND_KEY = "cdr";
 
-  public SessionPair(SessionInterface session, A first, D second) {
-    super(session);
+  public SessionPair(SessionRoot root, A first, D second) {
+    super(root);
     setFirst(first);
     setSecond(second);
   }

@@ -17,6 +17,8 @@ package com.google.enterprise.saml.common;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.server.BackEnd;
+import com.google.enterprise.session.manager.SessionManagerInterface;
+import com.google.enterprise.session.object.SessionRoot;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -31,6 +33,7 @@ import java.io.PrintWriter;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
@@ -62,6 +65,21 @@ public abstract class SecurityManagerServlet extends HttpServlet {
 
   public static BackEnd getBackEnd(ServletContext sc) {
     return getConnectorManager(sc).getBackEnd();
+  }
+
+  public SessionRoot getSessionRoot(HttpServletRequest request) {
+    SessionManagerInterface sessionManager =
+        getBackEnd(getServletContext()).getSessionManager();
+    HttpSession session = request.getSession();
+    String id;
+    synchronized (session) {
+      id = String.class.cast(session.getAttribute("SessionId"));
+      if (id == null) {
+        id = sessionManager.createSession();
+        session.setAttribute("SessionId", id);
+      }
+    }
+    return SessionRoot.getInstance(sessionManager, id);
   }
 
   /**

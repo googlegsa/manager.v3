@@ -14,16 +14,14 @@
 
 package com.google.enterprise.session.object;
 
-import com.google.enterprise.security.manager.SessionInterface;
-
 public class SessionMap<K extends SessionObject, V extends SessionObject>
     extends SessionObject {
 
   private static final String ENTRIES_KEY = "entries";
 
-  public SessionMap(SessionInterface session) {
-    super(session);
-    setObject(ENTRIES_KEY, new SessionList<SessionPair<K, V>>(session));
+  public SessionMap(SessionRoot root) {
+    super(root);
+    setObject(ENTRIES_KEY, new SessionList<SessionPair<K, V>>(root));
   }
 
   private SessionList<SessionPair<K, V>> getEntries() {
@@ -65,6 +63,6 @@ public class SessionMap<K extends SessionObject, V extends SessionObject>
         return;
       }
     }
-    entries.add(new SessionPair<K, V>(session, key, value));
+    entries.add(new SessionPair<K, V>(root, key, value));
   }
 }

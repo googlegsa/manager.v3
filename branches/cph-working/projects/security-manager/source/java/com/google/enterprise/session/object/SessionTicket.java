@@ -14,11 +14,6 @@
 
 package com.google.enterprise.session.object;
 
-import com.google.enterprise.security.manager.SessionInterface;
-
+// TODO(cph): implement
 public class SessionTicket extends SessionObject {
-
-  public SessionTicket(SessionInterface session) {
-    super(session);
-  }
 }

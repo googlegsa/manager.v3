@@ -14,60 +14,99 @@
 
 package com.google.enterprise.session.object;
 
-import com.google.enterprise.security.manager.SessionInterface;
-
-import java.util.Iterator;
+import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
 public class SessionList<T extends SessionObject> extends SessionObject implements Iterable<T> {
 
   private static final String N_ELEMENTS_KEY = "nElements";
   private static final String ELEMENTS_KEY = "elements";
 
-  public SessionList(SessionInterface session) {
-    super(session);
+  public SessionList(SessionRoot root) {
+    super(root);
     setInt(N_ELEMENTS_KEY, 0);
   }
 
-  public int size() {
+  public synchronized int size() {
     return getInt(N_ELEMENTS_KEY);
   }
 
-  public void add(T element) {
+  public synchronized T get(int index) {
+    if (index < 0 || index >= size()) {
+      throw new ArrayIndexOutOfBoundsException();
+    }
+    return getObject(ELEMENTS_KEY + SEP + index);
+  }
+
+  public synchronized void set(int index, T element) {
+    if (index < 0 || index >= size()) {
+      throw new ArrayIndexOutOfBoundsException();
+    }
+    setObject(ELEMENTS_KEY + SEP + index, element);
+  }
+
+  public synchronized void add(T element) {
     // We assume here that only the security manager writes, and the GSA
     // only reads.  So we need only worry about thread contention in the
     // security manager.
-    int n;
-    synchronized (session) {
-      n = getInt(N_ELEMENTS_KEY);
-      setObject(ELEMENTS_KEY + SEP + n, element);
-      setInt(N_ELEMENTS_KEY, n + 1);
-    }
+    int n = size();
+    setObject(ELEMENTS_KEY + SEP + n, element);
+    setInt(N_ELEMENTS_KEY, n + 1);
   }
 
-  public Iterator<T> iterator() {
+  public ListIterator<T> iterator() {
     return new SessionListIterator();
   }
 
-  class SessionListIterator implements Iterator<T> {
+  class SessionListIterator implements ListIterator<T> {
 
     private int index = 0;
+    private int prevIndex = -1;
 
     public boolean hasNext() {
       return index < size();
     }
 
-    public T next() {
-      int n;
-      synchronized (this) {
-        if (index >= size()) {
-          return null;
-        }
-        n = index++;
+    public boolean hasPrevious() {
+      return index > 0;
+    }
+
+    public int nextIndex() {
+      return index;
+    }
+
+    public int previousIndex() {
+      return index - 1;
+    }
+
+    public synchronized T next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException();
       }
-      return getObject(ELEMENTS_KEY + SEP + n);
+      prevIndex = (index++);
+      return getObject(ELEMENTS_KEY + SEP + prevIndex);
+    }
+
+    public synchronized T previous() {
+      if (!hasPrevious()) {
+        throw new NoSuchElementException();
+      }
+      prevIndex = (--index);
+      return getObject(ELEMENTS_KEY + SEP + prevIndex);
+    }
+
+    public void set(T element) {
+      if (prevIndex < 0) {
+        throw new IllegalStateException();
+      }
+      setObject(ELEMENTS_KEY + SEP + prevIndex, element);
     }
 
     public void remove() {
+      throw new UnsupportedOperationException();
+    }
+
+    public void add(T o) {
       throw new UnsupportedOperationException();
     }
   }

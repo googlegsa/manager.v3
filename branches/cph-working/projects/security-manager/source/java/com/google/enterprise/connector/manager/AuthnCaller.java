@@ -20,9 +20,11 @@ import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
 
-import java.util.Map;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.servlet.http.Cookie;
 
 /**
  * Calls the authenticate method of a supplied {@link AuthenticationManager},
@@ -35,23 +37,25 @@ public class AuthnCaller {
 
   private static final Logger LOGGER = Logger.getLogger(AuthnCaller.class.getName());
 
-  private AuthenticationManager authnManager;
-  private AuthenticationIdentity identity;
-  private Map<String,String> securityContext;
+  private final AuthenticationManager authnManager;
+  private final AuthenticationIdentity identity;
+  private final List<Cookie> cookies;
 
   @SuppressWarnings("unchecked")
   public AuthnCaller(AuthenticationManager authnManager, AuthenticationIdentity identity,
-      Map securityContext) {
+                     List<Cookie> cookies) {
     this.authnManager = authnManager;
     this.identity = identity;
-    this.securityContext = securityContext;
+    this.cookies = cookies;
   }
 
   public AuthenticationResponse authenticate() {
     if (authnManager == null) {
       return null;
     }
-    initializeCookiesFromContext();
+    for (Cookie c: cookies) {
+      identity.setCookie(c);
+    }
     AuthenticationResponse authenticationResponse = null;
     try {
       authenticationResponse = authnManager.authenticate(identity);
@@ -65,27 +69,26 @@ public class AuthnCaller {
     return authenticationResponse;
   }
 
-  private void initializeCookiesFromContext() {
-    if (securityContext != null) {
-      for (Map.Entry<String,String> e: securityContext.entrySet()) {
-        identity.setCookie(e.getKey(), e.getValue());
-      }
-    }
-  }
-
   /**
    * This implementation currently just throws away any changes the
    * authentication manager may have made to pre-existing cookies. It only adds
    * the values for new cookies.
    */
   private void reconcileReturnedCookiesWithContext() {
-    if (securityContext != null) {
-      for (Object o: identity.getCookieNames()) {
-        String cookie = (String) o;
-        if (!securityContext.containsKey(cookie)) {
-          securityContext.put(cookie, identity.getCookie(cookie));
-        }
+    for (Object o: identity.getCookieNames()) {
+      String name = String.class.cast(o);
+      if (!knownCookie(name)) {
+        cookies.add(identity.getCookie(name));
       }
     }
+  }
+
+  private boolean knownCookie(String name) {
+    for (Cookie c: cookies) {
+      if (c.getName().equals(name)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

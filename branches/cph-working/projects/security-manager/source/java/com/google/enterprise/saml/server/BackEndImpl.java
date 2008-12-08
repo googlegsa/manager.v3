@@ -21,8 +21,8 @@ import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.session.manager.SessionManagerInterface;
+import com.google.enterprise.session.metadata.AuthnDomainMetadata.AuthnMechanism;
 
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
@@ -128,16 +128,14 @@ public class BackEndImpl implements BackEnd {
 
   // return true if credentials are checked against Identity provider: either valid or invalid
   private boolean handleAuthn(UserIdentity id) {
-    AuthSite site = id.getAuthSite();
-    
     for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
       String connectorName = connStatus.getName();
       System.out.println("Got security plug-in " + connectorName);
 
       // Use connectorName as a clue as to what type of auth mechanism is suitable
-      if (connectorName.startsWith("Basic") && site.getMethod() != AuthNMechanism.BASIC_AUTH)
+      if (connectorName.startsWith("Basic") && id.getMechanism() != AuthnMechanism.BASIC_AUTH)
         continue;
-      if (connectorName.startsWith("Form") && site.getMethod() != AuthNMechanism.FORMS_AUTH)
+      if (connectorName.startsWith("Form") && id.getMechanism() != AuthnMechanism.FORMS_AUTH)
         continue;
       AuthenticationResponse authnResponse =
           manager.authenticate(connectorName, id, null);

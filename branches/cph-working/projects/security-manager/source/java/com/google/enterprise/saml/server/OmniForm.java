@@ -14,72 +14,37 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
+import com.google.enterprise.session.metadata.AuthnDomainMetadata;
+import com.google.enterprise.session.metadata.AuthnDomainMetadata.AuthnMechanism;
 
 import java.io.IOException;
-import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
 
 class OmniForm {
-  private final Vector<AuthSite> sites;
   private final String actionUrl;
   private StringBuffer formContent;
   
   public OmniForm(CSVReader reader, String actionUrl) throws NumberFormatException, IOException {
-    String[] nextLine;
-   
-    sites = new Vector<AuthSite>();
-    
-    // Each line is FQDN,realm,auth_method,optional_sample_login_url
-    // If sample login is missing, we deduce as FQDN + realm
-    while ((nextLine = reader.readNext()) != null) {
-      AuthNMechanism method = null;
-      if (nextLine[2].equals(AuthNMechanism.BASIC_AUTH.toString()))
-        method = AuthNMechanism.BASIC_AUTH;
-      if (nextLine[2].equals(AuthNMechanism.FORMS_AUTH.toString()))
-        method = AuthNMechanism.FORMS_AUTH;
-      sites.add(new AuthSite(nextLine[0], nextLine[1], method,
-                             nextLine.length > 3 ? nextLine[3] : null));
+    while (true) {
+      String[] nextLine = reader.readNext();
+      if (nextLine == null) {
+        break;
+      }
+      if (! (nextLine.length == 3 || nextLine.length == 4)) {
+        throw new IllegalStateException("ill-formed configuration line");
+      }
+      String fqdn = nextLine[0];
+      String realm = nextLine[1];
+      AuthnMechanism mechanism = Enum.valueOf(AuthnMechanism.class, nextLine[2]);
+      String loginUrl = (nextLine.length > 3) ? nextLine[3] : fqdn + realm;
+
+      String humanName = "\"" + realm + "\" @" + fqdn;
+      AuthnDomainMetadata metadata = new AuthnDomainMetadata(realm, humanName, mechanism);
+      metadata.getUrlPatterns().add(fqdn);
+      metadata.setLoginUrl(loginUrl);
     }
     this.actionUrl = actionUrl;
-  }
-
-  private void writeHeader() {
-    // We expect this form to be posted back to the same URL from which the form
-    // was GETed, so skip "action" attribute. 
-    formContent = new StringBuffer("<form method=\"post\" name=\"omni\" action=\"" +
-                                   actionUrl +
-                                   "\">\n");
-  }
-  private void writeFooter() {
-    formContent.append("<input type=\"submit\"></form>");
-  }
- 
-  /*
-   * Each area on the omniform looks like:
-   *  "Please login to %s@%s", AuthName, HTTPServerName
-   *  "username", "input type=text name=u"
-   *  "password", "input type=password name=pw"
-   */
-  private void writeArea(AuthSite site, int idx, UserIdentity id) {
-    String inputUserName = "u" + idx;
-    String inputPassName = "pw" + idx;
-    String inputStatus = "";
-    if ((id != null) && id.isVerified()) {
-      inputStatus = " disabled";
-      formContent.append("<span style=\"color:green\">Logged in to ");
-    } else {
-      formContent.append("Please login to ");
-    }
-    formContent.append("\"" + site.getRealm() + "\" @" +
-          site.getHostname() + ":<br>\n");
-    if ((id != null) && id.isVerified()) {
-      formContent.append("</span>");
-    }
-    formContent.append("<b>Username</b> <input type=\"text\" name=" + inputUserName + inputStatus + "><br>");
-    formContent.append("<b>Password</b> <input type=\"password\" name=" + inputPassName + inputStatus + "><br>");
-    formContent.append("\n<br><br><br>\n");
   }
 
   /**
@@ -88,15 +53,36 @@ class OmniForm {
    * @return the whole form suitable for display
    */
   public String writeForm(UserIdentity[] ids) {
+    formContent = new StringBuffer("<form method=\"post\" name=\"omni\" action=\"" +
+                                   actionUrl +
+                                   "\">\n");
     int idx = 0;
-
-    writeHeader();
-    for (AuthSite site : sites) {
-      writeArea(site, idx, (ids != null) ? ids[idx] : null);
-      idx++;
+    for (AuthnDomainMetadata metadata: AuthnDomainMetadata.getAllMetadata()) {
+      writeArea(metadata, idx, (ids != null) ? ids[idx] : null);
+      idx += 1;
     }
-    writeFooter();
+    formContent.append("<input type=\"submit\"></form>");
     return formContent.toString();
+  }
+
+  /*
+   * Each area on the omniform looks like:
+   *  "Please login to %s@%s", AuthName, HTTPServerName
+   *  "username", "input type=text name=u"
+   *  "password", "input type=password name=pw"
+   */
+  private void writeArea(AuthnDomainMetadata metadata, int idx, UserIdentity id) {
+    String inputStatus = "";
+    if ((id != null) && id.isVerified()) {
+      inputStatus = " disabled";
+      formContent.append("<span style=\"color:green\">Logged in to " + metadata.getHumanName() + "</span>");
+    } else {
+      formContent.append("Please login to " + metadata.getHumanName());
+    }
+    formContent.append(":<br>\n");
+    formContent.append("<b>Username</b> <input type=\"text\" name=u" + idx + inputStatus + "><br>\n");
+    formContent.append("<b>Password</b> <input type=\"password\" name=pw" + idx + inputStatus + "><br>\n");
+    formContent.append("<br><br><br>\n");
   }
   
   /**
@@ -108,7 +94,7 @@ class OmniForm {
     UserIdentity[] identities = new UserIdentity[sites.size()];
     int idx = 0;
     
-    for (AuthSite site : sites) {
+    for (AuthnDomainMetadata metadata: AuthnDomainMetadata.getAllMetadata()) {
       username = request.getParameter("u" + idx);
       password = request.getParameter("pw" + idx);
       if (username != null && username.length() > 0 && password != null && password.length() > 0)

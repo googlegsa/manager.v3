@@ -16,7 +16,6 @@ package com.google.enterprise.security.manager;
 
 import com.google.common.base.Preconditions;
 import com.google.enterprise.session.manager.KeyMaterial;
-import com.google.enterprise.session.object.SessionObject;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -28,13 +27,11 @@ import java.util.Map;
 public class LocalSession implements SessionInterface {
 
   private final Map<String, SessionValue> s;
-  private final Map<String, SessionObject> oidRegistry;
   private String krb5Identity;
   private String krb5CcacheFilename;
 
   public LocalSession() {
     s = new HashMap<String, SessionValue>();
-    oidRegistry = new HashMap<String, SessionObject>();
     krb5Identity = null;
     krb5CcacheFilename = null;
   }
@@ -130,14 +127,5 @@ public class LocalSession implements SessionInterface {
       }
       return new String(ba, utf8);
     }
-  }
-
-  public void cacheOidValue(String oid, SessionObject value) {
-    oidRegistry.put(oid, value);
-  }
-
-  @SuppressWarnings("unchecked")
-  public <T extends SessionObject> T getCachedOidValue(String oid) {
-    return (T) oidRegistry.get(oid);
   }
 }

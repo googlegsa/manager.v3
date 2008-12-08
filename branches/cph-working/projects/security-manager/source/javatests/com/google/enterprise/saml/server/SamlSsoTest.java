@@ -19,7 +19,6 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.client.MockArtifactConsumer;
 import com.google.enterprise.saml.client.MockServiceProvider;
 import com.google.enterprise.saml.client.MockUserAgent;
-import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.MockHttpTransport;
 
 import junit.framework.TestCase;
@@ -68,7 +67,7 @@ public class SamlSsoTest extends TestCase {
     EntityDescriptor gsaEntity = backend.getGsaEntity();
     SPSSODescriptor sp = gsaEntity.getSPSSODescriptor(SAML20P_NS);
     makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI,
-        "http://localhost:8973/" + GsaConstants.GSA_ARTIFACT_HANDLER_NAME).setIsDefault(true);
+        "http://localhost:8973/SamlArtifactConsumer").setIsDefault(true);
     transport.registerServlet(sp.getDefaultAssertionConsumerService(),
                               new MockArtifactConsumer(transport));
 
