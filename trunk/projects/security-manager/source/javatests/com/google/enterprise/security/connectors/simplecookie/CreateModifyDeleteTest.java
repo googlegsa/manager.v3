@@ -18,6 +18,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.saml.server.UserIdentity;
 
 import junit.framework.TestCase;
 
@@ -63,7 +64,7 @@ public class CreateModifyDeleteTest extends TestCase {
 
     securityContext = new HashMap<String, String>();
     securityContext.put("in", "username=fred");
-    connectorManager.authenticate(connectorName, null, securityContext);
+    connectorManager.authenticate(connectorName, new UserIdentity(null, null, null), securityContext);
     assertEquals("fred", securityContext.get("out"));
 
     configData =
@@ -73,7 +74,7 @@ public class CreateModifyDeleteTest extends TestCase {
 
     securityContext = new HashMap<String, String>();
     securityContext.put("abc", "user=joe");
-    connectorManager.authenticate(connectorName, null, securityContext);
+    connectorManager.authenticate(connectorName, new UserIdentity(null, null, null), securityContext);
     assertEquals("joe", securityContext.get("def"));
     
     connectorManager.removeConnector(connectorName);
