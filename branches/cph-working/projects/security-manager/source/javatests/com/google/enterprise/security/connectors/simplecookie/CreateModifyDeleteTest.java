@@ -18,6 +18,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.saml.server.UserIdentity;
 
 import junit.framework.TestCase;
 
@@ -54,7 +55,7 @@ public class CreateModifyDeleteTest extends TestCase {
     boolean connectorExists = testConnectorExists(connectorManager, connectorName);
 
     Map<String, String> configData;
-    List<Cookie> securityContext;
+    UserIdentity id = UserIdentity.compatNew(null, null, null);
     
     configData =
         ImmutableMap.of("CookieName", "in", "IdCookieName", "out", "Regex", "username=(.*)");
@@ -64,20 +65,20 @@ public class CreateModifyDeleteTest extends TestCase {
     connectorExists = testConnectorExists(connectorManager, connectorName);
     assertTrue(connectorExists);
 
-    securityContext = new ArrayList<Cookie>();
-    securityContext.add(new Cookie("in", "username=fred"));
-    connectorManager.authenticate(connectorName, null, securityContext);
-    assertEquals("fred", cookieValue("out", securityContext));
+    id = UserIdentity.compatNew(null, null, null);
+    id.setCookie("in", "username=fred");
+    connectorManager.authenticate(connectorName, id, null);
+    assertEquals("fred", id.getCookie("out"));
 
     configData =
         ImmutableMap.of("CookieName", "abc", "IdCookieName", "def", "Regex", "user=(.*)");
     connectorManager.setConnectorConfig(connectorName, connectorTypeName, configData, language,
         connectorExists);
 
-    securityContext = new ArrayList<Cookie>();
-    securityContext.add(new Cookie("abc", "user=joe"));
-    connectorManager.authenticate(connectorName, null, securityContext);
-    assertEquals("joe", cookieValue("def", securityContext));
+    id = UserIdentity.compatNew(null, null, null);
+    id.setCookie("abc", "user=joe");
+    connectorManager.authenticate(connectorName, id, null);
+    assertEquals("joe", id.getCookie("def"));
     
     connectorManager.removeConnector(connectorName);
     
@@ -86,15 +87,6 @@ public class CreateModifyDeleteTest extends TestCase {
 
     Context.getInstance().shutdown(true);
     Context.refresh();
-  }
-
-  private static String cookieValue(String name, List<Cookie> securityContext) {
-    for (Cookie c: securityContext) {
-      if (c.getName().equals(name)) {
-        return c.getValue();
-      }
-    }
-    return null;
   }
 
   private boolean testConnectorExists(ConnectorManager connectorManager, String connectorName) {

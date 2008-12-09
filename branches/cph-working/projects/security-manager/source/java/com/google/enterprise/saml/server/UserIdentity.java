@@ -64,9 +64,13 @@ public class UserIdentity implements AuthenticationIdentity {
 
   /** {@inheritDoc} */
   public String setCookie(String cookieName, String value) {
-    Cookie sc = credentials.getCookie(cookieName);
-    String oldValue = sc.getValue();
-    sc.setValue(value);
+    Cookie c = credentials.getCookie(cookieName);
+    if (c == null) {
+      credentials.getCookies().add(new Cookie(cookieName, value));
+      return null;
+    }
+    String oldValue = c.getValue();
+    c.setValue(value);
     return oldValue;
   }
 
