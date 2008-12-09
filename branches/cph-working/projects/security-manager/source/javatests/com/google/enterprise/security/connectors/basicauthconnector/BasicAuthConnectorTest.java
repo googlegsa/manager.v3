@@ -17,8 +17,8 @@ package com.google.enterprise.security.connectors.basicauthconnector;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.server.UserIdentity;
 import com.google.enterprise.security.connectors.basicauth.BasicAuthConnector;
-import com.google.enterprise.session.manager.AuthnDomain;
-import com.google.enterprise.session.manager.AuthnMechanism;
+import com.google.enterprise.sessionmanager.AuthnDomain;
+import com.google.enterprise.sessionmanager.AuthnMechanism;
 
 import junit.framework.TestCase;
 

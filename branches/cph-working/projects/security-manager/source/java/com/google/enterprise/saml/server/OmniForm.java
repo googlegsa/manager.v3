@@ -14,9 +14,9 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.session.manager.AuthnDomain;
-import com.google.enterprise.session.manager.AuthnMechanism;
-import com.google.enterprise.session.manager.CredentialsGroup;
+import com.google.enterprise.sessionmanager.AuthnDomain;
+import com.google.enterprise.sessionmanager.AuthnMechanism;
+import com.google.enterprise.sessionmanager.CredentialsGroup;
 
 import java.io.IOException;
 import java.util.List;

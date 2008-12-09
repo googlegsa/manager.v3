@@ -14,11 +14,11 @@
 
 package com.google.enterprise.security.manager;
 
-import com.google.enterprise.session.manager.KeyMaterial;
+import com.google.enterprise.sessionmanager.KeyMaterial;
 
 /**
  * Interface to an Authn/Authz session. Based on
- * {@link com.google.enterprise.session.manager.SessionManagerInterface}
+ * {@link com.google.enterprise.sessionmanager.SessionManagerInterface}
  */
 public interface SessionInterface {
 

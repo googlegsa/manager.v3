@@ -39,7 +39,7 @@
  * @author kstillson@google.com (Ken Stillson)
  */
 
-package com.google.enterprise.session.manager;
+package com.google.enterprise.sessionmanager;
 
 /**
  * This is the primary interface for interacting with the session manager.

@@ -1,11 +1,11 @@
 package com.google.enterprise.saml.server;
 
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
-import com.google.enterprise.session.manager.AuthnDomain;
-import com.google.enterprise.session.manager.AuthnDomainGroup;
-import com.google.enterprise.session.manager.AuthnMechanism;
-import com.google.enterprise.session.manager.CredentialsGroup;
-import com.google.enterprise.session.manager.DomainCredentials;
+import com.google.enterprise.sessionmanager.AuthnDomain;
+import com.google.enterprise.sessionmanager.AuthnDomainGroup;
+import com.google.enterprise.sessionmanager.AuthnMechanism;
+import com.google.enterprise.sessionmanager.CredentialsGroup;
+import com.google.enterprise.sessionmanager.DomainCredentials;
 
 import java.util.HashSet;
 import java.util.Set;

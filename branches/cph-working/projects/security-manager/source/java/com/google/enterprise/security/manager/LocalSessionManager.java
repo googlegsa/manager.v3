@@ -15,8 +15,8 @@
 package com.google.enterprise.security.manager;
 
 
-import com.google.enterprise.session.manager.KeyMaterial;
-import com.google.enterprise.session.manager.SessionManagerInterface;
+import com.google.enterprise.sessionmanager.KeyMaterial;
+import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import java.util.HashMap;
 import java.util.Map;

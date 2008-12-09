@@ -17,10 +17,10 @@ package com.google.enterprise.saml.common;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.server.BackEnd;
-import com.google.enterprise.session.manager.AuthnDomain;
-import com.google.enterprise.session.manager.AuthnDomainGroup;
-import com.google.enterprise.session.manager.CredentialsGroup;
-import com.google.enterprise.session.manager.DomainCredentials;
+import com.google.enterprise.sessionmanager.AuthnDomain;
+import com.google.enterprise.sessionmanager.AuthnDomainGroup;
+import com.google.enterprise.sessionmanager.CredentialsGroup;
+import com.google.enterprise.sessionmanager.DomainCredentials;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;

@@ -15,8 +15,8 @@
 package com.google.enterprise.saml.server;
 
 import com.google.enterprise.connector.manager.ConnectorManager;
-import com.google.enterprise.session.manager.CredentialsGroup;
-import com.google.enterprise.session.manager.SessionManagerInterface;
+import com.google.enterprise.sessionmanager.CredentialsGroup;
+import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.saml2.core.AuthzDecisionQuery;

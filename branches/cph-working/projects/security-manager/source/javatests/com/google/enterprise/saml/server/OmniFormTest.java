@@ -14,7 +14,7 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.session.manager.CredentialsGroup;
+import com.google.enterprise.sessionmanager.CredentialsGroup;
 
 import junit.framework.TestCase;
 

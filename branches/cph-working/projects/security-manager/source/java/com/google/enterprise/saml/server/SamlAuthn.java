@@ -17,7 +17,7 @@ package com.google.enterprise.saml.server;
 import com.google.enterprise.saml.common.GettableHttpServlet;
 import com.google.enterprise.saml.common.PostableHttpServlet;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
-import com.google.enterprise.session.manager.CredentialsGroup;
+import com.google.enterprise.sessionmanager.CredentialsGroup;
 
 import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.saml2.binding.decoding.HTTPRedirectDeflateDecoder;
