@@ -3,6 +3,7 @@ package com.google.enterprise.saml.server;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.saml.common.GsaConstants.AuthNDecision;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
@@ -48,7 +49,10 @@ public class UserIdentity implements AuthenticationIdentity {
   }
 
   public String setCookie(String cookieName, String value) {
-    throw new IllegalArgumentException();
+    String oldVal = getCookie(cookieName);
+    Cookie c = new Cookie(cookieName, value);
+    setCookie(c);
+    return oldVal;
   }
   
   public void setCookie(Cookie c) {
@@ -57,8 +61,13 @@ public class UserIdentity implements AuthenticationIdentity {
 
   @SuppressWarnings("unchecked")
   public Set getCookieNames() {
-    throw new IllegalArgumentException();
+    Set<String> result = new HashSet<String>();
+    for (Cookie c : cookieJar) {
+      result.add(c.getName());
+    }
+    return result;    
   }
+
   public Vector<Cookie> getCookies() {
     return this.cookieJar;
   }
