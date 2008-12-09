@@ -12,8 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.session.object;
+package com.google.enterprise.session.manager;
 
-// TODO(cph): implement
-public class SessionTicket extends SessionObject {
+public enum AuthnMechanism {
+  BASIC_AUTH,     // aka SekuLite
+  FORMS_AUTH,     // was known as (non-SAML) "SSO"
+  SAML,           // the SAML SPI
+  SSL,            // client-side x.509 certificate authN
+  CONNECTORS,     // connector manager authN logic
+  SPNEGO_KERBEROS // GSSAPI/SPNEGO/Kerberos WWW-Authenticate handshake
 }

@@ -14,18 +14,18 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.session.manager.SessionManagerInterface;
 import com.google.enterprise.connector.manager.ConnectorManager;
+import com.google.enterprise.session.manager.CredentialsGroup;
+import com.google.enterprise.session.manager.SessionManagerInterface;
 
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
-import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 
 import java.util.List;
-import java.util.Map;
+
+import javax.servlet.http.Cookie;
 
 /**
  * Interface to SAML server backend. Top-level classes such as servlets should
@@ -68,12 +68,17 @@ public interface BackEnd {
   /**
    * Validate identity credentials.
    *
-   * @param request The SAML authentication request being served.
-   * @param id The identity to validate.
-   * @returns A SAML Response with the validation result.
+   * @param group The credentials group to validate.
    */
-  public Response validateCredentials(AuthnRequest request, UserIdentity id);
-  public AuthenticationResponse handleCookie(Map<String, String> cookieJar);
+  public void validateCredentials(CredentialsGroup group);
+
+  /**
+   * Try to crack some cookies.
+   *
+   * @param cookies the cookies to try
+   * @return a username if one of the cookies was cracked
+   */
+  public String handleCookies(List<Cookie> cookies);
 
   /**
    * Get the SAML artifact map.

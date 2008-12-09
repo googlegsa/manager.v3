@@ -1,9 +1,11 @@
 package com.google.enterprise.saml.server;
 
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
-import com.google.enterprise.session.metadata.AuthnDomainMetadata.AuthnMechanism;
-import com.google.enterprise.session.object.AuthnDomainCredentials;
-import com.google.enterprise.session.object.SessionCookie;
+import com.google.enterprise.session.manager.AuthnDomain;
+import com.google.enterprise.session.manager.AuthnDomainGroup;
+import com.google.enterprise.session.manager.AuthnMechanism;
+import com.google.enterprise.session.manager.CredentialsGroup;
+import com.google.enterprise.session.manager.DomainCredentials;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -16,20 +18,36 @@ import javax.servlet.http.Cookie;
  */
 public class UserIdentity implements AuthenticationIdentity {
 
-  private final AuthnDomainCredentials credentials;
+  private final DomainCredentials credentials;
 
-  public UserIdentity(AuthnDomainCredentials credentials) {
+  public UserIdentity(DomainCredentials credentials) {
     this.credentials = credentials;
+  }
+
+  public static UserIdentity compatNew(
+      String username, String password, AuthnDomain domain) {
+    if (domain == null) {
+      domain = new AuthnDomain("foo", AuthnMechanism.FORMS_AUTH, new AuthnDomainGroup("Foo"));
+    }
+    CredentialsGroup group = new CredentialsGroup(domain.getGroup());
+    UserIdentity id = new UserIdentity(new DomainCredentials(domain, group));
+    group.setUsername(username);
+    group.setPassword(password);
+    return id;
+  }
+
+  public DomainCredentials getCredentials() {
+    return credentials;
   }
 
   /** {@inheritDoc} */
   public String getUsername() {
-    return credentials.getUsername();
+    return credentials.getGroup().getUsername();
   }
 
   /** {@inheritDoc} */
   public String getPassword() {
-    return credentials.getPassword();
+    return credentials.getGroup().getPassword();
   }
 
   /** {@inheritDoc} */
@@ -37,7 +55,7 @@ public class UserIdentity implements AuthenticationIdentity {
     if (cookieName == null || cookieName.length() < 1) {
       throw new IllegalArgumentException();
     }
-    for (SessionCookie c: credentials.getCookies()) {
+    for (Cookie c: credentials.getCookies()) {
       if (cookieName.equals(c.getName()))
         return c.getValue();
     }
@@ -46,7 +64,7 @@ public class UserIdentity implements AuthenticationIdentity {
 
   /** {@inheritDoc} */
   public String setCookie(String cookieName, String value) {
-    SessionCookie sc = credentials.getCookie(cookieName);
+    Cookie sc = credentials.getCookie(cookieName);
     String oldValue = sc.getValue();
     sc.setValue(value);
     return oldValue;
@@ -54,21 +72,14 @@ public class UserIdentity implements AuthenticationIdentity {
 
   /** {@inheritDoc} */
   public void setCookie(Cookie c) {
-    SessionCookie sc = credentials.getCookie(c.getName());
-    sc.setValue(c.getValue());
-    sc.setDomain(c.getDomain());
-    sc.setPath(c.getPath());
-    sc.setComment(c.getComment());
-    sc.setSecure(c.getSecure());
-    sc.setMaxAge(c.getMaxAge());
-    sc.setVersion(c.getVersion());
+    credentials.getCookies().add(c);
   }
 
   @SuppressWarnings("unchecked")
   /** {@inheritDoc} */
   public Set getCookieNames() {
     Set<String> names = new HashSet<String>();
-    for (SessionCookie c: credentials.getCookies()) {
+    for (Cookie c: credentials.getCookies()) {
       names.add(c.getName());
     }
     return names;
@@ -76,11 +87,11 @@ public class UserIdentity implements AuthenticationIdentity {
 
   /** {@inheritDoc} */
   public String getLoginUrl() {
-    return credentials.getMetadata().getLoginUrl();
+    return credentials.getDomain().getLoginUrl();
   }
   
   public void setVerified() {
-    credentials.setVerified(true);
+    credentials.resetVerification();
   }
 
   public boolean isVerified() {
@@ -88,6 +99,6 @@ public class UserIdentity implements AuthenticationIdentity {
   }
 
   public AuthnMechanism getMechanism() {
-    return credentials.getMetadata().getMechanism();
+    return credentials.getDomain().getMechanism();
   }
 }

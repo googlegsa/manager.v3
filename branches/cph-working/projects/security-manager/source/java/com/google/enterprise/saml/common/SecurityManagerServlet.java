@@ -17,8 +17,10 @@ package com.google.enterprise.saml.common;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.server.BackEnd;
-import com.google.enterprise.session.manager.SessionManagerInterface;
-import com.google.enterprise.session.object.SessionRoot;
+import com.google.enterprise.session.manager.AuthnDomain;
+import com.google.enterprise.session.manager.AuthnDomainGroup;
+import com.google.enterprise.session.manager.CredentialsGroup;
+import com.google.enterprise.session.manager.DomainCredentials;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -29,11 +31,12 @@ import org.opensaml.common.binding.SAMLMessageContext;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
@@ -67,19 +70,21 @@ public abstract class SecurityManagerServlet extends HttpServlet {
     return getConnectorManager(sc).getBackEnd();
   }
 
-  public SessionRoot getSessionRoot(HttpServletRequest request) {
-    SessionManagerInterface sessionManager =
-        getBackEnd(getServletContext()).getSessionManager();
-    HttpSession session = request.getSession();
-    String id;
-    synchronized (session) {
-      id = String.class.cast(session.getAttribute("SessionId"));
-      if (id == null) {
-        id = sessionManager.createSession();
-        session.setAttribute("SessionId", id);
+  public List<CredentialsGroup> getCredentialsGroups(HttpSession session) {
+    @SuppressWarnings("unchecked")
+        List<CredentialsGroup> groups = (List<CredentialsGroup>) session.getAttribute(CREDENTIALS);
+    if (groups == null) {
+      groups = new ArrayList<CredentialsGroup>();
+      for (AuthnDomainGroup metadata: AuthnDomainGroup.getAllGroups()) {
+        CredentialsGroup group = new CredentialsGroup(metadata);
+        for (AuthnDomain domain: metadata.getDomains()) {
+          new DomainCredentials(domain, group);
+        }
+        groups.add(group);
       }
+      session.setAttribute(CREDENTIALS, groups);
     }
-    return SessionRoot.getInstance(sessionManager, id);
+    return groups;
   }
 
   /**

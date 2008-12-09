@@ -14,10 +14,12 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.session.metadata.AuthnDomainMetadata;
-import com.google.enterprise.session.metadata.AuthnDomainMetadata.AuthnMechanism;
+import com.google.enterprise.session.manager.AuthnDomain;
+import com.google.enterprise.session.manager.AuthnMechanism;
+import com.google.enterprise.session.manager.CredentialsGroup;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -34,31 +36,25 @@ class OmniForm {
       if (! (nextLine.length == 3 || nextLine.length == 4)) {
         throw new IllegalStateException("ill-formed configuration line");
       }
-      String fqdn = nextLine[0];
-      String realm = nextLine[1];
-      AuthnMechanism mechanism = Enum.valueOf(AuthnMechanism.class, nextLine[2]);
-      String loginUrl = (nextLine.length > 3) ? nextLine[3] : fqdn + realm;
-
-      String humanName = "\"" + realm + "\" @" + fqdn;
-      AuthnDomainMetadata metadata = new AuthnDomainMetadata(realm, humanName, mechanism);
-      metadata.getUrlPatterns().add(fqdn);
-      metadata.setLoginUrl(loginUrl);
+      AuthnDomain.compatAuthSite(nextLine[0], nextLine[1],
+                                 Enum.valueOf(AuthnMechanism.class, nextLine[2]),
+                                 (nextLine.length > 3) ? nextLine[3] : null);
     }
     this.actionUrl = actionUrl;
   }
 
   /**
    * 
-   * @param ids
+   * @param groups
    * @return the whole form suitable for display
    */
-  public String writeForm(UserIdentity[] ids) {
+  public String writeForm(List<CredentialsGroup> groups) {
     formContent = new StringBuffer("<form method=\"post\" name=\"omni\" action=\"" +
                                    actionUrl +
                                    "\">\n");
     int idx = 0;
-    for (AuthnDomainMetadata metadata: AuthnDomainMetadata.getAllMetadata()) {
-      writeArea(metadata, idx, (ids != null) ? ids[idx] : null);
+    for (CredentialsGroup group: groups) {
+      writeArea(group, idx);
       idx += 1;
     }
     formContent.append("<input type=\"submit\"></form>");
@@ -71,13 +67,13 @@ class OmniForm {
    *  "username", "input type=text name=u"
    *  "password", "input type=password name=pw"
    */
-  private void writeArea(AuthnDomainMetadata metadata, int idx, UserIdentity id) {
+  private void writeArea(CredentialsGroup group, int idx) {
     String inputStatus = "";
-    if ((id != null) && id.isVerified()) {
+    if (group.isVerified()) {
       inputStatus = " disabled";
-      formContent.append("<span style=\"color:green\">Logged in to " + metadata.getHumanName() + "</span>");
+      formContent.append("<span style=\"color:green\">Logged in to " + group.getMetadata().getHumanName() + "</span>");
     } else {
-      formContent.append("Please login to " + metadata.getHumanName());
+      formContent.append("Please login to " + group.getMetadata().getHumanName());
     }
     formContent.append(":<br>\n");
     formContent.append("<b>Username</b> <input type=\"text\" name=u" + idx + inputStatus + "><br>\n");
@@ -88,22 +84,17 @@ class OmniForm {
   /**
    * Parse the form into an array of credentials awaiting authn decision.
    */
-  public UserIdentity[] parse(HttpServletRequest request, UserIdentity[] oldIds) {
-    String username;
-    String password;
-    UserIdentity[] identities = new UserIdentity[sites.size()];
+  public void parse(HttpServletRequest request, List<CredentialsGroup> groups) {
     int idx = 0;
-    
-    for (AuthnDomainMetadata metadata: AuthnDomainMetadata.getAllMetadata()) {
-      username = request.getParameter("u" + idx);
-      password = request.getParameter("pw" + idx);
-      if (username != null && username.length() > 0 && password != null && password.length() > 0)
-        identities[idx] = new UserIdentity(username, password, site);
-      else
-        identities[idx] = (oldIds == null ? null : oldIds[idx]);
+    for (CredentialsGroup group: groups) {
+      String username = request.getParameter("u" + idx);
+      String password = request.getParameter("pw" + idx);
+      if ((username != null) && (username.length() > 0) &&
+          (password != null) && (password.length() > 0)) {
+        group.setUsername(username);
+        group.setPassword(password);
+      }
       idx++;
     }
-    return identities;
   }
-
 }

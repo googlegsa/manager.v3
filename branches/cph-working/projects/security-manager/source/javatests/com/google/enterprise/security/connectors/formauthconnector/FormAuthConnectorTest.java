@@ -1,10 +1,26 @@
+// Copyright (C) 2008 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package com.google.enterprise.security.connectors.formauthconnector;
 
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.saml.server.AuthSite;
 import com.google.enterprise.saml.server.UserIdentity;
 import com.google.enterprise.security.connectors.formauth.FormAuthConnector;
-import com.google.enterprise.session.metadata.AuthnDomainMetadata.AuthnMechanism;
+import com.google.enterprise.session.manager.AuthnDomain;
+import com.google.enterprise.session.manager.AuthnMechanism;
+
+import junit.framework.TestCase;
 
 import org.apache.commons.httpclient.NameValuePair;
 
@@ -13,8 +29,6 @@ import java.net.URL;
 import java.util.Vector;
 
 import javax.servlet.http.Cookie;
-
-import junit.framework.TestCase;
 
 /* 
  * Tests for the {@link FormAuthConnector} class.
@@ -104,13 +118,17 @@ public class FormAuthConnectorTest extends TestCase {
   public void testAuthenticate() {
     FormAuthConnector conn = new FormAuthConnector("SMSESSION");
     
-    AuthSite site = new AuthSite("http://gama.corp.google.com", "/secured/", AuthnMechanism.FORMS_AUTH, null);
-    UserIdentity id = new UserIdentity("gama1", "gama%%1", site);
+    AuthnDomain domain =
+        AuthnDomain.compatAuthSite("http://gama.corp.google.com",
+                                   "/secured/", AuthnMechanism.FORMS_AUTH, null);
+    UserIdentity id = UserIdentity.compatNew("gama1", "gama%%1", domain);
     AuthenticationResponse result = conn.authenticate(id);
     assertTrue(result.isValid());
     
-    AuthSite site2 = new AuthSite("http://gama.corp.google.com", "/user1", AuthnMechanism.FORMS_AUTH, null);
-    UserIdentity id2 = new UserIdentity("gama1", "deadbeef", site2);
+    AuthnDomain domain2 =
+        AuthnDomain.compatAuthSite("http://gama.corp.google.com",
+                                   "/user1", AuthnMechanism.FORMS_AUTH, null);
+    UserIdentity id2 = UserIdentity.compatNew("gama1", "deadbeef", domain2);
     result = conn.authenticate(id2);
     assertFalse(result.isValid());
   }

@@ -20,8 +20,10 @@ import com.google.enterprise.connector.spi.AuthenticationResponse;
 
 import junit.framework.TestCase;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.http.Cookie;
 
 /**
  * Tests for the {@link AuthnCaller} class.
@@ -58,8 +60,8 @@ public class AuthnCallerTest extends TestCase {
   }
 
   private void runIdentityTest(AuthenticationManager authenticationManager, boolean expected,
-      AuthenticationIdentity identity, Map<String,String> context) {
-    AuthnCaller authnCaller = new AuthnCaller(authenticationManager, identity, context);
+      AuthenticationIdentity identity, List<Cookie> cookies) {
+    AuthnCaller authnCaller = new AuthnCaller(authenticationManager, identity, cookies);
     AuthenticationResponse response = authnCaller.authenticate();
     boolean result = ((response != null) && response.isValid());
     assertEquals(expected, result);
@@ -81,20 +83,31 @@ public class AuthnCallerTest extends TestCase {
     runBasicTest(authenticationManager, "fred", "xyzzy", true);
     runBasicTest(authenticationManager, "joe", "foo", false);
     AuthenticationIdentity identity;
-    Map<String,String> context;
+    List<Cookie> cookies;
+
     // show that the authnmanager sees the cookies and sets one
     identity = new UserPassIdentity("joe", "foo");
-    context = new HashMap<String,String>();
     assertNull(identity.getCookie("ilikecandy"));
-    context.put("joe_is_ok", "xxx");
-    runIdentityTest(authenticationManager, true, identity, context);
-    assertEquals("true",context.get("ilikecandy"));
+    cookies = new ArrayList<Cookie>();
+    cookies.add(new Cookie("joe_is_ok", "xxx"));
+    runIdentityTest(authenticationManager, true, identity, cookies);
+    assertEquals("true", cookieValue("ilikecandy", cookies));
+
     // show that the manager setting a cookie has no effect if it's already set
     identity = new UserPassIdentity("joe", "foo");
-    context = new HashMap<String,String>();
-    context.put("ilikecandy", "false");
-    context.put("joe_is_ok", "xxx");
-    runIdentityTest(authenticationManager, true, identity, context);
-    assertEquals("false",context.get("ilikecandy"));
+    cookies = new ArrayList<Cookie>();
+    cookies.add(new Cookie("ilikecandy", "false"));
+    cookies.add(new Cookie("joe_is_ok", "xxx"));
+    runIdentityTest(authenticationManager, true, identity, cookies);
+    assertEquals("false", cookieValue("ilikecandy", cookies));
+  }
+
+  private static String cookieValue(String name, List<Cookie> cookies) {
+    for (Cookie c: cookies) {
+      if (c.getName().equals(name)) {
+        return c.getValue();
+      }
+    }
+    return null;
   }
 }

@@ -21,9 +21,12 @@ import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.server.BackEnd;
 import com.google.enterprise.saml.server.UserIdentity;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.servlet.http.Cookie;
 
 /**
  * This class is temporary -- while the connector manager and the security
@@ -52,18 +55,17 @@ public class ConnectorManager extends ProductionManager {
   @Override
   public boolean authenticate(String connectorName, String username, String password) {
     AuthenticationResponse authnResponse =
-      authenticate(connectorName, new UserIdentity(username, password, null), null);
+      authenticate(connectorName, UserIdentity.compatNew(username, password, null), null);
     if (authnResponse == null || !authnResponse.isValid()) {
       return false;
     }
     return true;
   }
 
-  @SuppressWarnings("unchecked")
   /**
    * This method will become part of the {@link Manager} interface
    */
-  public AuthenticationResponse authenticate(String connectorName, UserIdentity id, Map securityContext) {
+  public AuthenticationResponse authenticate(String connectorName, UserIdentity id, List<Cookie> cookies) {
     AuthenticationManager authnManager = null;
     try {
       authnManager = instantiator.getAuthenticationManager(connectorName);
@@ -79,7 +81,14 @@ public class ConnectorManager extends ProductionManager {
       return null;
     }
 
-    AuthnCaller authnCaller = new AuthnCaller(authnManager, id, securityContext);
+    if (id == null) {
+      id = UserIdentity.compatNew(null, null, null);
+    }
+    if (cookies == null) {
+      cookies = new ArrayList<Cookie>();
+    }
+
+    AuthnCaller authnCaller = new AuthnCaller(authnManager, id, cookies);
 
     return authnCaller.authenticate();
   }

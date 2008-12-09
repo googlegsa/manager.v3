@@ -15,36 +15,24 @@
 package com.google.enterprise.saml.server;
 
 import com.google.enterprise.connector.manager.ConnectorManager;
-import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.session.manager.CredentialsGroup;
+import com.google.enterprise.session.manager.DomainCredentials;
 import com.google.enterprise.session.manager.SessionManagerInterface;
 
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
-import org.opensaml.saml2.core.Assertion;
-import org.opensaml.saml2.core.AuthnContext;
-import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
-import org.opensaml.saml2.core.Status;
-import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertion;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnStatement;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatusMessage;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeSubject;
+import javax.servlet.http.Cookie;
 
 /**
  * Simple mock saml server Backend for testing.
@@ -92,28 +80,23 @@ public class MockBackEnd implements BackEnd {
   }
 
   /** {@inheritDoc} */
-  public Response validateCredentials(AuthnRequest request, UserIdentity id) {
-    Status status = makeStatus();
-    Response response = makeResponse(request, status);
-    String username = id.getUsername();
-    String password = id.getPassword();
-    if (areCredentialsValid(username, password)) {
-      LOGGER.log(Level.INFO, "Authenticated successfully as " + username);
-      status.getStatusCode().setValue(StatusCode.SUCCESS_URI);
-      Assertion assertion = makeAssertion(makeIssuer(SM_ISSUER), makeSubject(username));
-      assertion.getAuthnStatements().add(makeAuthnStatement(AuthnContext.IP_PASSWORD_AUTHN_CTX));
-      response.getAssertions().add(assertion);
+  public void validateCredentials(CredentialsGroup group) {
+    if (group.isVerifiable()) {
+      boolean isValid = areCredentialsValid(group);
+      if (isValid) {
+        LOGGER.log(Level.INFO, "Authenticated successfully as " + group.getUsername());
+      }
     } else {
       LOGGER.log(Level.INFO, "Authentication failed");
-      status.getStatusCode().setValue(StatusCode.REQUEST_DENIED_URI);
-      status.setStatusMessage(makeStatusMessage("Authentication failed"));
     }
-    return response;
+    for (DomainCredentials credentials: group.getElements()) {
+      credentials.setVerified(true);
+    }
   }
 
   // trivial implementation
-  private boolean areCredentialsValid(String username, String password) {
-    return "joe".equals(username) && "plumber".equals(password);
+  private boolean areCredentialsValid(CredentialsGroup group) {
+    return "joe".equals(group.getUsername()) && "plumber".equals(group.getPassword());
   }
 
   /** {@inheritDoc} */
@@ -121,7 +104,7 @@ public class MockBackEnd implements BackEnd {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
 
-  public AuthenticationResponse handleCookie(Map<String, String> cookieJar) {
+  public String handleCookies(List<Cookie> cookies) {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
 

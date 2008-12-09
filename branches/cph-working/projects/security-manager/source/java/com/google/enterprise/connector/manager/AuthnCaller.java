@@ -41,7 +41,6 @@ public class AuthnCaller {
   private final AuthenticationIdentity identity;
   private final List<Cookie> cookies;
 
-  @SuppressWarnings("unchecked")
   public AuthnCaller(AuthenticationManager authnManager, AuthenticationIdentity identity,
                      List<Cookie> cookies) {
     this.authnManager = authnManager;
@@ -78,7 +77,7 @@ public class AuthnCaller {
     for (Object o: identity.getCookieNames()) {
       String name = String.class.cast(o);
       if (!knownCookie(name)) {
-        cookies.add(identity.getCookie(name));
+        cookies.add(new Cookie(name, identity.getCookie(name)));
       }
     }
   }
