@@ -14,11 +14,12 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.connector.manager.ConnectorManager;
-import com.google.enterprise.sessionmanager.CredentialsGroup;
+import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
+import com.google.enterprise.connector.manager.ConnectorManager;
 
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
+import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.metadata.EntityDescriptor;
@@ -68,17 +69,12 @@ public interface BackEnd {
   /**
    * Validate identity credentials.
    *
-   * @param group The credentials group to validate.
+   * @param request The SAML authentication request being served.
+   * @param id The identity to validate.
+   * @returns A SAML Response with the validation result.
    */
-  public void validateCredentials(CredentialsGroup group);
-
-  /**
-   * Try to crack some cookies.
-   *
-   * @param cookies the cookies to try
-   * @return a username if one of the cookies was cracked
-   */
-  public String handleCookies(List<Cookie> cookies);
+  public Response validateCredentials(AuthnRequest request, UserIdentity id);
+  public AuthenticationResponse handleCookie(List<Cookie> cookieJar);
 
   /**
    * Get the SAML artifact map.

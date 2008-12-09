@@ -14,7 +14,9 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.common.GettableHttpServlet;
+import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.PostableHttpServlet;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 import com.google.enterprise.sessionmanager.CredentialsGroup;
@@ -48,7 +50,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
@@ -114,7 +115,7 @@ public class SamlAuthn extends SecurityManagerServlet
       String gsaUrl = referer.substring(0, referer.indexOf("search"));
       System.out.println("GSA URL is " + gsaUrl);
       makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI,
-          gsaUrl + "SamlArtifactConsumer").setIsDefault(true);
+          gsaUrl + GsaConstants.GSA_ARTIFACT_HANDLER_NAME).setIsDefault(true);
       initializePeerEntity(context, peerEntity, sp,
                            AssertionConsumerService.DEFAULT_ELEMENT_NAME);
       selectPeerEndpoint(context, SAML2_ARTIFACT_BINDING_URI);
@@ -150,7 +151,7 @@ public class SamlAuthn extends SecurityManagerServlet
     FileReader file = new FileReader(tmpFile);
     CSVReader reader = new CSVReader(file);
     loginForm = new OmniForm(reader, getAction(request));
-    String formHtml = loginForm.writeForm(null);
+    String formHtml = loginForm.writeForm(getCredentialsGroups(request.getSession()));
     
     return formHtml;
   }
@@ -165,23 +166,45 @@ public class SamlAuthn extends SecurityManagerServlet
   private boolean tryCookies(HttpServletRequest request, HttpServletResponse response)
       throws ServletException {
     BackEnd backend = getBackEnd(getServletContext());
-
-    List<Cookie> cookies = new ArrayList<Cookie>();
-    for (Cookie c: request.getCookies()) {
-      cookies.add(c);
-    }
-
-    String username = backend.handleCookies(cookies);
-    if (username == null) {
+    List<Cookie> cookieJar = getCookieJar(request);
+    if (cookieJar == null) {
       return false;
     }
 
-    SAMLMessageContext<AuthnRequest, Response, NameID> context =
-        existingSamlMessageContext(request.getSession());
-    context.setOutboundSAMLMessage(
-        makeSuccessfulResponse(context.getInboundSAMLMessage(), username));
-    doRedirect(context, backend, response);
-    return true;
+    AuthenticationResponse authnResponse =
+        backend.handleCookie(cookieJar);
+    if ((authnResponse != null) && authnResponse.isValid()) {
+      // TODO make sure authnResponse has subject in BackEnd
+      String username = authnResponse.getData();
+      if (username != null) {
+        SAMLMessageContext<AuthnRequest, Response, NameID> context =
+            existingSamlMessageContext(request.getSession());
+        context.setOutboundSAMLMessage(
+            makeSuccessfulResponse(context.getInboundSAMLMessage(), username));
+        doRedirect(context, backend, response);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * If this request carries cookies, we use registered security connectors to
+   * figure out the user identity from the cookie.
+   *
+   * @param request The HTTP request message.
+   * @return A list of cookies, or null if no cookies.
+   */
+  private List<Cookie> getCookieJar(HttpServletRequest request) {
+    Cookie[] jar = request.getCookies();
+    if ((jar == null) || (jar.length == 0)) {
+      return null;
+    }
+    List<Cookie> cookieJar = new ArrayList<Cookie>(jar.length);
+    for (Cookie c: jar) {
+      cookieJar.add(c);
+    }
+    return cookieJar;
   }
 
   /**
@@ -196,29 +219,32 @@ public class SamlAuthn extends SecurityManagerServlet
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     BackEnd backend = getBackEnd(getServletContext());
-    HttpSession session = request.getSession();
 
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
-        existingSamlMessageContext(session);
+        existingSamlMessageContext(request.getSession());
 
-    List<CredentialsGroup> groups = getCredentialsGroups(session);
+    List<CredentialsGroup> groups = getCredentialsGroups(request.getSession());
     loginForm.parse(request, groups);
     for (CredentialsGroup group: groups) {
-      backend.validateCredentials(group);
+      // TODO make the context keep a queue of response SAMLMessage's
+      UserIdentity id = new UserIdentity(group.getElements().get(0));
+      Response samlMsg = backend.validateCredentials(context.getInboundSAMLMessage(), id);
+      if (samlMsg != null)
+        context.setOutboundSAMLMessage(samlMsg);    
     }
     
     // if not all identities get verified, repost omniform, with visual cues
     boolean hasInvalidCredential = false;
     for (CredentialsGroup group: groups) {
+      if (!group.isVerifiable()) // Skip auth site for which the user did not provide credentials
+        continue;
       if (group.isVerified()) {
-        for (Cookie c: group.getCookies()) {
+        List<Cookie> jar = group.getCookies();
+        for (Cookie c: jar) {
           response.addCookie(c);
         }
-      } else {
-        if ((group.getUsername() != null) && (group.getPassword() != null)) {
-          hasInvalidCredential = true;
-        }
-      }
+      } else
+        hasInvalidCredential = true;
     }
     
     if (hasInvalidCredential) {

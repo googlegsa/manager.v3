@@ -54,7 +54,7 @@ public class CreateModifyDeleteTest extends TestCase {
     boolean connectorExists = testConnectorExists(connectorManager, connectorName);
 
     Map<String, String> configData;
-    List<Cookie> cookies;
+    List<Cookie> securityContext;
     
     configData =
         ImmutableMap.of("CookieName", "in", "IdCookieName", "out", "Regex", "username=(.*)");
@@ -64,20 +64,20 @@ public class CreateModifyDeleteTest extends TestCase {
     connectorExists = testConnectorExists(connectorManager, connectorName);
     assertTrue(connectorExists);
 
-    cookies = new ArrayList<Cookie>();
-    cookies.add(new Cookie("in", "username=fred"));
-    connectorManager.authenticate(connectorName, null, cookies);
-    assertEquals("fred", cookieValue("out", cookies));
+    securityContext = new ArrayList<Cookie>();
+    securityContext.add(new Cookie("in", "username=fred"));
+    connectorManager.authenticate(connectorName, null, securityContext);
+    assertEquals("fred", cookieValue("out", securityContext));
 
     configData =
         ImmutableMap.of("CookieName", "abc", "IdCookieName", "def", "Regex", "user=(.*)");
     connectorManager.setConnectorConfig(connectorName, connectorTypeName, configData, language,
         connectorExists);
 
-    cookies = new ArrayList<Cookie>();
-    cookies.add(new Cookie("abc", "user=joe"));
-    connectorManager.authenticate(connectorName, null, cookies);
-    assertEquals("joe", cookieValue("def", cookies));
+    securityContext = new ArrayList<Cookie>();
+    securityContext.add(new Cookie("abc", "user=joe"));
+    connectorManager.authenticate(connectorName, null, securityContext);
+    assertEquals("joe", cookieValue("def", securityContext));
     
     connectorManager.removeConnector(connectorName);
     
@@ -88,8 +88,8 @@ public class CreateModifyDeleteTest extends TestCase {
     Context.refresh();
   }
 
-  private static String cookieValue(String name, List<Cookie> cookies) {
-    for (Cookie c: cookies) {
+  private static String cookieValue(String name, List<Cookie> securityContext) {
+    for (Cookie c: securityContext) {
       if (c.getName().equals(name)) {
         return c.getValue();
       }

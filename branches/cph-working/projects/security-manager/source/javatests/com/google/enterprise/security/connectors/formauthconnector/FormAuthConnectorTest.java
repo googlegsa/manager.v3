@@ -20,8 +20,6 @@ import com.google.enterprise.security.connectors.formauth.FormAuthConnector;
 import com.google.enterprise.sessionmanager.AuthnDomain;
 import com.google.enterprise.sessionmanager.AuthnMechanism;
 
-import junit.framework.TestCase;
-
 import org.apache.commons.httpclient.NameValuePair;
 
 import java.io.IOException;
@@ -29,6 +27,8 @@ import java.net.URL;
 import java.util.Vector;
 
 import javax.servlet.http.Cookie;
+
+import junit.framework.TestCase;
 
 /* 
  * Tests for the {@link FormAuthConnector} class.

@@ -21,7 +21,6 @@ import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.server.BackEnd;
 import com.google.enterprise.saml.server.UserIdentity;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -65,7 +64,7 @@ public class ConnectorManager extends ProductionManager {
   /**
    * This method will become part of the {@link Manager} interface
    */
-  public AuthenticationResponse authenticate(String connectorName, UserIdentity id, List<Cookie> cookies) {
+  public AuthenticationResponse authenticate(String connectorName, UserIdentity id, List<Cookie> securityContext) {
     AuthenticationManager authnManager = null;
     try {
       authnManager = instantiator.getAuthenticationManager(connectorName);
@@ -84,11 +83,7 @@ public class ConnectorManager extends ProductionManager {
     if (id == null) {
       id = UserIdentity.compatNew(null, null, null);
     }
-    if (cookies == null) {
-      cookies = new ArrayList<Cookie>();
-    }
-
-    AuthnCaller authnCaller = new AuthnCaller(authnManager, id, cookies);
+    AuthnCaller authnCaller = new AuthnCaller(authnManager, id, securityContext);
 
     return authnCaller.authenticate();
   }

@@ -17,7 +17,7 @@ package com.google.enterprise.security.manager;
 import com.google.enterprise.sessionmanager.KeyMaterial;
 
 /**
- * Interface to an Authn/Authz session. Based on
+ * Interface to a Authn/Authz session. Based on
  * {@link com.google.enterprise.sessionmanager.SessionManagerInterface}
  */
 public interface SessionInterface {
@@ -113,4 +113,5 @@ public interface SessionInterface {
    * @return Credentials Cache filename.
    */
   public abstract String getKrb5CcacheFilename();
+
 }

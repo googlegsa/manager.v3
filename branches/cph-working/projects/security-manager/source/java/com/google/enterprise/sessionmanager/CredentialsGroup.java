@@ -31,6 +31,19 @@ public class CredentialsGroup {
     elements = new ArrayList<DomainCredentials>();
   }
 
+  public static List<CredentialsGroup> newGroups() {
+    List<AuthnDomainGroup> elements = AuthnDomainGroup.getAllGroups();
+    List<CredentialsGroup> groups = new ArrayList<CredentialsGroup>(elements.size());
+    for (AuthnDomainGroup element: elements) {
+      CredentialsGroup group = new CredentialsGroup(element);
+      for (AuthnDomain domain: element.getDomains()) {
+        new DomainCredentials(domain, group);
+      }
+      groups.add(group);
+    }
+    return groups;
+  }
+
   public AuthnDomainGroup getMetadata() {
     return metadata;
   }

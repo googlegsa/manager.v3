@@ -29,9 +29,9 @@ import junit.framework.TestCase;
 public class BasicAuthConnectorTest extends TestCase {
   
   public void testAuthenticate() {
+    BasicAuthConnector conn;
     AuthnDomain domain;
     UserIdentity id;
-    BasicAuthConnector conn;
 
     // HTTP Basic Auth
     domain = AuthnDomain.compatAuthSite("http://leiz.mtv.corp.google.com",

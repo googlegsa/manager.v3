@@ -22,15 +22,15 @@ import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.sessionmanager.AuthnMechanism;
-import com.google.enterprise.sessionmanager.CredentialsGroup;
-import com.google.enterprise.sessionmanager.DomainCredentials;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
+import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.util.storage.MapBasedStorageService;
@@ -117,36 +117,43 @@ public class BackEndImpl implements BackEnd {
   }
 
   /** {@inheritDoc} */
-  public void validateCredentials(CredentialsGroup group) {
-    if (group.isVerifiable()) {
-      for (DomainCredentials credentials: group.getElements()) {
-        if (credentials.needsVerification()) {
-
-          for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
-            String connectorName = connStatus.getName();
-            System.out.println("Got security plug-in " + connectorName);
-
-            // Use connectorName as a clue as to what type of auth mechanism is suitable
-            if ((connectorName.startsWith("Basic")) &&
-                (credentials.getDomain().getMechanism() != AuthnMechanism.BASIC_AUTH))
-              continue;
-            if ((connectorName.startsWith("Form")) &&
-                (credentials.getDomain().getMechanism() != AuthnMechanism.FORMS_AUTH))
-              continue;
-            AuthenticationResponse authnResponse =
-                manager.authenticate(connectorName, new UserIdentity(credentials), null);
-            if (authnResponse != null) {
-              credentials.setVerified(authnResponse.isValid());
-              // TODO deal with cases where id.id != authnResponse.getData();
-            }
-          }
-        }
-      }
-    }
+  public Response validateCredentials(AuthnRequest request, UserIdentity id) {
+    if (id == null || id.isVerified())
+      return null;
+    
+    return
+        (handleAuthn(id)
+        ? SamlAuthn.makeSuccessfulResponse(request, id.getUsername())
+        : SamlAuthn.makeUnsuccessfulResponse(
+            request, StatusCode.REQUEST_DENIED_URI, "Authentication failed"));
   }
 
+  // return true if credentials are checked against Identity provider: either valid or invalid
+  private boolean handleAuthn(UserIdentity id) {
+    for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
+      String connectorName = connStatus.getName();
+      System.out.println("Got security plug-in " + connectorName);
+
+      // Use connectorName as a clue as to what type of auth mechanism is suitable
+      if (connectorName.startsWith("Basic") && id.getMechanism() != AuthnMechanism.BASIC_AUTH)
+        continue;
+      if (connectorName.startsWith("Form") && id.getMechanism() != AuthnMechanism.FORMS_AUTH)
+        continue;
+      AuthenticationResponse authnResponse =
+          manager.authenticate(connectorName, id, null);
+      if ((authnResponse != null) && authnResponse.isValid()) {
+        id.setVerified();
+        // TODO deal with cases where id.id != authnResponse.getData();
+      }
+    }
+    return true;
+
+  }
+
+  // some form of authentication has already happened, the user gave us cookies,
+  // see if the cookies reveal who the user is.
   /** {@inheritDoc} */
-  public String handleCookies(List<Cookie> cookies) {
+  public AuthenticationResponse handleCookie(List<Cookie> cookieJar) {
     for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
       String connectorName = connStatus.getName();
       LOGGER.info("Got security plug-in " + connectorName);
@@ -154,10 +161,12 @@ public class BackEndImpl implements BackEnd {
       // Use connectorName as a clue as to what type of auth mechanism is suitable
       if (!connectorName.startsWith("FORM-"))
         continue;
-      AuthenticationResponse authnResponse = manager.authenticate(connectorName, null, cookies);
+      AuthenticationResponse authnResponse =
+          manager.authenticate(connectorName, null, cookieJar);
       if ((authnResponse != null) && authnResponse.isValid())
-        return authnResponse.getData();
+        return authnResponse;
     }
+    
     return null;
   }
 

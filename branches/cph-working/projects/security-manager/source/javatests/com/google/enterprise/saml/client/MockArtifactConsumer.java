@@ -48,6 +48,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import static com.google.enterprise.saml.common.GsaConstants.GSA_ARTIFACT_PARAM_NAME;
+import static com.google.enterprise.saml.common.GsaConstants.GSA_RELAY_STATE_PARAM_NAME;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResolve;
@@ -99,8 +101,8 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
       throws ServletException, IOException {
     HttpServletResponseAdapter result = new HttpServletResponseAdapter(resp, true);
     HttpSession session = req.getSession();
-    String artifact = req.getParameter("SAMLart");
-    String relayState = req.getParameter("RelayState");
+    String artifact = req.getParameter(GSA_ARTIFACT_PARAM_NAME);
+    String relayState = req.getParameter(GSA_RELAY_STATE_PARAM_NAME);
     if (artifact == null) {
       LOGGER.log(Level.WARNING, "No artifact in message.");
       initErrorResponse(resp, SC_INTERNAL_SERVER_ERROR);

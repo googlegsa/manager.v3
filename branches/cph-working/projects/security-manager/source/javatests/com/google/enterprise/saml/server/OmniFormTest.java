@@ -59,7 +59,7 @@ public class OmniFormTest extends TestCase {
    * @throws UnsupportedEncodingException
    */
   public void testWriteForm() throws UnsupportedEncodingException {
-    String form = formOne.writeForm(null);
+    String form = formOne.writeForm(CredentialsGroup.newGroups());
     System.out.println(form);
   }
   
@@ -68,42 +68,43 @@ public class OmniFormTest extends TestCase {
    */
   public void testRewriteForm() {
     UserIdentity[] ids = new UserIdentity[4];
+
     ids[0] = UserIdentity.compatNew("voyager", "foobar", null);
     ids[0].setVerified();
-    ids[1] = UserIdentity.compatNew(null, null, null);
-    ids[2] = UserIdentity.compatNew(null, null, null);
-    ids[3] = UserIdentity.compatNew(null, null, null);
     String form = formOne.writeForm(getGroups(ids));
     System.out.println(form);
   }
   
-  /**
-   * Make sure we can extract data from the form.
-   * @throws IOException 
-   */
-  public void testParseForm() throws IOException {
-    final UserIdentity[] ids = new UserIdentity[2];
-    ids[0] = UserIdentity.compatNew("fred", "frocks", null);
-    ids[1] = UserIdentity.compatNew("jane", "jrocks", null);
+    /**
+     * Make sure we can extract data from the form.
+     * @throws IOException 
+     */
+    public void testParseForm() throws IOException {
+      final UserIdentity[] ids = new UserIdentity[2];
+      ids[0] = UserIdentity.compatNew("fred", "frocks", null);
+      ids[1] = UserIdentity.compatNew("jane", "jrocks", null);
 
-    MockHttpServletRequest request = makeMockHttpPost(null, "http://localhost/");
-    request.addParameter("u1", "fred");
-    request.addParameter("pw1", "frocks");
-    request.addParameter("u2", "jane");
-    request.addParameter("pw2", "jrocks");
+      MockHttpServletRequest request = makeMockHttpPost(null, "http://localhost/");
+      request.addParameter("u0", "fred");
+      request.addParameter("pw0", "frocks");
+      request.addParameter("u1", "jane");
+      request.addParameter("pw1", "jrocks");
 
-    formOne.parse(request, getGroups(ids));
+      formOne.parse(request, getGroups(ids));
 
-    assertEquals("fred", ids[0].getUsername());
-    assertEquals("frocks", ids[0].getPassword());
+      assertEquals("fred", ids[0].getUsername());
+      assertEquals("frocks", ids[0].getPassword());
 
-    assertEquals("jane", ids[1].getUsername());
-    assertEquals("jrocks", ids[1].getPassword());
-  }
+      assertEquals("jane", ids[1].getUsername());
+      assertEquals("jrocks", ids[1].getPassword());
+    }
 
   private List<CredentialsGroup> getGroups(UserIdentity[] ids) {
     List<CredentialsGroup> groups = new ArrayList<CredentialsGroup>();
     for (UserIdentity id: ids) {
+      if (id == null) {
+        id = UserIdentity.compatNew(null, null, null);
+      }
       groups.add(id.getCredentials().getGroup());
     }
     return groups;

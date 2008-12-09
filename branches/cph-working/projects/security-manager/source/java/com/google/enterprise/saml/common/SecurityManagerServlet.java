@@ -17,10 +17,7 @@ package com.google.enterprise.saml.common;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.server.BackEnd;
-import com.google.enterprise.sessionmanager.AuthnDomain;
-import com.google.enterprise.sessionmanager.AuthnDomainGroup;
 import com.google.enterprise.sessionmanager.CredentialsGroup;
-import com.google.enterprise.sessionmanager.DomainCredentials;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -31,7 +28,6 @@ import org.opensaml.common.binding.SAMLMessageContext;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.ServletContext;
@@ -74,14 +70,7 @@ public abstract class SecurityManagerServlet extends HttpServlet {
     @SuppressWarnings("unchecked")
         List<CredentialsGroup> groups = (List<CredentialsGroup>) session.getAttribute(CREDENTIALS);
     if (groups == null) {
-      groups = new ArrayList<CredentialsGroup>();
-      for (AuthnDomainGroup metadata: AuthnDomainGroup.getAllGroups()) {
-        CredentialsGroup group = new CredentialsGroup(metadata);
-        for (AuthnDomain domain: metadata.getDomains()) {
-          new DomainCredentials(domain, group);
-        }
-        groups.add(group);
-      }
+      groups = CredentialsGroup.newGroups();
       session.setAttribute(CREDENTIALS, groups);
     }
     return groups;

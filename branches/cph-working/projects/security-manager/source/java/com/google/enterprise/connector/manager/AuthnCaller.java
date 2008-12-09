@@ -37,24 +37,22 @@ public class AuthnCaller {
 
   private static final Logger LOGGER = Logger.getLogger(AuthnCaller.class.getName());
 
-  private final AuthenticationManager authnManager;
-  private final AuthenticationIdentity identity;
-  private final List<Cookie> cookies;
+  private AuthenticationManager authnManager;
+  private AuthenticationIdentity identity;
+  private final List<Cookie> securityContext;
 
   public AuthnCaller(AuthenticationManager authnManager, AuthenticationIdentity identity,
-                     List<Cookie> cookies) {
+      List<Cookie> securityContext) {
     this.authnManager = authnManager;
     this.identity = identity;
-    this.cookies = cookies;
+    this.securityContext = securityContext;
   }
 
   public AuthenticationResponse authenticate() {
     if (authnManager == null) {
       return null;
     }
-    for (Cookie c: cookies) {
-      identity.setCookie(c);
-    }
+    initializeCookiesFromContext();
     AuthenticationResponse authenticationResponse = null;
     try {
       authenticationResponse = authnManager.authenticate(identity);
@@ -68,22 +66,32 @@ public class AuthnCaller {
     return authenticationResponse;
   }
 
+  private void initializeCookiesFromContext() {
+    if (securityContext != null) {
+      for (Cookie c: securityContext) {
+        identity.setCookie(c.getName(), c.getValue());
+      }
+    }
+  }
+
   /**
    * This implementation currently just throws away any changes the
    * authentication manager may have made to pre-existing cookies. It only adds
    * the values for new cookies.
    */
   private void reconcileReturnedCookiesWithContext() {
-    for (Object o: identity.getCookieNames()) {
-      String name = String.class.cast(o);
-      if (!knownCookie(name)) {
-        cookies.add(new Cookie(name, identity.getCookie(name)));
+    if (securityContext != null) {
+      for (Object o: identity.getCookieNames()) {
+        String name = String.class.cast(o);
+        if (!knownCookie(name)) {
+          securityContext.add(new Cookie(name, identity.getCookie(name)));
+        }
       }
     }
   }
 
   private boolean knownCookie(String name) {
-    for (Cookie c: cookies) {
+    for (Cookie c: securityContext) {
       if (c.getName().equals(name)) {
         return true;
       }
