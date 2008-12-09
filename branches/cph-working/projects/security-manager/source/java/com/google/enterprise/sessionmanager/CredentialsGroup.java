@@ -19,6 +19,11 @@ import java.util.List;
 
 import javax.servlet.http.Cookie;
 
+/**
+ * The credentials associated with a single authentication-domain group.  Only the username and
+ * password are stored here; other credentials are domain-specific and are stored in the domain
+ * credentials comprising the group.
+ */ 
 public class CredentialsGroup {
 
   private final AuthnDomainGroup metadata;

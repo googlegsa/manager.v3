@@ -17,11 +17,15 @@ package com.google.enterprise.sessionmanager;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A group of authentication domains that share the same username/password for every user.
+ * This grouping is used to partition the login form.
+ */ 
 public class AuthnDomainGroup {
 
   private static final List<AuthnDomainGroup> allGroups = new ArrayList<AuthnDomainGroup>();
 
-  private final String humanName;
+  private final String humanName;  // A string to identify this group in the login form.
   private final List<AuthnDomain> domains;
 
   public AuthnDomainGroup(String humanName) {

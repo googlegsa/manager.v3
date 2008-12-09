@@ -17,16 +17,21 @@ package com.google.enterprise.sessionmanager;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A set of resources that are authenticated by a single IdP using a particular mechanism.  The
+ * resources are described by a set of URL patterns.  Information about the IdP is specific to the
+ * mechanism: for example, forms-auth IdPs have a login URL.
+ */
 public class AuthnDomain {
 
-  private final String name;
+  private final String name;  // The domain name must be unique.
   private final AuthnMechanism mechanism;
   private final AuthnDomainGroup group;
   private final List<String> urlPatterns;
+  private String testUrl;  // A URL covered by urlPatterns.
 
   // Fields for BASIC_AUTH and FORMS_AUTH
   private String loginUrl;
-  private String testUrl;
 
   // Fields for SAML:
   //private final MetadataProvider metadataProvider;

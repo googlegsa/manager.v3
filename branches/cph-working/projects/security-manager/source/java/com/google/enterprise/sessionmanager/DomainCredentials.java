@@ -19,6 +19,10 @@ import java.util.List;
 
 import javax.servlet.http.Cookie;
 
+/**
+ * The credentials associated with a single authentication domain.  (Does not include
+ * username/password, which is stored in the associated Credentials Group.)
+ */ 
 public class DomainCredentials {
 
   private enum Decision {
