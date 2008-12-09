@@ -22,11 +22,7 @@ import com.google.enterprise.saml.server.UserIdentity;
 
 import junit.framework.TestCase;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-
-import javax.servlet.http.Cookie;
 
 /**
  * Tests for creating, modifying and deleting a RegexCookieIdentityConnector
