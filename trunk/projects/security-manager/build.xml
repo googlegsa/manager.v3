@@ -167,6 +167,7 @@
 		<delete dir="${dist}" />
 		<delete dir="${tests.todir}" />
 		<delete dir="${tests.data}/tmp" />
+		<delete dir="${tests.data}/mockdata/connectors" />
 		<delete dir="${catalina.base}" />
 	</target>
 
