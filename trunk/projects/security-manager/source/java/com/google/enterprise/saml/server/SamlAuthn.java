@@ -253,7 +253,16 @@ public class SamlAuthn extends SecurityManagerServlet
       response.getWriter().print(loginForm.writeForm(ids));
       return;
     }
-    
+
+    // If we've reached here, we've fully authenticated the user. Update
+    // the Session Manager with the necessary info, and then generate
+    // the artifact redirect.
+    Map<String, String> cookieJar = getCookieJar(request);
+    if (cookieJar.containsKey(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME)) {
+      backend.updateSessionManager(
+          cookieJar.get(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME), ids);      
+    }
+
     // generate artifact, redirect, plant cookies
     LOGGER.info("All identities verified");
     doRedirect(context, backend, response);

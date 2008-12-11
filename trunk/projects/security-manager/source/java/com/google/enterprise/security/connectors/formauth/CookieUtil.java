@@ -14,6 +14,10 @@
 
 package com.google.enterprise.security.connectors.formauth;
 
+import com.google.enterprise.saml.common.GsaConstants;
+import com.google.enterprise.saml.common.Base64;
+import com.google.enterprise.saml.common.Base64DecoderException;
+
 import java.io.IOException;
 
 import java.net.URL;
@@ -431,6 +435,64 @@ public final class CookieUtil {
     }
     return strbuf.toString();
   }
+
+  public static String serializeCookie(Cookie cookie) {
+    StringBuilder str = new StringBuilder(safeSerialize(cookie.getName()));
+    str.append(GsaConstants.COOKIE_FIELD_SEPERATOR);
+    str.append(safeSerialize(cookie.getValue()));
+    str.append(GsaConstants.COOKIE_FIELD_SEPERATOR);
+    str.append(safeSerialize(cookie.getPath()));
+    str.append(GsaConstants.COOKIE_FIELD_SEPERATOR);
+    str.append(safeSerialize(cookie.getDomain()));
+    str.append(GsaConstants.COOKIE_FIELD_SEPERATOR);
+    str.append(safeSerialize(String.valueOf(cookie.getMaxAge())));
+    return str.toString();
+  }
+
+  public static String serializeCookies(Vector<Cookie> cookies) {
+    StringBuilder str = new StringBuilder();
+    for (Cookie cookie : cookies) {
+      str.append(serializeCookie(cookie));
+      str.append(GsaConstants.COOKIE_RECORD_SEPARATOR);
+    }
+    return str.toString();
+  }
+
+  private static String safeSerialize(String str) {
+    if (str == null) str = "";
+    return Base64.encodeWebSafe(str.getBytes(), false);
+  }
+
+  public static Cookie deserializeCookie(String str) {
+    String[] elements = str.split(GsaConstants.COOKIE_FIELD_SEPERATOR);
+    Cookie cookie = new Cookie(safeDeserialize(elements[0]),
+                               safeDeserialize(elements[1]));
+    cookie.setPath(safeDeserialize(elements[2]));
+    cookie.setDomain(safeDeserialize(elements[3]));
+    Integer maxAge = new Integer(safeDeserialize(elements[4]));
+    cookie.setMaxAge(maxAge);
+    return cookie;
+  }
+
+  public static Vector<Cookie> deserializeCookies(String str) {
+    Vector<Cookie> cookies = new Vector<Cookie>();
+    String[] elements = str.split(GsaConstants.COOKIE_RECORD_SEPARATOR);
+    for (String element : elements) {
+      cookies.add(deserializeCookie(element));
+    }
+    return cookies;
+  }
+
+  private static String safeDeserialize(String str) {
+     byte[] bytes = str.getBytes();
+     try {
+       return new String(Base64.decodeWebSafe(bytes, 0, bytes.length));
+     } catch (Base64DecoderException e) {
+       // Should not happen if the cookie was serialized by us
+       LOG.warning("Error while deserializing. Original string = <" + str + ">.");
+       return "";
+     }
+   }  
 
   private static boolean undefined(String str) {
     return str == null || "".equals(str);

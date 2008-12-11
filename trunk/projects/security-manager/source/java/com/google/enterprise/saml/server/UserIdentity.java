@@ -88,4 +88,15 @@ public class UserIdentity implements AuthenticationIdentity {
   public boolean isVerified() {
     return(status == AuthNDecision.VERIFIED);
   }
+
+  /**
+   * For logging purposes.
+   * @return a string containing user, password, and authsite info representing
+   * this UserIdentity
+   */
+  public String toString() {
+    return (username == null ? "null-user" : username) + " " +
+           (password == null? "null-password" : password) + " " + 
+           (site == null ? "null-authsite" : site.getLoginUri());
+  }
 }
