@@ -111,9 +111,11 @@ public class SamlAuthn extends SecurityManagerServlet
       SPSSODescriptor sp = peerEntity.getSPSSODescriptor(SAML20P_NS);
       
       // TODO is there a better way to deduce ACS URL??
+      String gsaUrl = null;
       String referer = request.getHeader("Referer");
-      String gsaUrl = referer.substring(0, referer.indexOf("search"));
-      System.out.println("GSA URL is " + gsaUrl);
+      if (referer != null)
+        gsaUrl = referer.substring(0, referer.indexOf("search"));
+      LOGGER.info("GSA URL is " + gsaUrl);
       makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI,
           gsaUrl + GsaConstants.GSA_ARTIFACT_HANDLER_NAME).setIsDefault(true);
       initializePeerEntity(context, peerEntity, sp,
