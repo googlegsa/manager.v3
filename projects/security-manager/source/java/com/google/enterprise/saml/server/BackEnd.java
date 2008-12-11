@@ -66,6 +66,18 @@ public interface BackEnd {
   public EntityDescriptor getGsaEntity();
 
   /**
+   * Get the SAML artifact map.
+   *
+   * The backend holds onto this map but doesn't use it.  The map is used by the servlets comprising
+   * the SAML identity provider.
+   *
+   * @returns The unique artifact map for the security manager.
+   */
+  public SAMLArtifactMap getArtifactMap();
+
+  public String getAuthConfigFile();
+
+  /**
    * Validate identity credentials.
    *
    * @param request The SAML authentication request being served.
@@ -76,21 +88,12 @@ public interface BackEnd {
   public AuthenticationResponse handleCookie(Map<String, String> cookieJar);
 
   /**
-   * Get the SAML artifact map.
-   *
-   * The backend holds onto this map but doesn't use it.  The map is used by the servlets comprising
-   * the SAML identity provider.
-   * 
-   * @returns The unique artifact map for the security manager.
-   */
-  public SAMLArtifactMap getArtifactMap();
-
-  /**
    * Process a set of SAML authorization queries.
    * 
    * @param authzDecisionQueries A list of authorization queries to be processed.
    * @returns A list of responses, corresponding to the argument.
    */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries);
-  public String getAuthConfigFile();
+
+  public void updateSessionManager(String sessionId, UserIdentity ids[]);
 }

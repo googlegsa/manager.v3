@@ -38,6 +38,7 @@ import org.opensaml.xml.parse.BasicParserPool;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 import java.util.logging.Logger;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.GSA_ISSUER;
@@ -47,9 +48,12 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeEntityDescripto
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeIdpSsoDescriptor;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSingleSignOnService;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSpSsoDescriptor;
+import com.google.enterprise.security.connectors.formauth.CookieUtil;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
+
+import javax.servlet.http.Cookie;
 
 /**
  * An implementation of the BackEnd interface for the Security Manager.
@@ -65,6 +69,11 @@ public class BackEndImpl implements BackEnd {
   private final EntityDescriptor gsaEntity;
   private final String loginFormConfigFile;
   private static final Logger LOGGER = Logger.getLogger(BackEndImpl.class.getName());
+
+  private GSASessionAdapter adapter;
+
+  // public for testing/debugging
+  public Vector<String> sessionIds;
 
   // TODO(cph): The metadata doesn't belong in the back end.
 
@@ -95,6 +104,9 @@ public class BackEndImpl implements BackEnd {
     makeSpSsoDescriptor(gsaEntity);
     // SPSSODescriptor sp = makeSpSsoDescriptor(gsaEntity);
     // makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI, acsUrl).setIsDefault(true);
+
+    adapter = new GSASessionAdapter(sm);
+    sessionIds = new Vector<String>();
   }
 
   /** {@inheritDoc} */
@@ -112,6 +124,15 @@ public class BackEndImpl implements BackEnd {
 
   public EntityDescriptor getGsaEntity() {
     return gsaEntity;
+  }
+
+  /** {@inheritDoc} */
+  public SAMLArtifactMap getArtifactMap() {
+    return artifactMap;
+  }
+
+  public String getAuthConfigFile() {
+    return loginFormConfigFile;
   }
 
   /** {@inheritDoc} */
@@ -170,11 +191,6 @@ public class BackEndImpl implements BackEnd {
   }
 
   /** {@inheritDoc} */
-  public SAMLArtifactMap getArtifactMap() {
-    return artifactMap;
-  }
-
-  /** {@inheritDoc} */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     return authzResponder.authorizeBatch(authzDecisionQueries);
   }
@@ -187,6 +203,42 @@ public class BackEndImpl implements BackEnd {
       connList = manager.getConnectorStatuses();
     }
     return connList;
+  }
+
+  public void updateSessionManager(String sessionId, UserIdentity[] ids) {    
+    LOGGER.info("Session ID: " + sessionId);
+    sessionIds.add(sessionId);
+    LOGGER.info("Users: ");
+
+    Vector<Cookie> cookies = new Vector<Cookie>();
+
+    for (UserIdentity id : ids) {
+      if (null == id) {
+        LOGGER.info("null id");
+        continue;
+      }
+      LOGGER.info("user id to sm: " + id.toString());
+
+      if (null != id.getUsername()) {
+        adapter.setUsername(sessionId, id.getUsername());
+      }
+      if (null != id.getPassword()) {
+        adapter.setPassword(sessionId, id.getPassword());
+      }
+
+      // TODO(con): currently setting the domain will break functionality
+      // for most Basic Auth headrequests. Once I figure out what's going on
+      // with NtlmDomains, I'll fix this.
+//      if (null != id.getAuthSite()) {
+//        adapter.setDomain(sessionId, id.getAuthSite().getHostname());
+//      }
+
+      cookies.addAll(id.getCookies());
+    }
+
+    adapter.setCookies(sessionId, CookieUtil.serializeCookies(cookies));
+
+    // TODO(con): connectors
   }
   
   // TODO get rid of this when we have a way of configuring plug-ins
@@ -220,7 +272,4 @@ public class BackEndImpl implements BackEnd {
     }
   }
 
-  public String getAuthConfigFile() {
-    return loginFormConfigFile;
-  }
 }
