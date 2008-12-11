@@ -28,6 +28,7 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleSignOnService;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertionConsumerService;
 import org.springframework.mock.web.MockServletConfig;
 
 import java.io.IOException;
@@ -50,6 +51,7 @@ import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
 
 /**
  * The MockServiceProvider class implements a servlet pretending to be the part of a SAML Service
@@ -58,7 +60,8 @@ import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
  */
 public class MockServiceProvider extends SecurityManagerServlet implements GettableHttpServlet {
   private static final long serialVersionUID = 1L;
-
+  private static final String acsUrl = "http://localhost:8973/security-manager/mockartifactconsumer";
+  
   public MockServiceProvider() throws ServletException {
     init(new MockServletConfig());
   }
@@ -90,6 +93,7 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
     
     EntityDescriptor localEntity = backend.getGsaEntity();
     SPSSODescriptor sp = localEntity.getSPSSODescriptor(SAML20P_NS);
+    makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI, acsUrl).setIsDefault(true);
     initializeLocalEntity(context, localEntity, sp, Endpoint.DEFAULT_ELEMENT_NAME);
     context.setOutboundMessageIssuer(localEntity.getEntityID());
     {
