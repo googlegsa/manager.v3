@@ -167,7 +167,7 @@
 		<delete dir="${dist}" />
 		<delete dir="${tests.todir}" />
 		<delete dir="${tests.data}/tmp" />
-		<delete dir="${tests.data}/mockdata/connectors" />
+		<delete dir="${tests.data}/mocktestdata/connectors" />
 		<delete dir="${catalina.base}" />
 	</target>
 
@@ -177,7 +177,7 @@
 	     also contains all and can be deployed as-is.
 	-->
 
-	<target name="install_init" depends="tomcat-stop">
+	<target name="install_init">
 		<mkdir dir="${war.dir}" />
 	</target>
 
