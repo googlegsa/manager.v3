@@ -177,7 +177,7 @@
 	     also contains all and can be deployed as-is.
 	-->
 
-	<target name="install_init">
+	<target name="install_init" depends="tomcat-stop">
 		<mkdir dir="${war.dir}" />
 	</target>
 
