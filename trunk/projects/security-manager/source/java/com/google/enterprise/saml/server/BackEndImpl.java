@@ -214,26 +214,31 @@ public class BackEndImpl implements BackEnd {
 
     for (UserIdentity id : ids) {
       if (null == id) {
-        LOGGER.info("null id");
+        LOGGER.warning("null id");
         continue;
       }
       LOGGER.info("user id to sm: " + id.toString());
 
-      if (null != id.getUsername()) {
-        adapter.setUsername(sessionId, id.getUsername());
-      }
-      if (null != id.getPassword()) {
-        adapter.setPassword(sessionId, id.getPassword());
-      }
-
+      // This clobbers any priorly stored basic auth credentials.
+      // The expectation is that only one basic auth module will be active
+      // at any given time, or that if multiple basic auth modules are
+      // active at once, only one of them will work.
+      if (AuthNMechanism.BASIC_AUTH == id.getAuthSite().getMethod()) {
+        if (null != id.getUsername()) {
+          adapter.setUsername(sessionId, id.getUsername());
+        }
+        if (null != id.getPassword()) {
+          adapter.setPassword(sessionId, id.getPassword());
+        }
       // TODO(con): currently setting the domain will break functionality
       // for most Basic Auth headrequests. Once I figure out what's going on
       // with NtlmDomains, I'll fix this.
-//      if (null != id.getAuthSite()) {
-//        adapter.setDomain(sessionId, id.getAuthSite().getHostname());
-//      }
+      //  if (null != id.getAuthSite()) {
+      //    adapter.setDomain(sessionId, id.getAuthSite().getHostname());
+      //  }
+      }
 
-      cookies.addAll(id.getCookies());
+      cookies.addAll(id.getCookies());     
     }
 
     adapter.setCookies(sessionId, CookieUtil.serializeCookies(cookies));
