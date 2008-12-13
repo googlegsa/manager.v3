@@ -111,9 +111,11 @@ public class SamlAuthn extends SecurityManagerServlet
       SPSSODescriptor sp = peerEntity.getSPSSODescriptor(SAML20P_NS);
       
       // TODO is there a better way to deduce ACS URL??
+      String gsaUrl = null;
       String referer = request.getHeader("Referer");
-      String gsaUrl = referer.substring(0, referer.indexOf("search"));
-      System.out.println("GSA URL is " + gsaUrl);
+      if (referer != null)
+        gsaUrl = referer.substring(0, referer.indexOf("search"));
+      LOGGER.info("GSA URL is " + gsaUrl);
       makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI,
           gsaUrl + GsaConstants.GSA_ARTIFACT_HANDLER_NAME).setIsDefault(true);
       initializePeerEntity(context, peerEntity, sp,
@@ -251,7 +253,16 @@ public class SamlAuthn extends SecurityManagerServlet
       response.getWriter().print(loginForm.writeForm(ids));
       return;
     }
-    
+
+    // If we've reached here, we've fully authenticated the user. Update
+    // the Session Manager with the necessary info, and then generate
+    // the artifact redirect.
+    Map<String, String> cookieJar = getCookieJar(request);
+    if (cookieJar.containsKey(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME)) {
+      backend.updateSessionManager(
+          cookieJar.get(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME), ids);      
+    }
+
     // generate artifact, redirect, plant cookies
     LOGGER.info("All identities verified");
     doRedirect(context, backend, response);

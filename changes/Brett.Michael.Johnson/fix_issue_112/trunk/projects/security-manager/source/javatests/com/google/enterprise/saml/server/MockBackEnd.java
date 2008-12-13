@@ -121,6 +121,10 @@ public class MockBackEnd implements BackEnd {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
 
+  public void updateSessionManager(String sessionId, UserIdentity ids[]) {
+    throw new UnsupportedOperationException("Unimplemented method.");
+  }
+
   public AuthenticationResponse handleCookie(Map<String, String> cookieJar) {
     throw new UnsupportedOperationException("Unimplemented method.");
   }

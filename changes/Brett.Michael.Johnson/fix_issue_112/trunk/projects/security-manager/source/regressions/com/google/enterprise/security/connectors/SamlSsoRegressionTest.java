@@ -48,24 +48,27 @@ public class SamlSsoRegressionTest extends TestCase {
   }
 
   public void testGoodCredentials() throws HttpException, IOException {
-    tryCredentials("joe", "plumber", HttpStatus.SC_OK);
-  }
-
-  public void testBadCredentials() throws HttpException, IOException {
-    tryCredentials("joe", "biden", HttpStatus.SC_UNAUTHORIZED);
-  }
-
-  private void tryCredentials(String username, String password, int expectedStatus)
-      throws HttpException, IOException {
-
     // Initial request to service provider
     String action = parseForm(tryGet(spUrl, HttpStatus.SC_OK));
 
-    // Submit credentials-gathering form
+    // Submit credentials-gathering form into the first credential group
+    // which is authenticated against fake-login.corp that accepts everything
     PostMethod method2 = new PostMethod(action);
-    method2.addParameter("username", username);
-    method2.addParameter("password", password);
-    tryPost(method2, expectedStatus);
+    method2.addParameter("u0", "voyager");
+    method2.addParameter("pw0", "plumer");
+    tryPost(method2, HttpStatus.SC_OK);
+  }
+
+  public void tryBadCredentials() throws HttpException, IOException {
+    // Initial request to service provider
+    String action = parseForm(tryGet(spUrl, HttpStatus.SC_OK));
+
+    // Submit credentials-gathering form into the second credential group
+    // which doesnot accept joe/plumber
+    PostMethod method2 = new PostMethod(action);
+    method2.addParameter("u1", "joe");
+    method2.addParameter("pw1", "plumer");
+    tryPost(method2, HttpStatus.SC_OK);
   }
 
   private String tryGet(String url, int expectedStatus) throws HttpException, IOException {
