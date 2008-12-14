@@ -14,7 +14,7 @@
 
 package com.google.enterprise.saml.client;
 
-import com.google.enterprise.saml.common.GettableHttpServlet;
+import com.google.enterprise.common.GettableHttpServlet;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 import com.google.enterprise.saml.server.BackEnd;
 
@@ -28,7 +28,6 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleSignOnService;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertionConsumerService;
 import org.springframework.mock.web.MockServletConfig;
 
 import java.io.IOException;
@@ -41,6 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 import static com.google.enterprise.saml.common.OpenSamlUtil.GOOGLE_PROVIDER_NAME;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertionConsumerService;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnRequest;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
@@ -50,8 +50,8 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
 import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
-import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
 
 /**
  * The MockServiceProvider class implements a servlet pretending to be the part of a SAML Service

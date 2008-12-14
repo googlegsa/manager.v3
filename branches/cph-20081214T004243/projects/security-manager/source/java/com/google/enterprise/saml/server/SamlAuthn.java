@@ -14,10 +14,10 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.common.GettableHttpServlet;
+import com.google.enterprise.common.PostableHttpServlet;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.saml.common.GettableHttpServlet;
 import com.google.enterprise.saml.common.GsaConstants;
-import com.google.enterprise.saml.common.PostableHttpServlet;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import org.opensaml.common.binding.SAMLMessageContext;

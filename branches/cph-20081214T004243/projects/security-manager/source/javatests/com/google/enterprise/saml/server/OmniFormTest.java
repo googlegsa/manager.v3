@@ -22,7 +22,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
-import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
+import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
 
 /**
  * Unit test for SamlAuthn handler.

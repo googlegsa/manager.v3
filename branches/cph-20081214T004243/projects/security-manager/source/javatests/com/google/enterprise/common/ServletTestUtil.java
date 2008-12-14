@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.saml.common;
+package com.google.enterprise.common;
 
 import org.opensaml.util.URLBuilder;
 import org.opensaml.xml.util.Pair;
@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Useful utilities for SAML testing.
  */
-public final class SamlTestUtil {
+public final class ServletTestUtil {
 
   public static MockHttpServletRequest makeMockHttpGet(String clientUrl, String serverUrl) {
     MockHttpServletRequest request = makeMockHttpRequest("GET", clientUrl, serverUrl);
@@ -77,7 +77,7 @@ public final class SamlTestUtil {
       int port = serverUrl.getPort();
       request.addHeader("Host", (port < 0) ? host : String.format("%s:%d", host, port));
     }
-    request.addHeader("Date", SecurityManagerServlet.httpDateString());
+    request.addHeader("Date", ServletBase.httpDateString());
     request.addHeader("Accept", "text/html, text/xhtml;q=0.9, text/plain;q=0.5, text/*;q=0.1");
     request.addHeader("Accept-Charset", "us-ascii, iso-8859-1, utf-8");
     request.addHeader("Accept-Encoding", "identity");
@@ -224,5 +224,4 @@ public final class SamlTestUtil {
     }
     out.flush();
   }
-
 }

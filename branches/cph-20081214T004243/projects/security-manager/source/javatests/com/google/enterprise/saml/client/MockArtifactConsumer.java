@@ -14,10 +14,11 @@
 
 package com.google.enterprise.saml.client;
 
-import com.google.enterprise.saml.common.GettableHttpServlet;
+import com.google.enterprise.common.GettableHttpServlet;
+import com.google.enterprise.common.HttpClientTransport;
+import com.google.enterprise.common.HttpTransport;
 import com.google.enterprise.saml.common.HttpServletRequestClientAdapter;
 import com.google.enterprise.saml.common.HttpServletResponseClientAdapter;
-import com.google.enterprise.saml.common.HttpTransport;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 import com.google.enterprise.saml.server.BackEnd;
 
@@ -58,7 +59,7 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageCont
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
-import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
+import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
 
 import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 
