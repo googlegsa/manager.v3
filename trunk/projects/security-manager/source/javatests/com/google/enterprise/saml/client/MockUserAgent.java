@@ -14,7 +14,7 @@
 
 package com.google.enterprise.saml.client;
 
-import com.google.enterprise.saml.common.HttpTransport;
+import com.google.enterprise.common.HttpTransport;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -24,7 +24,7 @@ import java.io.IOException;
 
 import javax.servlet.ServletException;
 
-import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpGet;
+import static com.google.enterprise.common.ServletTestUtil.makeMockHttpGet;
 
 /**
  * Implements a simple user agent that does HTTP servlet messaging over a given transport.

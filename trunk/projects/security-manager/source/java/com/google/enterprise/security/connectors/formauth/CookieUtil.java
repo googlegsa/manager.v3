@@ -14,12 +14,23 @@
 
 package com.google.enterprise.security.connectors.formauth;
 
+import com.google.enterprise.common.Base64;
+import com.google.enterprise.common.Base64DecoderException;
 import com.google.enterprise.saml.common.GsaConstants;
-import com.google.enterprise.saml.common.Base64;
-import com.google.enterprise.saml.common.Base64DecoderException;
+
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpConnectionManager;
+import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.NameValuePair;
+import org.apache.commons.httpclient.cookie.CookiePolicy;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
+import org.apache.commons.httpclient.util.IdleConnectionTimeoutThread;
 
 import java.io.IOException;
-
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -34,14 +45,8 @@ import java.util.TimeZone;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.servlet.http.Cookie;
 
-import org.apache.commons.httpclient.*;
-import org.apache.commons.httpclient.cookie.CookiePolicy;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
-import org.apache.commons.httpclient.util.IdleConnectionTimeoutThread;
+import javax.servlet.http.Cookie;
 
 
 /**
