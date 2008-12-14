@@ -92,7 +92,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       // construct URL for form posting
       if (action[0] != null) {
         URL formUrl = new URL(redirect);
-        URL newUrl = new URL(formUrl.getProtocol(), formUrl.getAuthority(), action[0]);
+        URL newUrl = new URL(formUrl, action[0]);
         redirect = newUrl.toString();
       }
     } catch (IOException e) {
@@ -100,9 +100,12 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       return new AuthenticationResponse(false, null);
     }
 
-    // submit FORM
     try {
-      submitLoginForm(redirect, param, cookies);
+      int status = submitLoginForm(redirect, param, cookies);
+      if (status != 200) {
+        LOGGER.info("Authentication failure status: " + status);
+        return new AuthenticationResponse(false, null);
+      }
     } catch (IOException e) {
       LOGGER.info("Could not POST login form: " + e.toString());
       return new AuthenticationResponse(false, null);
@@ -110,6 +113,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
 
     // We are form auth, we expect to have at least one cookie
     if (!anyCookiesChanged(cookies, originalCookies)) {
+      LOGGER.info("Authentication status OK but no cookie");
       return new AuthenticationResponse(false, null);
     }
 
@@ -130,8 +134,8 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       throws Exception {
     int redirectCount = 0;
     URL url = new URL(urlToFetch);
-    String lastRedirect = null;
-    String redirected = null;
+    String lastRedirect;
+    String redirected = urlToFetch;;
     StringBuffer redirectBuffer = new StringBuffer();
     int kMaxNumRedirectsToFollow = 4;
 
@@ -143,7 +147,6 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
                            bodyBuffer,
                            redirectBuffer, null,
                            null); // LOGGER
-
       lastRedirect = redirected;
       redirected = redirectBuffer.toString();
       if (redirected.length() > 0) {
@@ -156,7 +159,6 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
         break;
       }
     }
-
     return lastRedirect;
   }
 
@@ -178,15 +180,27 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     if (forms.length < 1) {
       return names;
     }
-    System.out.println("Got form " + forms[0].getAttributeByName("name"));
+    StringBuffer buffer = new StringBuffer("Got form");
+    {
+      String name = forms[0].getAttributeByName("name");
+      if (name != null) {
+        buffer.append("; name=");
+        buffer.append(name);
+      }
+    }
     TagNode[] inputs = forms[0].getElementsByName("input", true);
-    System.out.println("Got " + inputs.length + " input fields");
+    buffer.append("; ");
+    buffer.append(inputs.length);
+    buffer.append(" input fields");
     // We are screwed if there is more than one input with type "text", or more than
     // one input with type "password".
     for (TagNode node : inputs) {
       String inputType = node.getAttributeByName("type");
       String inputName = node.getAttributeByName("name");
-      System.out.println("input type is " + inputType + ", name is " + inputName);
+      buffer.append("; input type=");
+      buffer.append(inputType);
+      buffer.append(", name=");
+      buffer.append(inputName);
       if (inputType.equals("text")) {
         names.add(new StringPair(inputName, user));
       }
@@ -197,15 +211,17 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
         names.add(new StringPair(inputName, node.getAttributeByName("value")));
       }
     }
-    // Some form may need to be submitted to a different URL
+    // Some forms lack the required "action" attribute
     action[0] = forms[0].getAttributeByName("action");
-    if (action[0] != null)
-      System.out.println("Action is " + action[0]);
-
+    if (action[0] != null) {
+      buffer.append("; action=");
+      buffer.append(action[0]);
+    }
+    LOGGER.info(buffer.toString());
     return names;
   }
 
-  private void submitLoginForm(
+  private int submitLoginForm(
       String loginUrl, List<StringPair> parameters, Vector<Cookie> cookies)
       throws IOException {
     int redirectCount = 0;
@@ -233,15 +249,11 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
         // prepare for another fetch.
         url = new URL(redirected);
         httpMethod = "GET";
-
       } else {
         break;
       }
     }
-
-    if (status != 200 && status != 302) {
-      throw new IOException("Got " + status + "on POST to " + url.toString());
-    }
+    return status;
   }
 
   // This has to re-create all the cookies because AuthenticationIdentity doesn't provide
