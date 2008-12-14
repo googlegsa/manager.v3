@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.saml.client;
-
-import com.google.enterprise.saml.common.HttpTransport;
+package com.google.enterprise.common;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
@@ -36,8 +34,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static com.google.enterprise.saml.common.SamlTestUtil.servletRequestToString;
-import static com.google.enterprise.saml.common.SamlTestUtil.servletResponseToString;
+import static com.google.enterprise.common.ServletTestUtil.servletRequestToString;
+import static com.google.enterprise.common.ServletTestUtil.servletResponseToString;
 
 public final class HttpClientTransport implements HttpTransport {
   private static final Logger LOGGER = Logger.getLogger(HttpClientTransport.class.getName());

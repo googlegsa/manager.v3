@@ -14,13 +14,13 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.common.MockHttpTransport;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.client.MockArtifactConsumer;
 import com.google.enterprise.saml.client.MockServiceProvider;
 import com.google.enterprise.saml.client.MockUserAgent;
 import com.google.enterprise.saml.common.GsaConstants;
-import com.google.enterprise.saml.common.MockHttpTransport;
 
 import junit.framework.TestCase;
 
@@ -38,14 +38,14 @@ import java.net.MalformedURLException;
 import javax.servlet.ServletException;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertionConsumerService;
-import static com.google.enterprise.saml.common.SamlTestUtil.generatePostContent;
-import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpGet;
-import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
+import static com.google.enterprise.common.ServletTestUtil.generatePostContent;
+import static com.google.enterprise.common.ServletTestUtil.makeMockHttpGet;
+import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
+
+import static javax.servlet.http.HttpServletResponse.SC_OK;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
-
-import static javax.servlet.http.HttpServletResponse.SC_OK;
 
 public class SamlSsoTest extends TestCase {
 

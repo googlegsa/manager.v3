@@ -31,7 +31,7 @@ import javax.servlet.ServletException;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
-import static com.google.enterprise.saml.common.SamlTestUtil.makeMockHttpPost;
+import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
 
 /**
  * Unit test for SamlArtifactResolve handler.
