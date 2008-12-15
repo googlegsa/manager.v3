@@ -118,6 +118,7 @@ public class DocPusher implements Pusher {
 
   private FeedConnection feedConnection;
   private String gsaResponse;
+  private boolean feedWarning;
 
   /**
    *
@@ -125,6 +126,7 @@ public class DocPusher implements Pusher {
    */
   public DocPusher(FeedConnection feedConnection) {
     this.feedConnection = feedConnection;
+    this.feedWarning = false;
   }
 
   public static Logger getFeedLogger() {
@@ -748,8 +750,14 @@ public class DocPusher implements Pusher {
     if (osFilename != null) {
       osFile = new File(osFilename);
       try {
-        os = new BufferedOutputStream(new FileOutputStream(osFile, true));
+        os = new BufferedOutputStream(new FileOutputStream(osFile, true), 32768);
         is = new TeeInputStream(xmlData, os);
+        if (!feedWarning && FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
+          LOGGER.log(Level.WARNING, "Both TeedFeedFile Logging and FeedLogging"
+              + " are enabled.  Performance may be severely constrained. "
+              + " Persist only for short-term troubleshooting purposes.");
+          feedWarning = true;
+        }
       } catch (IOException e) {
         LOGGER.log(Level.WARNING, "cannot write file: " +
             osFile.getAbsolutePath(), e);

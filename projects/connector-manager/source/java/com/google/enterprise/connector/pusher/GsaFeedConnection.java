@@ -88,6 +88,7 @@ public class GsaFeedConnection implements FeedConnection {
     OutputStream outputStream;
     URLConnection uc;
     try {
+      LOGGER.finest("Opening feed connection.");
       synchronized (this) {
         uc = url.openConnection();
       }
@@ -103,6 +104,7 @@ public class GsaFeedConnection implements FeedConnection {
     boolean isThrowing = false;
     StringBuffer buf = new StringBuffer();
     try {
+      LOGGER.finest("Writing to feed connection.");
       // If there is an exception during this read/write, we do our
       // best to close the url connection and read the result.
       try {
@@ -162,6 +164,7 @@ public class GsaFeedConnection implements FeedConnection {
     } finally {
       BufferedReader br = null;
       try {
+        LOGGER.finest("Waiting for response from feed connection.");
         InputStream inputStream = uc.getInputStream();
         br = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
         String line;
@@ -180,6 +183,10 @@ public class GsaFeedConnection implements FeedConnection {
         } catch (IOException e) {
           LOGGER.log(Level.SEVERE,
                      "IOException while closing after post: continuing", e);
+        }
+        if (LOGGER.isLoggable(Level.FINEST)) {
+          LOGGER.finest("Received response from feed connection: "
+                        + buf.toString());
         }
       }
     }
