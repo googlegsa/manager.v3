@@ -14,6 +14,8 @@
 
 package com.google.enterprise.security.connectors.formauth;
 
+import com.google.enterprise.common.HttpClientInterface;
+import com.google.enterprise.common.StringPair;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
@@ -22,14 +24,15 @@ import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
 
-import org.apache.commons.httpclient.NameValuePair;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 
 import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 import java.util.logging.Logger;
-import java.net.URL;
 
 import javax.servlet.http.Cookie;
 
@@ -37,13 +40,15 @@ import javax.servlet.http.Cookie;
 
 public class FormAuthConnector implements Connector, Session, AuthenticationManager {
 
+  private final HttpClientInterface httpClient;
   @SuppressWarnings("unused")
   private final String cookieName;
-  
+
   private static final Logger LOGGER =
     Logger.getLogger(FormAuthConnector.class.getName());
 
-  public FormAuthConnector(String cookieName) {
+  public FormAuthConnector(HttpClientInterface httpClient, String cookieName) {
+    this.httpClient = httpClient;
     this.cookieName = cookieName; // TODO for cookie cracker use
   }
 
@@ -51,17 +56,17 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     // String cookieVal = identity.getCookie(cookieName);
     String username = identity.getUsername();
     String password = identity.getPassword();
-    
+
     if (username == null || password == null) {
       return null; // TODO try to crack a cookie
     }
-    
+
     String siteUri = identity.getLoginUrl();
     if (siteUri == null) {
       LOGGER.info("Could not authenticate: null URL");
       return null;
     }
-    
+
     // GET siteUri, till we hit a form; fill the form, post it; get the response,
     // remember the cookie returned to us.
     StringBuffer form = new StringBuffer();
@@ -72,8 +77,8 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       LOGGER.info("Could not GET login form from " + siteUri + ": " + e.toString());
       return new AuthenticationResponse(false, null);
     }
-    
-    Vector<NameValuePair> param = null;
+
+    List<StringPair> param;
     try {
       String[] action = new String[1];
       param = parseLoginForm(form, username, password, action);
@@ -90,31 +95,32 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       LOGGER.info("Could not parse login form: " + e.toString());
       return new AuthenticationResponse(false, null);
     }
-  
+
     // submit FORM
-    Vector<Cookie> cookies = null;
+    Vector<Cookie> cookies;
     try {
-      cookies = submitLoginForm(redirect, param.toArray(new NameValuePair[param.size()]));
+      cookies = submitLoginForm(redirect, param);
     } catch (IOException e) {
       LOGGER.info("Could not POST login form: " + e.toString());
       return new AuthenticationResponse(false, null);
     }
-    
-    // We are form auth, we expect to have at least one cookie 
-    if (cookies != null) {
-      // TODO stash these cookies to browser and session manager for impersonation
-      for (Cookie cookie : cookies) {
-        identity.setCookie(cookie);
-      }
-      return new AuthenticationResponse(true, username);
+
+    // We are form auth, we expect to have at least one cookie
+    if (cookies == null) {
+      return new AuthenticationResponse(false, null);
     }
-    return new AuthenticationResponse(false, null);
+
+    // TODO stash these cookies to browser and session manager for impersonation
+    for (Cookie cookie: cookies) {
+      identity.setCookie(cookie);
+    }
+    return new AuthenticationResponse(true, username);
   }
 
   /*
    * @returns the URL the form should be posted to
    */
-  public String fetchLoginForm(String urlToFetch, StringBuffer bodyBuffer)
+  private String fetchLoginForm(String urlToFetch, StringBuffer bodyBuffer)
       throws Exception {
     int redirectCount = 0;
     URL url = new URL(urlToFetch);
@@ -122,9 +128,9 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     String redirected = null;
     StringBuffer redirectBuffer = new StringBuffer();
     int kMaxNumRedirectsToFollow = 4;
-    
+
     while (true) {
-      CookieUtil.fetchPage("GET", url,
+      CookieUtil.fetchPage(httpClient, "GET", url,
                            null, // proxy,
                            "SecMgr", null, // cookies,
                            null, // parameters,
@@ -147,20 +153,20 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
 
     return lastRedirect;
   }
-  
+
   /**
    *  Pass a HTML form, in order to get the list of input fields.
    *  @param user username we have just collected from Omniform
    *  @param pass password we have just collected from Omniform
    *  @param action buffer for storing the action of the HTML form
-   *  
+   *
    *  @return the param names and values suitable for POSTing.
    */
 
-  public Vector<NameValuePair> parseLoginForm(StringBuffer form, String user, String pass,
+  private List<StringPair> parseLoginForm(StringBuffer form, String user, String pass,
       String[] action) throws IOException {
-    Vector<NameValuePair> names = new Vector<NameValuePair>();
- 
+    List<StringPair> names = new ArrayList<StringPair>();
+
     HtmlCleaner cleaner = new HtmlCleaner();
     TagNode[] forms = cleaner.clean(form.toString()).getElementsByName("form", true);
     if (forms.length < 1) {
@@ -176,13 +182,13 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       String inputName = node.getAttributeByName("name");
       System.out.println("input type is " + inputType + ", name is " + inputName);
       if (inputType.equals("text")) {
-        names.add(new NameValuePair(inputName, user));
+        names.add(new StringPair(inputName, user));
       }
       if (inputType.equals("password")) {
-        names.add(new NameValuePair(inputName, pass));
+        names.add(new StringPair(inputName, pass));
       }
       if (inputType.equals("hidden")) {
-        names.add(new NameValuePair(inputName, node.getAttributeByName("value")));
+        names.add(new StringPair(inputName, node.getAttributeByName("value")));
       }
     }
     // Some form may need to be submitted to a different URL
@@ -192,8 +198,8 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
 
     return names;
   }
-  
-  public Vector<Cookie> submitLoginForm(String loginUrl, NameValuePair[] parameters)
+
+  private Vector<Cookie> submitLoginForm(String loginUrl, List<StringPair> parameters)
       throws IOException {
     int redirectCount = 0;
     URL url = new URL(loginUrl);
@@ -203,16 +209,15 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     int kMaxNumRedirectsToFollow = 4;
     Vector<Cookie> cookies = new Vector<Cookie>();
     String httpMethod = "POST"; // post only once, follow redirect is needed
-    
-    while (true) {
-      status =   CookieUtil.fetchPage(httpMethod, url,
-                                      null, // proxy,
-                                      "SecMgr", cookies,
-                                      parameters,
-                                      bodyBuffer,
-                                      redirectBuffer, null,
-                                      null); // LOGGER
 
+    while (true) {
+      status = CookieUtil.fetchPage(httpClient, httpMethod, url,
+                                    null, // proxy,
+                                    "SecMgr", cookies,
+                                    parameters,
+                                    bodyBuffer,
+                                    redirectBuffer, null,
+                                    null); // LOGGER
       if (cookies.size() == 0)
         System.out.println(bodyBuffer.toString());
       String redirected = redirectBuffer.toString();
@@ -229,14 +234,14 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
         break;
       }
     }
-    
+
     if (status != 200 && status != 302) {
       throw new IOException("Got " + status + "on POST to " + url.toString());
     }
-    
+
     return(cookies.size() > 0 ? cookies : null);
   }
-  
+
   public Session login() {
     return this;
   }

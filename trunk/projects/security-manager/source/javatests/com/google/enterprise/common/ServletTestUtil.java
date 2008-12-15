@@ -51,7 +51,7 @@ public final class ServletTestUtil {
     return request;
   }
 
-  private static MockHttpServletRequest makeMockHttpRequest(String method, String client,
+  public static MockHttpServletRequest makeMockHttpRequest(String method, String client,
       String server) {
     URLBuilder serverUrl = new URLBuilder(server);
     // TODO(cph): figure out how to get servlet context from serverUrl.

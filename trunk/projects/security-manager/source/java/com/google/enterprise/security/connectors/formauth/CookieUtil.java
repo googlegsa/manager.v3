@@ -16,19 +16,10 @@ package com.google.enterprise.security.connectors.formauth;
 
 import com.google.enterprise.common.Base64;
 import com.google.enterprise.common.Base64DecoderException;
+import com.google.enterprise.common.HttpClientInterface;
+import com.google.enterprise.common.HttpExchange;
+import com.google.enterprise.common.StringPair;
 import com.google.enterprise.saml.common.GsaConstants;
-
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpConnectionManager;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
-import org.apache.commons.httpclient.NameValuePair;
-import org.apache.commons.httpclient.cookie.CookiePolicy;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
-import org.apache.commons.httpclient.util.IdleConnectionTimeoutThread;
 
 import java.io.IOException;
 import java.net.URL;
@@ -48,7 +39,6 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.Cookie;
 
-
 /**
  * A class with some static methods to be used for Forms Authentication
  * feature.
@@ -66,25 +56,6 @@ public final class CookieUtil {
   }
   private static final Logger LOG =
       Logger.getLogger(CookieUtil.class.getName());
-  private static final int CONNECTION_TIMEOUT = 3000;
-  private static final int IDLE_TIMEOUT = 3000;
-
-  private static HttpConnectionManager connectionManager;
-
-  static {
-    // set up ConnectionManager to be used.
-    connectionManager = new MultiThreadedHttpConnectionManager();
-
-    HttpConnectionManagerParams params = new HttpConnectionManagerParams();
-    params.setConnectionTimeout(CONNECTION_TIMEOUT);
-    connectionManager.setParams(params);
-
-    IdleConnectionTimeoutThread idleConnectionTimeoutThread
-        = new IdleConnectionTimeoutThread();
-    idleConnectionTimeoutThread.setTimeoutInterval(IDLE_TIMEOUT);
-    idleConnectionTimeoutThread.start();
-    idleConnectionTimeoutThread.addConnectionManager(connectionManager);
-  }
 
   private CookieUtil() {
   }
@@ -112,12 +83,13 @@ public final class CookieUtil {
    *  I'd make that change now, except we're in a 5.0 push, and mgmt asked for
    *  minimal changes necessary to resolve bug 858157.
    */
-  public static int fetchPage(String method,
+  public static int fetchPage(HttpClientInterface client,
+                              String method,
                               URL url,
                               String proxy,
                               String userAgent,
                               Vector<Cookie> cookies,
-                              NameValuePair[] parameters,
+                              List<StringPair> parameters,
                               StringBuffer bodyBuffer,
                               StringBuffer redirectBuffer,
                               Set<String> passwordFields,
@@ -132,85 +104,40 @@ public final class CookieUtil {
       redirectBuffer.setLength(0);
     }
 
-    HttpClient httpClient = new HttpClient(connectionManager);
-    setProxy(httpClient, proxy);
-    httpClient.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
-    HttpMethod httpMethod = null;
-    if ("post".equalsIgnoreCase(method)) {
-      httpMethod = new PostMethod(url.toString());
-      httpMethod.setRequestHeader("Content-type",
-                                  "application/x-www-form-urlencoded");
-      ((PostMethod) httpMethod).addParameters(parameters);
-    } else if ("get".equalsIgnoreCase(method)) {
-      httpMethod = new GetMethod(url.toString());
-    } else {
-      return 0;
-    }
-
-    httpMethod.setFollowRedirects(false);
+    HttpExchange exchange = client.newExchange(method, url, parameters);
+    exchange.setProxy(proxy);
 
     if (!undefined(userAgent)) {
-      httpMethod.setRequestHeader("User-Agent", userAgent);
+      exchange.setRequestHeader("User-Agent", userAgent);
     }
 
     String cookieStr = filterCookieToSend(cookies, url);
 
     if (!undefined(cookieStr)) {
-      httpMethod.setRequestHeader("Cookie", cookieStr);
+      exchange.setRequestHeader("Cookie", cookieStr);
     }
 
-    httpMethod.setRequestHeader("Accept", "*/*");
-    httpMethod.setRequestHeader("Host", url.getHost());
-    httpMethod.setPath(url.getPath());
+    exchange.setRequestHeader("Accept", "*/*");
+    exchange.setRequestHeader("Host", url.getHost());
 
-    if (!undefined(url.getQuery())) {
-      httpMethod.setQueryString(url.getQuery());
-    }
-
-    int status = httpClient.executeMethod(httpMethod);
-
-    if (logger != null) {  // log sending data
-      StringBuffer logInfo = new StringBuffer();
-      logInfo.append("\nRequest: " + httpMethod.getName() +
-                     " " + url.toString());
-      logInfo.append("\nHeaders:\n");
-      for (NameValuePair nvpair : httpMethod.getRequestHeaders()) {
-        logInfo.append(nvpair.toString());
-      }
-
-      if ("post".equalsIgnoreCase(method)) {
-        logInfo.append("\nParameters:");
-        for (NameValuePair nvpair : ((PostMethod)httpMethod).getParameters()) {
-          if (passwordFields != null &&
-              passwordFields.contains(nvpair.getName())) {
-            logInfo.append("\nname=").append(nvpair.getName()).
-              append(", value=******");
-          } else {
-            logInfo.append('\n').append(nvpair.toString());
-          }
-        }
-        logInfo.append("\n");
-      }
-      logInfo.append("\n================================================\n");
-      logger.info(logInfo.toString());
-    }
+    int status = exchange.exchange();
 
     if (bodyBuffer != null) {
-      bodyBuffer.append(httpMethod.getResponseBodyAsString());
+      bodyBuffer.append(exchange.getResponseEntityAsString());
     }
     if (redirectBuffer != null) {
-      String redirect = getRedirectUrl(url, httpMethod);
+      String redirect = getRedirectUrl(exchange, url);
       if (redirect != null)
         redirectBuffer.append(redirect);
     }
 
     if (cookies != null) {
       List<SetCookie> newCookies = new ArrayList<SetCookie>();
-      for (Header header : httpMethod.getResponseHeaders("Set-Cookie")) {
-        newCookies.addAll(SetCookieParser.parse(header.getValue()));
+      for (String value: exchange.getResponseHeaderValues("Set-Cookie")) {
+        newCookies.addAll(SetCookieParser.parse(value));
       }
-      for (Header header : httpMethod.getResponseHeaders("Set-Cookie2")) {
-        newCookies.addAll(SetCookieParser.parse(header.getValue()));
+      for (String value: exchange.getResponseHeaderValues("Set-Cookie2")) {
+        newCookies.addAll(SetCookieParser.parse(value));
       }
       // removing duplicate cookies in old Vector. We do it inefficient way
       // O(n^2) here for small Vectors
@@ -281,58 +208,37 @@ public final class CookieUtil {
       cookies.addAll(newCookies);
     }
 
-    if (logger != null) {  // log receiving data
-      StringBuilder logInfo = new StringBuilder();
-      logInfo.append("\nResponse: status = " + httpMethod.getStatusLine());
-      logInfo.append("\nHeaders:\n");
-      for (NameValuePair nvpair : httpMethod.getResponseHeaders()) {
-        logInfo.append(nvpair.toString());
-      }
-      logInfo.append("\n================================================\n");
-      logger.info(logInfo.toString());
-    }
-
-    httpMethod.releaseConnection();
+    exchange.close();
     return status;
   }
 
   /**
    * Get the URL to redirect to after executing an HTTP request if so exists
    *
-   * @param method The HttpMethod object, after performing the request
+   * @param exchange The HTTP exchange object.
    * @param url The base URL object.
    * @return The absolute URL from a <code>Refresh</code> or
    *         <code>Location</code> header. Return null if none exists
    */
-  public static String getRedirectUrl(URL url, HttpMethod method) {
-    String redirectUrl = null;
-    int status = method.getStatusCode();
+  public static String getRedirectUrl(HttpExchange exchange, URL url) {
+    int status = exchange.getStatusCode();
     if (status == 200) {
-      redirectUrl = getRefreshUrl(method);
-    } else if (status >= 300 && status < 400) {
-      redirectUrl = getResponseHeader(method, "Location");
+      return getRefreshUrl(exchange);
     }
-    return redirectUrl;
-  }
-
-  /** Return the String value of a header with name @name
-   *  @param method The HttpMethod object, after performing the request.
-   *  @param name Header name
-   *  @return Header value.
-   */
-  private static String getResponseHeader(HttpMethod method, String name) {
-    Header header = method.getResponseHeader(name);
-    return (header != null) ? header.getValue() : null;
+    if (status >= 300 && status < 400) {
+      return exchange.getResponseHeaderValue("Location");
+    }
+    return null;
   }
 
   /**
    * Get the relative URL string in Refresh header if exists.
-   * @param method The HttpMethod object, after performing the request.
+   * @param exchange The HTTP exchange object.
    * @return The relative URL string of Refresh header or null
    *   if none exists
    */
-  private static String getRefreshUrl(HttpMethod method) {
-    String refresh = getResponseHeader(method, "Refresh");
+  private static String getRefreshUrl(HttpExchange exchange) {
+    String refresh = exchange.getResponseHeaderValue("Refresh");
     if (refresh != null) {
       int pos = refresh.indexOf(';');
       if (pos != -1) {
@@ -348,27 +254,6 @@ public final class CookieUtil {
       }
     }
     return null;
-  }
-
-  /**
-   * If necessary, set proxy information for an HTTP client connection.
-   *
-   * @param httpClient The client object to set proxy info for
-   * @param proxy The proxy host:port to use to look up proxy information
-   */
-  public static void setProxy(HttpClient httpClient, String proxy) {
-    if (null == proxy) {
-      return;
-    }
-
-    String[] proxyInfo = proxy.split(":");
-    if (proxyInfo.length != 2) {
-      LOG.warning("Error parsing proxy config file entry.");
-      return;
-    }
-
-    httpClient.getHostConfiguration().
-      setProxy(proxyInfo[0], Integer.parseInt(proxyInfo[1]));
   }
 
   /**
