@@ -44,6 +44,7 @@ public abstract class ServletBase extends HttpServlet {
     response.setStatus(HttpServletResponse.SC_OK);
     response.setContentType("text/html");
     response.setCharacterEncoding("UTF-8");
+    response.setHeader("Content-Type", "text/html; charset=UTF-8");
     response.setBufferSize(0x1000);
     return response.getWriter();
   }
@@ -55,6 +56,6 @@ public abstract class ServletBase extends HttpServlet {
   }
 
   public static void initResponse(HttpServletResponse response) {
-    response.addHeader("Date", httpDateString());
+    response.setHeader("Date", httpDateString());
   }
 }

@@ -31,6 +31,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -48,6 +49,8 @@ public final class ServletTestUtil {
   public static MockHttpServletRequest makeMockHttpPost(String clientUrl, String serverUrl) {
     MockHttpServletRequest request = makeMockHttpRequest("POST", clientUrl, serverUrl);
     request.setContentType("application/x-www-form-urlencoded");
+    request.setCharacterEncoding("UTF-8");
+    request.addHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
     return request;
   }
 
@@ -184,6 +187,9 @@ public final class ServletTestUtil {
   }
 
   private static void copyText(Reader in, Writer out) throws IOException {
+    if (in == null) {
+      return;
+    }
     char[] buffer = new char[0x1000];
     while (true) {
       int nRead = in.read(buffer);
@@ -223,5 +229,54 @@ public final class ServletTestUtil {
       }
     }
     out.flush();
+  }
+
+  public static void finalizeResponse(HttpServletResponse response) {
+    if (response instanceof MockHttpServletResponse) {
+      MockHttpServletResponse mr = (MockHttpServletResponse) response;
+      response.addHeader("Content-Length", String.valueOf(mr.getContentLength()));
+      Cookie[] cookies = mr.getCookies();
+      if (cookies.length > 0) {
+        StringBuffer buffer = new StringBuffer();
+        for (Cookie c: cookies) {
+          if (buffer.length() > 0) {
+            buffer.append(", ");
+          }
+          convertCookie(c, buffer);
+        }
+        response.addHeader("Set-Cookie", buffer.toString());
+      }
+    }
+  }
+
+  private static void convertCookie(Cookie c, StringBuffer buffer) {
+    buffer.append(c.getName());
+    buffer.append("=");
+    if (c.getValue() != null) {
+      buffer.append(c.getValue());
+    }
+    if (c.getComment() != null) {
+      buffer.append("; comment=");
+      buffer.append(c.getComment());
+    }
+    if (c.getDomain() != null) {
+      buffer.append("; domain=");
+      buffer.append(c.getDomain());
+    }
+    if (c.getMaxAge() > 0) {
+      buffer.append("; Max-Age=");
+      buffer.append(c.getMaxAge());
+    }
+    if (c.getPath() != null) {
+      buffer.append("; path=");
+      buffer.append(c.getPath());
+    }
+    if (c.getVersion() != -1) {
+      buffer.append("; version=");
+      buffer.append(String.valueOf(c.getVersion()));
+    }
+    if (c.getSecure()) {
+      buffer.append("; secure");
+    }
   }
 }

@@ -59,12 +59,12 @@ public class SamlSsoRegressionTest extends TestCase {
     tryPost(method2, HttpStatus.SC_OK);
   }
 
-  public void tryBadCredentials() throws HttpException, IOException {
+  public void testBadCredentials() throws HttpException, IOException {
     // Initial request to service provider
     String action = parseForm(tryGet(spUrl, HttpStatus.SC_OK));
 
     // Submit credentials-gathering form into the second credential group
-    // which doesnot accept joe/plumber
+    // which does not accept joe/plumber
     PostMethod method2 = new PostMethod(action);
     method2.addParameter("u1", "joe");
     method2.addParameter("pw1", "plumer");
@@ -76,10 +76,10 @@ public class SamlSsoRegressionTest extends TestCase {
     method.setFollowRedirects(true);
     logRequest(method);
     int status = userAgent.executeMethod(method);
-    logResponse(method);
-    assertEquals("Incorrect response status code", expectedStatus, status);
     String body = method.getResponseBodyAsString();
+    logResponse(method);
     method.releaseConnection();
+    assertEquals("Incorrect response status code", expectedStatus, status);
     return body;
   }
 
@@ -98,19 +98,14 @@ public class SamlSsoRegressionTest extends TestCase {
     return action;
   }
 
-  private String tryPost(PostMethod method, int expectedStatus) throws HttpException, IOException {
+  private void tryPost(PostMethod method, int expectedStatus) throws HttpException, IOException {
     method.setRequestBody(method.getParameters());
     logRequest(method);
     int status = userAgent.executeMethod(method);
+    String body = method.getResponseBodyAsString();
     logResponse(method);
-    assertTrue("Incorrect response status code",
-               (status == HttpStatus.SC_SEE_OTHER)
-               || (status == HttpStatus.SC_MOVED_TEMPORARILY));
-    Header location = method.getResponseHeader("Location");
-    assertNotNull("Missing Location header in redirect", location);
-    method.getResponseBody();
     method.releaseConnection();
-    return tryGet(location.getValue(), expectedStatus);
+    assertEquals("Incorrect response status code", expectedStatus, status);
   }
 
   private static void logRequest(HttpMethodBase method) throws IOException {
