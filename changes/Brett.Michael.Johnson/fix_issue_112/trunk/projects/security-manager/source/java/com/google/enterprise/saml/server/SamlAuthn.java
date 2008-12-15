@@ -14,10 +14,10 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.common.GettableHttpServlet;
+import com.google.enterprise.common.PostableHttpServlet;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.saml.common.GettableHttpServlet;
 import com.google.enterprise.saml.common.GsaConstants;
-import com.google.enterprise.saml.common.PostableHttpServlet;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -37,8 +37,6 @@ import org.opensaml.saml2.metadata.SingleSignOnService;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -142,20 +140,13 @@ public class SamlAuthn extends SecurityManagerServlet
   private String getAction(HttpServletRequest request) {
     String url = request.getRequestURL().toString();
     int q = url.indexOf("?");
-    
     return (q < 0) ? url : url.substring(0, q);
   }
     
   private String omniform(String configFile, HttpServletRequest request)
       throws NumberFormatException, IOException {
-    File tmpFile = new File(configFile);
-    LOGGER.info("Opened CSV file " + tmpFile.getAbsolutePath());
-    FileReader file = new FileReader(tmpFile);
-    CSVReader reader = new CSVReader(file);
-    loginForm = new OmniForm(reader, getAction(request));
-    String formHtml = loginForm.writeForm(null);
-    
-    return formHtml;
+    loginForm = new OmniForm(configFile, getAction(request));
+    return loginForm.writeForm(null);
   }
 
   /**

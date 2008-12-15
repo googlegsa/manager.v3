@@ -70,7 +70,7 @@ public class BackEndImpl implements BackEnd {
   private final String loginFormConfigFile;
   private static final Logger LOGGER = Logger.getLogger(BackEndImpl.class.getName());
 
-  private GSASessionAdapter adapter;
+  protected GSASessionAdapter adapter;
 
   // public for testing/debugging
   public Vector<String> sessionIds;
