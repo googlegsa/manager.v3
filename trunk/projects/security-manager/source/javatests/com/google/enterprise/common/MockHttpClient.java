@@ -14,8 +14,6 @@
 
 package com.google.enterprise.common;
 
-import com.google.enterprise.common.ServletTestUtil;
-
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
@@ -55,6 +53,14 @@ public class MockHttpClient implements HttpClientInterface {
 
       if ("POST".equalsIgnoreCase(method)) {
         setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        for (StringPair p: parameters) {
+          request.addParameter(p.getName(), p.getValue());
+        }
+        try {
+          ServletTestUtil.generatePostContent(request);
+        } catch (IOException e) {
+          throw new IllegalArgumentException(e);
+        }
       }
     }
 
