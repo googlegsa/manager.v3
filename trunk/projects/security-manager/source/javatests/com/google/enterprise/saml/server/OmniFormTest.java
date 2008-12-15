@@ -18,7 +18,6 @@ import junit.framework.TestCase;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
@@ -32,22 +31,9 @@ public class OmniFormTest extends TestCase {
   private OmniForm formOne;
      
   @Override
-  public void setUp() {
-    CSVReader reader = null;
-    try {
-      FileReader file = new FileReader("testdata/AuthSites.conf");
-      reader = new CSVReader(file);
-    } catch(Exception e) {
-      System.out.println("CSV parsing aborted:" + e.toString());
-    }
-
-    try {
-      formOne = new OmniForm(reader, "whatever");
-    } catch (Exception e) {
-      System.out.println("CSV parsing problematic: " + e.toString());
-    }
+  public void setUp() throws IOException {
+    formOne = new OmniForm("testdata/AuthSites.conf", "whatever");
   }
-
 
   /**
    * Make sure we can construct login form.

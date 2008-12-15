@@ -14,34 +14,18 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
-
 import java.io.IOException;
-import java.util.Vector;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
 class OmniForm {
-  private final Vector<AuthSite> sites;
+  private final List<AuthSite> sites;
   private final String actionUrl;
   private StringBuffer formContent;
   
-  public OmniForm(CSVReader reader, String actionUrl) throws NumberFormatException, IOException {
-    String[] nextLine;
-   
-    sites = new Vector<AuthSite>();
-    
-    // Each line is FQDN,realm,auth_method,optional_sample_login_url
-    // If sample login is missing, we deduce as FQDN + realm
-    while ((nextLine = reader.readNext()) != null) {
-      AuthNMechanism method = null;
-      if (nextLine[2].equals(AuthNMechanism.BASIC_AUTH.toString()))
-        method = AuthNMechanism.BASIC_AUTH;
-      if (nextLine[2].equals(AuthNMechanism.FORMS_AUTH.toString()))
-        method = AuthNMechanism.FORMS_AUTH;
-      sites.add(new AuthSite(nextLine[0], nextLine[1], method,
-                             nextLine.length > 3 ? nextLine[3] : null));
-    }
+  public OmniForm(String configFile, String actionUrl) throws NumberFormatException, IOException {
+    sites = AuthSite.getSites(configFile);
     this.actionUrl = actionUrl;
   }
 
