@@ -259,19 +259,8 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
   private Vector<Cookie> copyCookies(Vector<Cookie> cookies) {
     Vector<Cookie> result = new Vector<Cookie>(cookies.size());
     for (Cookie c: cookies) {
-      result.add(copyCookie(c));
+      result.add(Cookie.class.cast(c.clone()));
     }
-    return result;
-  }
-
-  private Cookie copyCookie(Cookie cookie) {
-    Cookie result = new Cookie(cookie.getName(), cookie.getValue());
-    result.setComment(cookie.getComment());
-    result.setDomain(cookie.getDomain());
-    result.setMaxAge(cookie.getMaxAge());
-    result.setPath(cookie.getPath());
-    result.setSecure(cookie.getSecure());
-    result.setVersion(cookie.getVersion());
     return result;
   }
 
