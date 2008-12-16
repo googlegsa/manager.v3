@@ -12,15 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.saml.common;
+package com.google.enterprise.common;
 
-import java.io.IOException;
+public class StringPair {
+  private final String name;
+  private final String value;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+  public StringPair(String name, String value) {
+    this.name = name;
+    this.value = value;
+  }
 
-public interface PostableHttpServlet {
-  public void doPost(HttpServletRequest req, HttpServletResponse resp)
-      throws ServletException, IOException;
+  public String getName() {
+    return name;
+  }
+
+  public String getValue() {
+    return value;
+  }
 }

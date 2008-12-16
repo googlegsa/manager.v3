@@ -2,86 +2,94 @@
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 <beans>
 
-	<bean id="ApplicationContextProperties"
-		class="java.lang.String">
-		<constructor-arg value="/WEB-INF/applicationContext.properties"/>
-	</bean>
-
-	<bean id="EncryptedPropertyPlaceholderConfigurer"
-		class="com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer">
-		<property name="location" ref="ApplicationContextProperties"/>
-	</bean>	
-
-	<bean id="FeedConnection"
-		class="com.google.enterprise.connector.pusher.GsaFeedConnection">
-		<constructor-arg index="0" type="java.lang.String"
-			value="${gsa.feed.host}" />
-		<constructor-arg index="1" type="int" value="${gsa.feed.port}" />
-	</bean>
-
-	<bean id="Pusher"
-		class="com.google.enterprise.connector.pusher.DocPusher">
-		<constructor-arg index="0" ref="FeedConnection" />
-	</bean>
-
-	<!-- Create a Handler for the Feed Logger and add it to the logger -->
-	<bean id="FeedFormatter" class="java.util.logging.SimpleFormatter" />
-
-	<bean id="FeedHandler" class="com.google.enterprise.connector.pusher.FeedFileHandler">
-		<constructor-arg index="0" value="${catalina.base}/logs/google-connectors.feed%g.log" />
-		<constructor-arg index="1" value="52428800" />
-		<constructor-arg index="2" value="10" />
-		<property name="level" value="FINER" />
-		<property name="encoding" value="UTF-8" />
-		<property name="formatter" ref="FeedFormatter" />
-	</bean>
-
-	<bean id="FeedWrapperLogger" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-		<property name="staticMethod"
-			value="com.google.enterprise.connector.pusher.DocPusher.getFeedLogger" />
-	</bean>
-
-	<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-		<property name="targetObject" ref="FeedWrapperLogger" />
-		<property name="targetMethod" value="addHandler" />
-		<property name="arguments">
-			<list>
-				<ref bean="FeedHandler" />
-			</list>
-		</property>
-	</bean>
-
-	<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-		<property name="targetObject" ref="FeedWrapperLogger" />
-		<property name="targetMethod" value="setUseParentHandlers" />
-		<property name="arguments">
-			<list>
-				<value>false</value>
-			</list>
-		</property>
-	</bean>
-
-	<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-		<property name="targetObject" ref="FeedWrapperLogger" />
-		<property name="targetMethod" value="setLevel" />
-		<property name="arguments">
-			<list>
-				<value>${feedLoggingLevel}</value>
-			</list>
-		</property>
-	</bean>
-
-  <bean id="ConnectorConfigStore"
-    class="com.google.enterprise.connector.persist.FileStore">
+  <bean id="ApplicationContextProperties" class="java.lang.String">
+    <constructor-arg value="/WEB-INF/applicationContext.properties"/>
   </bean>
+
+  <bean id="EncryptedPropertyPlaceholderConfigurer"
+        class="com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer">
+    <property name="location" ref="ApplicationContextProperties"/>
+    <!-- Default values for some properties -->
+    <property name="properties">
+      <props>
+        <prop key="feedLoggingLevel">OFF</prop>
+        <prop key="gsa.feed.port">19900</prop>
+      </props>
+    </property>
+  </bean>
+
+  <bean id="FeedConnection"
+        class="com.google.enterprise.connector.pusher.GsaFeedConnection">
+    <constructor-arg index="0" type="java.lang.String" value="${gsa.feed.host}"/>
+    <constructor-arg index="1" type="int" value="${gsa.feed.port}"/>
+  </bean>
+
+  <bean id="Pusher"
+        class="com.google.enterprise.connector.pusher.DocPusher">
+    <constructor-arg index="0" ref="FeedConnection"/>
+  </bean>
+
+  <!-- Create a Handler for the Feed Logger and add it to the logger. -->
+  <bean id="FeedFormatter" class="java.util.logging.SimpleFormatter"/>
+
+  <bean id="FeedHandler"
+        class="com.google.enterprise.connector.pusher.FeedFileHandler">
+    <constructor-arg index="0" value="${catalina.base}/logs/google-connectors.feed%g.log"/>
+    <constructor-arg index="1" value="52428800"/>
+    <constructor-arg index="2" value="10"/>
+    <property name="level" value="FINER"/>
+    <property name="encoding" value="UTF-8"/>
+    <property name="formatter" ref="FeedFormatter"/>
+  </bean>
+
+  <bean id="FeedWrapperLogger"
+        class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.pusher.DocPusher.getFeedLogger"/>
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="targetObject" ref="FeedWrapperLogger"/>
+    <property name="targetMethod" value="addHandler"/>
+    <property name="arguments">
+      <list>
+        <ref bean="FeedHandler"/>
+      </list>
+    </property>
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="targetObject" ref="FeedWrapperLogger"/>
+    <property name="targetMethod" value="setUseParentHandlers"/>
+    <property name="arguments">
+      <list>
+        <value>false</value>
+      </list>
+    </property>
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="targetObject" ref="FeedWrapperLogger"/>
+    <property name="targetMethod" value="setLevel"/>
+    <property name="arguments">
+      <list>
+        <value>${feedLoggingLevel}</value>
+      </list>
+    </property>
+  </bean>
+
+  <!-- Persistent Store mechanism used to store the Connector Configuration,
+       Connector Schedule, and Connector Traversal State.  By default, this
+       information is stored in files in the Connector instance directory.
+  -->
+  <bean id="ConnectorConfigStore"
+        class="com.google.enterprise.connector.persist.FileStore"/>
 
   <bean id="ConnectorScheduleStore"
-    class="com.google.enterprise.connector.persist.FileStore">
-  </bean>
+        class="com.google.enterprise.connector.persist.FileStore"/>
 
   <bean id="ConnectorStateStore"
-    class="com.google.enterprise.connector.persist.FileStore">
-  </bean>
+        class="com.google.enterprise.connector.persist.FileStore"/>
 
   <!-- Legacy ConnectorStateStore and ConnectorScheduleStore used for
        upgrading existing connectors created by previous versions of
@@ -107,53 +115,57 @@
     <!-- No Legacy ConnectorConfigStores at this time -->
   </bean>
 
-	<bean id="Instantiator"
-		class="com.google.enterprise.connector.instantiator.SpringInstantiator">
-		<constructor-arg ref="Pusher" />
-	</bean>
-
-	<bean id="Monitor"
-		class="com.google.enterprise.connector.monitor.HashMapMonitor" />
-
-	<bean id="WorkQueue"
-		class="com.google.enterprise.connector.common.WorkQueue">
-		<constructor-arg index="0" type="int" value="20" />
-	</bean>
-
-  <bean id="Manager"
-    class="com.google.enterprise.connector.manager.ProductionManager">
-    <property name="scheduler" ref="TraversalScheduler" />
-    <property name="instantiator" ref="Instantiator" />
+  <bean id="Instantiator"
+        class="com.google.enterprise.connector.instantiator.SpringInstantiator">
+    <constructor-arg ref="Pusher"/>
   </bean>
 
-	<bean id="TraversalScheduler"
-		class="com.google.enterprise.connector.scheduler.TraversalScheduler">
-		<constructor-arg index="0" ref="Instantiator" />
-		<constructor-arg index="1" ref="Monitor" />
-		<constructor-arg index="2" ref="WorkQueue" />
-	</bean>
+  <bean id="Monitor"
+        class="com.google.enterprise.connector.monitor.HashMapMonitor"/>
 
+  <bean id="WorkQueue"
+        class="com.google.enterprise.connector.common.WorkQueue">
+    <constructor-arg index="0" type="int" value="20"/>
+  </bean>
+
+  <bean id="Manager"
+        class="com.google.enterprise.connector.manager.ProductionManager">
+    <property name="scheduler" ref="TraversalScheduler"/>
+    <property name="instantiator" ref="Instantiator"/>
+  </bean>
+
+  <bean id="TraversalScheduler"
+        class="com.google.enterprise.connector.scheduler.TraversalScheduler">
+    <constructor-arg index="0" ref="Instantiator"/>
+    <constructor-arg index="1" ref="Monitor"/>
+    <constructor-arg index="2" ref="WorkQueue"/>
+  </bean>
+
+  <!-- The TraversalContext is supplied to the Connector's TraversalManager,
+       so that it may make more intelligent decisions about what types of
+       content to feed.
+  -->
   <bean id="TraversalContext"
-		 class="com.google.enterprise.connector.traversal.ProductionTraversalContext">
-    <property name="fileSizeLimitInfo" ref="FileSizeLimitInfo" />
-    <property name="mimeTypeMap" ref="MimeTypeMap" />
+        class="com.google.enterprise.connector.traversal.ProductionTraversalContext">
+    <property name="fileSizeLimitInfo" ref="FileSizeLimitInfo"/>
+    <property name="mimeTypeMap" ref="MimeTypeMap"/>
   </bean>
 
   <bean id="FileSizeLimitInfo"
-		 class="com.google.enterprise.connector.traversal.FileSizeLimitInfo">
+        class="com.google.enterprise.connector.traversal.FileSizeLimitInfo">
     <!-- Maximum file size accepted by the GSA is 30MB -->
-    <property name="maxDocumentSize" value="31457280" />
+    <property name="maxDocumentSize" value="31457280"/>
   </bean>
 
   <bean id="MimeTypeMap"
-		 class="com.google.enterprise.connector.traversal.MimeTypeMap">
+        class="com.google.enterprise.connector.traversal.MimeTypeMap">
     <!-- Setting unknownMimeTypeSupportLevel to a positive value will allow
          the GSA to attempt to index the document contents of documents with
          unrecognized content types.  Set unknownMimeTypeSupportLevel to zero
          (or any other non-positive value) to disable sending document content
          for unknown content types to the GSA.  See unsupportedMimeTypes below.
          Note that unknownMimeTypeSupportLevel (from an earlier design) overlaps
-         in functionality with the content types (sans subtypes) entries in the 
+         in functionality with the content types (sans subtypes) entries in the
          preferred/supported/unsupported mime types below.  This is only because
          all of the IANA recognized content type classes are well represented
          in the tables below, so very few mime types should end up as "unknown".
@@ -163,7 +175,7 @@
          mime types (levels 2,3,4,5) and preferred mime types (levels 6,7,8,9),
          but above unsupported mime types (0 and below).
     -->
-    <property name="unknownMimeTypeSupportLevel" value="1" />
+    <property name="unknownMimeTypeSupportLevel" value="1"/>
 
     <!-- These three properties group most known mime types into three broad
          classes - preferred, supported, and unsupported.  Connectors may
@@ -185,7 +197,7 @@
          match, and its content type (sans subtype), "xyzzy", is also not
          present, so it would be assigned the unknownMimeTypeSupportLevel.
          Note that modifying entries in these properties may require
-         corresponding modifications to the Google Search Appliance Crawl 
+         corresponding modifications to the Google Search Appliance Crawl
          and Index administration page.  Similarly, modifications to the
          Crawl and Index page may also require changes to these entries.
     -->
@@ -357,9 +369,9 @@
         <value>i-world</value>
         <value>x-world</value>
         <!-- Comment out the following if you want to classify other application
-              subtypes as 'unknown mime type' rather than 'unsupported mime type'.
+             subtypes as 'unknown mime type' rather than 'unsupported mime type'.
         -->
-        <value>application</value> 
+        <value>application</value>
       </set>
     </property>
   </bean>

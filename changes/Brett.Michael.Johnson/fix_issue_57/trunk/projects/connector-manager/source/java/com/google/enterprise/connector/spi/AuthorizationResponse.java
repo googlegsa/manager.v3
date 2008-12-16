@@ -57,16 +57,12 @@ public class AuthorizationResponse {
   }
 
   /**
-   * Returns a hash code value for the object. The hashcode returned is the
-   * ones complement of the hashcode for the docid string.
+   * Returns a hash code value for the object.
    *
    * @return a hash code value for this object.
    */
   public int hashCode() {
-    if (docid == null) {
-      throw new IllegalStateException();
-    }
-    return docid.hashCode() ^ -1;
+    return docid.hashCode() + (valid ? 547 : 271);
   }
 
   /**
@@ -77,13 +73,13 @@ public class AuthorizationResponse {
    *         otherwise.
    */
   public boolean equals(Object obj) {
-    if (docid == null) {
-      throw new IllegalStateException();
+    if (obj == this) {
+      return true;
     }
     if (!(obj instanceof AuthorizationResponse)) {
       return false;
     }
     AuthorizationResponse other = (AuthorizationResponse) obj;
-    return (valid == other.isValid()) && docid.equals(other.getDocid());
+    return (valid == other.valid) && docid.equals(other.docid);
   }
 }

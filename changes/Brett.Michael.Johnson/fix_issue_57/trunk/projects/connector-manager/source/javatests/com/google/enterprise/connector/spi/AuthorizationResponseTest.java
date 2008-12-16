@@ -29,7 +29,7 @@ public class AuthorizationResponseTest extends TestCase {
     assertFalse(ar1.equals(ar3));
     assertFalse(ar1.equals(ar4));
     assertTrue(ar1.hashCode() == ar2.hashCode());
-    assertTrue(ar1.hashCode() == ar3.hashCode());
+    assertFalse(ar1.hashCode() == ar3.hashCode());
     assertFalse(ar1.hashCode() == ar4.hashCode());
     assertFalse(ar1.equals("docid1"));
     assertFalse(ar1.hashCode() == "docid1".hashCode());

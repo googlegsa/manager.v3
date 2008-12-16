@@ -14,24 +14,16 @@
 
 package com.google.enterprise.saml.common;
 
+import com.google.enterprise.common.ServletBase;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.server.BackEnd;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
@@ -39,12 +31,9 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageCont
 /**
  * Useful utilities for writing servlets.
  */
-public abstract class SecurityManagerServlet extends HttpServlet {
+public abstract class SecurityManagerServlet extends ServletBase {
 
   private static final long serialVersionUID = 1L;
-
-  protected static final DateTimeFormatter dtFormat =
-      DateTimeFormat.forPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'");
 
   /** Name of the session attribute that holds the SAML message context. */
   private static final String SAML_CONTEXT = "samlMessageContext";
@@ -52,10 +41,6 @@ public abstract class SecurityManagerServlet extends HttpServlet {
   /** Name of the attribute that holds the username/passwords awaiting verification. */
   protected static final String CREDENTIALS = "credentials";
   
-  public static String httpDateString() {
-    return dtFormat.print((new DateTime()).withZone(DateTimeZone.UTC));
-  }
-
   public static ConnectorManager getConnectorManager(ServletContext sc) {
     return (ConnectorManager) Context.getInstance(sc).getManager();
   }
@@ -95,24 +80,5 @@ public abstract class SecurityManagerServlet extends HttpServlet {
       throw new ServletException("Unable to get SAML message context.");
     }
     return context;
-  }
-
-  public static PrintWriter initNormalResponse(HttpServletResponse response) throws IOException {
-    initResponse(response);
-    response.setStatus(HttpServletResponse.SC_OK);
-    response.setContentType("text/html");
-    response.setCharacterEncoding("UTF-8");
-    response.setBufferSize(0x1000);
-    return response.getWriter();
-  }
-
-  public static void initErrorResponse(HttpServletResponse response, int code)
-      throws IOException {
-    initResponse(response);
-    response.sendError(code);
-  }
-
-  public static void initResponse(HttpServletResponse response) {
-    response.addHeader("Date", httpDateString());
   }
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.saml.common;
+package com.google.enterprise.common;
 
 import org.opensaml.saml2.metadata.Endpoint;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -29,8 +29,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static com.google.enterprise.saml.common.SamlTestUtil.servletRequestToString;
-import static com.google.enterprise.saml.common.SamlTestUtil.servletResponseToString;
+import static com.google.enterprise.common.ServletTestUtil.servletRequestToString;
+import static com.google.enterprise.common.ServletTestUtil.servletResponseToString;
 
 /**
  * A trivial HttpTransport that just maps request URLs to registered servlets.

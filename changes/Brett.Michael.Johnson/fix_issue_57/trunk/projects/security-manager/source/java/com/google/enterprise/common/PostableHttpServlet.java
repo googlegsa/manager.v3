@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.saml.common;
+package com.google.enterprise.common;
 
 import java.io.IOException;
 
@@ -20,7 +20,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public interface GettableHttpServlet {
-  public void doGet(HttpServletRequest req, HttpServletResponse resp)
+public interface PostableHttpServlet {
+  public void doPost(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException;
 }

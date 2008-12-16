@@ -51,7 +51,12 @@ public class SessionReader extends HttpServlet {
 
     StringBuilder msg = new StringBuilder("Message: <br>");
     for (String sid : backend.sessionIds) {
-      msg.append(readSession(sm, sid));
+      if (sm.sessionExists(sid)) {
+        msg.append(readSession(sm, sid));
+      } else {
+        backend.sessionIds.remove(sid);
+        msg.append("<p>Session ID: " + sid + " expired. Removing...</p>");
+      }
     }
    
     res.setContentType("text/html");
