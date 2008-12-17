@@ -646,7 +646,7 @@ public class DocPusher implements Pusher {
    */
   private static InputStream getNonNullContentStream(InputStream contentStream,
       String title) throws RepositoryException {
-    if (contentStream != null) {	// TODO: "or empty"?
+    if (contentStream != null) {  // TODO: "or empty"?
       return contentStream;
     }
     try {
@@ -656,9 +656,10 @@ public class DocPusher implements Pusher {
       // If the feed item supplied a title property, we build an HTML fragment
       // containing that title.  This provides better looking search result
       // entries.
-      if (title != null && title.length() > 0) {
+      if (title != null && title.trim().length() > 0) {
         try {
-          bytes = ("<html><title>" + title + "</title></html>").getBytes("UTF-8");
+          String t = "<html><title>" + title.trim() + "</title></html>";
+          bytes = t.getBytes("UTF-8");
         } catch (UnsupportedEncodingException uee) {
           // Don't be fancy.  Try the single space content.
         }
