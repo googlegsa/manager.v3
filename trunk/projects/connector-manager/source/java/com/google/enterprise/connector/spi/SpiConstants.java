@@ -53,6 +53,16 @@ public class SpiConstants {
   public static final String PROPNAME_LASTMODIFIED = "google:lastmodified";
 
   /**
+   * Identifies an optional string property that is the title of the document.
+   * This value is useful for providing a title for documents that supply no
+   * content, or for which a title cannot be automatically extracted from the
+   * supplied content.
+   * <p>
+   * Value: google:title
+   */
+  public static final String PROPNAME_TITLE = "google:title";
+
+  /**
    * Reserved for future use.
    * <p>
    * Value: google:contenturl
