@@ -29,6 +29,19 @@ public interface HttpExchange {
   public void setProxy(String proxy);
 
   /**
+   * Set credentials to use for basic auth.
+   * @param username
+   * @param password
+   */
+  public void setBasicAuthCredentials(String username, String password);
+
+  /**
+   * Control whether Authorize header is sent prior to server's request.
+   * @param isPreemptive If true, send the header prior.
+   */
+  public void setAuthenticationPreemptive(boolean isPreemptive);
+
+  /**
    * Set an HTTP request header field.
    *
    * Overrides any previous header of that name.
