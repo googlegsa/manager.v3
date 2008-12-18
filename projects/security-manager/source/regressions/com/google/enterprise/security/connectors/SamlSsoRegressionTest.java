@@ -102,7 +102,7 @@ public class SamlSsoRegressionTest extends TestCase {
     method.setRequestBody(method.getParameters());
     logRequest(method);
     int status = userAgent.executeMethod(method);
-    String body = method.getResponseBodyAsString();
+    method.getResponseBodyAsString();
     logResponse(method);
     method.releaseConnection();
     assertEquals("Incorrect response status code", expectedStatus, status);
