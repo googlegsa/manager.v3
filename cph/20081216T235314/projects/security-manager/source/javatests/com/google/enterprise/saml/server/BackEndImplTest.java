@@ -31,7 +31,7 @@ public class BackEndImplTest extends TestCase {
   private LocalSessionManager sm;
   private AuthSite basicSite = new AuthSite("host1", "realm1", AuthNMechanism.BASIC_AUTH, "uri1");
   private AuthSite formsSite = new AuthSite("host2", "realm2", AuthNMechanism.FORMS_AUTH, "uri2");
-  private AuthSite connectorSite = new AuthSite("host3", "realm3", AuthNMechanism.CONNECTORS, "uri3");
+  //private AuthSite connectorSite = new AuthSite("host3", "realm3", AuthNMechanism.CONNECTORS, "uri3");
 
   public void setUp() {
     sm = new LocalSessionManager();
