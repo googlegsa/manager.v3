@@ -15,6 +15,7 @@
 package com.google.enterprise.security.connectors.formauth;
 
 import com.google.enterprise.common.HttpClientInterface;
+import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.common.StringPair;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
@@ -140,10 +141,10 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     int kMaxNumRedirectsToFollow = 4;
 
     while (true) {
-      CookieUtil.fetchPage(httpClient, "GET", url,
+      CookieUtil.fetchPage(httpClient.getExchange(url),
+                           url,
                            null, // proxy,
                            "SecMgr", cookies,
-                           null, // parameters,
                            bodyBuffer,
                            redirectBuffer, null,
                            null); // LOGGER
@@ -230,13 +231,13 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     StringBuffer redirectBuffer = new StringBuffer();
     int status = 0;
     int kMaxNumRedirectsToFollow = 4;
-    String httpMethod = "POST"; // post only once, follow redirect is needed
+    // post only once, follow redirect if needed
+    HttpExchange exchange = httpClient.postExchange(url, parameters);
 
     while (true) {
-      status = CookieUtil.fetchPage(httpClient, httpMethod, url,
+      status = CookieUtil.fetchPage(exchange, url,
                                     null, // proxy,
                                     "SecMgr", cookies,
-                                    parameters,
                                     bodyBuffer,
                                     redirectBuffer, null,
                                     null); // LOGGER
@@ -248,7 +249,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
         }
         // prepare for another fetch.
         url = new URL(redirected);
-        httpMethod = "GET";
+        exchange = httpClient.getExchange(url);
       } else {
         break;
       }
