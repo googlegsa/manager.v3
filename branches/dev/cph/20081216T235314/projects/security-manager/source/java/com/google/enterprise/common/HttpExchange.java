@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,12 +34,6 @@ public interface HttpExchange {
    * @param password
    */
   public void setBasicAuthCredentials(String username, String password);
-
-  /**
-   * Control whether Authorize header is sent prior to server's request.
-   * @param isPreemptive If true, send the header prior.
-   */
-  public void setAuthenticationPreemptive(boolean isPreemptive);
 
   /**
    * Set an HTTP request header field.
