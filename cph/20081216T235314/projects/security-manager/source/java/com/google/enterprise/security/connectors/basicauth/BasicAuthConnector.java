@@ -21,6 +21,7 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
 
@@ -42,8 +43,8 @@ public class BasicAuthConnector implements Connector, Session, AuthenticationMan
     this.something = data;      // not used
   }
 
-  // TODO: add "throws IOException" and remove "catch" phrases
-  public AuthenticationResponse authenticate(AuthenticationIdentity identity) {
+  public AuthenticationResponse authenticate(AuthenticationIdentity identity)
+      throws RepositoryException {
     AuthenticationResponse notfound = new AuthenticationResponse(false, null);
     String username = identity.getUsername();
     String password = identity.getPassword();
@@ -55,7 +56,7 @@ public class BasicAuthConnector implements Connector, Session, AuthenticationMan
     try {
       loginUrl = new URL(identity.getLoginUrl());
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new RepositoryException(e);
     }
     HttpExchange exchange = httpClient.getExchange(loginUrl);
     exchange.setBasicAuthCredentials(username, password);
@@ -63,8 +64,9 @@ public class BasicAuthConnector implements Connector, Session, AuthenticationMan
     int status = 0;
     try {
       status = exchange.exchange();
-     } catch (Exception e) {
-      LOGGER.warning(e.toString());
+    } catch (IOException e) {
+      LOGGER.info(e.toString());
+      throw new RepositoryException(e);
     } finally {
       exchange.close();
     }
@@ -90,5 +92,4 @@ public class BasicAuthConnector implements Connector, Session, AuthenticationMan
   public TraversalManager getTraversalManager() {
     throw new UnsupportedOperationException();
   }
-
 }
