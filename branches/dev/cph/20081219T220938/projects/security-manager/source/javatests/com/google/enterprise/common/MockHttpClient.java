@@ -36,26 +36,8 @@ public class MockHttpClient implements HttpClientInterface {
   }
 
   /** {@inheritDoc} */
-  public HttpExchange getExchange(URL url) {
-    MockHttpServletRequest request =
-        ServletTestUtil.makeMockHttpRequest("GET", null, url.toString());
-    return new MockExchange(transport, request);
-  }
-
-  /** {@inheritDoc} */
-  public HttpExchange postExchange(URL url, List<StringPair> parameters) {
-    MockHttpServletRequest request =
-        ServletTestUtil.makeMockHttpRequest("POST", null, url.toString());
-    request.addHeader("Content-Type", "application/x-www-form-urlencoded");
-    for (StringPair p: parameters) {
-      request.addParameter(p.getName(), p.getValue());
-    }
-    try {
-      ServletTestUtil.generatePostContent(request);
-    } catch (IOException e) {
-      throw new IllegalArgumentException(e);
-    }
-    return new MockExchange(transport, request);
+  public HttpExchange newExchange(String method, URL url, List<StringPair> parameters) {
+    return new MockExchange(transport, method, url, parameters);
   }
 
   private static class MockExchange implements HttpExchange {
@@ -63,26 +45,31 @@ public class MockHttpClient implements HttpClientInterface {
     private final HttpTransport transport;
     private final MockHttpServletRequest request;
     private final MockHttpServletResponse response;
-    private String credentials;
-    private boolean isPreemptive;
 
-    public MockExchange(HttpTransport transport, MockHttpServletRequest request) {
+    public MockExchange(HttpTransport transport, String method, URL url, List<StringPair> parameters) {
       this.transport = transport;
-      this.request = request;
-      response = new MockHttpServletResponse();
-      credentials = null;
+      this.request = ServletTestUtil.makeMockHttpRequest(method, null, url.toString());
+      this.response = new MockHttpServletResponse();
+
+      if ("POST".equalsIgnoreCase(method)) {
+        if (parameters != null) {
+          setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+          for (StringPair p: parameters) {
+            request.addParameter(p.getName(), p.getValue());
+          }
+          try {
+            ServletTestUtil.generatePostContent(request);
+          } catch (IOException e) {
+            throw new IllegalArgumentException(e);
+          }
+        } else {
+          setRequestHeader("Content-Type", "text/xml;charset=UTF-8");
+        }
+      }
     }
 
     /** {@inheritDoc} */
     public void setProxy(String proxy) {
-    }
-
-    public void setBasicAuthCredentials(String username, String password) {
-      credentials = "Basic " + Base64.encode((username + ":" + password).getBytes());
-    }
-
-    public void setAuthenticationPreemptive(boolean isPreemptive) {
-      this.isPreemptive = isPreemptive;
     }
 
     /** {@inheritDoc} */
@@ -92,9 +79,6 @@ public class MockHttpClient implements HttpClientInterface {
 
     /** {@inheritDoc} */
     public int exchange() throws IOException {
-      if (isPreemptive && credentials != null) {
-        request.addHeader("Authorize", credentials);
-      }
       try {
         transport.exchange(request, response);
       } catch (ServletException e) {
@@ -127,6 +111,7 @@ public class MockHttpClient implements HttpClientInterface {
       return response.getStatus();
     }
 
+    @Override
     public void setRequestBody(byte[] requestConent) {
       request.setContent(requestConent);
     }
