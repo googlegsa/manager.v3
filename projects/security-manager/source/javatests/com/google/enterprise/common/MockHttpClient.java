@@ -52,14 +52,18 @@ public class MockHttpClient implements HttpClientInterface {
       this.response = new MockHttpServletResponse();
 
       if ("POST".equalsIgnoreCase(method)) {
-        setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        for (StringPair p: parameters) {
-          request.addParameter(p.getName(), p.getValue());
-        }
-        try {
-          ServletTestUtil.generatePostContent(request);
-        } catch (IOException e) {
-          throw new IllegalArgumentException(e);
+        if (parameters != null) {
+          setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+          for (StringPair p: parameters) {
+            request.addParameter(p.getName(), p.getValue());
+          }
+          try {
+            ServletTestUtil.generatePostContent(request);
+          } catch (IOException e) {
+            throw new IllegalArgumentException(e);
+          }
+        } else {
+          setRequestHeader("Content-Type", "text/xml;charset=UTF-8");
         }
       }
     }
@@ -107,8 +111,14 @@ public class MockHttpClient implements HttpClientInterface {
       return response.getStatus();
     }
 
+    @Override
+    public void setRequestBody(byte[] requestConent) {
+      request.setContent(requestConent);
+    }
+    
     /** {@inheritDoc} */
     public void close() {
     }
+
   }
 }

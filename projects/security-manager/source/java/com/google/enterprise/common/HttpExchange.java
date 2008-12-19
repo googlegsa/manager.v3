@@ -71,9 +71,11 @@ public interface HttpExchange {
    * @return The status code.
    */
   public int getStatusCode();
-
+  
+  public void setRequestBody(byte[] byteArrayRequestEntity);
   /**
    * Close the exchange and reclaim its resources.
    */
   public void close();
+
 }
