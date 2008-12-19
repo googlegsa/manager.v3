@@ -111,7 +111,6 @@ public class MockHttpClient implements HttpClientInterface {
       return response.getStatus();
     }
 
-    @Override
     public void setRequestBody(byte[] requestConent) {
       request.setContent(requestConent);
     }
