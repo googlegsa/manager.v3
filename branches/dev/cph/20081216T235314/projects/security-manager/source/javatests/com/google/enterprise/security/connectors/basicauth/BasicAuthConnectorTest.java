@@ -19,6 +19,7 @@ import com.google.enterprise.common.MockHttpClient;
 import com.google.enterprise.common.MockHttpTransport;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.saml.server.AuthSite;
 import com.google.enterprise.saml.server.UserIdentity;
@@ -43,12 +44,13 @@ public class BasicAuthConnectorTest extends TestCase {
     httpClient = new MockHttpClient(transport);
   }
   
-  public void testBasicAuth() {
+  public void testBasicAuth() throws RepositoryException {
     assertTrue(tryCredentials("joe", "plumber").isValid());
     assertFalse(tryCredentials("joe", "biden").isValid());
   }
 
-  private AuthenticationResponse tryCredentials(String username, String password) {
+  private AuthenticationResponse tryCredentials(String username, String password)
+      throws RepositoryException {
     BasicAuthConnector conn = new BasicAuthConnector(httpClient, site.getLoginUri());
     AuthenticationIdentity id = new UserIdentity(username, password, site);
     return conn.authenticate(id);
