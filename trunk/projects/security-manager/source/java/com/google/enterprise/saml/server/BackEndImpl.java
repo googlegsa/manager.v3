@@ -160,6 +160,8 @@ public class BackEndImpl implements BackEnd {
         continue;
       if (connectorName.startsWith("Form") && site.getMethod() != AuthNMechanism.FORMS_AUTH)
         continue;
+      if (connectorName.startsWith("Conn") && site.getMethod() != AuthNMechanism.CONNECTORS)
+        continue;
       AuthenticationResponse authnResponse =
           manager.authenticate(connectorName, id, null);
       if ((authnResponse != null) && authnResponse.isValid()) {
@@ -261,6 +263,8 @@ public class BackEndImpl implements BackEnd {
             "ServerUrl", "http://leiz.mtv.corp.google.com/basic/");
     Map<String, String> configFormAuth = ImmutableMap.of(
             "CookieName", "SMSESSION");
+    Map<String, String> configConnAuth = ImmutableMap.of(
+            "SpiVersion", "0");
     try {
       manager.setConnectorConfig(connectorName, connectorType,
                                  configData, language, false);
@@ -268,6 +272,8 @@ public class BackEndImpl implements BackEnd {
                                  configBasicAuth, language, false);
       manager.setConnectorConfig("FormAuth", "FormAuthConnector",
       		                     configFormAuth, language, false);
+      manager.setConnectorConfig("ConnAuth", "ConnAuthConnector",
+                                 configConnAuth, language, false);
     } catch (ConnectorNotFoundException e) {
       LOGGER.info("ConnectorNotFound: " + e.toString());
     } catch (InstantiatorException e) {

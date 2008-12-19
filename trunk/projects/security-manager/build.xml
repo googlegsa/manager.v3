@@ -130,6 +130,9 @@
 		<jar jarfile="${jar.dir}/formauthconnector.jar">
 			<fileset dir="connectorConfig/FormAuthConnector" includes="**/*.xml" />
 		</jar>
+		<jar jarfile="${jar.dir}/connauthconnector.jar">
+			<fileset dir="connectorConfig/ConnAuthConnector" includes="**/*.xml" />
+		</jar>
 		<jar jarfile="${jar.dir}/ssocookieconnector.jar">
 			<fileset dir="connectorConfig/SsoCookieIdentityConnector" includes="**/*.xml" />
 		</jar>

@@ -21,6 +21,7 @@ import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
+import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
@@ -71,10 +72,14 @@ public class HttpClientAdapter implements HttpClientInterface {
                           String method, URL url, List<StringPair> parameters) {
       if ("POST".equalsIgnoreCase(method)) {
         httpMethod = new PostMethod(url.toString());
-        httpMethod.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        PostMethod pm = PostMethod.class.cast(httpMethod);
-        for (StringPair p: parameters) {
-          pm.addParameter(p.getName(), p.getValue());
+        if (parameters != null ) {
+          httpMethod.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+          PostMethod pm = PostMethod.class.cast(httpMethod);
+          for (StringPair p: parameters) {
+            pm.addParameter(p.getName(), p.getValue());
+          }
+        } else {
+          httpMethod.setRequestHeader("Content-Type", "text/xml;charset=UTF-8");
         }
       } else if ("GET".equalsIgnoreCase(method)) {
         httpMethod = new GetMethod(url.toString());
@@ -150,6 +155,17 @@ public class HttpClientAdapter implements HttpClientInterface {
     /** {@inheritDoc} */
     public int getStatusCode() {
       return httpMethod.getStatusCode();
+    }
+
+    /** {@inheritDoc} */
+    public void setRequestBody(byte[] requestContent) {
+      String method = httpMethod.getName();
+      if ("POST".equalsIgnoreCase(method)) {
+        PostMethod pm = PostMethod.class.cast(httpMethod);
+        String contentType = pm.getRequestHeader("Content-Type").toString();
+        System.out.println("My content-type is " + contentType);
+        pm.setRequestEntity(new ByteArrayRequestEntity(requestContent, contentType));
+      }
     }
 
     /** {@inheritDoc} */
