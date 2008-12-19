@@ -39,9 +39,9 @@ public class NullFeedConnection implements FeedConnection {
   public String sendData(String dataSource,  String feedType, InputStream data)
       throws IOException {
     int bytesRead = 0;
-    int val = 0;
     byte[] bytebuf = new byte[32768];
     // Consume the input stream, but discard the contents.
+    int val = 0;
     while ((val = data.read(bytebuf)) != -1) {
       bytesRead += val;
     }
