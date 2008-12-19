@@ -669,7 +669,7 @@ public class DocPusher implements Pusher {
     if (osFilename != null) {
       osFile = new File(osFilename);
       try {
-        os = new BufferedOutputStream(new FileOutputStream(osFile, true));
+        os = new BufferedOutputStream(new FileOutputStream(osFile, true), 32768);
         is = new TeeInputStream(xmlData, os);
       } catch (IOException e) {
         LOGGER.log(Level.WARNING, "cannot write file: " +

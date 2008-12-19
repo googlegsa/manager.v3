@@ -89,10 +89,11 @@ public class GsaFeedConnection implements FeedConnection {
                           "multipart/form-data; boundary=" + BOUNDARY);
     OutputStream outputStream = uc.getOutputStream();
 
-    byte[] bytebuf = new byte[2048];
+    byte[] bytebuf = new byte[32768];
     int val;
 
     try {
+      LOGGER.finest("Writing to feed connection.");
       // if there is an exception during this read/write, we do our
       // best to close the url connection and read the result
 
@@ -127,16 +128,19 @@ public class GsaFeedConnection implements FeedConnection {
       }
     }
 
+    LOGGER.finest("Waiting for response from feed connection.");
     StringBuffer buf = new StringBuffer();
     InputStream inputStream = uc.getInputStream();
-  BufferedReader br =
-      new BufferedReader(new InputStreamReader(inputStream,"UTF8"));
+    BufferedReader br =
+        new BufferedReader(new InputStreamReader(inputStream,"UTF8"));
     String line;
     while ((line = br.readLine()) != null) {
       buf.append(line);
     }
     br.close();
-    return buf.toString();
+    String response = buf.toString();
+    LOGGER.finest("Received response from feed connection: " + response);
+    return response;
   }
 
 }
