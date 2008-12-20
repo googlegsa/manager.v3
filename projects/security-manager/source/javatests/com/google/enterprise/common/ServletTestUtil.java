@@ -27,11 +27,11 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -235,48 +235,10 @@ public final class ServletTestUtil {
     if (response instanceof MockHttpServletResponse) {
       MockHttpServletResponse mr = (MockHttpServletResponse) response;
       response.addHeader("Content-Length", String.valueOf(mr.getContentLength()));
-      Cookie[] cookies = mr.getCookies();
-      if (cookies.length > 0) {
-        StringBuffer buffer = new StringBuffer();
-        for (Cookie c: cookies) {
-          if (buffer.length() > 0) {
-            buffer.append(", ");
-          }
-          convertCookie(c, buffer);
-        }
-        response.addHeader("Set-Cookie", buffer.toString());
+      String value = ServletBase.setCookieHeaderValue(Arrays.asList(mr.getCookies()));
+      if (value != null) {
+        response.addHeader("Set-Cookie", value);
       }
-    }
-  }
-
-  private static void convertCookie(Cookie c, StringBuffer buffer) {
-    buffer.append(c.getName());
-    buffer.append("=");
-    if (c.getValue() != null) {
-      buffer.append(c.getValue());
-    }
-    if (c.getComment() != null) {
-      buffer.append("; comment=");
-      buffer.append(c.getComment());
-    }
-    if (c.getDomain() != null) {
-      buffer.append("; domain=");
-      buffer.append(c.getDomain());
-    }
-    if (c.getMaxAge() > 0) {
-      buffer.append("; Max-Age=");
-      buffer.append(c.getMaxAge());
-    }
-    if (c.getPath() != null) {
-      buffer.append("; path=");
-      buffer.append(c.getPath());
-    }
-    if (c.getVersion() != -1) {
-      buffer.append("; version=");
-      buffer.append(String.valueOf(c.getVersion()));
-    }
-    if (c.getSecure()) {
-      buffer.append("; secure");
     }
   }
 }

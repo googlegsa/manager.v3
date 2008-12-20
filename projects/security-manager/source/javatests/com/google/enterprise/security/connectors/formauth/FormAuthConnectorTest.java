@@ -53,6 +53,8 @@ public class FormAuthConnectorTest extends TestCase {
     AuthenticationResponse response = connector.authenticate(id);
     assertNotNull("Null response from authenticate()", response);
     assertTrue("Invalid response from authenticate()", response.isValid());
+    response = connector.authenticate(id);
+    assertNotNull("Null response from authenticate()", response);
+    assertFalse("Valid response from re-authenticate()", response.isValid());
   }
-
 }
