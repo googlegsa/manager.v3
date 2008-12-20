@@ -15,6 +15,7 @@
 package com.google.enterprise.security.connectors.formauth;
 
 import com.google.enterprise.common.HttpClientInterface;
+import com.google.enterprise.common.ServletBase;
 import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.common.StringPair;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
@@ -71,6 +72,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
 
     Vector<Cookie> originalCookies = getCookies(identity);
     Vector<Cookie> cookies = copyCookies(originalCookies);
+    logCookies(LOGGER, "original cookies", cookies);
 
     // GET siteUri, till we hit a form; fill the form, post it; get the response,
     // remember the cookie returned to us.
@@ -82,6 +84,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       LOGGER.info("Could not GET login form from " + siteUri + ": " + e.toString());
       return new AuthenticationResponse(false, null);
     }
+    logCookies(LOGGER, "after fetchLoginForm", cookies);
 
     List<StringPair> param;
     try {
@@ -111,6 +114,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       LOGGER.info("Could not POST login form: " + e.toString());
       return new AuthenticationResponse(false, null);
     }
+    logCookies(LOGGER, "after submitLoginForm", cookies);
 
     // We are form auth, we expect to have at least one cookie
     if (!anyCookiesChanged(cookies, originalCookies)) {
@@ -259,7 +263,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
 
   // This has to re-create all the cookies because AuthenticationIdentity doesn't provide
   // a way to get at the originals.
-  private Vector<Cookie> getCookies(AuthenticationIdentity identity) {
+  private static Vector<Cookie> getCookies(AuthenticationIdentity identity) {
     Vector<Cookie> result = new Vector<Cookie>();
     @SuppressWarnings("unchecked")
         Set<String> names = identity.getCookieNames();
@@ -269,7 +273,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     return result;
   }
 
-  private Vector<Cookie> copyCookies(Vector<Cookie> cookies) {
+  private static Vector<Cookie> copyCookies(Vector<Cookie> cookies) {
     Vector<Cookie> result = new Vector<Cookie>(cookies.size());
     for (Cookie c: cookies) {
       result.add(Cookie.class.cast(c.clone()));
@@ -277,7 +281,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     return result;
   }
 
-  private boolean anyCookiesChanged(Vector<Cookie> newCookies, Vector<Cookie> oldCookies) {
+  private static boolean anyCookiesChanged(Vector<Cookie> newCookies, Vector<Cookie> oldCookies) {
     for (Cookie c: newCookies) {
       if (!containsCookie(oldCookies, c, true)) {
         return true;
@@ -286,7 +290,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     return false;
   }
 
-  private boolean containsCookie(Vector<Cookie> cookies, Cookie cookie, boolean considerValue) {
+  private static boolean containsCookie(Vector<Cookie> cookies, Cookie cookie, boolean considerValue) {
     for (Cookie c: cookies) {
       if (compareCookies(c, cookie, considerValue)) {
         return true;
@@ -295,15 +299,23 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     return false;
   }
 
-  private boolean compareCookies(Cookie c1, Cookie c2, boolean considerValue) {
+  private static boolean compareCookies(Cookie c1, Cookie c2, boolean considerValue) {
     return
         stringEquals(c1.getName(), c2.getName())
         && stringEquals(c1.getDomain(), c2.getDomain())
         && considerValue ? stringEquals(c1.getValue(), c2.getValue()) : true;
   }
 
-  private boolean stringEquals(String s1, String s2) {
+  private static boolean stringEquals(String s1, String s2) {
     return (s1 == null) ? (s2 == null) : s1.equals(s2);
+  }
+
+  private static void logCookies(Logger LOGGER, String tag, Vector<Cookie> cookies) {
+    String value = ServletBase.setCookieHeaderValue(cookies);
+    if (value == null) {
+      value = "(none)";
+    }
+    LOGGER.info(tag + ": " + value);
   }
 
   public Session login() {
