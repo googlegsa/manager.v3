@@ -75,7 +75,7 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
     String request = createAuthnRequest(username, password);
     HttpExchange exchange;
     try {
-      exchange = httpClient.newExchange("POST", new URL(siteUri), null);
+      exchange = httpClient.postExchange(new URL(siteUri), null);
     } catch (MalformedURLException e2) {
       LOGGER.warning("Bad URL for connector manager: " + siteUri);
       return notfound;

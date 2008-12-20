@@ -23,13 +23,19 @@ import java.util.List;
  */
 public interface HttpClientInterface {
   /**
-   * Create a new HTTP exchange object.
+   * Create a new HTTP GET exchange object.
    *
-   * @param method The HTTP method for the request (GET or POST).
    * @param url The URL to send the request to.
-   * @param parameters The POST parameters if this is a POST.
-   *     For a GET request, this should be {@code null}.
    * @return A new HTTP exchange object.
    */
-  public HttpExchange newExchange(String method, URL url, List<StringPair> parameters);
+  public HttpExchange getExchange(URL url);
+
+  /**
+   * Create a new HTTP POST exchange object.
+   *
+   * @param url The URL to send the request to.
+   * @param parameters The POST parameters.
+   * @return A new HTTP exchange object.
+   */
+  public HttpExchange postExchange(URL url, List<StringPair> parameters);
 }
