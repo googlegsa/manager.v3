@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -66,7 +66,6 @@ public class MockHttpClient implements HttpClientInterface {
     private final MockHttpServletRequest request;
     private final MockHttpServletResponse response;
     private String credentials;
-    private boolean isPreemptive;
 
     public MockExchange(HttpTransport transport, MockHttpServletRequest request) {
       this.transport = transport;
@@ -83,10 +82,6 @@ public class MockHttpClient implements HttpClientInterface {
       credentials = "Basic " + Base64.encode((username + ":" + password).getBytes());
     }
 
-    public void setAuthenticationPreemptive(boolean isPreemptive) {
-      this.isPreemptive = isPreemptive;
-    }
-
     /** {@inheritDoc} */
     public void setRequestHeader(String name, String value) {
       request.addHeader(name, value);
@@ -94,7 +89,7 @@ public class MockHttpClient implements HttpClientInterface {
 
     /** {@inheritDoc} */
     public int exchange() throws IOException {
-      if (isPreemptive && credentials != null) {
+      if (credentials != null) {
         request.addHeader("Authorize", credentials);
       }
       try {
