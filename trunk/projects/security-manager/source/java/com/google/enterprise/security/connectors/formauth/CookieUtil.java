@@ -16,9 +16,7 @@ package com.google.enterprise.security.connectors.formauth;
 
 import com.google.enterprise.common.Base64;
 import com.google.enterprise.common.Base64DecoderException;
-import com.google.enterprise.common.HttpClientInterface;
 import com.google.enterprise.common.HttpExchange;
-import com.google.enterprise.common.StringPair;
 import com.google.enterprise.saml.common.GsaConstants;
 
 import java.io.IOException;
@@ -61,13 +59,12 @@ public final class CookieUtil {
   }
 
   /** Fetch a page, using POST or GET, and do not follow redirect.
-   *  @param method HTTP method, "GET" or "POST"
+   *  @param exchange The HTTP exchange object
    *  @param url The URL to fetch
    *  @param proxy The proxy String of form host:port if so desired
    *  @param userAgent The string to send in the user agent header
    *  @param cookies A Vector of existing cookie to be sent, newly
    *                 received cookies will be stored in here as well.
-   *  @param parameters Form data for a POST request
    *  @param bodyBuffer A StringBuffer to store response body. Ignored if null
    *  @param redirectBuffer A StringBuffer to store the redirect URL
    *                        if so exists; may be null
@@ -83,13 +80,11 @@ public final class CookieUtil {
    *  I'd make that change now, except we're in a 5.0 push, and mgmt asked for
    *  minimal changes necessary to resolve bug 858157.
    */
-  public static int fetchPage(HttpClientInterface client,
-                              String method,
+  public static int fetchPage(HttpExchange exchange,
                               URL url,
                               String proxy,
                               String userAgent,
                               Vector<Cookie> cookies,
-                              List<StringPair> parameters,
                               StringBuffer bodyBuffer,
                               StringBuffer redirectBuffer,
                               Set<String> passwordFields,
@@ -104,7 +99,6 @@ public final class CookieUtil {
       redirectBuffer.setLength(0);
     }
 
-    HttpExchange exchange = client.newExchange(method, url, parameters);
     exchange.setProxy(proxy);
 
     if (!undefined(userAgent)) {

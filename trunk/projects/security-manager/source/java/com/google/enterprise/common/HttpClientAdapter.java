@@ -20,6 +20,8 @@ import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.UsernamePasswordCredentials;
+import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -58,8 +60,31 @@ public class HttpClientAdapter implements HttpClientInterface {
   }
 
   /** {@inheritDoc} */
-  public HttpExchange newExchange(String method, URL url, List<StringPair> parameters) {
-    return new ClientExchange(connectionManager, method, url, parameters);
+  public HttpExchange getExchange(URL url) {
+    GetMethod method = new GetMethod(url.toString());
+    setPathFields(method, url);
+    return new ClientExchange(connectionManager, method);
+  }
+
+  public HttpExchange postExchange(URL url, List<StringPair> parameters) {
+    PostMethod method = new PostMethod(url.toString());
+    setPathFields(method, url);
+    if (parameters != null) {
+      method.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+      for (StringPair p: parameters) {
+        method.addParameter(p.getName(), p.getValue());
+      }
+    }
+    return new ClientExchange(connectionManager, method);
+  }
+
+  private void setPathFields(HttpMethod method, URL url) {
+    method.setFollowRedirects(false);
+    method.setPath(url.getPath());
+    String query = url.getQuery();
+    if ((query != null) && (query.length() > 0)) {
+      method.setQueryString(query);
+    }
   }
 
   private static class ClientExchange implements HttpExchange {
@@ -68,30 +93,8 @@ public class HttpClientAdapter implements HttpClientInterface {
     private final HttpMethod httpMethod;
     private final HttpClient httpClient;
 
-    public ClientExchange(HttpConnectionManager connectionManager,
-                          String method, URL url, List<StringPair> parameters) {
-      if ("POST".equalsIgnoreCase(method)) {
-        httpMethod = new PostMethod(url.toString());
-        if (parameters != null ) {
-          httpMethod.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-          PostMethod pm = PostMethod.class.cast(httpMethod);
-          for (StringPair p: parameters) {
-            pm.addParameter(p.getName(), p.getValue());
-          }
-        } else {
-          httpMethod.setRequestHeader("Content-Type", "text/xml;charset=UTF-8");
-        }
-      } else if ("GET".equalsIgnoreCase(method)) {
-        httpMethod = new GetMethod(url.toString());
-      } else {
-        throw new IllegalArgumentException("unknown method: " + method);
-      }
-      httpMethod.setFollowRedirects(false);
-      httpMethod.setPath(url.getPath());
-      String query = url.getQuery();
-      if ((query != null) && (query.length() > 0)) {
-        httpMethod.setQueryString(query);
-      }
+    public ClientExchange(HttpConnectionManager connectionManager, HttpMethod httpMethod) {
+      this.httpMethod = httpMethod;
       httpClient = new HttpClient(connectionManager);
       httpClient.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
     }
@@ -110,6 +113,17 @@ public class HttpClientAdapter implements HttpClientInterface {
 
       httpClient.getHostConfiguration().
         setProxy(proxyInfo[0], Integer.parseInt(proxyInfo[1]));
+    }
+
+    public void setBasicAuthCredentials(String username, String password) {
+      httpClient.getState().setCredentials(
+          new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, AuthScope.ANY_REALM),
+          new UsernamePasswordCredentials(username, password));
+      httpMethod.setDoAuthentication(true);
+    }
+
+    public void setAuthenticationPreemptive(boolean isPreemptive) {
+      httpClient.getParams().setAuthenticationPreemptive(isPreemptive);
     }
 
     /** {@inheritDoc} */

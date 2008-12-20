@@ -14,60 +14,60 @@
 
 package com.google.enterprise.security.connectors.basicauth;
 
+import com.google.enterprise.common.HttpClientInterface;
+import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.methods.GetMethod;
-
+import java.io.IOException;
+import java.net.URL;
 import java.util.logging.Logger;
-
-import javax.xml.ws.http.HTTPException;
 
 public class BasicAuthConnector implements Connector, Session, AuthenticationManager {
 
+  private final HttpClientInterface httpClient;
   @SuppressWarnings("unused")
   private final String something;
 
   private static final Logger LOGGER =
     Logger.getLogger(BasicAuthConnector.class.getName());
 
-  public BasicAuthConnector(String data) {
+  public BasicAuthConnector(HttpClientInterface httpClient, String data) {
+    this.httpClient = httpClient;
     this.something = data;      // not used
   }
 
-  public AuthenticationResponse authenticate(AuthenticationIdentity identity) {
+  public AuthenticationResponse authenticate(AuthenticationIdentity identity)
+      throws RepositoryException {
     AuthenticationResponse notfound = new AuthenticationResponse(false, null);
     String username = identity.getUsername();
     String password = identity.getPassword();
     if (username == null || password == null) {
       return notfound;
     }
-    
-    HttpClient httpClient = new HttpClient();
-    httpClient.getState().setCredentials(new AuthScope(null, -1, null),
-        new UsernamePasswordCredentials(username, password));
-    GetMethod getMethod = new GetMethod(identity.getLoginUrl());
-    getMethod.setDoAuthentication(true);
-    getMethod.setRequestHeader("User-Agent", "SecMgr");
+
+    URL loginUrl;
+    try {
+      loginUrl = new URL(identity.getLoginUrl());
+    } catch (IOException e) {
+      throw new RepositoryException(e);
+    }
+    HttpExchange exchange = httpClient.getExchange(loginUrl);
+    exchange.setBasicAuthCredentials(username, password);
+    exchange.setRequestHeader("User-Agent", "SecMgr");
     int status = 0;
     try {
-      status = httpClient.executeMethod(getMethod);
-      System.out.println(getMethod.getStatusLine());
-      if (status > 300) {
-        throw new HTTPException(status);
-      }
+      status = exchange.exchange();
      } catch (Exception e) {
       LOGGER.warning(e.toString());
     } finally {
-      getMethod.releaseConnection();
+      exchange.close();
     }
 
     if (status == 200) {
