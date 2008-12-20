@@ -35,19 +35,14 @@ public class MockHttpClient implements HttpClientInterface {
     this.transport = transport;
   }
 
-  /** {@inheritDoc} */
   public HttpExchange getExchange(URL url) {
-    MockHttpServletRequest request =
-        ServletTestUtil.makeMockHttpRequest("GET", null, url.toString());
+    MockHttpServletRequest request = ServletTestUtil.makeMockHttpGet(null, url.toString());
     return new MockExchange(transport, request);
   }
 
-  /** {@inheritDoc} */
   public HttpExchange postExchange(URL url, List<StringPair> parameters) {
-    MockHttpServletRequest request =
-        ServletTestUtil.makeMockHttpRequest("POST", null, url.toString());
+    MockHttpServletRequest request = ServletTestUtil.makeMockHttpPost(null, url.toString());
     if (parameters != null) {
-      request.addHeader("Content-Type", "application/x-www-form-urlencoded");
       for (StringPair p: parameters) {
         request.addParameter(p.getName(), p.getValue());
       }
@@ -74,7 +69,6 @@ public class MockHttpClient implements HttpClientInterface {
       credentials = null;
     }
 
-    /** {@inheritDoc} */
     public void setProxy(String proxy) {
     }
 
@@ -82,12 +76,10 @@ public class MockHttpClient implements HttpClientInterface {
       credentials = "Basic " + Base64.encode((username + ":" + password).getBytes());
     }
 
-    /** {@inheritDoc} */
     public void setRequestHeader(String name, String value) {
       request.addHeader(name, value);
     }
 
-    /** {@inheritDoc} */
     public int exchange() throws IOException {
       if (credentials != null) {
         request.addHeader("Authorize", credentials);
@@ -100,17 +92,14 @@ public class MockHttpClient implements HttpClientInterface {
       return response.getStatus();
     }
 
-    /** {@inheritDoc} */
     public String getResponseEntityAsString() throws IOException {
       return response.getContentAsString();
     }
 
-    /** {@inheritDoc} */
     public String getResponseHeaderValue(String name) {
       return String.class.cast(response.getHeader(name));
     }
 
-    /** {@inheritDoc} */
     public List<String> getResponseHeaderValues(String name) {
       List<String> result = new ArrayList<String>();
       for (Object value: response.getHeaders(name)) {
@@ -119,16 +108,14 @@ public class MockHttpClient implements HttpClientInterface {
       return result;
     }
 
-    /** {@inheritDoc} */
     public int getStatusCode() {
       return response.getStatus();
     }
 
-    public void setRequestBody(byte[] requestConent) {
-      request.setContent(requestConent);
+    public void setRequestBody(byte[] requestContent) {
+      request.setContent(requestContent);
     }
     
-    /** {@inheritDoc} */
     public void close() {
     }
 
