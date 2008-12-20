@@ -111,9 +111,6 @@ public final class CookieUtil {
       exchange.setRequestHeader("Cookie", cookieStr);
     }
 
-    exchange.setRequestHeader("Accept", "*/*");
-    exchange.setRequestHeader("Host", url.getHost());
-
     int status = exchange.exchange();
 
     if (bodyBuffer != null) {
@@ -257,17 +254,20 @@ public final class CookieUtil {
    *  @param url The target URL.
    *  @return A String to be used as value of a "Cookie" header
    */
-  private static String filterCookieToSend(Vector<Cookie> cookies,
-                                           URL url) {
+  private static String filterCookieToSend(Vector<Cookie> cookies, URL url) {
     if (cookies == null || cookies.size() == 0)
       return null;
     StringBuilder buffer = new StringBuilder();
     for (Cookie cookie: cookies) {
-      if (isCookieGoodFor(cookie, url))
-        buffer.append(cookie.getName()).append('=').
-          append(cookie.getValue()).append(';');
+      if (isCookieGoodFor(cookie, url)) {
+        if (buffer.length() > 0) {
+          buffer.append("; ");
+        }
+        buffer.append(cookie.getName());
+        buffer.append('=');
+        buffer.append(cookie.getValue());
+      }
     }
-
     return buffer.toString();
   }
 
