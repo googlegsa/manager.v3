@@ -64,8 +64,9 @@ public class BasicAuthConnector implements Connector, Session, AuthenticationMan
     int status = 0;
     try {
       status = exchange.exchange();
-     } catch (Exception e) {
-      LOGGER.warning(e.toString());
+    } catch (IOException e) {
+      LOGGER.info(e.toString());
+      throw new RepositoryException(e);
     } finally {
       exchange.close();
     }
@@ -91,5 +92,4 @@ public class BasicAuthConnector implements Connector, Session, AuthenticationMan
   public TraversalManager getTraversalManager() {
     throw new UnsupportedOperationException();
   }
-
 }

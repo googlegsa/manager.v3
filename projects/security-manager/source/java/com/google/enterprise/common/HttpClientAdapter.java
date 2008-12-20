@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -119,11 +119,8 @@ public class HttpClientAdapter implements HttpClientInterface {
       httpClient.getState().setCredentials(
           new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, AuthScope.ANY_REALM),
           new UsernamePasswordCredentials(username, password));
+      httpClient.getParams().setAuthenticationPreemptive(true);
       httpMethod.setDoAuthentication(true);
-    }
-
-    public void setAuthenticationPreemptive(boolean isPreemptive) {
-      httpClient.getParams().setAuthenticationPreemptive(isPreemptive);
     }
 
     /** {@inheritDoc} */
