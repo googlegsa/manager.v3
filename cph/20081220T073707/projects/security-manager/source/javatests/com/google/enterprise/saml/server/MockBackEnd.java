@@ -71,27 +71,22 @@ public class MockBackEnd implements BackEnd {
         artifactLifetime);
   }
 
-  /** {@inheritDoc} */
   public SessionManagerInterface getSessionManager() {
     return sessionManager;
   }
 
-  /** {@inheritDoc} */
   public EntityDescriptor getSecurityManagerEntity() {
     return null;
   }
 
-  /** {@inheritDoc} */
   public EntityDescriptor getGsaEntity() {
     return null;
   }
 
-  /** {@inheritDoc} */
   public SAMLArtifactMap getArtifactMap() {
     return artifactMap;
   }
 
-  /** {@inheritDoc} */
   public Response validateCredentials(AuthnRequest request, UserIdentity id) {
     Status status = makeStatus();
     Response response = makeResponse(request, status);
@@ -116,7 +111,6 @@ public class MockBackEnd implements BackEnd {
     return "joe".equals(username) && "plumber".equals(password);
   }
 
-  /** {@inheritDoc} */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
