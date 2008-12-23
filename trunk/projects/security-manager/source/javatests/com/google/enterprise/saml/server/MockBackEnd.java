@@ -57,27 +57,22 @@ public class MockBackEnd implements BackEnd {
         artifactLifetime);
   }
 
-  /** {@inheritDoc} */
   public SessionManagerInterface getSessionManager() {
     return sessionManager;
   }
 
-  /** {@inheritDoc} */
   public EntityDescriptor getSecurityManagerEntity() {
     return null;
   }
 
-  /** {@inheritDoc} */
   public EntityDescriptor getGsaEntity() {
     return null;
   }
 
-  /** {@inheritDoc} */
   public SAMLArtifactMap getArtifactMap() {
     return artifactMap;
   }
 
-  /** {@inheritDoc} */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     throw new UnsupportedOperationException("Unimplemented method.");
   }

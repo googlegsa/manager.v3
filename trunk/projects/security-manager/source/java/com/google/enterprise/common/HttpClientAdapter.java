@@ -59,7 +59,6 @@ public class HttpClientAdapter implements HttpClientInterface {
     idleConnectionTimeoutThread.addConnectionManager(connectionManager);
   }
 
-  /** {@inheritDoc} */
   public HttpExchange getExchange(URL url) {
     GetMethod method = new GetMethod(url.toString());
     setPathFields(method, url);
@@ -99,8 +98,7 @@ public class HttpClientAdapter implements HttpClientInterface {
       httpClient.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
     }
 
-    /** {@inheritDoc} */
-    public void setProxy(String proxy) {
+      public void setProxy(String proxy) {
       if (null == proxy) {
         return;
       }
@@ -123,13 +121,11 @@ public class HttpClientAdapter implements HttpClientInterface {
       httpMethod.setDoAuthentication(true);
     }
 
-    /** {@inheritDoc} */
-    public void setRequestHeader(String name, String value) {
+      public void setRequestHeader(String name, String value) {
       httpMethod.setRequestHeader(name, value);
     }
 
-    /** {@inheritDoc} */
-    public int exchange() throws IOException {
+      public int exchange() throws IOException {
       try {
         return httpClient.executeMethod(httpMethod);
       } catch (HttpException e) {
@@ -137,13 +133,11 @@ public class HttpClientAdapter implements HttpClientInterface {
       }
     }
 
-    /** {@inheritDoc} */
-    public String getResponseEntityAsString() throws IOException {
+      public String getResponseEntityAsString() throws IOException {
       return httpMethod.getResponseBodyAsString();
     }
 
-    /** {@inheritDoc} */
-    public String getResponseHeaderValue(String name) {
+      public String getResponseHeaderValue(String name) {
       for (Header header: httpMethod.getResponseHeaders(name)) {
         if (header.getName().equals(name)) {
           return header.getValue();
@@ -152,8 +146,7 @@ public class HttpClientAdapter implements HttpClientInterface {
       return null;
     }
 
-    /** {@inheritDoc} */
-    public List<String> getResponseHeaderValues(String name) {
+      public List<String> getResponseHeaderValues(String name) {
       List<String> result = new ArrayList<String>();
       for (Header header: httpMethod.getResponseHeaders(name)) {
         if (header.getName().equals(name)) {
@@ -163,13 +156,11 @@ public class HttpClientAdapter implements HttpClientInterface {
       return result;
     }
 
-    /** {@inheritDoc} */
-    public int getStatusCode() {
+      public int getStatusCode() {
       return httpMethod.getStatusCode();
     }
 
-    /** {@inheritDoc} */
-    public void setRequestBody(byte[] requestContent) {
+      public void setRequestBody(byte[] requestContent) {
       String method = httpMethod.getName();
       if ("POST".equalsIgnoreCase(method)) {
         PostMethod pm = PostMethod.class.cast(httpMethod);
@@ -179,8 +170,7 @@ public class HttpClientAdapter implements HttpClientInterface {
       }
     }
 
-    /** {@inheritDoc} */
-    public void close() {
+      public void close() {
       httpMethod.releaseConnection();
     }
   }
