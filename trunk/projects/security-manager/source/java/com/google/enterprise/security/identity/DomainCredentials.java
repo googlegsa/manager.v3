@@ -110,6 +110,7 @@ public class DomainCredentials implements AuthenticationIdentity {
     cookies.add(c);
   }
 
+  @SuppressWarnings("unchecked")
   public Set getCookieNames() {
     HashSet<String> s = new HashSet<String>();
     for (Cookie c : cookies) {
