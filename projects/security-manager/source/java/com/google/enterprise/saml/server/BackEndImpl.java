@@ -110,11 +110,9 @@ public class BackEndImpl implements BackEnd {
     sessionIds = new Vector<String>();
   }
 
-  /** {@inheritDoc} */
   public void setConnectorManager(ConnectorManager cm) {
     this.manager = cm;
   }
-  /** {@inheritDoc} */
   public SessionManagerInterface getSessionManager() {
     return sm;
   }
@@ -127,7 +125,6 @@ public class BackEndImpl implements BackEnd {
     return gsaEntity;
   }
 
-  /** {@inheritDoc} */
   public SAMLArtifactMap getArtifactMap() {
     return artifactMap;
   }
@@ -180,7 +177,6 @@ public class BackEndImpl implements BackEnd {
     return null;
   }
 
-  /** {@inheritDoc} */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     return authzResponder.authorizeBatch(authzDecisionQueries);
   }
