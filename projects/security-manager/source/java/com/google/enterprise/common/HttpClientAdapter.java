@@ -69,7 +69,7 @@ public class HttpClientAdapter implements HttpClientInterface {
     PostMethod method = new PostMethod(url.toString());
     setPathFields(method, url);
     if (parameters != null) {
-      method.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+      method.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
       for (StringPair p: parameters) {
         method.addParameter(p.getName(), p.getValue());
       }
