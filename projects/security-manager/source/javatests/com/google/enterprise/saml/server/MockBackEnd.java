@@ -16,43 +16,27 @@ package com.google.enterprise.saml.server;
 
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
-import org.opensaml.saml2.core.Assertion;
-import org.opensaml.saml2.core.AuthnContext;
-import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
-import org.opensaml.saml2.core.Status;
-import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Collection;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertion;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnStatement;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatusMessage;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeSubject;
-import com.google.enterprise.security.identity.CredentialsGroup;
 
 /**
  * Simple mock saml server Backend for testing.
  */
 public class MockBackEnd implements BackEnd {
-  private static final Logger LOGGER = Logger.getLogger(MockBackEnd.class.getName());
+  //private static final Logger LOGGER = Logger.getLogger(MockBackEnd.class.getName());
   private static final int artifactLifetime = 600000;  // ten minutes
 
   private final SessionManagerInterface sessionManager;

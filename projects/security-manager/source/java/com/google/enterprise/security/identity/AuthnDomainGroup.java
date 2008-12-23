@@ -14,14 +14,13 @@
 
 package com.google.enterprise.security.identity;
 
-import com.google.enterprise.saml.server.CSVReader;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
+import com.google.enterprise.saml.server.CSVReader;
 
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.IOException;
-import java.io.FileReader;
-import java.io.Reader;
 
 /**
  * A group of authentication domains that share the same username/password for every user.
@@ -69,6 +68,7 @@ public class AuthnDomainGroup {
         method = AuthNMechanism.FORMS_AUTH;
       }
       AuthnDomainGroup adg = new AuthnDomainGroup(nextLine[0] + nextLine[1]);
+      @SuppressWarnings("unused")
       AuthnDomain domain = new AuthnDomain(
           nextLine[0] + nextLine[1], method,
           "".equals(nextLine[3]) ? nextLine[0] + nextLine[1] : nextLine[3], adg);
