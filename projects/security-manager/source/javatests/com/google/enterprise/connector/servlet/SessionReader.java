@@ -22,6 +22,7 @@ import com.google.enterprise.sessionmanager.SessionManagerInterface;
 import com.google.enterprise.security.connectors.formauth.CookieUtil;
 
 import java.util.Vector;
+import java.util.logging.Logger;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -37,6 +38,7 @@ import javax.servlet.http.Cookie;
 public class SessionReader extends HttpServlet {
 
   private static final long serialVersionUID = 1L;
+  private static final Logger LOGGER = Logger.getLogger(SessionReader.class.getName());
 
   @Override
   protected void doGet(HttpServletRequest req,
@@ -78,11 +80,17 @@ public class SessionReader extends HttpServlet {
     String cookies = denullify(sm.getValue(sessionId, GsaConstants.AUTHN_MECH_PREFIX
         + GsaConstants.AuthNMechanism.FORMS_AUTH.toString()
         + GsaConstants.AUTHN_MECH_TOKEN));
+    LOGGER.info("ReadSession user string: " + user);
+    LOGGER.info("ReadSession domain string: " + domain);
+    LOGGER.info("ReadSession password string: " + password);
+    LOGGER.info("ReadSession cookies string: " + cookies);
 
     StringBuilder dCookies = new StringBuilder("");
-    Vector<Cookie> v = CookieUtil.deserializeCookies(cookies);
-    for (Cookie c : v) {
-      dCookies.append(c.getName() + ":" + c.getValue() + "<br>");
+    if ("null" != cookies && !cookies.isEmpty()) {
+      Vector<Cookie> v = CookieUtil.deserializeCookies(cookies);
+      for (Cookie c : v) {
+        dCookies.append(c.getName() + ":" + c.getValue() + "<br>");
+      }
     }
 
     return "<p>Session ID: " + sessionId + "<br>" +

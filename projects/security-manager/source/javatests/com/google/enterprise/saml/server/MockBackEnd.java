@@ -34,6 +34,7 @@ import org.opensaml.xml.parse.BasicParserPool;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,6 +46,7 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatusMessage;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSubject;
+import com.google.enterprise.security.identity.CredentialsGroup;
 
 /**
  * Simple mock saml server Backend for testing.
@@ -92,40 +94,20 @@ public class MockBackEnd implements BackEnd {
   }
 
   /** {@inheritDoc} */
-  public Response validateCredentials(AuthnRequest request, UserIdentity id) {
-    Status status = makeStatus();
-    Response response = makeResponse(request, status);
-    String username = id.getUsername();
-    String password = id.getPassword();
-    if (areCredentialsValid(username, password)) {
-      LOGGER.log(Level.INFO, "Authenticated successfully as " + username);
-      status.getStatusCode().setValue(StatusCode.SUCCESS_URI);
-      Assertion assertion = makeAssertion(makeIssuer(SM_ISSUER), makeSubject(username));
-      assertion.getAuthnStatements().add(makeAuthnStatement(AuthnContext.IP_PASSWORD_AUTHN_CTX));
-      response.getAssertions().add(assertion);
-    } else {
-      LOGGER.log(Level.INFO, "Authentication failed");
-      status.getStatusCode().setValue(StatusCode.REQUEST_DENIED_URI);
-      status.setStatusMessage(makeStatusMessage("Authentication failed"));
-    }
-    return response;
-  }
-
-  // trivial implementation
-  private boolean areCredentialsValid(String username, String password) {
-    return "joe".equals(username) && "plumber".equals(password);
-  }
-
-  /** {@inheritDoc} */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
 
-  public void updateSessionManager(String sessionId, UserIdentity ids[]) {
+  public void updateSessionManager(String sessionId,
+                                   Collection<CredentialsGroup> cgs) {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
 
   public AuthenticationResponse handleCookie(Map<String, String> cookieJar) {
+    throw new UnsupportedOperationException("Unimplemented method.");
+  }
+
+  public void authenticate(CredentialsGroup credentialsGroup) {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
 

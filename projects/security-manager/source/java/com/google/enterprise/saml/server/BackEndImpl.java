@@ -27,10 +27,8 @@ import com.google.enterprise.sessionmanager.SessionManagerInterface;
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
-import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
-import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.util.storage.MapBasedStorageService;
@@ -39,6 +37,7 @@ import org.opensaml.xml.parse.BasicParserPool;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+import java.util.Collection;
 import java.util.logging.Logger;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.GSA_ISSUER;
@@ -49,6 +48,8 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeIdpSsoDescripto
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSingleSignOnService;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSpSsoDescriptor;
 import com.google.enterprise.security.connectors.formauth.CookieUtil;
+import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.DomainCredentials;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
@@ -135,42 +136,29 @@ public class BackEndImpl implements BackEnd {
     return loginFormConfigFile;
   }
 
-  /** {@inheritDoc} */
-  public Response validateCredentials(AuthnRequest request, UserIdentity id) {
-    if (id == null || id.isVerified())
-      return null;
-    
-    return
-        (handleAuthn(id)
-        ? SamlAuthn.makeSuccessfulResponse(request, id.getUsername())
-        : SamlAuthn.makeUnsuccessfulResponse(
-            request, StatusCode.REQUEST_DENIED_URI, "Authentication failed"));
-  }
+  public void authenticate(CredentialsGroup cg) {
+    for (DomainCredentials dCred : cg.getElements()) {
+      for (ConnectorStatus connStatus : getConnectorStatuses(manager)) {
+        String connectorName = connStatus.getName();
+        LOGGER.info("Got security plug-in " + connectorName);
 
-  // return true if credentials are checked against Identity provider: either valid or invalid
-  private boolean handleAuthn(UserIdentity id) {
-    AuthSite site = id.getAuthSite();
-    
-    for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
-      String connectorName = connStatus.getName();
-      System.out.println("Got security plug-in " + connectorName);
-
-      // Use connectorName as a clue as to what type of auth mechanism is suitable
-      if (connectorName.startsWith("Basic") && site.getMethod() != AuthNMechanism.BASIC_AUTH)
-        continue;
-      if (connectorName.startsWith("Form") && site.getMethod() != AuthNMechanism.FORMS_AUTH)
-        continue;
-      if (connectorName.startsWith("Conn") && site.getMethod() != AuthNMechanism.CONNECTORS)
-        continue;
-      AuthenticationResponse authnResponse =
-          manager.authenticate(connectorName, id, null);
-      if ((authnResponse != null) && authnResponse.isValid()) {
-        id.setVerified();
-        // TODO deal with cases where id.id != authnResponse.getData();
+        // Use connectorName as a clue as to what type of auth mechanism is suitable
+        if (connectorName.startsWith("Basic") && dCred.getDomain().getMechanism() != AuthNMechanism.BASIC_AUTH) {
+          continue;
+        }
+        if (connectorName.startsWith("Form") && dCred.getDomain().getMechanism() != AuthNMechanism.FORMS_AUTH) {
+          continue;
+        }
+        if (connectorName.startsWith("Conn") && dCred.getDomain().getMechanism() != AuthNMechanism.CONNECTORS) {
+          continue;
+        }
+        AuthenticationResponse authnResponse = manager.authenticate(connectorName, dCred, null);
+        if ((null != authnResponse) && authnResponse.isValid()) {
+          LOGGER.info("Authn Success, credential verified: " + dCred.dumpInfo());
+          dCred.setVerified(true);
+        }
       }
     }
-    return true;
-
   }
 
   // some form of authentication has already happened, the user gave us cookies,
@@ -188,7 +176,7 @@ public class BackEndImpl implements BackEnd {
       if ((authnResponse != null) && authnResponse.isValid())
         return authnResponse;
     }
-    
+
     return null;
   }
 
@@ -196,7 +184,7 @@ public class BackEndImpl implements BackEnd {
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     return authzResponder.authorizeBatch(authzDecisionQueries);
   }
-  
+
   @SuppressWarnings("unchecked")
   private List<ConnectorStatus> getConnectorStatuses(ConnectorManager manager) {
     List<ConnectorStatus> connList = manager.getConnectorStatuses();
@@ -207,42 +195,42 @@ public class BackEndImpl implements BackEnd {
     return connList;
   }
 
-  public void updateSessionManager(String sessionId, UserIdentity[] ids) {    
+  public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs) {
     LOGGER.info("Session ID: " + sessionId);
     sessionIds.add(sessionId);
     LOGGER.info("Users: ");
 
     Vector<Cookie> cookies = new Vector<Cookie>();
 
-    for (UserIdentity id : ids) {
-      if (null == id) {
-        LOGGER.warning("null id");
-        continue;
-      }
-      LOGGER.info("user id to sm: " + id.toString());
+    for (CredentialsGroup cg : cgs) {
 
-      // This clobbers any priorly stored basic auth credentials.
-      // The expectation is that only one basic auth module will be active
-      // at any given time, or that if multiple basic auth modules are
-      // active at once, only one of them will work.
-      if (AuthNMechanism.BASIC_AUTH == id.getAuthSite().getMethod()) {
-        if (null != id.getUsername()) {
-          adapter.setUsername(sessionId, id.getUsername());
-        }
-        if (null != id.getPassword()) {
-          adapter.setPassword(sessionId, id.getPassword());
-        }
-      // TODO(con): currently setting the domain will break functionality
-      // for most Basic Auth headrequests. Once I figure out what's going on
-      // with NtlmDomains, I'll fix this.
-      //  if (null != id.getAuthSite()) {
-      //    adapter.setDomain(sessionId, id.getAuthSite().getHostname());
-      //  }
-      }
+      LOGGER.info("CG id/pw: " + cg.getUsername() + ":" + cg.getPassword());
 
-      cookies.addAll(id.getCookies());     
+      for (DomainCredentials dCred : cg.getElements()) {
+        // This clobbers any priorly stored basic auth credentials.
+        // The expectation is that only one basic auth module will be active
+        // at any given time, or that if multiple basic auth modules are
+        // active at once, only one of them will work.
+        if (AuthNMechanism.BASIC_AUTH == dCred.getDomain().getMechanism()) {
+          if (null != cg.getUsername()) {
+            adapter.setUsername(sessionId, cg.getUsername());
+          }
+          if (null != cg.getPassword()) {
+            adapter.setPassword(sessionId, cg.getPassword());
+          }
+          // TODO(con): currently setting the domain will break functionality
+          // for most Basic Auth headrequests. Once I figure out what's going on
+          // with NtlmDomains, I'll fix this.
+          //  if (null != id.getAuthSite()) {
+          //    adapter.setDomain(sessionId, id.getAuthSite().getHostname());
+          //  }
+        }
+
+        LOGGER.info("Adding " + dCred.getCookies().size() + " cookies to SM for"
+                    + " this DomainCredential.");
+        cookies.addAll(dCred.getCookies());
+      }
     }
-
     adapter.setCookies(sessionId, CookieUtil.serializeCookies(cookies));
 
     // TODO(con): connectors
