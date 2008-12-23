@@ -40,7 +40,6 @@ import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -63,6 +62,8 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeSubject;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
+import com.google.enterprise.security.ui.OmniFormHtml;
+import com.google.enterprise.security.ui.OmniForm;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
@@ -76,7 +77,6 @@ public class SamlAuthn extends SecurityManagerServlet
 
   /** Required for serializable classes. */
   private static final long serialVersionUID = 1L;
-  private OmniForm loginForm;
   private static final Logger LOGGER = Logger.getLogger(SamlAuthn.class.getName());
 
   /**
@@ -131,23 +131,25 @@ public class SamlAuthn extends SecurityManagerServlet
     if (tryCookies(request, response)) {
       return;
     }
-   
-    String formHtml = omniform(backend.getAuthConfigFile(), request);
 
-    response.getWriter().print(formHtml);
+    // This may not be the first time the user is seeing this form, so look for
+    // a previous OmniForm in this request session.
+    OmniForm omniform =
+        OmniForm.class.cast(request.getSession().getAttribute("Omniform"));
+    if (null == omniform) {
+      omniform = new OmniForm(
+          backend, new OmniFormHtml(getAction(request)));
+    }
+    request.getSession().setAttribute("Omniform", omniform);
+
+    response.getWriter().print(omniform.generateForm());
   }
 
   private String getAction(HttpServletRequest request) {
     String url = request.getRequestURL().toString();
     int q = url.indexOf("?");
     return (q < 0) ? url : url.substring(0, q);
-  }
-    
-  private String omniform(String configFile, HttpServletRequest request)
-      throws NumberFormatException, IOException {
-    loginForm = new OmniForm(configFile, getAction(request));
-    return loginForm.writeForm(null);
-  }
+  }    
 
   /**
    * Try to find a cookie that can be decoded into an identity.
@@ -216,34 +218,18 @@ public class SamlAuthn extends SecurityManagerServlet
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         existingSamlMessageContext(request.getSession());
 
-    UserIdentity[] ids = (UserIdentity[]) request.getSession().getAttribute(SecurityManagerServlet.CREDENTIALS);
-    ids = loginForm.parse(request, ids);
-    for (UserIdentity id : ids) {
-      // TODO make the context keep a queue of response SAMLMessage's
-      Response samlMsg = backend.validateCredentials(context.getInboundSAMLMessage(), id);
-      if (samlMsg != null)
-        context.setOutboundSAMLMessage(samlMsg);    
-    }
-    
-    // if not all identities get verified, repost omniform, with visual cues
-    boolean hasInvalidCredential = false;
-    for (UserIdentity id : ids) {
-      if (id == null) // Skip auth site for which the user did not provide credentials
-        continue;
-      if (id.isVerified()) {
-        Vector<Cookie> jar = id.getCookies();
-        for (Cookie c : jar) {
-          response.addCookie(c);
-        }
-      } else
-        hasInvalidCredential = true;
-    }
-    
-    if (hasInvalidCredential) {
-      request.getSession().setAttribute(SecurityManagerServlet.CREDENTIALS, ids);
-      response.getWriter().print(loginForm.writeForm(ids));
+    OmniForm omniform =
+        OmniForm.class.cast(request.getSession().getAttribute("Omniform"));
+
+    String verifiedId = omniform.handleFormSubmit(request);
+    if (null == verifiedId) {
+      response.getWriter().print(omniform.generateForm());
       return;
     }
+
+    LOGGER.info("Verified ID is: " + verifiedId);
+    context.setOutboundSAMLMessage(
+        makeSuccessfulResponse(context.getInboundSAMLMessage(), verifiedId));
 
     // If we've reached here, we've fully authenticated the user. Update
     // the Session Manager with the necessary info, and then generate
@@ -251,7 +237,8 @@ public class SamlAuthn extends SecurityManagerServlet
     Map<String, String> cookieJar = getCookieJar(request);
     if (cookieJar.containsKey(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME)) {
       backend.updateSessionManager(
-          cookieJar.get(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME), ids);      
+          cookieJar.get(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME),
+          omniform.getCredentialsGroups());
     }
 
     // generate artifact, redirect, plant cookies

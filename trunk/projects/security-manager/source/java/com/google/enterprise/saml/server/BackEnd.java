@@ -17,15 +17,16 @@ package com.google.enterprise.saml.server;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 import com.google.enterprise.connector.manager.ConnectorManager;
+import com.google.enterprise.security.identity.CredentialsGroup;
 
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
-import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Collection;
 
 /**
  * Interface to SAML server backend. Top-level classes such as servlets should
@@ -77,15 +78,15 @@ public interface BackEnd {
 
   public String getAuthConfigFile();
 
-  /**
-   * Validate identity credentials.
-   *
-   * @param request The SAML authentication request being served.
-   * @param id The identity to validate.
-   * @returns A SAML Response with the validation result.
-   */
-  public Response validateCredentials(AuthnRequest request, UserIdentity id);
   public AuthenticationResponse handleCookie(Map<String, String> cookieJar);
+
+  /**
+   * Attempts to authenticate a given CredentialsGroup.  This method will update
+   * the provided credentialsGroup with information retrieved during the
+   * authentication process (i.e. cookies, certificates, and other credentials),
+   * and it may set this credentialsGroup as verified as a result.
+   */
+  public void authenticate(CredentialsGroup credentialsGroup);
 
   /**
    * Process a set of SAML authorization queries.
@@ -95,5 +96,5 @@ public interface BackEnd {
    */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries);
 
-  public void updateSessionManager(String sessionId, UserIdentity ids[]);
+  public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs);
 }
