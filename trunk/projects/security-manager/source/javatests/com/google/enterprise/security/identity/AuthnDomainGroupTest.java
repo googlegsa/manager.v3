@@ -52,9 +52,9 @@ public class AuthnDomainGroupTest extends TestCase {
     assertEquals(AuthNMechanism.BASIC_AUTH, leizBasicDomain.getMechanism());
     assertEquals("http://leiz.mtv.corp.google.com/basic/", leizBasicDomain.getLoginUrl());
 
-    assertEquals(1, adgs.get(3).getDomains().size());
-    AuthnDomain moogleDomain = adgs.get(3).getDomains().get(0);
-    assertEquals("http://mooglegoogle.com,/moogle/", moogleDomain.getName());
+    assertEquals(1, adgs.get(2).getDomains().size());
+    AuthnDomain moogleDomain = adgs.get(2).getDomains().get(0);
+    assertEquals("http://mooglegoogle.com/moogle/", moogleDomain.getName());
     assertEquals("http://loginurl.com/login", moogleDomain.getLoginUrl());
 
   }
