@@ -80,7 +80,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     String redirect;
     try {
       redirect = fetchLoginForm(siteUri, form, cookies);
-    } catch (Exception e) {
+    } catch (IOException e) {
       LOGGER.info("Could not GET login form from " + siteUri + ": " + e.toString());
       return new AuthenticationResponse(false, null);
     }
@@ -136,7 +136,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
    * @returns the URL the form should be posted to
    */
   private String fetchLoginForm(String urlToFetch, StringBuffer bodyBuffer, Vector<Cookie> cookies)
-      throws Exception {
+      throws IOException {
     int redirectCount = 0;
     URL url = new URL(urlToFetch);
     String lastRedirect;
@@ -156,7 +156,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       redirected = redirectBuffer.toString();
       if (redirected.length() > 0) {
         if (++redirectCount > kMaxNumRedirectsToFollow) {
-          throw new Exception("Max num of redirects exceeded");
+          throw new IOException("Max num of redirects exceeded");
         }
         // prepare for another fetch.
         url = new URL(redirected);

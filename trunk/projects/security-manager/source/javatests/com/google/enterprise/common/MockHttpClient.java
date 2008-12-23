@@ -37,15 +37,14 @@ public class MockHttpClient implements HttpClientInterface {
 
   public HttpExchange getExchange(URL url) {
     MockHttpServletRequest request =
-        ServletTestUtil.makeMockHttpRequest("GET", null, url.toString());
+        ServletTestUtil.makeMockHttpGet(null, url.toString());
     return new MockExchange(transport, request);
   }
 
   public HttpExchange postExchange(URL url, List<StringPair> parameters) {
     MockHttpServletRequest request =
-        ServletTestUtil.makeMockHttpRequest("POST", null, url.toString());
+        ServletTestUtil.makeMockHttpPost(null, url.toString());
     if (parameters != null) {
-      request.addHeader("Content-Type", "application/x-www-form-urlencoded");
       for (StringPair p: parameters) {
         request.addParameter(p.getName(), p.getValue());
       }
@@ -115,8 +114,8 @@ public class MockHttpClient implements HttpClientInterface {
       return response.getStatus();
     }
 
-    public void setRequestBody(byte[] requestConent) {
-      request.setContent(requestConent);
+    public void setRequestBody(byte[] requestContent) {
+      request.setContent(requestContent);
     }
     
       public void close() {

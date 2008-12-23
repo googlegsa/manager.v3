@@ -41,20 +41,14 @@ import javax.servlet.http.HttpServletResponse;
 public final class ServletTestUtil {
 
   public static MockHttpServletRequest makeMockHttpGet(String clientUrl, String serverUrl) {
-    MockHttpServletRequest request = makeMockHttpRequest("GET", clientUrl, serverUrl);
-    request.setContent(new byte[0]);
-    return request;
+    return makeMockHttpRequest("GET", clientUrl, serverUrl);
   }
 
   public static MockHttpServletRequest makeMockHttpPost(String clientUrl, String serverUrl) {
-    MockHttpServletRequest request = makeMockHttpRequest("POST", clientUrl, serverUrl);
-    request.setContentType("application/x-www-form-urlencoded");
-    request.setCharacterEncoding("UTF-8");
-    request.addHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
-    return request;
+    return makeMockHttpRequest("POST", clientUrl, serverUrl);
   }
 
-  public static MockHttpServletRequest makeMockHttpRequest(String method, String client,
+  private static MockHttpServletRequest makeMockHttpRequest(String method, String client,
       String server) {
     URLBuilder serverUrl = new URLBuilder(server);
     // TODO(cph): figure out how to get servlet context from serverUrl.
@@ -208,6 +202,9 @@ public final class ServletTestUtil {
     byte[] content = bs.toByteArray();
     out.close();
     request.setContent(content);
+    request.setContentType("application/x-www-form-urlencoded");
+    request.setCharacterEncoding("UTF-8");
+    request.addHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
     request.addHeader("Content-Length", (new Integer(content.length)).toString());
   }
 
@@ -234,7 +231,9 @@ public final class ServletTestUtil {
   public static void finalizeResponse(HttpServletResponse response) {
     if (response instanceof MockHttpServletResponse) {
       MockHttpServletResponse mr = (MockHttpServletResponse) response;
-      response.addHeader("Content-Length", String.valueOf(mr.getContentLength()));
+      int length = mr.getContentAsByteArray().length;
+      mr.setContentLength(length);
+      response.addHeader("Content-Length", String.valueOf(length));
       String value = ServletBase.setCookieHeaderValue(Arrays.asList(mr.getCookies()));
       if (value != null) {
         response.addHeader("Set-Cookie", value);
