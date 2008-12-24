@@ -33,11 +33,6 @@ public class GsaConstants {
     SPNEGO_KERBEROS // GSSAPI/SPNEGO/Kerberos WWW-Authenticate handshake
   }
 
-  public static enum AuthNDecision {
-    TBD,            // haven't gone through verification yet
-    VERIFIED        // recognized by one IdP
-  }
-  
   // name of the cookie that we store the sessionId in
   // (package exposed for access by unit tests)
   public static final String AUTHN_SESSION_ID_COOKIE_NAME = "GSA_SESSION_ID";
