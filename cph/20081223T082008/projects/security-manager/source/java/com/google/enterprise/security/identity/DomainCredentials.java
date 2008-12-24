@@ -14,10 +14,10 @@
 
 package com.google.enterprise.security.identity;
 
-import com.google.enterprise.connector.spi.AuthenticationIdentity;
+import com.google.enterprise.connector.spi.SecAuthnIdentity;
 
-import java.util.Set;
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Vector;
 
 import javax.servlet.http.Cookie;
@@ -26,7 +26,7 @@ import javax.servlet.http.Cookie;
  * The credentials associated with a single authentication domain.  (Does not include
  * username/password, which is stored in the associated Credentials Group.)
  */ 
-public class DomainCredentials implements AuthenticationIdentity {
+public class DomainCredentials implements SecAuthnIdentity {
 
   private enum Decision {
     TBD,            // haven't gone through verification yet
@@ -63,60 +63,8 @@ public class DomainCredentials implements AuthenticationIdentity {
     return group.getPassword();
   }
 
-  /**
-   * Get a named cookie value.
-   *
-   * @param cookieName a non-null, non-empty String
-   * @return the cookie value, as a String, or null if not set
-   */
-  public String getCookie(String cookieName) {
-    for (Cookie c : cookies) {
-      if (c.getName().equals(cookieName)) {
-        return c.getValue();
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Set a named cookie value. If there was a previous value for this cookie,
-   * the old value is replaced by the specified value. If the value is null or
-   * empty, this has the effect of removing the cookie, if present.
-   *
-   * @param cookieName a non-null, non-empty String
-   * @param value the new value for this cookie; if null or empty, then the
-   *        cookie is removed
-   * @return the previous value associated with this cookie name, or null if
-   *         there was no value
-   */
-  public String setCookie(String cookieName, String value) {
-    String oldVal = "";
-    for (Cookie c : cookies) {
-      if (c.getName().equals(cookieName)) {
-        if (null == value || "".equals(value)) {
-          cookies.remove(c);
-        }
-        oldVal = c.getValue();
-        c.setValue(value);
-        return oldVal;
-      }
-    }
-
-    cookies.add(new Cookie(cookieName, value));
-    return null;
-  }
-
-  public void setCookie(Cookie c) {
+  public void addCookie(Cookie c) {
     cookies.add(c);
-  }
-
-  @SuppressWarnings("unchecked")
-  public Set getCookieNames() {
-    HashSet<String> s = new HashSet<String>();
-    for (Cookie c : cookies) {
-      s.add(c.getName());
-    }
-    return s;
   }
 
   public String getLoginUrl() {
@@ -139,11 +87,11 @@ public class DomainCredentials implements AuthenticationIdentity {
     this.decision = isVerified ? Decision.VERIFIED : Decision.REPUDIATED;
   }
 
-  public Vector<Cookie> getCookies() {
-    return cookies;
+  public Collection<Cookie> getCookies() {
+    return Collections.unmodifiableCollection(cookies);
   }
 
-  public Cookie getFullCookie(String name) {
+  public Cookie getCookieNamed(String name) {
     for (Cookie c: cookies) {
       if (c.getName().equals(name)) {
         return c;

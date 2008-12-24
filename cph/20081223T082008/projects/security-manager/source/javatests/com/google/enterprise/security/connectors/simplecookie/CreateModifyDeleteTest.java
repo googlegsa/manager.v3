@@ -17,13 +17,17 @@ package com.google.enterprise.security.connectors.simplecookie;
 import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.manager.UserPassIdentity;
+import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.spi.AuthenticationIdentity;
+import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.DomainCredentials;
 
 import junit.framework.TestCase;
 
-import java.util.HashMap;
 import java.util.Map;
+
+import javax.servlet.http.Cookie;
 
 /**
  * Tests for creating, modifying and deleting a RegexCookieIdentityConnector
@@ -43,7 +47,8 @@ public class CreateModifyDeleteTest extends TestCase {
     Context.getInstance().setFeeding(false);
     Context.getInstance().start();
 
-    ConnectorManager connectorManager = (ConnectorManager) Context.getInstance().getManager();
+    ConnectorManager connectorManager =
+        ConnectorManager.class.cast(Context.getInstance().getManager());
 
     String connectorName = "CookieConnector1";
     String connectorTypeName = "CookieConnector";
@@ -52,7 +57,8 @@ public class CreateModifyDeleteTest extends TestCase {
     boolean connectorExists = testConnectorExists(connectorManager, connectorName);
 
     Map<String, String> configData;
-    Map<String, String> securityContext;
+    SecAuthnContext securityContext;
+    Cookie cookie;
     
     configData =
         ImmutableMap.of("CookieName", "in", "IdCookieName", "out", "Regex", "username=(.*)");
@@ -62,20 +68,24 @@ public class CreateModifyDeleteTest extends TestCase {
     connectorExists = testConnectorExists(connectorManager, connectorName);
     assertTrue(connectorExists);
 
-    securityContext = new HashMap<String, String>();
-    securityContext.put("in", "username=fred");
-    connectorManager.authenticate(connectorName, new UserPassIdentity(null, null), securityContext);
-    assertEquals("fred", securityContext.get("out"));
+    securityContext = new SecAuthnContext();
+    securityContext.addCookie(new Cookie("in", "username=fred"));
+    connectorManager.authenticate(connectorName, newIdentity(), securityContext);
+    cookie = securityContext.getCookieNamed("out");
+    assertNotNull(cookie);
+    assertEquals("fred", cookie.getValue());
 
     configData =
         ImmutableMap.of("CookieName", "abc", "IdCookieName", "def", "Regex", "user=(.*)");
     connectorManager.setConnectorConfig(connectorName, connectorTypeName, configData, language,
         connectorExists);
 
-    securityContext = new HashMap<String, String>();
-    securityContext.put("abc", "user=joe");
-    connectorManager.authenticate(connectorName, new UserPassIdentity(null, null), securityContext);
-    assertEquals("joe", securityContext.get("def"));
+    securityContext = new SecAuthnContext();
+    securityContext.addCookie(new Cookie("abc", "user=joe"));
+    connectorManager.authenticate(connectorName, newIdentity(), securityContext);
+    cookie = securityContext.getCookieNamed("def");
+    assertNotNull(cookie);
+    assertEquals("joe", cookie.getValue());
     
     connectorManager.removeConnector(connectorName);
     
@@ -95,5 +105,9 @@ public class CreateModifyDeleteTest extends TestCase {
       connectorExists = false;
     }
     return connectorExists;
+  }
+
+  private AuthenticationIdentity newIdentity() {
+    return new DomainCredentials(null, new CredentialsGroup(null));
   }
 }
