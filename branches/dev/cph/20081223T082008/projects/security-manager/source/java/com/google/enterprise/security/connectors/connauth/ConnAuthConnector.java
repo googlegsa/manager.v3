@@ -21,6 +21,7 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
 
@@ -57,7 +58,8 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
    * username and password provided by a search user is valid for any of the
    * connectors the manager is responsible for.
    */
-  public AuthenticationResponse authenticate(AuthenticationIdentity identity) {
+  public AuthenticationResponse authenticate(AuthenticationIdentity raw) {
+    SecAuthnIdentity identity = SecAuthnIdentity.class.cast(raw);
     AuthenticationResponse notfound = new AuthenticationResponse(false, null);
     String username = identity.getUsername();
     String password = identity.getPassword();

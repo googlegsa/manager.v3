@@ -14,11 +14,14 @@
 
 package com.google.enterprise.security.connectors.simplecookie;
 
-import com.google.enterprise.connector.manager.UserPassIdentity;
-import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.connector.spi.SecAuthnIdentity;
+import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.DomainCredentials;
 
 import junit.framework.TestCase;
+
+import javax.servlet.http.Cookie;
 
 /**
  * Tests for the {@link SimpleCookieIdentityConnector} class.
@@ -37,12 +40,14 @@ public class SimpleCookieIdentityConnectorTest extends TestCase {
 
   private void runOneAuthenticationTest(String cookieName, String idCookieName,
       SimpleCookieIdentityConnector s, String cookieValue, String expectedIdentity) {
-    AuthenticationIdentity id = new UserPassIdentity("", "");
-    id.setCookie(cookieName, cookieValue);
+    SecAuthnIdentity id = new DomainCredentials(null, new CredentialsGroup(null));
+    id.addCookie(new Cookie(cookieName, cookieValue));
     AuthenticationResponse r = s.authenticate(id);
     if (expectedIdentity != null) {
     assertTrue(r.isValid());
-    assertEquals(expectedIdentity, id.getCookie(idCookieName));
+    Cookie c = id.getCookieNamed(idCookieName);
+    assertNotNull(c);
+    assertEquals(expectedIdentity, c.getValue());
     } else {
       assertFalse(r.isValid());
     }

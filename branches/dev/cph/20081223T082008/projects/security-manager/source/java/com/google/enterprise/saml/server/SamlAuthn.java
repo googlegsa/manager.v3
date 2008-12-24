@@ -16,9 +16,12 @@ package com.google.enterprise.saml.server;
 
 import com.google.enterprise.common.GettableHttpServlet;
 import com.google.enterprise.common.PostableHttpServlet;
+import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
+import com.google.enterprise.security.ui.OmniForm;
+import com.google.enterprise.security.ui.OmniFormHtml;
 
 import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.saml2.binding.decoding.HTTPRedirectDeflateDecoder;
@@ -38,8 +41,6 @@ import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -62,8 +63,6 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeSubject;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
-import com.google.enterprise.security.ui.OmniFormHtml;
-import com.google.enterprise.security.ui.OmniForm;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
@@ -161,13 +160,7 @@ public class SamlAuthn extends SecurityManagerServlet
   private boolean tryCookies(HttpServletRequest request, HttpServletResponse response)
       throws ServletException {
     BackEnd backend = getBackEnd(getServletContext());
-    Map<String, String> cookieJar = getCookieJar(request);
-    if (cookieJar == null) {
-      return false;
-    }
-
-    AuthenticationResponse authnResponse =
-        backend.handleCookie(cookieJar);
+    AuthenticationResponse authnResponse = backend.handleCookie(getAuthnContext(request));
     if ((authnResponse != null) && authnResponse.isValid()) {
       // TODO make sure authnResponse has subject in BackEnd
       String username = authnResponse.getData();
@@ -190,16 +183,15 @@ public class SamlAuthn extends SecurityManagerServlet
    * @param request The HTTP request message.
    * @return A Map of cookies, or null if no cookies.
    */
-  private Map<String, String> getCookieJar(HttpServletRequest request) {
-    Cookie[] jar = request.getCookies();
-    if ((jar == null) || (jar.length == 0)) {
-      return null;
+  private SecAuthnContext getAuthnContext(HttpServletRequest request) {
+    SecAuthnContext context = new SecAuthnContext();
+    Cookie[] cookies = request.getCookies();
+    if (cookies != null) {
+      for (Cookie c: cookies) {
+        context.addCookie(c);
+      }
     }
-    Map<String, String> cookieJar = new HashMap<String, String>(jar.length);
-    for (Cookie c: jar) {
-      cookieJar.put(c.getName(), c.getValue());
-    }
-    return cookieJar;
+    return context;
   }
 
   /**
@@ -234,11 +226,10 @@ public class SamlAuthn extends SecurityManagerServlet
     // If we've reached here, we've fully authenticated the user. Update
     // the Session Manager with the necessary info, and then generate
     // the artifact redirect.
-    Map<String, String> cookieJar = getCookieJar(request);
-    if (cookieJar.containsKey(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME)) {
-      backend.updateSessionManager(
-          cookieJar.get(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME),
-          omniform.getCredentialsGroups());
+    Cookie cookie =
+        getAuthnContext(request).getCookieNamed(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME);
+    if (cookie != null) {
+      backend.updateSessionManager(cookie.getValue(), omniform.getCredentialsGroups());
     }
 
     // generate artifact, redirect, plant cookies
