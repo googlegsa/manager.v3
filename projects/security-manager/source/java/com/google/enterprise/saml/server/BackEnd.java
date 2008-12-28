@@ -14,19 +14,19 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.sessionmanager.SessionManagerInterface;
 import com.google.enterprise.connector.manager.ConnectorManager;
+import com.google.enterprise.connector.manager.SecAuthnContext;
+import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Interface to SAML server backend. Top-level classes such as servlets should
@@ -78,7 +78,7 @@ public interface BackEnd {
 
   public String getAuthConfigFile();
 
-  public AuthenticationResponse handleCookie(Map<String, String> cookieJar);
+  public AuthenticationResponse handleCookie(SecAuthnContext context);
 
   /**
    * Attempts to authenticate a given CredentialsGroup.  This method will update

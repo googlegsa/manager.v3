@@ -14,18 +14,20 @@
 
 package com.google.enterprise.saml.server;
 
-import junit.framework.TestCase;
-import com.google.enterprise.security.manager.LocalSessionManager;
+import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.security.connectors.formauth.CookieUtil;
 import com.google.enterprise.security.identity.AuthnDomain;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
-import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
+import com.google.enterprise.security.manager.LocalSessionManager;
 
-import javax.servlet.http.Cookie;
-import java.util.Vector;
+import junit.framework.TestCase;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
+
+import javax.servlet.http.Cookie;
 
 /**
  * Unit test for BackEndImpl.
@@ -73,7 +75,7 @@ public class BackEndImplTest extends TestCase {
 
     formsCG.setUsername("joe");
     formsCG.setPassword("bob");
-    formsCG.getElements().get(0).setCookie("cookieOne", "cookieOneVal");
+    formsCG.getElements().get(0).addCookie(new Cookie("cookieOne", "cookieOneVal"));
 
     sid = sm.createSession();
     cgList.add(formsCG);

@@ -16,12 +16,11 @@ package com.google.enterprise.connector.manager;
 
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.saml.server.BackEnd;
 
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -54,11 +53,11 @@ public class ConnectorManager extends ProductionManager {
     throw new UnsupportedOperationException();
   }
 
-  @SuppressWarnings("unchecked")
   /**
    * This method will become part of the {@link Manager} interface
    */
-  public AuthenticationResponse authenticate(String connectorName, AuthenticationIdentity id, Map securityContext) {
+  public AuthenticationResponse authenticate(String connectorName, AuthenticationIdentity id,
+      SecAuthnContext securityContext) {
     AuthenticationManager authnManager = null;
     try {
       authnManager = instantiator.getAuthenticationManager(connectorName);

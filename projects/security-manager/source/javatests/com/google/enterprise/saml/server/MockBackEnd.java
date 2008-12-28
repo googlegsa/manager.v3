@@ -15,6 +15,7 @@
 package com.google.enterprise.saml.server;
 
 import com.google.enterprise.connector.manager.ConnectorManager;
+import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
@@ -30,7 +31,6 @@ import org.opensaml.xml.parse.BasicParserPool;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Simple mock saml server Backend for testing.
@@ -82,7 +82,7 @@ public class MockBackEnd implements BackEnd {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
 
-  public AuthenticationResponse handleCookie(Map<String, String> cookieJar) {
+  public AuthenticationResponse handleCookie(SecAuthnContext context) {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
 
@@ -92,7 +92,6 @@ public class MockBackEnd implements BackEnd {
 
   public void setConnectorManager(ConnectorManager cm) {
     // TODO Auto-generated method stub
-    
   }
 
   public String getAuthConfigFile() {
