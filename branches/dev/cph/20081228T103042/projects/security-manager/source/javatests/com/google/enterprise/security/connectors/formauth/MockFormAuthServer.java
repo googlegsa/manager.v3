@@ -60,6 +60,7 @@ public abstract class MockFormAuthServer extends SecurityManagerServlet
     }
   }
 
+  @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     PrintWriter writer = initNormalResponse(response);
@@ -76,6 +77,7 @@ public abstract class MockFormAuthServer extends SecurityManagerServlet
     ServletTestUtil.finalizeResponse(response);
   }
 
+  @Override
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     String username = request.getParameter(usernameKey);

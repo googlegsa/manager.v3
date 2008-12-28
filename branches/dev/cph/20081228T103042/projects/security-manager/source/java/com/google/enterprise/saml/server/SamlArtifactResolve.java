@@ -14,6 +14,18 @@
 
 package com.google.enterprise.saml.server;
 
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResponse;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
+import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
+import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
+import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
+import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
+
 import com.google.enterprise.common.PostableHttpServlet;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
@@ -32,25 +44,11 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
-import java.io.IOException;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
-import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResponse;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
-import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
-import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
-import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
-
-import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
-import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
 
 /**
  * Servlet to handle SAML artifact-resolution requests.  This is one part of the security manager's
@@ -64,7 +62,7 @@ public class SamlArtifactResolve extends SecurityManagerServlet implements Posta
 
   @Override
   public void doPost(HttpServletRequest req, HttpServletResponse resp)
-      throws ServletException, IOException {
+      throws ServletException {
     BackEnd backend = getBackEnd(getServletContext());
 
     // Establish the SAML message context
