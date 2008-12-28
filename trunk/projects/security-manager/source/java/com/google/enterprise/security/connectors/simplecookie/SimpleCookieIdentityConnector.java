@@ -19,8 +19,11 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
+
+import javax.servlet.http.Cookie;
 
 public class SimpleCookieIdentityConnector implements Connector, Session, AuthenticationManager {
 
@@ -35,18 +38,19 @@ public class SimpleCookieIdentityConnector implements Connector, Session, Authen
     this.c = c;
   }
 
-  public AuthenticationResponse authenticate(AuthenticationIdentity identity) {
+  public AuthenticationResponse authenticate(AuthenticationIdentity raw) {
+    SecAuthnIdentity identity = SecAuthnIdentity.class.cast(raw);
     AuthenticationResponse notfound = new AuthenticationResponse(false, null);
-    String cookie = identity.getCookie(cookieName);
+    Cookie cookie = identity.getCookieNamed(cookieName);
     if (cookie == null) {
       return notfound;
     }
-    String newIdentity = c.extract(cookieName + "=" + cookie);
+    String newIdentity = c.extract(cookieName + "=" + cookie.getValue());
     if (newIdentity == null) {
       return notfound;
     }
     if (idCookieName.length() > 0)
-      identity.setCookie(idCookieName, newIdentity);
+      identity.addCookie(new Cookie(idCookieName, newIdentity));
     return new AuthenticationResponse(true, null);
   }
 

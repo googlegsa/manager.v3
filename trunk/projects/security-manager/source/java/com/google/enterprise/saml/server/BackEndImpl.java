@@ -18,10 +18,14 @@ import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.ConnectorStatus;
+import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
+import com.google.enterprise.security.connectors.formauth.CookieUtil;
+import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.DomainCredentials;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
@@ -34,11 +38,13 @@ import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
-import java.util.Collection;
 import java.util.logging.Logger;
+
+import javax.servlet.http.Cookie;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.GSA_ISSUER;
 import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
@@ -47,14 +53,9 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeEntityDescripto
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeIdpSsoDescriptor;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSingleSignOnService;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSpSsoDescriptor;
-import com.google.enterprise.security.connectors.formauth.CookieUtil;
-import com.google.enterprise.security.identity.CredentialsGroup;
-import com.google.enterprise.security.identity.DomainCredentials;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
-
-import javax.servlet.http.Cookie;
 
 /**
  * An implementation of the BackEnd interface for the Security Manager.
@@ -160,7 +161,7 @@ public class BackEndImpl implements BackEnd {
 
   // some form of authentication has already happened, the user gave us cookies,
   // see if the cookies reveal who the user is.
-  public AuthenticationResponse handleCookie(Map<String, String> cookieJar) {
+  public AuthenticationResponse handleCookie(SecAuthnContext context) {
     for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
       String connectorName = connStatus.getName();
       LOGGER.info("Got security plug-in " + connectorName);
@@ -169,7 +170,7 @@ public class BackEndImpl implements BackEnd {
       if (!connectorName.startsWith("FORM-"))
         continue;
       AuthenticationResponse authnResponse =
-          manager.authenticate(connectorName, null, cookieJar);
+          manager.authenticate(connectorName, null, context);
       if ((authnResponse != null) && authnResponse.isValid())
         return authnResponse;
     }

@@ -17,11 +17,13 @@ package com.google.enterprise.connector.manager;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.connector.spi.SecAuthnIdentity;
+import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.DomainCredentials;
 
 import junit.framework.TestCase;
 
-import java.util.HashMap;
-import java.util.Map;
+import javax.servlet.http.Cookie;
 
 /**
  * Tests for the {@link AuthnCaller} class.
@@ -40,7 +42,8 @@ public class AuthnCallerTest extends TestCase {
 
   public void testSimpleAuthenticate() {
     AuthenticationManager authenticationManager = new AuthenticationManager() {
-      public AuthenticationResponse authenticate(AuthenticationIdentity id) {
+      public AuthenticationResponse authenticate(AuthenticationIdentity raw) {
+        SecAuthnIdentity id = SecAuthnIdentity.class.cast(raw);
         if (id.getUsername() == "fred" && id.getPassword() == "xyzzy") {
           return new AuthenticationResponse(true, null);
         }
@@ -53,12 +56,12 @@ public class AuthnCallerTest extends TestCase {
 
   private void runBasicTest(AuthenticationManager authenticationManager, String username,
       String password, boolean expected) {
-    AuthenticationIdentity identity = new UserPassIdentity(username, password);
+    SecAuthnIdentity identity = newIdentity(username, password);
     runIdentityTest(authenticationManager, expected, identity, null);
   }
 
   private void runIdentityTest(AuthenticationManager authenticationManager, boolean expected,
-      AuthenticationIdentity identity, Map<String,String> context) {
+      SecAuthnIdentity identity, SecAuthnContext context) {
     AuthnCaller authnCaller = new AuthnCaller(authenticationManager, identity, context);
     AuthenticationResponse response = authnCaller.authenticate();
     boolean result = ((response != null) && response.isValid());
@@ -67,12 +70,13 @@ public class AuthnCallerTest extends TestCase {
 
   public void testAuthenticateWithContext() {
     AuthenticationManager authenticationManager = new AuthenticationManager() {
-      public AuthenticationResponse authenticate(AuthenticationIdentity id) {
-        id.setCookie("ilikecandy", "true");
+      public AuthenticationResponse authenticate(AuthenticationIdentity raw) {
+        SecAuthnIdentity id = SecAuthnIdentity.class.cast(raw);
+        id.addCookie(new Cookie("ilikecandy", "true"));
         if (id.getUsername() == "fred" && id.getPassword() == "xyzzy") {
           return new AuthenticationResponse(true, null);
         }
-        if (id.getCookie("joe_is_ok") != null && id.getUsername() == "joe") {
+        if (id.getCookieNamed("joe_is_ok") != null && id.getUsername() == "joe") {
           return new AuthenticationResponse(true, null);
         }
         return new AuthenticationResponse(false, null);
@@ -80,21 +84,33 @@ public class AuthnCallerTest extends TestCase {
     };
     runBasicTest(authenticationManager, "fred", "xyzzy", true);
     runBasicTest(authenticationManager, "joe", "foo", false);
-    AuthenticationIdentity identity;
-    Map<String,String> context;
+    SecAuthnIdentity identity;
+    SecAuthnContext context;
+    Cookie cookie;
     // show that the authnmanager sees the cookies and sets one
-    identity = new UserPassIdentity("joe", "foo");
-    context = new HashMap<String,String>();
-    assertNull(identity.getCookie("ilikecandy"));
-    context.put("joe_is_ok", "xxx");
+    identity = newIdentity("joe", "foo");
+    context = new SecAuthnContext();
+    assertNull(identity.getCookieNamed("ilikecandy"));
+    context.addCookie(new Cookie("joe_is_ok", "xxx"));
     runIdentityTest(authenticationManager, true, identity, context);
-    assertEquals("true",context.get("ilikecandy"));
-    // show that the manager setting a cookie has no effect if it's already set
-    identity = new UserPassIdentity("joe", "foo");
-    context = new HashMap<String,String>();
-    context.put("ilikecandy", "false");
-    context.put("joe_is_ok", "xxx");
+    cookie = context.getCookieNamed("ilikecandy");
+    assertNotNull(cookie);
+    assertEquals("true", cookie.getValue());
+    // show that the authenticationManager setting a cookie has no effect if it's already set
+    identity = newIdentity("joe", "foo");
+    context = new SecAuthnContext();
+    context.addCookie(new Cookie("ilikecandy", "false"));
+    context.addCookie(new Cookie("joe_is_ok", "xxx"));
     runIdentityTest(authenticationManager, true, identity, context);
-    assertEquals("false",context.get("ilikecandy"));
+    cookie = context.getCookieNamed("ilikecandy");
+    assertNotNull(cookie);
+    assertEquals("false", cookie.getValue());
+  }
+
+  private SecAuthnIdentity newIdentity(String username, String password) {
+    CredentialsGroup group = new CredentialsGroup(null);
+    group.setUsername(username);
+    group.setPassword(password);
+    return new DomainCredentials(null, group);
   }
 }
