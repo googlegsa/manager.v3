@@ -1,4 +1,4 @@
-// Copyright 2007-8 Google Inc.
+// Copyright (C) 2007, 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,18 +16,10 @@ package com.google.enterprise.connector.manager;
 
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import javax.servlet.http.Cookie;
-
 public class UserPassIdentity implements AuthenticationIdentity {
 
   private final String username;
   private final String password;
-  
-  private final Map cookieJar;
 
   public String getPassword() {
     return password;
@@ -40,37 +32,5 @@ public class UserPassIdentity implements AuthenticationIdentity {
   public UserPassIdentity(final String username, final String password) {
     this.username = username;
     this.password = password;
-    cookieJar = new HashMap();
   }
-
-  public String getCookie(String cookieName) {
-    if (cookieName == null || cookieName.length() < 1) {
-      throw new IllegalArgumentException();
-    }
-    return (String) cookieJar.get(cookieName);
-  }
-
-  public String setCookie(String cookieName, String value) {
-    if (cookieName == null || cookieName.length() < 1) {
-      throw new IllegalArgumentException();
-    }
-    if (value == null || value.length() < 1) {
-      return (String) cookieJar.remove(cookieName);
-    }
-    return (String) cookieJar.put(cookieName,value);
-  }
-
-  public void setCookie(Cookie c) {
-    throw new IllegalArgumentException();
-  }
-  
-  public Set getCookieNames() {
-    Set result = cookieJar.keySet();
-    return result;
-  }
-  
-  public String getLoginUrl() {
-    return null;
-  }
-
 }
