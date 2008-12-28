@@ -55,6 +55,7 @@ public abstract class MockBasicAuthServer extends SecurityManagerServlet
     }
   }
 
+  @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     if (!goodAuthCredential(request)) {
@@ -69,6 +70,7 @@ public abstract class MockBasicAuthServer extends SecurityManagerServlet
     w.close();
   }
 
+  @Override
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     doGet(request, response);

@@ -46,6 +46,7 @@ public class BackEndImplTest extends TestCase {
   @SuppressWarnings("unused")
   private AuthnDomain connectorSite = new AuthnDomain("connectorDomain", AuthNMechanism.CONNECTORS, "connector_loginurl", adg3);
 
+  @Override
   public void setUp() {
     sm = new LocalSessionManager();
     backend = new BackEndImpl(sm,

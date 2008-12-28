@@ -53,6 +53,7 @@ public class BasicAuthConnectorTest extends TestCase {
     httpClient = new MockHttpClient(transport);
   }
 
+  @Override
   public void setUp() {
     cg = new CredentialsGroup(adg);
   }
