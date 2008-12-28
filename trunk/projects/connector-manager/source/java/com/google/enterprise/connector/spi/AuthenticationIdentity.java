@@ -1,4 +1,4 @@
-// Copyright 2007-8 Google Inc.
+// Copyright (C) 2007, 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
 // limitations under the License.
 
 package com.google.enterprise.connector.spi;
-
-import java.util.Set;
-
-import javax.servlet.http.Cookie;
 
 /**
  * Interface for the identity parameter of the
@@ -35,45 +31,4 @@ public interface AuthenticationIdentity {
    * @return the password, as a String
    */
   public String getPassword();
-
-  /**
-   * Get a named cookie value.
-   * 
-   * @param cookieName a non-null, non-empty String
-   * @return the cookie value, as a String, or null if not set
-   */
-  public String getCookie(String cookieName);
-
-  /**
-   * Set a named cookie value. If there was a previous value for this cookie,
-   * the old value is replaced by the specified value. If the value is null or
-   * empty, this has the effect of removing the cookie, if present.
-   * 
-   * @param cookieName a non-null, non-empty String
-   * @param value the new value for this cookie; if null or empty, then the
-   *        cookie is removed
-   * @return the previous value associated with this cookie name, or null if
-   *         there was no value
-   */
-  public String setCookie(String cookieName, String value);
-
-  /**
-   * 
-   * @param the cookie, with Name, Value, and optionally Domain, Path, MaxAge
-   */
-  public void setCookie(Cookie c);
-  
-  /**
-   * Get the Set of all defined cookies. If none are defined, an empty
-   * Set is returned.
-   * 
-   * @return the Set (of String) of all cookie names for which a value exists
-   */
-  public Set getCookieNames();
-  
-  /**
-   * Get the login URL from which this user can be authenticated.
-   */
-  public String getLoginUrl();
-
 }
