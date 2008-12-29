@@ -89,7 +89,9 @@ public class MockHttpClient implements HttpClientInterface {
       try {
         transport.exchange(request, response);
       } catch (ServletException e) {
-        throw new IOException(e);
+        IOException ee = new IOException();
+        ee.initCause(e);
+        throw ee;
       }
       return response.getStatus();
     }

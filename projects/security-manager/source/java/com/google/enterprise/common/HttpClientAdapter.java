@@ -129,7 +129,9 @@ public class HttpClientAdapter implements HttpClientInterface {
       try {
         return httpClient.executeMethod(httpMethod);
       } catch (HttpException e) {
-        throw new IOException(e);
+        IOException ee = new IOException();
+        ee.initCause(e);
+        throw ee;
       }
     }
 

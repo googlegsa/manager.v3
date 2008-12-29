@@ -86,7 +86,7 @@ public class SessionReader extends HttpServlet {
     LOGGER.info("ReadSession cookies string: " + cookies);
 
     StringBuilder dCookies = new StringBuilder("");
-    if ("null" != cookies && !cookies.isEmpty()) {
+    if ("null" != cookies && !(cookies.length() != 0)) {
       Vector<Cookie> v = CookieUtil.deserializeCookies(cookies);
       for (Cookie c : v) {
         dCookies.append(c.getName() + ":" + c.getValue() + "<br>");

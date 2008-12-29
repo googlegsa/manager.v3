@@ -14,6 +14,7 @@
 
 package com.google.enterprise.security.connectors.formauth;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.common.GettableHttpServlet;
 import com.google.enterprise.common.PostableHttpServlet;
 import com.google.enterprise.common.ServletTestUtil;
@@ -21,10 +22,7 @@ import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.Cookie;
@@ -37,16 +35,17 @@ public abstract class MockFormAuthServer extends SecurityManagerServlet
 
   protected final String usernameKey;
   protected final String passwordKey;
-  protected final List<Map.Entry<String, String>> inputs;
+  protected final Map<String, String> inputs;
   protected final Map<String, String> passwordMap;
   protected final Map<String, Cookie> cookieMap;
 
   protected MockFormAuthServer(String usernameKey, String passwordKey) {
     this.usernameKey = usernameKey;
     this.passwordKey = passwordKey;
-    inputs = new ArrayList<Map.Entry<String, String>>();
-    inputs.add(new AbstractMap.SimpleImmutableEntry<String, String>(usernameKey, "text"));
-    inputs.add(new AbstractMap.SimpleImmutableEntry<String, String>(passwordKey, "password"));
+    inputs = new ImmutableMap.Builder<String, String>()
+      .put(usernameKey, "text")
+      .put(passwordKey, "password")
+      .build();
     passwordMap = new HashMap<String, String>();
     cookieMap = new HashMap<String, Cookie>();
   }
@@ -68,7 +67,7 @@ public abstract class MockFormAuthServer extends SecurityManagerServlet
         "<http><head><title>Just another form from LA</title><body>\n"
         + "<h1>Please login</h1>\n"
         + "<form method=\"post\" action=\"" + getAction(request) + "\">\n");
-    for (Map.Entry<String, String> entry: inputs) {
+    for (Map.Entry<String, String> entry: inputs.entrySet()) {
       writer.write("<input name=\"" + entry.getKey() + "\""
                    + " type=\"" + entry.getValue() + "\"><br>\n");
     }

@@ -24,8 +24,6 @@ import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-import javax.xml.ws.http.HTTPException;
-
 /**
  * Extract identity from a web site protected by a SSO system.
  * serverUrl points to a web page, we GET this page using cookies collected from
@@ -68,8 +66,6 @@ public class SsoCookieIdentityExtractor implements CookieIdentityExtractor {
         LOGGER.info(idHeader.toString());         
       }
     } catch (IOException e) {
-      LOGGER.warning(e.toString());
-    } catch (HTTPException e) {
       LOGGER.warning(e.toString());
     } finally {
       getMethod.releaseConnection();
