@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc. All Rights Reserved.
+// Copyright 2002 Google, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,73 +12,70 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.security.connectors.formauth;
-
+package com.google.parser;
 
 import java.io.*;
 
 /**
- * The com.google.opengse.parser package provides a framework for creating
- * recursive descent parsers. A fairly straightforward transformation exists
- * between EBNF (extended Backus-Naur form) grammars and code used to construct
- * a parser using this framework that will match the grammar. The intention of
- * this package is to obviate the need to create small mini-parsers for tasks
- * that don't feel large enough for a standard compiler-compiler (like JavaCC)
- * but still need more formalism than simple string tokenization.
+ * The com.google.parser package provides a framework for creating recursive
+ * descent parsers. A fairly straightforward transformation exists between EBNF
+ * (extended Backus-Naur form) grammars and code used to construct a parser
+ * using this framework that will match the grammar. The intention of this
+ * package is to obviate the need to create small mini-parsers for tasks that
+ * don't feel large enough for a standard compiler-compiler (like JavaCC) but
+ * still need more formalism than simple string tokenization.
  *
- * The basic approach this framework takes to parsing is to define several types
- * of leaf parsers which know how to parse a particular type of object
+ * The basic approach this framework takes to parsing is to define several
+ * types of leaf parsers which know how to parse a particular type of object
  * (character set, string literal, etc.) and to then combine them together in
  * interesting ways. For example, a parser for a comma separated list of
  * integers would look like:
  *
- * Parser Chset.DIGIT.plus().list(new Chset(','));
+ *     Parser Chset.DIGIT.plus().list(new Chset(','));
  *
  * The EBNF this represents is:
  *
- * sent: [0-9]+ ("," [0-9]+)*
+ *     sent: [0-9]+ ("," [0-9]+)*
  *
  * The Parser.list() functionality is sometimes represented as the '%' operator
  * in EBNF extensions. It performs the transformation:
  *
- * a % b --> a (b a)*
+ *     a % b --> a (b a)*
  *
  * The leaf parsers that are currently defined are:
  *
- * @see Chset
- * @see Strcaselit
+ *   @see Chset
+ *   @see Strlit
+ *   @see Strcaselit
  *
  * The operators which combine 1 or 2 parsers together are:
  *
- * @see Action
- * @see Alternative
- * @see Difference
- * @see Intersection
- * @see Repeat
- * @see Sequence
+ *   @see Action
+ *   @see Alternative
+ *   @see Difference
+ *   @see Intersection
+ *   @see Repeat
+ *   @see Rule
+ *   @see Sequence
  *
  * In general, it isn't necessary to create an operator-type parser directly as
- * an appropriate member function usually exists in Parser for creating them.
- * Note that these are purely convenience routines.
+ * an appropriate member function usually exists in Parser for creating
+ * them. Note that these are purely convenience routines.
  *
  * In general, the parsers are greedy. For example, the Sequence parser will
  * match as much as possible with the left sub-parser before trying the right
  * sub-parser. This behavior can normally be avoided by using a recursive
  * grammar. Consider the following grammar:
  *
- * <pre>
  *   token: foo* bar
  *   foo:   [a-z]+
- *   bar: foo [0-9]+
- * </pre>
+ *   bar:   foo [0-9]+
  *
- * This grammar will fail to parse the string "aa0" because the 'foo*' rule will
- * consume all of the letters and not leave one left for the 'bar' rule. An
- * alternate definition of 'token' can prevent this behavior:
+ * This grammar will fail to parse the string "aa0" because the 'foo*' rule
+ * will consume all of the letters and not leave one left for the 'bar'
+ * rule. An alternate definition of 'token' can prevent this behavior:
  *
- * <pre>
  *   token: (foo token) | bar
- * </pre>
  *
  * The parsers created by this parser framework use infinite lookahead. In
  * extreme cases, a parser can be constructed which scans over the parse buffer
@@ -276,7 +273,7 @@ public abstract class Parser<T> {
 
   /**
    * Creates a sequence of four parsers.
-   * @see #sequence(Parser, Parser, Parser)
+   * @see sequence(Parser,Parser,Parser)
    */
   public static <T> Parser<T> sequence(Parser<? super T> one,
                                        Parser<? super T> two,
@@ -289,7 +286,7 @@ public abstract class Parser<T> {
 
   /**
    * Creates a sequence of five parsers.
-   * @see #sequence(Parser, Parser, Parser)
+   * @see sequence(Parser,Parser,Parser)
    */
   public static <T> Parser<T> sequence(Parser<? super T> one,
                                        Parser<? super T> two,

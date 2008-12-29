@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc. All Rights Reserved.
+// Copyright 2002 Google, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.security.connectors.formauth;
+package com.google.parser;
 
+import java.lang.*;
 
 /**
  * The <code>Strlit</code> parser performs a case-insensitive string comparison
@@ -27,10 +28,11 @@ package com.google.enterprise.security.connectors.formauth;
  *   p.parse("HELLO")       -> matches "HELLO"
  *   p.parse("hElLo")       -> matches "hElLo"
  *
+ * @see Strlit
  * @author Peter Mattis
  */
 public class Strcaselit extends Parser<Object> {
-  private final String str;
+  private String str;
 
   /**
    * Class constructor.
@@ -48,9 +50,8 @@ public class Strcaselit extends Parser<Object> {
    * must be a case-insensitive prefix of <code>buf[start,end)</code> for a
    * match to occur.
    *
-   * @see Parser#parse
+   * @see Parser.parse
    */
-  @Override
   public int parse(char[] buf, int start, int end, Object data) {
     for (int i = 0; i < str.length(); i++) {
       if ((start >= end) ||
