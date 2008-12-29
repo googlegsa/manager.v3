@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc. All Rights Reserved.
+// Copyright 2002 Google, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.security.connectors.formauth;
+package com.google.parser;
 
 /**
  * The <code>Alternative</code> parser parses either the <code>left</code> or
@@ -34,8 +34,8 @@ package com.google.enterprise.security.connectors.formauth;
  * @author Peter Mattis
  */
 public class Alternative<T> extends Parser<T> {
-  private final Parser<? super T> left;
-  private final Parser<? super T> right;
+  private Parser<? super T> left;
+  private Parser<? super T> right;
 
   /**
    * Class constructor.
@@ -56,9 +56,8 @@ public class Alternative<T> extends Parser<T> {
    * <code>buf[start,end]</code> against <code>left</code> or
    * <code>right</code> sub-parsers.
    *
-   * @see Parser#parse
+   * @see Parser.parse
    */
-  @Override
   public int parse(char[] buf, int start, int end, T data) {
     int hit = left.parse(buf, start, end, data);
     if (hit != NO_MATCH) {

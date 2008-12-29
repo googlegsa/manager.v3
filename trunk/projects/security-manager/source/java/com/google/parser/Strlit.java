@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.security.connectors.formauth;
+package com.google.parser;
 
 /**
  * The <code>Strlit</code> parser performs a case-sensitive string comparison
@@ -26,6 +26,7 @@ package com.google.enterprise.security.connectors.formauth;
  *   p.parse("HELLO")       -> no match
  *
  * @see Strcaselit
+ * @author Peter Mattis
  */
 public class Strlit extends Parser<Object> {
   private String str;
@@ -45,7 +46,7 @@ public class Strlit extends Parser<Object> {
    * parse buffer: <code>buf[start,end)</code>. <code>Strlit.str</code> must be
    * a prefix of <code>buf[start,end)</code> for a match to occur.
    *
-   * @see Parser#parse
+   * @see Parser.parse
    */
   public int parse(char[] buf, int start, int end, Object data) {
     for (int i = 0; i < str.length(); i++) {

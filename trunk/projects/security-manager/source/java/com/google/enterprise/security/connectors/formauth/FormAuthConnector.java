@@ -141,7 +141,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     int redirectCount = 0;
     URL url = new URL(urlToFetch);
     String lastRedirect;
-    String redirected = urlToFetch;;
+    String redirected = urlToFetch;
     StringBuffer redirectBuffer = new StringBuffer();
     int kMaxNumRedirectsToFollow = 4;
 

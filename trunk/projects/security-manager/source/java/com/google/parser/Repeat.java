@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc. All Rights Reserved.
+// Copyright 2002 Google, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.security.connectors.formauth;
+package com.google.parser;
+
+import java.util.*;
 
 /**
  * The <code>Repeat</code> parser returns a successful match if its
@@ -79,9 +81,8 @@ public class Repeat<T> extends Parser<T> {
    * parser matches at least <code>min</code> times and not more than
    * <code>max</code> times in sequence.
    *
-   * @see Parser#parse
+   * @see Parser.parse
    */
-  @Override
   public int parse(char[] buf, int start, int end, T data) {
     int hit = 0;
 
@@ -104,4 +105,3 @@ public class Repeat<T> extends Parser<T> {
     return hit;
   }
 }
-

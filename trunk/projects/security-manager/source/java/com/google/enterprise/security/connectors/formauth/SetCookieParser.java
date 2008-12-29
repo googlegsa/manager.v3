@@ -15,12 +15,17 @@
 package com.google.enterprise.security.connectors.formauth;
 
 import com.google.common.collect.Lists;
+import com.google.parser.Callback;
+import com.google.parser.Chset;
+import com.google.parser.Parser;
+import com.google.parser.Strcaselit;
+import com.google.parser.Strlit;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
-import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Utility for parsing the Set-Cookie and Set-Cookie2 http header. Parser
