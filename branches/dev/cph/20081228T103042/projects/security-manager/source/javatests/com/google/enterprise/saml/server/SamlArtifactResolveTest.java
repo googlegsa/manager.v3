@@ -15,6 +15,7 @@
 package com.google.enterprise.saml.server;
 
 import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import junit.framework.TestCase;
@@ -29,9 +30,10 @@ import java.io.IOException;
 
 import javax.servlet.ServletException;
 
+import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
+import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
-import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
 
 /**
  * Unit test for SamlArtifactResolve handler.
@@ -56,7 +58,6 @@ public class SamlArtifactResolveTest extends TestCase {
     MockHttpServletResponse mockResponse = new MockHttpServletResponse();
 
     String encodedArtifact = "AAQAACFRlGU7Pe4QCIfrpMEtVVuJSKUCzJE+6GPdLFM4AjN18B06VmSmJgs=";
-    String artifactIssuer = "http://google.com/";
     String entity =
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
         "<soap11:Envelope xmlns:soap11=\"http://schemas.xmlsoap.org/soap/envelope/\">\n" +
@@ -66,7 +67,7 @@ public class SamlArtifactResolveTest extends TestCase {
         "                           Version=\"2.0\"\n" +
         "                           xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\">\n" +
         "      <saml:Issuer xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">" +
-        artifactIssuer +
+        GsaConstants.GSA_ISSUER +
         "</saml:Issuer>\n" +
         "      <samlp:Artifact>" + encodedArtifact + "</samlp:Artifact>\n" +
         "    </samlp:ArtifactResolve>\n" +
@@ -80,8 +81,8 @@ public class SamlArtifactResolveTest extends TestCase {
 
     BackEnd backend = SecurityManagerServlet.getBackEnd(null);
     backend.getArtifactMap().put(encodedArtifact,
-                                 "http://foobar.com/",
-                                 artifactIssuer,
+                                 GsaConstants.GSA_ISSUER,
+                                 SM_ISSUER,
                                  makeResponse(null, makeStatus(StatusCode.SUCCESS_URI)));
 
     samlArtifactResolveInstance.doPost(mockRequest, mockResponse);
