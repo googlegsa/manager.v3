@@ -42,6 +42,7 @@ public abstract class MockFormAuthServer extends SecurityManagerServlet
   protected final Map<String, Cookie> cookieMap;
 
   protected MockFormAuthServer(String usernameKey, String passwordKey) {
+    super(null);
     this.usernameKey = usernameKey;
     this.passwordKey = passwordKey;
     inputs = new ArrayList<Map.Entry<String, String>>();

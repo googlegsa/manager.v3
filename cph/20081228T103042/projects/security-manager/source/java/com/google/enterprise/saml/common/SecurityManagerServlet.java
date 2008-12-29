@@ -21,6 +21,7 @@ import com.google.enterprise.saml.server.BackEnd;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
+import org.opensaml.saml2.metadata.EntityDescriptor;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -41,12 +42,26 @@ public abstract class SecurityManagerServlet extends ServletBase {
   /** Name of the attribute that holds the username/passwords awaiting verification. */
   protected static final String CREDENTIALS = "credentials";
   
+  private final Metadata.ViewKey entityType;
+
+  protected SecurityManagerServlet(Metadata.ViewKey entityType) {
+    this.entityType = entityType;
+  }
+
   public static ConnectorManager getConnectorManager(ServletContext sc) {
     return (ConnectorManager) Context.getInstance(sc).getManager();
   }
 
   public static BackEnd getBackEnd(ServletContext sc) {
     return getConnectorManager(sc).getBackEnd();
+  }
+
+  public EntityDescriptor getLocalEntity() {
+    return Metadata.getMetadata(entityType).getLocalEntity();
+  }
+
+  public EntityDescriptor getPeerEntity(String issuer) {
+    return Metadata.getMetadata(entityType).getPeerEntity(issuer);
   }
 
   /**

@@ -49,11 +49,7 @@ public class BackEndImplTest extends TestCase {
   @Override
   public void setUp() {
     sm = new LocalSessionManager();
-    backend = new BackEndImpl(sm,
-                              new AuthzResponderImpl(),
-                              "foo",  // loginConfigFile
-                              "bar",  // ssoUrl
-                              "baz"); // artifact resolution url
+    backend = new BackEndImpl(sm, new AuthzResponderImpl(), "foo");
   }
 
   public void testUpdateSessionManager() {

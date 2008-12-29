@@ -25,7 +25,6 @@ import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
-import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
@@ -49,7 +48,7 @@ public class MockBackEnd implements BackEnd {
    * @param authzResponder The authorization responder to use.
    */
   public MockBackEnd(SessionManagerInterface sm, AuthzResponder authzResponder,
-                     String acsUrl, String ssoUrl, String arUrl) {
+                     String loginFormConfigFile) {
     this.sessionManager = sm;
     artifactMap = new BasicSAMLArtifactMap(
         new BasicParserPool(),
@@ -59,14 +58,6 @@ public class MockBackEnd implements BackEnd {
 
   public SessionManagerInterface getSessionManager() {
     return sessionManager;
-  }
-
-  public EntityDescriptor getSecurityManagerEntity() {
-    return null;
-  }
-
-  public EntityDescriptor getGsaEntity() {
-    return null;
   }
 
   public SAMLArtifactMap getArtifactMap() {
@@ -91,7 +82,6 @@ public class MockBackEnd implements BackEnd {
   }
 
   public void setConnectorManager(ConnectorManager cm) {
-    // TODO Auto-generated method stub
   }
 
   public String getAuthConfigFile() {
