@@ -38,8 +38,6 @@ import java.net.URL;
 import java.util.List;
 import java.util.logging.Logger;
 
-import javax.xml.ws.http.HTTPException;
-
 public class ConnAuthConnector implements Connector, Session, AuthenticationManager {
 
   private final HttpClientInterface httpClient;
@@ -93,10 +91,11 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
     try {
       int status = exchange.exchange();
       if (status > 300) {
-        throw new HTTPException(status);
+        throw new IOException("Message exchange returned status " + status);
       }
       connectorUserInfos = parseResponse(exchange.getResponseEntityAsString(), "");
     } catch (Exception e) {
+      // TODO: should be more restrictive
       LOGGER.warning("Could not POST:" + e.toString());
     } finally {
       exchange.close();
