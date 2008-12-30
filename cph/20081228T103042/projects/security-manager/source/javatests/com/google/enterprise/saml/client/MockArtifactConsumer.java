@@ -19,7 +19,6 @@ import com.google.enterprise.common.HttpClientTransport;
 import com.google.enterprise.common.HttpTransport;
 import com.google.enterprise.saml.common.HttpServletRequestClientAdapter;
 import com.google.enterprise.saml.common.HttpServletResponseClientAdapter;
-import com.google.enterprise.saml.common.Metadata;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import org.opensaml.common.SAMLObject;
@@ -84,7 +83,6 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
    * @param transport A message-transport provider.
    */
   public MockArtifactConsumer(HttpTransport transport) {
-    super(Metadata.ViewKey.MOCK_SP);
     this.transport = transport;
   }
 
@@ -136,13 +134,13 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
     SAMLMessageContext<ArtifactResponse, ArtifactResolve, NameID> context =
         makeSamlMessageContext();
 
-    EntityDescriptor localEntity = getLocalEntity();
+    EntityDescriptor localEntity = getSpEntity();
     initializeLocalEntity(context, localEntity, localEntity.getSPSSODescriptor(SAML20P_NS),
                           Endpoint.DEFAULT_ELEMENT_NAME);
     {
       // TODO(cph): extract artifact resolution service entity ID from artifact and use that to get
       // the peer entity.
-      EntityDescriptor peerEntity = getPeerEntity(null);
+      EntityDescriptor peerEntity = getSmEntity();
       initializePeerEntity(context, peerEntity, peerEntity.getIDPSSODescriptor(SAML20P_NS),
                            ArtifactResolutionService.DEFAULT_ELEMENT_NAME,
                            SAML2_SOAP11_BINDING_URI);

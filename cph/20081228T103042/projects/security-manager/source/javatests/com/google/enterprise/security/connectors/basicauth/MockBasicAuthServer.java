@@ -43,7 +43,6 @@ public abstract class MockBasicAuthServer extends SecurityManagerServlet
   protected final Map<String, String> passwordMap;
 
   protected MockBasicAuthServer(String realm) {
-    super(null);
     this.realm = realm;
     passwordMap = new HashMap<String, String>();
   }

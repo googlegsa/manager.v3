@@ -40,6 +40,7 @@ public class MockBackEnd implements BackEnd {
 
   private final SessionManagerInterface sessionManager;
   private final SAMLArtifactMap artifactMap;
+  private final String loginFormConfigFile;
 
   /**
    * Create a new backend object.
@@ -50,6 +51,7 @@ public class MockBackEnd implements BackEnd {
   public MockBackEnd(SessionManagerInterface sm, AuthzResponder authzResponder,
                      String loginFormConfigFile) {
     this.sessionManager = sm;
+    this.loginFormConfigFile = loginFormConfigFile;
     artifactMap = new BasicSAMLArtifactMap(
         new BasicParserPool(),
         new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
@@ -68,24 +70,20 @@ public class MockBackEnd implements BackEnd {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
 
-  public void updateSessionManager(String sessionId,
-                                   Collection<CredentialsGroup> cgs) {
-    throw new UnsupportedOperationException("Unimplemented method.");
+  public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs) {
   }
 
   public AuthenticationResponse handleCookie(SecAuthnContext context) {
-    throw new UnsupportedOperationException("Unimplemented method.");
+    return null;
   }
 
   public void authenticate(CredentialsGroup credentialsGroup) {
-    throw new UnsupportedOperationException("Unimplemented method.");
   }
 
   public void setConnectorManager(ConnectorManager cm) {
   }
 
   public String getAuthConfigFile() {
-    // TODO Auto-generated method stub
-    return null;
+    return loginFormConfigFile;
   }
 }
