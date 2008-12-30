@@ -27,13 +27,19 @@
     <constructor-arg index="0" ref="SessionManager" />
     <constructor-arg index="1" ref="AuthzResponder" />
     <constructor-arg index="2" value="testdata/AuthSites.conf" />
-    <constructor-arg index="3" value="http://localhost:8973/security-manager/samlauthn" />
-    <constructor-arg index="4" value="http://localhost:8973/security-manager/samlartifact"/>
   </bean>
 
   <bean id="ConnectorManager"
     class="com.google.enterprise.connector.manager.ConnectorManager">
     <property name="instantiator" ref="Instantiator" />
     <property name="backEnd" ref="BackEnd" />
+  </bean>
+
+  <bean id="Metadata"
+	class="com.google.enterprise.saml.common.Metadata">
+    <constructor-arg index="0" value="source/webdocs/test/saml-metadata.xml" />
+    <constructor-arg index="1" value="http://google.com/enterprise/security-manager" />
+    <constructor-arg index="2" value="google.com" />
+    <constructor-arg index="3" value="http://localhost:8973/security-manager/mockserviceprovider" />
   </bean>
 </beans>

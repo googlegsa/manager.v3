@@ -37,8 +37,8 @@ import java.util.logging.Logger;
 
 public class SamlSsoRegressionTest extends TestCase {
   private static final Logger LOGGER = Logger.getLogger(SamlSsoRegressionTest.class.getName());
-
-  private static final String spUrl = "http://localhost:8973/security-manager/mockserviceprovider";
+  private static final String SP_URL =
+      "http://localhost:8973/security-manager/mockserviceprovider";
 
   private final HttpClient userAgent;
 
@@ -49,7 +49,7 @@ public class SamlSsoRegressionTest extends TestCase {
 
   public void testGoodCredentials() throws HttpException, IOException {
     // Initial request to service provider
-    String action = parseForm(tryGet(spUrl, HttpStatus.SC_OK));
+    String action = parseForm(tryGet(SP_URL, HttpStatus.SC_OK));
 
     // Submit credentials-gathering form into the first credential group
     // which is authenticated against fake-login.corp that accepts everything
@@ -61,7 +61,7 @@ public class SamlSsoRegressionTest extends TestCase {
 
   public void testBadCredentials() throws HttpException, IOException {
     // Initial request to service provider
-    String action = parseForm(tryGet(spUrl, HttpStatus.SC_OK));
+    String action = parseForm(tryGet(SP_URL, HttpStatus.SC_OK));
 
     // Submit credentials-gathering form into the second credential group
     // which does not accept joe/plumber
