@@ -21,8 +21,9 @@ import com.google.enterprise.saml.server.BackEnd;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
+import org.opensaml.saml2.metadata.EntityDescriptor;
 
-import javax.servlet.ServletContext;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpSession;
 
@@ -40,13 +41,42 @@ public abstract class SecurityManagerServlet extends ServletBase {
 
   /** Name of the attribute that holds the username/passwords awaiting verification. */
   protected static final String CREDENTIALS = "credentials";
+
+  private final Context context;
+  private final Metadata metadata;
   
-  public static ConnectorManager getConnectorManager(ServletContext sc) {
-    return (ConnectorManager) Context.getInstance(sc).getManager();
+  protected SecurityManagerServlet() {
+    ServletConfig config = getServletConfig();
+    if (config == null) {
+      context = Context.getInstance();
+    } else {
+      context = Context.getInstance(config.getServletContext());
+    }
+    metadata = Metadata.class.cast(context.getRequiredBean("Metadata", Metadata.class));
   }
 
-  public static BackEnd getBackEnd(ServletContext sc) {
-    return getConnectorManager(sc).getBackEnd();
+  public ConnectorManager getConnectorManager() {
+    return ConnectorManager.class.cast(context.getManager());
+  }
+
+  public BackEnd getBackEnd() {
+    return getConnectorManager().getBackEnd();
+  }
+
+  public EntityDescriptor getEntity(String id) throws ServletException {
+    return metadata.getEntity(id);
+  }
+
+  public EntityDescriptor getSmEntity() throws ServletException {
+    return metadata.getSmEntity();
+  }
+
+  public EntityDescriptor getSpEntity() throws ServletException {
+    return metadata.getSpEntity();
+  }
+
+  public String getSpUrl() {
+    return metadata.getSpUrl();
   }
 
   /**

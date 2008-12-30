@@ -14,6 +14,8 @@
 
 package com.google.enterprise.security.connectors;
 
+import com.google.enterprise.saml.common.GsaConstants;
+
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebRequest;
@@ -33,7 +35,7 @@ public class BasicRegressionTest extends TestCase {
       " IssueInstant=\"2008-11-15T07:09:41.127Z\" Version=\"2.0\"" +
       " xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\">" +
       "<saml:Issuer xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">" +
-      "http://google.com/enterprise/search-appliance" +
+      GsaConstants.GSA_ISSUER +
       "</saml:Issuer>" +
       "<samlp:Artifact>" +
       "AAQAAEKQJVvv+M3ofQmBLdUYHuk682uBPl1P6laijlxzGK3/VPXbcLAV9zM=" +
@@ -42,7 +44,7 @@ public class BasicRegressionTest extends TestCase {
       "</soap11:Body>" +
       "</soap11:Envelope>\n";
 
-  public void testSamlartifact() throws Exception {
+  public void testSamlArtifact() throws Exception {
     WebRequest request =
         new PostMethodWebRequest("http://localhost:8973/security-manager/samlartifact",
                                  new ByteArrayInputStream(entity.getBytes("UTF-8")),

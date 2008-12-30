@@ -351,6 +351,7 @@
 				<fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
 				<fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
 				<fileset dir="${connector-dist.dir}" includes="**/*.jar" />
+				<pathelement location="${connector-thirdparty.dir}/prod/servlet-api.jar" />
 				<pathelement location="${regressions.classes}" />
 				<pathelement location="${tests.classes}" />
 				<pathelement path="${java.class.path}" />
