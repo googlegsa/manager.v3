@@ -15,7 +15,6 @@
 package com.google.enterprise.saml.client;
 
 import com.google.enterprise.common.GettableHttpServlet;
-import com.google.enterprise.saml.common.Metadata;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import org.opensaml.common.SAMLObject;
@@ -38,7 +37,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.GOOGLE_PROVIDER_NAME;
-import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnRequest;
@@ -60,7 +58,6 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
   private static final long serialVersionUID = 1L;
 
   public MockServiceProvider() throws ServletException {
-    super(Metadata.ViewKey.MOCK_SP);
     init(new MockServletConfig());
   }
 
@@ -87,11 +84,11 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
   private void ifUnknown(HttpServletResponse resp, String relayState) throws ServletException {
     SAMLMessageContext<SAMLObject, AuthnRequest, NameID> context = makeSamlMessageContext();
 
-    EntityDescriptor localEntity = getLocalEntity();
+    EntityDescriptor localEntity = getSpEntity();
     SPSSODescriptor sp = localEntity.getSPSSODescriptor(SAML20P_NS);
     initializeLocalEntity(context, localEntity, sp, Endpoint.DEFAULT_ELEMENT_NAME);
     {
-      EntityDescriptor peerEntity = getPeerEntity(SM_ISSUER);
+      EntityDescriptor peerEntity = getSmEntity();
       initializePeerEntity(context, peerEntity, peerEntity.getIDPSSODescriptor(SAML20P_NS),
           SingleSignOnService.DEFAULT_ELEMENT_NAME,
           SAML2_REDIRECT_BINDING_URI);

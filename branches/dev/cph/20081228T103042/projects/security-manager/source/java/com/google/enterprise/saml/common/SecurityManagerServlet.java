@@ -23,7 +23,7 @@ import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 
-import javax.servlet.ServletContext;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpSession;
 
@@ -41,27 +41,42 @@ public abstract class SecurityManagerServlet extends ServletBase {
 
   /** Name of the attribute that holds the username/passwords awaiting verification. */
   protected static final String CREDENTIALS = "credentials";
+
+  private final Context context;
+  private final Metadata metadata;
   
-  private final Metadata.ViewKey entityType;
-
-  protected SecurityManagerServlet(Metadata.ViewKey entityType) {
-    this.entityType = entityType;
+  protected SecurityManagerServlet() {
+    ServletConfig config = getServletConfig();
+    if (config == null) {
+      context = Context.getInstance();
+    } else {
+      context = Context.getInstance(config.getServletContext());
+    }
+    metadata = Metadata.class.cast(context.getRequiredBean("Metadata", Metadata.class));
   }
 
-  public static ConnectorManager getConnectorManager(ServletContext sc) {
-    return (ConnectorManager) Context.getInstance(sc).getManager();
+  public ConnectorManager getConnectorManager() {
+    return ConnectorManager.class.cast(context.getManager());
   }
 
-  public static BackEnd getBackEnd(ServletContext sc) {
-    return getConnectorManager(sc).getBackEnd();
+  public BackEnd getBackEnd() {
+    return getConnectorManager().getBackEnd();
   }
 
-  public EntityDescriptor getLocalEntity() {
-    return Metadata.getMetadata(entityType).getLocalEntity();
+  public EntityDescriptor getEntity(String id) throws ServletException {
+    return metadata.getEntity(id);
   }
 
-  public EntityDescriptor getPeerEntity(String issuer) {
-    return Metadata.getMetadata(entityType).getPeerEntity(issuer);
+  public EntityDescriptor getSmEntity() throws ServletException {
+    return metadata.getSmEntity();
+  }
+
+  public EntityDescriptor getSpEntity() throws ServletException {
+    return metadata.getSpEntity();
+  }
+
+  public String getSpUrl() {
+    return metadata.getSpUrl();
   }
 
   /**

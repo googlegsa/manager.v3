@@ -15,90 +15,48 @@
 package com.google.enterprise.saml.common;
 
 import org.opensaml.saml2.metadata.EntityDescriptor;
-import org.opensaml.saml2.metadata.IDPSSODescriptor;
-import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.provider.MetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResolutionService;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertionConsumerService;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeEntityDescriptor;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeIdpSsoDescriptor;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeSingleSignOnService;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeSpSsoDescriptor;
-
-import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
-import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
-import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
+import javax.servlet.ServletException;
 
 public class Metadata {
 
-  public enum ViewKey { SM, MOCK_SP };
+  private final MetadataProvider provider;
+  private final String smEntityId;
+  private final String spEntityId;
+  private final String spUrl;
 
-  private static final String URL_PREFIX = "http://localhost:8973/security-manager/";
-  private static final String MOCK_SP_URL = URL_PREFIX + "mockserviceprovider";
-  private static final String MOCK_ACS_URL = URL_PREFIX + "mockartifactconsumer";
-  private static final String SSO_URL = URL_PREFIX + "samlauthn";
-  private static final String AR_URL = URL_PREFIX + "samlartifact";
-
-  private static Metadata spMetadata;
-  private static Metadata smMetadata;
-
-  private final EntityDescriptor localEntity;
-  private final List<EntityDescriptor> peerEntities;
-
-  private Metadata(EntityDescriptor localEntity) {
-    this.localEntity = localEntity;
-    peerEntities = new ArrayList<EntityDescriptor>();
+  public Metadata(String filename, String smEntityId, String spEntityId, String spUrl)
+      throws MetadataProviderException {
+    this.provider = OpenSamlUtil.getMetadataFromFile(filename);
+    this.smEntityId = smEntityId;
+    this.spEntityId = spEntityId;
+    this.spUrl = spUrl;
   }
 
-  public static Metadata getMetadata(ViewKey key) {
-    if (spMetadata == null) {
-      EntityDescriptor spEntity = makeEntityDescriptor(GsaConstants.GSA_ISSUER);
-      SPSSODescriptor sp = makeSpSsoDescriptor(spEntity);
-      makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI, MOCK_ACS_URL).setIsDefault(true);
-    
-      EntityDescriptor smEntity = makeEntityDescriptor(SM_ISSUER);
-      IDPSSODescriptor idp = makeIdpSsoDescriptor(smEntity);
-      makeSingleSignOnService(idp, SAML2_REDIRECT_BINDING_URI, SSO_URL);
-      makeArtifactResolutionService(idp, SAML2_SOAP11_BINDING_URI, AR_URL).setIsDefault(true);
-
-      spMetadata = new Metadata(spEntity);
-      smMetadata = new Metadata(smEntity);
-      spMetadata.addPeerEntity(smEntity);
-      smMetadata.addPeerEntity(spEntity);
+  public EntityDescriptor getEntity(String id) throws ServletException {
+    EntityDescriptor entity;
+    try {
+      entity = provider.getEntityDescriptor(id);
+    } catch (MetadataProviderException e) {
+      throw new ServletException(e);
     }
-    switch (key) {
-      case SM: return smMetadata;
-      case MOCK_SP: return spMetadata;
-      default: throw new IllegalArgumentException();
+    if (entity == null) {
+      throw new IllegalArgumentException("Unknown issuer: " + id);
     }
+    return entity;
   }
 
-  public static String getMockSpUrl() {
-    return MOCK_SP_URL;
+  public EntityDescriptor getSmEntity() throws ServletException {
+    return getEntity(smEntityId);
   }
 
-  public EntityDescriptor getLocalEntity() {
-    return localEntity;
+  public EntityDescriptor getSpEntity() throws ServletException {
+    return getEntity(spEntityId);
   }
 
-  public void addPeerEntity(EntityDescriptor entity) {
-    peerEntities.add(entity);
-  }
-
-  public EntityDescriptor getPeerEntity(String issuer) {
-    // TODO(cph): remove null case when last caller fixed.
-    if (issuer == null) {
-      return peerEntities.get(0);
-    }
-    for (EntityDescriptor entity: peerEntities) {
-      if (entity.getEntityID().equals(issuer)) {
-        return entity;
-      }
-    }
-    throw new IllegalArgumentException("Unknown issuer: " + issuer);
+  public String getSpUrl() {
+    return spUrl;
   }
 }
