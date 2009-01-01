@@ -14,57 +14,88 @@
 
 package com.google.enterprise.saml.common;
 
-import org.opensaml.ws.transport.http.HTTPInTransport;
-import org.opensaml.xml.security.credential.Credential;
-import org.springframework.mock.web.MockHttpServletResponse;
+import com.google.enterprise.common.HttpExchange;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import org.opensaml.ws.transport.http.HTTPOutTransport;
+import org.opensaml.xml.security.credential.Credential;
+
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.util.List;
 
-/**
- * HttpServletResponseClientAdapter implements an HTTPInTransport interface that can be used by the
- * OpenSAML decoders.  It takes a MockHttpServletResponse object which represents the message to be
- * processed by OpenSAML.
- */
-public class HttpServletResponseClientAdapter implements HTTPInTransport {
+public class HttpExchangeToOutTransport implements HTTPOutTransport {
 
-  private final MockHttpServletResponse response;
-  private final InputStream entityStream;
-  private String httpMethod;
+  private final HttpExchange exchange;
+  private final ByteArrayOutputStream entityStream;
+  private String encoding;
 
-  public HttpServletResponseClientAdapter(MockHttpServletResponse response) {
-    SecurityManagerServlet.initResponse(response);
-    this.response = response;
-    entityStream = new ByteArrayInputStream(response.getContentAsByteArray());
+  public HttpExchangeToOutTransport(HttpExchange exchange) {
+    this.exchange = exchange;
+    entityStream = new ByteArrayOutputStream();
   }
 
-  public String getPeerAddress() {
-    throw new UnsupportedOperationException();
+  public void finish() {
+    exchange.setRequestBody(entityStream.toByteArray());
   }
 
-  public String getPeerDomainName() {
-    throw new UnsupportedOperationException();
+  public void addParameter(String name, String value) {
+    exchange.addParameter(name, value);
   }
 
-  public InputStream getIncomingStream() {
+  public void setHeader(String name, String value) {
+    exchange.setRequestHeader(name, value);
+  }
+
+  public OutputStream getOutgoingStream() {
     return entityStream;
+  }
+
+  public void setCharacterEncoding(String encoding) {
+    this.encoding = encoding;
+  }
+
+  public String getCharacterEncoding() {
+    return encoding;
+  }
+
+  public void sendRedirect(String location) {
+    throw new UnsupportedOperationException();
+  }
+
+  public void setStatusCode(int status) {
+    throw new UnsupportedOperationException();
+  }
+
+  public void setVersion(HTTP_VERSION version) {
+    throw new UnsupportedOperationException();
+  }
+
+  public void setAttribute(String name, Object value) {
+    throw new UnsupportedOperationException();
   }
 
   public Object getAttribute(String name) {
     throw new UnsupportedOperationException();
   }
 
-  public String getCharacterEncoding() {
-    return response.getCharacterEncoding();
+  public String getParameterValue(String name) {
+    throw new UnsupportedOperationException();
+  }
+
+  public List<String> getParameterValues(String name) {
+    throw new UnsupportedOperationException();
+  }
+
+  public String getHeaderValue(String name) {
+    throw new UnsupportedOperationException();
   }
 
   public Credential getLocalCredential() {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   public Credential getPeerCredential() {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   public boolean isAuthenticated() {
@@ -92,32 +123,11 @@ public class HttpServletResponseClientAdapter implements HTTPInTransport {
   }
 
   public String getHTTPMethod() {
-    return httpMethod;
-  }
-
-  public void setHttpMethod(String method) {
-    httpMethod = method;
-  }
-
-  public String getHeaderValue(String name) {
-    return
-        (name.equalsIgnoreCase("Content-Type"))
-        ? response.getContentType()
-        : (name.equalsIgnoreCase("Content-Length"))
-        ? Integer.toString(response.getContentLength())
-        : (String) response.getHeader(name);
-  }
-
-  public String getParameterValue(String name) {
-    throw new UnsupportedOperationException();
-  }
-
-  public List<String> getParameterValues(String name) {
     throw new UnsupportedOperationException();
   }
 
   public int getStatusCode() {
-    return response.getStatus();
+    throw new UnsupportedOperationException();
   }
 
   public HTTP_VERSION getVersion() {
