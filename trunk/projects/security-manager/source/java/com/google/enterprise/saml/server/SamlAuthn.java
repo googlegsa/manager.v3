@@ -35,7 +35,6 @@ import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.EntityDescriptor;
-import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleSignOnService;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
@@ -49,11 +48,9 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static com.google.enterprise.saml.common.OpenSamlUtil.SM_ISSUER;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertion;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertionConsumerService;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnStatement;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
@@ -62,7 +59,6 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatusMessage;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSubject;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
-import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
@@ -92,38 +88,28 @@ public class SamlAuthn extends SecurityManagerServlet
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    BackEnd backend = getBackEnd(getServletContext());
+    BackEnd backend = getBackEnd();
 
     // Establish the SAML message context
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         newSamlMessageContext(request.getSession());
     {
-      EntityDescriptor localEntity = backend.getSecurityManagerEntity();
+      EntityDescriptor localEntity = getSmEntity();
       initializeLocalEntity(context, localEntity, localEntity.getIDPSSODescriptor(SAML20P_NS),
                             SingleSignOnService.DEFAULT_ELEMENT_NAME);
-      context.setOutboundMessageIssuer(localEntity.getEntityID());
-    }
-    {
-      EntityDescriptor peerEntity = backend.getGsaEntity();
-      SPSSODescriptor sp = peerEntity.getSPSSODescriptor(SAML20P_NS);
-
-      // TODO is there a better way to deduce ACS URL??
-      String gsaUrl = null;
-      String referer = request.getHeader("Referer");
-      if (referer != null)
-        gsaUrl = referer.substring(0, referer.indexOf("search"));
-      LOGGER.info("GSA URL is " + gsaUrl);
-      makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI,
-          gsaUrl + GsaConstants.GSA_ARTIFACT_HANDLER_NAME).setIsDefault(true);
-      initializePeerEntity(context, peerEntity, sp,
-                           AssertionConsumerService.DEFAULT_ELEMENT_NAME);
-      selectPeerEndpoint(context, SAML2_ARTIFACT_BINDING_URI);
-      context.setInboundMessageIssuer(peerEntity.getEntityID());
     }
 
     // Decode the request
     context.setInboundMessageTransport(new HttpServletRequestAdapter(request));
     runDecoder(new HTTPRedirectDeflateDecoder(), context);
+
+    // Select entity for response
+    {
+      EntityDescriptor peerEntity = getEntity(context.getInboundMessageIssuer());
+      initializePeerEntity(context, peerEntity, peerEntity.getSPSSODescriptor(SAML20P_NS),
+                           AssertionConsumerService.DEFAULT_ELEMENT_NAME,
+                           SAML2_ARTIFACT_BINDING_URI);
+    }
 
     // If there's a cookie we can decode, use that
     // TODO fold this nicely into multiple identities
@@ -159,7 +145,7 @@ public class SamlAuthn extends SecurityManagerServlet
    */
   private boolean tryCookies(HttpServletRequest request, HttpServletResponse response)
       throws ServletException {
-    BackEnd backend = getBackEnd(getServletContext());
+    BackEnd backend = getBackEnd();
     AuthenticationResponse authnResponse = backend.handleCookie(getAuthnContext(request));
     if ((authnResponse != null) && authnResponse.isValid()) {
       // TODO make sure authnResponse has subject in BackEnd
@@ -204,7 +190,7 @@ public class SamlAuthn extends SecurityManagerServlet
   @Override
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    BackEnd backend = getBackEnd(getServletContext());
+    BackEnd backend = getBackEnd();
 
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         existingSamlMessageContext(request.getSession());
@@ -236,17 +222,18 @@ public class SamlAuthn extends SecurityManagerServlet
     doRedirect(context, backend, response);
   }
 
-  public static Response makeSuccessfulResponse(AuthnRequest request, String username) {
+  private Response makeSuccessfulResponse(AuthnRequest request, String username) throws ServletException {
     LOGGER.info("Authenticated successfully as " + username);
     Response response = makeResponse(request, makeStatus(StatusCode.SUCCESS_URI));
-    Assertion assertion = makeAssertion(makeIssuer(SM_ISSUER), makeSubject(username));
+    Assertion assertion =
+        makeAssertion(makeIssuer(getSmEntity().getEntityID()), makeSubject(username));
     assertion.getAuthnStatements().add(makeAuthnStatement(AuthnContext.IP_PASSWORD_AUTHN_CTX));
     response.getAssertions().add(assertion);
     return response;
   }
 
-  public static Response makeUnsuccessfulResponse(AuthnRequest request, String code,
-                                                  String message) {
+  @SuppressWarnings("unused")
+  private Response makeUnsuccessfulResponse(AuthnRequest request, String code, String message) {
     LOGGER.log(Level.WARNING, message);
     Status status = makeStatus(code);
     status.setStatusMessage(makeStatusMessage(message));
