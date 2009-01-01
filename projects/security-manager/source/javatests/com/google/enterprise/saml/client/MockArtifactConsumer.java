@@ -20,7 +20,6 @@ import com.google.enterprise.common.HttpTransport;
 import com.google.enterprise.saml.common.HttpServletRequestClientAdapter;
 import com.google.enterprise.saml.common.HttpServletResponseClientAdapter;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
-import com.google.enterprise.saml.server.BackEnd;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -49,6 +48,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
 import static com.google.enterprise.saml.common.GsaConstants.GSA_ARTIFACT_PARAM_NAME;
 import static com.google.enterprise.saml.common.GsaConstants.GSA_RELAY_STATE_PARAM_NAME;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
@@ -58,13 +58,11 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
-import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
-import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
-
-import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
+
+import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 
 /**
  * The MockArtifactConsumer class implements a servlet pretending to be the part of a SAML Service
@@ -85,7 +83,6 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
    * @param transport A message-transport provider.
    */
   public MockArtifactConsumer(HttpTransport transport) {
-    super();
     this.transport = transport;
   }
 
@@ -93,8 +90,7 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
    * Creates a new mock SAML service provider with default message transport.
    */
   public MockArtifactConsumer() {
-    super();
-    this.transport = new HttpClientTransport();
+    this(new HttpClientTransport());
   }
 
   @Override
@@ -109,7 +105,7 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
       initErrorResponse(resp, SC_INTERNAL_SERVER_ERROR);
       return;
     }
-    SAMLObject message = resolveArtifact(artifact, relayState, req.getRequestURL().toString());
+    SAMLObject message = resolveArtifact(artifact, relayState);
     if (! (message instanceof Response)) {
       LOGGER.log(Level.WARNING, "Error from artifact resolver.");
       initErrorResponse(resp, SC_INTERNAL_SERVER_ERROR);
@@ -132,24 +128,22 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
     result.sendRedirect(relayState);
   }
 
-  private SAMLObject resolveArtifact(String artifact, String relayState, String clientUrl)
+  private SAMLObject resolveArtifact(String artifact, String relayState)
       throws ServletException, IOException {
-    BackEnd backend = getBackEnd(getServletContext());
-
     // Establish the SAML message context
     SAMLMessageContext<ArtifactResponse, ArtifactResolve, NameID> context =
         makeSamlMessageContext();
 
-    EntityDescriptor localEntity = backend.getGsaEntity();
+    EntityDescriptor localEntity = getSpEntity();
     initializeLocalEntity(context, localEntity, localEntity.getSPSSODescriptor(SAML20P_NS),
                           Endpoint.DEFAULT_ELEMENT_NAME);
-    context.setOutboundMessageIssuer(localEntity.getEntityID());
     {
-      EntityDescriptor peerEntity = backend.getSecurityManagerEntity();
+      // TODO(cph): extract artifact resolution service entity ID from artifact and use that to get
+      // the peer entity.
+      EntityDescriptor peerEntity = getSmEntity();
       initializePeerEntity(context, peerEntity, peerEntity.getIDPSSODescriptor(SAML20P_NS),
-                           ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
-      selectPeerEndpoint(context, SAML2_SOAP11_BINDING_URI);
-      context.setInboundMessageIssuer(peerEntity.getEntityID());
+                           ArtifactResolutionService.DEFAULT_ELEMENT_NAME,
+                           SAML2_SOAP11_BINDING_URI);
     }
 
     // Generate the request
