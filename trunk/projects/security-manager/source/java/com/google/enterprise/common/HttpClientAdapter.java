@@ -98,7 +98,7 @@ public class HttpClientAdapter implements HttpClientInterface {
       httpClient.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
     }
 
-      public void setProxy(String proxy) {
+    public void setProxy(String proxy) {
       if (null == proxy) {
         return;
       }
@@ -110,7 +110,7 @@ public class HttpClientAdapter implements HttpClientInterface {
       }
 
       httpClient.getHostConfiguration().
-        setProxy(proxyInfo[0], Integer.parseInt(proxyInfo[1]));
+          setProxy(proxyInfo[0], Integer.parseInt(proxyInfo[1]));
     }
 
     public void setBasicAuthCredentials(String username, String password) {
@@ -121,11 +121,11 @@ public class HttpClientAdapter implements HttpClientInterface {
       httpMethod.setDoAuthentication(true);
     }
 
-      public void setRequestHeader(String name, String value) {
+    public void setRequestHeader(String name, String value) {
       httpMethod.setRequestHeader(name, value);
     }
 
-      public int exchange() throws IOException {
+    public int exchange() throws IOException {
       try {
         return httpClient.executeMethod(httpMethod);
       } catch (HttpException e) {
@@ -135,11 +135,11 @@ public class HttpClientAdapter implements HttpClientInterface {
       }
     }
 
-      public String getResponseEntityAsString() throws IOException {
+    public String getResponseEntityAsString() throws IOException {
       return httpMethod.getResponseBodyAsString();
     }
 
-      public String getResponseHeaderValue(String name) {
+    public String getResponseHeaderValue(String name) {
       for (Header header: httpMethod.getResponseHeaders(name)) {
         if (header.getName().equals(name)) {
           return header.getValue();
@@ -148,7 +148,7 @@ public class HttpClientAdapter implements HttpClientInterface {
       return null;
     }
 
-      public List<String> getResponseHeaderValues(String name) {
+    public List<String> getResponseHeaderValues(String name) {
       List<String> result = new ArrayList<String>();
       for (Header header: httpMethod.getResponseHeaders(name)) {
         if (header.getName().equals(name)) {
@@ -158,11 +158,11 @@ public class HttpClientAdapter implements HttpClientInterface {
       return result;
     }
 
-      public int getStatusCode() {
+    public int getStatusCode() {
       return httpMethod.getStatusCode();
     }
 
-      public void setRequestBody(byte[] requestContent) {
+    public void setRequestBody(byte[] requestContent) {
       String method = httpMethod.getName();
       if ("POST".equalsIgnoreCase(method)) {
         PostMethod pm = PostMethod.class.cast(httpMethod);
@@ -172,7 +172,7 @@ public class HttpClientAdapter implements HttpClientInterface {
       }
     }
 
-      public void close() {
+    public void close() {
       httpMethod.releaseConnection();
     }
   }
