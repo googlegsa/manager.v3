@@ -71,18 +71,18 @@ public class MockHttpClient implements HttpClientInterface {
       credentials = null;
     }
 
-      public void setProxy(String proxy) {
+    public void setProxy(String proxy) {
     }
 
     public void setBasicAuthCredentials(String username, String password) {
       credentials = "Basic " + Base64.encode((username + ":" + password).getBytes());
     }
 
-      public void setRequestHeader(String name, String value) {
+    public void setRequestHeader(String name, String value) {
       request.addHeader(name, value);
     }
 
-      public int exchange() throws IOException {
+    public int exchange() throws IOException {
       if (credentials != null) {
         request.addHeader("Authorize", credentials);
       }
@@ -96,15 +96,15 @@ public class MockHttpClient implements HttpClientInterface {
       return response.getStatus();
     }
 
-      public String getResponseEntityAsString() throws IOException {
+    public String getResponseEntityAsString() throws IOException {
       return response.getContentAsString();
     }
 
-      public String getResponseHeaderValue(String name) {
+    public String getResponseHeaderValue(String name) {
       return String.class.cast(response.getHeader(name));
     }
 
-      public List<String> getResponseHeaderValues(String name) {
+    public List<String> getResponseHeaderValues(String name) {
       List<String> result = new ArrayList<String>();
       for (Object value: response.getHeaders(name)) {
         result.add(String.class.cast(value));
@@ -112,7 +112,7 @@ public class MockHttpClient implements HttpClientInterface {
       return result;
     }
 
-      public int getStatusCode() {
+    public int getStatusCode() {
       return response.getStatus();
     }
 
@@ -120,7 +120,7 @@ public class MockHttpClient implements HttpClientInterface {
       request.setContent(requestContent);
     }
     
-      public void close() {
+    public void close() {
     }
 
   }
