@@ -15,6 +15,7 @@
 package com.google.enterprise.common;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -34,6 +35,21 @@ public interface HttpExchange {
    * @param password
    */
   public void setBasicAuthCredentials(String username, String password);
+
+  /**
+   * Tell exchange whether to follow redirects.
+   * Default is to not follow them.
+   * @param followRedirects {@code true} means follow them.
+   */
+  public void setFollowRedirects(boolean followRedirects);
+
+  /**
+   * Add a parameter to the exchange.
+   * Works only for POST methods.
+   * @param name The parameter's name.
+   * @param value The parameter's value.
+   */
+  public void addParameter(String name, String value);
 
   /**
    * Set an HTTP request header field.
@@ -59,6 +75,13 @@ public interface HttpExchange {
   public String getResponseEntityAsString() throws IOException;
 
   /**
+   * Get the response entity (body) as an input stream.
+   * @return The entity input stream.
+   * @throw IOException if there's a transport error
+   */
+  public InputStream getResponseEntityAsStream() throws IOException;
+
+  /**
    * Get the value of a response header field.
    * @param name The name of the header.
    * @return The value of the named header, or null if no such header.
@@ -78,8 +101,13 @@ public interface HttpExchange {
    * @return The status code.
    */
   public int getStatusCode();
-  
+
+  /**
+   * Set the entity of the request.
+   * @param byteArrayRequestEntity The bytes to use as an entity.
+   */
   public void setRequestBody(byte[] byteArrayRequestEntity);
+
   /**
    * Close the exchange and reclaim its resources.
    */

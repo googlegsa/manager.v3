@@ -17,7 +17,6 @@ package com.google.enterprise.security.connectors.formauth;
 import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.common.GettableHttpServlet;
 import com.google.enterprise.common.PostableHttpServlet;
-import com.google.enterprise.common.ServletTestUtil;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import java.io.IOException;
@@ -73,7 +72,6 @@ public abstract class MockFormAuthServer extends SecurityManagerServlet
     }
     writer.write("</form></body></http>\n");
     writer.close();
-    ServletTestUtil.finalizeResponse(response);
   }
 
   @Override
@@ -98,7 +96,6 @@ public abstract class MockFormAuthServer extends SecurityManagerServlet
         + "<p>Welcome to the machine!</p>\n"
         + "</body></http>\n");
     writer.close();
-    ServletTestUtil.finalizeResponse(response);
   }
 
   private static String getAction(HttpServletRequest request) {

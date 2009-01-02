@@ -30,6 +30,7 @@ import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.util.IdleConnectionTimeoutThread;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -121,6 +122,18 @@ public class HttpClientAdapter implements HttpClientInterface {
       httpMethod.setDoAuthentication(true);
     }
 
+    public void setFollowRedirects(boolean followRedirects) {
+      httpMethod.setFollowRedirects(followRedirects);
+    }
+
+    public void addParameter(String name, String value) {
+      if (httpMethod instanceof PostMethod) {
+        ((PostMethod) httpMethod).addParameter(name, value);
+      } else {
+        throw new UnsupportedOperationException("addParameter works only for POST methods.");
+      }
+    }
+
     public void setRequestHeader(String name, String value) {
       httpMethod.setRequestHeader(name, value);
     }
@@ -137,6 +150,10 @@ public class HttpClientAdapter implements HttpClientInterface {
 
     public String getResponseEntityAsString() throws IOException {
       return httpMethod.getResponseBodyAsString();
+    }
+
+    public InputStream getResponseEntityAsStream() throws IOException {
+      return httpMethod.getResponseBodyAsStream();
     }
 
     public String getResponseHeaderValue(String name) {
