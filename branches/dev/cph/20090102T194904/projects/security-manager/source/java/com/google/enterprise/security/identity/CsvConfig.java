@@ -15,7 +15,6 @@
 package com.google.enterprise.security.identity;
 
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
-import com.google.enterprise.saml.server.CSVReader;
 
 import java.io.FileReader;
 import java.io.IOException;
