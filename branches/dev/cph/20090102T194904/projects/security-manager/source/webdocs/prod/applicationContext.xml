@@ -22,11 +22,16 @@
     class="com.google.enterprise.connector.persist.FileStore">
   </bean>
 
+  <bean id="IdentityConfig"
+    class="com.google.enterprise.security.identity.CsvConfig">
+    <constructor-arg index="0" value="AuthSites.conf" />
+  </bean>
+
   <bean id="BackEnd"
     class="com.google.enterprise.saml.server.BackEndImpl">
     <constructor-arg index="0" ref="SessionManager" />
     <constructor-arg index="1" ref="AuthzResponder" />
-    <constructor-arg index="2" value="AuthSites.conf" />
+    <property name="identityConfig" ref="IdentityConfig" />
   </bean>
 
   <bean id="ConnectorManager"

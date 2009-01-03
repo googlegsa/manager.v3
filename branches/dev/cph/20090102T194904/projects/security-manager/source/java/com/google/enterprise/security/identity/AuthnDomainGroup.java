@@ -14,11 +14,6 @@
 
 package com.google.enterprise.security.identity;
 
-import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
-import com.google.enterprise.saml.server.CSVReader;
-
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,32 +44,5 @@ public class AuthnDomainGroup {
 
   public List<AuthnDomain> getDomains() {
     return domains;
-  }
-
-  public static List<AuthnDomainGroup> getAuthnDomainGroups(String configFile)
-      throws IOException {
-    CSVReader reader = new CSVReader(new FileReader(configFile));
-    List<AuthnDomainGroup> adgs = new ArrayList<AuthnDomainGroup>();
-    String[] nextLine;
-
-    // Each line is FQDN,realm,auth_method,optional_sample_login_url
-    // If sample login is missing, we deduce as FQDN+realm
-    while ((nextLine = reader.readNext()) != null) {
-      AuthNMechanism method = null;
-      if (nextLine[2].equals(AuthNMechanism.BASIC_AUTH.toString())) {
-        method = AuthNMechanism.BASIC_AUTH;
-      }
-      if (nextLine[2].equals(AuthNMechanism.FORMS_AUTH.toString())) {
-        method = AuthNMechanism.FORMS_AUTH;
-      }
-      AuthnDomainGroup adg = new AuthnDomainGroup(nextLine[0] + nextLine[1]);
-      @SuppressWarnings("unused")
-      AuthnDomain domain = new AuthnDomain(
-          nextLine[0] + nextLine[1], method,
-          "".equals(nextLine[3]) ? nextLine[0] + nextLine[1] : nextLine[3], adg);
-      adgs.add(adg);
-    }
-
-    return adgs;
   }
 }

@@ -49,7 +49,7 @@ public class BackEndImplTest extends TestCase {
   @Override
   public void setUp() {
     sm = new LocalSessionManager();
-    backend = new BackEndImpl(sm, new AuthzResponderImpl(), "foo");
+    backend = new BackEndImpl(sm, new AuthzResponderImpl());
   }
 
   public void testUpdateSessionManager() {
