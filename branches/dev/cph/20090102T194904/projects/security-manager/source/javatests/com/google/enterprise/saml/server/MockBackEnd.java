@@ -30,7 +30,6 @@ import org.opensaml.saml2.core.Response;
 import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
