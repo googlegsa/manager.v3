@@ -17,6 +17,7 @@ package com.google.enterprise.saml.server;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
@@ -24,6 +25,7 @@ import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -59,7 +61,7 @@ public interface BackEnd {
    */
   public SAMLArtifactMap getArtifactMap();
 
-  public String getAuthConfigFile();
+  public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException;
 
   public AuthenticationResponse handleCookie(SecAuthnContext context);
 

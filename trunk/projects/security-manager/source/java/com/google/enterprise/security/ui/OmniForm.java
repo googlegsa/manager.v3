@@ -52,24 +52,18 @@ public class OmniForm {
    * I haven't figured out the right way to do so and keep the generate/submit
    * methods consistent for all UI implementations.  Perhaps we must restrict
    * UI implementations to ones that can be returned as HTTP content. 
+   * @throws IOException 
    */
-  public OmniForm(BackEnd backend, OmniFormHtml omniFormHtml) {
+  public OmniForm(BackEnd backend, OmniFormHtml omniFormHtml) throws IOException {
     this.omniHtml = omniFormHtml;
     this.backend = backend;
     this.formElements = new ArrayList<FormElement>();
     this.formElemToCG = new HashMap<FormElement,CredentialsGroup>();
 
-    List<AuthnDomainGroup> authnDomainGroups = new ArrayList<AuthnDomainGroup>();
-    try {
-      authnDomainGroups = AuthnDomainGroup.getAuthnDomainGroups(backend.getAuthConfigFile());
-    } catch (IOException e) {
-      LOGGER.severe("Could not find Omniform configuration file!");
-    }
-
     // TODO: check user cookies. Tricky part: if a user has a forms cookie
     // that shares the CG of a basic_auth site, we still need their login info.
     // TODO: check the SessionManager for the user's credentials/login info ?    
-    for (AuthnDomainGroup adg : authnDomainGroups) {
+    for (AuthnDomainGroup adg : backend.getAuthnDomainGroups()) {
       FormElement formElem = new FormElement(adg.getHumanName());
       formElements.add(formElem);
       CredentialsGroup cg = new CredentialsGroup(adg);

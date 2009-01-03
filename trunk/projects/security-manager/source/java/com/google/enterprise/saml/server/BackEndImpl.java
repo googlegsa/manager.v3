@@ -14,18 +14,17 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.common.collect.ImmutableList;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.SecAuthnContext;
-import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.security.connectors.formauth.CookieUtil;
+import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
+import com.google.enterprise.security.identity.IdentityConfig;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
@@ -36,9 +35,9 @@ import org.opensaml.saml2.core.Response;
 import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Vector;
 import java.util.logging.Logger;
 
@@ -54,8 +53,9 @@ public class BackEndImpl implements BackEnd {
   private ConnectorManager manager;
   private final AuthzResponder authzResponder;
   private final SAMLArtifactMap artifactMap;
-  private final String loginFormConfigFile;
   private static final Logger LOGGER = Logger.getLogger(BackEndImpl.class.getName());
+  private IdentityConfig identityConfig;
+  private List<AuthnDomainGroup> authnDomainGroups;
 
   protected GSASessionAdapter adapter;
 
@@ -68,16 +68,14 @@ public class BackEndImpl implements BackEnd {
    * @param sm The session manager to use.
    * @param authzResponder The authorization responder to use.
    */
-  public BackEndImpl(SessionManagerInterface sm, AuthzResponder authzResponder,
-                     String loginFormConfigFile) {
+  public BackEndImpl(SessionManagerInterface sm, AuthzResponder authzResponder) {
     this.sm = sm;
     this.authzResponder = authzResponder;
-    this.loginFormConfigFile = loginFormConfigFile;
     artifactMap = new BasicSAMLArtifactMap(
         new BasicParserPool(),
         new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
         artifactLifetime);
-
+    authnDomainGroups = null;
     adapter = new GSASessionAdapter(sm);
     sessionIds = new Vector<String>();
   }
@@ -85,34 +83,48 @@ public class BackEndImpl implements BackEnd {
   public void setConnectorManager(ConnectorManager cm) {
     this.manager = cm;
   }
+
   public SessionManagerInterface getSessionManager() {
     return sm;
+  }
+
+  public void setIdentityConfig(IdentityConfig identityConfig) {
+    this.identityConfig = identityConfig;
   }
 
   public SAMLArtifactMap getArtifactMap() {
     return artifactMap;
   }
 
-  public String getAuthConfigFile() {
-    return loginFormConfigFile;
+  public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException {
+    if (authnDomainGroups == null) {
+      authnDomainGroups = ImmutableList.copyOf(identityConfig.getConfig());
+    }
+    return authnDomainGroups;
   }
 
   public void authenticate(CredentialsGroup cg) {
     for (DomainCredentials dCred : cg.getElements()) {
+      String expectedTypeName;
+      switch (dCred.getDomain().getMechanism()) {
+        case BASIC_AUTH:
+          expectedTypeName = "BasicAuthConnector";
+          break;
+        case FORMS_AUTH:
+          expectedTypeName = "FormAuthConnector";
+          break;
+        case CONNECTORS:
+          expectedTypeName = "ConnAuthConnector";
+          break;
+        default:
+          continue;
+      }
       for (ConnectorStatus connStatus : getConnectorStatuses(manager)) {
+        if (!connStatus.getType().equals(expectedTypeName)) {
+          continue;
+        }
         String connectorName = connStatus.getName();
         LOGGER.info("Got security plug-in " + connectorName);
-
-        // Use connectorName as a clue as to what type of auth mechanism is suitable
-        if (connectorName.startsWith("Basic") && dCred.getDomain().getMechanism() != AuthNMechanism.BASIC_AUTH) {
-          continue;
-        }
-        if (connectorName.startsWith("Form") && dCred.getDomain().getMechanism() != AuthNMechanism.FORMS_AUTH) {
-          continue;
-        }
-        if (connectorName.startsWith("Conn") && dCred.getDomain().getMechanism() != AuthNMechanism.CONNECTORS) {
-          continue;
-        }
         AuthenticationResponse authnResponse = manager.authenticate(connectorName, dCred, null);
         if ((null != authnResponse) && authnResponse.isValid()) {
           LOGGER.info("Authn Success, credential verified: " + dCred.dumpInfo());
@@ -126,18 +138,15 @@ public class BackEndImpl implements BackEnd {
   // see if the cookies reveal who the user is.
   public AuthenticationResponse handleCookie(SecAuthnContext context) {
     for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
+      if (!connStatus.getType().equals("FormAuthConnector")) {
+        continue;
+      }
       String connectorName = connStatus.getName();
       LOGGER.info("Got security plug-in " + connectorName);
-
-      // Use connectorName as a clue as to what type of auth mechanism is suitable
-      if (!connectorName.startsWith("FORM-"))
-        continue;
-      AuthenticationResponse authnResponse =
-          manager.authenticate(connectorName, null, context);
+      AuthenticationResponse authnResponse = manager.authenticate(connectorName, null, context);
       if ((authnResponse != null) && authnResponse.isValid())
         return authnResponse;
     }
-
     return null;
   }
 
@@ -147,12 +156,7 @@ public class BackEndImpl implements BackEnd {
 
   @SuppressWarnings("unchecked")
   private List<ConnectorStatus> getConnectorStatuses(ConnectorManager manager) {
-    List<ConnectorStatus> connList = manager.getConnectorStatuses();
-    if (connList == null || connList.isEmpty()) {
-      instantiateConnector(manager);
-      connList = manager.getConnectorStatuses();
-    }
-    return connList;
+    return manager.getConnectorStatuses();
   }
 
   public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs) {
@@ -195,40 +199,4 @@ public class BackEndImpl implements BackEnd {
 
     // TODO(con): connectors
   }
-  
-  // TODO get rid of this when we have a way of configuring plug-ins
-  private void instantiateConnector(ConnectorManager manager) {
-    String connectorName = "FormLei";
-    String connectorType = "CookieConnector";
-    String language = "en";
-
-    Map<String, String> configData =
-        ImmutableMap.of(
-            "CookieName", "SMSESSION",
-            "ServerUrl", "http://gama.corp.google.com/user1/ssoAgent.asp",
-            "HttpHeaderName", "User-Name");
-    Map<String, String> configBasicAuth = ImmutableMap.of(
-            "ServerUrl", "http://leiz.mtv.corp.google.com/basic/");
-    Map<String, String> configFormAuth = ImmutableMap.of(
-            "CookieName", "SMSESSION");
-    Map<String, String> configConnAuth = ImmutableMap.of(
-            "SpiVersion", "0");
-    try {
-      manager.setConnectorConfig(connectorName, connectorType,
-                                 configData, language, false);
-      manager.setConnectorConfig("BasicAuth", "BasicAuthConnector",
-                                 configBasicAuth, language, false);
-      manager.setConnectorConfig("FormAuth", "FormAuthConnector",
-      		                     configFormAuth, language, false);
-      manager.setConnectorConfig("ConnAuth", "ConnAuthConnector",
-                                 configConnAuth, language, false);
-    } catch (ConnectorNotFoundException e) {
-      LOGGER.info("ConnectorNotFound: " + e.toString());
-    } catch (InstantiatorException e) {
-      LOGGER.info("Instantiator: " + e.toString());
-    } catch (PersistentStoreException e) {
-      LOGGER.info("PersistentStore: " + e.toString());
-    }
-  }
-
 }
