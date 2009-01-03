@@ -1,5 +1,3 @@
-package com.google.enterprise.saml.server;
-
 /**
  Copyright 2005 Bytecode Pty Ltd.
 
@@ -15,6 +13,8 @@ package com.google.enterprise.saml.server;
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
+package com.google.enterprise.security.identity;
 
 import java.io.BufferedReader;
 import java.io.IOException;
