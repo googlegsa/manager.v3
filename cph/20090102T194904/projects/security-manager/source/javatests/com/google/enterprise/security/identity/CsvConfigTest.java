@@ -14,12 +14,12 @@
 
 package com.google.enterprise.security.identity;
 
-import junit.framework.TestCase;
-
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
-import java.io.File;
+import junit.framework.TestCase;
+
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
@@ -28,9 +28,9 @@ import java.util.List;
  * Created by IntelliJ IDEA. User: con Date: Dec 18, 2008 Time: 5:54:54 PM To
  * change this template use File | Settings | File Templates.
  */
-public class AuthnDomainGroupTest extends TestCase {
+public class CsvConfigTest extends TestCase {
 
-  public void testAuthnDomainGroupParser() throws IOException {
+  public void testParser() throws IOException {
     // TODO: change this test when new AuthnDomainGroup parser is implemented
     // to handle multiple domains in the same Group
 
@@ -38,10 +38,11 @@ public class AuthnDomainGroupTest extends TestCase {
                     + "http://gama.corp.google.com,/secured/,FORMS_AUTH,\n"
                     + "http://mooglegoogle.com,/moogle/,FORMS_AUTH,http://loginurl.com/login";
     File  f = new File("foo");
+    f.deleteOnExit();
     BufferedWriter writer = new BufferedWriter(new FileWriter(f));
     writer.write(config);
     writer.close();
-    List<AuthnDomainGroup> adgs = AuthnDomainGroup.getAuthnDomainGroups(f.getAbsolutePath());
+    List<AuthnDomainGroup> adgs = CsvConfig.readConfigFile(f.getAbsolutePath());
 
     assertEquals(3, adgs.size());
 

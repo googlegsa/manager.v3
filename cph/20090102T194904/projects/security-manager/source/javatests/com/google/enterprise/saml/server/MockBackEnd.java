@@ -14,9 +14,11 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.common.collect.ImmutableList;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
@@ -28,6 +30,7 @@ import org.opensaml.saml2.core.Response;
 import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -40,7 +43,7 @@ public class MockBackEnd implements BackEnd {
 
   private final SessionManagerInterface sessionManager;
   private final SAMLArtifactMap artifactMap;
-  private final String loginFormConfigFile;
+  private List<AuthnDomainGroup> authnDomainGroups;
 
   /**
    * Create a new backend object.
@@ -48,14 +51,13 @@ public class MockBackEnd implements BackEnd {
    * @param sm The session manager to use.
    * @param authzResponder The authorization responder to use.
    */
-  public MockBackEnd(SessionManagerInterface sm, AuthzResponder authzResponder,
-                     String loginFormConfigFile) {
+  public MockBackEnd(SessionManagerInterface sm, AuthzResponder authzResponder) {
     this.sessionManager = sm;
-    this.loginFormConfigFile = loginFormConfigFile;
     artifactMap = new BasicSAMLArtifactMap(
         new BasicParserPool(),
         new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
         artifactLifetime);
+    authnDomainGroups = new ArrayList<AuthnDomainGroup>();
   }
 
   public SessionManagerInterface getSessionManager() {
@@ -73,6 +75,14 @@ public class MockBackEnd implements BackEnd {
   public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs) {
   }
 
+  public List<AuthnDomainGroup> getAuthnDomainGroups() {
+    return authnDomainGroups;
+  }
+
+  public void setAuthnDomainGroups(List<AuthnDomainGroup> authnDomainGroups) {
+    this.authnDomainGroups = ImmutableList.copyOf(authnDomainGroups);
+  }
+
   public AuthenticationResponse handleCookie(SecAuthnContext context) {
     return null;
   }
@@ -81,9 +91,5 @@ public class MockBackEnd implements BackEnd {
   }
 
   public void setConnectorManager(ConnectorManager cm) {
-  }
-
-  public String getAuthConfigFile() {
-    return loginFormConfigFile;
   }
 }
