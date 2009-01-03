@@ -19,6 +19,5 @@
     class="com.google.enterprise.saml.server.MockBackEnd">
     <constructor-arg index="0" ref="SessionManager" />
     <constructor-arg index="1" ref="ConnectorManager" />
-    <constructor-arg index="2" value="testdata/AuthSites.conf" />
   </bean>
 </beans>
