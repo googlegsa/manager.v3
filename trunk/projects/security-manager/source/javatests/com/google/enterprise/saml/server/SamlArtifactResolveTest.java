@@ -14,6 +14,10 @@
 
 package com.google.enterprise.saml.server;
 
+import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
+
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.common.GsaConstants;
@@ -22,7 +26,6 @@ import com.google.enterprise.saml.common.Metadata;
 import junit.framework.TestCase;
 
 import org.opensaml.saml2.core.StatusCode;
-import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.xml.io.MarshallingException;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -31,10 +34,6 @@ import org.springframework.mock.web.MockServletConfig;
 import java.io.IOException;
 
 import javax.servlet.ServletException;
-
-import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
 
 /**
  * Unit test for SamlArtifactResolve handler.
@@ -53,10 +52,9 @@ public class SamlArtifactResolveTest extends TestCase {
    * At the moment this test just makes sure the post handler codepath executes
    * without hitting an exception and returns non-empty content.
    * @throws MarshallingException
-   * @throws MetadataProviderException 
    */
   public void testPostHandler()
-      throws ServletException, IOException, MarshallingException, MetadataProviderException {
+      throws ServletException, IOException, MarshallingException {
     MockHttpServletRequest mockRequest = makeMockHttpPost(null, "http://localhost/");
     MockHttpServletResponse mockResponse = new MockHttpServletResponse();
 
