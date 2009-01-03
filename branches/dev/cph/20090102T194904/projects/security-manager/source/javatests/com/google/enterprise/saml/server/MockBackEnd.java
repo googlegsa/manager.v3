@@ -20,6 +20,7 @@ import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.IdentityConfig;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
@@ -30,6 +31,7 @@ import org.opensaml.saml2.core.Response;
 import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -42,6 +44,7 @@ public class MockBackEnd implements BackEnd {
 
   private final SessionManagerInterface sessionManager;
   private final SAMLArtifactMap artifactMap;
+  private IdentityConfig identityConfig;
   private List<AuthnDomainGroup> authnDomainGroups;
 
   /**
@@ -56,6 +59,7 @@ public class MockBackEnd implements BackEnd {
         new BasicParserPool(),
         new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
         artifactLifetime);
+    authnDomainGroups = null;
   }
 
   public SessionManagerInterface getSessionManager() {
@@ -73,12 +77,15 @@ public class MockBackEnd implements BackEnd {
   public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs) {
   }
 
-  public List<AuthnDomainGroup> getAuthnDomainGroups() {
-    return authnDomainGroups;
+  public void setIdentityConfig(IdentityConfig identityConfig) {
+    this.identityConfig = identityConfig;
   }
 
-  public void setAuthnDomainGroups(List<AuthnDomainGroup> authnDomainGroups) {
-    this.authnDomainGroups = ImmutableList.copyOf(authnDomainGroups);
+  public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException {
+    if (authnDomainGroups == null) {
+      authnDomainGroups = ImmutableList.copyOf(identityConfig.getConfig());
+    }
+    return authnDomainGroups;
   }
 
   public AuthenticationResponse handleCookie(SecAuthnContext context) {
