@@ -57,7 +57,6 @@ public class MockBackEnd implements BackEnd {
         new BasicParserPool(),
         new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
         artifactLifetime);
-    authnDomainGroups = new ArrayList<AuthnDomainGroup>();
   }
 
   public SessionManagerInterface getSessionManager() {
