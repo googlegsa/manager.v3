@@ -26,10 +26,16 @@
     <constructor-arg><null/></constructor-arg>
   </bean>
 
+  <bean id="IdentityConfig"
+	class="com.google.enterprise.security.identity.CsvConfig">
+    <constructor-arg index="0" value="testdata/AuthSites.conf" />
+  </bean>
+
   <bean id="BackEnd"
     class="com.google.enterprise.saml.server.MockBackEnd">
     <constructor-arg index="0" ref="SessionManager" />
     <constructor-arg index="1" ref="AuthzResponder" />
+    <property name="identityConfig" ref="IdentityConfig" />
   </bean>
 
   <bean id="Monitor"
