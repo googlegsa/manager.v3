@@ -14,6 +14,7 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.SecAuthnContext;
@@ -56,6 +57,7 @@ public class MockBackEnd implements BackEnd {
         new BasicParserPool(),
         new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
         artifactLifetime);
+    authnDomainGroups = ImmutableList.of();
   }
 
   public SessionManagerInterface getSessionManager() {
@@ -78,6 +80,7 @@ public class MockBackEnd implements BackEnd {
   }
 
   public void setAuthnDomainGroups(List<AuthnDomainGroup> authnDomainGroups) {
+    Preconditions.checkNotNull(authnDomainGroups);
     this.authnDomainGroups = ImmutableList.copyOf(authnDomainGroups);
   }
 
