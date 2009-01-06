@@ -109,8 +109,9 @@ public class SpringInstantiator implements Instantiator {
     ConnectorInterfaces connectorInterfaces =
         (ConnectorInterfaces) connectorCache.get(connectorName);
     if (connectorInterfaces == null) {
+      InstanceInfo info = getInstanceInfo(connectorName);
       connectorInterfaces = new ConnectorInterfaces(connectorName,
-          getInstanceInfo(connectorName).getConnector(), pusher, this);
+          info.getConnector(), pusher, info.getTraversalStateStore());
       connectorCache.put(connectorName, connectorInterfaces);
     }
     return connectorInterfaces;

@@ -42,7 +42,11 @@ public class GenerationalStateStore implements ConnectorStateStore {
    */
   public GenerationalStateStore(ConnectorStateStore baseStore) {
     this.myGenerations = new HashMap();
-    this.baseStore = baseStore;
+    if (baseStore instanceof GenerationalStateStore) {
+      this.baseStore = ((GenerationalStateStore)baseStore).baseStore;
+    } else {
+      this.baseStore = baseStore;
+    }
   }
 
   /**
@@ -77,7 +81,7 @@ public class GenerationalStateStore implements ConnectorStateStore {
    * @param connectorState String to store
    * @throws IllegalStateException if state store is disabled for this generation
    */
-  public void storeConnectorState(StoreContext context, 
+  public void storeConnectorState(StoreContext context,
       String connectorState) {
     testGeneration(context);
     baseStore.storeConnectorState(context, connectorState);
@@ -111,7 +115,7 @@ public class GenerationalStateStore implements ConnectorStateStore {
 
   /**
    * Return this instance's generation for this connector.
-   * If this instance does not yet have a generation for the 
+   * If this instance does not yet have a generation for the
    * connector, it grabs a snapshot of the most current generation.
    *
    * @param context a StoreContext

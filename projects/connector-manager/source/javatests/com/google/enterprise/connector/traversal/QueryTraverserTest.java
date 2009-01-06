@@ -55,12 +55,12 @@ public class QueryTraverserTest extends TestCase {
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     String connectorName = "foo";
     MockInstantiator instantiator = new MockInstantiator();
-    Traverser traverser = 
+    Traverser traverser =
       createTraverser(mrel, connectorName, instantiator);
 
     System.out.println();
     System.out.println("Running batch test batchsize " + batchSize);
-    
+
     int totalDocsProcessed = 0;
     int batchNumber = 0;
     while (true) {
@@ -109,12 +109,13 @@ public class QueryTraverserTest extends TestCase {
     TraversalManager qtm = new JcrTraversalManager(qm);
     MockPusher pusher = new MockPusher(System.out);
 
-    Traverser traverser =
-        new QueryTraverser(pusher, qtm, instantiator, connectorName);
+    Traverser traverser = new QueryTraverser(pusher, qtm,
+        instantiator.getTraversalStateStore(connectorName), connectorName);
+
     instantiator.setupTraverser(connectorName, traverser);
     return traverser;
   }
-  
+
   /**
    * Initialize a large file used for tests.  This is to avoid
    * having giant files checked into the source code repository.
@@ -140,7 +141,7 @@ public class QueryTraverserTest extends TestCase {
    */
   public final void testLargeFileStream() {
     try {
-      // This has internal knowledge of the contents of 
+      // This has internal knowledge of the contents of
       // MockRepositoryEventLogLargeFile.txt used below.
       makeLargeFile("testdata/tmp/largefile.txt");
     } catch (IOException e) {
