@@ -16,13 +16,20 @@ package com.google.enterprise.common;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.ServletException;
+
+import static com.google.enterprise.common.ServletTestUtil.generatePostContent;
+import static com.google.enterprise.common.ServletTestUtil.makeMockHttpGet;
+import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
 
 /**
  * A mock instance of HttpClientInterface, using HttpTransport for transport.
@@ -30,51 +37,43 @@ import javax.servlet.ServletException;
 public class MockHttpClient implements HttpClientInterface {
 
   private final HttpTransport transport;
+  private final MockHttpSession session;
+  private String referrer;
 
   public MockHttpClient(HttpTransport transport) {
     this.transport = transport;
+    session = new MockHttpSession();
+    referrer = null;
   }
 
-  /** {@inheritDoc} */
   public HttpExchange getExchange(URL url) {
-    MockHttpServletRequest request =
-        ServletTestUtil.makeMockHttpRequest("GET", null, url.toString());
-    return new MockExchange(transport, request);
+    MockHttpServletRequest request = makeMockHttpGet(null, url.toString());
+    return new MockExchange(request);
   }
 
-  /** {@inheritDoc} */
   public HttpExchange postExchange(URL url, List<StringPair> parameters) {
-    MockHttpServletRequest request =
-        ServletTestUtil.makeMockHttpRequest("POST", null, url.toString());
+    MockHttpServletRequest request = makeMockHttpPost(null, url.toString());
     if (parameters != null) {
-      request.addHeader("Content-Type", "application/x-www-form-urlencoded");
       for (StringPair p: parameters) {
         request.addParameter(p.getName(), p.getValue());
       }
-      try {
-        ServletTestUtil.generatePostContent(request);
-      } catch (IOException e) {
-        throw new IllegalArgumentException(e);
-      }
     }
-    return new MockExchange(transport, request);
+    return new MockExchange(request);
   }
 
-  private static class MockExchange implements HttpExchange {
+  private class MockExchange implements HttpExchange {
 
-    private final HttpTransport transport;
     private final MockHttpServletRequest request;
-    private final MockHttpServletResponse response;
+    private MockHttpServletResponse response;
     private String credentials;
+    private boolean followRedirects;
 
-    public MockExchange(HttpTransport transport, MockHttpServletRequest request) {
-      this.transport = transport;
+    public MockExchange(MockHttpServletRequest request) {
       this.request = request;
-      response = new MockHttpServletResponse();
       credentials = null;
+      followRedirects = false;
     }
 
-    /** {@inheritDoc} */
     public void setProxy(String proxy) {
     }
 
@@ -82,35 +81,83 @@ public class MockHttpClient implements HttpClientInterface {
       credentials = "Basic " + Base64.encode((username + ":" + password).getBytes());
     }
 
-    /** {@inheritDoc} */
+    public void setFollowRedirects(boolean followRedirects) {
+      this.followRedirects = followRedirects;
+    }
+
+    public void addParameter(String name, String value) {
+      request.addParameter(name, value);
+    }
+
     public void setRequestHeader(String name, String value) {
       request.addHeader(name, value);
     }
 
-    /** {@inheritDoc} */
     public int exchange() throws IOException {
-      if (credentials != null) {
-        request.addHeader("Authorize", credentials);
+      if (request.getMethod().equalsIgnoreCase("POST")) {
+        generatePostContent(request);
       }
-      try {
-        transport.exchange(request, response);
-      } catch (ServletException e) {
-        throw new IOException(e);
+      MockHttpServletResponse response = exchange1(request);
+      if (followRedirects) {
+        while (isRedirect(response)) {
+          response = exchange1(makeMockHttpGet(null, getRedirectUrl(response)));
+        }
       }
+      this.response = response;
       return response.getStatus();
     }
 
-    /** {@inheritDoc} */
+    private boolean isRedirect(MockHttpServletResponse response) {
+      int status = response.getStatus();
+      return (status == 303) || (status == 302);
+    }
+
+    private String getRedirectUrl(MockHttpServletResponse response) {
+      return String.class.cast(response.getHeader("Location"));
+    }
+
+    private MockHttpServletResponse exchange1(MockHttpServletRequest request)
+        throws IOException {
+      MockHttpServletResponse response = new MockHttpServletResponse();
+      if (referrer != null) {
+        request.addHeader("Referer", referrer);
+      }
+      if (credentials != null) {
+        request.addHeader("Authorize", credentials);
+      }
+      request.setSession(session);
+      try {
+        transport.exchange(request, response);
+      } catch (ServletException e) {
+        IOException ee = new IOException();
+        ee.initCause(e);
+        throw ee;
+      }
+      referrer = getReferrer(request);
+      return response;
+    }
+
+    private String getReferrer(MockHttpServletRequest request) {
+      String referrer = request.getRequestURL().toString();
+      int q = referrer.indexOf("?");
+      if (q >= 0) {
+        referrer = referrer.substring(0, q);
+      }
+      return referrer;
+    }
+
     public String getResponseEntityAsString() throws IOException {
       return response.getContentAsString();
     }
 
-    /** {@inheritDoc} */
+    public InputStream getResponseEntityAsStream() {
+      return new ByteArrayInputStream(response.getContentAsByteArray());
+    }
+
     public String getResponseHeaderValue(String name) {
       return String.class.cast(response.getHeader(name));
     }
 
-    /** {@inheritDoc} */
     public List<String> getResponseHeaderValues(String name) {
       List<String> result = new ArrayList<String>();
       for (Object value: response.getHeaders(name)) {
@@ -119,16 +166,14 @@ public class MockHttpClient implements HttpClientInterface {
       return result;
     }
 
-    /** {@inheritDoc} */
     public int getStatusCode() {
       return response.getStatus();
     }
 
-    public void setRequestBody(byte[] requestConent) {
-      request.setContent(requestConent);
+    public void setRequestBody(byte[] requestContent) {
+      request.setContent(requestContent);
     }
     
-    /** {@inheritDoc} */
     public void close() {
     }
 

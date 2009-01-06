@@ -27,7 +27,8 @@ import com.google.enterprise.connector.traversal.Traverser;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 
 /**
- *
+ * Access to the AuthenticationManager, AuthorizationManager, and
+ * TraversalManagager for a Connector instance.
  */
 public class ConnectorInterfaces {
 

@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc. All Rights Reserved.
+// Copyright 2002 Google, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.security.connectors.formauth;
+package com.google.parser;
 
 /**
  * Actions are fired when their <code>subject</code> parser matches. The
@@ -38,9 +38,9 @@ package com.google.enterprise.security.connectors.formauth;
  * @see Parser
  * @author Peter Mattis
  */
-public class Action<T, U extends T> extends Parser<U> {
-  private final Parser<T> subject;
-  private final Callback<U> callback;
+public class Action<T,U extends T> extends Parser<U> {
+  private Parser<T> subject;
+  private Callback<U> callback;
 
   /**
    * Class constructor.
@@ -63,9 +63,8 @@ public class Action<T, U extends T> extends Parser<U> {
    * result other than <code>NO_MATCH</code>), <code>callback.handle</code>
    * will be invoked and passed the matching region of the parse buffer.
    *
-   * @see Parser#parse
+   * @see Parser.parse
    */
-  @Override
   public int parse(char[] buf, int start, int end, U data) {
     int hit = subject.parse(buf, start, end, data);
     if (hit != NO_MATCH) {
@@ -74,4 +73,3 @@ public class Action<T, U extends T> extends Parser<U> {
     return hit;
   }
 }
-

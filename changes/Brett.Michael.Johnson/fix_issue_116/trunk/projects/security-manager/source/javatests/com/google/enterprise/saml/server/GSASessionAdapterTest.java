@@ -25,6 +25,7 @@ public class GSASessionAdapterTest extends TestCase {
   private LocalSessionManager sm;
   private GSASessionAdapter adapter;
 
+  @Override
   public void setUp() {
     sm = new LocalSessionManager();
     adapter = new GSASessionAdapter(sm);

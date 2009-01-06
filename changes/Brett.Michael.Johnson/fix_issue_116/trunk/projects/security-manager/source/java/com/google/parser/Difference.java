@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc. All Rights Reserved.
+// Copyright 2002 Google, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.security.connectors.formauth;
+package com.google.parser;
 
 /**
  * The <code>Difference</code> parser matches the prefix of the parse buffer if
@@ -30,8 +30,8 @@ package com.google.enterprise.security.connectors.formauth;
  * @author Peter Mattis
  */
 public class Difference<T> extends Parser<T> {
-  private final Parser<? super T> left;
-  private final Parser<? super T> right;
+  private Parser<? super T> left;
+  private Parser<? super T> right;
 
   /**
    * Class constructor.
@@ -56,15 +56,14 @@ public class Difference<T> extends Parser<T> {
    * string as doing so will cause this function to always return
    * <code>NO_MATCH</code>.
    *
-   * @see Parser#parse
+   * @see Parser.parse
    */
-  @Override
   public int parse(char[] buf, int start, int end, T data) {
-    int leftHit = left.parse(buf, start, end, data);
-    if (leftHit != NO_MATCH) {
-      int rightHit = right.parse(buf, start, end, data);
-      if (rightHit == NO_MATCH) {
-        return leftHit;
+    int left_hit = left.parse(buf, start, end, data);
+    if (left_hit != NO_MATCH) {
+      int right_hit = right.parse(buf, start, end, data);
+      if (right_hit == NO_MATCH) {
+        return left_hit;
       }
     }
     return NO_MATCH;

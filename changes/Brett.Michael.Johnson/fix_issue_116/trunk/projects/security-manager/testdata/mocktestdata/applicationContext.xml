@@ -26,13 +26,16 @@
     <constructor-arg><null/></constructor-arg>
   </bean>
 
+  <bean id="IdentityConfig"
+	class="com.google.enterprise.security.identity.CsvConfig">
+    <constructor-arg index="0" value="testdata/AuthSites.conf" />
+  </bean>
+
   <bean id="BackEnd"
     class="com.google.enterprise.saml.server.MockBackEnd">
     <constructor-arg index="0" ref="SessionManager" />
     <constructor-arg index="1" ref="AuthzResponder" />
-    <constructor-arg index="2" value="testdata/AuthSites.conf" />
-    <constructor-arg index="3" value="http://localhost:8973/security-manager/samlauthn" />
-    <constructor-arg index="4" value="http://localhost:8973/security-manager/samlartifact"/>
+    <property name="identityConfig" ref="IdentityConfig" />
   </bean>
 
   <bean id="Monitor"
@@ -55,5 +58,13 @@
     <property name="scheduler" ref="TraversalScheduler" />
     <property name="instantiator" ref="Instantiator" />
     <property name="backEnd" ref="BackEnd" />
+  </bean>
+
+  <bean id="Metadata"
+	class="com.google.enterprise.saml.common.Metadata">
+    <constructor-arg index="0" value="source/webdocs/test/saml-metadata.xml" />
+    <constructor-arg index="1" value="http://google.com/enterprise/security-manager" />
+    <constructor-arg index="2" value="google.com" />
+    <constructor-arg index="3" value="http://localhost:8973/security-manager/mockserviceprovider" />
   </bean>
 </beans>

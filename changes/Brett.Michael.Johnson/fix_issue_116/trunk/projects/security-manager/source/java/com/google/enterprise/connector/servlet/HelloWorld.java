@@ -19,8 +19,6 @@ import com.google.common.base.Preconditions;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.NavigableSet;
-import java.util.TreeSet;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -34,8 +32,6 @@ public class HelloWorld extends HttpServlet
 {
 	private static final long serialVersionUID = 1L;
 	
-	private NavigableSet<String> n;
-
 	/**
      * Generates a "Hello world" response.
      * @param req 
@@ -54,11 +50,6 @@ public class HelloWorld extends HttpServlet
       out.println("<HTML><HEAD><TITLE>Hello World</TITLE>"+
                   "</HEAD><BODY>Hello World!</BODY></HTML>");
       out.close();
-      // this is only here to prove that we're using java 1.6
-      n = new TreeSet<String>();
-      if (n == null) {
-    	  return;
-      }
     }
     
     /**

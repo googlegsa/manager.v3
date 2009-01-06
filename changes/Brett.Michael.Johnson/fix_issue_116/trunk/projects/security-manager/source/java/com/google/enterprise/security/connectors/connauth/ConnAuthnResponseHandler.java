@@ -55,8 +55,7 @@ final class ConnAuthnResponseHandler extends DefaultHandler {
    * @see org.xml.sax.ContentHandler#endElement(String, String, String)
    */
   @Override
-  public void endElement(String uri, String localName, String qName)
-      throws SAXException {
+  public void endElement(String uri, String localName, String qName) {
     if (IDENTITY.equals(localName)) {
       inIdentity = false;
     } else if (SUCCESS.equals(localName)) {

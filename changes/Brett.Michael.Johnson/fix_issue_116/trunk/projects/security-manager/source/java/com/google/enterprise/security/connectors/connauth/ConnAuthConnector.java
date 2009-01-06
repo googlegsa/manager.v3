@@ -21,6 +21,7 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
 
@@ -36,8 +37,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.logging.Logger;
-
-import javax.xml.ws.http.HTTPException;
 
 public class ConnAuthConnector implements Connector, Session, AuthenticationManager {
 
@@ -57,7 +56,8 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
    * username and password provided by a search user is valid for any of the
    * connectors the manager is responsible for.
    */
-  public AuthenticationResponse authenticate(AuthenticationIdentity identity) {
+  public AuthenticationResponse authenticate(AuthenticationIdentity raw) {
+    SecAuthnIdentity identity = SecAuthnIdentity.class.cast(raw);
     AuthenticationResponse notfound = new AuthenticationResponse(false, null);
     String username = identity.getUsername();
     String password = identity.getPassword();
@@ -91,10 +91,11 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
     try {
       int status = exchange.exchange();
       if (status > 300) {
-        throw new HTTPException(status);
+        throw new IOException("Message exchange returned status " + status);
       }
       connectorUserInfos = parseResponse(exchange.getResponseEntityAsString(), "");
     } catch (Exception e) {
+      // TODO: should be more restrictive
       LOGGER.warning("Could not POST:" + e.toString());
     } finally {
       exchange.close();

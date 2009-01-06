@@ -27,11 +27,11 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -41,20 +41,14 @@ import javax.servlet.http.HttpServletResponse;
 public final class ServletTestUtil {
 
   public static MockHttpServletRequest makeMockHttpGet(String clientUrl, String serverUrl) {
-    MockHttpServletRequest request = makeMockHttpRequest("GET", clientUrl, serverUrl);
-    request.setContent(new byte[0]);
-    return request;
+    return makeMockHttpRequest("GET", clientUrl, serverUrl);
   }
 
   public static MockHttpServletRequest makeMockHttpPost(String clientUrl, String serverUrl) {
-    MockHttpServletRequest request = makeMockHttpRequest("POST", clientUrl, serverUrl);
-    request.setContentType("application/x-www-form-urlencoded");
-    request.setCharacterEncoding("UTF-8");
-    request.addHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
-    return request;
+    return makeMockHttpRequest("POST", clientUrl, serverUrl);
   }
 
-  public static MockHttpServletRequest makeMockHttpRequest(String method, String client,
+  private static MockHttpServletRequest makeMockHttpRequest(String method, String client,
       String server) {
     URLBuilder serverUrl = new URLBuilder(server);
     // TODO(cph): figure out how to get servlet context from serverUrl.
@@ -208,6 +202,9 @@ public final class ServletTestUtil {
     byte[] content = bs.toByteArray();
     out.close();
     request.setContent(content);
+    request.setContentType("application/x-www-form-urlencoded");
+    request.setCharacterEncoding("UTF-8");
+    request.addHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
     request.addHeader("Content-Length", (new Integer(content.length)).toString());
   }
 
@@ -234,49 +231,13 @@ public final class ServletTestUtil {
   public static void finalizeResponse(HttpServletResponse response) {
     if (response instanceof MockHttpServletResponse) {
       MockHttpServletResponse mr = (MockHttpServletResponse) response;
-      response.addHeader("Content-Length", String.valueOf(mr.getContentLength()));
-      Cookie[] cookies = mr.getCookies();
-      if (cookies.length > 0) {
-        StringBuffer buffer = new StringBuffer();
-        for (Cookie c: cookies) {
-          if (buffer.length() > 0) {
-            buffer.append(", ");
-          }
-          convertCookie(c, buffer);
-        }
-        response.addHeader("Set-Cookie", buffer.toString());
+      int length = mr.getContentAsByteArray().length;
+      mr.setContentLength(length);
+      response.addHeader("Content-Length", String.valueOf(length));
+      String value = ServletBase.setCookieHeaderValue(Arrays.asList(mr.getCookies()));
+      if (value != null) {
+        response.addHeader("Set-Cookie", value);
       }
-    }
-  }
-
-  private static void convertCookie(Cookie c, StringBuffer buffer) {
-    buffer.append(c.getName());
-    buffer.append("=");
-    if (c.getValue() != null) {
-      buffer.append(c.getValue());
-    }
-    if (c.getComment() != null) {
-      buffer.append("; comment=");
-      buffer.append(c.getComment());
-    }
-    if (c.getDomain() != null) {
-      buffer.append("; domain=");
-      buffer.append(c.getDomain());
-    }
-    if (c.getMaxAge() > 0) {
-      buffer.append("; Max-Age=");
-      buffer.append(c.getMaxAge());
-    }
-    if (c.getPath() != null) {
-      buffer.append("; path=");
-      buffer.append(c.getPath());
-    }
-    if (c.getVersion() != -1) {
-      buffer.append("; version=");
-      buffer.append(String.valueOf(c.getVersion()));
-    }
-    if (c.getSecure()) {
-      buffer.append("; secure");
     }
   }
 }

@@ -14,13 +14,15 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.common.HttpClientInterface;
+import com.google.enterprise.common.HttpExchange;
+import com.google.enterprise.common.MockHttpClient;
 import com.google.enterprise.common.MockHttpTransport;
-import com.google.enterprise.connector.manager.ConnectorManager;
+import com.google.enterprise.common.StringPair;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.client.MockArtifactConsumer;
 import com.google.enterprise.saml.client.MockServiceProvider;
-import com.google.enterprise.saml.client.MockUserAgent;
-import com.google.enterprise.saml.common.GsaConstants;
+import com.google.enterprise.saml.common.Metadata;
 
 import junit.framework.TestCase;
 
@@ -29,29 +31,24 @@ import org.htmlcleaner.TagNode;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.ServletException;
 
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertionConsumerService;
-import static com.google.enterprise.common.ServletTestUtil.generatePostContent;
-import static com.google.enterprise.common.ServletTestUtil.makeMockHttpGet;
-import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
+import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 
-import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
-import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
-
 public class SamlSsoTest extends TestCase {
+  private static final String SP_URL =
+      "http://localhost:8973/security-manager/mockserviceprovider";
 
-  private static final String spUrl = "http://localhost:8973/search";
-
-  private final MockUserAgent userAgent;
+  private final HttpClientInterface userAgent;
 
   public SamlSsoTest(String name) throws ServletException {
     super(name);
@@ -59,42 +56,47 @@ public class SamlSsoTest extends TestCase {
     Context ctx = Context.getInstance();
     ctx.setStandaloneContext("source/webdocs/test/applicationContext.xml",
                              Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
-    BackEnd backend = ((ConnectorManager) ctx.getManager()).getBackEnd();
+    Metadata metadata =
+        Metadata.class.cast(ctx.getRequiredBean("Metadata", Metadata.class));
 
     // Initialize transport
     MockHttpTransport transport = new MockHttpTransport();
-    userAgent = new MockUserAgent(transport);
+    userAgent = new MockHttpClient(transport);
+    MockArtifactConsumer artifactConsumer = new MockArtifactConsumer();
+    artifactConsumer.setHttpClient(new MockHttpClient(transport));
 
-    EntityDescriptor gsaEntity = backend.getGsaEntity();
+    EntityDescriptor gsaEntity = metadata.getSpEntity();
     SPSSODescriptor sp = gsaEntity.getSPSSODescriptor(SAML20P_NS);
-    makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI,
-        "http://localhost:8973/" + GsaConstants.GSA_ARTIFACT_HANDLER_NAME).setIsDefault(true);
-    transport.registerServlet(sp.getDefaultAssertionConsumerService(),
-                              new MockArtifactConsumer(transport));
+    transport.registerServlet(sp.getDefaultAssertionConsumerService(), artifactConsumer);
 
-    EntityDescriptor smEntity = backend.getSecurityManagerEntity();
+    EntityDescriptor smEntity = metadata.getSmEntity();
     IDPSSODescriptor idp = smEntity.getIDPSSODescriptor(SAML20P_NS);
-    transport.registerServlet(idp.getSingleSignOnServices().get(0), new SamlAuthn());
-    transport.registerServlet(idp.getDefaultArtificateResolutionService(), new SamlArtifactResolve());
+    transport.registerServlet(idp.getSingleSignOnServices().get(0),
+                              new SamlAuthn());
+    transport.registerServlet(idp.getDefaultArtificateResolutionService(),
+                              new SamlArtifactResolve());
 
-    transport.registerServlet(spUrl, new MockServiceProvider());
+    transport.registerServlet(SP_URL, new MockServiceProvider());
   }
 
-  public void testCredentials() throws ServletException, IOException, MalformedURLException {
-    MockHttpServletResponse response = tryCredentials("joe", "plumber");
-    assertEquals("Incorrect response status code", SC_OK, response.getStatus());
+  public void testCredentials() throws IOException, MalformedURLException {
+    HttpExchange exchange = tryCredentials("joe", "plumber");
+    assertEquals("Incorrect response status code", SC_OK, exchange.getStatusCode());
   }
 
-  private MockHttpServletResponse tryCredentials(String username, String password)
-      throws ServletException, IOException, MalformedURLException {
+  private HttpExchange tryCredentials(String username, String password)
+      throws IOException, MalformedURLException {
 
     // Initial request to service provider
-    MockHttpServletResponse response1 = userAgent.exchange(makeMockHttpGet(null, spUrl));
+    HttpExchange exchange1 = userAgent.getExchange(new URL(SP_URL));
+    exchange1.setFollowRedirects(true);
+    int status = exchange1.exchange();
 
     // Parse credentials-gathering form
-    assertEquals("Incorrect response status code", SC_OK, response1.getStatus());
+    assertEquals("Incorrect response status code", SC_OK, status);
     HtmlCleaner cleaner = new HtmlCleaner();
-    TagNode[] forms = cleaner.clean(response1.getContentAsString()).getElementsByName("form", true);
+    TagNode[] forms =
+        cleaner.clean(exchange1.getResponseEntityAsString()).getElementsByName("form", true);
     assertEquals("Wrong number of forms in response", 1, forms.length);
     String method = forms[0].getAttributeByName("method");
     assertNotNull("<form> missing method attribute", method);
@@ -103,10 +105,12 @@ public class SamlSsoTest extends TestCase {
     assertNotNull("<form> missing action attribute", action);
 
     // Submit credentials-gathering form
-    MockHttpServletRequest request2 = makeMockHttpPost(null, action);
-    request2.addParameter("u1", username);
-    request2.addParameter("pw1", password);
-    generatePostContent(request2);
-    return userAgent.exchange(request2);
+    List<StringPair> params = new ArrayList<StringPair>();
+    params.add(new StringPair("u1", username));
+    params.add(new StringPair("pw1", password));
+    HttpExchange exchange2 = userAgent.postExchange(new URL(action), params);
+    exchange2.setFollowRedirects(true);
+    exchange2.exchange();
+    return exchange2;
   }
 }

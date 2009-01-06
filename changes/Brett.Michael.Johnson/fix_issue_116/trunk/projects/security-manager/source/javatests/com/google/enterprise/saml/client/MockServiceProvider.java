@@ -16,7 +16,6 @@ package com.google.enterprise.saml.client;
 
 import com.google.enterprise.common.GettableHttpServlet;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
-import com.google.enterprise.saml.server.BackEnd;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -40,18 +39,15 @@ import javax.servlet.http.HttpServletResponse;
 import static com.google.enterprise.saml.common.OpenSamlUtil.GOOGLE_PROVIDER_NAME;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertionConsumerService;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnRequest;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
-import static com.google.enterprise.saml.common.OpenSamlUtil.selectPeerEndpoint;
-
-import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
-import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
+
+import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 /**
  * The MockServiceProvider class implements a servlet pretending to be the part of a SAML Service
@@ -60,8 +56,7 @@ import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
  */
 public class MockServiceProvider extends SecurityManagerServlet implements GettableHttpServlet {
   private static final long serialVersionUID = 1L;
-  private static final String acsUrl = "http://localhost:8973/security-manager/mockartifactconsumer";
-  
+
   public MockServiceProvider() throws ServletException {
     init(new MockServletConfig());
   }
@@ -87,28 +82,23 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
   }
 
   private void ifUnknown(HttpServletResponse resp, String relayState) throws ServletException {
-    BackEnd backend = getBackEnd(getServletContext());
-
     SAMLMessageContext<SAMLObject, AuthnRequest, NameID> context = makeSamlMessageContext();
-    
-    EntityDescriptor localEntity = backend.getGsaEntity();
+
+    EntityDescriptor localEntity = getSpEntity();
     SPSSODescriptor sp = localEntity.getSPSSODescriptor(SAML20P_NS);
-    makeAssertionConsumerService(sp, SAML2_ARTIFACT_BINDING_URI, acsUrl).setIsDefault(true);
     initializeLocalEntity(context, localEntity, sp, Endpoint.DEFAULT_ELEMENT_NAME);
-    context.setOutboundMessageIssuer(localEntity.getEntityID());
     {
-      EntityDescriptor peerEntity = backend.getSecurityManagerEntity();
+      EntityDescriptor peerEntity = getSmEntity();
       initializePeerEntity(context, peerEntity, peerEntity.getIDPSSODescriptor(SAML20P_NS),
-                           SingleSignOnService.DEFAULT_ELEMENT_NAME);
-      selectPeerEndpoint(context, SAML2_REDIRECT_BINDING_URI);
-      context.setInboundMessageIssuer(peerEntity.getEntityID());
+          SingleSignOnService.DEFAULT_ELEMENT_NAME,
+          SAML2_REDIRECT_BINDING_URI);
     }
 
     // Generate the request
     {
       AuthnRequest authnRequest = makeAuthnRequest();
       authnRequest.setProviderName(GOOGLE_PROVIDER_NAME);
-      authnRequest.setIssuer(makeIssuer(localEntity.getEntityID()));
+      authnRequest.setIssuer(makeIssuer(context.getOutboundMessageIssuer()));
       authnRequest.setIsPassive(false);
       authnRequest.setAssertionConsumerServiceIndex(
           sp.getDefaultAssertionConsumerService().getIndex());

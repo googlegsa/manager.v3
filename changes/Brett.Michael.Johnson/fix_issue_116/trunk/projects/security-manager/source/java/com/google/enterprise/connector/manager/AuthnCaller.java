@@ -19,10 +19,12 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
+import com.google.enterprise.connector.spi.SecAuthnIdentity;
 
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.servlet.http.Cookie;
 
 /**
  * Calls the authenticate method of a supplied {@link AuthenticationManager},
@@ -36,14 +38,13 @@ public class AuthnCaller {
   private static final Logger LOGGER = Logger.getLogger(AuthnCaller.class.getName());
 
   private AuthenticationManager authnManager;
-  private AuthenticationIdentity identity;
-  private Map<String,String> securityContext;
+  private SecAuthnIdentity identity;
+  private SecAuthnContext securityContext;
 
-  @SuppressWarnings("unchecked")
   public AuthnCaller(AuthenticationManager authnManager, AuthenticationIdentity identity,
-      Map securityContext) {
+      SecAuthnContext securityContext) {
     this.authnManager = authnManager;
-    this.identity = identity;
+    this.identity = SecAuthnIdentity.class.cast(identity);
     this.securityContext = securityContext;
   }
 
@@ -67,8 +68,8 @@ public class AuthnCaller {
 
   private void initializeCookiesFromContext() {
     if (securityContext != null) {
-      for (Map.Entry<String,String> e: securityContext.entrySet()) {
-        identity.setCookie(e.getKey(), e.getValue());
+      for (Cookie c: securityContext.getCookies()) {
+        identity.addCookie(c);
       }
     }
   }
@@ -80,10 +81,9 @@ public class AuthnCaller {
    */
   private void reconcileReturnedCookiesWithContext() {
     if (securityContext != null) {
-      for (Object o: identity.getCookieNames()) {
-        String cookie = (String) o;
-        if (!securityContext.containsKey(cookie)) {
-          securityContext.put(cookie, identity.getCookie(cookie));
+      for (Cookie c: identity.getCookies()) {
+        if (securityContext.getCookieNamed(c.getName()) == null) {
+          securityContext.addCookie(c);
         }
       }
     }

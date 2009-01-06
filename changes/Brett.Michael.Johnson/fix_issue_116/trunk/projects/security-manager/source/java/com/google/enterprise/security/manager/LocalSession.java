@@ -17,7 +17,7 @@ package com.google.enterprise.security.manager;
 import com.google.common.base.Preconditions;
 import com.google.enterprise.sessionmanager.KeyMaterial;
 
-import java.nio.charset.Charset;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -100,8 +100,6 @@ public class LocalSession implements SessionInterface {
     private final String s;
     private final byte[] ba;
 
-    private static Charset utf8 = Charset.forName("UTF-8");
-
     SessionValue(String s) {
       Preconditions.checkNotNull(s);
       this.s = s;
@@ -118,14 +116,22 @@ public class LocalSession implements SessionInterface {
       if (ba != null) {
         return ba;
       }
-      return s.getBytes(utf8);
+      try {
+        return s.getBytes("UTF8");
+      } catch (UnsupportedEncodingException e) {
+        throw new IllegalArgumentException(e);
+      }
     }
 
     String getValue() {
       if (s != null) {
         return s;
       }
-      return new String(ba, utf8);
+      try {
+        return new String(ba, "UTF8");
+      } catch (UnsupportedEncodingException e) {
+        throw new IllegalArgumentException(e);
+      }
     }
   }
 }

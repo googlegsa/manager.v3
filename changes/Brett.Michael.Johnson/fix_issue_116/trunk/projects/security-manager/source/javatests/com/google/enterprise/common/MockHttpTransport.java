@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static com.google.enterprise.common.ServletTestUtil.finalizeResponse;
 import static com.google.enterprise.common.ServletTestUtil.servletRequestToString;
 import static com.google.enterprise.common.ServletTestUtil.servletResponseToString;
 
@@ -63,13 +64,14 @@ public final class MockHttpTransport implements HttpTransport {
   public void exchange(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     String method = request.getMethod();
-    if ("GET".equals(method)) {
+    if ("GET".equalsIgnoreCase(method)) {
       doGet(request, response);
-    } else if ("POST".equals(method)) {
+    } else if ("POST".equalsIgnoreCase(method)) {
       doPost(request, response);
     } else {
       throw new ServletException("Unknown request method: " + method);
     }
+    finalizeResponse(response);
   }
 
   private void doGet(HttpServletRequest request, HttpServletResponse response)

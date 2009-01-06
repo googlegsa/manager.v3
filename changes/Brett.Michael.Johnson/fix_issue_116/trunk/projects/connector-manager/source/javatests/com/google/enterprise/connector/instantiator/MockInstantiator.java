@@ -182,7 +182,7 @@ public class MockInstantiator implements Instantiator {
   }
 
   /**
-   * TraversalStateStore implemenetation used by the Traverser to
+   * TraversalStateStore implementation used by the Traverser to
    * maintain state between batches.
    */
   private class MockTraversalStateStore implements TraversalStateStore {
@@ -190,7 +190,7 @@ public class MockInstantiator implements Instantiator {
     private final StoreContext storeContext;
 
     public MockTraversalStateStore(String connectorName) {
-      storeContext = new StoreContext(connectorName);
+      this.storeContext = new StoreContext(connectorName);
       this.store = new GenerationalStateStore(connectorStateStore,
                                               storeContext);
     }

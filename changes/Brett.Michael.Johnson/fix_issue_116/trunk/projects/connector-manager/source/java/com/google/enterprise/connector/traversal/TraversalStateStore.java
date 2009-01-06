@@ -27,7 +27,6 @@ public interface TraversalStateStore {
    */
   public void storeTraversalState(String state);
 
-
   /**
    * Return a stored traversal state.
    *
@@ -37,7 +36,3 @@ public interface TraversalStateStore {
    */
   public String getTraversalState();
 }
-
-
-
-

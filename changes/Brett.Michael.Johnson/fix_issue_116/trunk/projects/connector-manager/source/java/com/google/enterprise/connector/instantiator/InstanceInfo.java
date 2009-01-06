@@ -368,7 +368,7 @@ public final class InstanceInfo {
   }
 
   /**
-   * TraversalStateStore implemenetation used by the Traverser to
+   * TraversalStateStore implementation used by the Traverser to
    * maintain state between batches.
    */
   private class ConnectorTraversalStateStore implements TraversalStateStore {
