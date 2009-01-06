@@ -24,16 +24,18 @@ import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.Traverser;
+import com.google.enterprise.connector.traversal.TraversalStateStore;
 
 /**
- * 
+ * Access to the AuthenticationManager, AuthorizationManager, and
+ * TraversalManagager for a Connector instance.
  */
 public class ConnectorInterfaces {
 
   final String connectorName;
   final Connector connector;
   final Pusher pusher;
-  final Instantiator instantiator;
+  final TraversalStateStore stateStore;
 
   // these are lazily constructed
   Traverser traverser = null;
@@ -48,14 +50,14 @@ public class ConnectorInterfaces {
    * @param connectorName
    * @param connector
    * @param pusher
-   * @param instantiator
+   * @param stateStore
    */
   ConnectorInterfaces(String connectorName, Connector connector, Pusher pusher,
-      Instantiator instantiator) {
+                      TraversalStateStore stateStore) {
     this.connectorName = connectorName;
     this.connector = connector;
     this.pusher = pusher;
-    this.instantiator = instantiator;
+    this.stateStore = stateStore;
   }
 
   /**
@@ -65,12 +67,13 @@ public class ConnectorInterfaces {
    * @param authenticationManager
    * @param authorizationManager
    */
-  ConnectorInterfaces(String connectorName, Traverser traverser, AuthenticationManager authenticationManager,
-      AuthorizationManager authorizationManager) {
+  ConnectorInterfaces(String connectorName, Traverser traverser,
+                      AuthenticationManager authenticationManager,
+                      AuthorizationManager authorizationManager) {
     this.connectorName = connectorName;
     this.connector = null;
     this.pusher = null;
-    this.instantiator = null;
+    this.stateStore = null;
     this.traverser = traverser;
     this.authenticationManager = authenticationManager;
     this.authorizationManager = authorizationManager;
@@ -135,7 +138,7 @@ public class ConnectorInterfaces {
       try {
         qtm = s.getTraversalManager();
         traverser =
-           new QueryTraverser(pusher, qtm, instantiator, connectorName);
+           new QueryTraverser(pusher, qtm, stateStore, connectorName);
       } catch (RepositoryException ignore) {
         // By only creating the Traverser after successfully getting
         // a TraversalManager, we avoid caching a Traverser with a

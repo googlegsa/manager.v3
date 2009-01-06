@@ -14,9 +14,7 @@
 
 package com.google.enterprise.connector.traversal;
 
-import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.FeedException;
 import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.pusher.Pusher;
@@ -43,22 +41,21 @@ public class QueryTraverser implements Traverser {
 
   private Pusher pusher;
   private TraversalManager queryTraversalManager;
-  private Instantiator instantiator;
+  private TraversalStateStore stateStore;
   private String connectorName;
   private int timeout;
 
   private static final int TRAVERSAL_TIMEOUT = 5000;
 
-  public QueryTraverser(Pusher p, TraversalManager q, Instantiator i,
-      String n) {
-    this.pusher = p;
-    this.queryTraversalManager = q;
-    this.instantiator = i;
-    this.connectorName = n;
+  public QueryTraverser(Pusher pusher, TraversalManager traversalManager,
+                        TraversalStateStore stateStore, String connectorName) {
+    this.pusher = pusher;
+    this.queryTraversalManager = traversalManager;
+    this.stateStore = stateStore;
+    this.connectorName = connectorName;
     if (this.queryTraversalManager instanceof HasTimeout) {
-      int requestedTimeout = ((HasTimeout) queryTraversalManager)
-          .getTimeoutMillis();
-      this.timeout = Math.max(requestedTimeout, TRAVERSAL_TIMEOUT);
+      this.timeout = Math.max(TRAVERSAL_TIMEOUT,
+          ((HasTimeout) queryTraversalManager).getTimeoutMillis());
     }
     if (this.queryTraversalManager instanceof TraversalContextAware) {
       TraversalContext tc = Context.getInstance().getTraversalContext();
@@ -85,11 +82,7 @@ public class QueryTraverser implements Traverser {
     DocumentList resultSet = null;
     String connectorState;
     try {
-      connectorState = instantiator.getConnectorState(connectorName);
-    } catch (ConnectorNotFoundException cnfe) {
-      // Our connector seems to have been deleted.  Don't process a batch.
-      LOGGER.finer("Halting traversal...");
-      return 0;
+      connectorState = stateStore.getTraversalState();
     } catch (IllegalStateException ise) {
       // We get here if the ConnectorStateStore for connector is disabled.
       // That happens if the connector was deleted while we were asleep.
@@ -158,7 +151,7 @@ public class QueryTraverser implements Traverser {
           }
         } catch (RepositoryDocumentException e) {
           // Skip individual documents that fail.  Proceed on to the next one.
-          LOGGER.log(Level.WARNING, "Skipping document (" + docid 
+          LOGGER.log(Level.WARNING, "Skipping document (" + docid
               + ") from connector " + connectorName, e);
         } catch (OutOfMemoryError e) {
           System.runFinalization();
@@ -174,7 +167,7 @@ public class QueryTraverser implements Traverser {
           }
         } catch (RuntimeException e) {
           // Skip individual documents that fail.  Proceed on to the next one.
-          LOGGER.log(Level.WARNING, "Skipping document (" + docid 
+          LOGGER.log(Level.WARNING, "Skipping document (" + docid
               + ") from connector " + connectorName, e);
         }
       }
@@ -224,8 +217,8 @@ public class QueryTraverser implements Traverser {
     try {
       connectorState = pm.checkpoint();
     } catch (RepositoryException re) {
-      // If checkpoint() throws RepositoryException, it means there is no 
-      // new checkpoint.  
+      // If checkpoint() throws RepositoryException, it means there is no
+      // new checkpoint.
       return null;
     } catch (Exception e) {
       // If checkpoint() throws some general Exception, it is probably
@@ -235,13 +228,10 @@ public class QueryTraverser implements Traverser {
     }
     try {
       if (connectorState != null) {
-        instantiator.setConnectorState(connectorName, connectorState);
+        stateStore.storeTraversalState(connectorState);
         LOGGER.finest("...checkpoint " + connectorState + " created.");
       }
       return connectorState;
-    } catch (ConnectorNotFoundException cnfe) {
-      // Our connector seems to have been deleted.  Don't save a checkpoint.
-      LOGGER.finest("...checkpoint " + connectorState + " discarded.");
     } catch (IllegalStateException ise) {
       // We get here if the ConnectorStateStore for connector is disabled.
       // That happens if the connector was deleted while we were working.
