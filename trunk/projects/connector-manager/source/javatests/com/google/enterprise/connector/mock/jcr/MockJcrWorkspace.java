@@ -48,7 +48,7 @@ public class MockJcrWorkspace implements Workspace {
   MockJcrSession session;
 
   /**
-   * Create a Workspace object from a 
+   * Create a Workspace object from a
    * @param repo
    * @param session
    */
@@ -72,7 +72,7 @@ public class MockJcrWorkspace implements Workspace {
   public String getName() {
     return "MockJcrWorkspace";
   }
-  
+
   /**
    * Gets a QueryManager for this Workspace
    * @return MockJcrQueryManager
@@ -122,8 +122,8 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @param arg1 
+   * @param arg0
+   * @param arg1
    */
   public void copy(String arg0, String arg1){
     throw new UnsupportedOperationException();
@@ -131,9 +131,9 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @param arg1 
-   * @param arg2 
+   * @param arg0
+   * @param arg1
+   * @param arg2
    */
   public void copy(String arg0, String arg1, String arg2) {
     throw new UnsupportedOperationException();
@@ -141,10 +141,10 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @param arg1 
-   * @param arg2 
-   * @param arg3 
+   * @param arg0
+   * @param arg1
+   * @param arg2
+   * @param arg3
    */
   public void clone(String arg0, String arg1, String arg2, boolean arg3) {
     throw new UnsupportedOperationException();
@@ -152,8 +152,8 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @param arg1 
+   * @param arg0
+   * @param arg1
    */
   public void move(String arg0, String arg1) {
     throw new UnsupportedOperationException();
@@ -161,8 +161,8 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @param arg1 
+   * @param arg0
+   * @param arg1
    */
   public void restore(Version[] arg0, boolean arg1) {
     throw new UnsupportedOperationException();
@@ -170,8 +170,8 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @param arg1 
+   * @param arg0
+   * @param arg1
    * @return nothing
    */
   public ContentHandler getImportContentHandler(String arg0, int arg1) {
@@ -180,9 +180,9 @@ public class MockJcrWorkspace implements Workspace {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
-   * @param arg1 
-   * @param arg2 
+   * @param arg0
+   * @param arg1
+   * @param arg2
    */
   public void importXML(String arg0, InputStream arg1, int arg2) {
     throw new UnsupportedOperationException();

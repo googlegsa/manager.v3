@@ -22,22 +22,22 @@ import java.util.Properties;
 public interface ConnectorConfigStore {
   /**
    * Gets the stored configuration of a named connector.
-   * 
+   *
    * @param context a StoreContext
-   * @return the configuration Properties, or null if no configuration has 
+   * @return the configuration Properties, or null if no configuration has
    *         been stored for this connector.
    */
   public Properties getConnectorConfiguration(StoreContext context);
 
   /**
    * Sets the stored configuration of a named connector.
-   * 
+   *
    * @param context a StoreContext
    * @param configuration Properties to store
    */
   public void storeConnectorConfiguration(StoreContext context,
       Properties configuration);
-  
+
   /**
    * Remove a stored connector configuration.  If no such connector exists,
    * do nothing.

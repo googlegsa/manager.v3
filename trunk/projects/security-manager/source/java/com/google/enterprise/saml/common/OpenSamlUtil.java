@@ -629,7 +629,7 @@ public final class OpenSamlUtil {
   }
 
   /*
-   * Metadata descriptions. 
+   * Metadata descriptions.
    */
 
   /**

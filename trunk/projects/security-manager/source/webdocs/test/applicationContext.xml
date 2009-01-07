@@ -2,24 +2,24 @@
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 <beans>
   <bean id="EncryptedPropertyPlaceholderConfigurer"
-    class="com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer">
-  </bean> 
+        class="com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer">
+  </bean>
 
   <bean id="SessionManager"
-    class="com.google.enterprise.security.manager.LocalSessionManager">
+        class="com.google.enterprise.security.manager.LocalSessionManager">
   </bean>
 
   <bean id="AuthzResponder"
-    class="com.google.enterprise.saml.server.AuthzResponderImpl">
+        class="com.google.enterprise.saml.server.AuthzResponderImpl">
   </bean>
 
   <bean id="Instantiator"
-    class="com.google.enterprise.connector.instantiator.SpringInstantiator">
+        class="com.google.enterprise.connector.instantiator.SpringInstantiator">
     <constructor-arg><null/></constructor-arg>
   </bean>
 
   <bean id="ConnectorConfigStore"
-    class="com.google.enterprise.connector.persist.FileStore">
+        class="com.google.enterprise.connector.persist.FileStore">
   </bean>
 
   <bean id="IdentityConfig"
@@ -28,14 +28,14 @@
   </bean>
 
   <bean id="BackEnd"
-    class="com.google.enterprise.saml.server.BackEndImpl">
+        class="com.google.enterprise.saml.server.BackEndImpl">
     <constructor-arg index="0" ref="SessionManager" />
     <constructor-arg index="1" ref="AuthzResponder" />
     <property name="identityConfig" ref="IdentityConfig" />
   </bean>
 
   <bean id="ConnectorManager"
-    class="com.google.enterprise.connector.manager.ConnectorManager">
+        class="com.google.enterprise.connector.manager.ConnectorManager">
     <property name="instantiator" ref="Instantiator" />
     <property name="backEnd" ref="BackEnd" />
   </bean>

@@ -17,7 +17,7 @@ package com.google.enterprise.connector.spiimpl;
 public class StringValue extends ValueImpl {
 
   private String stringValue;
-  
+
   public StringValue(String string) {
     super();
     this.stringValue = string;

@@ -18,11 +18,11 @@ package com.google.enterprise.connector.spi;
  * Interface that represents a list of documents to be traversed.
  * Documents are accessed through an iterator-like method:
  * <code>{@link #nextDocument()}</code>, which returns the next available
- * <code>{@link Document}</code> or null if there are no more. 
- * Important: a <code>Document</code> object obtained by calling 
+ * <code>{@link Document}</code> or null if there are no more.
+ * Important: a <code>Document</code> object obtained by calling
  * <code>{@link #nextDocument()}</code> is invalidated by the next
  * call to <code>{@link #nextDocument()}</code>. Typically, the caller will
- * store the current Document in a loop variable, so that it is clear that 
+ * store the current Document in a loop variable, so that it is clear that
  * this rule is observed; see the example code below.
  * <p>
  * In addition, a this interface has a special method
@@ -46,7 +46,7 @@ package com.google.enterprise.connector.spi;
  * </ul>
  * The typical pattern for consuming an object that implements this interface
  * is this (disregarding exception handling):
- * 
+ *
  * <pre>
  * DocumentList docList = ...
  * Document doc;
@@ -56,10 +56,10 @@ package com.google.enterprise.connector.spi;
  * }
  * String check = doclist.checkpoint();
  * </pre>
- * 
+ *
  * Note: because of the restriction that the next call to
  * <code>nextDocument()</code> invalidates the previous Document, and there
- * are similar restrictions in the <code>{@link Document}</code> interface, 
+ * are similar restrictions in the <code>{@link Document}</code> interface,
  * it is possible to provide a single stateful object that implements
  * <code>{@link DocumentList}</code>, <code>{@link Document}</code> and
  * <code>{@link Property}</code>, by returning <code>this</code> (or
@@ -71,7 +71,7 @@ public interface DocumentList {
 
   /**
    * Returns the next Document in this document list, if there is one.
-   * 
+   *
    * @return The new current document if there is one; <code>null</code>
    *         otherwise.
    * @throws RepositoryException if a repository access error occurs.
@@ -95,7 +95,7 @@ public interface DocumentList {
    * after a crash if necessary. When it chooses to restart traversal, it will
    * supply this string in a call to
    * <code>{@link TraversalManager#resumeTraversal(String)}</code>.
-   * 
+   *
    * @return A non-<code>null</code> <code>String</code> that can be supplied
    *         subsequently to {@link TraversalManager#resumeTraversal(String)}.
    * @throws RepositoryException if a repository access error occurs of if

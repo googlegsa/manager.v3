@@ -104,7 +104,7 @@ public class JcrAuthorizationManagerTest extends TestCase {
   }
 
   public final void testAuthorizeNewFormat() throws RepositoryException {
-    MockRepositoryEventList mrel = 
+    MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLogAcl.txt");
     MockRepository r = new MockRepository(mrel);
     MockJcrRepository repo = new MockJcrRepository(r);
@@ -115,7 +115,7 @@ public class JcrAuthorizationManagerTest extends TestCase {
     {
       String username = "joe";
       Map expectedResults = new HashMap();
-      
+
       expectedResults.put("no_acl", Boolean.TRUE);
       expectedResults.put("user_acl", Boolean.TRUE);
       expectedResults.put("user_role_acl", Boolean.TRUE);

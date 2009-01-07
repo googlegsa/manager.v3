@@ -26,7 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Manage persistence for schedule and state and configuration 
+ * Manage persistence for schedule and state and configuration
  * for a named connector. The persistent store for these data items
  * are files in the connector's work directory.
  */
@@ -141,7 +141,7 @@ public class FileStore implements ConnectorScheduleStore,
    * Gets the stored configuration of a named connector.
    *
    * @param context a StoreContext
-   * @return the configuration Properties, or null if no configuration 
+   * @return the configuration Properties, or null if no configuration
    *         has been stored for this connector.
    */
   public Properties getConnectorConfiguration(StoreContext context) {
@@ -161,14 +161,14 @@ public class FileStore implements ConnectorScheduleStore,
 
   /**
    * Stores the configuration of a named connector.
-   * 
+   *
    * @param context a StoreContext
    * @param configuration Properties to store
    */
-  public void storeConnectorConfiguration(StoreContext context, 
+  public void storeConnectorConfiguration(StoreContext context,
       Properties configuration) {
     if (configuration == null) {
-      removeConnectorConfiguration(context);      
+      removeConnectorConfiguration(context);
       return;
     }
     testStoreContext(context);
@@ -181,7 +181,7 @@ public class FileStore implements ConnectorScheduleStore,
                  + context.getConnectorName(), e);
     }
   }
-  
+
   /**
    * Remove a stored connector configuration.  If no such connector exists,
    * do nothing.

@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 /**
  * Admin servlet to get the config form to edit with pre-filled data
  * for a given existing connector name and language.
- * 
+ *
  */
 public class GetConnectorConfigToEdit extends ConnectorManagerGetServlet {
   private static final Logger LOGGER = Logger.getLogger(
@@ -45,7 +45,7 @@ public class GetConnectorConfigToEdit extends ConnectorManagerGetServlet {
   /**
    * Handler for doGet in order to do unit tests.
    * Returns the connector config form with pre-filled data.
-   * 
+   *
    */
   public static void handleDoGet(String connectorName, String language,
       Manager manager, PrintWriter out) {

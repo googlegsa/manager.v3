@@ -64,12 +64,12 @@ public class EncryptedPropertyPlaceholderConfigurer extends
     PropertyPlaceholderConfigurer {
 
   private static final String KEY_NAME = "EXTERNAL_CM_KEY";
-  
+
   private static final Logger LOGGER =
     Logger.getLogger(EncryptedPropertyPlaceholderConfigurer.class.getName());
 
   private static String keyStorePath = "external_cm.keystore";
-  
+
   private static String keyStorePasswdPath = null;
 
   private static String keyStoreType = "JCEKS";
@@ -78,14 +78,14 @@ public class EncryptedPropertyPlaceholderConfigurer extends
 
   /*
    * Overridden from the base class implementation. This looks for a
-   * properties with "password" in their name (case insensitive match) 
+   * properties with "password" in their name (case insensitive match)
    * and decrypts them.
    */
-  public void convertProperties(Properties properties) {   
+  public void convertProperties(Properties properties) {
     decryptSensitiveProperties(properties);
     super.convertProperties(properties);
   }
-  
+
   public static void encryptSensitiveProperties(Properties properties) {
     // New style properties file, encrypt any key with 'password' in it.
     PropertiesUtils.stampPropertiesVersion(properties);
@@ -120,13 +120,13 @@ public class EncryptedPropertyPlaceholderConfigurer extends
     keyStorePath = k;
     LOGGER.log(Level.INFO, "Using keystore " + k);
   }
-  
+
   public static String getKeyStorePath() {
     return keyStorePath;
   }
-  
+
   public static void setKeyStorePasswdPath(String k) {
-    keyStorePasswdPath = k;    
+    keyStorePasswdPath = k;
   }
 
   public static void setKeyStoreType(String t) {
@@ -149,8 +149,8 @@ public class EncryptedPropertyPlaceholderConfigurer extends
    * Creates a new keystore if none exists, or reads in existing
    * keystore.
    */
-  public static KeyStore getKeyStore() throws 
-                   KeyStoreException, CertificateException, 
+  public static KeyStore getKeyStore() throws
+                   KeyStoreException, CertificateException,
                    NoSuchAlgorithmException, IOException {
     KeyStore ks = KeyStore.getInstance(keyStoreType);
     FileInputStream fis = null;
@@ -162,14 +162,14 @@ public class EncryptedPropertyPlaceholderConfigurer extends
     }
     String keyStorePasswd = getKeyStorePasswd();
     char [] keyPassChars = keyStorePasswd.toCharArray();
-    if (keyStorePasswd.length() == 0) keyPassChars = null;    
+    if (keyStorePasswd.length() == 0) keyPassChars = null;
     ks.load(fis, keyPassChars);
     if (fis != null) fis.close();
     return ks;
   }
 
   /*
-   * Reads in password used to secure keystore. 
+   * Reads in password used to secure keystore.
    */
   private static String getKeyStorePasswd() {
     if (keyStorePasswdPath == null) return "";
@@ -185,14 +185,14 @@ public class EncryptedPropertyPlaceholderConfigurer extends
     }
     return "";
   }
-  
+
   /*
-   * Reads in secret key from keystore, or generates one and stores it in the 
+   * Reads in secret key from keystore, or generates one and stores it in the
    * keystore if none exists.
    */
   private static SecretKey getSecretKey() throws NoSuchAlgorithmException,
       KeyStoreException, CertificateException, IOException {
-    
+
     SecretKey key = null;
     KeyStore keyStore = getKeyStore();
     String keyStorePasswd = getKeyStorePasswd();
@@ -216,13 +216,13 @@ public class EncryptedPropertyPlaceholderConfigurer extends
     }
     return key;
   }
-  
+
   public static String encryptString(String plainText) {
     try {
-      SecretKey key = getSecretKey(); 
+      SecretKey key = getSecretKey();
       Cipher encryptor = Cipher.getInstance(keyStoreCryptoAlgo);
       encryptor.init(Cipher.ENCRYPT_MODE, key);
-      
+
       // Encode the string into bytes using utf-8
       byte[] utf8 = plainText.getBytes("UTF8");
       // Encrypt
@@ -260,14 +260,14 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       throw new RuntimeException("Could not encrypt password");
     }
   }
-  
+
   public static String decryptString(String cipherText) {
     try {
       Key secretKey = getSecretKey();
-      
+
       Cipher decryptor = Cipher.getInstance(keyStoreCryptoAlgo);
       decryptor.init(Cipher.DECRYPT_MODE, secretKey);
-      
+
       // Decode base64 to get bytes
       byte[] dec = new sun.misc.BASE64Decoder().decodeBuffer(cipherText);
       // Decrypt
@@ -294,7 +294,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
     } catch (InvalidKeyException e) {
       LOGGER.log(Level.SEVERE, "Could not decrypt password");
       throw new RuntimeException("Could not decrypt password");
-    } catch (BadPaddingException e) {      
+    } catch (BadPaddingException e) {
       LOGGER.log(Level.SEVERE, "Could not decrypt password");
       throw new RuntimeException("Could not decrypt password");
     } catch (IllegalStateException e) {

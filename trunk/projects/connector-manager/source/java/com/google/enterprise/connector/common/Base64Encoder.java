@@ -44,7 +44,7 @@ public class Base64Encoder {
    * @param data the character buffer
    * @param out output writer
    * @return the number of bytes processed
-   * @throws IOException 
+   * @throws IOException
    */
   public static int encode(byte data[], Writer out)
     throws IOException {
@@ -52,7 +52,7 @@ public class Base64Encoder {
   }
 
   /**
-   * Encoding algorithm. 
+   * Encoding algorithm.
    * @param data input data array
    * @param off offset into data array
    * @param len length to encode
@@ -66,9 +66,9 @@ public class Base64Encoder {
       b = data[off+1];
       c = data[off+2];
       outBuf[outLen++] = charMap[(a >>> 2) & 0x3F];
-      outBuf[outLen++] = charMap[((a << 4) & 0x30) + 
+      outBuf[outLen++] = charMap[((a << 4) & 0x30) +
                                          ((b >>> 4) & 0xf)];
-      outBuf[outLen++] = charMap[((b << 2) & 0x3c) + 
+      outBuf[outLen++] = charMap[((b << 2) & 0x3c) +
                                          ((c >>> 6) & 0x3)];
       outBuf[outLen++] = charMap[c & 0x3F];
       len -= 3;
@@ -80,7 +80,7 @@ public class Base64Encoder {
       b = 0;
       c = 0;
       outBuf[outLen++] = charMap[(a >>> 2) & 0x3F];
-      outBuf[outLen++] = charMap[((a << 4) & 0x30) + 
+      outBuf[outLen++] = charMap[((a << 4) & 0x30) +
                                          ((b >>> 4) & 0xf)];
       outBuf[outLen++] = '=';
       outBuf[outLen++] = '=';
@@ -90,9 +90,9 @@ public class Base64Encoder {
       b = data[off+1];
       c = 0;
       outBuf[outLen++] = charMap[(a >>> 2) & 0x3F];
-      outBuf[outLen++] = charMap[((a << 4) & 0x30) + 
+      outBuf[outLen++] = charMap[((a << 4) & 0x30) +
                                          ((b >>> 4) & 0xf)];
-      outBuf[outLen++] = charMap[((b << 2) & 0x3c) + 
+      outBuf[outLen++] = charMap[((b << 2) & 0x3c) +
                                          ((c >>> 6) & 0x3)];
       outBuf[outLen++] = '=';
       off+=2;
@@ -104,15 +104,15 @@ public class Base64Encoder {
   /**
    * Write out a buffer using Base64 encoding.
    *
-   * WARNING: This method will not flush the Writer 'out' (second argument). 
-   * You'll have to do this yourself, or lose some of your precious data. 
+   * WARNING: This method will not flush the Writer 'out' (second argument).
+   * You'll have to do this yourself, or lose some of your precious data.
    *
    * @param data the character buffer
    * @param off the starting offset in data
    * @param len length of data in data
    * @param out output writer
    * @return the number of bytes processed
-   * @throws IOException 
+   * @throws IOException
    */
   public static int encode(byte data[], int off, int len, Writer out)
     throws IOException {
@@ -125,14 +125,14 @@ public class Base64Encoder {
   /**
    * Write out a whole {@link InputStream} using Base64 encoding.
    *
-   * WARNING: This method will not flush the Writer 'out' (second argument). 
-   * You'll have to do this yourself, or lose some of your precious data. 
+   * WARNING: This method will not flush the Writer 'out' (second argument).
+   * You'll have to do this yourself, or lose some of your precious data.
    *
    * @param inStream the input data stream
    * @param out output writer
    * @param bufferSize size of buffer used for each encoding run
    * @return number of bytes processed
-   * @throws IOException 
+   * @throws IOException
    */
   public static int encode(InputStream inStream, Writer out, int bufferSize)
     throws IOException {
@@ -153,17 +153,17 @@ public class Base64Encoder {
    * Write out a whole {@link InputStream} using Base64 encoding,
    * using default buffer size of 1024*3.
    *
-   * WARNING: This method will not flush the Writer 'out' (second argument). 
-   * You'll have to do this yourself, or lose some of your precious data. 
+   * WARNING: This method will not flush the Writer 'out' (second argument).
+   * You'll have to do this yourself, or lose some of your precious data.
    *
    * @param inStream the input data stream
    * @param out output writer
    * @return number of bytes processed
-   * @throws IOException 
+   * @throws IOException
    */
   public static int encode(InputStream inStream, Writer out)
     throws IOException {
     return encode(inStream, out, 1024*3);
   }
- 
+
 }

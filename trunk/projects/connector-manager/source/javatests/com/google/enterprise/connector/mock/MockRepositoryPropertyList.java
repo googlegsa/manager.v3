@@ -29,9 +29,9 @@ import java.util.Map;
  * <p>
  * This models the metadata-list for a document.
  */
-public class MockRepositoryPropertyList { 
+public class MockRepositoryPropertyList {
   private Map proplist;
-  
+
   public String toString() {
     return proplist.toString();
   }
@@ -42,11 +42,11 @@ public class MockRepositoryPropertyList {
       return;
     }
     for (Iterator iter = l.iterator(); iter.hasNext(); ) {
-    	MockRepositoryProperty p = (MockRepositoryProperty) iter.next();
+      MockRepositoryProperty p = (MockRepositoryProperty) iter.next();
       proplist.put(p.getName(), p);
-    }   
+    }
   }
-  
+
   public MockRepositoryPropertyList() {
     init(null);
   }
@@ -58,7 +58,7 @@ public class MockRepositoryPropertyList {
   public MockRepositoryPropertyList(List l) {
     init(l);
   }
-  
+
   public MockRepositoryPropertyList(JSONObject jo) {
     List l = new LinkedList();
     for (Iterator keys = jo.keys(); keys.hasNext(); ) {
@@ -70,8 +70,8 @@ public class MockRepositoryPropertyList {
         throw new IllegalArgumentException("Bad JSON object");
       }
       MockRepositoryProperty p = new MockRepositoryProperty(name, value);
-      l.add(p);     
-    }    
+      l.add(p);
+    }
     init(l);
   }
 

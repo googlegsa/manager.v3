@@ -29,10 +29,10 @@ import com.google.enterprise.connector.manager.MockManager;
  */
 public class SetManagerConfigHandlerTest extends TestCase {
   private static final Logger LOGGER =
-	  Logger.getLogger(SetManagerConfigHandlerTest.class.getName());
+    Logger.getLogger(SetManagerConfigHandlerTest.class.getName());
   private String host;
   private int port;
-  
+
   public void testHandleDoPost1() {
     host = "10.32.20.102";
     port = 9411;
@@ -60,10 +60,10 @@ public class SetManagerConfigHandlerTest extends TestCase {
   }
 
   private void doTest(String xmlBody) {
-	LOGGER.info("xmlBody: " + xmlBody);
+  LOGGER.info("xmlBody: " + xmlBody);
     Manager manager = MockManager.getInstance();
     SetManagerConfigHandler hdl =
-    	new SetManagerConfigHandler(manager, xmlBody);
+      new SetManagerConfigHandler(manager, xmlBody);
     LOGGER.info("host: " + hdl.getFeederGateHost() + " " + this.host);
     LOGGER.info("Port: " + hdl.getFeederGatePort());
     Assert.assertEquals(this.host, hdl.getFeederGateHost());
@@ -73,7 +73,7 @@ public class SetManagerConfigHandlerTest extends TestCase {
 
 public String setXMLBody() {
   return
-	  "<" + ServletUtil.XMLTAG_MANAGER_CONFIG + ">\n" +
+    "<" + ServletUtil.XMLTAG_MANAGER_CONFIG + ">\n" +
       "  <FeederGate host=\"" + this.host + "\" port=\""+ this.port + "\"/>\n" +
       "</" + ServletUtil.XMLTAG_MANAGER_CONFIG + ">";
   }

@@ -58,7 +58,7 @@ public abstract class ValueImpl extends Value {
    * @return String representation for use in a feed document
    */
   public abstract String toFeedXml();
-  
+
   /**
    * Converts to boolean if possible
    * @return boolean representation of the Value

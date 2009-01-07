@@ -44,7 +44,7 @@ public abstract class SecurityManagerServlet extends ServletBase {
 
   private final Context context;
   private final Metadata metadata;
-  
+
   protected SecurityManagerServlet() {
     ServletConfig config = getServletConfig();
     if (config == null) {

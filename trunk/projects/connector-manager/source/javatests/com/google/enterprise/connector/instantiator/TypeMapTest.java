@@ -24,7 +24,7 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 
 /**
- * 
+ *
  */
 public class TypeMapTest extends TestCase {
 
@@ -46,12 +46,12 @@ public class TypeMapTest extends TestCase {
   }
 
   /**
-   * Test method for 
+   * Test method for
    * {@link com.google.enterprise.connector.instantiator.TypeMap
    * #getTypeInfo(java.lang.String)}.
    */
   public final void testGetTypeInfo() {
-    TypeMap typeMap = new TypeMap("classpath*:config/connectorType.xml", 
+    TypeMap typeMap = new TypeMap("classpath*:config/connectorType.xml",
         TEST_DIR_NAME);
     verifyType(typeMap, "TestConnectorA");
     verifyType(typeMap, "TestConnectorB");

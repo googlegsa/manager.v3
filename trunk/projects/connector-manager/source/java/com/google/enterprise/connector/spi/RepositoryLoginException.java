@@ -27,7 +27,7 @@ public class RepositoryLoginException extends RepositoryException {
 
   /**
    * Constructs a RepositoryLoginException with a supplied message but no root cause.
-   * @param message the message. Can be retrieved by the 
+   * @param message the message. Can be retrieved by the
    * {@link #getMessage()} method.
    */
   public RepositoryLoginException(String message) {
@@ -36,7 +36,7 @@ public class RepositoryLoginException extends RepositoryException {
 
   /**
    * Constructs a RepositoryLoginException with message and root cause.
-   * @param message   the message. Can be retrieved by the 
+   * @param message   the message. Can be retrieved by the
    * {@link #getMessage()} method.
    * @param rootCause root failure cause
    */

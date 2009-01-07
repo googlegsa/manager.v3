@@ -35,7 +35,7 @@ public class ConnectorManagerException extends Exception {
   /**
    * Constructs a ConnectorManagerException with a supplied message but no root
    * cause.
-   * 
+   *
    * @param message the message. Can be retrieved by the {@link #getMessage()}
    *        method.
    */
@@ -45,7 +45,7 @@ public class ConnectorManagerException extends Exception {
 
   /**
    * Constructs a ConnectorManagerException with message and root cause.
-   * 
+   *
    * @param message the message. Can be retrieved by the {@link #getMessage()}
    *        method.
    * @param rootCause root failure cause
@@ -57,7 +57,7 @@ public class ConnectorManagerException extends Exception {
 
   /**
    * Constructs a ConnectorManagerException with the specified root cause.
-   * 
+   *
    * @param rootCause root failure cause
    */
   public ConnectorManagerException(Throwable rootCause) {
@@ -68,7 +68,7 @@ public class ConnectorManagerException extends Exception {
   /**
    * Returns the detail message, including messages from nested exceptions if
    * any.
-   * 
+   *
    * @return the message
    */
   public String getMessage() {
@@ -83,7 +83,7 @@ public class ConnectorManagerException extends Exception {
 
   /**
    * Returns the embedded cause (throwable) which may be null.
-   * 
+   *
    * @return the cause
    */
   public Throwable getCause() {

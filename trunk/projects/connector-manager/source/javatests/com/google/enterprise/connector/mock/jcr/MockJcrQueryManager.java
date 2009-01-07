@@ -39,16 +39,16 @@ import javax.jcr.query.QueryManager;
  */
 public class MockJcrQueryManager implements QueryManager {
 
-  private static final String XPATH_QUERY_STRING_UNBOUNDED_DEFAULT = 
+  private static final String XPATH_QUERY_STRING_UNBOUNDED_DEFAULT =
     "//*[@jcr:primaryType='nt:resource'] order by @jcr:lastModified, @jcr:uuid";
-  
-  private static final String XPATH_QUERY_STRING_BOUNDED_DEFAULT = 
+
+  private static final String XPATH_QUERY_STRING_BOUNDED_DEFAULT =
     "//*[@jcr:primaryType = 'nt:resource' and @jcr:lastModified >= " +
     "''{0}''] order by @jcr:lastModified, @jcr:uuid";
-  
+
   private String xpathUnboundedTraversalQuery;
   private String xpathBoundedTraversalQuery;
-  
+
   /**
    * @param xpathBoundedTraversalQuery the xpathBoundedTraversalQuery to set
    */
@@ -69,7 +69,7 @@ public class MockJcrQueryManager implements QueryManager {
 
   /**
    * Creates a MockJcrQueryManager from a MockRepositoryDocumentStore
-   * 
+   *
    * @param store
    */
   public MockJcrQueryManager(MockRepositoryDocumentStore store) {
@@ -80,7 +80,7 @@ public class MockJcrQueryManager implements QueryManager {
 
   /**
    * Creates a query object. This class does not fully support JCR, because only
-   * the pseudo-query-language "mockQueryLanguage" is supported. 
+   * the pseudo-query-language "mockQueryLanguage" is supported.
    * @param statement
    * @param language
    * @return MockJcrQuery
@@ -139,10 +139,10 @@ public class MockJcrQueryManager implements QueryManager {
 
     MessageFormat mf = new MessageFormat(xpathBoundedTraversalQuery);
     Object[] objs = mf.parse(statement, new ParsePosition(0));
-    
+
     if (objs == null || objs.length < 1 || !(objs[0] instanceof String)) {
       throw new InvalidQueryException("Invalid query: \"" + statement + "\" "
-          + "does not match format: \"" + xpathBoundedTraversalQuery + "\"");      
+          + "does not match format: \"" + xpathBoundedTraversalQuery + "\"");
     }
     String dateString = (String) objs[0];
     return createXpathQueryWithBound(statement, dateString);
@@ -175,7 +175,7 @@ public class MockJcrQueryManager implements QueryManager {
   /**
    * Returns the query languages supported - in this case, only the mock query
    * language "mockQueryLanguage".
-   * 
+   *
    * @return {"mockQueryLanguage"}
    */
   public String[] getSupportedQueryLanguages() {
@@ -186,7 +186,7 @@ public class MockJcrQueryManager implements QueryManager {
 
   /**
    * Throws UnsupportedOperationException
-   * 
+   *
    * @param arg0
    * @return nothing
    */

@@ -27,7 +27,7 @@ import java.util.logging.Logger;
  * Unit tests for properties
  */
 public class MockRepositoryPropertyTest extends TestCase {
-  private static final Logger logger = 
+  private static final Logger logger =
     Logger.getLogger(MockRepositoryPropertyTest.class.getName());
   /**
    * Test the JSON constructor
@@ -57,8 +57,8 @@ public class MockRepositoryPropertyTest extends TestCase {
         throw new IllegalArgumentException("test input can not be parsed");
       }
       MockRepositoryProperty p = new MockRepositoryProperty(name, value);
-      logger.info("Created property " + p);    
-    }    
+      logger.info("Created property " + p);
+    }
     logger.info("Input object " + jo);
   }
 
@@ -78,7 +78,7 @@ public class MockRepositoryPropertyTest extends TestCase {
     Assert.assertEquals(false, p.isRepeating());
     Assert.assertEquals(1, values.length);
     Assert.assertEquals("skeedle", values[0]);
-    
+
     input = "{type:integer, value:[2, 3, 5, 7, 11]}";
     try {
       jo = new JSONObject(input);
@@ -90,8 +90,8 @@ public class MockRepositoryPropertyTest extends TestCase {
     Assert.assertEquals(true, p.isRepeating());
     Assert.assertEquals(5, values.length);
     Assert.assertEquals("7", values[3]);
-    
-    input = "{type:string, value:[]}";   
+
+    input = "{type:string, value:[]}";
     try {
       jo = new JSONObject(input);
     } catch (JSONException e) {

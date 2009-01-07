@@ -17,11 +17,11 @@ package com.google.enterprise.connector.spiimpl;
 public class DoubleValue extends ValueImpl {
 
   double doubleValue;
-  
+
   public DoubleValue(double doubleValue) {
     this.doubleValue = doubleValue;
   }
-  
+
   public String toFeedXml() {
     return Double.toString(doubleValue);
   }

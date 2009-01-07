@@ -36,7 +36,7 @@ public abstract class ServletBase extends HttpServlet {
 
   protected static final DateTimeFormatter dtFormat =
       DateTimeFormat.forPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'");
-  
+
   public static String httpDateString() {
     return dtFormat.print((new DateTime()).withZone(DateTimeZone.UTC));
   }

@@ -23,7 +23,7 @@ import java.util.ListIterator;
  * <p>
  * The work-horse is the MockRepositoryDocumentStore class.  This class wraps
  * a document store with a list of events and it knows what time it is.  One
- * can move time along by calling appropriate methods. 
+ * can move time along by calling appropriate methods.
  */
 public class MockRepository {
   MockRepositoryDocumentStore store;
@@ -38,7 +38,7 @@ public class MockRepository {
   }
 
   /**
-   * Creates a repository from a supplied event list and sets the time as 
+   * Creates a repository from a supplied event list and sets the time as
    * specified.  Typically, this would probably be zero - so the repository
    * would be empty, but you could advance time programmatically.
    * @param eventList Should be in increasing time order
@@ -53,7 +53,7 @@ public class MockRepository {
 
   /**
    * Creates a repository from a suppiled event list and sets the time to the
-   * time of the last event.  
+   * time of the last event.
    * @param eventList Should be in increasing time order
    */
   public MockRepository(MockRepositoryEventList eventList) {

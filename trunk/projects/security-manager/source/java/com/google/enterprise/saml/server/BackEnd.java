@@ -34,7 +34,7 @@ import java.util.List;
  * Interface to SAML server backend. Top-level classes such as servlets should
  * do transport and marshaling only, then interact with an instance of this
  * class.
- * 
+ *
  */
 public interface BackEnd {
 
@@ -42,7 +42,7 @@ public interface BackEnd {
    * Set the connector manager used by this backend.
    */
   public void setConnectorManager(ConnectorManager cm);
-  
+
   /**
    * Get the session manager used by this backend.
    *
@@ -92,7 +92,7 @@ public interface BackEnd {
 
   /**
    * Process a set of SAML authorization queries.
-   * 
+   *
    * @param authzDecisionQueries A list of authorization queries to be processed.
    * @return A list of responses, corresponding to the argument.
    */

@@ -86,7 +86,7 @@ public class MimeTypeMap {
 
   /**
    * Set the unsupported mime types whose content cannot be indexed.
-   * These mime types provide little or no textual content, or are 
+   * These mime types provide little or no textual content, or are
    * data formats that are either unknown or do not have a format converter.
    * The connector may still provide meta-data describing the content,
    * but the content itself should not be pushed.
@@ -102,7 +102,7 @@ public class MimeTypeMap {
   /*
    * Add the set of mimetypes to the typeMap at the desired support level.
    * Mimetypes with "/vnd.*" subtypes are preferred over others, and
-   * mimetypes registered with IANA are preferred over those with "/x-*" 
+   * mimetypes registered with IANA are preferred over those with "/x-*"
    * experimental subtypes.  This ranking is done by adjusting the support
    * level +/- 1, accordingly.  Content types sans subtypes are preferred
    * least of all, so their support level is adjusted by -2.
@@ -110,7 +110,7 @@ public class MimeTypeMap {
   private void initMimeTypes(Set mimeTypes, int supportLevel) {
     if (mimeTypes == null || mimeTypes.size() == 0)
       return;
-    
+
     // Adjust the support level so that "/vdn." and "/x-" subtype
     // sorting does not accidentally cross above or below 0.
     if (supportLevel == 0) {
@@ -145,7 +145,7 @@ public class MimeTypeMap {
   /**
    * Return the support level for a given mime type. No validation is
    * performed.
-   * 
+   *
    * @param mimeType
    * @return zero (or negative) means that this mimetype is not supported.
    *         Positive integers may be compared to choose which mime types are
@@ -162,7 +162,7 @@ public class MimeTypeMap {
         if (i > 0) {
           result = (Integer) typeMap.get(mimeType.substring(0, i));
         }
-      } 
+      }
     }
     int sl = (result == null) ? unknownMimeTypeSupportLevel : result.intValue();
     if (LOGGER.isLoggable(Level.FINEST)) {

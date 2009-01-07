@@ -30,18 +30,18 @@ public class ScheduleTest extends TestCase {
   final String strNoDelay = "connector1:60:1-2:3-5";
   final String illegalStrWithDelay = "connector2:60:0:";
   final String illegalStrNoDelay = "connector2:60:";
-  
+
   public void testSerialization() {
     List intervals = new ArrayList();
-    ScheduleTimeInterval interval1 = 
+    ScheduleTimeInterval interval1 =
       new ScheduleTimeInterval(new ScheduleTime(1), new ScheduleTime(2));
-    ScheduleTimeInterval interval2 = 
+    ScheduleTimeInterval interval2 =
       new ScheduleTimeInterval(new ScheduleTime(3), new ScheduleTime(5));
     intervals.add(interval1);
     intervals.add(interval2);
     Schedule schedule = new Schedule("connector1", 60, 0, intervals);
     Assert.assertEquals(strWithDelay, schedule.toString());
-    
+
     Schedule schedule2 = new Schedule("whatever", 30, 42, intervals);
     schedule2.readString(strWithDelay);
     Assert.assertEquals(strWithDelay, schedule2.toString());
@@ -56,7 +56,7 @@ public class ScheduleTest extends TestCase {
     Assert.assertEquals(strWithDelay, schedule4.toString());
 
     try {
-      Schedule schedule5 = new Schedule("connector2", 60, 0, 
+      Schedule schedule5 = new Schedule("connector2", 60, 0,
           Collections.EMPTY_LIST);
       fail("IllegalArgumentException expected");
     } catch (IllegalArgumentException e) {

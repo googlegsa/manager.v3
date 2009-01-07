@@ -36,7 +36,7 @@ public class SetManagerConfigTest extends TestCase {
       "applicationContext.properties";
   private static final String TEST_PROPERTIES = "testContext.properties";
 
-  public final void testSetConnectorManagerConfig() throws InstantiatorException, 
+  public final void testSetConnectorManagerConfig() throws InstantiatorException,
       IOException {
     // Make a copy of the properties file first and work from it, so it
     // doesn't appear that this file is modified every time the test runs.
@@ -60,7 +60,7 @@ public class SetManagerConfigTest extends TestCase {
 
     context.setConnectorManagerConfig("shme", 14);
     verifyPropsValues("shme", 14, propFileName);
-    
+
     context.setConnectorManagerConfig(host, port);
     verifyPropsValues(host, port, propFileName);
     Context.refresh();

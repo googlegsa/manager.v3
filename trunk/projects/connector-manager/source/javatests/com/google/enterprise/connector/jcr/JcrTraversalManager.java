@@ -39,16 +39,16 @@ public class JcrTraversalManager implements TraversalManager {
 
   javax.jcr.query.QueryManager queryManager;
 
-  private static final String XPATH_QUERY_STRING_UNBOUNDED_DEFAULT = 
+  private static final String XPATH_QUERY_STRING_UNBOUNDED_DEFAULT =
     "//*[@jcr:primaryType='nt:resource'] order by @jcr:lastModified, @jcr:uuid";
-  
-  private static final String XPATH_QUERY_STRING_BOUNDED_DEFAULT = 
+
+  private static final String XPATH_QUERY_STRING_BOUNDED_DEFAULT =
     "//*[@jcr:primaryType = 'nt:resource' and @jcr:lastModified >= " +
     "''{0}''] order by @jcr:lastModified, @jcr:uuid";
- 
+
   private String xpathUnboundedTraversalQuery;
   private String xpathBoundedTraversalQuery;
-  
+
   /**
    * @param xpathBoundedTraversalQuery the xpathBoundedTraversalQuery to set
    */
@@ -175,7 +175,7 @@ public class JcrTraversalManager implements TraversalManager {
 
   public DocumentList startTraversal() throws RepositoryException {
     String lang = Query.XPATH;
-    javax.jcr.query.Query query = 
+    javax.jcr.query.Query query =
       makeCheckpointQuery(xpathUnboundedTraversalQuery, lang);
     QueryResult queryResult = null;
     try {

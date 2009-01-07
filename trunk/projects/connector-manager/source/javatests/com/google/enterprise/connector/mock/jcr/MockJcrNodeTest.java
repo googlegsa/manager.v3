@@ -35,7 +35,7 @@ import javax.jcr.RepositoryException;
  * Unit tests for MockJCRNode
  */
 public class MockJcrNodeTest extends TestCase {
-  private static final Logger logger = 
+  private static final Logger logger =
       Logger.getLogger(MockJcrNodeTest.class.getName());
 
   /**

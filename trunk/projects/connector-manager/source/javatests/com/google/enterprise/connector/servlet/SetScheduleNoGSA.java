@@ -33,10 +33,10 @@ public class SetScheduleNoGSA extends HttpServlet {
 
   /**
    * Returns the manager config (form) for now.
-   * @param req 
-   * @param res 
-   * @throws IOException 
-   * 
+   * @param req
+   * @param res
+   * @throws IOException
+   *
    */
   protected void doGet(HttpServletRequest req,
                        HttpServletResponse res)
@@ -64,10 +64,10 @@ public class SetScheduleNoGSA extends HttpServlet {
 
   /**
    * Returns the simple response if successfully setting the manager config.
-   * @param req 
-   * @param res 
-   * @throws IOException 
-   * 
+   * @param req
+   * @param res
+   * @throws IOException
+   *
    */
   protected void doPost(HttpServletRequest req,
                         HttpServletResponse res)

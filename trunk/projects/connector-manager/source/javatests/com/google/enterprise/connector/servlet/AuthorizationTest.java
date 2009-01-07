@@ -27,53 +27,53 @@ import java.util.logging.Logger;
 
 /**
  * Tests the Authorization servlet class
- * 
+ *
  */
 public class AuthorizationTest extends TestCase {
   private static final Logger LOGGER =
       Logger.getLogger(AuthorizationTest.class.getName());
 
   private static final String TEST_XML1 =
-      "<AuthorizationQuery>\n" + 
-      "<ConnectorQuery>\n" + 
-      "  <Identity source=\"gsa\">CN=foo</Identity>\n" + 
+      "<AuthorizationQuery>\n" +
+      "<ConnectorQuery>\n" +
+      "  <Identity source=\"gsa\">CN=foo</Identity>\n" +
       "  <Resource>" + ServletUtil.PROTOCOL + "connector1.localhost" +
-         ServletUtil.DOCID + "foo1</Resource>\n" + 
+         ServletUtil.DOCID + "foo1</Resource>\n" +
       "  <Resource>" + ServletUtil.PROTOCOL + "connector2.localhost" +
-         ServletUtil.DOCID + "foo2</Resource>\n" + 
-      "</ConnectorQuery>\n" + 
-      "<ConnectorQuery>\n" + 
-      "  <Identity source=\"connector\">username</Identity>\n" + 
+         ServletUtil.DOCID + "foo2</Resource>\n" +
+      "</ConnectorQuery>\n" +
+      "<ConnectorQuery>\n" +
+      "  <Identity source=\"connector\">username</Identity>\n" +
       "  <Resource>" + ServletUtil.PROTOCOL + "connector3.localhost" +
-         ServletUtil.DOCID + "foo3</Resource>\n" + 
-      "</ConnectorQuery>\n" + 
+         ServletUtil.DOCID + "foo3</Resource>\n" +
+      "</ConnectorQuery>\n" +
       "</AuthorizationQuery>";
-  
+
   private static final String TEST_XML2 =
-      "<AuthorizationQuery>\n" + 
-      "<ConnectorQuery>\n" + 
-      "  <Identity source=\"gsa\">CN=foo</Identity>\n" + 
+      "<AuthorizationQuery>\n" +
+      "<ConnectorQuery>\n" +
+      "  <Identity source=\"gsa\">CN=foo</Identity>\n" +
       "  <Resource>" + ServletUtil.PROTOCOL + ".localhost" +
-         ServletUtil.DOCID + "foo1</Resource>\n" + 
-      "</ConnectorQuery>\n" + 
+         ServletUtil.DOCID + "foo1</Resource>\n" +
+      "</ConnectorQuery>\n" +
       "</AuthorizationQuery>";
 
   private static final String TEST_XML3 =
-      "<AuthorizationQuery>\n" + 
-      "<ConnectorQuery>\n" + 
-      "  <Identity source=\"gsa\">CN=foo</Identity>\n" + 
+      "<AuthorizationQuery>\n" +
+      "<ConnectorQuery>\n" +
+      "  <Identity source=\"gsa\">CN=foo</Identity>\n" +
       "  <Resource>" + ServletUtil.PROTOCOL + "Connector3.localhost" +
-         "/doc?DOC=foo1</Resource>\n" + 
-      "</ConnectorQuery>\n" + 
+         "/doc?DOC=foo1</Resource>\n" +
+      "</ConnectorQuery>\n" +
       "</AuthorizationQuery>";
 
   private static final String TEST_XML4 =
-      "<AuthorizationQuery>\n" + 
-      "<ConnectorQuery>\n" + 
-      "  <Identity source=\"gsa\"></Identity>\n" + 
+      "<AuthorizationQuery>\n" +
+      "<ConnectorQuery>\n" +
+      "  <Identity source=\"gsa\"></Identity>\n" +
       "  <Resource>" + ServletUtil.PROTOCOL + "connector1.localhost" +
-         ServletUtil.DOCID + "foo1</Resource>\n" + 
-      "</ConnectorQuery>\n" + 
+         ServletUtil.DOCID + "foo1</Resource>\n" +
+      "</ConnectorQuery>\n" +
       "</AuthorizationQuery>";
 
 
@@ -160,7 +160,7 @@ public class AuthorizationTest extends TestCase {
 
   public void testParsing() {
     {
-      AuthorizationParser authorizationParser = 
+      AuthorizationParser authorizationParser =
         new AuthorizationParser(TEST_XML1);
       authorizationParser.parse();
       Assert.assertEquals(2, authorizationParser.countParsedIdentities());
@@ -184,7 +184,7 @@ public class AuthorizationTest extends TestCase {
           .countUrlsForIdentityConnectorPair("username", "connector2"));
     }
     {
-      AuthorizationParser authorizationParser = 
+      AuthorizationParser authorizationParser =
         new AuthorizationParser(ONE_IDENTITY_TWO_QUERIES);
       authorizationParser.parse();
       Assert.assertEquals(1, authorizationParser.countParsedIdentities());
@@ -204,7 +204,7 @@ public class AuthorizationTest extends TestCase {
           .countUrlsForIdentityConnectorPair("username1", "connector2"));
     }
     {
-      AuthorizationParser authorizationParser = 
+      AuthorizationParser authorizationParser =
         new AuthorizationParser(MALFORMED_XML);
       authorizationParser.parse();
       Assert.assertNull(authorizationParser.getParseMap());

@@ -38,7 +38,7 @@ public class JcrAuthenticationManager implements AuthenticationManager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.spi.AuthenticationManager
    *      #authenticate(java.lang.String,java.lang.String)
    */

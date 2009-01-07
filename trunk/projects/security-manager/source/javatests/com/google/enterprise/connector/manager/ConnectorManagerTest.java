@@ -37,7 +37,7 @@ public class ConnectorManagerTest extends TestCase {
     Context.getInstance().start();
 
     ConnectorManager manager = (ConnectorManager) Context.getInstance().getManager();
-    
+
     Set<String> connectorTypeNames = manager.getConnectorTypeNames();
     for (String connectorTypeName: connectorTypeNames) {
       System.out.println(connectorTypeName);

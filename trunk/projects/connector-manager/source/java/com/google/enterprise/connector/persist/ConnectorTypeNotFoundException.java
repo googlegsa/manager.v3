@@ -35,7 +35,7 @@ public class ConnectorTypeNotFoundException extends PersistentStoreException {
   /**
    * Constructs a ConnectorTypeNotFoundException with a supplied message but no
    * root cause.
-   * 
+   *
    * @param message the message. Can be retrieved by the {@link #getMessage()}
    *        method.
    */
@@ -45,7 +45,7 @@ public class ConnectorTypeNotFoundException extends PersistentStoreException {
 
   /**
    * Constructs a ConnectorTypeNotFoundException with message and root cause.
-   * 
+   *
    * @param message the message. Can be retrieved by the {@link #getMessage()}
    *        method.
    * @param rootCause root failure cause
@@ -57,7 +57,7 @@ public class ConnectorTypeNotFoundException extends PersistentStoreException {
 
   /**
    * Constructs a ConnectorTypeNotFoundException with the specified root cause.
-   * 
+   *
    * @param rootCause root failure cause
    */
   public ConnectorTypeNotFoundException(Throwable rootCause) {

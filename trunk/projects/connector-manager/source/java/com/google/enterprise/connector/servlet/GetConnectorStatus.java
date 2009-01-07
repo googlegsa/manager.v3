@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 
 /**
  * Admin servlet to get the connector status for a given connector.
- * 
+ *
  */
 public class GetConnectorStatus extends ConnectorManagerGetServlet {
   private static final Logger LOGGER =
@@ -33,7 +33,7 @@ public class GetConnectorStatus extends ConnectorManagerGetServlet {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.servlet.ConnectorManagerGetServlet#
    *      processDoGet(java.lang.String, java.lang.String,
    *      com.google.enterprise.connector.manager.Manager,
@@ -47,7 +47,7 @@ public class GetConnectorStatus extends ConnectorManagerGetServlet {
   /**
    * Handler for doGet in order to do unit tests. Returns the connector
    * status.
-   * 
+   *
    * @param connectorName
    * @param manager
    * @param out PrintWriter where the response is written
@@ -81,7 +81,7 @@ public class GetConnectorStatus extends ConnectorManagerGetServlet {
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
       } else {
         ServletUtil.writeXMLElement(out, 2,
-            ServletUtil.XMLTAG_CONNECTOR_SCHEDULE, 
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULE,
             Schedule.toLegacyString(connectorStatus.getSchedule()));
       }
       ServletUtil

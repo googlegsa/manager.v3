@@ -30,7 +30,7 @@ import com.google.enterprise.connector.mock.MockRepositoryEvent.EventType;
 
 /**
  * Mock Document Store for Unit tests.
- * 
+ *
  * This class provides a rudimentary memory-based content management system
  * (CMS), to enable testing of the connector framework without external
  * dependencies.
@@ -100,7 +100,7 @@ public class MockRepositoryDocumentStore {
    * event becomes the timestanmp of the created or changed document. The
    * implementation does NOT enforce that events are supplied in increasing
    * timestamp order. Perhaps it would be a good idea to add this later.
-   * 
+   *
    * @param event
    */
   public void applyEvent(MockRepositoryEvent event) {
@@ -122,7 +122,7 @@ public class MockRepositoryDocumentStore {
   /**
    * Performs the DELETE action. Deletes are keyed by docID. The other fields of
    * the event are ignored.
-   * 
+   *
    * @param event Must be a DELETE event
    */
   private void doDelete(MockRepositoryEvent event) {
@@ -138,7 +138,7 @@ public class MockRepositoryDocumentStore {
    * Performs the SAVE and METADATA_ONLY_SAVE actions. Looks up the document by
    * ID - if not present, it creates it. If present, it applies the changes
    * specified in the event.
-   * 
+   *
    * @param event Must be a SAVE or METADATA_ONLY_SAVE event
    */
   private void doSave(MockRepositoryEvent event) {
@@ -168,7 +168,7 @@ public class MockRepositoryDocumentStore {
 
   /**
    * Looks up a document in the store by ID
-   * 
+   *
    * @param docid The ID to look for
    * @return If found, the document; otherwise, null
    */
@@ -178,7 +178,7 @@ public class MockRepositoryDocumentStore {
 
   /**
    * Returns an iterator over all documents in the store
-   * 
+   *
    * @return Iterator
    */
   public Iterator iterator() {
@@ -195,7 +195,7 @@ public class MockRepositoryDocumentStore {
    * Returns all documents last modified between the two dates: specifically,
    * all documents modified at a time greater than or equal to the from
    * parameter and strictly less than the to parameter
-   * 
+   *
    * @param from
    * @param to
    * @return A List of these results
@@ -217,7 +217,7 @@ public class MockRepositoryDocumentStore {
 
   /**
    * Returns all documents last modified on or after a given date.
-   * 
+   *
    * @param from
    * @return A list of these results
    */
@@ -251,7 +251,7 @@ public class MockRepositoryDocumentStore {
   /**
    * Checks the date-order integrity constraint: iterates through the documents
    * and makes sure the timnestamps are in ascending order.
-   * 
+   *
    * @return True or false, depending on whether the test passes
    */
   private boolean checkDateOrderIntegrity() {
@@ -273,7 +273,7 @@ public class MockRepositoryDocumentStore {
   /**
    * Checks the docid uniqueness constraint: iterates through the documents and
    * checks to see whether the ids have ever been seen before
-   * 
+   *
    * @return True or false, depending on whether the test passes
    */
 
@@ -293,7 +293,7 @@ public class MockRepositoryDocumentStore {
 
   /**
    * Runs all integrity checks
-   * 
+   *
    * @return true or false, depending on whether ALL tests pass
    */
   private boolean checkIntegrity() {

@@ -20,7 +20,7 @@ import java.util.List;
 
 /**
  * A traversal schedule.
- * 
+ *
  */
 public class Schedule {
   private String connectorName;
@@ -41,7 +41,7 @@ public class Schedule {
 
   /**
    * Create a schedule object.
-   * 
+   *
    * @param scheduleProto String readable by readString() method
    */
   public Schedule(String scheduleProto) {
@@ -52,9 +52,9 @@ public class Schedule {
    * Utility method to parse out the delay field.  Currently only used when
    * sending the schedule string back to a GSA that has not been updated to
    * parse the delay field from the schedule.
-   * 
+   *
    * Done in a safe manner so it won't mangle a given legacy schedule.
-   * 
+   *
    * @param schedule a schedule string that contains a delay field.
    * @return a schedule string without the delay field.
    */
@@ -85,13 +85,13 @@ public class Schedule {
 
   /**
    * Populate a schedule.
-   * 
+   *
    * @param schedule String of the form:
    *    <connectorName>:<load>:<retryDelayMillis>:<timeIntervals>
    *    OR
    *    <connectorName>:<load>:<timeIntervals>
-   * e.g. "connector1:60:86400000:1-2:3-5", "connector1:60:1-2:3-5" 
-   *  
+   * e.g. "connector1:60:86400000:1-2:3-5", "connector1:60:1-2:3-5"
+   *
    */
   public void readString(String schedule) {
     String exceptionReason = "Invalid schedule string format: " + schedule;
@@ -106,8 +106,8 @@ public class Schedule {
       } else {
         intervalsStart = 2;
       }
-      timeIntervals = new ArrayList(); 
-          
+      timeIntervals = new ArrayList();
+
       for (int i = intervalsStart; i < strs.length; i++) {
         String[] strs2 = strs[i].split("-");
         String startTime = strs2[0];
@@ -144,7 +144,7 @@ public class Schedule {
   public int getLoad() {
     return load;
   }
-  
+
   public int getRetryDelayMillis() {
     return retryDelayMillis;
   }

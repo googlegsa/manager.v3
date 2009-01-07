@@ -48,7 +48,7 @@ public class SimpleDocumentTest extends TestCase {
   }
 
   public void testFindProperty() throws RepositoryException {
-    Set propNames = document.getPropertyNames();    
+    Set propNames = document.getPropertyNames();
     for (Iterator iter = propNames.iterator(); iter.hasNext(); ) {
       String propName = (String) iter.next();
       Property prop = document.findProperty(propName);

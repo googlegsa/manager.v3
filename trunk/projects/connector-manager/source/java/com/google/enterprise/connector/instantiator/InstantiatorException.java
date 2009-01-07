@@ -32,7 +32,7 @@ public class InstantiatorException extends ConnectorManagerException {
   /**
    * Constructs a InstantiatorException with a supplied message but no root
    * cause.
-   * 
+   *
    * @param message the message. Can be retrieved by the {@link #getMessage()}
    *        method.
    */
@@ -42,7 +42,7 @@ public class InstantiatorException extends ConnectorManagerException {
 
   /**
    * Constructs a InstantiatorException with message and root cause.
-   * 
+   *
    * @param message the message. Can be retrieved by the {@link #getMessage()}
    *        method.
    * @param rootCause root failure cause
@@ -54,7 +54,7 @@ public class InstantiatorException extends ConnectorManagerException {
 
   /**
    * Constructs a InstantiatorException with the specified root cause.
-   * 
+   *
    * @param rootCause root failure cause
    */
   public InstantiatorException(Throwable rootCause) {

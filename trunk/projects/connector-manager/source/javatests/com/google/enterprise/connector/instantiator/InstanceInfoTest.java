@@ -37,7 +37,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * 
+ *
  */
 public class InstanceInfoTest extends TestCase {
 
@@ -208,7 +208,7 @@ public class InstanceInfoTest extends TestCase {
     assertFalse(exceptionThrown);
 
     // Check properties
-    Properties instanceProps = 
+    Properties instanceProps =
        PropertiesUtils.fromMap(instanceInfo.getConnectorConfig());
     assertEquals("password_test", instanceProps.getProperty("Password"));
     assertEquals("MockRepositoryEventLog3.txt",

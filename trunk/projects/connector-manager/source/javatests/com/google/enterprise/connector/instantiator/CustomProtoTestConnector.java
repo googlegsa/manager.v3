@@ -24,11 +24,11 @@ import com.google.enterprise.connector.spi.Session;
  *
  */
 public final class CustomProtoTestConnector implements Connector {
-  
+
   private Connector delegateConnector;
   private String customProperty = "default";
   private int customIntProperty = 0;
-  
+
   public void setDelegateConnector(final Connector delegateConnector) {
     this.delegateConnector = delegateConnector;
   }

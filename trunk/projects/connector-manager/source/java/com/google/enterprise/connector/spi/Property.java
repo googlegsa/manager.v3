@@ -24,7 +24,7 @@ package com.google.enterprise.connector.spi;
  * <p>
  * The typical pattern for consuming an object that implements this interface is
  * this (disregarding exception handling):
- * 
+ *
  * <pre>
  * Property prop = ...
  * Value v;
@@ -37,7 +37,7 @@ public interface Property {
 
   /**
    * Returns the next Value in this property, if there is one.
-   * 
+   *
    * @return The new current value, if there is one; <code>null</code>
    *         otherwise
    * @throws RepositoryException if a repository access error occurs

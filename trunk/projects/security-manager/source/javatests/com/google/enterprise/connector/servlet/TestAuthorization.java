@@ -36,14 +36,14 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class TestAuthorization extends HttpServlet
 {
-	private static final long serialVersionUID = 1L;
-	
-	/**
+  private static final long serialVersionUID = 1L;
+
+  /**
      * Generates a "Hello world" response.
-     * @param req 
-     * @param res 
-     * @throws IOException 
-     * 
+     * @param req
+     * @param res
+     * @throws IOException
+     *
      */
     @SuppressWarnings("unchecked")
     @Override
@@ -58,7 +58,7 @@ public class TestAuthorization extends HttpServlet
       }
       List<String> docids = ImmutableList.of(thisUrl);
       Collection<AuthorizationResponse> rs = null;
-      
+
       try {
         rs = am.authorizeDocids(docids, null);
       } catch (RepositoryException e) {
@@ -84,11 +84,11 @@ public class TestAuthorization extends HttpServlet
       out.println("</BODY></HTML>");
       out.close();
     }
-    
+
     /**
      * Returns servlet info.
      * @return informational message
-     * 
+     *
      */
     @Override
     public String getServletInfo()

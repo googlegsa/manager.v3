@@ -46,7 +46,7 @@ public class AuthorizationHandler {
   }
 
   /**
-   * Factory method for testing.  Ensures that the results come back in a 
+   * Factory method for testing.  Ensures that the results come back in a
    * predictable order.
    */
   static AuthorizationHandler makeAuthorizationHandlerForTest(String xmlBody,
@@ -75,7 +75,7 @@ public class AuthorizationHandler {
   }
 
   private void generateXml() {
-    
+
     ServletUtil.writeRootTag(out, false);
 
     if (results.size() > 0) {
@@ -145,5 +145,5 @@ public class AuthorizationHandler {
 
 
 
-  
+
 }

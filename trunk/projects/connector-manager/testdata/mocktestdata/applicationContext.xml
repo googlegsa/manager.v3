@@ -1,48 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 <beans>
+  <bean id="FeedConnection"
+        class="com.google.enterprise.connector.pusher.MockFeedConnection">
+  </bean>
 
-	<bean id="FeedConnection"
-		class="com.google.enterprise.connector.pusher.MockFeedConnection" />
+  <bean id="Pusher"
+        class="com.google.enterprise.connector.pusher.DocPusher">
+    <constructor-arg index="0" ref="FeedConnection" />
+  </bean>
 
-	<bean id="Pusher"
-		class="com.google.enterprise.connector.pusher.DocPusher">
-		<constructor-arg index="0" ref="FeedConnection" />
-	</bean>
+  <bean id="ConnectorScheduleStore"
+        class="com.google.enterprise.connector.persist.MockConnectorScheduleStore">
+  </bean>
 
-	<bean id="ConnectorScheduleStore"
-		class="com.google.enterprise.connector.persist.MockConnectorScheduleStore" />
+  <bean id="ConnectorStateStore"
+        class="com.google.enterprise.connector.persist.MockConnectorStateStore">
+  </bean>
 
-	<bean id="ConnectorStateStore"
-		class="com.google.enterprise.connector.persist.MockConnectorStateStore" />
+  <bean id="ConnectorConfigStore"
+        class="com.google.enterprise.connector.persist.FileStore">
+  </bean>
 
-	<bean id="ConnectorConfigStore"
-		class="com.google.enterprise.connector.persist.FileStore" />
+  <bean id="Instantiator"
+        class="com.google.enterprise.connector.instantiator.SpringInstantiator">
+    <constructor-arg ref="Pusher" />
+  </bean>
 
-	<bean id="Instantiator"
-		class="com.google.enterprise.connector.instantiator.SpringInstantiator">
-		<constructor-arg ref="Pusher" />
-	</bean>
+  <bean id="Monitor"
+        class="com.google.enterprise.connector.monitor.HashMapMonitor">
+  </bean>
 
-	<bean id="Monitor"
-		class="com.google.enterprise.connector.monitor.HashMapMonitor" />
+  <bean id="WorkQueue"
+        class="com.google.enterprise.connector.common.WorkQueue">
+    <constructor-arg index="0" type="int" value="2" />
+    <constructor-arg index="1" type="long" value="5000" />
+  </bean>
 
-	<bean id="WorkQueue" 
-		class="com.google.enterprise.connector.common.WorkQueue">
-		<constructor-arg index="0" type="int" value="2" />
-		<constructor-arg index="1" type="long" value="5000" />
-	</bean>
+  <bean id="Manager"
+        class="com.google.enterprise.connector.manager.ProductionManager">
+    <property name="instantiator" ref="Instantiator" />
+  </bean>
 
-	<bean id="Manager"
-		class="com.google.enterprise.connector.manager.ProductionManager">
-		<property name="instantiator" ref="Instantiator" />
-	</bean>
-
-	<bean id="TraversalScheduler"
-		class="com.google.enterprise.connector.scheduler.TraversalScheduler">
-		<constructor-arg index="0" ref="Instantiator" />
-		<constructor-arg index="1" ref="Monitor" />
-		<constructor-arg index="2" ref="WorkQueue" />
-	</bean>
-
+  <bean id="TraversalScheduler"
+        class="com.google.enterprise.connector.scheduler.TraversalScheduler">
+    <constructor-arg index="0" ref="Instantiator" />
+    <constructor-arg index="1" ref="Monitor" />
+    <constructor-arg index="2" ref="WorkQueue" />
+  </bean>
 </beans>

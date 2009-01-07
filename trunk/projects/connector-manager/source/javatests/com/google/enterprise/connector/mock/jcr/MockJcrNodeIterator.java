@@ -41,7 +41,7 @@ public class MockJcrNodeIterator implements NodeIterator {
 
   Iterator iter;
   Iterator internalIterator;
-  
+
   MockJcrNodeIterator(Iterator iter) {
     internalIterator = iter;
     this.iter = new Iterator() {
@@ -57,7 +57,7 @@ public class MockJcrNodeIterator implements NodeIterator {
       public void remove() {
         throw new UnsupportedOperationException();
       }
-      
+
     };
   }
 

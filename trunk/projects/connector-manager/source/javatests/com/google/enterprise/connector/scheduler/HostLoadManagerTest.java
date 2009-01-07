@@ -42,7 +42,7 @@ public class HostLoadManagerTest extends TestCase {
       }
     }
   }
-  
+
   public void testMaxFeedRateLimit() {
     final String connectorName = "cn1";
     addLoad(connectorName, 60);
@@ -50,7 +50,7 @@ public class HostLoadManagerTest extends TestCase {
     hostLoadManager.updateNumDocsTraversed(connectorName, 60);
     assertEquals(0, hostLoadManager.determineBatchHint(connectorName));
   }
-  
+
   public void testMultipleUpdates() {
     final String connectorName = "cn1";
     addLoad(connectorName, 60);
@@ -58,9 +58,9 @@ public class HostLoadManagerTest extends TestCase {
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
-    assertEquals(30, hostLoadManager.determineBatchHint(connectorName));    
+    assertEquals(30, hostLoadManager.determineBatchHint(connectorName));
   }
-  
+
   public void testMultipleConnectors() {
     final String connectorName1 = "cn1";
     final String connectorName2 = "cn2";
@@ -73,19 +73,19 @@ public class HostLoadManagerTest extends TestCase {
     hostLoadManager.updateNumDocsTraversed(connectorName2, 50);
     assertEquals(10, hostLoadManager.determineBatchHint(connectorName2));
   }
-  
+
   public void testPeriod() {
     final long periodInMillis = 1000;
     final String connectorName = "cn1";
     addLoad(connectorName, 3600);
-    HostLoadManager hostLoadManager = 
+    HostLoadManager hostLoadManager =
       new HostLoadManager(instantiator, periodInMillis);
     hostLoadManager.updateNumDocsTraversed(connectorName, 55);
     assertEquals(5, hostLoadManager.determineBatchHint(connectorName));
-    // sleep a period (and then some) so that batchHint is reset 
+    // sleep a period (and then some) so that batchHint is reset
     try {
       // extra time in ms in case sleeping the period is not long enough
-      final long extraTime = 200;  
+      final long extraTime = 200;
       Thread.sleep(periodInMillis + extraTime);
     } catch (InterruptedException e) {
       // TODO Auto-generated catch block
@@ -94,14 +94,14 @@ public class HostLoadManagerTest extends TestCase {
     assertEquals(60, hostLoadManager.determineBatchHint(connectorName));
     hostLoadManager.updateNumDocsTraversed(connectorName, 15);
     assertEquals(45, hostLoadManager.determineBatchHint(connectorName));
-    
+
   }
-  
+
   public void testRetryDelay() {
     final long periodInMillis = 1000;
     final String connectorName = "cn1";
     addLoad(connectorName, 60);
-    HostLoadManager hostLoadManager = 
+    HostLoadManager hostLoadManager =
       new HostLoadManager(instantiator, periodInMillis);
     assertEquals(false, hostLoadManager.shouldDelay(connectorName));
     hostLoadManager.connectorFinishedTraversal(connectorName);
@@ -109,7 +109,7 @@ public class HostLoadManagerTest extends TestCase {
     // sleep more than 100ms the time set in MockConnectorSchedule
     // so that this connector can be allowed to run again without delay
     try {
-      final long sleepTime = 250;  
+      final long sleepTime = 250;
       Thread.sleep(sleepTime);
     } catch (InterruptedException e) {
       // TODO Auto-generated catch block

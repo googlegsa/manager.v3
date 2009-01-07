@@ -37,7 +37,7 @@ public class JcrConnector implements Connector {
 
   /**
    * Construct an adaptor for a repository by using a JCR repository.
-   * 
+   *
    * @param repo
    */
   public JcrConnector(javax.jcr.Repository repo) {
@@ -46,7 +46,7 @@ public class JcrConnector implements Connector {
 
   private String username = "";
   private String password = "";
-  
+
   /**
    * @param password the password to set
    */

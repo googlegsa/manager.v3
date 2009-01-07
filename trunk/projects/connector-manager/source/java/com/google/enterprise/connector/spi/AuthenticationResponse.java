@@ -31,7 +31,7 @@ public class AuthenticationResponse {
     this.valid = valid;
     this.data = data;
   }
-  
+
   /**
    * Tests whether authentication was valid
    * @return true if authentication was valid

@@ -43,32 +43,32 @@ public class GetConnectorConfigToEditTest extends TestCase {
         "  <StatusId>0</StatusId>\n" +
         "  <ConfigureResponse>\n" +
         "    <FormSnippet><![CDATA[<tr>\n" +
-        "<td>Username</td>\n" + 
-        "<td>\n" + 
-        "<input type=\"text\" name=\"Username\" />\n" + 
-        "</td>\n" + 
-        "</tr>\n" + 
-        "<tr>\n" + 
-        "<td>Password</td>\n" + 
-        "<td>\n" + 
-        "<input type=\"password\" name=\"Password\" />\n" + 
-        "</td>\n" + 
-        "</tr>\n" + 
-        "<tr>\n" + 
-        "<td>Color</td>\n" + 
-        "<td>\n" + 
-        "<input type=\"text\" name=\"Color\" />\n" + 
-        "</td>\n" + 
-        "</tr>\n" + 
-        "<tr>\n" + 
-        "<td>Repository File</td>\n" + 
-        "<td>\n" + 
-        "<input type=\"text\" name=\"Repository File\" />\n" + 
-        "</td>\n" + 
-        "</tr>\n" + 
+        "<td>Username</td>\n" +
+        "<td>\n" +
+        "<input type=\"text\" name=\"Username\" />\n" +
+        "</td>\n" +
+        "</tr>\n" +
+        "<tr>\n" +
+        "<td>Password</td>\n" +
+        "<td>\n" +
+        "<input type=\"password\" name=\"Password\" />\n" +
+        "</td>\n" +
+        "</tr>\n" +
+        "<tr>\n" +
+        "<td>Color</td>\n" +
+        "<td>\n" +
+        "<input type=\"text\" name=\"Color\" />\n" +
+        "</td>\n" +
+        "</tr>\n" +
+        "<tr>\n" +
+        "<td>Repository File</td>\n" +
+        "<td>\n" +
+        "<input type=\"text\" name=\"Repository File\" />\n" +
+        "</td>\n" +
+        "</tr>\n" +
         "]]></FormSnippet>\n" +
         "    <message>Sample form for connectorAlang en</message>\n" +
-        "  </ConfigureResponse>\n" + 
+        "  </ConfigureResponse>\n" +
         "</CmResponse>\n";
     String connectorName = "connectorA";
     Manager manager = MockManager.getInstance();
@@ -79,7 +79,7 @@ public class GetConnectorConfigToEditTest extends TestCase {
     LOG.info(result.toString());
     LOG.info(expectedResult);
     out.flush();
-    Assert.assertEquals (StringUtils.normalizeNewlines(expectedResult), 
+    Assert.assertEquals (StringUtils.normalizeNewlines(expectedResult),
         StringUtils.normalizeNewlines(result.toString()));
     out.close();
   }

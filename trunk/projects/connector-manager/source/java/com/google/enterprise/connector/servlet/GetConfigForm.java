@@ -34,7 +34,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Admin servlet to get the config form for
  * a given connector type and language.
- * 
+ *
  */
 public class GetConfigForm extends HttpServlet {
   private static final Logger LOGGER =
@@ -42,11 +42,11 @@ public class GetConfigForm extends HttpServlet {
 
   /**
    * Returns the connector config form.
-   * 
+   *
    * @param req
    * @param res
    * @throws IOException
-   * 
+   *
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -91,11 +91,11 @@ public class GetConfigForm extends HttpServlet {
 
   /**
    * Returns the connector config form.
-   * 
+   *
    * @param req
    * @param res
    * @throws IOException
-   * 
+   *
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -104,7 +104,7 @@ public class GetConfigForm extends HttpServlet {
 
   /**
    * Handler for doGet in order to do unit tests.
-   * 
+   *
    * @param configResponse ConfigureResponse
    * @param status ConnectorMessageCode
    * @param out PrintWriter where the response is written

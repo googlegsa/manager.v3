@@ -89,7 +89,7 @@ public class InstanceMapTest extends TestCase {
           "{Username:foo, Password:bar, Color:red, "
               + "RepositoryFile:MockRepositoryEventLog3.txt}";
       updateConnectorTest(instanceMap, name, typeName, language,
-    		              false, jsonConfigString);
+                      false, jsonConfigString);
     }
 
     {
@@ -104,7 +104,7 @@ public class InstanceMapTest extends TestCase {
           "{Username:foo, Password:bar, Flavor:minty-fresh, "
               + "RepositoryFile:MockRepositoryEventLog3.txt}";
       updateConnectorTest(instanceMap, name, typeName, language,
-    		              false, jsonConfigString);
+                      false, jsonConfigString);
     }
 
     Assert.assertEquals(2, instanceMap.size());
@@ -121,7 +121,7 @@ public class InstanceMapTest extends TestCase {
           "{Username:foo, Password:bar, Flavor:butterscotch, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
       updateConnectorTest(instanceMap, name, typeName, language,
-    		              true, jsonConfigString);
+                      true, jsonConfigString);
     }
 
     Assert.assertEquals(2, instanceMap.size());
@@ -137,7 +137,7 @@ public class InstanceMapTest extends TestCase {
           "{Username:foo, Password:bar, Flavor:chocolate, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
       updateConnectorTest(instanceMap, name, typeName, language,
-    		              false, jsonConfigString);
+                      false, jsonConfigString);
     }
 
     Assert.assertEquals(3, instanceMap.size());
@@ -154,7 +154,7 @@ public class InstanceMapTest extends TestCase {
           "{Username:foo, Password:bar, Color:blue, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
       updateConnectorTest(instanceMap, name, typeName, language,
-    		              true, jsonConfigString);
+                      true, jsonConfigString);
     }
 
     Assert.assertEquals(3, instanceMap.size());
@@ -172,7 +172,7 @@ public class InstanceMapTest extends TestCase {
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
       try {
         updateConnectorTest(instanceMap, name, typeName, language,
-        		            false, jsonConfigString);
+                        false, jsonConfigString);
       } catch (ConnectorExistsException e) {
         Assert.assertTrue(true);
       } catch (ConnectorManagerException e) {
@@ -195,7 +195,7 @@ public class InstanceMapTest extends TestCase {
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
       try {
         updateConnectorTest(instanceMap, name, typeName, language,
-        		            true, jsonConfigString);
+                        true, jsonConfigString);
       } catch (ConnectorNotFoundException e) {
         Assert.assertTrue(true);
       } catch (ConnectorManagerException e) {

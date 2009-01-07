@@ -169,7 +169,7 @@ public class ConnectorTestUtils {
   }
 
   /**
-   * Compare two maps.  The maps need not be identical, but map1 
+   * Compare two maps.  The maps need not be identical, but map1
    * should be a subset of map2.  Note that this is slightly different
    * behaviour than earlier versions of compareMaps.
    *
@@ -204,7 +204,7 @@ public class ConnectorTestUtils {
     }
     return res;
   }
-  
+
   public static void copyFile(String source, String dest) throws IOException {
     InputStream in = new FileInputStream(new File(source));
     OutputStream out = new FileOutputStream(new File(dest));

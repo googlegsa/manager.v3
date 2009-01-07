@@ -15,12 +15,12 @@
 package com.google.enterprise.connector.scheduler;
 
 /**
- * An interval of time used for schedules. 
+ * An interval of time used for schedules.
  */
 public class ScheduleTimeInterval {
   private ScheduleTime startTime;
   private ScheduleTime endTime;
-  
+
   public ScheduleTimeInterval(ScheduleTime startTime, ScheduleTime endTime) {
     this.startTime = startTime;
     this.endTime = endTime;

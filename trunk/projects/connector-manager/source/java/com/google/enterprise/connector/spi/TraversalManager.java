@@ -27,13 +27,13 @@ package com.google.enterprise.connector.spi;
  * query analogous to the following SQL query (the repository need not support
  * SQL, SQL is used here only as an example):
  * <p>
- * 
+ *
  * <pre>
- *        select documentid, lastmodifydate from documents 
- *        where  lastmodifydate &lt; <b><i>date-constant</i></b> 
+ *        select documentid, lastmodifydate from documents
+ *        where  lastmodifydate &lt; <b><i>date-constant</i></b>
  *        order by lastmodifydate
  * </pre>
- * 
+ *
  * <p>
  * Such a repository can easily be traversed by lastmodifydate, and the state of
  * the traversal is easily encapsulated in a single, small data item: the date
@@ -55,25 +55,25 @@ package com.google.enterprise.connector.spi;
  * <li><code>resumeTraversal(String checkpoint)</code> Run a query that
  * resumes traversal from the supplied checkpoint
  * </ul>
- * Checkpoints are supplied by the 
+ * Checkpoints are supplied by the
  * <code>{@link DocumentList#checkpoint()}</code> method.
  * <p>
- * Please observe that the Connector Manager (the caller) makes no guarantee 
+ * Please observe that the Connector Manager (the caller) makes no guarantee
  * to consume the entire <code>DocumentList</code> returned by either the
- * <code>startTraversal</code> or <code>resumeTraversal</code> calls. 
- * The Connector Manager will consume as many it chooses, depending on load, 
- * schedule and other factors. The Connector Manager guarantees to call 
+ * <code>startTraversal</code> or <code>resumeTraversal</code> calls.
+ * The Connector Manager will consume as many it chooses, depending on load,
+ * schedule and other factors. The Connector Manager guarantees to call
  * <code>checkpoint</code> after handling the last document it has
- * successfully processed from the <code>DocumentList</code> it was using. 
- * Thus, the implementor is free to use a query that only returns a small 
+ * successfully processed from the <code>DocumentList</code> it was using.
+ * Thus, the implementor is free to use a query that only returns a small
  * number of results, if that gets better performance.
  * <p>
  * For example, to continue the SQL analogy, a query like this could be used:
- * 
+ *
  * <pre>
  *        select TOP 10 documentid, lastmodifydate from documents ...
  * </pre>
- * 
+ *
  * The <code>setBatchHint</code> method is provided so that the Connector
  * Manager can tell the implementation that it only wants that many results per
  * call. This is a hint - the implementation need not observe it. The
@@ -86,27 +86,27 @@ package com.google.enterprise.connector.spi;
  * The Connector Manager makes a distinction between the return of a null
  * DocumentList and an empty DocumentList (a DocumentList with zero entries).
  * Returning a null DocumentList will have impact on scheduling - the Connector
- * Manager may choose to wait longer after receiving a null result before it 
+ * Manager may choose to wait longer after receiving a null result before it
  * calls again.  Also, if a null result is returned, the Connector Manager will
- * not [indeed, cannot] call <code>checkpoint</code> before calling start or 
- * resume traversal again.  Returning a null DocumentList is suitable when 
+ * not [indeed, cannot] call <code>checkpoint</code> before calling start or
+ * resume traversal again.  Returning a null DocumentList is suitable when
  * a traversal is completely up to date, with no new documents available and
  * no new checkpoint state.
  * <p>
  * Returning an empty DocumentList will probably not have an impact on
- * scheduling.  The Connector Manager will call <code>checkpoint</code>, 
+ * scheduling.  The Connector Manager will call <code>checkpoint</code>,
  * and will likely call <code>resumeTraversal</code> again immediately.
- * Returning an empty DocumentList is not appropriate if a traversal is 
+ * Returning an empty DocumentList is not appropriate if a traversal is
  * completely up to date, as it would effectively induce a spin, constantly
  * calling <code>resumeTraversal</code> when it has no work to do.
  * Returning an empty DocumentList is a convenient way to indicate to the
- * Connector Manager, that although no documents were provided in this 
+ * Connector Manager, that although no documents were provided in this
  * batch, the Connector wishes to continue searching the repository for
  * suitable content.  The call to <code>checkpoint</code> allows the
  * Connector to record its progress through the repository.  This mechanism
  * is suitable for cases when the search for suitable content may exceed
  * the Connector Manager's timeout.
- * <p> 
+ * <p>
  * If the Connector returns a non-null <code>DocumentList</code>, even
  * one with zero entries, the Connector Manager will nearly always call
  * <code>checkpoint</code> when it has finished processing the DocumentList.
@@ -129,15 +129,15 @@ package com.google.enterprise.connector.spi;
  * <li><code>resumeTraversal(String checkpoint)</code> Resume traversal
  * according to the internal state of the implementation. The Connector Manager
  * will pass in whatever checkpoint String was returned by the last call to
- * <code>{@link DocumentList#checkpoint()}</code> 
+ * <code>{@link DocumentList#checkpoint()}</code>
  * but the implementation is free to ignore this and use its
- * internal state.  However, even in this case, <code>checkpoint</code> must 
+ * internal state.  However, even in this case, <code>checkpoint</code> must
  * not return a null String.
  * </ul>
  * The implementation must be careful about when and how it commits its internal
  * state to external storage. Remember again that the Connector Manager makes no
  * guarantee to consume the entire result set return by a traversal call. So the
- * implementation should wait until the checkpoint call, and only commit the 
+ * implementation should wait until the checkpoint call, and only commit the
  * state up to the last document returned.
  * <p>
  * <b> Note on "Metadata and URL" feeds vs. Content feeds </b>
@@ -152,7 +152,7 @@ package com.google.enterprise.connector.spi;
  * </p>
  * <p>
  * The developer can achieve this by following these steps. In the document list
- * returned by the traversal methods, specify the 
+ * returned by the traversal methods, specify the
  * {@link SpiConstants}.PROPNAME_SEARCHURL
  * property. The value should be a URL. If this property is specified, the
  * Connector Manager will use a "URL Feed" rather than a "Content Feed" for that
@@ -164,7 +164,7 @@ package com.google.enterprise.connector.spi;
  * <p>
  * <b>Note on Documents returned by traversal calls</b>
  * <p>
- * The <code>Document</code> objects returned by the queries defined here 
+ * The <code>Document</code> objects returned by the queries defined here
  * must contain special properties according to the following rules:
  * <ul>
  * <li> {@link SpiConstants}.PROPNAME_DOCID This property must be present.
@@ -190,7 +190,7 @@ public interface TraversalManager {
    * as many or as few of the results as it wants, but it guarantees to call
    * <code>{@link DocumentList#checkpoint()}</code> passing in the last object
    * it has successfully processed.
-   * 
+   *
    * @return A DocumentList of documents from the repository in natural order,
    *         or null if there are no documents.
    * @throws RepositoryException if the Repository is unreachable or similar
@@ -205,7 +205,7 @@ public interface TraversalManager {
    * DocumentList object returns objects from the repository in natural order
    * starting just after the document that was used to create the checkpoint
    * string.
-   * 
+   *
    * @param checkPoint String that indicates from where to resume traversal.
    * @return DocumentList object that returns documents starting just after the
    *         checkpoint, or null if there are no documents.
@@ -219,7 +219,7 @@ public interface TraversalManager {
    * the result sets returned by startTraversal or resumeTraversal need not be
    * larger than this number. The implementation may ignore this call or do its
    * best to return approximately this number.
-   * 
+   *
    * @param batchHint
    * @throws RepositoryException
    */

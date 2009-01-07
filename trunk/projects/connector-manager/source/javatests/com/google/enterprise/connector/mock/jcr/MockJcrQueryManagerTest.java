@@ -33,10 +33,10 @@ import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 
 /**
- * Unit tests for Mock JCR repository.  
+ * Unit tests for Mock JCR repository.
  */
 public class MockJcrQueryManagerTest extends TestCase {
-  private static final Logger logger = 
+  private static final Logger logger =
       Logger.getLogger(MockJcrQueryManagerTest.class.getName());
 
   /**
@@ -81,7 +81,7 @@ public class MockJcrQueryManagerTest extends TestCase {
 
     QueryManager qm = new MockJcrQueryManager(r.getStore());
 
-    String messagePattern = 
+    String messagePattern =
       "//*[@jcr:primaryType = 'nt:resource' and @jcr:lastModified >= " +
       "''{0}''] order by @jcr:lastModified, @jcr:uuid";
 

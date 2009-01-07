@@ -37,10 +37,10 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * 
+ *
  */
 public class InstantiatorTest extends TestCase {
-  
+
   private static final String TEST_DIR_NAME = "testdata/tempInstantiatorTests";
   private static final String TEST_CONFIG_FILE = "classpath*:config/connectorType.xml";
   private File baseDirectory;
@@ -65,11 +65,11 @@ public class InstantiatorTest extends TestCase {
 
   /**
    * Test method for adding, updating, deleting connectors.
-   * 
+   *
    * @throws JSONException
    * @throws InstantiatorException
-   * @throws ConnectorExistsException 
-   * @throws ConnectorNotFoundException 
+   * @throws ConnectorExistsException
+   * @throws ConnectorNotFoundException
    */
   public final void testAddUpdateDelete() throws JSONException,
       InstantiatorException, ConnectorTypeNotFoundException,
@@ -77,7 +77,7 @@ public class InstantiatorTest extends TestCase {
 
     {
       /*
-       * Test creation of a connector of type TestConnectorA. 
+       * Test creation of a connector of type TestConnectorA.
        * The type should already have been created.
        */
       String name = "connector1";
@@ -93,7 +93,7 @@ public class InstantiatorTest extends TestCase {
 
     {
       /*
-       * Test creation of a connector of type TestConnectorB. 
+       * Test creation of a connector of type TestConnectorB.
        * The type should already have been created.
        */
       String name = "connector2";
@@ -110,7 +110,7 @@ public class InstantiatorTest extends TestCase {
 
     {
       /*
-       * Test update of a connector instance of type TestConnectorB. 
+       * Test update of a connector instance of type TestConnectorB.
        * The instance was created in an earlier test.
        */
       String name = "connector2";
@@ -143,7 +143,7 @@ public class InstantiatorTest extends TestCase {
 
     {
       /*
-       * Test update of a connector instance of type TestConnectorA. 
+       * Test update of a connector instance of type TestConnectorA.
        * The instance was created in an earlier test.
        */
       String name = "connector3";
@@ -205,7 +205,7 @@ public class InstantiatorTest extends TestCase {
     assertEquals(3, connectorCount());
 
     /*
-     * Test dropping connectors.  Once dropped, I should not be able to 
+     * Test dropping connectors.  Once dropped, I should not be able to
      * get items from its interface.  Regression test for Issue 60.
      */
     instantiator.removeConnector("connector1");
@@ -251,10 +251,10 @@ public class InstantiatorTest extends TestCase {
         newTraverser = instantiator.getTraverser("connector1");
         assertSame(oldTraverser, newTraverser);
 
-        // Sleep for a few seconds, allowing the test thread time 
+        // Sleep for a few seconds, allowing the test thread time
         // to update the connector.
         try {
-          Thread.sleep(3 * 1000); 
+          Thread.sleep(3 * 1000);
         } catch (InterruptedException ie) {
           fail("Unexpected thread interruption.");
         }
@@ -262,7 +262,7 @@ public class InstantiatorTest extends TestCase {
         // Get the Traverser for our connector instance.
         // It should be a new traverser reflecting the updated connector.
         newTraverser = instantiator.getTraverser("connector1");
-        assertNotSame(oldTraverser, newTraverser);          
+        assertNotSame(oldTraverser, newTraverser);
       } catch (Exception e) {
         fail(e.getMessage());
       }
@@ -272,16 +272,16 @@ public class InstantiatorTest extends TestCase {
 
   /**
    * Tests the synchronization problems that surfaced with Issue 63.
-   * 
+   *
    * @throws JSONException
    * @throws InstantiatorException
-   * @throws ConnectorExistsException 
-   * @throws ConnectorNotFoundException 
+   * @throws ConnectorExistsException
+   * @throws ConnectorNotFoundException
    */
   public final void testIssue63Synchronization() throws JSONException,
       InstantiatorException, ConnectorTypeNotFoundException,
       ConnectorNotFoundException, ConnectorExistsException {
-      
+
     // Create a connector.
     String name = "connector1";
     String typeName = "TestConnectorA";
@@ -314,7 +314,7 @@ public class InstantiatorTest extends TestCase {
     try {
       child.join();
     } catch (InterruptedException e) {
-      fail("Unexpected thread interruption.");        
+      fail("Unexpected thread interruption.");
     }
     assertTrue(child.didFinish);
 

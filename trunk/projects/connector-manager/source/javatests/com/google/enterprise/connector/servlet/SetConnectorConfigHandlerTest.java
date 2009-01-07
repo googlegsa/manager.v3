@@ -119,7 +119,7 @@ public class SetConnectorConfigHandlerTest extends TestCase {
   }
 
   public String setXMLBody() {
-    String body = 
+    String body =
       "<" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">\n" +
       "  <" + ServletUtil.QUERY_PARAM_LANG + ">" + this.language + "</" + ServletUtil.QUERY_PARAM_LANG + ">\n" +
       "  <" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">" + this.connectorName + "</" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">\n" +
@@ -131,7 +131,7 @@ public class SetConnectorConfigHandlerTest extends TestCase {
       Map.Entry entry = (Map.Entry)iterator.next();
       body += "  <" + ServletUtil.XMLTAG_PARAMETERS + " name=\"" + entry.getKey()
            + "\" value=\"" + entry.getValue() + "\"/>\n";
-    }     
+    }
     return body + "</" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">";
   }
 }

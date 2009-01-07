@@ -62,18 +62,18 @@ public class TraversalSchedulerTest extends TestCase {
   }
 
 
-  private TraversalScheduler runWithSchedules(List schedules, 
+  private TraversalScheduler runWithSchedules(List schedules,
       Instantiator instantiator, boolean shutdown) {
     storeSchedules(schedules, instantiator);
     WorkQueue workQueue = new WorkQueue(2, 5000);
-    TraversalScheduler scheduler = 
+    TraversalScheduler scheduler =
       new TraversalScheduler(instantiator, new HashMapMonitor(), workQueue);
     scheduler.init();
     Thread thread = new Thread(scheduler, "TraversalScheduler");
     thread.start();
     if (shutdown) {
       // sleep to give it a chance to schedule something
-      try {  
+      try {
         Thread.sleep(200);
       } catch (InterruptedException ie) {
         ie.printStackTrace();
@@ -81,17 +81,17 @@ public class TraversalSchedulerTest extends TestCase {
       }
       scheduler.shutdown(false, 5000);
     }
-    
+
     return scheduler;
   }
-  
+
   private TraversalScheduler runWithSchedules(List schedules,
       Instantiator instantiator) {
     return runWithSchedules(schedules, instantiator, true);
   }
 
   /**
-   * Create an object that can return all connector instances referenced in 
+   * Create an object that can return all connector instances referenced in
    * MockInstantiator.
    */
   private void storeSchedules(List schedules, Instantiator instantiator) {
@@ -107,13 +107,13 @@ public class TraversalSchedulerTest extends TestCase {
       }
     }
   }
-  
+
   private Instantiator createMockInstantiator() {
     MockInstantiator instantiator = new MockInstantiator();
     instantiator.setupTestTraversers();
     return instantiator;
   }
-  
+
   private Instantiator createRealInstantiator() {
     Instantiator instantiator = new SpringInstantiator(
         new MockPusher(), new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
@@ -130,8 +130,8 @@ public class TraversalSchedulerTest extends TestCase {
 
   private void addConnector(Instantiator instantiator,
       String name, String typeName, String configString) {
-    try { 
-      instantiator.setConnectorConfig(name, typeName, 
+    try {
+      instantiator.setConnectorConfig(name, typeName,
           new JsonObjectAsMap(new JSONObject(configString)),
           I18NUtil.getLocaleFromStandardLocaleString("en"), false);
     } catch (ConnectorExistsException cee) {
@@ -146,7 +146,7 @@ public class TraversalSchedulerTest extends TestCase {
       fail(je.toString());
     }
   }
-  
+
   /**
    * Retrieve a schedule that will always run the particular traverser.
    * @param traverserName name of the traverser
@@ -161,38 +161,38 @@ public class TraversalSchedulerTest extends TestCase {
       new ScheduleTime(0)));
     Schedule schedule = new Schedule(traverserName, 60, delay, intervals);
     schedules.add(schedule);
-    
+
     return schedules;
   }
-  
+
   private List getSchedules(String traverserName) {
     return getSchedules(traverserName, 0);
   }
-  
+
   public void testRemoveConnector() {
     String connectorName = MockInstantiator.TRAVERSER_NAME_LONG_RUNNING;
     List schedules = getSchedules(connectorName);
-    TraversalScheduler scheduler = 
+    TraversalScheduler scheduler =
       runWithSchedules(schedules, createMockInstantiator(), false);
 
     // sleep to give it a chance to schedule something
-    try {  
+    try {
       Thread.sleep(100);
     } catch (InterruptedException ie) {
       ie.printStackTrace();
       fail(ie.toString());
     }
 
-    scheduler.removeConnector(connectorName);   
+    scheduler.removeConnector(connectorName);
   }
-  
+
   public void testNoopTraverser() {
     List schedules = getSchedules(MockInstantiator.TRAVERSER_NAME_NOOP);
-    runWithSchedules(schedules, createMockInstantiator());  
+    runWithSchedules(schedules, createMockInstantiator());
   }
-  
+
   /**
-   * Test a long running traverser and show that it can properly get 
+   * Test a long running traverser and show that it can properly get
    * interrupted.
    */
   public void testLongRunningTraverser() {
@@ -216,7 +216,7 @@ public class TraversalSchedulerTest extends TestCase {
     List schedules = getSchedules(MockInstantiator.TRAVERSER_NAME_INTERRUPTIBLE);
     runWithSchedules(schedules, createMockInstantiator());
   }
-  
+
   /**
    * Test that tests two mock Traverser objects.
    */
@@ -225,10 +225,10 @@ public class TraversalSchedulerTest extends TestCase {
     schedules.addAll(getSchedules(MockInstantiator.TRAVERSER_NAME2));
     runWithSchedules(schedules, createMockInstantiator());
   }
-  
+
   public void testRealInstantiator() {
     List schedules = getSchedules("connectorA");
     schedules.addAll(getSchedules("connectorB"));
     runWithSchedules(schedules, createRealInstantiator());
-  }  
+  }
 }

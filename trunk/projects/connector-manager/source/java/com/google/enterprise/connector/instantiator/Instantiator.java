@@ -174,24 +174,24 @@ public interface Instantiator {
 
   /**
    * Sets the schedule of a named connector.
-   * 
+   *
    * @param connectorName
    * @param connectorSchedule String to store or null unset any existing
    *        schedule.
    * @throws ConnectorNotFoundException if the named connector is not found
    */
-  public void setConnectorSchedule(String connectorName, 
+  public void setConnectorSchedule(String connectorName,
       String connectorSchedule) throws ConnectorNotFoundException;
 
   /**
    * Gets the schedule of a named connector.
-   * 
+   *
    * @param connectorName
    * @return the schedule String, or null to erase any previously set schedule
    *         for this connector.
    * @throws ConnectorNotFoundException if the named connector is not found
    */
-  public String getConnectorSchedule(String connectorName)                             
+  public String getConnectorSchedule(String connectorName)
       throws ConnectorNotFoundException;
 
   /**

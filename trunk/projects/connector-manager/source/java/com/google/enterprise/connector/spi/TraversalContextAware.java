@@ -16,14 +16,14 @@ package com.google.enterprise.connector.spi;
 
 /**
  * TraversalContextAware.  A TraversalManager should implement this
- * interface if it wants the ConnectorManager to supply it with a 
+ * interface if it wants the ConnectorManager to supply it with a
  * {@link TraversalContext} object.
  */
 public interface TraversalContextAware {
   /**
    * Supplies a {@link TraversalContext} object which the TraversalManager
    * can use to get various information from the Connector Manager.
-   * 
+   *
    * @param traversalContext
    */
   public void setTraversalContext(TraversalContext traversalContext);

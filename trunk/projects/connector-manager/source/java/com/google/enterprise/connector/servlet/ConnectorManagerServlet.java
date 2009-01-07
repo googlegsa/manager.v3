@@ -42,7 +42,7 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
    * This abstract method processes XML servlet-specific request body,
    * make servlet-specific call to the connector manager and write the
    * XML response body.
-   * 
+   *
    * @param xmlBody String the servlet-specific request body string in XML
    * @param manager Manager
    * @param out PrintWriter where the XML response body is written
@@ -52,7 +52,7 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
 
   /**
    * Returns an XML response to the HTTP GET request.
-   * 
+   *
    * @param req
    * @param res
    * @throws IOException
@@ -90,7 +90,7 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
       out.close();
       return;
     }
-    
+
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
     processDoPost(xmlBody, manager, out);

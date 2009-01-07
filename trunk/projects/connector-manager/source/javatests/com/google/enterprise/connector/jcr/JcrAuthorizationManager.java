@@ -45,7 +45,7 @@ public class JcrAuthorizationManager implements AuthorizationManager {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.spi.AuthorizationManager
    *      #authorizeDocids(java.util.List, java.lang.String)
    */

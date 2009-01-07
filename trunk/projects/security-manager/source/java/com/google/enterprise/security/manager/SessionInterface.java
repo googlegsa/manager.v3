@@ -24,7 +24,7 @@ public interface SessionInterface {
 
   /**
    * checks if a key exists associated with this session
-   * 
+   *
    * @return returns true if the key exists and false if it does not.
    */
   public abstract boolean keyExists(String key);
@@ -35,7 +35,7 @@ public interface SessionInterface {
    * silently. Callers need to ensure that key names do not conflict between
    * different sections of the overall system; prefixing your key name with your
    * package name is advised.
-   * 
+   *
    * @param key arbitrary string the caller wishes to assign, which is used for
    *        later retrieval of this data using the getValue method.
    * @param newValue the new value to assign to this key within this session. if
@@ -45,7 +45,7 @@ public interface SessionInterface {
 
   /**
    * retrieves the value set for a given key in this session
-   * 
+   *
    * @param key the key value used in setValue() for the session data being
    *        retrieved
    * @return the value set by setValue() for this key in this session or null if
@@ -60,7 +60,7 @@ public interface SessionInterface {
    * Callers need to ensure that key names do not conflict between different
    * sections of the overall system; prefixing your key name with your package
    * name is advised.
-   * 
+   *
    * @param key arbitrary string the caller wishes to assign, which is used for
    *        later retrieval of this data using the getValue method.
    * @param newValue the new value to assign to this key within this session. if
@@ -70,7 +70,7 @@ public interface SessionInterface {
 
   /**
    * retrieves a binary value set for a given key in this session
-   * 
+   *
    * @param key the key value used in setValue() for the session data being
    *        retrieved
    * @return the value set by setValue() for this key in this session or null if
@@ -82,7 +82,7 @@ public interface SessionInterface {
   /**
    * pass an SPNEGO/Kerberos token to the Session Manager so that it may extract
    * the delegated user identity for use in subsequent Head Requests
-   * 
+   *
    * @param spnegoBlob SPNEGO/Kerberos token fetched from the client
    * @return the Kerberos identity if the operation completed successfully, null
    *         otherwise
@@ -92,7 +92,7 @@ public interface SessionInterface {
   /**
    * request an Kerberos KeyMaterial object based on the currently Kerberos
    * identity associated with the session
-   * 
+   *
    * @param server Target server name
    * @return Base64-encoded value of the SPNEGO/Kerberos token
    */
@@ -100,7 +100,7 @@ public interface SessionInterface {
 
   /**
    * Returns the Kerberos identity if it has been initialized.
-   * 
+   *
    * @return A non-null string with the Kerberos identity if the credentials
    *         have been properly initialized for delegation. Null otherwise.
    */
@@ -109,7 +109,7 @@ public interface SessionInterface {
   /**
    * Returns the path to the Kerberos Credentials Cache where the user
    * credentials are stored.
-   * 
+   *
    * @return Credentials Cache filename.
    */
   public abstract String getKrb5CcacheFilename();

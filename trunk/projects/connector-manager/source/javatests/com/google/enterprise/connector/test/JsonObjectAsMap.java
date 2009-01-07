@@ -33,8 +33,8 @@ public class JsonObjectAsMap extends AbstractMap {
   final JSONObject jobj;
 
   /**
-   * 
-   * 
+   *
+   *
    */
   public JsonObjectAsMap() {
     jobj = new JSONObject();
@@ -44,7 +44,7 @@ public class JsonObjectAsMap extends AbstractMap {
    * The javadoc for AbstractMap specifies that you should provide a constructor
    * that takes a map. But one isn't needed here - as far as we know. This
    * implementation is here to let us know otherwise very loudly.
-   * 
+   *
    * @param m a Map
    */
   public JsonObjectAsMap(Map m) {
@@ -54,7 +54,7 @@ public class JsonObjectAsMap extends AbstractMap {
   /**
    * The primary constructor for this class
    * @param jobj
-   * 
+   *
    */
   public JsonObjectAsMap(JSONObject jobj) {
     this.jobj = jobj;
@@ -71,7 +71,7 @@ public class JsonObjectAsMap extends AbstractMap {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.util.AbstractMap#entrySet()
    */
   public Set entrySet() {
@@ -107,7 +107,7 @@ public class JsonObjectAsMap extends AbstractMap {
             }
           }
 
-          // no implementation needed here because we're only implementing 
+          // no implementation needed here because we're only implementing
           // unmodifiable maps
           public void remove() {
             throw new UnsupportedOperationException();

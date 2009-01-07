@@ -30,14 +30,14 @@ import java.util.Map;
 import java.util.Properties;
 
 public class PropertiesUtils {
-  
+
   private static final Logger LOGGER =
       Logger.getLogger(PropertiesUtils.class.getName());
 
   public static final String GOOGLE_CONNECTOR_WORK_DIR =
       "googleConnectorWorkDir";
   public static final String GOOGLE_WORK_DIR = "googleWorkDir";
-  public static final String GOOGLE_PROPERTIES_VERSION = 
+  public static final String GOOGLE_PROPERTIES_VERSION =
       "googlePropertiesVersion";
   public static final int GOOGLE_PROPERTIES_VERSION_NUMBER = 1;
 
@@ -52,9 +52,9 @@ public class PropertiesUtils {
    * @return Properties as read from file
    * @throws PropertiesException if error reading file
    */
-  public static Properties loadFromFile(File propertiesFile) 
+  public static Properties loadFromFile(File propertiesFile)
     throws PropertiesException {
-    try {    
+    try {
       InputStream is =
           new BufferedInputStream(new FileInputStream(propertiesFile));
       try {
@@ -69,7 +69,7 @@ public class PropertiesUtils {
   }
 
   /**
-   * Write the properties to a file.  Encrypt passwords, 
+   * Write the properties to a file.  Encrypt passwords,
    * version the properties, and try write them out in the
    * the same format they were read.
    *
@@ -105,7 +105,7 @@ public class PropertiesUtils {
    * @returns a String object with containing the properties.
    * @throws PropertiesException
    */
-  public static String storeToString(Properties properties, String comment) 
+  public static String storeToString(Properties properties, String comment)
       throws PropertiesException {
     try {
       ByteArrayOutputStream os = null;
@@ -128,7 +128,7 @@ public class PropertiesUtils {
    * such a thing as StringInputStream.  This should be able to
    * load properties from strings created by toString();
    *
-   * @param propertiesString 
+   * @param propertiesString
    * @returns a Properties object, or null if null string
    * @throws PropertiesException
    */
@@ -138,7 +138,7 @@ public class PropertiesUtils {
       try {
         ByteArrayInputStream is = null;
         try {
-          is = new ByteArrayInputStream(propertiesString.getBytes()); 
+          is = new ByteArrayInputStream(propertiesString.getBytes());
           return loadProperties(is);
         } finally {
           is.close();
@@ -158,7 +158,7 @@ public class PropertiesUtils {
    * @return Properties as read from inputStream
    * @throws PropertiesException
    */
-  public static Properties loadProperties(InputStream inputStream) 
+  public static Properties loadProperties(InputStream inputStream)
       throws PropertiesException {
     if (inputStream == null) {
       return null;
@@ -169,15 +169,15 @@ public class PropertiesUtils {
     } catch (Exception e) {
       throw new PropertiesException("Error loading properties from stream", e);
     }
-      
+
     // Decrypt stored passwords.
     decryptSensitiveProperties(properties);
-    
+
     return properties;
   }
 
   /**
-   * Write the properties to an OutputStream.  Encrypt passwords, 
+   * Write the properties to an OutputStream.  Encrypt passwords,
    * version the properties, and try write them out in the
    * the same format they were read.
    *
@@ -204,7 +204,7 @@ public class PropertiesUtils {
 
   /**
    * Make a Properties object from a Map, copying all the keys and values.
-   * 
+   *
    * @param sourceMap a Map representing properties key-value map
    * @returns new Properties object that may be modified without altering
    *          the source properties.

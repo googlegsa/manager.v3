@@ -50,7 +50,7 @@ web-site for further documentation and information.</p>
 <p>The Connector Manager uses the <a
 	href="http://www.springframework.org/">Spring Framework</a> to
 instantiate two important interfaces of this package: {@link
-com.google.enterprise.connector.spi.ConnectorType} and 
+com.google.enterprise.connector.spi.ConnectorType} and
 {@link com.google.enterprise.connector.spi.Connector}. The implementor of this SPI must
 provide two Spring xml configuration files to notify the Connector
 Manager of the existence of their implementation and to describe how to
@@ -77,13 +77,13 @@ ConnectorType interface. Unlike the connectorType.xml, the file is not
 normally self-contained. It may refer to external variables in the
 following syntax:</p>
 <pre>
-  &lt;property name="username" value="${username}"/&gt; 
+  &lt;property name="username" value="${username}"/&gt;
 </pre>
 <p>These variables will be supplied by Spring from a properties file
 created by the Connector Manager for each instance of a connector.
-Spring supplies these values using their 
+Spring supplies these values using their
 <a href="http://static.springframework.org/spring/docs/1.2.x/api/index.html">
-PropertyPlaceholderConfigurer</a> 
+PropertyPlaceholderConfigurer</a>
 functionality. The actual values are
 expected to come from the Search Appliance administrator, via screens
 rendered on the Administrator Console.</p>

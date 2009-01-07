@@ -19,7 +19,7 @@ package com.google.enterprise.connector.scheduler;
  */
 public class ScheduleTime {
   private int hour;  // value from 0-23
-  
+
   public ScheduleTime(int hour) {
     this.hour = hour;
   }

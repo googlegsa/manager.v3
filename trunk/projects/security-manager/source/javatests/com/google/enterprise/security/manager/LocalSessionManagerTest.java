@@ -21,7 +21,7 @@ import junit.framework.TestCase;
 
 /**
  * Tests to exercise the LocalSessionManager and LocalSession classes
- * 
+ *
  */
 public class LocalSessionManagerTest extends TestCase {
 

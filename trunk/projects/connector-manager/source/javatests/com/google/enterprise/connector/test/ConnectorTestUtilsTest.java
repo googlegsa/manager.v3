@@ -24,7 +24,7 @@ import java.io.StringReader;
 import java.util.logging.Logger;
 
 public class ConnectorTestUtilsTest extends TestCase {
-  private static final Logger logger = 
+  private static final Logger logger =
       Logger.getLogger(ConnectorTestUtilsTest.class.getName());
 
   String expectedContents = "now is the time for all \n"
@@ -52,7 +52,7 @@ public class ConnectorTestUtilsTest extends TestCase {
     logger.info(contents);
     logger.info("length of contents " + contents.length());
     String expectedContents = "now is the time for all \n"
-      + "good men to come to the aid \n" + "of their country \n";
+      + "good men to come to the aid\n" + "of their country\n";
     logger.info(expectedContents);
     logger.info("length of expected contents "
       + expectedContents.length());

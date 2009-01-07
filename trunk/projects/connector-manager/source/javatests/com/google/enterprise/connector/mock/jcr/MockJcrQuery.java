@@ -25,8 +25,8 @@ import javax.jcr.query.QueryResult;
 
 /**
  * MockJcrQuery implements the corresponding JCR interface.  This implementation
- * temporarily violates the explicit semantics of JCR by only allowing date 
- * queries between specified bounds.  This class will need revisiting when we 
+ * temporarily violates the explicit semantics of JCR by only allowing date
+ * queries between specified bounds.  This class will need revisiting when we
  * work with a real JCR implementation.
  * <p>
  * TODO(ziff): extend the query semantics as needed
@@ -41,13 +41,13 @@ public class MockJcrQuery implements Query {
   List internalQuery;
 
   /**
-   * Creates a MockJcrQuery object from a date range.  This is intended to be 
-   * used for query traversal.  We may need to add another constructor, or 
+   * Creates a MockJcrQuery object from a date range.  This is intended to be
+   * used for query traversal.  We may need to add another constructor, or
    * another type that implements this interface, for other SPI requirements
    * as we go along.
    * @param from    Beginning point of range
    * @param to  End point of range
-   * @param store   MockRepositoryDocumentStore from which documents are 
+   * @param store   MockRepositoryDocumentStore from which documents are
    * returned
    */
   public MockJcrQuery(MockRepositoryDateTime from, MockRepositoryDateTime to,
@@ -61,10 +61,10 @@ public class MockJcrQuery implements Query {
   }
 
   /**
-   * Creates a MockJcrQuery object from a single date.  This is intended to be 
-   * used for query traversal.  
+   * Creates a MockJcrQuery object from a single date.  This is intended to be
+   * used for query traversal.
    * @param from    Beginning point of range
-   * @param store   MockRepositoryDocumentStore from which documents are 
+   * @param store   MockRepositoryDocumentStore from which documents are
    * returned
    */
   public MockJcrQuery(MockRepositoryDateTime from,
@@ -86,7 +86,7 @@ public class MockJcrQuery implements Query {
   }
 
   /**
-   * Returns the query statement.  In this implementation, this is 
+   * Returns the query statement.  In this implementation, this is
    * just for debugging - it's not an actual query string in a query language.
    * @return the stored statement
    */
@@ -95,7 +95,7 @@ public class MockJcrQuery implements Query {
   }
 
   /**
-   * Returns the query language.  TBD(ziff): consider whether this is really 
+   * Returns the query language.  TBD(ziff): consider whether this is really
    * needed.
    * @return null
    */
@@ -117,7 +117,7 @@ public class MockJcrQuery implements Query {
 
   /**
    * Throws UnsupportedOperationException
-   * @param arg0 
+   * @param arg0
    * @return nothing
    */
   public Node storeAsNode(String arg0) {

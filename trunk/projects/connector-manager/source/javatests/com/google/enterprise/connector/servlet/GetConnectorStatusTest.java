@@ -39,7 +39,7 @@ public class GetConnectorStatusTest extends TestCase {
    * #handleDoGet(String, Manager, PrintWriter)}.
    *
    * connectorStatus = null
-   * 
+   *
    */
   public void testHandleDoGet2() {
     String name = null;
@@ -58,7 +58,7 @@ public class GetConnectorStatusTest extends TestCase {
     int status = 0;
     doTestStatus(name, status);
   }
- 
+
   public void testHandleDoGet5() {
     String name = "connectorName";
     int status = 0;
@@ -90,7 +90,7 @@ public class GetConnectorStatusTest extends TestCase {
     StringBuffer result = writer.getBuffer();
     LOG.info(result.toString());
     LOG.info(expectedResult);
-    Assert.assertEquals (StringUtils.normalizeNewlines(expectedResult), 
+    Assert.assertEquals (StringUtils.normalizeNewlines(expectedResult),
         StringUtils.normalizeNewlines(result.toString()));
     out.close();
   }

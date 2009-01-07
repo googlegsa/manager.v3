@@ -27,7 +27,7 @@ public interface Traverser {
 
   /**
    * Signal to the TraversalManager that it need not wait before calling
-   * {@link #runBatch(int)} again for the Connector, even if the Connector 
+   * {@link #runBatch(int)} again for the Connector, even if the Connector
    * returned no Documents in the previous batch.
    */
   public static final int NO_WAIT = 0;

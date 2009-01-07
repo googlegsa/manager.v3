@@ -174,7 +174,7 @@ public class GetConfig extends HttpServlet {
       //close the stream
       zout.finish();
     } else {
-      throw new FileNotFoundException("Configuration directory " 
+      throw new FileNotFoundException("Configuration directory "
           + configDir + " not found.");
     }
   }

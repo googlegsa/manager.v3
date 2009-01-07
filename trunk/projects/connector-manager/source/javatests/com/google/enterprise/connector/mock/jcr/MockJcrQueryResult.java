@@ -41,7 +41,7 @@ public class MockJcrQueryResult implements QueryResult {
   List result;
 
   /**
-   * Creates a MockJcrQueryResult from an Iterable<MockRepositoryDocument> 
+   * Creates a MockJcrQueryResult from an Iterable<MockRepositoryDocument>
    * (a MockRepository result)
    * @param result
    */
@@ -50,7 +50,7 @@ public class MockJcrQueryResult implements QueryResult {
   }
 
   /**
-   * Returns the result as a NodeIterator.  At present, this is the only 
+   * Returns the result as a NodeIterator.  At present, this is the only
    * supported operation.
    * @return MockJcrNodeIterator
    */

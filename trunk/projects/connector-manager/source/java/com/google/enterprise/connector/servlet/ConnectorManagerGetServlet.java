@@ -41,7 +41,7 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
    * This abstract method processes servlet-specific GET request,
    * make servlet-specific call to the connector manager and write the
    * XML response body.
-   * 
+   *
    * @param connectorName String the parameter for connector name
    * @param lang String the parameter for language
    * @param manager Manager
@@ -52,11 +52,11 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
 
   /**
    * Returns the XML response for a given request.
-   * 
+   *
    * @param req
    * @param res
    * @throws IOException
-   * 
+   *
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -79,7 +79,7 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
 
     ServletContext servletContext = this.getServletContext();
     Manager manager = Context.getInstance(servletContext).getManager();
-  
+
     processDoGet(connectorName, lang, manager, out);
     out.close();
   }
@@ -87,11 +87,11 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
   /**
    * Returns the XML response for a given request.
    * Simply call doGet
-   * 
+   *
    * @param req
    * @param res
    * @throws IOException
-   * 
+   *
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res) throws IOException {
     doGet(req, res);
@@ -99,7 +99,7 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
 
   /**
    * Write connector configuration to XML response
-   * 
+   *
    * @param out PrintWriter servlet response writer
    * @param status ConnectorMessageCode the servlet call status
    * @param configRes ConfigureResponse
