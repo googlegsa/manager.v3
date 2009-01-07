@@ -135,10 +135,8 @@ public class ProductionManager implements Manager {
       Iterator iter = results.iterator();
       while (iter.hasNext()) {
         AuthorizationResponse response = (AuthorizationResponse) iter.next();
-        String uuid = response.getDocid();
-        boolean ok = response.isValid();
-        if (ok) {
-          result.add(uuid);
+        if (response.isValid()) {
+          result.add(response.getDocid());
         }
       }
     } catch (ConnectorNotFoundException e) {
@@ -286,7 +284,7 @@ public class ProductionManager implements Manager {
   public void setSchedule(String connectorName, int load, int retryDelayMillis,
       String timeIntervals)
       throws ConnectorNotFoundException, PersistentStoreException {
-    Schedule schedule = new Schedule(connectorName + ":" + load + ":" 
+    Schedule schedule = new Schedule(connectorName + ":" + load + ":"
             + retryDelayMillis + ":" + timeIntervals);
     String connectorSchedule = schedule.toString();
     instantiator.setConnectorSchedule(connectorName, connectorSchedule);

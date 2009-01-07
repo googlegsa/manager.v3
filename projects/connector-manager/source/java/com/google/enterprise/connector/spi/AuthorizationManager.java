@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ public interface AuthorizationManager {
 
   /**
    * Gets authorization from the repository for a set of documents by ID.
-   * 
+   *
    * @param docids The document set represented as a Collection of Strings:
    *        the docid for each document. The Connector Manager will ensure that
    *        no docid is repeated in this collection.  The docid strings which the
@@ -37,9 +37,11 @@ public interface AuthorizationManager {
    *        {@link TraversalManager}.resumeTraversal call.
    * @param identity The user's identity, as an
    *        {@link AuthenticationIdentity}
-   * @return A Collection of {@link AuthorizationResponse} objects, one for each
-   *         docid in the docidList parameter; however, this list does not
-   *         need to be in the same order.
+   * @return A Collection of {@link AuthorizationResponse} objects.
+   *         The Collection of responses need not be in the same order as
+   *         the Collection of docids.  The returned Collection of responses
+   *         may contain only those docids for which the user has positive
+   *         access.  [In other words, negative repsonses are optional.]
    * @throws RepositoryException
    */
   Collection authorizeDocids(Collection docids, AuthenticationIdentity identity)

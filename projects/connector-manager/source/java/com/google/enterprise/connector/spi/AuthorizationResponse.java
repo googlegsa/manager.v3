@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc.
+// Copyright 2007-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ public class AuthorizationResponse {
 
   /**
    * Makes an AuthorizationResponse.
-   * 
+   *
    * @param valid Indicates that authorization was successful (valid)
    * @param docid The docid for which authorization succeeded - should not be
    *        null or empty
@@ -40,7 +40,7 @@ public class AuthorizationResponse {
 
   /**
    * Tests whether authorization was valid
-   * 
+   *
    * @return true if authorization was valid
    */
   public boolean isValid() {
@@ -49,7 +49,7 @@ public class AuthorizationResponse {
 
   /**
    * Gets the docid.
-   * 
+   *
    * @return docid - should not be null or empty
    */
   public String getDocid() {
@@ -57,33 +57,29 @@ public class AuthorizationResponse {
   }
 
   /**
-   * Returns a hash code value for the object. The hashcode returned is the
-   * hashcode for the docid string - the rest of the object is ignored.
-   * 
+   * Returns a hash code value for the object.
+   *
    * @return a hash code value for this object.
    */
   public int hashCode() {
-    if (docid == null) {
-      throw new IllegalStateException();
-    }
-    return docid.hashCode();
+    return docid.hashCode() + (valid ? 547 : 271);
   }
 
   /**
    * Indicates whether some other object is "equal to" this one. Implemented by
-   * running equals on the docid string.
-   * 
+   * running equals on the docid string and comparing the valid state.
+   *
    * @return true if this object is the same as the obj argument; false
    *         otherwise.
    */
   public boolean equals(Object obj) {
-    if (docid == null) {
-      throw new IllegalStateException();
+    if (obj == this) {
+      return true;
     }
     if (!(obj instanceof AuthorizationResponse)) {
       return false;
     }
     AuthorizationResponse other = (AuthorizationResponse) obj;
-    return this.docid.equals(other.getDocid());
+    return (valid == other.valid) && docid.equals(other.docid);
   }
 }
