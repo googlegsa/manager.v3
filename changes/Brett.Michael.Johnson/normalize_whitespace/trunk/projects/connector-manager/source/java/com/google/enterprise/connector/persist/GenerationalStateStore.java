@@ -42,7 +42,11 @@ public class GenerationalStateStore implements ConnectorStateStore {
    */
   public GenerationalStateStore(ConnectorStateStore baseStore) {
     this.myGenerations = new HashMap();
-    this.baseStore = baseStore;
+    if (baseStore instanceof GenerationalStateStore) {
+      this.baseStore = ((GenerationalStateStore)baseStore).baseStore;
+    } else {
+      this.baseStore = baseStore;
+    }
   }
 
   /**

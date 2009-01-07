@@ -159,7 +159,8 @@
       -->
 
       <!-- Replace the above Realm with one of the following to get a Realm
-           stored in a database and accessed via JDBC. -->
+           stored in a database and accessed via JDBC.
+      -->
 
       <!--
       <Realm  className="org.apache.catalina.realm.JDBCRealm"

@@ -109,8 +109,9 @@ public class QueryTraverserTest extends TestCase {
     TraversalManager qtm = new JcrTraversalManager(qm);
     MockPusher pusher = new MockPusher(System.out);
 
-    Traverser traverser =
-        new QueryTraverser(pusher, qtm, instantiator, connectorName);
+    Traverser traverser = new QueryTraverser(pusher, qtm,
+        instantiator.getTraversalStateStore(connectorName), connectorName);
+
     instantiator.setupTraverser(connectorName, traverser);
     return traverser;
   }

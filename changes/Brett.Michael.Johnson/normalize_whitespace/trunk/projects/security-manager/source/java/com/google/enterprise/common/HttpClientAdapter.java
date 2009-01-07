@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,13 +20,17 @@ import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.UsernamePasswordCredentials;
+import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
+import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.util.IdleConnectionTimeoutThread;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,9 +60,31 @@ public class HttpClientAdapter implements HttpClientInterface {
     idleConnectionTimeoutThread.addConnectionManager(connectionManager);
   }
 
-  /** {@inheritDoc} */
-  public HttpExchange newExchange(String method, URL url, List<StringPair> parameters) {
-    return new ClientExchange(connectionManager, method, url, parameters);
+  public HttpExchange getExchange(URL url) {
+    GetMethod method = new GetMethod(url.toString());
+    setPathFields(method, url);
+    return new ClientExchange(connectionManager, method);
+  }
+
+  public HttpExchange postExchange(URL url, List<StringPair> parameters) {
+    PostMethod method = new PostMethod(url.toString());
+    setPathFields(method, url);
+    if (parameters != null) {
+      method.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+      for (StringPair p: parameters) {
+        method.addParameter(p.getName(), p.getValue());
+      }
+    }
+    return new ClientExchange(connectionManager, method);
+  }
+
+  private void setPathFields(HttpMethod method, URL url) {
+    method.setFollowRedirects(false);
+    method.setPath(url.getPath());
+    String query = url.getQuery();
+    if ((query != null) && (query.length() > 0)) {
+      method.setQueryString(query);
+    }
   }
 
   private static class ClientExchange implements HttpExchange {
@@ -67,31 +93,12 @@ public class HttpClientAdapter implements HttpClientInterface {
     private final HttpMethod httpMethod;
     private final HttpClient httpClient;
 
-    public ClientExchange(HttpConnectionManager connectionManager,
-                          String method, URL url, List<StringPair> parameters) {
-      if ("POST".equalsIgnoreCase(method)) {
-        httpMethod = new PostMethod(url.toString());
-        httpMethod.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        PostMethod pm = PostMethod.class.cast(httpMethod);
-        for (StringPair p: parameters) {
-          pm.addParameter(p.getName(), p.getValue());
-        }
-      } else if ("GET".equalsIgnoreCase(method)) {
-        httpMethod = new GetMethod(url.toString());
-      } else {
-        throw new IllegalArgumentException("unknown method: " + method);
-      }
-      httpMethod.setFollowRedirects(false);
-      httpMethod.setPath(url.getPath());
-      String query = url.getQuery();
-      if ((query != null) && (query.length() > 0)) {
-        httpMethod.setQueryString(query);
-      }
+    public ClientExchange(HttpConnectionManager connectionManager, HttpMethod httpMethod) {
+      this.httpMethod = httpMethod;
       httpClient = new HttpClient(connectionManager);
       httpClient.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
     }
 
-    /** {@inheritDoc} */
     public void setProxy(String proxy) {
       if (null == proxy) {
         return;
@@ -104,29 +111,51 @@ public class HttpClientAdapter implements HttpClientInterface {
       }
 
       httpClient.getHostConfiguration().
-        setProxy(proxyInfo[0], Integer.parseInt(proxyInfo[1]));
+          setProxy(proxyInfo[0], Integer.parseInt(proxyInfo[1]));
     }
 
-    /** {@inheritDoc} */
+    public void setBasicAuthCredentials(String username, String password) {
+      httpClient.getState().setCredentials(
+          new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, AuthScope.ANY_REALM),
+          new UsernamePasswordCredentials(username, password));
+      httpClient.getParams().setAuthenticationPreemptive(true);
+      httpMethod.setDoAuthentication(true);
+    }
+
+    public void setFollowRedirects(boolean followRedirects) {
+      httpMethod.setFollowRedirects(followRedirects);
+    }
+
+    public void addParameter(String name, String value) {
+      if (httpMethod instanceof PostMethod) {
+        ((PostMethod) httpMethod).addParameter(name, value);
+      } else {
+        throw new UnsupportedOperationException("addParameter works only for POST methods.");
+      }
+    }
+
     public void setRequestHeader(String name, String value) {
       httpMethod.setRequestHeader(name, value);
     }
 
-    /** {@inheritDoc} */
     public int exchange() throws IOException {
       try {
         return httpClient.executeMethod(httpMethod);
       } catch (HttpException e) {
-        throw new IOException(e);
+        IOException ee = new IOException();
+        ee.initCause(e);
+        throw ee;
       }
     }
 
-    /** {@inheritDoc} */
     public String getResponseEntityAsString() throws IOException {
       return httpMethod.getResponseBodyAsString();
     }
 
-    /** {@inheritDoc} */
+    public InputStream getResponseEntityAsStream() throws IOException {
+      return httpMethod.getResponseBodyAsStream();
+    }
+
     public String getResponseHeaderValue(String name) {
       for (Header header: httpMethod.getResponseHeaders(name)) {
         if (header.getName().equals(name)) {
@@ -136,7 +165,6 @@ public class HttpClientAdapter implements HttpClientInterface {
       return null;
     }
 
-    /** {@inheritDoc} */
     public List<String> getResponseHeaderValues(String name) {
       List<String> result = new ArrayList<String>();
       for (Header header: httpMethod.getResponseHeaders(name)) {
@@ -147,12 +175,20 @@ public class HttpClientAdapter implements HttpClientInterface {
       return result;
     }
 
-    /** {@inheritDoc} */
     public int getStatusCode() {
       return httpMethod.getStatusCode();
     }
 
-    /** {@inheritDoc} */
+    public void setRequestBody(byte[] requestContent) {
+      String method = httpMethod.getName();
+      if ("POST".equalsIgnoreCase(method)) {
+        PostMethod pm = PostMethod.class.cast(httpMethod);
+        String contentType = pm.getRequestHeader("Content-Type").toString();
+        System.out.println("My content-type is " + contentType);
+        pm.setRequestEntity(new ByteArrayRequestEntity(requestContent, contentType));
+      }
+    }
+
     public void close() {
       httpMethod.releaseConnection();
     }

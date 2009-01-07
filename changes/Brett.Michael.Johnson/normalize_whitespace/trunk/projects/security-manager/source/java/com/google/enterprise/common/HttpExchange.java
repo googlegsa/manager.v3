@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package com.google.enterprise.common;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -27,6 +28,28 @@ public interface HttpExchange {
    * @param proxy The proxy host and port.
    */
   public void setProxy(String proxy);
+
+  /**
+   * Set credentials to use for basic auth.
+   * @param username
+   * @param password
+   */
+  public void setBasicAuthCredentials(String username, String password);
+
+  /**
+   * Tell exchange whether to follow redirects.
+   * Default is to not follow them.
+   * @param followRedirects {@code true} means follow them.
+   */
+  public void setFollowRedirects(boolean followRedirects);
+
+  /**
+   * Add a parameter to the exchange.
+   * Works only for POST methods.
+   * @param name The parameter's name.
+   * @param value The parameter's value.
+   */
+  public void addParameter(String name, String value);
 
   /**
    * Set an HTTP request header field.
@@ -52,6 +75,13 @@ public interface HttpExchange {
   public String getResponseEntityAsString() throws IOException;
 
   /**
+   * Get the response entity (body) as an input stream.
+   * @return The entity input stream.
+   * @throw IOException if there's a transport error
+   */
+  public InputStream getResponseEntityAsStream() throws IOException;
+
+  /**
    * Get the value of a response header field.
    * @param name The name of the header.
    * @return The value of the named header, or null if no such header.
@@ -73,7 +103,14 @@ public interface HttpExchange {
   public int getStatusCode();
 
   /**
+   * Set the entity of the request.
+   * @param byteArrayRequestEntity The bytes to use as an entity.
+   */
+  public void setRequestBody(byte[] byteArrayRequestEntity);
+
+  /**
    * Close the exchange and reclaim its resources.
    */
   public void close();
+
 }

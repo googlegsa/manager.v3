@@ -15,12 +15,15 @@
 package com.google.enterprise.security.connectors.formauth;
 
 import com.google.enterprise.common.HttpClientInterface;
+import com.google.enterprise.common.HttpExchange;
+import com.google.enterprise.common.ServletBase;
 import com.google.enterprise.common.StringPair;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
 
@@ -30,8 +33,8 @@ import org.htmlcleaner.TagNode;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Logger;
 
@@ -53,8 +56,8 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     this.cookieName = cookieName; // TODO for cookie cracker use
   }
 
-  public AuthenticationResponse authenticate(AuthenticationIdentity identity) {
-    // String cookieVal = identity.getCookie(cookieName);
+  public AuthenticationResponse authenticate(AuthenticationIdentity raw) {
+    SecAuthnIdentity identity = SecAuthnIdentity.class.cast(raw);
     String username = identity.getUsername();
     String password = identity.getPassword();
 
@@ -68,8 +71,9 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       return null;
     }
 
-    Vector<Cookie> originalCookies = getCookies(identity);
+    Collection<Cookie> originalCookies = identity.getCookies();
     Vector<Cookie> cookies = copyCookies(originalCookies);
+    logCookies(LOGGER, "original cookies", cookies);
 
     // GET siteUri, till we hit a form; fill the form, post it; get the response,
     // remember the cookie returned to us.
@@ -77,10 +81,11 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     String redirect;
     try {
       redirect = fetchLoginForm(siteUri, form, cookies);
-    } catch (Exception e) {
+    } catch (IOException e) {
       LOGGER.info("Could not GET login form from " + siteUri + ": " + e.toString());
       return new AuthenticationResponse(false, null);
     }
+    logCookies(LOGGER, "after fetchLoginForm", cookies);
 
     List<StringPair> param;
     try {
@@ -110,6 +115,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       LOGGER.info("Could not POST login form: " + e.toString());
       return new AuthenticationResponse(false, null);
     }
+    logCookies(LOGGER, "after submitLoginForm", cookies);
 
     // We are form auth, we expect to have at least one cookie
     if (!anyCookiesChanged(cookies, originalCookies)) {
@@ -121,7 +127,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     // overwrite an IP-bound cookie currently held by the user agent.
     for (Cookie cookie: cookies) {
       if (!containsCookie(originalCookies, cookie, false)) {
-        identity.setCookie(cookie);
+        identity.addCookie(cookie);
       }
     }
     return new AuthenticationResponse(true, username);
@@ -131,19 +137,19 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
    * @returns the URL the form should be posted to
    */
   private String fetchLoginForm(String urlToFetch, StringBuffer bodyBuffer, Vector<Cookie> cookies)
-      throws Exception {
+      throws IOException {
     int redirectCount = 0;
     URL url = new URL(urlToFetch);
     String lastRedirect;
-    String redirected = urlToFetch;;
+    String redirected = urlToFetch;
     StringBuffer redirectBuffer = new StringBuffer();
     int kMaxNumRedirectsToFollow = 4;
 
     while (true) {
-      CookieUtil.fetchPage(httpClient, "GET", url,
+      CookieUtil.fetchPage(httpClient.getExchange(url),
+                           url,
                            null, // proxy,
                            "SecMgr", cookies,
-                           null, // parameters,
                            bodyBuffer,
                            redirectBuffer, null,
                            null); // LOGGER
@@ -151,7 +157,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       redirected = redirectBuffer.toString();
       if (redirected.length() > 0) {
         if (++redirectCount > kMaxNumRedirectsToFollow) {
-          throw new Exception("Max num of redirects exceeded");
+          throw new IOException("Max num of redirects exceeded");
         }
         // prepare for another fetch.
         url = new URL(redirected);
@@ -230,13 +236,13 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     StringBuffer redirectBuffer = new StringBuffer();
     int status = 0;
     int kMaxNumRedirectsToFollow = 4;
-    String httpMethod = "POST"; // post only once, follow redirect is needed
+    // post only once, follow redirect if needed
+    HttpExchange exchange = httpClient.postExchange(url, parameters);
 
     while (true) {
-      status = CookieUtil.fetchPage(httpClient, httpMethod, url,
+      status = CookieUtil.fetchPage(exchange, url,
                                     null, // proxy,
                                     "SecMgr", cookies,
-                                    parameters,
                                     bodyBuffer,
                                     redirectBuffer, null,
                                     null); // LOGGER
@@ -248,7 +254,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
         }
         // prepare for another fetch.
         url = new URL(redirected);
-        httpMethod = "GET";
+        exchange = httpClient.getExchange(url);
       } else {
         break;
       }
@@ -256,19 +262,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     return status;
   }
 
-  // This has to re-create all the cookies because AuthenticationIdentity doesn't provide
-  // a way to get at the originals.
-  private Vector<Cookie> getCookies(AuthenticationIdentity identity) {
-    Vector<Cookie> result = new Vector<Cookie>();
-    @SuppressWarnings("unchecked")
-        Set<String> names = identity.getCookieNames();
-    for (String name: names) {
-      result.add(new Cookie(name, identity.getCookie(name)));
-    }
-    return result;
-  }
-
-  private Vector<Cookie> copyCookies(Vector<Cookie> cookies) {
+  private static Vector<Cookie> copyCookies(Collection<Cookie> cookies) {
     Vector<Cookie> result = new Vector<Cookie>(cookies.size());
     for (Cookie c: cookies) {
       result.add(Cookie.class.cast(c.clone()));
@@ -276,7 +270,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     return result;
   }
 
-  private boolean anyCookiesChanged(Vector<Cookie> newCookies, Vector<Cookie> oldCookies) {
+  private static boolean anyCookiesChanged(Collection<Cookie> newCookies, Collection<Cookie> oldCookies) {
     for (Cookie c: newCookies) {
       if (!containsCookie(oldCookies, c, true)) {
         return true;
@@ -285,7 +279,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     return false;
   }
 
-  private boolean containsCookie(Vector<Cookie> cookies, Cookie cookie, boolean considerValue) {
+  private static boolean containsCookie(Collection<Cookie> cookies, Cookie cookie, boolean considerValue) {
     for (Cookie c: cookies) {
       if (compareCookies(c, cookie, considerValue)) {
         return true;
@@ -294,15 +288,23 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     return false;
   }
 
-  private boolean compareCookies(Cookie c1, Cookie c2, boolean considerValue) {
+  private static boolean compareCookies(Cookie c1, Cookie c2, boolean considerValue) {
     return
         stringEquals(c1.getName(), c2.getName())
         && stringEquals(c1.getDomain(), c2.getDomain())
         && considerValue ? stringEquals(c1.getValue(), c2.getValue()) : true;
   }
 
-  private boolean stringEquals(String s1, String s2) {
+  private static boolean stringEquals(String s1, String s2) {
     return (s1 == null) ? (s2 == null) : s1.equals(s2);
+  }
+
+  private static void logCookies(Logger LOGGER, String tag, Collection<Cookie> cookies) {
+    String value = ServletBase.setCookieHeaderValue(cookies);
+    if (value == null) {
+      value = "(none)";
+    }
+    LOGGER.info(tag + ": " + value);
   }
 
   public Session login() {

@@ -14,18 +14,21 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.sessionmanager.SessionManagerInterface;
 import com.google.enterprise.connector.manager.ConnectorManager;
+import com.google.enterprise.connector.manager.SecAuthnContext;
+import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.security.identity.AuthnDomainGroup;
+import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.IdentityConfig;
+import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
-import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
-import org.opensaml.saml2.metadata.EntityDescriptor;
 
+import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Interface to SAML server backend. Top-level classes such as servlets should
@@ -45,25 +48,9 @@ public interface BackEnd {
    *
    * This may migrate to the next inner layer.
    *
-   * @returns A session manager object.
+   * @return A session manager object.
    */
   public SessionManagerInterface getSessionManager();
-
-  // TODO(cph): The metadata doesn't belong in the back end.
-
-  /**
-   * Get the SAML metadata description for the security manager.
-   *
-   * @returns An initialized SAML entity descriptor
-   */
-  public EntityDescriptor getSecurityManagerEntity();
-
-  /**
-   * Get the SAML metadata description for the GSA.
-   *
-   * @returns An initialized SAML entity descriptor
-   */
-  public EntityDescriptor getGsaEntity();
 
   /**
    * Get the SAML artifact map.
@@ -71,29 +58,50 @@ public interface BackEnd {
    * The backend holds onto this map but doesn't use it.  The map is used by the servlets comprising
    * the SAML identity provider.
    *
-   * @returns The unique artifact map for the security manager.
+   * @return The unique artifact map for the security manager.
    */
   public SAMLArtifactMap getArtifactMap();
 
-  public String getAuthConfigFile();
+  /**
+   * Inject the identity configuration source.
+   * @param identityConfig The identity configuration to use.
+   */
+  public void setIdentityConfig(IdentityConfig identityConfig);
 
   /**
-   * Validate identity credentials.
-   *
-   * @param request The SAML authentication request being served.
-   * @param id The identity to validate.
-   * @returns A SAML Response with the validation result.
+   * Get the identity configuration.
+   * @return The identity configuration as a list of authn domain groups.
    */
-  public Response validateCredentials(AuthnRequest request, UserIdentity id);
-  public AuthenticationResponse handleCookie(Map<String, String> cookieJar);
+  public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException;
+
+  /**
+   * Attempt to find a cookie that can be converted to a verified identity.
+   * @param context The authn context containing the cookies to try.
+   * @return An authentication response with the result of the attempt.
+   */
+  public AuthenticationResponse handleCookie(SecAuthnContext context);
+
+  /**
+   * Attempts to authenticate a given CredentialsGroup.  This method will update
+   * the provided credentialsGroup with information retrieved during the
+   * authentication process (i.e. cookies, certificates, and other credentials),
+   * and it may set this credentialsGroup as verified as a result.
+   * @param credentialsGroup The credentials group to authenticate.
+   */
+  public void authenticate(CredentialsGroup credentialsGroup);
 
   /**
    * Process a set of SAML authorization queries.
    *
    * @param authzDecisionQueries A list of authorization queries to be processed.
-   * @returns A list of responses, corresponding to the argument.
+   * @return A list of responses, corresponding to the argument.
    */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries);
 
-  public void updateSessionManager(String sessionId, UserIdentity ids[]);
+  /**
+   * Update the GSA session manager with the identity information we've collected.
+   * @param sessionId The session manager ID to associate the information with.
+   * @param cgs The set of identity information to be associated.
+   */
+  public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs);
 }

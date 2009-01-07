@@ -23,6 +23,7 @@ import com.google.enterprise.connector.persist.ConnectorScheduleStore;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.GenerationalStateStore;
 import com.google.enterprise.connector.persist.StoreContext;
+import com.google.enterprise.connector.traversal.TraversalStateStore;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.xml.XmlBeanFactory;
@@ -355,6 +356,53 @@ public final class InstanceInfo {
    */
   public String getConnectorState() {
     return stateStore.getConnectorState(storeContext);
+  }
+
+  /**
+   * Creates a TraversalStateStore for this connector instance.
+   *
+   * @return a new TraversalStateStore
+   */
+  TraversalStateStore getTraversalStateStore() {
+    return new ConnectorTraversalStateStore();
+  }
+
+  /**
+   * TraversalStateStore implementation used by the Traverser to
+   * maintain state between batches.
+   */
+  private class ConnectorTraversalStateStore implements TraversalStateStore {
+    private final GenerationalStateStore store;
+
+    public ConnectorTraversalStateStore() {
+      this.store = new GenerationalStateStore(stateStore, storeContext);
+    }
+
+    /**
+     * Store traversal state.
+     *
+     * @param state a String representation of the state to store.
+     *        If null, any previous stored state is discarded.
+     * @throws IllegalStateException if the store is no longer valid.
+     */
+    public void storeTraversalState(String state) {
+      if (state == null) {
+        store.removeConnectorState(storeContext);
+      } else {
+        store.storeConnectorState(storeContext, state);
+      }
+    }
+
+    /**
+     * Return a stored traversal state.
+     *
+     * @returns String representation of the stored state, or
+     *          null if no state is stored.
+     * @throws IllegalStateException if the store is no longer valid.
+     */
+    public String getTraversalState() {
+      return store.getConnectorState(storeContext);
+    }
   }
 
   /**

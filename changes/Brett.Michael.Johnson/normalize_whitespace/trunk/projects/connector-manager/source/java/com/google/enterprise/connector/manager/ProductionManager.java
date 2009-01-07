@@ -135,10 +135,8 @@ public class ProductionManager implements Manager {
       Iterator iter = results.iterator();
       while (iter.hasNext()) {
         AuthorizationResponse response = (AuthorizationResponse) iter.next();
-        String uuid = response.getDocid();
-        boolean ok = response.isValid();
-        if (ok) {
-          result.add(uuid);
+        if (response.isValid()) {
+          result.add(response.getDocid());
         }
       }
     } catch (ConnectorNotFoundException e) {

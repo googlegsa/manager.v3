@@ -569,8 +569,9 @@ public class DocPusher implements Pusher {
 
     InputStream encodedContentStream = null;
     if (feedType != XML_FEED_METADATA_AND_URL) {
-      InputStream contentStream = getNonNullContentStream(getOptionalStream(
-          document, SpiConstants.PROPNAME_CONTENT));
+      InputStream contentStream = getNonNullContentStream(
+          getOptionalStream(document, SpiConstants.PROPNAME_CONTENT),
+          getOptionalString(document, SpiConstants.PROPNAME_TITLE));
 
       if (null != contentStream) {
         encodedContentStream = new Base64FilterInputStream(contentStream);
@@ -633,33 +634,45 @@ public class DocPusher implements Pusher {
   }
 
   /**
-   * DEFAULT_CONTENT is a string that is substituted for null or empty content
-   * streams, in order to make sure the GSA indexes the feed item.
-   */
-  private static final String DEFAULT_CONTENT = " ";
-
-  /**
    * Inspect the content stream for a feed item, and if it's null or empty,
    * substitute a string which will insure that the feed items gets indexed by
-   * the GSA
+   * the GSA.
    *
    * @param contentStream from the feed item
+   * @param title from the feed item
    * @return an InputStream which is guaranteed to be non-null.
-   * @throws RepositoryDocumentException if the DEFAULT_CONTENT string above
+   * @throws RepositoryDocumentException if the default content string
    *         cannot be UTF-8-encoded into a ByteArrayInputStream.
    */
-  private static InputStream getNonNullContentStream(InputStream contentStream)
-    throws RepositoryException {
-    InputStream output = contentStream;
+  private static InputStream getNonNullContentStream(InputStream contentStream,
+      String title) throws RepositoryException {
+    if (contentStream != null) {  // TODO: "or empty"?
+      return contentStream;
+    }
     try {
-      if (contentStream == null) {
-        output = new ByteArrayInputStream(DEFAULT_CONTENT.getBytes("UTF-8"));
+      byte[] bytes = null;
+      // Default content is a string that is substituted for null or empty
+      // content streams, in order to make sure the GSA indexes the feed item.
+      // If the feed item supplied a title property, we build an HTML fragment
+      // containing that title.  This provides better looking search result
+      // entries.
+      if (title != null && title.trim().length() > 0) {
+        try {
+          String t = "<html><title>" + title.trim() + "</title></html>";
+          bytes = t.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException uee) {
+          // Don't be fancy.  Try the single space content.
+        }
       }
+      // If no title is available, we supply a single space as the content.
+      if (bytes == null) {
+        bytes = " ".getBytes("UTF-8");
+      }
+      return new ByteArrayInputStream(bytes);
     } catch (IOException e) {
       throw new RepositoryDocumentException(
           "Failed to create default content stream: " + e.toString());
     }
-    return output;
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@ package com.google.enterprise.connector.manager;
 
 import junit.framework.TestCase;
 
-import java.util.Iterator;
-import java.util.Set;
-
 /**
  * Tests for the {@link UserPassIdentity} class.
  */
@@ -30,27 +27,5 @@ public class UserPassIdentityTest extends TestCase {
     UserPassIdentity i = new UserPassIdentity(username, password);
     assertEquals(username, i.getUsername());
     assertEquals(password, i.getPassword());
-  }
-
-  public void testCookies() {
-    String username = "argle-bargle";
-    String password = "xyzzy";
-    UserPassIdentity i = new UserPassIdentity(username, password);
-    try {
-      i.setCookie(null, "foo");
-      fail();
-    } catch (IllegalArgumentException e) { // expected
-    }
-    i.setCookie("foo", "bazfaz");
-    assertEquals("bazfaz", i.getCookie("foo"));
-    Set cookieNames = i.getCookieNames();
-    assertEquals(1, cookieNames.size());
-    Iterator iter = cookieNames.iterator();
-    while (iter.hasNext()) {
-      String cookie = (String) iter.next();
-      assertEquals(cookie,"foo");
-    }
-    assertEquals("bazfaz", i.setCookie("foo", null));
-    assertNull(i.getCookie("foo"));
   }
 }
