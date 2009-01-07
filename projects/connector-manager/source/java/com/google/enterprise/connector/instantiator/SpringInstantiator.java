@@ -23,6 +23,7 @@ import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.traversal.Traverser;
+import com.google.enterprise.connector.traversal.TraversalStateStore;
 
 import java.util.ArrayList;
 import java.util.Collections;
