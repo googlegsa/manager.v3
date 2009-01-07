@@ -2,11 +2,11 @@
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 <beans>
   <bean id="HttpClientInterface"
-	class="com.google.enterprise.common.HttpClientAdapter">
+        class="com.google.enterprise.common.HttpClientAdapter">
   </bean>
 
   <bean id="BasicAuthConnector"
-    class="com.google.enterprise.security.connectors.basicauth.BasicAuthConnector">
+        class="com.google.enterprise.security.connectors.basicauth.BasicAuthConnector">
     <constructor-arg index="0" ref="HttpClientInterface" />
     <constructor-arg index="1" type="java.lang.String" value="${ServerUrl}" />
   </bean>

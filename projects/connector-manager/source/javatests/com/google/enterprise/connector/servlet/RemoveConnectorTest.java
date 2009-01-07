@@ -69,7 +69,7 @@ public class RemoveConnectorTest extends TestCase {
     StringBuffer result = writer.getBuffer();
     LOGGER.info(result.toString());
     LOGGER.info(expectedResult);
-    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult), 
+    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult),
         StringUtils.normalizeNewlines(result.toString()));
     out.close();
   }

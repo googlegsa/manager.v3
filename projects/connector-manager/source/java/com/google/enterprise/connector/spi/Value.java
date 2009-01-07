@@ -46,7 +46,7 @@ public abstract class Value {
 
   /**
    * Creates a value carrying a String.
-   * 
+   *
    * @param stringValue The String value
    * @return a Value instance carrying this value
    */
@@ -56,7 +56,7 @@ public abstract class Value {
 
   /**
    * Creates a value carrying binary data.
-   * 
+   *
    * @param inputStreamValue An <code>InputStream</code> containing the data
    * @return a Value instance carrying this data
    */
@@ -66,7 +66,7 @@ public abstract class Value {
 
   /**
    * Creates a value carrying binary data.
-   * 
+   *
    * @param byteArrayValue An <code>byte</code> array containing the data
    * @return a Value instance carrying this data
    */
@@ -76,7 +76,7 @@ public abstract class Value {
 
   /**
    * Creates a value carrying an integer.
-   * 
+   *
    * @param longValue A <code>long</code> containing the data
    * @return a Value instance carrying this data
    */
@@ -86,7 +86,7 @@ public abstract class Value {
 
   /**
    * Creates a value carrying an integer.
-   * 
+   *
    * @param doubleValue A <code>double</code> containing the data
    * @return a Value instance carrying this data
    */
@@ -96,7 +96,7 @@ public abstract class Value {
 
   /**
    * Creates a value carrying a date.
-   * 
+   *
    * @param calendarValue A <code>Calendar</code> object containing the data
    * @return a Value instance carrying this data
    */
@@ -106,7 +106,7 @@ public abstract class Value {
 
   /**
    * Creates a value carrying a boolean.
-   * 
+   *
    * @param booleanValue A <code>boolean</code> containing the data
    * @return a Value instance carrying this data
    */
@@ -116,7 +116,7 @@ public abstract class Value {
 
   /**
    * Creates a value carrying a boolean.
-   * 
+   *
    * @param stringValue A <code>String</code> containing the data. The String
    *        is converted as follows:
    *        <ul>
@@ -133,7 +133,7 @@ public abstract class Value {
 
   /**
    * Convenience function for access to a single named value from a DocumentList
-   * 
+   *
    * @param document the Document List from which to extract the Value
    * @param propertyName the name of the Property
    * @return The first Value of that named property, if there is one -
@@ -148,10 +148,10 @@ public abstract class Value {
     }
     return p.nextValue();
   }
-  
+
   /**
    * Convenience function for access to a single string value from a DocumentList
-   * 
+   *
    * @param document the Document List from which to extract the Value
    * @param propertyName the name of the Property
    * @return The string Value of that named property, if there is one -
@@ -170,7 +170,7 @@ public abstract class Value {
   /**
    * Returns a string representation of the Value. Connector developers may
    * count on this for debugging.
-   * 
+   *
    * @return a string representation of the Value.
    */
   public abstract String toString();
@@ -205,10 +205,10 @@ public abstract class Value {
 
   /**
    * Formats a calendar object for the Feeds Protocol, using the
-   * ISO-8601 format for just the date portion.  See 
+   * ISO-8601 format for just the date portion.  See
    * <a href="http://code.google.com/apis/searchappliance/documentation/50/feedsguide.html">
    * Feeds Protocol Developer's Guide</a>
-   * 
+   *
    * @param c
    * @return a String in ISO-8601 date format
    */
@@ -220,7 +220,7 @@ public abstract class Value {
 
   /**
    * Formats a calendar object as RFC 822.
-   * 
+   *
    * @param c
    * @return a String in RFC 822 format - always in GMT zone
    */
@@ -232,7 +232,7 @@ public abstract class Value {
 
   /**
    * Formats a calendar object as ISO-8601.
-   * 
+   *
    * @param c
    * @return a String in ISO-8601 format - always in GMT zone
    */
@@ -273,7 +273,7 @@ public abstract class Value {
   /**
    * Parses a String in ISO-8601 format (GMT zone) and returns an equivalent
    * java.util.Calendar object.
-   * 
+   *
    * @param s
    * @return a Calendar object
    * @throws ParseException if the the String can not be parsed

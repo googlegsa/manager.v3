@@ -30,15 +30,15 @@ public class SetScheduleTest extends TestCase {
   private static final Logger LOG =
       Logger.getLogger(SetScheduleTest.class.getName());
 
-	/**
-	 * Test method for {@link com.google.enterprise.connector.servlet.SetSchedule#
-	 * handleDoPost(java.lang.String, com.google.enterprise.connector.manager.Manager)}.
-	 */
+  /**
+   * Test method for {@link com.google.enterprise.connector.servlet.SetSchedule#
+   * handleDoPost(java.lang.String, com.google.enterprise.connector.manager.Manager)}.
+   */
   public void testHandleDoPost() {
     String connectorName = "connector1";
     int load = 6;
     String timeIntervals = "1-2:5-10:12-18";
-    String xmlBody = 
+    String xmlBody =
             "<" + ServletUtil.XMLTAG_CONNECTOR_SCHEDULES + ">\n"
           + "  <" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">" + connectorName
           + "</" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">\n"
@@ -52,15 +52,15 @@ public class SetScheduleTest extends TestCase {
     Manager manager = MockManager.getInstance();
     ConnectorMessageCode status = SetSchedule.handleDoPost(xmlBody, manager);
     LOG.info("Status Id: " + String.valueOf(status.getMessageId()));
-    Assert.assertEquals(status.getMessageId(), expectedResult); 
+    Assert.assertEquals(status.getMessageId(), expectedResult);
   }
-  
+
   public void testHandleDoPostWithRetryDelay() {
     String connectorName = "connector1";
     int load = 6;
     int retryDelay = 1000;
     String timeIntervals = "1-2:5-10:12-18";
-    String xmlBody = 
+    String xmlBody =
             "<" + ServletUtil.XMLTAG_CONNECTOR_SCHEDULES + ">\n"
           + "  <" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">" + connectorName
           + "</" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">\n"
@@ -76,7 +76,7 @@ public class SetScheduleTest extends TestCase {
     Manager manager = MockManager.getInstance();
     ConnectorMessageCode status = SetSchedule.handleDoPost(xmlBody, manager);
     LOG.info("Status Id: " + String.valueOf(status.getMessageId()));
-    Assert.assertEquals(status.getMessageId(), expectedResult); 
+    Assert.assertEquals(status.getMessageId(), expectedResult);
   }
 
 }

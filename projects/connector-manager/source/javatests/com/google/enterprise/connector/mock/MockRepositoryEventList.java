@@ -57,8 +57,8 @@ public class MockRepositoryEventList {
    */
   public void setWorkDirName(String workDirName) {
     this.workDirName = workDirName;
-  } 
-  
+  }
+
   /**
    * This default constructor is currently used in Spring-based tests
    */
@@ -68,7 +68,7 @@ public class MockRepositoryEventList {
   /**
    * Looks for the supplied filename on the classpath, and if it can find it,
    * reads the file and parses
-   * 
+   *
    * @param filename
    */
   public MockRepositoryEventList(String filename) {

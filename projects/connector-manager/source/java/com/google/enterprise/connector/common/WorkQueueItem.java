@@ -21,7 +21,7 @@ public abstract class WorkQueueItem {
   protected static long timeout = 5 * 60 * 1000;
   // the thread that is executing the item (this is used for interrupting work)
   private WorkQueueThread workQueueThread;
-  
+
   public WorkQueueThread getWorkQueueThread() {
     return workQueueThread;
   }
@@ -43,6 +43,6 @@ public abstract class WorkQueueItem {
   public long getTimeout() {
     return timeout;
   }
-  
+
   public abstract void doWork();
 }

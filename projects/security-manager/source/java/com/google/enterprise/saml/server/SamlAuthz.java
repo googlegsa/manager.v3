@@ -190,7 +190,7 @@ public class SamlAuthz extends SecurityManagerServlet {
   class MultiAuthzQueryDecisionHandler implements ContentHandler {
 
     private HashMap<String, ArrayList<String>> urlToId;
-     
+
     public MultiAuthzQueryDecisionHandler() {
       urlToId = new HashMap<String, ArrayList<String>>();
     }
@@ -214,7 +214,7 @@ public class SamlAuthz extends SecurityManagerServlet {
       }
       return null;
     }
-    
+
     public void setDocumentLocator(Locator locator) {
     }
 

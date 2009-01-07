@@ -24,7 +24,7 @@ import java.io.PrintWriter;
  *
  */
 public class Authorization extends ConnectorManagerServlet {
-  
+
   /*
    * (non-Javadoc)
    * @see com.google.enterprise.connector.servlet.ConnectorManagerServlet
@@ -36,5 +36,5 @@ public class Authorization extends ConnectorManagerServlet {
     AuthorizationHandler authorizationHandler = new AuthorizationHandler(xmlBody, manager, out);
     authorizationHandler.handleDoPost();
   }
-  
+
 }

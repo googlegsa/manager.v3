@@ -68,7 +68,7 @@ public class SimpleConnectorType implements ConnectorType {
   /**
    * Set the keys that are required for configuration. One of the overloadings
    * of this method must be called exactly once before the SPI methods are used.
-   * 
+   *
    * @param keys
    *          A list of String keys
    */
@@ -83,7 +83,7 @@ public class SimpleConnectorType implements ConnectorType {
   /**
    * Set the keys that are required for configuration. One of the overloadings
    * of this method must be called exactly once before the SPI methods are used.
-   * 
+   *
    * @param keys
    *          An array of String keys
    */
@@ -94,7 +94,7 @@ public class SimpleConnectorType implements ConnectorType {
   /**
    * Sets the form to be used by this configurer. This is optional. If this
    * method is used, it must be called before the SPI methods are used.
-   * 
+   *
    * @param formSnippet
    *          A String snippet of html - see the COnfigurer interface
    */
@@ -118,7 +118,7 @@ public class SimpleConnectorType implements ConnectorType {
 
   /**
    * Validates whether a string is an acceptable value for a specific key.
-   * 
+   *
    * @param key
    * @param val
    * @return true if the val is acceptable for this key
@@ -150,7 +150,7 @@ public class SimpleConnectorType implements ConnectorType {
   /**
    * Make a config form snippet using the keys (in the supplied order) and, if
    * passed a non-null config map, pre-filling values in from that map
-   * 
+   *
    * @param configMap
    * @return config form snippet
    */
@@ -251,7 +251,7 @@ public class SimpleConnectorType implements ConnectorType {
    * Returns an embedded configurer, which may depend on the configData already
    * supplied. This method is here primarily so that implementors can override
    * it.
-   * 
+   *
    * @param configData
    * @param locale
    * @return another Configurer, which may be null
@@ -262,7 +262,7 @@ public class SimpleConnectorType implements ConnectorType {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.spi.Configurer#getConfigForm(java.util.Locale)
    */
   public ConfigureResponse getConfigForm(Locale locale) {
@@ -274,7 +274,7 @@ public class SimpleConnectorType implements ConnectorType {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.spi.Configurer#validateConfig(java.util.Map,
    *      java.util.Locale)
    */
@@ -292,7 +292,7 @@ public class SimpleConnectorType implements ConnectorType {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.spi.Configurer
    *      #getPopulatedConfigForm(java.util.Map,java.util.Locale)
    */

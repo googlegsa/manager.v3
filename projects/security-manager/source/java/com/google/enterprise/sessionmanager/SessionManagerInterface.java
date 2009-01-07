@@ -47,7 +47,7 @@ package com.google.enterprise.sessionmanager;
  * implementations.
  */
 public interface SessionManagerInterface {
-  
+
   /**
    * checks if a given session exists
    *
@@ -72,14 +72,14 @@ public interface SessionManagerInterface {
 
   /**
    * gets the age of a session in seconds
-   * 
+   *
    * @param sessionId   the sessionId (returned by createSession) for the
    *                    session store receiveing the new key/value pair
-   * 
+   *
    * @return            the age in seconds.
    */
   public long sessionAge(String sessionId);
-  
+
   /**
    * creates a new session store (a data alloaction for a new session)
    *
@@ -175,10 +175,10 @@ public interface SessionManagerInterface {
    */
   public void deleteSession(String sessionId)
       throws IndexOutOfBoundsException;
-  
+
   /**
    * pass an SPNEGO/Kerberos token to the Session Manager so that it may extract
-   * the delegated user identity for use in subsequent Head Requests 
+   * the delegated user identity for use in subsequent Head Requests
    * @param sessionId
    * @param spnegoBlob  SPNEGO/Kerberos token fetched from the client
    * @return            the Kerberos identity if the operation completed
@@ -190,7 +190,7 @@ public interface SessionManagerInterface {
     throws IndexOutOfBoundsException;
 
   /**
-   * request an Kerberos KeyMaterial object based on the currently Kerberos 
+   * request an Kerberos KeyMaterial object based on the currently Kerberos
    * identity associated with the session
    * @param sessionId
    * @param server      Target server name
@@ -226,12 +226,12 @@ public interface SessionManagerInterface {
 
   /**
    * Parses the given keytab filename.
-   * @return           Principal name inside the first entry in the keytab 
+   * @return           Principal name inside the first entry in the keytab
    *                   file on success, null otherwise.
    * @throws           RuntimeException if not implemented.
    */
   public String parseKrb5Keytab(String filepath);
-  
+
   /**
    * Gets the server principal name.
    * @return           Server principal name if the Kerberos engine has been

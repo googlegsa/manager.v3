@@ -48,8 +48,8 @@ public class SetSchedule extends ConnectorManagerServlet {
 
   /**
    * Returns an error code (ConnectorMessageCode) for setting the schedule.
-   * 
-   * @param xmlBody String the XML request body string 
+   *
+   * @param xmlBody String the XML request body string
    * @param manager Manager
    */
   public static ConnectorMessageCode handleDoPost(
@@ -68,7 +68,7 @@ public class SetSchedule extends ConnectorManagerServlet {
         root, ServletUtil.XMLTAG_LOAD));
     // Default to 5 minutes delay unless one is specified
     int retryDelayMillis = 5 * 60 * 1000;
-    String delayStr = ServletUtil.getFirstElementByTagName(root, 
+    String delayStr = ServletUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_DELAY);
     if (delayStr != null) {
       retryDelayMillis = Integer.parseInt(delayStr);

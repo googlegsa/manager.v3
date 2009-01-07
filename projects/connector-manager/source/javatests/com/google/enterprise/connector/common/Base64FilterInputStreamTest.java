@@ -39,7 +39,7 @@ public class Base64FilterInputStreamTest extends TestCase {
     }
     Assert.assertTrue(Arrays.equals(expectedBytes, resultBytes));
   }
-  
+
   public void testReadArray() throws IOException {
     byte[] bytes = new byte[]{ 'a', 'b', 'c', 'd' };
     ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
@@ -49,9 +49,9 @@ public class Base64FilterInputStreamTest extends TestCase {
     byte[] resultBytes = new byte[expectedBytes.length];
     int bytesRead = is.read(resultBytes, 0, resultBytes.length);
     Assert.assertEquals(expectedBytes.length, bytesRead);
-    Assert.assertTrue(Arrays.equals(expectedBytes, resultBytes));  
+    Assert.assertTrue(Arrays.equals(expectedBytes, resultBytes));
   }
-  
+
   /**
    * Compare results from read() and read(bytes[], int, int) methods.
    * @throws IOException
@@ -67,26 +67,26 @@ public class Base64FilterInputStreamTest extends TestCase {
     byte[] resultBytes = new byte[4];
     val = is1.read(resultBytes, 0, 4);
     Assert.assertEquals(4, val);
-    
+
     int index = 0;
     while (-1 != (val = is2.read())) {
       Assert.assertTrue(resultBytes[index] == (byte) val);
       index++;
     }
   }
-  
+
   /**
-   * ByteArrayInputStream that returns a single byte at a time even if you 
+   * ByteArrayInputStream that returns a single byte at a time even if you
    * request more.
    */
   private class SingleByteArrayInputStream extends ByteArrayInputStream {
     public SingleByteArrayInputStream(byte[] bytes) {
       super(bytes);
     }
-    
+
     public int read(byte[] b, int off, int len) {
       int byteValue = read();
-      
+
       if (-1 == byteValue) {
         return -1;
       } else {
@@ -95,7 +95,7 @@ public class Base64FilterInputStreamTest extends TestCase {
       }
     }
   }
-  
+
   /**
    * Test that this stream works even if the underlying stream does not return
    * bytes in multiples of 3.
@@ -112,6 +112,6 @@ public class Base64FilterInputStreamTest extends TestCase {
       resultBytes[index] = (byte) val;
       index++;
     }
-    Assert.assertTrue(Arrays.equals(expectedBytes, resultBytes));    
+    Assert.assertTrue(Arrays.equals(expectedBytes, resultBytes));
   }
 }

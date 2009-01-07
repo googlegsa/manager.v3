@@ -44,7 +44,7 @@ public class MockJcrValue implements Value {
 
   public MockJcrValue(PropertyType type, String v) {
     this.val = v;
-    this.type = type;    
+    this.type = type;
   }
 
   public String getString() throws IllegalStateException {
@@ -102,8 +102,8 @@ public class MockJcrValue implements Value {
     return mockRepositoryTypeToJCRType(type);
   }
 
-  // The mapping below will need to be maintained as we add new 
-  // datatypes to the MockRepository implementation. 
+  // The mapping below will need to be maintained as we add new
+  // datatypes to the MockRepository implementation.
   // For reference, I have copied the following constants from JCR:
   // public static final int STRING = 1;
   // public static final int BINARY = 2;

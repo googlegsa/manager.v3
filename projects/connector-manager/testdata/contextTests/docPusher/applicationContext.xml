@@ -1,43 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 <beans>
+  <bean id="ApplicationContextProperties" class="java.lang.String">
+    <constructor-arg value="testdata/contextTests/docPusher/applicationContext.properties"/>
+  </bean>
 
-	<bean id="ApplicationContextProperties" 
-		class="java.lang.String">
-		<constructor-arg value="testdata/contextTests/docPusher/applicationContext.properties"/>
-	</bean>
+  <bean id="PropertyPlaceholderConfigurer"
+        class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" >
+    <property name="location" ref="ApplicationContextProperties"/>
+  </bean>
 
-	<bean id="PropertyPlaceholderConfigurer"
-		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" >
-		<property name="location" ref="ApplicationContextProperties"/>
-	</bean>	
+  <bean id="FeedConnection"
+        class="com.google.enterprise.connector.pusher.MockFeedConnection">
+  </bean>
 
-	<bean id="FeedConnection"
-		class="com.google.enterprise.connector.pusher.MockFeedConnection"/>
+  <bean id="Pusher"
+        class="com.google.enterprise.connector.pusher.MockPusher">
+  </bean>
 
-	<bean id="Pusher"
-		class="com.google.enterprise.connector.pusher.MockPusher"/>
+  <bean id="ConnectorConfigStore"
+        class="com.google.enterprise.connector.persist.FileStore">
+  </bean>
 
-	<bean id="ConnectorConfigStore"
-		class="com.google.enterprise.connector.persist.FileStore"/>
+  <bean id="ConnectorScheduleStore"
+        class="com.google.enterprise.connector.persist.MockConnectorScheduleStore">
+  </bean>
 
-	<bean id="ConnectorScheduleStore"
-		class="com.google.enterprise.connector.persist.MockConnectorScheduleStore"/>
+  <bean id="ConnectorStateStore"
+        class="com.google.enterprise.connector.persist.MockConnectorStateStore">
+  </bean>
 
-	<bean id="ConnectorStateStore"
-		class="com.google.enterprise.connector.persist.MockConnectorStateStore" />
+  <bean id="Instantiator"
+        class="com.google.enterprise.connector.instantiator.MockInstantiator">
+    <constructor-arg index="0" ref="ConnectorConfigStore" />
+    <constructor-arg index="1" ref="ConnectorScheduleStore" />
+    <constructor-arg index="2" ref="ConnectorStateStore" />
+  </bean>
 
-	<bean id="Instantiator"
-		class="com.google.enterprise.connector.instantiator.MockInstantiator">
-		<constructor-arg index="0" ref="ConnectorConfigStore" />
-		<constructor-arg index="1" ref="ConnectorScheduleStore" />
-		<constructor-arg index="2" ref="ConnectorStateStore" />
-	</bean>
+  <bean id="Monitor"
+        class="com.google.enterprise.connector.monitor.HashMapMonitor">
+  </bean>
 
-	<bean id="Monitor"
-		class="com.google.enterprise.connector.monitor.HashMapMonitor" />
-
-	<bean id="Manager"
-		class="com.google.enterprise.connector.manager.MockManager"/>
-
+  <bean id="Manager"
+        class="com.google.enterprise.connector.manager.MockManager">
+  </bean>
 </beans>

@@ -19,9 +19,9 @@ import com.google.enterprise.connector.spi.Value;
 import java.util.Calendar;
 
 public class DateValue extends ValueImpl {
-  
+
   Calendar calendarValue;
-  
+
   public DateValue(Calendar calendarValue) {
     this.calendarValue = calendarValue;
   }

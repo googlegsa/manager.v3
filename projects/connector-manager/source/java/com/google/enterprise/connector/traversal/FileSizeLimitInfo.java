@@ -20,7 +20,7 @@ package com.google.enterprise.connector.traversal;
 public class FileSizeLimitInfo {
 
   private long maxDocumentSize = Long.MAX_VALUE;
-  
+
   public void setMaxDocumentSize(long maxDocumentSize) {
     this.maxDocumentSize = maxDocumentSize;
   }

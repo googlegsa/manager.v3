@@ -34,22 +34,22 @@ public class MonitorTest extends TestCase {
     temp = new TreeMap();
     temp.put(key, value);
     monitor.setVariables(temp);
-    assertEquals("One variable should be set.", 
+    assertEquals("One variable should be set.",
       1, monitor.getVariables().size());
 
     temp = monitor.getVariables();
-    assertEquals("One variable should be set.", 
+    assertEquals("One variable should be set.",
       1, temp.size());
     assertTrue("Key should be in variables.", temp.containsKey(key));
     assertTrue("Value should be in variables.", temp.containsValue(value));
-    
+
     boolean exceptionCaught = false;
     try {
       temp.put(key, value);
     } catch (UnsupportedOperationException uoe) {
       exceptionCaught = true;
     } finally {
-      assertTrue("Should not be allowed to modify the returned Map.", 
+      assertTrue("Should not be allowed to modify the returned Map.",
         exceptionCaught);
     }
   }

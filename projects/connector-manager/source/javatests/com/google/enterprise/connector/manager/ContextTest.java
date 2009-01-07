@@ -19,7 +19,7 @@ import junit.framework.TestCase;
 import org.springframework.context.ApplicationContext;
 
 /**
- * 
+ *
  */
 public class ContextTest extends TestCase {
 

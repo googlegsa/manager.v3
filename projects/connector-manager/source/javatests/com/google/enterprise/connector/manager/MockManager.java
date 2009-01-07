@@ -181,7 +181,7 @@ public class MockManager implements Manager {
    *      java.util.Map, java.lang.String)
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configData, String language, 
+      String connectorTypeName, Map configData, String language,
       boolean update) {
     LOGGER.info("setConnectorConfig() connectorName: " + connectorName);
     LOGGER.info("setConnectorConfig() update: " + update);
@@ -213,7 +213,7 @@ public class MockManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#setSchedule(
    *      java.lang.String, int, java.lang.String)
    */
-  public void setSchedule(String connectorName, int load, int retryDelayMillis, 
+  public void setSchedule(String connectorName, int load, int retryDelayMillis,
       String timeIntervals) {
     // do nothing
   }

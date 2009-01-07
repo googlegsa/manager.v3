@@ -23,9 +23,9 @@ import java.net.URLEncoder;
  * URL encodes input stream.
  */
 public class UrlEncodedFilterInputStream extends FilterInputStream {
-  
+
   /**
-   * Given some InputStream, create an InputStream that URL encodes the 
+   * Given some InputStream, create an InputStream that URL encodes the
    * input stream.
    * @param in
    */
@@ -36,24 +36,24 @@ public class UrlEncodedFilterInputStream extends FilterInputStream {
   private int rawBufSize = 4 * 1024;
   private byte rawBuf[] = new byte[rawBufSize];
   private byte encodedBuf[];
-  
+
   /*
    * Position of next int to read.
    */
   private int encodedBufPos = 0;
   private int encodedBufEndPos = 0;  // position with no valid data
-  
+
   private byte[] readBuffer = new byte[1];
-  
+
   public int read() throws IOException {
     int retVal = read(readBuffer, 0, 1);
     if (-1 == retVal) {
       return -1;
     } else {
       return readBuffer[0];
-    } 
+    }
   }
-  
+
   public int read(byte b[], int off, int len) throws IOException {
     if (len < 0) {
       return 0;
@@ -65,19 +65,19 @@ public class UrlEncodedFilterInputStream extends FilterInputStream {
     while (true) {
       // fulfill read based on already encoded bytes
       if (encodedBufEndPos - encodedBufPos > 0) {
-        int numBytesToCopy = 
+        int numBytesToCopy =
           Math.min(currLen, encodedBufEndPos - encodedBufPos);
         System.arraycopy(encodedBuf, encodedBufPos, b, currOff, numBytesToCopy);
         encodedBufPos += numBytesToCopy;
         currLen -= numBytesToCopy;
         currOff += numBytesToCopy;
       }
-      
+
       // if already done fulfilling entire read request, return
       if (currLen <= 0) {
         return len;
       }
-      
+
       // try reading more data
       int bytesRead = -1;
       try {
@@ -90,7 +90,7 @@ public class UrlEncodedFilterInputStream extends FilterInputStream {
           throw e;
         }
       }
-      
+
       if (-1 == bytesRead) {
         if (currLen < len) {
           return len - currLen;
@@ -98,13 +98,13 @@ public class UrlEncodedFilterInputStream extends FilterInputStream {
           return -1;
         }
       }
-      
+
       // encode data
       String rawBufStr = new String(rawBuf, 0, bytesRead, "UTF-8");
       String encodedBufStr = URLEncoder.encode(rawBufStr, "UTF-8");
       encodedBuf = encodedBufStr.getBytes("UTF-8");
       encodedBufPos = 0;
       encodedBufEndPos = encodedBuf.length;
-    }    
+    }
   }
 }

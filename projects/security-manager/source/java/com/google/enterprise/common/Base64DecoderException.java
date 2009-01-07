@@ -16,9 +16,9 @@ package com.google.enterprise.common;
 
 /**
  * Exception thrown when encountering an invalid Base64 input character.
- * 
+ *
  * <p>This class may be used with the Google Web Toolkit (GWT).
- * 
+ *
  * @author nelson
  */
 public class Base64DecoderException extends Exception {

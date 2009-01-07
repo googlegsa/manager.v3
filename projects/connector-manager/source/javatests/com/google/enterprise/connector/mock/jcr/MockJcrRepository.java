@@ -46,7 +46,7 @@ public class MockJcrRepository implements Repository {
 
   /**
    * Creates a MockJcrRepository from a MockRepository.
-   * 
+   *
    * @param repo
    */
   public MockJcrRepository(MockRepository repo) {
@@ -56,7 +56,7 @@ public class MockJcrRepository implements Repository {
 
   /**
    * Gets this MockJcrRepository's MockRepository - only for testing.
-   * 
+   *
    * @return the MockRepository
    */
   public MockRepository getRepo() {
@@ -116,7 +116,7 @@ public class MockJcrRepository implements Repository {
     }
     MockRepositoryProperty property = doc.getProplist().getProperty("acl");
     if (property == null) {
-      return true; 
+      return true;
     }
     String[] values = property.getValues();
     for (int i=0; i<values.length; i++) {

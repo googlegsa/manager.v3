@@ -33,33 +33,33 @@ public class MockRepositoryEvent {
    * @author ziff@google.com (Donald "Max" Ziff)
    */
   public static class EventType implements Comparable {
-	  private static int nextOrdinal = 0;
-	  private final int ordinal = nextOrdinal++;
+    private static int nextOrdinal = 0;
+    private final int ordinal = nextOrdinal++;
 
-	    public static final EventType SAVE = 
-	    	new EventType("save");
-	    public static final EventType DELETE = 
-	    	new EventType("delete");
-	    public static final EventType METADATA_ONLY_SAVE = 
-	    	new EventType("metadata_only_save");
-	    public static final EventType ERROR = 
-	    	new EventType("error");
+      public static final EventType SAVE =
+        new EventType("save");
+      public static final EventType DELETE =
+        new EventType("delete");
+      public static final EventType METADATA_ONLY_SAVE =
+        new EventType("metadata_only_save");
+      public static final EventType ERROR =
+        new EventType("error");
 
-		private static final EventType[] PRIVATE_VALUES =
-		  {SAVE, DELETE, METADATA_ONLY_SAVE, ERROR};
-		public static final List Values = 
-			Collections.unmodifiableList(Arrays.asList(PRIVATE_VALUES));
+    private static final EventType[] PRIVATE_VALUES =
+      {SAVE, DELETE, METADATA_ONLY_SAVE, ERROR};
+    public static final List Values =
+      Collections.unmodifiableList(Arrays.asList(PRIVATE_VALUES));
 
-		private String tag;
+    private String tag;
 
     EventType(String m) {
-    	tag = m;
+      tag = m;
     }
 
     public String toString() {
       return tag;
     }
-    
+
     public static EventType findEventType(String tag) {
         if (tag == null) {
           return ERROR;
@@ -72,9 +72,9 @@ public class MockRepositoryEvent {
         return ERROR;
       }
 
-  	public int compareTo(Object o) {
-  		return ordinal - ((EventType)o).ordinal;
-  	}
+    public int compareTo(Object o) {
+      return ordinal - ((EventType)o).ordinal;
+    }
   }
 
   private EventType type;
@@ -82,18 +82,18 @@ public class MockRepositoryEvent {
   private String content;
   private MockRepositoryPropertyList propertyList;
   private MockRepositoryDateTime timeStamp;
-  
+
   public String toString() {
-    String displayContent = 
+    String displayContent =
       ((content != null) ? (" content:\"" + content + "\" ") : "null");
-    return "{" + timeStamp.toString() + " " + type + " " + docID + 
+    return "{" + timeStamp.toString() + " " + type + " " + docID +
       displayContent + propertyList.toString() + "}";
   }
 
-  public MockRepositoryEvent(EventType type, 
-                             String docID, 
+  public MockRepositoryEvent(EventType type,
+                             String docID,
                              String content,
-                             MockRepositoryPropertyList propertyList, 
+                             MockRepositoryPropertyList propertyList,
                              MockRepositoryDateTime timeStamp) {
     this.type = type;
     this.docID = docID;
@@ -109,7 +109,7 @@ public class MockRepositoryEvent {
     String timeStampStr = null;
     Map propBag = new HashMap();
     for (Iterator iter = params.entrySet().iterator(); iter.hasNext(); ) {
-    	Map.Entry entry = (Map.Entry) iter.next();
+      Map.Entry entry = (Map.Entry) iter.next();
       String key = (String) entry.getKey();
       String value = (String) entry.getValue();
       if ("docid".equals(key)) {
@@ -122,7 +122,7 @@ public class MockRepositoryEvent {
         timeStampStr = value;
       } else {
         propBag.put(key, value);
-      }    
+      }
     }
     // validate the important parameters
     // content may be null or "" - at this level we don't care
@@ -138,11 +138,11 @@ public class MockRepositoryEvent {
     ticks = Integer.parseInt(timeStampStr);
     if (ticks < 0) {
       throw new RuntimeException("Event parameters must " +
-        "specify a non-zero time stamp");      
+        "specify a non-zero time stamp");
     }
     List l = new LinkedList();
     for (Iterator iter = propBag.entrySet().iterator(); iter.hasNext(); ) {
-    	Map.Entry entry = (Map.Entry) iter.next();
+      Map.Entry entry = (Map.Entry) iter.next();
       String key = (String) entry.getKey();
       String value = (String) entry.getValue();
       l.add(new MockRepositoryProperty(key, value));

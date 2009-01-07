@@ -75,7 +75,7 @@ public class GetConfigFormTest extends TestCase {
       "    <tr><td>Password</td>" +
       "      <td><input type=\"password\" name=\"passwd\" value=\"\">" +
       "    </td></tr>" +
-      "    <tr><td>Seed URIs</td>" + 
+      "    <tr><td>Seed URIs</td>" +
       "      <td><textarea name=\"seedUris\"></textarea></td></tr>";
     String expectedResult =
       "<CmResponse>\n" +
@@ -84,7 +84,7 @@ public class GetConfigFormTest extends TestCase {
       "    <FormSnippet><![CDATA[" + formSnippet + "]]></FormSnippet>\n" +
       "    <message>" + message + "</message>\n" +
       "  </ConfigureResponse>\n" +
-      "</CmResponse>\n";      
+      "</CmResponse>\n";
     ConfigureResponse configResponse =
         new ConfigureResponse(message, formSnippet);
     doTest(configResponse, expectedResult);
@@ -99,7 +99,7 @@ public class GetConfigFormTest extends TestCase {
     StringBuffer result = writer.getBuffer();
     logger.info(result.toString());
     logger.info(expectedResult);
-    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult), 
+    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult),
         StringUtils.normalizeNewlines(result.toString()));
     out.close();
   }

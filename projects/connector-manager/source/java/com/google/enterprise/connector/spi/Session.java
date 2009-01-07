@@ -21,17 +21,17 @@ package com.google.enterprise.connector.spi;
  * notification.
  */
 public interface Session {
-  
+
   /**
-   * Gets a TraversalManager to implement query-based traversal.  
+   * Gets a TraversalManager to implement query-based traversal.
    * @return    a TraversalManager - should not be null
    * @throws RepositoryException
    */
-  public TraversalManager getTraversalManager() 
+  public TraversalManager getTraversalManager()
       throws RepositoryException;
-  
+
   /**
-   * Gets an AuthenticationManager.  It is permissible to return null.  
+   * Gets an AuthenticationManager.  It is permissible to return null.
    * A null return means that this implementation does not support an
    * Authentication Manager.  This may be for one of these reasons:
    * <ul>
@@ -42,11 +42,11 @@ public interface Session {
    * @return    a AuthenticationManager - may be null
    * @throws RepositoryException
    */
-  public AuthenticationManager getAuthenticationManager() 
+  public AuthenticationManager getAuthenticationManager()
       throws RepositoryException;
-  
+
   /**
-   * Gets an AuthorizationManager.  It is permissible to return null.  
+   * Gets an AuthorizationManager.  It is permissible to return null.
    * A null return means that this implementation does not support an
    * Authorization Manager.  This may be for one of these reasons:
    * <ul>
@@ -58,7 +58,7 @@ public interface Session {
    * @return    a AuthorizationManager - may be null
    * @throws RepositoryException
    */
-  public AuthorizationManager getAuthorizationManager() 
+  public AuthorizationManager getAuthorizationManager()
       throws RepositoryException;
-  
+
 }

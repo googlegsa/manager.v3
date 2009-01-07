@@ -23,7 +23,7 @@ public class InterruptibleQueryTraverser implements Traverser {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
    */
   public int runBatch(int batchHint) {
@@ -59,6 +59,6 @@ public class InterruptibleQueryTraverser implements Traverser {
   private static final int TRAVERSAL_TIMEOUT = 5000;
 
   public int getTimeoutMillis() {
-	return TRAVERSAL_TIMEOUT;
+  return TRAVERSAL_TIMEOUT;
   }
 }

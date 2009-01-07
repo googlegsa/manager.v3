@@ -11,13 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 
 package com.google.enterprise.connector.servlet;
 
 /**
  * Error/message codes returning from Connector Manager to GSA AdminConsole
- * 
+ *
  */
 public class ConnectorMessageCode {
   public static final int SUCCESS = 0;
@@ -39,7 +39,7 @@ public class ConnectorMessageCode {
   public static final int RESPONSE_NULL_CONFIGURE = 5220;
   public static final int RESPONSE_NULL_RESOURCE = 5221;
   public static final int RESPONSE_NULL_DOCID = 5222;
-  public static final int INVALID_CONNECTOR_CONFIG = 5223;  
+  public static final int INVALID_CONNECTOR_CONFIG = 5223;
 
   public static final int ERROR_PARSING_XML_REQUEST = 5300;
   public static final int EXCEPTION_CONNECTOR_MANAGER = 5301;
@@ -49,7 +49,7 @@ public class ConnectorMessageCode {
   public static final int EXCEPTION_INSTANTIATOR = 5305;
   public static final int EXCEPTION_PERSISTENT_STORE = 5306;
   public static final int EXCEPTION_THROWABLE = 5307;
-  
+
   public static final int EXCEPTION_IO = 5308;
   public static final int EXCEPTION_MALFORMED_URL = 5309;
   public static final int EXCEPTION_NUMBER_FORMAT = 5310;
@@ -74,7 +74,7 @@ public class ConnectorMessageCode {
   public static final int OVERLAP_BAD_SCHEDULE = 5413;
   public static final int CONNECTOR_DISCONNECTED = 5414;
   public static final int CONNECTOR_MANAGER_DISCONNECTED = 5415;
-  
+
   public static final int UNSUPPORTED_CALL = 5997;
   public static final int UNSUPPORTED_MESSAGE_CODE = 5998;
   public static final int WRONG_MESSAGE_CODE = 5999;

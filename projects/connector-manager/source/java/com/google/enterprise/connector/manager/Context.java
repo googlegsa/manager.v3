@@ -303,7 +303,7 @@ public class Context {
    *         null if no bean of the appropriate name or type is found.
    * @throws BeansException if there is an instantiation problem.
    */
-  public Object getBean(ListableBeanFactory factory, String beanName, 
+  public Object getBean(ListableBeanFactory factory, String beanName,
       Class clazz) throws BeansException {
     Object result = null;
 
@@ -326,7 +326,7 @@ public class Context {
 
     // Get the list of beans defined in the bean factory of the required type.
     String[] beanList = factory.getBeanNamesForType(clazz);
-      
+
     // Make sure there is at least one
     if (beanList.length < 1) {
       return null;
@@ -474,12 +474,12 @@ public class Context {
     props.put(GSA_FEED_HOST_PROPERTY_KEY, feederGateHost);
     props.put(GSA_FEED_PORT_PROPERTY_KEY, Integer.toString(feederGatePort));
     try {
-      PropertiesUtils.storeToFile(props, propFile, 
+      PropertiesUtils.storeToFile(props, propFile,
           "Google Enterprise Connector Manager Configuration");
     } catch (PropertiesException e) {
       LOGGER.log(Level.WARNING, "Unable to save application context properties"
           + " file " + propFileName + ". ", e);
-      throw new InstantiatorException(e);      
+      throw new InstantiatorException(e);
     }
     LOGGER.info("Updated Connector Manager Config: " +
         GSA_FEED_HOST_PROPERTY_KEY + "=" + feederGateHost + "; " +

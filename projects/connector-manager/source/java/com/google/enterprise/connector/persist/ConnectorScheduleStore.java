@@ -20,7 +20,7 @@ package com.google.enterprise.connector.persist;
 public interface ConnectorScheduleStore {
   /**
    * Gets the stored schedule of a named connector.
-   * 
+   *
    * @param context a StoreContext
    * @return the schedule String, or null if no schedule has been stored for
    * this connector
@@ -29,13 +29,13 @@ public interface ConnectorScheduleStore {
 
   /**
    * Sets the stored schedule of a named connector.
-   * 
+   *
    * @param context a StoreContext
    * @param connectorSchedule String to store
    */
   public void storeConnectorSchedule(StoreContext context,
                                      String connectorSchedule);
-  
+
   /**
    * Remove a connector schedule.  If no such connector exists, do nothing.
    *

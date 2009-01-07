@@ -43,7 +43,7 @@ public class JcrTraversalManagerTest extends TestCase {
 
   /**
    * Test generating checkpoints
-   * 
+   *
    * @throws RepositoryException
    * @throws JSONException
    */
@@ -62,7 +62,7 @@ public class JcrTraversalManagerTest extends TestCase {
       logger.info(checkpointString);
 
       JSONObject jo = new JSONObject(checkpointString);
-      
+
       String lastModified = jo.getString("lastModified");
       Assert.assertEquals("1970-01-01T00:00:10.000Z", lastModified);
       String uuid = jo.getString("uuid");
@@ -126,13 +126,13 @@ public class JcrTraversalManagerTest extends TestCase {
     }
   }
 
-  private int countDocuments(DocumentList documentList) 
+  private int countDocuments(DocumentList documentList)
       throws RepositoryException {
     int counter = 0;
     if (documentList != null) {
       Document document = null;
       while ((document = documentList.nextDocument()) != null) {
-        logger.info(Value.getSingleValueString(document, 
+        logger.info(Value.getSingleValueString(document,
             SpiConstants.PROPNAME_DOCID));
         counter++;
       }

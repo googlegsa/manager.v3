@@ -26,7 +26,7 @@ import java.net.InetAddress;
  * the default Java implementation of {@link java.net.URL} does not.
  * This subclass of {@link java.net.URLStreamHandler} will parse SMB URLs
  * (which should look like normal URLs), additionally applying some
- * constraints documented 
+ * constraints documented
  * <a href="http://code.google.com/apis/searchappliance/documentation/50/admin/URL_patterns.html#SMB_patterns">
  * here</a>.
  * <p>
@@ -35,7 +35,7 @@ import java.net.InetAddress;
  */
 public class SmbURLStreamHandler extends URLStreamHandler {
   private static final int SMB_DEFAULT_PORT = 139;
-  private static final SmbURLStreamHandler instance = new SmbURLStreamHandler(); 
+  private static final SmbURLStreamHandler instance = new SmbURLStreamHandler();
 
   /**
    * Singleton Constructor.
@@ -67,31 +67,31 @@ public class SmbURLStreamHandler extends URLStreamHandler {
   }
 
   /**
-   * Parse the SMB URL.  At this point the only thing we care about is 
+   * Parse the SMB URL.  At this point the only thing we care about is
    * if the SMB URL passes the constraints mentioned in the this page:
    * http://code.google.com/apis/searchappliance/documentation/50/admin/URL_patterns.html#SMB_patterns
    */
   protected void parseURL(URL url, String spec, int start, int limit) {
     if (!"smb".equalsIgnoreCase(url.getProtocol())) {
-      throw new IllegalArgumentException("URL " + spec 
+      throw new IllegalArgumentException("URL " + spec
           + " does not appear to be 'smb:' scheme.");
-    } 
+    }
     String subSpec = spec.substring(start, limit);
     if (subSpec.equals("//") || subSpec.equals("////")) {
       throw new IllegalArgumentException("Top level SMB URLs, like " +  spec
           + " are not supported here.");
-    } 
+    }
     if (subSpec.indexOf('\\', start) >= 0) {
       throw new IllegalArgumentException("Backslash character '\\' is not "
           + "permitted in URLs, even SMB URLs: " + spec);
-    } 
+    }
 
     super.parseURL(url, spec, start, limit);
 
     // Make sure the hostname is not omitted and is not a workgroup name.
     InetAddress hostAddr = getHostAddress(url);
     if (hostAddr == null) {
-      throw new IllegalArgumentException("Host '" + url.getHost() 
+      throw new IllegalArgumentException("Host '" + url.getHost()
           + "' does not appear to be a valid server.");
     }
   }

@@ -34,7 +34,7 @@ public interface Connector {
    * the SPI. Credentials, if needed, are supplied externally through injection
    * via Spring or some other mechanism. If an exception is thrown, the
    * implementor should provide an explanatory message.
-   * 
+   *
    * @return An object implementing the {@link Session} interface
    * @throws RepositoryLoginException
    *           if there is a credentials-related problem

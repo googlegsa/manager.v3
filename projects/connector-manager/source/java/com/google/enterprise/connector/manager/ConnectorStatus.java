@@ -18,14 +18,14 @@ package com.google.enterprise.connector.manager;
  * Short info on a named connector.
  */
 public class ConnectorStatus {
-  
+
   private final String name;
   private final String type;
   private final int status;
   private final String schedule;
-  
+
   /**
-   * Primary constructor.  
+   * Primary constructor.
    * @param name the connector's name
    * @param type the connector's type
    * @param status the connector's status

@@ -32,21 +32,21 @@ import java.util.logging.Logger;
 public class SsoCookieIdentityExtractor implements CookieIdentityExtractor {
   final String serverUri;
   final String httpHeaderName;
-  
+
   private static final Logger LOGGER =
     Logger.getLogger(SsoCookieIdentityExtractor.class.getName());
- 
+
   public SsoCookieIdentityExtractor(String strUrl, String headerName) {
     this.serverUri = strUrl;
     this.httpHeaderName = headerName;
   }
-  
+
   public String extract(String s) {
     HttpConnectionManagerParams params = new HttpConnectionManagerParams();
     params.setConnectionTimeout(3000); // 3 seconds
     HttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
     connectionManager.setParams(params);
-    
+
     GetMethod getMethod = new GetMethod(serverUri);
     // Include cookie with request
     getMethod.setRequestHeader("Cookie", s);
@@ -56,14 +56,14 @@ public class SsoCookieIdentityExtractor implements CookieIdentityExtractor {
 
     HttpClient httpClient = new HttpClient(connectionManager);
     Header idHeader = null;
-    
+
     try {
       int status = httpClient.executeMethod(getMethod);
 
       LOGGER.info("Got status: " + status);
       if (status == 200) {
         idHeader = getMethod.getResponseHeader(httpHeaderName);
-        LOGGER.info(idHeader.toString());         
+        LOGGER.info(idHeader.toString());
       }
     } catch (IOException e) {
       LOGGER.warning(e.toString());

@@ -72,10 +72,10 @@ public final class CookieUtil {
    *                        should not be logged.
    *  @param logger A Logger to log HTTP communication.  Ignored if null.
    *  @return The HTTP status code of the request.
-   *  
+   *
    *  TODO - passwordFields is not a good approach;  we cannot predict
-   *  password field names.  It would be much better to scan the html field 
-   *  TYPES for a type of "password."  The enum of types is set by the html 
+   *  password field names.  It would be much better to scan the html field
+   *  TYPES for a type of "password."  The enum of types is set by the html
    *  standard, the range of possible password field names is unlimited.
    *  I'd make that change now, except we're in a 5.0 push, and mgmt asked for
    *  minimal changes necessary to resolve bug 858157.
@@ -184,7 +184,7 @@ public final class CookieUtil {
         }
 
         // TODO what to do with cookies that have no "domain" attribute??
-        
+
         // Now delete all cookies marked for deletion.
         for (Cookie cookie : cookies) {
           String thisName = cookie.getName();
@@ -376,7 +376,7 @@ public final class CookieUtil {
        LOG.warning("Error while deserializing. Original string = <" + str + ">.");
        return "";
      }
-   }  
+   }
 
   private static boolean undefined(String str) {
     return str == null || "".equals(str);

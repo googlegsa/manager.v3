@@ -17,11 +17,11 @@ package com.google.enterprise.connector.spiimpl;
 public class LongValue extends ValueImpl {
 
   long longValue;
-  
+
   public LongValue(long bool) {
     this.longValue = bool;
   }
-  
+
   public String toFeedXml() {
     return Long.toString(longValue);
   }

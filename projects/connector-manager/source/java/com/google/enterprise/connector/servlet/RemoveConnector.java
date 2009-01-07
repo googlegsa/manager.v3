@@ -43,7 +43,7 @@ public class RemoveConnector extends ConnectorManagerGetServlet {
   /**
    * Handler for doGet in order to do unit tests.
    * Returns the simple response if successfully removing the manager config.
-   * 
+   *
    * @param manager Manager
    * @param out PrintWriter where the response is written
    */

@@ -1,4 +1,16 @@
-// Copyright 2004-2005 Google Inc. All Rights Reserved.
+// Copyright 2004-2008 Google Inc.  All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package com.google.enterprise.connector.common;
 
@@ -15,7 +27,6 @@ import java.io.StringWriter;
 
 /**
  *  Unit Test for Base64Encoder
- *
  */
 public class Base64EncoderTest extends TestCase {
 
@@ -28,10 +39,10 @@ public class Base64EncoderTest extends TestCase {
     return new TestSuite(Base64EncoderTest.class);
   }
 
-//  private BASE64Encoder testEncoder = new BASE64Encoder();
+  // private BASE64Encoder testEncoder = new BASE64Encoder();
   private BASE64Decoder testDecoder = new BASE64Decoder();
 
- 
+
   public void testFixed() throws Exception {
     String input = " Google's indices consist of information that has been" +
                    " identified, indexed and compiled through an automated" +
@@ -74,9 +85,8 @@ public class Base64EncoderTest extends TestCase {
                     "V4IGl0IGFnYWluIGluIGEgcmVsYXRpdmVseSBzaG9ydCBhbW91bnQg" +
                     "b2YgdGltZS4=";
     StringWriter writer = new StringWriter();
-    int len = Base64Encoder.encode
-              (new ByteArrayInputStream(input.getBytes()), writer);
-
+    int len = Base64Encoder.encode(new ByteArrayInputStream(input.getBytes()),
+                                   writer);
     assertEquals(input.length(), len);
 
     String result = writer.toString();
@@ -89,36 +99,36 @@ public class Base64EncoderTest extends TestCase {
   public void testWordDoc() throws Exception {
     File file = new File("testdata/mocktestdata/test.doc");
     long fileLength = file.length();
-    
+
     // first, read original file bytes
-    byte[] bytes = new byte[(int) fileLength];    
+    byte[] bytes = new byte[(int) fileLength];
     FileInputStream fis = new FileInputStream(file);
     int offset = 0;
     int numRead = 0;
-    while (offset < bytes.length
-        && (numRead=fis.read(bytes, offset, bytes.length-offset)) >= 0) {
+    while (offset < bytes.length &&
+           (numRead = fis.read(bytes, offset, bytes.length-offset)) >= 0) {
       offset += numRead;
     }
     fis.close();
-   
+
     // encode and decode bytes (using byte[])
     StringWriter writer = new StringWriter();
     Base64Encoder.encode(bytes, writer);
     byte[] newBytes = testDecoder.decodeBuffer(writer.toString());
-    
+
     // encode and decode bytes (using InputStream)
     StringWriter writer2 = new StringWriter();
     fis = new FileInputStream(file);
     Base64Encoder.encode(fis, writer2);
     byte[] newBytes2 = testDecoder.decodeBuffer(writer.toString());
-    
+
     // last, make sure bytes are still the same
     for (int i = 0; i < bytes.length; i++) {
       assertEquals(bytes[i], newBytes[i]);
       assertEquals(bytes[i], newBytes2[i]);
     }
   }
-  
+
   public void testSpeed() throws Exception {
     byte[] input = new byte[1024*1024];
     StringWriter writer = new StringWriter((input.length / 3 + 1) * 4);

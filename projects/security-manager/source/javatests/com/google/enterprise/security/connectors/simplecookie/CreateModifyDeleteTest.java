@@ -37,7 +37,7 @@ public class CreateModifyDeleteTest extends TestCase {
   /**
    * We do Context.refresh() before and after so as not to interfere with other
    * tests that might use a Context
-   * 
+   *
    * @throws Exception
    */
   public final void testBasicFunctionality() throws Exception {
@@ -59,12 +59,12 @@ public class CreateModifyDeleteTest extends TestCase {
     Map<String, String> configData;
     SecAuthnContext securityContext;
     Cookie cookie;
-    
+
     configData =
         ImmutableMap.of("CookieName", "in", "IdCookieName", "out", "Regex", "username=(.*)");
     connectorManager.setConnectorConfig(connectorName, connectorTypeName, configData, language,
         connectorExists);
-    
+
     connectorExists = testConnectorExists(connectorManager, connectorName);
     assertTrue(connectorExists);
 
@@ -86,9 +86,9 @@ public class CreateModifyDeleteTest extends TestCase {
     cookie = securityContext.getCookieNamed("def");
     assertNotNull(cookie);
     assertEquals("joe", cookie.getValue());
-    
+
     connectorManager.removeConnector(connectorName);
-    
+
     connectorExists = testConnectorExists(connectorManager, connectorName);
     assertFalse(connectorExists);
 

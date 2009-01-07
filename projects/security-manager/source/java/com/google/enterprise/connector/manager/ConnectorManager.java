@@ -29,7 +29,7 @@ import java.util.logging.Logger;
  * manager are different builds. This gives the security manager a connector
  * manager with an implementation for the overloading of authenticate() that
  * includes a security context.
- * 
+ *
  * This functionality will eventually be merged with the connector manager's
  * {@link ProductionManager}.
  */

@@ -32,7 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Admin servlet to set connector config.
- * 
+ *
  */
 public class SetConnectorConfig extends ConnectorManagerServlet {
   private static final Logger LOGGER =
@@ -40,10 +40,10 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
 
   /**
    * doGet just call doPost.
-   * @param req 
-   * @param res 
-   * @throws IOException 
-   * 
+   * @param req
+   * @param res
+   * @throws IOException
+   *
    */
   protected void doGet(HttpServletRequest req,
                        HttpServletResponse res)
@@ -95,7 +95,7 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
         new SetConnectorConfigHandler(xmlBody, manager);
     ConfigureResponse configRes = handler.getConfigRes();
     ConnectorMessageCode status = (configRes == null) ? handler.getStatus() :
-    	new ConnectorMessageCode(ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
+      new ConnectorMessageCode(ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
 
     ConnectorManagerGetServlet.writeConfigureResponse(
         out, status, configRes);

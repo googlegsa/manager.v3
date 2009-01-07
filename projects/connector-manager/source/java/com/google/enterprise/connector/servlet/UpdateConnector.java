@@ -40,7 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Admin servlet to update connector config.
- * 
+ *
  */
 public class UpdateConnector extends HttpServlet {
   private static final Logger LOGGER =
@@ -48,11 +48,11 @@ public class UpdateConnector extends HttpServlet {
 
   /**
    * Returns the config form filled with data.
-   * 
+   *
    * @param req
    * @param res
    * @throws IOException
-   * 
+   *
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -79,11 +79,11 @@ public class UpdateConnector extends HttpServlet {
 
   /**
    * Returns the simple response if successfully updating the config.
-   * 
+   *
    * @param req
    * @param res
    * @throws IOException
-   * 
+   *
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -115,7 +115,7 @@ public class UpdateConnector extends HttpServlet {
     }
     if (configRes != null) {
       status =
-    	new ConnectorMessageCode(ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
+      new ConnectorMessageCode(ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
     }
     ConnectorManagerGetServlet.writeConfigureResponse(out, status, configRes);
     out.close();
@@ -184,7 +184,7 @@ public class UpdateConnector extends HttpServlet {
         + "\"submit\"></td></tr></TABLE></FORM></BODY></HTML>\n");
     return sbuf.toString();
   }
-  
+
   public static String htmlErrorPage(String status) {
     return "<HTML><BODY>Error: " + status + "</BODY></HTML>";
   }

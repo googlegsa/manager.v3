@@ -21,7 +21,7 @@ package com.google.enterprise.connector.mock;
  */
 public class MockRepositoryDateTime implements Comparable {
   private int ticks;
-  
+
   public String toString() {
     return Integer.toString(ticks);
   }

@@ -20,7 +20,7 @@ import java.util.Properties;
 /**
  * Mock Configuration Store - doesn't actually persist, just uses memory.
  */
-public class MockConnectorConfigStore extends HashMap 
+public class MockConnectorConfigStore extends HashMap
     implements ConnectorConfigStore {
 
   /* (non-Javadoc)

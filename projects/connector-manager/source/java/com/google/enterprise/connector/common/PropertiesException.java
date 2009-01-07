@@ -30,7 +30,7 @@ public class PropertiesException extends ConnectorManagerException {
 
   /**
    * Constructs a PropertiesException with a supplied message but no root cause.
-   * 
+   *
    * @param message the message. Can be retrieved by the {@link #getMessage()}
    *        method.
    */
@@ -40,7 +40,7 @@ public class PropertiesException extends ConnectorManagerException {
 
   /**
    * Constructs a PropertiesException with message and root cause.
-   * 
+   *
    * @param message the message. Can be retrieved by the {@link #getMessage()}
    *        method.
    * @param rootCause root failure cause
@@ -52,7 +52,7 @@ public class PropertiesException extends ConnectorManagerException {
 
   /**
    * Constructs a PropertiesException with the specified root cause.
-   * 
+   *
    * @param rootCause root failure cause
    */
   public PropertiesException(Throwable rootCause) {

@@ -21,17 +21,17 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Implements the Monitor interface using a Properties object.  This class is 
+ * Implements the Monitor interface using a Properties object.  This class is
  * thread-safe.
  */
 public class HashMapMonitor implements Monitor {
 
   private Map vars;
-  
+
   public HashMapMonitor() {
     vars = new HashMap();
   }
-  
+
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.monitor.Monitor#getVariables()
    * @return a read-only Map of the variables

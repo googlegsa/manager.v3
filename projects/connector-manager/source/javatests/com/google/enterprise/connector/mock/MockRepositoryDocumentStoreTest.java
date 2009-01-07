@@ -26,12 +26,12 @@ import java.util.logging.Logger;
  * Unit tests for Mock Document Store
  */
 public class MockRepositoryDocumentStoreTest extends TestCase {
-  private static final Logger logger = 
+  private static final Logger logger =
     Logger.getLogger(MockRepositoryDocumentStoreTest.class.getName());
 /**
  * Adds and deletes a few documents, checking integrity, size and content
  * along the way
- */  
+ */
   public void testIntegrity() {
     int expectedSize = 0;
 
@@ -40,54 +40,54 @@ public class MockRepositoryDocumentStoreTest extends TestCase {
     Assert.assertTrue("Store should have size " + expectedSize
       + " actual size: " + s.size(), s.size() == expectedSize);
 
-    MockRepositoryEvent e1 = 
-      new MockRepositoryEvent(EventType.SAVE, 
-                              "doc1", 
+    MockRepositoryEvent e1 =
+      new MockRepositoryEvent(EventType.SAVE,
+                              "doc1",
                               "now is the time",
-                              new MockRepositoryPropertyList(), 
+                              new MockRepositoryPropertyList(),
                               new MockRepositoryDateTime(1));
     doDocumentTest(s, "doc1", "now is the time", 1, e1);
 
-    MockRepositoryEvent e2 = 
-      new MockRepositoryEvent(EventType.SAVE, 
-                              "doc2", 
+    MockRepositoryEvent e2 =
+      new MockRepositoryEvent(EventType.SAVE,
+                              "doc2",
                               "now was the time",
-                              new MockRepositoryPropertyList(), 
+                              new MockRepositoryPropertyList(),
                               new MockRepositoryDateTime(2));
     doDocumentTest(s, "doc2", "now was the time", 2, e2);
 
-    MockRepositoryEvent e3 = 
-      new MockRepositoryEvent(EventType.SAVE, 
-                              "doc2", 
+    MockRepositoryEvent e3 =
+      new MockRepositoryEvent(EventType.SAVE,
+                              "doc2",
                               "the time is now",
-                              new MockRepositoryPropertyList(), 
+                              new MockRepositoryPropertyList(),
                               new MockRepositoryDateTime(3));
     doDocumentTest(s, "doc2", "the time is now", 2, e3);
 
-    MockRepositoryEvent e4 = 
+    MockRepositoryEvent e4 =
       new MockRepositoryEvent(EventType.DELETE,
-                              "doc2", 
-                              null, 
-                              null, 
+                              "doc2",
+                              null,
+                              null,
                               new MockRepositoryDateTime(4));
     doDocumentTest(s, "doc1", "now is the time", 1, e4);
   }
- 
+
 /**
  * Runs a series of tests given a single event and some expected values.
  * First, the event is applied.  The store itself checks its own integrity.
  * Next, we make sure that the store has the size we expect, make sure we
  * can find a supplied docid and make sure its content is as expected
  * @param s The store being tested
- * @param docid 
+ * @param docid
  * @param expectedContent
  * @param expectedSize
  * @param e1 event to apply
  */
-  private void doDocumentTest(MockRepositoryDocumentStore s,       
+  private void doDocumentTest(MockRepositoryDocumentStore s,
                               String docid,
-                              String expectedContent, 
-                              int expectedSize, 
+                              String expectedContent,
+                              int expectedSize,
                               MockRepositoryEvent e1) {
     MockRepositoryDocument d;
     s.applyEvent(e1);
@@ -96,75 +96,75 @@ public class MockRepositoryDocumentStoreTest extends TestCase {
     d = s.getDocByID(docid);
     Assert.assertTrue("Document " + docid + " not found in repository!",
       (d != null));
-    Assert.assertTrue("Document " + docid + " has unexpected content!", 
+    Assert.assertTrue("Document " + docid + " has unexpected content!",
       (d.getContent().equals(expectedContent)));
   }
 
   public void testQuery() {
     MockRepositoryDocumentStore s = new MockRepositoryDocumentStore();
 
-    MockRepositoryEvent e1 = 
-      new MockRepositoryEvent(EventType.SAVE, 
-                              "doc1", 
+    MockRepositoryEvent e1 =
+      new MockRepositoryEvent(EventType.SAVE,
+                              "doc1",
                               "now is the time",
-                              new MockRepositoryPropertyList(), 
+                              new MockRepositoryPropertyList(),
                               new MockRepositoryDateTime(1));
     doDocumentTest(s, "doc1", "now is the time", 1, e1);
 
-    MockRepositoryEvent e2 = 
-      new MockRepositoryEvent(EventType.SAVE, 
-                              "doc2", 
+    MockRepositoryEvent e2 =
+      new MockRepositoryEvent(EventType.SAVE,
+                              "doc2",
                               "now was the time",
-                              new MockRepositoryPropertyList(), 
+                              new MockRepositoryPropertyList(),
                               new MockRepositoryDateTime(2));
     doDocumentTest(s, "doc2", "now was the time", 2, e2);
 
-    MockRepositoryEvent e3 = 
-      new MockRepositoryEvent(EventType.SAVE, 
-                              "doc3", 
+    MockRepositoryEvent e3 =
+      new MockRepositoryEvent(EventType.SAVE,
+                              "doc3",
                               "the time is now",
-                              new MockRepositoryPropertyList(), 
+                              new MockRepositoryPropertyList(),
                               new MockRepositoryDateTime(3));
     doDocumentTest(s, "doc3", "the time is now", 3, e3);
 
-    MockRepositoryEvent e4 = 
-      new MockRepositoryEvent(EventType.SAVE, 
-                              "doc4", 
+    MockRepositoryEvent e4 =
+      new MockRepositoryEvent(EventType.SAVE,
+                              "doc4",
                               "the time is now",
-                              new MockRepositoryPropertyList(), 
+                              new MockRepositoryPropertyList(),
                               new MockRepositoryDateTime(4));
     doDocumentTest(s, "doc4", "the time is now", 4, e4);
 
-    MockRepositoryEvent e5 = 
-      new MockRepositoryEvent(EventType.SAVE, 
-                              "doc5", 
+    MockRepositoryEvent e5 =
+      new MockRepositoryEvent(EventType.SAVE,
+                              "doc5",
                               "the time is now",
-                              new MockRepositoryPropertyList(), 
+                              new MockRepositoryPropertyList(),
                               new MockRepositoryDateTime(5));
     doDocumentTest(s, "doc5", "the time is now", 5, e5);
 
     String[] expectedResults = {"doc3", "doc4", "doc5"};
-    doQueryTest(s, 
+    doQueryTest(s,
                 new MockRepositoryDateTime(3),
-                new MockRepositoryDateTime(6), 
+                new MockRepositoryDateTime(6),
                 expectedResults);
 
     String[] expectedResults2 = {"doc2", "doc3"};
-    doQueryTest(s, 
+    doQueryTest(s,
                 new MockRepositoryDateTime(2),
-                new MockRepositoryDateTime(4), 
+                new MockRepositoryDateTime(4),
                 expectedResults2);
   }
 
   private void doQueryTest(MockRepositoryDocumentStore s,
-                           MockRepositoryDateTime from, 
+                           MockRepositoryDateTime from,
                            MockRepositoryDateTime to,
                            String[] expectedResults) {
     int count = 0;
     boolean allMatch = true;
     boolean overflow = false;
     for (Iterator iter = s.dateRange(from, to).iterator(); iter.hasNext(); ) {
-    	MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
+      MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
       if (count < expectedResults.length) {
         if (!d.getDocID().equals(expectedResults[count])) {
           logger.info("Query result " + count + " docid " + d.getDocID()
@@ -186,33 +186,33 @@ public class MockRepositoryDocumentStoreTest extends TestCase {
   public void testSimultaneousEvents() {
     MockRepositoryDocumentStore s = new MockRepositoryDocumentStore();
 
-    doDocumentTest(s, 
-                   "doc1", 
-                   "now is the time", 
-                   1, 
-                   new MockRepositoryEvent(EventType.SAVE, 
-                                           "doc1", 
+    doDocumentTest(s,
+                   "doc1",
+                   "now is the time",
+                   1,
+                   new MockRepositoryEvent(EventType.SAVE,
+                                           "doc1",
                                            "now is the time",
-                                           new MockRepositoryPropertyList(), 
+                                           new MockRepositoryPropertyList(),
                                            new MockRepositoryDateTime(1)));
 
-    doDocumentTest(s, 
-                   "doc2", 
-                   "now was the time", 
-                   2, 
-                   new MockRepositoryEvent(EventType.SAVE, 
-                                           "doc2", 
+    doDocumentTest(s,
+                   "doc2",
+                   "now was the time",
+                   2,
+                   new MockRepositoryEvent(EventType.SAVE,
+                                           "doc2",
                                            "now was the time",
-                                           new MockRepositoryPropertyList(), 
+                                           new MockRepositoryPropertyList(),
                                            new MockRepositoryDateTime(1)));
 
-    doDocumentTest(s, 
-                   "doc3", 
-                   "now was the time", 
-                   3, new MockRepositoryEvent(EventType.SAVE, 
-                                              "doc3", 
+    doDocumentTest(s,
+                   "doc3",
+                   "now was the time",
+                   3, new MockRepositoryEvent(EventType.SAVE,
+                                              "doc3",
                                               "now was the time",
-                                              new MockRepositoryPropertyList(), 
+                                              new MockRepositoryPropertyList(),
                                               new MockRepositoryDateTime(1)));
   }
 }

@@ -31,13 +31,13 @@ import javax.servlet.http.HttpServletResponse;
 public class HelloWorld extends HttpServlet
 {
 	private static final long serialVersionUID = 1L;
-	
+
 	/**
      * Generates a "Hello world" response.
-     * @param req 
-     * @param res 
-     * @throws IOException 
-     * 
+     * @param req
+     * @param res
+     * @throws IOException
+     *
      */
     @Override
     protected void doGet(HttpServletRequest req,
@@ -51,11 +51,11 @@ public class HelloWorld extends HttpServlet
                   "</HEAD><BODY>Hello World!</BODY></HTML>");
       out.close();
     }
-    
+
     /**
      * Returns servlet info.
      * @return informational message
-     * 
+     *
      */
     @Override
     public String getServletInfo()

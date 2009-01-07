@@ -23,7 +23,7 @@ import java.util.prefs.Preferences;
 import java.util.Properties;
 
 /**
- * Manage persistence for schedule and state and configuration 
+ * Manage persistence for schedule and state and configuration
  * for a named connector. The persistent store for these data items
  * is via Java Preferences.
  *
@@ -137,7 +137,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    * @param context a StoreContext
    * @param connectorState state of the corresponding connector
    */
-  public void storeConnectorState(StoreContext context, 
+  public void storeConnectorState(StoreContext context,
       String connectorState) {
     initPrefsState();
     prefsState.put(context.getConnectorName(), connectorState);
@@ -157,7 +157,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    * Gets the stored configuration of a named connector.
    *
    * @param context a StoreContext
-   * @return the configuration Properties, or null if no configuration 
+   * @return the configuration Properties, or null if no configuration
    *         has been stored for this connector.
    */
   public Properties getConnectorConfiguration(StoreContext context) {
@@ -174,7 +174,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
 
   /**
    * Stores the configuration of a named connector.
-   * 
+   *
    * @param context a StoreContext
    * @param configuration Properties to store
    */
@@ -182,7 +182,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
       Properties configuration) {
     initPrefsConfig();
     try {
-      String header = "Configuration for Connector " 
+      String header = "Configuration for Connector "
           + context.getConnectorName();
       String propStr = PropertiesUtils.storeToString(configuration, header);
       prefsConfig.put(context.getConnectorName(), propStr);
@@ -191,7 +191,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
                  + context.getConnectorName(), e);
     }
   }
-  
+
   /**
    * Remove a stored connector configuration.  If no such connector exists,
    * do nothing.

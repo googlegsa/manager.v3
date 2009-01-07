@@ -30,10 +30,10 @@ public class HelloClientFromGSA extends HttpServlet
 {
     /**
      * Generates a "Hello world" response.
-     * @param req 
-     * @param res 
-     * @throws IOException 
-     * 
+     * @param req
+     * @param res
+     * @throws IOException
+     *
      */
     protected void doGet(HttpServletRequest req,
                          HttpServletResponse res)
@@ -45,11 +45,11 @@ public class HelloClientFromGSA extends HttpServlet
                   "</HEAD><BODY>Hello Client From GSA!</BODY></HTML>");
       out.close();
     }
-    
+
     /**
      * Returns servlet info.
      * @return informational message
-     * 
+     *
      */
     public String getServletInfo()
     {

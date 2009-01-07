@@ -34,7 +34,7 @@ public class UpdateConnectorTest extends TestCase {
    */
   public void testHandleDoGet() {
     String connectorName = "cname1";
-	String xmlBody = 
+  String xmlBody =
         "<ConnectorConfig>\n"
         + "<ConnectorName>" + connectorName + "</ConnectorName>\n"
         + "<ConnectorType>ctype1</ConnectorType>\n"
@@ -44,39 +44,39 @@ public class UpdateConnectorTest extends TestCase {
         + "<Param name=\"Repository File\" value=\"Foo Repository\"/>\n"
         + "</config>\n"
         + "</ConnectorConfig>\n";
-	String expectedResult =
-      "<HTML><HEAD><TITLE>Update Connector Config</TITLE></HEAD>\n" + 
-      "<BODY><H3>Update Connector Config:</H3><HR>\n" + 
-      "<FORM METHOD=POST ACTION=\"/connector-manager/updateConnector?ConnectorName=cname1&Lang=en\"><TABLE><tr><td>Connector Name: cname1</td></tr><tr>\n" + 
-      "<tr>\n" + 
-      "<td>Username</td>\n" + 
-      "<td>\n" + 
-      "<input type=\"text\" name=\"Username\" value=\"fooUser\" />\n" + 
-      "</td>\n" + 
-      "</tr>\n" + 
-      "<tr>\n" + 
-      "<td>Password</td>\n" + 
-      "<td>\n" + 
-      "<input type=\"password\" name=\"Password\" value=\"fooPassword\" />\n" + 
-      "</td>\n" + 
-      "</tr>\n" + 
-      "<tr>\n" + 
-      "<td>Color</td>\n" + 
-      "<td>\n" + 
-      "<input type=\"text\" name=\"Color\" />\n" + 
-      "</td>\n" + 
-      "</tr>\n" + 
-      "<tr>\n" + 
-      "<td>Repository File</td>\n" + 
-      "<td>\n" + 
-      "<input type=\"text\" name=\"Repository File\" value=\"Foo Repository\" />\n" + 
-      "</td>\n" + 
-      "</tr>\n" + 
+  String expectedResult =
+      "<HTML><HEAD><TITLE>Update Connector Config</TITLE></HEAD>\n" +
+      "<BODY><H3>Update Connector Config:</H3><HR>\n" +
+      "<FORM METHOD=POST ACTION=\"/connector-manager/updateConnector?ConnectorName=cname1&Lang=en\"><TABLE><tr><td>Connector Name: cname1</td></tr><tr>\n" +
+      "<tr>\n" +
+      "<td>Username</td>\n" +
+      "<td>\n" +
+      "<input type=\"text\" name=\"Username\" value=\"fooUser\" />\n" +
+      "</td>\n" +
+      "</tr>\n" +
+      "<tr>\n" +
+      "<td>Password</td>\n" +
+      "<td>\n" +
+      "<input type=\"password\" name=\"Password\" value=\"fooPassword\" />\n" +
+      "</td>\n" +
+      "</tr>\n" +
+      "<tr>\n" +
+      "<td>Color</td>\n" +
+      "<td>\n" +
+      "<input type=\"text\" name=\"Color\" />\n" +
+      "</td>\n" +
+      "</tr>\n" +
+      "<tr>\n" +
+      "<td>Repository File</td>\n" +
+      "<td>\n" +
+      "<input type=\"text\" name=\"Repository File\" value=\"Foo Repository\" />\n" +
+      "</td>\n" +
+      "</tr>\n" +
       "<tr><td><INPUT TYPE=\"SUBMIT\" NAME=\"action\" VALUE=\"submit\"></td></tr></TABLE></FORM></BODY></HTML>\n";
 
     Manager manager = MockManager.getInstance();
     String result = UpdateConnector.handleDoGet(manager, xmlBody, connectorName, "en", "/connector-manager");
-    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult), 
+    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult),
       StringUtils.normalizeNewlines(result.toString()));
   }
 

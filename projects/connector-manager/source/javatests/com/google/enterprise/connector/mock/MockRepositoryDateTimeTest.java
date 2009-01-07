@@ -33,7 +33,7 @@ public class MockRepositoryDateTimeTest extends TestCase {
     Assert.assertTrue(d1.compareTo(d3) < 0);
     Assert.assertTrue(d3.compareTo(d2) > 0);
   }
-  
+
   /**
    * Tests equals and hashCode
    */

@@ -15,7 +15,7 @@
 package com.google.enterprise.connector.spi;
 
 /**
- * Utility class containing methods used to encode and construct XML for the 
+ * Utility class containing methods used to encode and construct XML for the
  * Connector Manager.
  */
 public class XmlUtils {
@@ -83,9 +83,9 @@ public class XmlUtils {
 
   /**
    * Used to write out an attribute for an element.  Surrounding whitespace will
-   * not be added to the buffer.  The given value will be XML Encoded before 
+   * not be added to the buffer.  The given value will be XML Encoded before
    * appending to the buffer.
-   * 
+   *
    * <p>For example, given attrName="foo" and attrValue="val&lt;bar" writes out:
    * <pre>foo="val&amp;lt;bar"</pre>
    * @param attrName the attribute name.

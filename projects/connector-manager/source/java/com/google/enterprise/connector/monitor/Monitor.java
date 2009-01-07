@@ -21,16 +21,16 @@ import java.util.Map;
  * Whether or not this is synchronized is left as an implementation detail.
  */
 public interface Monitor {
-  
+
   /**
-   * Update or add variables.  If a variable is already existing, it is 
+   * Update or add variables.  If a variable is already existing, it is
    * overwritten.
    * @param vars the variables and values to set.  The keys must be of type
-   * String and the values must provide a toString() method.  If the value is 
+   * String and the values must provide a toString() method.  If the value is
    * null, then the variable is removed.
    */
   public void setVariables(Map vars);
-  
+
   /**
    * Retrieve all variables and their values.
    * @return a Map object with variable names (String) and values (Object).

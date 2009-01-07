@@ -136,7 +136,7 @@ public class MockRepositoryProperty {
       JSONObject jo = (JSONObject) o;
       init(name, jo);
     } else if (o instanceof InputStream) {
-      InputStream is = (InputStream) o; 
+      InputStream is = (InputStream) o;
       init(name, is);
     } else {
       throw new IllegalArgumentException(
@@ -187,7 +187,7 @@ public class MockRepositoryProperty {
     this.value = null;
     this.repeating = false;
     this.multivalues = null;
-  }  
+  }
 
   private String valuesToString() {
     if (!repeating) {
@@ -250,8 +250,8 @@ public class MockRepositoryProperty {
 
   /**
    * Return the underlying InputStream.  This method should only be called if
-   * the type is PropertyType.STREAM. 
-   * 
+   * the type is PropertyType.STREAM.
+   *
    * @return the underlying InputStream if object is of type STREAM
    */
   public InputStream getStreamValue() {
@@ -269,7 +269,7 @@ public class MockRepositoryProperty {
     }
     return streamValue;
   }
-  
+
   public boolean isRepeating() {
     return repeating;
   }

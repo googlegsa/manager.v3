@@ -25,7 +25,7 @@ import java.io.StringWriter;
 public class Base64FilterInputStream extends FilterInputStream {
 
   /**
-   * Given some InputStream, create an InputStream that base64 encodes the 
+   * Given some InputStream, create an InputStream that base64 encodes the
    * input stream.
    * @param in
    */
@@ -40,9 +40,9 @@ public class Base64FilterInputStream extends FilterInputStream {
   private int rawBufSize = 3 * 1024;
   private byte rawBuf[] = new byte[rawBufSize];
   private byte encodedBuf[];
-  
+
   private int rawBufEndPos = 0;  // position starting with no valid data
-  
+
   /*
    * Position of next int to read.
    */
@@ -50,7 +50,7 @@ public class Base64FilterInputStream extends FilterInputStream {
   private int encodedBufEndPos = 0;  // position starting with no valid data
 
   private byte[] readBuffer = new byte[1];
-  
+
   public int read() throws IOException {
     int retVal = read(readBuffer, 0, 1);
     if (-1 == retVal) {
@@ -59,12 +59,12 @@ public class Base64FilterInputStream extends FilterInputStream {
       return readBuffer[0];
     }
   }
-  
+
   public int read(byte b[], int off, int len) throws IOException {
     if (len < 0) {
       return 0;
     }
-    
+
     int currOff = off;  // current position to write into b
     int currLen = len;  // num bytes to write into b
     while (true) {
@@ -73,14 +73,14 @@ public class Base64FilterInputStream extends FilterInputStream {
 
       // fulfill read based on already encoded bytes
       if (encodedBufEndPos - encodedBufPos > 0) {
-        int numBytesToCopy = 
+        int numBytesToCopy =
           Math.min(currLen, encodedBufEndPos - encodedBufPos);
         System.arraycopy(encodedBuf, encodedBufPos, b, currOff, numBytesToCopy);
-        encodedBufPos += numBytesToCopy;      
+        encodedBufPos += numBytesToCopy;
         currLen -= numBytesToCopy;
         currOff += numBytesToCopy;
       }
-      
+
       // if already done fulfilling entire read request, return
       if (currLen <= 0) {
         return len;
@@ -117,7 +117,7 @@ public class Base64FilterInputStream extends FilterInputStream {
         } else {
           rawBufEndPos += bytesRead;
         }
-        
+
         // encode bytes in groups of three bytes
         numLeftoverBytes = rawBufEndPos % 3;
         numEncodableBytes = rawBufEndPos - numLeftoverBytes;

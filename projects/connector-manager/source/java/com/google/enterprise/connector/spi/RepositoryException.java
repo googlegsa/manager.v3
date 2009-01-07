@@ -60,7 +60,7 @@ public class RepositoryException extends Exception {
   }
 
   /**
-   * Returns the detail message, including messages from nested exceptions 
+   * Returns the detail message, including messages from nested exceptions
    * if any.
    * @return the message
    */
@@ -76,7 +76,7 @@ public class RepositoryException extends Exception {
 
   /**
    * Returns the embedded cause (throwable) which may be null.
-   * @return the cause 
+   * @return the cause
    */
   public Throwable getCause() {
     return rootCause;

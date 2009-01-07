@@ -24,7 +24,7 @@ public interface AuthenticationManager {
    * Authenticates against the repository and returns true or false
    * depending on whether authentication was successful. If an exception is
    * thrown, the implementor should provide an explanatory message.
-   * 
+   *
    * @param identity An AuthenticationIdentity object that encapsulates the
    *        user's identity
    * @return True means that authentication succeeded, false indicates

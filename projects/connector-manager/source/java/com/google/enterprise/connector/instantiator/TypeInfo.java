@@ -94,7 +94,7 @@ public class TypeInfo {
    * Produces info about a connector type from a Spring resource. Throughout, we
    * catch runtime exceptions, since Spring is known to throw them. We want to
    * try to recover by moving on to the next resource if needed.
-   * 
+   *
    * @param r A spring resource pointing to xml bean definitions.
    * @return TypeInfo extracted from that resource
    * @throws FactoryCreationFailureException
@@ -102,7 +102,7 @@ public class TypeInfo {
    * @throws NoBeansFoundException
    * @throws BeanInstantiationFailureException
    * @throws InstanceXmlFailureException
-   * @throws InstanceXmlMissingException 
+   * @throws InstanceXmlMissingException
    */
   static TypeInfo fromSpringResourceAndThrow(Resource r)
       throws FactoryCreationFailureException, BeanListFailureException, NoBeansFoundException,

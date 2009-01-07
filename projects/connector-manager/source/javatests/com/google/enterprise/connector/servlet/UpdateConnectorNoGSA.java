@@ -35,10 +35,10 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Test UpdateConnector through a browser.
- * 
+ *
  * http://localhost:8080/connector-manager/updateConnectorTest?
  * ConnectorName=connectorA&lang=en&Username=foo&Password=passwd
- * 
+ *
  */
 public class UpdateConnectorNoGSA extends HttpServlet {
   private static final Logger LOGGER =
@@ -46,11 +46,11 @@ public class UpdateConnectorNoGSA extends HttpServlet {
 
   /**
    * Returns the config form filled with data.
-   * 
+   *
    * @param req
    * @param res
    * @throws IOException
-   * 
+   *
    */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -93,11 +93,11 @@ public class UpdateConnectorNoGSA extends HttpServlet {
 
   /**
    * Returns the simple response if successfully updating the config.
-   * 
+   *
    * @param req
    * @param res
    * @throws IOException
-   * 
+   *
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
@@ -129,7 +129,7 @@ public class UpdateConnectorNoGSA extends HttpServlet {
     }
     if (configRes != null) {
       status =
-      	new ConnectorMessageCode(ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
+        new ConnectorMessageCode(ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
     }
     ConnectorManagerGetServlet.writeConfigureResponse(out, status, configRes);
     out.close();

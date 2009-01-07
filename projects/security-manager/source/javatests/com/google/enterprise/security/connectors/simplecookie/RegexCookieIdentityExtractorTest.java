@@ -16,7 +16,7 @@ package com.google.enterprise.security.connectors.simplecookie;
 
 import junit.framework.TestCase;
 
-/* 
+/*
  * Tests for the {@link RegexCookieIdentityExtractor} class.
  */
 public class RegexCookieIdentityExtractorTest extends TestCase {

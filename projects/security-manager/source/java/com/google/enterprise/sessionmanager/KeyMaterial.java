@@ -25,7 +25,7 @@ public class KeyMaterial {
     this.spnegoBlob = spnegoBlob;
     this.key = key;
   }
-  
+
   public String key() {
     return key;
   }
@@ -33,7 +33,7 @@ public class KeyMaterial {
   public String spnegoBlob() {
     return spnegoBlob;
   }
-  
+
   @Override
   public String toString() {
     return "[key: <" + key + ">, SPNEGO blob: <" + spnegoBlob + ">]";

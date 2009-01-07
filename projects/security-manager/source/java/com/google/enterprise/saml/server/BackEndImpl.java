@@ -64,7 +64,7 @@ public class BackEndImpl implements BackEnd {
 
   /**
    * Create a new backend object.
-   * 
+   *
    * @param sm The session manager to use.
    * @param authzResponder The authorization responder to use.
    */

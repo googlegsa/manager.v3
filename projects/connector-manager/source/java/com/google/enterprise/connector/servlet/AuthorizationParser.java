@@ -1,3 +1,17 @@
+// Copyright 2006-2008 Google Inc.  All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package com.google.enterprise.connector.servlet;
 
 import org.w3c.dom.Element;
@@ -28,19 +42,19 @@ public class AuthorizationParser {
 
   /**
    * Parse the XML into a map of maps of maps.
-   * 
+   *
    * First-level map is keyed by identity - the value contains all the urls
    * governed by the same identity.
-   * 
+   *
    * Second-level map is keyed by connector name - the value is all the urls
    * that come from the same connector.
-   * 
+   *
    * Third-level map is keyed by docid - the value is a ParsedUrl.
-   * 
+   *
    * In practice, for now, it is unlikely that the same connector will show up
    * under more than one identity. In fact, the most likely case is that the two
    * top-level maps have only one item.
-   * 
+   *
    * Visibility is default to facilitate testing
    */
   void parse() {
@@ -123,7 +137,7 @@ public class AuthorizationParser {
 
   /**
    * Return number of identities found. Just for testing.
-   * 
+   *
    * @return number of identities
    */
   int countParsedIdentities() {
@@ -133,7 +147,7 @@ public class AuthorizationParser {
   /**
    * Return number of connector names found for a given identity. Just for
    * testing.
-   * 
+   *
    * @return number of identities
    */
   int countConnectorsForIdentity(String identity) {
@@ -147,7 +161,7 @@ public class AuthorizationParser {
   /**
    * Return number of urls found for a given identity-connector pair. Just for
    * testing.
-   * 
+   *
    * @return number of identities
    */
   int countUrlsForIdentityConnectorPair(String identity, String connectorName) {

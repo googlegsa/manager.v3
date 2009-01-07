@@ -28,10 +28,10 @@ import javax.servlet.http.Cookie;
 public class SimpleCookieIdentityConnector implements Connector, Session, AuthenticationManager {
 
   private final CookieIdentityExtractor c;
-  
+
   private final String cookieName;
   private final String idCookieName;
-  
+
   SimpleCookieIdentityConnector(String cookieName, String idCookieName, CookieIdentityExtractor c) {
     this.cookieName = cookieName;
     this.idCookieName = idCookieName;

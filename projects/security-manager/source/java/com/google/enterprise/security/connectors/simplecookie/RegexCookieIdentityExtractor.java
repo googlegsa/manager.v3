@@ -20,11 +20,11 @@ import java.util.regex.Pattern;
 public class RegexCookieIdentityExtractor implements CookieIdentityExtractor {
 
   final Pattern pattern;
-  
+
   public RegexCookieIdentityExtractor(String pattern) {
     this.pattern = Pattern.compile(pattern);
   }
-  
+
   public String extract(String s) {
     Matcher m = pattern.matcher(s);
     if (!m.find()) {

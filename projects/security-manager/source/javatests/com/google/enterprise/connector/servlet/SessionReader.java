@@ -64,7 +64,7 @@ public class SessionReader extends HttpServlet {
         msg.append("<p>Session ID: " + sid + " expired. Removing...</p>");
       }
     }
-   
+
     res.setContentType("text/html");
     PrintWriter out = res.getWriter();
     out.println("<HTML><HEAD><TITLE>Session Test</TITLE>"+

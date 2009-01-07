@@ -237,11 +237,11 @@ public class SetCookieParser {
  *                       ; day month year (e.g., 02 Jun 1982)
  *      date1_alt      = 2DIGIT "-" month "-" 4DIGIT
  *                       ; day-month-year (e.g., 02-Jun-1982)
- *      date2_flexible = date2 | date2_alt 
+ *      date2_flexible = date2 | date2_alt
  *      date2          = 2DIGIT "-" month "-" 2DIGIT
  *                       ; day-month-year (e.g., 02-Jun-82)
  *      date2_alt      = 2DIGIT SP month SP 2DIGIT
- *                       ; day month year (e.g., 02 Jun 82) 
+ *                       ; day month year (e.g., 02 Jun 82)
  *      date3          = month SP ( 2DIGIT | ( SP 1DIGIT ))
  *                       ; month day (e.g., Jun  2)
  *
@@ -287,7 +287,7 @@ public class SetCookieParser {
       sequence(Parser.sequence(two_digits, dash),
                Parser.sequence(month, Parser.sequence(dash, four_digits)));
     Parser<Object> date1Flexible = Parser.alternative(date1, date1Alt);
-    
+
     Parser<Object> date2 = Parser.
       sequence(Parser.sequence(two_digits, dash),
                Parser.sequence(month, Parser.sequence(dash, two_digits)));
@@ -295,7 +295,7 @@ public class SetCookieParser {
     Parser<Object> date2Alt = Parser.
       sequence(Parser.sequence(two_digits, space),
                Parser.sequence(month, Parser.sequence(space, two_digits)));
-    Parser<Object> date2Flexible = Parser.alternative(date2, date2Alt); 
+    Parser<Object> date2Flexible = Parser.alternative(date2, date2Alt);
 
     Parser<Object> minute_second = Parser.sequence(new Chset("0-5"),
                                                    Chset.DIGIT);

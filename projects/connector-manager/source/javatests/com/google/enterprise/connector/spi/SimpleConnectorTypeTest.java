@@ -26,7 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * 
+ *
  */
 public class SimpleConnectorTypeTest extends TestCase {
 
@@ -67,7 +67,7 @@ public class SimpleConnectorTypeTest extends TestCase {
    * Test method for
    * {@link com.google.enterprise.connector.spi.SimpleConnectorType#
    * validateConfig(java.util.Map, Locale, ConnectorFactory)}.
-   * 
+   *
    * @throws JSONException
    */
   public final void testValidateConfig() throws JSONException {
@@ -80,8 +80,8 @@ public class SimpleConnectorTypeTest extends TestCase {
       ConfigureResponse configureResponse = simpleConnectorType.validateConfig(
           map, null, null);
       String configForm = configureResponse.getFormSnippet();
-      String expectedResult = 
-    	  "<tr>\r\n"
+      String expectedResult =
+        "<tr>\r\n"
           + "<td>user</td>\r\n"
           + "<td><input type=\"text\" value=\"max\" name=\"user\"/></td>\r\n"
           + "</tr>\r\n"
@@ -99,22 +99,22 @@ public class SimpleConnectorTypeTest extends TestCase {
     {
       SimpleConnectorType simpleConnectorType = new SimpleConnectorType();
       simpleConnectorType.setConfigKeys(new String[] {"user", "password"});
-      JSONObject jo = new JSONObject("{user:max, password:xyzzy, dog:snickers}");      
+      JSONObject jo = new JSONObject("{user:max, password:xyzzy, dog:snickers}");
       Map map = new JsonObjectAsMap(jo);
       ConfigureResponse configureResponse = simpleConnectorType.validateConfig(
           map, null, null);
       Assert.assertNull(configureResponse);
     }
-    
+
     {
       TestConnectorType testConnectorType = new TestConnectorType();
       testConnectorType.setConfigKeys(new String[] {"user", "password"});
-      JSONObject jo = new JSONObject("{user:max, password:xyzzy}");      
+      JSONObject jo = new JSONObject("{user:max, password:xyzzy}");
       Map map = new JsonObjectAsMap(jo);
       ConfigureResponse configureResponse = testConnectorType.validateConfig(
           map, null, null);
       String configForm = configureResponse.getFormSnippet();
-      String expectedResult = 
+      String expectedResult =
         "<tr>\r\n"
           + "<td>user</td>\r\n"
           + "<td><input type=\"text\" value=\"max\" name=\"user\"/></td>\r\n"
@@ -133,7 +133,7 @@ public class SimpleConnectorTypeTest extends TestCase {
    * Test method for
    * {@link com.google.enterprise.connector.spi.SimpleConnectorType#
    * getPopulatedConfigForm(java.util.Map, Locale)}.
-   * 
+   *
    * @throws JSONException
    */
   public final void testGetPopulatedConfigForm() throws JSONException {

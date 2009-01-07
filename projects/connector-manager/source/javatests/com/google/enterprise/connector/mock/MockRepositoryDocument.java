@@ -40,7 +40,7 @@ public class MockRepositoryDocument {
   private MockRepositoryDateTime timeStamp;
   /*
    * The Repository document can handle both returning either a String or an
-   * InputStream.  Callers can call either and will realize the String or 
+   * InputStream.  Callers can call either and will realize the String or
    * InputStream on demand.
    */
   private String content;
@@ -68,7 +68,7 @@ public class MockRepositoryDocument {
     }
     return content;
   }
-  
+
   public InputStream getContentStream() throws FileNotFoundException {
     if (null == inputStream) {
       if (null == contentFile || 0 == contentFile.length()) {
@@ -76,7 +76,7 @@ public class MockRepositoryDocument {
           if (null == content) {
             return null;
           }
-          inputStream = 
+          inputStream =
             new ByteArrayInputStream(
               content.getBytes(DocPusher.XML_DEFAULT_ENCODING));
         } catch (UnsupportedEncodingException e) {
@@ -102,7 +102,7 @@ public class MockRepositoryDocument {
     return timeStamp;
   }
 
-  public MockRepositoryDocument(MockRepositoryDateTime timeStamp, 
+  public MockRepositoryDocument(MockRepositoryDateTime timeStamp,
                                 String docid,
                                 String content,
                                 MockRepositoryPropertyList proplist) {

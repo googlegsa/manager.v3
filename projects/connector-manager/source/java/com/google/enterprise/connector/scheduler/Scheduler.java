@@ -16,14 +16,14 @@ package com.google.enterprise.connector.scheduler;
 
 /**
  * Interface to the Scheduler.
- * 
+ *
  * Runs the schedule.  The run() method consists of determining the schedule as
- * well as executing the schedule. 
+ * well as executing the schedule.
  */
 public interface Scheduler extends Runnable {
   /**
-   * Call this method when a connector is removed.  Assumes ScheduleStore has 
-   * already been updated to reflect the schedule change.  This causes the 
+   * Call this method when a connector is removed.  Assumes ScheduleStore has
+   * already been updated to reflect the schedule change.  This causes the
    * scheduler to gracefully interrupt any work that is done on this connector.
    * @param connectorName name of the connector instance
    */

@@ -40,10 +40,10 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
 
   /**
    * Returns the connector config form for given connector type.
-   * @param req 
-   * @param res 
-   * @throws IOException 
-   * 
+   * @param req
+   * @param res
+   * @throws IOException
+   *
    */
   protected void doGet(HttpServletRequest req,
                        HttpServletResponse res)
@@ -96,10 +96,10 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
 
   /**
    * Returns the simple response if successfully setting the connector config.
-   * @param req 
-   * @param res 
-   * @throws IOException 
-   * 
+   * @param req
+   * @param res
+   * @throws IOException
+   *
    */
   protected void doPost(HttpServletRequest req,
                         HttpServletResponse res)
@@ -132,7 +132,7 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
         writer.getBuffer().toString(), manager);
     ConfigureResponse configRes = handler.getConfigRes();
     ConnectorMessageCode status = (configRes == null) ? handler.getStatus() :
-    	new ConnectorMessageCode(ConnectorMessageCode.INVALID_CONNECTOR_CONFIG); 
+      new ConnectorMessageCode(ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
 
     ConnectorManagerGetServlet.writeConfigureResponse(
         out, status, configRes);

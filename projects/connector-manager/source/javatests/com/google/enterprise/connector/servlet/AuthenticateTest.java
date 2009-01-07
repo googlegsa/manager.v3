@@ -34,7 +34,7 @@ public class AuthenticateTest extends TestCase {
     Logger.getLogger(AuthenticateTest.class.getName());
 
   /**
-   * Test method for 
+   * Test method for
    * {@link com.google.enterprise.connector.servlet.Authenticate#handleDoPost(
    * java.lang.String, com.google.enterprise.connector.manager.Manager,
    * java.io.PrintWriter)}.
@@ -43,22 +43,22 @@ public class AuthenticateTest extends TestCase {
     String xmlBody =
       "<AuthnRequest>\n" +
       "  <Credentials>\n" +
-      "    <Username>fooUser</Username>\n" + 
-      "    <Password>fooPassword</Password>\n" + 
+      "    <Username>fooUser</Username>\n" +
+      "    <Password>fooPassword</Password>\n" +
       "  </Credentials>\n" +
       "</AuthnRequest>";
 
     String expectedResult =
-      "<CmResponse>\n" + 
-      "  <AuthnResponse>\n" + 
-      "    <Success ConnectorName=\"connector1\">\n" + 
-      "      <Identity>fooUser</Identity>\n" + 
-      "    </Success>\n" + 
-      "    <Success ConnectorName=\"connector2\">\n" + 
-      "      <Identity>fooUser</Identity>\n" + 
-      "    </Success>\n" + 
-      "  </AuthnResponse>\n" + 
-      "</CmResponse>\n"; 
+      "<CmResponse>\n" +
+      "  <AuthnResponse>\n" +
+      "    <Success ConnectorName=\"connector1\">\n" +
+      "      <Identity>fooUser</Identity>\n" +
+      "    </Success>\n" +
+      "    <Success ConnectorName=\"connector2\">\n" +
+      "      <Identity>fooUser</Identity>\n" +
+      "    </Success>\n" +
+      "  </AuthnResponse>\n" +
+      "</CmResponse>\n";
     doTest(xmlBody, expectedResult);
   }
 
@@ -72,7 +72,7 @@ public class AuthenticateTest extends TestCase {
     StringBuffer result = writer.getBuffer();
     LOGGER.info(result.toString());
     LOGGER.info(expectedResult);
-    Assert.assertEquals (StringUtils.normalizeNewlines(expectedResult), 
+    Assert.assertEquals (StringUtils.normalizeNewlines(expectedResult),
         StringUtils.normalizeNewlines(result.toString()));
     out.close();
   }

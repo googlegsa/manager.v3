@@ -24,7 +24,7 @@ import java.io.FileWriter;
 public class CryptoTest extends TestCase {
 
   private static String keyStorePasswdPath = "test_keystore_passwd";
-  
+
   /*
    * Create a file with a passwd in it
    */
@@ -33,15 +33,15 @@ public class CryptoTest extends TestCase {
     fw.write("dummy password");
     fw.close();
   }
-  
+
   protected void tearDown() throws Exception {
     File keyStoreFile = new File(
         EncryptedPropertyPlaceholderConfigurer.getKeyStorePath());
     ConnectorTestUtils.deleteAllFiles(keyStoreFile);
-    
+
     File keyPasswdFile = new File(keyStorePasswdPath);
     ConnectorTestUtils.deleteAllFiles(keyPasswdFile);
-    
+
     // delete keystore that might exist
     ConnectorTestUtils.deleteAllFiles(
         new File(EncryptedPropertyPlaceholderConfigurer.getKeyStorePath()));
@@ -49,22 +49,22 @@ public class CryptoTest extends TestCase {
 
   private void encryptAndDecrypt() {
     String plainText = "this is clear";
-    String cipherText = 
+    String cipherText =
         EncryptedPropertyPlaceholderConfigurer.encryptString(plainText);
     System.out.println("ciphertext = " + cipherText);
-    String decryptText = 
+    String decryptText =
         EncryptedPropertyPlaceholderConfigurer.decryptString(cipherText);
-    Assert.assertEquals(decryptText, plainText);    
-  }  
-  
+    Assert.assertEquals(decryptText, plainText);
+  }
+
   /*
-   * Tests encryption and decryption when no keystore password file 
+   * Tests encryption and decryption when no keystore password file
    * is specified.
    */
   public final void testEncryptDecrytWithoutKeyStorePasswd() {
     encryptAndDecrypt();
   }
-  
+
   /*
    * Tests encryption and decryption when given a keystore passwd in a file.
    */
@@ -73,9 +73,9 @@ public class CryptoTest extends TestCase {
         keyStorePasswdPath);
     encryptAndDecrypt();
   }
-  
+
   /*
-   * Tests encryption and decryption when given a keystore passwd file that 
+   * Tests encryption and decryption when given a keystore passwd file that
    * does not exist.
    */
   public final void testEncryptDecrytWithBadKeyStorePasswd() {

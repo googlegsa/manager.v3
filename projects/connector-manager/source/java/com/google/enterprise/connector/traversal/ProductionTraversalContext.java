@@ -28,7 +28,7 @@ public class ProductionTraversalContext implements TraversalContext {
 
   private FileSizeLimitInfo fileSizeLimitInfo = new FileSizeLimitInfo();
   private MimeTypeMap mimeTypeMap = new MimeTypeMap();
-  
+
   public void setFileSizeLimitInfo(FileSizeLimitInfo fileSizeLimitInfo) {
     this.fileSizeLimitInfo = fileSizeLimitInfo;
   }
