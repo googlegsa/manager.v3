@@ -873,7 +873,7 @@ public class DocPusherTest extends TestCase {
       assertFeedTeed(resultXML + secondResultXML, tffName);
     } finally {
       // Clean up teed feed file.
-      (new File(tffName)).delete();
+      (new File(tffName)).deleteOnExit();
     }
   }
 
