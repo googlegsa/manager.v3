@@ -39,7 +39,7 @@
   </bean>
 
   <bean id="Monitor"
-        class="com.google.enterprise.connector.monitor.HashMapMonitor"
+        class="com.google.enterprise.connector.monitor.HashMapMonitor">
   </bean>
 
   <bean id="WorkQueue"
