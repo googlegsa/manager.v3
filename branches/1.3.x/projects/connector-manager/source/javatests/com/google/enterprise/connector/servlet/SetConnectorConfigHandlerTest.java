@@ -97,6 +97,12 @@ public class SetConnectorConfigHandlerTest extends TestCase {
 
   private void doTest(String xmlBody) {
     LOGGER.info("xmlBody: " + xmlBody);
+    String name = this.connectorName;
+    if (!this.update) {
+      // GSA 5.2 wants connectorNames to be lower case.
+      name = name.toLowerCase();
+    }
+
     Manager manager = MockManager.getInstance();
     SetConnectorConfigHandler hdl = new SetConnectorConfigHandler(
         xmlBody, manager);
@@ -104,25 +110,31 @@ public class SetConnectorConfigHandlerTest extends TestCase {
     LOGGER.info("ConnectorType: " + hdl.getConnectorType() + " this: " + this.connectorType);
     if (hdl.getStatus().isSuccess()) {
       Assert.assertEquals(hdl.getLanguage(), this.language);
-      Assert.assertEquals(hdl.getConnectorName(), this.connectorName);
+      Assert.assertEquals(hdl.getConnectorName(), name);
       Assert.assertEquals(hdl.getConnectorType(), this.connectorType);
       Assert.assertEquals(hdl.isUpdate(), this.update);
       Assert.assertEquals(hdl.getConfigData(), this.configData);
     } else if (hdl.getStatus().getMessageId() ==
         ConnectorMessageCode.RESPONSE_NULL_CONNECTOR) {
-      Assert.assertEquals(0, this.connectorName.length());
+      Assert.assertEquals(0, name.length());
     } else if (hdl.getStatus().getMessageId() ==
         ConnectorMessageCode.RESPONSE_NULL_CONFIG_DATA) {
-      Assert.assertEquals(hdl.getConnectorName(), this.connectorName);
+      Assert.assertEquals(hdl.getConnectorName(), name);
       Assert.assertEquals(hdl.getConfigData(), this.configData);
     }
   }
 
   public String setXMLBody() {
+    String name = this.connectorName;
+    if (!this.update ) {
+      // GSA 5.2 wants connectorNames to be lower case.
+      // But we can only enforce it for new connectors, not existing ones.
+      name = name.toLowerCase();
+    }
     String body =
       "<" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">\n" +
       "  <" + ServletUtil.QUERY_PARAM_LANG + ">" + this.language + "</" + ServletUtil.QUERY_PARAM_LANG + ">\n" +
-      "  <" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">" + this.connectorName + "</" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">\n" +
+      "  <" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">" + name + "</" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">\n" +
       "  <" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">" + this.connectorType + "</" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">\n" +
       "  <" + ServletUtil.XMLTAG_UPDATE_CONNECTOR + ">" + this.update + "</" + ServletUtil.XMLTAG_UPDATE_CONNECTOR + ">\n";
     Set set = configData.entrySet();

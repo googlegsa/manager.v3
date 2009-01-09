@@ -75,6 +75,11 @@ public class SetConnectorConfigHandler {
     if (ServletUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_UPDATE_CONNECTOR).equalsIgnoreCase("true")) {
       this.update = true;
+    } else {
+      // GSA 5.2 and greater wants only lowercase connector names,
+      // so force all new connector names to be lower case.
+      // Unfortunately, we cannot do this for existing connectors.
+      this.connectorName = this.connectorName.toLowerCase();
     }
     this.configData = ServletUtil.getAllAttributes(
         root, ServletUtil.XMLTAG_PARAMETERS);
