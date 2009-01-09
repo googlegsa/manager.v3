@@ -97,8 +97,11 @@ public class SetConnectorConfigHandlerTest extends TestCase {
 
   private void doTest(String xmlBody) {
     LOGGER.info("xmlBody: " + xmlBody);
-    // GSA 5.2 wants connectorNames to be lower case.
-    String name = this.connectorName.toLowerCase();
+    String name = this.connectorName;
+    if (!this.update) {
+      // GSA 5.2 wants connectorNames to be lower case.
+      name = name.toLowerCase();
+    }
 
     Manager manager = MockManager.getInstance();
     SetConnectorConfigHandler hdl = new SetConnectorConfigHandler(
@@ -122,8 +125,12 @@ public class SetConnectorConfigHandlerTest extends TestCase {
   }
 
   public String setXMLBody() {
-    // GSA 5.2 wants connectorNames to be lower case.
-    String name = this.connectorName.toLowerCase();
+    String name = this.connectorName;
+    if (!this.update ) {
+      // GSA 5.2 wants connectorNames to be lower case.
+      // But we can only enforce it for new connectors, not existing ones.
+      name = name.toLowerCase();
+    }
     String body =
       "<" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">\n" +
       "  <" + ServletUtil.QUERY_PARAM_LANG + ">" + this.language + "</" + ServletUtil.QUERY_PARAM_LANG + ">\n" +
