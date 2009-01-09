@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<!-- This is the application context for production.  -->
 <beans>
   <bean id="EncryptedPropertyPlaceholderConfigurer"
         class="com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer">
@@ -23,7 +24,7 @@
   </bean>
 
   <bean id="IdentityConfig"
-    class="com.google.enterprise.security.identity.CsvConfig">
+	class="com.google.enterprise.security.identity.CsvConfig">
     <constructor-arg index="0" value="AuthSites.conf" />
   </bean>
 
@@ -38,5 +39,13 @@
         class="com.google.enterprise.connector.manager.ConnectorManager">
     <property name="instantiator" ref="Instantiator" />
     <property name="backEnd" ref="BackEnd" />
+  </bean>
+
+  <bean id="Metadata"
+	class="com.google.enterprise.saml.common.Metadata">
+    <constructor-arg index="0" value="saml-metadata.xml" />
+    <constructor-arg index="1" value="http://google.com/enterprise/security-manager" />
+    <constructor-arg index="2" value="google.com" />
+    <constructor-arg index="3" value="[enterprise front end]" />
   </bean>
 </beans>
