@@ -889,9 +889,9 @@ public final class OpenSamlUtil {
     return Configuration.getSAMLDateFormatter().print(date);
   }
 
-  public static MetadataProvider getMetadataFromFile(String filename)
+  public static MetadataProvider getMetadataFromFile(File file)
       throws MetadataProviderException {
-    FilesystemMetadataProvider provider = new FilesystemMetadataProvider(new File(filename));
+    FilesystemMetadataProvider provider = new FilesystemMetadataProvider(file);
     provider.setParserPool(new BasicParserPool());
     // Causes null-pointer errors in OpenSAML code:
     //provider.setRequireValidMetadata(true);

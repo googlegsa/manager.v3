@@ -37,7 +37,7 @@ public class CsvConfigTest extends TestCase {
     String config = "http://leiz.mtv.corp.google.com,/basic/,BASIC_AUTH,\n"
                     + "http://gama.corp.google.com,/secured/,FORMS_AUTH,\n"
                     + "http://mooglegoogle.com,/moogle/,FORMS_AUTH,http://loginurl.com/login";
-    File  f = new File("foo");
+    File f = File.createTempFile("foo", null);
     f.deleteOnExit();
     BufferedWriter writer = new BufferedWriter(new FileWriter(f));
     writer.write(config);

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<!-- This is the application context for regression tests.  -->
 <beans>
   <bean id="EncryptedPropertyPlaceholderConfigurer"
         class="com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer">
@@ -24,7 +25,7 @@
 
   <bean id="IdentityConfig"
 	class="com.google.enterprise.security.identity.CsvConfig">
-    <constructor-arg index="0" value="testdata/AuthSites.conf" />
+    <constructor-arg index="0" value="AuthSites.conf" />
   </bean>
 
   <bean id="BackEnd"
@@ -42,7 +43,7 @@
 
   <bean id="Metadata"
 	class="com.google.enterprise.saml.common.Metadata">
-    <constructor-arg index="0" value="source/webdocs/test/saml-metadata.xml" />
+    <constructor-arg index="0" value="saml-metadata.xml" />
     <constructor-arg index="1" value="http://google.com/enterprise/security-manager" />
     <constructor-arg index="2" value="google.com" />
     <constructor-arg index="3" value="http://localhost:8973/security-manager/mockserviceprovider" />

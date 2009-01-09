@@ -54,7 +54,7 @@ public class SamlSsoTest extends TestCase {
     super(name);
 
     Context ctx = Context.getInstance();
-    ctx.setStandaloneContext("source/webdocs/test/applicationContext.xml",
+    ctx.setStandaloneContext(Context.DEFAULT_JUNIT_CONTEXT_LOCATION,
                              Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
     Metadata metadata =
         Metadata.class.cast(ctx.getRequiredBean("Metadata", Metadata.class));
