@@ -20,9 +20,9 @@ import java.util.Map;
 /**
  * This factory provides a mechanism by which
  * {@link ConnectorType#validateConfig(Map, Locale, ConnectorFactory)}
- * may create instances of the connector for the purposes validation.
+ * may create instances of the connector for the purpose of validation.
  * {@link Connector} instances created by the factory are not added to
- * the Connector Manager's list if running connectors and do not have
+ * the Connector Manager's list of running connectors and do not have
  * an on-disk representation.
  */
 public interface ConnectorFactory {
