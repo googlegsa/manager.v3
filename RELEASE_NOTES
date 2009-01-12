@@ -11,7 +11,7 @@ list of known issues and workarounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 1.3.0, Jan 07, 2009
+Release 1.3.0, Jan 11, 2009
 ===========================
 
 Introduction
@@ -26,8 +26,8 @@ Summary of Changes
   * Fix Issue 9:   Miscellaneous minor issues in mock pusher
   * Fix Issue 49:  Connector instance properties are stored before they are validated.
   * Fix Issue 52:  ConnectorFactory interface in the Javadoc is not documented
-  * Fix Issue 58:  site: operator doesn't work with connector feeds
   * Fix Issue 57:  AuthorizationResponse.equals should use the valid field
+  * Fix Issue 58:  site: operator doesn't work with connector feeds
   * Fix Issue 59:  Add a canonical title property
   * Fix Issue 62:  TraversalContextAware interface is not used
   * Fix Issue 72:  Multiple problems with exception handling in QueryTraverser.runBatch
@@ -47,10 +47,11 @@ Summary of Changes
 
 Version Compatibility
 ---------------------
-Connectors created using previous 1.0.x versions of this product may not be
-compatible with this version.  There have been several small changes to the
-SPI, some additional functionality made available for the Connectors, and some
-clarification of flow of control.
+Connectors created using previous 1.0.x and 1.1.0 versions of this
+product may not be compatible with this version. There have been
+several small changes to the SPI, some additional functionality made
+available for the Connectors, and some clarification of flow of
+control.
 
 The following changes to the Connector Manager may have direct impact on
 existing connectors:
@@ -77,7 +78,7 @@ ConnectorType.validateConfig() May Return a Modified Configuration
 ------------------------------------------------------------------
 ConnectorType.validateConfig() may now return a modified configuration
 in the ConfigureResponse if desired.  That modified configuration
-will be saved and used to created the running connector instance.
+will be saved and used to create the running connector instance.
 
 For additional information see:
 http://code.google.com/p/google-enterprise-connector-manager/source/browse/trunk/projects/connector-manager/source/java/com/google/enterprise/connector/spi/ConnectorType.java
@@ -121,7 +122,7 @@ appropriate content.  The Connector Manager will call checkpoint()
 and reschedule the Connector for an immediate call to resumeTraversal().
 This allows the Connector to time-slice or monitor a time-consuming
 search for content without running afoul of the Connector Manager
-time-out of work threads.  Connectors that return an empty DocumentList
+time-out of work threads.  Connectors that return an empty DocumentList,
 when they should be returning null, will effectively run in a busy loop.
 
 For more information, see:
@@ -135,7 +136,7 @@ New "google:title" Property
 ---------------------------
 The named link that the GSA presents in search results is usually
 a title or headline that the GSA extracts from the document content.
-At this time, the GSA does not make use of other meta-data supplied
+At this time, the GSA does not make use of other metadata supplied
 by the Connector to display this title, so if the feed has no content
 or the GSA cannot extract a meaningful title from the supplied
 content, it instead displays the URL to the document in the search
@@ -145,10 +146,10 @@ are usually uninformative to the viewer.
 The Connector Manager has created a new canonical metadata field,
 "google:title", defined as SpiConstants.PROPNAME_TITLE.  At this
 point, the GSA makes no special use of this field.  However, if
-the Connector Manager receives a meta-data and content feed with
+the Connector Manager receives a metadata and content feed with
 no actual "google:content" field, it will create stub content
-consisting of an html title fragment.  This fools the current
-GSA versions into displaying that title in the search results.
+consisting of an html title fragment.  This causes the current
+GSA versions to display that title in the search results.
 
 In the future the GSA may make more direct use of the google:title
 field, so even if your Connector does provide content, it should
@@ -165,14 +166,14 @@ The Connector Manager now provides a TraversalContext implementation
 to Connectors so that they may better determine what types of
 document content to provide during a traversal.  Connectors may use
 the information provided by the TraversalContext to limit content
-provided for indexing, based upon document size or mime-type.
+provided for indexing, based upon document size or MIME type.
 
 For instance, the Connector might use TraversalContext information to:
- - Provide a Document with meta-data and full content.
- - Provide a Document with meta-data but supply content in an
+ - Provide a Document with metadata and full content.
+ - Provide a Document with metadata but supply content in an
    alternate format (such as HTML or PDF).
- - Provide a Document with meta-data and summarized content.
- - Provide a Document with meta-data but no content.
+ - Provide a Document with metadata and summarized content.
+ - Provide a Document with metadata but no content.
  - Skip a Document entirely.
 
 If a Connector's TraversalManager implementation adds the
@@ -185,7 +186,7 @@ If a TraversalContext is provided, the Connector's TraversalManager
 may then use it to tailor its Document feed.  For instance, the
 TraversalContext could be used to determine whether or not to
 supply a "google:content" property for a Document, based upon
-the document size or mime-type.  Note that the TraversalContext
+the document size or MIME type.  Note that the TraversalContext
 interface has changed slightly from its previous (unimplemented)
 version.
 
@@ -243,16 +244,16 @@ For additional information, see:
 http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=100
 
 
-AuthorizationResponse.equals() and AuthorizationResponse.hash()
----------------------------------------------------------------
+AuthorizationResponse.equals() and AuthorizationResponse.hashCode()
+-------------------------------------------------------------------
 
-The AuthorizationResponse.equals() and AuthorizationResponse.hash()
+The AuthorizationResponse.equals() and AuthorizationResponse.hashCode()
 methods have been changed to include the AuthorizationResponse.valid
 member in the computations.  In previous versions of the Connector
 Manager, only the AuthorizationResponse.docid member was used in
-AuthorizationResponse.equals() and AuthorizationResponse.hash().
+AuthorizationResponse.equals() and AuthorizationResponse.hashCode().
 The change is subtle, but AuthorizationResponse instances
-{ "1234", true } and { "1234", false } are now considered inequal,
+{ "1234", true } and { "1234", false } are now considered unequal,
 where they would have been considered equal in the past.
 
 For more information, see:
