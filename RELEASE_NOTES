@@ -11,7 +11,7 @@ list of known issues and workarounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 1.3.0, Jan 11, 2009
+Release 1.3.0, Jan 13, 2009
 ===========================
 
 Introduction
@@ -47,11 +47,47 @@ Summary of Changes
 
 Version Compatibility
 ---------------------
+
+Connector Names Should Not Contain Upper Case Alphabetics
+---------------------------------------------------------
+Newer releases of the Google Search Appliance require that
+Connector names contain only lower case alphabetic characters.
+Numeric digits, dashes, and underscores are still allowed,
+with the previously documented limitations, however upper case
+alphabetics should no longer be used.  Problems using upper
+case characters in Connector names first appeared in GSA
+version 5.0.4.G22, showing only minor inconsistencies in
+crawl diagnostics.  In GSA version 5.2, search authorizations
+fail.
+
+Unfortunately, the new lower case connector name limitation
+is not enforced when creating Connectors on the GSA
+Connector Administration page.
+
+Connector Manager version 1.3.0 makes small concessions to
+this issue.  For instance, new Connectors have their name
+lower cased at the time of creation.
+
+The Connector Manager does not, however, change the case
+of existing Connectors or migrate existing Connectors to
+the new lower case form.  Doing so would lead to inconsistent
+search results and make previously indexed content inaccessable.
+
+If you have existing Connector instances with mixed case or
+upper case names, you must changed them before upgrading to
+GSA version 5.2, or existing content fed from that Connector
+will become unsearchable.
+
+Further details and instructions may be found at:
+http://code.google.com/p/google-enterprise-connector-manager/wiki/LowerCaseConnectorNames
+
+
+Connector Manager SPI Changes that Affect Connector Implementation
+------------------------------------------------------------------
 Connectors created using previous 1.0.x and 1.1.0 versions of this
 product may not be compatible with this version. There have been
 several small changes to the SPI, some additional functionality made
-available for the Connectors, and some clarification of flow of
-control.
+available for the Connectors, and some clarification of flow of control.
 
 The following changes to the Connector Manager may have direct impact on
 existing connectors:
@@ -191,8 +227,8 @@ interface has changed slightly from its previous (unimplemented)
 version.
 
 For additional information, see:
+http://code.google.com/p/google-enterprise-connector-manager/wiki/TraversalContext
 http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=78
-and the attached document entitled "The New TraversalContext Interface"
 
 
 Connector Configuration Storage
