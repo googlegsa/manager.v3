@@ -117,6 +117,13 @@ public class SamlAuthn extends SecurityManagerServlet
       return;
     }
 
+    if (!backend.isIdentityConfigured()) {
+      // TODO: do something here that skips the omniform
+      // the correct behavior should be: redirect the user with an artifact
+      // that resolves to a negative response
+      
+    }
+
     // This may not be the first time the user is seeing this form, so look for
     // a previous OmniForm in this request session.
     OmniForm omniform =
@@ -232,7 +239,6 @@ public class SamlAuthn extends SecurityManagerServlet
     return response;
   }
 
-  @SuppressWarnings("unused")
   private Response makeUnsuccessfulResponse(AuthnRequest request, String code, String message) {
     LOGGER.log(Level.WARNING, message);
     Status status = makeStatus(code);

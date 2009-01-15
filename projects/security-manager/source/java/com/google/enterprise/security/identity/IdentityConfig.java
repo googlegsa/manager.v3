@@ -18,5 +18,12 @@ import java.io.IOException;
 import java.util.List;
 
 public interface IdentityConfig {
+
+  /**
+   * This method must return a non-null List. However the list may be empty
+   * to represent that no auth sites are configured.
+   * 
+   * @return a non-null but possibly empty list of AuthnDomainGroups
+   */
   public List<AuthnDomainGroup> getConfig() throws IOException;
 }
