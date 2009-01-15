@@ -40,6 +40,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 import java.util.logging.Logger;
+import java.util.logging.Level;
 
 import javax.servlet.http.Cookie;
 
@@ -88,6 +89,10 @@ public class BackEndImpl implements BackEnd {
     return sm;
   }
 
+  public boolean isIdentityConfigured() {
+    return !getAuthnDomainGroups().isEmpty();
+  }
+
   public void setIdentityConfig(IdentityConfig identityConfig) {
     this.identityConfig = identityConfig;
   }
@@ -96,9 +101,16 @@ public class BackEndImpl implements BackEnd {
     return artifactMap;
   }
 
-  public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException {
+  public List<AuthnDomainGroup> getAuthnDomainGroups() {
     if (authnDomainGroups == null) {
-      authnDomainGroups = ImmutableList.copyOf(identityConfig.getConfig());
+      authnDomainGroups = ImmutableList.of();
+    }
+    if (authnDomainGroups.isEmpty()) {
+      try {
+        authnDomainGroups = ImmutableList.copyOf(identityConfig.getConfig());
+      } catch (IOException e) {
+        LOGGER.log(Level.WARNING, "IO Error when reading AuthSites config.", e);
+      }
     }
     return authnDomainGroups;
   }

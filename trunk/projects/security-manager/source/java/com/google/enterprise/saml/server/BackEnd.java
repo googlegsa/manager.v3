@@ -63,6 +63,11 @@ public interface BackEnd {
   public SAMLArtifactMap getArtifactMap();
 
   /**
+   *
+   */
+  public boolean isIdentityConfigured();
+
+  /**
    * Inject the identity configuration source.
    * @param identityConfig The identity configuration to use.
    */
