@@ -70,6 +70,10 @@ public class MockBackEnd implements BackEnd {
     return artifactMap;
   }
 
+  public boolean isIdentityConfigured() {
+    return true;
+  }
+
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
