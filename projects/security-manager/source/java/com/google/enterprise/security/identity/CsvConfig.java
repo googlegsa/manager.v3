@@ -85,25 +85,11 @@ public class CsvConfig implements IdentityConfig {
   }
 
   public AuthNMechanism authNMechFromString(String mech) {
-    if ("BASIC_AUTH".equals(mech)) {
-      return AuthNMechanism.BASIC_AUTH;
+    try {
+      return AuthNMechanism.valueOf(mech);
+    } catch (IllegalArgumentException e) {
+      return null;
     }
-    if ("FORMS_AUTH".equals(mech)) {
-      return AuthNMechanism.FORMS_AUTH;
-    }
-    if ("SAML".equals(mech)) {
-      return AuthNMechanism.SAML;
-    }
-    if ("SSL".equals(mech)) {
-      return AuthNMechanism.SSL;
-    }
-    if ("CONNECTORS".equals(mech)) {
-      return AuthNMechanism.CONNECTORS;
-    }
-    if ("SPNEGO_KERBEROS".equals(mech)) {
-      return AuthNMechanism.SPNEGO_KERBEROS;
-    }
-    return null;
   }
 
   // This is useful in unit testing.
