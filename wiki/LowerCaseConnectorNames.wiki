@@ -109,7 +109,7 @@ new (lower case) name.
 If any *Crawl URLs*  (or *Do Not Crawl URLs*) contain the Connector
 name, replace the old (mixed case or upper case) name with the
 new (lower case) name.  *Note:* It is not usually the case that
-the *Crawl URLs* or *Do Not Crawl URLs* have embedded connector
+the Crawl URLs or Do Not Crawl URLs have embedded connector
 names, but it is possible.
 
 8) If this GSA only indexed content from Connectors that are
@@ -160,8 +160,8 @@ sections, create an equivalent entry for the new Connector.
 _Google Search Appliance > Crawl and Index > Crawl URLs_.  
 If any *Crawl URLs* (or *Do Not Crawl URLs*) contain the old Connector
 name, create an equivalent entry for the new Connector.
-*Note:* It is not usually the case that the *Crawl URLs* or
-*Do Not Crawl URLs* have embedded connector names,
+*Note:* It is not usually the case that the Crawl URLs or
+Do Not Crawl URLs have embedded connector names,
 but it is possible.
 
 4) Remember the Connector Configuration as shown in the
@@ -187,30 +187,28 @@ _Google Search Appliance > Connector Administration > Connectors > Add/Edit_
 and change the schedule to the desired (or default 12am - 12am) schedule.
 
 8) Delete the old Connector instance from the form
-Google Search Appliance > Connector Administration > Connectors > Delete
+_Google Search Appliance > Connector Administration > Connectors > Delete_.
 
 9) Manually delete the Connector instance directory, if it still exists:
-$TOMCAT_HOME/webapps/connector-manager/WEB_INF/$CONNECTOR_TYPE/$CONNECTOR_NAME
+`$TOMCAT_HOME/webapps/connector-manager/WEB_INF/$CONNECTOR_TYPE/$CONNECTOR_NAME`
 
 10) Go to
-Google Search Appliance > Crawl and Index > Collections
-If any Collections contain the old Connector name in the
-Include Content Matching the Following Patterns: section,
+_Google Search Appliance > Crawl and Index > Collections_.  
+If any *Collections* contain the old Connector name in the
+*Include Content Matching the Following Patterns:* section,
 remove the old Connector from the Collection.
 
 11) Goto
-Google Search Appliance > Crawl and Index > Crawl URLs
-If any Crawl URLs contain the old Connector name, remove
+_Google Search Appliance > Crawl and Index > Crawl URLs_.  
+If any *Crawl URLs* contain the old Connector name, remove
 that URL.
 
 12) Remove content fed by the old Connector from the index.
-Goto
-Google Search Appliance > Crawl and Index > Crawl URLs
-and add a new Do Not Crawl patter for the old Connector.
+Go to _Google Search Appliance > Crawl and Index > Crawl URLs_ 
+and add a new *Do Not Crawl* pattern for the old Connector.
 For instance, if the old Connector was named "OldConnector",
 then you would add a Do Not Crawl pattern "^googleconnector://OldConnector"
 
 13) Remove the Feeds from the old Connector.
-Go to
-Google Search Appliance > Crawl and Index > Feeds
-Delete all Feeds originating from the old Connector.
+Go to _Google Search Appliance > Crawl and Index > Feeds_ and
+delete all *Feeds* originating from the old Connector.
