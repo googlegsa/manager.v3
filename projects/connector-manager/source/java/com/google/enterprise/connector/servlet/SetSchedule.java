@@ -76,6 +76,17 @@ public class SetSchedule extends ConnectorManagerServlet {
     String timeIntervals = ServletUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_TIME_INTERVALS);
 
+    // TODO: Remove this when the GSA enforces lowercase connector names.
+    // Until then, this hack tries to determine if we are setting the
+    // schedule for a newly created connector or an existing connector.
+    if (!connectorName.equals(connectorName.toLowerCase())) {
+      try {
+        manager.getConnectorConfig(connectorName);
+      } catch (ConnectorNotFoundException e) {
+        connectorName = connectorName.toLowerCase();
+      }
+    }
+
     try {
       manager.setSchedule(connectorName, load, retryDelayMillis, timeIntervals);
     } catch (ConnectorNotFoundException e) {
