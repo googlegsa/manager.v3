@@ -4,10 +4,10 @@
 = Introduction =
 
 Newer releases of the Google Search Appliance require that
-Connector names contain only lower case alphabetic characters.
+Connector names contain only lower case alphabetic letters.
 Numerical digits, dashes, and underscores are still allowed,
 with the previously documented limitations, however upper case
-alphabetics should no longer be used.
+letters should no longer be used.
 
 
 = Details =
@@ -23,27 +23,25 @@ version 5.0.4.G22, with showing only minor inconsistencies
 in crawl diagnostics.  In GSA version 5.2, however, search 
 authorizations fail.
 
-Unfortunately, the new lower case connector name limitation
+At this time, the new lower case connector name limitation
 is not enforced when creating Connectors on the GSA
-_Connector Administration_ page.  Apparently, the lower case
-Connector name requirement will remain, and future changes
-to the _Connector Administration_ should enforce it.
+_Connector Administration_ page.
 
 Connector Manager version 1.3.0 makes small concessions to
-this issue.  For instance, new Connectors have their name
+this issue.  New Connectors have their name
 lower cased at the time of creation.  This may be somewhat
 visually confusing, as the Connector's name may appear in
 mixed case or upper case while filling out the _Connector
 Configuration_ forms on the GSA, but once the form is submitted
-the resulting connector is named all lower case.
+the resulting connector name will be converted to lower case.
 
-The Connector Manager does not, however, change the case
+The Connector Manager does not change the case
 of existing Connectors or migrate existing Connectors to
 the new lower case form.  Doing so would lead to inconsistent
 search results and make previously indexed content inaccessible.
 
 If you have existing Connector instances with mixed case or
-upper case names, you must changed them before upgrading to
+upper case names, you should change them before upgrading to
 GSA version 5.2, or all existing non-public content fed from
 that Connector will become unsearchable.
 
@@ -52,18 +50,18 @@ instance and re-indexing all the documents.  The old Connector
 should be removed.  It can be removed before re-indexing to
 conserve resources, or it can be removed after re-indexing
 so that previously indexed content may continue to be served
-while re-indexing takes place.  I will describe the steps
+while re-indexing takes place.  This document describes the steps
 involved for each strategy.
 
 
-==If Re-Indexing on a GSA running version 5.0.4==
+==Re-Indexing on a GSA running version 5.0.4==
 
-Verify that your GSA v5.0.4 has VM Patch 1 installed.
+Verify that your GSA v5.0.4 has VM Patch #1 installed.
 This contains a fix that improves feed and indexing performance.
 Login to the GSA _Version Manager_ (http://appliance_hostname:9941/).
 *Current Software Version* should show *5.0.4.G22 (or G24) VM patch #1*.
 If your GSA has not been patched, you should follow the instructions at the
-[https://support.google.com/enterprise/doc/gsa/update_inst/patch_update_for_504G22_24.html VM Patch 1 update page].
+[https://support.google.com/enterprise/doc/gsa/update_inst/patch_update_for_504G22_24.html VM Patch #1 update page].
 
 GSA version 5.2 does not require this patch.
 
@@ -73,10 +71,10 @@ GSA version 5.2 does not require this patch.
 This is the appropriate choice if re-indexing the content
 does not take very much time, or if you have already updated
 your GSA to software version 5.2.  This approach is simpler
-to execute and is especially convenient if reseting (deleting)
+to execute and is especially convenient if resetting (deleting)
 the index is an option.
 
-1) Remember the Connector Configuration as shown in the
+1) Make a note of the Connector Configuration as shown in the
 _Google Search Appliance > Connector Administration > Connectors > Add/Edit_
 page for the Connector instance.
 
@@ -165,14 +163,14 @@ name, create an equivalent entry for the new Connector.
 Do Not Crawl URLs have embedded connector names,
 but it is possible.
 
-4) Remember the Connector Configuration as shown in the
+4) Make a note of the Connector Configuration as shown in the
 _Google Search Appliance > Connector Administration > Connectors > Add/Edit_
 page for the existing Connector instance.
 
 5) Create a new connector with the configuration copied down
-in step 5.  If the old connector has a custom `connectorInstance.xml`,
-create the connector with an inactive schedule (1am - 1am), otherwise
-create the connector with the desired (or default) schedule and go to
+in step 4).  If the old connector has a custom `connectorInstance.xml`,
+create the new connector with an inactive schedule (1am - 1am), otherwise
+create the new connector with the desired (or default) schedule and go to
 step 8).
 
 6) If the old Connector has a customized `connectorInstance.xml` file, found in
@@ -190,7 +188,7 @@ and change the schedule to the desired (or default 12am - 12am) schedule.
 8) Delete the old Connector instance using the form
 _Google Search Appliance > Connector Administration > Connectors > Delete_.
 
-9) Manually delete the Connector instance directory, if it still exists:
+9) Manually delete the old Connector instance directory, if it still exists:
 `$TOMCAT_HOME/webapps/connector-manager/WEB_INF/$CONNECTOR_TYPE/$CONNECTOR_NAME`
 
 10) Go to
@@ -199,7 +197,7 @@ If any *Collections* contain the old Connector name in the
 *Include Content Matching the Following Patterns:* section,
 remove the old Connector from the Collection.
 
-11) Goto
+11) Go to
 _Google Search Appliance > Crawl and Index > Crawl URLs_.  
 If any *Crawl URLs* contain the old Connector name, remove
 that URL.
