@@ -207,6 +207,8 @@ public class SamlAuthn extends SecurityManagerServlet
 
     String verifiedId = omniform.handleFormSubmit(request);
     if (null == verifiedId) {
+      // TODO(cph): it ought to be possible to bail out of the omniform and return an
+      // unsuccessful SAML response.  This logic precludes that possibility.
       response.getWriter().print(omniform.generateForm());
       return;
     }
@@ -239,6 +241,7 @@ public class SamlAuthn extends SecurityManagerServlet
     return response;
   }
 
+  @SuppressWarnings("unused")
   private Response makeUnsuccessfulResponse(AuthnRequest request, String code, String message) {
     LOGGER.log(Level.WARNING, message);
     Status status = makeStatus(code);

@@ -18,6 +18,8 @@
   <property name="src" value="source/java" />
   <property name="classes" value="${prod}/classes" />
   <property name="webdocs" value="source/webdocs" />
+  <property name="prod.webdocs" value="${webdocs}/prod" />
+  <property name="tests.webdocs" value="${webdocs}/test" />
   <property name="connector-thirdparty.dir" value="${projects.dir}/connector-manager/third-party" />
   <property name="connector-dist.dir" value="${projects.dir}/connector-manager/dist/jarfile" />
   <property name="tests.src" value="source/javatests" />
@@ -108,7 +110,7 @@
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
         <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
         <fileset dir="${connector-dist.dir}" includes="**/*.jar" />
-        <pathelement location="${jar.dir}/cookieconnector.jar" />
+        <fileset dir="${jar.dir}" includes="*.jar" />
         <pathelement location="${connector-thirdparty.dir}/prod/servlet-api.jar" />
         <pathelement location="${tests.classes}" />
         <pathelement path="${java.class.path}" />
@@ -136,7 +138,7 @@
     <jar jarfile="${jar.dir}/ssocookieconnector.jar">
       <fileset dir="connectorConfig/SsoCookieIdentityConnector" includes="**/*.xml" />
     </jar>
-    <jar jarfile="${jar.dir}/cookieconnector.jar">
+    <jar jarfile="${jar.dir}/regexcookieconnector.jar">
       <fileset dir="connectorConfig/regexCookieIdentityConnector" includes="**/*.xml" />
     </jar>
   </target>
@@ -190,12 +192,12 @@
     <echo> The production war file dir is located at ${war.dir}</echo>
 
     <tstamp />
-    <war warfile="${prod.warfile}" webxml="${webdocs}/prod/web.xml">
+    <war warfile="${prod.warfile}" webxml="${prod.webdocs}/web.xml">
       <lib dir="${jar.dir}" includes="*.jar" excludes="security-tests.jar" />
       <lib file="${connector-dist.dir}/connector-spi.jar" />
       <lib file="${connector-dist.dir}/connector.jar" />
       <lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
-      <webinf dir="source/webdocs/prod" includes="applicationContext.xml" />
+      <webinf dir="${prod.webdocs}" includes="applicationContext.xml,saml-metadata.xml,AuthSites.conf" />
       <manifest>
         <attribute name="Implementation-Title" value="Security Manager" />
         <attribute name="Implementation-Version" value="${version} (build ${svnversion}  ${TODAY})" />
@@ -204,18 +206,18 @@
     </war>
   </target>
 
+  <!-- This war file is used for regression tests. -->
   <target name="war-tests" depends="install_init,jar" description="Builds the Test WAR file for installation.">
     <echo> The test war file dir is located at ${war.dir}</echo>
 
     <tstamp />
-    <war warfile="${tests.warfile}" webxml="${webdocs}/test/web.xml">
+    <war warfile="${tests.warfile}" webxml="${tests.webdocs}/web.xml">
       <lib dir="${jar.dir}" includes="*.jar" />
       <lib file="${connector-dist.dir}/connector-spi.jar" />
       <lib file="${connector-dist.dir}/connector.jar" />
       <lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
-      <!-- above this line is all the stuff that goes in the normal prod jar,
-           below is the stuff that is only needed for testing -->
-      <webinf dir="source/webdocs/test" includes="applicationContext.xml" />
+      <webinf dir="${tests.webdocs}" includes="applicationContext.xml,saml-metadata.xml,AuthSites.conf" />
+      <!-- Next line is specific to testing: -->
       <lib dir="${thirdparty.tests.jars}" includes="*.jar" />
       <manifest>
         <attribute name="Implementation-Title" value="Security Manager" />

@@ -33,7 +33,7 @@ public class CsvConfigTest extends TestCase {
     String config = "groupA,http://leiz.mtv.corp.google.com,/basic/,BASIC_AUTH,\n" +
         "groupA,http://gama.corp.google.com,/secured/,FORMS_AUTH,\n" +
         "groupB,http://mooglegoogle.com,/moogle/,FORMS_AUTH,http://loginurl.com/login";
-    File f = new File("foo");
+    File f = File.createTempFile("foo", null);
     f.deleteOnExit();
     writeConfigToFile(config, f);
     List<AuthnDomainGroup> adgs = CsvConfig.readConfigFile(f.getAbsolutePath());
