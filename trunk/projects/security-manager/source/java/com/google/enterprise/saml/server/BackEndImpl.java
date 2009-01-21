@@ -150,7 +150,9 @@ public class BackEndImpl implements BackEnd {
   // see if the cookies reveal who the user is.
   public AuthenticationResponse handleCookie(SecAuthnContext context) {
     for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
-      if (!connStatus.getType().equals("FormAuthConnector")) {
+      String connType = connStatus.getType();
+      if (! (connType.equals("SsoCookieIdentityConnector")
+             || connType.equals("regexCookieIdentityConnector"))) {
         continue;
       }
       String connectorName = connStatus.getName();

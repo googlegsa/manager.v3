@@ -14,8 +14,10 @@
 
 package com.google.enterprise.security.identity;
 
+import com.google.enterprise.common.FileUtil;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,11 +45,10 @@ import java.util.logging.Logger;
 public class CsvConfig implements IdentityConfig {
 
   private static final Logger LOGGER = Logger.getLogger(CsvConfig.class.getName());
-
-  private final String configFile;
+  private final File configFile;
 
   public CsvConfig(String configFile) {
-    this.configFile = configFile;
+    this.configFile = FileUtil.getContextFile(configFile);
   }
 
   /**

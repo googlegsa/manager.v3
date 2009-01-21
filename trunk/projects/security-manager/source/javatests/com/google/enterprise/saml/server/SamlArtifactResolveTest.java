@@ -78,7 +78,7 @@ public class SamlArtifactResolveTest extends TestCase {
 
     Context context = Context.getInstance();
     context.setStandaloneContext(
-        "source/webdocs/prod/applicationContext.xml",
+        Context.DEFAULT_JUNIT_CONTEXT_LOCATION,
         Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
     Metadata metadata =
         Metadata.class.cast(context.getRequiredBean("Metadata", Metadata.class));
