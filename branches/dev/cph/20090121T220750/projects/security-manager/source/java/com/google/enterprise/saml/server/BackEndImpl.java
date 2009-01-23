@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,11 +36,12 @@ import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
-import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.servlet.http.Cookie;
 
@@ -48,13 +49,13 @@ import javax.servlet.http.Cookie;
  * An implementation of the BackEnd interface for the Security Manager.
  */
 public class BackEndImpl implements BackEnd {
+  private static final Logger LOGGER = Logger.getLogger(BackEndImpl.class.getName());
   private static final int artifactLifetime = 600000;  // ten minutes
 
   private final SessionManagerInterface sm;
   private ConnectorManager manager;
   private final AuthzResponder authzResponder;
   private final SAMLArtifactMap artifactMap;
-  private static final Logger LOGGER = Logger.getLogger(BackEndImpl.class.getName());
   private IdentityConfig identityConfig;
   private List<AuthnDomainGroup> authnDomainGroups;
 
@@ -131,7 +132,7 @@ public class BackEndImpl implements BackEnd {
         default:
           continue;
       }
-      for (ConnectorStatus connStatus : getConnectorStatuses(manager)) {
+      for (ConnectorStatus connStatus : manager.getConnectorStatuses()) {
         if (!connStatus.getType().equals(expectedTypeName)) {
           continue;
         }
@@ -148,8 +149,9 @@ public class BackEndImpl implements BackEnd {
 
   // some form of authentication has already happened, the user gave us cookies,
   // see if the cookies reveal who the user is.
-  public AuthenticationResponse handleCookie(SecAuthnContext context) {
-    for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
+  public List<AuthenticationResponse> handleCookie(SecAuthnContext context) {
+    List<AuthenticationResponse> result = new ArrayList<AuthenticationResponse>();
+    for (ConnectorStatus connStatus: manager.getConnectorStatuses()) {
       String connType = connStatus.getType();
       if (! (connType.equals("SsoCookieIdentityConnector")
              || connType.equals("regexCookieIdentityConnector"))) {
@@ -159,18 +161,13 @@ public class BackEndImpl implements BackEnd {
       LOGGER.info("Got security plug-in " + connectorName);
       AuthenticationResponse authnResponse = manager.authenticate(connectorName, null, context);
       if ((authnResponse != null) && authnResponse.isValid())
-        return authnResponse;
+        result.add(authnResponse);
     }
-    return null;
+    return result;
   }
 
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     return authzResponder.authorizeBatch(authzDecisionQueries);
-  }
-
-  @SuppressWarnings("unchecked")
-  private List<ConnectorStatus> getConnectorStatuses(ConnectorManager manager) {
-    return manager.getConnectorStatuses();
   }
 
   public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs) {

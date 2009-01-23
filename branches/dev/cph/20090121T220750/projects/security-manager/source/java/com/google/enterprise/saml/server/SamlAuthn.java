@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.saml2.binding.decoding.HTTPRedirectDeflateDecoder;
 import org.opensaml.saml2.binding.encoding.HTTPArtifactEncoder;
 import org.opensaml.saml2.core.Assertion;
+import org.opensaml.saml2.core.Attribute;
+import org.opensaml.saml2.core.AttributeStatement;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.NameID;
@@ -40,6 +42,9 @@ import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -51,6 +56,9 @@ import javax.servlet.http.HttpServletResponse;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertion;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAttribute;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAttributeStatement;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAttributeValue;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnStatement;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
@@ -111,17 +119,26 @@ public class SamlAuthn extends SecurityManagerServlet
                            SAML2_ARTIFACT_BINDING_URI);
     }
 
-    // If there's a cookie we can decode, use that
-    // TODO fold this nicely into multiple identities
-    if (tryCookies(request, response)) {
+    // If there's a cookie we can decode, use that.
+    // TODO(cph): these cookies should be assigned to particular CredentialsGroups.
+    //    If that's done, then we might still need to prompt for more information with the
+    //    OmniForm, after having filled in the known identities.
+    List<String> usernames = tryCookies(request, response);
+    if (!usernames.isEmpty()) {
+      context.setOutboundSAMLMessage(
+          makeSuccessfulResponse(context.getInboundSAMLMessage(),
+                                 usernames.get(0),
+                                 usernames.subList(1, usernames.size())));
+      doRedirect(context, backend, response);
       return;
     }
 
     if (!backend.isIdentityConfigured()) {
-      // TODO: do something here that skips the omniform
-      // the correct behavior should be: redirect the user with an artifact
-      // that resolves to a negative response
-      
+      context.setOutboundSAMLMessage(
+          makeUnsuccessfulResponse(context.getInboundSAMLMessage(),
+                                   StatusCode.AUTHN_FAILED_URI,
+                                   "Security Manager not configured"));
+      doRedirect(context, backend, response);
     }
 
     // This may not be the first time the user is seeing this form, so look for
@@ -131,10 +148,10 @@ public class SamlAuthn extends SecurityManagerServlet
     if (null == omniform) {
       omniform = new OmniForm(
           backend, new OmniFormHtml(getAction(request)));
+      request.getSession().setAttribute("Omniform", omniform);
     }
-    request.getSession().setAttribute("Omniform", omniform);
 
-    response.getWriter().print(omniform.generateForm());
+    respondWithForm(omniform, response);
   }
 
   private String getAction(HttpServletRequest request) {
@@ -144,29 +161,19 @@ public class SamlAuthn extends SecurityManagerServlet
   }
 
   /**
-   * Try to find a cookie that can be decoded into an identity.
+   * Try to find cookies that can be decoded into an identity.
    *
    * @param request The HTTP request message.
    * @param response The HTTP response message.  Filled in if a suitable cookie was found.
-   * @return Whether or not a usable cookie was found.
+   * @return A list of usernames extracted from the cookies.
    */
-  private boolean tryCookies(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException {
-    BackEnd backend = getBackEnd();
-    AuthenticationResponse authnResponse = backend.handleCookie(getAuthnContext(request));
-    if ((authnResponse != null) && authnResponse.isValid()) {
-      // TODO make sure authnResponse has subject in BackEnd
-      String username = authnResponse.getData();
-      if (username != null) {
-        SAMLMessageContext<AuthnRequest, Response, NameID> context =
-            existingSamlMessageContext(request.getSession());
-        context.setOutboundSAMLMessage(
-            makeSuccessfulResponse(context.getInboundSAMLMessage(), username));
-        doRedirect(context, backend, response);
-        return true;
-      }
+  private List<String> tryCookies(HttpServletRequest request, HttpServletResponse response) {
+    List<String> result = new ArrayList<String>();
+    for (AuthenticationResponse ar: getBackEnd().handleCookie(getAuthnContext(request))) {
+      // TODO make sure response has subject in BackEnd
+      result.add(ar.getData());
     }
-    return false;
+    return result;
   }
 
   /**
@@ -209,13 +216,15 @@ public class SamlAuthn extends SecurityManagerServlet
     if (null == verifiedId) {
       // TODO(cph): it ought to be possible to bail out of the omniform and return an
       // unsuccessful SAML response.  This logic precludes that possibility.
-      response.getWriter().print(omniform.generateForm());
+      respondWithForm(omniform, response);
       return;
     }
 
     LOGGER.info("Verified ID is: " + verifiedId);
     context.setOutboundSAMLMessage(
-        makeSuccessfulResponse(context.getInboundSAMLMessage(), verifiedId));
+        makeSuccessfulResponse(context.getInboundSAMLMessage(),
+                               verifiedId,
+                               new ArrayList<String>(0)));
 
     // If we've reached here, we've fully authenticated the user. Update
     // the Session Manager with the necessary info, and then generate
@@ -231,17 +240,34 @@ public class SamlAuthn extends SecurityManagerServlet
     doRedirect(context, backend, response);
   }
 
-  private Response makeSuccessfulResponse(AuthnRequest request, String username) throws ServletException {
-    LOGGER.info("Authenticated successfully as " + username);
+  private void respondWithForm(OmniForm omniform, HttpServletResponse response)
+      throws IOException {
+    PrintWriter writer = initNormalResponse(response);
+    writer.print(omniform.generateForm());
+    writer.close();
+  }
+
+  private Response makeSuccessfulResponse(
+      AuthnRequest request, String primaryId, List<String> secondaryIds)
+      throws ServletException {
+    LOGGER.info("Authenticated successfully as " + primaryId);
     Response response = makeResponse(request, makeStatus(StatusCode.SUCCESS_URI));
     Assertion assertion =
-        makeAssertion(makeIssuer(getSmEntity().getEntityID()), makeSubject(username));
+        makeAssertion(makeIssuer(getSmEntity().getEntityID()), makeSubject(primaryId));
     assertion.getAuthnStatements().add(makeAuthnStatement(AuthnContext.IP_PASSWORD_AUTHN_CTX));
+    if (!secondaryIds.isEmpty()) {
+      Attribute attribute = makeAttribute("secondary-ids");
+      for (String id: secondaryIds) {
+        attribute.getAttributeValues().add(makeAttributeValue(id));
+      }
+      AttributeStatement attrStatement = makeAttributeStatement();
+      attrStatement.getAttributes().add(attribute);
+      assertion.getAttributeStatements().add(attrStatement);
+    }
     response.getAssertions().add(assertion);
     return response;
   }
 
-  @SuppressWarnings("unused")
   private Response makeUnsuccessfulResponse(AuthnRequest request, String code, String message) {
     LOGGER.log(Level.WARNING, message);
     Status status = makeStatus(code);
@@ -259,5 +285,4 @@ public class SamlAuthn extends SecurityManagerServlet
     encoder.setPostEncoding(false);
     runEncoder(encoder, context);
   }
-
 }
