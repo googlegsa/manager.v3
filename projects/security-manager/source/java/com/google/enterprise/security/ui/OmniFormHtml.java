@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,12 +61,12 @@ public class OmniFormHtml {
    * that was used to generate the page from which the request was posted
    * @return an updated list of FormElements
    */
-  public List<FormElement> parsePostedForm(HttpServletRequest request, List<FormElement> formElements) {        
+  public List<FormElement> parsePostedForm(HttpServletRequest request, List<FormElement> formElements) {
     for (int i = 0; i < formElements.size(); i++) {
       FormElement formElem = formElements.get(i);
       if (formElem.isActive()) {
         LOGGER.info("Retrieved username: " + request.getParameter("u"+i));
-        LOGGER.info("Retrieved password: " + request.getParameter("pw"+i));                
+        LOGGER.info("Retrieved password: " + request.getParameter("pw"+i));
         formElem.setUsername(request.getParameter("u" + i));
         formElem.setPassword(request.getParameter("pw" + i));
       }
@@ -99,12 +99,12 @@ public class OmniFormHtml {
   }
 
   private String headerString(String actionUrl) {
-    // We expect this form to be posted back to the same URL from which the form
-    // was GETed, so skip "action" attribute.
-    return "<form method=\"post\" name=\"omni\" action=\"" + actionUrl + "\">\n";
-  }
-  private String footerString() {
-    return "<input type=\"submit\"></form>";
+    return
+        "<html><head><title>Please login</title></head><body>\n"
+        + "<form method=\"post\" name=\"omni\" action=\"" + actionUrl + "\">\n";
   }
 
+  private String footerString() {
+    return "<input type=\"submit\"></form></body></html>\n";
+  }
 }
