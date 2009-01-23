@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -106,8 +106,8 @@ public class SamlSsoTest extends TestCase {
 
     // Submit credentials-gathering form
     List<StringPair> params = new ArrayList<StringPair>();
-    params.add(new StringPair("u1", username));
-    params.add(new StringPair("pw1", password));
+    params.add(new StringPair("u0", username));
+    params.add(new StringPair("pw0", password));
     HttpExchange exchange2 = userAgent.postExchange(new URL(action), params);
     exchange2.setFollowRedirects(true);
     exchange2.exchange();
