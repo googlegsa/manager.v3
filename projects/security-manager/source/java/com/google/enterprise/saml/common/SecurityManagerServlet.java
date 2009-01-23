@@ -75,10 +75,6 @@ public abstract class SecurityManagerServlet extends ServletBase {
     return metadata.getSpEntity();
   }
 
-  public String getSpUrl() {
-    return metadata.getSpUrl();
-  }
-
   /**
    * Create a new SAML message context and associate it with this session.
    *

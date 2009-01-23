@@ -46,6 +46,5 @@
     <constructor-arg index="0" value="saml-metadata.xml" />
     <constructor-arg index="1" value="http://google.com/enterprise/security-manager" />
     <constructor-arg index="2" value="google.com" />
-    <constructor-arg index="3" value="http://localhost:8973/security-manager/mockserviceprovider" />
   </bean>
 </beans>

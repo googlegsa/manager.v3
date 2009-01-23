@@ -27,14 +27,12 @@ public class Metadata {
   private final MetadataProvider provider;
   private final String smEntityId;
   private final String spEntityId;
-  private final String spUrl;
 
-  public Metadata(String filename, String smEntityId, String spEntityId, String spUrl)
+  public Metadata(String filename, String smEntityId, String spEntityId)
       throws MetadataProviderException {
     this.provider = OpenSamlUtil.getMetadataFromFile(FileUtil.getContextFile(filename));
     this.smEntityId = smEntityId;
     this.spEntityId = spEntityId;
-    this.spUrl = spUrl;
   }
 
   public EntityDescriptor getEntity(String id) throws ServletException {
@@ -56,9 +54,5 @@ public class Metadata {
 
   public EntityDescriptor getSpEntity() throws ServletException {
     return getEntity(spEntityId);
-  }
-
-  public String getSpUrl() {
-    return spUrl;
   }
 }
