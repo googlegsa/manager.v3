@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.xml.sax.SAXException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -192,22 +193,8 @@ public class ServletUtil {
    */
   public static Document parse(String fileContent,
                                SAXParseErrorHandler errorHandler) {
-    try {
-      DocumentBuilder builder = factory.newDocumentBuilder();
-      builder.setErrorHandler(errorHandler);
-      Document document = builder.parse(
-          new ByteArrayInputStream(fileContent.getBytes("UTF-8")));
-      return document;
-    } catch (ParserConfigurationException pce) {
-      LOGGER.log(Level.SEVERE, "Parse exception", pce);
-    } catch (java.io.UnsupportedEncodingException uee) {
-      LOGGER.log(Level.SEVERE, "Really Unexpected", uee);
-    } catch (SAXException se) {
-      LOGGER.log(Level.SEVERE, "SAX Exception", se);
-    } catch (IOException ioe) {
-      LOGGER.log(Level.SEVERE, "IO Exception", ioe);
-    }
-    return null;
+    InputStream in = stringToInputStream(fileContent);
+    return (in == null) ? null : parse(in, errorHandler);
   }
 
   /**
@@ -219,8 +206,54 @@ public class ServletUtil {
    */
   public static Element parseAndGetRootElement(String xmlBody,
                                                String rootTagName) {
+    InputStream in = stringToInputStream(xmlBody);
+    return (in == null) ? null : parseAndGetRootElement(in, rootTagName);
+  }
+
+  private static InputStream stringToInputStream(String fileContent) {
+    try {
+      return new ByteArrayInputStream(fileContent.getBytes("UTF-8"));
+    } catch (java.io.UnsupportedEncodingException uee) {
+      LOGGER.log(Level.SEVERE, "Really Unexpected", uee);
+      return null;
+    }
+  }
+
+  /**
+   * Parse an input stream to a Document.
+   *
+   * @param in the input stream
+   * @param errorHandler The error handle for SAX parser
+   * @return A result Document object, null on error
+   */
+  public static Document parse(InputStream in,
+                               SAXParseErrorHandler errorHandler) {
+    try {
+      DocumentBuilder builder = factory.newDocumentBuilder();
+      builder.setErrorHandler(errorHandler);
+      Document document = builder.parse(in);
+      return document;
+    } catch (ParserConfigurationException pce) {
+      LOGGER.log(Level.SEVERE, "Parse exception", pce);
+    } catch (SAXException se) {
+      LOGGER.log(Level.SEVERE, "SAX Exception", se);
+    } catch (IOException ioe) {
+      LOGGER.log(Level.SEVERE, "IO Exception", ioe);
+    }
+    return null;
+  }
+
+  /**
+   * Get a root element from an XML input stream.
+   *
+   * @param in the input stream
+   * @param rootTagName String the root element tag name
+   * @return a result Element object if successful, null on error
+   */
+  public static Element parseAndGetRootElement(InputStream in,
+                                               String rootTagName) {
     SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
-    Document document = ServletUtil.parse(xmlBody, errorHandler);
+    Document document = ServletUtil.parse(in, errorHandler);
     if (document == null) {
       LOGGER.log(Level.WARNING, "XML parsing exception!");
       return null;
