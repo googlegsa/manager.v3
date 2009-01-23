@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -124,6 +124,16 @@ public class HttpClientAdapter implements HttpClientInterface {
 
     public void setFollowRedirects(boolean followRedirects) {
       httpMethod.setFollowRedirects(followRedirects);
+    }
+
+    public String getHttpMethod() {
+      if (httpMethod instanceof GetMethod) {
+        return "GET";
+      }
+      if (httpMethod instanceof PostMethod) {
+        return "POST";
+      }
+      throw new IllegalStateException("unknown HTTP method");
     }
 
     public void addParameter(String name, String value) {
