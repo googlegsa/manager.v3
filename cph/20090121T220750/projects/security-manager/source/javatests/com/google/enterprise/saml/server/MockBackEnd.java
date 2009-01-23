@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.DomainCredentials;
 import com.google.enterprise.security.identity.IdentityConfig;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
@@ -32,14 +33,16 @@ import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Simple mock saml server Backend for testing.
  */
 public class MockBackEnd implements BackEnd {
-  //private static final Logger LOGGER = Logger.getLogger(MockBackEnd.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(MockBackEnd.class.getName());
   private static final int artifactLifetime = 600000;  // ten minutes
 
   private final SessionManagerInterface sessionManager;
@@ -92,11 +95,21 @@ public class MockBackEnd implements BackEnd {
     return authnDomainGroups;
   }
 
-  public AuthenticationResponse handleCookie(SecAuthnContext context) {
-    return null;
+  public List<AuthenticationResponse> handleCookie(SecAuthnContext context) {
+    return new ArrayList<AuthenticationResponse>(0);
   }
 
-  public void authenticate(CredentialsGroup credentialsGroup) {
+  public void authenticate(CredentialsGroup cg) {
+    for (DomainCredentials dc: cg.getElements()) {
+      switch (dc.getDomain().getMechanism()) {
+        case BASIC_AUTH:
+        case FORMS_AUTH:
+        case CONNECTORS:
+          LOGGER.info("Authn Success, credential verified: " + dc.dumpInfo());
+          dc.setVerified(true);
+          break;
+      }
+    }
   }
 
   public void setConnectorManager(ConnectorManager cm) {

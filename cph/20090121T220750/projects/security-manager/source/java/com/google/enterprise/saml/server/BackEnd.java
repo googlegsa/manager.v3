@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -82,9 +82,9 @@ public interface BackEnd {
   /**
    * Attempt to find a cookie that can be converted to a verified identity.
    * @param context The authn context containing the cookies to try.
-   * @return An authentication response with the result of the attempt.
+   * @return An list of valid authentication responses.
    */
-  public AuthenticationResponse handleCookie(SecAuthnContext context);
+  public List<AuthenticationResponse> handleCookie(SecAuthnContext context);
 
   /**
    * Attempts to authenticate a given CredentialsGroup.  This method will update
