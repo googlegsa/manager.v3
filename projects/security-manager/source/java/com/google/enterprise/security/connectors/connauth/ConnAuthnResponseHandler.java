@@ -1,4 +1,16 @@
-// Copyright 2008 Google Inc. All Rights Reserved.
+// Copyright (C) 2008, 2009 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package com.google.enterprise.security.connectors.connauth;
 
@@ -25,7 +37,7 @@ final class ConnAuthnResponseHandler extends DefaultHandler {
   private boolean inIdentity = false;
   private String currentConnectorManager;
   private String currentConnector;
-  
+
   private List<ConnectorUserInfo> userInfos = Lists.newArrayList();
 
   public ConnAuthnResponseHandler(String currentConnectorManager) {
@@ -58,15 +70,15 @@ final class ConnAuthnResponseHandler extends DefaultHandler {
   public void endElement(String uri, String localName, String qName) {
     if (IDENTITY.equals(localName)) {
       inIdentity = false;
-    } else if (SUCCESS.equals(localName)) {
+      return;
+    }
+    if (SUCCESS.equals(localName)) {
       userInfos.add(new ConnectorUserInfo(currentConnectorManager,
           currentConnector, currentIdentity.toString()));
+    }
+    if (SUCCESS.equals(localName) || FAILURE.equals(localName)) {
       currentConnector = null;
       currentIdentity.setLength(0);
-    } else if (FAILURE.equals(localName)) {
-      userInfos.add(new ConnectorUserInfo(currentConnectorManager,
-          currentConnector));
-      currentConnector = null;
     }
   }
 
@@ -79,7 +91,7 @@ final class ConnAuthnResponseHandler extends DefaultHandler {
       currentIdentity.append(ch, start, length);
     }
   }
-  
+
   /**
    * Call this after parsing an XML document.
    *

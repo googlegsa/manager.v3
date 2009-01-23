@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
@@ -31,7 +32,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import java.io.IOException;
-import java.io.StringReader;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -56,7 +57,8 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
    * username and password provided by a search user is valid for any of the
    * connectors the manager is responsible for.
    */
-  public AuthenticationResponse authenticate(AuthenticationIdentity raw) {
+  public AuthenticationResponse authenticate(AuthenticationIdentity raw)
+      throws RepositoryException {
     SecAuthnIdentity identity = SecAuthnIdentity.class.cast(raw);
     AuthenticationResponse notfound = new AuthenticationResponse(false, null);
     String username = identity.getUsername();
@@ -80,7 +82,7 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
       LOGGER.warning("Bad URL for connector manager: " + siteUri);
       return notfound;
     }
-       
+
     try {
       exchange.setRequestBody(request.getBytes("UTF-8"));
     } catch (UnsupportedEncodingException e1) {
@@ -93,12 +95,23 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
       if (status > 300) {
         throw new IOException("Message exchange returned status " + status);
       }
-      connectorUserInfos = parseResponse(exchange.getResponseEntityAsString(), "");
-    } catch (Exception e) {
-      // TODO: should be more restrictive
-      LOGGER.warning("Could not POST:" + e.toString());
+    } catch (IOException e) {
+      exchange.close();
+      throw new RepositoryException(e);
+    }
+
+    try {
+      connectorUserInfos = parseResponse(exchange.getResponseEntityAsStream(), "");
+    } catch (SAXException e) {
+      throw new RepositoryException(e);
+    } catch (IOException e) {
+      throw new RepositoryException(e);
     } finally {
       exchange.close();
+    }
+
+    if ((connectorUserInfos == null) || connectorUserInfos.isEmpty()) {
+      return notfound;
     }
 
     /*
@@ -107,18 +120,15 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
      * Results are encoded as <connector1 name>/<id1 name>,<connector2 name>/<id2 name>...
      * An "id name" is empty if that connector said "I don't know you".
      */
-    if (connectorUserInfos != null) {
-      StringBuffer data = new StringBuffer();
-      for (ConnectorUserInfo user : connectorUserInfos) {
-        if (data.length() > 0)
-          data.append(",");
-        data.append(user.getConnectorName());
-        data.append("/");
-        data.append(user.getIdentity());
-      }
-      return new AuthenticationResponse(true, data.toString());
+    StringBuffer data = new StringBuffer();
+    for (ConnectorUserInfo user : connectorUserInfos) {
+      if (data.length() > 0)
+        data.append(",");
+      data.append(user.getConnectorName());
+      data.append("/");
+      data.append(user.getIdentity());
     }
-    return notfound;
+    return new AuthenticationResponse(true, data.toString());
   }
 
   /**
@@ -149,14 +159,12 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
    * @throws SAXException If there was an error parsing response.
    * @throws IOException If there was an error reading response.
    */
-  private List<ConnectorUserInfo> parseResponse(String response, String managerId)
+  private List<ConnectorUserInfo> parseResponse(InputStream response, String managerId)
       throws SAXException, IOException {
-    System.out.println(response);
     XMLReader reader = XMLReaderFactory.createXMLReader();
     ConnAuthnResponseHandler handler = new ConnAuthnResponseHandler(managerId);
     reader.setContentHandler(handler);
-    reader.parse(new InputSource(new StringReader(response)));
-
+    reader.parse(new InputSource(response));
     return handler.getConnectorUserInfos();
   }
 
@@ -175,5 +183,4 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
   public TraversalManager getTraversalManager() {
     throw new UnsupportedOperationException();
   }
-
 }
