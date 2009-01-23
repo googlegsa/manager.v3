@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -94,7 +94,8 @@ public class MockHttpClient implements HttpClientInterface {
     }
 
     public int exchange() throws IOException {
-      if (request.getMethod().equalsIgnoreCase("POST")) {
+      if (request.getMethod().equalsIgnoreCase("POST")
+          && request.getParameterNames().hasMoreElements()) {
         generatePostContent(request);
       }
       MockHttpServletResponse response = exchange1(request);
