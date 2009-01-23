@@ -31,12 +31,6 @@ import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-/*
- * Just reuse the servlet of connector manager, which is not interesting as
- * it is not backed up by actual connectors to repositories. But it's still
- * sufficient to verify our SecMgr connector connector is speaking the right
- * AuthnRequest protocol.
- */
 public class MockCMAuthServer extends Authenticate
   implements PostableHttpServlet {
   private static final Logger LOGGER = Logger.getLogger(MockCMAuthServer.class.getName());
@@ -55,6 +49,8 @@ public class MockCMAuthServer extends Authenticate
       throws IOException {
     PrintWriter out = resp.getWriter();
 
+    // What follows is mostly a copy of code from the connector manager.
+    // We need it in order to parse the input request.
     Element root = ServletUtil.parseAndGetRootElement(
         req.getInputStream(),
         ServletUtil.XMLTAG_AUTHN_REQUEST);
