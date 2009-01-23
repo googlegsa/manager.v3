@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.google.enterprise.common.MockHttpClient;
 import com.google.enterprise.common.MockHttpTransport;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.CsvConfig;
@@ -50,15 +51,26 @@ public class ConnAuthConnectorTest extends TestCase {
     httpClient = new MockHttpClient(transport);
   }
 
-  public void test1() {
-    cg.setUsername("joe");
-    cg.setPassword("plumber");
+  public void testGood() throws RepositoryException {
+    assertTrue("Invalid response", tryCreds("joe", "plumber"));
+  }
+
+  public void testBadPassword() throws RepositoryException {
+    assertFalse("Valid response", tryCreds("joe", "biden"));
+  }
+
+  public void testBadUsername() throws RepositoryException {
+    assertFalse("Valid response", tryCreds("jim", "plumber"));
+  }
+
+  private boolean tryCreds(String username, String password) throws RepositoryException {
+    cg.setUsername(username);
+    cg.setPassword(password);
     DomainCredentials dCred = cg.getElements().get(0);
     ConnAuthConnector connector = new ConnAuthConnector(httpClient, "foo");
     AuthenticationResponse response = connector.authenticate(dCred);
     assertNotNull("Null response from authenticate()", response);
-    assertTrue("Invalid response from authenticate()", response.isValid());
+    return response.isValid();
   }
 
 }
-
