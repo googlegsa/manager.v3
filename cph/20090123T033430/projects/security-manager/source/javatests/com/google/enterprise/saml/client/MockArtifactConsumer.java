@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -146,7 +146,7 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
 
     // Encode the request
     HttpExchange exchange =
-        httpClient.getExchange(new URL(context.getPeerEntityEndpoint().getLocation()));
+        httpClient.postExchange(new URL(context.getPeerEntityEndpoint().getLocation()), null);
     HttpExchangeToOutTransport out = new HttpExchangeToOutTransport(exchange);
     context.setOutboundMessageTransport(out);
     runEncoder(new HTTPSOAP11Encoder(), context);
