@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,6 +45,10 @@ public class HttpExchangeToInTransport implements HTTPInTransport {
     return exchange.getStatusCode();
   }
 
+  public String getHTTPMethod() {
+    return exchange.getHttpMethod();
+  }
+
   public String getPeerAddress() {
     throw new UnsupportedOperationException();
   }
@@ -86,10 +90,6 @@ public class HttpExchangeToInTransport implements HTTPInTransport {
   }
 
   public void setIntegrityProtected(boolean value) {
-    throw new UnsupportedOperationException();
-  }
-
-  public String getHTTPMethod() {
     throw new UnsupportedOperationException();
   }
 

@@ -85,6 +85,10 @@ public class MockHttpClient implements HttpClientInterface {
       this.followRedirects = followRedirects;
     }
 
+    public String getHttpMethod() {
+      return request.getMethod();
+    }
+
     public void addParameter(String name, String value) {
       request.addParameter(name, value);
     }

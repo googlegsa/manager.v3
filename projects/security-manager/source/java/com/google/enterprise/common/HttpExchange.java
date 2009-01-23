@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,6 +42,12 @@ public interface HttpExchange {
    * @param followRedirects {@code true} means follow them.
    */
   public void setFollowRedirects(boolean followRedirects);
+
+  /**
+   * Get the HTTP method name.
+   * @return The HTTP method string: e.g. GET or POST.
+   */
+  public String getHttpMethod();
 
   /**
    * Add a parameter to the exchange.
