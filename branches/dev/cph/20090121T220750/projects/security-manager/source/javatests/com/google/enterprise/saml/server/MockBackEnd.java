@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -100,14 +100,16 @@ public class MockBackEnd implements BackEnd {
   }
 
   public void authenticate(CredentialsGroup cg) {
-    for (DomainCredentials dc: cg.getElements()) {
-      switch (dc.getDomain().getMechanism()) {
-        case BASIC_AUTH:
-        case FORMS_AUTH:
-        case CONNECTORS:
-          LOGGER.info("Authn Success, credential verified: " + dc.dumpInfo());
-          dc.setVerified(true);
-          break;
+    if ((cg.getUsername() == "joe") && (cg.getPassword() == "plumber")) {
+      for (DomainCredentials dc: cg.getElements()) {
+        switch (dc.getDomain().getMechanism()) {
+          case BASIC_AUTH:
+          case FORMS_AUTH:
+          case CONNECTORS:
+            LOGGER.info("Authn Success, credential verified: " + dc.dumpInfo());
+            dc.setVerified(true);
+            break;
+        }
       }
     }
   }
