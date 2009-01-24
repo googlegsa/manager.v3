@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -50,18 +50,26 @@ public class FormAuthConnectorTest extends TestCase {
     httpClient = new MockHttpClient(transport);
   }
 
-  public void test1() {
-    cg.setUsername("joe");
-    cg.setPassword("plumber");
-    DomainCredentials dCred = cg.getElements().get(0);
-    FormAuthConnector connector = new FormAuthConnector(httpClient, "foo");
-    AuthenticationResponse response = connector.authenticate(dCred);
-    assertNotNull("Null response from authenticate()", response);
-    assertTrue("Invalid response from authenticate()", response.isValid());
-    assertTrue(dCred.getCookies().size() > 0);
+  public void testGood() {
+    assertTrue(tryCreds("joe", "plumber"));
+  }
 
-    response = connector.authenticate(dCred);
+  public void testBadPassword() {
+    assertFalse(tryCreds("joe", "biden"));
+  }
+
+  public void testBadUsername() {
+    assertFalse(tryCreds("jim", "plumber"));
+  }
+
+  public boolean tryCreds(String username, String password) {
+    cg.setUsername(username);
+    cg.setPassword(password);
+    DomainCredentials dCred = cg.getElements().get(0);
+    dCred.clearCookies();
+    AuthenticationResponse response =
+        (new FormAuthConnector(httpClient, "foo")).authenticate(dCred);
     assertNotNull("Null response from authenticate()", response);
-    assertFalse("Valid response from re-authenticate()", response.isValid());
+    return response.isValid() && (dCred.getCookies().size() > 0);
   }
 }
