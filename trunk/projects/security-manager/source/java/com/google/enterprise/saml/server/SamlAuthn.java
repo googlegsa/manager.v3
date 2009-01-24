@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -47,6 +48,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
@@ -69,10 +71,22 @@ import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
  */
 public class SamlAuthn extends SecurityManagerServlet
     implements GettableHttpServlet, PostableHttpServlet {
-
+  private static final Logger LOGGER = Logger.getLogger(SamlAuthn.class.getName());
   /** Required for serializable classes. */
   private static final long serialVersionUID = 1L;
-  private static final Logger LOGGER = Logger.getLogger(SamlAuthn.class.getName());
+  private static final String PROMPT_COUNTER_NAME = "SamlAuthnPromptCounter";
+  private static final String OMNI_FORM_NAME = "SamlAuthnOmniForm";
+  private static final int defaultMaxPrompts = 3;
+
+  private int maxPrompts;
+
+  public SamlAuthn() {
+    maxPrompts = defaultMaxPrompts;
+  }
+
+  public void setMaxPrompts(int maxPrompts) {
+    this.maxPrompts = maxPrompts;
+  }
 
   /**
    * Accept an authentication request and (eventually) respond to the service provider with a
@@ -118,29 +132,13 @@ public class SamlAuthn extends SecurityManagerServlet
     }
 
     if (!backend.isIdentityConfigured()) {
-      // TODO: do something here that skips the omniform
-      // the correct behavior should be: redirect the user with an artifact
-      // that resolves to a negative response
-      
+      makeUnsuccessfulResponse(request, StatusCode.AUTHN_FAILED_URI,
+                               "Security Manager not configured");
+      doRedirect(request, response);
+      return;
     }
 
-    // This may not be the first time the user is seeing this form, so look for
-    // a previous OmniForm in this request session.
-    OmniForm omniform =
-        OmniForm.class.cast(request.getSession().getAttribute("Omniform"));
-    if (null == omniform) {
-      omniform = new OmniForm(
-          backend, new OmniFormHtml(getAction(request)));
-    }
-    request.getSession().setAttribute("Omniform", omniform);
-
-    response.getWriter().print(omniform.generateForm());
-  }
-
-  private String getAction(HttpServletRequest request) {
-    String url = request.getRequestURL().toString();
-    int q = url.indexOf("?");
-    return (q < 0) ? url : url.substring(0, q);
+    maybePrompt(request, response);
   }
 
   /**
@@ -158,11 +156,8 @@ public class SamlAuthn extends SecurityManagerServlet
       // TODO make sure authnResponse has subject in BackEnd
       String username = authnResponse.getData();
       if (username != null) {
-        SAMLMessageContext<AuthnRequest, Response, NameID> context =
-            existingSamlMessageContext(request.getSession());
-        context.setOutboundSAMLMessage(
-            makeSuccessfulResponse(context.getInboundSAMLMessage(), username));
-        doRedirect(context, backend, response);
+        makeSuccessfulResponse(request, username);
+        doRedirect(request, response);
         return true;
       }
     }
@@ -198,24 +193,19 @@ public class SamlAuthn extends SecurityManagerServlet
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     BackEnd backend = getBackEnd();
-
-    SAMLMessageContext<AuthnRequest, Response, NameID> context =
-        existingSamlMessageContext(request.getSession());
-
-    OmniForm omniform =
-        OmniForm.class.cast(request.getSession().getAttribute("Omniform"));
+    OmniForm omniform = getOmniForm(request);
 
     String verifiedId = omniform.handleFormSubmit(request);
     if (null == verifiedId) {
-      // TODO(cph): it ought to be possible to bail out of the omniform and return an
-      // unsuccessful SAML response.  This logic precludes that possibility.
-      response.getWriter().print(omniform.generateForm());
+      maybePrompt(request, response);
       return;
     }
 
+    // This sequence is done; reset for next.
+    resetPromptCounter(request.getSession());
+
     LOGGER.info("Verified ID is: " + verifiedId);
-    context.setOutboundSAMLMessage(
-        makeSuccessfulResponse(context.getInboundSAMLMessage(), verifiedId));
+    makeSuccessfulResponse(request, verifiedId);
 
     // If we've reached here, we've fully authenticated the user. Update
     // the Session Manager with the necessary info, and then generate
@@ -228,36 +218,88 @@ public class SamlAuthn extends SecurityManagerServlet
 
     // generate artifact, redirect, plant cookies
     LOGGER.info("All identities verified");
-    doRedirect(context, backend, response);
+    doRedirect(request, response);
   }
 
-  private Response makeSuccessfulResponse(AuthnRequest request, String username) throws ServletException {
+  private void maybePrompt(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    HttpSession session = request.getSession();
+    if (shouldPrompt(session)) {
+      PrintWriter writer = initNormalResponse(response);
+      writer.print(getOmniForm(request).generateForm());
+      writer.close();
+    } else {
+      makeUnsuccessfulResponse(request, StatusCode.AUTHN_FAILED_URI,
+                               "Incorrect username or password");
+      doRedirect(request, response);
+    }
+  }
+
+  private boolean shouldPrompt(HttpSession session) {
+    Object value = session.getAttribute(PROMPT_COUNTER_NAME);
+    int n = (value == null) ? 0 : Integer.class.cast(value);
+    if (n < maxPrompts) {
+      session.setAttribute(PROMPT_COUNTER_NAME, Integer.valueOf(n + 1));
+      return true;
+    }
+    resetPromptCounter(session);
+    return false;
+  }
+
+  private void resetPromptCounter(HttpSession session) {
+    session.removeAttribute(PROMPT_COUNTER_NAME);
+  }
+
+  private OmniForm getOmniForm(HttpServletRequest request)
+      throws IOException {
+    HttpSession session = request.getSession();
+    OmniForm omniform = OmniForm.class.cast(session.getAttribute(OMNI_FORM_NAME));
+    if (null == omniform) {
+      omniform = new OmniForm(getBackEnd(), new OmniFormHtml(getAction(request)));
+      session.setAttribute(OMNI_FORM_NAME, omniform);
+    }
+    return omniform;
+  }
+
+  private String getAction(HttpServletRequest request) {
+    String url = request.getRequestURL().toString();
+    int q = url.indexOf("?");
+    return (q < 0) ? url : url.substring(0, q);
+  }
+
+  private void makeSuccessfulResponse(HttpServletRequest request, String username)
+      throws ServletException {
     LOGGER.info("Authenticated successfully as " + username);
-    Response response = makeResponse(request, makeStatus(StatusCode.SUCCESS_URI));
+    SAMLMessageContext<AuthnRequest, Response, NameID> context =
+        existingSamlMessageContext(request.getSession());
+    Response response =
+        makeResponse(context.getInboundSAMLMessage(), makeStatus(StatusCode.SUCCESS_URI));
     Assertion assertion =
         makeAssertion(makeIssuer(getSmEntity().getEntityID()), makeSubject(username));
     assertion.getAuthnStatements().add(makeAuthnStatement(AuthnContext.IP_PASSWORD_AUTHN_CTX));
     response.getAssertions().add(assertion);
-    return response;
+    context.setOutboundSAMLMessage(response);
   }
 
-  @SuppressWarnings("unused")
-  private Response makeUnsuccessfulResponse(AuthnRequest request, String code, String message) {
+  private void makeUnsuccessfulResponse(HttpServletRequest request, String code, String message)
+      throws ServletException {
     LOGGER.log(Level.WARNING, message);
+    SAMLMessageContext<AuthnRequest, Response, NameID> context =
+        existingSamlMessageContext(request.getSession());
     Status status = makeStatus(code);
     status.setStatusMessage(makeStatusMessage(message));
-    return makeResponse(request, status);
+    context.setOutboundSAMLMessage(makeResponse(context.getInboundSAMLMessage(), status));
   }
 
-  private void doRedirect(SAMLMessageContext<AuthnRequest, Response, NameID> context,
-      BackEnd backend, HttpServletResponse response)
+  private void doRedirect(HttpServletRequest request, HttpServletResponse response)
       throws ServletException {
+    SAMLMessageContext<AuthnRequest, Response, NameID> context =
+        existingSamlMessageContext(request.getSession());
     // Encode the response message
     initResponse(response);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(response, true));
-    HTTPArtifactEncoder encoder = new HTTPArtifactEncoder(null, null, backend.getArtifactMap());
+    HTTPArtifactEncoder encoder = new HTTPArtifactEncoder(null, null, getBackEnd().getArtifactMap());
     encoder.setPostEncoding(false);
     runEncoder(encoder, context);
   }
-
 }
