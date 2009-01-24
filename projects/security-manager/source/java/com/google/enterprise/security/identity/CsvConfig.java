@@ -1,10 +1,10 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,9 +20,10 @@ import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -51,13 +52,17 @@ public class CsvConfig implements IdentityConfig {
     this.configFile = FileUtil.getContextFile(configFile);
   }
 
+  public List<AuthnDomainGroup> getConfig() throws IOException {
+    return getConfig(new FileReader(configFile));
+  }
+
   /**
    * For each valid line in the provided configuration, getConfig will create
    * an AuthnDomain and place it in the AuthnDomainGroup specified by that
    * line.  getConfig will create new AuthnDomainGroups as necessary.
    */
-  public List<AuthnDomainGroup> getConfig() throws IOException {
-    CSVReader reader = new CSVReader(new FileReader(configFile));
+  public List<AuthnDomainGroup> getConfig(Reader in) throws IOException {
+    CSVReader reader = new CSVReader(in);
     String[] nextLine;
 
     HashMap<String,AuthnDomainGroup> adgMap = new HashMap<String,AuthnDomainGroup>();
@@ -96,5 +101,9 @@ public class CsvConfig implements IdentityConfig {
   // This is useful in unit testing.
   public static List<AuthnDomainGroup> readConfigFile(String configFile) throws IOException {
     return (new CsvConfig(configFile)).getConfig();
+  }
+
+  public static List<AuthnDomainGroup> readConfigFile(Reader in) throws IOException {
+    return (new CsvConfig("AuthSites.conf")).getConfig(in);
   }
 }
