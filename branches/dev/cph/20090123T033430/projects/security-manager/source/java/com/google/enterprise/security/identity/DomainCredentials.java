@@ -1,10 +1,10 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,7 @@ import javax.servlet.http.Cookie;
 /**
  * The credentials associated with a single authentication domain.  (Does not include
  * username/password, which is stored in the associated Credentials Group.)
- */ 
+ */
 public class DomainCredentials implements SecAuthnIdentity {
 
   private enum Decision {
@@ -65,6 +65,11 @@ public class DomainCredentials implements SecAuthnIdentity {
 
   public void addCookie(Cookie c) {
     cookies.add(c);
+  }
+
+  // For testing:
+  public void clearCookies() {
+    cookies.clear();
   }
 
   public String getLoginUrl() {
@@ -109,6 +114,6 @@ public class DomainCredentials implements SecAuthnIdentity {
   }
 
   public String dumpInfo() {
-    return getUsername() + ":" + getPassword() + ":" + dumpCookies(); 
+    return getUsername() + ":" + getPassword() + ":" + dumpCookies();
   }
 }
