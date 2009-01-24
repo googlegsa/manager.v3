@@ -66,10 +66,10 @@
     <mkdir dir="${downloads.dir}" />
   </target>
 
-  <target name="connector-manager-war-prod" >
+  <target name="connector-manager-war-prod" depends="prebuild">
     <ant dir="${connector-manager.dir}" target="war-prod">
       <property name="version" value="${version}" />
-          </ant>
+    </ant>
   </target>
 
   <target name="download-connector-manager" depends="connector-manager-war-prod,make-downloads-dir">
