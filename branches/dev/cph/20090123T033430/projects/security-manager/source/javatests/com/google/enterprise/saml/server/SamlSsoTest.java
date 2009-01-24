@@ -37,14 +37,17 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 
+import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 
 public class SamlSsoTest extends TestCase {
+  private static final Logger LOGGER = Logger.getLogger(SamlSsoTest.class.getName());
   private static final String SP_URL =
       "http://localhost:8973/security-manager/mockserviceprovider";
 
@@ -71,21 +74,34 @@ public class SamlSsoTest extends TestCase {
 
     EntityDescriptor smEntity = metadata.getSmEntity();
     IDPSSODescriptor idp = smEntity.getIDPSSODescriptor(SAML20P_NS);
+    SamlAuthn samlAuthn = new SamlAuthn();
+    samlAuthn.setMaxPrompts(1);
     transport.registerServlet(idp.getSingleSignOnServices().get(0),
-                              new SamlAuthn());
+                              samlAuthn);
     transport.registerServlet(idp.getDefaultArtificateResolutionService(),
                               new SamlArtifactResolve());
 
     transport.registerServlet(SP_URL, new MockServiceProvider());
   }
 
-  public void testCredentials() throws IOException, MalformedURLException {
+  public void testGood() throws IOException, MalformedURLException {
     HttpExchange exchange = tryCredentials("joe", "plumber");
     assertEquals("Incorrect response status code", SC_OK, exchange.getStatusCode());
   }
 
+  public void testBadPassword() throws IOException, MalformedURLException {
+    HttpExchange exchange = tryCredentials("joe", "biden");
+    assertEquals("Incorrect response status code", SC_FORBIDDEN, exchange.getStatusCode());
+  }
+
+  public void testBadUsername() throws IOException, MalformedURLException {
+    HttpExchange exchange = tryCredentials("jim", "plumber");
+    assertEquals("Incorrect response status code", SC_FORBIDDEN, exchange.getStatusCode());
+  }
+
   private HttpExchange tryCredentials(String username, String password)
       throws IOException, MalformedURLException {
+    LOGGER.info("start test");
 
     // Initial request to service provider
     HttpExchange exchange1 = userAgent.getExchange(new URL(SP_URL));
