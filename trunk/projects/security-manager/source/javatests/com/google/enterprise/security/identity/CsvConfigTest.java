@@ -1,10 +1,10 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,10 +18,8 @@ import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
 import junit.framework.TestCase;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.List;
 
 /**
@@ -32,11 +30,8 @@ public class CsvConfigTest extends TestCase {
   public void testParser() throws IOException {
     String config = "groupA,http://leiz.mtv.corp.google.com,/basic/,BASIC_AUTH,\n" +
         "groupA,http://gama.corp.google.com,/secured/,FORMS_AUTH,\n" +
-        "groupB,http://mooglegoogle.com,/moogle/,FORMS_AUTH,http://loginurl.com/login";
-    File f = File.createTempFile("foo", null);
-    f.deleteOnExit();
-    writeConfigToFile(config, f);
-    List<AuthnDomainGroup> adgs = CsvConfig.readConfigFile(f.getAbsolutePath());
+        "groupB,http://mooglegoogle.com,/moogle/,FORMS_AUTH,http://loginurl.com/login\n";
+    List<AuthnDomainGroup> adgs = CsvConfig.readConfigFile(new StringReader(config));
 
     assertEquals(2, adgs.size());
     for (AuthnDomainGroup group : adgs) {
@@ -63,22 +58,13 @@ public class CsvConfigTest extends TestCase {
   public void testParserInvalidInput() throws IOException {
     String config = "groupA,not_enough,parameters\n" +
         "groupB,http://www.yahoo.com,/securepage,WRONG_AUTHMETHOD,,\n" +
-        "groupC,http://www.mooglegoogle.com,/moogle/,FORMS_AUTH,,";
-    File f = new File("foo");
-    f.deleteOnExit();
-    writeConfigToFile(config, f);
-    List<AuthnDomainGroup> adgs = CsvConfig.readConfigFile(f.getAbsolutePath());
+        "groupC,http://www.mooglegoogle.com,/moogle/,FORMS_AUTH,,\n";
+    List<AuthnDomainGroup> adgs = CsvConfig.readConfigFile(new StringReader(config));
 
     assertEquals(1, adgs.size());
     assertEquals("groupC",adgs.get(0).getHumanName());
     assertEquals(1, adgs.get(0).getDomains().size());
     AuthnDomain domain = adgs.get(0).getDomains().get(0);
     assertEquals("http://www.mooglegoogle.com/moogle/", domain.getName());
-  }
-
-  private void writeConfigToFile(String config, File f) throws IOException {
-    BufferedWriter writer = new BufferedWriter(new FileWriter(f));
-    writer.write(config);
-    writer.close();
   }
 }
