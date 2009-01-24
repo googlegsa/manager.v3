@@ -104,13 +104,14 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
     initResponse(resp);
     Response response = (Response) message;
     String code = response.getStatus().getStatusCode().getValue();
+    LOGGER.info("status code = " + code);
     if (code.equals(StatusCode.SUCCESS_URI)) {
       Assertion assertion = response.getAssertions().get(0);
       session.setAttribute("isAuthenticated", true);
       session.setAttribute("verifiedIdentity", assertion.getSubject().getNameID().getValue());
       session.setAttribute("verificationStatement",
                            assertion.getStatements(AuthnStatement.DEFAULT_ELEMENT_NAME).get(0));
-    } else if (code.equals(StatusCode.REQUEST_DENIED_URI)) {
+    } else if (code.equals(StatusCode.AUTHN_FAILED_URI)) {
       session.setAttribute("isAuthenticated", false);
     } else {
       // Do nothing.  The service provider will restart the authentication.

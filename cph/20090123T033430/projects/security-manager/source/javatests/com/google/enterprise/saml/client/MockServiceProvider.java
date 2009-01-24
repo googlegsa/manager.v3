@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
 
-import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 
 /**
  * The MockServiceProvider class implements a servlet pretending to be the part of a SAML Service
@@ -68,7 +68,7 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
     if (isAuthenticated == Boolean.TRUE) {
       ifAllowed(resp);
     } else if (isAuthenticated == Boolean.FALSE) {
-      initErrorResponse(resp, SC_UNAUTHORIZED);
+      initErrorResponse(resp, SC_FORBIDDEN);
     } else {
       ifUnknown(resp, req.getRequestURL().toString());
     }
