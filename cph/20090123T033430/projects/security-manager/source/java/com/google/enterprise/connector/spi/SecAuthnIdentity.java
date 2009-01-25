@@ -1,10 +1,10 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +13,8 @@
 // limitations under the License.
 
 package com.google.enterprise.connector.spi;
+
+import com.google.enterprise.security.identity.VerificationStatus;
 
 import java.util.Collection;
 
@@ -48,30 +50,16 @@ public interface SecAuthnIdentity extends AuthenticationIdentity {
   public Cookie getCookieNamed(String name);
 
   /**
-   * Test whether verification has been done for this identity.
-   * @return {@code true} iff verification hasn't been done yet.
+   * Get the verification status for this identity.
+   * @return The identity's verification status.
    */
-  public boolean needsVerification();
+  public VerificationStatus getVerificationStatus();
 
   /**
-   * Record the result of the verification process.
-   * In addition, it changes the value of {@link #needsVerification} to {@code false}.
-   * @param isVerified {@code true} if the identity is verified, {@code false} if it's repudiated.
+   * Set the verification status for this identity.
+   * @param status The new verification status.
    */
-  public void setVerified(boolean isVerified);
-
-  /**
-   * Return the result of the verification process.
-   * Meaningful only if {@link #needsVerification} returns {@code false}.
-   * @return {@code true} iff the identity is verified.
-   */
-  public boolean isVerified();
-
-  /**
-   * Reset the verification state of this identity.
-   * Changes the value of {@link #needsVerification} to {@code true}.
-   */
-  public void resetVerification();
+  public void setVerificationStatus(VerificationStatus status);
 
   /**
    * Return a login URL for identity types that require one.

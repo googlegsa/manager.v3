@@ -1,10 +1,10 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -63,34 +63,40 @@ public interface BackEnd {
   public SAMLArtifactMap getArtifactMap();
 
   /**
+   * Is there a reasonable identity configuration?
    *
+   * @return <code>true</code> if so.
    */
-  public boolean isIdentityConfigured();
+  public boolean isIdentityConfigured() throws IOException;
 
   /**
    * Inject the identity configuration source.
+   *
    * @param identityConfig The identity configuration to use.
    */
   public void setIdentityConfig(IdentityConfig identityConfig);
 
   /**
    * Get the identity configuration.
+   *
    * @return The identity configuration as a list of authn domain groups.
    */
   public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException;
 
   /**
    * Attempt to find a cookie that can be converted to a verified identity.
+   *
    * @param context The authn context containing the cookies to try.
-   * @return An authentication response with the result of the attempt.
+   * @return A list of valid authentication responses.
    */
-  public AuthenticationResponse handleCookie(SecAuthnContext context);
+  public List<AuthenticationResponse> handleCookie(SecAuthnContext context);
 
   /**
    * Attempts to authenticate a given CredentialsGroup.  This method will update
    * the provided credentialsGroup with information retrieved during the
    * authentication process (i.e. cookies, certificates, and other credentials),
    * and it may set this credentialsGroup as verified as a result.
+   *
    * @param credentialsGroup The credentials group to authenticate.
    */
   public void authenticate(CredentialsGroup credentialsGroup);
@@ -105,6 +111,7 @@ public interface BackEnd {
 
   /**
    * Update the GSA session manager with the identity information we've collected.
+   *
    * @param sessionId The session manager ID to associate the information with.
    * @param cgs The set of identity information to be associated.
    */

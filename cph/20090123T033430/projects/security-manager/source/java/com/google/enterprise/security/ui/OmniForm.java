@@ -1,10 +1,10 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -92,37 +92,33 @@ public class OmniForm {
    * This method assumes that the provided request is a POST of a form generated
    * by the same instance of this class.
    *
-   * @param request
-   * @return a username of one of the credentials groups verified by the
-   * authentication step of this method
+   * @param request The incoming submission.
+   * @return A list of verified usernames.
    */
-  public String handleFormSubmit(HttpServletRequest request) {
+  public List<String> handleFormSubmit(HttpServletRequest request) {
     omniHtml.parsePostedForm(request, formElements);
-    updateCredentials(formElements);
 
-    String username = null;
-    for (CredentialsGroup cg : getCredentialsGroups()) {
-      if (!cg.allCredentialsFilled()) {
-        LOGGER.info("Credentials group unfulfilled: " + cg.getAuthnDomainGroup().getHumanName());
-        return null;
-      }
-      username = cg.getUsername();
-    }
+    List<String> result = new ArrayList<String>();
+    for (FormElement elem: formElements) {
+      CredentialsGroup cg = formElemToCG.get(elem);
 
-    return username;
-  }
-
-  private void updateCredentials(List<FormElement> formElements) {
-    for (FormElement elem : formElements) {
+      // Authenticate user's input for this element.
       if (elem.isActive()) {
-        CredentialsGroup cg = formElemToCG.get(elem);
         cg.setUsername(elem.getUsername());
         cg.setPassword(elem.getPassword());
         backend.authenticate(cg);
-        if (cg.allCredentialsFilled()) {
+        if (cg.isVerified()) {
           elem.setActive(false);
         }
       }
+
+      // If this element is authenticated, include username in result.
+      if (cg.isVerified()) {
+        result.add(cg.getUsername());
+      } else {
+        LOGGER.info("Credentials group unfulfilled: " + cg.getAuthnDomainGroup().getHumanName());
+      }
     }
+    return result;
   }
 }
