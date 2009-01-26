@@ -1,4 +1,4 @@
-// Copyright 2002 Google, Inc.
+// Copyright 2002 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ package com.google.parser;
  *   p.parse("0") -> matches "0"
  *   p.parse("a") -> no match
  *
+ * @param <T>
  * @see Parser
  * @author Peter Mattis
  */
@@ -56,8 +57,9 @@ public class Difference<T> extends Parser<T> {
    * string as doing so will cause this function to always return
    * <code>NO_MATCH</code>.
    *
-   * @see Parser.parse
+   * @see Parser#parse
    */
+  @Override
   public int parse(char[] buf, int start, int end, T data) {
     int left_hit = left.parse(buf, start, end, data);
     if (left_hit != NO_MATCH) {
