@@ -29,8 +29,10 @@ import org.opensaml.saml2.binding.encoding.HTTPArtifactEncoder;
 import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.Attribute;
 import org.opensaml.saml2.core.AttributeStatement;
+import org.opensaml.saml2.core.AudienceRestriction;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.saml2.core.AuthnRequest;
+import org.opensaml.saml2.core.Conditions;
 import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.StatusCode;
@@ -59,7 +61,10 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertion;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAttribute;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAttributeStatement;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAttributeValue;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAudience;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAudienceRestriction;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnStatement;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeConditions;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
@@ -265,11 +270,20 @@ public class SamlAuthn extends SecurityManagerServlet
     LOGGER.info("Verified IDs: " + idsToString(ids));
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         existingSamlMessageContext(request.getSession());
-    Response samlResponse =
-        makeResponse(context.getInboundSAMLMessage(), makeStatus(StatusCode.SUCCESS_URI));
+
+    // Generate <Assertion> with <AuthnStatement>
     Assertion assertion =
         makeAssertion(makeIssuer(getSmEntity().getEntityID()), makeSubject(ids.get(0)));
     assertion.getAuthnStatements().add(makeAuthnStatement(AuthnContext.IP_PASSWORD_AUTHN_CTX));
+
+    // Generate <Conditions> with <AudienceRestriction>
+    Conditions conditions = makeConditions();
+    AudienceRestriction restriction = makeAudienceRestriction();
+    restriction.getAudiences().add(makeAudience(getSpEntity().getEntityID()));
+    conditions.getAudienceRestrictions().add(restriction);
+    assertion.setConditions(conditions);
+
+    // Generate <Attribute> for secondary IDs if needed
     if (ids.size() > 1) {
       Attribute attribute = makeAttribute("secondary-ids");
       for (String id: ids.subList(1, ids.size())) {
@@ -279,8 +293,14 @@ public class SamlAuthn extends SecurityManagerServlet
       attrStatement.getAttributes().add(attribute);
       assertion.getAttributeStatements().add(attrStatement);
     }
+
+    // Generate <Response>
+    Response samlResponse =
+        makeResponse(context.getInboundSAMLMessage(), makeStatus(StatusCode.SUCCESS_URI));
     samlResponse.getAssertions().add(assertion);
     context.setOutboundSAMLMessage(samlResponse);
+
+    // Done
     doRedirect(request, response);
   }
 
