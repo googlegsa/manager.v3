@@ -1,4 +1,4 @@
-// Copyright 2002 Google, Inc.
+// Copyright 2002 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ package com.google.parser;
  *   j.parse("a1", null) -> no match, because ALNUM+ matches "a1" which doesn't
  *                          match ALPHA+
  *
+ * @param <T>
  * @see Parser
  * @author Peter Mattis
  */
@@ -60,8 +61,9 @@ public class Intersection<T> extends Parser<T> {
    * Matches the prefix of the buffer (<code>buf[start,end)</code>) being
    * parsed against the <code>left</code> and <code>right</code> sub-parsers.
    *
-   * @see Parser.parse
+   * @see Parser#parse
    */
+  @Override
   public int parse(char[] buf, int start, int end, T data) {
     int left_hit = left.parse(buf, start, end, data);
     if (left_hit != NO_MATCH) {

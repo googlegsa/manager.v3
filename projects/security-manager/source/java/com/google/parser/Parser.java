@@ -1,4 +1,4 @@
-// Copyright 2002 Google, Inc.
+// Copyright 2002 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -82,6 +82,7 @@ import java.io.*;
  * many times trying to find a match. In practice, this doesn't happen very
  * often.
  *
+ * @param <T>
  * @author Peter Mattis
  */
 public abstract class Parser<T> {
@@ -273,7 +274,7 @@ public abstract class Parser<T> {
 
   /**
    * Creates a sequence of four parsers.
-   * @see sequence(Parser,Parser,Parser)
+   * @see #sequence(Parser,Parser,Parser)
    */
   public static <T> Parser<T> sequence(Parser<? super T> one,
                                        Parser<? super T> two,
@@ -286,7 +287,7 @@ public abstract class Parser<T> {
 
   /**
    * Creates a sequence of five parsers.
-   * @see sequence(Parser,Parser,Parser)
+   * @see #sequence(Parser,Parser,Parser)
    */
   public static <T> Parser<T> sequence(Parser<? super T> one,
                                        Parser<? super T> two,
