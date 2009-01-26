@@ -1,4 +1,4 @@
-// Copyright 2002 Google, Inc.
+// Copyright 2002 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -46,8 +46,9 @@ public class Strlit extends Parser<Object> {
    * parse buffer: <code>buf[start,end)</code>. <code>Strlit.str</code> must be
    * a prefix of <code>buf[start,end)</code> for a match to occur.
    *
-   * @see Parser.parse
+   * @see Parser#parse
    */
+  @Override
   public int parse(char[] buf, int start, int end, Object data) {
     for (int i = 0; i < str.length(); i++) {
       if ((start >= end) ||

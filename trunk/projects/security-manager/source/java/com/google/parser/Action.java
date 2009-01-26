@@ -1,4 +1,4 @@
-// Copyright 2002 Google, Inc.
+// Copyright 2002 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,11 +34,13 @@ package com.google.parser;
  *   p.parse("a0")    -> matches "a", buf == "a"
  *   p.parse("0")     -> no match, buf unchanged
  *
+ * @param <T>
+ * @param <U>
  * @see Callback
  * @see Parser
  * @author Peter Mattis
  */
-public class Action<T,U extends T> extends Parser<U> {
+public class Action<T, U extends T> extends Parser<U> {
   private Parser<T> subject;
   private Callback<U> callback;
 
@@ -63,8 +65,9 @@ public class Action<T,U extends T> extends Parser<U> {
    * result other than <code>NO_MATCH</code>), <code>callback.handle</code>
    * will be invoked and passed the matching region of the parse buffer.
    *
-   * @see Parser.parse
+   * @see Parser#parse
    */
+  @Override
   public int parse(char[] buf, int start, int end, U data) {
     int hit = subject.parse(buf, start, end, data);
     if (hit != NO_MATCH) {
