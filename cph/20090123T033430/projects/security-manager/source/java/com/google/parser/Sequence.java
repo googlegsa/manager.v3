@@ -1,4 +1,4 @@
-// Copyright 2002, 2006 Google, Inc.
+// Copyright 2002, 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ package com.google.parser;
  *   p.parse("a")      -> no match, does not end in a digit
  *   p.parse("0")      -> no match, does not start with a letter
  *
+ * @param <T>
  * @see Parser
  * @author Peter Mattis
  */
@@ -58,8 +59,9 @@ public class Sequence<T> extends Parser<T> {
    * parsed against the <code>left</code> and <code>right</code> sub-parsers in
    * sequence.
    *
-   * @see Parser.parse
+   * @see Parser#parse
    */
+  @Override
   public int parse(char[] buf, int start, int end, T data) {
     int left_hit = left.parse(buf, start, end, data);
     if (left_hit != NO_MATCH) {
