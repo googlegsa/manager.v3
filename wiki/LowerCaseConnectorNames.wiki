@@ -79,17 +79,17 @@ _Google Search Appliance > Connector Administration > Connectors > Add/Edit_
 page for the Connector instance.
 
 2) If you have a customized `connectorInstance.xml` file, found in
-`$TOMCAT_HOME/webapps/connector-manager/WEB_INF/$CONNECTOR_TYPE/$CONNECTOR_NAME/connectorInstance.xml`,
+`$TOMCAT_HOME/webapps/connector-manager/WEB_INF/connectors/$CONNECTOR_TYPE/$CONNECTOR_NAME/connectorInstance.xml`,
 make a backup copy of that file outside of the Connector instance directory.
   * $TOMCAT_HOME is the Tomcat installation location for the connector.
-  * $CONNECTOR_TYPE is the type of the Connector (Documentum, Livelink, etc.)
+  * $CONNECTOR_TYPE is the type of the Connector (Livelink_Enterprise_Server, etc.)
   * $CONNECTOR_NAME is the name of the Connector instance.
 
 3) Delete the Connector instance using the form
 _Google Search Appliance > Connector Administration > Connectors > Delete_.
 
 4) Manually delete the Connector instance directory, if it still exists:
-`$TOMCAT_HOME/webapps/connector-manager/WEB_INF/$CONNECTOR_TYPE/$CONNECTOR_NAME`.  
+`$TOMCAT_HOME/webapps/connector-manager/WEB_INF/connectors/$CONNECTOR_TYPE/$CONNECTOR_NAME`.  
 Deleting the connector directory is especially important in Microsoft Windows
 and Mac OS X, which have case-insensitive file systems.
 
@@ -126,7 +126,7 @@ are done.
 
 10) Copy the saved `connectorInstance.xml` into the new Connector
 instance directory:
-`$TOMCAT_HOME/webapps/connector-manager/WEB_INF/$CONNECTOR_TYPE/$CONNECTOR_NAME`
+`$TOMCAT_HOME/webapps/connector-manager/WEB_INF/connectors/$CONNECTOR_TYPE/$CONNECTOR_NAME`
 
 11) Go to
 _Google Search Appliance > Connector Administration > Connectors > Add/Edit_
@@ -174,7 +174,7 @@ create the new connector with the desired (or default) schedule and go to
 step 8).
 
 6) If the old Connector has a customized `connectorInstance.xml` file, found in
-`$TOMCAT_HOME/webapps/connector-manager/WEB_INF/$CONNECTOR_TYPE/$CONNECTOR_NAME/connectorInstance.xml`,
+`$TOMCAT_HOME/webapps/connector-manager/WEB_INF/connectors/$CONNECTOR_TYPE/$CONNECTOR_NAME/connectorInstance.xml`,
 copy that `connectorInstance.xml` file from the old Connector instance
 directory to the new Connector instance directory.
   * $TOMCAT_HOME is the Tomcat installation location for the connector.
@@ -189,7 +189,7 @@ and change the schedule to the desired (or default 12am - 12am) schedule.
 _Google Search Appliance > Connector Administration > Connectors > Delete_.
 
 9) Manually delete the old Connector instance directory, if it still exists:
-`$TOMCAT_HOME/webapps/connector-manager/WEB_INF/$CONNECTOR_TYPE/$CONNECTOR_NAME`
+`$TOMCAT_HOME/webapps/connector-manager/WEB_INF/connectors/$CONNECTOR_TYPE/$CONNECTOR_NAME`
 
 10) Go to
 _Google Search Appliance > Crawl and Index > Collections_.  
@@ -205,8 +205,8 @@ that URL.
 12) Remove content fed by the old Connector from the index.
 Go to _Google Search Appliance > Crawl and Index > Crawl URLs_ 
 and add a new *Do Not Crawl* pattern for the old Connector.
-For instance, if the old Connector was named "OldConnector",
-then you would add a Do Not Crawl pattern "^googleconnector://OldConnector"
+For instance, if the old Connector was named "!OldConnector",
+then you would add a Do Not Crawl pattern "^googleconnector://!OldConnector"
 
 13) Remove the Feeds from the old Connector.
 Go to _Google Search Appliance > Crawl and Index > Feeds_ and
