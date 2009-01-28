@@ -82,7 +82,7 @@ page for the Connector instance.
 `$TOMCAT_HOME/webapps/connector-manager/WEB_INF/connectors/$CONNECTOR_TYPE/$CONNECTOR_NAME/connectorInstance.xml`,
 make a backup copy of that file outside of the Connector instance directory.
   * $TOMCAT_HOME is the Tomcat installation location for the connector.
-  * $CONNECTOR_TYPE is the type of the Connector (Livelink_Enterprise_Server, etc.)
+  * $CONNECTOR_TYPE is the type of the Connector (!Livelink_Enterprise_Server, etc.)
   * $CONNECTOR_NAME is the name of the Connector instance.
 
 3) Delete the Connector instance using the form
