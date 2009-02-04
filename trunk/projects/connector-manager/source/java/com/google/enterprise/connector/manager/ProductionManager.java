@@ -18,12 +18,9 @@ import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.ConnectorScheduleStore;
-import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.scheduler.Schedule;
-import com.google.enterprise.connector.scheduler.Scheduler;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
@@ -54,20 +51,8 @@ public class ProductionManager implements Manager {
       Logger.getLogger(ProductionManager.class.getName());
 
   Instantiator instantiator;
-  ConnectorScheduleStore connectorScheduleStore;
-  ConnectorStateStore connectorStateStore;
-  Scheduler scheduler;
 
   public ProductionManager() {
-  }
-
-  /**
-   * Set the scheduler.
-   *
-   * @param scheduler the scheduler to set.
-   */
-  public void setScheduler(Scheduler scheduler) {
-    this.scheduler = scheduler;
   }
 
   /**
@@ -76,7 +61,6 @@ public class ProductionManager implements Manager {
   public void setInstantiator(Instantiator instantiator) {
     this.instantiator = instantiator;
   }
-
 
   /*
    * (non-Javadoc)
@@ -299,7 +283,6 @@ public class ProductionManager implements Manager {
   public void removeConnector(String connectorName)
       throws InstantiatorException {
     instantiator.removeConnector(connectorName);
-    scheduler.removeConnector(connectorName);
   }
 
   /*
@@ -310,7 +293,6 @@ public class ProductionManager implements Manager {
    */
   public void restartConnectorTraversal(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
-    scheduler.removeConnector(connectorName);
     instantiator.restartConnectorTraversal(connectorName);
   }
 
