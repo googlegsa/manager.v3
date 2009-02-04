@@ -87,7 +87,7 @@ public class QueryTraverser implements Traverser {
       // We get here if the ConnectorStateStore for connector is disabled.
       // That happens if the connector was deleted while we were asleep.
       // Our connector seems to have been deleted.  Don't process a batch.
-      LOGGER.log(Level.WARNING, "Halting traversal..." + ise.getMessage());
+      LOGGER.finer("Halting traversal..." + ise.getMessage());
       return Traverser.FORCE_WAIT;
     }
 

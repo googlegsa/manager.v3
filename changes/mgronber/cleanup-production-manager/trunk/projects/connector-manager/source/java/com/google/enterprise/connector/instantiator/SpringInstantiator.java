@@ -218,10 +218,10 @@ public class SpringInstantiator implements Instantiator {
     LOGGER.info("Restarting traversal for Connector: " + connectorName);
     Scheduler scheduler = (Scheduler) Context.getInstance().
         getBean("TraversalScheduler", Scheduler.class);
+    setConnectorState(connectorName, null);
     if (scheduler != null) {
       scheduler.removeConnector(connectorName);
     }
-    setConnectorState(connectorName, null);
     connectorCache.remove(connectorName);
   }
 
