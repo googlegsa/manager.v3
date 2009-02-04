@@ -16,6 +16,7 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.jcr.JcrConnector;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
@@ -30,6 +31,7 @@ import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.persist.StoreContext;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.pusher.Pusher;
+import com.google.enterprise.connector.scheduler.Scheduler;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
@@ -229,8 +231,13 @@ public class MockInstantiator implements Instantiator {
    *      #restartConnectorTraversal(java.lang.String)
    */
   public void restartConnectorTraversal(String connectorName) {
+    Scheduler scheduler = (Scheduler) Context.getInstance().
+        getBean("TraversalScheduler", Scheduler.class);
     ConnectorInstance inst =
         (ConnectorInstance) connectorMap.get(connectorName);
+    if (scheduler != null) {
+      scheduler.removeConnector(connectorName);
+    }
     inst.getStateStore().removeConnectorState(inst.getStoreContext());
   }
 
@@ -246,10 +253,15 @@ public class MockInstantiator implements Instantiator {
     ConnectorInstance inst =
         (ConnectorInstance) connectorMap.remove(connectorName);
     if (inst != null) {
+      Scheduler scheduler = (Scheduler) Context.getInstance().
+          getBean("TraversalScheduler", Scheduler.class);
       StoreContext context = inst.getStoreContext();
       inst.getStateStore().removeConnectorState(context);
       connectorScheduleStore.removeConnectorSchedule(context);
       connectorConfigStore.removeConnectorConfiguration(context);
+      if (scheduler != null) {
+        scheduler.removeConnector(connectorName);
+      }
     }
   }
 

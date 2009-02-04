@@ -130,7 +130,6 @@
 
   <bean id="Manager"
         class="com.google.enterprise.connector.manager.ProductionManager">
-    <property name="scheduler" ref="TraversalScheduler"/>
     <property name="instantiator" ref="Instantiator"/>
   </bean>
 
