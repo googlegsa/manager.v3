@@ -57,7 +57,6 @@
 
   <bean id="ConnectorManager"
         class="com.google.enterprise.connector.manager.ConnectorManager">
-    <property name="scheduler" ref="TraversalScheduler" />
     <property name="instantiator" ref="Instantiator" />
     <property name="backEnd" ref="BackEnd" />
   </bean>
