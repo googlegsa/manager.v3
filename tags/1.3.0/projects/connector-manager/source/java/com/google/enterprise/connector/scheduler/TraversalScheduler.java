@@ -291,7 +291,7 @@ public class TraversalScheduler implements Scheduler {
       this.timeOfFirstFailure = 0;
     }
 
-    public void setIsFinished(boolean isFinished) {
+    public synchronized void setIsFinished(boolean isFinished) {
       this.isFinished = isFinished;
     }
 
@@ -324,15 +324,13 @@ public class TraversalScheduler implements Scheduler {
      * Wait until the run is finished.  Object lock must be held to call this
      * method.
      */
-    private void waitTillFinishedOrTimeout() {
+    private synchronized void waitTillFinishedOrTimeout() {
       if (!isFinished) {
         try {
-          synchronized(this) {
-            long timeout = getTraversalTimeout(getTraverser());
-            LOGGER.log(Level.FINEST, "Beginning wait (timeout=" + timeout + ")...");
-            wait(timeout);
-            LOGGER.log(Level.FINEST, "...ending wait");
-          }
+          long timeout = getTraversalTimeout(getTraverser());
+          LOGGER.log(Level.FINEST, "Beginning wait (timeout=" + timeout + ")...");
+          wait(timeout);
+          LOGGER.log(Level.FINEST, "...ending wait");
         } catch (InterruptedException e) {
           // TODO Auto-generated catch block
           LOGGER.log(Level.FINEST, "Interrupted");
@@ -375,11 +373,11 @@ public class TraversalScheduler implements Scheduler {
         numConsecutiveFailures = 0;
         timeOfFirstFailure = 0;
       }
-      isFinished = true;
       if (batchDone == Traverser.FORCE_WAIT && batchHint > 0) {
         hostLoadManager.connectorFinishedTraversal(connectorName);
       }
       synchronized(this) {
+        isFinished = true;
         notifyAll();
       }
     }
