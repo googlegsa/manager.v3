@@ -230,6 +230,12 @@ public class InstanceMapTest extends TestCase {
     String plainPasswd = (String) config.get("Password");
     Assert.assertEquals(instancePasswd, plainPasswd);
 
+    // verify that the googleConnectorName property is intact.
+    assertTrue(
+        instanceProps.containsKey(PropertiesUtils.GOOGLE_CONNECTOR_NAME));
+    assertEquals(name,
+        instanceProps.get(PropertiesUtils.GOOGLE_CONNECTOR_NAME));
+
     // verify that the google*WorkDir properties are intact.
     assertTrue(instanceProps.containsKey(PropertiesUtils.GOOGLE_WORK_DIR));
     assertTrue(
