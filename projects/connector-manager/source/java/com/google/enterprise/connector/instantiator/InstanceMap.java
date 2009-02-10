@@ -152,6 +152,7 @@ public class InstanceMap extends TreeMap {
     // context properties.  validateConfig() may also alter this map.
     Map config = new HashMap();
     config.putAll(configMap);
+    config.put(PropertiesUtils.GOOGLE_CONNECTOR_NAME, name);
     config.put(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR,
                connectorDir.getPath());
     config.put(PropertiesUtils.GOOGLE_WORK_DIR,
