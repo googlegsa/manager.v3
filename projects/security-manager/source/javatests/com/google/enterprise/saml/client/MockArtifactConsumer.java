@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright 2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -104,14 +104,13 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
     initResponse(resp);
     Response response = (Response) message;
     String code = response.getStatus().getStatusCode().getValue();
-    LOGGER.info("status code = " + code);
     if (code.equals(StatusCode.SUCCESS_URI)) {
       Assertion assertion = response.getAssertions().get(0);
       session.setAttribute("isAuthenticated", true);
       session.setAttribute("verifiedIdentity", assertion.getSubject().getNameID().getValue());
       session.setAttribute("verificationStatement",
                            assertion.getStatements(AuthnStatement.DEFAULT_ELEMENT_NAME).get(0));
-    } else if (code.equals(StatusCode.AUTHN_FAILED_URI)) {
+    } else if (code.equals(StatusCode.REQUEST_DENIED_URI)) {
       session.setAttribute("isAuthenticated", false);
     } else {
       // Do nothing.  The service provider will restart the authentication.
@@ -147,7 +146,7 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
 
     // Encode the request
     HttpExchange exchange =
-        httpClient.postExchange(new URL(context.getPeerEntityEndpoint().getLocation()), null);
+        httpClient.getExchange(new URL(context.getPeerEntityEndpoint().getLocation()));
     HttpExchangeToOutTransport out = new HttpExchangeToOutTransport(exchange);
     context.setOutboundMessageTransport(out);
     runEncoder(new HTTPSOAP11Encoder(), context);

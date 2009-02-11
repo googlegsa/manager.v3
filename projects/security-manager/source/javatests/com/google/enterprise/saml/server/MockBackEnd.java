@@ -1,10 +1,10 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,7 +20,6 @@ import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
-import com.google.enterprise.security.identity.DomainCredentials;
 import com.google.enterprise.security.identity.IdentityConfig;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
@@ -35,13 +34,12 @@ import org.opensaml.xml.parse.BasicParserPool;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Simple mock saml server Backend for testing.
  */
 public class MockBackEnd implements BackEnd {
-  private static final Logger LOGGER = Logger.getLogger(MockBackEnd.class.getName());
+  //private static final Logger LOGGER = Logger.getLogger(MockBackEnd.class.getName());
   private static final int artifactLifetime = 600000;  // ten minutes
 
   private final SessionManagerInterface sessionManager;
@@ -72,10 +70,6 @@ public class MockBackEnd implements BackEnd {
     return artifactMap;
   }
 
-  public boolean isIdentityConfigured() {
-    return true;
-  }
-
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     throw new UnsupportedOperationException("Unimplemented method.");
   }
@@ -98,19 +92,7 @@ public class MockBackEnd implements BackEnd {
     return null;
   }
 
-  public void authenticate(CredentialsGroup cg) {
-    if ((cg.getUsername() == "joe") && (cg.getPassword() == "plumber")) {
-      for (DomainCredentials dc: cg.getElements()) {
-        switch (dc.getDomain().getMechanism()) {
-          case BASIC_AUTH:
-          case FORMS_AUTH:
-          case CONNECTORS:
-            LOGGER.info("Authn Success, credential verified: " + dc.dumpInfo());
-            dc.setVerified(true);
-            break;
-        }
-      }
-    }
+  public void authenticate(CredentialsGroup credentialsGroup) {
   }
 
   public void setConnectorManager(ConnectorManager cm) {

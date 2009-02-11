@@ -40,7 +40,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 import java.util.logging.Logger;
-import java.util.logging.Level;
 
 import javax.servlet.http.Cookie;
 
@@ -89,10 +88,6 @@ public class BackEndImpl implements BackEnd {
     return sm;
   }
 
-  public boolean isIdentityConfigured() {
-    return !getAuthnDomainGroups().isEmpty();
-  }
-
   public void setIdentityConfig(IdentityConfig identityConfig) {
     this.identityConfig = identityConfig;
   }
@@ -101,16 +96,9 @@ public class BackEndImpl implements BackEnd {
     return artifactMap;
   }
 
-  public List<AuthnDomainGroup> getAuthnDomainGroups() {
+  public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException {
     if (authnDomainGroups == null) {
-      authnDomainGroups = ImmutableList.of();
-    }
-    if (authnDomainGroups.isEmpty()) {
-      try {
-        authnDomainGroups = ImmutableList.copyOf(identityConfig.getConfig());
-      } catch (IOException e) {
-        LOGGER.log(Level.WARNING, "IO Error when reading AuthSites config.", e);
-      }
+      authnDomainGroups = ImmutableList.copyOf(identityConfig.getConfig());
     }
     return authnDomainGroups;
   }
@@ -150,9 +138,7 @@ public class BackEndImpl implements BackEnd {
   // see if the cookies reveal who the user is.
   public AuthenticationResponse handleCookie(SecAuthnContext context) {
     for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
-      String connType = connStatus.getType();
-      if (! (connType.equals("SsoCookieIdentityConnector")
-             || connType.equals("regexCookieIdentityConnector"))) {
+      if (!connStatus.getType().equals("FormAuthConnector")) {
         continue;
       }
       String connectorName = connStatus.getName();

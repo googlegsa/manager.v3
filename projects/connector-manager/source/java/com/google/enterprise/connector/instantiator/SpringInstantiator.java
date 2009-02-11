@@ -14,17 +14,16 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.pusher.Pusher;
-import com.google.enterprise.connector.scheduler.Scheduler;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.traversal.Traverser;
+import com.google.enterprise.connector.traversal.TraversalStateStore;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -92,13 +91,8 @@ public class SpringInstantiator implements Instantiator {
   public synchronized void removeConnector(String connectorName) {
     initialize();
     LOGGER.info("Dropping connector: " + connectorName);
-    Scheduler scheduler = (Scheduler) Context.getInstance().
-        getBean("TraversalScheduler", Scheduler.class);
     connectorCache.remove(connectorName);
     instanceMap.removeConnector(connectorName);
-    if (scheduler != null) {
-      scheduler.removeConnector(connectorName);
-    }
   }
 
   /*
@@ -216,13 +210,8 @@ public class SpringInstantiator implements Instantiator {
       throws ConnectorNotFoundException {
     initialize();
     LOGGER.info("Restarting traversal for Connector: " + connectorName);
-    Scheduler scheduler = (Scheduler) Context.getInstance().
-        getBean("TraversalScheduler", Scheduler.class);
-    setConnectorState(connectorName, null);
-    if (scheduler != null) {
-      scheduler.removeConnector(connectorName);
-    }
     connectorCache.remove(connectorName);
+    setConnectorState(connectorName, null);
   }
 
   /*

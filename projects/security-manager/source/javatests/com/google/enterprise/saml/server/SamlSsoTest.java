@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright 2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,17 +37,14 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 
-import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 
 public class SamlSsoTest extends TestCase {
-  private static final Logger LOGGER = Logger.getLogger(SamlSsoTest.class.getName());
   private static final String SP_URL =
       "http://localhost:8973/security-manager/mockserviceprovider";
 
@@ -57,7 +54,7 @@ public class SamlSsoTest extends TestCase {
     super(name);
 
     Context ctx = Context.getInstance();
-    ctx.setStandaloneContext(Context.DEFAULT_JUNIT_CONTEXT_LOCATION,
+    ctx.setStandaloneContext("source/webdocs/test/applicationContext.xml",
                              Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
     Metadata metadata =
         Metadata.class.cast(ctx.getRequiredBean("Metadata", Metadata.class));
@@ -74,34 +71,21 @@ public class SamlSsoTest extends TestCase {
 
     EntityDescriptor smEntity = metadata.getSmEntity();
     IDPSSODescriptor idp = smEntity.getIDPSSODescriptor(SAML20P_NS);
-    SamlAuthn samlAuthn = new SamlAuthn();
-    samlAuthn.setMaxPrompts(1);
     transport.registerServlet(idp.getSingleSignOnServices().get(0),
-                              samlAuthn);
+                              new SamlAuthn());
     transport.registerServlet(idp.getDefaultArtificateResolutionService(),
                               new SamlArtifactResolve());
 
     transport.registerServlet(SP_URL, new MockServiceProvider());
   }
 
-  public void testGood() throws IOException, MalformedURLException {
+  public void testCredentials() throws IOException, MalformedURLException {
     HttpExchange exchange = tryCredentials("joe", "plumber");
     assertEquals("Incorrect response status code", SC_OK, exchange.getStatusCode());
   }
 
-  public void testBadPassword() throws IOException, MalformedURLException {
-    HttpExchange exchange = tryCredentials("joe", "biden");
-    assertEquals("Incorrect response status code", SC_FORBIDDEN, exchange.getStatusCode());
-  }
-
-  public void testBadUsername() throws IOException, MalformedURLException {
-    HttpExchange exchange = tryCredentials("jim", "plumber");
-    assertEquals("Incorrect response status code", SC_FORBIDDEN, exchange.getStatusCode());
-  }
-
   private HttpExchange tryCredentials(String username, String password)
       throws IOException, MalformedURLException {
-    LOGGER.info("start test");
 
     // Initial request to service provider
     HttpExchange exchange1 = userAgent.getExchange(new URL(SP_URL));
@@ -122,8 +106,8 @@ public class SamlSsoTest extends TestCase {
 
     // Submit credentials-gathering form
     List<StringPair> params = new ArrayList<StringPair>();
-    params.add(new StringPair("u0", username));
-    params.add(new StringPair("pw0", password));
+    params.add(new StringPair("u1", username));
+    params.add(new StringPair("pw1", password));
     HttpExchange exchange2 = userAgent.postExchange(new URL(action), params);
     exchange2.setFollowRedirects(true);
     exchange2.exchange();
