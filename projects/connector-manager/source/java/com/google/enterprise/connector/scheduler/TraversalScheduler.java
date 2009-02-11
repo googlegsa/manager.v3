@@ -325,17 +325,17 @@ public class TraversalScheduler implements Scheduler {
      * method.
      */
     private synchronized void waitTillFinishedOrTimeout() {
-      if (!isFinished) {
-        try {
-          long timeout = getTraversalTimeout(getTraverser());
-          LOGGER.log(Level.FINEST, "Beginning wait (timeout=" + timeout + ")...");
+      try {
+        long timeout = getTraversalTimeout(getTraverser());
+        LOGGER.log(Level.FINEST, "Beginning wait (timeout=" + timeout + ")...");
+        while (!isFinished) {
           wait(timeout);
-          LOGGER.log(Level.FINEST, "...ending wait");
-        } catch (InterruptedException e) {
-          // TODO Auto-generated catch block
-          LOGGER.log(Level.FINEST, "Interrupted");
-          e.printStackTrace();
         }
+        LOGGER.log(Level.FINEST, "...ending wait");
+      } catch (InterruptedException e) {
+        // TODO Auto-generated catch block
+        LOGGER.log(Level.FINEST, "Interrupted");
+        e.printStackTrace();
       }
     }
 
