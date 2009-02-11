@@ -27,6 +27,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEvent;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.Resource;
@@ -49,6 +50,9 @@ import javax.servlet.ServletContext;
  * When we run junit tests, we use a standalone context.
  * Use the methods setStandaloneContext and setServletContext to select the
  * context type.
+ * <p>
+ * Also the interface used for event publishing.  Wraps the event publishing
+ * functionality of the established context.
  */
 public class Context {
 
@@ -572,5 +576,16 @@ public class Context {
                  + "properties file.", ie);
     }
     return defaultValue;
+  }
+
+  /**
+   * Notify all listeners registered with this context of an application event.
+   * Events may be framework events or application-specific events.
+   *
+   * @param event the event to publish.
+   */
+  public void publishEvent(ApplicationEvent event) {
+    initApplicationContext();
+    applicationContext.publishEvent(event);
   }
 }
