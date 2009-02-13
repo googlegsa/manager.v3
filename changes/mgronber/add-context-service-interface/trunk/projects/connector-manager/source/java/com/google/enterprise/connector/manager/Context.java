@@ -277,7 +277,7 @@ public class Context {
    *         will be returned.
    */
   public ContextService findService(String serviceName) {
-    return (ContextService) getBean(serviceName, ContextService.class);
+    return (ContextService) getBean(serviceName, null);
   }
 
   /**

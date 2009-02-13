@@ -149,7 +149,22 @@ public class TestServiceTest extends TestCase {
     assertServicesStarted("check services are not running",
         false, services.values());
   }
-
+  
+  /**
+   * Tests that services can be retrieved from the Context.
+   */
+  public void testFindService() {
+    ApplicationContext appContext = context.getApplicationContext();
+    Map services = getServicesBeans(appContext);
+    for (Iterator valueIter = services.values().iterator();
+         valueIter.hasNext(); ) {
+      ContextService expectedService = (ContextService) valueIter.next();
+      assertEquals("found expected service",
+          expectedService, context.findService(expectedService.getName()));
+    }
+    assertTrue("null if not found", context.findService("bogus") == null);
+  }
+  
   /**
    * Checks the status of all the given services to make sure it matches the
    * given expected state. 
