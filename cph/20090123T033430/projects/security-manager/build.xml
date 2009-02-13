@@ -43,6 +43,14 @@
   <property name="prod.warfile" value="${war.dir}/${ant.project.name}.war" />
   <property name="tests.warfile" value="${war.dir}/${ant.project.name}_debug.war" />
 
+  <!-- Set up EMMA code-coverage tool. -->
+  <property name="emma.lib" value="third-party/emma" />
+  <path id="emma.path">
+    <fileset dir="${emma.lib}" includes="*.jar" />
+  </path>
+  <taskdef resource="emma_ant.properties" classpathref="emma.path" />
+  <property name="instrumented.dir" value="${build}/instrumented" />
+
   <!-- =========================== TASKS =============================== -->
   <target name="security_manager" description="Google Enterprise Security Manager" depends="war,regressions,junit-report" />
 
@@ -62,6 +70,7 @@
     <mkdir dir="${jar.dir}" />
     <mkdir dir="${regressions.build}" />
     <mkdir dir="${regressions.classes}" />
+    <mkdir dir="${instrumented.dir}" />
   </target>
 
   <target name="compile" depends="init">
@@ -103,9 +112,20 @@
   </target>
 
   <target name="run_tests" depends="compile_tests,jar-builtins">
+    <emma enabled="${emma.enabled}">
+      <instr outdir="${instrumented.dir}"
+             merge="yes"
+             filter="+com.google.enterprise.*">
+        <instrpath>
+          <pathelement location="${classes}" />
+          <fileset dir="${jar.dir}" includes="*.jar" />
+        </instrpath>
+      </instr>
+    </emma>
     <property name="test.suite" value="*" />
     <junit haltonfailure="yes" dir=".">
       <classpath>
+        <pathelement location="${instrumented.dir}" />
         <pathelement location="${classes}" />
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
         <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
@@ -114,12 +134,27 @@
         <pathelement location="${connector-thirdparty.dir}/prod/servlet-api.jar" />
         <pathelement location="${tests.classes}" />
         <pathelement path="${java.class.path}" />
+        <fileset dir="${emma.lib}" includes="*.jar" />
       </classpath>
       <formatter type="xml" />
       <batchtest fork="yes" todir="${tests.todir}">
         <fileset dir="${tests.src}" includes="**/${test.suite}Test.java" />
       </batchtest>
     </junit>
+  </target>
+
+  <target name="coverage_report">
+    <emma>
+      <report>
+        <infileset dir="${basedir}" includes="*.em, *.ec" />
+        <sourcepath>
+          <dirset dir="${basedir}/source/java">
+            <include name="**" />
+          </dirset>
+        </sourcepath>
+        <html />
+      </report>
+    </emma>
   </target>
 
   <target name="jar" depends="jar-prod,jar-tests,jar-builtins" description="Create jars for the Security Manager project" />
@@ -174,6 +209,9 @@
     <delete dir="${tests.data}/tmp" />
     <delete dir="${tests.data}/mocktestdata/connectors" />
     <delete dir="${catalina.base}" />
+    <delete dir="coverage" />
+    <delete file="coverage.em" />
+    <delete file="coverage.ec" />
   </target>
 
   <!-- ======================Installation targets====================== -->
