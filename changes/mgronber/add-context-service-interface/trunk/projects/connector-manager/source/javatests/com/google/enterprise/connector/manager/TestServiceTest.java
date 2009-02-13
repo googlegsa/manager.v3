@@ -23,6 +23,7 @@ import org.springframework.context.ApplicationContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -91,6 +92,85 @@ public class TestServiceTest extends TestCase {
   }
 
   /**
+   * Tests the order of starting and stopping of the services.
+   */
+  public void testServiceOrder() {
+    // Get the total list of services and register token queue with them.
+    List tokenList = new ArrayList();
+    ApplicationContext appContext = context.getApplicationContext();
+    Map services = getServicesBeans(appContext);
+    for (Iterator valueIter = services.values().iterator();
+         valueIter.hasNext(); ) {
+      TestService service = (TestService) valueIter.next();
+      service.setTokenList(tokenList);
+    }
+    // Start and shutdown the Context and test the tokens.
+    // TODO(mgronber): Remove this when the Scheduler has become a service.
+    context.setFeeding(false);
+    context.start();
+    context.shutdown(false);
+    assertEquals("check amount of tokens",
+        2 * allOrderedServiceNames.size(), tokenList.size());
+    assertTokenOrder("services started/stopped in right order",
+        allOrderedServiceNames, false, tokenList);
+    tokenList.clear();
+    context.start();
+    context.shutdown(true);
+    assertTokenOrder("services started/stopped in right order",
+        allOrderedServiceNames, true, tokenList);
+  }
+
+  /**
+   * Tests the order of starting and stopping of the services.
+   */
+  public void testServiceState() {
+    // Get the total list of services and register token queue with them.
+    List tokenList = new ArrayList();
+    ApplicationContext appContext = context.getApplicationContext();
+    Map services = getServicesBeans(appContext);
+    for (Iterator valueIter = services.values().iterator();
+         valueIter.hasNext(); ) {
+      TestService service = (TestService) valueIter.next();
+      service.setTokenList(tokenList);
+    }
+    // Start and shutdown the Context and test the status of the service.
+    // TODO(mgronber): Remove this when the Scheduler has become a service.
+    context.setFeeding(false);
+    context.start();
+    assertServicesStarted("check services are running",
+        true, services.values());
+    context.shutdown(false);
+    assertServicesStarted("check services are not running",
+        false, services.values());
+    context.start();
+    assertServicesStarted("check services are running",
+        true, services.values());
+    context.shutdown(true);
+    assertServicesStarted("check services are not running",
+        false, services.values());
+  }
+
+  /**
+   * Checks the status of all the given services to make sure it matches the
+   * given expected state. 
+   */
+  private void assertServicesStarted(String message, boolean expectedState,
+      Collection services) {
+    for (Iterator iter = services.iterator(); iter.hasNext(); ) {
+      assertEquals(message, expectedState,
+          ((ContextService) iter.next()).isRunning());
+    }
+  }
+
+  private Map getServicesBeans(ListableBeanFactory factory) {
+    return factory.getBeansOfType(ContextService.class);
+  }
+
+  private Object getBean(String name, Class requiredType) {
+    return context.getRequiredBean(name, requiredType);
+  }
+
+  /**
    * Compares the given list of expected keys with the key set from the
    * given map of services to make sure they are all included.  Does not check
    * for additional keys in the key set.
@@ -121,41 +201,19 @@ public class TestServiceTest extends TestCase {
       String serviceName = (String) listIter.next();
       TestService service =
           (TestService) ((Map.Entry)mapIter.next()).getValue();
-      assertEquals(message, serviceName, service.getServiceName());
+      assertEquals(message, serviceName, service.getName());
     }
   }
 
   /**
-   * Tests the starting and stopping of the services.
+   * Compares the order of the tokens in the given token list with the service
+   * names in the given list of service names and force value.  It is expected
+   * that the token list would contain tokens showing the services being started
+   * in the order given and then stopped in reverse order with the given force
+   * value.  
    */
-  public void testServices() {
-    // Get the total list of services and register token queue with them.
-    List tokenList = new ArrayList();
-    ApplicationContext appContext = context.getApplicationContext();
-    Map services = getServicesBeans(appContext);
-    for (Iterator valueIter = services.values().iterator();
-         valueIter.hasNext(); ) {
-      TestService service = (TestService) valueIter.next();
-      service.setTokenList(tokenList);
-    }
-    // Start and shutdown the Context and test the tokens.
-    // TODO(mgronber): Remove this when the Scheduler has become a service.
-    context.setFeeding(false);
-    context.start();
-    context.shutdown(false);
-    assertEquals("check amount of tokens",
-        2 * allOrderedServiceNames.size(), tokenList.size());
-    assertTokenOrder("services started/stopped in right order",
-        allOrderedServiceNames, tokenList, false);
-    tokenList.clear();
-    context.start();
-    context.shutdown(true);
-    assertTokenOrder("services started/stopped in right order",
-        allOrderedServiceNames, tokenList, true);
-  }
-
   private void assertTokenOrder(String message,
-      List orderedServiceNames, List tokenList, boolean force) {
+      List orderedServiceNames, boolean force, List tokenList) {
     Iterator tokenIter = tokenList.iterator();
     TestServiceToken token;
     // First check for start tokens.
@@ -173,13 +231,5 @@ public class TestServiceTest extends TestCase {
       assertEquals(message, "stop", token.getAction());
       assertEquals(message, force, token.isActionForced());
     }
-  }
-
-  private Map getServicesBeans(ListableBeanFactory factory) {
-    return factory.getBeansOfType(ContextService.class);
-  }
-
-  private Object getBean(String name, Class requiredType) {
-    return context.getRequiredBean(name, requiredType);
   }
 }

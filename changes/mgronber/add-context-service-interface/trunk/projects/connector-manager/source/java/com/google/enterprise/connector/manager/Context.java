@@ -37,14 +37,11 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -209,7 +206,7 @@ public class Context {
 
   /*
    * Choose a default context, if it wasn't specified in any other way. For now,
-   * we chooseservlet context by default.
+   * we choose servlet context by default.
    */
   private void initApplicationContext() {
     if (applicationContext == null) {
@@ -258,32 +255,61 @@ public class Context {
   }
 
   /**
-   * Starts any services declared as part of the application. 
+   * Starts any services declared as part of the application.
    */
   private void startServices() {
-    // Make sure the applicationContext is established.
     initApplicationContext();
-    // Get the services.
-    Map orderedServices =
-        (Map) getBean(ORDERED_SERVICES_BEAN_NAME, null);
+    List services = getServices();
+    for (Iterator iter = services.iterator(); iter.hasNext(); ) {
+      ContextService service = (ContextService) iter.next();
+      service.start();
+    }
+  }
+
+  /**
+   * Gets a service by name.  Returns a matching bean if found or null
+   * otherwise.
+   *
+   * @param serviceName the name of the service to find.
+   * @return if there is a single bean with the given name it will be returned.
+   *         If there are multiple beans with the same name, the first one found
+   *         will be returned.  If there are no beans with the given name, null
+   *         will be returned.
+   */
+  public ContextService findService(String serviceName) {
+    return (ContextService) getBean(serviceName, ContextService.class);
+  }
+
+  /**
+   * Returns an ordered list of services attached to the context.  Collection is
+   * ordered according to the startup order of the services.
+   * <p>
+   * To get the list in reverse order use {@link Collections#reverse(List)}.
+   *
+   * @return an ordered list of ContextService objects.  If no services are
+   *         registered an empty list will be returned.
+   */
+  public List getServices() {
+    Map orderedServices = (Map) getBean(ORDERED_SERVICES_BEAN_NAME, null);
     Map services = applicationContext.getBeansOfType(ContextService.class);
-    // Start them up.
-    List startedServices = new ArrayList();
+    List result = new ArrayList();
+
     if (orderedServices != null) {
       for (Iterator iter = orderedServices.keySet().iterator();
           iter.hasNext(); ) {
         ContextService service =
             (ContextService) orderedServices.get(iter.next());
-        service.start();
-        startedServices.add(service);
+        result.add(service);
       }
     }
     for (Iterator iter = services.values().iterator(); iter.hasNext(); ) {
         ContextService service = (ContextService) iter.next();
-      if (!startedServices.contains(service)) {
-        service.start();
+      if (!result.contains(service)) {
+        result.add(service);
       }
     }
+
+    return result;
   }
 
   /**
@@ -458,39 +484,15 @@ public class Context {
   }
 
   /**
-   * Stops any services declared as part of the application. 
+   * Stops any services declared as part of the application.
    */
   private void stopServices(boolean force) {
-    // Make sure the applicationContext is established.
     initApplicationContext();
-    // Get the services.
-    Map orderedServices =
-        (Map) getBean(ORDERED_SERVICES_BEAN_NAME, null);
-    Map services = applicationContext.getBeansOfType(ContextService.class);
-    Collection serviceValues = services.values();
-    if (orderedServices != null) {
-      // Determine which ones are not ordered and stop them.
-      Collection orderedServiceValues = orderedServices.values();
-      for (Iterator iter = serviceValues.iterator(); iter.hasNext(); ) {
-        ContextService service = (ContextService) iter.next();
-        if (!orderedServiceValues.contains(service)) {
-          service.stop(force);
-        }
-      }
-      // Now stop the ordered services in reverse order.
-      Set reverseSet = new TreeSet(Collections.reverseOrder());
-      reverseSet.addAll(orderedServices.keySet());
-      for (Iterator iter = reverseSet.iterator(); iter.hasNext(); ) {
-        ContextService service =
-            (ContextService) orderedServices.get(iter.next());
-        service.stop(force);
-      }
-    } else {
-      // Stop them all in any order.
-      for (Iterator iter = serviceValues.iterator(); iter.hasNext(); ) {
-        ContextService service = (ContextService) iter.next();
-        service.stop(force);
-      }
+    List services = getServices();
+    Collections.reverse(services);
+    for (Iterator iter = services.iterator(); iter.hasNext(); ) {
+      ContextService service = (ContextService) iter.next();
+      service.stop(force);
     }
   }
 

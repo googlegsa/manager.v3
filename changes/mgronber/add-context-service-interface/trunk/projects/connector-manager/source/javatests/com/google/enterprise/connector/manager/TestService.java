@@ -27,10 +27,7 @@ public class TestService implements ContextService {
 
   private String serviceName = "TestService";
   private List tokenList;
-
-  public String getServiceName() {
-    return serviceName;
-  }
+  private volatile boolean isRunning = false;
 
   public void setServiceName(String serviceName) {
     this.serviceName = serviceName;
@@ -43,6 +40,7 @@ public class TestService implements ContextService {
   public void start() {
     LOGGER.info(serviceName + ": Entering start...");
     tokenList.add(new TestServiceToken(serviceName, "start"));
+    isRunning = true;
     LOGGER.info(serviceName + ": ...exiting start.");
   }
 
@@ -50,9 +48,18 @@ public class TestService implements ContextService {
     LOGGER.info(serviceName + ": Entering stop...");
     LOGGER.info(serviceName + ": force=" + force);
     tokenList.add(new TestServiceToken(serviceName, "stop", force));
+    isRunning = false;
     LOGGER.info(serviceName + ": ...exiting stop.");
   }
-  
+
+  public String getName() {
+    return serviceName;
+  }
+
+  public boolean isRunning() {
+    return isRunning;
+  }
+
   /**
    * Marker used to note service action.
    */

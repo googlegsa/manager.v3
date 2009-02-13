@@ -40,4 +40,20 @@ public interface ContextService {
    * @param force suggestion to the service to stop as soon as possible.
    */
   public void stop(boolean force);
+
+  /**
+   * Returns the current running state of the service.  If the service is
+   * running it can be assumed that it has been started.
+   *  
+   * @return true if the service is currently running.
+   */
+  public boolean isRunning();
+
+  /**
+   * Returns the name of the service.  Services used within the same
+   * {@link Context} should have unique names.
+   *
+   * @return the current name for the service.
+   */
+  public String getName();
 }
