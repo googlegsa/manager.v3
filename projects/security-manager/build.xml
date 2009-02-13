@@ -43,6 +43,19 @@
   <property name="prod.warfile" value="${war.dir}/${ant.project.name}.war" />
   <property name="tests.warfile" value="${war.dir}/${ant.project.name}_debug.war" />
 
+  <!-- Set up Cobertura code-coverage tool. -->
+  <property name="cobertura.dir" value="third-party/cobertura" />
+  <path id="cobertura_classpath">
+    <fileset dir="${cobertura.dir}">
+      <include name="cobertura.jar" />
+      <include name="lib/**/*.jar" />
+    </fileset>
+  </path>
+  <taskdef classpathref="cobertura_classpath" resource="tasks.properties" />
+  <property name="coverage.file" value="${basedir}/cobertura.ser" />
+  <property name="instrumented.dir" value="${build}/instrumented" />
+  <property name="coverage.dir" value="${build}/coverage" />
+
   <!-- =========================== TASKS =============================== -->
   <target name="security_manager" description="Google Enterprise Security Manager" depends="war,regressions,junit-report" />
 
@@ -62,6 +75,8 @@
     <mkdir dir="${jar.dir}" />
     <mkdir dir="${regressions.build}" />
     <mkdir dir="${regressions.classes}" />
+    <mkdir dir="${instrumented.dir}" />
+    <mkdir dir="${coverage.dir}" />
   </target>
 
   <target name="compile" depends="init">
@@ -103,9 +118,18 @@
   </target>
 
   <target name="run_tests" depends="compile_tests,jar-builtins">
+    <delete file="${coverage.file}" />
+    <cobertura-instrument todir="${instrumented.dir}">
+      <fileset dir="${classes}" >
+        <include name="com/google/enterprise/**/*.class" />
+        <exclude name="com/google/enterprise/connector/servlet/HelloWorld.class" />
+        <exclude name="com/google/enterprise/connector/servlet/StartUp.class" />
+      </fileset>
+    </cobertura-instrument>
     <property name="test.suite" value="*" />
-    <junit haltonfailure="yes" dir=".">
+    <junit fork="yes" haltonfailure="yes" dir=".">
       <classpath>
+        <pathelement location="${instrumented.dir}" />
         <pathelement location="${classes}" />
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
         <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
@@ -113,6 +137,7 @@
         <fileset dir="${jar.dir}" includes="*.jar" />
         <pathelement location="${connector-thirdparty.dir}/prod/servlet-api.jar" />
         <pathelement location="${tests.classes}" />
+        <path refid="cobertura_classpath" />
         <pathelement path="${java.class.path}" />
       </classpath>
       <formatter type="xml" />
@@ -120,6 +145,14 @@
         <fileset dir="${tests.src}" includes="**/${test.suite}Test.java" />
       </batchtest>
     </junit>
+  </target>
+
+  <target name="coverage_report">
+    <cobertura-report format="html"
+                      datafile="${coverage.file}"
+                      destdir="${coverage.dir}"
+                      srcdir="${basedir}/source/java"
+                      />
   </target>
 
   <target name="jar" depends="jar-prod,jar-tests,jar-builtins" description="Create jars for the Security Manager project" />
@@ -174,6 +207,7 @@
     <delete dir="${tests.data}/tmp" />
     <delete dir="${tests.data}/mocktestdata/connectors" />
     <delete dir="${catalina.base}" />
+    <delete file="${coverage.file}" />
   </target>
 
   <!-- ======================Installation targets====================== -->
