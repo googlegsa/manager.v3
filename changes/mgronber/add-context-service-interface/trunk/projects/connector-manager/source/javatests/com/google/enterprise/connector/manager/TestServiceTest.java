@@ -149,7 +149,7 @@ public class TestServiceTest extends TestCase {
     assertServicesStarted("check services are not running",
         false, services.values());
   }
-  
+
   /**
    * Tests that services can be retrieved from the Context.
    */
@@ -164,10 +164,10 @@ public class TestServiceTest extends TestCase {
     }
     assertTrue("null if not found", context.findService("bogus") == null);
   }
-  
+
   /**
    * Checks the status of all the given services to make sure it matches the
-   * given expected state. 
+   * given expected state.
    */
   private void assertServicesStarted(String message, boolean expectedState,
       Collection services) {
@@ -190,7 +190,7 @@ public class TestServiceTest extends TestCase {
    * given map of services to make sure they are all included.  Does not check
    * for additional keys in the key set.
    */
-  private void assertCorrectKeys(String message, 
+  private void assertCorrectKeys(String message,
       List expectedKeys, Map services) {
     List missingServiceNames = new ArrayList();
 
@@ -225,7 +225,7 @@ public class TestServiceTest extends TestCase {
    * names in the given list of service names and force value.  It is expected
    * that the token list would contain tokens showing the services being started
    * in the order given and then stopped in reverse order with the given force
-   * value.  
+   * value.
    */
   private void assertTokenOrder(String message,
       List orderedServiceNames, boolean force, List tokenList) {

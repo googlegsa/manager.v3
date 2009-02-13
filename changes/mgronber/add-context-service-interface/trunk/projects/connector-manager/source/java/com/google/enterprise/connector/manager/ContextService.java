@@ -44,7 +44,7 @@ public interface ContextService {
   /**
    * Returns the current running state of the service.  If the service is
    * running it can be assumed that it has been started.
-   *  
+   *
    * @return true if the service is currently running.
    */
   public boolean isRunning();
