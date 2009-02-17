@@ -36,6 +36,11 @@ import org.springframework.web.context.support.XmlWebApplicationContext;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -70,6 +75,10 @@ public class Context {
   public static final String DEFAULT_JUNIT_COMMON_DIR_PATH =
       "testdata/mocktestdata/";
 
+  /**
+   * Id of the Spring Bean used to declare the order services are to be loaded.
+   */
+  public static final String ORDERED_SERVICES_BEAN_NAME = "OrderedServices";
   private static final String APPLICATION_CONTEXT_PROPERTIES_BEAN_NAME =
       "ApplicationContextProperties";
 
@@ -197,7 +206,7 @@ public class Context {
 
   /*
    * Choose a default context, if it wasn't specified in any other way. For now,
-   * we chooseservlet context by default.
+   * we choose servlet context by default.
    */
   private void initApplicationContext() {
     if (applicationContext == null) {
@@ -230,7 +239,6 @@ public class Context {
 
   /**
    * Do everything necessary to start up the application.
-   *
    */
   public void start() {
     if (started) {
@@ -242,7 +250,66 @@ public class Context {
     if (isFeeding) {
       startScheduler();
     }
+    startServices();
     started = true;
+  }
+
+  /**
+   * Starts any services declared as part of the application.
+   */
+  private void startServices() {
+    initApplicationContext();
+    List services = getServices();
+    for (Iterator iter = services.iterator(); iter.hasNext(); ) {
+      ContextService service = (ContextService) iter.next();
+      service.start();
+    }
+  }
+
+  /**
+   * Gets a service by name.  Returns a matching bean if found or null
+   * otherwise.
+   *
+   * @param serviceName the name of the service to find.
+   * @return if there is a single bean with the given name it will be returned.
+   *         If there are multiple beans with the same name, the first one found
+   *         will be returned.  If there are no beans with the given name, null
+   *         will be returned.
+   */
+  public ContextService findService(String serviceName) {
+    return (ContextService) getBean(serviceName, null);
+  }
+
+  /**
+   * Returns an ordered list of services attached to the context.  Collection is
+   * ordered according to the startup order of the services.
+   * <p>
+   * To get the list in reverse order use {@link Collections#reverse(List)}.
+   *
+   * @return an ordered list of ContextService objects.  If no services are
+   *         registered an empty list will be returned.
+   */
+  public List getServices() {
+    Map orderedServices = (Map) getBean(ORDERED_SERVICES_BEAN_NAME, null);
+    Map services = applicationContext.getBeansOfType(ContextService.class);
+    List result = new ArrayList();
+
+    if (orderedServices != null) {
+      for (Iterator iter = orderedServices.keySet().iterator();
+          iter.hasNext(); ) {
+        ContextService service =
+            (ContextService) orderedServices.get(iter.next());
+        result.add(service);
+      }
+    }
+    for (Iterator iter = services.values().iterator(); iter.hasNext(); ) {
+        ContextService service = (ContextService) iter.next();
+      if (!result.contains(service)) {
+        result.add(service);
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -407,11 +474,25 @@ public class Context {
 
   public void shutdown(boolean force) {
     LOGGER.log(Level.INFO, "shutdown");
+    stopServices(force);
     if (!isFeeding) {
-      return;
-    }
-    if (null != traversalScheduler) {
+      started = false;
+    } else if (null != traversalScheduler) {
       traversalScheduler.shutdown(force, WorkQueue.DEFAULT_SHUTDOWN_TIMEOUT);
+      started = false;
+    }
+  }
+
+  /**
+   * Stops any services declared as part of the application.
+   */
+  private void stopServices(boolean force) {
+    initApplicationContext();
+    List services = getServices();
+    Collections.reverse(services);
+    for (Iterator iter = services.iterator(); iter.hasNext(); ) {
+      ContextService service = (ContextService) iter.next();
+      service.stop(force);
     }
   }
 
