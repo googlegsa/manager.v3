@@ -248,7 +248,6 @@ public final class InstanceInfo {
       throws InstanceInfoException {
     Properties properties =
         (info.properties == null) ? new Properties() : info.properties;
-    LOGGER.info("Properties Resource: " + properties.toString());
     try {
       return new ByteArrayResourceHack(
           PropertiesUtils.storeToString(properties, null).getBytes());
