@@ -76,7 +76,6 @@ public class JcrConnector implements Connector {
           sessions.put(simpleCredentials, new JcrSession(session));
         }
       }
-      System.out.println("JcrConnector Login: username: " + username + "  password: " + password + "  Session: " + (JcrSession) sessions.get(simpleCredentials));
       return (JcrSession) sessions.get(simpleCredentials);
     } catch (javax.jcr.LoginException e) {
       throw new RepositoryLoginException(e);
@@ -86,17 +85,14 @@ public class JcrConnector implements Connector {
   }
 
   public synchronized void shutdown() throws RepositoryException {
-    System.out.println("JcrConnector Shutdown:");
     for (Iterator iter = sessions.values().iterator(); iter.hasNext();) {
       JcrSession jcrSession = (JcrSession) iter.next();
-      System.out.println("  JcrConnector Shutdown: logging out Session " + jcrSession);
       jcrSession.session.logout();
     }
     sessions.clear();
   }
 
   public void remove() throws RepositoryException {
-    System.out.println("JcrConnector Remove Connector");
     return;
   }
 }
