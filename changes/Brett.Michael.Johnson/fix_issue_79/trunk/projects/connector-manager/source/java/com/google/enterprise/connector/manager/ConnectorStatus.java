@@ -36,7 +36,7 @@ public class ConnectorStatus {
     this.name = name;
     this.type = type;
     this.status = status;
-    this.schedule = schedule;
+    this.schedule = schedule.trim();
   }
 
   /**
