@@ -129,10 +129,10 @@
     <constructor-arg index="0" type="int" value="20"/>
     <!-- Number of seconds before worker thread is considered timed out.
          A value of 0 means it never times out. -->
-    <constructor-arg index="1" type="int" value="300"/>
+    <constructor-arg index="1" type="int" value="1200"/>
     <!-- Number of seconds after a timed-out worker thread is interrupted
          before it is killed outright. -->
-    <constructor-arg index="3" type="int" value="60"/>
+    <constructor-arg index="3" type="int" value="600"/>
   </bean>
 
   <bean id="Manager"

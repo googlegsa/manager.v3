@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,11 +52,11 @@ public class WorkQueue {
   private boolean isInitialized;  // true after one-time init done
   private boolean shutdown;       // true when shutdown is initiated
 
-  private LinkedList <WorkQueueItem> workQueue;    // Queue used for added work
-  private Map <WorkQueueItem, Long> absTimeoutMap; // Track threads that timeout
+  private LinkedList workQueue;    // Queue used for added work
+  private Map absTimeoutMap; // Track threads that timeout
 
   private int numThreads;
-  private Set <WorkQueueThread> threads; // protected by "threads" instance lock
+  private Set threads; // protected by "threads" instance lock
 
   private InterrupterThread interrupterThread; // Looks for long running threads
   private LifeThread lifeThread;               // Looks for hung threads
@@ -111,7 +111,7 @@ public class WorkQueue {
       throw new IllegalArgumentException("numThreads must be > 0");
     }
     this.killThreadTimeout = killThreadTimeout * 1000;
-    this.workQueue = new LinkedList<WorkQueueItem>();
+    this.workQueue = new LinkedList();
     this.absTimeoutMap = new HashMap();
     this.isInitialized = false;
     this.shutdown = false;
@@ -194,9 +194,9 @@ public class WorkQueue {
 
     if (interrupt) {
       synchronized (threads) {
-        Iterator <WorkQueueThread> iter = threads.iterator();
+        Iterator iter = threads.iterator();
         while (iter.hasNext()) {
-          iter.next().interruptAndKill();
+          ((WorkQueueThread)iter.next()).interruptAndKill();
         }
       }
     }
@@ -219,9 +219,9 @@ public class WorkQueue {
    */
   private boolean isAnyThreadWorking() {
     synchronized (threads) {
-      Iterator <WorkQueueThread> iter = threads.iterator();
+      Iterator iter = threads.iterator();
       while (iter.hasNext()) {
-        if (iter.next().isWorking()) {
+        if (((WorkQueueThread)iter.next()).isWorking()) {
           return true;
         }
       }
@@ -239,14 +239,13 @@ public class WorkQueue {
     // set nextAbsTimeout.
     long now = System.currentTimeMillis();
     long nextAbsTimeout = now + killThreadTimeout;
-    Iterator <Map.Entry <WorkQueueItem, Long>> iter =
-        absTimeoutMap.entrySet().iterator();
+    Iterator iter = absTimeoutMap.entrySet().iterator();
     while (iter.hasNext()) {
-      Map.Entry <WorkQueueItem, Long> entry = iter.next();
-      long absTimeout = entry.getValue().longValue();
+      Map.Entry entry = (Map.Entry) iter.next();
+      long absTimeout = ((Long) entry.getValue()).longValue();
       if (absTimeout <= now) {  // We have a timeout.
         LOGGER.finest("A WorkItem timeout has occured...");
-        WorkQueueItem item = entry.getKey();
+        WorkQueueItem item = (WorkQueueItem) entry.getKey();
         // If the wait is too long, then we want to replace the thread.
         if (absTimeout + killThreadTimeout <= now) {
           LOGGER.finest("...replacing thread");
@@ -435,11 +434,11 @@ public class WorkQueue {
     public void run() {
       while (!shutdown) {
         try {
-          Set <WorkQueueThread> newThreads = new HashSet<WorkQueueThread>();
+          Set newThreads = new HashSet();
           synchronized (threads) {
-            Iterator <WorkQueueThread> iter = threads.iterator();
+            Iterator iter = threads.iterator();
             while (iter.hasNext()) {
-              WorkQueueThread thread = iter.next();
+              WorkQueueThread thread = (WorkQueueThread) iter.next();
               if (!thread.isAlive()) {
                 LOGGER.warning("WorkQueueThread was dead and is "
                     + "restarted by LifeThread: " + thread.getName());

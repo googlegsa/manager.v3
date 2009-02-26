@@ -19,8 +19,8 @@ package com.google.enterprise.connector.spi;
  * to supply the ConnectorManager with its own timeout value.
  *
  * This Interface has been deprecated.
+ * @deprecated
  */
-@Deprecated()
 public interface HasTimeout {
   /**
    * Gets the connector's preferred timeout.
