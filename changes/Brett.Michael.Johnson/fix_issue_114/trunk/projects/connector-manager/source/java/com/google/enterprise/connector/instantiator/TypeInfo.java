@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ import java.util.logging.Logger;
  * factory that uses Spring.
  */
 public class TypeInfo {
-  public static final String CONNECTOR_INSTANCE_XML = "connectorInstance.xml";
+  public  static final String CONNECTOR_INSTANCE_XML = "connectorInstance.xml";
+  private static final String CONNECTOR_DEFAULTS_XML = "connectorDefaults.xml";
 
   private static final Logger LOGGER =
       Logger.getLogger(TypeInfo.class.getName());
@@ -36,6 +37,7 @@ public class TypeInfo {
   private final String connectorTypeName;
   private final ConnectorType connectorType;
   private final Resource connectorInstancePrototype;
+  private final Resource connectorDefaultPrototype;
   private File connectorTypeDir = null;
 
   /**
@@ -43,6 +45,13 @@ public class TypeInfo {
    */
   Resource getConnectorInstancePrototype() {
     return connectorInstancePrototype;
+  }
+
+  /**
+   * @return the connectorDefaultPrototype
+   */
+  Resource getConnectorDefaultPrototype() {
+    return connectorDefaultPrototype;
   }
 
   /**
@@ -74,10 +83,11 @@ public class TypeInfo {
   }
 
   private TypeInfo(String connectorTypeName, ConnectorType connectorType,
-      Resource connectorInstancePrototype) {
+      Resource connectorInstancePrototype, Resource connectorDefaultPrototype) {
     this.connectorTypeName = connectorTypeName;
     this.connectorType = connectorType;
     this.connectorInstancePrototype = connectorInstancePrototype;
+    this.connectorDefaultPrototype = connectorDefaultPrototype;
   }
 
   public static TypeInfo fromSpringResource(Resource r) {
@@ -110,6 +120,7 @@ public class TypeInfo {
     String connectorTypeName = null;
     ConnectorType connectorType = null;
     Resource connectorInstancePrototype = null;
+    Resource connectorDefaultPrototype = null;
 
     // make a bean factory from the resource
     XmlBeanFactory factory;
@@ -144,16 +155,27 @@ public class TypeInfo {
     try {
       connectorInstancePrototype = r.createRelative(CONNECTOR_INSTANCE_XML);
     } catch (Exception e) {
-      throw new InstanceXmlFailureException(r, e, connectorTypeName);
+      throw new InstanceXmlFailureException(r, e, connectorTypeName,
+                                            CONNECTOR_INSTANCE_XML);
     }
 
     if (!connectorInstancePrototype.exists()) {
       throw new InstanceXmlMissingException(r, connectorTypeName);
     }
 
-    TypeInfo result =
-        new TypeInfo(connectorTypeName, connectorType,
-            connectorInstancePrototype);
+    // find the default prototype
+    try {
+      connectorDefaultPrototype = r.createRelative(CONNECTOR_DEFAULTS_XML);
+    } catch (Exception e) {
+      throw new InstanceXmlFailureException(r, e, connectorTypeName,
+                                            CONNECTOR_DEFAULTS_XML);
+    }
+    if (!connectorDefaultPrototype.exists()) {
+      connectorDefaultPrototype = null;
+    }
+
+    TypeInfo result = new TypeInfo(connectorTypeName, connectorType,
+        connectorInstancePrototype, connectorDefaultPrototype);
 
     // if more Connector Types were found issue a warning
     if (beanList.length > 1) {
@@ -208,8 +230,8 @@ public class TypeInfo {
   }
   static class InstanceXmlFailureException extends TypeInfoException {
     InstanceXmlFailureException(Resource resource, Exception cause,
-        String connectorTypeName) {
-      super("Exception from Spring while creating " + CONNECTOR_INSTANCE_XML
+        String connectorTypeName, String xmlResourceName) {
+      super("Exception from Spring while creating " + xmlResourceName
           + " sibling resource for " + connectorTypeName + " from resource "
           + resource.getDescription(), cause);
     }
