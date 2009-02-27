@@ -20,7 +20,6 @@ import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
-import com.google.enterprise.connector.spi.HasTimeout;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.SpiConstants;
@@ -43,9 +42,10 @@ public class QueryTraverser implements Traverser {
   private TraversalManager queryTraversalManager;
   private TraversalStateStore stateStore;
   private String connectorName;
-  private int timeout;
 
-  private static final int TRAVERSAL_TIMEOUT = 5000;
+  // Synchronize access to cancelWork.
+  private Object cancelLock = new Object();
+  private boolean cancelWork = false;
 
   public QueryTraverser(Pusher pusher, TraversalManager traversalManager,
                         TraversalStateStore stateStore, String connectorName) {
@@ -53,22 +53,28 @@ public class QueryTraverser implements Traverser {
     this.queryTraversalManager = traversalManager;
     this.stateStore = stateStore;
     this.connectorName = connectorName;
-    if (this.queryTraversalManager instanceof HasTimeout) {
-      this.timeout = Math.max(TRAVERSAL_TIMEOUT,
-          ((HasTimeout) queryTraversalManager).getTimeoutMillis());
-    }
     if (this.queryTraversalManager instanceof TraversalContextAware) {
       TraversalContext tc = Context.getInstance().getTraversalContext();
       ((TraversalContextAware)this.queryTraversalManager).setTraversalContext(tc);
     }
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
-   */
+  public void cancelBatch() {
+    synchronized(cancelLock) {
+      cancelWork = true;
+    }
+  }
+
+  public boolean isCancelled() {
+    synchronized(cancelLock) {
+      return cancelWork;
+    }
+  }
+
   public synchronized int runBatch(int batchHint) {
+    synchronized(cancelLock) {
+      cancelWork = false;
+    }
     if (batchHint <= 0) {
       throw new IllegalArgumentException("batchHint must be a positive int");
     }
@@ -116,7 +122,7 @@ public class QueryTraverser implements Traverser {
 
     try {
       while (true) {
-        if (Thread.currentThread().isInterrupted()) {
+        if (Thread.currentThread().isInterrupted() || isCancelled()) {
           LOGGER.finest(
               "Thread has been interrupted...breaking out of batch run.");
           break;
@@ -201,6 +207,12 @@ public class QueryTraverser implements Traverser {
       resultSet = null;
       counter = Traverser.FORCE_WAIT;
     } finally {
+      // If we have cancelled the work, abandon the batch.
+      if (isCancelled()) {
+        resultSet = null;
+        counter = Traverser.FORCE_WAIT;
+      }
+
       // Checkpoint completed work as well as skip past troublesome documents
       // (e.g. documents that are too large and will always fail).
       if ((resultSet != null) && (checkpointAndSave(resultSet) == null)) {
@@ -239,9 +251,5 @@ public class QueryTraverser implements Traverser {
       LOGGER.finest("...checkpoint " + connectorState + " discarded.");
     }
     return null;
-  }
-
-  public int getTimeoutMillis() {
-    return timeout;
   }
 }

@@ -41,6 +41,7 @@ import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.traversal.CancellableQueryTraverser;
 import com.google.enterprise.connector.traversal.InterruptibleQueryTraverser;
 import com.google.enterprise.connector.traversal.LongRunningQueryTraverser;
 import com.google.enterprise.connector.traversal.NeverEndingQueryTraverser;
@@ -68,6 +69,7 @@ public class MockInstantiator implements Instantiator {
   public static final String TRAVERSER_NAME_LONG_RUNNING = "longrunning";
   public static final String TRAVERSER_NAME_NEVER_ENDING = "neverending";
   public static final String TRAVERSER_NAME_INTERRUPTIBLE = "interruptible";
+  public static final String TRAVERSER_NAME_CANCELLABLE = "cancellable";
 
   private static final ConnectorType CONNECTOR_TYPE = null;
 
@@ -112,6 +114,7 @@ public class MockInstantiator implements Instantiator {
     setupTraverser(TRAVERSER_NAME_LONG_RUNNING, new LongRunningQueryTraverser());
     setupTraverser(TRAVERSER_NAME_NEVER_ENDING, new NeverEndingQueryTraverser());
     setupTraverser(TRAVERSER_NAME_INTERRUPTIBLE, new InterruptibleQueryTraverser());
+    setupTraverser(TRAVERSER_NAME_CANCELLABLE, new CancellableQueryTraverser());
   }
 
   public void setupTraverser(String traverserName, Traverser traverser) {

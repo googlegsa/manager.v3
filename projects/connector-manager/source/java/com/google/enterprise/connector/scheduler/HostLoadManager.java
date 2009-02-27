@@ -187,7 +187,16 @@ public class HostLoadManager {
         Schedule schedule = new Schedule(schedStr);
         int retryDelayMillis = schedule.getRetryDelayMillis();
         long now = System.currentTimeMillis();
-        return now < finishTime + retryDelayMillis;
+        if (now < finishTime + retryDelayMillis) {
+          return true;
+        }
+        int maxDocsPerPeriod = (int)
+            ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
+        int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
+        int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
+        if (remainingDocsToTraverse <= 0) {
+          return true;
+        }
       } catch (ConnectorNotFoundException e) {
         // Connector seems to have been deleted.
         removeConnector(connectorName);

@@ -452,6 +452,10 @@ public final class InstanceInfo {
         Properties properties =
             legacyStore.getConnectorConfiguration(info.storeContext);
         if (properties != null) {
+          LOGGER.config("Migrating configuration information for connector "
+                        + info.connectorName + " from legacy storage "
+                        + legacyStore.getClass().getName() + " to "
+                        + info.configStore.getClass().getName());
           info.properties = properties;
           info.configStore.storeConnectorConfiguration(info.storeContext,
                                                        properties);
@@ -460,6 +464,9 @@ public final class InstanceInfo {
         }
       }
     }
+    LOGGER.config("Connector " + info.connectorName
+                  + " lacks saved configuration information, and none was"
+                  + " found in any LegacyConnectorConfigStores.");
   }
 
   /**
@@ -479,12 +486,19 @@ public final class InstanceInfo {
         ConnectorScheduleStore legacyStore = (ConnectorScheduleStore)iter.next();
         String schedule = legacyStore.getConnectorSchedule(info.storeContext);
         if (schedule != null) {
+          LOGGER.config("Migrating traversal schedule information for connector "
+                        + info.connectorName + " from legacy storage "
+                        + legacyStore.getClass().getName() + " to "
+                        + info.schedStore.getClass().getName());
           info.schedStore.storeConnectorSchedule(info.storeContext, schedule);
           legacyStore.removeConnectorSchedule(info.storeContext);
           return;
         }
       }
     }
+    LOGGER.config("Connector " + info.connectorName
+                  + " lacks saved traversal schedule information, and none"
+                  + " was found in any LegacyConnectorScheduleStores.");
   }
 
   /**
@@ -504,12 +518,19 @@ public final class InstanceInfo {
         ConnectorStateStore legacyStore = (ConnectorStateStore)iter.next();
         String state = legacyStore.getConnectorState(info.storeContext);
         if (state != null) {
+          LOGGER.config("Migrating traversal state information for connector "
+                        + info.connectorName + " from legacy storage "
+                        + legacyStore.getClass().getName() + " to "
+                        + info.stateStore.getClass().getName());
           info.stateStore.storeConnectorState(info.storeContext, state);
           legacyStore.removeConnectorState(info.storeContext);
           return;
         }
       }
     }
+    LOGGER.config("Connector " + info.connectorName
+                  + " lacks saved traversal state information, and none was"
+                  + " found in any LegacyConnectorStateStores.");
   }
 
   static class InstanceInfoException extends InstantiatorException {
