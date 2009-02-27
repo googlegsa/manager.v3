@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -66,8 +66,9 @@ public interface Traverser {
   public int runBatch(int batchHint);
 
   /**
-   * Gets the preferred timeout
-   * @return The timeout, in milliseconds
+   * Cancel the Batch in progress.  Discard the batch.  This might be called
+   * when the workItem times out, connector deletion or reconfiguration, or
+   * during shutdown.
    */
-  public int getTimeoutMillis();
+  public void cancelBatch();
 }

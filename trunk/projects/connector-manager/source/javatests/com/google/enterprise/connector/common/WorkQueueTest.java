@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@ public class WorkQueueTest extends TestCase {
     }
     public void doWork() {
       System.out.println(str);
+    }
+    public void cancelWork() {
+      System.out.println("Cancelled: " + str);
     }
   }
 
@@ -72,7 +75,7 @@ public class WorkQueueTest extends TestCase {
   }
 
   public void testInterruptorFinish() {
-    WorkQueue queue = new WorkQueue(2, 1000, 1000);
+    WorkQueue queue = new WorkQueue(2, 1, 1);
     queue.init();
     SlowWorkQueueItem workItem =
         new SlowWorkQueueItem("testInterruptorFinish", 500);
@@ -85,7 +88,7 @@ public class WorkQueueTest extends TestCase {
   }
 
   public void testInterruptorInterrupt() {
-    WorkQueue queue = new WorkQueue(2, 3000, 1000);
+    WorkQueue queue = new WorkQueue(2, 1, 3);
     queue.init();
     SlowWorkQueueItem workItem =
         new SlowWorkQueueItem("testInterruptorInterrupt", 2000);
@@ -94,11 +97,12 @@ public class WorkQueueTest extends TestCase {
     workItem.waitForWorkToBeDone();
     assertTrue("Work was done", workItem.isDone);
     assertEquals("Work was interrupted once", 1, workItem.workInterruptedCount);
+    assertTrue("Work was not cancelled", !workItem.isCancelled);
     queue.shutdown(false);
   }
 
   public void testInterruptorKill() {
-    WorkQueue queue = new WorkQueue(2, 1000, 1000);
+    WorkQueue queue = new WorkQueue(2, 1, 1);
     queue.init();
     SlowWorkQueueItem workItem =
         new SlowWorkQueueItem("testInterrupterKill", 3000);
@@ -108,6 +112,7 @@ public class WorkQueueTest extends TestCase {
     assertTrue("Work was done", workItem.isDone);
     assertEquals("Work was interrupted twice", 2,
         workItem.workInterruptedCount);
+    assertTrue("Work was cancelled", workItem.isCancelled);
     queue.shutdown(false);
   }
 
@@ -115,12 +120,14 @@ public class WorkQueueTest extends TestCase {
     private String str;
     private long workDuration;
     private boolean isDone;
+    private boolean isCancelled;
     private int workInterruptedCount;
 
     public SlowWorkQueueItem(String str, long workDurationMillis) {
       this.str = str;
       this.workDuration = workDurationMillis;
       this.isDone = false;
+      this.isCancelled = false;
       this.workInterruptedCount = 0;
     }
 
@@ -147,6 +154,11 @@ public class WorkQueueTest extends TestCase {
       } finally {
         isDone = true;
       }
+    }
+
+    public void cancelWork() {
+      isCancelled = true;
+      System.err.println(str + ": ...work has been cancelled...");
     }
 
     public void waitForWorkToBeDone() {

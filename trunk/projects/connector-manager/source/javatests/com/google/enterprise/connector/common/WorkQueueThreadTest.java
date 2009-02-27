@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc. All Rights Reserved.
+// Copyright 2008-2009 Google Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ public class WorkQueueThreadTest extends TestCase {
     assertTrue("Work was started", testItem.workIsStarted);
     assertTrue("Work was interrupted", testItem.workIsInterrupted);
     assertTrue("Work was not done", !testItem.workIsDone);
+    assertTrue("Work was not cancelled", !testItem.workIsCancelled);
   }
 
   private static class TestItem extends WorkQueueItem {
@@ -78,6 +79,7 @@ public class WorkQueueThreadTest extends TestCase {
     private boolean workIsStarted;
     private boolean workIsDone;
     private boolean workIsInterrupted;
+    private boolean workIsCancelled;
 
     public TestItem(String str) {
       this.str = str;
@@ -85,6 +87,7 @@ public class WorkQueueThreadTest extends TestCase {
       workIsStarted = false;
       workIsDone = false;
       workIsInterrupted = false;
+      workIsCancelled = false;
     }
 
     public void finishWork() {
@@ -113,6 +116,11 @@ public class WorkQueueThreadTest extends TestCase {
           }
         }
       }
+    }
+
+    public void cancelWork() {
+      workIsCancelled = true;
+      System.out.println(str + ": ...work has been cancelled...");
     }
 
     public void waitForWorkToBeStarted() {

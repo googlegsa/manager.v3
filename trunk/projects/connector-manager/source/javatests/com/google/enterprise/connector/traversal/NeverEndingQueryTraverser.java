@@ -19,9 +19,6 @@ package com.google.enterprise.connector.traversal;
  */
 public class NeverEndingQueryTraverser implements Traverser {
 
-  /* (non-Javadoc)
-   * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
-   */
   public int runBatch(int batchHint) {
     boolean breakLoop = true;
     // infinite loop
@@ -35,9 +32,7 @@ public class NeverEndingQueryTraverser implements Traverser {
     return batchHint;
   }
 
-  private static final int TRAVERSAL_TIMEOUT = 5000;
-
-  public int getTimeoutMillis() {
-  return TRAVERSAL_TIMEOUT;
+  public void cancelBatch() {
+    // do nothing
   }
 }
