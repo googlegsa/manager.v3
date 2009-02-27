@@ -19,9 +19,6 @@ package com.google.enterprise.connector.traversal;
  */
 public class LongRunningQueryTraverser implements Traverser {
 
-  /* (non-Javadoc)
-   * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
-   */
   public int runBatch(int batchHint) {
     long sleepTime = 60 * 1000;
     try {
@@ -33,7 +30,6 @@ public class LongRunningQueryTraverser implements Traverser {
   }
 
   public void cancelBatch() {
-    // Not testing this.
+    throw new UnsupportedOperationException("Should not get cancelled");
   }
-
 }

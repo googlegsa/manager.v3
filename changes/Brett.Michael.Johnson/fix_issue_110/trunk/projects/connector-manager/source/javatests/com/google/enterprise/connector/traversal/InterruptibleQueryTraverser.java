@@ -21,11 +21,6 @@ import java.util.Date;
  */
 public class InterruptibleQueryTraverser implements Traverser {
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
-   */
   public int runBatch(int batchHint) {
     int counter = 0;
     boolean breakLoop = true;
@@ -59,5 +54,4 @@ public class InterruptibleQueryTraverser implements Traverser {
   public void cancelBatch() {
     throw new UnsupportedOperationException("Should not get cancelled");
   }
-
 }

@@ -20,9 +20,6 @@ package com.google.enterprise.connector.traversal;
 public class CancellableQueryTraverser implements Traverser {
   boolean cancelled = false;
 
-  /* (non-Javadoc)
-   * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
-   */
   public int runBatch(int batchHint) {
     // infinite loop
     while (!isCancelled()) {
@@ -42,5 +39,4 @@ public class CancellableQueryTraverser implements Traverser {
   public synchronized boolean isCancelled() {
     return cancelled;
   }
-
 }

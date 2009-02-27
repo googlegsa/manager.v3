@@ -18,12 +18,13 @@ package com.google.enterprise.connector.common;
  * Item that will be run within the WorkQueue.
  */
 public abstract class WorkQueueItem {
-  // The thread that is executing the item (this is used for interrupting work)
+  // The thread that is executing the item (this is used for interrupting work).
   private WorkQueueThread workQueueThread;
 
   /**
    * Set the WorkQueue thread.  This must be done before doWork() is called.
    * This thread will be used to interrupt the work if timeout occurs.
+   *
    * @param workQueueThread
    */
   public void setWorkQueueThread(WorkQueueThread workQueueThread) {

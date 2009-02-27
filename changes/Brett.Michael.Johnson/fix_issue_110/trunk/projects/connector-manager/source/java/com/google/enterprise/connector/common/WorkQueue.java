@@ -36,9 +36,6 @@ public class WorkQueue {
   private static final Logger LOGGER =
     Logger.getLogger(WorkQueue.class.getName());
 
-  // possible value for nextAbsTimeout
-  private static final long NO_TIMEOUT = 0;
-
   // Timeout in milliseconds to let a work item run before interrupting it.
   private long workItemTimeout = 5 * 60 * 1000;
 
@@ -74,8 +71,9 @@ public class WorkQueue {
    * Creates a WorkQueue with a default 5 minute timeout before
    * interrupting a thread, and a default 60 second timeout before
    * a thread is killed after it is interrupted.
+   *
    * @param numThreads the number of threads to execute work on the WorkQueue.
-   * This number should be at least 1.
+   *        This number should be at least 1.
    */
   public WorkQueue(int numThreads) {
     this(numThreads, 300, 60);
@@ -84,10 +82,12 @@ public class WorkQueue {
   /**
    * Creates a WorkQueue with a given number of worker threads and a
    * given timeout for the worker threads.
+   *
    * @param numThreads the number of threads to execute work on the WorkQueue.
-   * This number should be at least 1.
+   *        This number should be at least 1.
    * @param workItemTimeout time in seconds that each {@code WorkQueueItem}
-   * is given before it is interrupted.  A value of 0 means it never times out.
+   *        is given before it is interrupted.  A value of 0 means it never
+   *        times out.
    */
   public WorkQueue(int numThreads, int workItemTimeout) {
     this(numThreads, workItemTimeout, 60);
@@ -98,12 +98,13 @@ public class WorkQueue {
    * of the WorkQueueItem.
    *
    * @param numThreads the number of threads to execute work on the WorkQueue.
-   * This number should be at least 1.
+   *        This number should be at least 1.
    * @param workItemTimeout time in seconds that each {@code WorkQueueItem}
-   * is given before it is interrupted.  A value of 0 means it never times out.
+   *        is given before it is interrupted.  A value of 0 means it never
+   *        times out.
    * @param killThreadTimeout the additional time in seconds given over the
-   * {@code workItemTimeout} before the {@code WorkQueueThread} is killed rather
-   * than just interrupted.
+   *        {@code workItemTimeout} before the {@code WorkQueueThread} is
+   *        killed rather than just interrupted.
    */
   public WorkQueue(int numThreads, int workItemTimeout, int killThreadTimeout)
   {
@@ -150,6 +151,7 @@ public class WorkQueue {
 
   /**
    * Create WorkQueueThread and start it.
+   *
    * @param name name of the thread
    */
   private WorkQueueThread createAndStartWorkQueueThread(String name) {
@@ -172,7 +174,7 @@ public class WorkQueue {
    *
    * @param interrupt if true, interrupt threads
    * @param timeoutInMillis wait at least this timeout for threads to complete
-   * before just returning
+   *        before just returning
    */
   public synchronized void shutdown(boolean interrupt, long timeoutInMillis) {
     if (!isInitialized || shutdown) {
@@ -215,6 +217,7 @@ public class WorkQueue {
 
   /**
    * Determine whether any WorkQueue thread is working.
+   *
    * @return true if any thread in the WorkQueue is doing work.
    */
   private boolean isAnyThreadWorking() {
@@ -232,6 +235,7 @@ public class WorkQueue {
 
   /**
    * Interrupts all WorkQueueItems that have timed out.
+   *
    * @return number of milliseconds until next soonest timeout.
    */
   private synchronized long interruptAllTimedOutItems() {
@@ -273,6 +277,7 @@ public class WorkQueue {
    * an interrupt, we want to be able to reclaim the thread that is hung
    * executing that work.  We do so by spawning a new thread.  Caller must
    * hold instance lock.
+   *
    * @param item the item that is causing the hang
    */
   private void replaceHangingThread(WorkQueueItem item) {
@@ -289,6 +294,7 @@ public class WorkQueue {
 
   /**
    * Work to do right before executing the item.
+   *
    * @param item
    */
   void preWork(WorkQueueItem item) {
@@ -303,6 +309,7 @@ public class WorkQueue {
 
   /**
    * Work to do right after executing an item.
+   *
    * @param item
    */
   void postWork(WorkQueueItem item) {
@@ -313,6 +320,7 @@ public class WorkQueue {
 
   /**
    * Add a piece of work that will be executed at a later time.
+   *
    * @param work one piece of work
    */
   public synchronized void addWork(WorkQueueItem work) {
@@ -337,6 +345,7 @@ public class WorkQueue {
 
   /**
    * Cancel a piece of work by interrupting it.
+   *
    * @param work the piece of work to be updated.
    */
   public synchronized void cancelWork(WorkQueueItem work) {
@@ -364,6 +373,7 @@ public class WorkQueue {
 
   /**
    * Remove a piece of work.
+   *
    * @return the work item
    */
   WorkQueueItem removeWork() {
@@ -374,6 +384,7 @@ public class WorkQueue {
 
   /**
    * Determine the number of pieces of work that are in the queue.
+   *
    * @return the number of pieces of work in the queue.
    */
   public synchronized int getWorkCount() {

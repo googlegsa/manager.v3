@@ -43,7 +43,7 @@ public class QueryTraverser implements Traverser {
   private TraversalStateStore stateStore;
   private String connectorName;
 
-  // synchronize access to cancelWork
+  // Synchronize access to cancelWork.
   private Object cancelLock = new Object();
   private boolean cancelWork = false;
 
@@ -71,11 +71,6 @@ public class QueryTraverser implements Traverser {
     }
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
-   */
   public synchronized int runBatch(int batchHint) {
     synchronized(cancelLock) {
       cancelWork = false;
