@@ -159,9 +159,13 @@ public class InstanceMap extends TreeMap {
                Context.getInstance().getCommonDirPath());
 
     // Validate the configuration.
-    ConfigureResponse response =
-        typeInfo.getConnectorType().validateConfig(config, locale,
-            new ConnectorInstanceFactory(name, connectorDir, typeInfo, config));
+    ConfigureResponse response;
+    try {
+      response = typeInfo.getConnectorType().validateConfig(config, locale,
+          new ConnectorInstanceFactory(name, connectorDir, typeInfo, config));
+    } catch (Exception e) {
+      throw new InstantiatorException("Unexpected validateConfig failure.", e);
+    }
 
     if (response != null) {
       // If validateConfig() returns a non-null response with an error message.

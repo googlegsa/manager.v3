@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -64,6 +65,12 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
           out, ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_TYPE);
       LOGGER.log(
           Level.WARNING, ServletUtil.LOG_RESPONSE_NULL_CONNECTOR_TYPE, e);
+      out.close();
+      return;
+    } catch (InstantiatorException e) {
+      ServletUtil.writeResponse(
+          out, ConnectorMessageCode.EXCEPTION_INSTANTIATOR);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_INSTANTIATOR, e);
       out.close();
       return;
     }

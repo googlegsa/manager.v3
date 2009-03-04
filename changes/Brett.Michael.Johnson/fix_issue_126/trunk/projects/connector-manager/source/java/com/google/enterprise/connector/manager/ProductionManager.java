@@ -145,12 +145,16 @@ public class ProductionManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager
    *      #getConfigForm(java.lang.String, java.lang.String)
    */
-  public ConfigureResponse getConfigForm(String connectorTypeName,
-      String language) throws ConnectorTypeNotFoundException {
+  public ConfigureResponse getConfigForm(String connectorTypeName, String
+      language) throws ConnectorTypeNotFoundException, InstantiatorException {
     ConnectorType connectorType =
         instantiator.getConnectorType(connectorTypeName);
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
-    return connectorType.getConfigForm(locale);
+    try {
+      return connectorType.getConfigForm(locale);
+    } catch (Exception e) {
+      throw new InstantiatorException("Failed to get configuration form.", e);
+    }
   }
 
   /*
