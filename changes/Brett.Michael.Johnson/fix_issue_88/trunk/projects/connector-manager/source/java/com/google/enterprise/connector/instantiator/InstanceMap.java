@@ -72,7 +72,7 @@ public class InstanceMap extends TreeMap {
       if (connector instanceof ConnectorShutdownAware) {
         try {
           ((ConnectorShutdownAware)connector).shutdown();
-        } catch (RepositoryException e) {
+        } catch (Exception e) {
           LOGGER.log(Level.WARNING, "Problem shutting down connector "
                      + connectorName, e);
         }
@@ -223,7 +223,7 @@ public class InstanceMap extends TreeMap {
       if (connector instanceof ConnectorShutdownAware) {
         try {
           ((ConnectorShutdownAware)connector).shutdown();
-        } catch (RepositoryException e) {
+        } catch (Exception e) {
           LOGGER.log(Level.WARNING, "Problem shutting down connector " + name
               + " during configuration update.", e);
         }
@@ -275,13 +275,13 @@ public class InstanceMap extends TreeMap {
       try {
         LOGGER.fine("Shutting down Connector " + name);
         ((ConnectorShutdownAware)connector).shutdown();
-      } catch (RepositoryException e) {
+      } catch (Exception e) {
         LOGGER.log(Level.WARNING, "Failed to shutdown connector " + name, e);
       }
       try {
         LOGGER.fine("Removing Connector " + name);
         ((ConnectorShutdownAware)connector).delete();
-      } catch (RepositoryException e) {
+      } catch (Exception e) {
         LOGGER.log(Level.WARNING, "Failed to remove connector " + name, e);
       }
     }
@@ -370,7 +370,7 @@ public class InstanceMap extends TreeMap {
           if (connector instanceof ConnectorShutdownAware) {
             try {
               ((ConnectorShutdownAware)connector).shutdown();
-            } catch (RepositoryException e) {
+            } catch (Exception e) {
               LOGGER.log(Level.WARNING, "Failed to shutdown connector "
                   + info.getName() + " created by validateConfig", e);
             }

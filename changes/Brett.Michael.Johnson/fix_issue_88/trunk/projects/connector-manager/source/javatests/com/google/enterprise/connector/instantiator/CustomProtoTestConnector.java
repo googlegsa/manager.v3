@@ -21,8 +21,8 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
 
 /**
- * @author ziff
- *
+ * Wraps an existing Connector, adding the ability
+ * to add custom properties.
  */
 public final class CustomProtoTestConnector
     implements Connector, ConnectorShutdownAware {
