@@ -217,8 +217,8 @@ public class TraversalScheduler implements Scheduler {
                   return;
               }
               if (alreadyRunning) {
-                LOGGER.finer("Traversal work for connector "
-                             + connectorName + " is still running.");
+                //LOGGER.finer("Traversal work for connector "
+                //             + connectorName + " is still running.");
                 continue;
               }
               if (removedConnectors.contains(connectorName)) {
@@ -321,6 +321,7 @@ public class TraversalScheduler implements Scheduler {
     public synchronized void cancelWork() {
       if (traverser != null) {
         traverser.cancelBatch();
+        traverser = null;
       }
       setFinished(true);
       notifyAll();

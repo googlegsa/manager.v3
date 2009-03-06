@@ -64,6 +64,7 @@ public class QueryTraverser implements Traverser {
       cancelWork = true;
       stateStore = null;
     }
+    LOGGER.fine("Cancelling traversal for connector " + connectorName);
   }
 
   public boolean isCancelled() {
@@ -129,8 +130,8 @@ public class QueryTraverser implements Traverser {
     try {
       while (true) {
         if (Thread.currentThread().isInterrupted() || isCancelled()) {
-          LOGGER.finest(
-              "Thread has been interrupted...breaking out of batch run.");
+          LOGGER.fine("Traversal for connector " + connectorName
+                      + " has been interrupted...breaking out of batch run.");
           break;
         }
 
