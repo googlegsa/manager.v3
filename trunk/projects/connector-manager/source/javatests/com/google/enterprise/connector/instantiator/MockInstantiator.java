@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,7 +38,9 @@ import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.CancellableQueryTraverser;
@@ -56,6 +58,8 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.jcr.Repository;
 
@@ -72,6 +76,9 @@ public class MockInstantiator implements Instantiator {
   public static final String TRAVERSER_NAME_CANCELLABLE = "cancellable";
 
   private static final ConnectorType CONNECTOR_TYPE = null;
+
+  private static final Logger LOGGER =
+      Logger.getLogger(MockInstantiator.class.getName());
 
   private static final AuthenticationManager nullAuthenticationManager =
       new AuthenticationManager() {
@@ -105,6 +112,24 @@ public class MockInstantiator implements Instantiator {
     this.connectorScheduleStore = schedStore;
     this.connectorStateStore = stateStore;
     this.connectorMap = new HashMap();
+  }
+
+  public synchronized void shutdown() {
+    Iterator iter = connectorMap.keySet().iterator();
+    while (iter.hasNext()) {
+      String name = (String) iter.next();
+      ConnectorInstance instance = (ConnectorInstance) connectorMap.get(name);
+      Connector connector = instance.getConnectorInterfaces().getConnector();
+      if (connector != null && (connector instanceof ConnectorShutdownAware)) {
+        try {
+          ((ConnectorShutdownAware)connector).shutdown();
+        } catch (RepositoryException e) {
+          LOGGER.log(Level.WARNING, "Problem shutting down connector "
+                     + name, e);
+        }
+      }
+    }
+    connectorMap.clear();
   }
 
   public void setupTestTraversers() {

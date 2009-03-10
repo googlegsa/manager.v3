@@ -16,7 +16,9 @@ package com.google.enterprise.connector.instantiator;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
@@ -30,6 +32,7 @@ import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorFactory;
 import com.google.enterprise.connector.spi.RepositoryException;
 
@@ -59,6 +62,23 @@ public class InstanceMap extends TreeMap {
       }
       processTypeDirectory(typeInfo);
     }
+  }
+
+  public synchronized void shutdown() {
+    Iterator iter = this.keySet().iterator();
+    while (iter.hasNext()) {
+      String connectorName = (String) iter.next();
+      Connector connector = getInstanceInfo(connectorName).getConnector();
+      if (connector instanceof ConnectorShutdownAware) {
+        try {
+          ((ConnectorShutdownAware)connector).shutdown();
+        } catch (Exception e) {
+          LOGGER.log(Level.WARNING, "Problem shutting down connector "
+                     + connectorName, e);
+        }
+      }
+    }
+    this.clear();
   }
 
   private void processTypeDirectory(TypeInfo typeInfo) {
@@ -159,9 +179,11 @@ public class InstanceMap extends TreeMap {
                Context.getInstance().getCommonDirPath());
 
     // Validate the configuration.
+    ConnectorInstanceFactory factory =
+        new ConnectorInstanceFactory(name, connectorDir, typeInfo, config);
     ConfigureResponse response =
-        typeInfo.getConnectorType().validateConfig(config, locale,
-            new ConnectorInstanceFactory(name, connectorDir, typeInfo, config));
+        typeInfo.getConnectorType().validateConfig(config, locale, factory);
+    factory.shutdown();
 
     if (response != null) {
       // If validateConfig() returns a non-null response with an error message.
@@ -193,6 +215,19 @@ public class InstanceMap extends TreeMap {
       // We don't expect this, because an InstantiatorException should have
       // been thrown, but just in case.
       throw new InstantiatorException("Failed to create connector " + name);
+    }
+
+    // Tell old connector instance to shut down, as it is being replaced.
+    if (getInstanceInfo(name) != null) {
+      Connector connector = getInstanceInfo(name).getConnector();
+      if (connector instanceof ConnectorShutdownAware) {
+        try {
+          ((ConnectorShutdownAware)connector).shutdown();
+        } catch (Exception e) {
+          LOGGER.log(Level.WARNING, "Problem shutting down connector " + name
+              + " during configuration update.", e);
+        }
+      }
     }
 
     // Only after validateConfig and instantiation succeeds do we
@@ -235,6 +270,21 @@ public class InstanceMap extends TreeMap {
     if (instanceInfo == null) {
       return;
     }
+    Connector connector = instanceInfo.getConnector();
+    if (connector instanceof ConnectorShutdownAware) {
+      try {
+        LOGGER.fine("Shutting down Connector " + name);
+        ((ConnectorShutdownAware)connector).shutdown();
+      } catch (Exception e) {
+        LOGGER.log(Level.WARNING, "Failed to shutdown connector " + name, e);
+      }
+      try {
+        LOGGER.fine("Removing Connector " + name);
+        ((ConnectorShutdownAware)connector).delete();
+      } catch (Exception e) {
+        LOGGER.log(Level.WARNING, "Failed to remove connector " + name, e);
+      }
+    }
     File connectorDir = instanceInfo.getConnectorDir();
     instanceInfo.removeConnector();
     if (connectorDir.exists()) {
@@ -260,6 +310,7 @@ public class InstanceMap extends TreeMap {
     File connectorDir;
     TypeInfo typeInfo;
     Map origConfig;
+    List connectors;
 
     /**
      * Constructor takes the items needed by <code>InstanceInfo</code>,
@@ -276,6 +327,7 @@ public class InstanceMap extends TreeMap {
       this.connectorDir = connectorDir;
       this.typeInfo = typeInfo;
       this.origConfig = config;
+      this.connectors = new ArrayList();
     }
 
     /**
@@ -289,10 +341,40 @@ public class InstanceMap extends TreeMap {
       try {
         InstanceInfo info = InstanceInfo.fromNewConfig(connectorName,
             connectorDir, typeInfo, ((config == null) ? origConfig : config));
-        return (info == null) ? null : info.getConnector();
+        if (info == null) {
+          return null;
+        }
+        connectors.add(info);
+        return info.getConnector();
       } catch (InstantiatorException e) {
         throw new RepositoryException(
             "ConnectorFactory failed to make connector.", e);
+      }
+    }
+
+    /**
+     * Shutdown any connector instances created by the factory.
+     */
+    private void shutdown() {
+      List connectorList;
+      synchronized(this) {
+        connectorList = connectors;
+        connectors = null;
+      }
+      if (connectorList != null) {
+        Iterator i = connectorList.iterator();
+        while (i.hasNext()) {
+          InstanceInfo info = (InstanceInfo) i.next();
+          Connector connector = info.getConnector();
+          if (connector instanceof ConnectorShutdownAware) {
+            try {
+              ((ConnectorShutdownAware)connector).shutdown();
+            } catch (Exception e) {
+              LOGGER.log(Level.WARNING, "Failed to shutdown connector "
+                  + info.getName() + " created by validateConfig", e);
+            }
+          }
+        }
       }
     }
   }

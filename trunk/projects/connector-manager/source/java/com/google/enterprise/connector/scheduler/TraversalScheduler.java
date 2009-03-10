@@ -90,6 +90,7 @@ public class TraversalScheduler implements Scheduler {
       return;
     }
     workQueue.shutdown(interrupt, timeoutInMillis);
+    instantiator.shutdown();
     isInitialized = false;
     isShutdown = true;
   }
@@ -115,20 +116,21 @@ public class TraversalScheduler implements Scheduler {
         continue;
       }
       if (null == scheduleStr) {
-        LOGGER.log(Level.INFO, "Could not find schedule for connector: " +
-                   connectorName);
+        LOGGER.log(Level.INFO, "Could not find schedule for connector: "
+            + connectorName);
         continue;
       }
       Schedule schedule = new Schedule(scheduleStr);
-      if (!schedule.isDisabled())
+      if (!schedule.isDisabled()) {
         schedules.add(schedule);
+      }
     }
     removedConnectors.clear();
     return schedules;
   }
 
   private void updateMonitor() {
-    // TODO: change this when we figure out what we really want to monitor
+    // TODO: Change this when we figure out what we really want to monitor.
     Map vars = new HashMap();
     vars.put(SCHEDULER_CURRENT_TIME, new Date());
     monitor.setVariables(vars);
@@ -170,17 +172,17 @@ public class TraversalScheduler implements Scheduler {
    */
   public void removeConnector(String connectorName) {
     synchronized (this) {
-      // let scheduler know not to schedule more work for this connector
+      // Let scheduler know not to schedule more work for this connector.
       removedConnectors.add(connectorName);
 
-      // interrupt any work that is already getting done
+      // Interrupt any work that is already getting done.
       TraversalWorkQueueItem runnable =
         (TraversalWorkQueueItem) runnables.remove(connectorName);
       if (null != runnable) {
         workQueue.cancelWork(runnable);
       }
 
-      // tell the load manager to forget about this connector.
+      // Tell the load manager to forget about this connector.
       hostLoadManager.removeConnector(connectorName);
     }
   }
@@ -204,8 +206,7 @@ public class TraversalScheduler implements Scheduler {
             synchronized (this) {
               runnable = (TraversalWorkQueueItem) runnables.get(connectorName);
               if (null == runnable) {
-                runnable =
-                  new TraversalWorkQueueItem(connectorName);
+                runnable = new TraversalWorkQueueItem(connectorName);
                 runnables.put(connectorName, runnable);
               }
             }
