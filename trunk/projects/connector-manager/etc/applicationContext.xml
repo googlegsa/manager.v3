@@ -147,6 +147,15 @@
     <constructor-arg index="2" ref="WorkQueue"/>
   </bean>
 
+  <!-- This defines the number of seconds to wait after a Traversal of the
+       repository finds no new content before looking again.  By default,
+       the Scheduler waits 5 minutes (300 seconds) before retraversing the
+       repository if no new content was found on the last attempt.
+  -->
+  <bean id="TraversalDelaySecondsDefault" class="java.lang.Integer">
+    <constructor-arg index="0" type="int" value="300"/>
+  </bean>
+
   <!-- The TraversalContext is supplied to the Connector's TraversalManager,
        so that it may make more intelligent decisions about what types of
        content to feed.

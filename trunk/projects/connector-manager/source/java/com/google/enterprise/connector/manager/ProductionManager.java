@@ -20,7 +20,6 @@ import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
-import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
@@ -263,15 +262,11 @@ public class ProductionManager implements Manager {
    * (non-Javadoc)
    *
    * @see com.google.enterprise.connector.manager.Manager#setSchedule(
-   *      java.lang.String, int, java.lang.String)
+   *      java.lang.String, java.lang.String)
    */
-  public void setSchedule(String connectorName, int load, int retryDelayMillis,
-      String timeIntervals)
+  public void setSchedule(String connectorName, String schedule)
       throws ConnectorNotFoundException, PersistentStoreException {
-    Schedule schedule = new Schedule(connectorName + ":" + load + ":"
-            + retryDelayMillis + ":" + timeIntervals);
-    String connectorSchedule = schedule.toString();
-    instantiator.setConnectorSchedule(connectorName, connectorSchedule);
+    instantiator.setConnectorSchedule(connectorName, schedule);
   }
 
   /*
