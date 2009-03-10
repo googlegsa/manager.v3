@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,10 @@ package com.google.enterprise.connector.instantiator;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -27,6 +31,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.enterprise.connector.common.PropertiesUtils;
+import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
@@ -248,7 +253,6 @@ public class InstanceMap extends TreeMap {
         // we don't know why this directory already exists, but we're ok with it
         LOGGER.warning("Connector directory " + connectorDir.getAbsolutePath()
             + "; already exists for connector " + name);
-        return connectorDir;
       } else {
         throw new InstantiatorException("Existing file blocks creation of "
             + "connector directory at " + connectorDir.getAbsolutePath()
@@ -262,6 +266,25 @@ public class InstanceMap extends TreeMap {
             + " for connector " + name);
       }
     }
+
+    // If connectorInstance.xml file does not exist, copy it out of the
+    // Connector's jar file.
+    File configXml = new File(connectorDir, TypeInfo.CONNECTOR_INSTANCE_XML);
+    if (!configXml.exists()) {
+      try {
+        InputStream in =
+            typeInfo.getConnectorInstancePrototype().getInputStream();
+        String config = StringUtils.streamToStringAndThrow(in);
+        FileOutputStream out = new FileOutputStream(configXml);
+        out.write(config.getBytes("UTF-8"));
+        out.close();
+      } catch (IOException ioe) {
+        LOGGER.log(Level.WARNING,"Can't extract connectorInstance.xml "
+            + " to connector directory at " + connectorDir.getAbsolutePath()
+            + " for connector " + name, ioe);
+      }
+    }
+
     return connectorDir;
   }
 
@@ -286,7 +309,31 @@ public class InstanceMap extends TreeMap {
       }
     }
     File connectorDir = instanceInfo.getConnectorDir();
+    TypeInfo typeInfo = instanceInfo.getTypeInfo();
+
     instanceInfo.removeConnector();
+
+    // Remove the extracted connectorInstance.xml file, but only
+    // if it is unmodified.
+    // TODO: Remove this when fixing CM Issue 87?
+    File configXml = new File(connectorDir, TypeInfo.CONNECTOR_INSTANCE_XML);
+    if (configXml.exists()) {
+      try {
+        InputStream in1 =
+            typeInfo.getConnectorInstancePrototype().getInputStream();
+        FileInputStream in2 = new FileInputStream(configXml);
+        String conf1 = StringUtils.streamToStringAndThrow(in1);
+        String conf2 = StringUtils.streamToStringAndThrow(in2);
+        if (conf1.equals(conf2)) {
+          configXml.delete();
+        }
+      } catch (IOException ioe) {
+        LOGGER.log(Level.WARNING, "Can't delete connectorInstance.xml "
+            + " from connector directory at " + connectorDir.getAbsolutePath()
+            + " for connector " + name, ioe);
+      }
+    }
+
     if (connectorDir.exists()) {
       if (!connectorDir.delete()) {
         LOGGER.warning("Can't delete connector directory "
