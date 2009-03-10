@@ -17,7 +17,6 @@ package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Manager;
-import com.google.enterprise.connector.scheduler.Schedule;
 
 import java.io.PrintWriter;
 import java.util.logging.Logger;
@@ -74,18 +73,26 @@ public class GetConnectorStatus extends ConnectorManagerGetServlet {
           connectorStatus.getName());
       ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_CONNECTOR_TYPE,
           connectorStatus.getType());
-      ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_STATUS, Integer
-          .toString(connectorStatus.getStatus()));
-      if (connectorStatus.getSchedule() == null) {
+      ServletUtil.writeXMLElement(out, 2, ServletUtil.XMLTAG_STATUS,
+          Integer.toString(connectorStatus.getStatus()));
+
+      String schedule = connectorStatus.getSchedule();
+      if (schedule == null) {
         ServletUtil.writeEmptyXMLElement(out, 2,
-            ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULES);
       } else {
-        ServletUtil.writeXMLElement(out, 2,
-            ServletUtil.XMLTAG_CONNECTOR_SCHEDULE,
-            Schedule.toLegacyString(connectorStatus.getSchedule()));
+        StringBuffer buffer = new StringBuffer();
+        ServletUtil.writeXMLTagWithAttrs(buffer, 2,
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
+            ServletUtil.ATTRIBUTE_VERSION + "3" + ServletUtil.QUOTE,
+            false);
+        buffer.append(schedule);
+        ServletUtil.writeXMLTag(buffer, 0,
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULES, true);
+        out.println(buffer.toString());
       }
-      ServletUtil
-          .writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_STATUS, true);
+      ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_STATUS,
+          true);
     }
     ServletUtil.writeRootTag(out, true);
   }

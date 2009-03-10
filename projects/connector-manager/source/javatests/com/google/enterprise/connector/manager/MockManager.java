@@ -147,7 +147,7 @@ public class MockManager implements Manager {
     String name = connectorName;
     String type = "Documentum";
     int status = 0;
-    String schedule = connectorName + ":100:0-0";
+    String schedule = connectorName + ":100:0:0-0";
     return new ConnectorStatus(name, type, status, schedule);
   }
 
@@ -211,10 +211,9 @@ public class MockManager implements Manager {
    * (non-Javadoc)
    *
    * @see com.google.enterprise.connector.manager.Manager#setSchedule(
-   *      java.lang.String, int, java.lang.String)
+   *      java.lang.String, java.lang.String)
    */
-  public void setSchedule(String connectorName, int load, int retryDelayMillis,
-      String timeIntervals) {
+  public void setSchedule(String connectorName, String schedule) {
     // do nothing
   }
 

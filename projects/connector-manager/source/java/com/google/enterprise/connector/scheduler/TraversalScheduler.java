@@ -120,7 +120,8 @@ public class TraversalScheduler implements Scheduler {
         continue;
       }
       Schedule schedule = new Schedule(scheduleStr);
-      schedules.add(schedule);
+      if (!schedule.isDisabled())
+        schedules.add(schedule);
     }
     removedConnectors.clear();
     return schedules;

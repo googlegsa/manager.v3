@@ -22,7 +22,6 @@ import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
-import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -114,10 +113,7 @@ public class ImportExport {
       String name = connector.getName();
       String type = connector.getType();
       Map config = connector.getConfig();
-      Schedule schedule = null;
-      if (connector.getScheduleString() != null) {
-        schedule = new Schedule(connector.getScheduleString());
-      }
+      String schedule = connector.getScheduleString();
 
       try {
         String language = "en";
@@ -136,9 +132,7 @@ public class ImportExport {
         // set schedule, if given
         if (schedule != null ) {
           try {
-            manager.setSchedule(name, schedule.getLoad(),
-                schedule.getRetryDelayMillis(),
-                schedule.getTimeIntervalsAsString());
+            manager.setSchedule(name, schedule);
           } catch (ConnectorNotFoundException e) {
             // should never happen
             LOGGER.log(Level.WARNING, e.getMessage(), e);
