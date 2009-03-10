@@ -83,6 +83,18 @@ public class SpringInstantiator implements Instantiator {
     instanceMap = new InstanceMap(typeMap);
   }
 
+  /**
+   * Shutdown all connector instances.
+   */
+  public synchronized void shutdown() {
+    if (connectorCache != null) {
+      connectorCache.clear();
+    }
+    if (instanceMap != null) {
+      instanceMap.shutdown();
+    }
+  }
+
   /*
    * (non-Javadoc)
    *
