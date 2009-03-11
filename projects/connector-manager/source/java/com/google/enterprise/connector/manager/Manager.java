@@ -90,9 +90,11 @@ public interface Manager {
    *         default form.
    * @throws ConnectorTypeNotFoundException If the named connector type is not
    *         known to this manager.
+   * @throws InstantiatorException
    */
   public ConfigureResponse getConfigForm(String connectorTypeName,
-      String language) throws ConnectorTypeNotFoundException;
+      String language) throws ConnectorTypeNotFoundException,
+      InstantiatorException;
 
   /**
    * Get configuration data as a form snippet for an existing connnector. This

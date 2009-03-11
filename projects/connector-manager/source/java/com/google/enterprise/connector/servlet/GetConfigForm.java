@@ -15,6 +15,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -84,6 +85,10 @@ public class GetConfigForm extends HttpServlet {
       ServletUtil.writeResponse(out, status);
       LOGGER.log(Level.WARNING,
           ServletUtil.LOG_EXCEPTION_CONNECTOR_TYPE_NOT_FOUND, e);
+    } catch (InstantiatorException e) {
+      status.setMessageId(ConnectorMessageCode.EXCEPTION_INSTANTIATOR);
+      ServletUtil.writeResponse(out, status);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_INSTANTIATOR, e);
     }
 
     out.close();
