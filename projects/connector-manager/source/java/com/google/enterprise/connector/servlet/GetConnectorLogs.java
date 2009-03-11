@@ -25,8 +25,6 @@ import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.logging.Formatter;
 import java.util.logging.LogManager;
@@ -174,7 +172,8 @@ public class GetConnectorLogs extends HttpServlet {
     Context context = Context.getInstance(this.getServletContext());
 
     // Only allow incoming connections from the GSA or localhost.
-    if (!allowedRemoteAddr(context, req.getRemoteAddr())) {
+    if (!ServletUtil.allowedRemoteAddr(context.getGsaFeedHost(),
+                                       req.getRemoteAddr())) {
       res.sendError(HttpServletResponse.SC_FORBIDDEN);
       return;
     }
@@ -280,36 +279,6 @@ public class GetConnectorLogs extends HttpServlet {
   protected void doTrace(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     ServletUtil.dumpServletRequest(req, res);
-  }
-
-  /**
-   * Verify the request originated from either the GSA or
-   * localhost.  Since the logs and the feed file may contain
-   * proprietary customer information, we don't want to serve
-   * them up to just anybody.
-   *
-   * @param context the application context
-   * @param remoteAddr the IP address of the caller
-   * @returns true if request came from an acceptable IP address.
-   */
-  public static boolean allowedRemoteAddr(Context context, String remoteAddr) {
-    try {
-      InetAddress caller = InetAddress.getByName(remoteAddr);
-      if (caller.isLoopbackAddress() ||
-          caller.equals(InetAddress.getLocalHost())) {
-        return true;  // localhost is allowed access
-      }
-      String gsaHost = context.getGsaFeedHost();
-      InetAddress[] gsaAddrs = InetAddress.getAllByName(gsaHost);
-      for (int i = 0; i < gsaAddrs.length; i++) {
-        if (caller.equals(gsaAddrs[i])) {
-          return true;  // GSA is allowed access
-        }
-      }
-    } catch (UnknownHostException uhe) {
-      // Unknown host - fall through to fail.
-    }
-    return false;
   }
 
   /**
