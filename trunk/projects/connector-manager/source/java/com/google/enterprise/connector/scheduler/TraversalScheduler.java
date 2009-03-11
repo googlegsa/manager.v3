@@ -219,8 +219,8 @@ public class TraversalScheduler implements Scheduler {
                   return;
               }
               if (alreadyRunning) {
-                LOGGER.finer("Traversal work for connector "
-                             + connectorName + " is still running.");
+                //LOGGER.finer("Traversal work for connector "
+                //             + connectorName + " is still running.");
                 continue;
               }
               if (removedConnectors.contains(connectorName)) {
@@ -300,6 +300,10 @@ public class TraversalScheduler implements Scheduler {
             LOGGER.finest("Begin runBatch; batchHint = " + batchHint);
             batchDone = traverser.runBatch(batchHint);
             numDocs = (batchDone == Traverser.FORCE_WAIT) ? 0 : batchDone;
+            if (isFinished()) {
+              LOGGER.finest("End runBatch; Batch was canceled.");
+              return;      // If we got canceled, bail out.
+            }
             LOGGER.finest("End runBatch; batchDone = " + batchDone);
           }
           if (numDocs > 0) {
@@ -321,6 +325,7 @@ public class TraversalScheduler implements Scheduler {
     public synchronized void cancelWork() {
       if (traverser != null) {
         traverser.cancelBatch();
+        traverser = null;
       }
       setFinished(true);
       notifyAll();

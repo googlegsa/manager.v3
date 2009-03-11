@@ -75,7 +75,7 @@ public class WorkQueueTest extends TestCase {
   }
 
   public void testInterruptorFinish() {
-    WorkQueue queue = new WorkQueue(2, 1, 1);
+    WorkQueue queue = new WorkQueue(2, 1000, 1000);
     queue.init();
     SlowWorkQueueItem workItem =
         new SlowWorkQueueItem("testInterruptorFinish", 500);
@@ -88,7 +88,7 @@ public class WorkQueueTest extends TestCase {
   }
 
   public void testInterruptorInterrupt() {
-    WorkQueue queue = new WorkQueue(2, 1, 3);
+    WorkQueue queue = new WorkQueue(2, 3000, 1000);
     queue.init();
     SlowWorkQueueItem workItem =
         new SlowWorkQueueItem("testInterruptorInterrupt", 2000);
@@ -102,7 +102,7 @@ public class WorkQueueTest extends TestCase {
   }
 
   public void testInterruptorKill() {
-    WorkQueue queue = new WorkQueue(2, 1, 1);
+    WorkQueue queue = new WorkQueue(2, 1000, 1000);
     queue.init();
     SlowWorkQueueItem workItem =
         new SlowWorkQueueItem("testInterrupterKill", 3000);
