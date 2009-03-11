@@ -165,12 +165,16 @@ public class SpringInstantiator implements Instantiator {
    */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String connectorTypeName, Locale locale)
-      throws ConnectorNotFoundException {
+      throws ConnectorNotFoundException, InstantiatorException {
     InstanceInfo instanceInfo = getInstanceInfo(connectorName);
     TypeInfo typeInfo = instanceInfo.getTypeInfo();
     ConnectorType connectorType = typeInfo.getConnectorType();
     Map configMap = instanceInfo.getConnectorConfig();
-    return connectorType.getPopulatedConfigForm(configMap, locale);
+    try {
+      return connectorType.getPopulatedConfigForm(configMap, locale);
+    } catch (Exception e) {
+      throw new InstantiatorException("Failed to get configuration form", e);
+    }
   }
 
   /*

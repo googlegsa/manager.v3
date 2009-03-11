@@ -186,9 +186,15 @@ public class InstanceMap extends TreeMap {
     // Validate the configuration.
     ConnectorInstanceFactory factory =
         new ConnectorInstanceFactory(name, connectorDir, typeInfo, config);
-    ConfigureResponse response =
-        typeInfo.getConnectorType().validateConfig(config, locale, factory);
-    factory.shutdown();
+    ConfigureResponse response;
+    try {
+      response =
+          typeInfo.getConnectorType().validateConfig(config, locale, factory);
+    } catch (Exception e) {
+      throw new InstantiatorException("Unexpected validateConfig failure.", e);
+    } finally {
+      factory.shutdown();
+    }
 
     if (response != null) {
       // If validateConfig() returns a non-null response with an error message.

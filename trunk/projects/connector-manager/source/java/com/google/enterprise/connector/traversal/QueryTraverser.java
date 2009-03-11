@@ -54,8 +54,13 @@ public class QueryTraverser implements Traverser {
     this.stateStore = stateStore;
     this.connectorName = connectorName;
     if (this.queryTraversalManager instanceof TraversalContextAware) {
-      TraversalContext tc = Context.getInstance().getTraversalContext();
-      ((TraversalContextAware)this.queryTraversalManager).setTraversalContext(tc);
+      try {
+        TraversalContext tc = Context.getInstance().getTraversalContext();
+        ((TraversalContextAware)this.queryTraversalManager)
+            .setTraversalContext(tc);
+      } catch (Exception e) {
+        LOGGER.log(Level.WARNING, "Unable to set TraversalContext", e);
+      }
     }
   }
 
