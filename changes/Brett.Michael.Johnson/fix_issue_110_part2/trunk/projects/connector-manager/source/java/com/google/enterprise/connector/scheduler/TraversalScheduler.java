@@ -298,9 +298,11 @@ public class TraversalScheduler implements Scheduler {
             LOGGER.finest("Begin runBatch; batchHint = " + batchHint);
             batchDone = traverser.runBatch(batchHint);
             numDocs = (batchDone == Traverser.FORCE_WAIT) ? 0 : batchDone;
+            if (isFinished()) {
+              LOGGER.finest("End runBatch; Batch was canceled.");
+              return;      // If we got canceled, bail out.
+            }
             LOGGER.finest("End runBatch; batchDone = " + batchDone);
-            if (isFinished())
-              return;      // If we got cancelled, bail out.
           }
           if (numDocs > 0) {
             hostLoadManager.updateNumDocsTraversed(connectorName, numDocs);
