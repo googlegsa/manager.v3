@@ -37,11 +37,11 @@ public class WorkQueue {
     Logger.getLogger(WorkQueue.class.getName());
 
   // Timeout in milliseconds to let a work item run before interrupting it.
-  private long workItemTimeout = 5 * 60 * 1000;
+  private long workItemTimeout = 20 * 60 * 1000;
 
   // How long to wait after interrupting an overdue work item thread
   // before killing it off.
-  private long killThreadTimeout = 60 * 1000;
+  private long killThreadTimeout = 10 * 60 * 1000;
 
   /*
    * Variables that are protected by instance lock
@@ -59,24 +59,24 @@ public class WorkQueue {
   private LifeThread lifeThread;               // Looks for hung threads
 
   /**
-   * Creates a WorkQueue with 20 service threads, a default 5 minute timeout
-   * before interrupting a thread, and a default 60 second timeout before
+   * Creates a WorkQueue with 10 service threads, a default 20 minute timeout
+   * before interrupting a thread, and a default 10 minute timeout before
    * a thread is killed after it is interrupted.
    */
   public WorkQueue() {
-    this(20, 300, 60);
+    this(10, 10L * 60 * 1000, 20L * 60 * 1000);
   }
 
   /**
-   * Creates a WorkQueue with a default 5 minute timeout before
-   * interrupting a thread, and a default 60 second timeout before
+   * Creates a WorkQueue with a default 20 minute timeout before
+   * interrupting a thread, and a default 10 minute timeout before
    * a thread is killed after it is interrupted.
    *
    * @param numThreads the number of threads to execute work on the WorkQueue.
    *        This number should be at least 1.
    */
   public WorkQueue(int numThreads) {
-    this(numThreads, 300, 60);
+    this(numThreads, 10L * 60 * 1000, 20L * 60 * 1000);
   }
 
   /**
@@ -85,12 +85,12 @@ public class WorkQueue {
    *
    * @param numThreads the number of threads to execute work on the WorkQueue.
    *        This number should be at least 1.
-   * @param workItemTimeout time in seconds that each {@code WorkQueueItem}
-   *        is given before it is interrupted.  A value of 0 means it never
-   *        times out.
+   * @param killThreadTimeout the additional time in milliseconds given over the
+   *        {@code workItemTimeout} before the {@code WorkQueueThread} is
+   *        killed rather than just interrupted.
    */
-  public WorkQueue(int numThreads, int workItemTimeout) {
-    this(numThreads, workItemTimeout, 60);
+  public WorkQueue(int numThreads, long killThreadTimeout) {
+    this(numThreads, killThreadTimeout, 20L * 60 * 1000);
   }
 
   /**
@@ -99,26 +99,26 @@ public class WorkQueue {
    *
    * @param numThreads the number of threads to execute work on the WorkQueue.
    *        This number should be at least 1.
-   * @param workItemTimeout time in seconds that each {@code WorkQueueItem}
-   *        is given before it is interrupted.  A value of 0 means it never
-   *        times out.
-   * @param killThreadTimeout the additional time in seconds given over the
+   * @param killThreadTimeout the additional time in milliseconds given over the
    *        {@code workItemTimeout} before the {@code WorkQueueThread} is
    *        killed rather than just interrupted.
+   * @param workItemTimeout time in milliseconds that each {@code WorkQueueItem}
+   *        is given before it is interrupted.  A value of 0 means it never
+   *        times out.
    */
-  public WorkQueue(int numThreads, int workItemTimeout, int killThreadTimeout)
+  public WorkQueue(int numThreads, long killThreadTimeout, long workItemTimeout)
   {
     if (numThreads <= 0) {
       throw new IllegalArgumentException("numThreads must be > 0");
     }
-    this.killThreadTimeout = killThreadTimeout * 1000;
+    this.killThreadTimeout = killThreadTimeout;
     this.workQueue = new LinkedList();
     this.absTimeoutMap = new HashMap();
     this.isInitialized = false;
     this.shutdown = false;
     this.numThreads = numThreads;
     this.threads = new HashSet();
-    this.workItemTimeout = workItemTimeout * 1000;
+    this.workItemTimeout = workItemTimeout;
   }
 
   /**

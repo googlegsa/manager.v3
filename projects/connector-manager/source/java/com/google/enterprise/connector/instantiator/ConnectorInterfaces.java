@@ -136,7 +136,10 @@ public class ConnectorInterfaces {
    * @throws InstantiatorException
    */
   Traverser getTraverser() throws InstantiatorException {
-    if (traverser == null) {
+    // If our cached QueryTraverser has been canceled, get a new one.
+    // If the old one is a zombie, we need to preserved its canceled status.
+    if ((traverser == null) || ((traverser instanceof QueryTraverser) &&
+        ((QueryTraverser)traverser).isCancelled())) {
       Session s = getSession();
       TraversalManager qtm = null;
       try {

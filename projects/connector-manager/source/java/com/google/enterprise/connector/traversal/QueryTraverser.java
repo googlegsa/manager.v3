@@ -67,7 +67,9 @@ public class QueryTraverser implements Traverser {
   public void cancelBatch() {
     synchronized(cancelLock) {
       cancelWork = true;
+      stateStore = null;
     }
+    LOGGER.fine("Cancelling traversal for connector " + connectorName);
   }
 
   public boolean isCancelled() {
@@ -77,8 +79,9 @@ public class QueryTraverser implements Traverser {
   }
 
   public synchronized int runBatch(int batchHint) {
-    synchronized(cancelLock) {
-      cancelWork = false;
+    if (isCancelled()) {
+        LOGGER.warning("Attempting to run a cancelled QueryTraverser");
+        return Traverser.FORCE_WAIT;
     }
     if (batchHint <= 0) {
       throw new IllegalArgumentException("batchHint must be a positive int");
@@ -93,7 +96,11 @@ public class QueryTraverser implements Traverser {
     DocumentList resultSet = null;
     String connectorState;
     try {
-      connectorState = stateStore.getTraversalState();
+      if (stateStore != null) {
+        connectorState = stateStore.getTraversalState();
+      } else {
+        throw new IllegalStateException("null TraversalStateStore");
+      }
     } catch (IllegalStateException ise) {
       // We get here if the ConnectorStateStore for connector is disabled.
       // That happens if the connector was deleted while we were asleep.
@@ -128,8 +135,8 @@ public class QueryTraverser implements Traverser {
     try {
       while (true) {
         if (Thread.currentThread().isInterrupted() || isCancelled()) {
-          LOGGER.finest(
-              "Thread has been interrupted...breaking out of batch run.");
+          LOGGER.fine("Traversal for connector " + connectorName
+                      + " has been interrupted...breaking out of batch run.");
           break;
         }
 
@@ -245,7 +252,11 @@ public class QueryTraverser implements Traverser {
     }
     try {
       if (connectorState != null) {
-        stateStore.storeTraversalState(connectorState);
+        if (stateStore != null) {
+          stateStore.storeTraversalState(connectorState);
+        } else {
+          throw new IllegalStateException("null TraversalStateStore");
+        }
         LOGGER.finest("...checkpoint " + connectorState + " created.");
       }
       return connectorState;

@@ -126,13 +126,13 @@
   <bean id="WorkQueue"
         class="com.google.enterprise.connector.common.WorkQueue">
     <!-- Number of worker threads processing the queue. -->
-    <constructor-arg index="0" type="int" value="20"/>
-    <!-- Number of seconds before worker thread is considered timed out.
-         A value of 0 means it never times out. -->
-    <constructor-arg index="1" type="int" value="1200"/>
-    <!-- Number of seconds after a timed-out worker thread is interrupted
-         before it is killed outright. -->
-    <constructor-arg index="2" type="int" value="600"/>
+    <constructor-arg index="0" type="int" value="10"/>
+    <!-- Number of milliseconds before worker thread is considered timed out.
+         A value of 0 means it never times out. Default: 20 minutes -->
+    <constructor-arg index="2" type="long" value="1200000"/>
+    <!-- Number of milliseconds after a timed-out worker thread is interrupted
+         before it is killed outright. Default: 10 minutes -->
+    <constructor-arg index="1" type="long" value="600000"/>
   </bean>
 
   <bean id="Manager"
