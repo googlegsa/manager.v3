@@ -128,7 +128,7 @@ public class GenerationalStateStore implements ConnectorStateStore {
       generation = new Long(currentGeneration(context));
       myGenerations.put(connectorName, generation);
     }
-    return generation.longValue();
+    return generation;
   }
 
   /**
@@ -140,7 +140,7 @@ public class GenerationalStateStore implements ConnectorStateStore {
   protected static long currentGeneration(StoreContext context) {
     synchronized (generations) {
       Long generation = generations.get(context.getConnectorName());
-      return (generation == null) ? 0 : generation.longValue();
+      return (generation == null) ? 0 : generation;
     }
   }
 
@@ -156,7 +156,7 @@ public class GenerationalStateStore implements ConnectorStateStore {
     synchronized (generations) {
       Long generation = generations.get(context.getConnectorName());
       generations.put(context.getConnectorName(),
-          new Long((generation == null) ? 1 : generation.longValue() + 1));
+          new Long((generation == null) ? 1 : generation + 1));
     }
   }
 }

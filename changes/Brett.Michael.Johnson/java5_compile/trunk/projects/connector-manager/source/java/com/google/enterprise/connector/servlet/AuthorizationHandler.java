@@ -86,9 +86,7 @@ public class AuthorizationHandler {
 
   private void generateEachResultXml() {
     for (Entry<String, Boolean> e : results.entrySet()) {
-      String url = e.getKey();
-      Boolean permit = e.getValue();
-      writeResultElement(url, permit.booleanValue());
+      writeResultElement(e.getKey(), e.getValue());
     }
   }
 

@@ -164,7 +164,7 @@ public class MimeTypeMap {
         }
       }
     }
-    int sl = (result == null) ? unknownMimeTypeSupportLevel : result.intValue();
+    int sl = (result == null) ? unknownMimeTypeSupportLevel : result;
     if (LOGGER.isLoggable(Level.FINEST)) {
       LOGGER.finest("Mime type support level for " + mimeType + " is " + sl);
     }

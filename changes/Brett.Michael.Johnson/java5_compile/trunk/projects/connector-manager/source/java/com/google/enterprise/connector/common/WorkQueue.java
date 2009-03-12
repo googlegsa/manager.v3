@@ -244,7 +244,7 @@ public class WorkQueue {
     Iterator<Map.Entry<WorkQueueItem, Long>> iter;
     for (iter = absTimeoutMap.entrySet().iterator(); iter.hasNext(); ) {
       Map.Entry<WorkQueueItem, Long> entry = iter.next();
-      long absTimeout = entry.getValue().longValue();
+      long absTimeout = entry.getValue();
       if (absTimeout <= now) {  // We have a timeout.
         LOGGER.finest("A WorkItem timeout has occured...");
         WorkQueueItem item = entry.getKey();
@@ -296,9 +296,9 @@ public class WorkQueue {
    * @param item
    */
   void preWork(WorkQueueItem item) {
-    Long absTimeout = new Long(workItemTimeout + System.currentTimeMillis());
     synchronized(this) {
-      absTimeoutMap.put(item, absTimeout);
+      absTimeoutMap.put(item,
+                        (Long)(workItemTimeout + System.currentTimeMillis()));
     }
     synchronized(interrupterThread) {
       interrupterThread.notifyAll();

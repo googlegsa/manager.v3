@@ -127,10 +127,10 @@ public class Schedule {
     if (defaultRetryDelayMillis <= 0) {
       Integer retryDelaySecs = (Integer) Context.getInstance().getBean(
           "TraversalDelaySecondsDefault", Integer.class);
-      if (retryDelaySecs == null || retryDelaySecs.intValue() <= 0) {
+      if (retryDelaySecs == null || retryDelaySecs <= 0) {
         defaultRetryDelayMillis = DEFAULT_RETRY_DELAY_MILLIS;
       } else {
-        defaultRetryDelayMillis = retryDelaySecs.intValue() * 1000;
+        defaultRetryDelayMillis = retryDelaySecs * 1000;
       }
     }
     return defaultRetryDelayMillis;

@@ -603,7 +603,7 @@ public class Context {
             GSA_ADMIN_REQUIRES_PREFIX_DEFAULT.toString());
         gsaAdminRequiresPrefix = Boolean.valueOf(prop);
     }
-    return gsaAdminRequiresPrefix.booleanValue();
+    return gsaAdminRequiresPrefix;
   }
 
   /**

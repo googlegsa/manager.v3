@@ -102,8 +102,7 @@ public class HostLoadManager {
   private int getNumDocsTraversedThisPeriod(String connectorName) {
     updateNumDocsTraversedData();
     if (connectorNameToNumDocsTraversed.containsKey(connectorName)) {
-      Integer numDocs = connectorNameToNumDocsTraversed.get(connectorName);
-      return numDocs.intValue();
+      return connectorNameToNumDocsTraversed.get(connectorName);
     }
     return 0;
   }
@@ -118,10 +117,8 @@ public class HostLoadManager {
   {
     updateNumDocsTraversedData();
     Integer numDocs = connectorNameToNumDocsTraversed.get(connectorName);
-    Integer updatedNumDocs = new Integer((null == numDocs) ?
-                                         numDocsTraversed :
-                                         numDocsTraversed + numDocs.intValue());
-    connectorNameToNumDocsTraversed.put(connectorName, updatedNumDocs);
+    connectorNameToNumDocsTraversed.put(connectorName,
+        (numDocs == null) ? numDocsTraversed : numDocsTraversed + numDocs);
   }
 
   /**
@@ -130,8 +127,7 @@ public class HostLoadManager {
    * @param connectorName name of the connector instance
    */
   public void connectorFinishedTraversal(String connectorName) {
-    Long now = new Long(System.currentTimeMillis());
-    connectorNameToFinishTime.put(connectorName, now);
+    connectorNameToFinishTime.put(connectorName, System.currentTimeMillis());
   }
 
   /**
@@ -171,8 +167,7 @@ public class HostLoadManager {
   public boolean shouldDelay(String connectorName) {
     if (connectorNameToFinishTime.containsKey(connectorName)) {
       try {
-        Object value = connectorNameToFinishTime.get(connectorName);
-        long finishTime = ((Long)value).longValue();
+        long finishTime = connectorNameToFinishTime.get(connectorName);
         String schedStr = instantiator.getConnectorSchedule(connectorName);
         Schedule schedule = new Schedule(schedStr);
         int retryDelayMillis = schedule.getRetryDelayMillis();
