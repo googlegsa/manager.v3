@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -119,9 +118,7 @@ public class MockJcrNode implements Node {
           SpiConstants.GROUP_ROLES_PROPNAME_PREFIX);
     }
     // Now push all the other properties onto the list.
-    Iterator<MockRepositoryProperty> iter = doc.getProplist().iterator();
-    while (iter.hasNext()) {
-      MockRepositoryProperty prop = iter.next();
+    for (MockRepositoryProperty prop : doc.getProplist()) {
       // Don't pass on the some of the special MockRepoDocument properties so
       // they don't clutter the meta-data.  Shouldn't delete them from the
       // MockRepoDocument because they could be used by the MockRepo.

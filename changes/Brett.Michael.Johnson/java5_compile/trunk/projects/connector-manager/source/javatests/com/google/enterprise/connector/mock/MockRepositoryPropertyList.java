@@ -29,7 +29,9 @@ import java.util.Map;
  * <p>
  * This models the metadata-list for a document.
  */
-public class MockRepositoryPropertyList {
+public class MockRepositoryPropertyList
+    implements Iterable<MockRepositoryProperty> {
+
   private Map<String, MockRepositoryProperty> proplist;
 
   public String toString() {

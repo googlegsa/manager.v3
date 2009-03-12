@@ -72,7 +72,9 @@ import com.google.enterprise.connector.mock.MockRepositoryEvent.EventType;
  * <li>add textual dump/load so bigger test cases can be built easily
  * </ul>
  */
-public class MockRepositoryDocumentStore {
+public class MockRepositoryDocumentStore
+    implements Iterable <MockRepositoryDocument> {
+
   private static final Logger logger =
       Logger.getLogger(MockRepositoryDocumentStore.class.getName());
 
@@ -256,9 +258,7 @@ public class MockRepositoryDocumentStore {
   private boolean checkDateOrderIntegrity() {
     boolean result = true;
     int lastStamp = -1;
-    Iterator<MockRepositoryDocument> iter = this.iterator();
-    while (iter.hasNext()) {
-      MockRepositoryDocument d = iter.next();
+    for (MockRepositoryDocument d : this) {
       int thisStamp = d.getTimeStamp().getTicks();
       if (lastStamp > thisStamp) {
         result = false;
@@ -279,9 +279,7 @@ public class MockRepositoryDocumentStore {
   private boolean checkDocidUniquenessIntegrity() {
     boolean result = true;
     Set<String> m = new HashSet<String>();
-    Iterator<MockRepositoryDocument> iter = this.iterator();
-    while (iter.hasNext()) {
-      MockRepositoryDocument d = iter.next();
+    for (MockRepositoryDocument d : this) {
       if (!m.add(d.getDocID())) {
         // this docid appears more than once
         result = false;

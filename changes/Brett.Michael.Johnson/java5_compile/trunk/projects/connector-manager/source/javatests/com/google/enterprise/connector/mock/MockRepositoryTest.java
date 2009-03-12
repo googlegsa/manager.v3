@@ -16,7 +16,6 @@ package com.google.enterprise.connector.mock;
 
 import junit.framework.TestCase;
 
-import java.util.Iterator;
 
 /**
  * Unit tests for Mock Repository
@@ -71,11 +70,8 @@ public class MockRepositoryTest extends TestCase {
     MockRepositoryDocument doc = r.getStore().getDocByID("doc1");
 
     System.out.println();
-    MockRepositoryPropertyList proplist = doc.getProplist();
     int counter = 0;
-    Iterator<MockRepositoryProperty> iter = proplist.iterator();
-    while (iter.hasNext()) {
-      MockRepositoryProperty property = iter.next();
+    for (MockRepositoryProperty property : doc.getProplist()) {
       System.out.print(property.toString());
       System.out.println();
       counter++;

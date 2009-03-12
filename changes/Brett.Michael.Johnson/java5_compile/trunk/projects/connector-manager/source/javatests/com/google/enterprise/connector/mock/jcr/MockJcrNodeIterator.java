@@ -69,8 +69,8 @@ public class MockJcrNodeIterator implements NodeIterator {
     return iter.hasNext();
   }
 
-  public Object next() {
-    return (Object) iter.next();
+  public Node next() {
+    return (Node) iter.next();
   }
 
   // The following methods are JCR level 1 - but we do not anticipate using them
