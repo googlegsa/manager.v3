@@ -236,7 +236,7 @@ public class SpiConstants {
   /**
    * Ordinal-base typesafe enum for action types.
    */
-  public static class ActionType implements Comparable <ActionType> {
+  public static class ActionType implements Comparable<ActionType> {
     private static int nextOrdinal = 0;
     private final int ordinal = nextOrdinal++;
 
@@ -281,7 +281,7 @@ public class SpiConstants {
   /**
    * Ordinal-base typesafe enum for known role types.
    */
-  public static class RoleType implements Comparable <RoleType> {
+  public static class RoleType implements Comparable<RoleType> {
     private static int nextOrdinal = 0;
     private final int ordinal = nextOrdinal++;
 

@@ -21,7 +21,6 @@ import com.google.enterprise.connector.spi.SpiConstants;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -32,8 +31,8 @@ import javax.jcr.PropertyIterator;
 public class JcrDocument implements Document {
 
   private javax.jcr.Node node;
-  private static Map <String, String> aliasMap;
-  private Map <String, String> aliasedPropertyNames = null;
+  private static Map<String, String> aliasMap;
+  private Map<String, String> aliasedPropertyNames = null;
   private Property property;
 
   static {
@@ -43,8 +42,8 @@ public class JcrDocument implements Document {
     aliasMap.put(SpiConstants.PROPNAME_LASTMODIFIED, "jcr:lastModified");
   }
 
-  private Set <String> getOriginalPropertyNames() throws RepositoryException {
-    Set <String> originalNames = new HashSet<String>();
+  private Set<String> getOriginalPropertyNames() throws RepositoryException {
+    Set<String> originalNames = new HashSet<String>();
     final PropertyIterator propertyIterator = getJCRProperties();
     while (propertyIterator.hasNext()) {
       try {
@@ -72,11 +71,9 @@ public class JcrDocument implements Document {
       return;
     }
     aliasedPropertyNames = new TreeMap<String, String>();
-    Set <String> originalNames = getOriginalPropertyNames();
+    Set<String> originalNames = getOriginalPropertyNames();
     // set up aliases for the aliased names that actually appear in this node
-    Iterator <Entry <String, String>> i = aliasMap.entrySet().iterator();
-    while (i.hasNext()) {
-      Entry <String, String> e = i.next();
+    for (Entry<String, String> e : aliasMap.entrySet()) {
       String alias = e.getKey();
       String name = e.getValue();
       if (originalNames.contains(alias)) {
@@ -95,8 +92,7 @@ public class JcrDocument implements Document {
     // value, if they have the same name. For example, if a node has both
     // "google:docid" (PROPNAME_DOCID) and "jcr:uuid" (normal jcr id) then
     // the explicitly supplied "google:docid" beats out the aliased
-    for (Iterator <String> j = originalNames.iterator(); j.hasNext(); ) {
-      String name = j.next();
+    for (String name : originalNames) {
       aliasedPropertyNames.put(name, name);
     }
   }
@@ -132,9 +128,8 @@ public class JcrDocument implements Document {
     return property;
   }
 
-  public Set <String> getPropertyNames() throws RepositoryException {
+  public Set<String> getPropertyNames() throws RepositoryException {
     setupAliases();
     return aliasedPropertyNames.keySet();
   }
-
 }

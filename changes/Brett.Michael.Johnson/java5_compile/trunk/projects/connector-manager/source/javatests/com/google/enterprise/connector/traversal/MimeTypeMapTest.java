@@ -70,7 +70,7 @@ public class MimeTypeMapTest extends TestCase {
     Assert.assertTrue(testMap.mimeTypeSupportLevel("bar/cat") <= 0);
   }
 
-  private static Set <String> ArrayAsSet(String[] a) {
+  private static Set<String> ArrayAsSet(String[] a) {
     return new HashSet<String>(Arrays.asList(a));
   }
 }

@@ -26,12 +26,12 @@ import java.util.HashMap;
 public class GenerationalStateStore implements ConnectorStateStore {
 
   // Holds the most current generations of connector instances.
-  private static HashMap <String, Long> generations =
+  private static HashMap<String, Long> generations =
       new HashMap<String, Long>();
 
   // This instance's generations of connector instances.
   // May be older than the most current ones stored above.
-  private HashMap <String, Long> myGenerations;
+  private HashMap<String, Long> myGenerations;
 
   // The underlying ConnectorStateStore
   private ConnectorStateStore baseStore;

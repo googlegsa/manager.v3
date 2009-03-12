@@ -16,7 +16,12 @@ package com.google.enterprise.connector.instantiator;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.Iterator;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
@@ -25,11 +30,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.enterprise.connector.common.PropertiesUtils;
+import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorFactory;
 import com.google.enterprise.connector.spi.RepositoryException;
 
@@ -38,7 +45,7 @@ import com.google.enterprise.connector.spi.RepositoryException;
  * corresponding directory structure and maintains properties files that
  * implement the instances.
  */
-public class InstanceMap extends TreeMap <String, InstanceInfo> {
+public class InstanceMap extends TreeMap<String, InstanceInfo> {
 
   private static final Logger LOGGER =
       Logger.getLogger(InstanceMap.class.getName());
@@ -50,8 +57,7 @@ public class InstanceMap extends TreeMap <String, InstanceInfo> {
       throw new IllegalArgumentException();
     }
     this.typeMap = typeMap;
-    for (Iterator <String> i = typeMap.keySet().iterator(); i.hasNext();) {
-      String typeName = i.next();
+    for (String typeName : typeMap.keySet()) {
       TypeInfo typeInfo = typeMap.getTypeInfo(typeName);
       if (typeInfo == null) {
         LOGGER.log(Level.WARNING, "Skipping " + typeName);
@@ -59,6 +65,21 @@ public class InstanceMap extends TreeMap <String, InstanceInfo> {
       }
       processTypeDirectory(typeInfo);
     }
+  }
+
+  public synchronized void shutdown() {
+   for (String connectorName : this.keySet()) {
+      Connector connector = getInstanceInfo(connectorName).getConnector();
+      if (connector instanceof ConnectorShutdownAware) {
+        try {
+          ((ConnectorShutdownAware)connector).shutdown();
+        } catch (Exception e) {
+          LOGGER.log(Level.WARNING, "Problem shutting down connector "
+                     + connectorName, e);
+        }
+      }
+    }
+    this.clear();
   }
 
   private void processTypeDirectory(TypeInfo typeInfo) {
@@ -100,7 +121,7 @@ public class InstanceMap extends TreeMap <String, InstanceInfo> {
   }
 
   public ConfigureResponse updateConnector(String name, String typeName,
-      Map <String, String> config, Locale locale, boolean update)
+      Map<String, String> config, Locale locale, boolean update)
       throws InstantiatorException, ConnectorNotFoundException,
       ConnectorExistsException {
     InstanceInfo instanceInfo = getInstanceInfo(name);
@@ -135,7 +156,7 @@ public class InstanceMap extends TreeMap <String, InstanceInfo> {
   }
 
   private ConfigureResponse createNewConnector(String name, String typeName,
-      Map <String, String> config, Locale locale) throws InstantiatorException {
+      Map<String, String> config, Locale locale) throws InstantiatorException {
     TypeInfo typeInfo = typeMap.getTypeInfo(typeName);
     if (typeInfo == null) {
       throw new InstantiatorException();
@@ -145,12 +166,12 @@ public class InstanceMap extends TreeMap <String, InstanceInfo> {
   }
 
   private ConfigureResponse resetConfig(String name, File connectorDir,
-      TypeInfo typeInfo, Map <String, String> configMap, Locale locale)
+      TypeInfo typeInfo, Map<String, String> configMap, Locale locale)
       throws InstantiatorException {
 
     // Copy the configuration map, adding a couple of additional
     // context properties.  validateConfig() may also alter this map.
-    Map <String, String> config = new HashMap<String, String>();
+    Map<String, String> config = new HashMap<String, String>();
     config.putAll(configMap);
     config.put(PropertiesUtils.GOOGLE_CONNECTOR_NAME, name);
     config.put(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR,
@@ -159,9 +180,17 @@ public class InstanceMap extends TreeMap <String, InstanceInfo> {
                Context.getInstance().getCommonDirPath());
 
     // Validate the configuration.
-    ConfigureResponse response =
-        typeInfo.getConnectorType().validateConfig(config, locale,
-            new ConnectorInstanceFactory(name, connectorDir, typeInfo, config));
+    ConnectorInstanceFactory factory =
+        new ConnectorInstanceFactory(name, connectorDir, typeInfo, config);
+    ConfigureResponse response;
+    try {
+      response =
+          typeInfo.getConnectorType().validateConfig(config, locale, factory);
+    } catch (Exception e) {
+      throw new InstantiatorException("Unexpected validateConfig failure.", e);
+    } finally {
+      factory.shutdown();
+    }
 
     if (response != null) {
       // If validateConfig() returns a non-null response with an error message.
@@ -195,6 +224,19 @@ public class InstanceMap extends TreeMap <String, InstanceInfo> {
       throw new InstantiatorException("Failed to create connector " + name);
     }
 
+    // Tell old connector instance to shut down, as it is being replaced.
+    if (getInstanceInfo(name) != null) {
+      Connector connector = getInstanceInfo(name).getConnector();
+      if (connector instanceof ConnectorShutdownAware) {
+        try {
+          ((ConnectorShutdownAware)connector).shutdown();
+        } catch (Exception e) {
+          LOGGER.log(Level.WARNING, "Problem shutting down connector " + name
+              + " during configuration update.", e);
+        }
+      }
+    }
+
     // Only after validateConfig and instantiation succeeds do we
     // save the new configuration to persistent store.
     instanceInfo.setConnectorConfig(config);
@@ -213,7 +255,6 @@ public class InstanceMap extends TreeMap <String, InstanceInfo> {
         // we don't know why this directory already exists, but we're ok with it
         LOGGER.warning("Connector directory " + connectorDir.getAbsolutePath()
             + "; already exists for connector " + name);
-        return connectorDir;
       } else {
         throw new InstantiatorException("Existing file blocks creation of "
             + "connector directory at " + connectorDir.getAbsolutePath()
@@ -227,6 +268,25 @@ public class InstanceMap extends TreeMap <String, InstanceInfo> {
             + " for connector " + name);
       }
     }
+
+    // If connectorInstance.xml file does not exist, copy it out of the
+    // Connector's jar file.
+    File configXml = new File(connectorDir, TypeInfo.CONNECTOR_INSTANCE_XML);
+    if (!configXml.exists()) {
+      try {
+        InputStream in =
+            typeInfo.getConnectorInstancePrototype().getInputStream();
+        String config = StringUtils.streamToStringAndThrow(in);
+        FileOutputStream out = new FileOutputStream(configXml);
+        out.write(config.getBytes("UTF-8"));
+        out.close();
+      } catch (IOException ioe) {
+        LOGGER.log(Level.WARNING,"Can't extract connectorInstance.xml "
+            + " to connector directory at " + connectorDir.getAbsolutePath()
+            + " for connector " + name, ioe);
+      }
+    }
+
     return connectorDir;
   }
 
@@ -235,8 +295,47 @@ public class InstanceMap extends TreeMap <String, InstanceInfo> {
     if (instanceInfo == null) {
       return;
     }
+    Connector connector = instanceInfo.getConnector();
+    if (connector instanceof ConnectorShutdownAware) {
+      try {
+        LOGGER.fine("Shutting down Connector " + name);
+        ((ConnectorShutdownAware)connector).shutdown();
+      } catch (Exception e) {
+        LOGGER.log(Level.WARNING, "Failed to shutdown connector " + name, e);
+      }
+      try {
+        LOGGER.fine("Removing Connector " + name);
+        ((ConnectorShutdownAware)connector).delete();
+      } catch (Exception e) {
+        LOGGER.log(Level.WARNING, "Failed to remove connector " + name, e);
+      }
+    }
     File connectorDir = instanceInfo.getConnectorDir();
+    TypeInfo typeInfo = instanceInfo.getTypeInfo();
+
     instanceInfo.removeConnector();
+
+    // Remove the extracted connectorInstance.xml file, but only
+    // if it is unmodified.
+    // TODO: Remove this when fixing CM Issue 87?
+    File configXml = new File(connectorDir, TypeInfo.CONNECTOR_INSTANCE_XML);
+    if (configXml.exists()) {
+      try {
+        InputStream in1 =
+            typeInfo.getConnectorInstancePrototype().getInputStream();
+        FileInputStream in2 = new FileInputStream(configXml);
+        String conf1 = StringUtils.streamToStringAndThrow(in1);
+        String conf2 = StringUtils.streamToStringAndThrow(in2);
+        if (conf1.equals(conf2)) {
+          configXml.delete();
+        }
+      } catch (IOException ioe) {
+        LOGGER.log(Level.WARNING, "Can't delete connectorInstance.xml "
+            + " from connector directory at " + connectorDir.getAbsolutePath()
+            + " for connector " + name, ioe);
+      }
+    }
+
     if (connectorDir.exists()) {
       if (!connectorDir.delete()) {
         LOGGER.warning("Can't delete connector directory "
@@ -259,7 +358,8 @@ public class InstanceMap extends TreeMap <String, InstanceInfo> {
     String connectorName;
     File connectorDir;
     TypeInfo typeInfo;
-    Map <String, String> origConfig;
+    Map<String, String> origConfig;
+    List<InstanceInfo> connectors;
 
     /**
      * Constructor takes the items needed by <code>InstanceInfo</code>,
@@ -271,11 +371,12 @@ public class InstanceMap extends TreeMap <String, InstanceInfo> {
      * @param config the configuration provided to <code>validateConfig</code>.
      */
     public ConnectorInstanceFactory(String connectorName, File connectorDir,
-        TypeInfo typeInfo, Map <String, String> config) {
+        TypeInfo typeInfo, Map<String, String> config) {
       this.connectorName = connectorName;
       this.connectorDir = connectorDir;
       this.typeInfo = typeInfo;
       this.origConfig = config;
+      this.connectors = new ArrayList<InstanceInfo>();
     }
 
     /**
@@ -285,15 +386,43 @@ public class InstanceMap extends TreeMap <String, InstanceInfo> {
      *
      * @see com.google.enterprise.connector.spi.ConnectorFactory#makeConnector(Map)
      */
-    public Connector makeConnector(Map <String, String> config)
+    public Connector makeConnector(Map<String, String> config)
         throws RepositoryException {
       try {
         InstanceInfo info = InstanceInfo.fromNewConfig(connectorName,
             connectorDir, typeInfo, ((config == null) ? origConfig : config));
-        return (info == null) ? null : info.getConnector();
+        if (info == null) {
+          return null;
+        }
+        connectors.add(info);
+        return info.getConnector();
       } catch (InstantiatorException e) {
         throw new RepositoryException(
             "ConnectorFactory failed to make connector.", e);
+      }
+    }
+
+    /**
+     * Shutdown any connector instances created by the factory.
+     */
+    private void shutdown() {
+      List<InstanceInfo> connectorList;
+      synchronized(this) {
+        connectorList = connectors;
+        connectors = null;
+      }
+      if (connectorList != null) {
+        for (InstanceInfo info : connectorList) {
+          Connector connector = info.getConnector();
+          if (connector instanceof ConnectorShutdownAware) {
+            try {
+              ((ConnectorShutdownAware)connector).shutdown();
+            } catch (Exception e) {
+              LOGGER.log(Level.WARNING, "Failed to shutdown connector "
+                  + info.getName() + " created by validateConfig", e);
+            }
+          }
+        }
       }
     }
   }

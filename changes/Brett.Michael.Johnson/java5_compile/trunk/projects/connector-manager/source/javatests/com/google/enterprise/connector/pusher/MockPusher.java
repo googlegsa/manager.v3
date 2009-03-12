@@ -26,7 +26,6 @@ import com.google.enterprise.connector.spiimpl.BinaryValue;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.util.Iterator;
 
 
 public class MockPusher implements Pusher {
@@ -58,15 +57,13 @@ public class MockPusher implements Pusher {
     }
     processProperty(name, property);
 
-    Iterator <String> iter = document.getPropertyNames().iterator();
-    while (iter.hasNext()) {
-      name = iter.next();
-      if (name.equals(SpiConstants.PROPNAME_DOCID)) {
+    for (String propName : document.getPropertyNames()) {
+      if (propName.equals(SpiConstants.PROPNAME_DOCID)) {
         // we already dealt with these
         continue;
       }
-      property = document.findProperty(name);
-      processProperty(name, property);
+      property = document.findProperty(propName);
+      processProperty(propName, property);
     }
 
     printStream.println("</document>");

@@ -72,13 +72,12 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
    */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
-    Enumeration <?> headerNames = req.getHeaderNames();
+    Enumeration<?> headerNames = req.getHeaderNames();
     while (headerNames.hasMoreElements()) {
       String name = (String) headerNames.nextElement();
       LOGGER.log(Level.INFO, "HEADER " + name + ": " + req.getHeader(name));
     }
     BufferedReader reader = req.getReader();
-//  BufferedReader reader = new BufferedReader(new java.io.InputStreamReader(req.getInputStream(), "UTF-8"));
     res.setContentType(ServletUtil.MIMETYPE_XML);
     res.setCharacterEncoding("UTF-8");
     PrintWriter out = res.getWriter();

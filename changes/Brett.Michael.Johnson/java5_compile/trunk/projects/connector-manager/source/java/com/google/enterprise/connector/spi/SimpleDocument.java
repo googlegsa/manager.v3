@@ -20,14 +20,14 @@ import java.util.Set;
 
 public class SimpleDocument implements Document {
 
-  private Map <String, List<Value>> properties;
+  private Map<String, List<Value>> properties;
 
-  public SimpleDocument(Map <String, List<Value>> properties) {
+  public SimpleDocument(Map<String, List<Value>> properties) {
     this.properties = properties;
   }
 
   public Property findProperty(String name) {
-    List <Value> list = properties.get(name);
+    List<Value> list = properties.get(name);
     Property prop = null;
     if (list != null) {
       prop = new SimpleProperty(list);
@@ -35,7 +35,7 @@ public class SimpleDocument implements Document {
     return prop;
   }
 
-  public Set <String> getPropertyNames() {
+  public Set<String> getPropertyNames() {
     return properties.keySet();
   }
 }

@@ -47,7 +47,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -302,7 +301,7 @@ public class DocPusherTest extends TestCase {
    * Test minimal properties allowed for delete document.
    */
   public void testSimpleDeleteDoc() {
-    Map <String, Object> props = getTestDocumentConfig();
+    Map<String, Object> props = getTestDocumentConfig();
     props.put(SpiConstants.PROPNAME_ACTION,
         SpiConstants.ActionType.DELETE.toString());
     Document document = createSimpleDocument(props);
@@ -320,7 +319,7 @@ public class DocPusherTest extends TestCase {
     }
 
     // Now document with only DocId and Delete Action.
-    Map <String, Object> minProps = new HashMap<String, Object>();
+    Map<String, Object> minProps = new HashMap<String, Object>();
     minProps.put(SpiConstants.PROPNAME_DOCID,
                  props.get(SpiConstants.PROPNAME_DOCID));
     minProps.put(SpiConstants.PROPNAME_ACTION,
@@ -358,10 +357,9 @@ public class DocPusherTest extends TestCase {
    * Utility method to convert {@link Map} of Java Objects into a
    * {@link SimpleDocument}.
    */
-  private Document createSimpleDocument(Map <String, ?> props) {
-    Map <String, List<Value>> spiValues = new HashMap<String, List<Value>>();
-    for (Iterator <?> iter = props.keySet().iterator(); iter.hasNext();) {
-      String key = (String) iter.next();
+  private Document createSimpleDocument(Map<String, ?> props) {
+    Map<String, List<Value>> spiValues = new HashMap<String, List<Value>>();
+    for (String key : props.keySet()) {
       Object obj = props.get(key);
       Value val = null;
       if (obj instanceof String) {
@@ -373,7 +371,7 @@ public class DocPusherTest extends TestCase {
       } else {
         throw new AssertionError(obj);
       }
-      List <Value> values = new ArrayList <Value> ();
+      List<Value> values = new ArrayList<Value>();
       values.add(val);
       spiValues.put(key, values);
     }
@@ -916,8 +914,8 @@ public class DocPusherTest extends TestCase {
     return createSimpleDocument(getTestDocumentConfig());
   }
 
-  private Map <String, Object> getTestDocumentConfig() {
-    Map <String, Object> props = new HashMap<String, Object>();
+  private Map<String, Object> getTestDocumentConfig() {
+    Map<String, Object> props = new HashMap<String, Object>();
     Calendar cal = Calendar.getInstance();
     cal.setTimeInMillis(10 * 1000);
     props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
@@ -1202,7 +1200,7 @@ public class DocPusherTest extends TestCase {
    * and handled specially.
    */
   public void testBadSearchUrl1() throws Exception {
-    Map <String, Object> config = getTestDocumentConfig();
+    Map<String, Object> config = getTestDocumentConfig();
     config.put(SpiConstants.PROPNAME_SEARCHURL,
                "Not even remotely a \\ valid % URL");
     Document doc = createSimpleDocument(config);
@@ -1452,7 +1450,7 @@ public class DocPusherTest extends TestCase {
    * it throws a RepositoryDocumentException.
    */
   public void testContentReadError() throws Exception {
-    Map <String, Object> props = getTestDocumentConfig();
+    Map<String, Object> props = getTestDocumentConfig();
     props.put(SpiConstants.PROPNAME_CONTENT, new BadInputStream());
     Document document = createSimpleDocument(props);
 
@@ -1554,14 +1552,14 @@ public class DocPusherTest extends TestCase {
     private Document baseDocument;
 
     // Map of bad Properties.
-    private HashMap <String, Class <? extends Throwable>> badProperties;
+    private HashMap<String, Class<? extends Throwable>> badProperties;
 
     /**
      * Constructor wraps an existing Document.
      */
     public BadDocument(Document document) {
       baseDocument = document;
-      badProperties = new HashMap<String, Class <? extends Throwable>>();
+      badProperties = new HashMap<String, Class<? extends Throwable>>();
     }
 
     /**
@@ -1573,7 +1571,7 @@ public class DocPusherTest extends TestCase {
      *        Exception.
      */
     public void failProperty(String propertyName,
-                             Class <? extends Throwable> exception) {
+                             Class<? extends Throwable> exception) {
       if (exception != null &&
           !(RuntimeException.class.isAssignableFrom(exception) ||
             RepositoryException.class.isAssignableFrom(exception))) {
@@ -1591,7 +1589,7 @@ public class DocPusherTest extends TestCase {
      *        Exception.
      */
     public void failProperties(String[] propertyNames,
-                               Class <? extends Throwable> exception) {
+                               Class<? extends Throwable> exception) {
       for (int i = 0; i < propertyNames.length; i++) {
         failProperty(propertyNames[i], exception);
       }
@@ -1600,9 +1598,10 @@ public class DocPusherTest extends TestCase {
     /**
      * Return the Set of Property names available for this Document.
      */
-    public Set <String> getPropertyNames() throws RepositoryException {
+    public Set<String> getPropertyNames() throws RepositoryException {
       // Get all the property names of the base Document.
-      HashSet <String> names = new HashSet<String>((Set<String>)(baseDocument.getPropertyNames()));
+      HashSet<String> names =
+          new HashSet<String>((Set<String>)(baseDocument.getPropertyNames()));
       // Add my additional bad properties.
       names.addAll(badProperties.keySet());
       // Return the union.
@@ -1619,14 +1618,14 @@ public class DocPusherTest extends TestCase {
     public Property findProperty(String propertyName)
         throws RepositoryException {
       if (badProperties.containsKey(propertyName)) {
-        Class <? extends Throwable> throwable = badProperties.get(propertyName);
+        Class<? extends Throwable> throwable = badProperties.get(propertyName);
         if (throwable == null) {
           return null;
         }
 
-        Class <?> [] parameterTypes = { String.class };
+        Class<?> [] parameterTypes = { String.class };
         String[] parameters = { "Fail " + propertyName };
-        Constructor <? extends Throwable> constructor;
+        Constructor<? extends Throwable> constructor;
         try {
           constructor = throwable.getConstructor(parameterTypes);
         } catch (NoSuchMethodException e) {

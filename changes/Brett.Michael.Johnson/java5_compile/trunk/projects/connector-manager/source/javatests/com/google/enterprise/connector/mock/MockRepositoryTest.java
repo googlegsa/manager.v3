@@ -73,7 +73,7 @@ public class MockRepositoryTest extends TestCase {
     System.out.println();
     MockRepositoryPropertyList proplist = doc.getProplist();
     int counter = 0;
-    Iterator <MockRepositoryProperty> iter = proplist.iterator();
+    Iterator<MockRepositoryProperty> iter = proplist.iterator();
     while (iter.hasNext()) {
       MockRepositoryProperty property = iter.next();
       System.out.print(property.toString());

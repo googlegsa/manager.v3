@@ -18,8 +18,6 @@ import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Manager;
 
 import java.io.PrintWriter;
-import java.util.Iterator;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -79,9 +77,8 @@ public class Authenticate extends ConnectorManagerServlet {
       (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_USERNAME);
     String password = ServletUtil.getFirstElementByTagName(
       (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_PASSWORD);
-    List <ConnectorStatus> connList = manager.getConnectorStatuses();
-    for (Iterator <ConnectorStatus> i = connList.iterator(); i.hasNext();) {
-      String connectorName = i.next().getName();
+    for (ConnectorStatus connector : manager.getConnectorStatuses()) {
+      String connectorName = connector.getName();
       boolean authn = manager.authenticate(connectorName, username, password);
       if (authn) {
         ServletUtil.writeXMLTagWithAttrs(

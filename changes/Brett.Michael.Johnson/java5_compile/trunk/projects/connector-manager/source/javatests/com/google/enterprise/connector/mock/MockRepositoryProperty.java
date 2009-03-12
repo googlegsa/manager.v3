@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,7 +51,7 @@ public class MockRepositoryProperty {
   /**
    * Enumeration for property carrier types
    */
-  public static class PropertyType implements Comparable <PropertyType> {
+  public static class PropertyType implements Comparable<PropertyType> {
     private static int nextOrdinal = 0;
     private final int ordinal = nextOrdinal++;
 
@@ -64,7 +63,7 @@ public class MockRepositoryProperty {
 
     private static final PropertyType[] PRIVATE_VALUES =
         {STRING, DATE, INTEGER, STREAM, UNDEFINED};
-    public static final List <PropertyType> Values =
+    public static final List<PropertyType> Values =
         Collections.unmodifiableList(Arrays.asList(PRIVATE_VALUES));
 
 
@@ -100,7 +99,7 @@ public class MockRepositoryProperty {
   private String value;
   private InputStream streamValue;  // used for streams
   private boolean streamRead;  // indicates that stream has been used
-  private List <String> multivalues;
+  private List<String> multivalues;
   private boolean repeating;
 
   public MockRepositoryProperty(String name, PropertyType type, String value) {
@@ -193,18 +192,7 @@ public class MockRepositoryProperty {
     if (!repeating) {
       return value;
     } else {
-      StringBuffer buf = new StringBuffer(1024);
-      buf.append('[');
-      String separator = "";
-
-      for (Iterator <String> iter = multivalues.iterator(); iter.hasNext();) {
-        String v = iter.next();
-        buf.append(separator);
-        buf.append(v);
-        separator = ", ";
-      }
-      buf.append(']');
-      return new String(buf);
+      return multivalues.toString();
     }
   }
 

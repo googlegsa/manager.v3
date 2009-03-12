@@ -39,9 +39,12 @@ import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.traversal.CancellableQueryTraverser;
 import com.google.enterprise.connector.traversal.InterruptibleQueryTraverser;
 import com.google.enterprise.connector.traversal.LongRunningQueryTraverser;
 import com.google.enterprise.connector.traversal.NeverEndingQueryTraverser;
@@ -56,6 +59,8 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.jcr.Repository;
 
@@ -69,8 +74,12 @@ public class MockInstantiator implements Instantiator {
   public static final String TRAVERSER_NAME_LONG_RUNNING = "longrunning";
   public static final String TRAVERSER_NAME_NEVER_ENDING = "neverending";
   public static final String TRAVERSER_NAME_INTERRUPTIBLE = "interruptible";
+  public static final String TRAVERSER_NAME_CANCELLABLE = "cancellable";
 
   private static final ConnectorType CONNECTOR_TYPE = null;
+
+  private static final Logger LOGGER =
+      Logger.getLogger(MockInstantiator.class.getName());
 
   private static final AuthenticationManager nullAuthenticationManager =
       new AuthenticationManager() {
@@ -82,13 +91,13 @@ public class MockInstantiator implements Instantiator {
 
   private static final AuthorizationManager nullAuthorizationManager =
       new AuthorizationManager() {
-        public Collection <AuthorizationResponse> authorizeDocids(
-            Collection <String> docids, AuthenticationIdentity identity) {
+        public Collection<AuthorizationResponse> authorizeDocids(
+            Collection<String> docids, AuthenticationIdentity identity) {
           throw new UnsupportedOperationException();
         }
       };
 
-  private Map <String, ConnectorInstance> connectorMap;
+  private Map<String, ConnectorInstance> connectorMap;
   private ConnectorConfigStore connectorConfigStore;
   private ConnectorScheduleStore connectorScheduleStore;
   private ConnectorStateStore connectorStateStore;
@@ -106,6 +115,22 @@ public class MockInstantiator implements Instantiator {
     this.connectorMap = new HashMap<String, ConnectorInstance>();
   }
 
+  public synchronized void shutdown() {
+    for (String name : connectorMap.keySet()) {
+      ConnectorInstance instance = connectorMap.get(name);
+      Connector connector = instance.getConnectorInterfaces().getConnector();
+      if (connector != null && (connector instanceof ConnectorShutdownAware)) {
+        try {
+          ((ConnectorShutdownAware)connector).shutdown();
+        } catch (RepositoryException e) {
+          LOGGER.log(Level.WARNING, "Problem shutting down connector "
+                     + name, e);
+        }
+      }
+    }
+    connectorMap.clear();
+  }
+
   public void setupTestTraversers() {
     setupConnector(TRAVERSER_NAME1, "MockRepositoryEventLog1.txt");
     setupConnector(TRAVERSER_NAME2, "MockRepositoryEventLog1.txt");
@@ -113,6 +138,7 @@ public class MockInstantiator implements Instantiator {
     setupTraverser(TRAVERSER_NAME_LONG_RUNNING, new LongRunningQueryTraverser());
     setupTraverser(TRAVERSER_NAME_NEVER_ENDING, new NeverEndingQueryTraverser());
     setupTraverser(TRAVERSER_NAME_INTERRUPTIBLE, new InterruptibleQueryTraverser());
+    setupTraverser(TRAVERSER_NAME_CANCELLABLE, new CancellableQueryTraverser());
   }
 
   public void setupTraverser(String traverserName, Traverser traverser) {
@@ -246,7 +272,7 @@ public class MockInstantiator implements Instantiator {
     return "";
   }
 
-  public Iterator <String> getConnectorTypeNames() {
+  public Iterator<String> getConnectorTypeNames() {
     return connectorMap.keySet().iterator();
   }
 
@@ -281,7 +307,7 @@ public class MockInstantiator implements Instantiator {
     throw new UnsupportedOperationException();
   }
 
-  public Iterator <String> getConnectorNames() {
+  public Iterator<String> getConnectorNames() {
     return connectorMap.keySet().iterator();
   }
 
@@ -291,7 +317,7 @@ public class MockInstantiator implements Instantiator {
   }
 
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String typeName, Map <String, String> configKeys, Locale locale,
+      String typeName, Map<String, String> configKeys, Locale locale,
       boolean update) throws ConnectorNotFoundException {
     getConnectorInstance(connectorName).setTypeName(typeName);
     connectorConfigStore.storeConnectorConfiguration(
@@ -300,7 +326,7 @@ public class MockInstantiator implements Instantiator {
     return null;
   }
 
-  public Map <String, String> getConnectorConfig(String connectorName)
+  public Map<String, String> getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException {
     Properties props = connectorConfigStore.getConnectorConfiguration(
         getConnectorInstance(connectorName).getStoreContext());

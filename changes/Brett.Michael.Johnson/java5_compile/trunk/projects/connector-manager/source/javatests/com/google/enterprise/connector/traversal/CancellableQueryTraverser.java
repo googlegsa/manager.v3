@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,24 +15,28 @@
 package com.google.enterprise.connector.traversal;
 
 /**
- * A mock query traverser that runs forever.
+ * A mock query traverser that can be cancelled.
  */
-public class NeverEndingQueryTraverser implements Traverser {
+public class CancellableQueryTraverser implements Traverser {
+  boolean cancelled = false;
 
   public int runBatch(int batchHint) {
-    boolean breakLoop = true;
     // infinite loop
-    while (breakLoop) {
+    while (!isCancelled()) {
       try {
         Thread.sleep(1000);
       } catch (InterruptedException ie) {
         // do nothing
       }
     }
-    return batchHint;
+    return -1;
   }
 
-  public void cancelBatch() {
-    // do nothing
+  public synchronized void cancelBatch() {
+    cancelled = true;
+  }
+
+  public synchronized boolean isCancelled() {
+    return cancelled;
   }
 }

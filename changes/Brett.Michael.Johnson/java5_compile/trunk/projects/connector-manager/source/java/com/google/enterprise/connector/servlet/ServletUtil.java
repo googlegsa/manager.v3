@@ -27,6 +27,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -127,6 +129,7 @@ public class ServletUtil {
 
   public static final String XMLTAG_CONNECTOR_SCHEDULES = "ConnectorSchedules";
   public static final String XMLTAG_CONNECTOR_SCHEDULE = "ConnectorSchedule";
+  public static final String XMLTAG_DISABLED = "disabled";
   public static final String XMLTAG_LOAD = "load";
   public static final String XMLTAG_DELAY = "RetryDelayMillis";
   public static final String XMLTAG_TIME_INTERVALS = "TimeIntervals";
@@ -297,9 +300,9 @@ public class ServletUtil {
    * @return attribute name and value map of named child element
    *
    */
-  public static Map <String, String> getAllAttributes(Element elem, String name)
+  public static Map<String, String> getAllAttributes(Element elem, String name)
   {
-    Map <String, String>attributes = new TreeMap<String, String>();
+    Map<String, String>attributes = new TreeMap<String, String>();
     NodeList nodeList = elem.getElementsByTagName(name);
     int length = nodeList.getLength();
     for (int n = 0; n < length; ++n) {
@@ -338,10 +341,10 @@ public class ServletUtil {
    * @param name the given name of searched child elements
    * @return a list of values of those child text elements
    */
-  public static List <String> getAllElementsByTagName(Element elem, String name)
+  public static List<String> getAllElementsByTagName(Element elem, String name)
   {
     NodeList nodeList = elem.getElementsByTagName(name);
-    List <String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<String>();
     for (int i = 0; i < nodeList.getLength(); ++i) {
       NodeList children = nodeList.item(i).getChildNodes();
       if (children.getLength() == 0 ||
@@ -475,14 +478,14 @@ public class ServletUtil {
   }
 
   /**
-   * Write a name value pair as an XML element to a StringBuffer.
+   * Write a name value pair as an XML element to a StringBuilder.
    *
-   * @param out where StringBuffer to be written to
+   * @param out where StringBuilder to be written to
    * @param indentLevel the depth of indentation.
    * @param elemName element name
    * @param elemValue element value
    */
-  public static void writeXMLElement(StringBuffer out, int indentLevel,
+  public static void writeXMLElement(StringBuilder out, int indentLevel,
                                      String elemName, String elemValue) {
     out.append(indentStr(indentLevel)).append("<").append(elemName).append(">");
     out.append(elemValue).append("</").append(elemName).append(">");
@@ -517,15 +520,15 @@ public class ServletUtil {
   }
 
   /**
-   * Write an XML tag with attributes out to a StringBuffer.
+   * Write an XML tag with attributes out to a StringBuilder.
    *
-   * @param out where StringBuffer to be written to
+   * @param out where StringBuilder to be written to
    * @param indentLevel the depth of indentation.
    * @param elemName element name
    * @param attributes attributes
    * @param closeTag if true, close the tag with '/>'
    */
-  public static void writeXMLTagWithAttrs(StringBuffer out, int indentLevel,
+  public static void writeXMLTagWithAttrs(StringBuilder out, int indentLevel,
       String elemName, String attributes, boolean closeTag) {
     out.append(indentStr(indentLevel)).append("<").append(elemName);
     out.append(" ").append(attributes).append((closeTag)? "/>" : ">");
@@ -545,15 +548,15 @@ public class ServletUtil {
         + (endingTag ? "</" : "<") + (tagName) + ">");
   }
 
-  /** Write an XML tag to a StringBuffer
+  /** Write an XML tag to a StringBuilder
    *
-   * @param out where StringBuffer to be written to
+   * @param out where StringBuilder to be written to
    * @param indentLevel the depth of indentation
    * @param tagName String name of the XML tag to be added
    * @param endingTag String write a beginning tag if true or
    * an ending tag if false
    */
-  public static void writeXMLTag(StringBuffer out, int indentLevel,
+  public static void writeXMLTag(StringBuilder out, int indentLevel,
                                  String tagName, boolean endingTag) {
     out.append(indentStr(indentLevel)).append(endingTag ? "</" : "<");
     out.append(tagName).append(">");
@@ -635,9 +638,9 @@ public class ServletUtil {
                                 req.getRequestURL().toString());
     ServletUtil.writeXMLElement(out, 3, "ServletPath", req.getServletPath());
     ServletUtil.writeXMLTag(out, 3, "Headers", false);
-    for (Enumeration <?> names = req.getHeaderNames(); names.hasMoreElements(); ) {
+    for (Enumeration<?> names = req.getHeaderNames(); names.hasMoreElements(); ) {
       String name = (String)(names.nextElement());
-      for (Enumeration <?> e = req.getHeaders(name); e.hasMoreElements(); )
+      for (Enumeration<?> e = req.getHeaders(name); e.hasMoreElements(); )
         ServletUtil.writeXMLElement(out, 4, name, (String)(e.nextElement()));
     }
     ServletUtil.writeXMLTag(out, 3, "Headers", true);
@@ -650,7 +653,7 @@ public class ServletUtil {
                                 String.valueOf(req.getServerPort()));
     ServletUtil.writeXMLElement(out, 3, "RemoteAddr", req.getRemoteAddr());
     ServletUtil.writeXMLElement(out, 3, "RemoteHost", req.getRemoteHost());
-    Enumeration <?> names;
+    Enumeration<?> names;
     ServletUtil.writeXMLTag(out, 3, "Attributes", false);
     for (names = req.getAttributeNames(); names.hasMoreElements(); ) {
       String name = (String)(names.nextElement());
@@ -670,5 +673,34 @@ public class ServletUtil {
     ServletUtil.writeRootTag(out, true);
     out.close();
     return true;
+  }
+
+  /**
+   * Verify the request originated from either the GSA or
+   * localhost.  Since the logs and the feed file may contain
+   * proprietary customer information, we don't want to serve
+   * them up to just anybody.
+   *
+   * @param gsaHost the GSA feed host
+   * @param remoteAddr the IP address of the caller
+   * @returns true if request came from an acceptable IP address.
+   */
+  public static boolean allowedRemoteAddr(String gsaHost, String remoteAddr) {
+    try {
+      InetAddress caller = InetAddress.getByName(remoteAddr);
+      if (caller.isLoopbackAddress() ||
+          caller.equals(InetAddress.getLocalHost())) {
+        return true;  // localhost is allowed access
+      }
+      InetAddress[] gsaAddrs = InetAddress.getAllByName(gsaHost);
+      for (int i = 0; i < gsaAddrs.length; i++) {
+        if (caller.equals(gsaAddrs[i])) {
+          return true;  // GSA is allowed access
+        }
+      }
+    } catch (UnknownHostException uhe) {
+      // Unknown host - fall through to fail.
+    }
+    return false;
   }
 }

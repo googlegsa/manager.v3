@@ -106,7 +106,7 @@ public interface Instantiator {
    *
    * @return an iterator of String names
    */
-  public Iterator <String> getConnectorTypeNames();
+  public Iterator<String> getConnectorTypeNames();
 
   /**
    * Gets the prototype definition for instances of this type
@@ -127,7 +127,7 @@ public interface Instantiator {
    *
    * @return an Iterator of String names
    */
-  public Iterator <String> getConnectorNames();
+  public Iterator<String> getConnectorNames();
 
   /**
    * Get the type for a known connector
@@ -156,7 +156,7 @@ public interface Instantiator {
    * @throws InstantiatorException
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map <String, String> configMap, Locale locale,
+      String connectorTypeName, Map<String, String> configMap, Locale locale,
       boolean update)
       throws ConnectorNotFoundException, ConnectorExistsException,
       ConnectorTypeNotFoundException, InstantiatorException;
@@ -169,7 +169,7 @@ public interface Instantiator {
    *         configuration data
    * @throws ConnectorNotFoundException if the named connector is not found
    */
-  public Map <String, String> getConnectorConfig(String connectorName)
+  public Map<String, String> getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException;
 
   /**
@@ -216,4 +216,9 @@ public interface Instantiator {
    */
   public String getConnectorState(String connectorName)
       throws ConnectorNotFoundException;
+
+  /**
+   * Shutdown all the Connector instances.
+   */
+  public void shutdown();
 }

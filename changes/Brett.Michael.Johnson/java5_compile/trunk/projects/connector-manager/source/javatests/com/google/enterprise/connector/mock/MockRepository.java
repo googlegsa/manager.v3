@@ -29,7 +29,7 @@ public class MockRepository {
   MockRepositoryDocumentStore store;
   MockRepositoryDateTime currentTime;
   MockRepositoryEventList eventList;
-  ListIterator <MockRepositoryEvent> internalIterator;
+  ListIterator<MockRepositoryEvent> internalIterator;
 
   private void init() {
     store = new MockRepositoryDocumentStore();
@@ -60,7 +60,7 @@ public class MockRepository {
     this.eventList = eventList;
     init();
     // set the time to be the time of the last event supplied
-    List <MockRepositoryEvent> l = eventList.getEventList();
+    List<MockRepositoryEvent> l = eventList.getEventList();
     MockRepositoryEvent lastEvent = l.get(l.size() - 1);
     setTime(lastEvent.getTimeStamp());
   }

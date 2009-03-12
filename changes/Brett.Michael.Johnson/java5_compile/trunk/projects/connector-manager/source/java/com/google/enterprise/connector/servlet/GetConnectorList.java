@@ -22,7 +22,6 @@ import com.google.enterprise.connector.spi.ConnectorType;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -79,7 +78,7 @@ public class GetConnectorList extends HttpServlet {
     ServletUtil.writeRootTag(out, false);
     ServletUtil.writeManagerSplash(out);
 
-    Set <String> connectorTypes = manager.getConnectorTypeNames();
+    Set<String> connectorTypes = manager.getConnectorTypeNames();
     if (connectorTypes == null || connectorTypes.size() == 0) {
       ServletUtil.writeStatusId(
           out, ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_TYPE);
@@ -90,8 +89,7 @@ public class GetConnectorList extends HttpServlet {
 
     ServletUtil.writeStatusId(out, ConnectorMessageCode.SUCCESS);
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_TYPES, false);
-    for (Iterator <String> iter = connectorTypes.iterator(); iter.hasNext();) {
-      String typeName = iter.next();
+    for (String typeName : connectorTypes) {
       String version = null;
       try {
         ConnectorType connectorType = manager.getConnectorType(typeName);
@@ -102,7 +100,7 @@ public class GetConnectorList extends HttpServlet {
       }
       if (version != null && version.length() > 0) {
         // Write out the Connector version as an attribute on the tag.
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         ServletUtil.writeXMLTagWithAttrs(buffer, 2,
             ServletUtil.XMLTAG_CONNECTOR_TYPE,
             ServletUtil.ATTRIBUTE_VERSION + version + ServletUtil.QUOTE,

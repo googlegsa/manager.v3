@@ -242,7 +242,7 @@ public class PropertiesUtils {
    * @returns new Properties object that may be modified without altering
    *          the source properties.
    */
-  public static Properties fromMap(Map <String, String> sourceMap) {
+  public static Properties fromMap(Map<String, String> sourceMap) {
     if (sourceMap == null) {
       return null;
     }
@@ -259,12 +259,12 @@ public class PropertiesUtils {
    * @returns new Properties object that may be modified without altering
    *          the source properties.
    */
-  public static Map <String, String> toMap(Properties sourceProperties) {
+  public static Map<String, String> toMap(Properties sourceProperties) {
     if (sourceProperties == null) {
       return null;
     }
-    Map <String, String> configMap = new HashMap<String, String>();
-    Iterator <?> iter = sourceProperties.keySet().iterator();
+    Map<String, String> configMap = new HashMap<String, String>();
+    Iterator<?> iter = sourceProperties.keySet().iterator();
     while (iter.hasNext()) {
       String key = (String) iter.next();
       configMap.put(key, sourceProperties.getProperty(key));

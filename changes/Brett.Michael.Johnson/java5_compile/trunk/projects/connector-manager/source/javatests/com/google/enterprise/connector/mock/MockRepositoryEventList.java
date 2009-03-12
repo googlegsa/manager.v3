@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  * which knows how to create events from a file, using json
  */
 public class MockRepositoryEventList {
-  private List <MockRepositoryEvent> eventList = null;
+  private List<MockRepositoryEvent> eventList = null;
   private String workDirName = null;
   private String repositoryFileName = null;
 
@@ -110,8 +110,8 @@ public class MockRepositoryEventList {
         } catch (JSONException e) {
           throw new RuntimeException(e);
         }
-        Map <String, String> properties = new HashMap<String, String>();
-        Iterator <?> keys = jo.keys();
+        Map<String, String> properties = new HashMap<String, String>();
+        Iterator<?> keys = jo.keys();
         while (keys.hasNext()) {
           String k = (String) keys.next();
           try {
@@ -134,7 +134,7 @@ public class MockRepositoryEventList {
     }
   }
 
-  public List <MockRepositoryEvent> getEventList() {
+  public List<MockRepositoryEvent> getEventList() {
     if (eventList != null) {
       return eventList;
     }

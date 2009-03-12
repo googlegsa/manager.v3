@@ -76,7 +76,7 @@ public class MockRepositoryDocumentStore {
   private static final Logger logger =
       Logger.getLogger(MockRepositoryDocumentStore.class.getName());
 
-  Map <String, MockRepositoryDocument> store = null;
+  Map<String, MockRepositoryDocument> store = null;
 
   /**
    * Makes an empty store
@@ -182,8 +182,8 @@ public class MockRepositoryDocumentStore {
    *
    * @return Iterator
    */
-  public Iterator <MockRepositoryDocument> iterator() {
-    List <MockRepositoryDocument> l =
+  public Iterator<MockRepositoryDocument> iterator() {
+    List<MockRepositoryDocument> l =
         new LinkedList<MockRepositoryDocument>(store.values());
     sortDocuments(l);
     return l.listIterator();
@@ -202,12 +202,10 @@ public class MockRepositoryDocumentStore {
    * @param to
    * @return A List of these results
    */
-  public List <MockRepositoryDocument> dateRange(
+  public List<MockRepositoryDocument> dateRange(
       final MockRepositoryDateTime from, final MockRepositoryDateTime to) {
-    List <MockRepositoryDocument> l = new ArrayList<MockRepositoryDocument>();
-    Iterator <MockRepositoryDocument>iter = store.values().iterator();
-    while (iter.hasNext()) {
-      MockRepositoryDocument d = iter.next();
+    List<MockRepositoryDocument> l = new ArrayList<MockRepositoryDocument>();
+    for (MockRepositoryDocument d : store.values()) {
       int c1 = from.compareTo(d.getTimeStamp());
       int c2 = d.getTimeStamp().compareTo(to);
       if (c1 <= 0 && c2 < 0) {
@@ -224,12 +222,10 @@ public class MockRepositoryDocumentStore {
    * @param from
    * @return A list of these results
    */
-  public List <MockRepositoryDocument> dateRange(
+  public List<MockRepositoryDocument> dateRange(
        final MockRepositoryDateTime from) {
-    List <MockRepositoryDocument> l = new ArrayList<MockRepositoryDocument>();
-    Iterator <MockRepositoryDocument> iter = store.values().iterator();
-    while (iter.hasNext()) {
-      MockRepositoryDocument d = iter.next();
+    List<MockRepositoryDocument> l = new ArrayList<MockRepositoryDocument>();
+    for (MockRepositoryDocument d : store.values()) {
       int c1 = from.compareTo(d.getTimeStamp());
       if (c1 <= 0) {
         l.add(d);
@@ -239,7 +235,7 @@ public class MockRepositoryDocumentStore {
     return l;
   }
 
-  private void sortDocuments(List <MockRepositoryDocument> l) {
+  private void sortDocuments(List<MockRepositoryDocument> l) {
     Collections.sort(l, new Comparator<MockRepositoryDocument>() {
       public int compare(MockRepositoryDocument d1, MockRepositoryDocument d2) {
         int c = d1.getTimeStamp().compareTo(d2.getTimeStamp());
@@ -260,7 +256,7 @@ public class MockRepositoryDocumentStore {
   private boolean checkDateOrderIntegrity() {
     boolean result = true;
     int lastStamp = -1;
-    Iterator <MockRepositoryDocument> iter = this.iterator();
+    Iterator<MockRepositoryDocument> iter = this.iterator();
     while (iter.hasNext()) {
       MockRepositoryDocument d = iter.next();
       int thisStamp = d.getTimeStamp().getTicks();
@@ -282,8 +278,8 @@ public class MockRepositoryDocumentStore {
    */
   private boolean checkDocidUniquenessIntegrity() {
     boolean result = true;
-    Set <String> m = new HashSet<String>();
-    Iterator <MockRepositoryDocument> iter = this.iterator();
+    Set<String> m = new HashSet<String>();
+    Iterator<MockRepositoryDocument> iter = this.iterator();
     while (iter.hasNext()) {
       MockRepositoryDocument d = iter.next();
       if (!m.add(d.getDocID())) {

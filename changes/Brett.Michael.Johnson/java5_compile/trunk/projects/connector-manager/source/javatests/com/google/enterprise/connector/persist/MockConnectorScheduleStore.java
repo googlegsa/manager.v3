@@ -19,7 +19,7 @@ import java.util.HashMap;
 /**
  * Mock Schedule Store - doesn't actually persist, just uses memory.
  */
-public class MockConnectorScheduleStore extends HashMap <String, String>
+public class MockConnectorScheduleStore extends HashMap<String, String>
     implements ConnectorScheduleStore {
 
   /* (non-Javadoc)

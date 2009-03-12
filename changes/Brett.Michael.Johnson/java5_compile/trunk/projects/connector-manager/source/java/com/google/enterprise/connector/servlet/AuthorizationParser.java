@@ -18,7 +18,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -32,7 +31,7 @@ public class AuthorizationParser {
 
   private int status;
   private int numDocs;
-  private Map <String, Map<String, Map<String, ParsedUrl>>> parseMap;
+  private Map<String, Map<String, Map<String, ParsedUrl>>> parseMap;
 
   public AuthorizationParser(String xmlBody) {
     this.xmlBody = xmlBody;
@@ -100,7 +99,7 @@ public class AuthorizationParser {
     String source =
         ServletUtil.getFirstAttribute(queryItem, ServletUtil.XMLTAG_IDENTITY,
             "source");
-    List <String> resources =
+    List<String> resources =
         ServletUtil.getAllElementsByTagName(queryItem,
             ServletUtil.XMLTAG_RESOURCE);
     if (resources.isEmpty()) {
@@ -108,25 +107,24 @@ public class AuthorizationParser {
       return;
     }
 
-    Map <String, Map<String, ParsedUrl>> urlsByConnector =
+    Map<String, Map<String, ParsedUrl>> urlsByConnector =
         parseMap.get(identity);
     if (urlsByConnector == null) {
       urlsByConnector = new HashMap<String, Map<String, ParsedUrl>>();
       parseMap.put(identity, urlsByConnector);
     }
 
-    for (Iterator <String> iter = resources.iterator(); iter.hasNext();) {
-      parseResource(urlsByConnector, iter);
+    for (String url : resources) {
+      parseResource(urlsByConnector, url);
     }
   }
 
   private void parseResource(
-      Map <String, Map<String, ParsedUrl>> urlsByConnector,
-      Iterator <String> iter) {
-    String url = iter.next();
+      Map<String, Map<String, ParsedUrl>> urlsByConnector,
+      String url) {
     ParsedUrl p = new ParsedUrl(url);
     if (p.getStatus() == ConnectorMessageCode.SUCCESS) {
-      Map <String, ParsedUrl> urlsByDocid =
+      Map<String, ParsedUrl> urlsByDocid =
           urlsByConnector.get(p.getConnectorName());
       if (urlsByDocid == null) {
         urlsByDocid = new HashMap<String, ParsedUrl>();
@@ -155,7 +153,7 @@ public class AuthorizationParser {
    * @return number of identities
    */
   int countConnectorsForIdentity(String identity) {
-    Map <String, Map<String, ParsedUrl>> urlsByConnector =
+    Map<String, Map<String, ParsedUrl>> urlsByConnector =
         parseMap.get(identity);
     if (urlsByConnector == null) {
       return 0;
@@ -170,12 +168,12 @@ public class AuthorizationParser {
    * @return number of identities
    */
   int countUrlsForIdentityConnectorPair(String identity, String connectorName) {
-    Map <String, Map<String, ParsedUrl>> urlsByConnector =
+    Map<String, Map<String, ParsedUrl>> urlsByConnector =
         parseMap.get(identity);
     if (urlsByConnector == null) {
       return 0;
     }
-    Map <String, ParsedUrl> urlsByDocid = urlsByConnector.get(connectorName);
+    Map<String, ParsedUrl> urlsByDocid = urlsByConnector.get(connectorName);
     if (urlsByDocid == null) {
       return 0;
     }
@@ -190,7 +188,7 @@ public class AuthorizationParser {
     return status;
   }
 
-  public Map <String, Map<String, Map<String, ParsedUrl>>> getParseMap() {
+  public Map<String, Map<String, Map<String, ParsedUrl>>> getParseMap() {
     return parseMap;
   }
 }

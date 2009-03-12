@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -104,11 +103,11 @@ public class SimpleTestConnector implements Connector {
   }
 
   public class SimpleAuthorizationManager implements AuthorizationManager {
-    public Collection <AuthorizationResponse> authorizeDocids(
-        Collection <String> col, AuthenticationIdentity id) {
-      List <AuthorizationResponse> l = new ArrayList<AuthorizationResponse>();
-      for (Iterator <String> i = col.iterator(); i.hasNext(); ) {
-        l.add(new AuthorizationResponse(Boolean.TRUE, i.next()));
+    public Collection<AuthorizationResponse> authorizeDocids(
+        Collection<String> col, AuthenticationIdentity id) {
+      List<AuthorizationResponse> l = new ArrayList<AuthorizationResponse>();
+      for (String docId : col) {
+        l.add(new AuthorizationResponse(Boolean.TRUE, docId));
       }
       return l;
     }
@@ -146,14 +145,14 @@ public class SimpleTestConnector implements Connector {
       Calendar cal = Calendar.getInstance();
       cal.setTimeInMillis(10 * 1000);
 
-      Map <String, Object> props = new HashMap<String, Object>();
+      Map<String, Object> props = new HashMap<String, Object>();
       props.put(SpiConstants.PROPNAME_DOCID, "1");
       props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
       props.put(SpiConstants.PROPNAME_DISPLAYURL, "http://myserver/docid=1");
       props.put(SpiConstants.PROPNAME_CONTENT, "Hello World!");
       SimpleDocument document = createSimpleDocument(props);
 
-      List <SimpleDocument> docList = new LinkedList<SimpleDocument>();
+      List<SimpleDocument> docList = new LinkedList<SimpleDocument>();
       docList.add(document);
 
       documentServed = true;
@@ -164,10 +163,9 @@ public class SimpleTestConnector implements Connector {
      * Utility method to convert a <code>Map</code> of Java Objects into a
      * <code>SimpleDocument</code>.
      */
-    private SimpleDocument createSimpleDocument(Map <String, Object> props) {
-      Map <String, List<Value>> spiValues = new HashMap<String, List<Value>>();
-      for (Iterator<String> iter = props.keySet().iterator(); iter.hasNext();) {
-        String key = iter.next();
+    private SimpleDocument createSimpleDocument(Map<String, Object> props) {
+      Map<String, List<Value>> spiValues = new HashMap<String, List<Value>>();
+      for (String key : props.keySet()) {
         Object obj = props.get(key);
         Value val = null;
         if (obj instanceof String) {
@@ -177,7 +175,7 @@ public class SimpleTestConnector implements Connector {
         } else {
           throw new AssertionError(obj);
         }
-        List <Value> values = new ArrayList<Value>();
+        List<Value> values = new ArrayList<Value>();
         values.add(val);
         spiValues.put(key, values);
       }

@@ -41,14 +41,14 @@ import javax.jcr.query.RowIterator;
  */
 public class MockJcrQueryResult implements QueryResult {
 
-  List <MockRepositoryDocument> result;
+  List<MockRepositoryDocument> result;
 
   /**
    * Creates a MockJcrQueryResult from an Iterable<MockRepositoryDocument>
    * (a MockRepository result)
    * @param result
    */
-  public MockJcrQueryResult(List <MockRepositoryDocument> result) {
+  public MockJcrQueryResult(List<MockRepositoryDocument> result) {
     this.result = result;
   }
 

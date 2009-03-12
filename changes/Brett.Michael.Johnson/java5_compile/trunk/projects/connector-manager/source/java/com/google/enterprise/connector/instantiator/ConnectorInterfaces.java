@@ -91,6 +91,8 @@ public class ConnectorInterfaces {
       } catch (RepositoryException e) {
         // TODO(ziff): think about how this could be re-tried
         throw new InstantiatorException(e);
+      } catch (Exception e) {
+        throw new InstantiatorException(e);          
       }
     }
     return authenticationManager;
@@ -108,6 +110,8 @@ public class ConnectorInterfaces {
       } catch (RepositoryException e) {
         // TODO(ziff): think about how this could be re-tried
         throw new InstantiatorException(e);
+      } catch (Exception e) {
+        throw new InstantiatorException(e);          
       }
     }
     return authorizationManager;
@@ -132,7 +136,10 @@ public class ConnectorInterfaces {
    * @throws InstantiatorException
    */
   Traverser getTraverser() throws InstantiatorException {
-    if (traverser == null) {
+    // If our cached QueryTraverser has been canceled, get a new one.
+    // If the old one is a zombie, we need to preserved its canceled status.
+    if ((traverser == null) || ((traverser instanceof QueryTraverser) &&
+        ((QueryTraverser)traverser).isCancelled())) {
       Session s = getSession();
       TraversalManager qtm = null;
       try {
@@ -146,6 +153,8 @@ public class ConnectorInterfaces {
         // exception).  With a null Traverser, WorkQueueItems do nothing.
         // And without a cached (but invalid) Traverser, we will try
         // again on the next call to getTraverser() to get a valid one.
+      } catch (Exception e) {
+        throw new InstantiatorException(e);          
       }
     }
     return traverser;
@@ -162,6 +171,8 @@ public class ConnectorInterfaces {
       // for this one, we could try again later
       // TODO(ziff): think about how this could be re-tried
       throw new InstantiatorException(e);
+    } catch (Exception e) {
+      throw new InstantiatorException(e);          
     }
     return s;
   }

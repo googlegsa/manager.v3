@@ -43,7 +43,7 @@ public class GetConnectorListTest extends TestCase {
    */
   public void testHandleDoGet1() {
     Manager manager = new MockManager() {
-        public Set <String> getConnectorTypeNames() { return null; }
+        public Set<String> getConnectorTypeNames() { return null; }
       };
     String expectedResult =
         "<CmResponse>\n"

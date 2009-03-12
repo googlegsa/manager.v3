@@ -28,7 +28,6 @@ import junit.framework.TestCase;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +52,7 @@ public class JcrAuthorizationManagerTest extends TestCase {
     {
       String username = "joe";
 
-      Map <String, Boolean> expectedResults = new HashMap<String, Boolean>();
+      Map<String, Boolean> expectedResults = new HashMap<String, Boolean>();
       expectedResults.put("doc1", Boolean.TRUE);
       expectedResults.put("doc2", Boolean.TRUE);
       expectedResults.put("doc3", Boolean.TRUE);
@@ -66,7 +65,7 @@ public class JcrAuthorizationManagerTest extends TestCase {
     {
       String username = "bill";
 
-      Map <String, Boolean> expectedResults = new HashMap<String, Boolean>();
+      Map<String, Boolean> expectedResults = new HashMap<String, Boolean>();
       expectedResults.put("doc1", Boolean.FALSE);
       expectedResults.put("doc2", Boolean.FALSE);
       expectedResults.put("doc3", Boolean.TRUE);
@@ -79,7 +78,7 @@ public class JcrAuthorizationManagerTest extends TestCase {
     {
       String username = "fred";
 
-      Map <String, Boolean> expectedResults = new HashMap<String, Boolean>();
+      Map<String, Boolean> expectedResults = new HashMap<String, Boolean>();
       expectedResults.put("doc1", Boolean.FALSE);
       expectedResults.put("doc2", Boolean.FALSE);
       expectedResults.put("doc3", Boolean.TRUE);
@@ -92,7 +91,7 @@ public class JcrAuthorizationManagerTest extends TestCase {
     {
       String username = "murgatroyd";
 
-      Map <String, Boolean> expectedResults = new HashMap<String, Boolean>();
+      Map<String, Boolean> expectedResults = new HashMap<String, Boolean>();
       expectedResults.put("doc1", Boolean.FALSE);
       expectedResults.put("doc2", Boolean.FALSE);
       expectedResults.put("doc3", Boolean.TRUE);
@@ -115,7 +114,7 @@ public class JcrAuthorizationManagerTest extends TestCase {
     {
       String username = "joe";
 
-      Map <String, Boolean> expectedResults = new HashMap<String, Boolean>();
+      Map<String, Boolean> expectedResults = new HashMap<String, Boolean>();
       expectedResults.put("no_acl", Boolean.TRUE);
       expectedResults.put("user_acl", Boolean.TRUE);
       expectedResults.put("user_role_acl", Boolean.TRUE);
@@ -132,7 +131,7 @@ public class JcrAuthorizationManagerTest extends TestCase {
     {
       String username = "mary";
 
-      Map <String, Boolean> expectedResults = new HashMap<String, Boolean>();
+      Map<String, Boolean> expectedResults = new HashMap<String, Boolean>();
       expectedResults.put("no_acl", Boolean.TRUE);
       expectedResults.put("user_acl", Boolean.TRUE);
       expectedResults.put("user_role_acl", Boolean.TRUE);
@@ -149,7 +148,7 @@ public class JcrAuthorizationManagerTest extends TestCase {
     {
       String username = "eng";
 
-      Map <String, Boolean> expectedResults = new HashMap<String, Boolean>();
+      Map<String, Boolean> expectedResults = new HashMap<String, Boolean>();
       expectedResults.put("no_acl", Boolean.TRUE);
       expectedResults.put("user_acl", Boolean.FALSE);
       expectedResults.put("user_role_acl", Boolean.FALSE);
@@ -165,15 +164,14 @@ public class JcrAuthorizationManagerTest extends TestCase {
   }
 
   private void testAuthorization(AuthorizationManager authorizationManager,
-      Map <String, Boolean>expectedResults, String username)
+      Map<String, Boolean>expectedResults, String username)
       throws com.google.enterprise.connector.spi.RepositoryException {
-    List <String> docids = new LinkedList<String>(expectedResults.keySet());
+    List<String> docids = new LinkedList<String>(expectedResults.keySet());
 
     AuthenticationIdentity identity = new UserPassIdentity(username, null);
-    Collection <AuthorizationResponse> results =
+    Collection<AuthorizationResponse> results =
         authorizationManager.authorizeDocids(docids, identity);
-    for (Iterator <AuthorizationResponse> i = results.iterator(); i.hasNext();) {
-      AuthorizationResponse response = i.next();
+    for (AuthorizationResponse response : results) {
       String uuid = response.getDocid();
       boolean ok = response.isValid();
       Boolean expected = expectedResults.get(uuid);

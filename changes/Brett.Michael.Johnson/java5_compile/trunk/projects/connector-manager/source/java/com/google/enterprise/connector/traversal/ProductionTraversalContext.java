@@ -45,7 +45,7 @@ public class ProductionTraversalContext implements TraversalContext {
     return mimeTypeMap.mimeTypeSupportLevel(mimeType);
   }
 
-  public String preferredMimeType(Set <String> mimeTypes) {
+  public String preferredMimeType(Set<String> mimeTypes) {
     return mimeTypeMap.preferredMimeType(mimeTypes);
   }
 }

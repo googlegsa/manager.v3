@@ -14,8 +14,9 @@
 
 package com.google.enterprise.connector.scheduler;
 
+import com.google.enterprise.connector.manager.Context;
+
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -23,17 +24,43 @@ import java.util.List;
  */
 public class Schedule {
   private String connectorName;
+  private boolean disabled;
   private int load;
   private int retryDelayMillis; // maximum of ~24 days
-  private List <ScheduleTimeInterval> timeIntervals;
+  private List<ScheduleTimeInterval> timeIntervals;
 
-  public Schedule(String connectorName, int load, int retryDelayMillis,
-      List <ScheduleTimeInterval> timeIntervals) {
+  /**
+   * Construct a Schedule for a given Connector.
+   *
+   * @param connectorName
+   * @param disabled true if this schedule is currently disabled
+   * @param load The hostload (in docs per minute) as an integer
+   * @param retryDelayMillis Time to wait before next traversal (milliseconds)
+   * @param timeIntervals Time intervals string in the format of "1-2:3-8"
+   */
+  public Schedule(String connectorName, boolean disabled, int load,
+      int retryDelayMillis, String timeIntervals) {
+    this(connectorName, false, load, retryDelayMillis,
+         parseTimeIntervals(timeIntervals));
+  }
+
+  /**
+   * Set schedule for a given Connector.
+   *
+   * @param connectorName
+   * @param disabled true if this schedule is currently disabled
+   * @param load The hostload (in docs per minute) as an integer
+   * @param retryDelayMillis Time to wait before next traversal (milliseconds)
+   * @param timeIntervals Time intervals in the format of {1-2,3-8
+   */
+  public Schedule(String connectorName, boolean disabled, int load,
+      int retryDelayMillis, List<ScheduleTimeInterval> timeIntervals) {
     if ((null == timeIntervals) || (timeIntervals.isEmpty())) {
       throw new IllegalArgumentException();
     }
     this.connectorName = connectorName;
     this.load = load;
+    this.disabled = disabled;
     this.retryDelayMillis = retryDelayMillis;
     this.timeIntervals = timeIntervals;
   }
@@ -62,8 +89,13 @@ public class Schedule {
     try {
       if (fields[2].indexOf('-') < 0) {
         // It's a delay, get rid of it
-        StringBuffer result = new StringBuffer();
-        result.append(fields[0]);
+        StringBuilder result = new StringBuilder();
+        if (fields[0].charAt(0) == '#') {
+          // Legacy doesn't support disabled either.
+          result.append(fields[0].substring(1));
+        } else {
+          result.append(fields[0]);
+        }
         result.append(":").append(fields[1]);
 
         if (fields.length == 3) {
@@ -82,6 +114,28 @@ public class Schedule {
     }
   }
 
+  private static final int DEFAULT_RETRY_DELAY_MILLIS = 5 * 60 * 1000;
+  private static int defaultRetryDelayMillis = -1;
+  /**
+   * Return the default retryDelayMillis value.
+   * This can be defined in the Context by specifying
+   * TraversalDelaySecondsDefault value.  If the delay
+   * was not specified in the Context, then the default
+   * value of 5 minutes is returned.
+   */
+  public static int defaultRetryDelayMillis() {
+    if (defaultRetryDelayMillis <= 0) {
+      Integer retryDelaySecs = (Integer) Context.getInstance().getBean(
+          "TraversalDelaySecondsDefault", Integer.class);
+      if (retryDelaySecs == null || retryDelaySecs.intValue() <= 0) {
+        defaultRetryDelayMillis = DEFAULT_RETRY_DELAY_MILLIS;
+      } else {
+        defaultRetryDelayMillis = retryDelaySecs.intValue() * 1000;
+      }
+    }
+    return defaultRetryDelayMillis;
+  }
+
   /**
    * Populate a schedule.
    *
@@ -95,27 +149,25 @@ public class Schedule {
   public void readString(String schedule) {
     String exceptionReason = "Invalid schedule string format: " + schedule;
     try {
-      String[] strs = schedule.split(":");
-      connectorName = strs[0];
-      load = Integer.parseInt(strs[1]);
-      int intervalsStart = -1;
-      if(strs[2].indexOf('-') < 0) {
-        retryDelayMillis = Integer.parseInt(strs[2]);
-        intervalsStart = 3;
+      String[] strs = schedule.trim().split(":", 4);
+      if (strs[0].charAt(0) == '#') {
+        disabled = true;
+        connectorName = strs[0].substring(1);
       } else {
-        intervalsStart = 2;
+        connectorName = strs[0];
       }
-      timeIntervals = new ArrayList<ScheduleTimeInterval>();
-
-      for (int i = intervalsStart; i < strs.length; i++) {
-        String[] strs2 = strs[i].split("-");
-        String startTime = strs2[0];
-        String endTime = strs2[1];
-        ScheduleTime t1 = new ScheduleTime(Integer.parseInt(startTime));
-        ScheduleTime t2 = new ScheduleTime(Integer.parseInt(endTime));
-        ScheduleTimeInterval interval = new ScheduleTimeInterval(t1, t2);
-        timeIntervals.add(interval);
+      load = Integer.parseInt(strs[1]);
+      String intervals;
+      if (strs[2].indexOf('-') < 0) {
+        retryDelayMillis = Integer.parseInt(strs[2]);
+        intervals = strs[3];
+      } else {
+        // This is a legacy string without the retryDelay. Resplit.
+        retryDelayMillis = defaultRetryDelayMillis();
+        strs = schedule.trim().split(":", 3);
+        intervals = strs[2];
       }
+      timeIntervals = parseTimeIntervals(intervals);
       if (timeIntervals.size() < 1) {
         throw new IllegalArgumentException(exceptionReason);
       }
@@ -125,10 +177,36 @@ public class Schedule {
   }
 
   /**
+   * Parse a string of time intervals.
+   *
+   * @param intervals String of the form: "1-2:3-5:14-18" etc.
+   * @return List of ScheduleTimeInterval objects
+   */
+  private static List<ScheduleTimeInterval> parseTimeIntervals(
+      String intervals) {
+    String[] strs = intervals.trim().split(":");
+    List<ScheduleTimeInterval> timeIntervals =
+        new ArrayList<ScheduleTimeInterval> (strs.length);
+    for (int i = 0; i < strs.length; i++) {
+      String[] strs2 = strs[i].split("-");
+      String startTime = strs2[0];
+      String endTime = strs2[1];
+      ScheduleTime t1 = new ScheduleTime(Integer.parseInt(startTime));
+      ScheduleTime t2 = new ScheduleTime(Integer.parseInt(endTime));
+      ScheduleTimeInterval interval = new ScheduleTimeInterval(t1, t2);
+      timeIntervals.add(interval);
+    }
+    return timeIntervals;
+  }
+
+  /**
    * @return String of the form: e.g. "connector1:1-2:3-5"
    */
   public String toString() {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
+    if (disabled) {
+      buf.append('#');
+    }
     buf.append(connectorName);
     buf.append(":" + load);
     buf.append(":" + retryDelayMillis);
@@ -148,21 +226,23 @@ public class Schedule {
     return retryDelayMillis;
   }
 
-  public List <ScheduleTimeInterval> getTimeIntervals() {
+  public List<ScheduleTimeInterval> getTimeIntervals() {
     return timeIntervals;
+  }
+
+  public boolean isDisabled() {
+    return disabled;
   }
 
   /**
    * @return String of the form: e.g. "1-2:3-5"
    */
   public String getTimeIntervalsAsString() {
-    StringBuffer buf = new StringBuffer();
-    Iterator <ScheduleTimeInterval> iter = timeIntervals.iterator();
-    for (int index = 0; iter.hasNext(); index++) {
-      ScheduleTimeInterval interval = iter.next();
+    StringBuilder buf = new StringBuilder();
+    for (ScheduleTimeInterval interval : timeIntervals) {
       ScheduleTime startTime = interval.getStartTime();
       ScheduleTime endTime = interval.getEndTime();
-      if (index != 0) {
+      if (buf.length() > 0) {
         buf.append(":");
       }
       buf.append(startTime.getHour());

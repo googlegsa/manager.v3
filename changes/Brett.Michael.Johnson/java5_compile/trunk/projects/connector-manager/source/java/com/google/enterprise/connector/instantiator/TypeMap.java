@@ -22,9 +22,7 @@ import org.springframework.core.io.Resource;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,7 +31,7 @@ import java.util.logging.Logger;
  * This class keeps track of the installed connector types and maintains a
  * corresponding directory structure.
  */
-public class TypeMap extends TreeMap <String, TypeInfo> {
+public class TypeMap extends TreeMap<String, TypeInfo> {
 
   private static final String CONNECTOR_TYPE_PATTERN =
       "classpath*:config/connectorType.xml";
@@ -83,9 +81,7 @@ public class TypeMap extends TreeMap <String, TypeInfo> {
       return;
     }
 
-    List <Resource> resources = Arrays.asList(resourceArray);
-    for (Iterator <Resource> iter = resources.iterator(); iter.hasNext(); ) {
-      Resource r = iter.next();
+    for (Resource r : resourceArray) {
       TypeInfo typeInfo = TypeInfo.fromSpringResource(r);
       if (typeInfo == null) {
         LOGGER.log(Level.WARNING, "Skipping " + r.getDescription());
@@ -129,7 +125,7 @@ public class TypeMap extends TreeMap <String, TypeInfo> {
   }
 
   private void initializeTypeDirectories() {
-    for (Iterator <String> iter = keySet().iterator(); iter.hasNext(); ) {
+    for (Iterator<String> iter = keySet().iterator(); iter.hasNext(); ) {
       String typeName = iter.next();
       TypeInfo typeInfo = getTypeInfo(typeName);
       File connectorTypeDir = new File(typesDirectory, typeName);

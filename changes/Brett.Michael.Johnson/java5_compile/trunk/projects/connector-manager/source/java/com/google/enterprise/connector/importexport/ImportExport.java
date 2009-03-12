@@ -22,7 +22,6 @@ import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
-import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -43,7 +42,6 @@ import org.w3c.dom.NodeList;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,17 +59,15 @@ public class ImportExport {
    * Exports a list of connectors.
    * @return a List of ImportExportConnectors
    */
-  private static final List <ImportExportConnector> getConnectors(
+  private static final List<ImportExportConnector> getConnectors(
       Manager manager) {
-    List <ImportExportConnector> connectors =
+    List<ImportExportConnector> connectors =
         new ArrayList<ImportExportConnector>();
-    Iterator <ConnectorStatus> i = manager.getConnectorStatuses().iterator();
-    while (i.hasNext()) {
-      ConnectorStatus connectorStatus = i.next();
+    for (ConnectorStatus connectorStatus : manager.getConnectorStatuses()) {
       String name = connectorStatus.getName();
       String type = connectorStatus.getType();
       String scheduleString = connectorStatus.getSchedule();
-      Map <String, String> config = null;
+      Map<String, String> config = null;
       try {
         config = manager.getConnectorConfig(connectorStatus.getName());
       } catch (ConnectorNotFoundException e) {
@@ -100,24 +96,19 @@ public class ImportExport {
    * <code>noremove</code> is false.
    */
   private static final void setConnectors(Manager manager,
-      List <ImportExportConnector> connectors, boolean noRemove)
+      List<ImportExportConnector> connectors, boolean noRemove)
       throws InstantiatorException, PersistentStoreException {
-    Set <String> previousConnectorNames = new HashSet<String>();
-    Iterator <ConnectorStatus> i = manager.getConnectorStatuses().iterator();
-    while (i.hasNext()) {
-      previousConnectorNames.add(i.next().getName());
+    Set<String> previousConnectorNames = new HashSet<String>();
+
+    for (ConnectorStatus connector : manager.getConnectorStatuses()) {
+      previousConnectorNames.add(connector.getName());
     }
 
-    Iterator <ImportExportConnector> j = connectors.iterator();
-    while (j.hasNext()) {
-      ImportExportConnector connector = j.next();
+    for (ImportExportConnector connector : connectors) {
       String name = connector.getName();
       String type = connector.getType();
-      Map <String, String> config = connector.getConfig();
-      Schedule schedule = null;
-      if (connector.getScheduleString() != null) {
-        schedule = new Schedule(connector.getScheduleString());
-      }
+      Map<String, String> config = connector.getConfig();
+      String schedule = connector.getScheduleString();
 
       try {
         String language = "en";
@@ -136,9 +127,7 @@ public class ImportExport {
         // set schedule, if given
         if (schedule != null ) {
           try {
-            manager.setSchedule(name, schedule.getLoad(),
-                schedule.getRetryDelayMillis(),
-                schedule.getTimeIntervalsAsString());
+            manager.setSchedule(name, schedule);
           } catch (ConnectorNotFoundException e) {
             // should never happen
             LOGGER.log(Level.WARNING, e.getMessage(), e);
@@ -158,10 +147,9 @@ public class ImportExport {
 
     // remove previous connectors which no longer exist
     if (!noRemove) {
-      Iterator <String> names = previousConnectorNames.iterator();
-      while (names.hasNext()) {
+      for (String name : previousConnectorNames) {
         try {
-          manager.removeConnector(names.next());
+          manager.removeConnector(name);
         } catch (ConnectorNotFoundException e) {
           // should never happen
           LOGGER.log(Level.WARNING, e.getMessage(), e);
@@ -174,9 +162,9 @@ public class ImportExport {
    * Deserializes connectors from XML.
    * @return a List of ImportExportConnectors
    */
-  public static List <ImportExportConnector> fromXmlConnectorsElement(
+  public static List<ImportExportConnector> fromXmlConnectorsElement(
       Element connectorsElement) {
-    List <ImportExportConnector> connectors =
+    List<ImportExportConnector> connectors =
         new ArrayList<ImportExportConnector>();
 
     NodeList connectorElements = connectorsElement.getElementsByTagName(
@@ -192,7 +180,7 @@ public class ImportExport {
           connectorElement, ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
       Element configElement = (Element) connectorElement.getElementsByTagName(
           ServletUtil.XMLTAG_CONNECTOR_CONFIG).item(0);
-      Map <String, String> config = ServletUtil.getAllAttributes(
+      Map<String, String> config = ServletUtil.getAllAttributes(
           configElement, ServletUtil.XMLTAG_PARAMETERS);
       ImportExportConnector connector = new ImportExportConnector(
           name, type, scheduleString, config);
@@ -206,7 +194,7 @@ public class ImportExport {
    * Deserialializes connectors from XML string.
    * @return a List of ImportExportConnectors
    */
-  public static List <ImportExportConnector> fromXmlString(String xmlString) {
+  public static List<ImportExportConnector> fromXmlString(String xmlString) {
     Document document =
         ServletUtil.parse(xmlString, new SAXParseErrorHandler());
     Element connectorsElement = document.getDocumentElement();
@@ -217,20 +205,18 @@ public class ImportExport {
    * Serializes connectors to XML.
    * @param connectors a List of ImportExportConnectors
    */
-  public static String asXmlString(List <ImportExportConnector> connectors) {
+  public static String asXmlString(List<ImportExportConnector> connectors) {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
 
     ServletUtil.writeXMLTag(
         pw, 0, ServletUtil.XMLTAG_CONNECTOR_INSTANCES, false);
 
-    Iterator <ImportExportConnector> i = connectors.iterator();
-    while (i.hasNext()) {
-      ImportExportConnector connector = i.next();
+    for (ImportExportConnector connector : connectors) {
       String name = connector.getName();
       String type = connector.getType();
       String scheduleString = connector.getScheduleString();
-      Map <String, String> config = connector.getConfig();
+      Map<String, String> config = connector.getConfig();
       ServletUtil.writeXMLTag(
           pw, 1, ServletUtil.XMLTAG_CONNECTOR_INSTANCE, false);
       ServletUtil.writeXMLElement(
@@ -241,9 +227,7 @@ public class ImportExport {
           pw, 2, ServletUtil.XMLTAG_CONNECTOR_SCHEDULE, scheduleString);
       ServletUtil.writeXMLTag(
           pw, 2, ServletUtil.XMLTAG_CONNECTOR_CONFIG, false);
-      Iterator <Map.Entry <String, String>> j = config.entrySet().iterator();
-      while (j.hasNext()) {
-        Map.Entry <String, String> me = j.next();
+      for (Map.Entry<String, String> me : config.entrySet()) {
         String attributeString = ServletUtil.ATTRIBUTE_NAME + me.getKey()
             + ServletUtil.QUOTE + ServletUtil.ATTRIBUTE_VALUE
             + me.getValue() + ServletUtil.QUOTE;
@@ -266,7 +250,7 @@ public class ImportExport {
    * read a list of connectors from an XML file.
    * @return a List of ImportExportConnectors
    */
-  public static List <ImportExportConnector> readFromFile(String filename)
+  public static List<ImportExportConnector> readFromFile(String filename)
       throws IOException {
     Reader isr = new InputStreamReader(new FileInputStream(filename), "UTF-8");
     String string = StringUtils.readAllToString(isr);
@@ -278,7 +262,7 @@ public class ImportExport {
    * @param connectors a List of ImportExportConnectors
    */
   public static void writeToFile(String filename,
-      List <ImportExportConnector> connectors) throws IOException {
+      List<ImportExportConnector> connectors) throws IOException {
     OutputStreamWriter osw =
         new OutputStreamWriter(new FileOutputStream(filename), "UTF-8");
     osw.write(asXmlString(connectors));

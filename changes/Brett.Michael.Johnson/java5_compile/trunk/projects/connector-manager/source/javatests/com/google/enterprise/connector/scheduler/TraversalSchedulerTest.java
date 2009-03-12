@@ -36,7 +36,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -62,7 +61,7 @@ public class TraversalSchedulerTest extends TestCase {
   }
 
 
-  private TraversalScheduler runWithSchedules(List <Schedule> schedules,
+  private TraversalScheduler runWithSchedules(List<Schedule> schedules,
       Instantiator instantiator, boolean shutdown) {
     storeSchedules(schedules, instantiator);
     WorkQueue workQueue = new WorkQueue(2, 5000);
@@ -85,7 +84,7 @@ public class TraversalSchedulerTest extends TestCase {
     return scheduler;
   }
 
-  private TraversalScheduler runWithSchedules(List <Schedule> schedules,
+  private TraversalScheduler runWithSchedules(List<Schedule> schedules,
       Instantiator instantiator) {
     return runWithSchedules(schedules, instantiator, true);
   }
@@ -94,10 +93,8 @@ public class TraversalSchedulerTest extends TestCase {
    * Create an object that can return all connector instances referenced in
    * MockInstantiator.
    */
-  private void storeSchedules(List <Schedule> schedules, Instantiator instantiator) {
-    Iterator <Schedule> iter = schedules.iterator();
-    while (iter.hasNext()) {
-      Schedule schedule = iter.next();
+  private void storeSchedules(List<Schedule> schedules, Instantiator instantiator) {
+    for (Schedule schedule : schedules) {
       String connectorName = schedule.getConnectorName();
       String connectorSchedule = schedule.toString();
       try {
@@ -153,26 +150,26 @@ public class TraversalSchedulerTest extends TestCase {
    * @param delay retry delay in milliseconds
    * @return a List of Schedule objects
    */
-  private List <Schedule> getSchedules(String traverserName, int delay) {
-    List <ScheduleTimeInterval> intervals =
+  private List<Schedule> getSchedules(String traverserName, int delay) {
+    List<ScheduleTimeInterval> intervals =
         new ArrayList<ScheduleTimeInterval>();
     intervals.add(new ScheduleTimeInterval(
         new ScheduleTime(0),
         new ScheduleTime(0)));
 
-    List <Schedule> schedules = new ArrayList<Schedule>();
-    Schedule schedule = new Schedule(traverserName, 60, delay, intervals);
+    List<Schedule> schedules = new ArrayList<Schedule>();
+    Schedule schedule = new Schedule(traverserName, false, 60, delay, intervals);
     schedules.add(schedule);
     return schedules;
   }
 
-  private List <Schedule> getSchedules(String traverserName) {
+  private List<Schedule> getSchedules(String traverserName) {
     return getSchedules(traverserName, 0);
   }
 
   public void testRemoveConnector() {
     String connectorName = MockInstantiator.TRAVERSER_NAME_LONG_RUNNING;
-    List <Schedule> schedules = getSchedules(connectorName);
+    List<Schedule> schedules = getSchedules(connectorName);
     TraversalScheduler scheduler =
       runWithSchedules(schedules, createMockInstantiator(), false);
 
@@ -222,13 +219,13 @@ public class TraversalSchedulerTest extends TestCase {
    * Test that tests two mock Traverser objects.
    */
   public void testTwoTraversers() {
-    List <Schedule> schedules = getSchedules(MockInstantiator.TRAVERSER_NAME1);
+    List<Schedule> schedules = getSchedules(MockInstantiator.TRAVERSER_NAME1);
     schedules.addAll(getSchedules(MockInstantiator.TRAVERSER_NAME2));
     runWithSchedules(schedules, createMockInstantiator());
   }
 
   public void testRealInstantiator() {
-    List <Schedule> schedules = getSchedules("connectorA");
+    List<Schedule> schedules = getSchedules("connectorA");
     schedules.addAll(getSchedules("connectorB"));
     runWithSchedules(schedules, createRealInstantiator());
   }

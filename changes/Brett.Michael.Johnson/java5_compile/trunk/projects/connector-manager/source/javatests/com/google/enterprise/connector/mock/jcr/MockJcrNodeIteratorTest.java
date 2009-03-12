@@ -22,7 +22,6 @@ import com.google.enterprise.connector.spi.Value;
 import junit.framework.TestCase;
 
 import java.util.Calendar;
-import java.util.Iterator;
 import java.util.logging.Logger;
 
 import javax.jcr.Node;
@@ -48,9 +47,8 @@ public class MockJcrNodeIteratorTest extends TestCase {
     MockRepositoryDocumentStore mrd = new MockRepositoryDocumentStore();
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
-    Iterator <MockRepositoryEvent> iter = mrel.getEventList().iterator();
-    while (iter.hasNext()) {
-      mrd.applyEvent(iter.next());
+    for (MockRepositoryEvent event : mrel.getEventList()) {
+      mrd.applyEvent(event);
     }
 
     // create an node iterator over the entire store

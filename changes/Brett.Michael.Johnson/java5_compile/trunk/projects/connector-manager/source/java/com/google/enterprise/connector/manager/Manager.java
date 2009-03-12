@@ -48,7 +48,7 @@ public interface Manager {
    *
    * @return A Set of Strings - the name of each connector implementation.
    */
-  public Set <String> getConnectorTypeNames();
+  public Set<String> getConnectorTypeNames();
 
   /**
    * Returns the ConnectorType that is associated with the supplied name.
@@ -66,7 +66,7 @@ public interface Manager {
    *
    * @return A list of ConnectorStatus objects.
    */
-  public List <ConnectorStatus> getConnectorStatuses();
+  public List<ConnectorStatus> getConnectorStatuses();
 
   /**
    * Returns the status of a particular connector.
@@ -90,9 +90,11 @@ public interface Manager {
    *         default form.
    * @throws ConnectorTypeNotFoundException If the named connector type is not
    *         known to this manager.
+   * @throws InstantiatorException
    */
   public ConfigureResponse getConfigForm(String connectorTypeName,
-      String language) throws ConnectorTypeNotFoundException;
+      String language) throws ConnectorTypeNotFoundException,
+      InstantiatorException;
 
   /**
    * Get configuration data as a form snippet for an existing connnector. This
@@ -139,7 +141,7 @@ public interface Manager {
    *         configuration
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map <String, String> configData,
+      String connectorTypeName, Map<String, String> configData,
       String language, boolean update)
       throws ConnectorNotFoundException, ConnectorExistsException,
       PersistentStoreException, InstantiatorException;
@@ -164,23 +166,20 @@ public interface Manager {
    * @param username The username as a string
    * @return A Set of String IDs indicating which documents the user can see.
    */
-  public Set <String> authorizeDocids(String connectorName,
-      List <String> docidList, String username);
+  public Set<String> authorizeDocids(String connectorName,
+      List<String> docidList, String username);
 
   /**
    * Set schedule for a given Connector.
    *
    * @param connectorName
-   * @param load The hostload (in docs per minute) as an integer
-   * @param retryDelayMillis Time to wait before next traversal (milliseconds)
-   * @param timeIntervals Time intervals in the format of 1-2:3-8
+   * @param schedule stringified Schedule
    * @throws ConnectorNotFoundException If the named connector is not known to
    *         this manager.
    * @throws PersistentStoreException If there was a problem storing the
    *         configuration
    */
-  public void setSchedule(String connectorName, int load, int retryDelayMillis,
-      String timeIntervals)
+  public void setSchedule(String connectorName, String schedule)
       throws ConnectorNotFoundException, PersistentStoreException;
 
   /*
@@ -215,6 +214,6 @@ public interface Manager {
    * configuration data
    * @throws ConnectorNotFoundException if the named connector is not found
    */
-  public Map <String, String> getConnectorConfig(String connectorName)
+  public Map<String, String> getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException;
 }

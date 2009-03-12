@@ -17,7 +17,6 @@ package com.google.enterprise.connector.mock;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +31,7 @@ public class MockRepositoryEvent {
    * Enumeration for event types.
    * @author ziff@google.com (Donald "Max" Ziff)
    */
-  public static class EventType implements Comparable <EventType> {
+  public static class EventType implements Comparable<EventType> {
     private static int nextOrdinal = 0;
     private final int ordinal = nextOrdinal++;
 
@@ -47,7 +46,7 @@ public class MockRepositoryEvent {
 
     private static final EventType[] PRIVATE_VALUES =
       {SAVE, DELETE, METADATA_ONLY_SAVE, ERROR};
-    public static final List <EventType> Values =
+    public static final List<EventType> Values =
       Collections.unmodifiableList(Arrays.asList(PRIVATE_VALUES));
 
     private String tag;
@@ -102,15 +101,13 @@ public class MockRepositoryEvent {
     this.timeStamp = timeStamp;
   }
 
-  public MockRepositoryEvent(Map <String, String> params) {
+  public MockRepositoryEvent(Map<String, String> params) {
     String docid = null;
     String tempContent = null;
     String eventTypeTag = null;
     String timeStampStr = null;
-    Map <String, String> propBag = new HashMap<String, String>();
-    Iterator <Map.Entry <String, String>> iter = params.entrySet().iterator();
-    while (iter.hasNext()) {
-      Map.Entry <String, String> entry = iter.next();
+    Map<String, String> propBag = new HashMap<String, String>();
+    for (Map.Entry<String, String> entry : params.entrySet()) {
       String key = entry.getKey();
       String value = entry.getValue();
       if ("docid".equals(key)) {
@@ -141,9 +138,8 @@ public class MockRepositoryEvent {
       throw new RuntimeException("Event parameters must " +
         "specify a non-zero time stamp");
     }
-    List <MockRepositoryProperty> l = new LinkedList<MockRepositoryProperty>();
-    for (iter = propBag.entrySet().iterator(); iter.hasNext(); ) {
-      Map.Entry <String, String> entry = iter.next();
+    List<MockRepositoryProperty> l = new LinkedList<MockRepositoryProperty>();
+    for (Map.Entry<String, String> entry : propBag.entrySet()) {
       String key = entry.getKey();
       String value = entry.getValue();
       l.add(new MockRepositoryProperty(key, value));

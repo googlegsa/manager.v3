@@ -87,7 +87,7 @@ public class JcrDocumentTest extends TestCase {
       throws RepositoryException {
     int counter = 0;
     System.out.println();
-    Iterator <String> iter = document.getPropertyNames().iterator();
+    Iterator<String> iter = document.getPropertyNames().iterator();
     while (iter.hasNext()) {
       String name = iter.next();
       Property property = document.findProperty(name);

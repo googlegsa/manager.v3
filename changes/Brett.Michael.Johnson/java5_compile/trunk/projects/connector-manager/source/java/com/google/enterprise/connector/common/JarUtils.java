@@ -39,7 +39,7 @@ public class JarUtils {
    * @return the version string from the Jar file or the empty string
    * ("") if none found.
    */
-  public static String getJarVersion(Class <?> clazz) {
+  public static String getJarVersion(Class<?> clazz) {
     URL url = null;
     try {
       String resName = "/" + clazz.getName().replace('.', '/') + ".class";

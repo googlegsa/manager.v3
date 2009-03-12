@@ -89,7 +89,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
   public static void encryptSensitiveProperties(Properties properties) {
     // New style properties file, encrypt any key with 'password' in it.
     PropertiesUtils.stampPropertiesVersion(properties);
-    Enumeration <?> props = properties.propertyNames();
+    Enumeration<?> props = properties.propertyNames();
     while (props.hasMoreElements()) {
       String prop = (String) props.nextElement();
       if (prop.toLowerCase().indexOf("password") != -1) {
@@ -101,7 +101,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
 
   public static void decryptSensitiveProperties(Properties properties) {
     int version = PropertiesUtils.getPropertiesVersion(properties);
-    Enumeration <?> props = properties.propertyNames();
+    Enumeration<?> props = properties.propertyNames();
     while (props.hasMoreElements()) {
       String prop = (String) props.nextElement();
       // Older properties files (before we started versioning them) only

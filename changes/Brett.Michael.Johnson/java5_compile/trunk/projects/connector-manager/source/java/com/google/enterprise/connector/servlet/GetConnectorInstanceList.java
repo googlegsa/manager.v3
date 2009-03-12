@@ -24,7 +24,6 @@ import com.google.enterprise.connector.spi.ConnectorType;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -81,7 +80,7 @@ public class GetConnectorInstanceList extends HttpServlet {
     ServletUtil.writeRootTag(out, false);
     ServletUtil.writeManagerSplash(out);
 
-    List <ConnectorStatus> connectorInstances = manager.getConnectorStatuses();
+    List<ConnectorStatus> connectorInstances = manager.getConnectorStatuses();
     if (connectorInstances == null || connectorInstances.size() == 0) {
       ServletUtil.writeStatusId(out,
           ConnectorMessageCode.RESPONSE_NULL_CONNECTOR);
@@ -93,9 +92,7 @@ public class GetConnectorInstanceList extends HttpServlet {
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_INSTANCES,
         false);
 
-    Iterator <ConnectorStatus> iter = connectorInstances.iterator();
-    while (iter.hasNext()) {
-      ConnectorStatus connectorStatus = iter.next();
+    for (ConnectorStatus connectorStatus : connectorInstances) {
       ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_CONNECTOR_INSTANCE,
           false);
       ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_CONNECTOR_NAME,
@@ -117,15 +114,34 @@ public class GetConnectorInstanceList extends HttpServlet {
       }
       ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_STATUS, Integer
           .toString(connectorStatus.getStatus()));
-      if (connectorStatus.getSchedule() == null) {
+
+      String schedule = connectorStatus.getSchedule();
+      if (schedule == null) {
         LOGGER.log(Level.WARNING, connectorStatus.getName() + ": " +
             ServletUtil.LOG_RESPONSE_NULL_SCHEDULE);
         ServletUtil.writeEmptyXMLElement(out, 3,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
       } else {
-        ServletUtil.writeXMLElement(out, 3,
+        // Put out new style Schedules element.
+        StringBuilder buffer = new StringBuilder();
+        ServletUtil.writeXMLTagWithAttrs(buffer, 3,
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
+            ServletUtil.ATTRIBUTE_VERSION + "3" + ServletUtil.QUOTE,
+            false);
+        buffer.append(schedule);
+        ServletUtil.writeXMLTag(buffer, 0,
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULES, true);
+
+        // Also put out old-style Schedule element for legacy GSAs.
+        buffer.append('\n');
+        ServletUtil.writeXMLTagWithAttrs(buffer, 3,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULE,
-            Schedule.toLegacyString(connectorStatus.getSchedule()));
+            ServletUtil.ATTRIBUTE_VERSION + "1" + ServletUtil.QUOTE,
+            false);
+        buffer.append(Schedule.toLegacyString(schedule));
+        ServletUtil.writeXMLTag(buffer, 0,
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULE, true);
+        out.println(buffer.toString());
       }
       ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_CONNECTOR_INSTANCE,
           true);
@@ -135,5 +151,4 @@ public class GetConnectorInstanceList extends HttpServlet {
         true);
     ServletUtil.writeRootTag(out, true);
   }
-
 }

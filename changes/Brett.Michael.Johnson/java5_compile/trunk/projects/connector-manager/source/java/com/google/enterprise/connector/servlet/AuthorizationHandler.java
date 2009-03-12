@@ -19,7 +19,6 @@ import com.google.enterprise.connector.manager.Manager;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,8 +34,8 @@ public class AuthorizationHandler {
   PrintWriter out;
   int status;
   int numDocs;
-  private Map <String, Map<String, Map<String, ParsedUrl>>> parseMap;
-  Map <String, Boolean> results;
+  private Map<String, Map<String, Map<String, ParsedUrl>>> parseMap;
+  Map<String, Boolean> results;
 
   AuthorizationHandler(String xmlBody, Manager manager, PrintWriter out) {
     this.xmlBody = xmlBody;
@@ -86,9 +85,7 @@ public class AuthorizationHandler {
   }
 
   private void generateEachResultXml() {
-    Iterator <Map.Entry <String, Boolean>> i = results.entrySet().iterator();
-    while (i.hasNext()) {
-      Entry <String, Boolean> e = i.next();
+    for (Entry<String, Boolean> e : results.entrySet()) {
       String url = e.getKey();
       Boolean permit = e.getValue();
       writeResultElement(url, permit.booleanValue());
@@ -104,36 +101,28 @@ public class AuthorizationHandler {
   }
 
   private void computeResultSet() {
-    Iterator <Entry <String, Map<String, Map<String, ParsedUrl>>>> i =
-        parseMap.entrySet().iterator();
-    while (i.hasNext()) {
-      Entry <String, Map<String, Map<String, ParsedUrl>>> e = i.next();
+    for (Entry<String, Map<String, Map<String, ParsedUrl>>> e : parseMap.entrySet()) {
       String identity = e.getKey();
-      Map <String, Map<String, ParsedUrl>> urlsByConnector = e.getValue();
+      Map<String, Map<String, ParsedUrl>> urlsByConnector = e.getValue();
       runManagerQueries(identity, urlsByConnector);
     }
   }
 
   private void runManagerQueries(String identity,
-      Map <String, Map<String, ParsedUrl>> urlsByConnector) {
-    Iterator <Entry <String, Map<String, ParsedUrl>>> i =
-        urlsByConnector.entrySet().iterator();
-    while (i.hasNext()) {
-      Entry <String, Map<String, ParsedUrl>> e = i.next();
+      Map<String, Map<String, ParsedUrl>> urlsByConnector) {
+    for (Entry<String, Map<String, ParsedUrl>> e : urlsByConnector.entrySet()) {
       String connectorName = e.getKey();
-      Map <String, ParsedUrl> urlsByDocid = e.getValue();
-      List <String> docidList = new ArrayList<String>(urlsByDocid.keySet());
-      Set <String> answerSet =
+      Map<String, ParsedUrl> urlsByDocid = e.getValue();
+      List<String> docidList = new ArrayList<String>(urlsByDocid.keySet());
+      Set<String> answerSet =
           manager.authorizeDocids(connectorName, docidList, identity);
       accumulateQueryResults(answerSet, urlsByDocid);
     }
   }
 
-  private void accumulateQueryResults(Set <String> answerSet,
-      Map <String, ParsedUrl> urlsByDocid) {
-    Iterator <Entry <String, ParsedUrl>> i = urlsByDocid.entrySet().iterator();
-    while (i.hasNext()) {
-      Entry <String, ParsedUrl> e = i.next();
+  private void accumulateQueryResults(Set<String> answerSet,
+      Map<String, ParsedUrl> urlsByDocid) {
+    for (Entry<String, ParsedUrl> e : urlsByDocid.entrySet()) {
       String docid = e.getKey();
       ParsedUrl parsedUrl = e.getValue();
       Boolean permit = answerSet.contains(docid) ? Boolean.TRUE : Boolean.FALSE;

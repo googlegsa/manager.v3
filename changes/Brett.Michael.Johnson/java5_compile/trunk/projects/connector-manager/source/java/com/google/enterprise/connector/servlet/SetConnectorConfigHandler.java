@@ -41,7 +41,7 @@ public class SetConnectorConfigHandler {
   private String connectorName;
   private String connectorType;
   private boolean update = false;
-  private Map <String, String> configData;
+  private Map<String, String> configData;
   private ConfigureResponse configRes;
 
   /*
@@ -117,7 +117,7 @@ public class SetConnectorConfigHandler {
     return status;
   }
 
-  public Map <String, String> getConfigData() {
+  public Map<String, String> getConfigData() {
     return configData;
   }
 

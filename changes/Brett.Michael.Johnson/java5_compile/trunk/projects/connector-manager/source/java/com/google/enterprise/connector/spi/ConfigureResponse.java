@@ -25,7 +25,7 @@ public class ConfigureResponse {
 
   private final String message;
   private final String formSnippet;
-  private final Map <String, String> configData;
+  private final Map<String, String> configData;
 
   /**
    * Simple constructor.
@@ -67,7 +67,7 @@ public class ConfigureResponse {
    *          Manager will use this data.
    */
   public ConfigureResponse(String message, String formSnippet,
-                           Map <String, String> configData) {
+                           Map<String, String> configData) {
     super();
     this.message = message;
     this.formSnippet = formSnippet;
@@ -97,8 +97,7 @@ public class ConfigureResponse {
    *
    * @return the config data - may be null or empty
    */
-  public Map <String, String> getConfigData() {
+  public Map<String, String> getConfigData() {
     return configData;
   }
-
 }

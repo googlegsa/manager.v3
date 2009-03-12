@@ -47,7 +47,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -73,9 +72,9 @@ public class DocPusher implements Pusher {
    * being constructed.  Once sufficient information has been appended to this
    * buffer its contents will be logged and it will be nulled.
    */
-  private ThreadLocal <StringBuffer> feedLogRecord =
+  private ThreadLocal<StringBuffer> feedLogRecord =
       new ThreadLocal<StringBuffer>();
-  private static Set <String> propertySkipSet;
+  private static Set<String> propertySkipSet;
 
   static {
     propertySkipSet = new HashSet<String>();
@@ -158,7 +157,7 @@ public class DocPusher implements Pusher {
       } else {
         inputStreams = new InputStream[] {prefixStream, suffixStream};
       }
-      Enumeration <InputStream> inputStreamEnum = Collections.enumeration(
+      Enumeration<InputStream> inputStreamEnum = Collections.enumeration(
           Arrays.asList(inputStreams));
       result = new SequenceInputStream(inputStreamEnum);
     } catch (UnsupportedEncodingException e) {
@@ -271,7 +270,7 @@ public class DocPusher implements Pusher {
    */
   private static void xmlWrapMetadata(StringBuffer buf, Document document)
       throws RepositoryException {
-    Set <String> propertyNames = document.getPropertyNames();
+    Set<String> propertyNames = document.getPropertyNames();
     if (propertyNames == null) {
       LOGGER.log(Level.WARNING, "Property names set is empty");
       return;
@@ -283,10 +282,8 @@ public class DocPusher implements Pusher {
     buf.append(XmlUtils.xmlWrapStart(XML_METADATA));
     buf.append("\n");
 
-    Iterator <String> iter = propertyNames.iterator();
-    while (iter.hasNext()) {
+    for (String name : propertyNames) {
       Property property = null;
-      String name = iter.next();
       if (propertySkipSet.contains(name) ||
           name.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX) ||
           name.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX)) {
@@ -319,17 +316,17 @@ public class DocPusher implements Pusher {
    * </pre>
    *
    * @param aclPropName the name of the property being processed.  Should be one
-   *    of {@link SpiConstants#PROPNAME_ACLGROUPS} or
-   *    {@link SpiConstants#PROPNAME_ACLUSERS}.
+   *        of {@link SpiConstants#PROPNAME_ACLGROUPS} or
+   *        {@link SpiConstants#PROPNAME_ACLUSERS}.
    * @param document the document being processed.
    * @return either the original property if no conversion was necessary or a
-   *    new converted property containing ACL Entries.
+   *         new converted property containing ACL Entries.
    * @throws RepositoryException if there was a problem extracting properties.
    */
   private static Property processAclProperty(String aclPropName,
       Document document) throws RepositoryException {
     Property scopeProp = document.findProperty(aclPropName);
-    List <Value> aclEntryList = new ArrayList<Value>();
+    List<Value> aclEntryList = new ArrayList<Value>();
     boolean aclPropWasModified = false;
     Value scopeVal = null;
     while ((scopeVal = scopeProp.nextValue()) != null) {

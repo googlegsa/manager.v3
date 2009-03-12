@@ -39,10 +39,10 @@ import javax.jcr.NodeIterator;
  */
 public class MockJcrNodeIterator implements NodeIterator {
 
-  Iterator <MockJcrNode> iter;
-  Iterator <MockRepositoryDocument> internalIterator;
+  Iterator<MockJcrNode> iter;
+  Iterator<MockRepositoryDocument> internalIterator;
 
-  MockJcrNodeIterator(Iterator <MockRepositoryDocument> iter) {
+  MockJcrNodeIterator(Iterator<MockRepositoryDocument> iter) {
     internalIterator = iter;
     this.iter = new Iterator<MockJcrNode>() {
 

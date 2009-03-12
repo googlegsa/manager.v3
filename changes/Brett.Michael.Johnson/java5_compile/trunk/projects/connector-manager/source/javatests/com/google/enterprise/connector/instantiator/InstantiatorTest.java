@@ -325,7 +325,7 @@ public class InstantiatorTest extends TestCase {
    * Returns the count of connectors in the InstanceMap.
    */
   private int connectorCount() {
-    Iterator <String> iter = instantiator.getConnectorNames();
+    Iterator<String> iter = instantiator.getConnectorNames();
     int count;
     for (count = 0; iter.hasNext(); iter.next()) {
       count++;
@@ -338,7 +338,7 @@ public class InstantiatorTest extends TestCase {
    * false otherwise.
    */
   private boolean connectorExists(String connectorName) {
-    Iterator <String> iter = instantiator.getConnectorNames();
+    Iterator<String> iter = instantiator.getConnectorNames();
     while (iter.hasNext()) {
       if (connectorName.equals(iter.next()))
         return true;
@@ -355,7 +355,7 @@ public class InstantiatorTest extends TestCase {
     if (update)
       oldTraverser = instantiator.getTraverser(name);
 
-    Map <String, String> config = new JsonObjectAsMap(new JSONObject(jsonConfigString));
+    Map<String, String> config = new JsonObjectAsMap(new JSONObject(jsonConfigString));
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
     instantiator.setConnectorConfig(name, typeName, config, locale, update);
 
@@ -380,7 +380,7 @@ public class InstantiatorTest extends TestCase {
       assertNotSame(oldTraverser, traverser);
 
     // the password will be decrypted in the InstanceInfo
-    Map <String, String> instanceProps = instantiator.getConnectorConfig(name);
+    Map<String, String> instanceProps = instantiator.getConnectorConfig(name);
     String instancePasswd = instanceProps.get("Password");
     String plainPasswd = config.get("Password");
     assertEquals(instancePasswd, plainPasswd);

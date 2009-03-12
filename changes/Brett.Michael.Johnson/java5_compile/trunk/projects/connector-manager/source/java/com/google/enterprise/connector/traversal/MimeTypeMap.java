@@ -31,7 +31,7 @@ public class MimeTypeMap {
   private static final Logger LOGGER =
       Logger.getLogger(MimeTypeMap.class.getName());
 
-  private Map <String, Integer> typeMap;
+  private Map<String, Integer> typeMap;
   private int unknownMimeTypeSupportLevel;
 
   public MimeTypeMap() {
@@ -65,7 +65,7 @@ public class MimeTypeMap {
    *
    * @param mimeTypes Set of mime types that are preferred.
    */
-  public void setPreferredMimeTypes(Set <String> mimeTypes) {
+  public void setPreferredMimeTypes(Set<String> mimeTypes) {
     LOGGER.config("Setting preferred mime types to " + mimeTypes.toString());
     initMimeTypes(mimeTypes, 8);
   }
@@ -78,7 +78,7 @@ public class MimeTypeMap {
    *
    * @param mimeTypes Set of mime types that are preferred.
    */
-  public void setSupportedMimeTypes(Set <String> mimeTypes) {
+  public void setSupportedMimeTypes(Set<String> mimeTypes) {
     LOGGER.config("Setting supported mime types to " + mimeTypes.toString());
     initMimeTypes(mimeTypes, 4);
   }
@@ -93,7 +93,7 @@ public class MimeTypeMap {
    *
    * @param mimeTypes Set of mime types that are not indexable.
    */
-  public void setUnsupportedMimeTypes(Set <String> mimeTypes) {
+  public void setUnsupportedMimeTypes(Set<String> mimeTypes) {
     LOGGER.config("Setting unsupported mime types to " + mimeTypes.toString());
     initMimeTypes(mimeTypes, -1);
   }
@@ -107,7 +107,7 @@ public class MimeTypeMap {
    * level +/- 1, accordingly.  Content types sans subtypes are preferred
    * least of all, so their support level is adjusted by -2.
    */
-  private void initMimeTypes(Set <String> mimeTypes, int supportLevel) {
+  private void initMimeTypes(Set<String> mimeTypes, int supportLevel) {
     if (mimeTypes == null || mimeTypes.size() == 0)
       return;
 
@@ -128,7 +128,7 @@ public class MimeTypeMap {
     // slightly to prefer "vnd." subtypes over others, and prefer
     // any other subtype over "x-" subtypes.  Content types sans
     // subtypes are ranked below all others.
-    for (Iterator <String> i = mimeTypes.iterator(); i.hasNext(); ) {
+    for (Iterator<String> i = mimeTypes.iterator(); i.hasNext(); ) {
       String mimeType = i.next().trim().toLowerCase();
       if (mimeType.indexOf('/') < 0) {
         typeMap.put(mimeType, level0);
@@ -182,15 +182,14 @@ public class MimeTypeMap {
    * @param mimeTypes a Set of mime type Strings.
    * @return the most preferred mime type from the Set.
    */
-  public String preferredMimeType(Set <String> mimeTypes) {
+  public String preferredMimeType(Set<String> mimeTypes) {
     if (mimeTypes == null || mimeTypes.size() == 0)
       return null;
 
     // Look for an exact match on one of the mimeTypes.
     int bestLevel = Integer.MIN_VALUE;
     String bestMimeType = null;
-    for (Iterator <String> iter = mimeTypes.iterator(); iter.hasNext(); ) {
-      String mimeType = iter.next();
+    for (String mimeType : mimeTypes) {
       int thisLevel = mimeTypeSupportLevel(mimeType);
       if (thisLevel > bestLevel) {
         bestLevel = thisLevel;

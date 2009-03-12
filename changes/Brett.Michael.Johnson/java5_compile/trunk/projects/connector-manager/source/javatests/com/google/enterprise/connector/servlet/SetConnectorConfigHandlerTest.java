@@ -20,7 +20,6 @@ import com.google.enterprise.connector.manager.MockManager;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
@@ -36,7 +35,7 @@ public class SetConnectorConfigHandlerTest extends TestCase {
   private String language;
   private String connectorName;
   private String connectorType;
-  private Map <String, String> configData;
+  private Map<String, String> configData;
   private boolean update;
 
   public void testSetConnectorConfigHandler1() {
@@ -137,9 +136,7 @@ public class SetConnectorConfigHandlerTest extends TestCase {
       "  <" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">" + this.connectorType + "</" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">\n" +
       "  <" + ServletUtil.XMLTAG_UPDATE_CONNECTOR + ">" + this.update + "</" + ServletUtil.XMLTAG_UPDATE_CONNECTOR + ">\n";
 
-    Iterator <Map.Entry <String, String>> iterator = configData.entrySet().iterator();
-    while (iterator.hasNext()) {
-      Map.Entry <String, String> entry = iterator.next();
+    for (Map.Entry<String, String> entry : configData.entrySet()) {
       body += "  <" + ServletUtil.XMLTAG_PARAMETERS + " name=\"" + entry.getKey()
            + "\" value=\"" + entry.getValue() + "\"/>\n";
     }

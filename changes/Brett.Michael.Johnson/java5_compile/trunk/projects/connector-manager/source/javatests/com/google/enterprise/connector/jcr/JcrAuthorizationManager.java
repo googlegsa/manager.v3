@@ -19,7 +19,6 @@ import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Collection;
 
@@ -48,8 +47,8 @@ public class JcrAuthorizationManager implements AuthorizationManager {
    * @see com.google.enterprise.connector.spi.AuthorizationManager
    *      #authorizeDocids(java.util.Collection, AuthenticationIdentity)
    */
-  public Collection <AuthorizationResponse> authorizeDocids(
-      Collection <String> docids, AuthenticationIdentity identity)
+  public Collection<AuthorizationResponse> authorizeDocids(
+      Collection<String> docids, AuthenticationIdentity identity)
       throws RepositoryException {
     // we rely on the ability of the current session to impersonate any
     // other user
@@ -67,10 +66,9 @@ public class JcrAuthorizationManager implements AuthorizationManager {
     try {
       // iterate through the docids, try to fetch each one, and determine
       // this user's access by whether the fetch succeeds
-      LinkedList <AuthorizationResponse> result =
+      LinkedList<AuthorizationResponse> result =
           new LinkedList<AuthorizationResponse>();
-      for (Iterator <String> i = docids.iterator(); i.hasNext();) {
-        String uuid = i.next();
+      for (String uuid : docids) {
         boolean readPrivilege = false;
         try {
           userSession.getNodeByUUID(uuid);

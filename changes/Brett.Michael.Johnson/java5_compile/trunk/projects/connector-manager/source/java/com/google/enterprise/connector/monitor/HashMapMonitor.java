@@ -16,7 +16,6 @@ package com.google.enterprise.connector.monitor;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -25,7 +24,7 @@ import java.util.Map;
  */
 public class HashMapMonitor implements Monitor {
 
-  private Map <String, Object> vars;
+  private Map<String, Object> vars;
 
   public HashMapMonitor() {
     vars = new HashMap<String, Object>();
@@ -35,7 +34,7 @@ public class HashMapMonitor implements Monitor {
    * @see com.google.enterprise.connector.monitor.Monitor#getVariables()
    * @return a read-only Map of the variables
    */
-  public Map <String, ?> getVariables() {
+  public Map<String, ?> getVariables() {
     synchronized (vars) {
       return Collections.unmodifiableMap(vars);
     }
@@ -44,11 +43,9 @@ public class HashMapMonitor implements Monitor {
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.monitor.Monitor#setVariables(java.util.Map)
    */
-  public void setVariables(Map <String, ?> props) {
-    Iterator <String> iter = props.keySet().iterator();
+  public void setVariables(Map<String, ?> props) {
     synchronized (vars) {
-      while (iter.hasNext()) {
-        String key = iter.next();
+      for (String key : props.keySet()) {
         Object value = (Object) props.get(key);
         if (null == value) {
           vars.remove(key);

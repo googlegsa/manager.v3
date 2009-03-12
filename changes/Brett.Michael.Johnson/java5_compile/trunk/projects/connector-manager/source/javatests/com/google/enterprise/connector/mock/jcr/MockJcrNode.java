@@ -65,7 +65,7 @@ import javax.jcr.version.VersionHistory;
  * </ul>
  */
 public class MockJcrNode implements Node {
-  private static Set <String> propertySkipSet;
+  private static Set<String> propertySkipSet;
 
   private static Logger LOGGER =
     Logger.getLogger(MockJcrNode.class.getName());
@@ -76,13 +76,12 @@ public class MockJcrNode implements Node {
   }
 
   private MockRepositoryDocument doc;
-  private List <MockJcrProperty> propList = null;
+  private List<MockJcrProperty> propList = null;
 
   private Property findProperty(String name) throws RepositoryException {
-    for (Iterator <MockJcrProperty> i = propList.iterator(); i.hasNext(); ) {
-      MockJcrProperty p = i.next();
-      if (p.getName().equals(name)) {
-        return p;
+    for (MockJcrProperty prop : propList) {
+      if (prop.getName().equals(name)) {
+        return prop;
       }
     }
     return null;
@@ -120,7 +119,7 @@ public class MockJcrNode implements Node {
           SpiConstants.GROUP_ROLES_PROPNAME_PREFIX);
     }
     // Now push all the other properties onto the list.
-    Iterator <MockRepositoryProperty> iter = doc.getProplist().iterator();
+    Iterator<MockRepositoryProperty> iter = doc.getProplist().iterator();
     while (iter.hasNext()) {
       MockRepositoryProperty prop = iter.next();
       // Don't pass on the some of the special MockRepoDocument properties so
@@ -150,10 +149,10 @@ public class MockJcrNode implements Node {
    *     roles for a ACL Entry.
    */
   private void addAclProperty(String scopeType,
-      MockRepositoryProperty repoAclProp, List <MockJcrProperty> propList,
+      MockRepositoryProperty repoAclProp, List<MockJcrProperty> propList,
       String propName, String rolesPrefix) {
     String[] values = repoAclProp.getValues();
-    List <String> newAclScopes = new ArrayList<String>();
+    List<String> newAclScopes = new ArrayList<String>();
     for (int i = 0; i < values.length; i++) {
       String aclEntry = values[i];
       // Strip the scope type if present and continue to process the entries
@@ -188,31 +187,20 @@ public class MockJcrNode implements Node {
       // Entry.  Add the scope to the list and, if there are roles specified,
       // create an associated "<rolesPrefix><scopeId>" property and add it to
       // the propList.
-      StringBuffer aclScopeId = new StringBuffer("\"").append(scopeId).
-          append("\"");
-      newAclScopes.add(aclScopeId.toString());
+      newAclScopes.add("\"" + scopeId + "\"");
       if (rolesStr != null) {
         // Create a multi-value property for the scope's roles.
-        List <String> rolesList = Arrays.asList(rolesStr.split(",", 0));
-        StringBuffer scopeRolesNameBuf =
-            new StringBuffer(rolesPrefix).
-            append(scopeId);
-        StringBuffer scopeRolesBuf = new StringBuffer("{type:string, value:").
-            append(rolesList.toString()).append("}");
+        List<String> rolesList = Arrays.asList(rolesStr.split(",", 0));
         MockRepositoryProperty newRolesProp = new MockRepositoryProperty(
-            scopeRolesNameBuf.toString(), scopeRolesBuf.toString());
+            rolesPrefix + scopeId,
+            "{type:string, value:" + rolesList.toString() + "}");
         propList.add(new MockJcrProperty(newRolesProp));
       }
     }
 
     if (newAclScopes.size() > 0) {
-      StringBuffer jsonBuf = new StringBuffer();
-      jsonBuf.append("{type:string, value:");
-      jsonBuf.append(newAclScopes.toString());
-      jsonBuf.append("}");
-      String jsonString = jsonBuf.toString();
-      MockRepositoryProperty newAclProp =
-          new MockRepositoryProperty(propName, jsonString);
+      MockRepositoryProperty newAclProp = new MockRepositoryProperty(propName,
+          "{type:string, value:" + newAclScopes.toString() + "}");
       propList.add(new MockJcrProperty(newAclProp));
     }
   }

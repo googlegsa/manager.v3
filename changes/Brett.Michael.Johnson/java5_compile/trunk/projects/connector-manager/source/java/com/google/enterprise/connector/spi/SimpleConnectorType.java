@@ -16,7 +16,6 @@ package com.google.enterprise.connector.spi;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -57,8 +56,8 @@ public class SimpleConnectorType implements ConnectorType {
   private static final String TD_START = "<td>";
   private static final String TR_START = "<tr>\r\n";
 
-  private List <String> keys = null;
-  private Set <String>  keySet = null;
+  private List<String> keys = null;
+  private Set<String>  keySet = null;
   private String initialConfigForm = null;
 
   public SimpleConnectorType() {
@@ -71,7 +70,7 @@ public class SimpleConnectorType implements ConnectorType {
    *
    * @param keys A list of String keys
    */
-  public void setConfigKeys(List <String> keys) {
+  public void setConfigKeys(List<String> keys) {
     if (this.keys != null) {
       throw new IllegalStateException();
     }
@@ -127,9 +126,8 @@ public class SimpleConnectorType implements ConnectorType {
     return true;
   }
 
-  private boolean validateConfigMap(Map <String, String> configData) {
-    for (Iterator <String> i = keys.iterator(); i.hasNext();) {
-      String key = i.next();
+  private boolean validateConfigMap(Map<String, String> configData) {
+    for (String key : keys) {
       String val = configData.get(key);
       if (!validateConfigPair(key, val)) {
         return false;
@@ -138,7 +136,7 @@ public class SimpleConnectorType implements ConnectorType {
     return true;
   }
 
-  private void appendAttribute(StringBuffer buf, String attrName,
+  private void appendAttribute(StringBuilder buf, String attrName,
       String attrValue) {
     buf.append(" ");
     XmlUtils.xmlAppendAttrValuePair(attrName, attrValue, buf);
@@ -151,10 +149,9 @@ public class SimpleConnectorType implements ConnectorType {
    * @param configMap
    * @return config form snippet
    */
-  private String makeConfigForm(Map <String, String> configMap) {
-    StringBuffer buf = new StringBuffer(2048);
-    for (Iterator <String> i = keys.iterator(); i.hasNext();) {
-      String key = i.next();
+  private String makeConfigForm(Map<String, String> configMap) {
+    StringBuilder buf = new StringBuilder(2048);
+    for (String key : keys) {
       appendStartRow(buf, key, false);
       buf.append(OPEN_ELEMENT);
       buf.append(INPUT);
@@ -175,10 +172,9 @@ public class SimpleConnectorType implements ConnectorType {
     return buf.toString();
   }
 
-  private String makeValidatedForm(Map <String, String> configMap) {
-    StringBuffer buf = new StringBuffer(2048);
-    for (Iterator <String> i = keys.iterator(); i.hasNext();) {
-      String key = i.next();
+  private String makeValidatedForm(Map<String, String> configMap) {
+    StringBuilder buf = new StringBuilder(2048);
+    for (String key : keys) {
       String value = configMap.get(key);
       if (!validateConfigPair(key, value)) {
         appendStartRow(buf, key, true);
@@ -204,12 +200,10 @@ public class SimpleConnectorType implements ConnectorType {
       appendEndRow(buf);
     }
 
-    // toss in all the stuff that's in the map but isn't in the keyset
+    // Toss in all the stuff that's in the map but isn't in the keyset
     // taking care to list them in alphabetic order (this is mainly for
     // testability).
-    Iterator <String> i = new TreeSet<String>(configMap.keySet()).iterator();
-    while (i.hasNext()) {
-      String key = i.next();
+    for (String key : new TreeSet<String>(configMap.keySet())) {
       if (!keySet.contains(key)) {
         // add another hidden field to preserve this data
         String val = (String) configMap.get(key);
@@ -223,7 +217,7 @@ public class SimpleConnectorType implements ConnectorType {
     return buf.toString();
   }
 
-  private void appendStartRow(StringBuffer buf, String key, boolean red) {
+  private void appendStartRow(StringBuilder buf, String key, boolean red) {
     buf.append(TR_START);
     buf.append(TD_START);
     if (red) {
@@ -237,7 +231,7 @@ public class SimpleConnectorType implements ConnectorType {
     buf.append(TD_START);
   }
 
-  private void appendEndRow(StringBuffer buf) {
+  private void appendEndRow(StringBuilder buf) {
     buf.append(CLOSE_ELEMENT);
     buf.append(TD_END);
     buf.append(TR_END);
@@ -252,7 +246,7 @@ public class SimpleConnectorType implements ConnectorType {
    * @param locale
    * @return another Configurer, which may be null
    */
-  ConnectorType getEmbeddedConfigurer(Map <String, String> configData,
+  ConnectorType getEmbeddedConfigurer(Map<String, String> configData,
       Locale locale) {
     return null;
   }
@@ -276,7 +270,7 @@ public class SimpleConnectorType implements ConnectorType {
    * @see com.google.enterprise.connector.spi.Configurer
    *      #validateConfig(java.util.Map, java.util.Locale)
    */
-  public ConfigureResponse validateConfig(Map <String, String> configData,
+  public ConfigureResponse validateConfig(Map<String, String> configData,
       Locale locale, ConnectorFactory connectorFactory) {
     if (validateConfigMap(configData)) {
       // all is ok
@@ -295,7 +289,7 @@ public class SimpleConnectorType implements ConnectorType {
    *      #getPopulatedConfigForm(java.util.Map,java.util.Locale)
    */
   public ConfigureResponse getPopulatedConfigForm(
-      Map <String, String> configMap, Locale locale) {
+      Map<String, String> configMap, Locale locale) {
     return new ConfigureResponse("", makeConfigForm(configMap));
   }
 }

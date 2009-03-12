@@ -48,7 +48,7 @@ public class MockRepositoryPropertyTest extends TestCase {
     } catch (JSONException e) {
       throw new IllegalArgumentException("test input can not be parsed");
     }
-    for (Iterator <?> keys = jo.keys(); keys.hasNext(); ) {
+    for (Iterator<?> keys = jo.keys(); keys.hasNext(); ) {
       String name = (String) keys.next();
       Object value;
       try {

@@ -28,7 +28,7 @@ import java.util.Set;
  * things that want maps. This implementation could be enhanced to be
  * modifiable, but we don't need it for our testing.
  */
-public class JsonObjectAsMap extends AbstractMap <String, String> {
+public class JsonObjectAsMap extends AbstractMap<String, String> {
 
   final JSONObject jobj;
 
@@ -47,7 +47,7 @@ public class JsonObjectAsMap extends AbstractMap <String, String> {
    *
    * @param m a Map
    */
-  public JsonObjectAsMap(Map <?, ?> m) {
+  public JsonObjectAsMap(Map<?, ?> m) {
     throw new IllegalArgumentException();
   }
 
@@ -74,20 +74,20 @@ public class JsonObjectAsMap extends AbstractMap <String, String> {
    *
    * @see java.util.AbstractMap#entrySet()
    */
-  public Set <Map.Entry <String, String>> entrySet() {
-    return new AbstractSet<Map.Entry <String, String>>() {
-      public Iterator <Map.Entry <String, String>> iterator() {
-        final Iterator <?> i = jobj.keys();
-        return new Iterator<Map.Entry <String, String>>() {
+  public Set<Map.Entry<String, String>> entrySet() {
+    return new AbstractSet<Map.Entry<String, String>>() {
+      public Iterator<Map.Entry<String, String>> iterator() {
+        final Iterator<?> i = jobj.keys();
+        return new Iterator<Map.Entry<String, String>>() {
           public boolean hasNext() {
             return i.hasNext();
           }
 
-          public Map.Entry <String, String> next() {
+          public Map.Entry<String, String> next() {
             try {
               final String key = (String) i.next();
               final String val = jobj.getString(key);
-              Map.Entry <String, String> e = new Map.Entry <String, String>() {
+              Map.Entry<String, String> e = new Map.Entry<String, String>() {
                 public String getKey() {
                   return key;
                 }

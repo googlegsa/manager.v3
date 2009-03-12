@@ -44,7 +44,7 @@ public interface AuthorizationManager {
    *         access.  [In other words, negative repsonses are optional.]
    * @throws RepositoryException
    */
-  Collection <AuthorizationResponse> authorizeDocids(
-      Collection <String> docids, AuthenticationIdentity identity)
+  Collection<AuthorizationResponse> authorizeDocids(
+      Collection<String> docids, AuthenticationIdentity identity)
       throws RepositoryException;
 }

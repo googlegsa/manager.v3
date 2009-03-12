@@ -29,9 +29,9 @@ public class StringUtils {
 
   /**
    * Find a named file on the classpath then read the entire content as a
-   * String, skipping
-   * comment lines (lines that begin with #) and end-line comments
-   * (from the first occurrence of // to the end).
+   * String, skipping comment lines (lines that begin with #) and end-line
+   * comments (from the first occurrence of // to the end).
+   *
    * @param filename The name of file on the classpath
    * @return The contents of the reader (skipping comments)
    */
@@ -45,7 +45,7 @@ public class StringUtils {
     InputStream s = StringUtils.class.getResourceAsStream(filename);
     if (s == null) {
       throw new IllegalArgumentException(
-        "filename must be found on the classpath: " + filename);
+          "filename must be found on the classpath: " + filename);
     }
     InputStreamReader isr = new InputStreamReader(s);
     BufferedReader br = new BufferedReader(isr);
@@ -53,14 +53,15 @@ public class StringUtils {
   }
 
   /**
-   * Read a buffered reader and return the entire contents as a String, skipping
-   * comment lines (lines that begin with #) and end-line comments
+   * Read a buffered reader and return the entire contents as a String,
+   * skipping comment lines (lines that begin with #) and end-line comments
    * (from the first occurrence of // to the end).
+   *
    * @param br  An Buffered Reader ready for reading
    * @return The contents of the reader (skipping comments)
    */
   public static String streamToString(BufferedReader br) {
-    StringBuffer b = new StringBuffer(1024);
+    StringBuilder buf = new StringBuilder(1024);
     String line;
     try {
       while ((line = br.readLine()) != null) {
@@ -70,20 +71,21 @@ public class StringUtils {
         }
         int index = line.indexOf("//");
         if (index == -1) {
-          b.append(line);
+          buf.append(line);
         } else {
-          b.append(line.subSequence(0, index));
+          buf.append(line.subSequence(0, index));
         }
-        b.append('\n');
+        buf.append('\n');
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    return b.toString();
+    return buf.toString();
   }
 
   /**
    * Read an entire InputStream (as UTF-8) and return its contents as a String
+   *
    * @param is InputStream to read
    * @return contents as a String
    */
@@ -101,6 +103,7 @@ public class StringUtils {
 
   /**
    * Read an entire InputStream (as UTF-8) and return its contents as a String
+   *
    * @param is InputStream to read
    * @return contents as a String
    * @throws IOException
@@ -117,8 +120,8 @@ public class StringUtils {
       while (offset < bytes.length
              && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
         offset += numRead;
-        // if we have reach the limit, we want to increase the size to get the
-        // entire String
+        // If we have reach the limit, we want to increase the size to get the
+        // entire String.
         if (bytes.length == offset) {
           byte[] temp = bytes;
           bytesLen *= 2;
@@ -135,13 +138,14 @@ public class StringUtils {
 
   /**
    * Reads all from a Reader into a String. Close the Reader when finished.
+   *
    * @param reader Reader
    * @return the String
    * @throws IOException
    */
   public static String readAllToString(Reader reader) throws IOException {
     char buf[] = new char[4096];
-    StringBuffer strBuffer = new StringBuffer();
+    StringBuilder strBuffer = new StringBuilder();
     int size = 0;
     try {
       while ((size = reader.read(buf)) != -1) {
@@ -154,12 +158,12 @@ public class StringUtils {
   }
 
   /**
-   * Normalizes strings with \r\n newlines to just \n
+   * Normalizes strings with \r\n newlines to just \n.
+   *
    * @param input String to normalize
    * @return the normalized result
    */
   public static String normalizeNewlines(String input) {
-    String result = input.replaceAll("\r\n", "\n");
-    return result;
+    return input.replaceAll("\r\n", "\n");
   }
 }

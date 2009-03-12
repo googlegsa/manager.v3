@@ -35,8 +35,8 @@ public class HostLoadManager {
 
   private static final long MINUTE_IN_MILLIS = 60 * 1000;
   private long startTimeInMillis;
-  private Map <String, Integer> connectorNameToNumDocsTraversed;
-  private Map <String, Long> connectorNameToFinishTime;
+  private Map<String, Integer> connectorNameToNumDocsTraversed;
+  private Map<String, Long> connectorNameToFinishTime;
 
   /**
    * Number of milliseconds before we ignore previously fed documents.  In
@@ -177,7 +177,16 @@ public class HostLoadManager {
         Schedule schedule = new Schedule(schedStr);
         int retryDelayMillis = schedule.getRetryDelayMillis();
         long now = System.currentTimeMillis();
-        return now < finishTime + retryDelayMillis;
+        if (now < finishTime + retryDelayMillis) {
+          return true;
+        }
+        int maxDocsPerPeriod = (int)
+            ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
+        int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
+        int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
+        if (remainingDocsToTraverse <= 0) {
+          return true;
+        }
       } catch (ConnectorNotFoundException e) {
         // Connector seems to have been deleted.
         removeConnector(connectorName);

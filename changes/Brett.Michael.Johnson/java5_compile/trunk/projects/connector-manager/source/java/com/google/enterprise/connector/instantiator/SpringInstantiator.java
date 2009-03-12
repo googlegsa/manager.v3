@@ -46,10 +46,11 @@ public class SpringInstantiator implements Instantiator {
   TypeMap typeMap = null;
   InstanceMap instanceMap = null;
   Pusher pusher;
-  Map <String, ConnectorInterfaces> connectorCache;
+  Map<String, ConnectorInterfaces> connectorCache;
 
   /**
    * Normal constructor.
+   *
    * @param pusher
    */
   public SpringInstantiator(Pusher pusher) {
@@ -61,6 +62,7 @@ public class SpringInstantiator implements Instantiator {
 
   /**
    * Constructor used by unit tests.  Provides a specific test Context.
+   *
    * @param pusher
    * @param typeMap
    */
@@ -81,6 +83,18 @@ public class SpringInstantiator implements Instantiator {
     LOGGER.info("Initializing instantiator");
     typeMap = new TypeMap();
     instanceMap = new InstanceMap(typeMap);
+  }
+
+  /**
+   * Shutdown all connector instances.
+   */
+  public synchronized void shutdown() {
+    if (connectorCache != null) {
+      connectorCache.clear();
+    }
+    if (instanceMap != null) {
+      instanceMap.shutdown();
+    }
   }
 
   /*
@@ -156,12 +170,16 @@ public class SpringInstantiator implements Instantiator {
    */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String connectorTypeName, Locale locale)
-      throws ConnectorNotFoundException {
+      throws ConnectorNotFoundException, InstantiatorException {
     InstanceInfo instanceInfo = getInstanceInfo(connectorName);
     TypeInfo typeInfo = instanceInfo.getTypeInfo();
     ConnectorType connectorType = typeInfo.getConnectorType();
-    Map <String, String> configMap = instanceInfo.getConnectorConfig();
-    return connectorType.getPopulatedConfigForm(configMap, locale);
+    Map<String, String> configMap = instanceInfo.getConnectorConfig();
+    try {
+      return connectorType.getPopulatedConfigForm(configMap, locale);
+    } catch (Exception e) {
+      throw new InstantiatorException("Failed to get configuration form", e);
+    }
   }
 
   /*
@@ -197,9 +215,9 @@ public class SpringInstantiator implements Instantiator {
    * @see com.google.enterprise.connector.instantiator.Instantiator
    *      #getConnectorTypeNames()
    */
-  public synchronized Iterator <String> getConnectorTypeNames() {
+  public synchronized Iterator<String> getConnectorTypeNames() {
     initialize();
-    List <String> list =
+    List<String> list =
         Collections.unmodifiableList(new ArrayList<String>(typeMap.keySet()));
     return list.iterator();
   }
@@ -240,9 +258,9 @@ public class SpringInstantiator implements Instantiator {
    * @see com.google.enterprise.connector.persist.ConnectorConfigStore
    *      #getConnectorNames()
    */
-  public synchronized Iterator <String> getConnectorNames() {
+  public synchronized Iterator<String> getConnectorNames() {
     initialize();
-    List <String> list = new ArrayList<String>(instanceMap.keySet());
+    List<String> list = new ArrayList<String>(instanceMap.keySet());
     return Collections.unmodifiableList(list).iterator();
   }
 
@@ -264,7 +282,7 @@ public class SpringInstantiator implements Instantiator {
    *      #setConnectorConfig(java.lang.String, java.lang.String, java.util.Map)
    */
   public synchronized ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map <String, String> configMap, Locale locale,
+      String connectorTypeName, Map<String, String> configMap, Locale locale,
       boolean update) throws ConnectorNotFoundException,
       ConnectorExistsException, InstantiatorException {
     initialize();
@@ -280,7 +298,7 @@ public class SpringInstantiator implements Instantiator {
    * @see com.google.enterprise.connector.instantiator.Instantiator
    *      #getConnectorConfig(java.lang.String)
    */
-  public Map <String, String> getConnectorConfig(String connectorName)
+  public Map<String, String> getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException {
     return getInstanceInfo(connectorName).getConnectorConfig();
   }

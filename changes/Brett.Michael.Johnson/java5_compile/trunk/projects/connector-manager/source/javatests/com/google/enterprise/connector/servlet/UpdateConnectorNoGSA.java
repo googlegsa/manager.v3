@@ -59,8 +59,8 @@ public class UpdateConnectorNoGSA extends HttpServlet {
     StringWriter writer = new StringWriter();
     writer.write("<" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">");
 
-    Enumeration <?> names = req.getParameterNames();
-    for (Enumeration <?> e = names; e.hasMoreElements();) {
+    Enumeration<?> names = req.getParameterNames();
+    for (Enumeration<?> e = names; e.hasMoreElements();) {
       String name = (String) e.nextElement();
       if (name.equalsIgnoreCase(ServletUtil.QUERY_PARAM_LANG)) {
         language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
@@ -103,11 +103,11 @@ public class UpdateConnectorNoGSA extends HttpServlet {
       throws IOException {
     ConnectorMessageCode status = new ConnectorMessageCode();
     String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
-    Map <String, String> configData = new TreeMap<String, String>();
+    Map<String, String> configData = new TreeMap<String, String>();
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
     String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
-    Enumeration <?> names = req.getParameterNames();
-    for (Enumeration <?> e = names; e.hasMoreElements();) {
+    Enumeration<?> names = req.getParameterNames();
+    for (Enumeration<?> e = names; e.hasMoreElements();) {
       String name = (String) e.nextElement();
       configData.put(name, req.getParameter(name));
     }

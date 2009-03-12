@@ -19,9 +19,9 @@ import java.util.List;
 
 public class SimpleProperty implements Property {
 
-  Iterator <Value> iterator;
+  Iterator<Value> iterator;
 
-  public SimpleProperty(List <Value> values) {
+  public SimpleProperty(List<Value> values) {
     this.iterator = values.iterator();
   }
 

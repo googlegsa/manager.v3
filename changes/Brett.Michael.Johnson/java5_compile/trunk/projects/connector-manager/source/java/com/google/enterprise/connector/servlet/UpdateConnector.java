@@ -89,11 +89,11 @@ public class UpdateConnector extends HttpServlet {
       throws IOException {
     ConnectorMessageCode status = new ConnectorMessageCode();
     String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
-    Map <String, String> configData = new TreeMap<String, String>();
+    Map<String, String> configData = new TreeMap<String, String>();
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
     String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
-    Enumeration <?> names = req.getParameterNames();
-    for (Enumeration <?> e = names; e.hasMoreElements();) {
+    Enumeration<?> names = req.getParameterNames();
+    for (Enumeration<?> e = names; e.hasMoreElements();) {
       String name = (String) e.nextElement();
       configData.put(name, req.getParameter(name));
     }
@@ -143,8 +143,8 @@ public class UpdateConnector extends HttpServlet {
       formSnippet = ServletUtil.DEFAULT_FORM;
     }
 
-    StringBuffer sbuf =
-        new StringBuffer(
+    StringBuilder sbuf =
+        new StringBuilder(
             "<HTML><HEAD><TITLE>Update Connector Config</TITLE></HEAD>\n"
                 + "<BODY><H3>Update Connector Config:</H3><HR>\n"
                 + "<FORM METHOD=POST ACTION=\""
@@ -158,7 +158,7 @@ public class UpdateConnector extends HttpServlet {
     int endQuote = 0;
     String snip = formSnippet;
     String value = null;
-    Map <String, String> configData =
+    Map<String, String> configData =
         ServletUtil.getAllAttributes(root, ServletUtil.XMLTAG_PARAMETERS);
     if (configData.isEmpty()) {
       return htmlErrorPage("Empty config data");

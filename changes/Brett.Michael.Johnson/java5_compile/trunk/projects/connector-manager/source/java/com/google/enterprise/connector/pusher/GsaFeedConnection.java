@@ -102,7 +102,7 @@ public class GsaFeedConnection implements FeedConnection {
     }
 
     boolean isThrowing = false;
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     try {
       LOGGER.finest("Writing to feed connection.");
       // If there is an exception during this read/write, we do our

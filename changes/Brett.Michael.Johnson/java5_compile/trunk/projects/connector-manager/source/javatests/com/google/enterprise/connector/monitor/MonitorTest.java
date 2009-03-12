@@ -26,7 +26,7 @@ public class MonitorTest extends TestCase {
   public void testHashMapMonitor() {
     String key = "key";
     String value = "value";
-    Map <String, String> temp1 = new TreeMap<String, String>();
+    Map<String, String> temp1 = new TreeMap<String, String>();
     Monitor monitor = new HashMapMonitor();
 
     assertTrue("Variables should be empty.", monitor.getVariables().isEmpty());
@@ -36,9 +36,8 @@ public class MonitorTest extends TestCase {
     assertEquals("One variable should be set.",
       1, monitor.getVariables().size());
 
-    Map <String, ? extends Object> temp2 = monitor.getVariables();
-    assertEquals("One variable should be set.",
-      1, temp2.size());
+    Map<String, ? extends Object> temp2 = monitor.getVariables();
+    assertEquals("One variable should be set.", 1, temp2.size());
     assertTrue("Key should be in variables.", temp2.containsKey(key));
     assertTrue("Value should be in variables.", temp2.containsValue(value));
 

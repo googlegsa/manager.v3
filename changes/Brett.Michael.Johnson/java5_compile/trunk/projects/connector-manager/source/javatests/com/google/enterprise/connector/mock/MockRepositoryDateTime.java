@@ -19,7 +19,7 @@ package com.google.enterprise.connector.mock;
  * <p>
  * Implemented with a single int "ticks"
  */
-public class MockRepositoryDateTime implements Comparable <MockRepositoryDateTime> {
+public class MockRepositoryDateTime implements Comparable<MockRepositoryDateTime> {
   private int ticks;
 
   public String toString() {

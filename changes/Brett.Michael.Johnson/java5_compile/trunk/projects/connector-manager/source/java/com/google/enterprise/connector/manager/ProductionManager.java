@@ -20,7 +20,6 @@ import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
-import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
@@ -96,6 +95,8 @@ public class ProductionManager implements Manager {
       LOGGER.log(Level.WARNING, "Login: ", e);
     } catch (RepositoryException e) {
       LOGGER.log(Level.WARNING, "Repository: ", e);
+    } catch (Exception e) {
+      LOGGER.log(Level.WARNING, "Exception: ", e);
     }
 
     return result;
@@ -108,17 +109,15 @@ public class ProductionManager implements Manager {
    *      #authorizeDocids(java.lang.String, java.util.List,
    *      java.lang.String)
    */
-  public Set <String> authorizeDocids(String connectorName,
-      List <String> docidList, String username) {
-    Set <String> result = new HashSet<String>();
+  public Set<String> authorizeDocids(String connectorName,
+      List<String> docidList, String username) {
+    Set<String> result = new HashSet<String>();
     try {
       AuthorizationManager authzManager =
           instantiator.getAuthorizationManager(connectorName);
       AuthenticationIdentity identity = new UserPassIdentity(username, null);
-      Collection <AuthorizationResponse> results = authzManager.authorizeDocids(docidList, identity);
-      Iterator <AuthorizationResponse> iter = results.iterator();
-      while (iter.hasNext()) {
-        AuthorizationResponse response = iter.next();
+      Collection<AuthorizationResponse> results = authzManager.authorizeDocids(docidList, identity);
+      for (AuthorizationResponse response : results) {
         if (response.isValid()) {
           result.add(response.getDocid());
         }
@@ -130,6 +129,8 @@ public class ProductionManager implements Manager {
       LOGGER.log(Level.WARNING, "Instantiator: ", e);
     } catch (RepositoryException e) {
       LOGGER.log(Level.WARNING, "Repository: ", e);
+    } catch (Exception e) {
+      LOGGER.log(Level.WARNING, "Exception: ", e);
     }
 
     return result;
@@ -141,12 +142,16 @@ public class ProductionManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager
    *      #getConfigForm(java.lang.String, java.lang.String)
    */
-  public ConfigureResponse getConfigForm(String connectorTypeName,
-      String language) throws ConnectorTypeNotFoundException {
+  public ConfigureResponse getConfigForm(String connectorTypeName, String
+      language) throws ConnectorTypeNotFoundException, InstantiatorException {
     ConnectorType connectorType =
         instantiator.getConnectorType(connectorTypeName);
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
-    return connectorType.getConfigForm(locale);
+    try {
+      return connectorType.getConfigForm(locale);
+    } catch (Exception e) {
+      throw new InstantiatorException("Failed to get configuration form.", e);
+    }
   }
 
   /*
@@ -192,12 +197,11 @@ public class ProductionManager implements Manager {
    *
    * @see com.google.enterprise.connector.manager.Manager#getConnectorStatuses()
    */
-  public List <ConnectorStatus> getConnectorStatuses() {
-    List <ConnectorStatus> result = new ArrayList<ConnectorStatus>();
-    String connectorName;
-    Iterator <String> iter = instantiator.getConnectorNames();
+  public List<ConnectorStatus> getConnectorStatuses() {
+    List<ConnectorStatus> result = new ArrayList<ConnectorStatus>();
+    Iterator<String> iter = instantiator.getConnectorNames();
     while (iter.hasNext()) {
-      connectorName = iter.next();
+      String connectorName = iter.next();
       result.add(getConnectorStatus(connectorName));
     }
     return result;
@@ -208,9 +212,9 @@ public class ProductionManager implements Manager {
    *
    * @see com.google.enterprise.connector.manager.Manager#getConnectorTypeNames()
    */
-  public Set <String> getConnectorTypeNames() {
-    Set <String> result = new TreeSet<String>();
-    Iterator <String> i = instantiator.getConnectorTypeNames();
+  public Set<String> getConnectorTypeNames() {
+    Set<String> result = new TreeSet<String>();
+    Iterator<String> i = instantiator.getConnectorTypeNames();
     while (i.hasNext()) {
       result.add(i.next());
     }
@@ -234,7 +238,7 @@ public class ProductionManager implements Manager {
    *      java.lang.String, java.util.Map, java.lang.String)
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map <String, String> configData,
+      String connectorTypeName, Map<String, String> configData,
       String language, boolean update) throws ConnectorNotFoundException,
       PersistentStoreException, InstantiatorException {
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
@@ -262,15 +266,11 @@ public class ProductionManager implements Manager {
    * (non-Javadoc)
    *
    * @see com.google.enterprise.connector.manager.Manager#setSchedule(
-   *      java.lang.String, int, java.lang.String)
+   *      java.lang.String, java.lang.String)
    */
-  public void setSchedule(String connectorName, int load, int retryDelayMillis,
-      String timeIntervals)
+  public void setSchedule(String connectorName, String schedule)
       throws ConnectorNotFoundException, PersistentStoreException {
-    Schedule schedule = new Schedule(connectorName + ":" + load + ":"
-            + retryDelayMillis + ":" + timeIntervals);
-    String connectorSchedule = schedule.toString();
-    instantiator.setConnectorSchedule(connectorName, connectorSchedule);
+    instantiator.setConnectorSchedule(connectorName, schedule);
   }
 
   /*
@@ -301,7 +301,7 @@ public class ProductionManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#getConnectorConfig(
    *      java.lang.String)
    */
-  public Map <String, String> getConnectorConfig(String connectorName)
+  public Map<String, String> getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException {
     return instantiator.getConnectorConfig(connectorName);
   }

@@ -36,7 +36,7 @@ public class FileStore implements ConnectorScheduleStore,
   private static final Logger LOGGER =
       Logger.getLogger(FileStore.class.getName());
 
-  private Hashtable <String, String> cacheMap = new Hashtable<String, String>();
+  private Hashtable<String, String> cacheMap = new Hashtable<String, String>();
   private static final String schedName = "_schedule.txt";
   private static final String stateName = "_state.txt";
   private static final String configName = ".properties";

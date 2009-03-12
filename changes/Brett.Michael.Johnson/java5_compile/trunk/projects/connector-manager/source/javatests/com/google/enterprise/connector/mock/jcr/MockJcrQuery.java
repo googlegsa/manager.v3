@@ -39,7 +39,7 @@ public class MockJcrQuery implements Query {
   MockRepositoryDocumentStore store;
   String statement = null;
 
-  List <MockRepositoryDocument> internalQuery;
+  List<MockRepositoryDocument> internalQuery;
 
   /**
    * Creates a MockJcrQuery object from a date range.  This is intended to be

@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,8 +66,8 @@ public class MockManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#authorizeDocids(java.lang.String,
    *      java.util.List, java.lang.String)
    */
-  public Set <String> authorizeDocids(String connectorName,
-      List <String> docidList, String username) {
+  public Set<String> authorizeDocids(String connectorName,
+      List<String> docidList, String username) {
     return new HashSet<String>(docidList);
   }
 
@@ -77,7 +76,7 @@ public class MockManager implements Manager {
    *
    * @see com.google.enterprise.connector.manager.Manager#getConnectorTypes()
    */
-  public Set <String> getConnectorTypeNames() {
+  public Set<String> getConnectorTypeNames() {
     return new TreeSet<String>(Arrays.asList(
         new String[] {"Documentum", "Filenet", "Sharepoint"}));
   }
@@ -145,7 +144,7 @@ public class MockManager implements Manager {
     String name = connectorName;
     String type = "Documentum";
     int status = 0;
-    String schedule = connectorName + ":100:0-0";
+    String schedule = connectorName + ":100:0:0-0";
     return new ConnectorStatus(name, type, status, schedule);
   }
 
@@ -154,8 +153,8 @@ public class MockManager implements Manager {
    *
    * @see com.google.enterprise.connector.manager.Manager#getConnectorStatuses()
    */
-  public List <ConnectorStatus> getConnectorStatuses() {
-    List <ConnectorStatus> statuses = new ArrayList<ConnectorStatus>();
+  public List<ConnectorStatus> getConnectorStatuses() {
+    List<ConnectorStatus> statuses = new ArrayList<ConnectorStatus>();
     statuses.add(getConnectorStatus("connector1"));
     statuses.add(getConnectorStatus("connector2"));
     return statuses;
@@ -168,7 +167,7 @@ public class MockManager implements Manager {
    *      java.util.Map, java.lang.String)
    */
   public ConfigureResponse setConfig(String connectorName,
-      Map <String, String> configData, String language) {
+      Map<String, String> configData, String language) {
     return null;
   }
 
@@ -179,14 +178,12 @@ public class MockManager implements Manager {
    *      java.util.Map, java.lang.String)
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map <String, String> configData,
+      String connectorTypeName, Map<String, String> configData,
       String language, boolean update) {
     LOGGER.info("setConnectorConfig() connectorName: " + connectorName);
     LOGGER.info("setConnectorConfig() update: " + update);
     LOGGER.info("configData: ");
-    Iterator <Map.Entry <String, String>> iter = configData.entrySet().iterator();
-    while (iter.hasNext()) {
-      Map.Entry <String, String> entry = iter.next();
+    for (Map.Entry<String, String> entry : configData.entrySet()) {
       LOGGER.info(entry.getKey() + "/" + entry.getValue());
     }
     // null is a success response
@@ -208,10 +205,9 @@ public class MockManager implements Manager {
    * (non-Javadoc)
    *
    * @see com.google.enterprise.connector.manager.Manager#setSchedule(
-   *      java.lang.String, int, java.lang.String)
+   *      java.lang.String, java.lang.String)
    */
-  public void setSchedule(String connectorName, int load, int retryDelayMillis,
-      String timeIntervals) {
+  public void setSchedule(String connectorName, String schedule) {
     // do nothing
   }
 
@@ -245,7 +241,7 @@ public class MockManager implements Manager {
    * @see com.google.enterprise.connector.manager.Manager#getConnectorConfig(
    *      java.lang.String)
    */
-  public Map <String, String> getConnectorConfig(String connectorName) {
+  public Map<String, String> getConnectorConfig(String connectorName) {
     return new HashMap<String, String>();
   }
 }

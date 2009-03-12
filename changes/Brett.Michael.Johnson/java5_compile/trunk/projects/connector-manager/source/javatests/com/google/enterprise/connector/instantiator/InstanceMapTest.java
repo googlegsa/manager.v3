@@ -216,7 +216,7 @@ public class InstanceMapTest extends TestCase {
       String typeName, String language, boolean update,
       String jsonConfigString) throws JSONException, InstantiatorException,
       ConnectorNotFoundException, ConnectorExistsException {
-    Map <String, String> config =
+    Map<String, String> config =
         new JsonObjectAsMap(new JSONObject(jsonConfigString));
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
     instanceMap.updateConnector(name, typeName, config, locale, update);
@@ -226,7 +226,7 @@ public class InstanceMapTest extends TestCase {
     Assert.assertEquals(name, instanceInfo.getName());
 
     // the password will be decrypted in the InstanceInfo
-    Map <String, String> instanceProps = instanceInfo.getConnectorConfig();
+    Map<String, String> instanceProps = instanceInfo.getConnectorConfig();
     String instancePasswd = instanceProps.get("Password");
     String plainPasswd = config.get("Password");
     Assert.assertEquals(instancePasswd, plainPasswd);

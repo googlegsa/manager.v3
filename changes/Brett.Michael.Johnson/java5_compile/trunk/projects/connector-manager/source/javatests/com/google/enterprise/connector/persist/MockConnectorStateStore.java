@@ -19,7 +19,7 @@ import java.util.HashMap;
 /**
  * MockConnectorStateStore - doesn't actually persist, just uses memory.
  */
-public class MockConnectorStateStore extends HashMap <String, String>
+public class MockConnectorStateStore extends HashMap<String, String>
     implements ConnectorStateStore {
 
   /* (non-Javadoc)

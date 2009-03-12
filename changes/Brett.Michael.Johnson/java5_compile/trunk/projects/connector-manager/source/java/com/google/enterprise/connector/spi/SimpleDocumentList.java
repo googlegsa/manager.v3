@@ -19,11 +19,11 @@ import java.util.List;
 
 public class SimpleDocumentList implements DocumentList {
 
-  private List <? extends Document> documents;
-  private Iterator <? extends Document> iterator;
+  private List<? extends Document> documents;
+  private Iterator<? extends Document> iterator;
   private Document document;
 
-  public SimpleDocumentList(List <? extends Document> documents) {
+  public SimpleDocumentList(List<? extends Document> documents) {
     this.documents = documents;
     this.iterator = null;
     this.document = null;
