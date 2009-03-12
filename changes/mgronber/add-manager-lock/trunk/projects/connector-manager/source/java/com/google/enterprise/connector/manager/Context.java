@@ -572,7 +572,8 @@ public class Context {
     LOGGER.info("Updated Connector Manager Config: "
         + GSA_FEED_HOST_PROPERTY_KEY + "=" + feederGateHost + "; "
         + GSA_FEED_PORT_PROPERTY_KEY + "=" + feederGatePort + ";"
-        + MANAGER_LOCKED_PROPERTY_KEY + "=" + Boolean.TRUE.toString());
+        + MANAGER_LOCKED_PROPERTY_KEY + "="
+        + props.getProperty(MANAGER_LOCKED_PROPERTY_KEY));
 
     // Update our local cached feed host.
     gsaFeedHost = feederGateHost;
