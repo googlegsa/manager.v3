@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,17 +18,13 @@ package com.google.enterprise.connector.common;
  * Item that will be run within the WorkQueue.
  */
 public abstract class WorkQueueItem {
-  protected static long timeout = 5 * 60 * 1000;
-  // the thread that is executing the item (this is used for interrupting work)
+  // The thread that is executing the item (this is used for interrupting work).
   private WorkQueueThread workQueueThread;
-
-  public WorkQueueThread getWorkQueueThread() {
-    return workQueueThread;
-  }
 
   /**
    * Set the WorkQueue thread.  This must be done before doWork() is called.
    * This thread will be used to interrupt the work if timeout occurs.
+   *
    * @param workQueueThread
    */
   public void setWorkQueueThread(WorkQueueThread workQueueThread) {
@@ -36,13 +32,19 @@ public abstract class WorkQueueItem {
   }
 
   /**
-   * Return the number of milliseconds before the WorkQueueRunnable times out
-   * and may be interrupted.
-   * @return timeout in milliseconds
+   * @return the WorkQueueThread servicing this WorkQueueItem.
    */
-  public long getTimeout() {
-    return timeout;
+  public WorkQueueThread getWorkQueueThread() {
+    return workQueueThread;
   }
 
+  /**
+   * Called to perform the actual work.
+   */
   public abstract void doWork();
+
+  /**
+   * Called when WorkQueueItem times out, or during shutdown.
+   */
+  public abstract void cancelWork();
 }

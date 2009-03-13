@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,11 +21,6 @@ import java.util.Date;
  */
 public class InterruptibleQueryTraverser implements Traverser {
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
-   */
   public int runBatch(int batchHint) {
     int counter = 0;
     boolean breakLoop = true;
@@ -56,9 +51,7 @@ public class InterruptibleQueryTraverser implements Traverser {
     return counter;
   }
 
-  private static final int TRAVERSAL_TIMEOUT = 5000;
-
-  public int getTimeoutMillis() {
-  return TRAVERSAL_TIMEOUT;
+  public void cancelBatch() {
+    throw new UnsupportedOperationException("Should not get cancelled");
   }
 }
