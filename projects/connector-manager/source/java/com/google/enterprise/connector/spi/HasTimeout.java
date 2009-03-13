@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.google.enterprise.connector.spi;
  * HasTimeout.  This should be implemented by a TraversalManager if it wants
  * to supply the ConnectorManager with its own timeout value.
  *
+ * This Interface has been deprecated.
+ * @deprecated
  */
 public interface HasTimeout {
   /**

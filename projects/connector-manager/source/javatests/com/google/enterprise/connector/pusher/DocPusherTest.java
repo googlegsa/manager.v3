@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1634,7 +1634,7 @@ public class DocPusherTest extends TestCase {
         if (RuntimeException.class.isAssignableFrom(throwable)) {
           // RuntimeExceptions don't have to be declared.
           try {
-            throw (RuntimeException) constructor.newInstance(parameters);
+            throw (RuntimeException) constructor.newInstance((Object [])parameters);
           } catch (IllegalAccessException e) {
             throw new IllegalArgumentException(e.getMessage());
           } catch (InstantiationException e) {
@@ -1644,7 +1644,7 @@ public class DocPusherTest extends TestCase {
           }
         } else if (RepositoryException.class.isAssignableFrom(throwable)) {
           try {
-            throw (RepositoryException) constructor.newInstance(parameters);
+            throw (RepositoryException) constructor.newInstance((Object [])parameters);
           } catch (IllegalAccessException e) {
             throw new IllegalArgumentException(e.getMessage());
           } catch (InstantiationException e) {
