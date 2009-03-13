@@ -190,8 +190,8 @@ public class HostLoadManager {
         if (now < finishTime + retryDelayMillis) {
           return true;
         }
-        int maxDocsPerPeriod =
-          (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
+        int maxDocsPerPeriod = (int)
+            ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
         int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
         int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
         if (remainingDocsToTraverse <= 0) {

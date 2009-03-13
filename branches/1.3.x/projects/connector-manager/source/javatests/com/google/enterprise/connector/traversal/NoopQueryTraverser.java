@@ -26,9 +26,7 @@ public class NoopQueryTraverser implements Traverser {
     return batchHint;
   }
 
-  private static final int TRAVERSAL_TIMEOUT = 5000;
-
-  public int getTimeoutMillis() {
-  return TRAVERSAL_TIMEOUT;
+  public void cancelBatch() {
+    throw new UnsupportedOperationException("Should not get cancelled");
   }
 }
