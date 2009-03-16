@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@ package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.spi.AuthenticationIdentity;
+import com.google.enterprise.connector.spi.SimpleAuthenticationIdentity;
 
 import java.io.PrintWriter;
 import java.util.Iterator;
@@ -34,12 +36,7 @@ public class Authenticate extends ConnectorManagerServlet {
   private static final Logger LOGGER =
       Logger.getLogger(Authenticate.class.getName());
 
-  /*
-   * (non-Javadoc)
-   * @see com.google.enterprise.connector.servlet.ConnectorManagerServlet
-   * #processDoPost(java.lang.String,
-   * com.google.enterprise.connector.manager.Manager, java.io.PrintWriter)
-   */
+  /* @Override */
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
     handleDoPost(xmlBody, manager, out);
@@ -78,11 +75,16 @@ public class Authenticate extends ConnectorManagerServlet {
     String username = ServletUtil.getFirstElementByTagName(
       (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_USERNAME);
     String password = ServletUtil.getFirstElementByTagName(
-      (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_PASSWORD);
+        (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_PASSWORD);
+    String domain = ServletUtil.getFirstElementByTagName(
+        (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_DOMAIN);
     List connList = manager.getConnectorStatuses();
     for (Iterator iter = connList.iterator(); iter.hasNext();) {
       String connectorName = ((ConnectorStatus) iter.next()).getName();
-      boolean authn = manager.authenticate(connectorName, username, password);
+      AuthenticationIdentity identity = 
+        new SimpleAuthenticationIdentity(username, password, domain);
+      boolean authn = 
+        manager.authenticate(connectorName, identity);
       if (authn) {
         ServletUtil.writeXMLTagWithAttrs(
             out, 2, ServletUtil.XMLTAG_SUCCESS,

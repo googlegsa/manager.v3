@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.common.StringUtils;
-import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.manager.MockManager;
 
 import junit.framework.Assert;
@@ -33,12 +32,6 @@ public class AuthenticateTest extends TestCase {
   private static final Logger LOGGER =
     Logger.getLogger(AuthenticateTest.class.getName());
 
-  /**
-   * Test method for
-   * {@link com.google.enterprise.connector.servlet.Authenticate#handleDoPost(
-   * java.lang.String, com.google.enterprise.connector.manager.Manager,
-   * java.io.PrintWriter)}.
-   */
   public void testHandleDoPost() {
     String xmlBody =
       "<AuthnRequest>\n" +
@@ -59,12 +52,39 @@ public class AuthenticateTest extends TestCase {
       "    </Success>\n" +
       "  </AuthnResponse>\n" +
       "</CmResponse>\n";
-    doTest(xmlBody, expectedResult);
+    doTest(xmlBody, expectedResult, null, "fooUser", "fooPassword");
   }
 
-  private void doTest(String xmlBody, String expectedResult) {
+  public void testWithDomain() {
+    String xmlBody =
+      "<AuthnRequest>\n" +
+      "  <Credentials>\n" +
+      "    <Username>fooUser</Username>\n" +
+      "    <Domain>fooDomain</Domain>" +
+      "    <Password>fooPassword</Password>\n" +
+      "  </Credentials>\n" +
+      "</AuthnRequest>";
+
+    String expectedResult =
+      "<CmResponse>\n" +
+      "  <AuthnResponse>\n" +
+      "    <Success ConnectorName=\"connector1\">\n" +
+      "      <Identity>fooUser</Identity>\n" +
+      "    </Success>\n" +
+      "    <Success ConnectorName=\"connector2\">\n" +
+      "      <Identity>fooUser</Identity>\n" +
+      "    </Success>\n" +
+      "  </AuthnResponse>\n" +
+      "</CmResponse>\n";
+    doTest(xmlBody, expectedResult, "fooDomain", "fooUser", "fooPassword");
+  }
+
+  private void doTest(String xmlBody, String expectedResult, String domain, 
+      String username, String password) {
     LOGGER.info("xmlBody: " + xmlBody);
-    Manager manager = MockManager.getInstance();
+    MockManager manager = MockManager.getInstance();
+    manager.setShouldVerifyIdentity(true);
+    manager.setExpectedIdentity(domain, username, password);
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
     Authenticate.handleDoPost(xmlBody, manager, out);
