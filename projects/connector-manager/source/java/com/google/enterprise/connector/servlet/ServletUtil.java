@@ -116,6 +116,7 @@ public class ServletUtil {
   public static final String XMLTAG_AUTHN_CREDENTIAL = "Credentials";
   public static final String XMLTAG_AUTHN_USERNAME = "Username";
   public static final String XMLTAG_AUTHN_PASSWORD = "Password";
+  public static final String XMLTAG_AUTHN_DOMAIN = "Domain";
   public static final String XMLTAG_AUTHN_RESPONSE = "AuthnResponse";
   public static final String XMLTAG_SUCCESS = "Success";
   public static final String XMLTAG_FAILURE = "Failure";
