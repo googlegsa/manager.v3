@@ -47,7 +47,11 @@ public class DomainCredentials implements SecAuthnIdentity {
     group.getElements().add(this);
   }
 
-  public AuthnDomain getDomain() {
+  public String getDomain() {
+    return domain.getName();
+  }
+
+  public AuthnDomain getAuthnDomain() {
     return domain;
   }
 
