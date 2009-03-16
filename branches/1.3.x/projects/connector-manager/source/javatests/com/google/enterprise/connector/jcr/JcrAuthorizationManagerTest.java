@@ -1,4 +1,4 @@
-// Copyright 2006-2008 Google Inc.
+// Copyright 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.jcr;
 
-import com.google.enterprise.connector.manager.UserPassIdentity;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
@@ -22,6 +21,7 @@ import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.SimpleAuthenticationIdentity;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -169,7 +169,8 @@ public class JcrAuthorizationManagerTest extends TestCase {
       throws com.google.enterprise.connector.spi.RepositoryException {
     List docids = new LinkedList(expectedResults.keySet());
 
-    AuthenticationIdentity identity = new UserPassIdentity(username, null);
+    AuthenticationIdentity identity = 
+      new SimpleAuthenticationIdentity(username);
     Collection results = authorizationManager.authorizeDocids(docids, identity);
 
     for (Iterator i = results.iterator(); i.hasNext();) {
