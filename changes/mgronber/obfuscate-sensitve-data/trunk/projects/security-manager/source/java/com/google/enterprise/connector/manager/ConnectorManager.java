@@ -58,7 +58,8 @@ public class ConnectorManager extends ProductionManager {
   }
 
   @Override
-  public boolean authenticate(String connectorName, String username, String password) {
+  public boolean authenticate(String connectorName, 
+      AuthenticationIdentity identity) {
     throw new UnsupportedOperationException();
   }
 

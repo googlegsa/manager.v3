@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ public class JcrConnector implements Connector, ConnectorShutdownAware {
     }
   }
 
-  public void shutdown() throws RepositoryException {
+  public void shutdown() {
     synchronized (sessions) {
       for (Iterator iter = sessions.values().iterator(); iter.hasNext();) {
         JcrSession jcrSession = (JcrSession) iter.next();
@@ -95,7 +95,7 @@ public class JcrConnector implements Connector, ConnectorShutdownAware {
     }
   }
 
-  public void delete() throws RepositoryException {
+  public void delete() {
     return;
   }
 }
