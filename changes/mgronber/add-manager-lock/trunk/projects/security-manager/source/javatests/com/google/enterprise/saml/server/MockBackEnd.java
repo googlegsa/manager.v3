@@ -101,7 +101,7 @@ public class MockBackEnd implements BackEnd {
   public void authenticate(CredentialsGroup cg) {
     if ((cg.getUsername() == "joe") && (cg.getPassword() == "plumber")) {
       for (DomainCredentials dc: cg.getElements()) {
-        switch (dc.getDomain().getMechanism()) {
+        switch (dc.getAuthnDomain().getMechanism()) {
           case BASIC_AUTH:
           case FORMS_AUTH:
           case CONNECTORS:
