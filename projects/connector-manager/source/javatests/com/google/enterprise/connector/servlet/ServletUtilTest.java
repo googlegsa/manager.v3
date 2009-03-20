@@ -60,10 +60,10 @@ public class ServletUtilTest extends TestCase {
     // Filter out sensitive data.
     String obfuscatedForm = ServletUtil.filterSensitiveData(configForm);
     assertNotNull("Form returned", obfuscatedForm);
-    assertFalse("Form does not contain protected values",
-        obfuscatedForm.contains(protectedValue));
+    assertTrue("Form does not contain protected values",
+        obfuscatedForm.indexOf(protectedValue) == -1);
     assertTrue("Form still contains clear values",
-        obfuscatedForm.contains(clearValue));
+        obfuscatedForm.indexOf(clearValue) != -1);
 
     // Test exception cases.
     configForm = configForm.substring(1);
