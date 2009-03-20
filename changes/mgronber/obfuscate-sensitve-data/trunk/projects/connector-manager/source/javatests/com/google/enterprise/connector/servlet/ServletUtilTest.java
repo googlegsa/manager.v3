@@ -68,7 +68,7 @@ public class ServletUtilTest extends TestCase {
     // Test exception cases.
     configForm = configForm.substring(1);
     obfuscatedForm = ServletUtil.filterSensitiveData(configForm);
-    assertNull("Error - null form returned", obfuscatedForm);
+    assertNull("Null form returned when form invalid", obfuscatedForm);
   }
 
   public void testObfuscateEvilForm() {
