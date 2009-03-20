@@ -16,6 +16,7 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.common.JarUtils;
+import com.google.enterprise.connector.common.SecurityUtils;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -27,10 +28,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -44,6 +47,12 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 /**
  * Servlet constant and utility class.
@@ -673,7 +682,7 @@ public class ServletUtil {
     out.close();
     return true;
   }
-  
+
   /**
    * Verify the request originated from either the GSA or
    * localhost.  Since the logs and the feed file may contain
@@ -701,5 +710,115 @@ public class ServletUtil {
       // Unknown host - fall through to fail.
     }
     return false;
+  }
+
+  private static final String TEMP_ROOT_BEGIN_ELEMENT = "<filtered_root>";
+  private static final String TEMP_ROOT_END_ELEMENT = "</filtered_root>";
+
+  /**
+   * Utility function to scan the form snippet for any sensitive values and
+   * replace them with obfuscated values.
+   *
+   * @param formSnippet the form snippet to scan.  Expected to be a collection
+   *        of table rows (&lt;TR&gt;) containing input elements used within an
+   *        HTML FORM.  Should not contain the actual HTML FORM element.
+   * @return given formSnippet will all the sensitive values obfuscated.
+   *         Returns null on error.  Therefore caller should check result before
+   *         using.
+   */
+  public static String filterSensitiveData(String formSnippet) {
+    boolean valueObfuscated = false;
+    // Wrap the given form in a temporary root.
+    String rootSnippet =
+        TEMP_ROOT_BEGIN_ELEMENT + formSnippet + TEMP_ROOT_END_ELEMENT;
+
+    // Convert to DOM tree and obfuscated values if needed.
+    Document document =
+        ServletUtil.parse(rootSnippet, new SAXParseErrorHandler());
+    if (document == null) {
+      LOGGER.log(Level.WARNING, "XML parsing exception!");
+      return null;
+    }
+    NodeList nodeList = document.getElementsByTagName("input");
+    int length = nodeList.getLength();
+    for (int n = 0; n < length; ++n) {
+      // Find any names that are sensitive and obfuscate their values.
+      Element element = (Element) nodeList.item(n);
+      if (SecurityUtils.isKeySensitive(element.getAttribute("name")) &&
+          element.hasAttribute("value") &&
+          element.getAttribute("type").equalsIgnoreCase("password")) {
+        element.setAttribute("value",
+            obfuscateValue(element.getAttribute("value")));
+        valueObfuscated = true;
+      }
+    }
+
+    if (!valueObfuscated) {
+      // Form snippet was not touched - just return it.
+      return formSnippet;
+    } else {
+      // Part of form snippet was obfuscated.  Transform the DOM tree back into
+      // a string.
+      String filteredSnippet;
+      try {
+        TransformerFactory transformerFactory =
+            TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        DOMSource source = new DOMSource(document);
+        StreamResult result =  new StreamResult(new StringWriter());
+        transformer.transform(source, result);
+        filteredSnippet = result.getWriter().toString();
+      } catch (TransformerException unexpected) {
+        LOGGER.log(Level.WARNING, "XML transformation error!", unexpected);
+        return null;
+      }
+
+      // Remove the temporary root element.
+      filteredSnippet = filteredSnippet.replace(TEMP_ROOT_BEGIN_ELEMENT, "");
+      filteredSnippet = filteredSnippet.replace(TEMP_ROOT_END_ELEMENT, "");
+
+      return filteredSnippet;
+    }
+  }
+
+  /**
+   * Utility function to replace any sensitive values in the given config data
+   * that are obfuscated with open values from the previous configuration.
+   *
+   * @param configData the updated config properties that may still include some
+   *        obfuscated values.
+   * @param previousConfigData the current or previous set of properties that
+   *        have all the values in the clear.
+   */
+  public static void replaceSensitiveData(Map configData,
+      Map previousConfigData) {
+    for (Iterator iter = configData.keySet().iterator(); iter.hasNext(); ) {
+      String key = (String) iter.next();
+      // Revert if the key is sensitive and the string is still obfuscated and
+      // hasn't changed in length.
+      if (SecurityUtils.isKeySensitive(key) &&
+          isObfuscated((String) configData.get(key)) &&
+          ((String) configData.get(key)).length() ==
+              ((String) previousConfigData.get(key)).length()) {
+        configData.put(key, previousConfigData.get(key));
+      }
+    }
+  }
+
+  protected static String obfuscateValue(String value) {
+    return value.replaceAll(".", "*");
+  }
+
+  // Entire string of one or more '*' characters.
+  private static final Pattern OBFUSCATED_PATTERN = Pattern.compile("^\\*+$");
+
+  /**
+   * @param value the value to be checked.
+   * @return true if the given value is obfuscated.
+   */
+  protected static boolean isObfuscated(String value) {
+    Matcher matcher = OBFUSCATED_PATTERN.matcher(value);
+    return matcher.matches();
   }
 }
