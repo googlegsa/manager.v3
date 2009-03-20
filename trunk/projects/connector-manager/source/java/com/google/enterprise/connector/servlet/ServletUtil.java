@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.common.JarUtils;
@@ -775,8 +774,9 @@ public class ServletUtil {
       }
 
       // Remove the temporary root element.
-      filteredSnippet = filteredSnippet.replace(TEMP_ROOT_BEGIN_ELEMENT, "");
-      filteredSnippet = filteredSnippet.replace(TEMP_ROOT_END_ELEMENT, "");
+      filteredSnippet = filteredSnippet.substring(
+          TEMP_ROOT_BEGIN_ELEMENT.length(),
+          filteredSnippet.length() - TEMP_ROOT_END_ELEMENT.length());
 
       return filteredSnippet;
     }
