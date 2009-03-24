@@ -318,7 +318,7 @@ public class TraversalScheduler implements Scheduler {
               // If we have reached the end of the ECM content, and we are
               // not polling for new content, then disable this schedule.
               hostLoadManager.connectorFinishedTraversal(connectorName,
-                  Schedule.POLLING_DISABLED);
+                  schedule.getRetryDelayMillis());
               if (schedule.getRetryDelayMillis() == Schedule.POLLING_DISABLED) {
                 schedule.setDisabled(true);
                 instantiator.setConnectorSchedule(connectorName,

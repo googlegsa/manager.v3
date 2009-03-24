@@ -37,7 +37,6 @@ public class Schedule {
    */
   public static final int POLLING_DISABLED = -1;
 
-
   /**
    * Construct a Schedule for a given Connector.
    *

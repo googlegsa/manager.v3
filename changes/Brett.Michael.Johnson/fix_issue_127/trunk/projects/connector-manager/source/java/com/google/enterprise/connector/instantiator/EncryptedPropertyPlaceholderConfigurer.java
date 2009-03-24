@@ -14,6 +14,7 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.common.PropertiesUtils;
+import com.google.enterprise.connector.common.SecurityUtils;
 
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 
@@ -77,9 +78,8 @@ public class EncryptedPropertyPlaceholderConfigurer extends
   private static String keyStoreCryptoAlgo = "AES";
 
   /*
-   * Overridden from the base class implementation. This looks for a
-   * properties with "password" in their name (case insensitive match)
-   * and decrypts them.
+   * Overridden from the base class implementation. This looks for properties
+   * with a sensitive name and decrypts them.
    */
   public void convertProperties(Properties properties) {
     decryptSensitiveProperties(properties);
@@ -92,7 +92,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
     Enumeration props = properties.propertyNames();
     while (props.hasMoreElements()) {
       String prop = (String) props.nextElement();
-      if (prop.toLowerCase().indexOf("password") != -1) {
+      if (SecurityUtils.isKeySensitive(prop)) {
         properties.setProperty(prop,
             encryptString(properties.getProperty(prop)));
       }
@@ -108,7 +108,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       // encrypted a property called "Password".  Newer property files
       // encrypt any property with case-insensitive 'password' in the key.
       boolean doCrypt = (version < 1) ? prop.equals("Password") :
-          (prop.toLowerCase().indexOf("password") != -1);
+          (SecurityUtils.isKeySensitive(prop));
       if (doCrypt) {
         properties.setProperty(prop,
             decryptString(properties.getProperty(prop)));

@@ -31,7 +31,7 @@ public interface Traverser {
    * itself after a short period of time.  (Perhaps a loss of network
    * connectivity, or unresponsive server.)  The connector manager
    * may choose to wait increasingly longer periods of time if the
-   * condition perisists.
+   * condition persists.
    */
   public static final int ERROR_WAIT = -2;
 
@@ -61,7 +61,7 @@ public interface Traverser {
    *         method process no more than that number of documents in this batch.
    *
    * @return The actual number of documents given to the feed (may not be the
-   *         same as the batch hint), with 0 and -1 having special meaning:
+   *         same as the batch hint), with 0, -1, and -2 having special meaning:
    *         A return value of -2 indicates that the connector encountered a
    *         transient error condition - wait a while and try again.
    *         A return value of -1 indicates that no new documents are available
