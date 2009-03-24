@@ -20,10 +20,27 @@ package com.google.enterprise.connector.traversal;
 public interface Traverser {
 
   /**
-   * Signal to the TraversalManager that it should wait before calling
-   * {@link #runBatch(int)} again for the Connector.
+   * Interval to wait after a transient error before retrying a traversal.
    */
-  public static final int FORCE_WAIT = -1;
+  public static final int ERROR_WAIT_MILLIS = 15 * 60 * 1000;
+
+  /**
+   * Signal to the TraversalManager that it should wait before calling
+   * {@link #runBatch(int)} again for the Connector, because that
+   * Connector has encountered an error condition that might correct
+   * itself after a short period of time.  (Perhaps a loss of network
+   * connectivity, or unresponsive server.)  The connector manager
+   * may choose to wait increasingly longer periods of time if the
+   * condition persists.
+   */
+  public static final int ERROR_WAIT = -2;
+
+  /**
+   * Signal to the TraversalManager that it should wait before calling
+   * {@link #runBatch(int)} again for the Connector, because that
+   * Connector Repository has no new content available at this time.
+   */
+  public static final int POLLING_WAIT = -1;
 
   /**
    * Signal to the TraversalManager that it need not wait before calling
@@ -44,7 +61,9 @@ public interface Traverser {
    *         method process no more than that number of documents in this batch.
    *
    * @return The actual number of documents given to the feed (may not be the
-   *         same as the batch hint), with 0 and -1 having special meaning:
+   *         same as the batch hint), with 0, -1, and -2 having special meaning:
+   *         A return value of -2 indicates that the connector encountered a
+   *         transient error condition - wait a while and try again.
    *         A return value of -1 indicates that no new documents are available
    *         to index at this time - wait a while and try again.
    *         A return value of 0 indicates that while no documents were indexed
