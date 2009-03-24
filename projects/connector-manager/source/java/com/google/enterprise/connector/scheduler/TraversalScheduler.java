@@ -291,7 +291,7 @@ public class TraversalScheduler implements Scheduler {
 
     public void doWork() {
       int batchHint = hostLoadManager.determineBatchHint(connectorName);
-      int batchDone = Traverser.FORCE_WAIT;
+      int batchDone = Traverser.ERROR_WAIT;
       try {
         traverser = getTraverser();
         if (null != traverser) {
@@ -299,7 +299,7 @@ public class TraversalScheduler implements Scheduler {
           if (batchHint > 0) {
             LOGGER.finest("Begin runBatch; batchHint = " + batchHint);
             batchDone = traverser.runBatch(batchHint);
-            numDocs = (batchDone == Traverser.FORCE_WAIT) ? 0 : batchDone;
+            numDocs = (batchDone < 0) ? 0 : batchDone;
             if (isFinished()) {
               LOGGER.finest("End runBatch; Batch was canceled.");
               return;      // If we got canceled, bail out.
@@ -310,8 +310,32 @@ public class TraversalScheduler implements Scheduler {
             hostLoadManager.updateNumDocsTraversed(connectorName, numDocs);
           }
         }
-        if (batchDone == Traverser.FORCE_WAIT && batchHint > 0) {
-          hostLoadManager.connectorFinishedTraversal(connectorName);
+        if (batchDone < 0 && batchHint > 0) {
+          try {
+            Schedule schedule =
+                new Schedule(instantiator.getConnectorSchedule(connectorName));
+            if (batchDone == Traverser.POLLING_WAIT) {
+              // If we have reached the end of the ECM content, and we are
+              // not polling for new content, then disable this schedule.
+              hostLoadManager.connectorFinishedTraversal(connectorName,
+                  schedule.getRetryDelayMillis());
+              if (schedule.getRetryDelayMillis() == Schedule.POLLING_DISABLED) {
+                schedule.setDisabled(true);
+                instantiator.setConnectorSchedule(connectorName,
+                    schedule.toString());
+              }
+              LOGGER.info("Traversal complete. Automatically pausing traversal"
+                  + " for connector " + connectorName);
+            } else if (batchDone == Traverser.ERROR_WAIT) {
+              hostLoadManager.connectorFinishedTraversal(connectorName,
+                  Traverser.ERROR_WAIT_MILLIS);
+            } else {
+              hostLoadManager.connectorFinishedTraversal(connectorName,
+                  schedule.getRetryDelayMillis());
+            }
+          } catch (ConnectorNotFoundException cnfe) {
+            // Connector was apparently deleted.  Not a problem.
+          }
         }
       } finally {
         synchronized(this) {
