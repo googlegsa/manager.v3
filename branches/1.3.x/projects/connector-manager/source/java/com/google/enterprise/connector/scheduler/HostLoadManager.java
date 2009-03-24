@@ -17,6 +17,7 @@ package com.google.enterprise.connector.scheduler;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -69,8 +70,8 @@ public class HostLoadManager {
     this.periodInMillis = periodInMillis;
 
     startTimeInMillis = System.currentTimeMillis();
-    connectorNameToNumDocsTraversed = new HashMap();
-    connectorNameToFinishTime = new HashMap();
+    connectorNameToNumDocsTraversed = Collections.synchronizedMap(new HashMap());
+    connectorNameToFinishTime = Collections.synchronizedMap(new HashMap());
   }
 
   private int getMaxLoad(String connectorName) {
