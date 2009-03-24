@@ -103,12 +103,9 @@ public class HostLoadManager {
    */
   private int getNumDocsTraversedThisPeriod(String connectorName) {
     updateNumDocsTraversedData();
-    if (connectorNameToNumDocsTraversed.containsKey(connectorName)) {
-      Integer numDocs =
+    Integer numDocs =
         (Integer) connectorNameToNumDocsTraversed.get(connectorName);
-      return numDocs.intValue();
-    }
-    return 0;
+    return (numDocs == null) ? 0 : numDocs.intValue();
   }
 
   /**
@@ -119,16 +116,11 @@ public class HostLoadManager {
    */
   public void updateNumDocsTraversed(String connectorName,
       int numDocsTraversed) {
-    updateNumDocsTraversedData();
-    Integer numDocs =
-      (Integer) connectorNameToNumDocsTraversed.get(connectorName);
-    Integer updatedNumDocs;
-    if (null == numDocs) {
-      updatedNumDocs = new Integer(numDocsTraversed);
-    } else {
-      updatedNumDocs = new Integer(numDocs.intValue() + numDocsTraversed);
+    synchronized (connectorNameToNumDocsTraversed) {
+      int numDocs = getNumDocsTraversedThisPeriod(connectorName);
+      connectorNameToNumDocsTraversed.put(connectorName, 
+          new Integer(numDocs + numDocsTraversed));
     }
-    connectorNameToNumDocsTraversed.put(connectorName, updatedNumDocs);
   }
 
   /**
@@ -160,7 +152,7 @@ public class HostLoadManager {
    */
   public int determineBatchHint(String connectorName) {
     int maxDocsPerPeriod =
-      (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
+        (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
     int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
     int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
     if (LOGGER.isLoggable(Level.FINEST)) {
@@ -172,17 +164,13 @@ public class HostLoadManager {
     if (remainingDocsToTraverse > BATCH_SIZE) {
       remainingDocsToTraverse = BATCH_SIZE;
     }
-    if (remainingDocsToTraverse > 0) {
-      return remainingDocsToTraverse;
-    } else {
-      return 0;
-    }
+    return (remainingDocsToTraverse > 0) ? remainingDocsToTraverse : 0;
   }
 
   public boolean shouldDelay(String connectorName) {
-    if (connectorNameToFinishTime.containsKey(connectorName)) {
+    Object value = connectorNameToFinishTime.get(connectorName);
+    if (value != null) {
       try {
-        Object value = connectorNameToFinishTime.get(connectorName);
         long finishTime = ((Long)value).longValue();
         String schedStr = instantiator.getConnectorSchedule(connectorName);
         Schedule schedule = new Schedule(schedStr);
