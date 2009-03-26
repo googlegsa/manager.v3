@@ -11,6 +11,32 @@ list of known issues and workarounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
+Release 1.3.1, Mar 16, 2009
+===========================
+
+Introduction
+------------
+This is an upgrade release that addresses some problems discovered since
+the 1.3.0 release.  Users of previous releases are encouraged to upgrade.
+
+Summary of Changes
+------------------
+  * Fix Issue 110: Multiple threading issues, including a race condition,
+                   a deadlock condition, and failures when handling hanging
+                   traversers.  This should fix a large number of traversals
+                   that stop and never resume.  Some timeouts were lengthened
+                   as well, so some long-running tasks should no longer be
+                   considered "hung" and are likely to complete successfully.
+
+  * Fix Issue 123: Properties, including passwords, were inadvertently logged.
+
+  * Fix Issue 130: Wrong error messaged displayed if error status is returned
+                   from SetConnectorConfig servlet.
+
+  * Fix Issue 131: "Domain" gets removed when CM creates AuthenticationIdentity
+                   for the Connector.
+
+
 Release 1.3.0, Jan 13, 2009
 ===========================
 
