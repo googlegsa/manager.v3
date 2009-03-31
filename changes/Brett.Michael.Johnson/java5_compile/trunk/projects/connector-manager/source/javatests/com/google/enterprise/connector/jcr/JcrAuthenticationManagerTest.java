@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
 
 package com.google.enterprise.connector.jcr;
 
-import com.google.enterprise.connector.manager.UserPassIdentity;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
+import com.google.enterprise.connector.spi.SimpleAuthenticationIdentity;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -42,18 +42,27 @@ public class JcrAuthenticationManagerTest extends TestCase {
     AuthenticationManager authenticationManager =
         new JcrAuthenticationManager(session);
 
-    Assert.assertFalse(authenticationManager.authenticate(new UserPassIdentity("jimbo","jimbo")).isValid());
-    Assert.assertFalse(authenticationManager.authenticate(new UserPassIdentity("admin","admin1")).isValid());
-    Assert.assertFalse(authenticationManager.authenticate(new UserPassIdentity("joe","password")).isValid());
-    Assert.assertFalse(authenticationManager.authenticate(new UserPassIdentity("jimbo",null)).isValid());
+    Assert.assertFalse(authenticationManager.authenticate(
+        new SimpleAuthenticationIdentity("jimbo","jimbo")).isValid());
+    Assert.assertFalse(authenticationManager.authenticate(
+        new SimpleAuthenticationIdentity("admin","admin1")).isValid());
+    Assert.assertFalse(authenticationManager.authenticate(
+        new SimpleAuthenticationIdentity("joe","password")).isValid());
+    Assert.assertFalse(authenticationManager.authenticate(
+        new SimpleAuthenticationIdentity("jimbo")).isValid());
 
     // in this repository, the superuser account is open with any password
-    Assert.assertTrue(authenticationManager.authenticate(new UserPassIdentity(null,"jimbo")).isValid());
-    Assert.assertTrue(authenticationManager.authenticate(new UserPassIdentity(null,null)).isValid());
+    Assert.assertTrue(authenticationManager.authenticate(
+        new SimpleAuthenticationIdentity(null,"jimbo")).isValid());
+    Assert.assertTrue(authenticationManager.authenticate(
+        new SimpleAuthenticationIdentity(null)).isValid());
 
-    Assert.assertTrue(authenticationManager.authenticate(new UserPassIdentity("admin","admin")).isValid());
-    Assert.assertTrue(authenticationManager.authenticate(new UserPassIdentity("joe","joe")).isValid());
-    Assert.assertTrue(authenticationManager.authenticate(new UserPassIdentity("mary","mary")).isValid());
+    Assert.assertTrue(authenticationManager.authenticate(
+        new SimpleAuthenticationIdentity("admin","admin")).isValid());
+    Assert.assertTrue(authenticationManager.authenticate(
+        new SimpleAuthenticationIdentity("joe","joe")).isValid());
+    Assert.assertTrue(authenticationManager.authenticate(
+        new SimpleAuthenticationIdentity("mary","mary")).isValid());
   }
 
 }

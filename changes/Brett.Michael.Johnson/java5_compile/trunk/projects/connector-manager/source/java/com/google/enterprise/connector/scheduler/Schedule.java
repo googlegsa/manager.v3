@@ -30,6 +30,12 @@ public class Schedule {
   private List<ScheduleTimeInterval> timeIntervals;
 
   /**
+   * Signal to the Traverser that it should traverse the ECM repository
+   * until there is not new content, then stop.
+   */
+  public static final int POLLING_DISABLED = -1;
+
+  /**
    * Construct a Schedule for a given Connector.
    *
    * @param connectorName
@@ -87,7 +93,7 @@ public class Schedule {
   public static String toLegacyString(String schedule) {
     String[] fields = schedule.split(":");
     try {
-      if (fields[2].indexOf('-') < 0) {
+      if (fields[2].indexOf('-') <= 0) {
         // It's a delay, get rid of it
         StringBuilder result = new StringBuilder();
         if (fields[0].charAt(0) == '#') {
@@ -158,11 +164,11 @@ public class Schedule {
       }
       load = Integer.parseInt(strs[1]);
       String intervals;
-      if (strs[2].indexOf('-') < 0) {
+      if (strs[2].indexOf('-') <= 0) {
         retryDelayMillis = Integer.parseInt(strs[2]);
         intervals = strs[3];
       } else {
-        // This is a legacy string without the retryDelay. Resplit.
+        // This is a legacy string without the retryDelay.  Resplit.
         retryDelayMillis = defaultRetryDelayMillis();
         strs = schedule.trim().split(":", 3);
         intervals = strs[2];
@@ -186,7 +192,7 @@ public class Schedule {
       String intervals) {
     String[] strs = intervals.trim().split(":");
     List<ScheduleTimeInterval> timeIntervals =
-        new ArrayList<ScheduleTimeInterval> (strs.length);
+      new ArrayList<ScheduleTimeInterval> (strs.length);
     for (int i = 0; i < strs.length; i++) {
       String[] strs2 = strs[i].split("-");
       String startTime = strs2[0];
@@ -222,16 +228,36 @@ public class Schedule {
     return load;
   }
 
+  public void setLoad(int load) {
+    this.load = load;
+  }
+
   public int getRetryDelayMillis() {
     return retryDelayMillis;
+  }
+
+  public void setRetryDelayMillis(int retryDelayMillis) {
+    this.retryDelayMillis = retryDelayMillis;
   }
 
   public List<ScheduleTimeInterval> getTimeIntervals() {
     return timeIntervals;
   }
 
+  public void setTimeIntervals(List<ScheduleTimeInterval> timeIntervals) {
+    this.timeIntervals = timeIntervals;
+  }
+
+  public void setTimeIntervals(String timeIntervals) {
+    this.timeIntervals = parseTimeIntervals(timeIntervals);
+  }
+
   public boolean isDisabled() {
     return disabled;
+  }
+
+  public void setDisabled(boolean disabled) {
+    this.disabled = disabled;
   }
 
   /**

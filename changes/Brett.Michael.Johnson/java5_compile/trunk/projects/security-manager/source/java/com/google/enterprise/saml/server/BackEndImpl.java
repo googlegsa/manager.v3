@@ -118,7 +118,7 @@ public class BackEndImpl implements BackEnd {
   public void authenticate(CredentialsGroup cg) {
     for (DomainCredentials dCred : cg.getElements()) {
       String expectedTypeName;
-      switch (dCred.getDomain().getMechanism()) {
+      switch (dCred.getAuthnDomain().getMechanism()) {
         case BASIC_AUTH:
           expectedTypeName = "BasicAuthConnector";
           break;
@@ -189,7 +189,7 @@ public class BackEndImpl implements BackEnd {
         // The expectation is that only one basic auth module will be active
         // at any given time, or that if multiple basic auth modules are
         // active at once, only one of them will work.
-        if (AuthNMechanism.BASIC_AUTH == dCred.getDomain().getMechanism()) {
+        if (AuthNMechanism.BASIC_AUTH == dCred.getAuthnDomain().getMechanism()) {
           if (null != cg.getUsername()) {
             adapter.setUsername(sessionId, cg.getUsername());
           }

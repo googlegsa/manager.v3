@@ -19,6 +19,7 @@ import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
+import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 
@@ -147,15 +148,14 @@ public interface Manager {
       PersistentStoreException, InstantiatorException;
 
   /**
-   * Authenticates a user against a named connector.
-   *
+   * Authenticates an Identity against a named connector.
+   * 
    * @param connectorName
-   * @param username
-   * @param password
+   * @param identity An AuthenticationIdentity object that encapsulates the
+   *        user's identity
    * @return true for success.
    */
-  public boolean authenticate(String connectorName, String username,
-      String password);
+  public boolean authenticate(String connectorName, AuthenticationIdentity identity);
 
   /**
    * Gets authorization from a named connector for a set of documents by ID.

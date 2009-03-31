@@ -1,10 +1,10 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,20 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.manager;
-
-import junit.framework.TestCase;
+package com.google.enterprise.connector.common;
 
 /**
- * Tests for the {@link UserPassIdentity} class.
+ * Security related utility methods.
  */
-public class UserPassIdentityTest extends TestCase {
+public class SecurityUtils {
 
-  public void testGetUserPass() {
-    String username = "foo";
-    String password = "bar";
-    UserPassIdentity i = new UserPassIdentity(username, password);
-    assertEquals(username, i.getUsername());
-    assertEquals(password, i.getPassword());
+  /**
+   * @param key key name to test.
+   * @return true if the given key name describes a sensitive field.
+   */
+  public static boolean isKeySensitive(String key) {
+    return key.toLowerCase().indexOf("password") != -1;
   }
 }

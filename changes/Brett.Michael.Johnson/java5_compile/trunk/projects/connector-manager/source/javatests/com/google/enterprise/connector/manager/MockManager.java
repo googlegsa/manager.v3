@@ -17,6 +17,7 @@ package com.google.enterprise.connector.manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
+import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 
@@ -40,63 +41,79 @@ public class MockManager implements Manager {
   private static final MockManager INSTANCE = new MockManager();
   private static final Logger LOGGER =
       Logger.getLogger(MockManager.class.getName());
+  
+  private boolean shouldVerifyIdentity;
+  private String domain;
+  private String username;
+  private String password;
 
   // Protected constructor used by JUnit test subclasses.
   protected MockManager() {
+    shouldVerifyIdentity = false;
   }
 
   public static MockManager getInstance() {
     return INSTANCE;
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.manager.Manager#authenticate(java.lang.String,
-   *      java.lang.String, java.lang.String)
-   */
-  public boolean authenticate(String connectorName, String username,
-      String password) {
+  /* @Override */
+  public boolean authenticate(String connectorName, 
+      AuthenticationIdentity identity) {
+    if (!shouldVerifyIdentity) {
+      return true;
+    }
+    boolean result = true;
+    StringBuffer sb = new StringBuffer();
+    if (!verifyComponent("domain", domain, identity.getDomain(), sb)) {
+      result = false;
+    }
+    if (!verifyComponent("username", username, identity.getUsername(), sb)) {
+      result = false;
+    }
+    if (!verifyComponent("password", password, identity.getPassword(), sb)) {
+      result = false;
+    }
+    if (!result) {
+      throw new IllegalStateException(new String(sb));
+    }
+    return true;
+  }
+  
+  private boolean verifyComponent(String componentName, String expected, 
+      String actual, StringBuffer sb) {
+    if (expected == null) {
+      if (actual != null) {
+        sb.append("Expected null " + componentName + " got " + actual + "\n");
+        return false;
+      }
+      return true;
+    }
+    if (!expected.equals(actual)) {
+      sb.append("Expected " + componentName + "\"" + expected + "\" got \"" + actual +"\"\n");      
+      return false;
+    }
     return true;
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.manager.Manager#authorizeDocids(java.lang.String,
-   *      java.util.List, java.lang.String)
-   */
+  /* @Override */
   public Set<String> authorizeDocids(String connectorName,
       List<String> docidList, String username) {
     return new HashSet<String>(docidList);
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.manager.Manager#getConnectorTypes()
-   */
+  /* @Override */
   public Set<String> getConnectorTypeNames() {
     return new TreeSet<String>(Arrays.asList(
         new String[] {"Documentum", "Filenet", "Sharepoint"}));
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.manager.Manager#getConnectorType()
-   */
+  /* @Override */
   public ConnectorType getConnectorType(String typeName)
       throws ConnectorTypeNotFoundException {
     throw new ConnectorTypeNotFoundException("Unsupported Operation");
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.manager.Manager#getConfigForm(java.lang.String,
-   *      java.lang.String)
-   */
+  /* @Override */
   public ConfigureResponse getConfigForm(String connectorTypeName,
       String language) {
     String message =
@@ -113,12 +130,7 @@ public class MockManager implements Manager {
     return new ConfigureResponse(message, formSnippet);
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.manager.Manager#getConfigFormForConnector(java.lang.String,
-   *      java.lang.String)
-   */
+  /* @Override */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String language) {
     String message = "Sample form for " + connectorName + "lang " + language;
@@ -135,11 +147,7 @@ public class MockManager implements Manager {
     return new ConfigureResponse(message, formSnippet);
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.manager.Manager#getConnectorStatus(java.lang.String)
-   */
+  /* @Override */
   public ConnectorStatus getConnectorStatus(String connectorName) {
     String name = connectorName;
     String type = "Documentum";
@@ -148,11 +156,7 @@ public class MockManager implements Manager {
     return new ConnectorStatus(name, type, status, schedule);
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.manager.Manager#getConnectorStatuses()
-   */
+  /* @Override */
   public List<ConnectorStatus> getConnectorStatuses() {
     List<ConnectorStatus> statuses = new ArrayList<ConnectorStatus>();
     statuses.add(getConnectorStatus("connector1"));
@@ -160,23 +164,12 @@ public class MockManager implements Manager {
     return statuses;
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.manager.Manager#setConfig(java.lang.String,
-   *      java.util.Map, java.lang.String)
-   */
   public ConfigureResponse setConfig(String connectorName,
       Map<String, String> configData, String language) {
     return null;
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.manager.Manager#setConfig(java.lang.String,
-   *      java.util.Map, java.lang.String)
-   */
+  /* @Override */
   public ConfigureResponse setConnectorConfig(String connectorName,
       String connectorTypeName, Map<String, String> configData,
       String language, boolean update) {
@@ -190,33 +183,18 @@ public class MockManager implements Manager {
     return null;
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.manager.Manager#storeConfig(boolean,
-   *      java.lang.String, int, int)
-   */
+  /* @Override */
   public void setConnectorManagerConfig(String feederGateHost,
       int feederGatePort) {
     // do nothing
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.manager.Manager#setSchedule(
-   *      java.lang.String, java.lang.String)
-   */
+  /* @Override */
   public void setSchedule(String connectorName, String schedule) {
     // do nothing
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.manager.Manager#removeConnector(
-   *      java.lang.String)
-   */
+  /* @Override */
   public void removeConnector(String connectorName)
       throws ConnectorNotFoundException, PersistentStoreException {
     if (connectorName == "connector2") {
@@ -225,23 +203,24 @@ public class MockManager implements Manager {
     LOGGER.info("Removing connector: " + connectorName);
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.manager.Manager#restartConnectorTraversal(
-   *      java.lang.String)
-   */
+  /* @Override */
   public void restartConnectorTraversal(String connectorName) {
     // do nothing;
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.manager.Manager#getConnectorConfig(
-   *      java.lang.String)
-   */
+  /* @Override */
   public Map<String, String> getConnectorConfig(String connectorName) {
     return new HashMap<String, String>();
+  }
+  
+  public void setShouldVerifyIdentity(boolean b) {
+    shouldVerifyIdentity = b;
+  }
+  
+  public void setExpectedIdentity(String domain, String username, 
+      String password) {
+    this.domain = domain;
+    this.username = username;
+    this.password = password;
   }
 }

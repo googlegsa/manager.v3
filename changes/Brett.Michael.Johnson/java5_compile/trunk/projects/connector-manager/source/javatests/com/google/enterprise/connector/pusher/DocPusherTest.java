@@ -1635,7 +1635,8 @@ public class DocPusherTest extends TestCase {
         if (RuntimeException.class.isAssignableFrom(throwable)) {
           // RuntimeExceptions don't have to be declared.
           try {
-            throw (RuntimeException) constructor.newInstance((Object[])parameters);
+            throw (RuntimeException) constructor.newInstance(
+                (Object[])parameters);
           } catch (IllegalAccessException e) {
             throw new IllegalArgumentException(e.getMessage());
           } catch (InstantiationException e) {
@@ -1645,7 +1646,8 @@ public class DocPusherTest extends TestCase {
           }
         } else if (RepositoryException.class.isAssignableFrom(throwable)) {
           try {
-            throw (RepositoryException) constructor.newInstance((Object[])parameters);
+            throw (RepositoryException) constructor.newInstance(
+                (Object[])parameters);
           } catch (IllegalAccessException e) {
             throw new IllegalArgumentException(e.getMessage());
           } catch (InstantiationException e) {
