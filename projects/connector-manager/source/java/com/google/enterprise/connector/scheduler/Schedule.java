@@ -48,7 +48,7 @@ public class Schedule {
    */
   public Schedule(String connectorName, boolean disabled, int load,
       int retryDelayMillis, String timeIntervals) {
-    this(connectorName, false, load, retryDelayMillis,
+    this(connectorName, disabled, load, retryDelayMillis,
          parseTimeIntervals(timeIntervals));
   }
 
