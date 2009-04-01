@@ -86,6 +86,15 @@ public class SetConnectorConfigHandler {
     if (this.configData.isEmpty()) {
       this.status.setMessageId(ConnectorMessageCode.RESPONSE_NULL_CONFIG_DATA);
     }
+    if (update) {
+      try {
+        Map previousConfigData = manager.getConnectorConfig(connectorName);
+        ServletUtil.replaceSensitiveData(configData, previousConfigData);
+      } catch (ConnectorNotFoundException unexpected) {
+        // Trying to update a connector that is not currently known to the
+        // manager.  This case is handled below so dropping through for now.
+      }
+    }
 
     this.configRes = null;
     try {

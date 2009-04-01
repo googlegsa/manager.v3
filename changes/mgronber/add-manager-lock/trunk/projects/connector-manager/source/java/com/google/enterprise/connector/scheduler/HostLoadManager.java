@@ -17,6 +17,7 @@ package com.google.enterprise.connector.scheduler;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -69,8 +70,8 @@ public class HostLoadManager {
     this.periodInMillis = periodInMillis;
 
     startTimeInMillis = System.currentTimeMillis();
-    connectorNameToNumDocsTraversed = new HashMap();
-    connectorNameToFinishTime = new HashMap();
+    connectorNameToNumDocsTraversed = Collections.synchronizedMap(new HashMap());
+    connectorNameToFinishTime = Collections.synchronizedMap(new HashMap());
   }
 
   private int getMaxLoad(String connectorName) {
@@ -102,12 +103,9 @@ public class HostLoadManager {
    */
   private int getNumDocsTraversedThisPeriod(String connectorName) {
     updateNumDocsTraversedData();
-    if (connectorNameToNumDocsTraversed.containsKey(connectorName)) {
-      Integer numDocs =
+    Integer numDocs =
         (Integer) connectorNameToNumDocsTraversed.get(connectorName);
-      return numDocs.intValue();
-    }
-    return 0;
+    return (numDocs == null) ? 0 : numDocs.intValue();
   }
 
   /**
@@ -118,26 +116,26 @@ public class HostLoadManager {
    */
   public void updateNumDocsTraversed(String connectorName,
       int numDocsTraversed) {
-    updateNumDocsTraversedData();
-    Integer numDocs =
-      (Integer) connectorNameToNumDocsTraversed.get(connectorName);
-    Integer updatedNumDocs;
-    if (null == numDocs) {
-      updatedNumDocs = new Integer(numDocsTraversed);
-    } else {
-      updatedNumDocs = new Integer(numDocs.intValue() + numDocsTraversed);
+    synchronized (connectorNameToNumDocsTraversed) {
+      int numDocs = getNumDocsTraversedThisPeriod(connectorName);
+      connectorNameToNumDocsTraversed.put(connectorName,
+          new Integer(numDocs + numDocsTraversed));
     }
-    connectorNameToNumDocsTraversed.put(connectorName, updatedNumDocs);
   }
 
   /**
    * Let HostLoadManager know that a connector has just completed a traversal,
    * (whether it was a failure or natural completion is irrelevant).
+   *
    * @param connectorName name of the connector instance
+   * @param retryDelayMillis number of milliseconds to wait until retrying
+   *        traversal
    */
-  public void connectorFinishedTraversal(String connectorName) {
-    Long now = new Long(System.currentTimeMillis());
-    connectorNameToFinishTime.put(connectorName, now);
+  public void connectorFinishedTraversal(String connectorName,
+                                         int retryDelayMillis) {
+    Long finishTime = new Long(((retryDelayMillis < 0) ? Long.MAX_VALUE :
+        (System.currentTimeMillis() + retryDelayMillis)));
+    connectorNameToFinishTime.put(connectorName, finishTime);
   }
 
   /**
@@ -159,7 +157,7 @@ public class HostLoadManager {
    */
   public int determineBatchHint(String connectorName) {
     int maxDocsPerPeriod =
-      (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
+        (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
     int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
     int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
     if (LOGGER.isLoggable(Level.FINEST)) {
@@ -171,35 +169,23 @@ public class HostLoadManager {
     if (remainingDocsToTraverse > BATCH_SIZE) {
       remainingDocsToTraverse = BATCH_SIZE;
     }
-    if (remainingDocsToTraverse > 0) {
-      return remainingDocsToTraverse;
-    } else {
-      return 0;
-    }
+    return (remainingDocsToTraverse > 0) ? remainingDocsToTraverse : 0;
   }
 
   public boolean shouldDelay(String connectorName) {
-    if (connectorNameToFinishTime.containsKey(connectorName)) {
-      try {
-        Object value = connectorNameToFinishTime.get(connectorName);
-        long finishTime = ((Long)value).longValue();
-        String schedStr = instantiator.getConnectorSchedule(connectorName);
-        Schedule schedule = new Schedule(schedStr);
-        int retryDelayMillis = schedule.getRetryDelayMillis();
-        long now = System.currentTimeMillis();
-        if (now < finishTime + retryDelayMillis) {
-          return true;
-        }
-        int maxDocsPerPeriod = (int)
-            ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
-        int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
-        int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
-        if (remainingDocsToTraverse <= 0) {
-          return true;
-        }
-      } catch (ConnectorNotFoundException e) {
-        // Connector seems to have been deleted.
-        removeConnector(connectorName);
+    Object value = connectorNameToFinishTime.get(connectorName);
+    if (value != null) {
+      long finishTime = ((Long)value).longValue();
+      long now = System.currentTimeMillis();
+      if (now < finishTime) {
+        return true;
+      }
+      int maxDocsPerPeriod = (int)
+          ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
+      int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
+      int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
+      if (remainingDocsToTraverse <= 0) {
+        return true;
       }
     }
     return false;

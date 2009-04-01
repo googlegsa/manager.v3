@@ -88,23 +88,26 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
   /**
    * Writes the XML response for setting the connector config.
    */
-  /*
-   * (non-Javadoc)
-   * @see com.google.enterprise.connector.servlet.ConnectorManagerServlet
-   * #processDoPost(java.lang.String,
-   * com.google.enterprise.connector.manager.Manager, java.io.PrintWriter)
-   */
+  /* @Override */
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
     SetConnectorConfigHandler handler =
         new SetConnectorConfigHandler(xmlBody, manager);
     ConfigureResponse configRes = handler.getConfigRes();
-    ConnectorMessageCode status = (configRes == null) ? handler.getStatus() :
-      new ConnectorMessageCode(ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
-
+    ConnectorMessageCode status;
+    if (configRes == null) {
+      status = handler.getStatus();
+      if (!status.isSuccess()) {
+        // Avoid a bug in GSA that displays "No connector configuration
+        // returned by the connector manager.", rather than the error status.
+        configRes = new ConfigureResponse(null, null, null);
+      }
+    } else {
+      status = new ConnectorMessageCode(
+          ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
+    }
     ConnectorManagerGetServlet.writeConfigureResponse(
         out, status, configRes);
     out.close();
   }
-
 }

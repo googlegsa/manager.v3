@@ -62,12 +62,38 @@ public class SetManagerConfigTest extends TestCase {
     super.tearDown();
   }
 
+  public final void testGetConnectorManagerConfig() throws Exception {
+    // Get the properties directly from the file.
+    Properties props = loadProperties(propFileName);
+    String host = props.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
+    int port = Integer.parseInt(props.getProperty(
+        Context.GSA_FEED_PORT_PROPERTY_KEY));
+    // Now get them from the Context.
+    Properties managerProps = context.getConnectorManagerConfig();
+    String ctxHost =
+        managerProps.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
+    int ctxPort = Integer.parseInt(
+        managerProps.getProperty(Context.GSA_FEED_PORT_PROPERTY_KEY));
+    assertEquals("Correct host from context", host, ctxHost);
+    assertEquals("Correct port from context", port, ctxPort);
+
+    // Update the manager config and pull again.
+    context.setConnectorManagerConfig("shme", 14);
+    managerProps = context.getConnectorManagerConfig();
+    ctxHost =
+        managerProps.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
+    ctxPort = Integer.parseInt(
+        managerProps.getProperty(Context.GSA_FEED_PORT_PROPERTY_KEY));
+    assertEquals("Correct host from context", "shme", ctxHost);
+    assertEquals("Correct port from context", 14, ctxPort);
+  }
+
   public final void testSetConnectorManagerConfig() throws InstantiatorException,
       IOException {
     Properties props = loadProperties(propFileName);
-    String host = (String) props.get(Context.GSA_FEED_HOST_PROPERTY_KEY);
-    int port = Integer.parseInt((String) props.
-                                get(Context.GSA_FEED_PORT_PROPERTY_KEY));
+    String host = props.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
+    int port = Integer.parseInt(
+        props.getProperty(Context.GSA_FEED_PORT_PROPERTY_KEY));
 
     assertEquals("fubar", host);
     assertEquals(25, port);

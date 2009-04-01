@@ -38,6 +38,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -204,6 +205,16 @@ public class ProductionManager implements Manager {
         instantiator.setConnectorConfig(connectorName, connectorTypeName,
             configData, locale, update);
     return resp;
+  }
+
+  /* @Override */
+  public Properties getConnectorManagerConfig()
+      throws PersistentStoreException {
+    try {
+      return Context.getInstance().getConnectorManagerConfig();
+    } catch (InstantiatorException e) {
+      throw new PersistentStoreException(e);
+    }
   }
 
   /* @Override */

@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
@@ -187,6 +188,11 @@ public class MockManager implements Manager {
     }
     // null is a success response
     return null;
+  }
+
+  /* @Override */
+  public Properties getConnectorManagerConfig() {
+    return new Properties();
   }
 
   /* @Override */
