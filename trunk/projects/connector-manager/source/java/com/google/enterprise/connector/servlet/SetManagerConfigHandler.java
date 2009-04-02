@@ -14,11 +14,14 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 
 import org.w3c.dom.Element;
 
+import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,12 +53,48 @@ public class SetManagerConfigHandler {
       return;
     }
 
+    // Get settings from request.
     this.feederGateHost = ServletUtil.getFirstAttribute(
         root, ServletUtil.XMLTAG_FEEDERGATE,
-            ServletUtil.XMLTAG_FEEDERGATE_HOST);
+        ServletUtil.XMLTAG_FEEDERGATE_HOST);
     this.feederGatePort = Integer.parseInt(ServletUtil.getFirstAttribute(
         root, ServletUtil.XMLTAG_FEEDERGATE,
-            ServletUtil.XMLTAG_FEEDERGATE_PORT));
+        ServletUtil.XMLTAG_FEEDERGATE_PORT));
+
+    // Compare given settings to current.  If the same, just return success.
+    try {
+      Properties currentSettings = manager.getConnectorManagerConfig();
+      String currentFeedHost =
+          currentSettings.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
+      String currentFeedPort =
+          currentSettings.getProperty(Context.GSA_FEED_PORT_PROPERTY_KEY);
+      if (currentFeedHost != null && currentFeedPort != null &&
+          currentFeedHost.equals(feederGateHost) &&
+          Integer.parseInt(currentFeedPort) == feederGatePort) {
+        this.status = new ConnectorMessageCode(ConnectorMessageCode.SUCCESS);
+        return;
+      }
+    } catch (PersistentStoreException e) {
+      this.status = new ConnectorMessageCode(
+          ConnectorMessageCode.EXCEPTION_PERSISTENT_STORE);
+      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_PERSISTENT_STORE, e);
+      return;
+    }
+
+    // Bail if the manager is currently locked.
+    if (manager.isLocked()) {
+        String message = "Attempt has been made to change configuration on a"
+            + " locked Connector Manager. You must update the locked property"
+            + " on the Connector Manager before continuing.\n"
+            + "Request: feederGateHost=" + feederGateHost
+            + "; feederGatePort=" + feederGatePort;
+      LOGGER.warning(message);
+      this.status = new ConnectorMessageCode(
+          ConnectorMessageCode.ATTEMPT_TO_CHANGE_LOCKED_CONNECTOR_MANAGER);
+      return;
+    }
+
+    // If we get here, update the manager configuration.
     try {
       manager.setConnectorManagerConfig(this.feederGateHost,
           this.feederGatePort);
@@ -78,4 +117,3 @@ public class SetManagerConfigHandler {
     return status;
   }
 }
-
