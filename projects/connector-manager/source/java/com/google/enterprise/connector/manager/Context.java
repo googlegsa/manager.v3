@@ -714,7 +714,7 @@ public class Context {
     initApplicationContext();
     String isManagerLocked = getProperty(MANAGER_LOCKED_PROPERTY_KEY,
         Boolean.TRUE.toString());
-    return Boolean.parseBoolean(isManagerLocked);
+    return Boolean.valueOf(isManagerLocked).booleanValue();
   }
 
   /**
