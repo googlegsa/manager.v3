@@ -21,6 +21,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import java.io.ByteArrayInputStream;
@@ -29,6 +31,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -201,12 +204,14 @@ public class ServletUtil {
    *
    * @param fileContent the XML string
    * @param errorHandler The error handle for SAX parser
+   * @param entityResolver The entity resolver to use
    * @return A result Document object, null on error
    */
   public static Document parse(String fileContent,
-                               SAXParseErrorHandler errorHandler) {
+                               SAXParseErrorHandler errorHandler,
+                               EntityResolver entityResolver) {
     InputStream in = stringToInputStream(fileContent);
-    return (in == null) ? null : parse(in, errorHandler);
+    return (in == null) ? null : parse(in, errorHandler, entityResolver);
   }
 
   /**
@@ -236,13 +241,16 @@ public class ServletUtil {
    *
    * @param in the input stream
    * @param errorHandler The error handle for SAX parser
+   * @param entityResolver The entity resolver to use
    * @return A result Document object, null on error
    */
   public static Document parse(InputStream in,
-                               SAXParseErrorHandler errorHandler) {
+                               SAXParseErrorHandler errorHandler,
+                               EntityResolver entityResolver) {
     try {
       DocumentBuilder builder = factory.newDocumentBuilder();
       builder.setErrorHandler(errorHandler);
+      builder.setEntityResolver(entityResolver);
       Document document = builder.parse(in);
       return document;
     } catch (ParserConfigurationException pce) {
@@ -265,7 +273,7 @@ public class ServletUtil {
   public static Element parseAndGetRootElement(InputStream in,
                                                String rootTagName) {
     SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
-    Document document = ServletUtil.parse(in, errorHandler);
+    Document document = ServletUtil.parse(in, errorHandler, null);
     if (document == null) {
       LOGGER.log(Level.WARNING, "XML parsing exception!");
       return null;
@@ -613,6 +621,28 @@ public class ServletUtil {
     return result;
   }
 
+  private static final Pattern CDATA_BEGIN_PATTERN =
+      Pattern.compile("/*\\Q<![CDATA[\\E");
+  private static final Pattern CDATA_END_PATTERN =
+      Pattern.compile("/*\\Q]]>\\E");
+
+  /**
+   * Removes any markers form the given snippet that are not allowed to be
+   * nested.
+   *
+   * @param formSnippet snippet of a form that may have markers in it that are
+   *        not allowed to be nested.
+   * @return the given formSnippet with all markers that are not allowed to be
+   *         nested removed.
+   */
+  public static String removeNestedMarkers(String formSnippet) {
+    Matcher matcher = CDATA_BEGIN_PATTERN.matcher(formSnippet);
+    String result = matcher.replaceAll("");
+    matcher = CDATA_END_PATTERN.matcher(result);
+    result = matcher.replaceAll("");
+    return result;
+  }
+
   /**
    * For Debugging: Write out the HttpServletRequest information.
    * This writes an XML stream to the response output that describes
@@ -711,8 +741,67 @@ public class ServletUtil {
     return false;
   }
 
+  private static final String DOCTYPE = "<!DOCTYPE html PUBLIC "
+      + "\"-//W3C//DTD XHTML 1.0 Transitional//EN\" "
+      + "\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">";
+
   private static final String TEMP_ROOT_BEGIN_ELEMENT = "<filtered_root>";
   private static final String TEMP_ROOT_END_ELEMENT = "</filtered_root>";
+
+  private static final String XHTML_DTD_URL =
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
+  private static final String XHTML_DTD_FILE = "/xhtml1-transitional.dtd";
+  private static final String HTML_LAT1_URL =
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml-lat1.ent";
+  private static final String HTML_LAT1_FILE = "/xhtml-lat1.ent";
+  private static final String HTML_SYMBOL_URL =
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml-symbol.ent";
+  private static final String HTML_SYMBOL_FILE = "/xhtml-symbol.ent";
+  private static final String HTML_SPECIAL_URL =
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml-special.ent";
+  private static final String HTML_SPECIAL_FILE = "/xhtml-special.ent";
+
+  private static class LocalEntityResolver implements EntityResolver {
+    public InputSource resolveEntity(String publicId, String systemId) {
+      URL url;
+      if (XHTML_DTD_URL.equals(systemId)) {
+        LOGGER.fine("publicId=" + publicId + "; systemId=" + systemId);
+        url = getClass().getResource(XHTML_DTD_FILE);
+        if (url != null) {
+          // Go with local resource.
+          LOGGER.fine("Resolving " + XHTML_DTD_URL + " to local entity");
+          return new InputSource(url.toString());
+        } else {
+          // Go with the HTTP URL.
+          LOGGER.fine("Unable to resolve " + XHTML_DTD_URL + " to local entity");
+          return null;
+        }
+      } else if (HTML_LAT1_URL.equals(systemId)) {
+        url = getClass().getResource(HTML_LAT1_FILE);
+        if (url != null) {
+          return new InputSource(url.toString());
+        } else {
+          return null;
+        }
+      } else if (HTML_SYMBOL_URL.equals(systemId)) {
+        url = getClass().getResource(HTML_SYMBOL_FILE);
+        if (url != null) {
+          return new InputSource(url.toString());
+        } else {
+          return null;
+        }
+      } else if (HTML_SPECIAL_URL.equals(systemId)) {
+        url = getClass().getResource(HTML_SPECIAL_FILE);
+        if (url != null) {
+          return new InputSource(url.toString());
+        } else {
+          return null;
+        }
+      } else {
+        return null;
+      }
+    }
+  }
 
   /**
    * Utility function to scan the form snippet for any sensitive values and
@@ -728,12 +817,13 @@ public class ServletUtil {
   public static String filterSensitiveData(String formSnippet) {
     boolean valueObfuscated = false;
     // Wrap the given form in a temporary root.
-    String rootSnippet =
-        TEMP_ROOT_BEGIN_ELEMENT + formSnippet + TEMP_ROOT_END_ELEMENT;
+    String rootSnippet = DOCTYPE
+        + TEMP_ROOT_BEGIN_ELEMENT + formSnippet + TEMP_ROOT_END_ELEMENT;
 
     // Convert to DOM tree and obfuscated values if needed.
     Document document =
-        ServletUtil.parse(rootSnippet, new SAXParseErrorHandler());
+        ServletUtil.parse(rootSnippet, new SAXParseErrorHandler(),
+            new LocalEntityResolver());
     if (document == null) {
       LOGGER.log(Level.WARNING, "XML parsing exception!");
       return null;
