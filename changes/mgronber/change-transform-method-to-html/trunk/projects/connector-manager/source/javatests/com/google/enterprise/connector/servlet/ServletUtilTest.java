@@ -239,7 +239,7 @@ public class ServletUtilTest extends TestCase {
     // Create form with JavaScript.
     String configForm =
         "<script language=\"JavaScript\" type=\"text/javascript\">"
-        + "//<![CDATA["
+        + "<![CDATA["
         + "  function checkSelect() {"
         + "    var opt = document.getElementById('Version');"
         + "    if (opt == 'version1') {"
@@ -248,7 +248,7 @@ public class ServletUtilTest extends TestCase {
         + "      alert('Version1 Not Selected');"
         + "    }"
         + "  }"
-        + "//]]>"
+        + "]]>"
         + "</script>"
         + "<tr>"
         + "<td>Sensitive input to force parsing</td>"
@@ -263,7 +263,6 @@ public class ServletUtilTest extends TestCase {
         + "</tr>";
     String expectedForm =
         "<script language=\"JavaScript\" type=\"text/javascript\" xml:space=\"preserve\">"
-        + "//"
         + "  function checkSelect() {"
         + "    var opt = document.getElementById('Version');"
         + "    if (opt == 'version1') {"
@@ -272,7 +271,6 @@ public class ServletUtilTest extends TestCase {
         + "      alert('Version1 Not Selected');"
         + "    }"
         + "  }"
-        + "//"
         + "</script>"
         + "<tr>"
         + "<td colspan=\"1\" rowspan=\"1\">Sensitive input to force parsing</td>"
