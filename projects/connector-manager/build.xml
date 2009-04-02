@@ -16,6 +16,7 @@
   <property name="dist" value="dist" />
   <property name="src" value="source/java" />
   <property name="classes" value="${prod}/classes" />
+  <property name="dtds" value="source/dtds" />
   <property name="webdocs" value="source/webdocs" />
 
   <property name="tests.src" value="source/javatests" />
@@ -149,6 +150,10 @@
         <include name="**/servlet/ConnectorMessageCode.class" />
         <include name="**/servlet/ServletUtil.class" />
         <include name="**/servlet/SAXParseErrorHandler.class" />
+      </fileset>
+      <fileset dir="${dtds}">
+        <include name="*.dtd" />
+        <include name="*.ent" />
       </fileset>
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager Utility"/>

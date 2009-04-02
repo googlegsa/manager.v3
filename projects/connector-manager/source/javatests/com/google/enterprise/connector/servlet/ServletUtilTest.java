@@ -20,6 +20,10 @@ import com.google.enterprise.connector.spi.XmlUtils;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import java.io.File;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -29,7 +33,6 @@ public class ServletUtilTest extends TestCase {
   private static final String HIDE_KEY_TWO = "a_password_two";
   private static final String HIDE_KEY_THREE = "imapasswordtoo";
   private static final String CLEAR_KEY_ONE = "NotAPwd";
-
 
   public void testPrependCmPrefix() {
     onePrependTest("foo name=\"bar\" bar", "foo name=\"CM_bar\" bar");
@@ -46,7 +49,53 @@ public class ServletUtilTest extends TestCase {
     Assert.assertEquals(original, ServletUtil.stripCmPrefix(result));
   }
 
-  public void testObfuscateForm() {
+  public void testRemoveNestedMarkers() {
+    String formWithMarkers =
+        "<script language=\"JavaScript\" type=\"text/javascript\">"
+        + "//<![CDATA["
+        + "  function foo() {"
+        + "    alert('foo');"
+        + "  }"
+        + "//]]>"
+        + "</script>";
+    String expectedFormWithMarkers =
+        "<script language=\"JavaScript\" type=\"text/javascript\">"
+        + "  function foo() {"
+        + "    alert('foo');"
+        + "  }"
+        + "</script>";
+    String formWithSimilarMarkers =
+        "<script language=\"JavaScript\" type=\"text/javascript\">"
+        + "<![CDATA["
+        + "  function foo() {"
+        + "    alert('foo');"
+        + "  }"
+        + "]]>"
+        + "</script>";
+    String expectedFormWithSimilarMarkers =
+        "<script language=\"JavaScript\" type=\"text/javascript\">"
+        + "  function foo() {"
+        + "    alert('foo');"
+        + "  }"
+        + "</script>";
+    String formWithoutMarkers =
+        "<script language=\"JavaScript\" type=\"text/javascript\">"
+        + "function foo() {"
+        + "  alert('foo');"
+        + "}"
+        + "</script>";
+    String result = ServletUtil.removeNestedMarkers(formWithMarkers);
+    assertEquals("Form with markers cleaned up",
+        expectedFormWithMarkers, result);
+    result = ServletUtil.removeNestedMarkers(formWithSimilarMarkers);
+    assertEquals("Form with similar markers cleaned up",
+        expectedFormWithSimilarMarkers, result);
+    result = ServletUtil.removeNestedMarkers(formWithoutMarkers);
+    assertEquals("Form without markers left alone",
+        formWithoutMarkers, result);
+  }
+
+  public void testObfuscateForm() throws Exception {
     // Create simple form.
     String protectedValue = "protected";
     String clearValue = "clear";
@@ -58,6 +107,7 @@ public class ServletUtilTest extends TestCase {
     String configForm = makeConfigForm(configMap);
 
     // Filter out sensitive data.
+    addDtdToClassLoader();
     String obfuscatedForm = ServletUtil.filterSensitiveData(configForm);
     assertNotNull("Form returned", obfuscatedForm);
     assertTrue("Form does not contain protected values",
@@ -71,7 +121,7 @@ public class ServletUtilTest extends TestCase {
     assertNull("Null form returned when form invalid", obfuscatedForm);
   }
 
-  public void testObfuscateEvilForm() {
+  public void testObfuscateEvilForm() throws Exception {
     // Create form with radio buttons with sensitive names.
     String sensitiveName = "doPasswordCheck";
     assertTrue("name is still considered sensitive",
@@ -87,9 +137,132 @@ public class ServletUtilTest extends TestCase {
       + "<label for=\"doPasswordCheck-false\">False</label><br/>\n"
       + "</td>\n"
       + "</tr>";
+    addDtdToClassLoader();
     String obfuscateForm = ServletUtil.filterSensitiveData(configForm);
     assertNotNull("Form returned", obfuscateForm);
     assertEquals("Form not changed", configForm, obfuscateForm);
+  }
+
+  public void testObfuscateFormWithEntities() throws Exception {
+    // Create form with character entities.
+    String configForm =
+        "<tr>"
+        + "<td>Sensitive input to force parsing</td>"
+        + "<td><input name=\"Password\" type=\"password\" value=\"protected\"/></td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td>HTML and XML &amp; &lt;</td>"
+        + "<td><input name=\"HtmlAndXml\" type=\"text\" value=\"clear\"/></td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td>Some&nbsp;of&#160;the&#xA0;other 252 &copy; &#169; &#xA9;</td>"
+        + "<td><input name=\"Other252\" type=\"text\" value=\"clear\"/></td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td>Value has non-252 but needs to be preserved</td>"
+        + "<td><input name=\"ValueHas\" type=\"text\" value=\"clear1&#10;clear2&#xA;clear3\"/></td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td>Two&nbsp;words</td>"
+        + "<td><textarea rows='5' cols='40' name='url'>"
+        + "http://www.example.com/doc?a=b&amp;c=d"
+        + "</textarea></td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td>Two&nbsp;words</td>"
+        + "<td><textarea rows='5' cols='40' name='quote'>"
+        + "Is that a &dagger; I see before me?"
+        + "</textarea></td>"
+        + "</tr>";
+    String expectedForm =
+        "<tr>"
+        + "<td colspan=\"1\" rowspan=\"1\">Sensitive input to force parsing</td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Password\" type=\"password\" value=\"*********\"/></td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td colspan=\"1\" rowspan=\"1\">HTML and XML &amp; &lt;</td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"HtmlAndXml\" type=\"text\" value=\"clear\"/></td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td colspan=\"1\" rowspan=\"1\">Some of the other 252 © © ©</td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Other252\" type=\"text\" value=\"clear\"/></td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td colspan=\"1\" rowspan=\"1\">Value has non-252 but needs to be preserved</td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"ValueHas\" type=\"text\" value=\"clear1&#10;clear2&#10;clear3\"/></td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td colspan=\"1\" rowspan=\"1\">Two words</td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><textarea cols=\"40\" name=\"url\" rows=\"5\">"
+        + "http://www.example.com/doc?a=b&amp;c=d"
+        + "</textarea></td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td colspan=\"1\" rowspan=\"1\">Two words</td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><textarea cols=\"40\" name=\"quote\" rows=\"5\">"
+        + "Is that a \u2020 I see before me?"
+        + "</textarea></td>"
+        + "</tr>";
+    addDtdToClassLoader();
+    String obfuscateForm = ServletUtil.filterSensitiveData(configForm);
+    assertNotNull("Form returned", obfuscateForm);
+    assertEquals("Form changed as expected", expectedForm, obfuscateForm);
+  }
+
+  public void testObfuscateFormWithScript() throws Exception {
+    // Create form with JavaScript.
+    String configForm =
+        "<script language=\"JavaScript\" type=\"text/javascript\">"
+        + "//<![CDATA["
+        + "  function checkSelect() {"
+        + "    var opt = document.getElementById('Version');"
+        + "    if (opt == 'version1') {"
+        + "      alert('Version1 Selected');"
+        + "    } else {"
+        + "      alert('Version1 Not Selected');"
+        + "    }"
+        + "  }"
+        + "//]]>"
+        + "</script>"
+        + "<tr>"
+        + "<td>Sensitive input to force parsing</td>"
+        + "<td><input name=\"Password\" type=\"password\" value=\"protected\"/></td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td><div style='float: left;'>Select Version</div></td>"
+        + "<td><select id=\"SPType\" name=\"Version\" size=\"1\" onchange=\"checkSelect();\">"
+        + "  <option selected=\"\" value=\"version1\">Version 1</option>"
+        + "  <option value=\"version2\">Version 2</option>"
+        + "</select></td>"
+        + "</tr>";
+    String expectedForm =
+        "<script language=\"JavaScript\" type=\"text/javascript\" xml:space=\"preserve\">"
+        + "//<![CDATA["
+        + "  function checkSelect() {"
+        + "    var opt = document.getElementById('Version');"
+        + "    if (opt == 'version1') {"
+        + "      alert('Version1 Selected');"
+        + "    } else {"
+        + "      alert('Version1 Not Selected');"
+        + "    }"
+        + "  }"
+        + "//]]>"
+        + "</script>"
+        + "<tr>"
+        + "<td colspan=\"1\" rowspan=\"1\">Sensitive input to force parsing</td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Password\" type=\"password\" value=\"*********\"/></td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td colspan=\"1\" rowspan=\"1\"><div style=\"float: left;\">Select Version</div></td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><select id=\"SPType\" name=\"Version\" onchange=\"checkSelect();\" size=\"1\">"
+        + "  <option selected=\"\" value=\"version1\">Version 1</option>"
+        + "  <option value=\"version2\">Version 2</option></select>"
+        + "</td>"
+        + "</tr>";
+    addDtdToClassLoader();
+    String obfuscateForm = ServletUtil.filterSensitiveData(configForm);
+    assertNotNull("Form returned", obfuscateForm);
+    assertEquals("Form changed as expected", expectedForm, obfuscateForm);
   }
 
   public void testObfuscateTools() {
@@ -228,5 +401,20 @@ public class ServletUtilTest extends TestCase {
         obfuscatedConfig.put(key, clearConfig.get(key));
       }
     }
+  }
+
+  private static final String DTD_DIRECTORY = "source/dtds/";
+
+  private void addDtdToClassLoader() throws Exception {
+    // Add the DTD files to the System ClassLoader.
+    File f = new File(DTD_DIRECTORY);
+    URL u = f.toURI().toURL();
+    URLClassLoader sysClassLoader =
+        (URLClassLoader) ServletUtil.class.getClassLoader();
+    Class clazz = URLClassLoader.class;
+    // Since the addURL() method is protected need to use reflection.
+    Method method = clazz.getDeclaredMethod("addURL", new Class[] {URL.class});
+    method.setAccessible(true);
+    method.invoke(sysClassLoader, new Object[] {u});
   }
 }

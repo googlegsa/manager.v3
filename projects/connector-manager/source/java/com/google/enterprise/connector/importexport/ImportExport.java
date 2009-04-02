@@ -200,7 +200,7 @@ public class ImportExport {
    */
   public static List fromXmlString(String xmlString) {
     Document document =
-        ServletUtil.parse(xmlString, new SAXParseErrorHandler());
+        ServletUtil.parse(xmlString, new SAXParseErrorHandler(), null);
     Element connectorsElement = document.getDocumentElement();
     return fromXmlConnectorsElement(connectorsElement);
   }
