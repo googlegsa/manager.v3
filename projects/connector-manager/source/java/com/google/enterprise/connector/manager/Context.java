@@ -66,6 +66,7 @@ public class Context {
   public static final String GSA_ADMIN_REQUIRES_PREFIX_KEY =
       "gsa.admin.requiresPrefix";
   public static final String TEED_FEED_FILE_PROPERTY_KEY = "teedFeedFile";
+  public static final String MANAGER_LOCKED_PROPERTY_KEY = "manager.locked";
 
   public static final Boolean GSA_ADMIN_REQUIRES_PREFIX_DEFAULT =
       Boolean.FALSE;
@@ -81,6 +82,49 @@ public class Context {
   public static final String ORDERED_SERVICES_BEAN_NAME = "OrderedServices";
   private static final String APPLICATION_CONTEXT_PROPERTIES_BEAN_NAME =
       "ApplicationContextProperties";
+
+  private static final String CONNECTOR_MANGER_CONFIG_HEADER =
+      " Google Enterprise Connector Manager Configuration\n"
+      + "\n"
+      + " Specifies the host IP for the feed host on the GSA.\n"
+      + " Example:\n"
+      + "     gsa.feed.host=172.24.2.0\n"
+      + "\n"
+      + " Specifies the host port for the feed host on the GSA.\n"
+      + " Example:\n"
+      + "     gsa.feed.port=19900\n"
+      + "\n"
+      + " This property is used to lock out the Admin Servlet and prevent it\n"
+      + " from making changes to this configuration file.  Specifically, the\n"
+      + " ability to set the FeedConnection properties will be locked out.  If\n"
+      + " it is set to 'true' or missing the Servlet will not be allowed to\n"
+      + " update this file. \n"
+      + " NOTE: This property will automatically be changed to 'true' upon\n"
+      + " successful update of the file by the Servlet.  Therefore, once the\n"
+      + " FeedConnection properties are successfully updated by the Servlet\n"
+      + " subsequent updates will be locked out until the flag is manually\n"
+      + " reset to false.\n"
+      + " Example:\n"
+      + "     manager.locked=false\n"
+      + "\n"
+      + " This property controls the logging of the feed record to a log file.\n"
+      + " The log record will contain the feed XML without the content data.\n"
+      + " Set this property to ALL to enable feed logging, OFF to disable.\n"
+      + " Customers and developers can use this functionality to observe the\n"
+      + " feed record and metadata information the connector manager sends to\n"
+      + " the GSA.\n"
+      + " Example:\n"
+      + "     feedLoggingLevel=OFF\n"
+      + "\n"
+      + " If you set teedFeedFile to the name of an existing file, whenever the\n"
+      + " connector manager feeds content to the GSA, it will write a duplicate\n"
+      + " copy of the feed XML to the file specified by teedFeedFile. GSA\n"
+      + " customers and third-party developers can use this functionality to\n"
+      + " observe the content the connector manager sends to the GSA and\n"
+      + " reproduce any issue which may arise.\n"
+      + " Example:\n"
+      + "     teedFeedFile=/tmp/CMTeedFeedFile"
+      + "\n";
 
   private static final Logger LOGGER =
       Logger.getLogger(Context.class.getName());
@@ -540,6 +584,26 @@ public class Context {
     return propFile;
   }
 
+  public Properties getConnectorManagerConfig() throws InstantiatorException {
+    initApplicationContext();
+    Properties result = new Properties();
+    // Get the properties out of the CM properties file if present.
+    String propFileName = getPropFileName();
+    File propFile = getPropFile(propFileName);
+    try {
+      Properties props = PropertiesUtils.loadFromFile(propFile);
+      result.setProperty(GSA_FEED_HOST_PROPERTY_KEY,
+          props.getProperty(GSA_FEED_HOST_PROPERTY_KEY));
+      result.setProperty(GSA_FEED_PORT_PROPERTY_KEY,
+          props.getProperty(GSA_FEED_PORT_PROPERTY_KEY));
+    } catch (PropertiesException e) {
+      LOGGER.log(Level.WARNING, "Unable to read application context properties"
+          + " file " + propFileName,
+          e);
+    }
+    return result;
+  }
+
   public void setConnectorManagerConfig(String feederGateHost,
       int feederGatePort) throws InstantiatorException {
     initApplicationContext();
@@ -558,17 +622,21 @@ public class Context {
     }
     props.put(GSA_FEED_HOST_PROPERTY_KEY, feederGateHost);
     props.put(GSA_FEED_PORT_PROPERTY_KEY, Integer.toString(feederGatePort));
+    // Lock down the manager at this point.
+    props.put(MANAGER_LOCKED_PROPERTY_KEY, Boolean.TRUE.toString());
     try {
       PropertiesUtils.storeToFile(props, propFile,
-          "Google Enterprise Connector Manager Configuration");
+          CONNECTOR_MANGER_CONFIG_HEADER);
     } catch (PropertiesException e) {
       LOGGER.log(Level.WARNING, "Unable to save application context properties"
           + " file " + propFileName + ". ", e);
       throw new InstantiatorException(e);
     }
-    LOGGER.info("Updated Connector Manager Config: " +
-        GSA_FEED_HOST_PROPERTY_KEY + "=" + feederGateHost + "; " +
-        GSA_FEED_PORT_PROPERTY_KEY + "=" + feederGatePort);
+    LOGGER.info("Updated Connector Manager Config: "
+        + GSA_FEED_HOST_PROPERTY_KEY + "=" + feederGateHost + "; "
+        + GSA_FEED_PORT_PROPERTY_KEY + "=" + feederGatePort + ";"
+        + MANAGER_LOCKED_PROPERTY_KEY + "="
+        + props.getProperty(MANAGER_LOCKED_PROPERTY_KEY));
 
     // Update our local cached feed host.
     gsaFeedHost = feederGateHost;
@@ -633,6 +701,20 @@ public class Context {
       isGsaFeedHostInitialized = true;
     }
     return gsaFeedHost;
+  }
+
+  /**
+   * Reads <code>manager.locked</code> property from the application context
+   * properties file.
+   *
+   * @return true if the property does not exist.  Returns true if the property
+   *         is set to 'true', ignoring case.  Returns false otherwise.
+   */
+  public boolean getIsManagerLocked() {
+    initApplicationContext();
+    String isManagerLocked = getProperty(MANAGER_LOCKED_PROPERTY_KEY,
+        Boolean.TRUE.toString());
+    return Boolean.parseBoolean(isManagerLocked);
   }
 
   /**

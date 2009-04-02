@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
@@ -190,6 +191,11 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
+  public Properties getConnectorManagerConfig() {
+    return new Properties();
+  }
+
+  /* @Override */
   public void setConnectorManagerConfig(String feederGateHost,
       int feederGatePort) {
     // do nothing
@@ -217,6 +223,11 @@ public class MockManager implements Manager {
   /* @Override */
   public Map getConnectorConfig(String connectorName) {
     return new HashMap();
+  }
+
+  /* @Override */
+  public boolean isLocked() {
+    return false;
   }
   
   public void setShouldVerifyIdentity(boolean b) {
