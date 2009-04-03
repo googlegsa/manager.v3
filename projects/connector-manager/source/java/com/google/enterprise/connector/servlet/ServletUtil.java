@@ -856,6 +856,7 @@ public class ServletUtil {
         transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
         transformer.setOutputProperty(OutputKeys.METHOD, "html");
         transformer.setOutputProperty(OutputKeys.VERSION, "4.0");
+        transformer.setOutputProperty(OutputKeys.INDENT, "no");
         DOMSource source = new DOMSource(document);
         StreamResult result =  new StreamResult(new StringWriter());
         transformer.transform(source, result);
