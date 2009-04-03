@@ -74,6 +74,12 @@ public class ConnectorMessageCode {
   public static final int OVERLAP_BAD_SCHEDULE = 5413;
   public static final int CONNECTOR_DISCONNECTED = 5414;
   public static final int CONNECTOR_MANAGER_DISCONNECTED = 5415;
+  public static final int ATTEMPT_TO_CHANGE_LOCKED_CONNECTOR_MANAGER = 5416;
+
+  // Specific success message codes - 5500-5599
+  public static final int FIRST_SUCCESS_MESSAGE_CODE = 5500;
+  public static final int SUCCESS_RESTART_TRAVERSAL = 5500;
+  public static final int LAST_SUCCESS_MESSAGE_CODE = 5599;
 
   public static final int UNSUPPORTED_CALL = 5997;
   public static final int UNSUPPORTED_MESSAGE_CODE = 5998;

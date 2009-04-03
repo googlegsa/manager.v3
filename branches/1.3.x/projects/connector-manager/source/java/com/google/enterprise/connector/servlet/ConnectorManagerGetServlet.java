@@ -107,16 +107,30 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
   public static void writeConfigureResponse(PrintWriter out,
       ConnectorMessageCode status, ConfigureResponse configRes) {
     ServletUtil.writeRootTag(out, false);
+    // Have to check the configRes for a well formed HTML snippet before
+    // committing to given status.
+    String formSnippet = null;
+    if (configRes != null && configRes.getFormSnippet() != null &&
+        configRes.getFormSnippet().length() > 0) {
+      formSnippet = configRes.getFormSnippet();
+      if (Context.getInstance().gsaAdminRequiresPrefix()) {
+        formSnippet = ServletUtil.prependCmPrefix(formSnippet);
+      }
+      formSnippet = ServletUtil.filterSensitiveData(formSnippet);
+      if (formSnippet == null) {
+        // Form snippet was not well formed.  Change status to reflect XML
+        // parsing error.
+        status = new ConnectorMessageCode(
+            ConnectorMessageCode.ERROR_PARSING_XML_REQUEST);
+        configRes = null;
+      }
+    }
+    // Now write out the response.
     ServletUtil.writeMessageCode(out, status);
     if (configRes != null) {
       ServletUtil.writeXMLTag(
           out, 1, ServletUtil.XMLTAG_CONFIGURE_RESPONSE, false);
-      if (configRes.getFormSnippet() != null &&
-          configRes.getFormSnippet().length() > 0) {
-        String formSnippet = configRes.getFormSnippet();
-        if (Context.getInstance().gsaAdminRequiresPrefix()) {
-          formSnippet = ServletUtil.prependCmPrefix(formSnippet);
-        }
+      if (formSnippet != null) {
         ServletUtil.writeXMLElement(
             out, 2, ServletUtil.XMLTAG_FORM_SNIPPET,
             "<![CDATA[" + formSnippet + "]]>");
