@@ -49,6 +49,32 @@ public class ServletUtilTest extends TestCase {
     Assert.assertEquals(original, ServletUtil.stripCmPrefix(result));
   }
 
+  public void testEmptyTextArea() throws Exception {
+    // Create form with character entities.
+    String configForm =
+        "<tr>"
+        + "<td>Sensitive input to force parsing</td>"
+        + "<td><input name=\"Password\" type=\"password\" value=\"protected\"/></td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td>Sample text</td>"
+        + "<td><textarea cols=\"50\" name=\"SampleText\" rows=\"5\"></textarea></td>"
+        + "</tr>";
+    String expectedForm =
+        "<tr>"
+        + "<td colspan=\"1\" rowspan=\"1\">Sensitive input to force parsing</td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Password\" type=\"password\" value=\"*********\"></td>"
+        + "</tr>"
+        + "<tr>"
+        + "<td colspan=\"1\" rowspan=\"1\">Sample text</td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><textarea cols=\"50\" name=\"SampleText\" rows=\"5\"></textarea></td>"
+        + "</tr>";
+    addDtdToClassLoader();
+    String obfuscateForm = ServletUtil.filterSensitiveData(configForm);
+    assertNotNull("Form returned", obfuscateForm);
+    assertEquals("Form changed as expected", expectedForm, obfuscateForm);
+  }
+
   public void testRemoveNestedMarkers() {
     String formWithMarkers =
         "<script language=\"JavaScript\" type=\"text/javascript\">"
@@ -154,12 +180,10 @@ public class ServletUtilTest extends TestCase {
         + "<td>HTML and XML &amp; &lt;</td>"
         + "<td><input name=\"HtmlAndXml\" type=\"text\" value=\"clear\"/></td>"
         + "</tr>"
-        /* Can't get this to pass on all platforms so commenting out for now.
         + "<tr>"
         + "<td>Some&nbsp;of&#160;the&#xA0;other 252 &copy; &#169; &#xA9;</td>"
         + "<td><input name=\"Other252\" type=\"text\" value=\"clear\"/></td>"
         + "</tr>"
-        */
         + "<tr>"
         + "<td>Value has non-252 but needs to be preserved</td>"
         + "<td><input name=\"ValueHas\" type=\"text\" value=\"clear1&#10;clear2&#xA;clear3\"/></td>"
@@ -179,21 +203,19 @@ public class ServletUtilTest extends TestCase {
     String expectedForm =
         "<tr>"
         + "<td colspan=\"1\" rowspan=\"1\">Sensitive input to force parsing</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Password\" type=\"password\" value=\"*********\"/></td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Password\" type=\"password\" value=\"*********\"></td>"
         + "</tr>"
         + "<tr>"
         + "<td colspan=\"1\" rowspan=\"1\">HTML and XML &amp; &lt;</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"HtmlAndXml\" type=\"text\" value=\"clear\"/></td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"HtmlAndXml\" type=\"text\" value=\"clear\"></td>"
         + "</tr>"
-        /*
         + "<tr>"
-        + "<td colspan=\"1\" rowspan=\"1\">Some of the other 252 © © ©</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Other252\" type=\"text\" value=\"clear\"/></td>"
+        + "<td colspan=\"1\" rowspan=\"1\">Some&nbsp;of&nbsp;the&nbsp;other 252 &copy; &copy; &copy;</td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Other252\" type=\"text\" value=\"clear\"></td>"
         + "</tr>"
-        */
         + "<tr>"
         + "<td colspan=\"1\" rowspan=\"1\">Value has non-252 but needs to be preserved</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"ValueHas\" type=\"text\" value=\"clear1&#10;clear2&#10;clear3\"/></td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"ValueHas\" type=\"text\" value=\"clear1\nclear2\nclear3\"></td>"
         + "</tr>"
         + "<tr>"
         + "<td colspan=\"1\" rowspan=\"1\">Two words</td>"
@@ -204,7 +226,7 @@ public class ServletUtilTest extends TestCase {
         + "<tr>"
         + "<td colspan=\"1\" rowspan=\"1\">Two words</td>"
         + "<td colspan=\"1\" rowspan=\"1\"><textarea cols=\"40\" name=\"quote\" rows=\"5\">"
-        + "Is that a \u2020 I see before me?"
+        + "Is that a &dagger; I see before me?"
         + "</textarea></td>"
         + "</tr>";
     addDtdToClassLoader();
@@ -217,7 +239,7 @@ public class ServletUtilTest extends TestCase {
     // Create form with JavaScript.
     String configForm =
         "<script language=\"JavaScript\" type=\"text/javascript\">"
-        + "//<![CDATA["
+        + "<![CDATA["
         + "  function checkSelect() {"
         + "    var opt = document.getElementById('Version');"
         + "    if (opt == 'version1') {"
@@ -226,7 +248,7 @@ public class ServletUtilTest extends TestCase {
         + "      alert('Version1 Not Selected');"
         + "    }"
         + "  }"
-        + "//]]>"
+        + "]]>"
         + "</script>"
         + "<tr>"
         + "<td>Sensitive input to force parsing</td>"
@@ -241,7 +263,6 @@ public class ServletUtilTest extends TestCase {
         + "</tr>";
     String expectedForm =
         "<script language=\"JavaScript\" type=\"text/javascript\" xml:space=\"preserve\">"
-        + "//<![CDATA["
         + "  function checkSelect() {"
         + "    var opt = document.getElementById('Version');"
         + "    if (opt == 'version1') {"
@@ -250,16 +271,15 @@ public class ServletUtilTest extends TestCase {
         + "      alert('Version1 Not Selected');"
         + "    }"
         + "  }"
-        + "//]]>"
         + "</script>"
         + "<tr>"
         + "<td colspan=\"1\" rowspan=\"1\">Sensitive input to force parsing</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Password\" type=\"password\" value=\"*********\"/></td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Password\" type=\"password\" value=\"*********\"></td>"
         + "</tr>"
         + "<tr>"
         + "<td colspan=\"1\" rowspan=\"1\"><div style=\"float: left;\">Select Version</div></td>"
         + "<td colspan=\"1\" rowspan=\"1\"><select id=\"SPType\" name=\"Version\" onchange=\"checkSelect();\" size=\"1\">"
-        + "  <option selected=\"\" value=\"version1\">Version 1</option>"
+        + "  <option selected value=\"version1\">Version 1</option>"
         + "  <option value=\"version2\">Version 2</option></select>"
         + "</td>"
         + "</tr>";
