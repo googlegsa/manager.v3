@@ -11,6 +11,29 @@ list of known issues and workarounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
+Release 1.3.2, Apr 03, 2009
+===========================
+
+Introduction
+------------
+This is an upgrade release that addresses some problems discovered since
+the 1.3.0 release.  It also adds some enhanced security measures that
+obfuscates configuration data communicated between the Google Search
+Appliance and the Connector Manager, and prevents hijacking of a content feed.
+These enhanced security measures impact Connector Manager administrators
+and Connector Developers.  For details see the Version Compatibility
+section below.  Users of previous releases are encouraged to upgrade.
+
+Summary of Changes
+------------------
+  * Fixed a Concurrency issue with the HostLoadManager.
+
+
+Version Compatibility
+---------------------
+
+
+
 Release 1.3.1, Mar 16, 2009
 ===========================
 
