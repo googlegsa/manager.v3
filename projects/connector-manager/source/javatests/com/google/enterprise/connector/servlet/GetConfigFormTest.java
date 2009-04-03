@@ -67,13 +67,13 @@ public class GetConfigFormTest extends TestCase {
     String message = "Sample form";
     String formSnippet =
       "    <tr><td>Repository</td>" +
-      "      <td><input type=\"text\" name=\"repository\" value=\"\"></td>" +
+      "      <td><input type=\"text\" name=\"repository\" value=\"\"/></td>" +
       "    </tr>" +
       "    <tr><td>Username</td>" +
-      "      <td><input type=\"text\" name=\"username\" value=\"\">" +
+      "      <td><input type=\"text\" name=\"username\" value=\"\"/>" +
       "      </td></tr>" +
       "    <tr><td>Password</td>" +
-      "      <td><input type=\"password\" name=\"passwd\" value=\"\">" +
+      "      <td><input type=\"password\" name=\"passwd\" value=\"\"/>" +
       "    </td></tr>" +
       "    <tr><td>Seed URIs</td>" +
       "      <td><textarea name=\"seedUris\"></textarea></td></tr>";

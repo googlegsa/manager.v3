@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,22 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.common.JarUtils;
+import com.google.enterprise.connector.common.SecurityUtils;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.InetAddress;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -41,6 +49,12 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 /**
  * Servlet constant and utility class.
@@ -127,6 +141,7 @@ public class ServletUtil {
 
   public static final String XMLTAG_CONNECTOR_SCHEDULES = "ConnectorSchedules";
   public static final String XMLTAG_CONNECTOR_SCHEDULE = "ConnectorSchedule";
+  public static final String XMLTAG_DISABLED = "disabled";
   public static final String XMLTAG_LOAD = "load";
   public static final String XMLTAG_DELAY = "RetryDelayMillis";
   public static final String XMLTAG_TIME_INTERVALS = "TimeIntervals";
@@ -189,26 +204,14 @@ public class ServletUtil {
    *
    * @param fileContent the XML string
    * @param errorHandler The error handle for SAX parser
+   * @param entityResolver The entity resolver to use
    * @return A result Document object, null on error
    */
   public static Document parse(String fileContent,
-                               SAXParseErrorHandler errorHandler) {
-    try {
-      DocumentBuilder builder = factory.newDocumentBuilder();
-      builder.setErrorHandler(errorHandler);
-      Document document = builder.parse(
-          new ByteArrayInputStream(fileContent.getBytes("UTF-8")));
-      return document;
-    } catch (ParserConfigurationException pce) {
-      LOGGER.log(Level.SEVERE, "Parse exception", pce);
-    } catch (java.io.UnsupportedEncodingException uee) {
-      LOGGER.log(Level.SEVERE, "Really Unexpected", uee);
-    } catch (SAXException se) {
-      LOGGER.log(Level.SEVERE, "SAX Exception", se);
-    } catch (IOException ioe) {
-      LOGGER.log(Level.SEVERE, "IO Exception", ioe);
-    }
-    return null;
+                               SAXParseErrorHandler errorHandler,
+                               EntityResolver entityResolver) {
+    InputStream in = stringToInputStream(fileContent);
+    return (in == null) ? null : parse(in, errorHandler, entityResolver);
   }
 
   /**
@@ -220,8 +223,57 @@ public class ServletUtil {
    */
   public static Element parseAndGetRootElement(String xmlBody,
                                                String rootTagName) {
+    InputStream in = stringToInputStream(xmlBody);
+    return (in == null) ? null : parseAndGetRootElement(in, rootTagName);
+  }
+
+  private static InputStream stringToInputStream(String fileContent) {
+    try {
+      return new ByteArrayInputStream(fileContent.getBytes("UTF-8"));
+    } catch (java.io.UnsupportedEncodingException uee) {
+      LOGGER.log(Level.SEVERE, "Really Unexpected", uee);
+      return null;
+    }
+  }
+
+  /**
+   * Parse an input stream to a Document.
+   *
+   * @param in the input stream
+   * @param errorHandler The error handle for SAX parser
+   * @param entityResolver The entity resolver to use
+   * @return A result Document object, null on error
+   */
+  public static Document parse(InputStream in,
+                               SAXParseErrorHandler errorHandler,
+                               EntityResolver entityResolver) {
+    try {
+      DocumentBuilder builder = factory.newDocumentBuilder();
+      builder.setErrorHandler(errorHandler);
+      builder.setEntityResolver(entityResolver);
+      Document document = builder.parse(in);
+      return document;
+    } catch (ParserConfigurationException pce) {
+      LOGGER.log(Level.SEVERE, "Parse exception", pce);
+    } catch (SAXException se) {
+      LOGGER.log(Level.SEVERE, "SAX Exception", se);
+    } catch (IOException ioe) {
+      LOGGER.log(Level.SEVERE, "IO Exception", ioe);
+    }
+    return null;
+  }
+
+  /**
+   * Get a root element from an XML input stream.
+   *
+   * @param in the input stream
+   * @param rootTagName String the root element tag name
+   * @return a result Element object if successful, null on error
+   */
+  public static Element parseAndGetRootElement(InputStream in,
+                                               String rootTagName) {
     SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
-    Document document = ServletUtil.parse(xmlBody, errorHandler);
+    Document document = ServletUtil.parse(in, errorHandler, null);
     if (document == null) {
       LOGGER.log(Level.WARNING, "XML parsing exception!");
       return null;
@@ -569,6 +621,28 @@ public class ServletUtil {
     return result;
   }
 
+  private static final Pattern CDATA_BEGIN_PATTERN =
+      Pattern.compile("/*\\Q<![CDATA[\\E");
+  private static final Pattern CDATA_END_PATTERN =
+      Pattern.compile("/*\\Q]]>\\E");
+
+  /**
+   * Removes any markers form the given snippet that are not allowed to be
+   * nested.
+   *
+   * @param formSnippet snippet of a form that may have markers in it that are
+   *        not allowed to be nested.
+   * @return the given formSnippet with all markers that are not allowed to be
+   *         nested removed.
+   */
+  public static String removeNestedMarkers(String formSnippet) {
+    Matcher matcher = CDATA_BEGIN_PATTERN.matcher(formSnippet);
+    String result = matcher.replaceAll("");
+    matcher = CDATA_END_PATTERN.matcher(result);
+    result = matcher.replaceAll("");
+    return result;
+  }
+
   /**
    * For Debugging: Write out the HttpServletRequest information.
    * This writes an XML stream to the response output that describes
@@ -636,5 +710,208 @@ public class ServletUtil {
     ServletUtil.writeRootTag(out, true);
     out.close();
     return true;
+  }
+
+  /**
+   * Verify the request originated from either the GSA or
+   * localhost.  Since the logs and the feed file may contain
+   * proprietary customer information, we don't want to serve
+   * them up to just anybody.
+   *
+   * @param gsaHost the GSA feed host
+   * @param remoteAddr the IP address of the caller
+   * @returns true if request came from an acceptable IP address.
+   */
+  public static boolean allowedRemoteAddr(String gsaHost, String remoteAddr) {
+    try {
+      InetAddress caller = InetAddress.getByName(remoteAddr);
+      if (caller.isLoopbackAddress() ||
+          caller.equals(InetAddress.getLocalHost())) {
+        return true;  // localhost is allowed access
+      }
+      InetAddress[] gsaAddrs = InetAddress.getAllByName(gsaHost);
+      for (int i = 0; i < gsaAddrs.length; i++) {
+        if (caller.equals(gsaAddrs[i])) {
+          return true;  // GSA is allowed access
+        }
+      }
+    } catch (UnknownHostException uhe) {
+      // Unknown host - fall through to fail.
+    }
+    return false;
+  }
+
+  private static final String DOCTYPE = "<!DOCTYPE html PUBLIC "
+      + "\"-//W3C//DTD XHTML 1.0 Transitional//EN\" "
+      + "\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">";
+
+  private static final String TEMP_ROOT_BEGIN_ELEMENT = "<filtered_root>";
+  private static final String TEMP_ROOT_END_ELEMENT = "</filtered_root>";
+
+  private static final String XHTML_DTD_URL =
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
+  private static final String XHTML_DTD_FILE = "/xhtml1-transitional.dtd";
+  private static final String HTML_LAT1_URL =
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml-lat1.ent";
+  private static final String HTML_LAT1_FILE = "/xhtml-lat1.ent";
+  private static final String HTML_SYMBOL_URL =
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml-symbol.ent";
+  private static final String HTML_SYMBOL_FILE = "/xhtml-symbol.ent";
+  private static final String HTML_SPECIAL_URL =
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml-special.ent";
+  private static final String HTML_SPECIAL_FILE = "/xhtml-special.ent";
+
+  private static class LocalEntityResolver implements EntityResolver {
+    public InputSource resolveEntity(String publicId, String systemId) {
+      URL url;
+      if (XHTML_DTD_URL.equals(systemId)) {
+        LOGGER.fine("publicId=" + publicId + "; systemId=" + systemId);
+        url = getClass().getResource(XHTML_DTD_FILE);
+        if (url != null) {
+          // Go with local resource.
+          LOGGER.fine("Resolving " + XHTML_DTD_URL + " to local entity");
+          return new InputSource(url.toString());
+        } else {
+          // Go with the HTTP URL.
+          LOGGER.fine("Unable to resolve " + XHTML_DTD_URL + " to local entity");
+          return null;
+        }
+      } else if (HTML_LAT1_URL.equals(systemId)) {
+        url = getClass().getResource(HTML_LAT1_FILE);
+        if (url != null) {
+          return new InputSource(url.toString());
+        } else {
+          return null;
+        }
+      } else if (HTML_SYMBOL_URL.equals(systemId)) {
+        url = getClass().getResource(HTML_SYMBOL_FILE);
+        if (url != null) {
+          return new InputSource(url.toString());
+        } else {
+          return null;
+        }
+      } else if (HTML_SPECIAL_URL.equals(systemId)) {
+        url = getClass().getResource(HTML_SPECIAL_FILE);
+        if (url != null) {
+          return new InputSource(url.toString());
+        } else {
+          return null;
+        }
+      } else {
+        return null;
+      }
+    }
+  }
+
+  /**
+   * Utility function to scan the form snippet for any sensitive values and
+   * replace them with obfuscated values.
+   *
+   * @param formSnippet the form snippet to scan.  Expected to be a collection
+   *        of table rows (&lt;TR&gt;) containing input elements used within an
+   *        HTML FORM.  Should not contain the actual HTML FORM element.
+   * @return given formSnippet will all the sensitive values obfuscated.
+   *         Returns null on error.  Therefore caller should check result before
+   *         using.
+   */
+  public static String filterSensitiveData(String formSnippet) {
+    boolean valueObfuscated = false;
+    // Wrap the given form in a temporary root.
+    String rootSnippet = DOCTYPE
+        + TEMP_ROOT_BEGIN_ELEMENT + formSnippet + TEMP_ROOT_END_ELEMENT;
+
+    // Convert to DOM tree and obfuscated values if needed.
+    Document document =
+        ServletUtil.parse(rootSnippet, new SAXParseErrorHandler(),
+            new LocalEntityResolver());
+    if (document == null) {
+      LOGGER.log(Level.WARNING, "XML parsing exception!");
+      return null;
+    }
+    NodeList nodeList = document.getElementsByTagName("input");
+    int length = nodeList.getLength();
+    for (int n = 0; n < length; ++n) {
+      // Find any names that are sensitive and obfuscate their values.
+      Element element = (Element) nodeList.item(n);
+      if (SecurityUtils.isKeySensitive(element.getAttribute("name")) &&
+          element.hasAttribute("value") &&
+          element.getAttribute("type").equalsIgnoreCase("password")) {
+        element.setAttribute("value",
+            obfuscateValue(element.getAttribute("value")));
+        valueObfuscated = true;
+      }
+    }
+
+    if (!valueObfuscated) {
+      // Form snippet was not touched - just return it.
+      return formSnippet;
+    } else {
+      // Part of form snippet was obfuscated.  Transform the DOM tree back into
+      // a string.
+      String filteredSnippet;
+      try {
+        TransformerFactory transformerFactory =
+            TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        transformer.setOutputProperty(OutputKeys.METHOD, "html");
+        transformer.setOutputProperty(OutputKeys.VERSION, "4.0");
+        transformer.setOutputProperty(OutputKeys.INDENT, "no");
+        DOMSource source = new DOMSource(document);
+        StreamResult result =  new StreamResult(new StringWriter());
+        transformer.transform(source, result);
+        filteredSnippet = result.getWriter().toString();
+      } catch (TransformerException unexpected) {
+        LOGGER.log(Level.WARNING, "XML transformation error!", unexpected);
+        return null;
+      }
+
+      // Remove the temporary root element.
+      filteredSnippet = filteredSnippet.substring(
+          TEMP_ROOT_BEGIN_ELEMENT.length(),
+          filteredSnippet.length() - TEMP_ROOT_END_ELEMENT.length());
+
+      return filteredSnippet;
+    }
+  }
+
+  /**
+   * Utility function to replace any sensitive values in the given config data
+   * that are obfuscated with open values from the previous configuration.
+   *
+   * @param configData the updated config properties that may still include some
+   *        obfuscated values.
+   * @param previousConfigData the current or previous set of properties that
+   *        have all the values in the clear.
+   */
+  public static void replaceSensitiveData(Map configData,
+      Map previousConfigData) {
+    for (Iterator iter = configData.keySet().iterator(); iter.hasNext(); ) {
+      String key = (String) iter.next();
+      // Revert if the key is sensitive and the string is still obfuscated and
+      // hasn't changed in length.
+      if (SecurityUtils.isKeySensitive(key) &&
+          isObfuscated((String) configData.get(key)) &&
+          ((String) configData.get(key)).length() ==
+              ((String) previousConfigData.get(key)).length()) {
+        configData.put(key, previousConfigData.get(key));
+      }
+    }
+  }
+
+  protected static String obfuscateValue(String value) {
+    return value.replaceAll(".", "*");
+  }
+
+  // Entire string of one or more '*' characters.
+  private static final Pattern OBFUSCATED_PATTERN = Pattern.compile("^\\*+$");
+
+  /**
+   * @param value the value to be checked.
+   * @return true if the given value is obfuscated.
+   */
+  protected static boolean isObfuscated(String value) {
+    Matcher matcher = OBFUSCATED_PATTERN.matcher(value);
+    return matcher.matches();
   }
 }
