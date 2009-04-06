@@ -83,47 +83,53 @@ public class Context {
   private static final String APPLICATION_CONTEXT_PROPERTIES_BEAN_NAME =
       "ApplicationContextProperties";
 
+  // This is the comment written to the ApplicationContextProperties file.
   private static final String CONNECTOR_MANGER_CONFIG_HEADER =
       " Google Enterprise Connector Manager Configuration\n"
       + "\n"
-      + " Specifies the host IP for the feed host on the GSA.\n"
-      + " Example:\n"
-      + "     gsa.feed.host=172.24.2.0\n"
+      + " The 'gsa.feed.host' property specifies the host name or IP address\n"
+      + " for the feed host on the GSA.\n"
+      + " For example:\n"
+      + "   gsa.feed.host=172.24.2.0\n"
       + "\n"
-      + " Specifies the host port for the feed host on the GSA.\n"
-      + " Example:\n"
-      + "     gsa.feed.port=19900\n"
+      + " The 'gsa.feed.port' property specifies the host port for the feed\n"
+      + " host on the GSA.\n"
+      + " For example:\n"
+      + "   gsa.feed.port=19900\n"
       + "\n"
-      + " This property is used to lock out the Admin Servlet and prevent it\n"
-      + " from making changes to this configuration file.  Specifically, the\n"
-      + " ability to set the FeedConnection properties will be locked out.  If\n"
-      + " it is set to 'true' or missing the Servlet will not be allowed to\n"
-      + " update this file. \n"
+      + " The 'manager.locked' property is used to lock out the Admin Servlet\n"
+      + " and prevent it from making changes to this configuration file.\n"
+      + " Specifically, the ability to set the FeedConnection properties will\n"
+      + " be locked out.  If it is set to 'true' or missing the Servlet will\n"
+      + " not be allowed to update this file.\n"
       + " NOTE: This property will automatically be changed to 'true' upon\n"
       + " successful update of the file by the Servlet.  Therefore, once the\n"
       + " FeedConnection properties are successfully updated by the Servlet\n"
       + " subsequent updates will be locked out until the flag is manually\n"
-      + " reset to false.\n"
-      + " Example:\n"
-      + "     manager.locked=false\n"
+      + " reset to 'false'.\n"
+      + " For example:\n"
+      + "   manager.locked=false\n"
       + "\n"
-      + " This property controls the logging of the feed record to a log file.\n"
-      + " The log record will contain the feed XML without the content data.\n"
-      + " Set this property to ALL to enable feed logging, OFF to disable.\n"
-      + " Customers and developers can use this functionality to observe the\n"
-      + " feed record and metadata information the connector manager sends to\n"
-      + " the GSA.\n"
-      + " Example:\n"
-      + "     feedLoggingLevel=OFF\n"
+      + " The 'feedLoggingLevel' property controls the logging of the feed\n"
+      + " record to a log file.  The log record will contain the feed XML\n"
+      + " without the content data.  Set this property to 'ALL' to enable feed\n"
+      + " logging, 'OFF' to disable.  Customers and developers can use this\n"
+      + " functionality to observe the feed record and metadata information\n"
+      + " the connector manager sends to the GSA.\n"
+      + " For example:\n"
+      + "   feedLoggingLevel=OFF\n"
       + "\n"
-      + " If you set teedFeedFile to the name of an existing file, whenever the\n"
-      + " connector manager feeds content to the GSA, it will write a duplicate\n"
-      + " copy of the feed XML to the file specified by teedFeedFile. GSA\n"
-      + " customers and third-party developers can use this functionality to\n"
-      + " observe the content the connector manager sends to the GSA and\n"
-      + " reproduce any issue which may arise.\n"
-      + " Example:\n"
-      + "     teedFeedFile=/tmp/CMTeedFeedFile"
+      + " If you set the 'teedFeedFile' property to the name of an existing\n"
+      + " file, whenever the connector manager feeds content to the GSA, it\n"
+      + " will write a duplicate copy of the feed XML to the file specified by\n"
+      + " the teedFeedFile property.  GSA customers and third-party developers\n"
+      + " can use this functionality to observe the content the connector\n"
+      + " manager sends to the GSA and reproduce any issue which may arise.\n"
+      + " NOTE: The teedFeedFile will contain all feed data sent to the GSA,\n"
+      + " including document content and metadata.  The teedFeedFile can\n"
+      + " therefore grow quite large very quickly.\n"
+      + " For example:\n"
+      + "   teedFeedFile=/tmp/CMTeedFeedFile"
       + "\n";
 
   private static final Logger LOGGER =
@@ -159,6 +165,8 @@ public class Context {
 
   private boolean isGsaFeedHostInitialized = false;
   private String gsaFeedHost = null;
+
+  private int propertiesVersion = 0;
 
   /**
    * @param feeding to feed or not to feed
@@ -712,9 +720,15 @@ public class Context {
    */
   public boolean getIsManagerLocked() {
     initApplicationContext();
-    String isManagerLocked = getProperty(MANAGER_LOCKED_PROPERTY_KEY,
-        Boolean.TRUE.toString());
-    return Boolean.valueOf(isManagerLocked).booleanValue();
+    String isManagerLocked = getProperty(MANAGER_LOCKED_PROPERTY_KEY, null);
+    if (isManagerLocked != null) {
+      return Boolean.valueOf(isManagerLocked).booleanValue();
+    }
+    // Consider older, but uninitialized properties files to be unlocked.
+    if (propertiesVersion < 2 && "localhost".equals(getGsaFeedHost())) {
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -729,6 +743,7 @@ public class Context {
       File propFile = getPropFile(propFileName);
       try {
         Properties props = PropertiesUtils.loadFromFile(propFile);
+        propertiesVersion = PropertiesUtils.getPropertiesVersion(props);
         return props.getProperty(key, defaultValue);
       } catch (PropertiesException e) {
         LOGGER.log(Level.WARNING, "Unable to read application context "

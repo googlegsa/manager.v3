@@ -41,7 +41,7 @@ public class PropertiesUtils {
   public static final String GOOGLE_WORK_DIR = "googleWorkDir";
   public static final String GOOGLE_PROPERTIES_VERSION =
       "googlePropertiesVersion";
-  public static final int GOOGLE_PROPERTIES_VERSION_NUMBER = 1;
+  public static final int GOOGLE_PROPERTIES_VERSION_NUMBER = 2;
 
   private PropertiesUtils() {
     // prevents instantiation
@@ -198,6 +198,11 @@ public class PropertiesUtils {
       Properties props = copy(properties);
       stampPropertiesVersion(props);
       encryptSensitiveProperties(props);
+      // If the comment contains embedded newlines, we must comment out each
+      // subsequent line after the first, as Java Properties won't do it for us.
+      if (comment != null && comment.indexOf('\n') > 0) {
+        comment = comment.replaceAll("\n", "\n#");
+      }
       props.store(outputStream, comment);
     } catch (Exception e) {
       throw new PropertiesException("Error storing properties to stream", e);
