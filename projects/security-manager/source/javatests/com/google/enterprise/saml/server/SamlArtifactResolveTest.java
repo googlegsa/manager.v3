@@ -68,7 +68,7 @@ public class SamlArtifactResolveTest extends TestCase {
         "                           Version=\"2.0\"\n" +
         "                           xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\">\n" +
         "      <saml:Issuer xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">" +
-        GsaConstants.GSA_ISSUER +
+        GsaConstants.GSA_TESTING_ISSUER +
         "</saml:Issuer>\n" +
         "      <samlp:Artifact>" + encodedArtifact + "</samlp:Artifact>\n" +
         "    </samlp:ArtifactResolve>\n" +
