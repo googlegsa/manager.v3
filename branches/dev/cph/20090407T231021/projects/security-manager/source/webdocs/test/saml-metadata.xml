@@ -5,7 +5,7 @@
 
   <!-- Description of the Mock GSA -->
   <EntityDescriptor
-      entityID="google.com">
+      entityID="http://google.com/enterprise/gsa/testing">
 
     <SPSSODescriptor
 	protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
