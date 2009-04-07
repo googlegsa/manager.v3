@@ -1,10 +1,10 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,7 @@ import javax.servlet.http.Cookie;
  * The credentials associated with a single authentication-domain group.  Only the username and
  * password are stored here; other credentials are domain-specific and are stored in the domain
  * credentials comprising the group.
- */ 
+ */
 public class CredentialsGroup {
 
   private final AuthnDomainGroup authnDomainGroup;
@@ -74,7 +74,7 @@ public class CredentialsGroup {
   private void maybeResetVerification(String s1, String s2) {
     if ((s1 == null) ? (s2 != null) : s1.equals(s2)) {
       for (DomainCredentials element: elements) {
-        element.resetVerification();
+        element.setVerificationStatus(VerificationStatus.TBD);
       }
     }
   }
@@ -88,11 +88,17 @@ public class CredentialsGroup {
   }
 
   public boolean isVerified() {
-    if (isVerifiable()) {
-      for (DomainCredentials element: elements) {
-        if (element.isVerified()) {
-          return true;
-        }
+    if (!isVerifiable()) {
+      return false;
+    }
+    for (DomainCredentials element: elements) {
+      if (element.getVerificationStatus() == VerificationStatus.REFUTED) {
+        return false;
+      }
+    }
+    for (DomainCredentials element: elements) {
+      if (element.getVerificationStatus() == VerificationStatus.VERIFIED) {
+        return true;
       }
     }
     return false;
@@ -104,14 +110,5 @@ public class CredentialsGroup {
       cookies.addAll(element.getCookies());
     }
     return cookies;
-  }
-
-  public boolean allCredentialsFilled() {
-    for (DomainCredentials dCred : elements) {
-      if (dCred.needsVerification()) {
-        return false;
-      }
-    }    
-    return true;
   }
 }
