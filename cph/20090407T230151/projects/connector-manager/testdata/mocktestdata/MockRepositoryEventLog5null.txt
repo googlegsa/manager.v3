@@ -1,2 +1,0 @@
-# testing pusher with a null metadata item
-{"timestamp":"10","type":"save","docid":"doc1", "google:searchurl":"http://www.sometesturl.com/test", "google:nullvals":"", "google:lastmodified":"Tue, 15 Nov 1994 12:45:26 GMT"}
