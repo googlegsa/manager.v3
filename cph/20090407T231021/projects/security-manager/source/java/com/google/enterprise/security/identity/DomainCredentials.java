@@ -28,21 +28,15 @@ import javax.servlet.http.Cookie;
  */
 public class DomainCredentials implements SecAuthnIdentity {
 
-  private enum Decision {
-    TBD,            // haven't gone through verification yet
-    VERIFIED,       // recognized by IdP
-    REPUDIATED,     // unrecognized by IdP
-  }
-
   private final AuthnDomain domain;
   private final CredentialsGroup group;
-  private Decision decision;
+  private VerificationStatus status;
   private final Vector<Cookie> cookies;
 
   public DomainCredentials(AuthnDomain domain, CredentialsGroup group) {
     this.domain = domain;
     this.group = group;
-    decision = Decision.TBD;
+    status = VerificationStatus.TBD;
     cookies = new Vector<Cookie>();
     group.getElements().add(this);
   }
@@ -80,20 +74,12 @@ public class DomainCredentials implements SecAuthnIdentity {
     return domain.getLoginUrl();
   }
 
-  public void resetVerification() {
-    this.decision = Decision.TBD;
+  public VerificationStatus getVerificationStatus() {
+    return status;
   }
 
-  public boolean needsVerification() {
-    return decision == Decision.TBD;
-  }
-
-  public boolean isVerified() {
-    return decision == Decision.VERIFIED;
-  }
-
-  public void setVerified(boolean isVerified) {
-    this.decision = isVerified ? Decision.VERIFIED : Decision.REPUDIATED;
+  public void setVerificationStatus(VerificationStatus status) {
+    this.status = status;
   }
 
   public Collection<Cookie> getCookies() {
