@@ -149,6 +149,16 @@ public class GsaFeedConnection implements FeedConnection {
             "IOException while posting: will retry later", e);
         isThrowing = true;
         throw new FeedException(e);
+      } catch (RuntimeException e) {
+        LOGGER.log(Level.SEVERE,
+            "RuntimeException while feeding: skipping", e);
+        isThrowing = true;
+        throw new RepositoryDocumentException(e);
+      } catch (Error e) {
+        LOGGER.log(Level.SEVERE,
+            "Error while feeding: skipping", e);
+        isThrowing = true;
+        throw new RepositoryDocumentException(e);
       } finally {
         try {
           outputStream.close();
