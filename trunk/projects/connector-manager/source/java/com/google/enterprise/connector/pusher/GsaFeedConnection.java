@@ -150,15 +150,11 @@ public class GsaFeedConnection implements FeedConnection {
         isThrowing = true;
         throw new FeedException(e);
       } catch (RuntimeException e) {
-        LOGGER.log(Level.SEVERE,
-            "RuntimeException while feeding: skipping", e);
         isThrowing = true;
-        throw new RepositoryDocumentException(e);
+        throw e;
       } catch (Error e) {
-        LOGGER.log(Level.SEVERE,
-            "Error while feeding: skipping", e);
         isThrowing = true;
-        throw new RepositoryDocumentException(e);
+        throw e;
       } finally {
         try {
           outputStream.close();
