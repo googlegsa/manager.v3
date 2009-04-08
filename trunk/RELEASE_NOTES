@@ -11,6 +11,61 @@ list of known issues and workarounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
+Release 1.3.2, Apr 07, 2009
+===========================
+
+Introduction
+------------
+This is an upgrade release that addresses some problems discovered since
+the 1.3.0 release.  It also adds some enhanced security measures that
+obfuscates configuration data communicated between the Google Search
+Appliance and the Connector Manager, and prevents hijacking of a content feed.
+These enhanced security measures impact Connector Manager administrators
+and Connector Developers.  For details see the Version Compatibility
+section below.  Users of previous releases are encouraged to upgrade.
+
+Summary of Changes
+------------------
+  * Fixed a Concurrency issue with the HostLoadManager.
+  * Fix Issue 137: Obfuscate configuration data transported between the
+                   Google Search Appliance and the Connector Manager.
+                   This has compatibility implications for connector
+                   writers.  See the Compatibility section below.
+  * Fix Issue 138: Prevent hijacking a Connector Manager Content Feed
+                   using a "set once latch".  This makes it difficult to
+                   implement man-in-the middle attacks that observes
+                   document content as it is being fed to the GSA.
+                   Redirecting a content feed now requires manual intervention.
+                   This has compatibility implications for Connector Manager
+                   administrators.  See the Compatibility section below.
+  * Fix Issue 139: A followup change to Issue 137 that corrects a problem
+                   filtering forms that have embedded scripts, but no
+                   sensitive data.
+  * Fix Issue 140: Fix a problem where the GsaFeedConnection did not
+                   handle OutOfMemoryErrors correctly, resulting in a
+                   loop feeding the same content indefinitely.
+
+Version Compatibility
+---------------------
+The two security enhancements (Issues 137 and 138) have compatibility
+issues for connector authors and administrators.
+
+The Connector Manager now obfuscates the connector configuration form data
+sent between the GSA and Connector Manager.  This prevents sensitive
+configuration settings (such as ECM account passwords) from being trasmitted
+in the clear.  However to accomplish this, the Connector Manager must parse
+the configuration form returned by ConnectorType getPopulatedConfigForm(),
+getConfigForm(), and validateConfig() methods.  These forms must now be
+well-formed XHTML fragments.  For additional details, please see:
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=137
+
+The Connector Manager now has a latch that prevents redirecting a content
+feed without manual intervention by an administrator.  Connector administrators
+must now clear a flag in the Connector Manager properties before configuring
+the Connector Manager to feed a different Search Appliance.  For details see:
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=138
+
+
 Release 1.3.1, Mar 16, 2009
 ===========================
 
@@ -34,7 +89,20 @@ Summary of Changes
                    from SetConnectorConfig servlet.
 
   * Fix Issue 131: "Domain" gets removed when CM creates AuthenticationIdentity
-                   for the Connector.
+                   for the Connector.  This has compatibility implications for
+                   connector writers.  See the Compatibility section below.
+
+Version Compatibility
+---------------------
+Connector authors should note the Issue 131 change to the AuthenticationIdentity
+Interface, adding the Domain element and getDomain() method.  Older versions
+of the Google Search Appliance do not supply the domain, so connectors often
+required a configuration setting that specified the Windows domain used.
+Connectors that implemented this work-around should continue to do so for the
+indefinite future.  However, if the connector received a domain from the GSA,
+that domain should be used in deference to any locally configured domain.
+For additional details, please see:
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=131
 
 
 Release 1.3.0, Jan 13, 2009
