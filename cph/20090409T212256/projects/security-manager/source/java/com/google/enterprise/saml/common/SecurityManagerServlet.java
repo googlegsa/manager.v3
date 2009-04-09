@@ -71,10 +71,6 @@ public abstract class SecurityManagerServlet extends ServletBase {
     return metadata.getSmEntity();
   }
 
-  public EntityDescriptor getSpEntity() throws ServletException {
-    return metadata.getSpEntity();
-  }
-
   /**
    * Create a new SAML message context and associate it with this session.
    *

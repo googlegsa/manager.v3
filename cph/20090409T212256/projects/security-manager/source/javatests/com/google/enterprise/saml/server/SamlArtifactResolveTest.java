@@ -86,7 +86,7 @@ public class SamlArtifactResolveTest extends TestCase {
     BackEnd backend = ConnectorManager.class.cast(context.getManager()).getBackEnd();
     backend.getArtifactMap().put(
         encodedArtifact,
-        metadata.getSpEntity().getEntityID(),
+        GsaConstants.GSA_TESTING_ISSUER,
         metadata.getSmEntity().getEntityID(),
         makeResponse(null, makeStatus(StatusCode.SUCCESS_URI)));
 

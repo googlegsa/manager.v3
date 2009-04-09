@@ -47,6 +47,8 @@ import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 
+import static com.google.enterprise.saml.common.GsaConstants.GSA_TESTING_ISSUER;
+
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
@@ -74,7 +76,7 @@ public class SamlSsoTest extends TestCase {
     MockArtifactConsumer artifactConsumer = new MockArtifactConsumer();
     artifactConsumer.setHttpClient(new MockHttpClient(transport));
 
-    EntityDescriptor gsaEntity = metadata.getSpEntity();
+    EntityDescriptor gsaEntity = metadata.getEntity(GSA_TESTING_ISSUER);
     SPSSODescriptor sp = gsaEntity.getSPSSODescriptor(SAML20P_NS);
     transport.registerServlet(sp.getDefaultAssertionConsumerService(), artifactConsumer);
 
