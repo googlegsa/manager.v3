@@ -323,9 +323,9 @@ public class TraversalScheduler implements Scheduler {
                 schedule.setDisabled(true);
                 instantiator.setConnectorSchedule(connectorName,
                     schedule.toString());
+                LOGGER.info("Traversal complete. Automatically pausing "
+                  + "traversal for connector " + connectorName);
               }
-              LOGGER.info("Traversal complete. Automatically pausing traversal"
-                  + " for connector " + connectorName);
             } else if (batchDone == Traverser.ERROR_WAIT) {
               hostLoadManager.connectorFinishedTraversal(connectorName,
                   Traverser.ERROR_WAIT_MILLIS);

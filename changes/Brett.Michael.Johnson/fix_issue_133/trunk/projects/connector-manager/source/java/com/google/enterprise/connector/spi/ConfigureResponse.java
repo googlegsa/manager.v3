@@ -29,17 +29,18 @@ public class ConfigureResponse {
 
   /**
    * Simple constructor.
-   *
-   * @param message
-   *          A message to be included to the user along with the form. This
-   *          message may be null or empty - no distinction is made between
-   *          those cases. The message should be plain text - may not contain
-   *          script directives.
-   * @param formSnippet
-   *          A sequence of &lt;tr&gt; elements, each of which should contain
-   *          two &lt;td&gt; fields, first is the description of configuration
-   *          element, second is an HTML input field. The snippet may be null or
-   *          empty. Again, there may be no script elements.
+   * 
+   * @param message A message to be included to the user along with the form.
+   *        This message may be null or empty - no distinction is made between
+   *        those cases. The message should be plain text - may not contain
+   *        script directives.
+   * @param formSnippet A well formed snippet of XHTML containing a sequence of
+   *        &lt;tr&gt; elements to be displayed within a form. Each &lt;tr&gt;
+   *        should contain two &lt;td&gt; fields. First is the description of
+   *        configuration element, and second is the form element. The snippet
+   *        may be null or empty. Script elements should be avoided, however, if
+   *        they are used the script code must be contained within a CDATA
+   *        section.
    */
   public ConfigureResponse(String message, String formSnippet) {
     super();
@@ -56,11 +57,13 @@ public class ConfigureResponse {
    *          message may be null or empty - no distinction is made between
    *          those cases. The message should be plain text - may not contain
    *          script directives.
-   * @param formSnippet
-   *          A sequence of &lt;tr&gt; elements, each of which should contain
-   *          two &lt;td&gt; fields, first is the description of configuration
-   *          element, second is an HTML input field. The snippet may be null or
-   *          empty. Again, there may be no script elements.
+   * @param formSnippet A well formed snippet of XHTML containing a sequence of
+   *        &lt;tr&gt; elements to be displayed within a form. Each &lt;tr&gt;
+   *        should contain two &lt;td&gt; fields. First is the description of
+   *        configuration element, and second is the form element. The snippet
+   *        may be null or empty. Script elements should be avoided, however, if
+   *        they are used the script code must be contained within a CDATA
+   *        section.
    * @param configData
    *          A {@link java.util.Map} of name, value pairs (String, String) of
    *          configuration data.  If supplied, where appropriate, the Connector

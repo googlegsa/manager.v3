@@ -67,4 +67,4 @@ public class Alternative<T> extends Parser<T> {
     }
     return right.parse(buf, start, end, data);
   }
-};
+}

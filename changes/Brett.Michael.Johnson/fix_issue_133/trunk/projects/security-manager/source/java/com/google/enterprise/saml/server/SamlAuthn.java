@@ -27,13 +27,14 @@ import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.saml2.binding.decoding.HTTPRedirectDeflateDecoder;
 import org.opensaml.saml2.binding.encoding.HTTPArtifactEncoder;
 import org.opensaml.saml2.core.Assertion;
+import org.opensaml.saml2.core.Attribute;
+import org.opensaml.saml2.core.AttributeStatement;
 import org.opensaml.saml2.core.AudienceRestriction;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.Conditions;
 import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Response;
-import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.EntityDescriptor;
@@ -43,6 +44,8 @@ import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -55,6 +58,9 @@ import javax.servlet.http.HttpSession;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertion;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAttribute;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAttributeStatement;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAttributeValue;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAudience;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAudienceRestriction;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnStatement;
@@ -62,7 +68,6 @@ import static com.google.enterprise.saml.common.OpenSamlUtil.makeConditions;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatusMessage;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSubject;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
@@ -130,43 +135,33 @@ public class SamlAuthn extends SecurityManagerServlet
                            SAML2_ARTIFACT_BINDING_URI);
     }
 
-    // If there's a cookie we can decode, use that
-    // TODO fold this nicely into multiple identities
+    // If there are cookies we can decode, use them.
     if (tryCookies(request, response)) {
       return;
     }
 
-    if (!backend.isIdentityConfigured()) {
-      makeUnsuccessfulResponse(request, StatusCode.AUTHN_FAILED_URI,
-                               "Security Manager not configured");
-      doRedirect(request, response);
-      return;
+    if (backend.isIdentityConfigured()) {
+      maybePrompt(request, response);
+    } else {
+      makeUnsuccessfulResponse(request, response, "Security Manager not configured");
     }
-
-    maybePrompt(request, response);
   }
 
-  /**
-   * Try to find a cookie that can be decoded into an identity.
-   *
-   * @param request The HTTP request message.
-   * @param response The HTTP response message.  Filled in if a suitable cookie was found.
-   * @return Whether or not a usable cookie was found.
-   */
+  // Try to find cookies that can be decoded into identities.
   private boolean tryCookies(HttpServletRequest request, HttpServletResponse response)
       throws ServletException {
-    BackEnd backend = getBackEnd();
-    AuthenticationResponse authnResponse = backend.handleCookie(getAuthnContext(request));
-    if ((authnResponse != null) && authnResponse.isValid()) {
-      // TODO make sure authnResponse has subject in BackEnd
-      String username = authnResponse.getData();
-      if (username != null) {
-        makeSuccessfulResponse(request, username);
-        doRedirect(request, response);
-        return true;
-      }
+    // TODO(cph): these cookies should be assigned to particular CredentialsGroups.
+    //    If that's done, then we might still need to prompt for more information with the
+    //    OmniForm, after having filled in the known identities.
+    List<String> ids = new ArrayList<String>();
+    for (AuthenticationResponse ar: getBackEnd().handleCookie(getAuthnContext(request))) {
+      ids.add(ar.getData());
     }
-    return false;
+    if (ids.isEmpty()) {
+      return false;
+    }
+    makeSuccessfulResponse(request, response, ids);
+    return true;
   }
 
   /**
@@ -200,8 +195,8 @@ public class SamlAuthn extends SecurityManagerServlet
     BackEnd backend = getBackEnd();
     OmniForm omniform = getOmniForm(request);
 
-    String verifiedId = omniform.handleFormSubmit(request);
-    if (null == verifiedId) {
+    List<String> ids = omniform.handleFormSubmit(request);
+    if (ids.isEmpty()) {
       maybePrompt(request, response);
       return;
     }
@@ -209,21 +204,14 @@ public class SamlAuthn extends SecurityManagerServlet
     // This sequence is done; reset for next.
     resetPromptCounter(request.getSession());
 
-    LOGGER.info("Verified ID is: " + verifiedId);
-    makeSuccessfulResponse(request, verifiedId);
-
-    // If we've reached here, we've fully authenticated the user. Update
-    // the Session Manager with the necessary info, and then generate
-    // the artifact redirect.
+    // Update the Session Manager with the necessary info.
     Cookie cookie =
         getAuthnContext(request).getCookieNamed(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME);
     if (cookie != null) {
       backend.updateSessionManager(cookie.getValue(), omniform.getCredentialsGroups());
     }
 
-    // generate artifact, redirect, plant cookies
-    LOGGER.info("All identities verified");
-    doRedirect(request, response);
+    makeSuccessfulResponse(request, response, ids);
   }
 
   private void maybePrompt(HttpServletRequest request, HttpServletResponse response)
@@ -234,9 +222,7 @@ public class SamlAuthn extends SecurityManagerServlet
       writer.print(getOmniForm(request).generateForm());
       writer.close();
     } else {
-      makeUnsuccessfulResponse(request, StatusCode.AUTHN_FAILED_URI,
-                               "Incorrect username or password");
-      doRedirect(request, response);
+      makeUnsuccessfulResponse(request, response, "Incorrect username or password");
     }
   }
 
@@ -258,12 +244,17 @@ public class SamlAuthn extends SecurityManagerServlet
   private OmniForm getOmniForm(HttpServletRequest request)
       throws IOException {
     HttpSession session = request.getSession();
-    OmniForm omniform = OmniForm.class.cast(session.getAttribute(OMNI_FORM_NAME));
+    OmniForm omniform = sessionOmniForm(session);
     if (null == omniform) {
       omniform = new OmniForm(getBackEnd(), new OmniFormHtml(getAction(request)));
       session.setAttribute(OMNI_FORM_NAME, omniform);
     }
     return omniform;
+  }
+
+  // Exposed for debugging:
+  public static OmniForm sessionOmniForm(HttpSession session) {
+    return OmniForm.class.cast(session.getAttribute(OMNI_FORM_NAME));
   }
 
   private String getAction(HttpServletRequest request) {
@@ -272,15 +263,17 @@ public class SamlAuthn extends SecurityManagerServlet
     return (q < 0) ? url : url.substring(0, q);
   }
 
-  private void makeSuccessfulResponse(HttpServletRequest request, String username)
+  // We have at least one verified identity.  The first identity is considered the primary.
+  private void makeSuccessfulResponse(HttpServletRequest request, HttpServletResponse response,
+                                      List<String> ids)
       throws ServletException {
-    LOGGER.info("Authenticated successfully as " + username);
+    LOGGER.info("Verified IDs: " + idsToString(ids));
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         existingSamlMessageContext(request.getSession());
 
     // Generate <Assertion> with <AuthnStatement>
     Assertion assertion =
-        makeAssertion(makeIssuer(getSmEntity().getEntityID()), makeSubject(username));
+        makeAssertion(makeIssuer(getSmEntity().getEntityID()), makeSubject(ids.get(0)));
     assertion.getAuthnStatements().add(makeAuthnStatement(AuthnContext.IP_PASSWORD_AUTHN_CTX));
 
     // Generate <Conditions> with <AudienceRestriction>
@@ -291,20 +284,42 @@ public class SamlAuthn extends SecurityManagerServlet
     assertion.setConditions(conditions);
 
     // Generate <Response>
-    Response response =
+    Response samlResponse =
         makeResponse(context.getInboundSAMLMessage(), makeStatus(StatusCode.SUCCESS_URI));
-    response.getAssertions().add(assertion);
-    context.setOutboundSAMLMessage(response);
+    if (ids.size() > 1) {
+      Attribute attribute = makeAttribute("secondary-ids");
+      for (String id: ids.subList(1, ids.size())) {
+        attribute.getAttributeValues().add(makeAttributeValue(id));
+      }
+      AttributeStatement attrStatement = makeAttributeStatement();
+      attrStatement.getAttributes().add(attribute);
+      assertion.getAttributeStatements().add(attrStatement);
+    }
+    samlResponse.getAssertions().add(assertion);
+    context.setOutboundSAMLMessage(samlResponse);
+    doRedirect(request, response);
   }
 
-  private void makeUnsuccessfulResponse(HttpServletRequest request, String code, String message)
+  private String idsToString(List<String> ids) {
+    StringBuffer buffer = new StringBuffer();
+    for (String id: ids) {
+      if (buffer.length() > 0) {
+        buffer.append(", ");
+      }
+      buffer.append(id);
+    }
+    return buffer.toString();
+  }
+
+  private void makeUnsuccessfulResponse(HttpServletRequest request, HttpServletResponse response,
+                                        String message)
       throws ServletException {
     LOGGER.log(Level.WARNING, message);
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         existingSamlMessageContext(request.getSession());
-    Status status = makeStatus(code);
-    status.setStatusMessage(makeStatusMessage(message));
-    context.setOutboundSAMLMessage(makeResponse(context.getInboundSAMLMessage(), status));
+    context.setOutboundSAMLMessage(makeResponse(context.getInboundSAMLMessage(),
+                                                makeStatus(StatusCode.AUTHN_FAILED_URI, message)));
+    doRedirect(request, response);
   }
 
   private void doRedirect(HttpServletRequest request, HttpServletResponse response)

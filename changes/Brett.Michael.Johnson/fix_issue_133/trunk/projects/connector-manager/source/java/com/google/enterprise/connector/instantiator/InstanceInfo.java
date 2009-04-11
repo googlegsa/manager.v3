@@ -164,9 +164,10 @@ public final class InstanceInfo {
       if (info.getConnectorSchedule() == null) {
         // If there is no schedule, create a disabled schedule rather than
         // logging "schedule not found" once a second for eternity.
-        LOGGER.warning("Traversal Schedule not found for connector " +
-                       connectorName + ", disabling traversal.");
-        Schedule schedule = new Schedule(connectorName, true, 0, -1, "1-1");
+        LOGGER.warning("Traversal Schedule not found for connector "
+                       + connectorName + ", disabling traversal.");
+        Schedule schedule = new Schedule();
+        schedule.setConnectorName(connectorName);
         info.setConnectorSchedule(schedule.toString());
       }
     }

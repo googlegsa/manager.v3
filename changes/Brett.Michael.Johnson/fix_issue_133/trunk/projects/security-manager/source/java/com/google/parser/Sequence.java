@@ -72,4 +72,4 @@ public class Sequence<T> extends Parser<T> {
     }
     return NO_MATCH;
   }
-};
+}
