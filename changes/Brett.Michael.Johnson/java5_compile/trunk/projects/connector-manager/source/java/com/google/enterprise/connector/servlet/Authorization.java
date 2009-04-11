@@ -25,16 +25,10 @@ import java.io.PrintWriter;
  */
 public class Authorization extends ConnectorManagerServlet {
 
-  /*
-   * (non-Javadoc)
-   * @see com.google.enterprise.connector.servlet.ConnectorManagerServlet
-   * #processDoPost(java.lang.String,
-   * com.google.enterprise.connector.manager.Manager, java.io.PrintWriter)
-   */
+  @Override
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
     AuthorizationHandler authorizationHandler = new AuthorizationHandler(xmlBody, manager, out);
     authorizationHandler.handleDoPost();
   }
-
 }

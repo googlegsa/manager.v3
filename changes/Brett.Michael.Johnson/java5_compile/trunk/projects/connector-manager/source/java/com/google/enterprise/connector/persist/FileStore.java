@@ -51,7 +51,7 @@ public class FileStore implements ConnectorScheduleStore,
     testStoreContext(context);
     String key = context.getConnectorName() + schedName;
     if (cacheMap.containsKey(key)) {
-      return (String) cacheMap.get(key);
+      return cacheMap.get(key);
     }
     String schedule = readStoreFile(context, schedName);
     if (schedule != null) {
@@ -99,7 +99,7 @@ public class FileStore implements ConnectorScheduleStore,
     testStoreContext(context);
     String key = context.getConnectorName() + stateName;
     if (cacheMap.containsKey(key)) {
-      return (String) cacheMap.get(key);
+      return cacheMap.get(key);
     }
     String state = readStoreFile(context, stateName);
     if (state != null) {

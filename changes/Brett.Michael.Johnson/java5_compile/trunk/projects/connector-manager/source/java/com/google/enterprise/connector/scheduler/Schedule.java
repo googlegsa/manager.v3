@@ -36,6 +36,14 @@ public class Schedule {
   public static final int POLLING_DISABLED = -1;
 
   /**
+   * Construct an empty, disabled Schedule.
+   */
+  public Schedule() {
+    this(null, true, 0, -1, "1-1");
+  }
+
+
+  /**
    * Construct a Schedule for a given Connector.
    *
    * @param connectorName
@@ -46,7 +54,7 @@ public class Schedule {
    */
   public Schedule(String connectorName, boolean disabled, int load,
       int retryDelayMillis, String timeIntervals) {
-    this(connectorName, false, load, retryDelayMillis,
+    this(connectorName, disabled, load, retryDelayMillis,
          parseTimeIntervals(timeIntervals));
   }
 
@@ -208,6 +216,7 @@ public class Schedule {
   /**
    * @return String of the form: e.g. "connector1:1-2:3-5"
    */
+  @Override
   public String toString() {
     StringBuilder buf = new StringBuilder();
     if (disabled) {
@@ -222,6 +231,10 @@ public class Schedule {
 
   public String getConnectorName() {
     return connectorName;
+  }
+
+  public void setConnectorName(String connectorName) {
+    this.connectorName = connectorName;
   }
 
   public int getLoad() {

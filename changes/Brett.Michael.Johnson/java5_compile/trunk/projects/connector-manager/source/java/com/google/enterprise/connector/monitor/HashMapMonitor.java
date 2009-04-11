@@ -46,7 +46,7 @@ public class HashMapMonitor implements Monitor {
   public void setVariables(Map<String, ?> props) {
     synchronized (vars) {
       for (String key : props.keySet()) {
-        Object value = (Object) props.get(key);
+        Object value = props.get(key);
         if (null == value) {
           vars.remove(key);
         } else {

@@ -176,7 +176,7 @@ public class MockRepositoryDocumentStore
    * @return If found, the document; otherwise, null
    */
   public MockRepositoryDocument getDocByID(String docid) {
-    return (MockRepositoryDocument) store.get(docid);
+    return store.get(docid);
   }
 
   /**

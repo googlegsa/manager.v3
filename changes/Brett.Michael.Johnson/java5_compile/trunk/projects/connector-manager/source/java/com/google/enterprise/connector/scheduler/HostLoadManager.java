@@ -105,8 +105,7 @@ public class HostLoadManager {
    */
   private int getNumDocsTraversedThisPeriod(String connectorName) {
     updateNumDocsTraversedData();
-    Integer numDocs =
-        (Integer) connectorNameToNumDocsTraversed.get(connectorName);
+    Integer numDocs = connectorNameToNumDocsTraversed.get(connectorName);
     return (numDocs == null) ? 0 : numDocs.intValue();
   }
 

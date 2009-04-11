@@ -105,7 +105,7 @@ public class JcrDocument implements Document {
   public Property findProperty(String name) throws RepositoryException {
     setupAliases();
     // first, we check whether there is a JCR property with this name
-    String originalName = (String) aliasedPropertyNames.get(name);
+    String originalName = aliasedPropertyNames.get(name);
     if (originalName == null) {
       return null;
     }

@@ -160,6 +160,7 @@ public class SimpleConnectorTypeTest extends TestCase {
     public TestConnectorType() {
       super();
     }
+    @Override
     public boolean validateConfigPair(String key, String val) {
       if (!super.validateConfigPair(key, val)) {
         return false;

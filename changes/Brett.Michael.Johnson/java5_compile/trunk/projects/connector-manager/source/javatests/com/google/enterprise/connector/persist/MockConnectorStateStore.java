@@ -27,7 +27,7 @@ public class MockConnectorStateStore extends HashMap<String, String>
    * #getConnectorState(StoreContext)
    */
   public String getConnectorState(StoreContext context) {
-    return (String) this.get(context.getConnectorName());
+    return this.get(context.getConnectorName());
   }
 
   /* (non-Javadoc)

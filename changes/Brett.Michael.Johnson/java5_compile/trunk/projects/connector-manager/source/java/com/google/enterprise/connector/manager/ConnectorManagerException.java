@@ -71,6 +71,7 @@ public class ConnectorManagerException extends Exception {
    *
    * @return the message
    */
+  @Override
   public String getMessage() {
     String s = super.getMessage();
     if (rootCause == null) {
@@ -86,6 +87,7 @@ public class ConnectorManagerException extends Exception {
    *
    * @return the cause
    */
+  @Override
   public Throwable getCause() {
     return rootCause;
   }

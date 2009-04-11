@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ import org.opensaml.saml2.core.Artifact;
 import org.opensaml.saml2.core.ArtifactResolve;
 import org.opensaml.saml2.core.ArtifactResponse;
 import org.opensaml.saml2.core.Assertion;
+import org.opensaml.saml2.core.Attribute;
+import org.opensaml.saml2.core.AttributeStatement;
 import org.opensaml.saml2.core.Audience;
 import org.opensaml.saml2.core.AudienceRestriction;
 import org.opensaml.saml2.core.AuthnContext;
@@ -105,6 +107,13 @@ public final class OpenSamlUtil {
     } catch (ConfigurationException e) {
       throw new IllegalStateException(e);
     }
+
+    // This is required in order to patch around missing code in OpenSAML.
+    Configuration.registerObjectProvider(
+        AttributeValue.DEFAULT_ELEMENT_NAME,
+        new AttributeValueBuilder(),
+        new AttributeValueMarshaller(),
+        new AttributeValueUnmarshaller());
   }
 
   private static final XMLObjectBuilderFactory objectBuilderFactory =
@@ -127,6 +136,12 @@ public final class OpenSamlUtil {
       makeSamlObjectBuilder(ArtifactResponse.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<Assertion> assertionBuilder =
       makeSamlObjectBuilder(Assertion.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<Attribute> attributeBuilder =
+      makeSamlObjectBuilder(Attribute.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<AttributeStatement> attributeStatementBuilder =
+      makeSamlObjectBuilder(AttributeStatement.DEFAULT_ELEMENT_NAME);
+  private static final SAMLObjectBuilder<AttributeValue> attributeValueBuilder =
+      makeSamlObjectBuilder(AttributeValue.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<Audience> audienceBuilder =
       makeSamlObjectBuilder(Audience.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<AudienceRestriction> audienceRestrictionBuilder =
@@ -336,6 +351,38 @@ public final class OpenSamlUtil {
     Assertion assertion = makeAssertion(issuer);
     assertion.setSubject(subject);
     return assertion;
+  }
+
+  /**
+   * Static factory for SAML <code>Attribute</code> objects.
+   *
+   * @param name The attribute name.
+   * @return A new <code>Attribute</code> object.
+   */
+  public static Attribute makeAttribute(String name) {
+    Attribute attribute = attributeBuilder.buildObject();
+    attribute.setName(name);
+    return attribute;
+  }
+
+  /**
+   * Static factory for SAML <code>AttributeStatement</code> objects.
+   *
+   * @return A new <code>AttributeStatement</code> object.
+   */
+  public static AttributeStatement makeAttributeStatement() {
+    return attributeStatementBuilder.buildObject();
+  }
+
+  /**
+   * Static factory for SAML <code>AttributeValue</code> objects.
+   *
+   * @return A new <code>AttributeValue</code> object.
+   */
+  public static AttributeValue makeAttributeValue(String value) {
+    AttributeValue attrValue = attributeValueBuilder.buildObject();
+    attrValue.setValue(value);
+    return attrValue;
   }
 
   /**
@@ -553,12 +600,16 @@ public final class OpenSamlUtil {
   /**
    * Static factory for SAML <code>Status</code> objects.
    *
-   * A convenience method that supplies an empty <code>StatusCode</code> object.
+   * A convenience method that generates a status object with a message.
    *
+   * @param value A URI specifying one of the standard SAML status codes.
+   * @param message A string describing the status.
    * @return A new <code>Status</code> object.
    */
-  public static Status makeStatus() {
-    return makeStatus(makeStatusCode());
+  public static Status makeStatus(String value, String message) {
+    Status status = makeStatus(value);
+    status.setStatusMessage(makeStatusMessage(message));
+    return status;
   }
 
   /**

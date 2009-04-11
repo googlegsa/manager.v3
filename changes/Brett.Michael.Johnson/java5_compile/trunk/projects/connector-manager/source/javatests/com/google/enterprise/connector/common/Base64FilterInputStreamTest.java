@@ -83,6 +83,7 @@ public class Base64FilterInputStreamTest extends TestCase {
       super(bytes);
     }
 
+    @Override
     public int read(byte[] b, int off, int len) {
       int byteValue = read();
 

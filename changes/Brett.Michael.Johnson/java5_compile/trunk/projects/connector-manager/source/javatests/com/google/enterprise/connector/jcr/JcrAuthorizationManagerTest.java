@@ -168,7 +168,7 @@ public class JcrAuthorizationManagerTest extends TestCase {
       throws com.google.enterprise.connector.spi.RepositoryException {
     List<String> docids = new LinkedList<String>(expectedResults.keySet());
 
-    AuthenticationIdentity identity = 
+    AuthenticationIdentity identity =
       new SimpleAuthenticationIdentity(username);
     Collection<AuthorizationResponse> results =
         authorizationManager.authorizeDocids(docids, identity);

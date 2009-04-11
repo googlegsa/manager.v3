@@ -128,7 +128,7 @@ public class SpringInstantiator implements Instantiator {
   private synchronized ConnectorInterfaces getConnectorInterfaces(
       String connectorName) throws ConnectorNotFoundException {
     ConnectorInterfaces connectorInterfaces =
-        (ConnectorInterfaces) connectorCache.get(connectorName);
+      connectorCache.get(connectorName);
     if (connectorInterfaces == null) {
       InstanceInfo info = getInstanceInfo(connectorName);
       connectorInterfaces = new ConnectorInterfaces(connectorName,
@@ -141,7 +141,7 @@ public class SpringInstantiator implements Instantiator {
   private synchronized InstanceInfo getInstanceInfo(String connectorName)
       throws ConnectorNotFoundException {
     initialize();
-    InstanceInfo instanceInfo = (InstanceInfo) instanceMap.get(connectorName);
+    InstanceInfo instanceInfo = instanceMap.get(connectorName);
     if (instanceInfo == null) {
       throw new ConnectorNotFoundException("Connector not found: "
           + connectorName);

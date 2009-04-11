@@ -35,6 +35,7 @@ public class TestListenerTest extends TestCase {
   private Context context;
   private TestListener testListener;
 
+  @Override
   protected void setUp() throws Exception {
     // Setup a Context to point to stand alone XML file with just the needed
     // beans.
@@ -47,6 +48,7 @@ public class TestListenerTest extends TestCase {
       (TestListener) getBean(LISTENER_BEAN_NAME, TestListener.class);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     context = null;
     Context.refresh();

@@ -52,6 +52,7 @@ public class SmbURLStreamHandler extends URLStreamHandler {
   /**
    * Return the default port for SMB service.
    */
+  @Override
   protected int getDefaultPort() {
     return SMB_DEFAULT_PORT;
   }
@@ -61,6 +62,7 @@ public class SmbURLStreamHandler extends URLStreamHandler {
    * for the Connector Manager.  We don't actually support streaming
    * content via SMB.
    */
+  @Override
   public URLConnection openConnection(URL url) throws IOException {
     throw new IOException("Unsupported operation: Cannot openConnection to URL "
                           + url.toExternalForm());
@@ -71,6 +73,7 @@ public class SmbURLStreamHandler extends URLStreamHandler {
    * if the SMB URL passes the constraints mentioned in the this page:
    * http://code.google.com/apis/searchappliance/documentation/50/admin/URL_patterns.html#SMB_patterns
    */
+  @Override
   protected void parseURL(URL url, String spec, int start, int limit) {
     if (!"smb".equalsIgnoreCase(url.getProtocol())) {
       throw new IllegalArgumentException("URL " + spec

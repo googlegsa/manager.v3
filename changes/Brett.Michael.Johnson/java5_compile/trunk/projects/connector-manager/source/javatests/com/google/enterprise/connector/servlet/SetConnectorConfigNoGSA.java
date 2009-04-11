@@ -44,10 +44,9 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
-  protected void doGet(HttpServletRequest req,
-                       HttpServletResponse res)
+  @Override
+  protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     String connectorTypeName = req.getParameter(
         ServletUtil.XMLTAG_CONNECTOR_TYPE);
@@ -106,10 +105,9 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
-  protected void doPost(HttpServletRequest req,
-                        HttpServletResponse res)
+  @Override
+  protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);

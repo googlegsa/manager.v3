@@ -206,7 +206,7 @@ public class SimpleConnectorType implements ConnectorType {
     for (String key : new TreeSet<String>(configMap.keySet())) {
       if (!keySet.contains(key)) {
         // add another hidden field to preserve this data
-        String val = (String) configMap.get(key);
+        String val = configMap.get(key);
         buf.append("<input type=\"hidden\" value=\"");
         buf.append(val);
         buf.append("\" name=\"");

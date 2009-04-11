@@ -27,11 +27,13 @@ public class PrefsStoreTest extends TestCase {
 
   protected PrefsStore store;
 
+  @Override
   protected void setUp() {
     // Only testing use of userRoot
     store = new PrefsStore(true, "testing");
   }
 
+  @Override
   protected void tearDown() {
     store.clear();
   }

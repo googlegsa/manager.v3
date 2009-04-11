@@ -80,7 +80,7 @@ public class MockRepository {
   public void setTime(MockRepositoryDateTime newTime) {
     if (newTime.compareTo(currentTime) > 0) {
       while (internalIterator.hasNext()) {
-        MockRepositoryEvent e = (MockRepositoryEvent) internalIterator.next();
+        MockRepositoryEvent e = internalIterator.next();
         if (e.getTimeStamp().compareTo(newTime) > 0) {
           internalIterator.previous();
           break;

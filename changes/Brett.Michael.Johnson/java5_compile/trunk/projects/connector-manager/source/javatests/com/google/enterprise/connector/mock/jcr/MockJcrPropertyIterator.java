@@ -47,7 +47,7 @@ public class MockJcrPropertyIterator implements PropertyIterator {
   }
 
   public Property nextProperty() {
-    return (Property) propIterator.next();
+    return propIterator.next();
   }
 
   public boolean hasNext() {

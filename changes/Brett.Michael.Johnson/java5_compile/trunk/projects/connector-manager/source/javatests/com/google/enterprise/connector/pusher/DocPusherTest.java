@@ -1516,6 +1516,7 @@ public class DocPusherTest extends TestCase {
    * A FeedConnection that returns a bad response.
    */
   private class BadFeedConnection2 extends MockFeedConnection {
+  @Override
     public String sendData(String dataSource, FeedData feedData)
         throws RepositoryException {
       super.sendData(dataSource, feedData);
@@ -1528,16 +1529,20 @@ public class DocPusherTest extends TestCase {
    */
   private class BadInputStream extends InputStream {
     // Make it look like there is something to read.
-    public int available() {
+  @Override
+  public int available() {
       return 69;
     }
     // Override read methods, always throwing IOException.
+  @Override
     public int read() throws IOException {
       throw new IOException("This stream is unreadable");
     }
+  @Override
     public int read(byte[] b) throws IOException {
       throw new IOException("This stream is unreadable");
     }
+  @Override
     public int read(byte[] b, int o, int l) throws IOException {
       throw new IOException("This stream is unreadable");
     }
@@ -1601,7 +1606,7 @@ public class DocPusherTest extends TestCase {
     public Set<String> getPropertyNames() throws RepositoryException {
       // Get all the property names of the base Document.
       HashSet<String> names =
-          new HashSet<String>((Set<String>)(baseDocument.getPropertyNames()));
+          new HashSet<String>(baseDocument.getPropertyNames());
       // Add my additional bad properties.
       names.addAll(badProperties.keySet());
       // Return the union.

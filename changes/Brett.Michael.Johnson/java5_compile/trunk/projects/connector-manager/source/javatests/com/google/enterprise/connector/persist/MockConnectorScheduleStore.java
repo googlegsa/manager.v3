@@ -27,7 +27,7 @@ public class MockConnectorScheduleStore extends HashMap<String, String>
    * #getConnectorSchedule(StoreContext)
    */
   public String getConnectorSchedule(StoreContext context) {
-    return (String) this.get(context.getConnectorName());
+    return this.get(context.getConnectorName());
   }
 
   /* (non-Javadoc)

@@ -73,6 +73,7 @@ public class MockRepositoryProperty {
       tag = t;
     }
 
+    @Override
     public String toString() {
       return tag;
     }
@@ -196,6 +197,7 @@ public class MockRepositoryProperty {
     }
   }
 
+  @Override
   public String toString() {
     return name + "(" + type.toString() + "):"
         + (repeating ? valuesToString() : value);
@@ -223,7 +225,7 @@ public class MockRepositoryProperty {
     if (multivalues == null || multivalues.size() < 1) {
       return "";
     }
-    return (String) multivalues.get(0);
+    return multivalues.get(0);
   }
 
   private final static String[] EMPTY_STRING_ARRAY = new String[0];
@@ -232,7 +234,7 @@ public class MockRepositoryProperty {
     if (!repeating) {
       return new String[] {getValue()};
     } else {
-      return (String[]) multivalues.toArray(EMPTY_STRING_ARRAY);
+      return multivalues.toArray(EMPTY_STRING_ARRAY);
     }
   }
 

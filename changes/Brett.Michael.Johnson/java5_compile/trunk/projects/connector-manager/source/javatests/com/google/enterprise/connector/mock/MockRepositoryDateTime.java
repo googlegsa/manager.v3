@@ -22,6 +22,7 @@ package com.google.enterprise.connector.mock;
 public class MockRepositoryDateTime implements Comparable<MockRepositoryDateTime> {
   private int ticks;
 
+  @Override
   public String toString() {
     return Integer.toString(ticks);
   }
@@ -38,6 +39,7 @@ public class MockRepositoryDateTime implements Comparable<MockRepositoryDateTime
     return this.getTicks() - t.getTicks();
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
@@ -48,6 +50,7 @@ public class MockRepositoryDateTime implements Comparable<MockRepositoryDateTime
     return (compareTo((MockRepositoryDateTime)obj) == 0);
   }
 
+  @Override
   public int hashCode() {
     long lticks = ticks;
     return (int)(lticks ^ (lticks >>> 32));  // See Bloch, EJ, p. 38

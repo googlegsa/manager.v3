@@ -34,6 +34,7 @@ public class MockRepositoryPropertyList
 
   private Map<String, MockRepositoryProperty> proplist;
 
+  @Override
   public String toString() {
     return proplist.toString();
   }
@@ -90,7 +91,7 @@ public class MockRepositoryPropertyList
   }
 
   public String lookupStringValue(String name) {
-    MockRepositoryProperty p = (MockRepositoryProperty) proplist.get(name);
+    MockRepositoryProperty p = proplist.get(name);
     if (p == null) {
       return null;
     }
@@ -102,6 +103,6 @@ public class MockRepositoryPropertyList
   }
 
   public MockRepositoryProperty getProperty(String name) {
-    return (MockRepositoryProperty) proplist.get(name);
+    return proplist.get(name);
   }
 }

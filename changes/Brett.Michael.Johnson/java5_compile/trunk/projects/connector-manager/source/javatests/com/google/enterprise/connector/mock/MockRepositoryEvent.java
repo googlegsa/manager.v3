@@ -55,6 +55,7 @@ public class MockRepositoryEvent {
       tag = m;
     }
 
+    @Override
     public String toString() {
       return tag;
     }
@@ -82,6 +83,7 @@ public class MockRepositoryEvent {
   private MockRepositoryPropertyList propertyList;
   private MockRepositoryDateTime timeStamp;
 
+  @Override
   public String toString() {
     String displayContent =
       ((content != null) ? (" content:\"" + content + "\" ") : "null");

@@ -48,6 +48,7 @@ public class GetConnectorInstanceList extends HttpServlet {
    * @param res
    * @throws IOException
    */
+  @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     doPost(req, res);
@@ -60,6 +61,7 @@ public class GetConnectorInstanceList extends HttpServlet {
    * @param res
    * @throws IOException
    */
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     res.setContentType(ServletUtil.MIMETYPE_XML);

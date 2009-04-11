@@ -58,6 +58,7 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
    * @param res
    * @throws IOException
    */
+  @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     doPost(req, res);
@@ -70,6 +71,7 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
    * @param res
    * @throws IOException
    */
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     Enumeration<?> headerNames = req.getHeaderNames();

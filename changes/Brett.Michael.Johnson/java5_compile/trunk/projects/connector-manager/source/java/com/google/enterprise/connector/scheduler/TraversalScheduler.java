@@ -284,6 +284,7 @@ public class TraversalScheduler implements Scheduler {
       return traverser;
     }
 
+    @Override
     public void doWork() {
       int batchHint = hostLoadManager.determineBatchHint(connectorName);
       int batchDone = Traverser.ERROR_WAIT;
@@ -318,9 +319,9 @@ public class TraversalScheduler implements Scheduler {
                 schedule.setDisabled(true);
                 instantiator.setConnectorSchedule(connectorName,
                     schedule.toString());
+                LOGGER.info("Traversal complete. Automatically pausing "
+                  + "traversal for connector " + connectorName);
               }
-              LOGGER.info("Traversal complete. Automatically pausing traversal"
-                  + " for connector " + connectorName);
             } else if (batchDone == Traverser.ERROR_WAIT) {
               hostLoadManager.connectorFinishedTraversal(connectorName,
                   Traverser.ERROR_WAIT_MILLIS);
@@ -341,6 +342,7 @@ public class TraversalScheduler implements Scheduler {
       }
     }
 
+    @Override
     public synchronized void cancelWork() {
       if (traverser != null) {
         traverser.cancelBatch();
@@ -350,6 +352,7 @@ public class TraversalScheduler implements Scheduler {
       notifyAll();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder();
       sb.append("TraversalWorkQueueItem[");

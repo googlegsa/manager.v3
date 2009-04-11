@@ -52,8 +52,8 @@ public class UpdateConnector extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
+  @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
@@ -83,8 +83,8 @@ public class UpdateConnector extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     ConnectorMessageCode status = new ConnectorMessageCode();

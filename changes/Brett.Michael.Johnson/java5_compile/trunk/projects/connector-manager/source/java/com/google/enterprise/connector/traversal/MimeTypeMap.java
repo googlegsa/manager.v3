@@ -154,13 +154,13 @@ public class MimeTypeMap {
   public int mimeTypeSupportLevel(String mimeType) {
     Integer result = null;
     if (mimeType != null) {
-      result = (Integer) typeMap.get(mimeType.trim().toLowerCase());
+      result = typeMap.get(mimeType.trim().toLowerCase());
       if (result == null) {
         // If exact match not found, look for a match on just the
         // primary mimetype (sans the subtype).
         int i = mimeType.indexOf('/');
         if (i > 0) {
-          result = (Integer) typeMap.get(mimeType.substring(0, i));
+          result = typeMap.get(mimeType.substring(0, i));
         }
       }
     }

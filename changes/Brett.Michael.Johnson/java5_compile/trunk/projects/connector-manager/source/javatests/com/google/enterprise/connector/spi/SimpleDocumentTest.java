@@ -26,6 +26,7 @@ import java.util.Set;
 public class SimpleDocumentTest extends TestCase {
   private SimpleDocument document;
 
+  @Override
   protected void setUp() throws Exception {
     Map<String, Object> props = new HashMap<String, Object>();
     Calendar cal = Calendar.getInstance();
@@ -42,6 +43,7 @@ public class SimpleDocumentTest extends TestCase {
     document = createSimpleDocument(props);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     document = null;
   }

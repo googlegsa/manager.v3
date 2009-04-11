@@ -36,11 +36,7 @@ public class SetSchedule extends ConnectorManagerServlet {
   /**
    * Writes the XML response for setting the schedule.
    */
-  /* (non-Javadoc)
-   * @see com.google.enterprise.connector.servlet.ConnectorManagerGetServlet#
-   * processDoGet(java.lang.String, java.lang.String,
-   * com.google.enterprise.connector.manager.Manager, java.io.PrintWriter)
-   */
+  @Override
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
     ConnectorMessageCode status = handleDoPost(xmlBody, manager);

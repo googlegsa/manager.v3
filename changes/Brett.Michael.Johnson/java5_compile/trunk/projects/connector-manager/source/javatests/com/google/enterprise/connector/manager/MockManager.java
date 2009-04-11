@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
@@ -41,7 +42,7 @@ public class MockManager implements Manager {
   private static final MockManager INSTANCE = new MockManager();
   private static final Logger LOGGER =
       Logger.getLogger(MockManager.class.getName());
-  
+
   private boolean shouldVerifyIdentity;
   private String domain;
   private String username;
@@ -57,7 +58,7 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public boolean authenticate(String connectorName, 
+  public boolean authenticate(String connectorName,
       AuthenticationIdentity identity) {
     if (!shouldVerifyIdentity) {
       return true;
@@ -78,8 +79,8 @@ public class MockManager implements Manager {
     }
     return true;
   }
-  
-  private boolean verifyComponent(String componentName, String expected, 
+
+  private boolean verifyComponent(String componentName, String expected,
       String actual, StringBuffer sb) {
     if (expected == null) {
       if (actual != null) {
@@ -89,7 +90,7 @@ public class MockManager implements Manager {
       return true;
     }
     if (!expected.equals(actual)) {
-      sb.append("Expected " + componentName + "\"" + expected + "\" got \"" + actual +"\"\n");      
+      sb.append("Expected " + componentName + "\"" + expected + "\" got \"" + actual +"\"\n");
       return false;
     }
     return true;
@@ -164,6 +165,7 @@ public class MockManager implements Manager {
     return statuses;
   }
 
+  @SuppressWarnings("unused")
   public ConfigureResponse setConfig(String connectorName,
       Map<String, String> configData, String language) {
     return null;
@@ -181,6 +183,11 @@ public class MockManager implements Manager {
     }
     // null is a success response
     return null;
+  }
+
+  /* @Override */
+  public Properties getConnectorManagerConfig() {
+    return new Properties();
   }
 
   /* @Override */
@@ -212,12 +219,17 @@ public class MockManager implements Manager {
   public Map<String, String> getConnectorConfig(String connectorName) {
     return new HashMap<String, String>();
   }
-  
+
+  /* @Override */
+  public boolean isLocked() {
+    return false;
+  }
+
   public void setShouldVerifyIdentity(boolean b) {
     shouldVerifyIdentity = b;
   }
-  
-  public void setExpectedIdentity(String domain, String username, 
+
+  public void setExpectedIdentity(String domain, String username,
       String password) {
     this.domain = domain;
     this.username = username;

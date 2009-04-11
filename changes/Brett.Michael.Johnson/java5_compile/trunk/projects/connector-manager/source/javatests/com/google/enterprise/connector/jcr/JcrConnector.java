@@ -77,7 +77,7 @@ public class JcrConnector implements Connector, ConnectorShutdownAware {
           sessions.put(simpleCredentials, new JcrSession(session));
         }
       }
-      return (JcrSession) sessions.get(simpleCredentials);
+      return sessions.get(simpleCredentials);
     } catch (javax.jcr.LoginException e) {
       throw new RepositoryLoginException(e);
     } catch (javax.jcr.RepositoryException e) {

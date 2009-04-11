@@ -54,6 +54,7 @@ public class TestServiceTest extends TestCase {
 
   private Context context;
 
+  @Override
   protected void setUp() throws Exception {
     // Setup a Context to point to stand alone XML file with just the needed
     // beans.
@@ -62,6 +63,7 @@ public class TestServiceTest extends TestCase {
     context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT, null);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     context = null;
     Context.refresh();
@@ -83,7 +85,7 @@ public class TestServiceTest extends TestCase {
     // order and that they are in the expected order.
     @SuppressWarnings("unchecked")
     Map<String, ?> contextServices = (Map<String, ?>)
-        (Map) getBean(Context.ORDERED_SERVICES_BEAN_NAME, null);
+        getBean(Context.ORDERED_SERVICES_BEAN_NAME, null);
     assertEquals("Correct number of ordered services",
         orderedServiceIds.size(), contextServices.size());
     assertCorrectKeys("Correct ordered service ids",

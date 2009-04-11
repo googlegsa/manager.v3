@@ -34,7 +34,7 @@ public class Authenticate extends ConnectorManagerServlet {
   private static final Logger LOGGER =
       Logger.getLogger(Authenticate.class.getName());
 
-  /* @Override */
+  @Override
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
     handleDoPost(xmlBody, manager, out);
@@ -78,9 +78,9 @@ public class Authenticate extends ConnectorManagerServlet {
         (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_DOMAIN);
     for (ConnectorStatus connector : manager.getConnectorStatuses()) {
       String connectorName = connector.getName();
-      AuthenticationIdentity identity = 
+      AuthenticationIdentity identity =
         new SimpleAuthenticationIdentity(username, password, domain);
-      boolean authn = 
+      boolean authn =
         manager.authenticate(connectorName, identity);
       if (authn) {
         ServletUtil.writeXMLTagWithAttrs(

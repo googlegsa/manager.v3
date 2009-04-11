@@ -251,11 +251,11 @@ public class DocPusher implements Pusher {
     }
 
     if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-      ((StringBuffer) feedLogRecord.get()).append(prefix);
+      feedLogRecord.get().append(prefix);
       if (contentAllowed && content != null) {
-        ((StringBuffer) feedLogRecord.get()).append("...content...");
+        feedLogRecord.get().append("...content...");
       }
-      ((StringBuffer) feedLogRecord.get()).append(suffix);
+      feedLogRecord.get().append(suffix);
     }
 
     return is;
@@ -418,7 +418,7 @@ public class DocPusher implements Pusher {
    */
   private static String getCalendarAndThrow(Document document, String name)
       throws IllegalArgumentException, RepositoryException {
-    String result = null;
+    String result;
     ValueImpl v = getValueAndThrow(document, name);
     if (v == null) {
       result = null;
@@ -611,7 +611,7 @@ public class DocPusher implements Pusher {
 
     if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
       feedLogRecord.set(new StringBuffer());
-      ((StringBuffer) feedLogRecord.get()).append(prefix);
+      feedLogRecord.get().append(prefix);
     }
 
     InputStream recordInputStream = xmlWrapRecord(searchurl, displayUrl,
@@ -622,9 +622,9 @@ public class DocPusher implements Pusher {
         recordInputStream, suffix.toString());
 
     if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-      ((StringBuffer) feedLogRecord.get()).append(suffix);
+      feedLogRecord.get().append(suffix);
       FEED_LOGGER.log(FEED_LOG_LEVEL,
-          ((StringBuffer) feedLogRecord.get()).toString());
+          feedLogRecord.get().toString());
       feedLogRecord.set(null);
     }
 
@@ -709,6 +709,7 @@ public class DocPusher implements Pusher {
       this.out = out;
     }
 
+    @Override
     public int read() throws IOException {
       int retval = super.read();
       if (retval != -1) {
@@ -717,6 +718,7 @@ public class DocPusher implements Pusher {
       return retval;
     }
 
+    @Override
     public int read(byte[] b, int off, int len) throws IOException {
       int retval = super.read(b, off, len);
       if (retval != -1) {

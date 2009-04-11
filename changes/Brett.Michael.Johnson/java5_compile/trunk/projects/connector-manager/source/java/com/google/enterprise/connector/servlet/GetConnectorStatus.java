@@ -38,6 +38,7 @@ public class GetConnectorStatus extends ConnectorManagerGetServlet {
    *      com.google.enterprise.connector.manager.Manager,
    *      java.io.PrintWriter)
    */
+  @Override
   protected void processDoGet(String connectorName, String lang,
       Manager manager, PrintWriter out) {
     handleDoGet(connectorName, manager, out);

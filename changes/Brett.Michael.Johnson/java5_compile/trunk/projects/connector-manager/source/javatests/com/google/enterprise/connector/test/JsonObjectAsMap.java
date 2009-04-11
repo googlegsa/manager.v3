@@ -69,13 +69,10 @@ public class JsonObjectAsMap extends AbstractMap<String, String> {
     }
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see java.util.AbstractMap#entrySet()
-   */
+  @Override
   public Set<Map.Entry<String, String>> entrySet() {
     return new AbstractSet<Map.Entry<String, String>>() {
+      @Override
       public Iterator<Map.Entry<String, String>> iterator() {
         final Iterator<?> i = jobj.keys();
         return new Iterator<Map.Entry<String, String>>() {
@@ -115,6 +112,7 @@ public class JsonObjectAsMap extends AbstractMap<String, String> {
         };
       }
 
+      @Override
       public int size() {
         return jobj.length();
       }

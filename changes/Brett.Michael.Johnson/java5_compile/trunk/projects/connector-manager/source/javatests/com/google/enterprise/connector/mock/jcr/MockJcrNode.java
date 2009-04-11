@@ -77,7 +77,7 @@ public class MockJcrNode implements Node {
   private MockRepositoryDocument doc;
   private List<MockJcrProperty> propList = null;
 
-  private Property findProperty(String name) throws RepositoryException {
+  private Property findProperty(String name) {
     for (MockJcrProperty prop : propList) {
       if (prop.getName().equals(name)) {
         return prop;

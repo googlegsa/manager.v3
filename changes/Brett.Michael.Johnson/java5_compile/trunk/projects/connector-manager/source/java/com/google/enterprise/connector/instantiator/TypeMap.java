@@ -121,7 +121,7 @@ public class TypeMap extends TreeMap<String, TypeInfo> {
   }
 
   public TypeInfo getTypeInfo(String connectorTypeName) {
-    return (TypeInfo) this.get(connectorTypeName);
+    return this.get(connectorTypeName);
   }
 
   private void initializeTypeDirectories() {

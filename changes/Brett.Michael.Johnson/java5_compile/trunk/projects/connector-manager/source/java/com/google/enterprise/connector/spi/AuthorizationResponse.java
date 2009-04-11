@@ -61,6 +61,7 @@ public class AuthorizationResponse {
    *
    * @return a hash code value for this object.
    */
+  @Override
   public int hashCode() {
     return docid.hashCode() + (valid ? 547 : 271);
   }
@@ -72,6 +73,7 @@ public class AuthorizationResponse {
    * @return true if this object is the same as the obj argument; false
    *         otherwise.
    */
+  @Override
   public boolean equals(Object obj) {
     if (obj == this) {
       return true;

@@ -23,6 +23,7 @@ import com.google.enterprise.connector.persist.ConnectorScheduleStore;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.GenerationalStateStore;
 import com.google.enterprise.connector.persist.StoreContext;
+import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 
 import org.springframework.beans.BeansException;
@@ -156,9 +157,22 @@ public final class InstanceInfo {
     // before launching the connector instance.
     if (info.properties == null) {
       upgradeConfigStore(info);
+      if (info.properties == null) {
+        throw new InstanceInfoException("Configuration not found for connector "
+                                        + connectorName);
+      }
     }
     if (info.schedStore.getConnectorSchedule(info.storeContext) == null) {
       upgradeScheduleStore(info);
+      if (info.getConnectorSchedule() == null) {
+        // If there is no schedule, create a disabled schedule rather than
+        // logging "schedule not found" once a second for eternity.
+        LOGGER.warning("Traversal Schedule not found for connector "
+                       + connectorName + ", disabling traversal.");
+        Schedule schedule = new Schedule();
+        schedule.setConnectorName(connectorName);
+        info.setConnectorSchedule(schedule.toString());
+      }
     }
     if (info.stateStore.getConnectorState(info.storeContext) == null) {
       upgradeStateStore(info);
@@ -281,6 +295,7 @@ public final class InstanceInfo {
     public ByteArrayResourceHack(byte[] byteArray) {
       super(byteArray);
     }
+    @Override
     public String getFilename() {
       return "ByteArrayResourceHasNoFilename";
     }
@@ -440,7 +455,7 @@ public final class InstanceInfo {
           return null;
         ArrayList<T> list = new ArrayList<T>();
         while (iter.hasNext()) {
-          Object store = (Object) iter.next();
+          Object store = iter.next();
           if (clazz.isInstance(store)) {
             list.add(clazz.cast(store));
           } else {

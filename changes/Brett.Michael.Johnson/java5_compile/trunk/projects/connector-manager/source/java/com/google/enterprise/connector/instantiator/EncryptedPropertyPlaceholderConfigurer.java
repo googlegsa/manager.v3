@@ -81,6 +81,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
    * Overridden from the base class implementation. This looks for properties
    * with a sensitive name and decrypts them.
    */
+  @Override
   public void convertProperties(Properties properties) {
     decryptSensitiveProperties(properties);
     super.convertProperties(properties);

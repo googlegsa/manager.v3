@@ -48,6 +48,7 @@ public class TraversalSchedulerTest extends TestCase {
   private static final String TEST_CONFIG_FILE = "classpath*:config/connectorType.xml";
   private File baseDirectory;
 
+  @Override
   protected void setUp() throws Exception {
     // Make sure that the test directory does not exist
     baseDirectory = new File(TEST_DIR_NAME);
@@ -56,6 +57,7 @@ public class TraversalSchedulerTest extends TestCase {
     assertTrue(baseDirectory.mkdirs());
   }
 
+  @Override
   protected void tearDown() throws Exception {
     assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
   }

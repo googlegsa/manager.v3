@@ -155,6 +155,7 @@ public class GetConnectorLogs extends HttpServlet {
    * @param res
    * @throws IOException
    */
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException, FileNotFoundException {
     doGet(req, res);
@@ -167,6 +168,7 @@ public class GetConnectorLogs extends HttpServlet {
    * @param res
    * @throws IOException
    */
+  @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException, FileNotFoundException {
     Context context = Context.getInstance(this.getServletContext());
@@ -276,6 +278,7 @@ public class GetConnectorLogs extends HttpServlet {
    * Specialized {@code doTrace} method that constructs an XML representation
    * of the given request and returns it as the response.
    */
+  @Override
   protected void doTrace(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     ServletUtil.dumpServletRequest(req, res);
@@ -815,10 +818,12 @@ public class GetConnectorLogs extends HttpServlet {
       }
     }
 
+    @Override
     public File getLogFile(String logName) {
       return new File(pattern);
     }
 
+    @Override
     public File getLogDirectory() {
       File parent = (new File(pattern)).getParentFile();
       if (parent != null) {
@@ -829,10 +834,12 @@ public class GetConnectorLogs extends HttpServlet {
       }
     }
 
+    @Override
     public String getArchiveName() {
       return new File(pattern).getName() + ".zip";
     }
 
+    @Override
     public File[] listLogs() {
       return new File[] { new File(pattern) };
     }

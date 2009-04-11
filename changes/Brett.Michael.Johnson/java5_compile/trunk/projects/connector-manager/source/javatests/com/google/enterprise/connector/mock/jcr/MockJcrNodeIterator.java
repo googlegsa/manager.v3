@@ -62,7 +62,7 @@ public class MockJcrNodeIterator implements NodeIterator {
   }
 
   public Node nextNode() {
-    return (Node) iter.next();
+    return iter.next();
   }
 
   public boolean hasNext() {
@@ -70,7 +70,7 @@ public class MockJcrNodeIterator implements NodeIterator {
   }
 
   public Node next() {
-    return (Node) iter.next();
+    return iter.next();
   }
 
   // The following methods are JCR level 1 - but we do not anticipate using them

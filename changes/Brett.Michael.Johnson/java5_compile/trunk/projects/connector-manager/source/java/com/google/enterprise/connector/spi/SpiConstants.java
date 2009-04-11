@@ -252,6 +252,7 @@ public class SpiConstants {
         tag = m;
     }
 
+    @Override
     public String toString() {
       return tag;
     }
@@ -300,6 +301,7 @@ public class SpiConstants {
         tag = m;
     }
 
+    @Override
     public String toString() {
       return tag;
     }

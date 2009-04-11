@@ -45,6 +45,7 @@ public class InstantiatorTest extends TestCase {
   private File baseDirectory;
   private Instantiator instantiator;
 
+  @Override
   protected void setUp() throws Exception {
     // Make sure that the test directory does not exist
     baseDirectory = new File(TEST_DIR_NAME);
@@ -57,6 +58,7 @@ public class InstantiatorTest extends TestCase {
     assertEquals(0, connectorCount());
   }
 
+  @Override
   protected void tearDown() throws Exception {
     assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
   }
@@ -242,6 +244,7 @@ public class InstantiatorTest extends TestCase {
 
   private class Issue63ChildThread extends Thread {
     public volatile boolean didFinish = false;
+    @Override
     public void run() {
       try {
         Traverser oldTraverser, newTraverser;

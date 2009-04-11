@@ -56,8 +56,8 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
+  @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     res.setContentType(ServletUtil.MIMETYPE_XML);
@@ -91,8 +91,8 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res) throws IOException {
     doGet(req, res);
   }
@@ -123,6 +123,8 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
         status = new ConnectorMessageCode(
             ConnectorMessageCode.ERROR_PARSING_XML_REQUEST);
         configRes = null;
+      } else {
+        formSnippet = ServletUtil.removeNestedMarkers(formSnippet);
       }
     }
     // Now write out the response.

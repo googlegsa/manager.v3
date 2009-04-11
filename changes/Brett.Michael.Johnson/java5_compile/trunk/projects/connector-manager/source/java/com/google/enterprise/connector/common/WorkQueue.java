@@ -297,8 +297,7 @@ public class WorkQueue {
    */
   void preWork(WorkQueueItem item) {
     synchronized(this) {
-      absTimeoutMap.put(item,
-                        (Long)(workItemTimeout + System.currentTimeMillis()));
+      absTimeoutMap.put(item, workItemTimeout + System.currentTimeMillis());
     }
     synchronized(interrupterThread) {
       interrupterThread.notifyAll();
@@ -375,7 +374,7 @@ public class WorkQueue {
    * @return the work item
    */
   WorkQueueItem removeWork() {
-    WorkQueueItem item = (WorkQueueItem) workQueue.removeFirst();
+    WorkQueueItem item = workQueue.removeFirst();
     LOGGER.finest("Removing work: " + item);
     return item;
   }
@@ -405,6 +404,7 @@ public class WorkQueue {
       }
     }
 
+    @Override
     public void run() {
       long nextCheckTimeout = killThreadTimeout;
       while (!shutdown) {
@@ -439,6 +439,7 @@ public class WorkQueue {
       }
     }
 
+    @Override
     public void run() {
       while (!shutdown) {
         try {

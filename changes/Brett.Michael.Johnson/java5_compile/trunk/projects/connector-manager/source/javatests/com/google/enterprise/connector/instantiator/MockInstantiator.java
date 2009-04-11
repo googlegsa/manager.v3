@@ -260,8 +260,7 @@ public class MockInstantiator implements Instantiator {
   public void restartConnectorTraversal(String connectorName) {
     Scheduler scheduler = (Scheduler) Context.getInstance().
         getBean("TraversalScheduler", Scheduler.class);
-    ConnectorInstance inst =
-        (ConnectorInstance) connectorMap.get(connectorName);
+    ConnectorInstance inst = connectorMap.get(connectorName);
     if (scheduler != null) {
       scheduler.removeConnector(connectorName);
     }
@@ -277,8 +276,7 @@ public class MockInstantiator implements Instantiator {
   }
 
   public void removeConnector(String connectorName) {
-    ConnectorInstance inst =
-        (ConnectorInstance) connectorMap.remove(connectorName);
+    ConnectorInstance inst = connectorMap.remove(connectorName);
     if (inst != null) {
       Scheduler scheduler = (Scheduler) Context.getInstance().
           getBean("TraversalScheduler", Scheduler.class);
@@ -367,7 +365,7 @@ public class MockInstantiator implements Instantiator {
   private ConnectorInstance getConnectorInstance(String connectorName)
       throws ConnectorNotFoundException {
     if (connectorMap.containsKey(connectorName)) {
-      return (ConnectorInstance) connectorMap.get(connectorName);
+      return connectorMap.get(connectorName);
     } else {
       throw new ConnectorNotFoundException("Connector not found: "
           + connectorName);
