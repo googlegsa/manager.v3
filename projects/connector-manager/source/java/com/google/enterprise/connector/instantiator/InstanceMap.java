@@ -166,7 +166,17 @@ public class InstanceMap extends TreeMap {
       throw new InstantiatorException();
     }
     File connectorDir = makeConnectorDirectory(name, typeInfo);
-    return resetConfig(name, connectorDir, typeInfo, config, locale);
+    try {
+      ConfigureResponse result = null;
+      result = resetConfig(name, connectorDir, typeInfo, config, locale);
+      if (result != null && result.getMessage() != null) {
+        removeConnectorDirectory(name, connectorDir, typeInfo);
+      }
+      return result;
+    } catch (InstantiatorException ie) {
+      removeConnectorDirectory(name, connectorDir, typeInfo);
+      throw (ie);
+    }
   }
 
   private ConfigureResponse resetConfig(String name, File connectorDir,
@@ -290,35 +300,11 @@ public class InstanceMap extends TreeMap {
             + " for connector " + name, ioe);
       }
     }
-
     return connectorDir;
   }
 
-  public void removeConnector(String name) {
-    InstanceInfo instanceInfo = (InstanceInfo) this.remove(name);
-    if (instanceInfo == null) {
-      return;
-    }
-    Connector connector = instanceInfo.getConnector();
-    if (connector instanceof ConnectorShutdownAware) {
-      try {
-        LOGGER.fine("Shutting down Connector " + name);
-        ((ConnectorShutdownAware)connector).shutdown();
-      } catch (Exception e) {
-        LOGGER.log(Level.WARNING, "Failed to shutdown connector " + name, e);
-      }
-      try {
-        LOGGER.fine("Removing Connector " + name);
-        ((ConnectorShutdownAware)connector).delete();
-      } catch (Exception e) {
-        LOGGER.log(Level.WARNING, "Failed to remove connector " + name, e);
-      }
-    }
-    File connectorDir = instanceInfo.getConnectorDir();
-    TypeInfo typeInfo = instanceInfo.getTypeInfo();
-
-    instanceInfo.removeConnector();
-
+  private void removeConnectorDirectory(String name, File connectorDir,
+        TypeInfo typeInfo) {
     // Remove the extracted connectorInstance.xml file, but only
     // if it is unmodified.
     // TODO: Remove this when fixing CM Issue 87?
@@ -347,6 +333,32 @@ public class InstanceMap extends TreeMap {
             + "; this connector may be difficult to delete.");
       }
     }
+  }
+
+  public void removeConnector(String name) {
+    InstanceInfo instanceInfo = (InstanceInfo) this.remove(name);
+    if (instanceInfo == null) {
+      return;
+    }
+    Connector connector = instanceInfo.getConnector();
+    if (connector instanceof ConnectorShutdownAware) {
+      try {
+        LOGGER.fine("Shutting down Connector " + name);
+        ((ConnectorShutdownAware)connector).shutdown();
+      } catch (Exception e) {
+        LOGGER.log(Level.WARNING, "Failed to shutdown connector " + name, e);
+      }
+      try {
+        LOGGER.fine("Removing Connector " + name);
+        ((ConnectorShutdownAware)connector).delete();
+      } catch (Exception e) {
+        LOGGER.log(Level.WARNING, "Failed to remove connector " + name, e);
+      }
+    }
+
+    instanceInfo.removeConnector();
+    removeConnectorDirectory(name, instanceInfo.getConnectorDir(),
+        instanceInfo.getTypeInfo());
   }
 
   /**
