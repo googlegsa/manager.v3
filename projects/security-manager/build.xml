@@ -18,8 +18,6 @@
   <property name="src" value="source/java" />
   <property name="classes" value="${prod}/classes" />
   <property name="webdocs" value="source/webdocs" />
-  <property name="prod.webdocs" value="${webdocs}/prod" />
-  <property name="tests.webdocs" value="${webdocs}/test" />
   <property name="connector-thirdparty.dir" value="${projects.dir}/connector-manager/third-party" />
   <property name="connector-dist.dir" value="${projects.dir}/connector-manager/dist/jarfile" />
   <property name="tests.src" value="source/javatests" />
@@ -43,19 +41,6 @@
   <property name="prod.warfile" value="${war.dir}/${ant.project.name}.war" />
   <property name="tests.warfile" value="${war.dir}/${ant.project.name}_debug.war" />
 
-  <!-- Set up Cobertura code-coverage tool. -->
-  <property name="cobertura.dir" value="third-party/cobertura" />
-  <path id="cobertura_classpath">
-    <fileset dir="${cobertura.dir}">
-      <include name="cobertura.jar" />
-      <include name="lib/**/*.jar" />
-    </fileset>
-  </path>
-  <taskdef classpathref="cobertura_classpath" resource="tasks.properties" />
-  <property name="coverage.file" value="${basedir}/cobertura.ser" />
-  <property name="instrumented.dir" value="${build}/instrumented" />
-  <property name="coverage.dir" value="${build}/coverage" />
-
   <!-- =========================== TASKS =============================== -->
   <target name="security_manager" description="Google Enterprise Security Manager" depends="war,regressions,junit-report" />
 
@@ -75,8 +60,6 @@
     <mkdir dir="${jar.dir}" />
     <mkdir dir="${regressions.build}" />
     <mkdir dir="${regressions.classes}" />
-    <mkdir dir="${instrumented.dir}" />
-    <mkdir dir="${coverage.dir}" />
   </target>
 
   <target name="compile" depends="init">
@@ -118,26 +101,16 @@
   </target>
 
   <target name="run_tests" depends="compile_tests,jar-builtins">
-    <delete file="${coverage.file}" />
-    <cobertura-instrument todir="${instrumented.dir}">
-      <fileset dir="${classes}" >
-        <include name="com/google/enterprise/**/*.class" />
-        <exclude name="com/google/enterprise/connector/servlet/HelloWorld.class" />
-        <exclude name="com/google/enterprise/connector/servlet/StartUp.class" />
-      </fileset>
-    </cobertura-instrument>
     <property name="test.suite" value="*" />
-    <junit fork="yes" haltonfailure="yes" dir=".">
+    <junit haltonfailure="yes" dir=".">
       <classpath>
-        <pathelement location="${instrumented.dir}" />
         <pathelement location="${classes}" />
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
         <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
         <fileset dir="${connector-dist.dir}" includes="**/*.jar" />
-        <fileset dir="${jar.dir}" includes="*.jar" />
+        <pathelement location="${jar.dir}/cookieconnector.jar" />
         <pathelement location="${connector-thirdparty.dir}/prod/servlet-api.jar" />
         <pathelement location="${tests.classes}" />
-        <path refid="cobertura_classpath" />
         <pathelement path="${java.class.path}" />
       </classpath>
       <formatter type="xml" />
@@ -145,14 +118,6 @@
         <fileset dir="${tests.src}" includes="**/${test.suite}Test.java" />
       </batchtest>
     </junit>
-  </target>
-
-  <target name="coverage_report">
-    <cobertura-report format="html"
-                      datafile="${coverage.file}"
-                      destdir="${coverage.dir}"
-                      srcdir="${basedir}/source/java"
-                      />
   </target>
 
   <target name="jar" depends="jar-prod,jar-tests,jar-builtins" description="Create jars for the Security Manager project" />
@@ -171,7 +136,7 @@
     <jar jarfile="${jar.dir}/ssocookieconnector.jar">
       <fileset dir="connectorConfig/SsoCookieIdentityConnector" includes="**/*.xml" />
     </jar>
-    <jar jarfile="${jar.dir}/regexcookieconnector.jar">
+    <jar jarfile="${jar.dir}/cookieconnector.jar">
       <fileset dir="connectorConfig/regexCookieIdentityConnector" includes="**/*.xml" />
     </jar>
   </target>
@@ -207,7 +172,6 @@
     <delete dir="${tests.data}/tmp" />
     <delete dir="${tests.data}/mocktestdata/connectors" />
     <delete dir="${catalina.base}" />
-    <delete file="${coverage.file}" />
   </target>
 
   <!-- ======================Installation targets====================== -->
@@ -226,12 +190,12 @@
     <echo> The production war file dir is located at ${war.dir}</echo>
 
     <tstamp />
-    <war warfile="${prod.warfile}" webxml="${prod.webdocs}/web.xml">
+    <war warfile="${prod.warfile}" webxml="${webdocs}/prod/web.xml">
       <lib dir="${jar.dir}" includes="*.jar" excludes="security-tests.jar" />
       <lib file="${connector-dist.dir}/connector-spi.jar" />
       <lib file="${connector-dist.dir}/connector.jar" />
       <lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
-      <webinf dir="${prod.webdocs}" includes="applicationContext.xml,saml-metadata.xml,AuthSites.conf" />
+      <webinf dir="source/webdocs/prod" includes="applicationContext.xml" />
       <manifest>
         <attribute name="Implementation-Title" value="Security Manager" />
         <attribute name="Implementation-Version" value="${version} (build ${svnversion}  ${TODAY})" />
@@ -240,18 +204,18 @@
     </war>
   </target>
 
-  <!-- This war file is used for regression tests. -->
   <target name="war-tests" depends="install_init,jar" description="Builds the Test WAR file for installation.">
     <echo> The test war file dir is located at ${war.dir}</echo>
 
     <tstamp />
-    <war warfile="${tests.warfile}" webxml="${tests.webdocs}/web.xml">
+    <war warfile="${tests.warfile}" webxml="${webdocs}/test/web.xml">
       <lib dir="${jar.dir}" includes="*.jar" />
       <lib file="${connector-dist.dir}/connector-spi.jar" />
       <lib file="${connector-dist.dir}/connector.jar" />
       <lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
-      <webinf dir="${tests.webdocs}" includes="applicationContext.xml,saml-metadata.xml,AuthSites.conf" />
-      <!-- Next line is specific to testing: -->
+      <!-- above this line is all the stuff that goes in the normal prod jar,
+           below is the stuff that is only needed for testing -->
+      <webinf dir="source/webdocs/test" includes="applicationContext.xml" />
       <lib dir="${thirdparty.tests.jars}" includes="*.jar" />
       <manifest>
         <attribute name="Implementation-Title" value="Security Manager" />

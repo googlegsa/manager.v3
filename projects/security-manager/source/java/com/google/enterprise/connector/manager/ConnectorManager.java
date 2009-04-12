@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,16 +14,13 @@
 
 package com.google.enterprise.connector.manager;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.server.BackEnd;
 
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,12 +38,6 @@ public class ConnectorManager extends ProductionManager {
   private static final Logger LOGGER = Logger.getLogger(ConnectorManager.class.getName());
 
   private BackEnd backEnd;
-  private boolean securityManagerConnectorsInitialized;
-
-  public ConnectorManager() {
-    super();
-    securityManagerConnectorsInitialized = false;
-  }
 
   public BackEnd getBackEnd() {
     return backEnd;
@@ -58,8 +49,7 @@ public class ConnectorManager extends ProductionManager {
   }
 
   @Override
-  public boolean authenticate(String connectorName, 
-      AuthenticationIdentity identity) {
+  public boolean authenticate(String connectorName, String username, String password) {
     throw new UnsupportedOperationException();
   }
 
@@ -86,32 +76,5 @@ public class ConnectorManager extends ProductionManager {
     AuthnCaller authnCaller = new AuthnCaller(authnManager, id, securityContext);
 
     return authnCaller.authenticate();
-  }
-
-  @Override
-  public List<ConnectorStatus> getConnectorStatuses() {
-    if (!securityManagerConnectorsInitialized) {
-      try {
-        this.setConnectorConfig("BasicAuth", "BasicAuthConnector",
-                                ImmutableMap.of("ServerUrl", "foo"),  // dummy parameter
-                                "en", false);
-        this.setConnectorConfig("FormAuth", "FormAuthConnector",
-                                ImmutableMap.of("CookieName", "bar"),  // dummy parameter
-                                "en", false);
-        this.setConnectorConfig("ConnAuth", "ConnAuthConnector",
-                                ImmutableMap.of("SpiVersion", "0"),
-                                "en", false);
-        securityManagerConnectorsInitialized = true;
-      } catch (ConnectorNotFoundException e) {
-        LOGGER.info("ConnectorNotFound: " + e.toString());
-      } catch (InstantiatorException e) {
-        LOGGER.info("Instantiator: " + e.toString());
-      } catch (PersistentStoreException e) {
-        LOGGER.info("PersistentStore: " + e.toString());
-      }
-    }
-    @SuppressWarnings("unchecked")
-    List<ConnectorStatus> result = super.getConnectorStatuses();
-    return result;
   }
 }

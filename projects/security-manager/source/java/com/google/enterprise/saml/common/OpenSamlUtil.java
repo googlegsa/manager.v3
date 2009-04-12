@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright 2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,17 +30,12 @@ import org.opensaml.saml2.core.Artifact;
 import org.opensaml.saml2.core.ArtifactResolve;
 import org.opensaml.saml2.core.ArtifactResponse;
 import org.opensaml.saml2.core.Assertion;
-import org.opensaml.saml2.core.Attribute;
-import org.opensaml.saml2.core.AttributeStatement;
-import org.opensaml.saml2.core.Audience;
-import org.opensaml.saml2.core.AudienceRestriction;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.saml2.core.AuthnContextClassRef;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthnStatement;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.AuthzDecisionStatement;
-import org.opensaml.saml2.core.Conditions;
 import org.opensaml.saml2.core.DecisionTypeEnumeration;
 import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.NameID;
@@ -107,13 +102,6 @@ public final class OpenSamlUtil {
     } catch (ConfigurationException e) {
       throw new IllegalStateException(e);
     }
-
-    // This is required in order to patch around missing code in OpenSAML.
-    Configuration.registerObjectProvider(
-        AttributeValue.DEFAULT_ELEMENT_NAME,
-        new AttributeValueBuilder(),
-        new AttributeValueMarshaller(),
-        new AttributeValueUnmarshaller());
   }
 
   private static final XMLObjectBuilderFactory objectBuilderFactory =
@@ -136,16 +124,6 @@ public final class OpenSamlUtil {
       makeSamlObjectBuilder(ArtifactResponse.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<Assertion> assertionBuilder =
       makeSamlObjectBuilder(Assertion.DEFAULT_ELEMENT_NAME);
-  private static final SAMLObjectBuilder<Attribute> attributeBuilder =
-      makeSamlObjectBuilder(Attribute.DEFAULT_ELEMENT_NAME);
-  private static final SAMLObjectBuilder<AttributeStatement> attributeStatementBuilder =
-      makeSamlObjectBuilder(AttributeStatement.DEFAULT_ELEMENT_NAME);
-  private static final SAMLObjectBuilder<AttributeValue> attributeValueBuilder =
-      makeSamlObjectBuilder(AttributeValue.DEFAULT_ELEMENT_NAME);
-  private static final SAMLObjectBuilder<Audience> audienceBuilder =
-      makeSamlObjectBuilder(Audience.DEFAULT_ELEMENT_NAME);
-  private static final SAMLObjectBuilder<AudienceRestriction> audienceRestrictionBuilder =
-      makeSamlObjectBuilder(AudienceRestriction.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<AuthnContext> authnContextBuilder =
       makeSamlObjectBuilder(AuthnContext.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<AuthnContextClassRef> authnContextClassRefBuilder =
@@ -158,8 +136,6 @@ public final class OpenSamlUtil {
       makeSamlObjectBuilder(AuthzDecisionQuery.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<AuthzDecisionStatement> authzDecisionStatementBuilder =
       makeSamlObjectBuilder(AuthzDecisionStatement.DEFAULT_ELEMENT_NAME);
-  private static final SAMLObjectBuilder<Conditions> conditionsBuilder =
-      makeSamlObjectBuilder(Conditions.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<Issuer> issuerBuilder =
       makeSamlObjectBuilder(Issuer.DEFAULT_ELEMENT_NAME);
   private static final SAMLObjectBuilder<NameID> nameIDBuilder =
@@ -354,59 +330,6 @@ public final class OpenSamlUtil {
   }
 
   /**
-   * Static factory for SAML <code>Attribute</code> objects.
-   *
-   * @param name The attribute name.
-   * @return A new <code>Attribute</code> object.
-   */
-  public static Attribute makeAttribute(String name) {
-    Attribute attribute = attributeBuilder.buildObject();
-    attribute.setName(name);
-    return attribute;
-  }
-
-  /**
-   * Static factory for SAML <code>AttributeStatement</code> objects.
-   *
-   * @return A new <code>AttributeStatement</code> object.
-   */
-  public static AttributeStatement makeAttributeStatement() {
-    return attributeStatementBuilder.buildObject();
-  }
-
-  /**
-   * Static factory for SAML <code>AttributeValue</code> objects.
-   *
-   * @return A new <code>AttributeValue</code> object.
-   */
-  public static AttributeValue makeAttributeValue(String value) {
-    AttributeValue attrValue = attributeValueBuilder.buildObject();
-    attrValue.setValue(value);
-    return attrValue;
-  }
-
-  /**
-   * Static factory for SAML <code>Audience</code> objects.
-   *
-   * @param uri The audience URI.
-   * @return A new <code>Audience</code> object.
-   */
-  public static Audience makeAudience(String uri) {
-    Audience audience = audienceBuilder.buildObject();
-    audience.setAudienceURI(uri);
-    return audience;
-  }
-
-  /**
-   * Static factory for SAML <code>AudienceRestriction</code> objects.
-   *
-   * @return A new <code>AudienceRestriction</code> object.
-   */
-  public static AudienceRestriction makeAudienceRestriction() {
-    return audienceRestrictionBuilder.buildObject();
-  }
-
-  /**
    * Static factory for SAML <code>AuthnContext</code> objects.
    *
    * @param classRef An <code>AuthnContextClassRef</code> identifying an authentication context
@@ -527,15 +450,6 @@ public final class OpenSamlUtil {
   }
 
   /**
-   * Static factory for SAML <code>Conditions</code> objects.
-   *
-   * @return A new <code>Conditions</code> object.
-   */
-  public static Conditions makeConditions() {
-    return conditionsBuilder.buildObject();
-  }
-
-  /**
    * Static factory for SAML <code>Issuer</code> objects.
    *
    * @param name The issuer of a response object.  In the absence of a specific format, this is a
@@ -600,16 +514,12 @@ public final class OpenSamlUtil {
   /**
    * Static factory for SAML <code>Status</code> objects.
    *
-   * A convenience method that generates a status object with a message.
+   * A convenience method that supplies an empty <code>StatusCode</code> object.
    *
-   * @param value A URI specifying one of the standard SAML status codes.
-   * @param message A string describing the status.
    * @return A new <code>Status</code> object.
    */
-  public static Status makeStatus(String value, String message) {
-    Status status = makeStatus(value);
-    status.setStatusMessage(makeStatusMessage(message));
-    return status;
+  public static Status makeStatus() {
+    return makeStatus(makeStatusCode());
   }
 
   /**
@@ -979,9 +889,9 @@ public final class OpenSamlUtil {
     return Configuration.getSAMLDateFormatter().print(date);
   }
 
-  public static MetadataProvider getMetadataFromFile(File file)
+  public static MetadataProvider getMetadataFromFile(String filename)
       throws MetadataProviderException {
-    FilesystemMetadataProvider provider = new FilesystemMetadataProvider(file);
+    FilesystemMetadataProvider provider = new FilesystemMetadataProvider(new File(filename));
     provider.setParserPool(new BasicParserPool());
     // Causes null-pointer errors in OpenSAML code:
     //provider.setRequireValidMetadata(true);

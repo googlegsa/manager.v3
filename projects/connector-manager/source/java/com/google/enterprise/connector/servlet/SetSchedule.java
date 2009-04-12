@@ -17,7 +17,6 @@ package com.google.enterprise.connector.servlet;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
-import com.google.enterprise.connector.scheduler.Schedule;
 
 import org.w3c.dom.Element;
 
@@ -67,9 +66,8 @@ public class SetSchedule extends ConnectorManagerServlet {
         root, ServletUtil.XMLTAG_CONNECTOR_NAME);
     int load = Integer.parseInt(ServletUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_LOAD));
-    boolean disabled = (ServletUtil.getFirstElementByTagName(root,
-        ServletUtil.XMLTAG_DISABLED) != null);
-    int retryDelayMillis = Schedule.defaultRetryDelayMillis();
+    // Default to 5 minutes delay unless one is specified
+    int retryDelayMillis = 5 * 60 * 1000;
     String delayStr = ServletUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_DELAY);
     if (delayStr != null) {
@@ -77,9 +75,6 @@ public class SetSchedule extends ConnectorManagerServlet {
     }
     String timeIntervals = ServletUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_TIME_INTERVALS);
-
-    Schedule schedule = new Schedule(connectorName, disabled, load,
-        retryDelayMillis, timeIntervals);
 
     // TODO: Remove this when the GSA enforces lowercase connector names.
     // Until then, this hack tries to determine if we are setting the
@@ -93,7 +88,7 @@ public class SetSchedule extends ConnectorManagerServlet {
     }
 
     try {
-      manager.setSchedule(connectorName, schedule.toString());
+      manager.setSchedule(connectorName, load, retryDelayMillis, timeIntervals);
     } catch (ConnectorNotFoundException e) {
       status = new ConnectorMessageCode(
           ConnectorMessageCode.EXCEPTION_CONNECTOR_NOT_FOUND, connectorName);

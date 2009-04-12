@@ -1,4 +1,4 @@
-// Copyright 2007-2009 Google Inc.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,17 +15,15 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.spi.Connector;
-import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
 
 /**
- * Wraps an existing Connector, adding the ability
- * to add custom properties.
+ * @author ziff
+ *
  */
-public final class CustomProtoTestConnector
-    implements Connector, ConnectorShutdownAware {
+public final class CustomProtoTestConnector implements Connector {
 
   private Connector delegateConnector;
   private String customProperty = "default";
@@ -51,19 +49,10 @@ public final class CustomProtoTestConnector
     this.customIntProperty = customIntProperty;
   }
 
+  /* (non-Javadoc)
+   * @see com.google.enterprise.connector.spi.Connector#login()
+   */
   public Session login() throws RepositoryLoginException, RepositoryException {
      return delegateConnector.login();
-  }
-
-  public void shutdown() throws RepositoryException {
-    if (delegateConnector instanceof ConnectorShutdownAware) {
-      ((ConnectorShutdownAware)delegateConnector).shutdown();
-    }
-  }
-
-  public void delete() throws RepositoryException {
-    if (delegateConnector instanceof ConnectorShutdownAware) {
-      ((ConnectorShutdownAware)delegateConnector).delete();
-    }
   }
 }

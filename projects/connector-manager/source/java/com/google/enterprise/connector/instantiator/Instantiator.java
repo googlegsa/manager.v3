@@ -216,9 +216,4 @@ public interface Instantiator {
    */
   public String getConnectorState(String connectorName)
       throws ConnectorNotFoundException;
-
-  /**
-   * Shutdown all the Connector instances.
-   */
-  public void shutdown();
 }

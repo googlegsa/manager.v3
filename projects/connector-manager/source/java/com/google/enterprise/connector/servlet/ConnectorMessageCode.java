@@ -24,6 +24,7 @@ public class ConnectorMessageCode {
 
   /**
    * IDs from 5210 to 6000 are reserved for GSA / Connector Manager
+   *
    */
   public static final int RESPONSE_HTTP_FAIL = 5210;
   public static final int RESPONSE_EMPTY_REQUEST = 5211;
@@ -73,7 +74,6 @@ public class ConnectorMessageCode {
   public static final int OVERLAP_BAD_SCHEDULE = 5413;
   public static final int CONNECTOR_DISCONNECTED = 5414;
   public static final int CONNECTOR_MANAGER_DISCONNECTED = 5415;
-
   public static final int ATTEMPT_TO_CHANGE_LOCKED_CONNECTOR_MANAGER = 5416;
 
   // Specific success message codes - 5500-5599
@@ -124,11 +124,6 @@ public class ConnectorMessageCode {
 
   public boolean isSuccess() {
     return (messageId == SUCCESS);
-  }
-  
-  public boolean isSuccessMessage() {
-    return (messageId >= FIRST_SUCCESS_MESSAGE_CODE &&
-            messageId <= LAST_SUCCESS_MESSAGE_CODE);
   }
 
   public boolean hasMessage() {

@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
 import com.google.enterprise.security.identity.IdentityConfig;
-import com.google.enterprise.security.identity.VerificationStatus;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
@@ -37,7 +36,6 @@ import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
@@ -49,13 +47,13 @@ import javax.servlet.http.Cookie;
  * An implementation of the BackEnd interface for the Security Manager.
  */
 public class BackEndImpl implements BackEnd {
-  private static final Logger LOGGER = Logger.getLogger(BackEndImpl.class.getName());
   private static final int artifactLifetime = 600000;  // ten minutes
 
   private final SessionManagerInterface sm;
   private ConnectorManager manager;
   private final AuthzResponder authzResponder;
   private final SAMLArtifactMap artifactMap;
+  private static final Logger LOGGER = Logger.getLogger(BackEndImpl.class.getName());
   private IdentityConfig identityConfig;
   private List<AuthnDomainGroup> authnDomainGroups;
 
@@ -77,7 +75,6 @@ public class BackEndImpl implements BackEnd {
         new BasicParserPool(),
         new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
         artifactLifetime);
-    identityConfig = null;
     authnDomainGroups = null;
     adapter = new GSASessionAdapter(sm);
     sessionIds = new Vector<String>();
@@ -91,13 +88,8 @@ public class BackEndImpl implements BackEnd {
     return sm;
   }
 
-  public boolean isIdentityConfigured() throws IOException {
-    return !getAuthnDomainGroups().isEmpty();
-  }
-
   public void setIdentityConfig(IdentityConfig identityConfig) {
     this.identityConfig = identityConfig;
-    authnDomainGroups = null;
   }
 
   public SAMLArtifactMap getArtifactMap() {
@@ -106,12 +98,7 @@ public class BackEndImpl implements BackEnd {
 
   public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException {
     if (authnDomainGroups == null) {
-      if (identityConfig != null) {
-        authnDomainGroups = ImmutableList.copyOf(identityConfig.getConfig());
-      }
-      if (authnDomainGroups == null) {
-        authnDomainGroups = ImmutableList.of();
-      }
+      authnDomainGroups = ImmutableList.copyOf(identityConfig.getConfig());
     }
     return authnDomainGroups;
   }
@@ -119,7 +106,7 @@ public class BackEndImpl implements BackEnd {
   public void authenticate(CredentialsGroup cg) {
     for (DomainCredentials dCred : cg.getElements()) {
       String expectedTypeName;
-      switch (dCred.getAuthnDomain().getMechanism()) {
+      switch (dCred.getDomain().getMechanism()) {
         case BASIC_AUTH:
           expectedTypeName = "BasicAuthConnector";
           break;
@@ -132,7 +119,7 @@ public class BackEndImpl implements BackEnd {
         default:
           continue;
       }
-      for (ConnectorStatus connStatus : manager.getConnectorStatuses()) {
+      for (ConnectorStatus connStatus : getConnectorStatuses(manager)) {
         if (!connStatus.getType().equals(expectedTypeName)) {
           continue;
         }
@@ -141,8 +128,7 @@ public class BackEndImpl implements BackEnd {
         AuthenticationResponse authnResponse = manager.authenticate(connectorName, dCred, null);
         if ((null != authnResponse) && authnResponse.isValid()) {
           LOGGER.info("Authn Success, credential verified: " + dCred.dumpInfo());
-          // TODO(cph): should this be set to REFUTED if the result is invalid?
-          dCred.setVerificationStatus(VerificationStatus.VERIFIED);
+          dCred.setVerified(true);
         }
       }
     }
@@ -150,25 +136,27 @@ public class BackEndImpl implements BackEnd {
 
   // some form of authentication has already happened, the user gave us cookies,
   // see if the cookies reveal who the user is.
-  public List<AuthenticationResponse> handleCookie(SecAuthnContext context) {
-    List<AuthenticationResponse> result = new ArrayList<AuthenticationResponse>();
-    for (ConnectorStatus connStatus: manager.getConnectorStatuses()) {
-      String connType = connStatus.getType();
-      if (! (connType.equals("SsoCookieIdentityConnector")
-             || connType.equals("regexCookieIdentityConnector"))) {
+  public AuthenticationResponse handleCookie(SecAuthnContext context) {
+    for (ConnectorStatus connStatus: getConnectorStatuses(manager)) {
+      if (!connStatus.getType().equals("FormAuthConnector")) {
         continue;
       }
       String connectorName = connStatus.getName();
       LOGGER.info("Got security plug-in " + connectorName);
       AuthenticationResponse authnResponse = manager.authenticate(connectorName, null, context);
       if ((authnResponse != null) && authnResponse.isValid())
-        result.add(authnResponse);
+        return authnResponse;
     }
-    return result;
+    return null;
   }
 
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     return authzResponder.authorizeBatch(authzDecisionQueries);
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<ConnectorStatus> getConnectorStatuses(ConnectorManager manager) {
+    return manager.getConnectorStatuses();
   }
 
   public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs) {
@@ -187,7 +175,7 @@ public class BackEndImpl implements BackEnd {
         // The expectation is that only one basic auth module will be active
         // at any given time, or that if multiple basic auth modules are
         // active at once, only one of them will work.
-        if (AuthNMechanism.BASIC_AUTH == dCred.getAuthnDomain().getMechanism()) {
+        if (AuthNMechanism.BASIC_AUTH == dCred.getDomain().getMechanism()) {
           if (null != cg.getUsername()) {
             adapter.setUsername(sessionId, cg.getUsername());
           }

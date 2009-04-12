@@ -15,7 +15,6 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -67,14 +66,10 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
     } catch (ConnectorTypeNotFoundException e) {
       status = new ConnectorMessageCode(
           ConnectorMessageCode.EXCEPTION_CONNECTOR_TYPE_NOT_FOUND,
-          connectorType);
+              connectorType);
       ServletUtil.writeResponse(out, status);
       LOGGER.log(Level.WARNING,
           ServletUtil.LOG_EXCEPTION_CONNECTOR_TYPE_NOT_FOUND, e);
-    } catch (InstantiatorException e) {
-      status.setMessageId(ConnectorMessageCode.EXCEPTION_INSTANTIATOR);
-      ServletUtil.writeResponse(out, status);
-      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_INSTANTIATOR, e);
     }
 
     if (formSnippet == null) {
@@ -88,7 +83,12 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
   /**
    * Writes the XML response for setting the connector config.
    */
-  /* @Override */
+  /*
+   * (non-Javadoc)
+   * @see com.google.enterprise.connector.servlet.ConnectorManagerServlet
+   * #processDoPost(java.lang.String,
+   * com.google.enterprise.connector.manager.Manager, java.io.PrintWriter)
+   */
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
     SetConnectorConfigHandler handler =
@@ -110,4 +110,5 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
         out, status, configRes);
     out.close();
   }
+
 }

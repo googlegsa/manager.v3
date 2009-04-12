@@ -68,7 +68,7 @@ public class SamlArtifactResolveTest extends TestCase {
         "                           Version=\"2.0\"\n" +
         "                           xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\">\n" +
         "      <saml:Issuer xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">" +
-        GsaConstants.GSA_TESTING_ISSUER +
+        GsaConstants.GSA_ISSUER +
         "</saml:Issuer>\n" +
         "      <samlp:Artifact>" + encodedArtifact + "</samlp:Artifact>\n" +
         "    </samlp:ArtifactResolve>\n" +
@@ -78,7 +78,7 @@ public class SamlArtifactResolveTest extends TestCase {
 
     Context context = Context.getInstance();
     context.setStandaloneContext(
-        Context.DEFAULT_JUNIT_CONTEXT_LOCATION,
+        "source/webdocs/prod/applicationContext.xml",
         Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
     Metadata metadata =
         Metadata.class.cast(context.getRequiredBean("Metadata", Metadata.class));

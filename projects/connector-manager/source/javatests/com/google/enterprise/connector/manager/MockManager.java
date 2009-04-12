@@ -43,7 +43,7 @@ public class MockManager implements Manager {
   private static final MockManager INSTANCE = new MockManager();
   private static final Logger LOGGER =
       Logger.getLogger(MockManager.class.getName());
-  
+
   private boolean shouldVerifyIdentity;
   private String domain;
   private String username;
@@ -59,7 +59,7 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public boolean authenticate(String connectorName, 
+  public boolean authenticate(String connectorName,
       AuthenticationIdentity identity) {
     if (!shouldVerifyIdentity) {
       return true;
@@ -80,8 +80,8 @@ public class MockManager implements Manager {
     }
     return true;
   }
-  
-  private boolean verifyComponent(String componentName, String expected, 
+
+  private boolean verifyComponent(String componentName, String expected,
       String actual, StringBuffer sb) {
     if (expected == null) {
       if (actual != null) {
@@ -91,7 +91,7 @@ public class MockManager implements Manager {
       return true;
     }
     if (!expected.equals(actual)) {
-      sb.append("Expected " + componentName + "\"" + expected + "\" got \"" + actual +"\"\n");      
+      sb.append("Expected " + componentName + "\"" + expected + "\" got \"" + actual +"\"\n");
       return false;
     }
     return true;
@@ -156,7 +156,7 @@ public class MockManager implements Manager {
     String name = connectorName;
     String type = "Documentum";
     int status = 0;
-    String schedule = connectorName + ":100:0:0-0";
+    String schedule = connectorName + ":100:0-0";
     return new ConnectorStatus(name, type, status, schedule);
   }
 
@@ -202,7 +202,8 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public void setSchedule(String connectorName, String schedule) {
+  public void setSchedule(String connectorName, int load, int retryDelayMillis,
+      String timeIntervals) {
     // do nothing
   }
 
@@ -229,12 +230,12 @@ public class MockManager implements Manager {
   public boolean isLocked() {
     return false;
   }
-  
+
   public void setShouldVerifyIdentity(boolean b) {
     shouldVerifyIdentity = b;
   }
-  
-  public void setExpectedIdentity(String domain, String username, 
+
+  public void setExpectedIdentity(String domain, String username,
       String password) {
     this.domain = domain;
     this.username = username;

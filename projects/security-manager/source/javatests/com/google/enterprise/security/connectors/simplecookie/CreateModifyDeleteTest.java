@@ -42,8 +42,7 @@ public class CreateModifyDeleteTest extends TestCase {
    */
   public final void testBasicFunctionality() throws Exception {
     Context.refresh();
-    Context.getInstance().setStandaloneContext(
-        Context.DEFAULT_JUNIT_CONTEXT_LOCATION,
+    Context.getInstance().setStandaloneContext(Context.DEFAULT_JUNIT_CONTEXT_LOCATION,
         Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
     Context.getInstance().setFeeding(false);
     Context.getInstance().start();
@@ -52,7 +51,7 @@ public class CreateModifyDeleteTest extends TestCase {
         ConnectorManager.class.cast(Context.getInstance().getManager());
 
     String connectorName = "CookieConnector1";
-    String connectorTypeName = "regexCookieIdentityConnector";
+    String connectorTypeName = "CookieConnector";
     String language = "en";
 
     boolean connectorExists = testConnectorExists(connectorManager, connectorName);

@@ -1,4 +1,4 @@
-// Copyright 2002 Google Inc.
+// Copyright 2002 Google, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,6 +42,14 @@ import java.util.*;
  * @author Peter Mattis
  */
 public class Chset extends Parser<Object> implements Cloneable {
+  private static final Comparator range_cmp = new Comparator() {
+      public int compare(Object a, Object b) {
+        Range ra = (Range) a;
+        Range rb = (Range) b;
+        return ra.first - rb.first;
+      }
+    };
+
   protected static final char MIN_CHAR = 0;
   protected static final char MAX_CHAR = 65535;
 
@@ -127,10 +135,11 @@ public class Chset extends Parser<Object> implements Cloneable {
   /**
    * Returns a clone character set of <code>this</code>.
    */
-  @Override
   public Object clone() {
     Chset n = new Chset();
-    for (Range r : ranges) {
+    for (Iterator iter = ranges.iterator();
+         iter.hasNext();) {
+      Range r = (Range) iter.next();
       n.ranges.add(new Range(r.first, r.last));
     }
     n.refreshAsciiSet();
@@ -140,9 +149,8 @@ public class Chset extends Parser<Object> implements Cloneable {
   /**
    * Matches <code>buf[start]</code> against the character set.
    *
-   * @see Parser#parse
+   * @see Parser.parse
    */
-  @Override
   public int parse(char[] buf, int start, int end, Object data) {
     if ((start < end) && test(buf[start])) {
       return 1;
@@ -195,7 +203,7 @@ public class Chset extends Parser<Object> implements Cloneable {
   }
 
   /**
-   * @see #set
+   * @see set(Range)
    */
   protected void set(char min, char max) {
     set(new Range(min, max));
@@ -206,7 +214,7 @@ public class Chset extends Parser<Object> implements Cloneable {
    * subsequent calls to <code>test</code> for characters within the range will
    * return <code>true</code>.
    *
-   * @see #union
+   * @see union
    */
   private void set(Range r) {
     if (ranges.isEmpty()) {
@@ -231,7 +239,7 @@ public class Chset extends Parser<Object> implements Cloneable {
   }
 
   /**
-   * @see #clear
+   * @see clear(Range)
    */
   protected void clear(char min, char max) {
     clear(new Range(min, max));
@@ -242,7 +250,7 @@ public class Chset extends Parser<Object> implements Cloneable {
    * subsequent calls to <code>test</code> for characters within the range will
    * return <code>false</code>.
    *
-   * @see #difference
+   * @see difference
    */
   private void clear(Range r) {
     if (ranges.isEmpty()) {
@@ -302,10 +310,10 @@ public class Chset extends Parser<Object> implements Cloneable {
    *
    * @param first The start of the range to find the insertion point for.
    *
-   * @see #test
-   * @see #set
-   * @see #clear
-   * @see Arrays#binarySearch
+   * @see test
+   * @see set
+   * @see clear
+   * @see Arrays.binarySearch
    */
   private int find(int first) {
     int s = 0;
@@ -334,8 +342,8 @@ public class Chset extends Parser<Object> implements Cloneable {
    * range and the range at the specified position in the range array must be
    * mergeable.
    *
-   * @see #set
-   * @see #clear
+   * @see set
+   * @see clear
    */
   private void merge(int pos, Range r) {
     Range t = ranges.get(pos);
@@ -375,8 +383,9 @@ public class Chset extends Parser<Object> implements Cloneable {
    */
   public static Chset union(Chset left, Chset right) {
     Chset n = (Chset) left.clone();
-    for (Range r : right.ranges) {
-      n.set(r);
+    for (Iterator iter = right.ranges.iterator();
+         iter.hasNext();) {
+      n.set((Range) iter.next());
     }
     return n;
   }
@@ -394,8 +403,9 @@ public class Chset extends Parser<Object> implements Cloneable {
    */
   public static Chset difference(Chset left, Chset right) {
     Chset n = (Chset) left.clone();
-    for (Range r : right.ranges) {
-      n.clear(r);
+    for (Iterator iter = right.ranges.iterator();
+         iter.hasNext();) {
+      n.clear((Range) iter.next());
     }
     return n;
   }
@@ -429,7 +439,6 @@ public class Chset extends Parser<Object> implements Cloneable {
     return union(difference(left, right), difference(right, left));
   }
 
-  @Override
   public String toString() {
     StringBuffer buf = new StringBuffer();
     for (int i = 0; i < ranges.size(); i++) {
@@ -482,9 +491,9 @@ public class Chset extends Parser<Object> implements Cloneable {
      *
      * @param ch The character to test for inclusion.
      *
-     * @see #test
-     * @see #set
-     * @see #clear
+     * @see Chset.test
+     * @see Chset.set
+     * @see Chset.clear
      */
     boolean includes(int ch) {
       return (first <= ch) && (ch <= last);
@@ -495,8 +504,8 @@ public class Chset extends Parser<Object> implements Cloneable {
      *
      * @param r The range to test for inclusion.
      *
-     * @see #set
-     * @see #clear
+     * @see Chset.set
+     * @see Chset.clear
      */
     boolean includes(Range r) {
       return (first <= r.first) && (r.last <= last);
@@ -509,7 +518,7 @@ public class Chset extends Parser<Object> implements Cloneable {
      *
      * @param r The range to test for mergeability with.
      *
-     * @see #set
+     * @see Chset.set
      */
     boolean mergeable(Range r) {
       // A range is mergeable if there are no gaps between the ranges.  If there
@@ -526,8 +535,8 @@ public class Chset extends Parser<Object> implements Cloneable {
      *
      * @param r The range to merge with.
      *
-     * @see #set
-     * @see #merge
+     * @see Chset.set
+     * @see Chset.merge
      */
     void merge(Range r) {
       first = Math.min(first, r.first);

@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2009 Google Inc.
+// Copyright (C) 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,13 +15,9 @@
 package com.google.enterprise.connector.jcr;
 
 import com.google.enterprise.connector.spi.Connector;
-import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
-
-import java.util.HashMap;
-import java.util.Iterator;
 
 import javax.jcr.Credentials;
 import javax.jcr.SimpleCredentials;
@@ -32,7 +28,7 @@ import javax.jcr.SimpleCredentials;
  * credentials must be supplied externally (to the SPIRepository constructor and
  * login method). All other JCR objects are produced from these.
  */
-public class JcrConnector implements Connector, ConnectorShutdownAware {
+public class JcrConnector implements Connector {
 
   javax.jcr.Repository repo;
 
@@ -50,7 +46,6 @@ public class JcrConnector implements Connector, ConnectorShutdownAware {
 
   private String username = "";
   private String password = "";
-  private HashMap sessions = new HashMap();
 
   /**
    * @param password the password to set
@@ -69,15 +64,10 @@ public class JcrConnector implements Connector, ConnectorShutdownAware {
   public Session login() throws RepositoryLoginException,
       RepositoryException {
     try {
-      Credentials simpleCredentials =
-          new SimpleCredentials(username, password.toCharArray());
-      synchronized (sessions) {
-        if (!sessions.containsKey(simpleCredentials)) {
-          javax.jcr.Session session = repo.login(simpleCredentials);
-          sessions.put(simpleCredentials, new JcrSession(session));
-        }
-      }
-      return (JcrSession) sessions.get(simpleCredentials);
+      Credentials simpleCredentials = new SimpleCredentials(username, password
+          .toCharArray());
+      javax.jcr.Session session = repo.login(simpleCredentials);
+      return new JcrSession(session);
     } catch (javax.jcr.LoginException e) {
       throw new RepositoryLoginException(e);
     } catch (javax.jcr.RepositoryException e) {
@@ -85,17 +75,4 @@ public class JcrConnector implements Connector, ConnectorShutdownAware {
     }
   }
 
-  public void shutdown() {
-    synchronized (sessions) {
-      for (Iterator iter = sessions.values().iterator(); iter.hasNext();) {
-        JcrSession jcrSession = (JcrSession) iter.next();
-        jcrSession.session.logout();
-      }
-      sessions.clear();
-    }
-  }
-
-  public void delete() {
-    return;
-  }
 }

@@ -54,13 +54,8 @@ public class QueryTraverser implements Traverser {
     this.stateStore = stateStore;
     this.connectorName = connectorName;
     if (this.queryTraversalManager instanceof TraversalContextAware) {
-      try {
-        TraversalContext tc = Context.getInstance().getTraversalContext();
-        ((TraversalContextAware)this.queryTraversalManager)
-            .setTraversalContext(tc);
-      } catch (Exception e) {
-        LOGGER.log(Level.WARNING, "Unable to set TraversalContext", e);
-      }
+      TraversalContext tc = Context.getInstance().getTraversalContext();
+      ((TraversalContextAware)this.queryTraversalManager).setTraversalContext(tc);
     }
   }
 
@@ -81,7 +76,7 @@ public class QueryTraverser implements Traverser {
   public synchronized int runBatch(int batchHint) {
     if (isCancelled()) {
         LOGGER.warning("Attempting to run a cancelled QueryTraverser");
-        return Traverser.ERROR_WAIT;
+        return Traverser.FORCE_WAIT;
     }
     if (batchHint <= 0) {
       throw new IllegalArgumentException("batchHint must be a positive int");
@@ -106,7 +101,7 @@ public class QueryTraverser implements Traverser {
       // That happens if the connector was deleted while we were asleep.
       // Our connector seems to have been deleted.  Don't process a batch.
       LOGGER.finer("Halting traversal..." + ise.getMessage());
-      return Traverser.ERROR_WAIT;
+      return Traverser.FORCE_WAIT;
     }
 
     if (connectorState == null) {
@@ -129,7 +124,7 @@ public class QueryTraverser implements Traverser {
     // no new content to traverse.
     if (resultSet == null) {
       LOGGER.finer("Result set is NULL, no documents returned for traversal.");
-      return Traverser.POLLING_WAIT;
+      return Traverser.FORCE_WAIT;
     }
 
     try {
@@ -195,7 +190,7 @@ public class QueryTraverser implements Traverser {
         // If we blew up on the first document, it may be an indication that
         // there is a systemic Connector problem (for instance, loss of
         // connectivity to its repository).  Wait a while, then try again.
-        counter = Traverser.ERROR_WAIT;
+        counter = Traverser.FORCE_WAIT;
       }
     } catch (PushException e) {
       LOGGER.log(Level.SEVERE, "Push Exception during traversal.", e);
@@ -203,33 +198,33 @@ public class QueryTraverser implements Traverser {
       // (as there is a discrepancy between what the Connector thinks
       // it has fed, and what actually has been pushed).
       resultSet = null;
-      counter = Traverser.ERROR_WAIT;
+      counter = Traverser.FORCE_WAIT;
     } catch (FeedException e) {
       LOGGER.log(Level.SEVERE, "Feed Exception during traversal.", e);
       // Drop the entire batch on the floor.  Do not call checkpoint
       // (as there is a discrepancy between what the Connector thinks
       // it has fed, and what actually has been pushed).
       resultSet = null;
-      counter = Traverser.ERROR_WAIT;
+      counter = Traverser.FORCE_WAIT;
     } catch (Throwable t) {
       LOGGER.log(Level.SEVERE, "Uncaught Exception during traversal.", t);
       // Drop the entire batch on the floor.  Do not call checkpoint
       // (as there is a discrepancy between what the Connector thinks
       // it has fed, and what actually has been pushed).
       resultSet = null;
-      counter = Traverser.ERROR_WAIT;
+      counter = Traverser.FORCE_WAIT;
     } finally {
       // If we have cancelled the work, abandon the batch.
       if (isCancelled()) {
         resultSet = null;
-        counter = Traverser.ERROR_WAIT;
+        counter = Traverser.FORCE_WAIT;
       }
 
       // Checkpoint completed work as well as skip past troublesome documents
       // (e.g. documents that are too large and will always fail).
       if ((resultSet != null) && (checkpointAndSave(resultSet) == null)) {
         // Unable to get a checkpoint, so wait a while, then retry batch.
-        counter = Traverser.ERROR_WAIT;
+        counter = Traverser.FORCE_WAIT;
       }
     }
     return counter;

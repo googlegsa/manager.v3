@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,14 +27,11 @@ import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.saml2.binding.decoding.HTTPRedirectDeflateDecoder;
 import org.opensaml.saml2.binding.encoding.HTTPArtifactEncoder;
 import org.opensaml.saml2.core.Assertion;
-import org.opensaml.saml2.core.Attribute;
-import org.opensaml.saml2.core.AttributeStatement;
-import org.opensaml.saml2.core.AudienceRestriction;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.saml2.core.AuthnRequest;
-import org.opensaml.saml2.core.Conditions;
 import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.EntityDescriptor;
@@ -43,9 +40,6 @@ import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,21 +47,15 @@ import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAssertion;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAttribute;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAttributeStatement;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAttributeValue;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAudience;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAudienceRestriction;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnStatement;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeConditions;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatusMessage;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSubject;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
@@ -81,22 +69,10 @@ import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
  */
 public class SamlAuthn extends SecurityManagerServlet
     implements GettableHttpServlet, PostableHttpServlet {
-  private static final Logger LOGGER = Logger.getLogger(SamlAuthn.class.getName());
+
   /** Required for serializable classes. */
   private static final long serialVersionUID = 1L;
-  private static final String PROMPT_COUNTER_NAME = "SamlAuthnPromptCounter";
-  private static final String OMNI_FORM_NAME = "SamlAuthnOmniForm";
-  private static final int defaultMaxPrompts = 3;
-
-  private int maxPrompts;
-
-  public SamlAuthn() {
-    maxPrompts = defaultMaxPrompts;
-  }
-
-  public void setMaxPrompts(int maxPrompts) {
-    this.maxPrompts = maxPrompts;
-  }
+  private static final Logger LOGGER = Logger.getLogger(SamlAuthn.class.getName());
 
   /**
    * Accept an authentication request and (eventually) respond to the service provider with a
@@ -135,33 +111,55 @@ public class SamlAuthn extends SecurityManagerServlet
                            SAML2_ARTIFACT_BINDING_URI);
     }
 
-    // If there are cookies we can decode, use them.
+    // If there's a cookie we can decode, use that
+    // TODO fold this nicely into multiple identities
     if (tryCookies(request, response)) {
       return;
     }
 
-    if (backend.isIdentityConfigured()) {
-      maybePrompt(request, response);
-    } else {
-      makeUnsuccessfulResponse(request, response, "Security Manager not configured");
+    // This may not be the first time the user is seeing this form, so look for
+    // a previous OmniForm in this request session.
+    OmniForm omniform =
+        OmniForm.class.cast(request.getSession().getAttribute("Omniform"));
+    if (null == omniform) {
+      omniform = new OmniForm(
+          backend, new OmniFormHtml(getAction(request)));
     }
+    request.getSession().setAttribute("Omniform", omniform);
+
+    response.getWriter().print(omniform.generateForm());
   }
 
-  // Try to find cookies that can be decoded into identities.
+  private String getAction(HttpServletRequest request) {
+    String url = request.getRequestURL().toString();
+    int q = url.indexOf("?");
+    return (q < 0) ? url : url.substring(0, q);
+  }
+
+  /**
+   * Try to find a cookie that can be decoded into an identity.
+   *
+   * @param request The HTTP request message.
+   * @param response The HTTP response message.  Filled in if a suitable cookie was found.
+   * @return Whether or not a usable cookie was found.
+   */
   private boolean tryCookies(HttpServletRequest request, HttpServletResponse response)
       throws ServletException {
-    // TODO(cph): these cookies should be assigned to particular CredentialsGroups.
-    //    If that's done, then we might still need to prompt for more information with the
-    //    OmniForm, after having filled in the known identities.
-    List<String> ids = new ArrayList<String>();
-    for (AuthenticationResponse ar: getBackEnd().handleCookie(getAuthnContext(request))) {
-      ids.add(ar.getData());
+    BackEnd backend = getBackEnd();
+    AuthenticationResponse authnResponse = backend.handleCookie(getAuthnContext(request));
+    if ((authnResponse != null) && authnResponse.isValid()) {
+      // TODO make sure authnResponse has subject in BackEnd
+      String username = authnResponse.getData();
+      if (username != null) {
+        SAMLMessageContext<AuthnRequest, Response, NameID> context =
+            existingSamlMessageContext(request.getSession());
+        context.setOutboundSAMLMessage(
+            makeSuccessfulResponse(context.getInboundSAMLMessage(), username));
+        doRedirect(context, backend, response);
+        return true;
+      }
     }
-    if (ids.isEmpty()) {
-      return false;
-    }
-    makeSuccessfulResponse(request, response, ids);
-    return true;
+    return false;
   }
 
   /**
@@ -193,144 +191,64 @@ public class SamlAuthn extends SecurityManagerServlet
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     BackEnd backend = getBackEnd();
-    OmniForm omniform = getOmniForm(request);
 
-    List<String> ids = omniform.handleFormSubmit(request);
-    if (ids.isEmpty()) {
-      maybePrompt(request, response);
+    SAMLMessageContext<AuthnRequest, Response, NameID> context =
+        existingSamlMessageContext(request.getSession());
+
+    OmniForm omniform =
+        OmniForm.class.cast(request.getSession().getAttribute("Omniform"));
+
+    String verifiedId = omniform.handleFormSubmit(request);
+    if (null == verifiedId) {
+      response.getWriter().print(omniform.generateForm());
       return;
     }
 
-    // This sequence is done; reset for next.
-    resetPromptCounter(request.getSession());
+    LOGGER.info("Verified ID is: " + verifiedId);
+    context.setOutboundSAMLMessage(
+        makeSuccessfulResponse(context.getInboundSAMLMessage(), verifiedId));
 
-    // Update the Session Manager with the necessary info.
+    // If we've reached here, we've fully authenticated the user. Update
+    // the Session Manager with the necessary info, and then generate
+    // the artifact redirect.
     Cookie cookie =
         getAuthnContext(request).getCookieNamed(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME);
     if (cookie != null) {
       backend.updateSessionManager(cookie.getValue(), omniform.getCredentialsGroups());
     }
 
-    makeSuccessfulResponse(request, response, ids);
+    // generate artifact, redirect, plant cookies
+    LOGGER.info("All identities verified");
+    doRedirect(context, backend, response);
   }
 
-  private void maybePrompt(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException {
-    HttpSession session = request.getSession();
-    if (shouldPrompt(session)) {
-      PrintWriter writer = initNormalResponse(response);
-      writer.print(getOmniForm(request).generateForm());
-      writer.close();
-    } else {
-      makeUnsuccessfulResponse(request, response, "Incorrect username or password");
-    }
-  }
-
-  private boolean shouldPrompt(HttpSession session) {
-    Object value = session.getAttribute(PROMPT_COUNTER_NAME);
-    int n = (value == null) ? 0 : Integer.class.cast(value);
-    if (n < maxPrompts) {
-      session.setAttribute(PROMPT_COUNTER_NAME, Integer.valueOf(n + 1));
-      return true;
-    }
-    resetPromptCounter(session);
-    return false;
-  }
-
-  private void resetPromptCounter(HttpSession session) {
-    session.removeAttribute(PROMPT_COUNTER_NAME);
-  }
-
-  private OmniForm getOmniForm(HttpServletRequest request)
-      throws IOException {
-    HttpSession session = request.getSession();
-    OmniForm omniform = sessionOmniForm(session);
-    if (null == omniform) {
-      omniform = new OmniForm(getBackEnd(), new OmniFormHtml(getAction(request)));
-      session.setAttribute(OMNI_FORM_NAME, omniform);
-    }
-    return omniform;
-  }
-
-  // Exposed for debugging:
-  public static OmniForm sessionOmniForm(HttpSession session) {
-    return OmniForm.class.cast(session.getAttribute(OMNI_FORM_NAME));
-  }
-
-  private String getAction(HttpServletRequest request) {
-    String url = request.getRequestURL().toString();
-    int q = url.indexOf("?");
-    return (q < 0) ? url : url.substring(0, q);
-  }
-
-  // We have at least one verified identity.  The first identity is considered the primary.
-  private void makeSuccessfulResponse(HttpServletRequest request, HttpServletResponse response,
-                                      List<String> ids)
-      throws ServletException {
-    LOGGER.info("Verified IDs: " + idsToString(ids));
-    SAMLMessageContext<AuthnRequest, Response, NameID> context =
-        existingSamlMessageContext(request.getSession());
-
-    // Generate <Assertion> with <AuthnStatement>
+  private Response makeSuccessfulResponse(AuthnRequest request, String username) throws ServletException {
+    LOGGER.info("Authenticated successfully as " + username);
+    Response response = makeResponse(request, makeStatus(StatusCode.SUCCESS_URI));
     Assertion assertion =
-        makeAssertion(makeIssuer(getSmEntity().getEntityID()), makeSubject(ids.get(0)));
+        makeAssertion(makeIssuer(getSmEntity().getEntityID()), makeSubject(username));
     assertion.getAuthnStatements().add(makeAuthnStatement(AuthnContext.IP_PASSWORD_AUTHN_CTX));
-
-    // Generate <Conditions> with <AudienceRestriction>
-    Conditions conditions = makeConditions();
-    AudienceRestriction restriction = makeAudienceRestriction();
-    restriction.getAudiences().add(makeAudience(getSpEntity().getEntityID()));
-    conditions.getAudienceRestrictions().add(restriction);
-    assertion.setConditions(conditions);
-
-    // Generate <Response>
-    Response samlResponse =
-        makeResponse(context.getInboundSAMLMessage(), makeStatus(StatusCode.SUCCESS_URI));
-    if (ids.size() > 1) {
-      Attribute attribute = makeAttribute("secondary-ids");
-      for (String id: ids.subList(1, ids.size())) {
-        attribute.getAttributeValues().add(makeAttributeValue(id));
-      }
-      AttributeStatement attrStatement = makeAttributeStatement();
-      attrStatement.getAttributes().add(attribute);
-      assertion.getAttributeStatements().add(attrStatement);
-    }
-    samlResponse.getAssertions().add(assertion);
-    context.setOutboundSAMLMessage(samlResponse);
-    doRedirect(request, response);
+    response.getAssertions().add(assertion);
+    return response;
   }
 
-  private String idsToString(List<String> ids) {
-    StringBuffer buffer = new StringBuffer();
-    for (String id: ids) {
-      if (buffer.length() > 0) {
-        buffer.append(", ");
-      }
-      buffer.append(id);
-    }
-    return buffer.toString();
-  }
-
-  private void makeUnsuccessfulResponse(HttpServletRequest request, HttpServletResponse response,
-                                        String message)
-      throws ServletException {
+  @SuppressWarnings("unused")
+  private Response makeUnsuccessfulResponse(AuthnRequest request, String code, String message) {
     LOGGER.log(Level.WARNING, message);
-    SAMLMessageContext<AuthnRequest, Response, NameID> context =
-        existingSamlMessageContext(request.getSession());
-    context.setOutboundSAMLMessage(makeResponse(context.getInboundSAMLMessage(),
-                                                makeStatus(StatusCode.AUTHN_FAILED_URI, message)));
-    doRedirect(request, response);
+    Status status = makeStatus(code);
+    status.setStatusMessage(makeStatusMessage(message));
+    return makeResponse(request, status);
   }
 
-  private void doRedirect(HttpServletRequest request, HttpServletResponse response)
+  private void doRedirect(SAMLMessageContext<AuthnRequest, Response, NameID> context,
+      BackEnd backend, HttpServletResponse response)
       throws ServletException {
-    SAMLMessageContext<AuthnRequest, Response, NameID> context =
-        existingSamlMessageContext(request.getSession());
     // Encode the response message
     initResponse(response);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(response, true));
-    HTTPArtifactEncoder encoder = new HTTPArtifactEncoder(null, null, getBackEnd().getArtifactMap());
+    HTTPArtifactEncoder encoder = new HTTPArtifactEncoder(null, null, backend.getArtifactMap());
     encoder.setPostEncoding(false);
     runEncoder(encoder, context);
   }
+
 }

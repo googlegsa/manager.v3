@@ -18,8 +18,12 @@ import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.persist.ConnectorScheduleStore;
+import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
+import com.google.enterprise.connector.scheduler.Schedule;
+import com.google.enterprise.connector.scheduler.Scheduler;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
@@ -52,8 +56,20 @@ public class ProductionManager implements Manager {
       Logger.getLogger(ProductionManager.class.getName());
 
   Instantiator instantiator;
+  ConnectorScheduleStore connectorScheduleStore;
+  ConnectorStateStore connectorStateStore;
+  Scheduler scheduler;
 
   public ProductionManager() {
+  }
+
+  /**
+   * Set the scheduler.
+   *
+   * @param scheduler the scheduler to set.
+   */
+  public void setScheduler(Scheduler scheduler) {
+    this.scheduler = scheduler;
   }
 
   /**
@@ -64,7 +80,7 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public boolean authenticate(String connectorName, 
+  public boolean authenticate(String connectorName,
       AuthenticationIdentity identity) {
     boolean result = false;
 
@@ -89,8 +105,6 @@ public class ProductionManager implements Manager {
       LOGGER.log(Level.WARNING, "Login: ", e);
     } catch (RepositoryException e) {
       LOGGER.log(Level.WARNING, "Repository: ", e);
-    } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Exception: ", e);
     }
 
     return result;
@@ -103,7 +117,7 @@ public class ProductionManager implements Manager {
     try {
       AuthorizationManager authzManager =
           instantiator.getAuthorizationManager(connectorName);
-      AuthenticationIdentity identity = 
+      AuthenticationIdentity identity =
         new SimpleAuthenticationIdentity(username);
       Collection results = authzManager.authorizeDocids(docidList, identity);
       Iterator iter = results.iterator();
@@ -120,24 +134,18 @@ public class ProductionManager implements Manager {
       LOGGER.log(Level.WARNING, "Instantiator: ", e);
     } catch (RepositoryException e) {
       LOGGER.log(Level.WARNING, "Repository: ", e);
-    } catch (Exception e) {
-      LOGGER.log(Level.WARNING, "Exception: ", e);
     }
 
     return result;
   }
 
   /* @Override */
-  public ConfigureResponse getConfigForm(String connectorTypeName, String
-      language) throws ConnectorTypeNotFoundException, InstantiatorException {
+  public ConfigureResponse getConfigForm(String connectorTypeName,
+      String language) throws ConnectorTypeNotFoundException {
     ConnectorType connectorType =
         instantiator.getConnectorType(connectorTypeName);
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
-    try {
-      return connectorType.getConfigForm(locale);
-    } catch (Exception e) {
-      throw new InstantiatorException("Failed to get configuration form.", e);
-    }
+    return connectorType.getConfigForm(locale);
   }
 
   /* @Override */
@@ -229,20 +237,26 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public void setSchedule(String connectorName, String schedule)
+  public void setSchedule(String connectorName, int load, int retryDelayMillis,
+      String timeIntervals)
       throws ConnectorNotFoundException, PersistentStoreException {
-    instantiator.setConnectorSchedule(connectorName, schedule);
+    Schedule schedule = new Schedule(connectorName + ":" + load + ":"
+            + retryDelayMillis + ":" + timeIntervals);
+    String connectorSchedule = schedule.toString();
+    instantiator.setConnectorSchedule(connectorName, connectorSchedule);
   }
 
   /* @Override */
   public void removeConnector(String connectorName)
       throws InstantiatorException {
     instantiator.removeConnector(connectorName);
+    scheduler.removeConnector(connectorName);
   }
 
   /* @Override */
   public void restartConnectorTraversal(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
+    scheduler.removeConnector(connectorName);
     instantiator.restartConnectorTraversal(connectorName);
   }
 

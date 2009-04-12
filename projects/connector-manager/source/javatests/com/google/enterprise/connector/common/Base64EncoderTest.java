@@ -115,12 +115,18 @@ public class Base64EncoderTest extends TestCase {
     StringWriter writer = new StringWriter();
     Base64Encoder.encode(bytes, writer);
     byte[] newBytes = testDecoder.decodeBuffer(writer.toString());
+    System.out.println("byte[] encoded");
+    System.out.println(writer.toString());
+    System.out.println("end byte[] encoded");
 
     // encode and decode bytes (using InputStream)
     StringWriter writer2 = new StringWriter();
     fis = new FileInputStream(file);
     Base64Encoder.encode(fis, writer2);
-    byte[] newBytes2 = testDecoder.decodeBuffer(writer.toString());
+    byte[] newBytes2 = testDecoder.decodeBuffer(writer2.toString());
+    System.out.println("inputstream encoded");
+    System.out.println(writer2.toString());
+    System.out.println("end inputstream encoded");
 
     // last, make sure bytes are still the same
     for (int i = 0; i < bytes.length; i++) {

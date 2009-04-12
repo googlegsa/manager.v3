@@ -14,8 +14,6 @@
 
 package com.google.enterprise.saml.common;
 
-import com.google.enterprise.common.FileUtil;
-
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
@@ -27,12 +25,14 @@ public class Metadata {
   private final MetadataProvider provider;
   private final String smEntityId;
   private final String spEntityId;
+  private final String spUrl;
 
-  public Metadata(String filename, String smEntityId, String spEntityId)
+  public Metadata(String filename, String smEntityId, String spEntityId, String spUrl)
       throws MetadataProviderException {
-    this.provider = OpenSamlUtil.getMetadataFromFile(FileUtil.getContextFile(filename));
+    this.provider = OpenSamlUtil.getMetadataFromFile(filename);
     this.smEntityId = smEntityId;
     this.spEntityId = spEntityId;
+    this.spUrl = spUrl;
   }
 
   public EntityDescriptor getEntity(String id) throws ServletException {
@@ -54,5 +54,9 @@ public class Metadata {
 
   public EntityDescriptor getSpEntity() throws ServletException {
     return getEntity(spEntityId);
+  }
+
+  public String getSpUrl() {
+    return spUrl;
   }
 }

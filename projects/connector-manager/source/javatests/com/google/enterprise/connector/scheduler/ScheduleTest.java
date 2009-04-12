@@ -27,10 +27,7 @@ import java.util.List;
 public class ScheduleTest extends TestCase {
 
   final String strWithDelay = "connector1:60:0:1-2:3-5";
-  final String strWithDefaultDelay = "connector1:60:300000:1-2:3-5";
   final String strNoDelay = "connector1:60:1-2:3-5";
-  final String strIntervals = "1-2:3-5";
-  final String strWithDisabled = "#connector1:60:0:1-2:3-5";
   final String illegalStrWithDelay = "connector2:60:0:";
   final String illegalStrNoDelay = "connector2:60:";
 
@@ -42,59 +39,51 @@ public class ScheduleTest extends TestCase {
       new ScheduleTimeInterval(new ScheduleTime(3), new ScheduleTime(5));
     intervals.add(interval1);
     intervals.add(interval2);
-    Schedule schedule = new Schedule("connector1", false, 60, 0, intervals);
+    Schedule schedule = new Schedule("connector1", 60, 0, intervals);
     Assert.assertEquals(strWithDelay, schedule.toString());
 
-    Schedule schedule1 = new Schedule("connector1", false, 60, 0, strIntervals);
-    Assert.assertEquals(strWithDelay, schedule1.toString());
-
-    Schedule schedule2 = new Schedule("whatever", false, 30, 42, intervals);
+    Schedule schedule2 = new Schedule("whatever", 30, 42, intervals);
     schedule2.readString(strWithDelay);
     Assert.assertEquals(strWithDelay, schedule2.toString());
     schedule2.readString(strNoDelay);
-    Assert.assertEquals(strWithDefaultDelay, schedule2.toString());
+    Assert.assertEquals(strWithDelay, schedule2.toString());
 
     Schedule schedule3 = new Schedule(strWithDelay);
     Assert.assertEquals(strWithDelay, schedule3.toString());
 
-    // Missing delay becomes Default.
+    // missing delay becomes 0
     Schedule schedule4 = new Schedule(strNoDelay);
-    Assert.assertEquals(strWithDefaultDelay, schedule4.toString());
+    Assert.assertEquals(strWithDelay, schedule4.toString());
 
     try {
-      new Schedule("connector2", false, 60, 0, Collections.EMPTY_LIST);
+      Schedule schedule5 = new Schedule("connector2", 60, 0,
+          Collections.EMPTY_LIST);
       fail("IllegalArgumentException expected");
     } catch (IllegalArgumentException e) {
-      // Expected exception occurred.
+      // expected exception occurred
     }
 
     try {
-      Schedule schedule6 = new Schedule("whatever", false, 30, 42, intervals);
+      Schedule schedule6 = new Schedule("whatever", 30, 42, intervals);
       schedule6.readString(illegalStrWithDelay);
       fail("IllegalArgumentException expected");
     } catch (IllegalArgumentException e) {
-      // Expected exception occurred.
+      // expected exception occurred
     }
 
     try {
-      new Schedule(illegalStrWithDelay);
+      Schedule schedule7 = new Schedule(illegalStrWithDelay);
       fail("IllegalArgumentException expected");
     } catch (IllegalArgumentException e) {
-      // Expected exception occurred.
+      // expected exception occurred
     }
 
     try {
-      new Schedule(illegalStrNoDelay);
+      Schedule schedule8 = new Schedule(illegalStrNoDelay);
       fail("IllegalArgumentException expected");
     } catch (IllegalArgumentException e) {
-      // Expected exception occurred.
+      // expected exception occurred
     }
-
-    Schedule schedule9 = new Schedule("connector1", true, 60, 0, intervals);
-    Assert.assertEquals(strWithDisabled, schedule9.toString());
-
-    Schedule schedule10 = new Schedule(strWithDisabled);
-    Assert.assertEquals(strWithDisabled, schedule10.toString());
   }
 
   public void testToLegacyString() {
@@ -104,13 +93,13 @@ public class ScheduleTest extends TestCase {
       Schedule.toLegacyString(illegalStrWithDelay);
       fail("IllegalArgumentException expected");
     } catch (IllegalArgumentException e) {
-      // Expected exception occurred.
+      // expected exception occurred
     }
     try {
       Schedule.toLegacyString(illegalStrNoDelay);
       fail("IllegalArgumentException expected");
     } catch (IllegalArgumentException e) {
-      // Expected exception occurred.
+      // expected exception occurred
     }
   }
 }

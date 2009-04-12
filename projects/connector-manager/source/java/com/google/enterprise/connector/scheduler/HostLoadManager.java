@@ -118,7 +118,7 @@ public class HostLoadManager {
       int numDocsTraversed) {
     synchronized (connectorNameToNumDocsTraversed) {
       int numDocs = getNumDocsTraversedThisPeriod(connectorName);
-      connectorNameToNumDocsTraversed.put(connectorName,
+      connectorNameToNumDocsTraversed.put(connectorName, 
           new Integer(numDocs + numDocsTraversed));
     }
   }
@@ -126,16 +126,11 @@ public class HostLoadManager {
   /**
    * Let HostLoadManager know that a connector has just completed a traversal,
    * (whether it was a failure or natural completion is irrelevant).
-   *
    * @param connectorName name of the connector instance
-   * @param retryDelayMillis number of milliseconds to wait until retrying
-   *        traversal
    */
-  public void connectorFinishedTraversal(String connectorName,
-                                         int retryDelayMillis) {
-    Long finishTime = new Long(((retryDelayMillis < 0) ? Long.MAX_VALUE :
-        (System.currentTimeMillis() + retryDelayMillis)));
-    connectorNameToFinishTime.put(connectorName, finishTime);
+  public void connectorFinishedTraversal(String connectorName) {
+    Long now = new Long(System.currentTimeMillis());
+    connectorNameToFinishTime.put(connectorName, now);
   }
 
   /**
@@ -175,17 +170,25 @@ public class HostLoadManager {
   public boolean shouldDelay(String connectorName) {
     Object value = connectorNameToFinishTime.get(connectorName);
     if (value != null) {
-      long finishTime = ((Long)value).longValue();
-      long now = System.currentTimeMillis();
-      if (now < finishTime) {
-        return true;
-      }
-      int maxDocsPerPeriod = (int)
-          ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
-      int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
-      int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
-      if (remainingDocsToTraverse <= 0) {
-        return true;
+      try {
+        long finishTime = ((Long)value).longValue();
+        String schedStr = instantiator.getConnectorSchedule(connectorName);
+        Schedule schedule = new Schedule(schedStr);
+        int retryDelayMillis = schedule.getRetryDelayMillis();
+        long now = System.currentTimeMillis();
+        if (now < finishTime + retryDelayMillis) {
+          return true;
+        }
+        int maxDocsPerPeriod = (int)
+            ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
+        int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
+        int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
+        if (remainingDocsToTraverse <= 0) {
+          return true;
+        }
+      } catch (ConnectorNotFoundException e) {
+        // Connector seems to have been deleted.
+        removeConnector(connectorName);
       }
     }
     return false;

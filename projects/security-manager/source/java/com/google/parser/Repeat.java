@@ -1,4 +1,4 @@
-// Copyright 2002 Google Inc.
+// Copyright 2002 Google, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
 // limitations under the License.
 
 package com.google.parser;
+
+import java.util.*;
 
 /**
  * The <code>Repeat</code> parser returns a successful match if its
@@ -31,7 +33,6 @@ package com.google.parser;
  *   p.parse("aaa")  -> matches "aaa"
  *   p.parse("aaaa") -> matches "aaa"
  *
- * @param <T>
  * @author Peter Mattis
  */
 public class Repeat<T> extends Parser<T> {
@@ -80,9 +81,8 @@ public class Repeat<T> extends Parser<T> {
    * parser matches at least <code>min</code> times and not more than
    * <code>max</code> times in sequence.
    *
-   * @see Parser#parse
+   * @see Parser.parse
    */
-  @Override
   public int parse(char[] buf, int start, int end, T data) {
     int hit = 0;
 

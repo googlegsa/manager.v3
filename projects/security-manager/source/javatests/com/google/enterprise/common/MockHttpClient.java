@@ -1,10 +1,10 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -46,11 +46,6 @@ public class MockHttpClient implements HttpClientInterface {
     referrer = null;
   }
 
-  // For debugging:
-  public MockHttpSession getSession() {
-    return session;
-  }
-
   public HttpExchange getExchange(URL url) {
     MockHttpServletRequest request = makeMockHttpGet(null, url.toString());
     return new MockExchange(request);
@@ -90,10 +85,6 @@ public class MockHttpClient implements HttpClientInterface {
       this.followRedirects = followRedirects;
     }
 
-    public String getHttpMethod() {
-      return request.getMethod();
-    }
-
     public void addParameter(String name, String value) {
       request.addParameter(name, value);
     }
@@ -103,8 +94,7 @@ public class MockHttpClient implements HttpClientInterface {
     }
 
     public int exchange() throws IOException {
-      if (request.getMethod().equalsIgnoreCase("POST")
-          && request.getParameterNames().hasMoreElements()) {
+      if (request.getMethod().equalsIgnoreCase("POST")) {
         generatePostContent(request);
       }
       MockHttpServletResponse response = exchange1(request);

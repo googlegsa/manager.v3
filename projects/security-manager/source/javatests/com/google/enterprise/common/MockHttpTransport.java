@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright 2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -71,6 +71,7 @@ public final class MockHttpTransport implements HttpTransport {
     } else {
       throw new ServletException("Unknown request method: " + method);
     }
+    finalizeResponse(response);
   }
 
   private void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -82,7 +83,6 @@ public final class MockHttpTransport implements HttpTransport {
     }
     logRequest(request, servlet.getClass().getName());
     servlet.doGet(request, response);
-    finalizeResponse(response);
     logResponse(response, servlet.getClass().getName());
   }
 
@@ -95,7 +95,6 @@ public final class MockHttpTransport implements HttpTransport {
     }
     logRequest(request, servlet.getClass().getName());
     servlet.doPost(request, response);
-    finalizeResponse(response);
     logResponse(response, servlet.getClass().getName());
   }
 

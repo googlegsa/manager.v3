@@ -104,7 +104,7 @@ public class HostLoadManagerTest extends TestCase {
     HostLoadManager hostLoadManager =
       new HostLoadManager(instantiator, periodInMillis);
     assertEquals(false, hostLoadManager.shouldDelay(connectorName));
-    hostLoadManager.connectorFinishedTraversal(connectorName, 100);
+    hostLoadManager.connectorFinishedTraversal(connectorName);
     assertEquals(true, hostLoadManager.shouldDelay(connectorName));
     // sleep more than 100ms the time set in MockConnectorSchedule
     // so that this connector can be allowed to run again without delay
