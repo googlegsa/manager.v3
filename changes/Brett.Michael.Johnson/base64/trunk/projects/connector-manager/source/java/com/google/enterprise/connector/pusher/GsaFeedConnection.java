@@ -121,7 +121,7 @@ public class GsaFeedConnection implements FeedConnection {
         writeMultipartControlHeader(outputStream,
                                     "data",
                                     ServletUtil.MIMETYPE_XML);
-        byte[] bytebuf = new byte[16384];
+        byte[] bytebuf = new byte[32768];
         int val;
         while (true) {
           // Handle input exceptions differently than output exceptions.
