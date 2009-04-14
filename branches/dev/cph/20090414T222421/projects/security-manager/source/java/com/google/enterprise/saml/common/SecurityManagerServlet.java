@@ -57,10 +57,6 @@ public abstract class SecurityManagerServlet extends ServletBase {
     return getMetadata().getSmEntity();
   }
 
-  public EntityDescriptor getSpEntity() throws ServletException {
-    return getMetadata().getSpEntity();
-  }
-
   private Metadata getMetadata() {
     return Metadata.class.cast(Context.getInstance().getRequiredBean("Metadata", Metadata.class));
   }
