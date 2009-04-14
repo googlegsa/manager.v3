@@ -317,9 +317,19 @@ public class Base64FilterInputStreamTest extends TestCase {
   /* Test read(byte[], off, len) interface with newlines in output. */
   public void testReadByteArrayWithNewLines() throws Exception {
     byteArrayRead5(77);
+    byteArrayRead5(80);
+    byteArrayRead5(190);
     byteArrayRead5(expectNL.length());
     byteArrayRead5(expectNL.length() + 1);
     byteArrayRead5(2048);
+  }
+
+  /* Test read(byte[], off, len) when < less than BASE64_LINE_LENGTH
+   * doesn't produce newlines, even when asked.
+   */
+  public void testReadByteArrayWithoutNewLines() throws Exception {
+    byteArrayRead6(38);
+    byteArrayRead6(76);
   }
 
   /* Test read(byte[]) interface. */
@@ -386,6 +396,7 @@ public class Base64FilterInputStreamTest extends TestCase {
    * and newlines in output.
    */
   public void byteArrayRead5(int buffsize) throws Exception {
+    Assert.assertTrue((buffsize > 76));
     ByteArrayInputStream bais = new ByteArrayInputStream(input.getBytes());
     Base64FilterInputStream is = new Base64FilterInputStream(bais, true);
     byte[] resultBytes = new byte[buffsize + 3];
@@ -396,5 +407,22 @@ public class Base64FilterInputStreamTest extends TestCase {
       resultBuffer.append(new String(resultBytes, 3, val));
     }
     Assert.assertTrue(expectNL.equals(resultBuffer.toString()));
+  }
+
+  /* Test read(byte[], off, len) interface, where len <= BASE64_LINE_LENGTH
+   * and newlines are requested.  No newlines should actually be produced.
+   */
+  public void byteArrayRead6(int buffsize) throws Exception {
+    Assert.assertTrue((buffsize <= 76));
+    ByteArrayInputStream bais = new ByteArrayInputStream(input.getBytes());
+    Base64FilterInputStream is = new Base64FilterInputStream(bais, true);
+    byte[] resultBytes = new byte[buffsize];
+    StringBuffer resultBuffer = new StringBuffer(expect.length());
+
+    int val;
+    while (-1 != (val = is.read(resultBytes, 0, buffsize))) {
+      resultBuffer.append(new String(resultBytes, 0, val));
+    }
+    Assert.assertTrue(expect.equals(resultBuffer.toString()));
   }
 }

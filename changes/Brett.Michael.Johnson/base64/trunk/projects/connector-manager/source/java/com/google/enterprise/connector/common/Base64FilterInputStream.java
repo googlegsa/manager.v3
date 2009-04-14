@@ -23,7 +23,8 @@ import java.io.InputStream;
  */
 public class Base64FilterInputStream extends FilterInputStream {
 
-  /* NOTE: The actual length of lines will approximate this.
+  /* NOTE: Since output line position is not maintained across calls to
+   * read(...), the actual length of lines will approximate this.
    * For our purposes, strict adherence to RFC 2045 is not necessary.
    * We only want to make viewing teedFeedFiles easier.
    */
@@ -94,11 +95,16 @@ public class Base64FilterInputStream extends FilterInputStream {
 
     // Determine the number of threebyte datum we need to read to
     // fill the destination buffer with quadbyte encoded data.
+    // If we are breaking lines, try to constrain the read size
+    // so that it generates whole lines.
     int readLen;
-    if (breakLines) {
-      readLen = ((len - len/BASE64_LINE_LENGTH) / 4) * 3;
+    int lineLen;
+    if (breakLines && len > BASE64_LINE_LENGTH) {
+      readLen = (((len / (BASE64_LINE_LENGTH+1)) * BASE64_LINE_LENGTH) / 4) * 3;
+      lineLen = BASE64_LINE_LENGTH;
     } else {
       readLen = (len / 4) * 3;
+      lineLen = Integer.MAX_VALUE;
     }
 
     // Read the input data into the tail end of the target buffer.
@@ -109,8 +115,7 @@ public class Base64FilterInputStream extends FilterInputStream {
 
     // Convert the buffer in-place.
     bytesWritten = Base64.encode(b, off + (len - readLen), readBytes, b, off,
-        Base64.ALPHABET, (breakLines)? BASE64_LINE_LENGTH : Integer.MAX_VALUE);
-
+                                 Base64.ALPHABET, lineLen);
     return bytesWritten;
   }
 
