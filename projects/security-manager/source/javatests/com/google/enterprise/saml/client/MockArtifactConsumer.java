@@ -50,6 +50,7 @@ import javax.servlet.http.HttpSession;
 
 import static com.google.enterprise.saml.common.GsaConstants.GSA_ARTIFACT_PARAM_NAME;
 import static com.google.enterprise.saml.common.GsaConstants.GSA_RELAY_STATE_PARAM_NAME;
+import static com.google.enterprise.saml.common.GsaConstants.GSA_TESTING_ISSUER;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResolve;
@@ -129,7 +130,7 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
     SAMLMessageContext<ArtifactResponse, ArtifactResolve, NameID> context =
         makeSamlMessageContext();
 
-    EntityDescriptor localEntity = getSpEntity();
+    EntityDescriptor localEntity = getEntity(GSA_TESTING_ISSUER);
     initializeLocalEntity(context, localEntity, localEntity.getSPSSODescriptor(SAML20P_NS),
                           Endpoint.DEFAULT_ELEMENT_NAME);
     {

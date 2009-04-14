@@ -26,13 +26,11 @@ public class Metadata {
 
   private final String filename;
   private final String smEntityId;
-  private final String spEntityId;
   private MetadataProvider provider;
 
-  public Metadata(String filename, String smEntityId, String spEntityId) {
+  public Metadata(String filename, String smEntityId) {
     this.filename = filename;
     this.smEntityId = smEntityId;
-    this.spEntityId = spEntityId;
     this.provider = null;
   }
 
@@ -54,9 +52,5 @@ public class Metadata {
 
   public EntityDescriptor getSmEntity() throws ServletException {
     return getEntity(smEntityId);
-  }
-
-  public EntityDescriptor getSpEntity() throws ServletException {
-    return getEntity(spEntityId);
   }
 }
