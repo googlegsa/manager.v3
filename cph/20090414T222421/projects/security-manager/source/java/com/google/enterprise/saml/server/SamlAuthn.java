@@ -279,7 +279,7 @@ public class SamlAuthn extends SecurityManagerServlet
     // Generate <Conditions> with <AudienceRestriction>
     Conditions conditions = makeConditions();
     AudienceRestriction restriction = makeAudienceRestriction();
-    restriction.getAudiences().add(makeAudience(getSpEntity().getEntityID()));
+    restriction.getAudiences().add(makeAudience(context.getInboundMessageIssuer()));
     conditions.getAudienceRestrictions().add(restriction);
     assertion.setConditions(conditions);
 
