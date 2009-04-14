@@ -15,6 +15,7 @@
 package com.google.enterprise.saml.client;
 
 import com.google.enterprise.common.GettableHttpServlet;
+import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import org.opensaml.common.SAMLObject;
@@ -84,7 +85,7 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
   private void ifUnknown(HttpServletResponse resp, String relayState) throws ServletException {
     SAMLMessageContext<SAMLObject, AuthnRequest, NameID> context = makeSamlMessageContext();
 
-    EntityDescriptor localEntity = getSpEntity();
+    EntityDescriptor localEntity = getEntity(GsaConstants.GSA_TESTING_ISSUER);
     SPSSODescriptor sp = localEntity.getSPSSODescriptor(SAML20P_NS);
     initializeLocalEntity(context, localEntity, sp, Endpoint.DEFAULT_ELEMENT_NAME);
     {
