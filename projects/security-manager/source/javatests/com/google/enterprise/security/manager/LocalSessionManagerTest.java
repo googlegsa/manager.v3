@@ -14,16 +14,14 @@
 
 package com.google.enterprise.security.manager;
 
-import com.google.enterprise.security.manager.LocalSessionManager;
+import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
-
-import junit.framework.TestCase;
 
 /**
  * Tests to exercise the LocalSessionManager and LocalSession classes
  *
  */
-public class LocalSessionManagerTest extends TestCase {
+public class LocalSessionManagerTest extends SecurityManagerTestCase {
 
   public void testBasicFunctionality() {
     SessionManagerInterface sm = new LocalSessionManager();

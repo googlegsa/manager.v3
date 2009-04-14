@@ -17,6 +17,7 @@ package com.google.enterprise.saml.server;
 import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.common.MockHttpClient;
 import com.google.enterprise.common.MockHttpTransport;
+import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.common.StringPair;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
@@ -28,8 +29,6 @@ import com.google.enterprise.security.identity.AuthnDomain;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.MockIdentityConfig;
-
-import junit.framework.TestCase;
 
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
@@ -45,28 +44,24 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletException;
-
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 
-public class SamlSsoTest extends TestCase {
+public class SamlSsoTest extends SecurityManagerTestCase {
   private static final Logger LOGGER = Logger.getLogger(SamlSsoTest.class.getName());
   private static final String SP_URL =
       "http://localhost:8973/security-manager/mockserviceprovider";
 
-  private final MockHttpClient userAgent;
+  private MockHttpClient userAgent;
 
-  public SamlSsoTest(String name) throws ServletException {
-    super(name);
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
 
-    Context ctx = Context.getInstance();
-    ctx.setStandaloneContext(Context.DEFAULT_JUNIT_CONTEXT_LOCATION,
-                             Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
     Metadata metadata =
-        Metadata.class.cast(ctx.getRequiredBean("Metadata", Metadata.class));
+        Metadata.class.cast(Context.getInstance().getRequiredBean("Metadata", Metadata.class));
 
     // Initialize transport
     MockHttpTransport transport = new MockHttpTransport();
