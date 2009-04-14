@@ -23,7 +23,6 @@ import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpSession;
 
@@ -42,21 +41,8 @@ public abstract class SecurityManagerServlet extends ServletBase {
   /** Name of the attribute that holds the username/passwords awaiting verification. */
   protected static final String CREDENTIALS = "credentials";
 
-  private final Context context;
-  private final Metadata metadata;
-
-  protected SecurityManagerServlet() {
-    ServletConfig config = getServletConfig();
-    if (config == null) {
-      context = Context.getInstance();
-    } else {
-      context = Context.getInstance(config.getServletContext());
-    }
-    metadata = Metadata.class.cast(context.getRequiredBean("Metadata", Metadata.class));
-  }
-
   public ConnectorManager getConnectorManager() {
-    return ConnectorManager.class.cast(context.getManager());
+    return ConnectorManager.class.cast(Context.getInstance().getManager());
   }
 
   public BackEnd getBackEnd() {
@@ -64,15 +50,19 @@ public abstract class SecurityManagerServlet extends ServletBase {
   }
 
   public EntityDescriptor getEntity(String id) throws ServletException {
-    return metadata.getEntity(id);
+    return getMetadata().getEntity(id);
   }
 
   public EntityDescriptor getSmEntity() throws ServletException {
-    return metadata.getSmEntity();
+    return getMetadata().getSmEntity();
   }
 
   public EntityDescriptor getSpEntity() throws ServletException {
-    return metadata.getSpEntity();
+    return getMetadata().getSpEntity();
+  }
+
+  private Metadata getMetadata() {
+    return Metadata.class.cast(Context.getInstance().getRequiredBean("Metadata", Metadata.class));
   }
 
   /**

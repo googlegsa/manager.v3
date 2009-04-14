@@ -14,26 +14,26 @@
 
 package com.google.enterprise.security.connectors.simplecookie;
 
+import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
-
-import junit.framework.TestCase;
 
 import javax.servlet.http.Cookie;
 
 /**
  * Tests for the {@link SimpleCookieIdentityConnector} class.
  */
-public class SimpleCookieIdentityConnectorTest extends TestCase {
+public class SimpleCookieIdentityConnectorTest extends SecurityManagerTestCase {
 
   public void testAuthenticate() {
     String cookieName = "arglebargle";
     String idCookieName = "xyzzy";
     String pattern = "username=(.*)";
     CookieIdentityExtractor c = new RegexCookieIdentityExtractor(pattern);
-    SimpleCookieIdentityConnector s = new SimpleCookieIdentityConnector(cookieName, idCookieName, c);
+    SimpleCookieIdentityConnector s =
+        new SimpleCookieIdentityConnector(cookieName, idCookieName, c);
     runOneAuthenticationTest(cookieName, idCookieName, s, "username=fred", "fred");
     runOneAuthenticationTest(cookieName, idCookieName, s, "randomness", null);
   }

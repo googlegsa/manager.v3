@@ -14,7 +14,7 @@
 
 package com.google.enterprise.saml.server;
 
-import junit.framework.TestCase;
+import com.google.enterprise.common.SecurityManagerTestCase;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -25,7 +25,7 @@ import java.io.UnsupportedEncodingException;
 /**
  * Unit test for SamlAuthz handler.
  */
-public class SamlAuthzTest extends TestCase {
+public class SamlAuthzTest extends SecurityManagerTestCase {
 
   private static final String REQUEST_CONTENT =
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
@@ -72,7 +72,8 @@ public class SamlAuthzTest extends TestCase {
   private SamlAuthz samlAuthzInstance;
 
   @Override
-  public void setUp() {
+  public void setUp() throws Exception {
+    super.setUp();
     samlAuthzInstance = new SamlAuthz();
   }
 

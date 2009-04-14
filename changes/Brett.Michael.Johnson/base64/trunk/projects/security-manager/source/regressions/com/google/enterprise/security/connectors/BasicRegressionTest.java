@@ -35,7 +35,7 @@ public class BasicRegressionTest extends TestCase {
       " IssueInstant=\"2008-11-15T07:09:41.127Z\" Version=\"2.0\"" +
       " xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\">" +
       "<saml:Issuer xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">" +
-      GsaConstants.GSA_ISSUER +
+      GsaConstants.GSA_TESTING_ISSUER +
       "</saml:Issuer>" +
       "<samlp:Artifact>" +
       "AAQAAEKQJVvv+M3ofQmBLdUYHuk682uBPl1P6laijlxzGK3/VPXbcLAV9zM=" +

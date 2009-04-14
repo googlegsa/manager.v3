@@ -25,6 +25,7 @@ import com.google.enterprise.connector.spi.ConnectorType;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -32,6 +33,16 @@ import java.util.Set;
  * main() programs may be built using this.
  */
 public interface Manager {
+
+  /**
+   * Gets the current configuration of the Connector Manager itself.  
+   *
+   * @return the current configuration settings in a Properties object.  Keys
+   *         to the Properties are the same as the keys in the property file.
+   * @throws PersistentStoreException if there was a problem retrieving the
+   *         configuration.
+   */
+  public Properties getConnectorManagerConfig() throws PersistentStoreException;
 
   /**
    * Stores configuration changes to the Connector Manager itself.
@@ -216,4 +227,9 @@ public interface Manager {
    */
   public Map getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException;
+
+  /**
+   * @return true if the manager is currently locked, false otherwise.
+   */
+  public boolean isLocked();
 }

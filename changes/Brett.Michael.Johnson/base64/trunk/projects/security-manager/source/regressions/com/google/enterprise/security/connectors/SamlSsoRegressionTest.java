@@ -40,35 +40,32 @@ public class SamlSsoRegressionTest extends TestCase {
   private static final String SP_URL =
       "http://localhost:8973/security-manager/mockserviceprovider";
 
-  private final HttpClient userAgent;
+  private HttpClient userAgent;
 
-  public SamlSsoRegressionTest(String name) {
-    super(name);
+  @Override
+  public void setUp() throws Exception {
     userAgent = new HttpClient();
   }
 
   public void testGoodCredentials() throws HttpException, IOException {
-    // Initial request to service provider
     String action = parseForm(tryGet(SP_URL, HttpStatus.SC_OK));
-
-    // Submit credentials-gathering form into the first credential group
-    // which is authenticated against fake-login.corp that accepts everything
-    PostMethod method2 = new PostMethod(action);
-    method2.addParameter("u0", "voyager");
-    method2.addParameter("pw0", "plumer");
-    tryPost(method2, HttpStatus.SC_OK);
+    PostMethod method = new PostMethod(action);
+    method.addParameter("u0", "joe");
+    method.addParameter("pw0", "plumber");
+    int status = tryPost(method);
+    assertTrue("Incorrect response status code",
+               (status == HttpStatus.SC_SEE_OTHER || status == HttpStatus.SC_MOVED_TEMPORARILY));
+    Header h = method.getResponseHeader("location");
+    assertNotNull(h);
+    tryGet(h.getValue(), HttpStatus.SC_OK);
   }
 
   public void testBadCredentials() throws HttpException, IOException {
-    // Initial request to service provider
     String action = parseForm(tryGet(SP_URL, HttpStatus.SC_OK));
-
-    // Submit credentials-gathering form into the second credential group
-    // which does not accept joe/plumber
-    PostMethod method2 = new PostMethod(action);
-    method2.addParameter("u1", "joe");
-    method2.addParameter("pw1", "plumer");
-    tryPost(method2, HttpStatus.SC_OK);
+    PostMethod method = new PostMethod(action);
+    method.addParameter("u0", "joe");
+    method.addParameter("pw0", "biden");
+    assertEquals("Incorrect response status code", HttpStatus.SC_OK, tryPost(method));
   }
 
   private String tryGet(String url, int expectedStatus) throws HttpException, IOException {
@@ -98,14 +95,14 @@ public class SamlSsoRegressionTest extends TestCase {
     return action;
   }
 
-  private void tryPost(PostMethod method, int expectedStatus) throws HttpException, IOException {
+  private int tryPost(PostMethod method) throws HttpException, IOException {
     method.setRequestBody(method.getParameters());
     logRequest(method);
     int status = userAgent.executeMethod(method);
     method.getResponseBodyAsString();
     logResponse(method);
     method.releaseConnection();
-    assertEquals("Incorrect response status code", expectedStatus, status);
+    return status;
   }
 
   private static void logRequest(HttpMethodBase method) throws IOException {

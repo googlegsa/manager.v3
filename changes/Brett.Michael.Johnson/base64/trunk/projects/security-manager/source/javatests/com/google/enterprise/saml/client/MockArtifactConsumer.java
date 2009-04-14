@@ -15,6 +15,7 @@
 package com.google.enterprise.saml.client;
 
 import com.google.enterprise.common.GettableHttpServlet;
+import com.google.enterprise.common.HttpClientAdapter;
 import com.google.enterprise.common.HttpClientInterface;
 import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.saml.common.HttpExchangeToInTransport;
@@ -76,6 +77,9 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
   private HttpClientInterface httpClient;
 
   public HttpClientInterface getHttpClient() {
+    if (httpClient == null) {
+      httpClient = new HttpClientAdapter();
+    }
     return httpClient;
   }
 
@@ -147,7 +151,7 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
 
     // Encode the request
     HttpExchange exchange =
-        httpClient.postExchange(new URL(context.getPeerEntityEndpoint().getLocation()), null);
+        getHttpClient().postExchange(new URL(context.getPeerEntityEndpoint().getLocation()), null);
     HttpExchangeToOutTransport out = new HttpExchangeToOutTransport(exchange);
     context.setOutboundMessageTransport(out);
     runEncoder(new HTTPSOAP11Encoder(), context);

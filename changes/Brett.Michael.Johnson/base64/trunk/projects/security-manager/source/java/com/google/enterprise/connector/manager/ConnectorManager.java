@@ -93,10 +93,10 @@ public class ConnectorManager extends ProductionManager {
     if (!securityManagerConnectorsInitialized) {
       try {
         this.setConnectorConfig("BasicAuth", "BasicAuthConnector",
-                                ImmutableMap.of("ServerUrl", ""),  // dummy parameter
+                                ImmutableMap.of("ServerUrl", "foo"),  // dummy parameter
                                 "en", false);
         this.setConnectorConfig("FormAuth", "FormAuthConnector",
-                                ImmutableMap.of("CookieName", ""),  // dummy parameter
+                                ImmutableMap.of("CookieName", "bar"),  // dummy parameter
                                 "en", false);
         this.setConnectorConfig("ConnAuth", "ConnAuthConnector",
                                 ImmutableMap.of("SpiVersion", "0"),
@@ -111,7 +111,7 @@ public class ConnectorManager extends ProductionManager {
       }
     }
     @SuppressWarnings("unchecked")
-        List<ConnectorStatus> result = super.getConnectorStatuses();
+    List<ConnectorStatus> result = super.getConnectorStatuses();
     return result;
   }
 }

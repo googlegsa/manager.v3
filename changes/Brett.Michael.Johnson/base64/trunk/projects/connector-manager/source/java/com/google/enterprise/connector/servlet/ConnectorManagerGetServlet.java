@@ -123,6 +123,8 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
         status = new ConnectorMessageCode(
             ConnectorMessageCode.ERROR_PARSING_XML_REQUEST);
         configRes = null;
+      } else {
+        formSnippet = ServletUtil.removeNestedMarkers(formSnippet);
       }
     }
     // Now write out the response.

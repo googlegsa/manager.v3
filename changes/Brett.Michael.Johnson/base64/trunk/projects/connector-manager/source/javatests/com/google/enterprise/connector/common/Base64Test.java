@@ -75,6 +75,23 @@ public class Base64Test extends TestCase {
                     "V4IGl0IGFnYWluIGluIGEgcmVsYXRpdmVseSBzaG9ydCBhbW91bnQg" +
                     "b2YgdGltZS4=";
 
+  static String expectNL =
+      "IEdvb2dsZSdzIGluZGljZXMgY29uc2lzdCBvZiBpbmZvcm1hdGlvbiB0aGF0IGhhcyBiZWVuIGlk\n" +
+      "ZW50aWZpZWQsIGluZGV4ZWQgYW5kIGNvbXBpbGVkIHRocm91Z2ggYW4gYXV0b21hdGVkIHByb2Nl\n" +
+      "c3Mgd2l0aCBubyBhZHZhbmNlIHJldmlldyBieSBodW1hbiBiZWluZ3MuIEdpdmVuIHRoZSBlbm9y\n" +
+      "bW91cyB2b2x1bWUgb2Ygd2ViIHNpdGUgaW5mb3JtYXRpb24gYWRkZWQsIGRlbGV0ZWQsIGFuZCBj\n" +
+      "aGFuZ2VkIG9uIGEgZnJlcXVlbnQgYmFzaXMsIEdvb2dsZSBjYW5ub3QgYW5kIGRvZXMgbm90IHNj\n" +
+      "cmVlbiBhbnl0aGluZyBtYWRlIGF2YWlsYWJsZSB0aHJvdWdoIGl0cyBpbmRpY2VzLiBGb3IgZWFj\n" +
+      "aCB3ZWIgc2l0ZSByZWZsZWN0ZWQgaW4gR29vZ2xlJ3MgaW5kaWNlcywgaWYgZWl0aGVyIChpKSBh\n" +
+      "IHNpdGUgb3duZXIgcmVzdHJpY3RzIGFjY2VzcyB0byBoaXMgb3IgaGVyIHdlYiBzaXRlIG9yIChp\n" +
+      "aSkgYSBzaXRlIGlzIHRha2VuIGRvd24gZnJvbSB0aGUgd2ViLCB0aGVuLCB1cG9uIHJlY2VpcHQg\n" +
+      "b2YgYSByZXF1ZXN0IGJ5IHRoZSBzaXRlIG93bmVyIG9yIGEgdGhpcmQgcGFydHkgaW4gdGhlIHNl\n" +
+      "Y29uZCBpbnN0YW5jZSwgR29vZ2xlIHdvdWxkIGNvbnNpZGVyIG9uIGEgY2FzZS1ieS1jYXNlIGJh\n" +
+      "c2lzIHJlcXVlc3RzIHRvIHJlbW92ZSB0aGUgbGluayB0byB0aGF0IHNpdGUgZnJvbSBpdHMgaW5k\n" +
+      "aWNlcy4gSG93ZXZlciwgaWYgdGhlIG9wZXJhdG9yIG9mIHRoZSBzaXRlIGRvZXMgbm90IHRha2Ug\n" +
+      "c3RlcHMgdG8gcHJldmVudCBpdCwgdGhlIGF1dG9tYXRpYyBmYWNpbGl0aWVzIHVzZWQgdG8gY3Jl\n" +
+      "YXRlIHRoZSBpbmRpY2VzIGFyZSBsaWtlbHkgdG8gZmluZCB0aGF0IHNpdGUgYW5kIGluZGV4IGl0\n" +
+      "IGFnYWluIGluIGEgcmVsYXRpdmVseSBzaG9ydCBhbW91bnQgb2YgdGltZS4=";
 
   /* Test the basic encode and decode functions. */
   public void testFixed() throws Exception {
@@ -89,7 +106,7 @@ public class Base64Test extends TestCase {
   public void testWriteToByteArray() throws Exception {
     byte[] resultBytes = new byte[expect.length()];
     int length = Base64.encode(input.getBytes(), 0, input.length(),
-                               resultBytes, 0, Base64.ALPHABET);
+        resultBytes, 0, Base64.ALPHABET, Integer.MAX_VALUE);
 
     assertTrue(length == expect.length());
 
@@ -100,11 +117,13 @@ public class Base64Test extends TestCase {
     assertEquals(input, decode);
   }
 
-  /* Test my special write-to-preallocated array enhancement. */
+  /* Test my special write-to-preallocated array enhancement,
+   * specifying a destination offset.
+   */
   public void testWriteToByteArray2() throws Exception {
     byte[] resultBytes = new byte[expect.length() + 9];
     int length = Base64.encode(input.getBytes(), 0, input.length(),
-                               resultBytes, 4, Base64.ALPHABET);
+        resultBytes, 4, Base64.ALPHABET, Integer.MAX_VALUE);
 
     assertTrue(length == expect.length());
 
@@ -116,15 +135,15 @@ public class Base64Test extends TestCase {
   }
 
   /* Test my special write-to-preallocated array enhancement,
-     specifying a source offset.
-  */
+   * specifying a source offset.
+   */
   public void testWriteToByteArray3() throws Exception {
     byte[] sourceBytes = new byte[input.length() + 9];
     System.arraycopy(input.getBytes(), 0, sourceBytes, 5, input.length());
 
     byte[] resultBytes = new byte[expect.length()];
     int length = Base64.encode(sourceBytes, 5, input.length(),
-                               resultBytes, 0, Base64.ALPHABET);
+        resultBytes, 0, Base64.ALPHABET, Integer.MAX_VALUE);
 
     assertTrue(length == expect.length());
 
@@ -135,11 +154,44 @@ public class Base64Test extends TestCase {
     assertEquals(input, decode);
   }
 
+  /* Test my special write-to-preallocated array enhancement w/newlines. */
+  public void testWriteToByteArray4() throws Exception {
+    byte[] resultBytes = new byte[expectNL.length()];
+    int length = Base64.encode(input.getBytes(), 0, input.length(),
+        resultBytes, 0, Base64.ALPHABET, 76);
+
+    assertTrue(length == expectNL.length());
+
+    String result = new String(resultBytes);
+    assertEquals(expectNL, result);
+
+    String decode = new String(Base64.decode(result));
+    assertEquals(input, decode);
+  }
+
+  /* Test my special write-to-preallocated array enhancement,
+   * specifying a destination offset and line length.
+   */
+  public void testWriteToByteArray5() throws Exception {
+    byte[] resultBytes = new byte[expectNL.length() + 9];
+    int length = Base64.encode(input.getBytes(), 0, input.length(),
+        resultBytes, 4, Base64.ALPHABET, 76);
+
+    assertTrue(length == expectNL.length());
+
+    String result = new String(resultBytes, 4, length);
+    assertEquals(expectNL, result);
+
+    String decode = new String(Base64.decode(result));
+    assertEquals(input, decode);
+  }
+
   public void testSpeed() throws Exception {
     byte[] input = new byte[5*1024*1024];
     byte[] output = new byte[4 + ((input.length * 4) / 3)];
     long start = System.currentTimeMillis();
-    Base64.encode(input, 0, input.length, output, 0, Base64.ALPHABET);
+    Base64.encode(input, 0, input.length, output, 0, Base64.ALPHABET,
+                  Integer.MAX_VALUE);
     long duration = System.currentTimeMillis() - start;
     System.out.println("testSpeed: " + duration + " millisecs");
     // Old Base64Encoder used to run 6x longer

@@ -19,7 +19,7 @@ package com.google.enterprise.saml.common;
  */
 public class GsaConstants {
 
-  public static final String GSA_ISSUER = "google.com";
+  public static final String GSA_TESTING_ISSUER = "http://google.com/enterprise/gsa/testing";
   public static final String GSA_ARTIFACT_HANDLER_NAME = "SamlArtifactConsumer";
   public static final String GSA_ARTIFACT_PARAM_NAME = "SAMLart";
   public static final String GSA_RELAY_STATE_PARAM_NAME = "RelayState";

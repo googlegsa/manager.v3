@@ -23,13 +23,34 @@ import java.io.InputStream;
  */
 public class Base64FilterInputStream extends FilterInputStream {
 
+  /* NOTE: The actual length of lines will approximate this.
+   * For our purposes, strict adherence to RFC 2045 is not necessary.
+   * We only want to make viewing teedFeedFiles easier.
+   */
+  static final int BASE64_LINE_LENGTH = 76;
+  private boolean breakLines = false;
+
+
+  /**
+   * Given some InputStream, create an InputStream that base64 encodes the
+   * input stream.  No line breaks are included in the output stream.
+   *
+   * @param in an InputStream providing source data for encoding
+   */
+  public Base64FilterInputStream(InputStream in) {
+    this (in, false);
+  }
+
   /**
    * Given some InputStream, create an InputStream that base64 encodes the
    * input stream.
-   * @param in
+   *
+   * @param in an InputStream providing source data for encoding
+   * @param breakLines if true, add line breaks
    */
-  public Base64FilterInputStream(InputStream in) {
+  public Base64FilterInputStream(InputStream in, boolean breakLines) {
     super(in);
+    this.breakLines = breakLines;
   }
 
   /* This is used when reading small amounts of data. */
@@ -73,7 +94,12 @@ public class Base64FilterInputStream extends FilterInputStream {
 
     // Determine the number of threebyte datum we need to read to
     // fill the destination buffer with quadbyte encoded data.
-    int readLen = (len / 4) * 3;
+    int readLen;
+    if (breakLines) {
+      readLen = ((len - len/BASE64_LINE_LENGTH) / 4) * 3;
+    } else {
+      readLen = (len / 4) * 3;
+    }
 
     // Read the input data into the tail end of the target buffer.
     int readBytes = fillbuff(b, off + (len - readLen), readLen);
@@ -82,8 +108,9 @@ public class Base64FilterInputStream extends FilterInputStream {
     }
 
     // Convert the buffer in-place.
-    bytesWritten = Base64.encode(b, off + (len - readLen), readBytes,
-                                 b, off, Base64.ALPHABET);
+    bytesWritten = Base64.encode(b, off + (len - readLen), readBytes, b, off,
+        Base64.ALPHABET, (breakLines)? BASE64_LINE_LENGTH : Integer.MAX_VALUE);
+
     return bytesWritten;
   }
 
@@ -123,6 +150,9 @@ public class Base64FilterInputStream extends FilterInputStream {
     if (encodedBufPos < 4) {
       available += (4 - encodedBufPos);
     }
+    if (breakLines) {
+      available += available/BASE64_LINE_LENGTH;
+    }
     return available;
   }
 
@@ -134,6 +164,10 @@ public class Base64FilterInputStream extends FilterInputStream {
    */
   public long skip(long n) throws IOException {
     long skipped = 0;
+
+    if (breakLines) {
+      n -= n/BASE64_LINE_LENGTH;
+    }
 
     // Skip over encoded morsel.
     while (encodedBufPos < 4 && n > 0) {

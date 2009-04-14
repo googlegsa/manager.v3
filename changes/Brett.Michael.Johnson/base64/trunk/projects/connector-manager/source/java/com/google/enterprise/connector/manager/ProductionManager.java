@@ -38,6 +38,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -207,6 +208,16 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
+  public Properties getConnectorManagerConfig()
+      throws PersistentStoreException {
+    try {
+      return Context.getInstance().getConnectorManagerConfig();
+    } catch (InstantiatorException e) {
+      throw new PersistentStoreException(e);
+    }
+  }
+
+  /* @Override */
   public void setConnectorManagerConfig(String feederGateHost,
       int feederGatePort) throws PersistentStoreException {
     try {
@@ -239,5 +250,9 @@ public class ProductionManager implements Manager {
   public Map getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException {
     return instantiator.getConnectorConfig(connectorName);
+  }
+
+  public boolean isLocked() {
+    return Context.getInstance().getIsManagerLocked();
   }
 }

@@ -24,20 +24,24 @@ import javax.servlet.ServletException;
 
 public class Metadata {
 
-  private final MetadataProvider provider;
+  private final String filename;
   private final String smEntityId;
   private final String spEntityId;
+  private MetadataProvider provider;
 
-  public Metadata(String filename, String smEntityId, String spEntityId)
-      throws MetadataProviderException {
-    this.provider = OpenSamlUtil.getMetadataFromFile(FileUtil.getContextFile(filename));
+  public Metadata(String filename, String smEntityId, String spEntityId) {
+    this.filename = filename;
     this.smEntityId = smEntityId;
     this.spEntityId = spEntityId;
+    this.provider = null;
   }
 
   public EntityDescriptor getEntity(String id) throws ServletException {
     EntityDescriptor entity;
     try {
+      if (provider == null) {
+        provider = OpenSamlUtil.getMetadataFromFile(FileUtil.getContextFile(filename));
+      }
       entity = provider.getEntityDescriptor(id);
     } catch (MetadataProviderException e) {
       throw new ServletException(e);

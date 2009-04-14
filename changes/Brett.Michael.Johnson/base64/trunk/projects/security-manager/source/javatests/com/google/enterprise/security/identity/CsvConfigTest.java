@@ -14,9 +14,8 @@
 
 package com.google.enterprise.security.identity;
 
+import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
-
-import junit.framework.TestCase;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -25,7 +24,7 @@ import java.util.List;
 /**
  * Unit test for CsvConfig.
  */
-public class CsvConfigTest extends TestCase {
+public class CsvConfigTest extends SecurityManagerTestCase {
 
   public void testParser() throws IOException {
     String config = "groupA,http://leiz.mtv.corp.google.com,/basic/,BASIC_AUTH,\n" +

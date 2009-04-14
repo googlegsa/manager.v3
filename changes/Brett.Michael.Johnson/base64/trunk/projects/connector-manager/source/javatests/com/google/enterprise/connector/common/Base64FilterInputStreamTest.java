@@ -132,6 +132,7 @@ public class Base64FilterInputStreamTest extends TestCase {
                    " prevent it, the automatic facilities used to create" +
                    " the indices are likely to find that site and index it" +
                    " again in a relatively short amount of time.";
+
   static String expect = "IEdvb2dsZSdzIGluZGljZXMgY29uc2lzdCBvZiBpbmZvcm1hdGlvbi" +
                     "B0aGF0IGhhcyBiZWVuIGlkZW50aWZpZWQsIGluZGV4ZWQgYW5kIGNv" +
                     "bXBpbGVkIHRocm91Z2ggYW4gYXV0b21hdGVkIHByb2Nlc3Mgd2l0aC" +
@@ -156,7 +157,25 @@ public class Base64FilterInputStreamTest extends TestCase {
                     "V4IGl0IGFnYWluIGluIGEgcmVsYXRpdmVseSBzaG9ydCBhbW91bnQg" +
                     "b2YgdGltZS4=";
 
-  /* test read() interface */
+  static String expectNL =
+      "IEdvb2dsZSdzIGluZGljZXMgY29uc2lzdCBvZiBpbmZvcm1hdGlvbiB0aGF0IGhhcyBiZWVuIGlk\n" +
+      "ZW50aWZpZWQsIGluZGV4ZWQgYW5kIGNvbXBpbGVkIHRocm91Z2ggYW4gYXV0b21hdGVkIHByb2Nl\n" +
+      "c3Mgd2l0aCBubyBhZHZhbmNlIHJldmlldyBieSBodW1hbiBiZWluZ3MuIEdpdmVuIHRoZSBlbm9y\n" +
+      "bW91cyB2b2x1bWUgb2Ygd2ViIHNpdGUgaW5mb3JtYXRpb24gYWRkZWQsIGRlbGV0ZWQsIGFuZCBj\n" +
+      "aGFuZ2VkIG9uIGEgZnJlcXVlbnQgYmFzaXMsIEdvb2dsZSBjYW5ub3QgYW5kIGRvZXMgbm90IHNj\n" +
+      "cmVlbiBhbnl0aGluZyBtYWRlIGF2YWlsYWJsZSB0aHJvdWdoIGl0cyBpbmRpY2VzLiBGb3IgZWFj\n" +
+      "aCB3ZWIgc2l0ZSByZWZsZWN0ZWQgaW4gR29vZ2xlJ3MgaW5kaWNlcywgaWYgZWl0aGVyIChpKSBh\n" +
+      "IHNpdGUgb3duZXIgcmVzdHJpY3RzIGFjY2VzcyB0byBoaXMgb3IgaGVyIHdlYiBzaXRlIG9yIChp\n" +
+      "aSkgYSBzaXRlIGlzIHRha2VuIGRvd24gZnJvbSB0aGUgd2ViLCB0aGVuLCB1cG9uIHJlY2VpcHQg\n" +
+      "b2YgYSByZXF1ZXN0IGJ5IHRoZSBzaXRlIG93bmVyIG9yIGEgdGhpcmQgcGFydHkgaW4gdGhlIHNl\n" +
+      "Y29uZCBpbnN0YW5jZSwgR29vZ2xlIHdvdWxkIGNvbnNpZGVyIG9uIGEgY2FzZS1ieS1jYXNlIGJh\n" +
+      "c2lzIHJlcXVlc3RzIHRvIHJlbW92ZSB0aGUgbGluayB0byB0aGF0IHNpdGUgZnJvbSBpdHMgaW5k\n" +
+      "aWNlcy4gSG93ZXZlciwgaWYgdGhlIG9wZXJhdG9yIG9mIHRoZSBzaXRlIGRvZXMgbm90IHRha2Ug\n" +
+      "c3RlcHMgdG8gcHJldmVudCBpdCwgdGhlIGF1dG9tYXRpYyBmYWNpbGl0aWVzIHVzZWQgdG8gY3Jl\n" +
+      "YXRlIHRoZSBpbmRpY2VzIGFyZSBsaWtlbHkgdG8gZmluZCB0aGF0IHNpdGUgYW5kIGluZGV4IGl0\n" +
+      "IGFnYWluIGluIGEgcmVsYXRpdmVseSBzaG9ydCBhbW91bnQgb2YgdGltZS4=";
+
+  /* Test read() interface. */
   public void testRead1() throws Exception {
     ByteArrayInputStream bais = new ByteArrayInputStream(input.getBytes());
     Base64FilterInputStream is = new Base64FilterInputStream(bais);
@@ -171,7 +190,7 @@ public class Base64FilterInputStreamTest extends TestCase {
     Assert.assertTrue(expect.equals(new String(resultBytes)));
   }
 
-  /* test read(byte[]) interface */
+  /* Test read(byte[]) interface. */
   public void testReadByteArray() throws Exception {
     byteArrayRead(1);
     byteArrayRead(2);
@@ -190,7 +209,7 @@ public class Base64FilterInputStreamTest extends TestCase {
     byteArrayRead(2048);
   }
 
-  /* test read(byte[], off, len) interface */
+  /* Test read(byte[], off, len) interface. */
   public void testReadByteArrayWithOffLen() throws Exception {
     byteArrayRead2(1);
     byteArrayRead2(2);
@@ -209,7 +228,7 @@ public class Base64FilterInputStreamTest extends TestCase {
     byteArrayRead2(2048);
   }
 
-  /* test read(byte[], off, len) interface where off != 0 */
+  /* Test read(byte[], off, len) interface where off != 0. */
   public void testReadByteArrayWithOffset() throws Exception {
     byteArrayRead3(1);
     byteArrayRead3(2);
@@ -228,7 +247,7 @@ public class Base64FilterInputStreamTest extends TestCase {
     byteArrayRead3(2048);
   }
 
-  /* test use of mixed read() and read(byte[], off, len) interface */
+  /* Test use of mixed read() and read(byte[], off, len) interface. */
   public void testReadWithReadByteArray() throws Exception {
     byteArrayRead4(1, 1);
     byteArrayRead4(2, 1);
@@ -295,8 +314,15 @@ public class Base64FilterInputStreamTest extends TestCase {
     byteArrayRead4(2048, 4);
   }
 
+  /* Test read(byte[], off, len) interface with newlines in output. */
+  public void testReadByteArrayWithNewLines() throws Exception {
+    byteArrayRead5(77);
+    byteArrayRead5(expectNL.length());
+    byteArrayRead5(expectNL.length() + 1);
+    byteArrayRead5(2048);
+  }
 
-  /* test read(byte[]) interface */
+  /* Test read(byte[]) interface. */
   public void byteArrayRead(int buffsize) throws Exception {
     ByteArrayInputStream bais = new ByteArrayInputStream(input.getBytes());
     Base64FilterInputStream is = new Base64FilterInputStream(bais);
@@ -310,7 +336,7 @@ public class Base64FilterInputStreamTest extends TestCase {
     Assert.assertTrue(expect.equals(resultBuffer.toString()));
   }
 
-  /* test read(byte[], off, len) interface */
+  /* Test read(byte[], off, len) interface. */
   public void byteArrayRead2(int buffsize) throws Exception {
     ByteArrayInputStream bais = new ByteArrayInputStream(input.getBytes());
     Base64FilterInputStream is = new Base64FilterInputStream(bais);
@@ -324,7 +350,7 @@ public class Base64FilterInputStreamTest extends TestCase {
     Assert.assertTrue(expect.equals(resultBuffer.toString()));
   }
 
-  /* test read(byte[], off, len) interface, where off != 0 */
+  /* Test read(byte[], off, len) interface, where off != 0. */
   public void byteArrayRead3(int buffsize) throws Exception {
     ByteArrayInputStream bais = new ByteArrayInputStream(input.getBytes());
     Base64FilterInputStream is = new Base64FilterInputStream(bais);
@@ -338,7 +364,7 @@ public class Base64FilterInputStreamTest extends TestCase {
     Assert.assertTrue(expect.equals(resultBuffer.toString()));
   }
 
-  /* test use of mixed read() and read(byte[], off, len) interface */
+  /* Test use of mixed read() and read(byte[], off, len) interface. */
   public void byteArrayRead4(int buffsize, int readsize) throws Exception {
     ByteArrayInputStream bais = new ByteArrayInputStream(input.getBytes());
     Base64FilterInputStream is = new Base64FilterInputStream(bais);
@@ -354,5 +380,21 @@ public class Base64FilterInputStreamTest extends TestCase {
       resultBuffer.append(new String(resultBytes, 0, val));
     }
     Assert.assertTrue(expect.equals(resultBuffer.toString()));
+  }
+
+  /* Test read(byte[], off, len) interface, where off != 0,
+   * and newlines in output.
+   */
+  public void byteArrayRead5(int buffsize) throws Exception {
+    ByteArrayInputStream bais = new ByteArrayInputStream(input.getBytes());
+    Base64FilterInputStream is = new Base64FilterInputStream(bais, true);
+    byte[] resultBytes = new byte[buffsize + 3];
+    StringBuffer resultBuffer = new StringBuffer(expectNL.length());
+
+    int val;
+    while (-1 != (val = is.read(resultBytes, 3, buffsize))) {
+      resultBuffer.append(new String(resultBytes, 3, val));
+    }
+    Assert.assertTrue(expectNL.equals(resultBuffer.toString()));
   }
 }

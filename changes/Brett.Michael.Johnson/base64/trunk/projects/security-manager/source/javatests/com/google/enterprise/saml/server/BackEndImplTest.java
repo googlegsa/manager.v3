@@ -14,14 +14,13 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.security.connectors.formauth.CookieUtil;
 import com.google.enterprise.security.identity.AuthnDomain;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.manager.LocalSessionManager;
-
-import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +31,7 @@ import javax.servlet.http.Cookie;
 /**
  * Unit test for BackEndImpl.
  */
-public class BackEndImplTest extends TestCase {
+public class BackEndImplTest extends SecurityManagerTestCase {
 
   private BackEndImpl backend;
   private LocalSessionManager sm;
@@ -40,14 +39,18 @@ public class BackEndImplTest extends TestCase {
   private AuthnDomainGroup adg2 = new AuthnDomainGroup("adg2");
   private AuthnDomainGroup adg3 = new AuthnDomainGroup("adg3");
   @SuppressWarnings("unused")
-  private AuthnDomain basicSite = new AuthnDomain("basicDomain", AuthNMechanism.BASIC_AUTH, "basic_loginurl", adg1);
+  private AuthnDomain basicSite =
+      new AuthnDomain("basicDomain", AuthNMechanism.BASIC_AUTH, "basic_loginurl", adg1);
   @SuppressWarnings("unused")
-  private AuthnDomain formsSite = new AuthnDomain("formsDomain", AuthNMechanism.FORMS_AUTH, "forms_loginurl", adg2);
+  private AuthnDomain formsSite =
+      new AuthnDomain("formsDomain", AuthNMechanism.FORMS_AUTH, "forms_loginurl", adg2);
   @SuppressWarnings("unused")
-  private AuthnDomain connectorSite = new AuthnDomain("connectorDomain", AuthNMechanism.CONNECTORS, "connector_loginurl", adg3);
+  private AuthnDomain connectorSite =
+      new AuthnDomain("connectorDomain", AuthNMechanism.CONNECTORS, "connector_loginurl", adg3);
 
   @Override
-  public void setUp() {
+  public void setUp() throws Exception {
+    super.setUp();
     sm = new LocalSessionManager();
     backend = new BackEndImpl(sm, new AuthzResponderImpl());
   }

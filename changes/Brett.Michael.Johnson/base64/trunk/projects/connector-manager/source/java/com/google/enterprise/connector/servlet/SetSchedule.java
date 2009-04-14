@@ -69,14 +69,11 @@ public class SetSchedule extends ConnectorManagerServlet {
         root, ServletUtil.XMLTAG_LOAD));
     boolean disabled = (ServletUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_DISABLED) != null);
-    int retryDelayMillis = -1;
+    int retryDelayMillis = Schedule.defaultRetryDelayMillis();
     String delayStr = ServletUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_DELAY);
     if (delayStr != null) {
       retryDelayMillis = Integer.parseInt(delayStr);
-    }
-    if (retryDelayMillis < 0) {
-      retryDelayMillis = Schedule.defaultRetryDelayMillis();
     }
     String timeIntervals = ServletUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_TIME_INTERVALS);

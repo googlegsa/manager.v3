@@ -14,19 +14,20 @@
 
 package com.google.enterprise.saml.server;
 
-import junit.framework.TestCase;
+import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.security.manager.LocalSessionManager;
 
 /**
  * Unit test for GSASessionAdapter.
  */
-public class GSASessionAdapterTest extends TestCase {
+public class GSASessionAdapterTest extends SecurityManagerTestCase {
 
   private LocalSessionManager sm;
   private GSASessionAdapter adapter;
 
   @Override
-  public void setUp() {
+  public void setUp() throws Exception {
+    super.setUp();
     sm = new LocalSessionManager();
     adapter = new GSASessionAdapter(sm);
   }

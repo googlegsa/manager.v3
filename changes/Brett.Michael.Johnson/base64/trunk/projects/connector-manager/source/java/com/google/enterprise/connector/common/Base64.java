@@ -349,7 +349,7 @@ public class Base64 {
   /**
    * Encodes a byte array into Base64 notation into a destination byte array.
    * Warning: No check is made to make sure the destination is big enough
-   * to hold the conversion.  No linebreaks are inserted into the output.
+   * to hold the conversion.
    * This was optimally constructed for use by Base64FilterInputStream.
    *
    * @param source The data to convert
@@ -358,13 +358,15 @@ public class Base64 {
    * @param dest The destination array for converted data
    * @param destOffset Offset in destination array to write
    * @param alphabet is the encoding alphabet
+   * @param maxLineLength maximum length of one line.
    * @return the number of bytes written to destination.
    */
   static int encode(byte[] source, int sourceOffset, int sourceLength,
-      byte[] dest, int destOffset, byte[] alphabet) {
+      byte[] dest, int destOffset, byte[] alphabet, int maxLineLength) {
     int s = 0;
     int d = destOffset;
     int len = sourceLength - 2;
+    int lineLength = 0;
 
     for (; s < len; s += 3, d += 4) {
       // The following block of code is the same as
@@ -378,11 +380,20 @@ public class Base64 {
       dest[d + 1] = alphabet[(inBuff >>> 12) & 0x3f];
       dest[d + 2] = alphabet[(inBuff >>> 6) & 0x3f];
       dest[d + 3] = alphabet[(inBuff) & 0x3f];
+
+      if ((lineLength += 4) >= maxLineLength) {
+        dest[d + 4] = NEW_LINE;
+        d++;
+        lineLength = 0;
+      } // end if: end of line
     } // end for: each piece of array
 
     if (s < sourceLength) {
       encode3to4(source, s + sourceOffset, sourceLength - s, dest, d, alphabet);
       d += 4;
+      if ((lineLength += 4) >= maxLineLength) {
+        dest[d++] = NEW_LINE;
+      }
     }
 
     return d - destOffset;

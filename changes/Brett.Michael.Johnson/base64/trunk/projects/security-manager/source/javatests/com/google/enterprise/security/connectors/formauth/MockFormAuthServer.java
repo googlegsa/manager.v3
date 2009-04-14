@@ -38,7 +38,7 @@ public abstract class MockFormAuthServer extends SecurityManagerServlet
   protected final Map<String, String> passwordMap;
   protected final Map<String, Cookie> cookieMap;
 
-  protected MockFormAuthServer(String usernameKey, String passwordKey) {
+  MockFormAuthServer(String usernameKey, String passwordKey) {
     this.usernameKey = usernameKey;
     this.passwordKey = passwordKey;
     inputs = new ImmutableMap.Builder<String, String>()
@@ -47,15 +47,6 @@ public abstract class MockFormAuthServer extends SecurityManagerServlet
       .build();
     passwordMap = new HashMap<String, String>();
     cookieMap = new HashMap<String, Cookie>();
-  }
-
-  public static class Server1 extends MockFormAuthServer {
-    private static final long serialVersionUID = 1L;
-    public Server1() {
-      super("username", "password");
-      passwordMap.put("joe", "plumber");
-      cookieMap.put("joe", new Cookie("Server1ID", "blahblahblah"));
-    }
   }
 
   @Override
