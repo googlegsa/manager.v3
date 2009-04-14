@@ -121,7 +121,7 @@ public class Base64FilterInputStream extends FilterInputStream {
 
   /**
    * Try to fill up the buffer with data read from the input stream.
-   * This is tolerent of short reads - returning less than the requested
+   * This is tolerant of short reads - returning less than the requested
    * amount of data, even if there is more available.
    *
    * @param b buffer to fill
