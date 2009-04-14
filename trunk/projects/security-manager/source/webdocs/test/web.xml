@@ -267,9 +267,6 @@
     <url-pattern>/setScheduleTest</url-pattern>
   </servlet-mapping>
 
-  <!-- This servlet from the connector manager is temporarily commented out.
-       a special startup servlet for the security manager is used instead -->
-  <!--
   <servlet>
     <servlet-name>StartUp</servlet-name>
     <servlet-class>com.google.enterprise.connector.servlet.StartUp</servlet-class>
@@ -279,7 +276,6 @@
     <servlet-name>StartUp</servlet-name>
     <url-pattern>/startUp</url-pattern>
   </servlet-mapping>
-  -->
 
   <servlet>
     <servlet-name>GetConnectorConfigToEdit</servlet-name>
@@ -375,6 +371,15 @@
   <servlet-mapping>
     <servlet-name>MockArtifactConsumer</servlet-name>
     <url-pattern>/mockartifactconsumer</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>MockFormAuthServer1</servlet-name>
+    <servlet-class>com.google.enterprise.security.connectors.formauth.MockFormAuthServer1</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>MockFormAuthServer1</servlet-name>
+    <url-pattern>/mockformauthserver1</url-pattern>
   </servlet-mapping>
 
 </web-app>

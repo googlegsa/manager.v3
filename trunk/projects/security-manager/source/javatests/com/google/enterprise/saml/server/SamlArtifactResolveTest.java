@@ -14,16 +14,11 @@
 
 package com.google.enterprise.saml.server;
 
-import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
-
+import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.Metadata;
-
-import junit.framework.TestCase;
 
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.xml.io.MarshallingException;
@@ -35,15 +30,23 @@ import java.io.IOException;
 
 import javax.servlet.ServletException;
 
+import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
+
 /**
  * Unit test for SamlArtifactResolve handler.
  */
-public class SamlArtifactResolveTest extends TestCase {
+public class SamlArtifactResolveTest extends SecurityManagerTestCase {
 
-  SamlArtifactResolve samlArtifactResolveInstance;
+  private Metadata metadata;
+  private SamlArtifactResolve samlArtifactResolveInstance;
 
   @Override
-  public void setUp() throws ServletException {
+  public void setUp() throws Exception {
+    super.setUp();
+    metadata = Metadata.class.cast(
+        Context.getInstance().getRequiredBean("Metadata", Metadata.class));
     samlArtifactResolveInstance = new SamlArtifactResolve();
     samlArtifactResolveInstance.init(new MockServletConfig());
   }
@@ -76,14 +79,7 @@ public class SamlArtifactResolveTest extends TestCase {
         "</soap11:Envelope>\n";
     mockRequest.setContent(entity.getBytes("UTF-8"));
 
-    Context context = Context.getInstance();
-    context.setStandaloneContext(
-        Context.DEFAULT_JUNIT_CONTEXT_LOCATION,
-        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
-    Metadata metadata =
-        Metadata.class.cast(context.getRequiredBean("Metadata", Metadata.class));
-
-    BackEnd backend = ConnectorManager.class.cast(context.getManager()).getBackEnd();
+    BackEnd backend = ConnectorManager.class.cast(Context.getInstance().getManager()).getBackEnd();
     backend.getArtifactMap().put(
         encodedArtifact,
         metadata.getSpEntity().getEntityID(),

@@ -14,48 +14,41 @@
 
 package com.google.enterprise.security.connectors.basicauth;
 
+import com.google.enterprise.common.HttpClientInterface;
+import com.google.enterprise.common.MockHttpClient;
+import com.google.enterprise.common.MockHttpTransport;
+import com.google.enterprise.common.SecurityManagerTestCase;
+import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.security.identity.AuthnDomain;
-import com.google.enterprise.security.identity.DomainCredentials;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
-import com.google.enterprise.common.MockHttpClient;
-import com.google.enterprise.common.HttpClientInterface;
-import com.google.enterprise.common.MockHttpTransport;
-
-import junit.framework.TestCase;
-
-import javax.servlet.ServletException;
+import com.google.enterprise.security.identity.DomainCredentials;
 
 /*
  * Tests for the {@link BasicAuthConnector} class.
  * Maybe should use a mock Idp...
  */
-public class BasicAuthConnectorTest extends TestCase {
+public class BasicAuthConnectorTest extends SecurityManagerTestCase {
 
-  AuthnDomain domain;
-  AuthnDomainGroup adg;
-  CredentialsGroup cg;
-  BasicAuthConnector conn;
-  private final HttpClientInterface httpClient;
+  private AuthnDomainGroup adg;
+  private AuthnDomain domain;
+  private CredentialsGroup cg;
+  private HttpClientInterface httpClient;
 
-  public BasicAuthConnectorTest(String name) throws ServletException {
-    super(name);
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
     adg = new AuthnDomainGroup("ADG1");
     domain = new AuthnDomain(
         "BasicDomain", AuthNMechanism.BASIC_AUTH,
         "http://localhost:8973/basic/", adg);
+    cg = new CredentialsGroup(adg);
     MockHttpTransport transport = new MockHttpTransport();
     transport.registerServlet(domain.getLoginUrl(), new MockBasicAuthServer.Server1());
     httpClient = new MockHttpClient(transport);
-  }
-
-  @Override
-  public void setUp() {
-    cg = new CredentialsGroup(adg);
   }
 
   public void testHttpAuthenticate() throws RepositoryException {

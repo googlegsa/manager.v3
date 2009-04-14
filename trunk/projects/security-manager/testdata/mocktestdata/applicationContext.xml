@@ -55,7 +55,7 @@
     <constructor-arg index="2" ref="WorkQueue" />
   </bean>
 
-  <bean id="ConnectorManager"
+  <bean id="Manager"
         class="com.google.enterprise.connector.manager.ConnectorManager">
     <property name="instantiator" ref="Instantiator" />
     <property name="backEnd" ref="BackEnd" />
