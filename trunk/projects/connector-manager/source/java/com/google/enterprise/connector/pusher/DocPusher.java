@@ -145,19 +145,20 @@ public class DocPusher implements Pusher {
   private static InputStream stringWrappedInputStream(String prefix,
       InputStream is, String suffix)  throws RepositoryException {
     InputStream result = null;
-
     try {
+      if (is == null) {
+        return new ByteArrayInputStream((prefix + suffix)
+            .getBytes(XML_DEFAULT_ENCODING));
+      }
       ByteArrayInputStream prefixStream = new ByteArrayInputStream(prefix
           .getBytes(XML_DEFAULT_ENCODING));
 
       ByteArrayInputStream suffixStream = new ByteArrayInputStream(suffix
           .getBytes(XML_DEFAULT_ENCODING));
+
       InputStream[] inputStreams;
-      if (is != null) {
-        inputStreams = new InputStream[] {prefixStream, is, suffixStream};
-      } else {
-        inputStreams = new InputStream[] {prefixStream, suffixStream};
-      }
+      inputStreams = new InputStream[] {prefixStream, is, suffixStream};
+
       Enumeration inputStreamEnum = Collections.enumeration(Arrays
           .asList(inputStreams));
       result = new SequenceInputStream(inputStreamEnum);
@@ -232,13 +233,13 @@ public class DocPusher implements Pusher {
       prefix.append(XML_CONTENT);
       prefix.append(" ");
       XmlUtils.xmlAppendAttrValuePair(XML_ENCODING, "base64binary", prefix);
-      prefix.append(">");
+      prefix.append(">\n");
     }
 
     // build suffix
     StringBuffer suffix = new StringBuffer();
     if (feedType != XML_FEED_METADATA_AND_URL && contentAllowed) {
-      suffix.append(XmlUtils.xmlWrapEnd(XML_CONTENT));
+      suffix.append('\n').append(XmlUtils.xmlWrapEnd(XML_CONTENT));
     }
     suffix.append(XmlUtils.xmlWrapEnd(XML_RECORD));
 
@@ -525,7 +526,7 @@ public class DocPusher implements Pusher {
    * Builds the xml string for a given document.
    */
   protected InputStream buildXmlData(Document document, String connectorName,
-      String feedType) throws RepositoryException {
+      String feedType, boolean loggingContent) throws RepositoryException {
     // build prefix
     StringBuffer prefix = new StringBuffer();
     prefix.append(XML_START);
@@ -574,7 +575,8 @@ public class DocPusher implements Pusher {
           getOptionalString(document, SpiConstants.PROPNAME_TITLE));
 
       if (null != contentStream) {
-        encodedContentStream = new Base64FilterInputStream(contentStream);
+        encodedContentStream =
+            new Base64FilterInputStream(contentStream, loggingContent);
       }
     }
 
@@ -742,9 +744,11 @@ public class DocPusher implements Pusher {
       throws PushException, FeedException, RepositoryException {
     String feedType = null;
     InputStream xmlData = null;
+    String osFilename = Context.getInstance().getTeedFeedFile();
     try {
       feedType = getFeedType(document);
-      xmlData = buildXmlData(document, connectorName, feedType);
+      xmlData = buildXmlData(document, connectorName, feedType,
+                             (osFilename != null));
     } catch (RuntimeException e) {
       LOGGER.log(Level.WARNING,
           "Rethrowing RuntimeException as RepositoryDocumentException", e);
@@ -757,7 +761,6 @@ public class DocPusher implements Pusher {
     }
     // Setup the teedFeedFile if declared
     InputStream is = xmlData;
-    String osFilename = Context.getInstance().getTeedFeedFile();
     File osFile = null;
     OutputStream os = null;
     if (osFilename != null) {
