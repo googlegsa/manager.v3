@@ -1,4 +1,4 @@
-// Copyright 2006-2008 Google Inc. All Rights Reserved.
+// Copyright 2006-2009 Google Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -50,8 +50,8 @@ public class UpdateConnectorNoGSA extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
+  @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     String language = null;
@@ -59,8 +59,8 @@ public class UpdateConnectorNoGSA extends HttpServlet {
     StringWriter writer = new StringWriter();
     writer.write("<" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">");
 
-    Enumeration names = req.getParameterNames();
-    for (Enumeration e = names; e.hasMoreElements();) {
+    Enumeration<?> names = req.getParameterNames();
+    for (Enumeration<?> e = names; e.hasMoreElements();) {
       String name = (String) e.nextElement();
       if (name.equalsIgnoreCase(ServletUtil.QUERY_PARAM_LANG)) {
         language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
@@ -97,17 +97,17 @@ public class UpdateConnectorNoGSA extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     ConnectorMessageCode status = new ConnectorMessageCode();
     String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
-    Map configData = new TreeMap();
+    Map<String, String> configData = new TreeMap<String, String>();
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
     String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
-    Enumeration names = req.getParameterNames();
-    for (Enumeration e = names; e.hasMoreElements();) {
+    Enumeration<?> names = req.getParameterNames();
+    for (Enumeration<?> e = names; e.hasMoreElements();) {
       String name = (String) e.nextElement();
       configData.put(name, req.getParameter(name));
     }
@@ -118,9 +118,8 @@ public class UpdateConnectorNoGSA extends HttpServlet {
     Manager manager = Context.getInstance(servletContext).getManager();
     ConfigureResponse configRes = null;
     try {
-      configRes =
-          manager.setConnectorConfig(connectorName, connectorType, configData,
-              lang, true);
+      configRes = manager.setConnectorConfig(connectorName, connectorType,
+          configData, lang, true);
     } catch (ConnectorManagerException e) {
       status = new ConnectorMessageCode(
           ConnectorMessageCode.EXCEPTION_CONNECTOR_MANAGER);

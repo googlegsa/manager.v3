@@ -36,6 +36,7 @@ import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.AuthorizationManager;
+import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
@@ -54,9 +55,9 @@ import com.google.enterprise.connector.traversal.TraversalStateStore;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -90,13 +91,13 @@ public class MockInstantiator implements Instantiator {
 
   private static final AuthorizationManager nullAuthorizationManager =
       new AuthorizationManager() {
-        public Collection authorizeDocids(Collection docids,
-            AuthenticationIdentity identity) {
+        public Collection<AuthorizationResponse> authorizeDocids(
+            Collection<String> docids, AuthenticationIdentity identity) {
           throw new UnsupportedOperationException();
         }
       };
 
-  private Map connectorMap;
+  private Map<String, ConnectorInstance> connectorMap;
   private ConnectorConfigStore connectorConfigStore;
   private ConnectorScheduleStore connectorScheduleStore;
   private ConnectorStateStore connectorStateStore;
@@ -111,14 +112,12 @@ public class MockInstantiator implements Instantiator {
     this.connectorConfigStore = configStore;
     this.connectorScheduleStore = schedStore;
     this.connectorStateStore = stateStore;
-    this.connectorMap = new HashMap();
+    this.connectorMap = new HashMap<String, ConnectorInstance>();
   }
 
   public synchronized void shutdown() {
-    Iterator iter = connectorMap.keySet().iterator();
-    while (iter.hasNext()) {
-      String name = (String) iter.next();
-      ConnectorInstance instance = (ConnectorInstance) connectorMap.get(name);
+    for (String name : connectorMap.keySet()) {
+      ConnectorInstance instance = connectorMap.get(name);
       Connector connector = instance.getConnectorInterfaces().getConnector();
       if (connector != null && (connector instanceof ConnectorShutdownAware)) {
         try {
@@ -261,8 +260,7 @@ public class MockInstantiator implements Instantiator {
   public void restartConnectorTraversal(String connectorName) {
     Scheduler scheduler = (Scheduler) Context.getInstance().
         getBean("TraversalScheduler", Scheduler.class);
-    ConnectorInstance inst =
-        (ConnectorInstance) connectorMap.get(connectorName);
+    ConnectorInstance inst = connectorMap.get(connectorName);
     if (scheduler != null) {
       scheduler.removeConnector(connectorName);
     }
@@ -273,13 +271,12 @@ public class MockInstantiator implements Instantiator {
     return "";
   }
 
-  public Iterator getConnectorTypeNames() {
-    return connectorMap.keySet().iterator();
+  public Set<String> getConnectorTypeNames() {
+    return connectorMap.keySet();
   }
 
   public void removeConnector(String connectorName) {
-    ConnectorInstance inst =
-        (ConnectorInstance) connectorMap.remove(connectorName);
+    ConnectorInstance inst = connectorMap.remove(connectorName);
     if (inst != null) {
       Scheduler scheduler = (Scheduler) Context.getInstance().
           getBean("TraversalScheduler", Scheduler.class);
@@ -308,8 +305,8 @@ public class MockInstantiator implements Instantiator {
     throw new UnsupportedOperationException();
   }
 
-  public Iterator getConnectorNames() {
-    return connectorMap.keySet().iterator();
+  public Set<String> getConnectorNames() {
+    return connectorMap.keySet();
   }
 
   public String getConnectorTypeName(String connectorName)
@@ -318,8 +315,8 @@ public class MockInstantiator implements Instantiator {
   }
 
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String typeName, Map configKeys, Locale locale, boolean update)
-      throws ConnectorNotFoundException {
+      String typeName, Map<String, String> configKeys, Locale locale,
+      boolean update) throws ConnectorNotFoundException {
     getConnectorInstance(connectorName).setTypeName(typeName);
     connectorConfigStore.storeConnectorConfiguration(
         getConnectorInstance(connectorName).getStoreContext(),
@@ -327,11 +324,15 @@ public class MockInstantiator implements Instantiator {
     return null;
   }
 
-  public Map getConnectorConfig(String connectorName)
+  public Map<String, String> getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException {
     Properties props = connectorConfigStore.getConnectorConfiguration(
         getConnectorInstance(connectorName).getStoreContext());
-    return (props == null) ? (Map) new HashMap() : (Map) props;
+    if (props == null) {
+      return new HashMap<String, String>();
+    } else {
+      return PropertiesUtils.toMap(props);
+    }
   }
 
   public void setConnectorSchedule(String connectorName,
@@ -364,7 +365,7 @@ public class MockInstantiator implements Instantiator {
   private ConnectorInstance getConnectorInstance(String connectorName)
       throws ConnectorNotFoundException {
     if (connectorMap.containsKey(connectorName)) {
-      return (ConnectorInstance) connectorMap.get(connectorName);
+      return connectorMap.get(connectorName);
     } else {
       throw new ConnectorNotFoundException("Connector not found: "
           + connectorName);

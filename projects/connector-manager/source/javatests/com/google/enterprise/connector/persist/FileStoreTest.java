@@ -30,12 +30,14 @@ public class FileStoreTest extends TestCase {
   protected FileStore store;
   protected File storeDir;
 
+  @Override
   protected void setUp() {
     storeDir = new File("testdata/tmp/filestore");
     assertTrue(storeDir.mkdirs());
     store = new FileStore();
   }
 
+  @Override
   protected void tearDown() {
     assertTrue(ConnectorTestUtils.deleteAllFiles(storeDir));
   }

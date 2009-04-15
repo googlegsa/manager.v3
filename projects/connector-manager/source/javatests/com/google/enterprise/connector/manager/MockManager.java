@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -43,7 +42,7 @@ public class MockManager implements Manager {
   private static final MockManager INSTANCE = new MockManager();
   private static final Logger LOGGER =
       Logger.getLogger(MockManager.class.getName());
-  
+
   private boolean shouldVerifyIdentity;
   private String domain;
   private String username;
@@ -59,7 +58,7 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public boolean authenticate(String connectorName, 
+  public boolean authenticate(String connectorName,
       AuthenticationIdentity identity) {
     if (!shouldVerifyIdentity) {
       return true;
@@ -80,8 +79,8 @@ public class MockManager implements Manager {
     }
     return true;
   }
-  
-  private boolean verifyComponent(String componentName, String expected, 
+
+  private boolean verifyComponent(String componentName, String expected,
       String actual, StringBuffer sb) {
     if (expected == null) {
       if (actual != null) {
@@ -91,23 +90,21 @@ public class MockManager implements Manager {
       return true;
     }
     if (!expected.equals(actual)) {
-      sb.append("Expected " + componentName + "\"" + expected + "\" got \"" + actual +"\"\n");      
+      sb.append("Expected " + componentName + "\"" + expected + "\" got \"" + actual +"\"\n");
       return false;
     }
     return true;
   }
 
   /* @Override */
-  public Set authorizeDocids(String connectorName, List docidList,
-      String username) {
-    Set docidAuthSet = new HashSet();
-    docidAuthSet.addAll(docidList);
-    return docidAuthSet;
+  public Set<String> authorizeDocids(String connectorName,
+      List<String> docidList, String username) {
+    return new HashSet<String>(docidList);
   }
 
   /* @Override */
-  public Set getConnectorTypeNames() {
-    return new TreeSet(Arrays.asList(
+  public Set<String> getConnectorTypeNames() {
+    return new TreeSet<String>(Arrays.asList(
         new String[] {"Documentum", "Filenet", "Sharepoint"}));
   }
 
@@ -161,29 +158,27 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public List getConnectorStatuses() {
-    List statuses = new ArrayList();
+  public List<ConnectorStatus> getConnectorStatuses() {
+    List<ConnectorStatus> statuses = new ArrayList<ConnectorStatus>();
     statuses.add(getConnectorStatus("connector1"));
     statuses.add(getConnectorStatus("connector2"));
     return statuses;
   }
 
-  public ConfigureResponse setConfig(String connectorName, Map configData,
-      String language) {
+  @SuppressWarnings("unused")
+  public ConfigureResponse setConfig(String connectorName,
+      Map<String, String> configData, String language) {
     return null;
   }
 
   /* @Override */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configData, String language,
-      boolean update) {
+      String connectorTypeName, Map<String, String> configData,
+      String language, boolean update) {
     LOGGER.info("setConnectorConfig() connectorName: " + connectorName);
     LOGGER.info("setConnectorConfig() update: " + update);
     LOGGER.info("configData: ");
-    Set set = configData.entrySet();
-    Iterator iterator = set.iterator();
-    while (iterator.hasNext()) {
-      Map.Entry entry = (Map.Entry) iterator.next();
+    for (Map.Entry<String, String> entry : configData.entrySet()) {
       LOGGER.info(entry.getKey() + "/" + entry.getValue());
     }
     // null is a success response
@@ -221,20 +216,20 @@ public class MockManager implements Manager {
   }
 
   /* @Override */
-  public Map getConnectorConfig(String connectorName) {
-    return new HashMap();
+  public Map<String, String> getConnectorConfig(String connectorName) {
+    return new HashMap<String, String>();
   }
 
   /* @Override */
   public boolean isLocked() {
     return false;
   }
-  
+
   public void setShouldVerifyIdentity(boolean b) {
     shouldVerifyIdentity = b;
   }
-  
-  public void setExpectedIdentity(String domain, String username, 
+
+  public void setExpectedIdentity(String domain, String username,
       String password) {
     this.domain = domain;
     this.username = username;

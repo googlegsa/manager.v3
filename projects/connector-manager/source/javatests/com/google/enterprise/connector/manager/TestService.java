@@ -26,14 +26,14 @@ public class TestService implements ContextService {
       Logger.getLogger(TestService.class.getName());
 
   private String serviceName = "TestService";
-  private List tokenList;
+  private List<TestServiceToken> tokenList;
   private volatile boolean isRunning = false;
 
   public void setServiceName(String serviceName) {
     this.serviceName = serviceName;
   }
 
-  public void setTokenList(List tokenList) {
+  public void setTokenList(List<TestServiceToken> tokenList) {
     this.tokenList = tokenList;
   }
 

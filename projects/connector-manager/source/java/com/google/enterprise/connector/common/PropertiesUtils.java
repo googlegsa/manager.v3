@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.util.logging.Logger;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
@@ -72,8 +74,7 @@ public class PropertiesUtils {
 
   /**
    * Write the properties to a file.  Encrypt passwords,
-   * version the properties, and try write them out in the
-   * the same format they were read.
+   * version the properties.
    *
    * @param properties Properties to write
    * @param propertiesFile File to write properties to
@@ -119,8 +120,7 @@ public class PropertiesUtils {
         os.close();
       }
     } catch (IOException e) {
-      throw new PropertiesException("Unable to encode Properties to a String",
-                                    e);
+      throw new PropertiesException("Unable to encode Properties to String", e);
     }
   }
 
@@ -180,8 +180,7 @@ public class PropertiesUtils {
 
   /**
    * Write the properties to an OutputStream.  Encrypt passwords,
-   * version the properties, and try write them out in the
-   * the same format they were read.
+   * version the properties.
    *
    * @param properties Properties to write
    * @param outputStream OutputStream to write properties to
@@ -216,13 +215,34 @@ public class PropertiesUtils {
    * @returns new Properties object that may be modified without altering
    *          the source properties.
    */
-  public static Properties fromMap(Map sourceMap) {
+  public static Properties fromMap(Map<String, String> sourceMap) {
     if (sourceMap == null) {
       return null;
     }
     Properties properties = new Properties();
     properties.putAll(sourceMap);
     return properties;
+  }
+
+  /**
+   * Make a Map&lt;String, String&gt; from the supplied Properties,
+   * copying all the keys and values.
+   *
+   * @param sourceProperties Properties representing properties key-value map.
+   * @returns a Map&lt;String, String&gt; representation of the source
+   *          Properties.
+   */
+  public static Map<String, String> toMap(Properties sourceProperties) {
+    if (sourceProperties == null) {
+      return null;
+    }
+    Map<String, String> configMap = new HashMap<String, String>();
+    Iterator<?> iter = sourceProperties.keySet().iterator();
+    while (iter.hasNext()) {
+      String key = (String) iter.next();
+      configMap.put(key, sourceProperties.getProperty(key));
+    }
+    return configMap;
   }
 
   /**
@@ -235,7 +255,9 @@ public class PropertiesUtils {
    * the source properties.
    */
   public static Properties copy(Properties sourceProperties) {
-    return fromMap(sourceProperties);
+    Properties props = new Properties();
+    props.putAll(sourceProperties);
+    return props;
   }
 
   /**
@@ -261,7 +283,6 @@ public class PropertiesUtils {
   public static void decryptSensitiveProperties(Properties properties) {
     EncryptedPropertyPlaceholderConfigurer.decryptSensitiveProperties(properties);
   }
-
 
   /**
    * Stamp the Properties set with the current Properties Version.

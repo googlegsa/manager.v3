@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,11 +14,14 @@
 
 package com.google.enterprise.connector.mock.jcr;
 
+import com.google.enterprise.connector.mock.MockRepositoryDocument;
+
 import java.util.List;
 
 import javax.jcr.NodeIterator;
 import javax.jcr.query.QueryResult;
 import javax.jcr.query.RowIterator;
+
 
 /**
  * MockJcrQueryResult implements the corresponding JCR interface, with these
@@ -38,14 +41,14 @@ import javax.jcr.query.RowIterator;
  */
 public class MockJcrQueryResult implements QueryResult {
 
-  List result;
+  List<MockRepositoryDocument> result;
 
   /**
    * Creates a MockJcrQueryResult from an Iterable<MockRepositoryDocument>
    * (a MockRepository result)
    * @param result
    */
-  public MockJcrQueryResult(List result) {
+  public MockJcrQueryResult(List<MockRepositoryDocument> result) {
     this.result = result;
   }
 

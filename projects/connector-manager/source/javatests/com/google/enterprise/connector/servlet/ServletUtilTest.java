@@ -25,7 +25,6 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 public class ServletUtilTest extends TestCase {
@@ -125,7 +124,7 @@ public class ServletUtilTest extends TestCase {
     // Create simple form.
     String protectedValue = "protected";
     String clearValue = "clear";
-    Map configMap = new HashMap();
+    Map<String, String> configMap = new HashMap<String, String>();
     configMap.put(HIDE_KEY_ONE, protectedValue);
     configMap.put(HIDE_KEY_TWO, protectedValue);
     configMap.put(HIDE_KEY_THREE, protectedValue);
@@ -321,7 +320,7 @@ public class ServletUtilTest extends TestCase {
 
   public void testReplaceSensitiveData() {
     String clearValue = "clear value";
-    Map clearConfig = new HashMap();
+    Map<String, String> clearConfig = new HashMap<String, String>();
     clearConfig.put(HIDE_KEY_ONE, clearValue);
     clearConfig.put(HIDE_KEY_TWO, clearValue);
     clearConfig.put(HIDE_KEY_THREE, clearValue);
@@ -329,7 +328,7 @@ public class ServletUtilTest extends TestCase {
 
     // Let's just obfuscate all the ones that should be and then revert them.
     String obfuscatedValue = "***********";
-    Map obfuscatedConfig = new HashMap();
+    Map<String, String> obfuscatedConfig = new HashMap<String, String>();
     obfuscateValues(clearConfig, obfuscatedConfig);
     assertEquals(obfuscatedValue, obfuscatedConfig.get(HIDE_KEY_ONE));
     assertEquals(obfuscatedValue, obfuscatedConfig.get(HIDE_KEY_TWO));
@@ -371,10 +370,9 @@ public class ServletUtilTest extends TestCase {
   private static final String TD_START = "<td>";
   private static final String TR_START = "<tr>\r\n";
 
-  private String makeConfigForm(Map configMap) {
-    StringBuffer buf = new StringBuffer(2048);
-    for (Iterator i = configMap.keySet().iterator(); i.hasNext(); ) {
-      String key = (String) i.next();
+  private String makeConfigForm(Map<String, String> configMap) {
+    StringBuilder buf = new StringBuilder(2048);
+    for (String key : configMap.keySet()) {
       appendStartRow(buf, key);
       buf.append(OPEN_ELEMENT);
       buf.append(INPUT);
@@ -385,7 +383,7 @@ public class ServletUtilTest extends TestCase {
       }
       appendAttribute(buf, NAME, key);
       if (configMap != null) {
-        String value = (String) configMap.get(key);
+        String value = configMap.get(key);
         if (value != null) {
           appendAttribute(buf, VALUE, value);
         }
@@ -395,7 +393,7 @@ public class ServletUtilTest extends TestCase {
     return buf.toString();
   }
 
-  private void appendStartRow(StringBuffer buf, String key) {
+  private void appendStartRow(StringBuilder buf, String key) {
     buf.append(TR_START);
     buf.append(TD_START);
     buf.append(key);
@@ -403,27 +401,25 @@ public class ServletUtilTest extends TestCase {
     buf.append(TD_START);
   }
 
-  private void appendEndRow(StringBuffer buf) {
+  private void appendEndRow(StringBuilder buf) {
     buf.append(CLOSE_ELEMENT);
     buf.append(TD_END);
     buf.append(TR_END);
   }
 
-  private void appendAttribute(StringBuffer buf, String attrName,
+  private void appendAttribute(StringBuilder buf, String attrName,
       String attrValue) {
     buf.append(" ");
     XmlUtils.xmlAppendAttrValuePair(attrName, attrValue, buf);
   }
 
-  private void obfuscateValues(Map clearConfig, Map obfuscatedConfig) {
-    for (Iterator iter = clearConfig.keySet().iterator(); iter.hasNext(); ) {
-      String key = (String) iter.next();
-      if (SecurityUtils.isKeySensitive(key)) {
-        obfuscatedConfig.put(key,
-            ServletUtil.obfuscateValue((String) clearConfig.get(key)));
-      } else {
-        obfuscatedConfig.put(key, clearConfig.get(key));
-      }
+  private void obfuscateValues(Map<String, String> clearConfig,
+       Map<String, String> obfuscatedConfig) {
+    for (String key : clearConfig.keySet()) {
+      String clearValue = clearConfig.get(key);
+      obfuscatedConfig.put(key,
+          (SecurityUtils.isKeySensitive(key)) ?
+              ServletUtil.obfuscateValue(clearValue) : clearValue);
     }
   }
 
@@ -435,7 +431,7 @@ public class ServletUtilTest extends TestCase {
     URL u = f.toURI().toURL();
     URLClassLoader sysClassLoader =
         (URLClassLoader) ServletUtil.class.getClassLoader();
-    Class clazz = URLClassLoader.class;
+    Class<URLClassLoader> clazz = URLClassLoader.class;
     // Since the addURL() method is protected need to use reflection.
     Method method = clazz.getDeclaredMethod("addURL", new Class[] {URL.class});
     method.setAccessible(true);

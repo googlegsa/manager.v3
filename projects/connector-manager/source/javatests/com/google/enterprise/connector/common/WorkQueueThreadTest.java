@@ -22,11 +22,13 @@ import junit.framework.TestCase;
 public class WorkQueueThreadTest extends TestCase {
   private WorkQueue queue;
 
+  @Override
   protected void setUp() throws Exception {
     queue = new WorkQueue(2);
     queue.init();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     queue.shutdown(false);
   }
@@ -97,6 +99,7 @@ public class WorkQueueThreadTest extends TestCase {
       }
     }
 
+    @Override
     public void doWork() {
       synchronized (this) {
         while (!isFinished) {
@@ -118,6 +121,7 @@ public class WorkQueueThreadTest extends TestCase {
       }
     }
 
+    @Override
     public void cancelWork() {
       workIsCancelled = true;
       System.out.println(str + ": ...work has been cancelled...");

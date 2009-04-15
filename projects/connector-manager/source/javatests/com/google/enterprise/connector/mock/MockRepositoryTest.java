@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@ package com.google.enterprise.connector.mock;
 
 import junit.framework.TestCase;
 
-import java.util.Iterator;
 
 /**
  * Unit tests for Mock Repository
@@ -71,10 +70,8 @@ public class MockRepositoryTest extends TestCase {
     MockRepositoryDocument doc = r.getStore().getDocByID("doc1");
 
     System.out.println();
-    MockRepositoryPropertyList proplist = doc.getProplist();
     int counter = 0;
-    for (Iterator i = proplist.iterator(); i.hasNext();) {
-      MockRepositoryProperty property = (MockRepositoryProperty) i.next();
+    for (MockRepositoryProperty property : doc.getProplist()) {
       System.out.print(property.toString());
       System.out.println();
       counter++;

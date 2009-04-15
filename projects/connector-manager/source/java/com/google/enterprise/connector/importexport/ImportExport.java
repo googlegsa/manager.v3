@@ -1,4 +1,4 @@
-// Copyright (C) 2007 Google Inc.
+// Copyright (C) 2007-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import org.w3c.dom.NodeList;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,17 +59,15 @@ public class ImportExport {
    * Exports a list of connectors.
    * @return a List of ImportExportConnectors
    */
-  private static final List getConnectors(Manager manager) {
-    List connectors = new ArrayList();
-
-    for (Iterator i = manager.getConnectorStatuses().iterator();
-         i.hasNext();
-         ) {
-      ConnectorStatus connectorStatus = (ConnectorStatus) i.next();
+  private static final List<ImportExportConnector> getConnectors(
+      Manager manager) {
+    List<ImportExportConnector> connectors =
+        new ArrayList<ImportExportConnector>();
+    for (ConnectorStatus connectorStatus : manager.getConnectorStatuses()) {
       String name = connectorStatus.getName();
       String type = connectorStatus.getType();
       String scheduleString = connectorStatus.getSchedule();
-      Map config = null;
+      Map<String, String> config = null;
       try {
         config = manager.getConnectorConfig(connectorStatus.getName());
       } catch (ConnectorNotFoundException e) {
@@ -98,21 +95,19 @@ public class ImportExport {
    * which are not included in <code>connectors</code> if and only if
    * <code>noremove</code> is false.
    */
-  private static final void setConnectors(
-      Manager manager, List connectors, boolean noRemove)
+  private static final void setConnectors(Manager manager,
+      List<ImportExportConnector> connectors, boolean noRemove)
       throws InstantiatorException, PersistentStoreException {
-    Set previousConnectorNames = new HashSet();
-    for (Iterator i = manager.getConnectorStatuses().iterator();
-         i.hasNext();
-         ) {
-      previousConnectorNames.add(((ConnectorStatus) i.next()).getName());
+    Set<String> previousConnectorNames = new HashSet<String>();
+
+    for (ConnectorStatus connector : manager.getConnectorStatuses()) {
+      previousConnectorNames.add(connector.getName());
     }
 
-    for (Iterator i = connectors.iterator(); i.hasNext(); ) {
-      ImportExportConnector connector = (ImportExportConnector) i.next();
+    for (ImportExportConnector connector : connectors) {
       String name = connector.getName();
       String type = connector.getType();
-      Map config = connector.getConfig();
+      Map<String, String> config = connector.getConfig();
       String schedule = connector.getScheduleString();
 
       try {
@@ -152,9 +147,8 @@ public class ImportExport {
 
     // remove previous connectors which no longer exist
     if (!noRemove) {
-      for (Iterator i = previousConnectorNames.iterator(); i.hasNext(); ) {
+      for (String name : previousConnectorNames) {
         try {
-          String name = (String) i.next();
           manager.removeConnector(name);
         } catch (ConnectorNotFoundException e) {
           // should never happen
@@ -168,8 +162,10 @@ public class ImportExport {
    * Deserializes connectors from XML.
    * @return a List of ImportExportConnectors
    */
-  public static List fromXmlConnectorsElement(Element connectorsElement) {
-    List connectors = new ArrayList();
+  public static List<ImportExportConnector> fromXmlConnectorsElement(
+      Element connectorsElement) {
+    List<ImportExportConnector> connectors =
+        new ArrayList<ImportExportConnector>();
 
     NodeList connectorElements = connectorsElement.getElementsByTagName(
         ServletUtil.XMLTAG_CONNECTOR_INSTANCE);
@@ -184,7 +180,7 @@ public class ImportExport {
           connectorElement, ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
       Element configElement = (Element) connectorElement.getElementsByTagName(
           ServletUtil.XMLTAG_CONNECTOR_CONFIG).item(0);
-      Map config = ServletUtil.getAllAttributes(
+      Map<String, String> config = ServletUtil.getAllAttributes(
           configElement, ServletUtil.XMLTAG_PARAMETERS);
       ImportExportConnector connector = new ImportExportConnector(
           name, type, scheduleString, config);
@@ -198,7 +194,7 @@ public class ImportExport {
    * Deserialializes connectors from XML string.
    * @return a List of ImportExportConnectors
    */
-  public static List fromXmlString(String xmlString) {
+  public static List<ImportExportConnector> fromXmlString(String xmlString) {
     Document document =
         ServletUtil.parse(xmlString, new SAXParseErrorHandler(), null);
     Element connectorsElement = document.getDocumentElement();
@@ -209,19 +205,18 @@ public class ImportExport {
    * Serializes connectors to XML.
    * @param connectors a List of ImportExportConnectors
    */
-  public static String asXmlString(List connectors) {
+  public static String asXmlString(List<ImportExportConnector> connectors) {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
 
     ServletUtil.writeXMLTag(
         pw, 0, ServletUtil.XMLTAG_CONNECTOR_INSTANCES, false);
 
-    for (Iterator i = connectors.iterator(); i.hasNext(); ) {
-      ImportExportConnector connector = (ImportExportConnector) i.next();
+    for (ImportExportConnector connector : connectors) {
       String name = connector.getName();
       String type = connector.getType();
       String scheduleString = connector.getScheduleString();
-      Map config = connector.getConfig();
+      Map<String, String> config = connector.getConfig();
       ServletUtil.writeXMLTag(
           pw, 1, ServletUtil.XMLTAG_CONNECTOR_INSTANCE, false);
       ServletUtil.writeXMLElement(
@@ -232,12 +227,10 @@ public class ImportExport {
           pw, 2, ServletUtil.XMLTAG_CONNECTOR_SCHEDULE, scheduleString);
       ServletUtil.writeXMLTag(
           pw, 2, ServletUtil.XMLTAG_CONNECTOR_CONFIG, false);
-      for (Iterator j = config.entrySet().iterator(); j.hasNext(); ) {
-        Map.Entry me = (Map.Entry) j.next();
-        String attributeString = ServletUtil.ATTRIBUTE_NAME
-            + (String) me.getKey() + ServletUtil.QUOTE
-            + ServletUtil.ATTRIBUTE_VALUE + (String) me.getValue()
-            + ServletUtil.QUOTE;
+      for (Map.Entry<String, String> me : config.entrySet()) {
+        String attributeString = ServletUtil.ATTRIBUTE_NAME + me.getKey()
+            + ServletUtil.QUOTE + ServletUtil.ATTRIBUTE_VALUE
+            + me.getValue() + ServletUtil.QUOTE;
         ServletUtil.writeXMLTagWithAttrs(
             pw, 3, ServletUtil.XMLTAG_PARAMETERS, attributeString, true);
       }
@@ -257,7 +250,7 @@ public class ImportExport {
    * read a list of connectors from an XML file.
    * @return a List of ImportExportConnectors
    */
-  public static List readFromFile(String filename)
+  public static List<ImportExportConnector> readFromFile(String filename)
       throws IOException {
     Reader isr = new InputStreamReader(new FileInputStream(filename), "UTF-8");
     String string = StringUtils.readAllToString(isr);
@@ -268,8 +261,8 @@ public class ImportExport {
    * write a list of connectors to an XML file.
    * @param connectors a List of ImportExportConnectors
    */
-  public static void writeToFile(String filename, List connectors)
-      throws IOException {
+  public static void writeToFile(String filename,
+      List<ImportExportConnector> connectors) throws IOException {
     OutputStreamWriter osw =
         new OutputStreamWriter(new FileOutputStream(filename), "UTF-8");
     osw.write(asXmlString(connectors));
@@ -278,7 +271,8 @@ public class ImportExport {
 
   /**
    * A utility to import/export connectors from/to an XML file.
-   * usage: <code>ImportExport (export|import|import-no-remove) &lt;filename&gt;filename</code>
+   * usage: <code>ImportExport (export|import|import-no-remove)
+   *        &lt;filename&gt;filename</code>
    */
   public static final void main(String[] args) throws Exception {
     Context context = Context.getInstance();

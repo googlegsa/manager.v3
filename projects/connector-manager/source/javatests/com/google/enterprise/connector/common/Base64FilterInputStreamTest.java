@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -84,6 +84,7 @@ public class Base64FilterInputStreamTest extends TestCase {
       super(bytes);
     }
 
+    @Override
     public int read(byte[] b, int off, int len) {
       int byteValue = read();
 

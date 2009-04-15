@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,15 +25,17 @@ public interface Monitor {
   /**
    * Update or add variables.  If a variable is already existing, it is
    * overwritten.
+   *
    * @param vars the variables and values to set.  The keys must be of type
-   * String and the values must provide a toString() method.  If the value is
-   * null, then the variable is removed.
+   *        String and the values must provide a toString() method.  If the
+   *        value is null, then the variable is removed.
    */
-  public void setVariables(Map vars);
+  public void setVariables(Map<String, ?> vars);
 
   /**
    * Retrieve all variables and their values.
+   *
    * @return a Map object with variable names (String) and values (Object).
    */
-  public Map getVariables();
+  public Map<String, ?> getVariables();
 }

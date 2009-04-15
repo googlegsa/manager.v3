@@ -179,14 +179,14 @@ public class TypeInfo {
 
     // If more Connector Types were found, issue a warning.
     if (beanList.length > 1) {
-      StringBuffer buf = new StringBuffer();
+      StringBuilder buf = new StringBuilder();
       for (int i = 1; i < beanList.length; i++) {
         buf.append(" ");
         buf.append(beanList[i]);
       }
       LOGGER.log(Level.WARNING, "Resource " + r.getDescription()
           + "contains multiple Connector Type definitions.  Using the first: "
-          + connectorTypeName + ".  Skipping:" + buf);
+          + connectorTypeName + ".  Skipping:" + buf.toString());
     }
 
     return result;

@@ -20,17 +20,22 @@ import junit.framework.TestCase;
 import java.util.Properties;
 
 /**
- * Class to test ScheduleStore.
+ * Class to test PrefsStore.
+ *
+ * Note that PrefsStore is a deprecated class.
  */
+@SuppressWarnings("deprecation")
 public class PrefsStoreTest extends TestCase {
 
   protected PrefsStore store;
 
+  @Override
   protected void setUp() {
     // Only testing use of userRoot
     store = new PrefsStore(true, "testing");
   }
 
+  @Override
   protected void tearDown() {
     store.clear();
   }
@@ -101,13 +106,12 @@ public class PrefsStoreTest extends TestCase {
 
   // Tests if the exception is thrown correctly when the connector name is null.
   public void testGetConnectorState2() {
-    boolean exceptionCaught = false;
     try {
-      String state = store.getConnectorState(new StoreContext(null));
-    } catch (NullPointerException e) {
-        exceptionCaught = true;
+      store.getConnectorState(new StoreContext(null));
+      fail("Expected exception to be thrown");
+    } catch (NullPointerException expected) {
+      assertEquals("Null key", expected.getMessage());
     }
-    assertTrue(exceptionCaught);
   }
 
   // Tests state cannot be retrieved after removal.
@@ -168,14 +172,13 @@ public class PrefsStoreTest extends TestCase {
 
   // Tests if the exception is thrown correctly when the connector name is null.
   public void testGetConnectorConfiguration2() {
-    boolean exceptionCaught = false;
     StoreContext storeContext = new StoreContext(null);
     try {
-      Properties config = store.getConnectorConfiguration(storeContext);
-    } catch (NullPointerException e) {
-        exceptionCaught = true;
+      store.getConnectorConfiguration(storeContext);
+      fail("Expected exception to be thrown");
+    } catch (NullPointerException expected) {
+      assertEquals("Null key", expected.getMessage());
     }
-    assertTrue(exceptionCaught);
   }
 
   // Tests configuration cannot be retrieved after removal.

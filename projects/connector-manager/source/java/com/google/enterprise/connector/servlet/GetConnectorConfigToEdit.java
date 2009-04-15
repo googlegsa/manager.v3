@@ -33,11 +33,7 @@ public class GetConnectorConfigToEdit extends ConnectorManagerGetServlet {
   private static final Logger LOGGER = Logger.getLogger(
     GetConnectorConfigToEdit.class.getName());
 
-  /* (non-Javadoc)
-   * @see com.google.enterprise.connector.servlet.ConnectorManagerGetServlet#
-   * processDoGet(java.lang.String, java.lang.String,
-   * com.google.enterprise.connector.manager.Manager, java.io.PrintWriter)
-   */
+  @Override
   protected void processDoGet(String connectorName, String lang, Manager manager, PrintWriter out) {
     handleDoGet(connectorName, lang, manager, out);
   }

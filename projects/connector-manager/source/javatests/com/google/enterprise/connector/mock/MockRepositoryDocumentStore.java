@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -72,10 +72,13 @@ import com.google.enterprise.connector.mock.MockRepositoryEvent.EventType;
  * <li>add textual dump/load so bigger test cases can be built easily
  * </ul>
  */
-public class MockRepositoryDocumentStore {
-  private static final Logger logger = Logger
-      .getLogger(MockRepositoryDocumentStore.class.getName());
-  Map store = null;
+public class MockRepositoryDocumentStore
+    implements Iterable <MockRepositoryDocument> {
+
+  private static final Logger logger =
+      Logger.getLogger(MockRepositoryDocumentStore.class.getName());
+
+  Map<String, MockRepositoryDocument> store = null;
 
   /**
    * Makes an empty store
@@ -88,7 +91,7 @@ public class MockRepositoryDocumentStore {
    * Returns a store to the empty state
    */
   public void reinit() {
-    store = new HashMap();
+    store = new HashMap<String, MockRepositoryDocument>();
     if (!checkIntegrity()) {
       throw new RuntimeException("MockRepositoryStore integrity check failed");
     }
@@ -173,7 +176,7 @@ public class MockRepositoryDocumentStore {
    * @return If found, the document; otherwise, null
    */
   public MockRepositoryDocument getDocByID(String docid) {
-    return (MockRepositoryDocument) store.get(docid);
+    return store.get(docid);
   }
 
   /**
@@ -181,8 +184,9 @@ public class MockRepositoryDocumentStore {
    *
    * @return Iterator
    */
-  public Iterator iterator() {
-    List l = new LinkedList(store.values());
+  public Iterator<MockRepositoryDocument> iterator() {
+    List<MockRepositoryDocument> l =
+        new LinkedList<MockRepositoryDocument>(store.values());
     sortDocuments(l);
     return l.listIterator();
   }
@@ -200,11 +204,10 @@ public class MockRepositoryDocumentStore {
    * @param to
    * @return A List of these results
    */
-  public List dateRange(final MockRepositoryDateTime from,
-      final MockRepositoryDateTime to) {
-    List l = new ArrayList();
-    for (Iterator iter = store.values().iterator(); iter.hasNext();) {
-      MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
+  public List<MockRepositoryDocument> dateRange(
+      final MockRepositoryDateTime from, final MockRepositoryDateTime to) {
+    List<MockRepositoryDocument> l = new ArrayList<MockRepositoryDocument>();
+    for (MockRepositoryDocument d : store.values()) {
       int c1 = from.compareTo(d.getTimeStamp());
       int c2 = d.getTimeStamp().compareTo(to);
       if (c1 <= 0 && c2 < 0) {
@@ -221,10 +224,10 @@ public class MockRepositoryDocumentStore {
    * @param from
    * @return A list of these results
    */
-  public List dateRange(final MockRepositoryDateTime from) {
-    List l = new ArrayList();
-    for (Iterator iter = store.values().iterator(); iter.hasNext();) {
-      MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
+  public List<MockRepositoryDocument> dateRange(
+       final MockRepositoryDateTime from) {
+    List<MockRepositoryDocument> l = new ArrayList<MockRepositoryDocument>();
+    for (MockRepositoryDocument d : store.values()) {
       int c1 = from.compareTo(d.getTimeStamp());
       if (c1 <= 0) {
         l.add(d);
@@ -234,11 +237,9 @@ public class MockRepositoryDocumentStore {
     return l;
   }
 
-  private void sortDocuments(List l) {
-    Collections.sort(l, new Comparator() {
-      public int compare(Object o1, Object o2) {
-        MockRepositoryDocument d1 = (MockRepositoryDocument) o1;
-        MockRepositoryDocument d2 = (MockRepositoryDocument) o2;
+  private void sortDocuments(List<MockRepositoryDocument> l) {
+    Collections.sort(l, new Comparator<MockRepositoryDocument>() {
+      public int compare(MockRepositoryDocument d1, MockRepositoryDocument d2) {
         int c = d1.getTimeStamp().compareTo(d2.getTimeStamp());
         if (c != 0) {
           return c;
@@ -257,8 +258,7 @@ public class MockRepositoryDocumentStore {
   private boolean checkDateOrderIntegrity() {
     boolean result = true;
     int lastStamp = -1;
-    for (Iterator iter = this.iterator(); iter.hasNext();) {
-      MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
+    for (MockRepositoryDocument d : this) {
       int thisStamp = d.getTimeStamp().getTicks();
       if (lastStamp > thisStamp) {
         result = false;
@@ -276,12 +276,10 @@ public class MockRepositoryDocumentStore {
    *
    * @return True or false, depending on whether the test passes
    */
-
   private boolean checkDocidUniquenessIntegrity() {
     boolean result = true;
-    Set m = new HashSet();
-    for (Iterator iter = this.iterator(); iter.hasNext();) {
-      MockRepositoryDocument d = (MockRepositoryDocument) iter.next();
+    Set<String> m = new HashSet<String>();
+    for (MockRepositoryDocument d : this) {
       if (!m.add(d.getDocID())) {
         // this docid appears more than once
         result = false;

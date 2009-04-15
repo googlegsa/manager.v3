@@ -101,11 +101,9 @@ public class MockJcrQueryManagerTest extends TestCase {
 
     NodeIterator ni = qr.getNodes();
 
-    Node n;
-
     int count = 0;
     while (ni.hasNext()) {
-      n = ni.nextNode();
+      ni.nextNode();
       count++;
     }
     Assert.assertEquals(2, count);

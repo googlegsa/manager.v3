@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc.
+// Copyright 2007-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.google.enterprise.connector.manager.Manager;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,14 +34,14 @@ public class AuthorizationHandler {
   PrintWriter out;
   int status;
   int numDocs;
-  private Map parseMap;
-  Map results;
+  private Map<String, Map<String, Map<String, ParsedUrl>>> parseMap;
+  Map<String, Boolean> results;
 
   AuthorizationHandler(String xmlBody, Manager manager, PrintWriter out) {
     this.xmlBody = xmlBody;
     this.manager = manager;
     this.out = out;
-    results = new HashMap();
+    results = new HashMap<String, Boolean>();
   }
 
   /**
@@ -53,7 +52,7 @@ public class AuthorizationHandler {
       Manager manager, PrintWriter out) {
     AuthorizationHandler authorizationHandler = new AuthorizationHandler(
         xmlBody, manager, out);
-    authorizationHandler.results = new TreeMap();
+    authorizationHandler.results = new TreeMap<String, Boolean>();
     return authorizationHandler;
   }
 
@@ -75,66 +74,55 @@ public class AuthorizationHandler {
   }
 
   private void generateXml() {
-
     ServletUtil.writeRootTag(out, false);
-
     if (results.size() > 0) {
       ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_AUTHZ_RESPONSE, false);
       generateEachResultXml();
       ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_AUTHZ_RESPONSE, true);
     }
-
     ServletUtil.writeStatusId(out, status);
     ServletUtil.writeRootTag(out, true);
   }
 
   private void generateEachResultXml() {
-    for (Iterator i = results.entrySet().iterator(); i.hasNext(); ) {
-      Entry e = (Entry) i.next();
-      String url = (String) e.getKey();
-      Boolean permit = (Boolean) e.getValue();
-      writeResultElement(url, permit.booleanValue());
+    for (Entry<String, Boolean> e : results.entrySet()) {
+      writeResultElement(e.getKey(), e.getValue());
     }
   }
 
   private void writeResultElement(String url, boolean permit) {
     ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_ANSWER, false);
     ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_RESOURCE, url);
-    if (permit) {
-      ServletUtil
-          .writeXMLElement(out, 3, ServletUtil.XMLTAG_DECISION, "Permit");
-    } else {
-      ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_DECISION, "Deny");
-    }
+    ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_DECISION,
+                                (permit) ? "Permit" : "Deny");
     ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_ANSWER, true);
   }
 
   private void computeResultSet() {
-    for (Iterator i = parseMap.entrySet().iterator(); i.hasNext();) {
-      Entry e = (Entry) i.next();
-      String identity = (String) e.getKey();
-      Map urlsByConnector = (Map) e.getValue();
+    for (Entry<String, Map<String, Map<String, ParsedUrl>>> e : parseMap.entrySet()) {
+      String identity = e.getKey();
+      Map<String, Map<String, ParsedUrl>> urlsByConnector = e.getValue();
       runManagerQueries(identity, urlsByConnector);
     }
   }
 
-  private void runManagerQueries(String identity, Map urlsByConnector) {
-    for (Iterator i = urlsByConnector.entrySet().iterator(); i.hasNext();) {
-      Entry e = (Entry) i.next();
-      String connectorName = (String) e.getKey();
-      Map urlsByDocid = (Map) e.getValue();
-      List docidList = new ArrayList(urlsByDocid.keySet());
-      Set answerSet = manager
-          .authorizeDocids(connectorName, docidList, identity);
+  private void runManagerQueries(String identity,
+      Map<String, Map<String, ParsedUrl>> urlsByConnector) {
+    for (Entry<String, Map<String, ParsedUrl>> e : urlsByConnector.entrySet()) {
+      String connectorName = e.getKey();
+      Map<String, ParsedUrl> urlsByDocid = e.getValue();
+      List<String> docidList = new ArrayList<String>(urlsByDocid.keySet());
+      Set<String> answerSet =
+          manager.authorizeDocids(connectorName, docidList, identity);
       accumulateQueryResults(answerSet, urlsByDocid);
     }
   }
 
-  private void accumulateQueryResults(Set answerSet, Map urlsByDocid) {
-    for (Iterator i = urlsByDocid.entrySet().iterator(); i.hasNext();) {
-      Entry e = (Entry) i.next();
-      String docid = (String) e.getKey();
-      ParsedUrl parsedUrl = (ParsedUrl) e.getValue();
+  private void accumulateQueryResults(Set<String> answerSet,
+      Map<String, ParsedUrl> urlsByDocid) {
+    for (Entry<String, ParsedUrl> e : urlsByDocid.entrySet()) {
+      String docid = e.getKey();
+      ParsedUrl parsedUrl = e.getValue();
       Boolean permit = answerSet.contains(docid) ? Boolean.TRUE : Boolean.FALSE;
       Object isDup = results.put(parsedUrl.getUrl(), permit);
       if (isDup != null) {
@@ -142,8 +130,4 @@ public class AuthorizationHandler {
       }
     }
   }
-
-
-
-
 }

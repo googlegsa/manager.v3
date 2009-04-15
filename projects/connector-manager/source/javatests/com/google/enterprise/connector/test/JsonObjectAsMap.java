@@ -28,7 +28,7 @@ import java.util.Set;
  * things that want maps. This implementation could be enhanced to be
  * modifiable, but we don't need it for our testing.
  */
-public class JsonObjectAsMap extends AbstractMap {
+public class JsonObjectAsMap extends AbstractMap<String, String> {
 
   final JSONObject jobj;
 
@@ -47,7 +47,7 @@ public class JsonObjectAsMap extends AbstractMap {
    *
    * @param m a Map
    */
-  public JsonObjectAsMap(Map m) {
+  public JsonObjectAsMap(Map<?, ?> m) {
     throw new IllegalArgumentException();
   }
 
@@ -60,44 +60,40 @@ public class JsonObjectAsMap extends AbstractMap {
     this.jobj = jobj;
   }
 
-  public Object get(Object key) {
+  public String get(String key) {
     try {
-      return jobj.get((String) key);
+      return jobj.getString(key);
     } catch (JSONException e) {
       // this means the key wasn't found
       return null;
     }
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see java.util.AbstractMap#entrySet()
-   */
-  public Set entrySet() {
-    return new AbstractSet() {
-
-      public Iterator iterator() {
-        final Iterator i = jobj.keys();
-        return new Iterator() {
+  @Override
+  public Set<Map.Entry<String, String>> entrySet() {
+    return new AbstractSet<Map.Entry<String, String>>() {
+      @Override
+      public Iterator<Map.Entry<String, String>> iterator() {
+        final Iterator<?> i = jobj.keys();
+        return new Iterator<Map.Entry<String, String>>() {
           public boolean hasNext() {
             return i.hasNext();
           }
 
-          public Object next() {
+          public Map.Entry<String, String> next() {
             try {
               final String key = (String) i.next();
-              final Object val = jobj.get(key);
-              Entry e = new Entry() {
-                public Object getKey() {
+              final String val = jobj.getString(key);
+              Map.Entry<String, String> e = new Map.Entry<String, String>() {
+                public String getKey() {
                   return key;
                 }
 
-                public Object getValue() {
+                public String getValue() {
                   return val;
                 }
 
-                public Object setValue(Object value) {
+                public String setValue(String value) {
                   throw new UnsupportedOperationException();
                 }
               };
@@ -116,6 +112,7 @@ public class JsonObjectAsMap extends AbstractMap {
         };
       }
 
+      @Override
       public int size() {
         return jobj.length();
       }

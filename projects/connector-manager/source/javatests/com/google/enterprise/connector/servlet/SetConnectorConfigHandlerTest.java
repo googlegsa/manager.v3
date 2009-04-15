@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,9 +20,7 @@ import com.google.enterprise.connector.manager.MockManager;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 
@@ -37,14 +35,14 @@ public class SetConnectorConfigHandlerTest extends TestCase {
   private String language;
   private String connectorName;
   private String connectorType;
-  private Map configData;
+  private Map<String, String> configData;
   private boolean update;
 
   public void testSetConnectorConfigHandler1() {
     language = "en";
     connectorName = "connectorA";
     connectorType = "documentum";
-    configData = new TreeMap();
+    configData = new TreeMap<String, String>();
     configData.put("name1", "valueA1");
     configData.put("name2", "valueA2");
     configData.put("name3", "valueA3");
@@ -55,7 +53,7 @@ public class SetConnectorConfigHandlerTest extends TestCase {
     language = "en";
     connectorName = "";
     connectorType = "documentum";
-    configData = new TreeMap();
+    configData = new TreeMap<String, String>();
     configData.put("name1", "valueB1");
     configData.put("name2", "valueB2");
     configData.put("name3", "valueB3");
@@ -67,7 +65,7 @@ public class SetConnectorConfigHandlerTest extends TestCase {
     connectorName = "connectorC";
     connectorType = "documentum";
     update = true;
-    configData = new TreeMap();
+    configData = new TreeMap<String, String>();
     doTest(setXMLBody());
   }
 
@@ -76,7 +74,7 @@ public class SetConnectorConfigHandlerTest extends TestCase {
     connectorName = "connectorC";
     connectorType = "documentum";
     update = true;
-    configData = new TreeMap();
+    configData = new TreeMap<String, String>();
     configData.put("name1", "valueB1");
     configData.put("name2", "valueB2");
     configData.put("name3", "valueB3");
@@ -88,7 +86,7 @@ public class SetConnectorConfigHandlerTest extends TestCase {
     connectorName = "connectorC";
     connectorType = "documentum";
     update = false;
-    configData = new TreeMap();
+    configData = new TreeMap<String, String>();
     configData.put("name1", "valueB1");
     configData.put("name2", "valueB2");
     configData.put("name3", "valueB3");
@@ -137,10 +135,8 @@ public class SetConnectorConfigHandlerTest extends TestCase {
       "  <" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">" + name + "</" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">\n" +
       "  <" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">" + this.connectorType + "</" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">\n" +
       "  <" + ServletUtil.XMLTAG_UPDATE_CONNECTOR + ">" + this.update + "</" + ServletUtil.XMLTAG_UPDATE_CONNECTOR + ">\n";
-    Set set = configData.entrySet();
-    Iterator iterator = set.iterator();
-    while (iterator.hasNext()) {
-      Map.Entry entry = (Map.Entry)iterator.next();
+
+    for (Map.Entry<String, String> entry : configData.entrySet()) {
       body += "  <" + ServletUtil.XMLTAG_PARAMETERS + " name=\"" + entry.getKey()
            + "\" value=\"" + entry.getValue() + "\"/>\n";
     }

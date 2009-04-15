@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class MockRepositoryPropertyTest extends TestCase {
     } catch (JSONException e) {
       throw new IllegalArgumentException("test input can not be parsed");
     }
-    for (Iterator keys = jo.keys(); keys.hasNext(); ) {
+    for (Iterator<?> keys = jo.keys(); keys.hasNext(); ) {
       String name = (String) keys.next();
       Object value;
       try {

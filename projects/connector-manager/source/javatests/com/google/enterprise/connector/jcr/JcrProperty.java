@@ -1,4 +1,4 @@
-// Copyright 2006-2008 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,8 +28,7 @@ public class JcrProperty implements Property {
   private javax.jcr.Property property;
   private String name;
   private String alias;
-  private Value value = null;
-  private Iterator iterator;
+  private Iterator <javax.jcr.Value> iterator;
 
 
   public JcrProperty(javax.jcr.Property p) {
@@ -106,13 +105,7 @@ public class JcrProperty implements Property {
         throw new RepositoryException(e);
       }
     }
-    boolean hasNext = iterator.hasNext();
-    if (hasNext) {
-      value = toSpiValue((javax.jcr.Value) iterator.next());
-    } else {
-      value = null;
-    }
-    return value;
+    return (iterator.hasNext()) ? toSpiValue(iterator.next()) : null;
   }
 
 }

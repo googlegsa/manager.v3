@@ -47,8 +47,8 @@ import java.util.Set;
  *   doSomethingElseSpecial(prop);
  * }
  * ... so on for other special properties as needed ...
- * for (Iterator i = doc.getPropertyNames().iterator(); i.hasNext(); ) {
- *   prop = doc.findProperty((String) i.next());
+ * for (String propName : doc.getPropertyNames()) {
+ *   prop = doc.findProperty(propName);
  *   // assert(prop != null);
  *   doSomething(prop);
  * }
@@ -71,10 +71,10 @@ public interface Document {
   /**
    * Gets the set of names of all Properties in this Document.
    *
-   * @return The names, as a Set
+   * @return The names, as a Set of Strings
    * @throws RepositoryException if a repository access error occurs
    * @throws RepositoryDocumentException if a document has fatal
    *         processing errors
    */
-  public Set getPropertyNames() throws RepositoryException;
+  public Set<String> getPropertyNames() throws RepositoryException;
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.google.enterprise.connector.spiimpl.BinaryValue;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.util.Iterator;
 
 
 public class MockPusher implements Pusher {
@@ -58,14 +57,13 @@ public class MockPusher implements Pusher {
     }
     processProperty(name, property);
 
-    for (Iterator i = document.getPropertyNames().iterator(); i.hasNext();) {
-      name = (String) i.next();
-      if (name.equals(SpiConstants.PROPNAME_DOCID)) {
+    for (String propName : document.getPropertyNames()) {
+      if (propName.equals(SpiConstants.PROPNAME_DOCID)) {
         // we already dealt with these
         continue;
       }
-      property = document.findProperty(name);
-      processProperty(name, property);
+      property = document.findProperty(propName);
+      processProperty(propName, property);
     }
 
     printStream.println("</document>");

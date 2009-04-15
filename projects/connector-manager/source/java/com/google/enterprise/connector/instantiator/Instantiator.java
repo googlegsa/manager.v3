@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.traversal.Traverser;
 
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Interface for instantiator component.
@@ -102,11 +102,11 @@ public interface Instantiator {
       throws ConnectorTypeNotFoundException;
 
   /**
-   * Gets all the known connector type names
+   * Gets all the known connector type names.
    *
-   * @return an iterator of String names
+   * @return a Set of String names
    */
-  public Iterator getConnectorTypeNames();
+  public Set<String> getConnectorTypeNames();
 
   /**
    * Gets the prototype definition for instances of this type
@@ -123,11 +123,11 @@ public interface Instantiator {
       throws ConnectorNotFoundException, InstantiatorException;
 
   /**
-   * Get the names of all known connectors
+   * Get the names of all known connector instances.
    *
-   * @return an Iterator of String names
+   * @return a Set of String names
    */
-  public Iterator getConnectorNames();
+  public Set<String> getConnectorNames();
 
   /**
    * Get the type for a known connector
@@ -145,7 +145,7 @@ public interface Instantiator {
    *
    * @param connectorName The connector to create
    * @param connectorTypeName The type for this connector
-   * @param configKeys A configuration map for this connector
+   * @param configMap A configuration map for this connector
    * @param locale A Java Locale string
    * @param update A boolean true if updating the existing connector
    * @return null if config is valid and accepted, a ConfigureResponse object
@@ -156,7 +156,7 @@ public interface Instantiator {
    * @throws InstantiatorException
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configKeys, Locale locale,
+      String connectorTypeName, Map<String, String> configMap, Locale locale,
       boolean update)
       throws ConnectorNotFoundException, ConnectorExistsException,
       ConnectorTypeNotFoundException, InstantiatorException;
@@ -169,7 +169,7 @@ public interface Instantiator {
    *         configuration data
    * @throws ConnectorNotFoundException if the named connector is not found
    */
-  public Map getConnectorConfig(String connectorName)
+  public Map<String, String> getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException;
 
   /**

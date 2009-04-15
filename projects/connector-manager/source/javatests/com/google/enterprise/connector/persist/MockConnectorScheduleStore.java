@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import java.util.HashMap;
 /**
  * Mock Schedule Store - doesn't actually persist, just uses memory.
  */
-public class MockConnectorScheduleStore extends HashMap
+public class MockConnectorScheduleStore extends HashMap<String, String>
     implements ConnectorScheduleStore {
 
   /* (non-Javadoc)
@@ -27,7 +27,7 @@ public class MockConnectorScheduleStore extends HashMap
    * #getConnectorSchedule(StoreContext)
    */
   public String getConnectorSchedule(StoreContext context) {
-    return (String) this.get(context.getConnectorName());
+    return this.get(context.getConnectorName());
   }
 
   /* (non-Javadoc)

@@ -61,6 +61,7 @@ public class Base64FilterInputStream extends FilterInputStream {
   private byte[] encodedBuffer = new byte[4];
   private int encodedBufPos = 4;  // Position of next byte to read.
 
+  @Override
   public int read() throws IOException {
     if (encodedBufPos >= 4) {
       int retVal = fillbuff(inputBuffer, 0, 3);
@@ -75,6 +76,7 @@ public class Base64FilterInputStream extends FilterInputStream {
     return encodedBuffer[encodedBufPos++];
   }
 
+  @Override
   public int read(byte b[], int off, int len) throws IOException {
     // If there is some leftover morsel of encoded data, return that.
     if (len > 3 && encodedBufPos < 4) {
@@ -145,6 +147,7 @@ public class Base64FilterInputStream extends FilterInputStream {
   /**
    * We don't support mark() or reset().
    */
+  @Override
   public boolean markSupported() {
     return false;
   }
@@ -152,6 +155,7 @@ public class Base64FilterInputStream extends FilterInputStream {
   /**
    * Return the number of bytes available to read.
    */
+  @Override
   public int available() throws IOException {
     int available = ((in.available() + 2) / 3) * 4;
     if (encodedBufPos < 4) {
@@ -169,6 +173,7 @@ public class Base64FilterInputStream extends FilterInputStream {
    * @param n number of bytes to skip.
    * @return number of bytes skipped.
    */
+  @Override
   public long skip(long n) throws IOException {
     long skipped = 0;
 

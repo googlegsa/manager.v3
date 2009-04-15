@@ -23,11 +23,13 @@ public class GenerationalStateStoreTest extends TestCase {
   protected ConnectorStateStore backingStore;
   protected GenerationalStateStore store;
 
+  @Override
   protected void setUp() {
     backingStore = new MockConnectorStateStore();
     store = new GenerationalStateStore(backingStore);
   }
 
+  @Override
   protected void tearDown() {
   }
 

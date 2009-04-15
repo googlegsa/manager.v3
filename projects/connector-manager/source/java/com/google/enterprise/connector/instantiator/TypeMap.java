@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,9 +22,7 @@ import org.springframework.core.io.Resource;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,11 +30,10 @@ import java.util.logging.Logger;
 /**
  * This class keeps track of the installed connector types and maintains a
  * corresponding directory structure.
- *
  */
-public class TypeMap extends TreeMap {
+public class TypeMap extends TreeMap<String, TypeInfo> {
 
-  private static String CONNECTOR_TYPE_PATTERN =
+  private static final String CONNECTOR_TYPE_PATTERN =
       "classpath*:config/connectorType.xml";
 
   private static final Logger LOGGER =
@@ -84,9 +81,7 @@ public class TypeMap extends TreeMap {
       return;
     }
 
-    List resources = Arrays.asList(resourceArray);
-    for (Iterator i = resources.iterator(); i.hasNext();) {
-      Resource r = (Resource) i.next();
+    for (Resource r : resourceArray) {
       TypeInfo typeInfo = TypeInfo.fromSpringResource(r);
       if (typeInfo == null) {
         LOGGER.log(Level.WARNING, "Skipping " + r.getDescription());
@@ -126,13 +121,12 @@ public class TypeMap extends TreeMap {
   }
 
   public TypeInfo getTypeInfo(String connectorTypeName) {
-    return (TypeInfo) this.get(connectorTypeName);
+    return this.get(connectorTypeName);
   }
 
   private void initializeTypeDirectories() {
-    for (Iterator typeNameIterator = keySet().iterator(); typeNameIterator
-        .hasNext();) {
-      String typeName = (String) typeNameIterator.next();
+    for (Iterator<String> iter = keySet().iterator(); iter.hasNext(); ) {
+      String typeName = iter.next();
       TypeInfo typeInfo = getTypeInfo(typeName);
       File connectorTypeDir = new File(typesDirectory, typeName);
       if (!connectorTypeDir.exists()) {
@@ -141,12 +135,12 @@ public class TypeMap extends TreeMap {
       if (!typesDirectory.exists()) {
         LOGGER.warning("Type " + typeName
             + " has a valid definition but no type directory - skipping it");
-        typeNameIterator.remove();
+        iter.remove();
       } else if (!typesDirectory.isDirectory()) {
         LOGGER.warning("Unexpected file " + connectorTypeDir.getPath()
             + " blocks creation of instances directory for type " + typeName
             + " - skipping it");
-        typeNameIterator.remove();
+        iter.remove();
       } else {
         typeInfo.setConnectorTypeDir(connectorTypeDir);
         LOGGER.info("Connector type: " + typeInfo.getConnectorTypeName()
@@ -154,5 +148,4 @@ public class TypeMap extends TreeMap {
       }
     }
   }
-
 }

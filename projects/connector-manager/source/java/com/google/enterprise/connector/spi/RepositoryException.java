@@ -62,8 +62,10 @@ public class RepositoryException extends Exception {
   /**
    * Returns the detail message, including messages from nested exceptions
    * if any.
+   *
    * @return the message
    */
+  @Override
   public String getMessage() {
     String s = super.getMessage();
     if (rootCause == null) {
@@ -76,8 +78,10 @@ public class RepositoryException extends Exception {
 
   /**
    * Returns the embedded cause (throwable) which may be null.
+   *
    * @return the cause
    */
+  @Override
   public Throwable getCause() {
     return rootCause;
   }

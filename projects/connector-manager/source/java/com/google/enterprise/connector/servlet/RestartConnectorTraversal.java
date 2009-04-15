@@ -37,7 +37,7 @@ public class RestartConnectorTraversal extends ConnectorManagerGetServlet {
   private static final Logger LOGGER =
       Logger.getLogger(RestartConnectorTraversal.class.getName());
 
-
+  @Override
   protected void processDoGet(String connectorName, String lang,
       Manager manager, PrintWriter out) {
     handleDoGet(connectorName, manager, out);

@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc.
+// Copyright 2007-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,14 +20,14 @@ import java.util.Set;
 
 public class SimpleDocument implements Document {
 
-  private Map properties;
+  private Map<String, List<Value>> properties;
 
-  public SimpleDocument(Map properties) {
+  public SimpleDocument(Map<String, List<Value>> properties) {
     this.properties = properties;
   }
 
   public Property findProperty(String name) {
-    List list = (List) properties.get(name);
+    List<Value> list = properties.get(name);
     Property prop = null;
     if (list != null) {
       prop = new SimpleProperty(list);
@@ -35,7 +35,7 @@ public class SimpleDocument implements Document {
     return prop;
   }
 
-  public Set getPropertyNames() {
+  public Set<String> getPropertyNames() {
     return properties.keySet();
   }
 }

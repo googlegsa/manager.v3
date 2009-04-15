@@ -1,4 +1,4 @@
-// Copyright 2006-2008 Google Inc.
+// Copyright 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,8 +29,6 @@ import junit.framework.TestCase;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.Iterator;
 
 import javax.jcr.Node;
 
@@ -87,8 +85,7 @@ public class JcrDocumentTest extends TestCase {
       throws RepositoryException {
     int counter = 0;
     System.out.println();
-    for (Iterator i = document.getPropertyNames().iterator(); i.hasNext();) {
-      String name = (String) i.next();
+    for (String name : document.getPropertyNames()) {
       Property property = document.findProperty(name);
       Assert.assertNotNull(property);
       Value value = property.nextValue();

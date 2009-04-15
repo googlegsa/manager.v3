@@ -22,14 +22,17 @@ public class DoubleValue extends ValueImpl {
     this.doubleValue = doubleValue;
   }
 
+  @Override
   public String toFeedXml() {
     return Double.toString(doubleValue);
   }
 
+  @Override
   public String toString() {
     return Double.toString(doubleValue);
   }
 
+  @Override
   public boolean toBoolean() {
     return (doubleValue == 0.0);
   }

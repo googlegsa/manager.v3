@@ -36,6 +36,7 @@ public class TestConnectivity extends HttpServlet {
    * @param res
    * @throws IOException
    */
+  @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     LOGGER.info("Hello from the TestConnectivity servlet!");
@@ -52,6 +53,7 @@ public class TestConnectivity extends HttpServlet {
    * @param res
    * @throws IOException
    */
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     doGet(req, res);

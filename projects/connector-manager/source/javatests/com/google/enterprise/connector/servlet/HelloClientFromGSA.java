@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.servlet;
 
-
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -24,35 +23,33 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Simple "Hello world" servlet.
- *
  */
 public class HelloClientFromGSA extends HttpServlet
 {
-    /**
-     * Generates a "Hello world" response.
-     * @param req
-     * @param res
-     * @throws IOException
-     *
-     */
-    protected void doGet(HttpServletRequest req,
-                         HttpServletResponse res)
-              throws IOException
-    {
-      res.setContentType("text/html");
-      PrintWriter out = res.getWriter();
-      out.println("<HTML><HEAD><TITLE>Hello Client From GSA</TITLE>"+
-                  "</HEAD><BODY>Hello Client From GSA!</BODY></HTML>");
-      out.close();
-    }
+  /**
+   * Generates a "Hello world" response.
+   *
+   * @param req
+   * @param res
+   * @throws IOException
+   */
+  @Override
+  protected void doGet(HttpServletRequest req, HttpServletResponse res)
+      throws IOException {
+    res.setContentType("text/html");
+    PrintWriter out = res.getWriter();
+    out.println("<HTML><HEAD><TITLE>Hello Client From GSA</TITLE>"
+                + "</HEAD><BODY>Hello Client From GSA!</BODY></HTML>");
+    out.close();
+  }
 
-    /**
-     * Returns servlet info.
-     * @return informational message
-     *
-     */
-    public String getServletInfo()
-    {
-      return "HelloClientServlet 1.0";
-    }
+  /**
+   * Returns servlet info.
+   *
+   * @return informational message
+   */
+  @Override
+  public String getServletInfo() {
+    return "HelloClientServlet 1.0";
+  }
 }

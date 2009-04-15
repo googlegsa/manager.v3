@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,11 +26,12 @@ import java.util.HashMap;
 public class GenerationalStateStore implements ConnectorStateStore {
 
   // Holds the most current generations of connector instances.
-  private static HashMap generations = new HashMap();
+  private static HashMap<String, Long> generations =
+      new HashMap<String, Long>();
 
   // This instance's generations of connector instances.
   // May be older than the most current ones stored above.
-  private HashMap myGenerations;
+  private HashMap<String, Long> myGenerations;
 
   // The underlying ConnectorStateStore
   private ConnectorStateStore baseStore;
@@ -41,7 +42,7 @@ public class GenerationalStateStore implements ConnectorStateStore {
    * @param baseStore The underlying ConnectorStateStore to wrap.
    */
   public GenerationalStateStore(ConnectorStateStore baseStore) {
-    this.myGenerations = new HashMap();
+    this.myGenerations = new HashMap<String, Long>();
     if (baseStore instanceof GenerationalStateStore) {
       this.baseStore = ((GenerationalStateStore)baseStore).baseStore;
     } else {
@@ -81,8 +82,7 @@ public class GenerationalStateStore implements ConnectorStateStore {
    * @param connectorState String to store
    * @throws IllegalStateException if state store is disabled for this generation
    */
-  public void storeConnectorState(StoreContext context,
-      String connectorState) {
+  public void storeConnectorState(StoreContext context, String connectorState) {
     testGeneration(context);
     baseStore.storeConnectorState(context, connectorState);
   }
@@ -107,7 +107,6 @@ public class GenerationalStateStore implements ConnectorStateStore {
    */
   private void testGeneration(StoreContext context) {
     if (myGeneration(context) != currentGeneration(context)) {
-      // Why don't you all just f-f-f-fade away.
       throw new IllegalStateException("Attempt to access disabled Connector "
           + "State Store for connector: " + context.getConnectorName());
     }
@@ -123,13 +122,13 @@ public class GenerationalStateStore implements ConnectorStateStore {
    */
   protected synchronized long myGeneration(StoreContext context) {
     String connectorName = context.getConnectorName();
-    Long generation = (Long)myGenerations.get(connectorName);
+    Long generation = myGenerations.get(connectorName);
     if (generation == null) {
       // If we have no generation yet, get the most current one.
       generation = new Long(currentGeneration(context));
       myGenerations.put(connectorName, generation);
     }
-    return generation.longValue();
+    return generation;
   }
 
   /**
@@ -140,8 +139,8 @@ public class GenerationalStateStore implements ConnectorStateStore {
    */
   protected static long currentGeneration(StoreContext context) {
     synchronized (generations) {
-      Long generation = (Long)generations.get(context.getConnectorName());
-      return (generation == null) ? 0 : generation.longValue();
+      Long generation = generations.get(context.getConnectorName());
+      return (generation == null) ? 0 : generation;
     }
   }
 
@@ -155,9 +154,9 @@ public class GenerationalStateStore implements ConnectorStateStore {
    */
   public static void newGeneration(StoreContext context) {
     synchronized (generations) {
-      Long generation = (Long)generations.get(context.getConnectorName());
+      Long generation = generations.get(context.getConnectorName());
       generations.put(context.getConnectorName(),
-          new Long((generation == null) ? 1 : generation.longValue() + 1));
+          new Long((generation == null) ? 1 : generation + 1));
     }
   }
 }

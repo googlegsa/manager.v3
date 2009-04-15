@@ -155,6 +155,7 @@ public class GetConnectorLogs extends HttpServlet {
    * @param res
    * @throws IOException
    */
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException, FileNotFoundException {
     doGet(req, res);
@@ -167,6 +168,7 @@ public class GetConnectorLogs extends HttpServlet {
    * @param res
    * @throws IOException
    */
+  @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException, FileNotFoundException {
     Context context = Context.getInstance(this.getServletContext());
@@ -276,6 +278,7 @@ public class GetConnectorLogs extends HttpServlet {
    * Specialized {@code doTrace} method that constructs an XML representation
    * of the given request and returns it as the response.
    */
+  @Override
   protected void doTrace(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     ServletUtil.dumpServletRequest(req, res);
@@ -570,7 +573,7 @@ public class GetConnectorLogs extends HttpServlet {
       // Only take the filename part of the path.
       fhPattern = baseName(fhPattern);
       int len = fhPattern.length();
-      StringBuffer buf = new StringBuffer(2 * len);
+      StringBuilder buf = new StringBuilder(2 * len);
       for (int i = 0; i < len; i++) {
         char c = fhPattern.charAt(i);
         // % is the lead-in quote character for FileHandler patterns.
@@ -653,7 +656,7 @@ public class GetConnectorLogs extends HttpServlet {
         dirName = System.getProperty("user.dir");
       } else {
         int len = dirName.length();
-        StringBuffer buf = new StringBuffer(2 * len);
+        StringBuilder buf = new StringBuilder(2 * len);
         for (int i = 0; i < len; i++) {
           char c = dirName.charAt(i);
           // % is the lead-in quote character for FileHandler patterns.
@@ -728,7 +731,7 @@ public class GetConnectorLogs extends HttpServlet {
       // Only take the filename part of the path.
       String fhPattern = baseName(pattern);
       int len = fhPattern.length();
-      StringBuffer buf = new StringBuffer(2 * len);
+      StringBuilder buf = new StringBuilder(2 * len);
       int i;
       for (i = 0; i < len; i++) {
         char c = fhPattern.charAt(i);
@@ -815,10 +818,12 @@ public class GetConnectorLogs extends HttpServlet {
       }
     }
 
+    @Override
     public File getLogFile(String logName) {
       return new File(pattern);
     }
 
+    @Override
     public File getLogDirectory() {
       File parent = (new File(pattern)).getParentFile();
       if (parent != null) {
@@ -829,10 +834,12 @@ public class GetConnectorLogs extends HttpServlet {
       }
     }
 
+    @Override
     public String getArchiveName() {
       return new File(pattern).getName() + ".zip";
     }
 
+    @Override
     public File[] listLogs() {
       return new File[] { new File(pattern) };
     }

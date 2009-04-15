@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.google.enterprise.connector.spi.ConnectorType;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -49,6 +48,7 @@ public class GetConnectorInstanceList extends HttpServlet {
    * @param res
    * @throws IOException
    */
+  @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     doPost(req, res);
@@ -61,6 +61,7 @@ public class GetConnectorInstanceList extends HttpServlet {
    * @param res
    * @throws IOException
    */
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     res.setContentType(ServletUtil.MIMETYPE_XML);
@@ -81,7 +82,7 @@ public class GetConnectorInstanceList extends HttpServlet {
     ServletUtil.writeRootTag(out, false);
     ServletUtil.writeManagerSplash(out);
 
-    List connectorInstances = manager.getConnectorStatuses();
+    List<ConnectorStatus> connectorInstances = manager.getConnectorStatuses();
     if (connectorInstances == null || connectorInstances.size() == 0) {
       ServletUtil.writeStatusId(out,
           ConnectorMessageCode.RESPONSE_NULL_CONNECTOR);
@@ -93,8 +94,7 @@ public class GetConnectorInstanceList extends HttpServlet {
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_INSTANCES,
         false);
 
-    for (Iterator iter = connectorInstances.iterator(); iter.hasNext();) {
-      ConnectorStatus connectorStatus = (ConnectorStatus) iter.next();
+    for (ConnectorStatus connectorStatus : connectorInstances) {
       ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_CONNECTOR_INSTANCE,
           false);
       ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_CONNECTOR_NAME,
@@ -125,7 +125,7 @@ public class GetConnectorInstanceList extends HttpServlet {
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
       } else {
         // Put out new style Schedules element.
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         ServletUtil.writeXMLTagWithAttrs(buffer, 3,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
             ServletUtil.ATTRIBUTE_VERSION + "3" + ServletUtil.QUOTE,
@@ -153,5 +153,4 @@ public class GetConnectorInstanceList extends HttpServlet {
         true);
     ServletUtil.writeRootTag(out, true);
   }
-
 }

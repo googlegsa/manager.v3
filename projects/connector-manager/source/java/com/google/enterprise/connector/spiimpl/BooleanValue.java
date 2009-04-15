@@ -29,10 +29,12 @@ public class BooleanValue extends ValueImpl {
     return bool ? TRUE_INSTANCE : FALSE_INSTANCE;
   }
 
+  @Override
   public String toFeedXml() {
     return Boolean.toString(booleanValue);
   }
 
+  @Override
   public String toString() {
     return Boolean.toString(booleanValue);
   }
@@ -42,6 +44,7 @@ public class BooleanValue extends ValueImpl {
     return makeBooleanValue(b);
   }
 
+  @Override
   public boolean toBoolean() {
     return booleanValue;
   }

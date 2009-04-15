@@ -24,7 +24,7 @@ public class ImportExportConnector {
   private String name;
   private String type;
   private String scheduleString;
-  private Map config;
+  private Map<String, String> config;
 
   /**
    * @param name the connector's name
@@ -32,8 +32,8 @@ public class ImportExportConnector {
    * @param scheduleString the connector's schedule as a String
    * @param config the connector's ConnectorType-specific configuration data
    */
-  public ImportExportConnector(
-      String name, String type, String scheduleString, Map config) {
+  public ImportExportConnector(String name, String type, String scheduleString,
+      Map<String, String> config) {
     this.name = name;
     this.type = type;
     this.scheduleString = scheduleString;
@@ -65,7 +65,7 @@ public class ImportExportConnector {
   /**
    * @return the connector's ConnectorType-specific configuration data
    */
-  public Map getConfig() {
+  public Map<String, String> getConfig() {
     return config;
   }
 }

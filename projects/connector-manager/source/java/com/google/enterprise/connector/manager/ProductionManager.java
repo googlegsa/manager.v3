@@ -34,13 +34,11 @@ import com.google.enterprise.connector.spi.SimpleAuthenticationIdentity;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,7 +62,7 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public boolean authenticate(String connectorName, 
+  public boolean authenticate(String connectorName,
       AuthenticationIdentity identity) {
     boolean result = false;
 
@@ -97,18 +95,17 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public Set authorizeDocids(String connectorName, List docidList,
-      String username) {
-    Set result = new HashSet();
+  public Set<String> authorizeDocids(String connectorName,
+      List<String> docidList, String username) {
+    Set<String> result = new HashSet<String>();
     try {
       AuthorizationManager authzManager =
           instantiator.getAuthorizationManager(connectorName);
-      AuthenticationIdentity identity = 
-        new SimpleAuthenticationIdentity(username);
-      Collection results = authzManager.authorizeDocids(docidList, identity);
-      Iterator iter = results.iterator();
-      while (iter.hasNext()) {
-        AuthorizationResponse response = (AuthorizationResponse) iter.next();
+      AuthenticationIdentity identity =
+          new SimpleAuthenticationIdentity(username);
+      Collection<AuthorizationResponse> results =
+          authzManager.authorizeDocids(docidList, identity);
+      for (AuthorizationResponse response : results) {
         if (response.isValid()) {
           result.add(response.getDocid());
         }
@@ -128,8 +125,9 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public ConfigureResponse getConfigForm(String connectorTypeName, String
-      language) throws ConnectorTypeNotFoundException, InstantiatorException {
+  public ConfigureResponse getConfigForm(String connectorTypeName,
+      String language)
+      throws ConnectorTypeNotFoundException, InstantiatorException {
     ConnectorType connectorType =
         instantiator.getConnectorType(connectorTypeName);
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
@@ -142,7 +140,8 @@ public class ProductionManager implements Manager {
 
   /* @Override */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
-      String language) throws ConnectorNotFoundException, InstantiatorException {
+      String language)
+      throws ConnectorNotFoundException, InstantiatorException {
     String connectorTypeName = instantiator.getConnectorTypeName(connectorName);
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
     ConfigureResponse response =
@@ -169,24 +168,17 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public List getConnectorStatuses() {
-    List result = new ArrayList();
-    String connectorName;
-    Iterator iter = instantiator.getConnectorNames();
-    while (iter.hasNext()) {
-      connectorName = (String) iter.next();
+  public List<ConnectorStatus> getConnectorStatuses() {
+    List<ConnectorStatus> result = new ArrayList<ConnectorStatus>();
+    for (String connectorName : instantiator.getConnectorNames()) {
       result.add(getConnectorStatus(connectorName));
     }
     return result;
   }
 
   /* @Override */
-  public Set getConnectorTypeNames() {
-    Set result = new TreeSet();
-    for (Iterator i = instantiator.getConnectorTypeNames(); i.hasNext();) {
-      result.add(i.next());
-    }
-    return result;
+  public Set<String> getConnectorTypeNames() {
+    return instantiator.getConnectorTypeNames();
   }
 
   /* @Override */
@@ -197,14 +189,12 @@ public class ProductionManager implements Manager {
 
   /* @Override */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configData, String language, boolean update)
-      throws ConnectorNotFoundException, PersistentStoreException,
-      InstantiatorException {
+      String connectorTypeName, Map<String, String> configData,
+      String language, boolean update) throws ConnectorNotFoundException,
+      PersistentStoreException, InstantiatorException {
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
-    ConfigureResponse resp =
-        instantiator.setConnectorConfig(connectorName, connectorTypeName,
-            configData, locale, update);
-    return resp;
+    return instantiator.setConnectorConfig(connectorName, connectorTypeName,
+        configData, locale, update);
   }
 
   /* @Override */
@@ -247,11 +237,12 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public Map getConnectorConfig(String connectorName)
+  public Map<String, String> getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException {
     return instantiator.getConnectorConfig(connectorName);
   }
 
+  /* @Override */
   public boolean isLocked() {
     return Context.getInstance().getIsManagerLocked();
   }

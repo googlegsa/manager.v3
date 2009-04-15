@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public class MockRepository {
   MockRepositoryDocumentStore store;
   MockRepositoryDateTime currentTime;
   MockRepositoryEventList eventList;
-  ListIterator internalIterator;
+  ListIterator<MockRepositoryEvent> internalIterator;
 
   private void init() {
     store = new MockRepositoryDocumentStore();
@@ -60,8 +60,8 @@ public class MockRepository {
     this.eventList = eventList;
     init();
     // set the time to be the time of the last event supplied
-    List l = eventList.getEventList();
-    MockRepositoryEvent lastEvent = (MockRepositoryEvent) l.get(l.size() - 1);
+    List<MockRepositoryEvent> l = eventList.getEventList();
+    MockRepositoryEvent lastEvent = l.get(l.size() - 1);
     setTime(lastEvent.getTimeStamp());
   }
 
@@ -80,7 +80,7 @@ public class MockRepository {
   public void setTime(MockRepositoryDateTime newTime) {
     if (newTime.compareTo(currentTime) > 0) {
       while (internalIterator.hasNext()) {
-        MockRepositoryEvent e = (MockRepositoryEvent) internalIterator.next();
+        MockRepositoryEvent e = internalIterator.next();
         if (e.getTimeStamp().compareTo(newTime) > 0) {
           internalIterator.previous();
           break;

@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  * which knows how to create events from a file, using json
  */
 public class MockRepositoryEventList {
-  private List eventList = null;
+  private List<MockRepositoryEvent> eventList = null;
   private String workDirName = null;
   private String repositoryFileName = null;
 
@@ -72,7 +72,7 @@ public class MockRepositoryEventList {
    * @param filename
    */
   public MockRepositoryEventList(String filename) {
-    eventList = new LinkedList();
+    eventList = new LinkedList<MockRepositoryEvent>();
     String filePrefix = Context.getInstance().getCommonDirPath();
     File inputFile = new File(filePrefix + filename);
     try {
@@ -110,8 +110,8 @@ public class MockRepositoryEventList {
         } catch (JSONException e) {
           throw new RuntimeException(e);
         }
-        Iterator keys = jo.keys();
-        Map properties = new HashMap();
+        Map<String, String> properties = new HashMap<String, String>();
+        Iterator<?> keys = jo.keys();
         while (keys.hasNext()) {
           String k = (String) keys.next();
           try {
@@ -134,11 +134,11 @@ public class MockRepositoryEventList {
     }
   }
 
-  public List getEventList() {
+  public List<MockRepositoryEvent> getEventList() {
     if (eventList != null) {
       return eventList;
     }
-    eventList = new LinkedList();
+    eventList = new LinkedList<MockRepositoryEvent>();
     if (repositoryFileName != null) {
       if (workDirName != null) {
         File workDir = new File(workDirName);
@@ -155,5 +155,4 @@ public class MockRepositoryEventList {
     }
     return eventList;
   }
-
 }

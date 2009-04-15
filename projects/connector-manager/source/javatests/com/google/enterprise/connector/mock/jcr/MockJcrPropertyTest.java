@@ -66,7 +66,7 @@ public class MockJcrPropertyTest extends TestCase {
       MockRepositoryProperty testProp = pl.getProperty("abc");
       Property testJCRProp = new MockJcrProperty(testProp);
       try {
-        long l = testJCRProp.getLong();
+        testJCRProp.getLong();
         // shouldn't get here - previous line should throw exception
         Assert.assertFalse(true);
       } catch (Exception e) {

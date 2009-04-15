@@ -47,7 +47,8 @@ public interface ConnectorType {
    * @return a ConfigureResponse object. The form must be prepopulated with the
    *         supplied data in the map.
    */
-  public ConfigureResponse getPopulatedConfigForm(Map configMap, Locale locale);
+  public ConfigureResponse getPopulatedConfigForm(Map<String, String> configMap,
+                                                  Locale locale);
 
   /**
    * Validates config data and returns a new form snippet and error message if
@@ -74,7 +75,6 @@ public interface ConnectorType {
    *         configuration map is returned, it must preserve configuration
    *         items with names beginning with "google".
    */
-  public ConfigureResponse validateConfig(Map configData, Locale locale,
-      ConnectorFactory connectorFactory);
-
+  public ConfigureResponse validateConfig(Map<String, String> configData,
+      Locale locale, ConnectorFactory connectorFactory);
 }

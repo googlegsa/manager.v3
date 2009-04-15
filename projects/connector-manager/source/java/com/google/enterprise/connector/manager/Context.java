@@ -311,9 +311,7 @@ public class Context {
    */
   private void startServices() {
     initApplicationContext();
-    List services = getServices();
-    for (Iterator iter = services.iterator(); iter.hasNext(); ) {
-      ContextService service = (ContextService) iter.next();
+    for (ContextService service : getServices()) {
       service.start();
     }
   }
@@ -341,20 +339,22 @@ public class Context {
    * @return an ordered list of ContextService objects.  If no services are
    *         registered an empty list will be returned.
    */
-  public List getServices() {
-    Map orderedServices = (Map) getBean(ORDERED_SERVICES_BEAN_NAME, null);
-    Map services = applicationContext.getBeansOfType(ContextService.class);
-    List result = new ArrayList();
+  public List<ContextService> getServices() {
+    // TODO: Investigate the use of the GenericBeanFactoryAccessor here.
+    Map<?, ?> orderedServices = (Map<?, ?>)
+        getBean(ORDERED_SERVICES_BEAN_NAME, null);
+    Map<?, ?> services = applicationContext.getBeansOfType(ContextService.class);
+    List<ContextService> result = new ArrayList<ContextService>();
 
     if (orderedServices != null) {
-      for (Iterator iter = orderedServices.keySet().iterator();
+      for (Iterator<?> iter = orderedServices.keySet().iterator();
           iter.hasNext(); ) {
         ContextService service =
             (ContextService) orderedServices.get(iter.next());
         result.add(service);
       }
     }
-    for (Iterator iter = services.values().iterator(); iter.hasNext(); ) {
+    for (Iterator<?> iter = services.values().iterator(); iter.hasNext(); ) {
         ContextService service = (ContextService) iter.next();
       if (!result.contains(service)) {
         result.add(service);
@@ -377,7 +377,7 @@ public class Context {
    * @throws IllegalStateException if there are no beans of the right type, or
    *         if there is an instantiation problem.
    */
-  public Object getRequiredBean(String beanName, Class clazz) {
+  public Object getRequiredBean(String beanName, Class<?> clazz) {
     try {
       Object object = getBean(beanName, clazz);
       if (object != null) {
@@ -393,8 +393,8 @@ public class Context {
   /**
    * Get an optional bean from the application context.
    *
-   * @param beanName the name of the bean we're looking for. Typically, the same
-   *        as its most general interface.
+   * @param beanName the name of the bean we're looking for. Typically,
+   *        the same as its most general interface.
    * @param clazz the class of the bean we're looking for.
    * @return if there is a single bean of the required type, we return it,
    *         regardless of name. If there are multiple beans of the required
@@ -403,7 +403,8 @@ public class Context {
    *         null if no bean of the appropriate name or type is found.
    * @throws BeansException if there is an instantiation problem.
    */
-  public Object getBean(String beanName, Class clazz) throws BeansException {
+  public Object getBean(String beanName, Class<?> clazz)
+      throws BeansException {
     initApplicationContext();
     return getBean(applicationContext, beanName, clazz);
   }
@@ -427,7 +428,7 @@ public class Context {
    * @throws BeansException if there is an instantiation problem.
    */
   public Object getBean(ListableBeanFactory factory, String beanName,
-      Class clazz) throws BeansException {
+      Class<?> clazz) throws BeansException {
     Object result = null;
 
     // First, look for a bean with the specified name and type.
@@ -457,7 +458,7 @@ public class Context {
 
     // If more beans were found issue a warning.
     if (beanList.length > 1) {
-      StringBuffer buf = new StringBuffer();
+      StringBuilder buf = new StringBuilder();
       for (int i = 1; i < beanList.length; i++) {
         buf.append(" ");
         buf.append(beanList[i]);
@@ -540,17 +541,16 @@ public class Context {
    */
   private void stopServices(boolean force) {
     initApplicationContext();
-    List services = getServices();
+    List<ContextService> services = getServices();
     Collections.reverse(services);
-    for (Iterator iter = services.iterator(); iter.hasNext(); ) {
-      ContextService service = (ContextService) iter.next();
+    for (ContextService service : services) {
       service.stop(force);
     }
   }
 
   /**
-   * Retrieves the prefix for the Common directory file depending on whether its
-   * standalone context or servlet context.
+   * Retrieves the prefix for the Common directory file depending on whether
+   * it is a standalone context or servlet context.
    *
    * @return prefix for the Repository file.
    */
@@ -680,7 +680,7 @@ public class Context {
             GSA_ADMIN_REQUIRES_PREFIX_DEFAULT.toString());
         gsaAdminRequiresPrefix = Boolean.valueOf(prop);
     }
-    return gsaAdminRequiresPrefix.booleanValue();
+    return gsaAdminRequiresPrefix;
   }
 
   /**

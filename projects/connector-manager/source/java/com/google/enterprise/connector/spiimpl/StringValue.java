@@ -23,14 +23,17 @@ public class StringValue extends ValueImpl {
     this.stringValue = string;
   }
 
+  @Override
   public String toFeedXml() {
     return stringValue;
   }
 
+  @Override
   public String toString() {
     return stringValue;
   }
 
+  @Override
   public boolean toBoolean() {
     return BooleanValue.makeBooleanValue(stringValue).toBoolean();
   }

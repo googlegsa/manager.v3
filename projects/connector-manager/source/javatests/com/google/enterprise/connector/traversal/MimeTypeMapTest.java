@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc.
+// Copyright 2007-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import junit.framework.TestCase;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -71,11 +70,7 @@ public class MimeTypeMapTest extends TestCase {
     Assert.assertTrue(testMap.mimeTypeSupportLevel("bar/cat") <= 0);
   }
 
-  private static Set ArrayAsSet(String[] a) {
-    List l = Arrays.asList(a);
-    Set result = new HashSet();
-    result.addAll(l);
-    return result;
+  private static Set<String> ArrayAsSet(String[] a) {
+    return new HashSet<String>(Arrays.asList(a));
   }
-
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class JarUtils {
    * @return the version string from the Jar file or the empty string
    * ("") if none found.
    */
-  public static String getJarVersion(Class clazz) {
+  public static String getJarVersion(Class<?> clazz) {
     URL url = null;
     try {
       String resName = "/" + clazz.getName().replace('.', '/') + ".class";

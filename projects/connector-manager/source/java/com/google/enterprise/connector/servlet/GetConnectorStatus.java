@@ -38,6 +38,7 @@ public class GetConnectorStatus extends ConnectorManagerGetServlet {
    *      com.google.enterprise.connector.manager.Manager,
    *      java.io.PrintWriter)
    */
+  @Override
   protected void processDoGet(String connectorName, String lang,
       Manager manager, PrintWriter out) {
     handleDoGet(connectorName, manager, out);
@@ -81,7 +82,7 @@ public class GetConnectorStatus extends ConnectorManagerGetServlet {
         ServletUtil.writeEmptyXMLElement(out, 2,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES);
       } else {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         ServletUtil.writeXMLTagWithAttrs(buffer, 2,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
             ServletUtil.ATTRIBUTE_VERSION + "3" + ServletUtil.QUOTE,
@@ -96,5 +97,4 @@ public class GetConnectorStatus extends ConnectorManagerGetServlet {
     }
     ServletUtil.writeRootTag(out, true);
   }
-
 }

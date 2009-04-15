@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc.
+// Copyright 2007-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,12 +18,11 @@ import java.util.Iterator;
 import java.util.List;
 
 public class SimpleDocumentList implements DocumentList {
-
-  private List documents;
-  private Iterator iterator;
+  private List<? extends Document> documents;
+  private Iterator<? extends Document> iterator;
   private Document document;
 
-  public SimpleDocumentList(List documents) {
+  public SimpleDocumentList(List<? extends Document> documents) {
     this.documents = documents;
     this.iterator = null;
     this.document = null;
@@ -34,7 +33,7 @@ public class SimpleDocumentList implements DocumentList {
       iterator = documents.iterator();
     }
     if (iterator.hasNext()) {
-      document = (Document) iterator.next();
+      document = iterator.next();
       return document;
     }
     return null;
@@ -47,5 +46,4 @@ public class SimpleDocumentList implements DocumentList {
     return Value.getSingleValueString(document,
         SpiConstants.PROPNAME_LASTMODIFIED);
   }
-
 }
