@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,121 +17,175 @@ package com.google.enterprise.connector.common;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 
 /**
  * Base64 encodes an input stream.
  */
 public class Base64FilterInputStream extends FilterInputStream {
 
+  // NOTE: Since output line position is not maintained across calls
+  // to read(...), the actual length of output lines might exceed this.
+  // For our purposes, strict adherence to RFC 2045 is not necessary.
+  // In practice, however, our sole use of read(byte[], int, int) with
+  // large buffer sizes will produce consistent results.  We produce 76
+  // character lines for the benefit of third-party decoders that might
+  // be used when debugging.
+  static final int BASE64_LINE_LENGTH = 76;
+  private boolean breakLines = false;
+
+
+  /**
+   * Given some InputStream, create an InputStream that base64 encodes the
+   * input stream.  No line breaks are included in the output stream.
+   *
+   * @param in an InputStream providing source data for encoding
+   */
+  public Base64FilterInputStream(InputStream in) {
+    this (in, false);
+  }
+
   /**
    * Given some InputStream, create an InputStream that base64 encodes the
    * input stream.
-   * @param in
+   *
+   * @param in an InputStream providing source data for encoding
+   * @param breakLines if true, add line breaks
    */
-  public Base64FilterInputStream(InputStream in) {
+  public Base64FilterInputStream(InputStream in, boolean breakLines) {
     super(in);
+    this.breakLines = breakLines;
   }
 
-  /*
-   * Choose a raw buffer size that is divisible by three so we don't have any
-   * leftover bytes.
-   */
-  private int rawBufSize = 3 * 1024;
-  private byte rawBuf[] = new byte[rawBufSize];
-  private byte encodedBuf[];
-
-  private int rawBufEndPos = 0;  // position starting with no valid data
-
-  /*
-   * Position of next int to read.
-   */
-  private int encodedBufPos = 0;
-  private int encodedBufEndPos = 0;  // position starting with no valid data
-
-  private byte[] readBuffer = new byte[1];
+  /* This is used when reading small amounts of data. */
+  private byte[] inputBuffer = new byte[3];
+  private byte[] encodedBuffer = new byte[4];
+  private int encodedBufPos = 4;  // Position of next byte to read.
 
   public int read() throws IOException {
-    int retVal = read(readBuffer, 0, 1);
-    if (-1 == retVal) {
-      return -1;
-    } else {
-      return readBuffer[0];
+    if (encodedBufPos >= 4) {
+      int retVal = fillbuff(inputBuffer, 0, 3);
+      if (-1 == retVal) {
+        return -1;
+      } else {
+        Base64.encode3to4(inputBuffer, 0, retVal, encodedBuffer, 0,
+                          Base64.ALPHABET);
+        encodedBufPos = 0;
+      }
     }
+    return encodedBuffer[encodedBufPos++];
   }
 
   public int read(byte b[], int off, int len) throws IOException {
-    if (len < 0) {
-      return 0;
+    // If there is some leftover morsel of encoded data, return that.
+    if (len > 3 && encodedBufPos < 4) {
+      len = 4 - encodedBufPos;
     }
 
-    int currOff = off;  // current position to write into b
-    int currLen = len;  // num bytes to write into b
-    while (true) {
-      int numLeftoverBytes = rawBufEndPos;
-      int numEncodableBytes = 0;
-
-      // fulfill read based on already encoded bytes
-      if (encodedBufEndPos - encodedBufPos > 0) {
-        int numBytesToCopy =
-          Math.min(currLen, encodedBufEndPos - encodedBufPos);
-        System.arraycopy(encodedBuf, encodedBufPos, b, currOff, numBytesToCopy);
-        encodedBufPos += numBytesToCopy;
-        currLen -= numBytesToCopy;
-        currOff += numBytesToCopy;
-      }
-
-      // if already done fulfilling entire read request, return
-      if (currLen <= 0) {
-        return len;
-      }
-
-      // if we reach here, it means we need more encoded bytes
-      while (0 == numEncodableBytes) {
-        int bytesRead = -1;
-        try {
-          bytesRead =
-            in.read(rawBuf, rawBufEndPos, rawBuf.length - rawBufEndPos);
-        } catch (IOException e) {
-          // if we've read any bytes, we return that number
-          if (currLen < len) {
-            return len - currLen;
-          } else {
-            throw e;
-          }
-        }
-        if (-1 == bytesRead) {
-          if (0 == numLeftoverBytes) {
-            if (currLen < len) {
-              return len - currLen;
-            } else {
-              return -1;
-            }
-          } else {
-            // if we can't read new bytes, but we had some from before, then
-            // it is okay to encode those.
-            numEncodableBytes += numLeftoverBytes;
-            numLeftoverBytes = 0;
-            break;
-          }
+    // Special case reads of less than one encoded quadbyte.
+    int bytesWritten = 0;
+    if (len < 4) {
+      for (; bytesWritten < len; bytesWritten++) {
+        int aByte = read();
+        if (aByte == -1) {
+          return (bytesWritten > 0) ? bytesWritten : -1;
         } else {
-          rawBufEndPos += bytesRead;
+          b[off + bytesWritten] = (byte)aByte;
         }
-
-        // encode bytes in groups of three bytes
-        numLeftoverBytes = rawBufEndPos % 3;
-        numEncodableBytes = rawBufEndPos - numLeftoverBytes;
       }
-
-      // encode the encodable bytes (i.e. all bytes except possibly one or two
-      // extra bytes if it isn't a multiple of three)
-      StringWriter writer = new StringWriter();
-      Base64Encoder.encode(rawBuf, 0, numEncodableBytes, writer);
-      encodedBuf = writer.toString().getBytes();
-      encodedBufPos = 0;
-      encodedBufEndPos = encodedBuf.length;
-      System.arraycopy(rawBuf, numEncodableBytes, rawBuf, 0, numLeftoverBytes);
-      rawBufEndPos = numLeftoverBytes;
+      return bytesWritten;
     }
+
+    // Determine the number of threebyte datum we need to read to
+    // fill the destination buffer with quadbyte encoded data.
+    // If we are breaking lines, try to constrain the read size
+    // so that it generates whole lines.
+    int readLen;
+    int lineLen;
+    if (breakLines && len > BASE64_LINE_LENGTH) {
+      readLen = (((len / (BASE64_LINE_LENGTH+1)) * BASE64_LINE_LENGTH) / 4) * 3;
+      lineLen = BASE64_LINE_LENGTH;
+    } else {
+      readLen = (len / 4) * 3;
+      lineLen = Integer.MAX_VALUE;
+    }
+
+    // Read the input data into the tail end of the target buffer.
+    int readBytes = fillbuff(b, off + (len - readLen), readLen);
+    if (readBytes == -1) {
+      return -1;
+    }
+
+    // Convert the buffer in-place.
+    bytesWritten = Base64.encode(b, off + (len - readLen), readBytes, b, off,
+                                 Base64.ALPHABET, lineLen);
+    return bytesWritten;
+  }
+
+  /**
+   * Try to fill up the buffer with data read from the input stream.
+   * This is tolerant of short reads - returning less than the requested
+   * amount of data, even if there is more available.
+   *
+   * @param b buffer to fill
+   * @param off offset into b to start filling
+   * @param len number of bytes to read
+   */
+  private int fillbuff(byte b[], int off, int len) throws IOException {
+    int bytesRead = 0;
+    while (bytesRead < len) {
+      int val = in.read(b, off + bytesRead, len - bytesRead);
+      if (val == -1) {
+        return (bytesRead > 0) ? bytesRead : -1;
+      }
+      bytesRead += val;
+    }
+    return bytesRead;
+  }
+
+  /**
+   * We don't support mark() or reset().
+   */
+  public boolean markSupported() {
+    return false;
+  }
+
+  /**
+   * Return the number of bytes available to read.
+   */
+  public int available() throws IOException {
+    int available = ((in.available() + 2) / 3) * 4;
+    if (encodedBufPos < 4) {
+      available += (4 - encodedBufPos);
+    }
+    if (breakLines) {
+      available += available/BASE64_LINE_LENGTH;
+    }
+    return available;
+  }
+
+  /**
+   * Skip over bytes in the input stream.
+   *
+   * @param n number of bytes to skip.
+   * @return number of bytes skipped.
+   */
+  public long skip(long n) throws IOException {
+    long skipped = 0;
+
+    if (breakLines) {
+      n -= n/BASE64_LINE_LENGTH;
+    }
+
+    // Skip over encoded morsel.
+    while (encodedBufPos < 4 && n > 0) {
+      encodedBufPos++;
+      skipped++;
+      n--;
+    }
+    // Skip over enough threebytes to cover the resulting encoded quadbytes.
+    if (n > 0) {
+      skipped += in.skip((n / 4) * 3);
+    }
+    return skipped;
   }
 }

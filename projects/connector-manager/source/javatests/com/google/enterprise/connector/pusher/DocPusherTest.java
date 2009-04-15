@@ -142,8 +142,8 @@ public class DocPusherTest extends TestCase {
         + "<metadata>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
-        + "</metadata>\n" + "<content encoding=\"base64binary\">"
-        + "bm93IGlzIHRoZSB0aW1l" + "</content>\n" + "</record>\n";
+        + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
+        + "bm93IGlzIHRoZSB0aW1l" + "\n</content>\n" + "</record>\n";
 
     expectedXml[0] = buildExpectedXML(feedType, record);
     takeFeed(expectedXml, "MockRepositoryEventLog6.txt");
@@ -170,8 +170,8 @@ public class DocPusherTest extends TestCase {
         + "<meta name=\"google:aclusers\" content=\"joe, mary, fred, mark, bill, admin\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"false\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
-        + "</metadata>\n" + "<content encoding=\"base64binary\">"
-        + "VGhpcyBpcyBhIHNlY3VyZSBkb2N1bWVudA==" + "</content>\n"
+        + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
+        + "VGhpcyBpcyBhIHNlY3VyZSBkb2N1bWVudA==" + "\n</content>\n"
         + "</record>\n";
     expectedXml[0] = buildExpectedXML(feedType, record);
 
@@ -188,8 +188,8 @@ public class DocPusherTest extends TestCase {
         + "<meta name=\"google:aclusers\" content=\"joe, mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
-        + "</metadata>\n" + "<content encoding=\"base64binary\">"
-        + "VGhpcyBpcyB0aGUgcHVibGljIGRvY3VtZW50Lg==" + "</content>\n"
+        + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
+        + "VGhpcyBpcyB0aGUgcHVibGljIGRvY3VtZW50Lg==" + "\n</content>\n"
         + "</record>\n";
     expectedXml[1] = buildExpectedXML(feedType, record);
 
@@ -208,8 +208,8 @@ public class DocPusherTest extends TestCase {
         + "<meta name=\"google:aclusers\" content=\"joe, mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"public\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
-        + "</metadata>\n" + "<content encoding=\"base64binary\">"
-        + "VGhpcyBpcyBhIGRvY3VtZW50Lg==" + "</content>\n" + "</record>\n";
+        + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
+        + "VGhpcyBpcyBhIGRvY3VtZW50Lg==" + "\n</content>\n" + "</record>\n";
     expectedXml[2] = buildExpectedXML(feedType, record);
 
     takeFeed(expectedXml, "MockRepositoryEventLog7.txt");
@@ -237,8 +237,8 @@ public class DocPusherTest extends TestCase {
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:mimetype\" content=\"text/html\"/>\n"
         + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
-        + "</metadata>\n" + "<content encoding=\"base64binary\">" + content
-        + "</content>\n" + "</record>\n";
+        + "</metadata>\n" + "<content encoding=\"base64binary\">\n" + content
+        + "\n</content>\n" + "</record>\n";
 
     expectedXml[0] = buildExpectedXML(feedType, record);
     takeFeed(expectedXml, "MockRepositoryEventLog8.txt");
@@ -797,6 +797,7 @@ public class DocPusherTest extends TestCase {
     String xmlLine = xmlIn.readLine();
     String logLine;
     boolean isMatch = false;
+    boolean inContent = false;
     while ((logLine = logIn.readLine()) != null) {
       if (logLine.indexOf(xmlLine) >= 0) {
         assertEquals(xmlLine, logLine.substring(7));
@@ -804,14 +805,25 @@ public class DocPusherTest extends TestCase {
         isMatch = true;
         while ((xmlLine = xmlIn.readLine()) != null) {
           logLine = logIn.readLine();
-          if (xmlLine.indexOf("<content") >= 0) {
-            if (!"<content encoding=\"base64binary\">...content...</content>".equals(logLine)) {
+          if (inContent) {
+            inContent = false;
+            if (!"...content...".equals(logLine)) {
               isMatch = false;
               break;
             }
-          } else if (!xmlLine.equals(logLine)) {
-            isMatch = false;
-            break;
+          } else {
+            if ("...content...".equals(logLine)) {
+              // Content outside of <content></content> element?
+              isMatch = false;
+              break;
+            }
+            if (xmlLine.indexOf("<content") >= 0) {
+              inContent = true;
+            }
+            if (!xmlLine.equals(logLine)) {
+              isMatch = false;
+              break;
+            }
           }
         }
         if (isMatch) {
