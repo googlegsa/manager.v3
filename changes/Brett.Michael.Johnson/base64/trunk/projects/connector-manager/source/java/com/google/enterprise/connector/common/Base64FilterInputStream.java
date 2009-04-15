@@ -23,11 +23,13 @@ import java.io.InputStream;
  */
 public class Base64FilterInputStream extends FilterInputStream {
 
-  /* NOTE: Since output line position is not maintained across calls to
-   * read(...), the actual length of lines will approximate this.
-   * For our purposes, strict adherence to RFC 2045 is not necessary.
-   * We only want to make viewing teedFeedFiles easier.
-   */
+  // NOTE: Since output line position is not maintained across calls
+  // to read(...), the actual length of output lines might exceed this.
+  // For our purposes, strict adherence to RFC 2045 is not necessary.
+  // In practice, however, our sole use of read(byte[], int, int) with
+  // large buffer sizes will produce consistent results.  We produce 76
+  // character lines for the benefit of third-party decoders that might
+  // be used when debugging.
   static final int BASE64_LINE_LENGTH = 76;
   private boolean breakLines = false;
 

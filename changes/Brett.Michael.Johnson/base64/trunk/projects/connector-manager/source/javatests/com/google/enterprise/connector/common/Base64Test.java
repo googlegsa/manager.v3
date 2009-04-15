@@ -14,9 +14,7 @@
 
 package com.google.enterprise.connector.common;
 
-import junit.framework.Test;
 import junit.framework.TestCase;
-import junit.framework.TestSuite;
 
 /**
  * Unit Test for iHarder Base64.
@@ -179,12 +177,19 @@ public class Base64Test extends TestCase {
   public void testSpeed() throws Exception {
     byte[] input = new byte[5*1024*1024];
     byte[] output = new byte[4 + ((input.length * 4) / 3)];
+    // Force these arrays to be paged in before starting the clock.
+    System.arraycopy(input, 0, output, 0, input.length);
+    System.arraycopy(input, 0, output, input.length,
+                     output.length - input.length);
     long start = System.currentTimeMillis();
     Base64.encode(input, 0, input.length, output, 0, Base64.ALPHABET,
                   Integer.MAX_VALUE);
     long duration = System.currentTimeMillis() - start;
     System.out.println("testSpeed: " + duration + " millisecs");
-    // Old Base64Encoder used to run 6x longer
-    assertTrue(duration < 250); // ~ 25ms on my 2.6GHz Core 2 Duo
+    // OriginalBase64Encoder used to run 20x longer than this one.
+    // TODO: This threshold is already 10x longer than this test
+    // takes on my machine, so I don't think this is a valid
+    // regression test.
+    assertTrue(duration < 300);
   }
 }

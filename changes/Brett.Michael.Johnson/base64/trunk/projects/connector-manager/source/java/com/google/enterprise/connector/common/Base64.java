@@ -49,47 +49,21 @@ public class Base64 {
   /** The new line character (\n) as a byte. */
   private final static byte NEW_LINE = (byte) '\n';
 
-  /**
-   * The 64 valid Base64 values.
-   * TODO - This array is mutable and public. It should probably be
-   * made private and a method that returns a clone can be added.
-   */
-  public final static byte[] ALPHABET = {
-      (byte) 'A', (byte) 'B', (byte) 'C', (byte) 'D', (byte) 'E', (byte) 'F',
-      (byte) 'G', (byte) 'H', (byte) 'I', (byte) 'J', (byte) 'K', (byte) 'L',
-      (byte) 'M', (byte) 'N', (byte) 'O', (byte) 'P', (byte) 'Q', (byte) 'R',
-      (byte) 'S', (byte) 'T', (byte) 'U', (byte) 'V', (byte) 'W', (byte) 'X',
-      (byte) 'Y', (byte) 'Z', (byte) 'a', (byte) 'b', (byte) 'c', (byte) 'd',
-      (byte) 'e', (byte) 'f', (byte) 'g', (byte) 'h', (byte) 'i', (byte) 'j',
-      (byte) 'k', (byte) 'l', (byte) 'm', (byte) 'n', (byte) 'o', (byte) 'p',
-      (byte) 'q', (byte) 'r', (byte) 's', (byte) 't', (byte) 'u', (byte) 'v',
-      (byte) 'w', (byte) 'x', (byte) 'y', (byte) 'z', (byte) '0', (byte) '1',
-      (byte) '2', (byte) '3', (byte) '4', (byte) '5', (byte) '6', (byte) '7',
-      (byte) '8', (byte) '9', (byte) '+', (byte) '/'
-  };
+  /** The 64 valid Base64 values. */
+  public final static byte[] ALPHABET =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+      .getBytes();
 
-  /**
-   * The 64 valid web safe Base64 values.
-   * TODO - This array is mutable and public. It should probably be
-   * made private and a method that returns a clone can be added.
-   */
-  public final static byte[] WEBSAFE_ALPHABET = {
-      (byte) 'A', (byte) 'B', (byte) 'C', (byte) 'D', (byte) 'E', (byte) 'F',
-      (byte) 'G', (byte) 'H', (byte) 'I', (byte) 'J', (byte) 'K', (byte) 'L',
-      (byte) 'M', (byte) 'N', (byte) 'O', (byte) 'P', (byte) 'Q', (byte) 'R',
-      (byte) 'S', (byte) 'T', (byte) 'U', (byte) 'V', (byte) 'W', (byte) 'X',
-      (byte) 'Y', (byte) 'Z', (byte) 'a', (byte) 'b', (byte) 'c', (byte) 'd',
-      (byte) 'e', (byte) 'f', (byte) 'g', (byte) 'h', (byte) 'i', (byte) 'j',
-      (byte) 'k', (byte) 'l', (byte) 'm', (byte) 'n', (byte) 'o', (byte) 'p',
-      (byte) 'q', (byte) 'r', (byte) 's', (byte) 't', (byte) 'u', (byte) 'v',
-      (byte) 'w', (byte) 'x', (byte) 'y', (byte) 'z', (byte) '0', (byte) '1',
-      (byte) '2', (byte) '3', (byte) '4', (byte) '5', (byte) '6', (byte) '7',
-      (byte) '8', (byte) '9', (byte) '-', (byte) '_'
-  };
+  /** The 64 valid web safe Base64 values. */
+  public final static byte[] WEBSAFE_ALPHABET =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+      .getBytes();
 
   /**
    * Translates a Base64 value to either its 6-bit reconstruction value
-   * or a negative number indicating some other meaning.
+   * or a negative number indicating some other meaning.  This can decode
+   * content that was endoded with either the standard ALPHABET or the
+   * WEBSAFE_ALPHABET.
    */
   private final static byte[] DECODABET = {
       -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal  0 -  8
@@ -119,10 +93,10 @@ public class Base64 {
       -9, -9, -9, -9, -9 // Decimal 123 - 127
   };
 
-  // Indicates white space in encoding
+  // Indicates white space in encoding.
   private final static byte WHITE_SPACE_ENC = -5;
 
-  // Indicates equals sign in encoding
+  // Indicates equals sign in encoding.
   private final static byte EQUALS_SIGN_ENC = -1;
 
   private Base64() {
@@ -451,7 +425,7 @@ public class Base64 {
       if (sbiDecode >= WHITE_SPACE_ENC) { // White space Equals sign or better
         if (sbiDecode >= EQUALS_SIGN_ENC) {
           // An equals sign (for padding) must not occur at position 0 or 1
-          // and must be the last byte[s] in the encoded value
+          // and must be the last byte[s] in the encoded value.
           if (sbiCrop == EQUALS_SIGN) {
             int bytesLeft = len - i;
             byte lastByte = (byte) (source[len - 1 + off] & 0x7f);
@@ -487,7 +461,7 @@ public class Base64 {
     // b4Posn != 0.  There can be at most 2 equal signs at the end of
     // four characters, so the b4 buffer must have two or three
     // characters.  This also catches the case where the input is
-    // padded with EQUALS_SIGN
+    // padded with EQUALS_SIGN.
     if (b4Posn != 0) {
       if (b4Posn == 1) {
         throw new Base64DecoderException("single trailing character at offset "

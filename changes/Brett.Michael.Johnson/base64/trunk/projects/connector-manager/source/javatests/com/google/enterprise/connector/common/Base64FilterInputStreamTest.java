@@ -327,8 +327,7 @@ public class Base64FilterInputStreamTest extends TestCase {
   }
 
   /* Test read(byte[], off, len) when < less than BASE64_LINE_LENGTH
-   * doesn't produce newlines, even when asked.
-   */
+   * doesn't produce newlines, even when asked. */
   public void testReadByteArrayWithoutNewLines() throws Exception {
     byteArrayRead6(38);
     byteArrayRead6(76);
@@ -395,8 +394,7 @@ public class Base64FilterInputStreamTest extends TestCase {
   }
 
   /* Test read(byte[], off, len) interface, where off != 0,
-   * and newlines in output.
-   */
+   * and newlines in output. */
   public void byteArrayRead5(int buffsize) throws Exception {
     Assert.assertTrue((buffsize > 76));
     ByteArrayInputStream bais = new ByteArrayInputStream(input.getBytes());
@@ -412,8 +410,7 @@ public class Base64FilterInputStreamTest extends TestCase {
   }
 
   /* Test read(byte[], off, len) interface, where len <= BASE64_LINE_LENGTH
-   * and newlines are requested.  No newlines should actually be produced.
-   */
+   * and newlines are requested.  No newlines should actually be produced. */
   public void byteArrayRead6(int buffsize) throws Exception {
     Assert.assertTrue((buffsize <= 76));
     ByteArrayInputStream bais = new ByteArrayInputStream(input.getBytes());
