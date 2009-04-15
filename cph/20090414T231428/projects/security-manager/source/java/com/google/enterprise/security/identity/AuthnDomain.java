@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,16 +30,14 @@ public class AuthnDomain {
   private final AuthNMechanism mechanism;
   private final AuthnDomainGroup group;
   private final List<String> urlPatterns;
+  private final String sampleUrl;
 
-  // Fields for BASIC_AUTH and FORMS_AUTH
-  private final String loginUrl;
-  
-  public AuthnDomain(String name, AuthNMechanism mechanism, String loginUrl,
+  public AuthnDomain(String name, AuthNMechanism mechanism, String sampleUrl,
                      AuthnDomainGroup group) {
     this.name = name;
     this.mechanism = mechanism;
     this.group = group;
-    this.loginUrl = loginUrl;
+    this.sampleUrl = sampleUrl;
     urlPatterns = new ArrayList<String>();
     group.addDomain(this);
   }
@@ -60,7 +58,7 @@ public class AuthnDomain {
     return urlPatterns;
   }
 
-  public String getLoginUrl() {
-    return loginUrl;
+  public String getSampleUrl() {
+    return sampleUrl;
   }
 }

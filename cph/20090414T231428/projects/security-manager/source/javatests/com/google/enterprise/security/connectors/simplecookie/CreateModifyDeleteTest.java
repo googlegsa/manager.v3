@@ -21,7 +21,6 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
-import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
 
 import java.util.Map;
@@ -92,6 +91,6 @@ public class CreateModifyDeleteTest extends SecurityManagerTestCase {
   }
 
   private AuthenticationIdentity newIdentity() {
-    return new DomainCredentials(null, new CredentialsGroup(null));
+    return DomainCredentials.dummy();
   }
 }

@@ -65,5 +65,5 @@ public interface SecAuthnIdentity extends AuthenticationIdentity {
    * Return a login URL for identity types that require one.
    * @return The login URL, or null if no such.
    */
-  public String getLoginUrl();
+  public String getSampleUrl();
 }

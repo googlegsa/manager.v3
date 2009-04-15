@@ -40,7 +40,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -143,9 +142,7 @@ public class SamlSsoTest extends SecurityManagerTestCase {
 
   private int countGoodGroups() {
     int nGood = 0;
-    Collection<CredentialsGroup> groups =
-        SamlAuthn.sessionOmniForm(userAgent.getSession()).getCredentialsGroups();
-    for (CredentialsGroup group: groups) {
+    for (CredentialsGroup group: SamlAuthn.sessionCredentialsGroups(userAgent.getSession())) {
       if (group.isVerified()) {
         nGood += 1;
       }
