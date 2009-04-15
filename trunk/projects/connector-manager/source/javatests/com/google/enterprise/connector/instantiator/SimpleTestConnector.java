@@ -1,4 +1,4 @@
-// Copyright 2006-2008 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.AuthorizationManager;
+import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.Session;
@@ -31,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -103,9 +103,13 @@ public class SimpleTestConnector implements Connector {
   }
 
   public class SimpleAuthorizationManager implements AuthorizationManager {
-    public Collection authorizeDocids(Collection col,
-        AuthenticationIdentity id) {
-      return col;
+    public Collection<AuthorizationResponse> authorizeDocids(
+        Collection<String> col, AuthenticationIdentity id) {
+      List<AuthorizationResponse> l = new ArrayList<AuthorizationResponse>();
+      for (String docId : col) {
+        l.add(new AuthorizationResponse(Boolean.TRUE, docId));
+      }
+      return l;
     }
   }
 
@@ -141,14 +145,14 @@ public class SimpleTestConnector implements Connector {
       Calendar cal = Calendar.getInstance();
       cal.setTimeInMillis(10 * 1000);
 
-      Map props = new HashMap();
+      Map<String, Object> props = new HashMap<String, Object>();
       props.put(SpiConstants.PROPNAME_DOCID, "1");
       props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
       props.put(SpiConstants.PROPNAME_DISPLAYURL, "http://myserver/docid=1");
       props.put(SpiConstants.PROPNAME_CONTENT, "Hello World!");
       SimpleDocument document = createSimpleDocument(props);
 
-      List docList = new LinkedList();
+      List<SimpleDocument> docList = new LinkedList<SimpleDocument>();
       docList.add(document);
 
       documentServed = true;
@@ -159,10 +163,9 @@ public class SimpleTestConnector implements Connector {
      * Utility method to convert a <code>Map</code> of Java Objects into a
      * <code>SimpleDocument</code>.
      */
-    private SimpleDocument createSimpleDocument(Map props) {
-      Map spiValues = new HashMap();
-      for (Iterator iter = props.keySet().iterator(); iter.hasNext();) {
-        String key = (String) iter.next();
+    private SimpleDocument createSimpleDocument(Map<String, Object> props) {
+      Map<String, List<Value>> spiValues = new HashMap<String, List<Value>>();
+      for (String key : props.keySet()) {
         Object obj = props.get(key);
         Value val = null;
         if (obj instanceof String) {
@@ -172,7 +175,7 @@ public class SimpleTestConnector implements Connector {
         } else {
           throw new AssertionError(obj);
         }
-        List values = new ArrayList();
+        List<Value> values = new ArrayList<Value>();
         values.add(val);
         spiValues.put(key, values);
       }

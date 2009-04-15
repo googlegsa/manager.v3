@@ -49,14 +49,15 @@ public class WorkQueue {
   private boolean isInitialized;  // true after one-time init done
   private boolean shutdown;       // true when shutdown is initiated
 
-  private LinkedList workQueue;    // Queue used for added work
-  private Map absTimeoutMap; // Track threads that timeout
+  private LinkedList<WorkQueueItem> workQueue;    // Queue used for added work.
+  private Map<WorkQueueItem, Long> absTimeoutMap; // Map of expected timeouts.
 
   private int numThreads;
-  private Set threads; // protected by "threads" instance lock
+  // Access is protected by "threads" instance lock.
+  private Set<WorkQueueThread> threads;
 
-  private InterrupterThread interrupterThread; // Looks for long running threads
-  private LifeThread lifeThread;               // Looks for hung threads
+  private InterrupterThread interrupterThread; // Looks for long running threads.
+  private LifeThread lifeThread;               // Looks for hung threads.
 
   /**
    * Creates a WorkQueue with 10 service threads, a default 20 minute timeout
@@ -112,12 +113,12 @@ public class WorkQueue {
       throw new IllegalArgumentException("numThreads must be > 0");
     }
     this.killThreadTimeout = killThreadTimeout;
-    this.workQueue = new LinkedList();
-    this.absTimeoutMap = new HashMap();
+    this.workQueue = new LinkedList<WorkQueueItem>();
+    this.absTimeoutMap = new HashMap<WorkQueueItem, Long>();
     this.isInitialized = false;
     this.shutdown = false;
     this.numThreads = numThreads;
-    this.threads = new HashSet();
+    this.threads = new HashSet<WorkQueueThread>();
     this.workItemTimeout = workItemTimeout;
   }
 
@@ -196,9 +197,8 @@ public class WorkQueue {
 
     if (interrupt) {
       synchronized (threads) {
-        Iterator iter = threads.iterator();
-        while (iter.hasNext()) {
-          ((WorkQueueThread)iter.next()).interruptAndKill();
+        for (WorkQueueThread thread : threads) {
+          thread.interruptAndKill();
         }
       }
     }
@@ -222,16 +222,14 @@ public class WorkQueue {
    */
   private boolean isAnyThreadWorking() {
     synchronized (threads) {
-      Iterator iter = threads.iterator();
-      while (iter.hasNext()) {
-        if (((WorkQueueThread)iter.next()).isWorking()) {
+      for (WorkQueueThread thread : threads) {
+        if (thread.isWorking()) {
           return true;
         }
       }
     }
     return false;
   }
-
 
   /**
    * Interrupts all WorkQueueItems that have timed out.
@@ -243,13 +241,13 @@ public class WorkQueue {
     // set nextAbsTimeout.
     long now = System.currentTimeMillis();
     long nextAbsTimeout = now + killThreadTimeout;
-    Iterator iter = absTimeoutMap.entrySet().iterator();
-    while (iter.hasNext()) {
-      Map.Entry entry = (Map.Entry) iter.next();
-      long absTimeout = ((Long) entry.getValue()).longValue();
+    Iterator<Map.Entry<WorkQueueItem, Long>> iter;
+    for (iter = absTimeoutMap.entrySet().iterator(); iter.hasNext(); ) {
+      Map.Entry<WorkQueueItem, Long> entry = iter.next();
+      long absTimeout = entry.getValue();
       if (absTimeout <= now) {  // We have a timeout.
         LOGGER.finest("A WorkItem timeout has occured...");
-        WorkQueueItem item = (WorkQueueItem) entry.getKey();
+        WorkQueueItem item = entry.getKey();
         // If the wait is too long, then we want to replace the thread.
         if (absTimeout + killThreadTimeout <= now) {
           LOGGER.finest("...replacing thread");
@@ -298,9 +296,8 @@ public class WorkQueue {
    * @param item
    */
   void preWork(WorkQueueItem item) {
-    Long absTimeout = new Long(workItemTimeout + System.currentTimeMillis());
     synchronized(this) {
-      absTimeoutMap.put(item, absTimeout);
+      absTimeoutMap.put(item, workItemTimeout + System.currentTimeMillis());
     }
     synchronized(interrupterThread) {
       interrupterThread.notifyAll();
@@ -377,7 +374,7 @@ public class WorkQueue {
    * @return the work item
    */
   WorkQueueItem removeWork() {
-    WorkQueueItem item = (WorkQueueItem) workQueue.removeFirst();
+    WorkQueueItem item = workQueue.removeFirst();
     LOGGER.finest("Removing work: " + item);
     return item;
   }
@@ -407,6 +404,7 @@ public class WorkQueue {
       }
     }
 
+    @Override
     public void run() {
       long nextCheckTimeout = killThreadTimeout;
       while (!shutdown) {
@@ -415,11 +413,10 @@ public class WorkQueue {
             wait(nextCheckTimeout);
           }
         } catch (InterruptedException e) {
-          // thread was signaled to determine whether there are new work items
-          // to be interrupted (this is done under normal operation--e.g. when
-          // we add a work item)
+          // Thread was signaled to determine whether there are new work
+          // items to be interrupted (this is done under normal operation --
+          // e.g. when we add a work item).
         }
-
         nextCheckTimeout = interruptAllTimedOutItems();
       }
     }
@@ -442,21 +439,22 @@ public class WorkQueue {
       }
     }
 
+    @Override
     public void run() {
       while (!shutdown) {
         try {
-          Set newThreads = new HashSet();
+          Set<WorkQueueThread> newThreads = new HashSet<WorkQueueThread>();
+          Set<WorkQueueThread> deadThreads = new HashSet<WorkQueueThread>();
           synchronized (threads) {
-            Iterator iter = threads.iterator();
-            while (iter.hasNext()) {
-              WorkQueueThread thread = (WorkQueueThread) iter.next();
+            for (WorkQueueThread thread : threads) {
               if (!thread.isAlive()) {
                 LOGGER.warning("WorkQueueThread was dead and is "
                     + "restarted by LifeThread: " + thread.getName());
-                iter.remove();
+                deadThreads.add(thread);
                 newThreads.add(createAndStartWorkQueueThread(thread.getName()));
               }
             }
+            threads.removeAll(deadThreads);
             threads.addAll(newThreads);
           }
           synchronized (this) {

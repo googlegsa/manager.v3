@@ -35,7 +35,7 @@ import java.util.Set;
 public interface Manager {
 
   /**
-   * Gets the current configuration of the Connector Manager itself.  
+   * Gets the current configuration of the Connector Manager itself.
    *
    * @return the current configuration settings in a Properties object.  Keys
    *         to the Properties are the same as the keys in the property file.
@@ -60,7 +60,7 @@ public interface Manager {
    *
    * @return A Set of Strings - the name of each connector implementation.
    */
-  public Set getConnectorTypeNames();
+  public Set<String> getConnectorTypeNames();
 
   /**
    * Returns the ConnectorType that is associated with the supplied name.
@@ -78,7 +78,7 @@ public interface Manager {
    *
    * @return A list of ConnectorStatus objects.
    */
-  public List getConnectorStatuses();
+  public List<ConnectorStatus> getConnectorStatuses();
 
   /**
    * Returns the status of a particular connector.
@@ -153,14 +153,14 @@ public interface Manager {
    *         configuration
    */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map configData, String language,
-      boolean update)
+      String connectorTypeName, Map<String, String> configData,
+      String language, boolean update)
       throws ConnectorNotFoundException, ConnectorExistsException,
       PersistentStoreException, InstantiatorException;
 
   /**
    * Authenticates an Identity against a named connector.
-   * 
+   *
    * @param connectorName
    * @param identity An AuthenticationIdentity object that encapsulates the
    *        user's identity
@@ -177,8 +177,8 @@ public interface Manager {
    * @param username The username as a string
    * @return A Set of String IDs indicating which documents the user can see.
    */
-  public Set authorizeDocids(String connectorName, List docidList,
-      String username);
+  public Set<String> authorizeDocids(String connectorName,
+      List<String> docidList, String username);
 
   /**
    * Set schedule for a given Connector.
@@ -225,7 +225,7 @@ public interface Manager {
    * configuration data
    * @throws ConnectorNotFoundException if the named connector is not found
    */
-  public Map getConnectorConfig(String connectorName)
+  public Map<String, String> getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException;
 
   /**

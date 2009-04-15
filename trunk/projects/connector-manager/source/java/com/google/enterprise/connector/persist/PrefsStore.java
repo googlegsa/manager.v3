@@ -27,8 +27,9 @@ import java.util.Properties;
  * for a named connector. The persistent store for these data items
  * is via Java Preferences.
  *
- * @deprecated  Replaced by FileStore
+ * @deprecated Replaced by FileStore.
  */
+@Deprecated
 public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
     ConnectorConfigStore {
 

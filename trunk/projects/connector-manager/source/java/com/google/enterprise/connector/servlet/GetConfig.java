@@ -71,6 +71,7 @@ public class GetConfig extends HttpServlet {
    * @param res
    * @throws IOException
    */
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException, FileNotFoundException {
     doGet(req, res);
@@ -83,6 +84,7 @@ public class GetConfig extends HttpServlet {
    * @param res
    * @throws IOException
    */
+  @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException, FileNotFoundException {
     Context context = Context.getInstance(this.getServletContext());
@@ -118,6 +120,7 @@ public class GetConfig extends HttpServlet {
    * Specialized {@code doTrace} method that constructs an XML representation
    * of the given request and returns it as the response.
    */
+  @Override
   protected void doTrace(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     ServletUtil.dumpServletRequest(req, res);

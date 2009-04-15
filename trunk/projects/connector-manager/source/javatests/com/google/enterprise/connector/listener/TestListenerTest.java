@@ -35,6 +35,7 @@ public class TestListenerTest extends TestCase {
   private Context context;
   private TestListener testListener;
 
+  @Override
   protected void setUp() throws Exception {
     // Setup a Context to point to stand alone XML file with just the needed
     // beans.
@@ -47,6 +48,7 @@ public class TestListenerTest extends TestCase {
       (TestListener) getBean(LISTENER_BEAN_NAME, TestListener.class);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     context = null;
     Context.refresh();
@@ -66,7 +68,7 @@ public class TestListenerTest extends TestCase {
    */
   public void testOnApplicationEvent() {
     // Get the events from the listener.
-    List eventQueue = testListener.pullEventsFromQueue();
+    List<ApplicationEvent> eventQueue = testListener.pullEventsFromQueue();
     assertTrue("One message in queue", eventQueue.size() == 1);
     assertTrue("Message of type ContextRefreshedEvent",
         (eventQueue.get(0) instanceof ContextRefreshedEvent));
@@ -95,7 +97,7 @@ public class TestListenerTest extends TestCase {
     assertEquals(message, source.value, eventSource.value);
   }
 
-  private Object getBean(String name, Class requiredType) {
+  private Object getBean(String name, Class<?> requiredType) {
     return context.getRequiredBean(name, requiredType);
   }
 

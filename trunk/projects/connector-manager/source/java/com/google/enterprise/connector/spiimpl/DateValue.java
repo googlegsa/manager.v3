@@ -26,6 +26,7 @@ public class DateValue extends ValueImpl {
     this.calendarValue = calendarValue;
   }
 
+  @Override
   public String toFeedXml() {
     return Value.calendarToFeedXml(calendarValue);
   }
@@ -38,10 +39,12 @@ public class DateValue extends ValueImpl {
     return Value.calendarToIso8601(calendarValue);
   }
 
+  @Override
   public String toString() {
     return toIso8601();
   }
 
+  @Override
   public boolean toBoolean() {
     return (calendarValue == null);
   }

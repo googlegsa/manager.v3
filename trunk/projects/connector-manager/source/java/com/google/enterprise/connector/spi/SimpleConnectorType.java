@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@ package com.google.enterprise.connector.spi;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -41,8 +40,8 @@ import java.util.logging.Logger;
  * to validate a particular key-value pair.
  */
 public class SimpleConnectorType implements ConnectorType {
-  private static final Logger LOGGER = Logger
-      .getLogger(SimpleConnectorType.class.getName());
+  private static final Logger LOGGER =
+      Logger.getLogger(SimpleConnectorType.class.getName());
 
   private static final String VALUE = "value";
   private static final String NAME = "name";
@@ -57,8 +56,8 @@ public class SimpleConnectorType implements ConnectorType {
   private static final String TD_START = "<td>";
   private static final String TR_START = "<tr>\r\n";
 
-  private List keys = null;
-  private Set keySet = null;
+  private List<String> keys = null;
+  private Set<String>  keySet = null;
   private String initialConfigForm = null;
 
   public SimpleConnectorType() {
@@ -69,23 +68,21 @@ public class SimpleConnectorType implements ConnectorType {
    * Set the keys that are required for configuration. One of the overloadings
    * of this method must be called exactly once before the SPI methods are used.
    *
-   * @param keys
-   *          A list of String keys
+   * @param keys A list of String keys
    */
-  public void setConfigKeys(List keys) {
+  public void setConfigKeys(List<String> keys) {
     if (this.keys != null) {
       throw new IllegalStateException();
     }
     this.keys = keys;
-    this.keySet = new HashSet(keys);
+    this.keySet = new HashSet<String>(keys);
   }
 
   /**
    * Set the keys that are required for configuration. One of the overloadings
    * of this method must be called exactly once before the SPI methods are used.
    *
-   * @param keys
-   *          An array of String keys
+   * @param keys An array of String keys
    */
   public void setConfigKeys(String[] keys) {
     setConfigKeys(Arrays.asList(keys));
@@ -95,8 +92,7 @@ public class SimpleConnectorType implements ConnectorType {
    * Sets the form to be used by this configurer. This is optional. If this
    * method is used, it must be called before the SPI methods are used.
    *
-   * @param formSnippet
-   *          A String snippet of html - see the COnfigurer interface
+   * @param formSnippet A String snippet of html - see the Configurer interface
    */
   public void setInitialConfigForm(String formSnippet) {
     if (this.initialConfigForm != null) {
@@ -130,10 +126,9 @@ public class SimpleConnectorType implements ConnectorType {
     return true;
   }
 
-  private boolean validateConfigMap(Map configData) {
-    for (Iterator i = keys.iterator(); i.hasNext();) {
-      String key = (String) i.next();
-      String val = (String) configData.get(key);
+  private boolean validateConfigMap(Map<String, String> configData) {
+    for (String key : keys) {
+      String val = configData.get(key);
       if (!validateConfigPair(key, val)) {
         return false;
       }
@@ -141,7 +136,7 @@ public class SimpleConnectorType implements ConnectorType {
     return true;
   }
 
-  private void appendAttribute(StringBuffer buf, String attrName,
+  private void appendAttribute(StringBuilder buf, String attrName,
       String attrValue) {
     buf.append(" ");
     XmlUtils.xmlAppendAttrValuePair(attrName, attrValue, buf);
@@ -154,10 +149,9 @@ public class SimpleConnectorType implements ConnectorType {
    * @param configMap
    * @return config form snippet
    */
-  private String makeConfigForm(Map configMap) {
-    StringBuffer buf = new StringBuffer(2048);
-    for (Iterator i = keys.iterator(); i.hasNext();) {
-      String key = (String) i.next();
+  private String makeConfigForm(Map<String, String> configMap) {
+    StringBuilder buf = new StringBuilder(2048);
+    for (String key : keys) {
       appendStartRow(buf, key, false);
       buf.append(OPEN_ELEMENT);
       buf.append(INPUT);
@@ -168,7 +162,7 @@ public class SimpleConnectorType implements ConnectorType {
       }
       appendAttribute(buf, NAME, key);
       if (configMap != null) {
-        String value = (String) configMap.get(key);
+        String value = configMap.get(key);
         if (value != null) {
           appendAttribute(buf, VALUE, value);
         }
@@ -178,12 +172,10 @@ public class SimpleConnectorType implements ConnectorType {
     return buf.toString();
   }
 
-  private String makeValidatedForm(Map configMap) {
-    StringBuffer buf = new StringBuffer(2048);
-    for (Iterator i = keys.iterator(); i.hasNext();) {
-      String key = (String) i.next();
-
-      String value = (String) configMap.get(key);
+  private String makeValidatedForm(Map<String, String> configMap) {
+    StringBuilder buf = new StringBuilder(2048);
+    for (String key : keys) {
+      String value = configMap.get(key);
       if (!validateConfigPair(key, value)) {
         appendStartRow(buf, key, true);
         buf.append(OPEN_ELEMENT);
@@ -208,15 +200,13 @@ public class SimpleConnectorType implements ConnectorType {
       appendEndRow(buf);
     }
 
-    // toss in all the stuff that's in the map but isn't in the keyset
+    // Toss in all the stuff that's in the map but isn't in the keyset
     // taking care to list them in alphabetic order (this is mainly for
     // testability).
-    Iterator i = new TreeSet(configMap.keySet()).iterator();
-    while (i.hasNext()) {
-      String key = (String) i.next();
+    for (String key : new TreeSet<String>(configMap.keySet())) {
       if (!keySet.contains(key)) {
         // add another hidden field to preserve this data
-        String val = (String) configMap.get(key);
+        String val = configMap.get(key);
         buf.append("<input type=\"hidden\" value=\"");
         buf.append(val);
         buf.append("\" name=\"");
@@ -227,7 +217,7 @@ public class SimpleConnectorType implements ConnectorType {
     return buf.toString();
   }
 
-  private void appendStartRow(StringBuffer buf, String key, boolean red) {
+  private void appendStartRow(StringBuilder buf, String key, boolean red) {
     buf.append(TR_START);
     buf.append(TD_START);
     if (red) {
@@ -241,7 +231,7 @@ public class SimpleConnectorType implements ConnectorType {
     buf.append(TD_START);
   }
 
-  private void appendEndRow(StringBuffer buf) {
+  private void appendEndRow(StringBuilder buf) {
     buf.append(CLOSE_ELEMENT);
     buf.append(TD_END);
     buf.append(TR_END);
@@ -256,29 +246,21 @@ public class SimpleConnectorType implements ConnectorType {
    * @param locale
    * @return another Configurer, which may be null
    */
-  ConnectorType getEmbeddedConfigurer(Map configData, Locale locale) {
+  ConnectorType getEmbeddedConfigurer(Map<String, String> configData,
+      Locale locale) {
     return null;
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.spi.Configurer#getConfigForm(java.util.Locale)
-   */
+  /* @Override */
   public ConfigureResponse getConfigForm(Locale locale) {
-    ConfigureResponse result = new ConfigureResponse("",
-        getInitialConfigForm());
+    ConfigureResponse result =
+        new ConfigureResponse("", getInitialConfigForm());
     LOGGER.info("getConfigForm form:\n" + result.getFormSnippet());
     return result;
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.spi.Configurer#validateConfig(java.util.Map,
-   *      java.util.Locale)
-   */
-  public ConfigureResponse validateConfig(Map configData,
+  /* @Override */
+  public ConfigureResponse validateConfig(Map<String, String> configData,
       Locale locale, ConnectorFactory connectorFactory) {
     if (validateConfigMap(configData)) {
       // all is ok
@@ -290,17 +272,9 @@ public class SimpleConnectorType implements ConnectorType {
         "Some required configuration is missing", form);
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.spi.Configurer
-   *      #getPopulatedConfigForm(java.util.Map,java.util.Locale)
-   */
-  public ConfigureResponse getPopulatedConfigForm(Map configMap,
-      Locale locale) {
-    ConfigureResponse result = new ConfigureResponse("",
-        makeConfigForm(configMap));
-    return result;
+  /* @Override */
+  public ConfigureResponse getPopulatedConfigForm(
+      Map<String, String> configMap, Locale locale) {
+    return new ConfigureResponse("", makeConfigForm(configMap));
   }
-
 }

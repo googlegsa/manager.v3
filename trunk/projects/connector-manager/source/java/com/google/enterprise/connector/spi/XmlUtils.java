@@ -29,6 +29,30 @@ public class XmlUtils {
     // prevents instantiation
   }
 
+  /*
+   * Wraps an xm tag with < and >.
+   */
+  public static String xmlWrapStart(String str) {
+    StringBuilder buf = new StringBuilder();
+    buf.append("<");
+    buf.append(str);
+    buf.append(">");
+    return buf.toString();
+  }
+
+  /*
+   * Wraps an xml tag with </ and >.
+   */
+  public static String xmlWrapEnd(String str) {
+    StringBuilder buf = new StringBuilder();
+    buf.append("</");
+    buf.append(str);
+    buf.append(">\n");
+    return buf.toString();
+  }
+
+  /* StringBuffer Interface */
+
   public static void XmlEncodeAttrValue(String val, StringBuffer buf) {
     for (int i = 0; i < val.length(); i++) {
       char c = val.charAt(i);
@@ -59,28 +83,6 @@ public class XmlUtils {
     }
   }
 
-  /*
-   * Wraps an xm tag with < and >.
-   */
-  public static String xmlWrapStart(String str) {
-    StringBuffer buf = new StringBuffer();
-    buf.append("<");
-    buf.append(str);
-    buf.append(">");
-    return buf.toString();
-  }
-
-  /*
-   * Wraps an xml tag with </ and >.
-   */
-  public static String xmlWrapEnd(String str) {
-    StringBuffer buf = new StringBuffer();
-    buf.append("</");
-    buf.append(str);
-    buf.append(">\n");
-    return buf.toString();
-  }
-
   /**
    * Used to write out an attribute for an element.  Surrounding whitespace will
    * not be added to the buffer.  The given value will be XML Encoded before
@@ -94,6 +96,58 @@ public class XmlUtils {
    */
   public static void xmlAppendAttrValuePair(String attrName, String attrValue,
       StringBuffer buf) {
+    buf.append(attrName);
+    buf.append("=\"");
+    XmlEncodeAttrValue(attrValue, buf);
+    buf.append("\"");
+  }
+
+
+  /* StringBuilder Interface */
+
+  public static void XmlEncodeAttrValue(String val, StringBuilder buf) {
+    for (int i = 0; i < val.length(); i++) {
+      char c = val.charAt(i);
+      /**
+       * Only these characters need to be encoded, according to
+       * http://www.w3.org/TR/REC-xml/#NT-AttValue. Actually, we could only
+       * encode one of the quote characters if we knew that that was the one
+       * used to wrap the value, but we'll play it safe and encode both. TODO:
+       * what happens to white-space?
+       */
+      switch (c) {
+      case '<':
+        buf.append(XML_LESS_THAN);
+        break;
+      case '&':
+        buf.append(XML_AMPERSAND);
+        break;
+      case '"':
+        buf.append(XML_QUOTE);
+        break;
+      case '\'':
+        buf.append(XML_APOSTROPHE);
+        break;
+      default:
+        buf.append(c);
+        break;
+      }
+    }
+  }
+
+  /**
+   * Used to write out an attribute for an element.  Surrounding whitespace will
+   * not be added to the buffer.  The given value will be XML Encoded before
+   * appending to the buffer.
+   *
+   * <p>For example, given attrName="foo" and attrValue="val&lt;bar" writes out:
+   * <pre>foo="val&amp;lt;bar"</pre>
+   * @param attrName the attribute name.
+   * @param attrValue the attribute value.
+   * @param buf the StringBuilder to append the attribute.
+   */
+  public static void xmlAppendAttrValuePair(String attrName, String attrValue,
+      StringBuilder buf) {
     buf.append(attrName);
     buf.append("=\"");
     XmlEncodeAttrValue(attrValue, buf);

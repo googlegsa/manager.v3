@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,38 +42,31 @@ public class JcrTraversalManagerTest extends TestCase {
       Logger.getLogger(JcrTraversalManagerTest.class.getName());
 
   /**
-   * Test generating checkpoints
+   * Test generating checkpoints.
    *
    * @throws RepositoryException
    * @throws JSONException
    */
   public void testCheckpoint() throws RepositoryException, JSONException {
-
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
-    QueryManager qm = new MockJcrQueryManager(r.getStore());
-    TraversalManager qtm = new JcrTraversalManager(qm);
+    MockRepositoryDocument mockDoc = r.getStore().getDocByID("doc1");
+    Document doc = new JcrDocument(new MockJcrNode(mockDoc));
+    String checkpointString = JcrDocumentList.checkpoint(doc);
+    logger.info(checkpointString);
 
-    {
-      MockRepositoryDocument mockDoc = r.getStore().getDocByID("doc1");
-      Document doc = new JcrDocument(new MockJcrNode(mockDoc));
-      String checkpointString = JcrDocumentList.checkpoint(doc);
-      logger.info(checkpointString);
+    JSONObject jo = new JSONObject(checkpointString);
 
-      JSONObject jo = new JSONObject(checkpointString);
-
-      String lastModified = jo.getString("lastModified");
-      Assert.assertEquals("1970-01-01T00:00:10.000Z", lastModified);
-      String uuid = jo.getString("uuid");
-      Assert.assertEquals("doc1", uuid);
-    }
+    String lastModified = jo.getString("lastModified");
+    Assert.assertEquals("1970-01-01T00:00:10.000Z", lastModified);
+    String uuid = jo.getString("uuid");
+    Assert.assertEquals("doc1", uuid);
   }
 
   public void testExtractFromCheckpoint() throws JSONException {
     String checkpointString =
-        "{\"uuid\":\"doc1\","
-            + "\"lastModified\":\"1970-01-01T00:00:10.000Z\"}";
+        "{\"uuid\":\"doc1\",\"lastModified\":\"1970-01-01T00:00:10.000Z\"}";
     JcrTraversalManager qtm =
         new JcrTraversalManager(null);
 
@@ -87,7 +80,6 @@ public class JcrTraversalManagerTest extends TestCase {
   }
 
   public void testResumeTraversal() throws RepositoryException {
-
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);

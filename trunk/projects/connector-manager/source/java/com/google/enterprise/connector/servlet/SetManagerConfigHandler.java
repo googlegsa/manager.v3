@@ -20,7 +20,6 @@ import com.google.enterprise.connector.persist.PersistentStoreException;
 
 import org.w3c.dom.Element;
 
-import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;

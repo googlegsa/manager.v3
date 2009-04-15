@@ -1,4 +1,4 @@
-// Copyright 2006-2008 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -32,7 +31,7 @@ public class AuthorizationParser {
 
   private int status;
   private int numDocs;
-  private Map parseMap;
+  private Map<String, Map<String, Map<String, ParsedUrl>>> parseMap;
 
   public AuthorizationParser(String xmlBody) {
     this.xmlBody = xmlBody;
@@ -42,19 +41,19 @@ public class AuthorizationParser {
 
   /**
    * Parse the XML into a map of maps of maps.
-   *
+   * <p>
    * First-level map is keyed by identity - the value contains all the urls
    * governed by the same identity.
-   *
+   * <p>
    * Second-level map is keyed by connector name - the value is all the urls
    * that come from the same connector.
-   *
+   * <p>
    * Third-level map is keyed by docid - the value is a ParsedUrl.
-   *
-   * In practice, for now, it is unlikely that the same connector will show up
-   * under more than one identity. In fact, the most likely case is that the two
-   * top-level maps have only one item.
-   *
+   * <p>
+   * In practice, for now, it is unlikely that the same connector will
+   * show up under more than one identity. In fact, the most likely case
+   * is that the two top-level maps have only one item.
+   * <p>
    * Visibility is default to facilitate testing
    */
   void parse() {
@@ -77,7 +76,7 @@ public class AuthorizationParser {
 
     status = ConnectorMessageCode.SUCCESS;
     numDocs = 0;
-    parseMap = new HashMap();
+    parseMap = new HashMap<String, Map<String, Map<String, ParsedUrl>>>();
 
     for (int i = 0; i < queryList.getLength(); ++i) {
       Element queryItem = (Element) queryList.item(i);
@@ -97,10 +96,7 @@ public class AuthorizationParser {
     String identity =
         ServletUtil.getFirstElementByTagName(queryItem,
             ServletUtil.XMLTAG_IDENTITY);
-    String source =
-        ServletUtil.getFirstAttribute(queryItem, ServletUtil.XMLTAG_IDENTITY,
-            "source");
-    List resources =
+    List<String> resources =
         ServletUtil.getAllElementsByTagName(queryItem,
             ServletUtil.XMLTAG_RESOURCE);
     if (resources.isEmpty()) {
@@ -108,24 +104,27 @@ public class AuthorizationParser {
       return;
     }
 
-    Map urlsByConnector = (Map) parseMap.get(identity);
+    Map<String, Map<String, ParsedUrl>> urlsByConnector =
+        parseMap.get(identity);
     if (urlsByConnector == null) {
-      urlsByConnector = new HashMap();
+      urlsByConnector = new HashMap<String, Map<String, ParsedUrl>>();
       parseMap.put(identity, urlsByConnector);
     }
 
-    for (Iterator iter = resources.iterator(); iter.hasNext();) {
-      parseResource(urlsByConnector, iter);
+    for (String url : resources) {
+      parseResource(urlsByConnector, url);
     }
   }
 
-  private void parseResource(Map urlsByConnector, Iterator iter) {
-    String url = (String) iter.next();
+  private void parseResource(
+      Map<String, Map<String, ParsedUrl>> urlsByConnector,
+      String url) {
     ParsedUrl p = new ParsedUrl(url);
     if (p.getStatus() == ConnectorMessageCode.SUCCESS) {
-      Map urlsByDocid = (Map) urlsByConnector.get(p.getConnectorName());
+      Map<String, ParsedUrl> urlsByDocid =
+          urlsByConnector.get(p.getConnectorName());
       if (urlsByDocid == null) {
-        urlsByDocid = new HashMap();
+        urlsByDocid = new HashMap<String, ParsedUrl>();
         urlsByConnector.put(p.getConnectorName(), urlsByDocid);
       }
       urlsByDocid.put(p.getDocid(), p);
@@ -145,13 +144,14 @@ public class AuthorizationParser {
   }
 
   /**
-   * Return number of connector names found for a given identity. Just for
-   * testing.
+   * Return number of connector names found for a given identity.
+   * Just for testing.
    *
    * @return number of identities
    */
   int countConnectorsForIdentity(String identity) {
-    Map urlsByConnector = (Map) parseMap.get(identity);
+    Map<String, Map<String, ParsedUrl>> urlsByConnector =
+        parseMap.get(identity);
     if (urlsByConnector == null) {
       return 0;
     }
@@ -159,17 +159,18 @@ public class AuthorizationParser {
   }
 
   /**
-   * Return number of urls found for a given identity-connector pair. Just for
-   * testing.
+   * Return number of urls found for a given identity-connector pair.
+   * Just for testing.
    *
    * @return number of identities
    */
   int countUrlsForIdentityConnectorPair(String identity, String connectorName) {
-    Map urlsByConnector = (Map) parseMap.get(identity);
+    Map<String, Map<String, ParsedUrl>> urlsByConnector =
+        parseMap.get(identity);
     if (urlsByConnector == null) {
       return 0;
     }
-    Map urlsByDocid = (Map) urlsByConnector.get(connectorName);
+    Map<String, ParsedUrl> urlsByDocid = urlsByConnector.get(connectorName);
     if (urlsByDocid == null) {
       return 0;
     }
@@ -184,7 +185,7 @@ public class AuthorizationParser {
     return status;
   }
 
-  public Map getParseMap() {
+  public Map<String, Map<String, Map<String, ParsedUrl>>> getParseMap() {
     return parseMap;
   }
 }

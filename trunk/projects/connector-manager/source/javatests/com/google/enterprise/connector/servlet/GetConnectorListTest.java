@@ -1,4 +1,4 @@
-// Copyright 2006-2008 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -43,7 +43,8 @@ public class GetConnectorListTest extends TestCase {
    */
   public void testHandleDoGet1() {
     Manager manager = new MockManager() {
-        public Set getConnectorTypeNames() { return null; }
+        @Override
+        public Set<String> getConnectorTypeNames() { return null; }
       };
     String expectedResult =
         "<CmResponse>\n"

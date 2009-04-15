@@ -21,7 +21,6 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
 
 import java.util.HashMap;
-import java.util.Iterator;
 
 import javax.jcr.Credentials;
 import javax.jcr.SimpleCredentials;
@@ -50,7 +49,8 @@ public class JcrConnector implements Connector, ConnectorShutdownAware {
 
   private String username = "";
   private String password = "";
-  private HashMap sessions = new HashMap();
+  private HashMap<Credentials, JcrSession> sessions =
+      new HashMap<Credentials, JcrSession>();
 
   /**
    * @param password the password to set
@@ -77,7 +77,7 @@ public class JcrConnector implements Connector, ConnectorShutdownAware {
           sessions.put(simpleCredentials, new JcrSession(session));
         }
       }
-      return (JcrSession) sessions.get(simpleCredentials);
+      return sessions.get(simpleCredentials);
     } catch (javax.jcr.LoginException e) {
       throw new RepositoryLoginException(e);
     } catch (javax.jcr.RepositoryException e) {
@@ -87,8 +87,7 @@ public class JcrConnector implements Connector, ConnectorShutdownAware {
 
   public void shutdown() {
     synchronized (sessions) {
-      for (Iterator iter = sessions.values().iterator(); iter.hasNext();) {
-        JcrSession jcrSession = (JcrSession) iter.next();
+      for (JcrSession jcrSession : sessions.values()) {
         jcrSession.session.logout();
       }
       sessions.clear();

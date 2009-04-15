@@ -44,10 +44,9 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
-  protected void doGet(HttpServletRequest req,
-                       HttpServletResponse res)
+  @Override
+  protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     ConnectorMessageCode status = new ConnectorMessageCode();
     String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
@@ -88,7 +87,7 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
   /**
    * Writes the XML response for setting the connector config.
    */
-  /* @Override */
+  @Override
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
     SetConnectorConfigHandler handler =

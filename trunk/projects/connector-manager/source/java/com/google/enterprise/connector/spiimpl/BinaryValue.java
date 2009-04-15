@@ -29,10 +29,12 @@ public class BinaryValue extends ValueImpl {
     this.binaryValue = new ByteArrayInputStream(byteArray);
   }
 
+  @Override
   public String toFeedXml() {
     throw new IllegalArgumentException();
   }
 
+  @Override
   public String toString() {
     return binaryValue.toString();
   }
@@ -41,6 +43,7 @@ public class BinaryValue extends ValueImpl {
     return binaryValue;
   }
 
+  @Override
   public boolean toBoolean() {
     return (binaryValue == null);
   }

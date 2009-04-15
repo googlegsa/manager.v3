@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright 2008-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import java.util.Properties;
 /**
  * Mock Configuration Store - doesn't actually persist, just uses memory.
  */
-public class MockConnectorConfigStore extends HashMap
+public class MockConnectorConfigStore extends HashMap<String, Properties>
     implements ConnectorConfigStore {
 
   /* (non-Javadoc)
@@ -28,7 +28,7 @@ public class MockConnectorConfigStore extends HashMap
    * #getConnectorConfig(StoreContext)
    */
   public Properties getConnectorConfiguration(StoreContext context) {
-    return (Properties) this.get(context.getConnectorName());
+    return this.get(context.getConnectorName());
   }
 
   /* (non-Javadoc)

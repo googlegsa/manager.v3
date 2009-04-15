@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@ public class HostLoadManager {
 
   private static final long MINUTE_IN_MILLIS = 60 * 1000;
   private long startTimeInMillis;
-  private Map connectorNameToNumDocsTraversed;
-  private Map connectorNameToFinishTime;
+  private Map<String, Integer> connectorNameToNumDocsTraversed;
+  private Map<String, Long> connectorNameToFinishTime;
 
   /**
    * Number of milliseconds before we ignore previously fed documents.  In
@@ -68,10 +68,11 @@ public class HostLoadManager {
   public HostLoadManager(Instantiator instantiator, long periodInMillis) {
     this.instantiator = instantiator;
     this.periodInMillis = periodInMillis;
-
     startTimeInMillis = System.currentTimeMillis();
-    connectorNameToNumDocsTraversed = Collections.synchronizedMap(new HashMap());
-    connectorNameToFinishTime = Collections.synchronizedMap(new HashMap());
+    connectorNameToNumDocsTraversed =
+        Collections.synchronizedMap(new HashMap<String, Integer>());
+    connectorNameToFinishTime =
+        Collections.synchronizedMap(new HashMap<String, Long>());
   }
 
   private int getMaxLoad(String connectorName) {
@@ -98,19 +99,20 @@ public class HostLoadManager {
 
   /**
    * Determine the number of documents traversed since a given time.
+   *
    * @param connectorName name of the connector instance
    * @return number of documents traversed
    */
   private int getNumDocsTraversedThisPeriod(String connectorName) {
     updateNumDocsTraversedData();
-    Integer numDocs =
-        (Integer) connectorNameToNumDocsTraversed.get(connectorName);
+    Integer numDocs = connectorNameToNumDocsTraversed.get(connectorName);
     return (numDocs == null) ? 0 : numDocs.intValue();
   }
 
   /**
    * Let HostLoadManager know how many documents have been traversed so that
    * it can properly enforce the host load.
+   *
    * @param connectorName name of the connector instance
    * @param numDocsTraversed number of documents traversed
    */
@@ -141,6 +143,7 @@ public class HostLoadManager {
   /**
    * Remove the connector's statistics from the caches.
    * This is called when a connector is deleted.
+   *
    * @param connectorName name of the connector instance
    */
   public void removeConnector(String connectorName) {
@@ -152,6 +155,7 @@ public class HostLoadManager {
    * Determine how many documents to be recommended to be traversed.  This
    * number is based on the max feed rate for the connector instance as well
    * as the load determined based on calls to updateNumDocsTraversed().
+   *
    * @param connectorName name of the connector instance
    * @return hint to the number of documents traverser should traverse
    */

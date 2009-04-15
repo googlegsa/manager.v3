@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.google.enterprise.connector.spi.ConnectorType;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -47,6 +46,7 @@ public class GetConnectorList extends HttpServlet {
    * @param res
    * @throws IOException
    */
+  @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     doPost(req, res);
@@ -59,6 +59,7 @@ public class GetConnectorList extends HttpServlet {
    * @param res
    * @throws IOException
    */
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     res.setContentType(ServletUtil.MIMETYPE_XML);
@@ -79,7 +80,7 @@ public class GetConnectorList extends HttpServlet {
     ServletUtil.writeRootTag(out, false);
     ServletUtil.writeManagerSplash(out);
 
-    Set connectorTypes = manager.getConnectorTypeNames();
+    Set<String> connectorTypes = manager.getConnectorTypeNames();
     if (connectorTypes == null || connectorTypes.size() == 0) {
       ServletUtil.writeStatusId(
           out, ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_TYPE);
@@ -90,8 +91,7 @@ public class GetConnectorList extends HttpServlet {
 
     ServletUtil.writeStatusId(out, ConnectorMessageCode.SUCCESS);
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_CONNECTOR_TYPES, false);
-    for (Iterator iter = connectorTypes.iterator(); iter.hasNext();) {
-      String typeName = (String) iter.next();
+    for (String typeName : connectorTypes) {
       String version = null;
       try {
         ConnectorType connectorType = manager.getConnectorType(typeName);
@@ -102,7 +102,7 @@ public class GetConnectorList extends HttpServlet {
       }
       if (version != null && version.length() > 0) {
         // Write out the Connector version as an attribute on the tag.
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         ServletUtil.writeXMLTagWithAttrs(buffer, 2,
             ServletUtil.XMLTAG_CONNECTOR_TYPE,
             ServletUtil.ATTRIBUTE_VERSION + version + ServletUtil.QUOTE,

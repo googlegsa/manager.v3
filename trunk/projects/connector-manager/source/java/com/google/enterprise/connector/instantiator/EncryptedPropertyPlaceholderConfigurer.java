@@ -81,6 +81,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
    * Overridden from the base class implementation. This looks for properties
    * with a sensitive name and decrypts them.
    */
+  @Override
   public void convertProperties(Properties properties) {
     decryptSensitiveProperties(properties);
     super.convertProperties(properties);
@@ -89,7 +90,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
   public static void encryptSensitiveProperties(Properties properties) {
     // New style properties file, encrypt any key with 'password' in it.
     PropertiesUtils.stampPropertiesVersion(properties);
-    Enumeration props = properties.propertyNames();
+    Enumeration<?> props = properties.propertyNames();
     while (props.hasMoreElements()) {
       String prop = (String) props.nextElement();
       if (SecurityUtils.isKeySensitive(prop)) {
@@ -101,7 +102,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
 
   public static void decryptSensitiveProperties(Properties properties) {
     int version = PropertiesUtils.getPropertiesVersion(properties);
-    Enumeration props = properties.propertyNames();
+    Enumeration<?> props = properties.propertyNames();
     while (props.hasMoreElements()) {
       String prop = (String) props.nextElement();
       // Older properties files (before we started versioning them) only

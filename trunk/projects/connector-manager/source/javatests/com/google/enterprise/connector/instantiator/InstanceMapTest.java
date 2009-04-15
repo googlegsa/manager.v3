@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ public class InstanceMapTest extends TestCase {
   private static final String TEST_DIR_NAME = "testdata/tempInstantiatorTests";
   private File baseDirectory;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     // Make sure that the test directory does not exist
@@ -53,6 +54,7 @@ public class InstanceMapTest extends TestCase {
     Assert.assertTrue(baseDirectory.mkdirs());
   }
 
+  @Override
   protected void tearDown() throws Exception {
     Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
     super.tearDown();
@@ -216,7 +218,8 @@ public class InstanceMapTest extends TestCase {
       String typeName, String language, boolean update,
       String jsonConfigString) throws JSONException, InstantiatorException,
       ConnectorNotFoundException, ConnectorExistsException {
-    Map config = new JsonObjectAsMap(new JSONObject(jsonConfigString));
+    Map<String, String> config =
+        new JsonObjectAsMap(new JSONObject(jsonConfigString));
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
     instanceMap.updateConnector(name, typeName, config, locale, update);
     InstanceInfo instanceInfo = instanceMap.getInstanceInfo(name);
@@ -225,9 +228,9 @@ public class InstanceMapTest extends TestCase {
     Assert.assertEquals(name, instanceInfo.getName());
 
     // the password will be decrypted in the InstanceInfo
-    Map instanceProps = instanceInfo.getConnectorConfig();
-    String instancePasswd = (String) instanceProps.get("Password");
-    String plainPasswd = (String) config.get("Password");
+    Map<String, String> instanceProps = instanceInfo.getConnectorConfig();
+    String instancePasswd = instanceProps.get("Password");
+    String plainPasswd = config.get("Password");
     Assert.assertEquals(instancePasswd, plainPasswd);
 
     // verify that the googleConnectorName property is intact.

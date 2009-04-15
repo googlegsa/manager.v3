@@ -18,7 +18,6 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -35,11 +34,12 @@ public class ScheduleTest extends TestCase {
   final String illegalStrNoDelay = "connector2:60:";
 
   public void testSerialization() {
-    List intervals = new ArrayList();
+    List<ScheduleTimeInterval> intervals =
+        new ArrayList<ScheduleTimeInterval>();
     ScheduleTimeInterval interval1 =
-      new ScheduleTimeInterval(new ScheduleTime(1), new ScheduleTime(2));
+        new ScheduleTimeInterval(new ScheduleTime(1), new ScheduleTime(2));
     ScheduleTimeInterval interval2 =
-      new ScheduleTimeInterval(new ScheduleTime(3), new ScheduleTime(5));
+        new ScheduleTimeInterval(new ScheduleTime(3), new ScheduleTime(5));
     intervals.add(interval1);
     intervals.add(interval2);
     Schedule schedule = new Schedule("connector1", false, 60, 0, intervals);
@@ -62,7 +62,8 @@ public class ScheduleTest extends TestCase {
     Assert.assertEquals(strWithDefaultDelay, schedule4.toString());
 
     try {
-      new Schedule("connector2", false, 60, 0, Collections.EMPTY_LIST);
+      new Schedule("connector2", false, 60, 0,
+          new ArrayList<ScheduleTimeInterval>(0));
       fail("IllegalArgumentException expected");
     } catch (IllegalArgumentException e) {
       // Expected exception occurred.

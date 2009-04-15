@@ -40,6 +40,7 @@ public class ConnectorMessageCodeTest extends TestCase {
   private ConnectorMessageCode successIdCode;
   private ConnectorMessageCode successIdParamCode;
 
+  @Override
   protected void setUp() throws Exception {
     // Create representative set of messages using the various constructors.
     defaultCode = new ConnectorMessageCode();
@@ -60,6 +61,7 @@ public class ConnectorMessageCodeTest extends TestCase {
         ConnectorMessageCode.SUCCESS_RESTART_TRAVERSAL, PARAMS1);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     defaultCode = null;
     successCode = null;

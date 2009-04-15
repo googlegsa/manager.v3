@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright 2008-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class FileStore implements ConnectorScheduleStore,
   private static final Logger LOGGER =
       Logger.getLogger(FileStore.class.getName());
 
-  private Hashtable cacheMap = new Hashtable();
+  private Hashtable<String, String> cacheMap = new Hashtable<String, String>();
   private static final String schedName = "_schedule.txt";
   private static final String stateName = "_state.txt";
   private static final String configName = ".properties";
@@ -51,7 +51,7 @@ public class FileStore implements ConnectorScheduleStore,
     testStoreContext(context);
     String key = context.getConnectorName() + schedName;
     if (cacheMap.containsKey(key)) {
-      return (String) cacheMap.get(key);
+      return cacheMap.get(key);
     }
     String schedule = readStoreFile(context, schedName);
     if (schedule != null) {
@@ -99,7 +99,7 @@ public class FileStore implements ConnectorScheduleStore,
     testStoreContext(context);
     String key = context.getConnectorName() + stateName;
     if (cacheMap.containsKey(key)) {
-      return (String) cacheMap.get(key);
+      return cacheMap.get(key);
     }
     String state = readStoreFile(context, stateName);
     if (state != null) {

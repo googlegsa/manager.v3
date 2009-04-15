@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,14 +19,12 @@ import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Collection;
 
 import javax.jcr.Credentials;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.LoginException;
-import javax.jcr.Node;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 
@@ -47,9 +45,10 @@ public class JcrAuthorizationManager implements AuthorizationManager {
    * (non-Javadoc)
    *
    * @see com.google.enterprise.connector.spi.AuthorizationManager
-   *      #authorizeDocids(java.util.List, java.lang.String)
+   *      #authorizeDocids(java.util.Collection, AuthenticationIdentity)
    */
-  public Collection authorizeDocids(Collection docids, AuthenticationIdentity identity)
+  public Collection<AuthorizationResponse> authorizeDocids(
+      Collection<String> docids, AuthenticationIdentity identity)
       throws RepositoryException {
     // we rely on the ability of the current session to impersonate any
     // other user
@@ -67,16 +66,15 @@ public class JcrAuthorizationManager implements AuthorizationManager {
     try {
       // iterate through the docids, try to fetch each one, and determine
       // this user's access by whether the fetch succeeds
-      LinkedList result = new LinkedList();
-      for (Iterator i = docids.iterator(); i.hasNext();) {
-        String uuid = (String) i.next();
+      LinkedList<AuthorizationResponse> result =
+          new LinkedList<AuthorizationResponse>();
+      for (String uuid : docids) {
         boolean readPrivilege = false;
         try {
-          Node n = userSession.getNodeByUUID(uuid);
+          userSession.getNodeByUUID(uuid);
           readPrivilege = true;
         } catch (ItemNotFoundException e) {
-          // normal behavior if the user does not have privileges for this
-          // item
+          // Normal behavior if the user does not have privileges for this item.
           readPrivilege = false;
         } catch (javax.jcr.RepositoryException e) {
           throw new RepositoryException(e);
@@ -90,5 +88,4 @@ public class JcrAuthorizationManager implements AuthorizationManager {
       userSession.logout();
     }
   }
-
 }

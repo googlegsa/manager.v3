@@ -33,13 +33,13 @@ public class SetScheduleNoGSA extends HttpServlet {
 
   /**
    * Returns the manager config (form) for now.
+   *
    * @param req
    * @param res
    * @throws IOException
-   *
    */
-  protected void doGet(HttpServletRequest req,
-                       HttpServletResponse res)
+  @Override
+  protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     res.setContentType(ServletUtil.MIMETYPE_HTML);
     PrintWriter out = res.getWriter();
@@ -64,13 +64,13 @@ public class SetScheduleNoGSA extends HttpServlet {
 
   /**
    * Returns the simple response if successfully setting the manager config.
+   *
    * @param req
    * @param res
    * @throws IOException
-   *
    */
-  protected void doPost(HttpServletRequest req,
-                        HttpServletResponse res)
+  @Override
+  protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     String forTime = req.getParameter("forTime");
     String timeIntervals = null;

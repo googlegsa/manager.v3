@@ -56,8 +56,8 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
+  @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     res.setContentType(ServletUtil.MIMETYPE_XML);
@@ -91,8 +91,8 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res) throws IOException {
     doGet(req, res);
   }

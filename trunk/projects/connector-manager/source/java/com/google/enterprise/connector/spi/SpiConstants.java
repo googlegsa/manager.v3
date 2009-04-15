@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -236,7 +236,8 @@ public class SpiConstants {
   /**
    * Ordinal-base typesafe enum for action types.
    */
-  public static class ActionType implements Comparable {
+  // TODO: Change this to an Enum.
+  public static class ActionType implements Comparable<ActionType> {
     private static int nextOrdinal = 0;
     private final int ordinal = nextOrdinal++;
 
@@ -252,6 +253,7 @@ public class SpiConstants {
         tag = m;
     }
 
+    @Override
     public String toString() {
       return tag;
     }
@@ -273,15 +275,16 @@ public class SpiConstants {
         return ERROR;
       }
 
-    public int compareTo(Object o) {
-        return ordinal - ((ActionType)o).ordinal;
+    public int compareTo(ActionType actionType) {
+        return ordinal - actionType.ordinal;
     }
   }
 
   /**
    * Ordinal-base typesafe enum for known role types.
    */
-  public static class RoleType implements Comparable {
+  // TODO: Change this to an Enum.
+  public static class RoleType implements Comparable<RoleType> {
     private static int nextOrdinal = 0;
     private final int ordinal = nextOrdinal++;
 
@@ -300,6 +303,7 @@ public class SpiConstants {
         tag = m;
     }
 
+    @Override
     public String toString() {
       return tag;
     }
@@ -321,8 +325,8 @@ public class SpiConstants {
         return ERROR;
       }
 
-    public int compareTo(Object o) {
-        return ordinal - ((RoleType)o).ordinal;
+    public int compareTo(RoleType roleType) {
+        return ordinal - roleType.ordinal;
     }
   }
 }

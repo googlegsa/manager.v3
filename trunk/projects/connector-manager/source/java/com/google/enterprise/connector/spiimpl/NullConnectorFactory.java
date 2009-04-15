@@ -24,8 +24,7 @@ public class NullConnectorFactory implements ConnectorFactory {
   public NullConnectorFactory() {
   }
 
-  public Connector makeConnector(Map config) {
+  public Connector makeConnector(Map<String, String> config) {
     throw new UnsupportedOperationException();
   }
-
 }

@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,8 +52,8 @@ public class UpdateConnector extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
+  @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
@@ -83,17 +83,17 @@ public class UpdateConnector extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     ConnectorMessageCode status = new ConnectorMessageCode();
     String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
-    Map configData = new TreeMap();
+    Map<String, String> configData = new TreeMap<String, String>();
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
     String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
-    Enumeration names = req.getParameterNames();
-    for (Enumeration e = names; e.hasMoreElements();) {
+    Enumeration<?> names = req.getParameterNames();
+    for (Enumeration<?> e = names; e.hasMoreElements();) {
       String name = (String) e.nextElement();
       configData.put(name, req.getParameter(name));
     }
@@ -143,8 +143,8 @@ public class UpdateConnector extends HttpServlet {
       formSnippet = ServletUtil.DEFAULT_FORM;
     }
 
-    StringBuffer sbuf =
-        new StringBuffer(
+    StringBuilder sbuf =
+        new StringBuilder(
             "<HTML><HEAD><TITLE>Update Connector Config</TITLE></HEAD>\n"
                 + "<BODY><H3>Update Connector Config:</H3><HR>\n"
                 + "<FORM METHOD=POST ACTION=\""
@@ -158,26 +158,24 @@ public class UpdateConnector extends HttpServlet {
     int endQuote = 0;
     String snip = formSnippet;
     String value = null;
-    Map configData =
+    Map<String, String> configData =
         ServletUtil.getAllAttributes(root, ServletUtil.XMLTAG_PARAMETERS);
     if (configData.isEmpty()) {
       return htmlErrorPage("Empty config data");
     }
 
     while ((beginQuote = snip.indexOf(ServletUtil.ATTRIBUTE_NAME)) != -1) {
-      endQuote =
-          snip.indexOf(ServletUtil.QUOTE, beginQuote
-              + ServletUtil.ATTRIBUTE_NAME.length());
+      endQuote = snip.indexOf(ServletUtil.QUOTE, beginQuote
+                              + ServletUtil.ATTRIBUTE_NAME.length());
       sbuf.append(snip.substring(0, endQuote + 1));
-      String key =
-          snip.substring(beginQuote + ServletUtil.ATTRIBUTE_NAME.length(), endQuote);
-      value = (String) configData.get(key);
+      String key = snip.substring(
+          beginQuote + ServletUtil.ATTRIBUTE_NAME.length(), endQuote);
+      value = configData.get(key);
       if (value != null) {
         sbuf.append(ServletUtil.ATTRIBUTE_VALUE).append(value).append(
             ServletUtil.QUOTE);
       }
       snip = snip.substring(endQuote + 1, snip.length());
-
     }
     sbuf.append(snip.substring(0, snip.length()));
     sbuf.append("<tr><td><INPUT TYPE=\"SUBMIT\" NAME=\"action\" VALUE="

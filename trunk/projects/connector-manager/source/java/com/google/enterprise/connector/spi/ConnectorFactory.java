@@ -39,5 +39,6 @@ public interface ConnectorFactory {
    * @throws RepositoryException if the Connector construction
    *         fails for any reason.
    */
-  Connector makeConnector(Map config) throws RepositoryException;
+  Connector makeConnector(Map<String, String> config)
+      throws RepositoryException;
 }

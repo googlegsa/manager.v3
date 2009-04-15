@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.google.enterprise.connector.mock;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +31,7 @@ public class MockRepositoryEvent {
    * Enumeration for event types.
    * @author ziff@google.com (Donald "Max" Ziff)
    */
-  public static class EventType implements Comparable {
+  public static class EventType implements Comparable<EventType> {
     private static int nextOrdinal = 0;
     private final int ordinal = nextOrdinal++;
 
@@ -47,7 +46,7 @@ public class MockRepositoryEvent {
 
     private static final EventType[] PRIVATE_VALUES =
       {SAVE, DELETE, METADATA_ONLY_SAVE, ERROR};
-    public static final List Values =
+    public static final List<EventType> Values =
       Collections.unmodifiableList(Arrays.asList(PRIVATE_VALUES));
 
     private String tag;
@@ -56,6 +55,7 @@ public class MockRepositoryEvent {
       tag = m;
     }
 
+    @Override
     public String toString() {
       return tag;
     }
@@ -72,8 +72,8 @@ public class MockRepositoryEvent {
         return ERROR;
       }
 
-    public int compareTo(Object o) {
-      return ordinal - ((EventType)o).ordinal;
+    public int compareTo(EventType eventType) {
+      return ordinal - eventType.ordinal;
     }
   }
 
@@ -83,6 +83,7 @@ public class MockRepositoryEvent {
   private MockRepositoryPropertyList propertyList;
   private MockRepositoryDateTime timeStamp;
 
+  @Override
   public String toString() {
     String displayContent =
       ((content != null) ? (" content:\"" + content + "\" ") : "null");
@@ -102,16 +103,15 @@ public class MockRepositoryEvent {
     this.timeStamp = timeStamp;
   }
 
-  public MockRepositoryEvent(Map params) {
+  public MockRepositoryEvent(Map<String, String> params) {
     String docid = null;
     String tempContent = null;
     String eventTypeTag = null;
     String timeStampStr = null;
-    Map propBag = new HashMap();
-    for (Iterator iter = params.entrySet().iterator(); iter.hasNext(); ) {
-      Map.Entry entry = (Map.Entry) iter.next();
-      String key = (String) entry.getKey();
-      String value = (String) entry.getValue();
+    Map<String, String> propBag = new HashMap<String, String>();
+    for (Map.Entry<String, String> entry : params.entrySet()) {
+      String key = entry.getKey();
+      String value = entry.getValue();
       if ("docid".equals(key)) {
         docid = value;
       } else if ("content".equals(key)) {
@@ -140,11 +140,10 @@ public class MockRepositoryEvent {
       throw new RuntimeException("Event parameters must " +
         "specify a non-zero time stamp");
     }
-    List l = new LinkedList();
-    for (Iterator iter = propBag.entrySet().iterator(); iter.hasNext(); ) {
-      Map.Entry entry = (Map.Entry) iter.next();
-      String key = (String) entry.getKey();
-      String value = (String) entry.getValue();
+    List<MockRepositoryProperty> l = new LinkedList<MockRepositoryProperty>();
+    for (Map.Entry<String, String> entry : propBag.entrySet()) {
+      String key = entry.getKey();
+      String value = entry.getValue();
       l.add(new MockRepositoryProperty(key, value));
     }
     this.type = t;

@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -35,7 +34,6 @@ import javax.jcr.Item;
 import javax.jcr.ItemVisitor;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
@@ -65,31 +63,30 @@ import javax.jcr.version.VersionHistory;
  * </ul>
  */
 public class MockJcrNode implements Node {
-  private static Set propertySkipSet;
+  private static Set<String> propertySkipSet;
 
   private static Logger LOGGER =
     Logger.getLogger(MockJcrNode.class.getName());
 
   static {
-    propertySkipSet = new HashSet();
+    propertySkipSet = new HashSet<String>();
     propertySkipSet.add("acl");
   }
 
   private MockRepositoryDocument doc;
-  private List propList = null;
+  private List<MockJcrProperty> propList = null;
 
-  private Property findProperty(String name) throws RepositoryException {
-    for (Iterator iter = propList.iterator(); iter.hasNext();) {
-      Property p = (Property) iter.next();
-      if (p.getName().equals(name)) {
-        return p;
+  private Property findProperty(String name) {
+    for (MockJcrProperty prop : propList) {
+      if (prop.getName().equals(name)) {
+        return prop;
       }
     }
     return null;
   }
 
   private void init() {
-    propList = new LinkedList();
+    propList = new LinkedList<MockJcrProperty>();
     // Convert the special MockRepositoryDocument schema to a JCR property list
     MockRepositoryProperty p = null;
     // content
@@ -120,8 +117,7 @@ public class MockJcrNode implements Node {
           SpiConstants.GROUP_ROLES_PROPNAME_PREFIX);
     }
     // Now push all the other properties onto the list.
-    for (Iterator iter = doc.getProplist().iterator(); iter.hasNext();) {
-      MockRepositoryProperty prop = (MockRepositoryProperty) iter.next();
+    for (MockRepositoryProperty prop : doc.getProplist()) {
       // Don't pass on the some of the special MockRepoDocument properties so
       // they don't clutter the meta-data.  Shouldn't delete them from the
       // MockRepoDocument because they could be used by the MockRepo.
@@ -149,10 +145,10 @@ public class MockJcrNode implements Node {
    *     roles for a ACL Entry.
    */
   private void addAclProperty(String scopeType,
-      MockRepositoryProperty repoAclProp, List propList, String propName,
-      String rolesPrefix) {
+      MockRepositoryProperty repoAclProp, List<MockJcrProperty> propList,
+      String propName, String rolesPrefix) {
     String[] values = repoAclProp.getValues();
-    List newAclScopes = new ArrayList();
+    List<String> newAclScopes = new ArrayList<String>();
     for (int i = 0; i < values.length; i++) {
       String aclEntry = values[i];
       // Strip the scope type if present and continue to process the entries
@@ -187,31 +183,20 @@ public class MockJcrNode implements Node {
       // Entry.  Add the scope to the list and, if there are roles specified,
       // create an associated "<rolesPrefix><scopeId>" property and add it to
       // the propList.
-      StringBuffer aclScopeId = new StringBuffer("\"").append(scopeId).
-          append("\"");
-      newAclScopes.add(aclScopeId.toString());
+      newAclScopes.add("\"" + scopeId + "\"");
       if (rolesStr != null) {
         // Create a multi-value property for the scope's roles.
-        List rolesList = Arrays.asList(rolesStr.split(",", 0));
-        StringBuffer scopeRolesNameBuf =
-            new StringBuffer(rolesPrefix).
-            append(scopeId);
-        StringBuffer scopeRolesBuf = new StringBuffer("{type:string, value:").
-            append(rolesList.toString()).append("}");
+        List<String> rolesList = Arrays.asList(rolesStr.split(",", 0));
         MockRepositoryProperty newRolesProp = new MockRepositoryProperty(
-            scopeRolesNameBuf.toString(), scopeRolesBuf.toString());
+            rolesPrefix + scopeId,
+            "{type:string, value:" + rolesList.toString() + "}");
         propList.add(new MockJcrProperty(newRolesProp));
       }
     }
 
     if (newAclScopes.size() > 0) {
-      StringBuffer jsonBuf = new StringBuffer();
-      jsonBuf.append("{type:string, value:");
-      jsonBuf.append(newAclScopes.toString());
-      jsonBuf.append("}");
-      String jsonString = jsonBuf.toString();
-      MockRepositoryProperty newAclProp =
-          new MockRepositoryProperty(propName, jsonString);
+      MockRepositoryProperty newAclProp = new MockRepositoryProperty(propName,
+          "{type:string, value:" + newAclScopes.toString() + "}");
       propList.add(new MockJcrProperty(newAclProp));
     }
   }
@@ -221,8 +206,7 @@ public class MockJcrNode implements Node {
     init();
   }
 
-  public Property getProperty(String arg0) throws PathNotFoundException,
-      RepositoryException {
+  public Property getProperty(String arg0) {
     return findProperty(arg0);
   }
 
@@ -239,7 +223,7 @@ public class MockJcrNode implements Node {
     return p.getString();
   }
 
-  public boolean hasProperty(String arg0) throws RepositoryException {
+  public boolean hasProperty(String arg0) {
     Property p = findProperty(arg0);
     return (p != null);
   }

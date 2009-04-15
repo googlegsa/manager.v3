@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,26 +26,24 @@ public class MonitorTest extends TestCase {
   public void testHashMapMonitor() {
     String key = "key";
     String value = "value";
-    Map temp;
+    Map<String, String> temp1 = new TreeMap<String, String>();
     Monitor monitor = new HashMapMonitor();
 
     assertTrue("Variables should be empty.", monitor.getVariables().isEmpty());
 
-    temp = new TreeMap();
-    temp.put(key, value);
-    monitor.setVariables(temp);
+    temp1.put(key, value);
+    monitor.setVariables(temp1);
     assertEquals("One variable should be set.",
       1, monitor.getVariables().size());
 
-    temp = monitor.getVariables();
-    assertEquals("One variable should be set.",
-      1, temp.size());
-    assertTrue("Key should be in variables.", temp.containsKey(key));
-    assertTrue("Value should be in variables.", temp.containsValue(value));
+    Map<String, ? extends Object> temp2 = monitor.getVariables();
+    assertEquals("One variable should be set.", 1, temp2.size());
+    assertTrue("Key should be in variables.", temp2.containsKey(key));
+    assertTrue("Value should be in variables.", temp2.containsValue(value));
 
     boolean exceptionCaught = false;
     try {
-      temp.put(key, value);
+      temp2.put(key, null);
     } catch (UnsupportedOperationException uoe) {
       exceptionCaught = true;
     } finally {

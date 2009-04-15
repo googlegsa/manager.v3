@@ -25,9 +25,11 @@ public class WorkQueueTest extends TestCase {
     public PrintRunnable(String str) {
       this.str = str;
     }
+    @Override
     public void doWork() {
       System.out.println(str);
     }
+    @Override
     public void cancelWork() {
       System.out.println("Cancelled: " + str);
     }
@@ -131,6 +133,7 @@ public class WorkQueueTest extends TestCase {
       this.workInterruptedCount = 0;
     }
 
+    @Override
     public void doWork() {
       long start = System.currentTimeMillis();
       try {
@@ -156,6 +159,7 @@ public class WorkQueueTest extends TestCase {
       }
     }
 
+    @Override
     public void cancelWork() {
       isCancelled = true;
       System.err.println(str + ": ...work has been cancelled...");

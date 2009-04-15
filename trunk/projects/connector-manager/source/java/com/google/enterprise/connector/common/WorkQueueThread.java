@@ -52,6 +52,7 @@ public class WorkQueueThread extends Thread {
     interrupt();
   }
 
+  @Override
   public void run() {
     while (!exit) {
       try {

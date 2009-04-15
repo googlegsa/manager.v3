@@ -41,6 +41,7 @@ public class SetManagerConfigTest extends TestCase {
   private String propFileName;
   private Context context;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     // Make a copy of the properties file first and work from it, so it
@@ -56,6 +57,7 @@ public class SetManagerConfigTest extends TestCase {
     context.setFeeding(false);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     Context.refresh();
     ConnectorTestUtils.deleteFile(propFileName);
@@ -128,8 +130,7 @@ public class SetManagerConfigTest extends TestCase {
     Properties props = loadProperties(propFileName);
     String actualHost = props.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
     int actualPort =
-        Integer.valueOf(props.getProperty(Context.GSA_FEED_PORT_PROPERTY_KEY))
-            .intValue();
+        Integer.valueOf(props.getProperty(Context.GSA_FEED_PORT_PROPERTY_KEY));
     assertEquals(expectedHost, actualHost);
     assertEquals(expectedPort, actualPort);
     String isManagerLocked =

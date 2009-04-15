@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -73,12 +72,12 @@ public class DocPusher implements Pusher {
    * being constructed.  Once sufficient information has been appended to this
    * buffer its contents will be logged and it will be nulled.
    */
-  private ThreadLocal feedLogRecord = new ThreadLocal();
-
-  private static Set propertySkipSet;
+  private ThreadLocal<StringBuffer> feedLogRecord =
+      new ThreadLocal<StringBuffer>();
+  private static Set<String> propertySkipSet;
 
   static {
-    propertySkipSet = new HashSet();
+    propertySkipSet = new HashSet<String>();
     propertySkipSet.add(SpiConstants.PROPNAME_CONTENT);
     propertySkipSet.add(SpiConstants.PROPNAME_DOCID);
   }
@@ -159,8 +158,8 @@ public class DocPusher implements Pusher {
       InputStream[] inputStreams;
       inputStreams = new InputStream[] {prefixStream, is, suffixStream};
 
-      Enumeration inputStreamEnum = Collections.enumeration(Arrays
-          .asList(inputStreams));
+      Enumeration<InputStream> inputStreamEnum = Collections.enumeration(
+          Arrays.asList(inputStreams));
       result = new SequenceInputStream(inputStreamEnum);
     } catch (UnsupportedEncodingException e) {
       LOGGER.log(Level.SEVERE, "Encoding error.", e);
@@ -253,11 +252,11 @@ public class DocPusher implements Pusher {
     }
 
     if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-      ((StringBuffer) feedLogRecord.get()).append(prefix);
+      feedLogRecord.get().append(prefix);
       if (contentAllowed && content != null) {
-        ((StringBuffer) feedLogRecord.get()).append("...content...");
+        feedLogRecord.get().append("...content...");
       }
-      ((StringBuffer) feedLogRecord.get()).append(suffix);
+      feedLogRecord.get().append(suffix);
     }
 
     return is;
@@ -272,7 +271,7 @@ public class DocPusher implements Pusher {
    */
   private static void xmlWrapMetadata(StringBuffer buf, Document document)
       throws RepositoryException {
-    Set propertyNames = document.getPropertyNames();
+    Set<String> propertyNames = document.getPropertyNames();
     if (propertyNames == null) {
       LOGGER.log(Level.WARNING, "Property names set is empty");
       return;
@@ -284,9 +283,8 @@ public class DocPusher implements Pusher {
     buf.append(XmlUtils.xmlWrapStart(XML_METADATA));
     buf.append("\n");
 
-    for (Iterator iter = propertyNames.iterator(); iter.hasNext();) {
+    for (String name : propertyNames) {
       Property property = null;
-      String name = (String) iter.next();
       if (propertySkipSet.contains(name) ||
           name.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX) ||
           name.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX)) {
@@ -319,17 +317,17 @@ public class DocPusher implements Pusher {
    * </pre>
    *
    * @param aclPropName the name of the property being processed.  Should be one
-   *    of {@link SpiConstants#PROPNAME_ACLGROUPS} or
-   *    {@link SpiConstants#PROPNAME_ACLUSERS}.
+   *        of {@link SpiConstants#PROPNAME_ACLGROUPS} or
+   *        {@link SpiConstants#PROPNAME_ACLUSERS}.
    * @param document the document being processed.
    * @return either the original property if no conversion was necessary or a
-   *    new converted property containing ACL Entries.
+   *         new converted property containing ACL Entries.
    * @throws RepositoryException if there was a problem extracting properties.
    */
   private static Property processAclProperty(String aclPropName,
       Document document) throws RepositoryException {
     Property scopeProp = document.findProperty(aclPropName);
-    List aclEntryList = new ArrayList();
+    List<Value> aclEntryList = new ArrayList<Value>();
     boolean aclPropWasModified = false;
     Value scopeVal = null;
     while ((scopeVal = scopeProp.nextValue()) != null) {
@@ -421,7 +419,7 @@ public class DocPusher implements Pusher {
    */
   private static String getCalendarAndThrow(Document document, String name)
       throws IllegalArgumentException, RepositoryException {
-    String result = null;
+    String result;
     ValueImpl v = getValueAndThrow(document, name);
     if (v == null) {
       result = null;
@@ -615,7 +613,7 @@ public class DocPusher implements Pusher {
 
     if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
       feedLogRecord.set(new StringBuffer());
-      ((StringBuffer) feedLogRecord.get()).append(prefix);
+      feedLogRecord.get().append(prefix);
     }
 
     InputStream recordInputStream = xmlWrapRecord(searchurl, displayUrl,
@@ -626,9 +624,9 @@ public class DocPusher implements Pusher {
         recordInputStream, suffix.toString());
 
     if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-      ((StringBuffer) feedLogRecord.get()).append(suffix);
+      feedLogRecord.get().append(suffix);
       FEED_LOGGER.log(FEED_LOG_LEVEL,
-          ((StringBuffer) feedLogRecord.get()).toString());
+          feedLogRecord.get().toString());
       feedLogRecord.set(null);
     }
 
@@ -713,6 +711,7 @@ public class DocPusher implements Pusher {
       this.out = out;
     }
 
+    @Override
     public int read() throws IOException {
       int retval = super.read();
       if (retval != -1) {
@@ -721,6 +720,7 @@ public class DocPusher implements Pusher {
       return retval;
     }
 
+    @Override
     public int read(byte[] b, int off, int len) throws IOException {
       int retval = super.read(b, off, len);
       if (retval != -1) {
@@ -785,8 +785,8 @@ public class DocPusher implements Pusher {
       if (!gsaResponse.equals(GsaFeedConnection.SUCCESS_RESPONSE)) {
         String eMessage = gsaResponse;
         if (GsaFeedConnection.UNAUTHORIZED_RESPONSE.equals(gsaResponse)) {
-          eMessage += ": Client is not authorized to send feeds."
-              + " Make sure the GSA is configured to trust feeds from your host.";
+          eMessage += ": Client is not authorized to send feeds. Make "
+              + "sure the GSA is configured to trust feeds from your host.";
         } else if (GsaFeedConnection.INTERNAL_ERROR_RESPONSE.equals(gsaResponse)) {
           eMessage += ": Check GSA status or feed format.";
         }

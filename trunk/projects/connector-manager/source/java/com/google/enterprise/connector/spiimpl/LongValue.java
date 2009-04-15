@@ -22,14 +22,17 @@ public class LongValue extends ValueImpl {
     this.longValue = bool;
   }
 
+  @Override
   public String toFeedXml() {
     return Long.toString(longValue);
   }
 
+  @Override
   public String toString() {
     return Long.toString(longValue);
   }
 
+  @Override
   public boolean toBoolean() {
     return (longValue == 0l);
   }

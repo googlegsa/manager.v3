@@ -76,7 +76,7 @@ public class SimpleConnectorTypeTest extends TestCase {
       simpleConnectorType.setConfigKeys(new String[] {"user", "password"});
       JSONObject jo = new JSONObject(
           "{user:max, dog:snickers, destination:heaven}");
-      Map map = new JsonObjectAsMap(jo);
+      Map<String, String> map = new JsonObjectAsMap(jo);
       ConfigureResponse configureResponse = simpleConnectorType.validateConfig(
           map, null, null);
       String configForm = configureResponse.getFormSnippet();
@@ -100,7 +100,7 @@ public class SimpleConnectorTypeTest extends TestCase {
       SimpleConnectorType simpleConnectorType = new SimpleConnectorType();
       simpleConnectorType.setConfigKeys(new String[] {"user", "password"});
       JSONObject jo = new JSONObject("{user:max, password:xyzzy, dog:snickers}");
-      Map map = new JsonObjectAsMap(jo);
+      Map<String, String> map = new JsonObjectAsMap(jo);
       ConfigureResponse configureResponse = simpleConnectorType.validateConfig(
           map, null, null);
       Assert.assertNull(configureResponse);
@@ -110,7 +110,7 @@ public class SimpleConnectorTypeTest extends TestCase {
       TestConnectorType testConnectorType = new TestConnectorType();
       testConnectorType.setConfigKeys(new String[] {"user", "password"});
       JSONObject jo = new JSONObject("{user:max, password:xyzzy}");
-      Map map = new JsonObjectAsMap(jo);
+      Map<String, String> map = new JsonObjectAsMap(jo);
       ConfigureResponse configureResponse = testConnectorType.validateConfig(
           map, null, null);
       String configForm = configureResponse.getFormSnippet();
@@ -140,7 +140,8 @@ public class SimpleConnectorTypeTest extends TestCase {
     {
       SimpleConnectorType simpleConnectorType = new SimpleConnectorType();
       simpleConnectorType.setConfigKeys(new String[] {"user", "password"});
-      Map map = new JsonObjectAsMap(new JSONObject("{user:max, password:foo}"));
+      Map<String, String> map =
+          new JsonObjectAsMap(new JSONObject("{user:max, password:foo}"));
       ConfigureResponse configureResponse = simpleConnectorType
           .getPopulatedConfigForm(map, null);
       String configForm = configureResponse.getFormSnippet();
@@ -154,10 +155,12 @@ public class SimpleConnectorTypeTest extends TestCase {
       Assert.assertTrue(message.length() == 0);
     }
   }
+
   private static class TestConnectorType extends SimpleConnectorType {
     public TestConnectorType() {
       super();
     }
+    @Override
     public boolean validateConfigPair(String key, String val) {
       if (!super.validateConfigPair(key, val)) {
         return false;

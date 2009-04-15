@@ -28,12 +28,14 @@ public class CryptoTest extends TestCase {
   /*
    * Create a file with a passwd in it
    */
+  @Override
   protected void setUp() throws Exception {
     FileWriter fw = new FileWriter(keyStorePasswdPath);
     fw.write("dummy password");
     fw.close();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     File keyStoreFile = new File(
         EncryptedPropertyPlaceholderConfigurer.getKeyStorePath());

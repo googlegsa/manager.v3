@@ -25,11 +25,11 @@ public class ConfigureResponse {
 
   private final String message;
   private final String formSnippet;
-  private final Map configData;
+  private final Map<String, String> configData;
 
   /**
    * Simple constructor.
-   * 
+   *
    * @param message A message to be included to the user along with the form.
    *        This message may be null or empty - no distinction is made between
    *        those cases. The message should be plain text - may not contain
@@ -69,7 +69,8 @@ public class ConfigureResponse {
    *          configuration data.  If supplied, where appropriate, the Connector
    *          Manager will use this data.
    */
-  public ConfigureResponse(String message, String formSnippet, Map configData) {
+  public ConfigureResponse(String message, String formSnippet,
+                           Map<String, String> configData) {
     super();
     this.message = message;
     this.formSnippet = formSnippet;
@@ -99,8 +100,7 @@ public class ConfigureResponse {
    *
    * @return the config data - may be null or empty
    */
-  public Map getConfigData() {
+  public Map<String, String> getConfigData() {
     return configData;
   }
-
 }

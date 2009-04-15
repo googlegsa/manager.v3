@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@ package com.google.enterprise.connector.monitor;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Implements the Monitor interface using a Properties object.  This class is
@@ -26,17 +24,17 @@ import java.util.Set;
  */
 public class HashMapMonitor implements Monitor {
 
-  private Map vars;
+  private Map<String, Object> vars;
 
   public HashMapMonitor() {
-    vars = new HashMap();
+    vars = new HashMap<String, Object>();
   }
 
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.monitor.Monitor#getVariables()
    * @return a read-only Map of the variables
    */
-  public Map getVariables() {
+  public Map<String, ?> getVariables() {
     synchronized (vars) {
       return Collections.unmodifiableMap(vars);
     }
@@ -45,14 +43,10 @@ public class HashMapMonitor implements Monitor {
   /* (non-Javadoc)
    * @see com.google.enterprise.connector.monitor.Monitor#setVariables(java.util.Map)
    */
-  public void setVariables(Map props) {
-    Set entrySet = props.entrySet();
-    Iterator iter = entrySet.iterator();
+  public void setVariables(Map<String, ?> props) {
     synchronized (vars) {
-      while (iter.hasNext()) {
-        Map.Entry entry = (Map.Entry) iter.next();
-        String key = (String) entry.getKey();
-        Object value = entry.getValue();
+      for (String key : props.keySet()) {
+        Object value = props.get(key);
         if (null == value) {
           vars.remove(key);
         } else {
@@ -61,5 +55,4 @@ public class HashMapMonitor implements Monitor {
       }
     }
   }
-
 }

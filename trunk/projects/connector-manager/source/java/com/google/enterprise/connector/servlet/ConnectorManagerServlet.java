@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.google.enterprise.connector.manager.Manager;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -56,8 +57,8 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
+  @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     doPost(req, res);
@@ -69,16 +70,16 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
    * @param req
    * @param res
    * @throws IOException
-   *
    */
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
-    for (java.util.Enumeration headerNames = req.getHeaderNames(); headerNames.hasMoreElements(); ) {
+    Enumeration<?> headerNames = req.getHeaderNames();
+    while (headerNames.hasMoreElements()) {
       String name = (String) headerNames.nextElement();
       LOGGER.log(Level.INFO, "HEADER " + name + ": " + req.getHeader(name));
     }
     BufferedReader reader = req.getReader();
-//     BufferedReader reader = new BufferedReader(new java.io.InputStreamReader(req.getInputStream(), "UTF-8"));
     res.setContentType(ServletUtil.MIMETYPE_XML);
     res.setCharacterEncoding("UTF-8");
     PrintWriter out = res.getWriter();
@@ -96,5 +97,4 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
     processDoPost(xmlBody, manager, out);
     out.close();
   }
-
 }

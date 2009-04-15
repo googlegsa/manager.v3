@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,20 +29,22 @@ import java.util.Map;
  * <p>
  * This models the metadata-list for a document.
  */
-public class MockRepositoryPropertyList {
-  private Map proplist;
+public class MockRepositoryPropertyList
+    implements Iterable<MockRepositoryProperty> {
 
+  private Map<String, MockRepositoryProperty> proplist;
+
+  @Override
   public String toString() {
     return proplist.toString();
   }
 
-  private void init(List l) {
-    proplist = new HashMap();
+  private void init(List<MockRepositoryProperty> l) {
+    proplist = new HashMap<String, MockRepositoryProperty>();
     if (l == null) {
       return;
     }
-    for (Iterator iter = l.iterator(); iter.hasNext(); ) {
-      MockRepositoryProperty p = (MockRepositoryProperty) iter.next();
+    for (MockRepositoryProperty p : l) {
       proplist.put(p.getName(), p);
     }
   }
@@ -55,13 +57,13 @@ public class MockRepositoryPropertyList {
     init(Arrays.asList(l));
   }
 
-  public MockRepositoryPropertyList(List l) {
+  public MockRepositoryPropertyList(List<MockRepositoryProperty> l) {
     init(l);
   }
 
   public MockRepositoryPropertyList(JSONObject jo) {
-    List l = new LinkedList();
-    for (Iterator keys = jo.keys(); keys.hasNext(); ) {
+    List<MockRepositoryProperty> l = new LinkedList<MockRepositoryProperty>();
+    for (Iterator<?> keys = jo.keys(); keys.hasNext(); ) {
       String name = (String) keys.next();
       Object value;
       try {
@@ -89,18 +91,18 @@ public class MockRepositoryPropertyList {
   }
 
   public String lookupStringValue(String name) {
-    MockRepositoryProperty p = (MockRepositoryProperty) proplist.get(name);
+    MockRepositoryProperty p = proplist.get(name);
     if (p == null) {
       return null;
     }
     return p.getValue();
   }
 
-  public Iterator iterator() {
+  public Iterator<MockRepositoryProperty> iterator() {
     return proplist.values().iterator();
   }
 
   public MockRepositoryProperty getProperty(String name) {
-    return (MockRepositoryProperty) proplist.get(name);
+    return proplist.get(name);
   }
 }

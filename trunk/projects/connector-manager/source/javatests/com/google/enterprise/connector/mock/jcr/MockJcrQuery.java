@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.mock.jcr;
 
 import com.google.enterprise.connector.mock.MockRepositoryDateTime;
+import com.google.enterprise.connector.mock.MockRepositoryDocument;
 import com.google.enterprise.connector.mock.MockRepositoryDocumentStore;
 
 import java.util.List;
@@ -38,7 +39,7 @@ public class MockJcrQuery implements Query {
   MockRepositoryDocumentStore store;
   String statement = null;
 
-  List internalQuery;
+  List<MockRepositoryDocument> internalQuery;
 
   /**
    * Creates a MockJcrQuery object from a date range.  This is intended to be

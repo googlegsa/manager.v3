@@ -19,7 +19,6 @@ import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -32,7 +31,8 @@ public class TestListener implements ApplicationListener {
       Logger.getLogger(TestListener.class.getName());
 
   private String listenerName = "TestListener";
-  private List eventQueue = new ArrayList();
+  private List<ApplicationEvent> eventQueue =
+      new ArrayList<ApplicationEvent>();
 
   public String getListenerName() {
     return listenerName;
@@ -60,11 +60,11 @@ public class TestListener implements ApplicationListener {
    *
    * @return a List containing all the current events in the event queue.
    */
-  public List pullEventsFromQueue() {
-    List result = new ArrayList();
+  public List<ApplicationEvent> pullEventsFromQueue() {
+    List<ApplicationEvent> result = new ArrayList<ApplicationEvent>();
     synchronized (eventQueue) {
-      for (Iterator iter = eventQueue.iterator(); iter.hasNext(); ) {
-        result.add(iter.next());
+      for (ApplicationEvent event : eventQueue) {
+        result.add(event);
       }
       eventQueue.clear();
     }

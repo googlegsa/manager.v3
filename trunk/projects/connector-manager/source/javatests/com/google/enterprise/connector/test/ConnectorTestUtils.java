@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -74,7 +73,7 @@ public class ConnectorTestUtils {
    * @return The contents of the reader (skipping comments)
    */
   public static String streamToString(BufferedReader br) {
-    StringBuffer b = new StringBuffer(1024);
+    StringBuilder b = new StringBuilder(1024);
     String line;
     try {
       while ((line = br.readLine()) != null) {
@@ -93,7 +92,7 @@ public class ConnectorTestUtils {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    return new String(b);
+    return b.toString();
   }
 
   /**
@@ -176,15 +175,15 @@ public class ConnectorTestUtils {
    * @param map1 a Map that should be a subset of map2
    * @param map2 a Map that should be a superset of map1
    */
-  public static void compareMaps(Map map1, Map map2) {
-    Set set1 = map1.keySet();
-    Set set2 = map2.keySet();
+  public static void compareMaps(Map<Object, Object> map1,
+      Map<Object, Object> map2) {
+    Set<Object> set1 = map1.keySet();
+    Set<Object> set2 = map2.keySet();
     Assert.assertTrue("there is a key in map1 that's not in map2",
         set2.containsAll(set1));
 
-    for (Iterator i = set1.iterator(); i.hasNext();) {
-      Object next = i.next();
-      Assert.assertEquals(map1.get(next), map2.get(next));
+    for (Object key : set1) {
+      Assert.assertEquals(map1.get(key), map2.get(key));
     }
   }
 

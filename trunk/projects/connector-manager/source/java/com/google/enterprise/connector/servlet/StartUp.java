@@ -36,6 +36,7 @@ public class StartUp extends HttpServlet {
   private static final Logger LOGGER =
       Logger.getLogger(StartUp.class.getName());
 
+  @Override
   public void init() {
     LOGGER.info("init");
     ServletContext servletContext = this.getServletContext();
@@ -43,16 +44,19 @@ public class StartUp extends HttpServlet {
     LOGGER.info("init done");
   }
 
+  @Override
   public void destroy() {
     LOGGER.info("destroy");
     Context.getInstance().shutdown(true);
   }
 
+  @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     doPost(req, res);
   }
 
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     ServletContext servletContext = this.getServletContext();

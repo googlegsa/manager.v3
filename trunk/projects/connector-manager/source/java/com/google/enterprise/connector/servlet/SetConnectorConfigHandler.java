@@ -41,7 +41,7 @@ public class SetConnectorConfigHandler {
   private String connectorName;
   private String connectorType;
   private boolean update = false;
-  private Map configData;
+  private Map<String, String> configData;
   private ConfigureResponse configRes;
 
   /*
@@ -88,7 +88,8 @@ public class SetConnectorConfigHandler {
     }
     if (update) {
       try {
-        Map previousConfigData = manager.getConnectorConfig(connectorName);
+        Map<String, String> previousConfigData =
+            manager.getConnectorConfig(connectorName);
         ServletUtil.replaceSensitiveData(configData, previousConfigData);
       } catch (ConnectorNotFoundException unexpected) {
         // Trying to update a connector that is not currently known to the
@@ -126,7 +127,7 @@ public class SetConnectorConfigHandler {
     return status;
   }
 
-  public Map getConfigData() {
+  public Map<String, String> getConfigData() {
     return configData;
   }
 

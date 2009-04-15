@@ -31,6 +31,7 @@ public class TypeMapTest extends TestCase {
   private static final String TEST_DIR_NAME = "testdata/tempTypeMapTests";
   private File baseDirectory;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     // Make sure that the test directory does not exist
@@ -40,6 +41,7 @@ public class TypeMapTest extends TestCase {
     Assert.assertTrue(baseDirectory.mkdirs());
   }
 
+  @Override
   protected void tearDown() throws Exception {
     Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
     super.tearDown();

@@ -35,7 +35,6 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -315,10 +314,10 @@ public class ServletUtil {
    * @param elem Element The parent XML element
    * @param name String name of the child text element
    * @return attribute name and value map of named child element
-   *
    */
-  public static Map getAllAttributes(Element elem, String name) {
-    Map attributes = new TreeMap();
+  public static Map<String, String> getAllAttributes(Element elem,
+                                                     String name) {
+    Map<String, String>attributes = new TreeMap<String, String>();
     NodeList nodeList = elem.getElementsByTagName(name);
     int length = nodeList.getLength();
     for (int n = 0; n < length; ++n) {
@@ -357,9 +356,10 @@ public class ServletUtil {
    * @param name the given name of searched child elements
    * @return a list of values of those child text elements
    */
-  public static List getAllElementsByTagName(Element elem, String name) {
+  public static List<String> getAllElementsByTagName(Element elem, String name)
+  {
     NodeList nodeList = elem.getElementsByTagName(name);
-    List result = new ArrayList();
+    List<String> result = new ArrayList<String>();
     for (int i = 0; i < nodeList.getLength(); ++i) {
       NodeList children = nodeList.item(i).getChildNodes();
       if (children.getLength() == 0 ||
@@ -376,7 +376,6 @@ public class ServletUtil {
    *
    * @param out where PrintWriter to be written to
    * @param statusId int
-   *
    */
   public static void writeResponse(PrintWriter out, int statusId) {
     writeRootTag(out, false);
@@ -389,7 +388,6 @@ public class ServletUtil {
    *
    * @param out where PrintWriter to be written to
    * @param status ConnectorMessageCode
-   *
    */
   public static void writeResponse(PrintWriter out,
                                    ConnectorMessageCode status) {
@@ -403,7 +401,6 @@ public class ServletUtil {
    *
    * @param out where PrintWriter to be written to
    * @param endingTag boolean true if it is the ending tag
-   *
    */
   public static void writeRootTag(PrintWriter out, boolean endingTag) {
     writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, endingTag);
@@ -437,7 +434,6 @@ public class ServletUtil {
    *
    * @param out where PrintWriter to be written to
    * @param statusId int
-   *
    */
   public static void writeStatusId(PrintWriter out,
                                    int statusId) {
@@ -450,7 +446,6 @@ public class ServletUtil {
    *
    * @param out where PrintWriter to be written to
    * @param status ConnectorMessageCode
-   *
    */
   public static void writeMessageCode(PrintWriter out,
                                       ConnectorMessageCode status) {
@@ -493,14 +488,14 @@ public class ServletUtil {
   }
 
   /**
-   * Write a name value pair as an XML element to a StringBuffer.
+   * Write a name value pair as an XML element to a StringBuilder.
    *
-   * @param out where StringBuffer to be written to
+   * @param out where StringBuilder to be written to
    * @param indentLevel the depth of indentation.
    * @param elemName element name
    * @param elemValue element value
    */
-  public static void writeXMLElement(StringBuffer out, int indentLevel,
+  public static void writeXMLElement(StringBuilder out, int indentLevel,
                                      String elemName, String elemValue) {
     out.append(indentStr(indentLevel)).append("<").append(elemName).append(">");
     out.append(elemValue).append("</").append(elemName).append(">");
@@ -535,15 +530,15 @@ public class ServletUtil {
   }
 
   /**
-   * Write an XML tag with attributes out to a StringBuffer.
+   * Write an XML tag with attributes out to a StringBuilder.
    *
-   * @param out where StringBuffer to be written to
+   * @param out where StringBuilder to be written to
    * @param indentLevel the depth of indentation.
    * @param elemName element name
    * @param attributes attributes
    * @param closeTag if true, close the tag with '/>'
    */
-  public static void writeXMLTagWithAttrs(StringBuffer out, int indentLevel,
+  public static void writeXMLTagWithAttrs(StringBuilder out, int indentLevel,
       String elemName, String attributes, boolean closeTag) {
     out.append(indentStr(indentLevel)).append("<").append(elemName);
     out.append(" ").append(attributes).append((closeTag)? "/>" : ">");
@@ -555,7 +550,7 @@ public class ServletUtil {
    * @param indentLevel the depth of indentation
    * @param tagName String name of the XML tag to be added
    * @param endingTag String write a beginning tag if true or
-   * an ending tag if false
+   *        an ending tag if false
    */
   public static void writeXMLTag(PrintWriter out, int indentLevel,
                                  String tagName, boolean endingTag) {
@@ -563,15 +558,15 @@ public class ServletUtil {
         + (endingTag ? "</" : "<") + (tagName) + ">");
   }
 
-  /** Write an XML tag to a StringBuffer
+  /** Write an XML tag to a StringBuilder
    *
-   * @param out where StringBuffer to be written to
+   * @param out where StringBuilder to be written to
    * @param indentLevel the depth of indentation
    * @param tagName String name of the XML tag to be added
    * @param endingTag String write a beginning tag if true or
-   * an ending tag if false
+   *        an ending tag if false
    */
-  public static void writeXMLTag(StringBuffer out, int indentLevel,
+  public static void writeXMLTag(StringBuilder out, int indentLevel,
                                  String tagName, boolean endingTag) {
     out.append(indentStr(indentLevel)).append(endingTag ? "</" : "<");
     out.append(tagName).append(">");
@@ -648,7 +643,7 @@ public class ServletUtil {
    * This writes an XML stream to the response output that describes
    * most of the data received in the request structure.  It returns
    * true, so that you may call it from doGet() like:
-   *   if (dumpServletRequest(req, res)) return;
+   * <code>  if (dumpServletRequest(req, res)) return;</code>
    * without javac complaining about unreachable code with a straight
    * return.
    *
@@ -675,9 +670,9 @@ public class ServletUtil {
                                 req.getRequestURL().toString());
     ServletUtil.writeXMLElement(out, 3, "ServletPath", req.getServletPath());
     ServletUtil.writeXMLTag(out, 3, "Headers", false);
-    for (Enumeration names = req.getHeaderNames(); names.hasMoreElements(); ) {
+    for (Enumeration<?> names = req.getHeaderNames(); names.hasMoreElements(); ) {
       String name = (String)(names.nextElement());
-      for (Enumeration e = req.getHeaders(name); e.hasMoreElements(); )
+      for (Enumeration<?> e = req.getHeaders(name); e.hasMoreElements(); )
         ServletUtil.writeXMLElement(out, 4, name, (String)(e.nextElement()));
     }
     ServletUtil.writeXMLTag(out, 3, "Headers", true);
@@ -690,7 +685,7 @@ public class ServletUtil {
                                 String.valueOf(req.getServerPort()));
     ServletUtil.writeXMLElement(out, 3, "RemoteAddr", req.getRemoteAddr());
     ServletUtil.writeXMLElement(out, 3, "RemoteHost", req.getRemoteHost());
-    Enumeration names;
+    Enumeration<?> names;
     ServletUtil.writeXMLTag(out, 3, "Attributes", false);
     for (names = req.getAttributeNames(); names.hasMoreElements(); ) {
       String name = (String)(names.nextElement());
@@ -884,16 +879,15 @@ public class ServletUtil {
    * @param previousConfigData the current or previous set of properties that
    *        have all the values in the clear.
    */
-  public static void replaceSensitiveData(Map configData,
-      Map previousConfigData) {
-    for (Iterator iter = configData.keySet().iterator(); iter.hasNext(); ) {
-      String key = (String) iter.next();
+  public static void replaceSensitiveData(Map<String, String> configData,
+      Map<String, String>  previousConfigData) {
+    for (String key : configData.keySet()) {
       // Revert if the key is sensitive and the string is still obfuscated and
       // hasn't changed in length.
       if (SecurityUtils.isKeySensitive(key) &&
-          isObfuscated((String) configData.get(key)) &&
-          ((String) configData.get(key)).length() ==
-              ((String) previousConfigData.get(key)).length()) {
+          isObfuscated(configData.get(key)) &&
+          (configData.get(key).length() ==
+              previousConfigData.get(key).length())) {
         configData.put(key, previousConfigData.get(key));
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2007-2008 Google Inc.
+// Copyright 2007-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 package com.google.enterprise.connector.spi;
 
 /**
- * The carrier type of the list returned by the {@link AuthorizationManager}.authorizeDocids
- * method.
+ * The carrier type of the list returned by the
+ * {@link AuthorizationManager}.authorizeDocids method.
  */
 public class AuthorizationResponse {
 
@@ -61,6 +61,7 @@ public class AuthorizationResponse {
    *
    * @return a hash code value for this object.
    */
+  @Override
   public int hashCode() {
     return docid.hashCode() + (valid ? 547 : 271);
   }
@@ -72,6 +73,7 @@ public class AuthorizationResponse {
    * @return true if this object is the same as the obj argument; false
    *         otherwise.
    */
+  @Override
   public boolean equals(Object obj) {
     if (obj == this) {
       return true;

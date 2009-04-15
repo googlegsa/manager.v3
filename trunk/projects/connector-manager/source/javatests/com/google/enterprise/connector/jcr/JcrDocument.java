@@ -21,7 +21,6 @@ import com.google.enterprise.connector.spi.SpiConstants;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -32,19 +31,19 @@ import javax.jcr.PropertyIterator;
 public class JcrDocument implements Document {
 
   private javax.jcr.Node node;
-  private static Map aliasMap;
-  private Map aliasedPropertyNames = null;
+  private static Map<String, String> aliasMap;
+  private Map<String, String> aliasedPropertyNames = null;
   private Property property;
 
   static {
-    aliasMap = new HashMap();
+    aliasMap = new HashMap<String, String>();
     aliasMap.put(SpiConstants.PROPNAME_DOCID, "jcr:uuid");
     aliasMap.put(SpiConstants.PROPNAME_CONTENT, "jcr:content");
     aliasMap.put(SpiConstants.PROPNAME_LASTMODIFIED, "jcr:lastModified");
   }
 
-  private Set getOriginalPropertyNames() throws RepositoryException {
-    Set originalNames = new HashSet();
+  private Set<String> getOriginalPropertyNames() throws RepositoryException {
+    Set<String> originalNames = new HashSet<String>();
     final PropertyIterator propertyIterator = getJCRProperties();
     while (propertyIterator.hasNext()) {
       try {
@@ -71,13 +70,12 @@ public class JcrDocument implements Document {
     if (aliasedPropertyNames != null) {
       return;
     }
-    aliasedPropertyNames = new TreeMap();
-    Set originalNames = getOriginalPropertyNames();
+    aliasedPropertyNames = new TreeMap<String, String>();
+    Set<String> originalNames = getOriginalPropertyNames();
     // set up aliases for the aliased names that actually appear in this node
-    for (Iterator i = aliasMap.entrySet().iterator(); i.hasNext();) {
-      Entry e = (Entry) i.next();
-      String alias = (String) e.getKey();
-      String name = (String) e.getValue();
+    for (Entry<String, String> e : aliasMap.entrySet()) {
+      String alias = e.getKey();
+      String name = e.getValue();
       if (originalNames.contains(alias)) {
         // this one is explicitly supplied - we ignore the default
         aliasedPropertyNames.put(alias, alias);
@@ -94,8 +92,7 @@ public class JcrDocument implements Document {
     // value, if they have the same name. For example, if a node has both
     // "google:docid" (PROPNAME_DOCID) and "jcr:uuid" (normal jcr id) then
     // the explicitly supplied "google:docid" beats out the aliased
-    for (Iterator i = originalNames.iterator(); i.hasNext();) {
-      String name = (String) i.next();
+    for (String name : originalNames) {
       aliasedPropertyNames.put(name, name);
     }
   }
@@ -108,7 +105,7 @@ public class JcrDocument implements Document {
   public Property findProperty(String name) throws RepositoryException {
     setupAliases();
     // first, we check whether there is a JCR property with this name
-    String originalName = (String) aliasedPropertyNames.get(name);
+    String originalName = aliasedPropertyNames.get(name);
     if (originalName == null) {
       return null;
     }
@@ -131,9 +128,8 @@ public class JcrDocument implements Document {
     return property;
   }
 
-  public Set getPropertyNames() throws RepositoryException {
+  public Set<String> getPropertyNames() throws RepositoryException {
     setupAliases();
     return aliasedPropertyNames.keySet();
   }
-
 }

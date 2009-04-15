@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 
@@ -46,6 +45,7 @@ public class InstantiatorTest extends TestCase {
   private File baseDirectory;
   private Instantiator instantiator;
 
+  @Override
   protected void setUp() throws Exception {
     // Make sure that the test directory does not exist
     baseDirectory = new File(TEST_DIR_NAME);
@@ -58,6 +58,7 @@ public class InstantiatorTest extends TestCase {
     assertEquals(0, connectorCount());
   }
 
+  @Override
   protected void tearDown() throws Exception {
     assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
   }
@@ -243,6 +244,7 @@ public class InstantiatorTest extends TestCase {
 
   private class Issue63ChildThread extends Thread {
     public volatile boolean didFinish = false;
+    @Override
     public void run() {
       try {
         Traverser oldTraverser, newTraverser;
@@ -325,12 +327,7 @@ public class InstantiatorTest extends TestCase {
    * Returns the count of connectors in the InstanceMap.
    */
   private int connectorCount() {
-    Iterator iter = instantiator.getConnectorNames();
-    int count;
-    for (count = 0; iter.hasNext(); iter.next()) {
-      count++;
-    }
-    return count;
+    return instantiator.getConnectorNames().size();
   }
 
   /*
@@ -338,9 +335,8 @@ public class InstantiatorTest extends TestCase {
    * false otherwise.
    */
   private boolean connectorExists(String connectorName) {
-    Iterator iter = instantiator.getConnectorNames();
-    while (iter.hasNext()) {
-      if (connectorName.equals(iter.next()))
+    for (String name : instantiator.getConnectorNames()) {
+      if (connectorName.equalsIgnoreCase(name))
         return true;
     }
     return false;
@@ -355,7 +351,7 @@ public class InstantiatorTest extends TestCase {
     if (update)
       oldTraverser = instantiator.getTraverser(name);
 
-    Map config = new JsonObjectAsMap(new JSONObject(jsonConfigString));
+    Map<String, String> config = new JsonObjectAsMap(new JSONObject(jsonConfigString));
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
     instantiator.setConnectorConfig(name, typeName, config, locale, update);
 
@@ -380,9 +376,9 @@ public class InstantiatorTest extends TestCase {
       assertNotSame(oldTraverser, traverser);
 
     // the password will be decrypted in the InstanceInfo
-    Map instanceProps = instantiator.getConnectorConfig(name);
-    String instancePasswd = (String) instanceProps.get("Password");
-    String plainPasswd = (String) config.get("Password");
+    Map<String, String> instanceProps = instantiator.getConnectorConfig(name);
+    String instancePasswd = instanceProps.get("Password");
+    String plainPasswd = config.get("Password");
     assertEquals(instancePasswd, plainPasswd);
   }
 }

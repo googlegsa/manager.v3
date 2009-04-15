@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc.
+// Copyright 2007-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@ import java.util.List;
 
 public class SimpleProperty implements Property {
 
-  Iterator iterator;
+  Iterator<Value> iterator;
 
-  public SimpleProperty(List values) {
+  public SimpleProperty(List<Value> values) {
     this.iterator = values.iterator();
   }
 
   public Value nextValue() {
-    return (iterator.hasNext()) ? (Value) iterator.next() : null;
+    return (iterator.hasNext()) ? iterator.next() : null;
   }
 }
