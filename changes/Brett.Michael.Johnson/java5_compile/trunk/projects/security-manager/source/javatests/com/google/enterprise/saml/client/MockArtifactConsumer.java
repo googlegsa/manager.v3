@@ -15,6 +15,7 @@
 package com.google.enterprise.saml.client;
 
 import com.google.enterprise.common.GettableHttpServlet;
+import com.google.enterprise.common.HttpClientAdapter;
 import com.google.enterprise.common.HttpClientInterface;
 import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.saml.common.HttpExchangeToInTransport;
@@ -49,6 +50,7 @@ import javax.servlet.http.HttpSession;
 
 import static com.google.enterprise.saml.common.GsaConstants.GSA_ARTIFACT_PARAM_NAME;
 import static com.google.enterprise.saml.common.GsaConstants.GSA_RELAY_STATE_PARAM_NAME;
+import static com.google.enterprise.saml.common.GsaConstants.GSA_TESTING_ISSUER;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResolve;
@@ -76,6 +78,9 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
   private HttpClientInterface httpClient;
 
   public HttpClientInterface getHttpClient() {
+    if (httpClient == null) {
+      httpClient = new HttpClientAdapter();
+    }
     return httpClient;
   }
 
@@ -125,7 +130,7 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
     SAMLMessageContext<ArtifactResponse, ArtifactResolve, NameID> context =
         makeSamlMessageContext();
 
-    EntityDescriptor localEntity = getSpEntity();
+    EntityDescriptor localEntity = getEntity(GSA_TESTING_ISSUER);
     initializeLocalEntity(context, localEntity, localEntity.getSPSSODescriptor(SAML20P_NS),
                           Endpoint.DEFAULT_ELEMENT_NAME);
     {
@@ -147,7 +152,7 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
 
     // Encode the request
     HttpExchange exchange =
-        httpClient.postExchange(new URL(context.getPeerEntityEndpoint().getLocation()), null);
+        getHttpClient().postExchange(new URL(context.getPeerEntityEndpoint().getLocation()), null);
     HttpExchangeToOutTransport out = new HttpExchangeToOutTransport(exchange);
     context.setOutboundMessageTransport(out);
     runEncoder(new HTTPSOAP11Encoder(), context);

@@ -314,10 +314,9 @@ public class ServletUtil {
    * @param elem Element The parent XML element
    * @param name String name of the child text element
    * @return attribute name and value map of named child element
-   *
    */
-  public static Map<String, String> getAllAttributes(Element elem, String name)
-  {
+  public static Map<String, String> getAllAttributes(Element elem,
+                                                     String name) {
     Map<String, String>attributes = new TreeMap<String, String>();
     NodeList nodeList = elem.getElementsByTagName(name);
     int length = nodeList.getLength();
@@ -377,7 +376,6 @@ public class ServletUtil {
    *
    * @param out where PrintWriter to be written to
    * @param statusId int
-   *
    */
   public static void writeResponse(PrintWriter out, int statusId) {
     writeRootTag(out, false);
@@ -390,7 +388,6 @@ public class ServletUtil {
    *
    * @param out where PrintWriter to be written to
    * @param status ConnectorMessageCode
-   *
    */
   public static void writeResponse(PrintWriter out,
                                    ConnectorMessageCode status) {
@@ -404,7 +401,6 @@ public class ServletUtil {
    *
    * @param out where PrintWriter to be written to
    * @param endingTag boolean true if it is the ending tag
-   *
    */
   public static void writeRootTag(PrintWriter out, boolean endingTag) {
     writeXMLTag(out, 0, ServletUtil.XMLTAG_RESPONSE_ROOT, endingTag);
@@ -438,7 +434,6 @@ public class ServletUtil {
    *
    * @param out where PrintWriter to be written to
    * @param statusId int
-   *
    */
   public static void writeStatusId(PrintWriter out,
                                    int statusId) {
@@ -451,7 +446,6 @@ public class ServletUtil {
    *
    * @param out where PrintWriter to be written to
    * @param status ConnectorMessageCode
-   *
    */
   public static void writeMessageCode(PrintWriter out,
                                       ConnectorMessageCode status) {
@@ -556,7 +550,7 @@ public class ServletUtil {
    * @param indentLevel the depth of indentation
    * @param tagName String name of the XML tag to be added
    * @param endingTag String write a beginning tag if true or
-   * an ending tag if false
+   *        an ending tag if false
    */
   public static void writeXMLTag(PrintWriter out, int indentLevel,
                                  String tagName, boolean endingTag) {
@@ -570,7 +564,7 @@ public class ServletUtil {
    * @param indentLevel the depth of indentation
    * @param tagName String name of the XML tag to be added
    * @param endingTag String write a beginning tag if true or
-   * an ending tag if false
+   *        an ending tag if false
    */
   public static void writeXMLTag(StringBuilder out, int indentLevel,
                                  String tagName, boolean endingTag) {
@@ -649,7 +643,7 @@ public class ServletUtil {
    * This writes an XML stream to the response output that describes
    * most of the data received in the request structure.  It returns
    * true, so that you may call it from doGet() like:
-   *   if (dumpServletRequest(req, res)) return;
+   * <code>  if (dumpServletRequest(req, res)) return;</code>
    * without javac complaining about unreachable code with a straight
    * return.
    *

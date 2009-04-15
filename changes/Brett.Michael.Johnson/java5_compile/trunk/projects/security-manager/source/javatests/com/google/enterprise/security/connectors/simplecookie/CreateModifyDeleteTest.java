@@ -15,6 +15,7 @@
 package com.google.enterprise.security.connectors.simplecookie;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.SecAuthnContext;
@@ -23,8 +24,6 @@ import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
 
-import junit.framework.TestCase;
-
 import java.util.Map;
 
 import javax.servlet.http.Cookie;
@@ -32,22 +31,9 @@ import javax.servlet.http.Cookie;
 /**
  * Tests for creating, modifying and deleting a RegexCookieIdentityConnector
  */
-public class CreateModifyDeleteTest extends TestCase {
+public class CreateModifyDeleteTest extends SecurityManagerTestCase {
 
-  /**
-   * We do Context.refresh() before and after so as not to interfere with other
-   * tests that might use a Context
-   *
-   * @throws Exception
-   */
   public final void testBasicFunctionality() throws Exception {
-    Context.refresh();
-    Context.getInstance().setStandaloneContext(
-        Context.DEFAULT_JUNIT_CONTEXT_LOCATION,
-        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
-    Context.getInstance().setFeeding(false);
-    Context.getInstance().start();
-
     ConnectorManager connectorManager =
         ConnectorManager.class.cast(Context.getInstance().getManager());
 
@@ -92,9 +78,6 @@ public class CreateModifyDeleteTest extends TestCase {
 
     connectorExists = testConnectorExists(connectorManager, connectorName);
     assertFalse(connectorExists);
-
-    Context.getInstance().shutdown(true);
-    Context.refresh();
   }
 
   private boolean testConnectorExists(ConnectorManager connectorManager, String connectorName) {

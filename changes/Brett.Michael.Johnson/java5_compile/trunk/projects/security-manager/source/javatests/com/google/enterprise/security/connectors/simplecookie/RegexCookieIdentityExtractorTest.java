@@ -14,12 +14,12 @@
 
 package com.google.enterprise.security.connectors.simplecookie;
 
-import junit.framework.TestCase;
+import com.google.enterprise.common.SecurityManagerTestCase;
 
 /*
  * Tests for the {@link RegexCookieIdentityExtractor} class.
  */
-public class RegexCookieIdentityExtractorTest extends TestCase {
+public class RegexCookieIdentityExtractorTest extends SecurityManagerTestCase {
 
   public void testExtract() {
     String pattern = "username=(.*)";

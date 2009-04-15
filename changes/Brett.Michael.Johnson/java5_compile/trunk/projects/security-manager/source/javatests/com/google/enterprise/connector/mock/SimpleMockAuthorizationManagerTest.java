@@ -15,17 +15,17 @@
 package com.google.enterprise.connector.mock;
 
 import com.google.common.collect.ImmutableList;
+import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
 
 import junit.framework.Assert;
-import junit.framework.TestCase;
 
 import java.util.Collection;
 import java.util.List;
 
-public class SimpleMockAuthorizationManagerTest extends TestCase {
+public class SimpleMockAuthorizationManagerTest extends SecurityManagerTestCase {
 
   public void testAuthorizeDocids() throws RepositoryException {
     AuthorizationManager am = new SimpleMockAuthorizationManager();

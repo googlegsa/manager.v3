@@ -251,12 +251,7 @@ public class SimpleConnectorType implements ConnectorType {
     return null;
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.spi.Configurer
-   *      #getConfigForm(java.util.Locale)
-   */
+  /* @Override */
   public ConfigureResponse getConfigForm(Locale locale) {
     ConfigureResponse result =
         new ConfigureResponse("", getInitialConfigForm());
@@ -264,12 +259,7 @@ public class SimpleConnectorType implements ConnectorType {
     return result;
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.spi.Configurer
-   *      #validateConfig(java.util.Map, java.util.Locale)
-   */
+  /* @Override */
   public ConfigureResponse validateConfig(Map<String, String> configData,
       Locale locale, ConnectorFactory connectorFactory) {
     if (validateConfigMap(configData)) {
@@ -282,12 +272,7 @@ public class SimpleConnectorType implements ConnectorType {
         "Some required configuration is missing", form);
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.spi.Configurer
-   *      #getPopulatedConfigForm(java.util.Map,java.util.Locale)
-   */
+  /* @Override */
   public ConfigureResponse getPopulatedConfigForm(
       Map<String, String> configMap, Locale locale) {
     return new ConfigureResponse("", makeConfigForm(configMap));

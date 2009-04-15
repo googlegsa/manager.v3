@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.manager;
 
+import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
@@ -21,14 +22,12 @@ import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
 
-import junit.framework.TestCase;
-
 import javax.servlet.http.Cookie;
 
 /**
  * Tests for the {@link AuthnCaller} class.
  */
-public class AuthnCallerTest extends TestCase {
+public class AuthnCallerTest extends SecurityManagerTestCase {
 
   public void testNullAuthenticate() {
     AuthenticationManager authenticationManager = new AuthenticationManager() {

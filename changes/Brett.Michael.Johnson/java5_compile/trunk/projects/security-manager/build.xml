@@ -242,7 +242,7 @@
 
   <!-- This war file is used for regression tests. -->
   <target name="war-tests" depends="install_init,jar" description="Builds the Test WAR file for installation.">
-    <echo> The test war file dir is located at ${war.dir}</echo>
+    <echo>The test war file dir is located at ${war.dir}</echo>
 
     <tstamp />
     <war warfile="${tests.warfile}" webxml="${tests.webdocs}/web.xml">
@@ -273,22 +273,12 @@
   </target>
 
   <!-- Regressions Targets -->
-
   <property name="catalina-ant.jar" value="third-party/tests/catalina-ant.jar" />
-
-  <!-- Configure the custom Ant tasks for the Manager application -->
-  <taskdef name="deploy" classname="org.apache.catalina.ant.DeployTask" classpath="${catalina-ant.jar}" />
-  <taskdef name="list" classname="org.apache.catalina.ant.ListTask" classpath="${catalina-ant.jar}" />
-  <taskdef name="reload" classname="org.apache.catalina.ant.ReloadTask" classpath="${catalina-ant.jar}" />
-  <taskdef name="resources" classname="org.apache.catalina.ant.ResourcesTask" classpath="${catalina-ant.jar}" />
-  <taskdef name="roles" classname="org.apache.catalina.ant.RolesTask" classpath="${catalina-ant.jar}" />
-  <taskdef name="start" classname="org.apache.catalina.ant.StartTask" classpath="${catalina-ant.jar}" />
-  <taskdef name="stop" classname="org.apache.catalina.ant.StopTask" classpath="${catalina-ant.jar}" />
-  <taskdef name="undeploy" classname="org.apache.catalina.ant.UndeployTask" classpath="${catalina-ant.jar}" />
-
   <property environment="env" />
   <property name="catalina.home" value="${env.CATALINA_HOME}" />
   <property name="catalina.base" value="catalina-base" />
+  <property name="regression.war.dir" value="${catalina.base}/webapps/security-manager" />
+  <property name="regression.war.file" value="${regression.war.dir}.war" />
 
   <target name="make-full-prod-war-path">
     <pathconvert property="war.prod.full.path" refid="prod.war.path" />
@@ -334,6 +324,7 @@
       <jvmarg value="-Djava.io.tmpdir=${catalina.base}/temp" />
       <jvmarg value="-Djava.util.logging.manager=${catalina.logging.manager}" />
       <jvmarg value="-Djava.util.logging.config.file=${catalina.logging.config.file}" />
+      <!--<jvmarg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:7000" />-->
       <arg line="start" />
     </java>
     <sleep seconds="20" />
@@ -350,34 +341,15 @@
     </java>
   </target>
 
-  <!-- Configure properties to access the Manager application -->
-  <property name="url" value="http://localhost:8973/manager" />
-  <property name="username" value="admin" />
-  <property name="password" value="tomcat" />
-  <property name="path" value="/security-manager" />
-
-  <target name="deploy" description="Install security-manager" depends="war,make-full-tests-war-path">
-    <echo message="file:${war.tests.full.path}" />
-    <deploy url="${url}" username="${username}" password="${password}" path="${path}" war="file:${war.tests.full.path}" />
+  <target name="setup_regressions" depends="compile_regressions,war-tests,setup-catalina-base">
+    <delete dir="${regression.war.dir}" />
+    <copy file="${tests.warfile}" tofile="${catalina.base}/webapps/security-manager.war" overwrite="true" />
   </target>
 
-  <target name="reload" description="Reload security-manager" depends="war">
-    <reload url="${url}" username="${username}" password="${password}" path="${path}" />
+  <target name="clean_regressions" description="Remove security-manager">
+    <delete dir="${regression.war.dir}" />
+    <delete file="${regression.war.file}"/>
   </target>
-
-  <target name="undeploy" description="Remove security-manager">
-    <undeploy url="${url}" username="${username}" password="${password}" path="${path}" />
-  </target>
-
-  <target name="start" description="Start Tomcat application">
-    <start url="${url}" username="${username}" password="${password}" path="${path}" />
-  </target>
-
-  <target name="stop" description="Stop Tomcat application">
-    <stop url="${url}" username="${username}" password="${password}" path="${path}" />
-  </target>
-
-  <target name="setup_regressions" depends="compile_regressions,setup-catalina-base,war,make-full-tests-war-path" />
 
   <target name="run_regressions">
     <property name="test.suite" value="*" />
@@ -401,9 +373,7 @@
 
   <target name="regressions" description="Run Tomcat regression tests" depends="setup_regressions">
     <antcall target="tomcat-start" />
-    <antcall target="deploy" />
     <antcall target="run_regressions" />
-    <antcall target="undeploy" />
     <antcall target="tomcat-stop" />
   </target>
 

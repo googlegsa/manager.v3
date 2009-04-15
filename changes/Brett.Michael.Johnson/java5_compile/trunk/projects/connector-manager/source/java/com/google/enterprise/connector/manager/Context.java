@@ -340,6 +340,7 @@ public class Context {
    *         registered an empty list will be returned.
    */
   public List<ContextService> getServices() {
+    // TODO: Investigate the use of the GenericBeanFactoryAccessor here.
     Map<?, ?> orderedServices = (Map<?, ?>)
         getBean(ORDERED_SERVICES_BEAN_NAME, null);
     Map<?, ?> services = applicationContext.getBeansOfType(ContextService.class);
@@ -549,7 +550,7 @@ public class Context {
 
   /**
    * Retrieves the prefix for the Common directory file depending on whether
-   * its standalone context or servlet context.
+   * it is a standalone context or servlet context.
    *
    * @return prefix for the Repository file.
    */

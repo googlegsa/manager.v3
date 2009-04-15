@@ -34,7 +34,6 @@ import javax.jcr.Item;
 import javax.jcr.ItemVisitor;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
@@ -207,8 +206,7 @@ public class MockJcrNode implements Node {
     init();
   }
 
-  public Property getProperty(String arg0) throws PathNotFoundException,
-      RepositoryException {
+  public Property getProperty(String arg0) {
     return findProperty(arg0);
   }
 
@@ -225,7 +223,7 @@ public class MockJcrNode implements Node {
     return p.getString();
   }
 
-  public boolean hasProperty(String arg0) throws RepositoryException {
+  public boolean hasProperty(String arg0) {
     Property p = findProperty(arg0);
     return (p != null);
   }

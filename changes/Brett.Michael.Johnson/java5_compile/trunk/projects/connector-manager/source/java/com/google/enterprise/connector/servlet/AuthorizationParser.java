@@ -41,19 +41,19 @@ public class AuthorizationParser {
 
   /**
    * Parse the XML into a map of maps of maps.
-   *
+   * <p>
    * First-level map is keyed by identity - the value contains all the urls
    * governed by the same identity.
-   *
+   * <p>
    * Second-level map is keyed by connector name - the value is all the urls
    * that come from the same connector.
-   *
+   * <p>
    * Third-level map is keyed by docid - the value is a ParsedUrl.
-   *
+   * <p>
    * In practice, for now, it is unlikely that the same connector will
    * show up under more than one identity. In fact, the most likely case
    * is that the two top-level maps have only one item.
-   *
+   * <p>
    * Visibility is default to facilitate testing
    */
   void parse() {
@@ -96,9 +96,6 @@ public class AuthorizationParser {
     String identity =
         ServletUtil.getFirstElementByTagName(queryItem,
             ServletUtil.XMLTAG_IDENTITY);
-    String source =
-        ServletUtil.getFirstAttribute(queryItem, ServletUtil.XMLTAG_IDENTITY,
-            "source");
     List<String> resources =
         ServletUtil.getAllElementsByTagName(queryItem,
             ServletUtil.XMLTAG_RESOURCE);

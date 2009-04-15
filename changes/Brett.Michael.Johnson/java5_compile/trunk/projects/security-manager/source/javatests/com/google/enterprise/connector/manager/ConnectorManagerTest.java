@@ -14,37 +14,22 @@
 
 package com.google.enterprise.connector.manager;
 
-import junit.framework.TestCase;
+import com.google.enterprise.common.SecurityManagerTestCase;
 
 import java.util.Set;
 
 /**
  * Tests for the {@link ConnectorManager} class.
  */
-public class ConnectorManagerTest extends TestCase {
+public class ConnectorManagerTest extends SecurityManagerTestCase {
 
-  /**
-   * We do Context.refresh() before and after so as not to interfere with other
-   * tests that might use a Context
-   */
   @SuppressWarnings("unchecked")
   public final void testBasicFunctionality() {
-    Context.refresh();
-    Context.getInstance().setStandaloneContext(
-        Context.DEFAULT_JUNIT_CONTEXT_LOCATION,
-        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
-    Context.getInstance().setFeeding(false);
-    Context.getInstance().start();
-
     ConnectorManager manager = (ConnectorManager) Context.getInstance().getManager();
 
     Set<String> connectorTypeNames = manager.getConnectorTypeNames();
     for (String connectorTypeName: connectorTypeNames) {
       System.out.println(connectorTypeName);
     }
-    Context.getInstance().shutdown(true);
-    Context.refresh();
   }
-
-
 }

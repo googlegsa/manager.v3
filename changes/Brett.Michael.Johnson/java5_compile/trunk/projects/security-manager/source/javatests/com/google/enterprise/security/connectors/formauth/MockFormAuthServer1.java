@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2009 Google Inc.
+// Copyright (C) 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,19 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.spi;
+package com.google.enterprise.security.connectors.formauth;
 
-/**
- * HasTimeout.  This should be implemented by a TraversalManager if it wants
- * to supply the ConnectorManager with its own timeout value.
- *
- * @deprecated This Interface has been fully deprecated.  It is never called.
- */
-@Deprecated
-public interface HasTimeout {
-  /**
-   * Gets the connector's preferred timeout.
-   * @return The timeout value, in milliseconds.
-   */
-  public int getTimeoutMillis();
+import javax.servlet.http.Cookie;
+
+public class MockFormAuthServer1 extends MockFormAuthServer {
+  private static final long serialVersionUID = 1L;
+  public MockFormAuthServer1() {
+    super("username", "password");
+    passwordMap.put("joe", "plumber");
+    cookieMap.put("joe", new Cookie("Server1ID", "blahblahblah"));
+  }
 }

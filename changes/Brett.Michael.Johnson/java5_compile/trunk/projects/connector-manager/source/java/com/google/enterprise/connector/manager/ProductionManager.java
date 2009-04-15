@@ -179,7 +179,7 @@ public class ProductionManager implements Manager {
   /* @Override */
   public Set<String> getConnectorTypeNames() {
     return instantiator.getConnectorTypeNames();
-    }
+  }
 
   /* @Override */
   public ConnectorType getConnectorType(String typeName)
@@ -194,7 +194,7 @@ public class ProductionManager implements Manager {
       PersistentStoreException, InstantiatorException {
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
     return instantiator.setConnectorConfig(connectorName, connectorTypeName,
-            configData, locale, update);
+        configData, locale, update);
   }
 
   /* @Override */
@@ -242,6 +242,7 @@ public class ProductionManager implements Manager {
     return instantiator.getConnectorConfig(connectorName);
   }
 
+  /* @Override */
   public boolean isLocked() {
     return Context.getInstance().getIsManagerLocked();
   }

@@ -225,12 +225,12 @@ public class PropertiesUtils {
   }
 
   /**
-   * Make a Map &lt;String, String&gt; from the supplied Properties,
+   * Make a Map&lt;String, String&gt; from the supplied Properties,
    * copying all the keys and values.
    *
-   * @param sourceMap a Map representing properties key-value map
-   * @returns new Properties object that may be modified without altering
-   *          the source properties.
+   * @param sourceProperties Properties representing properties key-value map.
+   * @returns a Map&lt;String, String&gt; representation of the source
+   *          Properties.
    */
   public static Map<String, String> toMap(Properties sourceProperties) {
     if (sourceProperties == null) {

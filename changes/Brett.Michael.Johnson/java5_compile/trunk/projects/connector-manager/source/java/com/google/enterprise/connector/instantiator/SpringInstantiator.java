@@ -127,8 +127,7 @@ public class SpringInstantiator implements Instantiator {
 
   private synchronized ConnectorInterfaces getConnectorInterfaces(
       String connectorName) throws ConnectorNotFoundException {
-    ConnectorInterfaces connectorInterfaces =
-      connectorCache.get(connectorName);
+    ConnectorInterfaces connectorInterfaces = connectorCache.get(connectorName);
     if (connectorInterfaces == null) {
       InstanceInfo info = getInstanceInfo(connectorName);
       connectorInterfaces = new ConnectorInterfaces(connectorName,

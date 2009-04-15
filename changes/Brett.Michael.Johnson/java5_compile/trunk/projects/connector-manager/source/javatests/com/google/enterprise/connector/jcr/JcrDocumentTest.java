@@ -30,8 +30,6 @@ import junit.framework.TestCase;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Iterator;
-
 import javax.jcr.Node;
 
 public class JcrDocumentTest extends TestCase {
@@ -87,9 +85,7 @@ public class JcrDocumentTest extends TestCase {
       throws RepositoryException {
     int counter = 0;
     System.out.println();
-    Iterator<String> iter = document.getPropertyNames().iterator();
-    while (iter.hasNext()) {
-      String name = iter.next();
+    for (String name : document.getPropertyNames()) {
       Property property = document.findProperty(name);
       Assert.assertNotNull(property);
       Value value = property.nextValue();

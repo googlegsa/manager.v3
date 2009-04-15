@@ -18,7 +18,6 @@ import java.util.Iterator;
 import java.util.List;
 
 public class SimpleDocumentList implements DocumentList {
-
   private List<? extends Document> documents;
   private Iterator<? extends Document> iterator;
   private Document document;
@@ -47,5 +46,4 @@ public class SimpleDocumentList implements DocumentList {
     return Value.getSingleValueString(document,
         SpiConstants.PROPNAME_LASTMODIFIED);
   }
-
 }
