@@ -100,7 +100,7 @@
       </classpath>
       <compilerarg value="-Xlint"/>
       <compilerarg value="-Xlint:-serial"/>
-      <compilerarg value="-Xlint:-deprecated"/>
+      <compilerarg value="-Xlint:-deprecation"/>
     </javac>
   </target>
 
