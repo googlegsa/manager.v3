@@ -127,47 +127,47 @@ public class Base64 {
    * @return the <var>destination</var> array
    * @since 1.3
    */
-   static byte[] encode3to4(byte[] source, int srcOffset,
-       int numSigBytes, byte[] destination, int destOffset, byte[] alphabet) {
-     //           1         2         3
-     // 01234567890123456789012345678901 Bit position
-     // --------000000001111111122222222 Array position from threeBytes
-     // --------|    ||    ||    ||    | Six bit groups to index alphabet
-     //          >>18  >>12  >> 6  >> 0  Right shift necessary
-     //                0x3f  0x3f  0x3f  Additional AND
+  static byte[] encode3to4(byte[] source, int srcOffset,
+      int numSigBytes, byte[] destination, int destOffset, byte[] alphabet) {
+    //           1         2         3
+    // 01234567890123456789012345678901 Bit position
+    // --------000000001111111122222222 Array position from threeBytes
+    // --------|    ||    ||    ||    | Six bit groups to index alphabet
+    //          >>18  >>12  >> 6  >> 0  Right shift necessary
+    //                0x3f  0x3f  0x3f  Additional AND
 
-     // Create buffer with zero-padding if there are only one or two
-     // significant bytes passed in the array.
-     // We have to shift left 24 in order to flush out the 1's that appear
-     // when Java treats a value as negative that is cast from a byte to an int.
-     int inBuff =
-         (numSigBytes > 0 ? ((source[srcOffset] << 24) >>> 8) : 0)
-            | (numSigBytes > 1 ? ((source[srcOffset + 1] << 24) >>> 16) : 0)
-            | (numSigBytes > 2 ? ((source[srcOffset + 2] << 24) >>> 24) : 0);
+    // Create buffer with zero-padding if there are only one or two
+    // significant bytes passed in the array.
+    // We have to shift left 24 in order to flush out the 1's that appear
+    // when Java treats a value as negative that is cast from a byte to an int.
+    int inBuff =
+        (numSigBytes > 0 ? ((source[srcOffset] << 24) >>> 8) : 0)
+        | (numSigBytes > 1 ? ((source[srcOffset + 1] << 24) >>> 16) : 0)
+        | (numSigBytes > 2 ? ((source[srcOffset + 2] << 24) >>> 24) : 0);
 
-     switch (numSigBytes) {
-       case 3:
-         destination[destOffset] = alphabet[(inBuff >>> 18)];
-         destination[destOffset + 1] = alphabet[(inBuff >>> 12) & 0x3f];
-         destination[destOffset + 2] = alphabet[(inBuff >>> 6) & 0x3f];
-         destination[destOffset + 3] = alphabet[(inBuff) & 0x3f];
-         return destination;
-       case 2:
-         destination[destOffset] = alphabet[(inBuff >>> 18)];
-         destination[destOffset + 1] = alphabet[(inBuff >>> 12) & 0x3f];
-         destination[destOffset + 2] = alphabet[(inBuff >>> 6) & 0x3f];
-         destination[destOffset + 3] = EQUALS_SIGN;
-         return destination;
-       case 1:
-         destination[destOffset] = alphabet[(inBuff >>> 18)];
-         destination[destOffset + 1] = alphabet[(inBuff >>> 12) & 0x3f];
-         destination[destOffset + 2] = EQUALS_SIGN;
-         destination[destOffset + 3] = EQUALS_SIGN;
-         return destination;
-       default:
-         return destination;
-     } // end switch
-   } // end encode3to4
+    switch (numSigBytes) {
+      case 3:
+        destination[destOffset] = alphabet[(inBuff >>> 18)];
+        destination[destOffset + 1] = alphabet[(inBuff >>> 12) & 0x3f];
+        destination[destOffset + 2] = alphabet[(inBuff >>> 6) & 0x3f];
+        destination[destOffset + 3] = alphabet[(inBuff) & 0x3f];
+        return destination;
+      case 2:
+        destination[destOffset] = alphabet[(inBuff >>> 18)];
+        destination[destOffset + 1] = alphabet[(inBuff >>> 12) & 0x3f];
+        destination[destOffset + 2] = alphabet[(inBuff >>> 6) & 0x3f];
+        destination[destOffset + 3] = EQUALS_SIGN;
+        return destination;
+      case 1:
+        destination[destOffset] = alphabet[(inBuff >>> 18)];
+        destination[destOffset + 1] = alphabet[(inBuff >>> 12) & 0x3f];
+        destination[destOffset + 2] = EQUALS_SIGN;
+        destination[destOffset + 3] = EQUALS_SIGN;
+        return destination;
+      default:
+        return destination;
+    } // end switch
+  } // end encode3to4
 
   /**
    * Encodes a byte array into Base64 notation.
@@ -267,8 +267,8 @@ public class Base64 {
       // but inlined for faster encoding (~20% improvement)
       int inBuff =
           ((source[s + sourceOffset] << 24) >>> 8)
-              | ((source[s + 1 + sourceOffset] << 24) >>> 16)
-              | ((source[s + 2 + sourceOffset] << 24) >>> 24);
+          | ((source[s + 1 + sourceOffset] << 24) >>> 16)
+          | ((source[s + 2 + sourceOffset] << 24) >>> 24);
       dest[d] = alphabet[(inBuff >>> 18)];
       dest[d + 1] = alphabet[(inBuff >>> 12) & 0x3f];
       dest[d + 2] = alphabet[(inBuff >>> 6) & 0x3f];
@@ -323,7 +323,7 @@ public class Base64 {
     if (source[srcOffset + 2] == EQUALS_SIGN) {
       int outBuff =
           ((decodabet[source[srcOffset]] << 24) >>> 6)
-              | ((decodabet[source[srcOffset + 1]] << 24) >>> 12);
+          | ((decodabet[source[srcOffset + 1]] << 24) >>> 12);
 
       destination[destOffset] = (byte) (outBuff >>> 16);
       return 1;
@@ -331,8 +331,8 @@ public class Base64 {
       // Example: DkL=
       int outBuff =
           ((decodabet[source[srcOffset]] << 24) >>> 6)
-              | ((decodabet[source[srcOffset + 1]] << 24) >>> 12)
-              | ((decodabet[source[srcOffset + 2]] << 24) >>> 18);
+          | ((decodabet[source[srcOffset + 1]] << 24) >>> 12)
+          | ((decodabet[source[srcOffset + 2]] << 24) >>> 18);
 
       destination[destOffset] = (byte) (outBuff >>> 16);
       destination[destOffset + 1] = (byte) (outBuff >>> 8);
@@ -341,9 +341,9 @@ public class Base64 {
       // Example: DkLE
       int outBuff =
           ((decodabet[source[srcOffset]] << 24) >>> 6)
-              | ((decodabet[source[srcOffset + 1]] << 24) >>> 12)
-              | ((decodabet[source[srcOffset + 2]] << 24) >>> 18)
-              | ((decodabet[source[srcOffset + 3]] << 24) >>> 24);
+          | ((decodabet[source[srcOffset + 1]] << 24) >>> 12)
+          | ((decodabet[source[srcOffset + 2]] << 24) >>> 18)
+          | ((decodabet[source[srcOffset + 3]] << 24) >>> 24);
 
       destination[destOffset] = (byte) (outBuff >> 16);
       destination[destOffset + 1] = (byte) (outBuff >> 8);
