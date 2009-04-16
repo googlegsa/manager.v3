@@ -22,9 +22,8 @@ import java.util.Properties;
 /**
  * Class to test PrefsStore.
  *
- * @deprecated PrefsStore is a deprecated class, so this test is too.
+ * Note: PrefsStore is a deprecated class.
  */
-@Deprecated
 @SuppressWarnings("deprecation")
 public class PrefsStoreTest extends TestCase {
 
