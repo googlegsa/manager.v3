@@ -15,6 +15,7 @@
 package com.google.enterprise.security.identity;
 
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
+import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -33,7 +34,7 @@ public class DomainCredentials implements SecAuthnIdentity {
   private VerificationStatus status;
   private final Vector<Cookie> cookies;
 
-  public DomainCredentials(AuthnDomain domain, CredentialsGroup group) {
+  DomainCredentials(AuthnDomain domain, CredentialsGroup group) {
     this.domain = domain;
     this.group = group;
     status = VerificationStatus.TBD;
@@ -41,12 +42,20 @@ public class DomainCredentials implements SecAuthnIdentity {
     group.getElements().add(this);
   }
 
+  public static DomainCredentials dummy() {
+    return new DomainCredentials(null, CredentialsGroup.dummy());
+  }
+
   public String getDomain() {
     return domain.getName();
   }
 
-  public AuthnDomain getAuthnDomain() {
-    return domain;
+  public AuthNMechanism getMechanism() {
+    return domain.getMechanism();
+  }
+
+  public String getSampleUrl() {
+    return domain.getSampleUrl();
   }
 
   public CredentialsGroup getGroup() {
@@ -68,10 +77,6 @@ public class DomainCredentials implements SecAuthnIdentity {
   // For testing:
   public void clearCookies() {
     cookies.clear();
-  }
-
-  public String getLoginUrl() {
-    return domain.getLoginUrl();
   }
 
   public VerificationStatus getVerificationStatus() {

@@ -17,7 +17,6 @@ package com.google.enterprise.security.connectors.simplecookie;
 import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
-import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
 
 import javax.servlet.http.Cookie;
@@ -40,7 +39,7 @@ public class SimpleCookieIdentityConnectorTest extends SecurityManagerTestCase {
 
   private void runOneAuthenticationTest(String cookieName, String idCookieName,
       SimpleCookieIdentityConnector s, String cookieValue, String expectedIdentity) {
-    SecAuthnIdentity id = new DomainCredentials(null, new CredentialsGroup(null));
+    SecAuthnIdentity id = DomainCredentials.dummy();
     id.addCookie(new Cookie(cookieName, cookieValue));
     AuthenticationResponse r = s.authenticate(id);
     if (expectedIdentity != null) {

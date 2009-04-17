@@ -39,13 +39,13 @@ public class CsvConfigTest extends SecurityManagerTestCase {
         AuthnDomain leizBasicDomain = group.getDomains().get(0);
         assertEquals("http://leiz.mtv.corp.google.com/basic/", leizBasicDomain.getName());
         assertEquals(AuthNMechanism.BASIC_AUTH, leizBasicDomain.getMechanism());
-        assertEquals("http://leiz.mtv.corp.google.com/basic/", leizBasicDomain.getLoginUrl());
+        assertEquals("http://leiz.mtv.corp.google.com/basic/", leizBasicDomain.getSampleUrl());
         continue;
       }
       if ("groupB".equals(group.getHumanName())) {
         AuthnDomain moogleDomain = group.getDomains().get(0);
         assertEquals("http://mooglegoogle.com/moogle/", moogleDomain.getName());
-        assertEquals("http://loginurl.com/login", moogleDomain.getLoginUrl());
+        assertEquals("http://loginurl.com/login", moogleDomain.getSampleUrl());
         continue;
       }
 
