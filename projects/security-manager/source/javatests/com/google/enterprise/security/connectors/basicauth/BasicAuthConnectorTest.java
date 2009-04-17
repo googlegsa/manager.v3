@@ -18,7 +18,6 @@ import com.google.enterprise.common.HttpClientInterface;
 import com.google.enterprise.common.MockHttpClient;
 import com.google.enterprise.common.MockHttpTransport;
 import com.google.enterprise.common.SecurityManagerTestCase;
-import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
@@ -27,27 +26,29 @@ import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /*
  * Tests for the {@link BasicAuthConnector} class.
- * Maybe should use a mock Idp...
  */
 public class BasicAuthConnectorTest extends SecurityManagerTestCase {
 
-  private AuthnDomainGroup adg;
-  private AuthnDomain domain;
-  private CredentialsGroup cg;
+  private List<CredentialsGroup> cgs;
   private HttpClientInterface httpClient;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    adg = new AuthnDomainGroup("ADG1");
-    domain = new AuthnDomain(
+    List<AuthnDomainGroup> adgs = new ArrayList<AuthnDomainGroup>();
+    adgs.add(new AuthnDomainGroup("ADG1"));
+    new AuthnDomain(
         "BasicDomain", AuthNMechanism.BASIC_AUTH,
-        "http://localhost:8973/basic/", adg);
-    cg = new CredentialsGroup(adg);
+        "http://localhost:8973/basic/", adgs.get(0));
+    cgs = CredentialsGroup.newGroups(adgs);
     MockHttpTransport transport = new MockHttpTransport();
-    transport.registerServlet(domain.getLoginUrl(), new MockBasicAuthServer.Server1());
+    transport.registerServlet(cgs.get(0).getElements().get(0).getSampleUrl(),
+                              new MockBasicAuthServer.Server1());
     httpClient = new MockHttpClient(transport);
   }
 
@@ -58,10 +59,10 @@ public class BasicAuthConnectorTest extends SecurityManagerTestCase {
 
   private AuthenticationResponse tryCredentials(String username, String password)
       throws RepositoryException {
-    BasicAuthConnector conn = new BasicAuthConnector(httpClient, domain.getLoginUrl());
-    AuthenticationIdentity id = new DomainCredentials(domain, cg);
-    cg.setUsername(username);
-    cg.setPassword(password);
-    return conn.authenticate(id);
+    cgs.get(0).setUsername(username);
+    cgs.get(0).setPassword(password);
+    DomainCredentials dc = cgs.get(0).getElements().get(0);
+    BasicAuthConnector conn = new BasicAuthConnector(httpClient, dc.getSampleUrl());
+    return conn.authenticate(dc);
   }
 }

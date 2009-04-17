@@ -65,7 +65,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       return null; // TODO try to crack a cookie
     }
 
-    String siteUri = identity.getLoginUrl();
+    String siteUri = identity.getSampleUrl();
     if (siteUri == null) {
       LOGGER.info("Could not authenticate: null URL");
       return null;
