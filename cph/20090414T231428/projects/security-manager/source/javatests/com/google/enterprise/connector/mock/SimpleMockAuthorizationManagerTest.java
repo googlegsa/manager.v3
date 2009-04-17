@@ -34,7 +34,6 @@ public class SimpleMockAuthorizationManagerTest extends SecurityManagerTestCase 
     Assert.assertFalse(runOneTest(am, "http://bar.com/bar"));
   }
 
-  @SuppressWarnings("unchecked")
   private boolean runOneTest(AuthorizationManager am, String thisUrl) throws RepositoryException {
     boolean authOk = false;
     List<String> docids = ImmutableList.of(thisUrl);
