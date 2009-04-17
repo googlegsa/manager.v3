@@ -23,7 +23,6 @@ import java.util.Set;
  */
 public class ConnectorManagerTest extends SecurityManagerTestCase {
 
-  @SuppressWarnings("unchecked")
   public final void testBasicFunctionality() {
     ConnectorManager manager = (ConnectorManager) Context.getInstance().getManager();
 

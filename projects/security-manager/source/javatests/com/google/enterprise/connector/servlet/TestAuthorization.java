@@ -45,7 +45,6 @@ public class TestAuthorization extends HttpServlet
      * @throws IOException
      *
      */
-    @SuppressWarnings("unchecked")
     @Override
     protected void doGet(HttpServletRequest req,
                          HttpServletResponse res)
