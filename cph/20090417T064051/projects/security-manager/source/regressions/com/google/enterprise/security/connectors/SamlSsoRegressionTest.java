@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class SamlSsoRegressionTest extends TestCase {
@@ -111,10 +110,10 @@ public class SamlSsoRegressionTest extends TestCase {
     writeRequest(method, out);
     String message = out.toString();
     out.close();
-    LOGGER.log(Level.INFO, message);
+    LOGGER.info(message);
   }
 
-  private static void writeRequest(HttpMethodBase method, Writer out)  throws IOException {
+  private static void writeRequest(HttpMethodBase method, Writer out) throws IOException {
     out.write(method.getName());
     out.write(" ");
     out.write(method.getURI().toString());
@@ -142,10 +141,10 @@ public class SamlSsoRegressionTest extends TestCase {
     writeResponse(method, out);
     String message = out.toString();
     out.close();
-    LOGGER.log(Level.INFO, message);
+    LOGGER.info(message);
   }
 
-  private static void writeResponse(HttpMethodBase method, Writer out)  throws IOException {
+  private static void writeResponse(HttpMethodBase method, Writer out) throws IOException {
     out.write(method.getStatusLine().toString());
     out.write("\n");
     for (Header h: method.getResponseHeaders()) {
