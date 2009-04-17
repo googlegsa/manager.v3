@@ -26,12 +26,7 @@ import java.util.List;
 
 public class SimpleMockAuthorizationManager implements AuthorizationManager {
 
-  @SuppressWarnings("unchecked")
-  public Collection authorizeDocids(Collection docids, AuthenticationIdentity identity) {
-    return typedAuthorizeDocids(docids, identity);
-  }
-
-  private Collection<AuthorizationResponse> typedAuthorizeDocids(Collection<String> docids,
+  public Collection<AuthorizationResponse> authorizeDocids(Collection<String> docids,
       AuthenticationIdentity identity) {
     Preconditions.checkContentsNotNull(docids);
     List<AuthorizationResponse> result = new ArrayList<AuthorizationResponse>();
@@ -46,5 +41,4 @@ public class SimpleMockAuthorizationManager implements AuthorizationManager {
     }
     return ImmutableList.copyOf(result);
   }
-
 }
