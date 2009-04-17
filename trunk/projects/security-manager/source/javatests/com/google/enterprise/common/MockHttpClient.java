@@ -36,9 +36,9 @@ import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
  */
 public class MockHttpClient implements HttpClientInterface {
 
-  private final HttpTransport transport;
+  final HttpTransport transport;
   private final MockHttpSession session;
-  private String referrer;
+  String referrer;
 
   public MockHttpClient(HttpTransport transport) {
     this.transport = transport;
