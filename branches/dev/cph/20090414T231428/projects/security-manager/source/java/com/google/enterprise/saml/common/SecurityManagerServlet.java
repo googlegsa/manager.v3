@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
 package com.google.enterprise.saml.common;
 
 import com.google.enterprise.common.ServletBase;
+import com.google.enterprise.common.SessionAttribute;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.saml.server.BackEnd;
 
 import org.opensaml.common.SAMLObject;
@@ -24,7 +26,8 @@ import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpSession;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
 
@@ -35,59 +38,118 @@ public abstract class SecurityManagerServlet extends ServletBase {
 
   private static final long serialVersionUID = 1L;
 
-  /** Name of the session attribute that holds the SAML message context. */
-  private static final String SAML_CONTEXT = "samlMessageContext";
+  /** Session attribute to hold the authentication context. */
+  private static final SessionAttribute<SecAuthnContext> AUTHN_CONTEXT_ATTR =
+      SessionAttribute.getNamed("authnContext");
 
-  /** Name of the attribute that holds the username/passwords awaiting verification. */
-  protected static final String CREDENTIALS = "credentials";
+  /** Session attribute to hold the SAML message context. */
+  private static final SessionAttribute<SAMLMessageContext<? extends SAMLObject, ? extends SAMLObject, ? extends SAMLObject>> SAML_CONTEXT_ATTR =
+      SessionAttribute.getNamed("samlContext");
 
-  public ConnectorManager getConnectorManager() {
+  public static ConnectorManager getConnectorManager() {
     return ConnectorManager.class.cast(Context.getInstance().getManager());
   }
 
-  public BackEnd getBackEnd() {
+  public static BackEnd getBackEnd() {
     return getConnectorManager().getBackEnd();
   }
 
-  public EntityDescriptor getEntity(String id) throws ServletException {
+  public static EntityDescriptor getEntity(String id) throws ServletException {
     return getMetadata().getEntity(id);
   }
 
-  public EntityDescriptor getSmEntity() throws ServletException {
+  public static EntityDescriptor getSmEntity() throws ServletException {
     return getMetadata().getSmEntity();
   }
 
-  private Metadata getMetadata() {
+  private static Metadata getMetadata() {
     return Metadata.class.cast(Context.getInstance().getRequiredBean("Metadata", Metadata.class));
   }
 
   /**
-   * Create a new SAML message context and associate it with this session.
+   * Get the GSA session ID for an HTTP request.
    *
-   * @param session The current session object.
-   * @return A new message context.
+   * @param request An HTTP request.
+   * @return The corresponding session ID.
+   * @throws ServletException if no session ID is found.
    */
-  public static <TI extends SAMLObject, TO extends SAMLObject, TN extends SAMLObject>
-        SAMLMessageContext<TI, TO, TN> newSamlMessageContext(HttpSession session) {
-    SAMLMessageContext<TI, TO, TN> context = makeSamlMessageContext();
-    session.setAttribute(SAML_CONTEXT, context);
+  protected static String getSessionId(HttpServletRequest request)
+      throws ServletException {
+    String sessionId = getSessionId1(request);
+    if (sessionId == null) {
+      throw new ServletException("No session ID found");
+    }
+    return sessionId;
+  }
+
+  /**
+   * Get the GSA session ID for an HTTP request.
+   *
+   * @param request An HTTP request.
+   * @return If the request has a session ID.
+   */
+  protected static boolean hasSessionId(HttpServletRequest request) {
+    return (getSessionId1(request) != null);
+  }
+
+  private static String getSessionId1(HttpServletRequest request) {
+    Cookie[] cs = request.getCookies();
+    if (cs != null) {
+      for (Cookie c : cs) {
+        if (c.getName().equals(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME)) {
+          return c.getValue();
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get an authentication context for a session, creating if needed.
+   *
+   * @param request An HTTP request.
+   * @return An authentication context for that request.
+   */
+  protected static SecAuthnContext getAuthnContext(HttpServletRequest request)
+      throws ServletException {
+    String sessionId = getSessionId(request);
+    SecAuthnContext context = AUTHN_CONTEXT_ATTR.get(sessionId);
+    if (context == null) {
+      context = new SecAuthnContext();
+      context.addCookies(request.getCookies());
+      AUTHN_CONTEXT_ATTR.put(sessionId, context);
+    }
     return context;
   }
 
   /**
-   * Fetch a SAML message context from a session.
+   * Create a new SAML message context and associate it with this request.
    *
-   * @param session The current session object.
+   * @param request The current request object.
    * @return A new message context.
-   * @throws ServletException if there's no context in the session.
    */
   public static <TI extends SAMLObject, TO extends SAMLObject, TN extends SAMLObject>
-        SAMLMessageContext<TI, TO, TN> existingSamlMessageContext(HttpSession session)
+        SAMLMessageContext<TI, TO, TN> newSamlMessageContext(HttpServletRequest request)
+      throws ServletException {
+    SAMLMessageContext<TI, TO, TN> context = makeSamlMessageContext();
+    SAML_CONTEXT_ATTR.put(getSessionId(request), context);
+    return context;
+  }
+
+  /**
+   * Fetch a SAML message context from a request.
+   *
+   * @param request The current request object.
+   * @return The previously saved message context.
+   * @throws ServletException if there's no context in the request.
+   */
+  public static <TI extends SAMLObject, TO extends SAMLObject, TN extends SAMLObject>
+        SAMLMessageContext<TI, TO, TN> existingSamlMessageContext(HttpServletRequest request)
       throws ServletException {
     // Restore context and signal error if none.
     @SuppressWarnings("unchecked")
     SAMLMessageContext<TI, TO, TN> context =
-        (SAMLMessageContext<TI, TO, TN>) session.getAttribute(SAML_CONTEXT);
+        (SAMLMessageContext<TI, TO, TN>) SAML_CONTEXT_ATTR.get(getSessionId(request));
     if (context == null) {
       throw new ServletException("Unable to get SAML message context.");
     }
