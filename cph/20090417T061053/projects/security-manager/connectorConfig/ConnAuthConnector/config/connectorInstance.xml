@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+  <bean id="HttpClientInterface"
+	class="com.google.enterprise.common.HttpClientAdapter">
+  </bean>
+
+  <bean id="ConnAuthConnector"
+	class="com.google.enterprise.security.connectors.connauth.ConnAuthConnector">
+    <constructor-arg index="0" ref="HttpClientInterface" />
+    <constructor-arg index="1" type="java.lang.String" value="${SpiVersion}" />
+  </bean>
+</beans>
