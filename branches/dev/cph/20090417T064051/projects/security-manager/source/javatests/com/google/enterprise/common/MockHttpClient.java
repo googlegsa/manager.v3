@@ -16,7 +16,6 @@ package com.google.enterprise.common;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.mock.web.MockHttpSession;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -26,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 
 import static com.google.enterprise.common.ServletTestUtil.generatePostContent;
 import static com.google.enterprise.common.ServletTestUtil.makeMockHttpGet;
@@ -37,33 +37,34 @@ import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
 public class MockHttpClient implements HttpClientInterface {
 
   final HttpTransport transport;
-  private final MockHttpSession session;
+  private final List<Cookie> globalCookies;
   String referrer;
 
   public MockHttpClient(HttpTransport transport) {
     this.transport = transport;
-    session = new MockHttpSession();
+    globalCookies = new ArrayList<Cookie>();
     referrer = null;
-  }
-
-  // For debugging:
-  public MockHttpSession getSession() {
-    return session;
   }
 
   public HttpExchange getExchange(URL url) {
     MockHttpServletRequest request = makeMockHttpGet(null, url.toString());
+    request.setCookies(globalCookies.toArray(new Cookie[0]));
     return new MockExchange(request);
   }
 
   public HttpExchange postExchange(URL url, List<StringPair> parameters) {
     MockHttpServletRequest request = makeMockHttpPost(null, url.toString());
+    request.setCookies(globalCookies.toArray(new Cookie[0]));
     if (parameters != null) {
       for (StringPair p: parameters) {
         request.addParameter(p.getName(), p.getValue());
       }
     }
     return new MockExchange(request);
+  }
+
+  public void addCookie(String name, String value) {
+    globalCookies.add(new Cookie(name, value));
   }
 
   private class MockExchange implements HttpExchange {
@@ -110,7 +111,9 @@ public class MockHttpClient implements HttpClientInterface {
       MockHttpServletResponse response = exchange1(request);
       if (followRedirects) {
         while (isRedirect(response)) {
-          response = exchange1(makeMockHttpGet(null, getRedirectUrl(response)));
+          MockHttpServletRequest newRequest = makeMockHttpGet(null, getRedirectUrl(response));
+          newRequest.setCookies(request.getCookies());
+          response = exchange1(newRequest);
         }
       }
       this.response = response;
@@ -135,7 +138,6 @@ public class MockHttpClient implements HttpClientInterface {
       if (credentials != null) {
         request.addHeader("Authorize", credentials);
       }
-      request.setSession(session);
       try {
         transport.exchange(request, response);
       } catch (ServletException e) {
@@ -183,7 +185,7 @@ public class MockHttpClient implements HttpClientInterface {
     public void setRequestBody(byte[] requestContent) {
       request.setContent(requestContent);
     }
-    
+
     public void close() {
     }
 

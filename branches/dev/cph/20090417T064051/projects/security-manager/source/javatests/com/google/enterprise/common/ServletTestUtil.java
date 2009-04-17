@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -128,6 +128,16 @@ public final class ServletTestUtil {
       }
     }
     out.write("\n");
+  }
+
+  public static void finalizeRequest(HttpServletRequest request) {
+    if (request instanceof MockHttpServletRequest) {
+      MockHttpServletRequest mr = (MockHttpServletRequest) request;
+      String value = ServletBase.cookieHeaderValue(Arrays.asList(mr.getCookies()));
+      if (value != null) {
+        mr.addHeader("Cookie", value);
+      }
+    }
   }
 
   public static String servletResponseToString(MockHttpServletResponse response, String tag)
