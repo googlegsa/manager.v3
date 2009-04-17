@@ -56,7 +56,7 @@ public class BasicAuthConnector implements Connector, Session, AuthenticationMan
 
     URL loginUrl;
     try {
-      loginUrl = new URL(identity.getLoginUrl());
+      loginUrl = new URL(identity.getSampleUrl());
     } catch (IOException e) {
       throw new RepositoryException(e);
     }

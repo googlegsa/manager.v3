@@ -19,7 +19,6 @@ import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
-import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
 
 import javax.servlet.http.Cookie;
@@ -107,9 +106,9 @@ public class AuthnCallerTest extends SecurityManagerTestCase {
   }
 
   private SecAuthnIdentity newIdentity(String username, String password) {
-    CredentialsGroup group = new CredentialsGroup(null);
-    group.setUsername(username);
-    group.setPassword(password);
-    return new DomainCredentials(null, group);
+    DomainCredentials id = DomainCredentials.dummy();
+    id.getGroup().setUsername(username);
+    id.getGroup().setPassword(password);
+    return id;
   }
 }
