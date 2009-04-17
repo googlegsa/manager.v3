@@ -23,6 +23,7 @@ import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.client.MockArtifactConsumer;
 import com.google.enterprise.saml.client.MockServiceProvider;
+import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.Metadata;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.security.identity.AuthnDomain;
@@ -35,6 +36,7 @@ import org.htmlcleaner.TagNode;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.springframework.mock.web.MockServletConfig;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -55,6 +57,8 @@ public class SamlSsoTest extends SecurityManagerTestCase {
   private static final String SP_URL =
       "http://localhost:8973/security-manager/mockserviceprovider";
 
+  private static int idCounter = 0;
+  private String sessionId;
   private MockHttpClient userAgent;
 
   @Override
@@ -63,10 +67,13 @@ public class SamlSsoTest extends SecurityManagerTestCase {
 
     Metadata metadata =
         Metadata.class.cast(Context.getInstance().getRequiredBean("Metadata", Metadata.class));
+    sessionId = "sessionId" + Integer.toString(idCounter++);
+    LOGGER.info("new session id = " + sessionId);
 
     // Initialize transport
     MockHttpTransport transport = new MockHttpTransport();
     userAgent = new MockHttpClient(transport);
+    userAgent.addCookie(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME, sessionId);
     MockArtifactConsumer artifactConsumer = new MockArtifactConsumer();
     artifactConsumer.setHttpClient(new MockHttpClient(transport));
 
@@ -83,7 +90,9 @@ public class SamlSsoTest extends SecurityManagerTestCase {
     transport.registerServlet(idp.getDefaultArtificateResolutionService(),
                               new SamlArtifactResolve());
 
-    transport.registerServlet(SP_URL, new MockServiceProvider());
+    MockServiceProvider msp = new MockServiceProvider();
+    msp.init(new MockServletConfig());
+    transport.registerServlet(SP_URL, msp);
   }
 
   public void testGood() throws IOException, MalformedURLException {
@@ -135,14 +144,14 @@ public class SamlSsoTest extends SecurityManagerTestCase {
         .getBackEnd().setIdentityConfig(config);
   }
 
-  private void assertResults(int statusCode, int nGood, HttpExchange exchange) {
+  private void assertResults(int statusCode, int nGood, HttpExchange exchange) throws IOException {
     assertEquals("Incorrect response status code", statusCode, exchange.getStatusCode());
     assertEquals("Incorrect number of verified groups", nGood, countGoodGroups());
   }
 
-  private int countGoodGroups() {
+  private int countGoodGroups() throws IOException {
     int nGood = 0;
-    for (CredentialsGroup group: SamlAuthn.sessionCredentialsGroups(userAgent.getSession())) {
+    for (CredentialsGroup group: SamlAuthn.getCredentialsGroups(sessionId)) {
       if (group.isVerified()) {
         nGood += 1;
       }
