@@ -110,7 +110,6 @@ public class ConnectorManager extends ProductionManager {
         LOGGER.info("PersistentStore: " + e.toString());
       }
     }
-    @SuppressWarnings("unchecked")
     List<ConnectorStatus> result = super.getConnectorStatuses();
     return result;
   }
