@@ -68,7 +68,7 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
     }
     List<ConnectorUserInfo> connectorUserInfos = null;
 
-    String siteUri = identity.getLoginUrl();
+    String siteUri = identity.getSampleUrl();
     if (siteUri == null) {
       LOGGER.warning("null URL for connector manager");
       return null;

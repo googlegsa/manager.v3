@@ -119,7 +119,7 @@ public class MockBackEnd implements BackEnd {
     if ((username != null) && (password != null)
         && password.equals(userMap.get(username))) {
       for (DomainCredentials dc: cg.getElements()) {
-        switch (dc.getAuthnDomain().getMechanism()) {
+        switch (dc.getMechanism()) {
           case BASIC_AUTH:
           case FORMS_AUTH:
           case CONNECTORS:

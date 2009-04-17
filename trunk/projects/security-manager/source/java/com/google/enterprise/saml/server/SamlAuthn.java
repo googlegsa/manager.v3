@@ -20,6 +20,7 @@ import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
+import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.ui.OmniForm;
 import com.google.enterprise.security.ui.OmniFormHtml;
 
@@ -86,6 +87,7 @@ public class SamlAuthn extends SecurityManagerServlet
   private static final long serialVersionUID = 1L;
   private static final String PROMPT_COUNTER_NAME = "SamlAuthnPromptCounter";
   private static final String OMNI_FORM_NAME = "SamlAuthnOmniForm";
+  private static final String CREDENTIALS_GROUPS_NAME = "SamlAuthnCredentialsGroups";
   private static final int defaultMaxPrompts = 3;
 
   private int maxPrompts;
@@ -194,8 +196,20 @@ public class SamlAuthn extends SecurityManagerServlet
       throws ServletException, IOException {
     BackEnd backend = getBackEnd();
     OmniForm omniform = getOmniForm(request);
+    List<CredentialsGroup> cgs = getCredentialsGroups(request);
 
-    List<String> ids = omniform.handleFormSubmit(request);
+    omniform.handleFormSubmit(request);
+    List<String> ids = new ArrayList<String>();
+    for (CredentialsGroup cg : cgs) {
+      if (!cg.isVerified() && cg.isVerifiable()) {
+        backend.authenticate(cg);
+        if (cg.isVerified()) {
+          ids.add(cg.getUsername());
+        } else {
+          LOGGER.info("Credentials group unfulfilled: " + cg.getHumanName());
+        }
+      }
+    }
     if (ids.isEmpty()) {
       maybePrompt(request, response);
       return;
@@ -208,7 +222,7 @@ public class SamlAuthn extends SecurityManagerServlet
     Cookie cookie =
         getAuthnContext(request).getCookieNamed(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME);
     if (cookie != null) {
-      backend.updateSessionManager(cookie.getValue(), omniform.getCredentialsGroups());
+      backend.updateSessionManager(cookie.getValue(), cgs);
     }
 
     makeSuccessfulResponse(request, response, ids);
@@ -246,7 +260,7 @@ public class SamlAuthn extends SecurityManagerServlet
     HttpSession session = request.getSession();
     OmniForm omniform = sessionOmniForm(session);
     if (null == omniform) {
-      omniform = new OmniForm(getBackEnd(), new OmniFormHtml(getAction(request)));
+      omniform = new OmniForm(getCredentialsGroups(request), new OmniFormHtml(getAction(request)));
       session.setAttribute(OMNI_FORM_NAME, omniform);
     }
     return omniform;
@@ -255,6 +269,23 @@ public class SamlAuthn extends SecurityManagerServlet
   // Exposed for debugging:
   public static OmniForm sessionOmniForm(HttpSession session) {
     return OmniForm.class.cast(session.getAttribute(OMNI_FORM_NAME));
+  }
+
+  private List<CredentialsGroup> getCredentialsGroups(HttpServletRequest request)
+      throws IOException {
+    HttpSession session = request.getSession();
+    List<CredentialsGroup> groups = sessionCredentialsGroups(session);
+    if (null == groups) {
+      groups = CredentialsGroup.newGroups(getBackEnd().getAuthnDomainGroups());
+      session.setAttribute(CREDENTIALS_GROUPS_NAME, groups);
+    }
+    return groups;
+  }
+
+  // Exposed for debugging:
+  @SuppressWarnings("unchecked")
+  public static List<CredentialsGroup> sessionCredentialsGroups(HttpSession session) {
+    return List.class.cast(session.getAttribute(CREDENTIALS_GROUPS_NAME));
   }
 
   private String getAction(HttpServletRequest request) {
