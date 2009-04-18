@@ -14,6 +14,8 @@
 
 package com.google.enterprise.common;
 
+import com.google.common.collect.ImmutableList;
+
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
@@ -36,9 +38,9 @@ import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
  */
 public class MockHttpClient implements HttpClientInterface {
 
-  private final HttpTransport transport;
-  private final List<Cookie> globalCookies;
-  private String referrer;
+  final HttpTransport transport;
+  final List<Cookie> globalCookies;
+  String referrer;
 
   public MockHttpClient(HttpTransport transport) {
     this.transport = transport;
@@ -48,13 +50,11 @@ public class MockHttpClient implements HttpClientInterface {
 
   public HttpExchange getExchange(URL url) {
     MockHttpServletRequest request = makeMockHttpGet(null, url.toString());
-    request.setCookies(globalCookies.toArray(new Cookie[0]));
     return new MockExchange(request);
   }
 
   public HttpExchange postExchange(URL url, List<StringPair> parameters) {
     MockHttpServletRequest request = makeMockHttpPost(null, url.toString());
-    request.setCookies(globalCookies.toArray(new Cookie[0]));
     if (parameters != null) {
       for (StringPair p: parameters) {
         request.addParameter(p.getName(), p.getValue());
@@ -63,8 +63,8 @@ public class MockHttpClient implements HttpClientInterface {
     return new MockExchange(request);
   }
 
-  public void addCookie(String name, String value) {
-    globalCookies.add(new Cookie(name, value));
+  public List<Cookie> getCookies() {
+    return ImmutableList.copyOf(globalCookies);
   }
 
   private class MockExchange implements HttpExchange {
@@ -75,6 +75,7 @@ public class MockHttpClient implements HttpClientInterface {
     private boolean followRedirects;
 
     public MockExchange(MockHttpServletRequest request) {
+      initRequestCookies(request);
       this.request = request;
       credentials = null;
       followRedirects = false;
@@ -109,10 +110,11 @@ public class MockHttpClient implements HttpClientInterface {
         generatePostContent(request);
       }
       MockHttpServletResponse response = exchange1(request);
+      mergeIntoGlobalCookies(response.getCookies());
       if (followRedirects) {
         while (isRedirect(response)) {
           MockHttpServletRequest newRequest = makeMockHttpGet(null, getRedirectUrl(response));
-          newRequest.setCookies(request.getCookies());
+          initRequestCookies(newRequest);
           response = exchange1(newRequest);
         }
       }
@@ -158,6 +160,18 @@ public class MockHttpClient implements HttpClientInterface {
       return referrer;
     }
 
+    private void mergeIntoGlobalCookies(Cookie[] cookies) {
+      if (cookies != null) {
+        for (Cookie c : cookies) {
+          globalCookies.add(c);
+        }
+      }
+    }
+
+    private void initRequestCookies(MockHttpServletRequest request) {
+      request.setCookies(globalCookies.toArray(new Cookie[0]));
+    }
+
     public String getResponseEntityAsString() throws IOException {
       return response.getContentAsString();
     }
@@ -188,6 +202,5 @@ public class MockHttpClient implements HttpClientInterface {
 
     public void close() {
     }
-
   }
 }
