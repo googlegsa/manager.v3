@@ -43,8 +43,9 @@ public abstract class SecurityManagerServlet extends ServletBase {
       SessionAttribute.getNamed("authnContext");
 
   /** Session attribute to hold the SAML message context. */
-  private static final SessionAttribute<SAMLMessageContext<? extends SAMLObject, ? extends SAMLObject, ? extends SAMLObject>> SAML_CONTEXT_ATTR =
-      SessionAttribute.getNamed("samlContext");
+  private static final SessionAttribute<
+      SAMLMessageContext<? extends SAMLObject, ? extends SAMLObject, ? extends SAMLObject>>
+      SAML_CONTEXT_ATTR = SessionAttribute.getNamed("samlContext");
 
   public static ConnectorManager getConnectorManager() {
     return ConnectorManager.class.cast(Context.getInstance().getManager());
@@ -83,7 +84,7 @@ public abstract class SecurityManagerServlet extends ServletBase {
   }
 
   /**
-   * Get the GSA session ID for an HTTP request.
+   * Does an HTTP request have a GSA session ID?
    *
    * @param request An HTTP request.
    * @return If the request has a session ID.
@@ -123,7 +124,7 @@ public abstract class SecurityManagerServlet extends ServletBase {
   }
 
   /**
-   * Create a new SAML message context and associate it with this request.
+   * Create a new SAML message context and associate it with the current session.
    *
    * @param request The current request object.
    * @return A new message context.
@@ -137,7 +138,7 @@ public abstract class SecurityManagerServlet extends ServletBase {
   }
 
   /**
-   * Fetch a SAML message context from a request.
+   * Fetch an existing SAML message context from the current session.
    *
    * @param request The current request object.
    * @return The previously saved message context.
