@@ -41,5 +41,4 @@ public class SimpleMockAuthorizationManager implements AuthorizationManager {
     }
     return ImmutableList.copyOf(result);
   }
-
 }
