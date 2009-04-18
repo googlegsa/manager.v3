@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.servlet.http.Cookie;
 
 public class SecAuthnContext {
+  private static final Logger LOGGER = Logger.getLogger(SecAuthnContext.class.getName());
 
   private final List<Cookie> cookies;
 
@@ -44,5 +46,16 @@ public class SecAuthnContext {
 
   public void addCookie(Cookie c) {
     cookies.add(c);
+  }
+
+  public void addCookies(Cookie[] cs) {
+    if (cs == null || cs.length == 0) {
+      LOGGER.info("No cookies found");
+    } else {
+      for (Cookie c: cs) {
+        LOGGER.info("Found cookie: " + c.getName() + "=" + c.getValue());
+        cookies.add(c);
+      }
+    }
   }
 }
