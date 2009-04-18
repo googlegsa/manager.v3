@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static com.google.enterprise.common.ServletTestUtil.finalizeRequest;
 import static com.google.enterprise.common.ServletTestUtil.finalizeResponse;
 import static com.google.enterprise.common.ServletTestUtil.servletRequestToString;
 import static com.google.enterprise.common.ServletTestUtil.servletResponseToString;
@@ -80,6 +81,7 @@ public final class MockHttpTransport implements HttpTransport {
     if (servlet == null) {
       throw new ServletException("Unknown request URL: " + url);
     }
+    finalizeRequest(request);
     logRequest(request, servlet.getClass().getName());
     servlet.doGet(request, response);
     finalizeResponse(response);
@@ -93,6 +95,7 @@ public final class MockHttpTransport implements HttpTransport {
     if (servlet == null) {
       throw new ServletException("Unknown request URL: " + url);
     }
+    finalizeRequest(request);
     logRequest(request, servlet.getClass().getName());
     servlet.doPost(request, response);
     finalizeResponse(response);

@@ -16,9 +16,8 @@ package com.google.enterprise.saml.server;
 
 import com.google.enterprise.common.GettableHttpServlet;
 import com.google.enterprise.common.PostableHttpServlet;
-import com.google.enterprise.connector.manager.SecAuthnContext;
+import com.google.enterprise.common.SessionAttribute;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.ui.OmniForm;
@@ -51,10 +50,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
@@ -85,10 +82,13 @@ public class SamlAuthn extends SecurityManagerServlet
   private static final Logger LOGGER = Logger.getLogger(SamlAuthn.class.getName());
   /** Required for serializable classes. */
   private static final long serialVersionUID = 1L;
-  private static final String PROMPT_COUNTER_NAME = "SamlAuthnPromptCounter";
-  private static final String OMNI_FORM_NAME = "SamlAuthnOmniForm";
-  private static final String CREDENTIALS_GROUPS_NAME = "SamlAuthnCredentialsGroups";
   private static final int defaultMaxPrompts = 3;
+  private static final SessionAttribute<Integer> PROMPT_COUNTER_ATTR =
+      SessionAttribute.getNamed("promptCounter");
+  private static final SessionAttribute<OmniForm> OMNI_FORM_ATTR =
+      SessionAttribute.getNamed("omniForm");
+  private static final SessionAttribute<List<CredentialsGroup>> CREDENTIALS_GROUPS_ATTR =
+      SessionAttribute.getNamed("credentialsGroups");
 
   private int maxPrompts;
 
@@ -118,7 +118,7 @@ public class SamlAuthn extends SecurityManagerServlet
 
     // Establish the SAML message context
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
-        newSamlMessageContext(request.getSession());
+        newSamlMessageContext(request);
     {
       EntityDescriptor localEntity = getSmEntity();
       initializeLocalEntity(context, localEntity, localEntity.getIDPSSODescriptor(SAML20P_NS),
@@ -167,23 +167,6 @@ public class SamlAuthn extends SecurityManagerServlet
   }
 
   /**
-   * Create a new authentication context from an HTTP request.
-   *
-   * @param request An HTTP request.
-   * @return An authentication context for that request.
-   */
-  private SecAuthnContext getAuthnContext(HttpServletRequest request) {
-    SecAuthnContext context = new SecAuthnContext();
-    Cookie[] cookies = request.getCookies();
-    if (cookies != null) {
-      for (Cookie c: cookies) {
-        context.addCookie(c);
-      }
-    }
-    return context;
-  }
-
-  /**
    * Extract the username and password from the parameters, then ask the backend to validate them.
    * The backend returns the appropriate SAML Response message, which we then encode and return to
    * the service provider.  At the moment we only support the Artifact binding for the response.
@@ -216,22 +199,17 @@ public class SamlAuthn extends SecurityManagerServlet
     }
 
     // This sequence is done; reset for next.
-    resetPromptCounter(request.getSession());
+    resetPromptCounter(request);
 
     // Update the Session Manager with the necessary info.
-    Cookie cookie =
-        getAuthnContext(request).getCookieNamed(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME);
-    if (cookie != null) {
-      backend.updateSessionManager(cookie.getValue(), cgs);
-    }
+    backend.updateSessionManager(getSessionId(request), cgs);
 
     makeSuccessfulResponse(request, response, ids);
   }
 
   private void maybePrompt(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    HttpSession session = request.getSession();
-    if (shouldPrompt(session)) {
+    if (shouldPrompt(request)) {
       PrintWriter writer = initNormalResponse(response);
       writer.print(getOmniForm(request).generateForm());
       writer.close();
@@ -240,52 +218,49 @@ public class SamlAuthn extends SecurityManagerServlet
     }
   }
 
-  private boolean shouldPrompt(HttpSession session) {
-    Object value = session.getAttribute(PROMPT_COUNTER_NAME);
-    int n = (value == null) ? 0 : Integer.class.cast(value);
+  private boolean shouldPrompt(HttpServletRequest request)
+      throws ServletException {
+    String sessionId = getSessionId(request);
+    Integer value = PROMPT_COUNTER_ATTR.get(sessionId);
+    int n = (value == null) ? 0 : value;
     if (n < maxPrompts) {
-      session.setAttribute(PROMPT_COUNTER_NAME, Integer.valueOf(n + 1));
+      PROMPT_COUNTER_ATTR.put(sessionId, Integer.valueOf(n + 1));
       return true;
     }
-    resetPromptCounter(session);
+    resetPromptCounter(request);
     return false;
   }
 
-  private void resetPromptCounter(HttpSession session) {
-    session.removeAttribute(PROMPT_COUNTER_NAME);
+  private void resetPromptCounter(HttpServletRequest request)
+      throws ServletException {
+    PROMPT_COUNTER_ATTR.remove(getSessionId(request));
   }
 
   private OmniForm getOmniForm(HttpServletRequest request)
-      throws IOException {
-    HttpSession session = request.getSession();
-    OmniForm omniform = sessionOmniForm(session);
+      throws IOException, ServletException {
+    String sessionId = getSessionId(request);
+    OmniForm omniform = OMNI_FORM_ATTR.get(sessionId);
     if (null == omniform) {
       omniform = new OmniForm(getCredentialsGroups(request), new OmniFormHtml(getAction(request)));
-      session.setAttribute(OMNI_FORM_NAME, omniform);
+      OMNI_FORM_ATTR.put(sessionId, omniform);
     }
     return omniform;
   }
 
-  // Exposed for debugging:
-  public static OmniForm sessionOmniForm(HttpSession session) {
-    return OmniForm.class.cast(session.getAttribute(OMNI_FORM_NAME));
+  private static List<CredentialsGroup> getCredentialsGroups(HttpServletRequest request)
+      throws IOException, ServletException {
+    return getCredentialsGroups(getSessionId(request));
   }
 
-  private List<CredentialsGroup> getCredentialsGroups(HttpServletRequest request)
+  // Not private so can be used by unit tests.
+  static List<CredentialsGroup> getCredentialsGroups(String sessionId)
       throws IOException {
-    HttpSession session = request.getSession();
-    List<CredentialsGroup> groups = sessionCredentialsGroups(session);
+    List<CredentialsGroup> groups = CREDENTIALS_GROUPS_ATTR.get(sessionId);
     if (null == groups) {
       groups = CredentialsGroup.newGroups(getBackEnd().getAuthnDomainGroups());
-      session.setAttribute(CREDENTIALS_GROUPS_NAME, groups);
+      CREDENTIALS_GROUPS_ATTR.put(sessionId, groups);
     }
     return groups;
-  }
-
-  // Exposed for debugging:
-  @SuppressWarnings("unchecked")
-  public static List<CredentialsGroup> sessionCredentialsGroups(HttpSession session) {
-    return List.class.cast(session.getAttribute(CREDENTIALS_GROUPS_NAME));
   }
 
   private String getAction(HttpServletRequest request) {
@@ -300,7 +275,7 @@ public class SamlAuthn extends SecurityManagerServlet
       throws ServletException {
     LOGGER.info("Verified IDs: " + idsToString(ids));
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
-        existingSamlMessageContext(request.getSession());
+        existingSamlMessageContext(request);
 
     // Generate <Assertion> with <AuthnStatement>
     Assertion assertion =
@@ -347,7 +322,7 @@ public class SamlAuthn extends SecurityManagerServlet
       throws ServletException {
     LOGGER.log(Level.WARNING, message);
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
-        existingSamlMessageContext(request.getSession());
+        existingSamlMessageContext(request);
     context.setOutboundSAMLMessage(makeResponse(context.getInboundSAMLMessage(),
                                                 makeStatus(StatusCode.AUTHN_FAILED_URI, message)));
     doRedirect(request, response);
@@ -356,7 +331,7 @@ public class SamlAuthn extends SecurityManagerServlet
   private void doRedirect(HttpServletRequest request, HttpServletResponse response)
       throws ServletException {
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
-        existingSamlMessageContext(request.getSession());
+        existingSamlMessageContext(request);
     // Encode the response message
     initResponse(response);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(response, true));
