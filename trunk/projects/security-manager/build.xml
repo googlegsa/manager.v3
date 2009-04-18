@@ -57,11 +57,11 @@
   <property name="coverage.dir" value="${build}/coverage" />
 
   <!-- =========================== TASKS =============================== -->
-  <target name="security_manager" description="Google Enterprise Security Manager" depends="war,regressions,junit-report" />
+  <target name="security_manager" description="Google Enterprise Security Manager" depends="war-prod" />
 
-  <target name="all" depends="war" />
+  <target name="all" depends="war,run_tests,regressions" />
 
-  <target name="everything" depends="all,run_tests,install-security-manager,junit-report" />
+  <target name="everything" depends="all,install-security-manager,junit-report" />
 
   <target name="init">
     <mkdir dir="${build}" />
@@ -117,7 +117,12 @@
     </javac>
   </target>
 
-  <target name="run_tests" depends="compile_tests,jar-builtins">
+  <target name="run_tests">
+    <delete dir="${instrumented.dir}" />
+    <antcall target="run_tests_1" />
+  </target>
+
+  <target name="coverage_report">
     <delete file="${coverage.file}" />
     <cobertura-instrument todir="${instrumented.dir}">
       <fileset dir="${classes}" >
@@ -126,6 +131,15 @@
         <exclude name="com/google/enterprise/connector/servlet/StartUp.class" />
       </fileset>
     </cobertura-instrument>
+    <antcall target="run_tests_1" />
+    <cobertura-report format="html"
+                      datafile="${coverage.file}"
+                      destdir="${coverage.dir}"
+                      srcdir="${basedir}/source/java"
+                      />
+  </target>
+
+  <target name="run_tests_1" depends="compile_tests,jar-builtins">
     <property name="test.suite" value="*" />
     <junit fork="yes" haltonfailure="yes" dir=".">
       <classpath>
@@ -145,14 +159,6 @@
         <fileset dir="${tests.src}" includes="**/${test.suite}Test.java" />
       </batchtest>
     </junit>
-  </target>
-
-  <target name="coverage_report">
-    <cobertura-report format="html"
-                      datafile="${coverage.file}"
-                      destdir="${coverage.dir}"
-                      srcdir="${basedir}/source/java"
-                      />
   </target>
 
   <target name="jar" depends="jar-prod,jar-tests,jar-builtins" description="Create jars for the Security Manager project" />
@@ -222,7 +228,7 @@
 
   <target name="war" depends="war-prod,war-tests" description="Builds the Production WAR file." />
 
-  <target name="war-prod" depends="install_init,jar" description="Builds the Production WAR file for installation.">
+  <target name="war-prod" depends="install_init,jar-prod,jar-builtins" description="Builds the Production WAR file for installation.">
     <echo> The production war file dir is located at ${war.dir}</echo>
 
     <tstamp />
