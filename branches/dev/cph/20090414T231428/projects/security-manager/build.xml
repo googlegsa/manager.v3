@@ -61,7 +61,7 @@
 
   <target name="all" depends="war,run_tests,regressions" />
 
-  <target name="everything" depends="all,regressions,install-security-manager,junit-report" />
+  <target name="everything" depends="all,install-security-manager,junit-report" />
 
   <target name="init">
     <mkdir dir="${build}" />
@@ -247,7 +247,7 @@
   </target>
 
   <!-- This war file is used for regression tests. -->
-  <target name="war-tests" depends="install_init,jar-tests,jar-builtins" description="Builds the Test WAR file for installation.">
+  <target name="war-tests" depends="install_init,jar" description="Builds the Test WAR file for installation.">
     <echo>The test war file dir is located at ${war.dir}</echo>
 
     <tstamp />
