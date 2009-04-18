@@ -18,6 +18,7 @@ import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.common.MockHttpClient;
 import com.google.enterprise.common.MockHttpTransport;
 import com.google.enterprise.common.SecurityManagerTestCase;
+import com.google.enterprise.common.SessionAttribute;
 import com.google.enterprise.common.StringPair;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
@@ -36,7 +37,6 @@ import org.htmlcleaner.TagNode;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
-import org.springframework.mock.web.MockServletConfig;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -44,6 +44,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+
+import javax.servlet.http.Cookie;
 
 import static com.google.enterprise.saml.common.GsaConstants.GSA_TESTING_ISSUER;
 
@@ -57,8 +59,6 @@ public class SamlSsoTest extends SecurityManagerTestCase {
   private static final String SP_URL =
       "http://localhost:8973/security-manager/mockserviceprovider";
 
-  private static int idCounter = 0;
-  private String sessionId;
   private MockHttpClient userAgent;
 
   @Override
@@ -67,13 +67,10 @@ public class SamlSsoTest extends SecurityManagerTestCase {
 
     Metadata metadata =
         Metadata.class.cast(Context.getInstance().getRequiredBean("Metadata", Metadata.class));
-    sessionId = "sessionId" + Integer.toString(idCounter++);
-    LOGGER.info("new session id = " + sessionId);
 
     // Initialize transport
     MockHttpTransport transport = new MockHttpTransport();
     userAgent = new MockHttpClient(transport);
-    userAgent.addCookie(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME, sessionId);
     MockArtifactConsumer artifactConsumer = new MockArtifactConsumer();
     artifactConsumer.setHttpClient(new MockHttpClient(transport));
 
@@ -90,9 +87,13 @@ public class SamlSsoTest extends SecurityManagerTestCase {
     transport.registerServlet(idp.getDefaultArtificateResolutionService(),
                               new SamlArtifactResolve());
 
-    MockServiceProvider msp = new MockServiceProvider();
-    msp.init(new MockServletConfig());
-    transport.registerServlet(SP_URL, msp);
+    transport.registerServlet(SP_URL, new MockServiceProvider());
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    SessionAttribute.eraseSession(getSessionId());
+    super.tearDown();
   }
 
   public void testGood() throws IOException, MalformedURLException {
@@ -151,12 +152,22 @@ public class SamlSsoTest extends SecurityManagerTestCase {
 
   private int countGoodGroups() throws IOException {
     int nGood = 0;
-    for (CredentialsGroup group: SamlAuthn.getCredentialsGroups(sessionId)) {
+    for (CredentialsGroup group: SamlAuthn.getCredentialsGroups(getSessionId())) {
       if (group.isVerified()) {
         nGood += 1;
       }
     }
     return nGood;
+  }
+
+  private String getSessionId() {
+    for (Cookie c : userAgent.getCookies()) {
+      if (c.getName().equals(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME)) {
+        return c.getValue();
+      }
+    }
+    fail("Unable to find session ID cookie");
+    return null;
   }
 
   private HttpExchange trySingleCredential(String username, String password)
