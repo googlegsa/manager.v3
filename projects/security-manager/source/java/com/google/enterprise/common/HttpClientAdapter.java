@@ -20,6 +20,7 @@ import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.NTCredentials;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
@@ -122,6 +123,14 @@ public class HttpClientAdapter implements HttpClientInterface {
       httpMethod.setDoAuthentication(true);
     }
 
+    public void setNtlmAuthCredentials(String domain, String username, String password) {
+      httpClient.getState().setCredentials(
+          new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, AuthScope.ANY_REALM),
+          new NTCredentials(username, password, "", domain));
+      httpClient.getParams().setAuthenticationPreemptive(true);
+      httpMethod.setDoAuthentication(true);
+    }
+    
     public void setFollowRedirects(boolean followRedirects) {
       httpMethod.setFollowRedirects(followRedirects);
     }
@@ -168,9 +177,7 @@ public class HttpClientAdapter implements HttpClientInterface {
 
     public String getResponseHeaderValue(String name) {
       for (Header header: httpMethod.getResponseHeaders(name)) {
-        if (header.getName().equals(name)) {
-          return header.getValue();
-        }
+        return header.getValue();
       }
       return null;
     }
@@ -178,9 +185,7 @@ public class HttpClientAdapter implements HttpClientInterface {
     public List<String> getResponseHeaderValues(String name) {
       List<String> result = new ArrayList<String>();
       for (Header header: httpMethod.getResponseHeaders(name)) {
-        if (header.getName().equals(name)) {
-          result.add(header.getValue());
-        }
+        result.add(header.getValue());
       }
       return result;
     }

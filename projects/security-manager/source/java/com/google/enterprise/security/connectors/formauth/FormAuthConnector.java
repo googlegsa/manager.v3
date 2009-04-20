@@ -66,10 +66,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     }
 
     String siteUri = identity.getSampleUrl();
-    if (siteUri == null) {
-      LOGGER.info("Could not authenticate: null URL");
-      return null;
-    }
+    LOGGER.info("Trying to authenticate against " + siteUri);
 
     Collection<Cookie> originalCookies = identity.getCookies();
     Vector<Cookie> cookies = copyCookies(originalCookies);
@@ -98,6 +95,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       if (action[0] != null) {
         URL formUrl = new URL(redirect);
         URL newUrl = new URL(formUrl, action[0]);
+        LOGGER.info("POST to " + redirect + " modified " + action[0]);
         redirect = newUrl.toString();
       }
     } catch (IOException e) {
@@ -184,6 +182,10 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     HtmlCleaner cleaner = new HtmlCleaner();
     TagNode[] forms = cleaner.clean(form.toString()).getElementsByName("form", true);
     if (forms.length < 1) {
+      forms = cleaner.clean(form.toString()).getElementsByName("FORM", true);
+    }
+    if (forms.length < 1) {
+      LOGGER.info(form.toString());
       return names;
     }
     StringBuffer buffer = new StringBuffer("Got form");
@@ -213,7 +215,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       if (inputType.equals("password")) {
         names.add(new StringPair(inputName, pass));
       }
-      if (inputType.equals("hidden")) {
+      if (inputType.equalsIgnoreCase("hidden")) {
         names.add(new StringPair(inputName, node.getAttributeByName("value")));
       }
     }

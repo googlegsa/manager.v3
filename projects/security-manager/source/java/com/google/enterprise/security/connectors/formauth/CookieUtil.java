@@ -147,7 +147,7 @@ public final class CookieUtil {
                  " exp=" + expiresAt);
         if (setCookie.getMaxAge() == 0) {
           // Max age is non-negative (RFC2109) and negative means
-          // attribtue not present, so we just check for 0.
+          // attribute not present, so we just check for 0.
           LOG.info("This cookie has expired based on max-age: " + name);
           expiredCookieNames.add(name);
           expiredCookies.add(setCookie);
