@@ -31,16 +31,16 @@ import java.util.logging.Logger;
  *
  * The expected format of the config file is as follows:
  *
- * AuthnDomainGroup name,FQDN,subpath,AuthnMech,(optionally)loginUrl
+ * group name,FQDN,subpath,AuthnMech,(optionally)loginUrl
  *
- * All the fields following the AuthnDomainGroup name refer to a specific
- * AuthnDomain.  Thus, multiple lines may share the same AuthnDomainGroup name
- * to represent multiple AuthnDomains that belong to the same AuthnDomainGroup.
+ * All the fields following the group name refer to a specific identity element.  Thus,
+ * multiple lines may share the same group name to represent multiple identity elements
+ * that belong to the same credentials group.
  *
- * The AuthnDomainGroup name may be any abritrary alphanumerical string.
+ * The group name may be any arbitrary alphanumerical string.
  *
- * The AuthnMech string may be any one of the following:
- * BASIC_AUTH,FORMS_AUTH,SAML,SSL,CONNECTORS,SPNEGO_KERBEROS
+ * The AuthnMech string may be any of the names in
+ * com.google.enterprise.saml.common.AuthNMechanism.
  */
 public class CsvConfig implements IdentityConfig {
 
@@ -51,20 +51,20 @@ public class CsvConfig implements IdentityConfig {
     this.configFile = configFile;
   }
 
-  public List<AuthnDomainGroup> getConfig() throws IOException {
+  public List<CredentialsGroupConfig> getConfig() throws IOException {
     return getConfig(new FileReader(FileUtil.getContextFile(configFile)));
   }
 
   /**
    * For each valid line in the provided configuration, getConfig will create
-   * an AuthnDomain and place it in the AuthnDomainGroup specified by that
-   * line.  getConfig will create new AuthnDomainGroups as necessary.
+   * an IdentityElementConfig and place it in the CredentialsGroupConfig specified by that
+   * line.  getConfig will create new CredentialsGroupConfigs as necessary.
    */
-  public List<AuthnDomainGroup> getConfig(Reader in) throws IOException {
+  public List<CredentialsGroupConfig> getConfig(Reader in) throws IOException {
     CSVReader reader = new CSVReader(in);
     String[] nextLine;
 
-    HashMap<String,AuthnDomainGroup> adgMap = new HashMap<String,AuthnDomainGroup>();
+    HashMap<String,CredentialsGroupConfig> cgcMap = new HashMap<String,CredentialsGroupConfig>();
     while ((nextLine = reader.readNext()) != null) {
       if (nextLine.length < 5) {
         LOGGER.severe("Invalid configuration line, skipping: \n" + nextLine);
@@ -77,16 +77,16 @@ public class CsvConfig implements IdentityConfig {
         continue;
       }
 
-      String adgName = nextLine[0];
-      if (!adgMap.containsKey(adgName)) {
-        adgMap.put(adgName, new AuthnDomainGroup(adgName));
+      String cgcName = nextLine[0];
+      if (!cgcMap.containsKey(cgcName)) {
+        cgcMap.put(cgcName, new CredentialsGroupConfig(cgcName));
       }
-      new AuthnDomain(nextLine[1] + nextLine[2], authMech,
+      new IdentityElementConfig(authMech,
           "".equals(nextLine[4]) ? nextLine[1] + nextLine[2] : nextLine[4],
-          adgMap.get(adgName));
+          cgcMap.get(cgcName));
     }
 
-    return new ArrayList<AuthnDomainGroup>(adgMap.values());
+    return new ArrayList<CredentialsGroupConfig>(cgcMap.values());
   }
 
   public AuthNMechanism authNMechFromString(String mech) {
@@ -98,11 +98,11 @@ public class CsvConfig implements IdentityConfig {
   }
 
   // This is useful in unit testing.
-  public static List<AuthnDomainGroup> readConfigFile(String configFile) throws IOException {
+  public static List<CredentialsGroupConfig> readConfigFile(String configFile) throws IOException {
     return (new CsvConfig(configFile)).getConfig();
   }
 
-  public static List<AuthnDomainGroup> readConfigFile(Reader in) throws IOException {
+  public static List<CredentialsGroupConfig> readConfigFile(Reader in) throws IOException {
     return (new CsvConfig("AuthSites.conf")).getConfig(in);
   }
 }

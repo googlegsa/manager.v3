@@ -1,10 +1,10 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,9 +17,9 @@ package com.google.enterprise.saml.server;
 import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.security.connectors.formauth.CookieUtil;
-import com.google.enterprise.security.identity.AuthnDomain;
-import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.CredentialsGroupConfig;
+import com.google.enterprise.security.identity.IdentityElementConfig;
 import com.google.enterprise.security.manager.LocalSessionManager;
 
 import java.util.ArrayList;
@@ -33,20 +33,19 @@ import javax.servlet.http.Cookie;
  */
 public class BackEndImplTest extends SecurityManagerTestCase {
 
-  private final List<AuthnDomainGroup> adgs;
+  private final List<CredentialsGroupConfig> groupConfigs;
   private LocalSessionManager sm;
   private BackEndImpl backend;
 
   public BackEndImplTest() {
-    adgs = new ArrayList<AuthnDomainGroup>();
-    adgs.add(new AuthnDomainGroup("adg1"));
-    adgs.add(new AuthnDomainGroup("adg2"));
-    adgs.add(new AuthnDomainGroup("adg3"));
+    groupConfigs = new ArrayList<CredentialsGroupConfig>();
+    groupConfigs.add(new CredentialsGroupConfig("group1"));
+    groupConfigs.add(new CredentialsGroupConfig("group2"));
+    groupConfigs.add(new CredentialsGroupConfig("group3"));
 
-    new AuthnDomain("basicDomain", AuthNMechanism.BASIC_AUTH, "basic_loginurl", adgs.get(0));
-    new AuthnDomain("formsDomain", AuthNMechanism.FORMS_AUTH, "forms_loginurl", adgs.get(1));
-    new AuthnDomain("connectorDomain", AuthNMechanism.CONNECTORS, "connector_loginurl",
-                    adgs.get(2));
+    new IdentityElementConfig(AuthNMechanism.BASIC_AUTH, "basic_loginurl", groupConfigs.get(0));
+    new IdentityElementConfig(AuthNMechanism.FORMS_AUTH, "forms_loginurl", groupConfigs.get(1));
+    new IdentityElementConfig(AuthNMechanism.CONNECTORS, "connector_loginurl", groupConfigs.get(2));
   }
 
   @Override
@@ -57,13 +56,13 @@ public class BackEndImplTest extends SecurityManagerTestCase {
   }
 
   public void testUpdateSessionManager() {
-    List<CredentialsGroup> cgs = CredentialsGroup.newGroups(adgs);
-    CredentialsGroup basicCG = cgs.get(0);
-    CredentialsGroup formsCG = cgs.get(1);
-    // CredentialsGroup connectorCG = cgs.get(2);
+    List<CredentialsGroup> groups = CredentialsGroup.newGroups(groupConfigs);
+    CredentialsGroup basicCG = groups.get(0);
+    CredentialsGroup formsCG = groups.get(1);
+    // CredentialsGroup connectorCG = groups.get(2);
 
-    basicCG.setUsername("user");
-    basicCG.setPassword("password");
+    basicCG.getElements().get(0).setUsername("user");
+    basicCG.getElements().get(0).setPassword("password");
 
     String sid = sm.createSession();
     List<CredentialsGroup> cgList = new ArrayList<CredentialsGroup>();
@@ -72,9 +71,9 @@ public class BackEndImplTest extends SecurityManagerTestCase {
     assertEquals("user", backend.adapter.getUsername(sid));
     assertEquals("password", backend.adapter.getPassword(sid));
 
-    formsCG.setUsername("joe");
-    formsCG.setPassword("bob");
-    formsCG.getElements().get(0).addCookie(new Cookie("cookieOne", "cookieOneVal"));
+    formsCG.getElements().get(0).setUsername("joe");
+    formsCG.getElements().get(0).setPassword("bob");
+    formsCG.addCookie(new Cookie("cookieOne", "cookieOneVal"));
 
     sid = sm.createSession();
     cgList.add(formsCG);
