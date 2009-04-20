@@ -20,9 +20,10 @@ import com.google.enterprise.common.MockHttpTransport;
 import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.CredentialsGroupConfig;
 import com.google.enterprise.security.identity.CsvConfig;
+import com.google.enterprise.security.identity.IdentityElement;
 
 import java.io.IOException;
 import java.util.List;
@@ -36,8 +37,8 @@ public class ConnAuthConnectorTest extends SecurityManagerTestCase {
 
   public ConnAuthConnectorTest(String name) throws IOException, ServletException {
     super(name);
-    List<AuthnDomainGroup> adgs = CsvConfig.readConfigFile("AuthSites.conf");
-    cgs = CredentialsGroup.newGroups(adgs);
+    List<CredentialsGroupConfig> cgcs = CsvConfig.readConfigFile("AuthSites.conf");
+    cgs = CredentialsGroup.newGroups(cgcs);
     MockHttpTransport transport = new MockHttpTransport();
     transport.registerServlet(cgs.get(0).getElements().get(0).getSampleUrl(),
                               new MockCMAuthServer());
@@ -57,12 +58,11 @@ public class ConnAuthConnectorTest extends SecurityManagerTestCase {
   }
 
   private boolean tryCreds(String username, String password) throws RepositoryException {
-    cgs.get(0).setUsername(username);
-    cgs.get(0).setPassword(password);
-    ConnAuthConnector connector = new ConnAuthConnector(httpClient, "foo");
-    AuthenticationResponse response = connector.authenticate(cgs.get(0).getElements().get(0));
+    IdentityElement id = cgs.get(0).getElements().get(0);
+    id.setUsername(username);
+    id.setPassword(password);
+    AuthenticationResponse response = (new ConnAuthConnector(httpClient, "foo")).authenticate(id);
     assertNotNull("Null response from authenticate()", response);
     return response.isValid();
   }
-
 }

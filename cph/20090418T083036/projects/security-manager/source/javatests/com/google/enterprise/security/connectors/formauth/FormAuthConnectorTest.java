@@ -19,10 +19,10 @@ import com.google.enterprise.common.MockHttpClient;
 import com.google.enterprise.common.MockHttpTransport;
 import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.CredentialsGroupConfig;
 import com.google.enterprise.security.identity.CsvConfig;
-import com.google.enterprise.security.identity.DomainCredentials;
+import com.google.enterprise.security.identity.IdentityElement;
 
 import java.io.IOException;
 import java.util.List;
@@ -36,8 +36,8 @@ public class FormAuthConnectorTest extends SecurityManagerTestCase {
 
   public FormAuthConnectorTest(String name) throws IOException, ServletException {
     super(name);
-    List<AuthnDomainGroup> adgs = CsvConfig.readConfigFile("AuthSites.conf");
-    List<CredentialsGroup> cgs = CredentialsGroup.newGroups(adgs);
+    List<CredentialsGroupConfig> cgcs = CsvConfig.readConfigFile("AuthSites.conf");
+    List<CredentialsGroup> cgs = CredentialsGroup.newGroups(cgcs);
     cg = cgs.get(0);
     MockHttpTransport transport = new MockHttpTransport();
     transport.registerServlet(cg.getElements().get(0).getSampleUrl(),
@@ -58,13 +58,13 @@ public class FormAuthConnectorTest extends SecurityManagerTestCase {
   }
 
   public boolean tryCreds(String username, String password) {
-    cg.setUsername(username);
-    cg.setPassword(password);
-    DomainCredentials dCred = cg.getElements().get(0);
-    dCred.clearCookies();
+    cg.clearCookies();
+    IdentityElement id = cg.getElements().get(0);
+    id.setUsername(username);
+    id.setPassword(password);
     AuthenticationResponse response =
-        (new FormAuthConnector(httpClient, "foo")).authenticate(dCred);
+        (new FormAuthConnector(httpClient, "foo")).authenticate(id);
     assertNotNull("Null response from authenticate()", response);
-    return response.isValid() && (dCred.getCookies().size() > 0);
+    return response.isValid() && (cg.getCookies().size() > 0);
   }
 }

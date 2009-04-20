@@ -27,9 +27,9 @@ import com.google.enterprise.saml.client.MockServiceProvider;
 import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.Metadata;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
-import com.google.enterprise.security.identity.AuthnDomain;
-import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.CredentialsGroupConfig;
+import com.google.enterprise.security.identity.IdentityElementConfig;
 import com.google.enterprise.security.identity.MockIdentityConfig;
 
 import org.htmlcleaner.HtmlCleaner;
@@ -134,12 +134,12 @@ public class SamlSsoTest extends SecurityManagerTestCase {
 
   private void setUpMultipleConfig() {
     MockIdentityConfig config = new MockIdentityConfig();
-    List<AuthnDomainGroup> groups = config.getConfig();
-    AuthnDomainGroup g1 = new AuthnDomainGroup("group1");
-    new AuthnDomain("domain1", AuthNMechanism.FORMS_AUTH, "http://localhost/login1", g1);
+    List<CredentialsGroupConfig> groups = config.getConfig();
+    CredentialsGroupConfig g1 = new CredentialsGroupConfig("group1");
+    new IdentityElementConfig(AuthNMechanism.FORMS_AUTH, "http://localhost/login1", g1);
     groups.add(g1);
-    AuthnDomainGroup g2 = new AuthnDomainGroup("group2");
-    new AuthnDomain("domain2", AuthNMechanism.FORMS_AUTH, "http://localhost/login2", g2);
+    CredentialsGroupConfig g2 = new CredentialsGroupConfig("group2");
+    new IdentityElementConfig(AuthNMechanism.FORMS_AUTH, "http://localhost/login2", g2);
     groups.add(g2);
     ConnectorManager.class.cast(Context.getInstance().getManager())
         .getBackEnd().setIdentityConfig(config);

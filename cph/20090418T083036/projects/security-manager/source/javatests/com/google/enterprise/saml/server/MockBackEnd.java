@@ -18,10 +18,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
-import com.google.enterprise.security.identity.DomainCredentials;
+import com.google.enterprise.security.identity.CredentialsGroupConfig;
 import com.google.enterprise.security.identity.IdentityConfig;
+import com.google.enterprise.security.identity.IdentityElement;
 import com.google.enterprise.security.identity.VerificationStatus;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
@@ -52,7 +52,7 @@ public class MockBackEnd implements BackEnd {
   private final SAMLArtifactMap artifactMap;
   private final Map<String, String> userMap;
   private IdentityConfig identityConfig;
-  private List<AuthnDomainGroup> authnDomainGroups;
+  private List<CredentialsGroupConfig> groupConfigs;
 
   /**
    * Create a new backend object.
@@ -70,7 +70,7 @@ public class MockBackEnd implements BackEnd {
     userMap.put("joe", "plumber");
     userMap.put("jim", "electrician");
     identityConfig = null;
-    authnDomainGroups = null;
+    groupConfigs = null;
   }
 
   public SessionManagerInterface getSessionManager() {
@@ -82,7 +82,7 @@ public class MockBackEnd implements BackEnd {
   }
 
   public boolean isIdentityConfigured() throws IOException {
-    return !getAuthnDomainGroups().isEmpty();
+    return !getIdentityConfiguration().isEmpty();
   }
 
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
@@ -94,19 +94,19 @@ public class MockBackEnd implements BackEnd {
 
   public void setIdentityConfig(IdentityConfig identityConfig) {
     this.identityConfig = identityConfig;
-    authnDomainGroups = null;
+    groupConfigs = null;
   }
 
-  public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException {
-    if (authnDomainGroups == null) {
+  public List<CredentialsGroupConfig> getIdentityConfiguration() throws IOException {
+    if (groupConfigs == null) {
       if (identityConfig != null) {
-        authnDomainGroups = ImmutableList.copyOf(identityConfig.getConfig());
+        groupConfigs = ImmutableList.copyOf(identityConfig.getConfig());
       }
-      if (authnDomainGroups == null) {
-        authnDomainGroups = ImmutableList.of();
+      if (groupConfigs == null) {
+        groupConfigs = ImmutableList.of();
       }
     }
-    return authnDomainGroups;
+    return groupConfigs;
   }
 
   public List<AuthenticationResponse> handleCookie(SecAuthnContext context) {
@@ -114,19 +114,19 @@ public class MockBackEnd implements BackEnd {
   }
 
   public void authenticate(CredentialsGroup cg) {
-    String username = cg.getUsername();
-    String password = cg.getPassword();
-    if ((username != null) && (password != null)
-        && password.equals(userMap.get(username))) {
-      for (DomainCredentials dc: cg.getElements()) {
-        switch (dc.getMechanism()) {
-          case BASIC_AUTH:
-          case FORMS_AUTH:
-          case CONNECTORS:
-            LOGGER.info("Authn Success, credential verified: " + dc.dumpInfo());
-            dc.setVerificationStatus(VerificationStatus.VERIFIED);
-            break;
-        }
+    for (IdentityElement id: cg.getElements()) {
+      switch (id.getMechanism()) {
+        case BASIC_AUTH:
+        case FORMS_AUTH:
+        case CONNECTORS:
+          String username = id.getUsername();
+          String password = id.getPassword();
+          if ((username != null) && (password != null)
+              && password.equals(userMap.get(username))) {
+            id.setVerificationStatus(VerificationStatus.VERIFIED);
+            LOGGER.info("Authn Success, credential verified: " + username);
+          }
+          break;
       }
     }
   }
