@@ -37,6 +37,14 @@ public interface HttpExchange {
   public void setBasicAuthCredentials(String username, String password);
 
   /**
+   * Set credentials to use for NTLM auth.
+   * @param domain
+   * @param username
+   * @param password
+   */
+  public void setNtlmAuthCredentials(String domain, String username, String password);
+  
+  /**
    * Tell exchange whether to follow redirects.
    * Default is to not follow them.
    * @param followRedirects {@code true} means follow them.
