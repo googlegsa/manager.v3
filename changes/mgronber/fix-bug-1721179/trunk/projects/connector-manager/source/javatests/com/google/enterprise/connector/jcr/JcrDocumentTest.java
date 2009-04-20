@@ -80,6 +80,9 @@ public class JcrDocumentTest extends TestCase {
       String expectedValue) throws RepositoryException {
     Value v = document.findProperty(name).nextValue();
     if (v instanceof BinaryValue) {
+      // Note this won't work for streams that originate as binary files or
+      // documents since the call to streamToString() will mangle the
+      // characters.  For this test case, all these originate as plain text.
       assertEquals(expectedValue,
           StringUtils.streamToString(((BinaryValue) v).getInputStream()));
     } else {
