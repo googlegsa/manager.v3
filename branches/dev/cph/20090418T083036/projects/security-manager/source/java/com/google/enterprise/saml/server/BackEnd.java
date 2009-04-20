@@ -17,8 +17,8 @@ package com.google.enterprise.saml.server;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.CredentialsGroupConfig;
 import com.google.enterprise.security.identity.IdentityConfig;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
@@ -79,9 +79,9 @@ public interface BackEnd {
   /**
    * Get the identity configuration.
    *
-   * @return The identity configuration as a list of authn domain groups.
+   * @return A list of credentials-group config objects.
    */
-  public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException;
+  public List<CredentialsGroupConfig> getIdentityConfiguration() throws IOException;
 
   /**
    * Attempt to find a cookie that can be converted to a verified identity.
