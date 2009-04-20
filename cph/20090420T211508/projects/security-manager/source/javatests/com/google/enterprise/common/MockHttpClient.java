@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,9 +14,10 @@
 
 package com.google.enterprise.common;
 
+import com.google.common.collect.ImmutableList;
+
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.mock.web.MockHttpSession;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 
 import static com.google.enterprise.common.ServletTestUtil.generatePostContent;
 import static com.google.enterprise.common.ServletTestUtil.makeMockHttpGet;
@@ -37,18 +39,13 @@ import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
 public class MockHttpClient implements HttpClientInterface {
 
   final HttpTransport transport;
-  private final MockHttpSession session;
+  final List<Cookie> globalCookies;
   String referrer;
 
   public MockHttpClient(HttpTransport transport) {
     this.transport = transport;
-    session = new MockHttpSession();
+    globalCookies = new ArrayList<Cookie>();
     referrer = null;
-  }
-
-  // For debugging:
-  public MockHttpSession getSession() {
-    return session;
   }
 
   public HttpExchange getExchange(URL url) {
@@ -66,6 +63,10 @@ public class MockHttpClient implements HttpClientInterface {
     return new MockExchange(request);
   }
 
+  public List<Cookie> getCookies() {
+    return ImmutableList.copyOf(globalCookies);
+  }
+
   private class MockExchange implements HttpExchange {
 
     private final MockHttpServletRequest request;
@@ -74,6 +75,7 @@ public class MockHttpClient implements HttpClientInterface {
     private boolean followRedirects;
 
     public MockExchange(MockHttpServletRequest request) {
+      initRequestCookies(request);
       this.request = request;
       credentials = null;
       followRedirects = false;
@@ -108,9 +110,12 @@ public class MockHttpClient implements HttpClientInterface {
         generatePostContent(request);
       }
       MockHttpServletResponse response = exchange1(request);
+      mergeIntoGlobalCookies(response.getCookies());
       if (followRedirects) {
         while (isRedirect(response)) {
-          response = exchange1(makeMockHttpGet(null, getRedirectUrl(response)));
+          MockHttpServletRequest newRequest = makeMockHttpGet(null, getRedirectUrl(response));
+          initRequestCookies(newRequest);
+          response = exchange1(newRequest);
         }
       }
       this.response = response;
@@ -135,7 +140,6 @@ public class MockHttpClient implements HttpClientInterface {
       if (credentials != null) {
         request.addHeader("Authorize", credentials);
       }
-      request.setSession(session);
       try {
         transport.exchange(request, response);
       } catch (ServletException e) {
@@ -154,6 +158,18 @@ public class MockHttpClient implements HttpClientInterface {
         referrer = referrer.substring(0, q);
       }
       return referrer;
+    }
+
+    private void mergeIntoGlobalCookies(Cookie[] cookies) {
+      if (cookies != null) {
+        for (Cookie c : cookies) {
+          globalCookies.add(c);
+        }
+      }
+    }
+
+    private void initRequestCookies(MockHttpServletRequest request) {
+      request.setCookies(globalCookies.toArray(new Cookie[0]));
     }
 
     public String getResponseEntityAsString() throws IOException {
@@ -183,9 +199,8 @@ public class MockHttpClient implements HttpClientInterface {
     public void setRequestBody(byte[] requestContent) {
       request.setContent(requestContent);
     }
-    
+
     public void close() {
     }
-
   }
 }

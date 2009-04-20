@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import com.google.enterprise.common.GettableHttpServlet;
 import com.google.enterprise.common.HttpClientAdapter;
 import com.google.enterprise.common.HttpClientInterface;
 import com.google.enterprise.common.HttpExchange;
+import com.google.enterprise.common.SessionAttribute;
 import com.google.enterprise.saml.common.HttpExchangeToInTransport;
 import com.google.enterprise.saml.common.HttpExchangeToOutTransport;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
@@ -28,8 +29,6 @@ import org.opensaml.saml2.binding.decoding.HTTPSOAP11Decoder;
 import org.opensaml.saml2.binding.encoding.HTTPSOAP11Encoder;
 import org.opensaml.saml2.core.ArtifactResolve;
 import org.opensaml.saml2.core.ArtifactResponse;
-import org.opensaml.saml2.core.Assertion;
-import org.opensaml.saml2.core.AuthnStatement;
 import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.StatusCode;
@@ -46,7 +45,6 @@ import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import static com.google.enterprise.saml.common.GsaConstants.GSA_ARTIFACT_PARAM_NAME;
 import static com.google.enterprise.saml.common.GsaConstants.GSA_RELAY_STATE_PARAM_NAME;
@@ -75,6 +73,9 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
   private static final long serialVersionUID = 1L;
   private static final Logger LOGGER = Logger.getLogger(MockArtifactConsumer.class.getName());
 
+  private static final SessionAttribute<Boolean> AUTHENTICATED_ATTR =
+      SessionAttribute.getNamed("isAuthenticated");
+
   private HttpClientInterface httpClient;
 
   public HttpClientInterface getHttpClient() {
@@ -92,7 +93,7 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
   public void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
     HttpServletResponseAdapter result = new HttpServletResponseAdapter(resp, true);
-    HttpSession session = req.getSession();
+    String sessionId = getSessionId(req);
     String artifact = req.getParameter(GSA_ARTIFACT_PARAM_NAME);
     String relayState = req.getParameter(GSA_RELAY_STATE_PARAM_NAME);
     if (artifact == null) {
@@ -111,13 +112,9 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
     String code = response.getStatus().getStatusCode().getValue();
     LOGGER.info("status code = " + code);
     if (code.equals(StatusCode.SUCCESS_URI)) {
-      Assertion assertion = response.getAssertions().get(0);
-      session.setAttribute("isAuthenticated", true);
-      session.setAttribute("verifiedIdentity", assertion.getSubject().getNameID().getValue());
-      session.setAttribute("verificationStatement",
-                           assertion.getStatements(AuthnStatement.DEFAULT_ELEMENT_NAME).get(0));
+      AUTHENTICATED_ATTR.put(sessionId, true);
     } else if (code.equals(StatusCode.AUTHN_FAILED_URI)) {
-      session.setAttribute("isAuthenticated", false);
+      AUTHENTICATED_ATTR.put(sessionId, false);
     } else {
       // Do nothing.  The service provider will restart the authentication.
     }
