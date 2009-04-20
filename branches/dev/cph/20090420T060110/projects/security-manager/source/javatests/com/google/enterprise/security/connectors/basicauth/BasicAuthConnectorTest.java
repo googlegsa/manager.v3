@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
-import com.google.enterprise.security.identity.AuthnDomain;
-import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
-import com.google.enterprise.security.identity.DomainCredentials;
+import com.google.enterprise.security.identity.CredentialsGroupConfig;
+import com.google.enterprise.security.identity.IdentityElement;
+import com.google.enterprise.security.identity.IdentityElementConfig;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,12 +40,11 @@ public class BasicAuthConnectorTest extends SecurityManagerTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    List<AuthnDomainGroup> adgs = new ArrayList<AuthnDomainGroup>();
-    adgs.add(new AuthnDomainGroup("ADG1"));
-    new AuthnDomain(
-        "BasicDomain", AuthNMechanism.BASIC_AUTH,
-        "http://localhost:8973/basic/", adgs.get(0));
-    cgs = CredentialsGroup.newGroups(adgs);
+    List<CredentialsGroupConfig> cgcs = new ArrayList<CredentialsGroupConfig>();
+    cgcs.add(new CredentialsGroupConfig("group1"));
+    new IdentityElementConfig(
+        AuthNMechanism.BASIC_AUTH, "http://localhost:8973/basic/", cgcs.get(0));
+    cgs = CredentialsGroup.newGroups(cgcs);
     MockHttpTransport transport = new MockHttpTransport();
     transport.registerServlet(cgs.get(0).getElements().get(0).getSampleUrl(),
                               new MockBasicAuthServer.Server1());
@@ -59,10 +58,9 @@ public class BasicAuthConnectorTest extends SecurityManagerTestCase {
 
   private AuthenticationResponse tryCredentials(String username, String password)
       throws RepositoryException {
-    cgs.get(0).setUsername(username);
-    cgs.get(0).setPassword(password);
-    DomainCredentials dc = cgs.get(0).getElements().get(0);
-    BasicAuthConnector conn = new BasicAuthConnector(httpClient, dc.getSampleUrl());
-    return conn.authenticate(dc);
+    IdentityElement id = cgs.get(0).getElements().get(0);
+    id.setUsername(username);
+    id.setPassword(password);
+    return (new BasicAuthConnector(httpClient, id.getSampleUrl())).authenticate(id);
   }
 }

@@ -1,10 +1,10 @@
-// Copyright 2008 Google Inc. All Rights Reserved.
+// Copyright 2008, 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@ package com.google.enterprise.security.connectors.simplecookie;
 import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
-import com.google.enterprise.security.identity.DomainCredentials;
+import com.google.enterprise.security.identity.IdentityElement;
 
 import javax.servlet.http.Cookie;
 
@@ -39,7 +39,7 @@ public class SimpleCookieIdentityConnectorTest extends SecurityManagerTestCase {
 
   private void runOneAuthenticationTest(String cookieName, String idCookieName,
       SimpleCookieIdentityConnector s, String cookieValue, String expectedIdentity) {
-    SecAuthnIdentity id = DomainCredentials.dummy();
+    SecAuthnIdentity id = IdentityElement.dummy();
     id.addCookie(new Cookie(cookieName, cookieValue));
     AuthenticationResponse r = s.authenticate(id);
     if (expectedIdentity != null) {

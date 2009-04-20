@@ -15,38 +15,40 @@
 package com.google.enterprise.security.identity;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 
 import javax.servlet.http.Cookie;
 
 /**
- * The credentials associated with a single authentication-domain group.  Only the username and
- * password are stored here; other credentials are domain-specific and are stored in the domain
- * credentials comprising the group.
+ * The credentials associated with a single group, in which the username (and password, if
+ * any) are assumed to be the same for all credentials.  There may be multiple mechanisms
+ * supported for a particular group, each of which is independently verified.  Cookies are
+ * shared between all mechanisms.
  */
 public class CredentialsGroup {
 
-  private final AuthnDomainGroup authnDomainGroup;
-  private final List<DomainCredentials> elements;
-  private String username;
-  private String password;
+  private final CredentialsGroupConfig config;
+  private final List<IdentityElement> elements;
+  private final List<Cookie> cookies;
 
-  private CredentialsGroup(AuthnDomainGroup authnDomainGroup) {
-    this.authnDomainGroup = authnDomainGroup;
-    elements = new ArrayList<DomainCredentials>();
+  private CredentialsGroup(CredentialsGroupConfig config) {
+    this.config = config;
+    elements = new ArrayList<IdentityElement>();
+    cookies = new ArrayList<Cookie>();
   }
 
-  public static List<CredentialsGroup> newGroups(List<AuthnDomainGroup> adgs) {
-    List<CredentialsGroup> cgs = new ArrayList<CredentialsGroup>();
-    for (AuthnDomainGroup adg : adgs) {
-      CredentialsGroup cg = new CredentialsGroup(adg);
-      for (AuthnDomain ad : adg.getDomains()) {
-        new DomainCredentials(ad, cg);
+  public static List<CredentialsGroup> newGroups(List<CredentialsGroupConfig> configs) {
+    List<CredentialsGroup> groups = new ArrayList<CredentialsGroup>();
+    for (CredentialsGroupConfig groupConfig : configs) {
+      CredentialsGroup group = new CredentialsGroup(groupConfig);
+      for (IdentityElementConfig identityConfig : groupConfig.getElements()) {
+        new IdentityElement(identityConfig, group);
       }
-      cgs.add(cg);
+      groups.add(group);
     }
-    return cgs;
+    return groups;
   }
 
   // Used for testing only:
@@ -54,60 +56,52 @@ public class CredentialsGroup {
     return new CredentialsGroup(null);
   }
 
+  public String getName() {
+    return config.getName();
+  }
+
   public String getHumanName() {
-    return authnDomainGroup.getHumanName();
+    return config.getHumanName();
   }
 
-  public String getUsername() {
-    return username;
-  }
-
-  public void setUsername(String username) {
-    if ((username != null) && (username.length() == 0)) {
-      username = null;
-    }
-    maybeResetVerification(this.username, username);
-    this.username = username;
-  }
-
-  public String getPassword() {
-    return password;
-  }
-
-  public void setPassword(String password) {
-    if ((password != null) && (password.length() == 0)) {
-      password = null;
-    }
-    maybeResetVerification(this.password, password);
-    this.password = password;
-  }
-
-  private void maybeResetVerification(String s1, String s2) {
-    if ((s1 == null) ? (s2 != null) : s1.equals(s2)) {
-      for (DomainCredentials element: elements) {
-        element.setVerificationStatus(VerificationStatus.TBD);
-      }
-    }
-  }
-
-  public List<DomainCredentials> getElements() {
+  public List<IdentityElement> getElements() {
     return elements;
   }
 
+  // TODO(cph): Need more intelligent selection if the usernames are ever different.
+  public String getUsername() {
+    for (IdentityElement element: elements) {
+      if (element.getUsername() != null) {
+        return element.getUsername();
+      }
+    }
+    return null;
+  }
+
+  // TODO(cph): This is almost certainly wrong.  As used in SamlAuthn, it means "should we
+  // try to verify this group?".  So what are the conditions in which that's true?  One
+  // simple heuristic: if there are no verified elements and we have at least one element
+  // that could be verified, then we should do so.  So we need to change IdentityElement
+  // to have an isVerifiable() method.
   public boolean isVerifiable() {
-    return ((username != null) && (password != null));
+    for (IdentityElement element: elements) {
+      if ((element.getUsername() != null) && (element.getPassword() != null)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public boolean isVerified() {
     if (!isVerifiable()) {
       return false;
     }
-    for (DomainCredentials element: elements) {
+    for (IdentityElement element: elements) {
       if (element.getVerificationStatus() == VerificationStatus.REFUTED) {
         return false;
       }
     }
-    for (DomainCredentials element: elements) {
+    for (IdentityElement element: elements) {
       if (element.getVerificationStatus() == VerificationStatus.VERIFIED) {
         return true;
       }
@@ -115,11 +109,25 @@ public class CredentialsGroup {
     return false;
   }
 
-  public Vector<Cookie> getCookies() {
-    Vector<Cookie> cookies = new Vector<Cookie>();
-    for (DomainCredentials element: elements) {
-      cookies.addAll(element.getCookies());
+  public Collection<Cookie> getCookies() {
+    return Collections.unmodifiableCollection(cookies);
+  }
+
+  public void addCookie(Cookie c) {
+    cookies.add(c);
+  }
+
+  // For testing:
+  public void clearCookies() {
+    cookies.clear();
+  }
+
+  public Cookie getCookieNamed(String name) {
+    for (Cookie c: cookies) {
+      if (c.getName().equals(name)) {
+        return c;
+      }
     }
-    return cookies;
+    return null;
   }
 }

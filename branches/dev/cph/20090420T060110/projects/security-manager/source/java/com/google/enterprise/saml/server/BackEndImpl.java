@@ -21,10 +21,10 @@ import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.security.connectors.formauth.CookieUtil;
-import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
-import com.google.enterprise.security.identity.DomainCredentials;
+import com.google.enterprise.security.identity.CredentialsGroupConfig;
 import com.google.enterprise.security.identity.IdentityConfig;
+import com.google.enterprise.security.identity.IdentityElement;
 import com.google.enterprise.security.identity.VerificationStatus;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
@@ -57,7 +57,7 @@ public class BackEndImpl implements BackEnd {
   private final AuthzResponder authzResponder;
   private final SAMLArtifactMap artifactMap;
   private IdentityConfig identityConfig;
-  private List<AuthnDomainGroup> authnDomainGroups;
+  private List<CredentialsGroupConfig> groupsConfig;
 
   protected GSASessionAdapter adapter;
 
@@ -78,7 +78,7 @@ public class BackEndImpl implements BackEnd {
         new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
         artifactLifetime);
     identityConfig = null;
-    authnDomainGroups = null;
+    groupsConfig = null;
     adapter = new GSASessionAdapter(sm);
     sessionIds = new Vector<String>();
   }
@@ -92,34 +92,34 @@ public class BackEndImpl implements BackEnd {
   }
 
   public boolean isIdentityConfigured() throws IOException {
-    return !getAuthnDomainGroups().isEmpty();
+    return !getIdentityConfiguration().isEmpty();
   }
 
   public void setIdentityConfig(IdentityConfig identityConfig) {
     this.identityConfig = identityConfig;
-    authnDomainGroups = null;
+    groupsConfig = null;
   }
 
   public SAMLArtifactMap getArtifactMap() {
     return artifactMap;
   }
 
-  public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException {
-    if (authnDomainGroups == null) {
+  public List<CredentialsGroupConfig> getIdentityConfiguration() throws IOException {
+    if (groupsConfig == null) {
       if (identityConfig != null) {
-        authnDomainGroups = ImmutableList.copyOf(identityConfig.getConfig());
+        groupsConfig = ImmutableList.copyOf(identityConfig.getConfig());
       }
-      if (authnDomainGroups == null) {
-        authnDomainGroups = ImmutableList.of();
+      if (groupsConfig == null) {
+        groupsConfig = ImmutableList.of();
       }
     }
-    return authnDomainGroups;
+    return groupsConfig;
   }
 
   public void authenticate(CredentialsGroup cg) {
-    for (DomainCredentials dCred : cg.getElements()) {
+    for (IdentityElement id : cg.getElements()) {
       String expectedTypeName;
-      switch (dCred.getMechanism()) {
+      switch (id.getMechanism()) {
         case BASIC_AUTH:
           expectedTypeName = "BasicAuthConnector";
           break;
@@ -138,11 +138,11 @@ public class BackEndImpl implements BackEnd {
         }
         String connectorName = connStatus.getName();
         LOGGER.info("Got security plug-in " + connectorName);
-        AuthenticationResponse authnResponse = manager.authenticate(connectorName, dCred, null);
+        AuthenticationResponse authnResponse = manager.authenticate(connectorName, id, null);
         if ((null != authnResponse) && authnResponse.isValid()) {
-          LOGGER.info("Authn Success, credential verified: " + dCred.dumpInfo());
+          LOGGER.info("Authn Success, credential verified: " + id.getUsername());
           // TODO(cph): should this be set to REFUTED if the result is invalid?
-          dCred.setVerificationStatus(VerificationStatus.VERIFIED);
+          id.setVerificationStatus(VerificationStatus.VERIFIED);
         }
       }
     }
@@ -179,20 +179,18 @@ public class BackEndImpl implements BackEnd {
     Vector<Cookie> cookies = new Vector<Cookie>();
 
     for (CredentialsGroup cg : cgs) {
-
-      LOGGER.info("CG id/pw: " + cg.getUsername() + ":" + cg.getPassword());
-
-      for (DomainCredentials dCred : cg.getElements()) {
-        // This clobbers any priorly stored basic auth credentials.
+      for (IdentityElement id : cg.getElements()) {
+        LOGGER.info("IdentityElement group/username: " + cg.getName() + "/" + id.getUsername());
+        // This clobbers any previously stored basic auth credentials.
         // The expectation is that only one basic auth module will be active
         // at any given time, or that if multiple basic auth modules are
         // active at once, only one of them will work.
-        if (AuthNMechanism.BASIC_AUTH == dCred.getMechanism()) {
-          if (null != cg.getUsername()) {
-            adapter.setUsername(sessionId, cg.getUsername());
+        if (AuthNMechanism.BASIC_AUTH == id.getMechanism()) {
+          if (null != id.getUsername()) {
+            adapter.setUsername(sessionId, id.getUsername());
           }
-          if (null != cg.getPassword()) {
-            adapter.setPassword(sessionId, cg.getPassword());
+          if (null != id.getPassword()) {
+            adapter.setPassword(sessionId, id.getPassword());
           }
           // TODO(con): currently setting the domain will break functionality
           // for most Basic Auth headrequests. Once I figure out what's going on
@@ -201,12 +199,11 @@ public class BackEndImpl implements BackEnd {
           //    adapter.setDomain(sessionId, id.getAuthSite().getHostname());
           //  }
         }
-
-        LOGGER.info("Adding " + dCred.getCookies().size() + " cookies to SM for"
-                    + " this DomainCredential.");
-        cookies.addAll(dCred.getCookies());
       }
+      cookies.addAll(cg.getCookies());
+      LOGGER.info("Adding " + cg.getCookies().size() + " cookies to SM for this identity.");
     }
+
     adapter.setCookies(sessionId, CookieUtil.serializeCookies(cookies));
 
     // TODO(con): connectors

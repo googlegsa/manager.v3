@@ -18,4 +18,5 @@ public enum VerificationStatus {
   TBD,            // haven't gone through verification yet
   VERIFIED,       // recognized by IdP
   REFUTED,        // unrecognized by IdP
+  INDETERMINATE   // IdP unable to decide
 }

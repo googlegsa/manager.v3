@@ -15,6 +15,7 @@
 package com.google.enterprise.security.ui;
 
 import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.IdentityElement;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -85,8 +86,10 @@ public class OmniForm {
     for (FormElement elem: formElements) {
       if (elem.isActive()) {
         CredentialsGroup cg = formElemToCG.get(elem);
-        cg.setUsername(elem.getUsername());
-        cg.setPassword(elem.getPassword());
+        for (IdentityElement id : cg.getElements()) {
+          id.setUsername(elem.getUsername());
+          id.setPassword(elem.getPassword());
+        }
       }
     }
   }

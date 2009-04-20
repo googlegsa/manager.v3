@@ -189,7 +189,7 @@ public class SamlAuthn extends SecurityManagerServlet
         if (cg.isVerified()) {
           ids.add(cg.getUsername());
         } else {
-          LOGGER.info("Credentials group unfulfilled: " + cg.getHumanName());
+          LOGGER.info("Credentials group unfulfilled: " + cg.getName());
         }
       }
     }
@@ -257,7 +257,7 @@ public class SamlAuthn extends SecurityManagerServlet
       throws IOException {
     List<CredentialsGroup> groups = CREDENTIALS_GROUPS_ATTR.get(sessionId);
     if (null == groups) {
-      groups = CredentialsGroup.newGroups(getBackEnd().getAuthnDomainGroups());
+      groups = CredentialsGroup.newGroups(getBackEnd().getIdentityConfiguration());
       CREDENTIALS_GROUPS_ATTR.put(sessionId, groups);
     }
     return groups;
