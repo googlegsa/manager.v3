@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -59,6 +59,24 @@ public abstract class ServletBase extends HttpServlet {
 
   public static void initResponse(HttpServletResponse response) {
     response.setHeader("Date", httpDateString());
+  }
+
+  public static String cookieHeaderValue(Collection<Cookie> cookies) {
+    if (cookies.size() == 0) {
+      return null;
+    }
+    StringBuffer buffer = new StringBuffer();
+    for (Cookie c: cookies) {
+      if (buffer.length() > 0) {
+        buffer.append("; ");
+      }
+      buffer.append(c.getName());
+      buffer.append("=");
+      if (c.getValue() != null) {
+        buffer.append(c.getValue());
+      }
+    }
+    return buffer.toString();
   }
 
   public static String setCookieHeaderValue(Collection<Cookie> cookies) {

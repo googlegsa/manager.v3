@@ -18,10 +18,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.servlet.http.Cookie;
 
 public class SecAuthnContext {
+  private static final Logger LOGGER = Logger.getLogger(SecAuthnContext.class.getName());
 
   private final List<Cookie> cookies;
 
@@ -44,5 +46,16 @@ public class SecAuthnContext {
 
   public void addCookie(Cookie c) {
     cookies.add(c);
+  }
+
+  public void addCookies(Cookie[] cs) {
+    if (cs == null || cs.length == 0) {
+      LOGGER.info("No cookies found");
+    } else {
+      for (Cookie c: cs) {
+        LOGGER.info("Found cookie: " + c.getName() + "=" + c.getValue());
+        cookies.add(c);
+      }
+    }
   }
 }
