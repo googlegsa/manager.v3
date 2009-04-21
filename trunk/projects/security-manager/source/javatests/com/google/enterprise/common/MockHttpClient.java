@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -183,16 +183,12 @@ public class MockHttpClient implements HttpClientInterface {
     public void setRequestBody(byte[] requestContent) {
       request.setContent(requestContent);
     }
-    
+
     public void close() {
     }
 
-    @Override
-    public void setNtlmAuthCredentials(String domain,
-        String username, String password) {
-      // TODO Auto-generated method stub
-      
+    /* @Override */
+    public void setNtlmAuthCredentials(String domain, String username, String password) {
     }
-
   }
 }
