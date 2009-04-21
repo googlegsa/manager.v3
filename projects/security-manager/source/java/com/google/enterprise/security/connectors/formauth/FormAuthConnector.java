@@ -65,26 +65,27 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       return null; // TODO try to crack a cookie
     }
 
-    String siteUri = identity.getSampleUrl();
-    LOGGER.info("Trying to authenticate against " + siteUri);
+    String sampleUrl = identity.getSampleUrl();
+    LOGGER.info("Trying to authenticate against " + sampleUrl);
 
     Collection<Cookie> originalCookies = identity.getCookies();
     Vector<Cookie> cookies = copyCookies(originalCookies);
     logCookies(LOGGER, "original cookies", cookies);
 
-    // GET siteUri, till we hit a form; fill the form, post it; get the response,
-    // remember the cookie returned to us.
+    // GET sampleUrl, following redirects until we hit a form; fill the form, post it; get
+    // the response, remember the cookie returned to us.
     StringBuffer form = new StringBuffer();
-    String redirect;
+    String formUrl;
     try {
-      redirect = fetchLoginForm(siteUri, form, cookies);
+      formUrl = fetchLoginForm(sampleUrl, form, cookies);
     } catch (IOException e) {
-      LOGGER.info("Could not GET login form from " + siteUri + ": " + e.toString());
+      LOGGER.info("Could not GET login form from " + sampleUrl + ": " + e.toString());
       return new AuthenticationResponse(false, null);
     }
     logCookies(LOGGER, "after fetchLoginForm", cookies);
 
     List<StringPair> param;
+    String postUrl;
     try {
       String[] action = new String[1];
       param = parseLoginForm(form, username, password, action);
@@ -92,19 +93,19 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
         throw new IOException("where are the input fields???");
       }
       // construct URL for form posting
-      if (action[0] != null) {
-        URL formUrl = new URL(redirect);
-        URL newUrl = new URL(formUrl, action[0]);
-        LOGGER.info("POST to " + redirect + " modified " + action[0]);
-        redirect = newUrl.toString();
+      if (action[0] == null) {
+        postUrl = formUrl;
+      } else {
+        postUrl = new URL(new URL(formUrl), action[0]).toString();
       }
     } catch (IOException e) {
       LOGGER.info("Could not parse login form: " + e.toString());
       return new AuthenticationResponse(false, null);
     }
 
+    LOGGER.info("POST to: " + postUrl);
     try {
-      int status = submitLoginForm(redirect, param, cookies);
+      int status = submitLoginForm(postUrl, param, cookies);
       if (status != 200) {
         LOGGER.info("Authentication failure status: " + status);
         return new AuthenticationResponse(false, null);
@@ -131,15 +132,22 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     return new AuthenticationResponse(true, username);
   }
 
-  /*
-   * @returns the URL the form should be posted to
+  /**
+   * Gets a login form from a site.
+   *
+   * Follows redirects until it gets to the form or exceeds a hard-coded limit.
+   *
+   * @param sampleUrl A sample URL protected by forms authentication.
+   * @param bodyBuffer A buffer in which the form is stored.
+   * @param cookies A container to hold any cookies collected during the operation.
+   * @return The URL of the form.
    */
-  private String fetchLoginForm(String urlToFetch, StringBuffer bodyBuffer, Vector<Cookie> cookies)
+  private String fetchLoginForm(String sampleUrl, StringBuffer bodyBuffer, Vector<Cookie> cookies)
       throws IOException {
     int redirectCount = 0;
-    URL url = new URL(urlToFetch);
+    URL url = new URL(sampleUrl);
     String lastRedirect;
-    String redirected = urlToFetch;
+    String redirected = sampleUrl;
     StringBuffer redirectBuffer = new StringBuffer();
     int kMaxNumRedirectsToFollow = 4;
 
@@ -158,7 +166,8 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
           throw new IOException("Max num of redirects exceeded");
         }
         // prepare for another fetch.
-        url = new URL(redirected);
+        url = new URL(url, redirected);
+        redirected = url.toString();
       } else {
         break;
       }
@@ -167,16 +176,16 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
   }
 
   /**
-   *  Pass a HTML form, in order to get the list of input fields.
-   *  @param user username we have just collected from Omniform
-   *  @param pass password we have just collected from Omniform
-   *  @param action buffer for storing the action of the HTML form
+   * Parse an HTML form into its component fields.
    *
-   *  @return the param names and values suitable for POSTing.
+   * @param user The username we are going to submit to the form.
+   * @param pass The password we are going to submit to the form.
+   * @param action Will hold the form's "action" on return.
+   * @return The form field names and values suitable for POSTing.
    */
-
   private List<StringPair> parseLoginForm(StringBuffer form, String user, String pass,
       String[] action) throws IOException {
+    LOGGER.info("Form to parse: " + form.toString());
     List<StringPair> names = new ArrayList<StringPair>();
 
     HtmlCleaner cleaner = new HtmlCleaner();
@@ -229,6 +238,16 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     return names;
   }
 
+  /**
+   * Submit a filled-in form to a site.
+   *
+   * Follows any redirects generated by the submission.
+   *
+   * @param loginUrl The URL to post the values to.
+   * @param parameters The parameters to be posted.
+   * @param cookies The cookies being submitted; new cookies are added here.
+   * @return An HTTP status code for the operation.
+   */
   private int submitLoginForm(
       String loginUrl, List<StringPair> parameters, Vector<Cookie> cookies)
       throws IOException {
@@ -255,7 +274,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
           throw new IOException("Max num of redirects exceeded");
         }
         // prepare for another fetch.
-        url = new URL(redirected);
+        url = new URL(url, redirected);
         exchange = httpClient.getExchange(url);
       } else {
         break;
