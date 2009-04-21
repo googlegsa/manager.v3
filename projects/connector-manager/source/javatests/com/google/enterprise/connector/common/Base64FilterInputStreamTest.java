@@ -14,11 +14,24 @@
 
 package com.google.enterprise.connector.common;
 
+import com.google.enterprise.connector.jcr.JcrConnector;
+import com.google.enterprise.connector.mock.MockRepository;
+import com.google.enterprise.connector.mock.MockRepositoryEventList;
+import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
+import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.spiimpl.BinaryValue;
+
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 
 /**
@@ -114,6 +127,45 @@ public class Base64FilterInputStreamTest extends TestCase {
       index++;
     }
     Assert.assertTrue(Arrays.equals(expectedBytes, resultBytes));
+  }
+
+  /**
+   * Tests that the <code>JcrConnector</code> when used with a Stream value
+   * maintains the original encoding of the binary content.
+   */
+  public void testBug1721179() throws Exception {
+    // Encode the raw file.
+    File rawFile = new File("testdata/mocktestdata/test.doc");
+    InputStream rawIs = new FileInputStream(rawFile);
+    InputStream rawEis = new Base64FilterInputStream(rawIs);
+
+    // Encode the content from the JcrConnector.  This creates a JcrConnector
+    // like the Test Connector would and then extracts the document and the
+    // content stream property as it is done during traversal.
+    MockRepositoryEventList eventList = new MockRepositoryEventList(
+        "MockRepositoryEventLogBinaryFile.txt");
+    MockRepository mockRepo = new MockRepository(eventList);
+    MockJcrRepository mockJcrRepo = new MockJcrRepository(mockRepo);
+    JcrConnector jcrConn = new JcrConnector(mockJcrRepo);
+    TraversalManager travMgr = jcrConn.login().getTraversalManager();
+    Document document = travMgr.startTraversal().nextDocument();
+    assertEquals("worddoc",
+        Value.getSingleValueString(document, SpiConstants.PROPNAME_DOCID));
+    Value v = Value.getSingleValue(document, SpiConstants.PROPNAME_CONTENT);
+    InputStream contentStream = ((BinaryValue) v).getInputStream();
+    InputStream encodedContentStream =
+        new Base64FilterInputStream(contentStream);
+
+    // Compare the bytes on each of the streams.
+    int rawByte;
+    while ((rawByte = rawEis.read()) != -1) {
+      assertEquals(rawByte, encodedContentStream.read());
+    }
+    assertEquals(-1, encodedContentStream.read());
+
+    // Clean up.
+    rawEis.close();
+    encodedContentStream.close();
   }
 
   static final String input =

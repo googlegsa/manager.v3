@@ -91,9 +91,17 @@ public class MockJcrProperty implements Property {
   }
 
   public Value[] getValues() {
-    String[] values = p.getValues();
-    Value[] vs = makeValueArray(p.getType(), values);
-    return vs;
+    if (p.isRepeating()) {
+      // TODO: This can still cause problems when the property contains multiple
+      // stream values.  Need to preserve the binary Values without converting
+      // them to a String.
+      String[] values = p.getValues();
+      Value[] vr = makeValueArray(p.getType(), values);
+      return vr;
+    } else {
+      Value[] vs = new Value[] {new MockJcrValue(p)};
+      return vs;
+    }
   }
 
   public InputStream getStream() throws ValueFormatException,
