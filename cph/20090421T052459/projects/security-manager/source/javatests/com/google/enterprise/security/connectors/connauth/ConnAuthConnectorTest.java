@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.google.enterprise.common.MockHttpTransport;
 import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.security.identity.AuthnDomainGroup;
+import com.google.enterprise.security.identity.CredentialsGroupConfig;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.CsvConfig;
 
@@ -36,7 +36,7 @@ public class ConnAuthConnectorTest extends SecurityManagerTestCase {
 
   public ConnAuthConnectorTest(String name) throws IOException, ServletException {
     super(name);
-    List<AuthnDomainGroup> adgs = CsvConfig.readConfigFile("AuthSites.conf");
+    List<CredentialsGroupConfig> adgs = CsvConfig.readConfigFile("AuthSites.conf");
     cgs = CredentialsGroup.newGroups(adgs);
     MockHttpTransport transport = new MockHttpTransport();
     transport.registerServlet(cgs.get(0).getElements().get(0).getSampleUrl(),

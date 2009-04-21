@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.google.enterprise.saml.server;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.security.identity.AuthnDomainGroup;
+import com.google.enterprise.security.identity.CredentialsGroupConfig;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.IdentityConfig;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
@@ -81,7 +81,7 @@ public interface BackEnd {
    *
    * @return The identity configuration as a list of authn domain groups.
    */
-  public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException;
+  public List<CredentialsGroupConfig> getAuthnDomainGroups() throws IOException;
 
   /**
    * Attempt to find a cookie that can be converted to a verified identity.

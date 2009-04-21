@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ import com.google.enterprise.common.MockHttpClient;
 import com.google.enterprise.common.MockHttpTransport;
 import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.security.identity.AuthnDomainGroup;
+import com.google.enterprise.security.identity.CredentialsGroupConfig;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.CsvConfig;
-import com.google.enterprise.security.identity.DomainCredentials;
+import com.google.enterprise.security.identity.IdentityElement;
 
 import java.io.IOException;
 import java.util.List;
@@ -36,7 +36,7 @@ public class FormAuthConnectorTest extends SecurityManagerTestCase {
 
   public FormAuthConnectorTest(String name) throws IOException, ServletException {
     super(name);
-    List<AuthnDomainGroup> adgs = CsvConfig.readConfigFile("AuthSites.conf");
+    List<CredentialsGroupConfig> adgs = CsvConfig.readConfigFile("AuthSites.conf");
     List<CredentialsGroup> cgs = CredentialsGroup.newGroups(adgs);
     cg = cgs.get(0);
     MockHttpTransport transport = new MockHttpTransport();
@@ -60,7 +60,7 @@ public class FormAuthConnectorTest extends SecurityManagerTestCase {
   public boolean tryCreds(String username, String password) {
     cg.setUsername(username);
     cg.setPassword(password);
-    DomainCredentials dCred = cg.getElements().get(0);
+    IdentityElement dCred = cg.getElements().get(0);
     dCred.clearCookies();
     AuthenticationResponse response =
         (new FormAuthConnector(httpClient, "foo")).authenticate(dCred);

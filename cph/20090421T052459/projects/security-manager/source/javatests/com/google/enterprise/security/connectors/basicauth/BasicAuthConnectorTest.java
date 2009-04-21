@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
-import com.google.enterprise.security.identity.AuthnDomain;
-import com.google.enterprise.security.identity.AuthnDomainGroup;
+import com.google.enterprise.security.identity.IdentityElementConfig;
+import com.google.enterprise.security.identity.CredentialsGroupConfig;
 import com.google.enterprise.security.identity.CredentialsGroup;
-import com.google.enterprise.security.identity.DomainCredentials;
+import com.google.enterprise.security.identity.IdentityElement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,9 +40,9 @@ public class BasicAuthConnectorTest extends SecurityManagerTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    List<AuthnDomainGroup> adgs = new ArrayList<AuthnDomainGroup>();
-    adgs.add(new AuthnDomainGroup("ADG1"));
-    new AuthnDomain(
+    List<CredentialsGroupConfig> adgs = new ArrayList<CredentialsGroupConfig>();
+    adgs.add(new CredentialsGroupConfig("ADG1"));
+    new IdentityElementConfig(
         "BasicDomain", AuthNMechanism.BASIC_AUTH,
         "http://localhost:8973/basic/", adgs.get(0));
     cgs = CredentialsGroup.newGroups(adgs);
@@ -61,7 +61,7 @@ public class BasicAuthConnectorTest extends SecurityManagerTestCase {
       throws RepositoryException {
     cgs.get(0).setUsername(username);
     cgs.get(0).setPassword(password);
-    DomainCredentials dc = cgs.get(0).getElements().get(0);
+    IdentityElement dc = cgs.get(0).getElements().get(0);
     BasicAuthConnector conn = new BasicAuthConnector(httpClient, dc.getSampleUrl());
     return conn.authenticate(dc);
   }
