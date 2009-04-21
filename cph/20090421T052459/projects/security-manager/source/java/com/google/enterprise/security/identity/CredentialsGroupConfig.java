@@ -18,8 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A group of authentication domains that share the same username/password for every user.
- * This grouping is used to partition the login form.
+ * This is the configuration information for a credentials group.  A CredentialsGroup
+ * object is per-session; this object is shared by all sessions.
  */
 public class CredentialsGroupConfig {
 
