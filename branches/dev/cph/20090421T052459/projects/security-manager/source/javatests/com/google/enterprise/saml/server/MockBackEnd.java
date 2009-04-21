@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.security.identity.AuthnDomainGroup;
+import com.google.enterprise.security.identity.CredentialsGroupConfig;
 import com.google.enterprise.security.identity.CredentialsGroup;
-import com.google.enterprise.security.identity.DomainCredentials;
+import com.google.enterprise.security.identity.IdentityElement;
 import com.google.enterprise.security.identity.IdentityConfig;
 import com.google.enterprise.security.identity.VerificationStatus;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
@@ -52,7 +52,7 @@ public class MockBackEnd implements BackEnd {
   private final SAMLArtifactMap artifactMap;
   private final Map<String, String> userMap;
   private IdentityConfig identityConfig;
-  private List<AuthnDomainGroup> authnDomainGroups;
+  private List<CredentialsGroupConfig> authnDomainGroups;
 
   /**
    * Create a new backend object.
@@ -97,7 +97,7 @@ public class MockBackEnd implements BackEnd {
     authnDomainGroups = null;
   }
 
-  public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException {
+  public List<CredentialsGroupConfig> getAuthnDomainGroups() throws IOException {
     if (authnDomainGroups == null) {
       if (identityConfig != null) {
         authnDomainGroups = ImmutableList.copyOf(identityConfig.getConfig());
@@ -118,7 +118,7 @@ public class MockBackEnd implements BackEnd {
     String password = cg.getPassword();
     if ((username != null) && (password != null)
         && password.equals(userMap.get(username))) {
-      for (DomainCredentials dc: cg.getElements()) {
+      for (IdentityElement dc: cg.getElements()) {
         switch (dc.getMechanism()) {
           case BASIC_AUTH:
           case FORMS_AUTH:

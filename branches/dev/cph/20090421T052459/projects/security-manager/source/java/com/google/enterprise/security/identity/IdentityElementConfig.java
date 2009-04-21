@@ -1,10 +1,10 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,16 +24,16 @@ import java.util.List;
  * resources are described by a set of URL patterns.  Information about the IdP is specific to the
  * mechanism: for example, forms-auth IdPs have a login URL.
  */
-public class AuthnDomain {
+public class IdentityElementConfig {
 
   private final String name;  // The domain name must be unique.
   private final AuthNMechanism mechanism;
-  private final AuthnDomainGroup group;
+  private final CredentialsGroupConfig group;
   private final List<String> urlPatterns;
   private final String sampleUrl;
 
-  public AuthnDomain(String name, AuthNMechanism mechanism, String sampleUrl,
-                     AuthnDomainGroup group) {
+  public IdentityElementConfig(String name, AuthNMechanism mechanism, String sampleUrl,
+                     CredentialsGroupConfig group) {
     this.name = name;
     this.mechanism = mechanism;
     this.group = group;
@@ -50,7 +50,7 @@ public class AuthnDomain {
     return mechanism;
   }
 
-  public AuthnDomainGroup getGroup() {
+  public CredentialsGroupConfig getGroup() {
     return group;
   }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class CsvConfig implements IdentityConfig {
     this.configFile = configFile;
   }
 
-  public List<AuthnDomainGroup> getConfig() throws IOException {
+  public List<CredentialsGroupConfig> getConfig() throws IOException {
     return getConfig(new FileReader(FileUtil.getContextFile(configFile)));
   }
 
@@ -60,11 +60,11 @@ public class CsvConfig implements IdentityConfig {
    * an AuthnDomain and place it in the AuthnDomainGroup specified by that
    * line.  getConfig will create new AuthnDomainGroups as necessary.
    */
-  public List<AuthnDomainGroup> getConfig(Reader in) throws IOException {
+  public List<CredentialsGroupConfig> getConfig(Reader in) throws IOException {
     CSVReader reader = new CSVReader(in);
     String[] nextLine;
 
-    HashMap<String,AuthnDomainGroup> adgMap = new HashMap<String,AuthnDomainGroup>();
+    HashMap<String,CredentialsGroupConfig> adgMap = new HashMap<String,CredentialsGroupConfig>();
     while ((nextLine = reader.readNext()) != null) {
       if (nextLine.length < 5) {
         LOGGER.severe("Invalid configuration line, skipping: \n" + nextLine);
@@ -79,14 +79,14 @@ public class CsvConfig implements IdentityConfig {
 
       String adgName = nextLine[0];
       if (!adgMap.containsKey(adgName)) {
-        adgMap.put(adgName, new AuthnDomainGroup(adgName));
+        adgMap.put(adgName, new CredentialsGroupConfig(adgName));
       }
-      new AuthnDomain(nextLine[1] + nextLine[2], authMech,
+      new IdentityElementConfig(nextLine[1] + nextLine[2], authMech,
           "".equals(nextLine[4]) ? nextLine[1] + nextLine[2] : nextLine[4],
           adgMap.get(adgName));
     }
 
-    return new ArrayList<AuthnDomainGroup>(adgMap.values());
+    return new ArrayList<CredentialsGroupConfig>(adgMap.values());
   }
 
   public AuthNMechanism authNMechFromString(String mech) {
@@ -98,11 +98,11 @@ public class CsvConfig implements IdentityConfig {
   }
 
   // This is useful in unit testing.
-  public static List<AuthnDomainGroup> readConfigFile(String configFile) throws IOException {
+  public static List<CredentialsGroupConfig> readConfigFile(String configFile) throws IOException {
     return (new CsvConfig(configFile)).getConfig();
   }
 
-  public static List<AuthnDomainGroup> readConfigFile(Reader in) throws IOException {
+  public static List<CredentialsGroupConfig> readConfigFile(Reader in) throws IOException {
     return (new CsvConfig("AuthSites.conf")).getConfig(in);
   }
 }

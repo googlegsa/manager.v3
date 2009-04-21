@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,29 +20,29 @@ import java.util.List;
 /**
  * A group of authentication domains that share the same username/password for every user.
  * This grouping is used to partition the login form.
- */ 
-public class AuthnDomainGroup {
+ */
+public class CredentialsGroupConfig {
 
   private final String humanName;  // A string to identify this group in the login form.
-  private final List<AuthnDomain> domains;
+  private final List<IdentityElementConfig> domains;
 
-  public AuthnDomainGroup(String humanName) {
+  public CredentialsGroupConfig(String humanName) {
     this.humanName = humanName;
-    domains = new ArrayList<AuthnDomain>();
+    domains = new ArrayList<IdentityElementConfig>();
   }
 
   public String getHumanName() {
     return humanName;
   }
 
-  public void addDomain(AuthnDomain domain) {
+  public void addDomain(IdentityElementConfig domain) {
     if (domains.contains(domain)) {
       return;
     }
     domains.add(domain);
   }
 
-  public List<AuthnDomain> getDomains() {
+  public List<IdentityElementConfig> getDomains() {
     return domains;
   }
 }

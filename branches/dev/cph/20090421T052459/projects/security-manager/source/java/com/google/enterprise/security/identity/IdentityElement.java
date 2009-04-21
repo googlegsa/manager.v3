@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,14 +27,14 @@ import javax.servlet.http.Cookie;
  * The credentials associated with a single authentication domain.  (Does not include
  * username/password, which is stored in the associated Credentials Group.)
  */
-public class DomainCredentials implements SecAuthnIdentity {
+public class IdentityElement implements SecAuthnIdentity {
 
-  private final AuthnDomain domain;
+  private final IdentityElementConfig domain;
   private final CredentialsGroup group;
   private VerificationStatus status;
   private final Vector<Cookie> cookies;
 
-  DomainCredentials(AuthnDomain domain, CredentialsGroup group) {
+  IdentityElement(IdentityElementConfig domain, CredentialsGroup group) {
     this.domain = domain;
     this.group = group;
     status = VerificationStatus.TBD;
@@ -42,8 +42,8 @@ public class DomainCredentials implements SecAuthnIdentity {
     group.getElements().add(this);
   }
 
-  public static DomainCredentials dummy() {
-    return new DomainCredentials(null, CredentialsGroup.dummy());
+  public static IdentityElement dummy() {
+    return new IdentityElement(null, CredentialsGroup.dummy());
   }
 
   public String getDomain() {

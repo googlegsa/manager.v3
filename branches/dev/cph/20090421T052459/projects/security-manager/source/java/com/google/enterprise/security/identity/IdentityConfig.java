@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,8 +22,8 @@ public interface IdentityConfig {
   /**
    * This method must return a non-null List. However the list may be empty
    * to represent that no auth sites are configured.
-   * 
-   * @return a non-null but possibly empty list of AuthnDomainGroups
+   *
+   * @return a non-null but possibly empty list of CredentialsGroupConfigs
    */
-  public List<AuthnDomainGroup> getConfig() throws IOException;
+  public List<CredentialsGroupConfig> getConfig() throws IOException;
 }

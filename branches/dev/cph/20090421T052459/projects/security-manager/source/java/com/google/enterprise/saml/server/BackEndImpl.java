@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.security.connectors.formauth.CookieUtil;
-import com.google.enterprise.security.identity.AuthnDomainGroup;
+import com.google.enterprise.security.identity.CredentialsGroupConfig;
 import com.google.enterprise.security.identity.CredentialsGroup;
-import com.google.enterprise.security.identity.DomainCredentials;
+import com.google.enterprise.security.identity.IdentityElement;
 import com.google.enterprise.security.identity.IdentityConfig;
 import com.google.enterprise.security.identity.VerificationStatus;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
@@ -57,7 +57,7 @@ public class BackEndImpl implements BackEnd {
   private final AuthzResponder authzResponder;
   private final SAMLArtifactMap artifactMap;
   private IdentityConfig identityConfig;
-  private List<AuthnDomainGroup> authnDomainGroups;
+  private List<CredentialsGroupConfig> authnDomainGroups;
 
   protected GSASessionAdapter adapter;
 
@@ -104,7 +104,7 @@ public class BackEndImpl implements BackEnd {
     return artifactMap;
   }
 
-  public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException {
+  public List<CredentialsGroupConfig> getAuthnDomainGroups() throws IOException {
     if (authnDomainGroups == null) {
       if (identityConfig != null) {
         authnDomainGroups = ImmutableList.copyOf(identityConfig.getConfig());
@@ -117,7 +117,7 @@ public class BackEndImpl implements BackEnd {
   }
 
   public void authenticate(CredentialsGroup cg) {
-    for (DomainCredentials dCred : cg.getElements()) {
+    for (IdentityElement dCred : cg.getElements()) {
       String expectedTypeName;
       switch (dCred.getMechanism()) {
         case BASIC_AUTH:
@@ -182,7 +182,7 @@ public class BackEndImpl implements BackEnd {
 
       LOGGER.info("CG id/pw: " + cg.getUsername() + ":" + cg.getPassword());
 
-      for (DomainCredentials dCred : cg.getElements()) {
+      for (IdentityElement dCred : cg.getElements()) {
         // This clobbers any priorly stored basic auth credentials.
         // The expectation is that only one basic auth module will be active
         // at any given time, or that if multiple basic auth modules are

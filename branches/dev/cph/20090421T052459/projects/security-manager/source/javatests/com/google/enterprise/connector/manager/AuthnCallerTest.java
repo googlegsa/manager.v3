@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,7 +19,7 @@ import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
-import com.google.enterprise.security.identity.DomainCredentials;
+import com.google.enterprise.security.identity.IdentityElement;
 
 import javax.servlet.http.Cookie;
 
@@ -106,7 +106,7 @@ public class AuthnCallerTest extends SecurityManagerTestCase {
   }
 
   private SecAuthnIdentity newIdentity(String username, String password) {
-    DomainCredentials id = DomainCredentials.dummy();
+    IdentityElement id = IdentityElement.dummy();
     id.getGroup().setUsername(username);
     id.getGroup().setPassword(password);
     return id;

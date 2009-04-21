@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,8 +17,8 @@ package com.google.enterprise.saml.server;
 import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.security.connectors.formauth.CookieUtil;
-import com.google.enterprise.security.identity.AuthnDomain;
-import com.google.enterprise.security.identity.AuthnDomainGroup;
+import com.google.enterprise.security.identity.IdentityElementConfig;
+import com.google.enterprise.security.identity.CredentialsGroupConfig;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.manager.LocalSessionManager;
 
@@ -33,19 +33,19 @@ import javax.servlet.http.Cookie;
  */
 public class BackEndImplTest extends SecurityManagerTestCase {
 
-  private final List<AuthnDomainGroup> adgs;
+  private final List<CredentialsGroupConfig> adgs;
   private LocalSessionManager sm;
   private BackEndImpl backend;
 
   public BackEndImplTest() {
-    adgs = new ArrayList<AuthnDomainGroup>();
-    adgs.add(new AuthnDomainGroup("adg1"));
-    adgs.add(new AuthnDomainGroup("adg2"));
-    adgs.add(new AuthnDomainGroup("adg3"));
+    adgs = new ArrayList<CredentialsGroupConfig>();
+    adgs.add(new CredentialsGroupConfig("adg1"));
+    adgs.add(new CredentialsGroupConfig("adg2"));
+    adgs.add(new CredentialsGroupConfig("adg3"));
 
-    new AuthnDomain("basicDomain", AuthNMechanism.BASIC_AUTH, "basic_loginurl", adgs.get(0));
-    new AuthnDomain("formsDomain", AuthNMechanism.FORMS_AUTH, "forms_loginurl", adgs.get(1));
-    new AuthnDomain("connectorDomain", AuthNMechanism.CONNECTORS, "connector_loginurl",
+    new IdentityElementConfig("basicDomain", AuthNMechanism.BASIC_AUTH, "basic_loginurl", adgs.get(0));
+    new IdentityElementConfig("formsDomain", AuthNMechanism.FORMS_AUTH, "forms_loginurl", adgs.get(1));
+    new IdentityElementConfig("connectorDomain", AuthNMechanism.CONNECTORS, "connector_loginurl",
                     adgs.get(2));
   }
 

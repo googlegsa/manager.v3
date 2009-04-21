@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,22 +27,22 @@ import javax.servlet.http.Cookie;
  */
 public class CredentialsGroup {
 
-  private final AuthnDomainGroup authnDomainGroup;
-  private final List<DomainCredentials> elements;
+  private final CredentialsGroupConfig authnDomainGroup;
+  private final List<IdentityElement> elements;
   private String username;
   private String password;
 
-  private CredentialsGroup(AuthnDomainGroup authnDomainGroup) {
+  private CredentialsGroup(CredentialsGroupConfig authnDomainGroup) {
     this.authnDomainGroup = authnDomainGroup;
-    elements = new ArrayList<DomainCredentials>();
+    elements = new ArrayList<IdentityElement>();
   }
 
-  public static List<CredentialsGroup> newGroups(List<AuthnDomainGroup> adgs) {
+  public static List<CredentialsGroup> newGroups(List<CredentialsGroupConfig> adgs) {
     List<CredentialsGroup> cgs = new ArrayList<CredentialsGroup>();
-    for (AuthnDomainGroup adg : adgs) {
+    for (CredentialsGroupConfig adg : adgs) {
       CredentialsGroup cg = new CredentialsGroup(adg);
-      for (AuthnDomain ad : adg.getDomains()) {
-        new DomainCredentials(ad, cg);
+      for (IdentityElementConfig ad : adg.getDomains()) {
+        new IdentityElement(ad, cg);
       }
       cgs.add(cg);
     }
@@ -84,13 +84,13 @@ public class CredentialsGroup {
 
   private void maybeResetVerification(String s1, String s2) {
     if ((s1 == null) ? (s2 != null) : s1.equals(s2)) {
-      for (DomainCredentials element: elements) {
+      for (IdentityElement element: elements) {
         element.setVerificationStatus(VerificationStatus.TBD);
       }
     }
   }
 
-  public List<DomainCredentials> getElements() {
+  public List<IdentityElement> getElements() {
     return elements;
   }
 
@@ -102,12 +102,12 @@ public class CredentialsGroup {
     if (!isVerifiable()) {
       return false;
     }
-    for (DomainCredentials element: elements) {
+    for (IdentityElement element: elements) {
       if (element.getVerificationStatus() == VerificationStatus.REFUTED) {
         return false;
       }
     }
-    for (DomainCredentials element: elements) {
+    for (IdentityElement element: elements) {
       if (element.getVerificationStatus() == VerificationStatus.VERIFIED) {
         return true;
       }
@@ -117,7 +117,7 @@ public class CredentialsGroup {
 
   public Vector<Cookie> getCookies() {
     Vector<Cookie> cookies = new Vector<Cookie>();
-    for (DomainCredentials element: elements) {
+    for (IdentityElement element: elements) {
       cookies.addAll(element.getCookies());
     }
     return cookies;
