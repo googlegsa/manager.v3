@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package com.google.enterprise.saml.client;
 
 import com.google.enterprise.common.GettableHttpServlet;
+import com.google.enterprise.common.SessionAttribute;
 import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
@@ -28,12 +29,12 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleSignOnService;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
-import org.springframework.mock.web.MockServletConfig;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -58,14 +59,20 @@ import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 public class MockServiceProvider extends SecurityManagerServlet implements GettableHttpServlet {
   private static final long serialVersionUID = 1L;
 
-  public MockServiceProvider() throws ServletException {
-    init(new MockServletConfig());
-  }
+  private static final SessionAttribute<Boolean> AUTHENTICATED_ATTR =
+      SessionAttribute.getNamed("isAuthenticated");
 
   @Override
   public void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    Object isAuthenticated = req.getSession().getAttribute("isAuthenticated");
+    String sessionId;
+    if (!hasSessionId(req)) {
+      sessionId = getBackEnd().getSessionManager().createSession();
+      resp.addCookie(new Cookie(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME, sessionId));
+    } else {
+      sessionId = getSessionId(req);
+    }
+    Boolean isAuthenticated = AUTHENTICATED_ATTR.get(sessionId);
     if (isAuthenticated == Boolean.TRUE) {
       ifAllowed(resp);
     } else if (isAuthenticated == Boolean.FALSE) {
