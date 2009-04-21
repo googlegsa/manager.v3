@@ -17,6 +17,7 @@ package com.google.enterprise.security.connectors.formauth;
 import com.google.enterprise.common.Base64;
 import com.google.enterprise.common.Base64DecoderException;
 import com.google.enterprise.common.HttpExchange;
+import com.google.enterprise.common.ServletBase;
 import com.google.enterprise.saml.common.GsaConstants;
 
 import java.io.IOException;
@@ -100,6 +101,14 @@ public final class CookieUtil {
     }
 
     exchange.setProxy(proxy);
+
+    // Boilerplate headers.
+    exchange.setRequestHeader("Date", ServletBase.httpDateString());
+    exchange.setRequestHeader(
+        "Accept", "text/html, text/xhtml;q=0.9, text/plain;q=0.5, text/*;q=0.1");
+    exchange.setRequestHeader("Accept-Charset", "us-ascii, iso-8859-1, utf-8");
+    exchange.setRequestHeader("Accept-Encoding", "identity");
+    exchange.setRequestHeader("Accept-Language", "en-us, en;q=0.9");
 
     if (!undefined(userAgent)) {
       exchange.setRequestHeader("User-Agent", userAgent);
