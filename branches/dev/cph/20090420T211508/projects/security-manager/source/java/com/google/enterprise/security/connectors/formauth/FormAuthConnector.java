@@ -96,9 +96,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       }
       // construct URL for form posting
       if (action[0] != null) {
-        URL formUrl = new URL(redirect);
-        URL newUrl = new URL(formUrl, action[0]);
-        redirect = newUrl.toString();
+        redirect = action[0];
       }
     } catch (IOException e) {
       LOGGER.info("Could not parse login form: " + e.toString());
@@ -176,7 +174,6 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
    *
    *  @return the param names and values suitable for POSTing.
    */
-
   private List<StringPair> parseLoginForm(StringBuffer form, String user, String pass,
       String[] action) throws IOException {
     List<StringPair> names = new ArrayList<StringPair>();
