@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.jcr;
 
+import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryDocument;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
@@ -23,8 +24,8 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.spiimpl.BinaryValue;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import org.json.JSONException;
@@ -54,7 +55,7 @@ public class JcrDocumentTest extends TestCase {
           "http://www.sometesturl.com/test");
 
       int count = countProperties(document);
-      Assert.assertEquals(5, count);
+      assertEquals(5, count);
     }
     {
       String json1 =
@@ -71,14 +72,22 @@ public class JcrDocumentTest extends TestCase {
           "http://www.sometesturl.com/test");
 
       int count = countProperties(document);
-      Assert.assertEquals(4, count);
+      assertEquals(4, count);
     }
   }
 
   private void validateProperty(Document document, String name,
       String expectedValue) throws RepositoryException {
-    Assert.assertEquals(expectedValue, document.findProperty(name).nextValue()
-        .toString());
+    Value v = document.findProperty(name).nextValue();
+    if (v instanceof BinaryValue) {
+      // Note this won't work for streams that originate as binary files or
+      // documents since the call to streamToString() will mangle the
+      // characters.  For this test case, all these originate as plain text.
+      assertEquals(expectedValue,
+          StringUtils.streamToString(((BinaryValue) v).getInputStream()));
+    } else {
+      assertEquals(expectedValue, v.toString());
+    }
   }
 
   public int countProperties(Document document)
@@ -87,9 +96,9 @@ public class JcrDocumentTest extends TestCase {
     System.out.println();
     for (String name : document.getPropertyNames()) {
       Property property = document.findProperty(name);
-      Assert.assertNotNull(property);
+      assertNotNull(property);
       Value value = property.nextValue();
-      Assert.assertNotNull(value);
+      assertNotNull(value);
       System.out.print(name);
       System.out.print("(");
       String type = value.getClass().getName();
