@@ -203,12 +203,8 @@ public class MockHttpClient implements HttpClientInterface {
     public void close() {
     }
 
-    @Override
-    public void setNtlmAuthCredentials(String domain,
-        String username, String password) {
-      // TODO Auto-generated method stub
-      
+    /* @Override */
+    public void setNtlmAuthCredentials(String domain, String username, String password) {
     }
-
   }
 }
