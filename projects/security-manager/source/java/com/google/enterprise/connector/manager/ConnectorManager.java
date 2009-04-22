@@ -24,6 +24,7 @@ import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.server.BackEnd;
 
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,12 +42,6 @@ public class ConnectorManager extends ProductionManager {
   private static final Logger LOGGER = Logger.getLogger(ConnectorManager.class.getName());
 
   private BackEnd backEnd;
-  private boolean securityManagerConnectorsInitialized;
-
-  public ConnectorManager() {
-    super();
-    securityManagerConnectorsInitialized = false;
-  }
 
   public BackEnd getBackEnd() {
     return backEnd;
@@ -58,7 +53,7 @@ public class ConnectorManager extends ProductionManager {
   }
 
   @Override
-  public boolean authenticate(String connectorName, 
+  public boolean authenticate(String connectorName,
       AuthenticationIdentity identity) {
     throw new UnsupportedOperationException();
   }
@@ -90,27 +85,38 @@ public class ConnectorManager extends ProductionManager {
 
   @Override
   public List<ConnectorStatus> getConnectorStatuses() {
-    if (!securityManagerConnectorsInitialized) {
-      try {
-        this.setConnectorConfig("BasicAuth", "BasicAuthConnector",
-                                ImmutableMap.of("ServerUrl", "foo"),  // dummy parameter
-                                "en", false);
-        this.setConnectorConfig("FormAuth", "FormAuthConnector",
-                                ImmutableMap.of("CookieName", "bar"),  // dummy parameter
-                                "en", false);
-        this.setConnectorConfig("ConnAuth", "ConnAuthConnector",
-                                ImmutableMap.of("SpiVersion", "0"),
-                                "en", false);
-        securityManagerConnectorsInitialized = true;
-      } catch (ConnectorNotFoundException e) {
-        LOGGER.info("ConnectorNotFound: " + e.toString());
-      } catch (InstantiatorException e) {
-        LOGGER.info("Instantiator: " + e.toString());
-      } catch (PersistentStoreException e) {
-        LOGGER.info("PersistentStore: " + e.toString());
-      }
+    try {
+      checkAndSetConnectorConfig("BasicAuth", "BasicAuthConnector",
+                                 ImmutableMap.of("ServerUrl", "foo"),  // dummy parameter
+                                 "en", false);
+      checkAndSetConnectorConfig("FormAuth", "FormAuthConnector",
+                                 ImmutableMap.of("CookieName", "bar"),  // dummy parameter
+                                 "en", false);
+      checkAndSetConnectorConfig("ConnAuth", "ConnAuthConnector",
+                                 ImmutableMap.of("SpiVersion", "0"),
+                                 "en", false);
+    } catch (ConnectorNotFoundException e) {
+      LOGGER.info("ConnectorNotFound: " + e.toString());
+    } catch (InstantiatorException e) {
+      LOGGER.info("Instantiator: " + e.toString());
+    } catch (PersistentStoreException e) {
+      LOGGER.info("PersistentStore: " + e.toString());
     }
     List<ConnectorStatus> result = super.getConnectorStatuses();
     return result;
   }
+
+  private void checkAndSetConnectorConfig(String connectorName,
+                                          String connectorTypeName,
+                                          Map configData, String language,
+                                          boolean update)
+      throws PersistentStoreException, InstantiatorException {
+    try {
+      this.getConnectorConfig(connectorName);
+    } catch (ConnectorNotFoundException e) {
+      this.setConnectorConfig(connectorName, connectorTypeName, configData,
+                              language, update);
+    }
+  }
+
 }
