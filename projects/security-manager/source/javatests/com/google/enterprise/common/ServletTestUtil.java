@@ -195,6 +195,15 @@ public final class ServletTestUtil {
     in.close();
   }
 
+  /**
+   * Generate POST body and headers for a mock servlet request.
+   *
+   * Should be called immediately before the servlet is called.  Converts the mock's
+   * parameters into the appropriate form for an HTTP message.  Wouldn't be needed if the
+   * mock was more complete.
+   *
+   * @param request The request to be filled in.
+   */
   public static void generatePostContent(MockHttpServletRequest request) throws IOException {
     ByteArrayOutputStream bs = new ByteArrayOutputStream();
     Writer out = new OutputStreamWriter(bs);
@@ -228,6 +237,15 @@ public final class ServletTestUtil {
     out.flush();
   }
 
+  /**
+   * Finalize a mock servlet response prior to using it.
+   *
+   * Should be called immediately after the servlet has returned.  Fills in some fields
+   * that the mock isn't already taking care of; this wouldn't be needed if the mock was a
+   * little more complete.
+   *
+   * @param response A servlet response that is (potentially) a mock.
+   */
   public static void finalizeResponse(HttpServletResponse response) {
     if (response instanceof MockHttpServletResponse) {
       MockHttpServletResponse mr = (MockHttpServletResponse) response;
