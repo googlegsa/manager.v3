@@ -122,12 +122,9 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       return new AuthenticationResponse(false, null);
     }
 
-    // Save cookies back to the identity.  Save only newly added cookies; we don't want to
-    // overwrite an IP-bound cookie currently held by the user agent.
+    // Transfer all retrieved cookies to the identity
     for (Cookie cookie: cookies) {
-      if (!containsCookie(originalCookies, cookie, false)) {
-        identity.addCookie(cookie);
-      }
+      identity.addCookie(cookie);
     }
     return new AuthenticationResponse(true, username);
   }
