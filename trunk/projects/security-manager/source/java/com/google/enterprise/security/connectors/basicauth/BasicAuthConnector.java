@@ -54,6 +54,7 @@ public class BasicAuthConnector implements Connector, Session, AuthenticationMan
       return notfound;
     }
 
+    LOGGER.info("BasicAuth attempting on login url: " + identity.getSampleUrl());
     URL loginUrl;
     try {
       loginUrl = new URL(identity.getSampleUrl());
