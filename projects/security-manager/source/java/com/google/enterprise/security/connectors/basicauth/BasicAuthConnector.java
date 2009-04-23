@@ -73,6 +73,7 @@ public class BasicAuthConnector implements Connector, Session, AuthenticationMan
       exchange.close();
     }
 
+    LOGGER.info("BasicAuth authenticate status: " + status);
     if (status == 200) {
       return new AuthenticationResponse(true, username);
     }

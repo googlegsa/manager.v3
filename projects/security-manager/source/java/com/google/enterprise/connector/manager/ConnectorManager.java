@@ -21,6 +21,7 @@ import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.connector.scheduler.TraversalScheduler;
 import com.google.enterprise.saml.server.BackEnd;
 
 import java.util.List;
@@ -42,6 +43,11 @@ public class ConnectorManager extends ProductionManager {
   private static final Logger LOGGER = Logger.getLogger(ConnectorManager.class.getName());
 
   private BackEnd backEnd;
+
+  public ConnectorManager() {
+    super();
+    Logger.getLogger(TraversalScheduler.class.getName()).setLevel(Level.WARNING);
+  }
 
   public BackEnd getBackEnd() {
     return backEnd;
