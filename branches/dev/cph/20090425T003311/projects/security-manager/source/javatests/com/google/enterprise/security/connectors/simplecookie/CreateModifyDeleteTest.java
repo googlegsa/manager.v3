@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,9 +18,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.spi.AuthenticationIdentity;
+import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.security.identity.DomainCredentials;
 
 import java.util.Map;
@@ -43,7 +42,7 @@ public class CreateModifyDeleteTest extends SecurityManagerTestCase {
     boolean connectorExists = testConnectorExists(connectorManager, connectorName);
 
     Map<String, String> configData;
-    SecAuthnContext securityContext;
+    SecAuthnIdentity id;
     Cookie cookie;
 
     configData =
@@ -54,10 +53,10 @@ public class CreateModifyDeleteTest extends SecurityManagerTestCase {
     connectorExists = testConnectorExists(connectorManager, connectorName);
     assertTrue(connectorExists);
 
-    securityContext = new SecAuthnContext();
-    securityContext.addCookie(new Cookie("in", "username=fred"));
-    connectorManager.authenticate(connectorName, newIdentity(), securityContext);
-    cookie = securityContext.getCookieNamed("out");
+    id = newIdentity();
+    id.addCookie(new Cookie("in", "username=fred"));
+    connectorManager.authenticate(connectorName, id);
+    cookie = id.getCookieNamed("out");
     assertNotNull(cookie);
     assertEquals("fred", cookie.getValue());
 
@@ -66,10 +65,10 @@ public class CreateModifyDeleteTest extends SecurityManagerTestCase {
     connectorManager.setConnectorConfig(connectorName, connectorTypeName, configData, language,
         connectorExists);
 
-    securityContext = new SecAuthnContext();
-    securityContext.addCookie(new Cookie("abc", "user=joe"));
-    connectorManager.authenticate(connectorName, newIdentity(), securityContext);
-    cookie = securityContext.getCookieNamed("def");
+    id = newIdentity();
+    id.addCookie(new Cookie("abc", "user=joe"));
+    connectorManager.authenticate(connectorName, id);
+    cookie = id.getCookieNamed("def");
     assertNotNull(cookie);
     assertEquals("joe", cookie.getValue());
 
@@ -90,7 +89,7 @@ public class CreateModifyDeleteTest extends SecurityManagerTestCase {
     return connectorExists;
   }
 
-  private AuthenticationIdentity newIdentity() {
+  private SecAuthnIdentity newIdentity() {
     return DomainCredentials.dummy();
   }
 }

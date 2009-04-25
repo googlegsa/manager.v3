@@ -64,4 +64,11 @@ public interface SecAuthnIdentity extends AuthenticationIdentity {
    * @return The login URL, or null if no such.
    */
   public String getSampleUrl();
+
+  /**
+   * Set the identity's username.
+   *
+   * @param username The new username, must not be null.
+   */
+  public void setUsername(String username);
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -65,6 +65,10 @@ public class DomainCredentials implements SecAuthnIdentity {
 
   public String getUsername() {
     return group.getUsername();
+  }
+
+  public void setUsername(String username) {
+    group.setUsername(username);
   }
 
   public String getPassword() {

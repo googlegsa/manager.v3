@@ -26,6 +26,7 @@ import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.VerificationStatus;
 
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
@@ -62,7 +63,8 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     String password = identity.getPassword();
 
     if (username == null || password == null) {
-      return null; // TODO try to crack a cookie
+      identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
+      return null;
     }
 
     String sampleUrl = identity.getSampleUrl();
@@ -80,6 +82,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       formUrl = fetchLoginForm(sampleUrl, form, cookies);
     } catch (IOException e) {
       LOGGER.info("Could not GET login form from " + sampleUrl + ": " + e.toString());
+      identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
     logCookies(LOGGER, "after fetchLoginForm", cookies);
@@ -100,6 +103,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       }
     } catch (IOException e) {
       LOGGER.info("Could not parse login form: " + e.toString());
+      identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
 
@@ -108,10 +112,12 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       int status = submitLoginForm(postUrl, param, cookies);
       if (status != 200) {
         LOGGER.info("Authentication failure status: " + status);
+        identity.setVerificationStatus(VerificationStatus.REFUTED);
         return new AuthenticationResponse(false, null);
       }
     } catch (IOException e) {
       LOGGER.info("Could not POST login form: " + e.toString());
+      identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
     logCookies(LOGGER, "after submitLoginForm", cookies);
@@ -119,6 +125,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     // We are form auth, we expect to have at least one cookie
     if (!anyCookiesChanged(cookies, originalCookies)) {
       LOGGER.info("Authentication status OK but no cookie");
+      identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
 
@@ -126,6 +133,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     for (Cookie cookie: cookies) {
       identity.addCookie(cookie);
     }
+    identity.setVerificationStatus(VerificationStatus.VERIFIED);
     return new AuthenticationResponse(true, username);
   }
 
