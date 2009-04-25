@@ -14,7 +14,6 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.common.collect.ImmutableList;
 import com.google.enterprise.common.ServletBase;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.ConnectorStatus;
@@ -58,7 +57,6 @@ public class BackEndImpl implements BackEnd {
   private final AuthzResponder authzResponder;
   private final SAMLArtifactMap artifactMap;
   private IdentityConfig identityConfig;
-  private List<AuthnDomainGroup> authnDomainGroups;
 
   protected GSASessionAdapter adapter;
 
@@ -79,7 +77,6 @@ public class BackEndImpl implements BackEnd {
         new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
         artifactLifetime);
     identityConfig = null;
-    authnDomainGroups = null;
     adapter = new GSASessionAdapter(sm);
     sessionIds = new Vector<String>();
   }
@@ -98,7 +95,6 @@ public class BackEndImpl implements BackEnd {
 
   public void setIdentityConfig(IdentityConfig identityConfig) {
     this.identityConfig = identityConfig;
-    authnDomainGroups = null;
   }
 
   public SAMLArtifactMap getArtifactMap() {
@@ -106,15 +102,10 @@ public class BackEndImpl implements BackEnd {
   }
 
   public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException {
-    if (authnDomainGroups == null) {
-      if (identityConfig != null) {
-        authnDomainGroups = ImmutableList.copyOf(identityConfig.getConfig());
-      }
-      if (authnDomainGroups == null) {
-        authnDomainGroups = ImmutableList.of();
-      }
-    }
-    return authnDomainGroups;
+    return
+        (identityConfig != null)
+        ? identityConfig.getConfig()
+        : new ArrayList<AuthnDomainGroup>();
   }
 
   public void authenticate(CredentialsGroup cg) {
