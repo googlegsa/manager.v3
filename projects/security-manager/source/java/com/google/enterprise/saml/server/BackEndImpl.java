@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package com.google.enterprise.saml.server;
 
 import com.google.common.collect.ImmutableList;
+import com.google.enterprise.common.ServletBase;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.SecAuthnContext;
@@ -174,13 +175,12 @@ public class BackEndImpl implements BackEnd {
   public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs) {
     LOGGER.info("Session ID: " + sessionId);
     sessionIds.add(sessionId);
-    LOGGER.info("Users: ");
 
     Vector<Cookie> cookies = new Vector<Cookie>();
 
     for (CredentialsGroup cg : cgs) {
 
-      LOGGER.info("CG id/pw: " + cg.getUsername() + ":" + cg.getPassword());
+      LOGGER.info("CG " + cg.getHumanName() + " has id: " + cg.getUsername());
 
       for (DomainCredentials dCred : cg.getElements()) {
         // This clobbers any priorly stored basic auth credentials.
@@ -202,12 +202,14 @@ public class BackEndImpl implements BackEnd {
           //  }
         }
 
-        LOGGER.info("Adding " + dCred.getCookies().size() + " cookies to SM for"
-                    + " this DomainCredential.");
+        LOGGER.info("DomainCredential " + dCred.getDomain() + " cookies: " +
+                    ServletBase.setCookieHeaderValue(dCred.getCookies()));
         cookies.addAll(dCred.getCookies());
       }
     }
     adapter.setCookies(sessionId, CookieUtil.serializeCookies(cookies));
+    LOGGER.info("Cookies sent to session manager: " +
+                ServletBase.setCookieHeaderValue(cookies));
 
     // TODO(con): connectors
   }

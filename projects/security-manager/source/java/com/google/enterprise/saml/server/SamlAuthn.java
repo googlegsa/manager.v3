@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ package com.google.enterprise.saml.server;
 
 import com.google.enterprise.common.GettableHttpServlet;
 import com.google.enterprise.common.PostableHttpServlet;
+import com.google.enterprise.common.ServletBase;
 import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.common.GsaConstants;
@@ -179,6 +180,8 @@ public class SamlAuthn extends SecurityManagerServlet
       for (Cookie c: cookies) {
         context.addCookie(c);
       }
+      LOGGER.info("Cookies from user agent: "
+                  + ServletBase.setCookieHeaderValue(context.getCookies()));
     }
     return context;
   }
