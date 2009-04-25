@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.security.identity;
+package com.google.enterprise.connector.spi;
 
 public enum VerificationStatus {
   TBD,            // haven't gone through verification yet
   VERIFIED,       // recognized by IdP
   REFUTED,        // unrecognized by IdP
+  INDETERMINATE   // unable to verify
 }

@@ -14,6 +14,8 @@
 
 package com.google.enterprise.security.identity;
 
+import com.google.enterprise.connector.spi.VerificationStatus;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
