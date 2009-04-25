@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -114,7 +114,8 @@ public class ConnectorManager extends ProductionManager {
 
   private void checkAndSetConnectorConfig(String connectorName,
                                           String connectorTypeName,
-                                          Map configData, String language,
+                                          Map<String, String> configData,
+                                          String language,
                                           boolean update)
       throws PersistentStoreException, InstantiatorException {
     try {
