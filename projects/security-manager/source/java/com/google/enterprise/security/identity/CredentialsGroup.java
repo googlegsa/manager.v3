@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
 
 package com.google.enterprise.security.identity;
 
+import com.google.common.collect.ImmutableList;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -21,19 +23,20 @@ import java.util.Vector;
 import javax.servlet.http.Cookie;
 
 /**
- * The credentials associated with a single authentication-domain group.  Only the username and
- * password are stored here; other credentials are domain-specific and are stored in the domain
- * credentials comprising the group.
+ * This class models the per-session information for a credentials group, which is a set
+ * of identity verification elements that share the same username and password for each
+ * user.  This object directly holds the per-session data, while the configuration info,
+ * which is shared by all sessions, is stored in a separate object.
  */
 public class CredentialsGroup {
 
-  private final AuthnDomainGroup authnDomainGroup;
+  private final AuthnDomainGroup configInfo;
   private final List<DomainCredentials> elements;
   private String username;
   private String password;
 
-  private CredentialsGroup(AuthnDomainGroup authnDomainGroup) {
-    this.authnDomainGroup = authnDomainGroup;
+  private CredentialsGroup(AuthnDomainGroup configInfo) {
+    this.configInfo = configInfo;
     elements = new ArrayList<DomainCredentials>();
   }
 
@@ -41,7 +44,7 @@ public class CredentialsGroup {
     List<CredentialsGroup> cgs = new ArrayList<CredentialsGroup>();
     for (AuthnDomainGroup adg : adgs) {
       CredentialsGroup cg = new CredentialsGroup(adg);
-      for (AuthnDomain ad : adg.getDomains()) {
+      for (AuthnDomain ad : adg.getElements()) {
         new DomainCredentials(ad, cg);
       }
       cgs.add(cg);
@@ -50,12 +53,12 @@ public class CredentialsGroup {
   }
 
   // Used for testing only:
-  public static CredentialsGroup dummy() {
+  static CredentialsGroup dummy() {
     return new CredentialsGroup(null);
   }
 
   public String getHumanName() {
-    return authnDomainGroup.getHumanName();
+    return configInfo.getHumanName();
   }
 
   public String getUsername() {
@@ -90,8 +93,12 @@ public class CredentialsGroup {
     }
   }
 
+  void addElement(DomainCredentials element) {
+    elements.add(element);
+  }
+
   public List<DomainCredentials> getElements() {
-    return elements;
+    return ImmutableList.copyOf(elements);
   }
 
   public boolean isVerifiable() {

@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,16 +31,15 @@ import java.util.logging.Logger;
  *
  * The expected format of the config file is as follows:
  *
- * AuthnDomainGroup name,FQDN,subpath,AuthnMech,(optionally)loginUrl
+ * credentials-group-name,FQDN,subpath,AuthnMech[,sampleUrl]
  *
- * All the fields following the AuthnDomainGroup name refer to a specific
- * AuthnDomain.  Thus, multiple lines may share the same AuthnDomainGroup name
- * to represent multiple AuthnDomains that belong to the same AuthnDomainGroup.
+ * All the fields following the credentials-group name refer to a specific means of
+ * verification.  Thus, multiple lines may share the same credentials-group name to
+ * represent multiple means of verification that belong to the same credentials group.
  *
- * The AuthnDomainGroup name may be any abritrary alphanumerical string.
+ * The credentials-group name may be any arbitrary alphanumerical string.
  *
- * The AuthnMech string may be any one of the following:
- * BASIC_AUTH,FORMS_AUTH,SAML,SSL,CONNECTORS,SPNEGO_KERBEROS
+ * The AuthnMech string may be any value specified in GsaConstants.AuthNMechanism.
  */
 public class CsvConfig implements IdentityConfig {
 
@@ -58,7 +57,7 @@ public class CsvConfig implements IdentityConfig {
   /**
    * For each valid line in the provided configuration, getConfig will create
    * an AuthnDomain and place it in the AuthnDomainGroup specified by that
-   * line.  getConfig will create new AuthnDomainGroups as necessary.
+   * line, creating new AuthnDomainGroups as necessary.
    */
   public List<AuthnDomainGroup> getConfig(Reader in) throws IOException {
     CSVReader reader = new CSVReader(in);
