@@ -1,10 +1,10 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,30 +16,25 @@ package com.google.enterprise.security.identity;
 
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * A set of resources that are authenticated by a single IdP using a particular mechanism.  The
- * resources are described by a set of URL patterns.  Information about the IdP is specific to the
- * mechanism: for example, forms-auth IdPs have a login URL.
+ * This mis-named class models the configuration info for a set of DomainCredential
+ * objects.  This information captures everything needed in order to verify an identity
+ * using a particular mechanism.  For each of these objects, there is a set of per-session
+ * DomainCredential objects that capture the data for verifying a particular identity in a
+ * particular session.
  */
 public class AuthnDomain {
 
-  private final String name;  // The domain name must be unique.
-  private final AuthNMechanism mechanism;
-  private final AuthnDomainGroup group;
-  private final List<String> urlPatterns;
-  private final String sampleUrl;
+  private final String name;              // The name must be unique.
+  private final AuthNMechanism mechanism; // The mechanism to be used.
+  private final String sampleUrl;         // A sample URL to GET for verification.
 
   public AuthnDomain(String name, AuthNMechanism mechanism, String sampleUrl,
-                     AuthnDomainGroup group) {
+                     AuthnDomainGroup adg) {
     this.name = name;
     this.mechanism = mechanism;
-    this.group = group;
     this.sampleUrl = sampleUrl;
-    urlPatterns = new ArrayList<String>();
-    group.addDomain(this);
+    adg.addElement(this);
   }
 
   public String getName() {
@@ -48,14 +43,6 @@ public class AuthnDomain {
 
   public AuthNMechanism getMechanism() {
     return mechanism;
-  }
-
-  public AuthnDomainGroup getGroup() {
-    return group;
-  }
-
-  public List<String> getUrlPatterns() {
-    return urlPatterns;
   }
 
   public String getSampleUrl() {

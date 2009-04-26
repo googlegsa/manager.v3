@@ -20,59 +20,60 @@ import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.http.Cookie;
 
 /**
- * The credentials associated with a single authentication domain.  (Does not include
- * username/password, which is stored in the associated Credentials Group.)
+ * This mis-named class models the per-session info associated with verifying a particular
+ * identity using a particular mechanism.  A better name might be "verification info", but
+ * we have yet to settle on an appropriate name.  This object directly holds the
+ * per-session data, while the configuration info, which is shared by all sessions, is
+ * stored in a separate object.
  */
 public class DomainCredentials implements SecAuthnIdentity {
 
-  private final AuthnDomain domain;
-  private final CredentialsGroup group;
+  private final AuthnDomain configInfo;
+  private final CredentialsGroup cg;
   private VerificationStatus status;
-  private final Vector<Cookie> cookies;
+  private final List<Cookie> cookies;
 
-  DomainCredentials(AuthnDomain domain, CredentialsGroup group) {
-    this.domain = domain;
-    this.group = group;
+  DomainCredentials(AuthnDomain configInfo, CredentialsGroup cg) {
+    this.configInfo = configInfo;
+    this.cg = cg;
     status = VerificationStatus.TBD;
-    cookies = new Vector<Cookie>();
-    group.getElements().add(this);
+    cookies = new ArrayList<Cookie>();
+    cg.addElement(this);
   }
 
+  // Used for testing only:
   public static DomainCredentials dummy() {
     return new DomainCredentials(null, CredentialsGroup.dummy());
   }
 
   public String getDomain() {
-    return domain.getName();
+    return configInfo.getName();
   }
 
   public AuthNMechanism getMechanism() {
-    return domain.getMechanism();
+    return configInfo.getMechanism();
   }
 
   public String getSampleUrl() {
-    return domain.getSampleUrl();
-  }
-
-  public CredentialsGroup getGroup() {
-    return group;
+    return configInfo.getSampleUrl();
   }
 
   public String getUsername() {
-    return group.getUsername();
+    return cg.getUsername();
   }
 
   public void setUsername(String username) {
-    group.setUsername(username);
+    cg.setUsername(username);
   }
 
   public String getPassword() {
-    return group.getPassword();
+    return cg.getPassword();
   }
 
   public void addCookie(Cookie c) {

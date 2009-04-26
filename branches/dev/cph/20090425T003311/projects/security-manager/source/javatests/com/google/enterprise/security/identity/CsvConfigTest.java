@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,15 +35,15 @@ public class CsvConfigTest extends SecurityManagerTestCase {
     assertEquals(2, adgs.size());
     for (AuthnDomainGroup group : adgs) {
       if ("groupA".equals(group.getHumanName())) {
-        assertEquals(2, group.getDomains().size());
-        AuthnDomain leizBasicDomain = group.getDomains().get(0);
+        assertEquals(2, group.getElements().size());
+        AuthnDomain leizBasicDomain = group.getElements().get(0);
         assertEquals("http://leiz.mtv.corp.google.com/basic/", leizBasicDomain.getName());
         assertEquals(AuthNMechanism.BASIC_AUTH, leizBasicDomain.getMechanism());
         assertEquals("http://leiz.mtv.corp.google.com/basic/", leizBasicDomain.getSampleUrl());
         continue;
       }
       if ("groupB".equals(group.getHumanName())) {
-        AuthnDomain moogleDomain = group.getDomains().get(0);
+        AuthnDomain moogleDomain = group.getElements().get(0);
         assertEquals("http://mooglegoogle.com/moogle/", moogleDomain.getName());
         assertEquals("http://loginurl.com/login", moogleDomain.getSampleUrl());
         continue;
@@ -62,8 +62,8 @@ public class CsvConfigTest extends SecurityManagerTestCase {
 
     assertEquals(1, adgs.size());
     assertEquals("groupC",adgs.get(0).getHumanName());
-    assertEquals(1, adgs.get(0).getDomains().size());
-    AuthnDomain domain = adgs.get(0).getDomains().get(0);
+    assertEquals(1, adgs.get(0).getElements().size());
+    AuthnDomain domain = adgs.get(0).getElements().get(0);
     assertEquals("http://www.mooglegoogle.com/moogle/", domain.getName());
   }
 }
