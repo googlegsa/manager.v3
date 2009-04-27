@@ -28,7 +28,7 @@ public class SimpleMockAuthorizationManager implements AuthorizationManager {
 
   public Collection<AuthorizationResponse> authorizeDocids(Collection<String> docids,
       AuthenticationIdentity identity) {
-    Preconditions.checkContentsNotNull(docids);
+    Preconditions.checkArgument(docids.size() != 0);
     List<AuthorizationResponse> result = new ArrayList<AuthorizationResponse>();
     for (String s : docids) {
       AuthorizationResponse a;
