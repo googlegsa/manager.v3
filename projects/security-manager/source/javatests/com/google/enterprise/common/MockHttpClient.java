@@ -14,6 +14,8 @@
 
 package com.google.enterprise.common;
 
+import com.google.enterprise.connector.common.Base64;
+
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockHttpSession;

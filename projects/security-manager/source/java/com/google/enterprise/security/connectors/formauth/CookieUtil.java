@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,10 +14,10 @@
 
 package com.google.enterprise.security.connectors.formauth;
 
-import com.google.enterprise.common.Base64;
-import com.google.enterprise.common.Base64DecoderException;
 import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.common.ServletBase;
+import com.google.enterprise.connector.common.Base64;
+import com.google.enterprise.connector.common.Base64DecoderException;
 import com.google.enterprise.saml.common.GsaConstants;
 
 import java.io.IOException;
@@ -377,9 +377,8 @@ public final class CookieUtil {
   }
 
   private static String safeDeserialize(String str) {
-     byte[] bytes = str.getBytes();
      try {
-       return new String(Base64.decodeWebSafe(bytes, 0, bytes.length));
+       return new String(Base64.decode(str));
      } catch (Base64DecoderException e) {
        // Should not happen if the cookie was serialized by us
        LOG.warning("Error while deserializing. Original string = <" + str + ">.");
