@@ -221,8 +221,7 @@ public class SamlAuthn extends SecurityManagerServlet
   }
 
   private void updateIncomingCookies(HttpServletRequest request) {
-    CookieDifferentiator cd = getCookieDifferentiator(request);
-    CookieSet cookies = cd.getNewCookies();
+    CookieSet cookies = getUserAgentCookies(request);
     cookies.clear();
     Cookie[] cookies2 = request.getCookies();
     if (cookies2 != null) {
@@ -230,15 +229,16 @@ public class SamlAuthn extends SecurityManagerServlet
         cookies.add(c);
       }
     }
-    cd.commitStep();
+    getCookieDifferentiator(request).commitStep();
   }
 
   private void updateOutgoingCookies(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
-    CookieDifferentiator cd = getCookieDifferentiator(request);
-    CookieSet cookies = cd.getNewCookies();
-    List<CredentialsGroup> cgs = getCredentialsGroups(request);
-    for (CredentialsGroup cg : cgs) {
+    CookieSet cookies = getUserAgentCookies(request);
+    CookieSet newCookies = new CookieSet();
+
+    // Find all new IdP cookies that don't conflict with incoming cookies.
+    for (CredentialsGroup cg : getCredentialsGroups(request)) {
       for (DomainCredentials dc : cg.getElements()) {
         for (CookieDifferentiator.Delta delta : dc.getCookieDifferentiator().getDifferential()) {
           Cookie c = delta.getCookie();
@@ -246,25 +246,25 @@ public class SamlAuthn extends SecurityManagerServlet
             case ADD:
             case MODIFY:
               if (!cookies.contains(c.getName())) {
-                cookies.add(c);
+                newCookies.add(c);
               }
               break;
           }
         }
       }
     }
-    cd.commitStep();
-    for (CookieDifferentiator.Delta delta : cd.getDifferential()) {
-      switch (delta.getOperation()) {
-        case ADD:
-          response.addCookie(delta.getCookie());
-          break;
-      }
+
+    // Send all those cookies back to the user agent.
+    for (Cookie c : newCookies) {
+      response.addCookie(c);
     }
   }
 
-  private CookieDifferentiator getCookieDifferentiator(HttpServletRequest request) {
-    HttpSession session = request.getSession();
+  private static CookieDifferentiator getCookieDifferentiator(HttpServletRequest request) {
+    return getCookieDifferentiator(request.getSession());
+  }
+
+  public static CookieDifferentiator getCookieDifferentiator(HttpSession session) {
     CookieDifferentiator cd =
         CookieDifferentiator.class.cast(session.getAttribute(COOKIE_DIFFERENTIATOR_NAME));
     if (cd == null) {
@@ -272,6 +272,14 @@ public class SamlAuthn extends SecurityManagerServlet
       session.setAttribute(COOKIE_DIFFERENTIATOR_NAME, cd);
     }
     return cd;
+  }
+
+  private static CookieSet getUserAgentCookies(HttpServletRequest request) {
+    return getUserAgentCookies(request.getSession());
+  }
+
+  public static CookieSet getUserAgentCookies(HttpSession session) {
+    return getCookieDifferentiator(session).getNewCookies();
   }
 
   /**
@@ -341,7 +349,7 @@ public class SamlAuthn extends SecurityManagerServlet
     HttpSession session = request.getSession();
     List<CredentialsGroup> groups = sessionCredentialsGroups(session);
     if (null == groups) {
-      groups = CredentialsGroup.newGroups(getBackEnd().getAuthnDomainGroups());
+      groups = CredentialsGroup.newGroups(getBackEnd().getAuthnDomainGroups(), session);
       session.setAttribute(CREDENTIALS_GROUPS_NAME, groups);
     }
     return groups;

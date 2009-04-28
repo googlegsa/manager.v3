@@ -19,6 +19,8 @@ import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.security.identity.DomainCredentials;
 
+import org.springframework.mock.web.MockHttpSession;
+
 import javax.servlet.http.Cookie;
 
 /**
@@ -39,7 +41,7 @@ public class SimpleCookieIdentityConnectorTest extends SecurityManagerTestCase {
 
   private void runOneAuthenticationTest(String cookieName, String idCookieName,
       SimpleCookieIdentityConnector s, String cookieValue, String expectedIdentity) {
-    SecAuthnIdentity id = DomainCredentials.dummy();
+    SecAuthnIdentity id = DomainCredentials.dummy(new MockHttpSession());
     id.addCookie(new Cookie(cookieName, cookieValue));
     AuthenticationResponse r = s.authenticate(id);
     if (expectedIdentity != null) {

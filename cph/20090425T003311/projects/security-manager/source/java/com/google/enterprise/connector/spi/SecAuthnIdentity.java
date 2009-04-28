@@ -17,12 +17,20 @@ package com.google.enterprise.connector.spi;
 import com.google.enterprise.common.CookieDifferentiator;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpSession;
 
 /**
  * An extension to the connector manager's identity model to support additional identity
  * information needed by the security manager: cookies, identity verification, etc.
  */
 public interface SecAuthnIdentity extends AuthenticationIdentity {
+
+  /**
+   * Get the session for this identity.
+   *
+   * @return The identity's session object.
+   */
+  public HttpSession getSession();
 
   /**
    * Get the cookie differentiator associated with this identity.

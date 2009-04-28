@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.List;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpSession;
 
 /**
  * This mis-named class models the per-session info associated with verifying a particular
@@ -48,8 +49,8 @@ public class DomainCredentials implements SecAuthnIdentity {
   }
 
   // Used for testing only:
-  public static DomainCredentials dummy() {
-    return new DomainCredentials(null, CredentialsGroup.dummy());
+  public static DomainCredentials dummy(HttpSession session) {
+    return new DomainCredentials(null, CredentialsGroup.dummy(session));
   }
 
   public String getDomain() {
@@ -62,6 +63,10 @@ public class DomainCredentials implements SecAuthnIdentity {
 
   public String getSampleUrl() {
     return configInfo.getSampleUrl();
+  }
+
+  public HttpSession getSession() {
+    return cg.getSession();
   }
 
   public String getUsername() {
