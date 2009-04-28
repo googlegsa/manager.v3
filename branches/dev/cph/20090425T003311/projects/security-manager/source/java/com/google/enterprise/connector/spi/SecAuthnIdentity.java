@@ -14,7 +14,7 @@
 
 package com.google.enterprise.connector.spi;
 
-import java.util.Collection;
+import com.google.enterprise.common.CookieDifferentiator;
 
 import javax.servlet.http.Cookie;
 
@@ -25,11 +25,11 @@ import javax.servlet.http.Cookie;
 public interface SecAuthnIdentity extends AuthenticationIdentity {
 
   /**
-   * Get the cookies associated with this identity.
-   * Don't modify the result; the implementation should return an immutable copy.
-   * @return A collection of cookie objects.
+   * Get the cookie differentiator associated with this identity.
+   *
+   * @return The identity's cookie differentiator.
    */
-  public Collection<Cookie> getCookies();
+  public CookieDifferentiator getCookieDifferentiator();
 
   /**
    * Associate a cookie with this identity.

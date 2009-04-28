@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,8 +27,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.GregorianCalendar;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
@@ -64,7 +65,7 @@ public final class CookieUtil {
    *  @param url The URL to fetch
    *  @param proxy The proxy String of form host:port if so desired
    *  @param userAgent The string to send in the user agent header
-   *  @param cookies A Vector of existing cookie to be sent, newly
+   *  @param cookies A Collection of existing cookie to be sent, newly
    *                 received cookies will be stored in here as well.
    *  @param bodyBuffer A StringBuffer to store response body. Ignored if null
    *  @param redirectBuffer A StringBuffer to store the redirect URL
@@ -85,7 +86,7 @@ public final class CookieUtil {
                               URL url,
                               String proxy,
                               String userAgent,
-                              Vector<Cookie> cookies,
+                              Collection<Cookie> cookies,
                               StringBuffer bodyBuffer,
                               StringBuffer redirectBuffer,
                               Set<String> passwordFields,
@@ -139,73 +140,72 @@ public final class CookieUtil {
       for (String value: exchange.getResponseHeaderValues("Set-Cookie2")) {
         newCookies.addAll(SetCookieParser.parse(value));
       }
-      // removing duplicate cookies in old Vector. We do it inefficient way
-      // O(n^2) here for small Vectors
-      List<Cookie> cookiesToRemove = new ArrayList<Cookie>();
-      Set<String> expiredCookieNames = new HashSet<String>();
-      Set<SetCookie> expiredCookies = new HashSet<SetCookie>();
+
+      // Remove duplicate cookies in old collection.  This is O(n^2) for small n.
+      Iterator<Cookie> iter2 = cookies.iterator();
+      while (iter2.hasNext()) {
+        String name = iter2.next().getName();
+        for (SetCookie sc : newCookies) {
+          if (sc.getName().equals(name)) {
+            iter2.remove();
+            break;
+          }
+        }
+      }
 
       // Get the current time so we can check for expired cookies.
       Calendar cal = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
       long curTimeGmt = cal.getTimeInMillis();
 
-      for (SetCookie setCookie : newCookies) {
+      // Remove any incoming cookies that have expired.
+      Iterator<SetCookie> iter1 = newCookies.iterator();
+      while (iter1.hasNext()) {
+        SetCookie setCookie = iter1.next();
         String name = setCookie.getName();
         String expiresAt = setCookie.getExpires();
         LOG.info("name=" + name + " age=" + setCookie.getMaxAge() +
                  " exp=" + expiresAt);
+
+        // Ignore cookies with max-age=0.
         if (setCookie.getMaxAge() == 0) {
           // Max age is non-negative (RFC2109) and negative means
           // attribute not present, so we just check for 0.
           LOG.info("This cookie has expired based on max-age: " + name);
-          expiredCookieNames.add(name);
-          expiredCookies.add(setCookie);
-        } else if (expiresAt != null) {
+          iter1.remove();
+          continue;
+        }
+
+        if (expiresAt != null) {
+          // Compute expiration date of cookie, if possible.
+          // We try 2 styles of date formats.
           long expMillis = -1;
-          // We try 2 styles of date formats but only want to complain if
-          // both fail, so we store the last exception here.
-          ParseException lastParsingProblem = null;
           try {
             expMillis = DATE_FORMAT_RFC2109.parse(expiresAt).getTime();
-          } catch (ParseException pe) {
-            lastParsingProblem = pe;
-          }
-
-          if (lastParsingProblem != null) { // Parsing failed, try other fmt
+          } catch (ParseException e1) {
+            // Parsing failed, try other format.
             try {
               expMillis = DATE_FORMAT_ALT.parse(expiresAt).getTime();
-            } catch (ParseException pe) {
-              lastParsingProblem = pe;
+            } catch (ParseException e2) {
+              LOG.log(Level.WARNING,
+                      "Can't parse cookie date \"" + expiresAt + "\" for cookie " + name,
+                      e2);
             }
           }
 
+          // Ignore expired cookies.
           if (expMillis >= 0 && expMillis <= curTimeGmt) {
             LOG.info("This cookie has expired based on time: " + name);
-            expiredCookieNames.add(name);
-            expiredCookies.add(setCookie);
-          } else if (expMillis == -1 && lastParsingProblem != null) {
-            // If we never parsed the time and we have an exception recorded
-            // then complain.
-            LOG.log(Level.WARNING,
-                    "Can't parse cookie date \"" + expiresAt
-                    + "\" for cookie " + name, lastParsingProblem);
+            iter1.remove();
+            continue;
           }
         }
 
         // TODO what to do with cookies that have no "domain" attribute??
 
-        // Now delete all cookies marked for deletion.
-        for (Cookie cookie : cookies) {
-          String thisName = cookie.getName();
-          if (name.equals(thisName) ||
-              expiredCookieNames.contains(thisName)) {
-            cookiesToRemove.add(cookie);
-          }
-        }
+        // Cookie not expired, add it to set.
+        LOG.info("Add new cookie: " + name);
+        cookies.add(setCookie);
       }
-      newCookies.removeAll(expiredCookies);
-      cookies.removeAll(cookiesToRemove);
-      cookies.addAll(newCookies);
     }
 
     exchange.close();
@@ -220,7 +220,7 @@ public final class CookieUtil {
    * @return The absolute URL from a <code>Refresh</code> or
    *         <code>Location</code> header. Return null if none exists
    */
-  public static String getRedirectUrl(HttpExchange exchange, URL url) {
+  private static String getRedirectUrl(HttpExchange exchange, URL url) {
     int status = exchange.getStatusCode();
     if (status == 200) {
       return getRefreshUrl(exchange);
@@ -257,13 +257,13 @@ public final class CookieUtil {
   }
 
   /**
-   *  Build a String representation out of a Vector of Cookie that
+   *  Build a String representation out of a Collection of Cookie that
    *  applies for a given URL.
-   *  @param cookies Vector of Cookie object
+   *  @param cookies Collection of Cookie object
    *  @param url The target URL.
    *  @return A String to be used as value of a "Cookie" header
    */
-  private static String filterCookieToSend(Vector<Cookie> cookies, URL url) {
+  private static String filterCookieToSend(Collection<Cookie> cookies, URL url) {
     if (cookies == null || cookies.size() == 0)
       return null;
     StringBuilder buffer = new StringBuilder();
@@ -298,35 +298,6 @@ public final class CookieUtil {
       return false;
     }
     return true;
-  }
-
-  /**
-   *  Return a multi-line String of Set-Cookie header, ready to
-   *  send to User-Agent.
-   *  Since the Vector may contains Cookie from user-agent and Cookie from
-   *  @param cookies Vector of Cookie
-   *  @return A String value that can be used in a Set-Cookie header.
-   */
-  public static String toSetCookieString(Vector<Cookie> cookies) {
-    StringBuilder strbuf = new StringBuilder();
-    boolean first = true;
-    for (Cookie cookie : cookies) {
-      if (first) {
-        first = false;
-      } else {
-        strbuf.append("\nSet-Cookie: ");
-      }
-
-      if (!(cookie instanceof SetCookie)) {
-        SetCookie temp = new SetCookie(cookie.getName(), cookie.getValue());
-        cookie = temp;
-      }
-
-      String cookieStr = ((SetCookie)cookie).toString();
-      LOG.fine("Set-Cookie: " + cookieStr);
-      strbuf.append(cookieStr);
-    }
-    return strbuf.toString();
   }
 
   public static String serializeCookie(Cookie cookie) {
@@ -388,6 +359,6 @@ public final class CookieUtil {
    }
 
   private static boolean undefined(String str) {
-    return str == null || "".equals(str);
+    return str == null || str.isEmpty();
   }
 }

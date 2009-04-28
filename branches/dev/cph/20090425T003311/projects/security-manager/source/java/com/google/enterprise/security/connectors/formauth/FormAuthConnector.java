@@ -14,6 +14,8 @@
 
 package com.google.enterprise.security.connectors.formauth;
 
+import com.google.enterprise.common.CookieDifferentiator;
+import com.google.enterprise.common.CookieSet;
 import com.google.enterprise.common.HttpClientInterface;
 import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.common.ServletBase;
@@ -36,7 +38,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Vector;
 import java.util.logging.Logger;
 
 import javax.servlet.http.Cookie;
@@ -70,8 +71,8 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     String sampleUrl = identity.getSampleUrl();
     LOGGER.info("Trying to authenticate against " + sampleUrl);
 
-    Collection<Cookie> originalCookies = identity.getCookies();
-    Vector<Cookie> cookies = copyCookies(originalCookies);
+    CookieDifferentiator differentiator = identity.getCookieDifferentiator();
+    CookieSet cookies = differentiator.getNewCookies();
     logCookies(LOGGER, "original cookies", cookies);
 
     // GET sampleUrl, following redirects until we hit a form; fill the form, post it; get
@@ -82,11 +83,13 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       formUrl = fetchLoginForm(sampleUrl, form, cookies);
     } catch (IOException e) {
       LOGGER.info("Could not GET login form from " + sampleUrl + ": " + e.toString());
+      differentiator.abortStep();
       identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
     logCookies(LOGGER, "after fetchLoginForm", cookies);
 
+    // Parse the returned login form.
     List<StringPair> param;
     String postUrl;
     try {
@@ -103,36 +106,40 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       }
     } catch (IOException e) {
       LOGGER.info("Could not parse login form: " + e.toString());
+      differentiator.abortStep();
       identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
 
+    // Fill in the login form and POST the result.
     LOGGER.info("POST to: " + postUrl);
     try {
       int status = submitLoginForm(postUrl, param, cookies);
       if (status != 200) {
         LOGGER.info("Authentication failure status: " + status);
+        differentiator.abortStep();
         identity.setVerificationStatus(VerificationStatus.REFUTED);
         return new AuthenticationResponse(false, null);
       }
     } catch (IOException e) {
       LOGGER.info("Could not POST login form: " + e.toString());
+      differentiator.abortStep();
       identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
     logCookies(LOGGER, "after submitLoginForm", cookies);
 
+    // Commit the cookie changes.
+    differentiator.commitStep();
+
     // We are form auth, we expect to have at least one cookie
-    if (!anyCookiesChanged(cookies, originalCookies)) {
+    if (!differentiator.hasAddedCookies()) {
       LOGGER.info("Authentication status OK but no cookie");
       identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
 
-    // Transfer all retrieved cookies to the identity
-    for (Cookie cookie: cookies) {
-      identity.addCookie(cookie);
-    }
+    // Successful login.
     identity.setVerificationStatus(VerificationStatus.VERIFIED);
     return new AuthenticationResponse(true, username);
   }
@@ -147,7 +154,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
    * @param cookies A container to hold any cookies collected during the operation.
    * @return The URL of the form.
    */
-  private String fetchLoginForm(String sampleUrl, StringBuffer bodyBuffer, Vector<Cookie> cookies)
+  private String fetchLoginForm(String sampleUrl, StringBuffer bodyBuffer, CookieSet cookies)
       throws IOException {
     int redirectCount = 0;
     URL url = new URL(sampleUrl);
@@ -254,7 +261,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
    * @return An HTTP status code for the operation.
    */
   private int submitLoginForm(
-      String loginUrl, List<StringPair> parameters, Vector<Cookie> cookies)
+      String loginUrl, List<StringPair> parameters, CookieSet cookies)
       throws IOException {
     int redirectCount = 0;
     URL url = new URL(loginUrl);
@@ -286,43 +293,6 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       }
     }
     return status;
-  }
-
-  private static Vector<Cookie> copyCookies(Collection<Cookie> cookies) {
-    Vector<Cookie> result = new Vector<Cookie>(cookies.size());
-    for (Cookie c: cookies) {
-      result.add(Cookie.class.cast(c.clone()));
-    }
-    return result;
-  }
-
-  private static boolean anyCookiesChanged(Collection<Cookie> newCookies, Collection<Cookie> oldCookies) {
-    for (Cookie c: newCookies) {
-      if (!containsCookie(oldCookies, c, true)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean containsCookie(Collection<Cookie> cookies, Cookie cookie, boolean considerValue) {
-    for (Cookie c: cookies) {
-      if (compareCookies(c, cookie, considerValue)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean compareCookies(Cookie c1, Cookie c2, boolean considerValue) {
-    return
-        stringEquals(c1.getName(), c2.getName())
-        && stringEquals(c1.getDomain(), c2.getDomain())
-        && considerValue ? stringEquals(c1.getValue(), c2.getValue()) : true;
-  }
-
-  private static boolean stringEquals(String s1, String s2) {
-    return (s1 == null) ? (s2 == null) : s1.equals(s2);
   }
 
   private static void logCookies(Logger LOGGER, String tag, Collection<Cookie> cookies) {

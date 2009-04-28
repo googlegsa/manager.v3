@@ -14,6 +14,8 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.common.CookieDifferentiator;
+import com.google.enterprise.common.CookieSet;
 import com.google.enterprise.common.GettableHttpServlet;
 import com.google.enterprise.common.PostableHttpServlet;
 import com.google.enterprise.saml.common.GsaConstants;
@@ -87,6 +89,7 @@ public class SamlAuthn extends SecurityManagerServlet
   private static final String PROMPT_COUNTER_NAME = "SamlAuthnPromptCounter";
   private static final String OMNI_FORM_NAME = "SamlAuthnOmniForm";
   private static final String CREDENTIALS_GROUPS_NAME = "SamlAuthnCredentialsGroups";
+  private static final String COOKIE_DIFFERENTIATOR_NAME = "SamlAuthnCookieDifferentiator";
   private static final int defaultMaxPrompts = 3;
 
   private int maxPrompts;
@@ -113,6 +116,7 @@ public class SamlAuthn extends SecurityManagerServlet
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
+    updateIncomingCookies(request);
     BackEnd backend = getBackEnd();
 
     // Establish the SAML message context
@@ -138,14 +142,12 @@ public class SamlAuthn extends SecurityManagerServlet
 
     // If there are cookies we can decode, use them.
     if (tryCookies(request, response)) {
-      return;
-    }
-
-    if (backend.isIdentityConfigured()) {
+    } else if (backend.isIdentityConfigured()) {
       maybePrompt(request, response);
     } else {
       makeUnsuccessfulResponse(request, response, "Security Manager not configured");
     }
+    updateOutgoingCookies(request, response);
   }
 
   // Try to find cookies that can be decoded into identities.
@@ -182,6 +184,7 @@ public class SamlAuthn extends SecurityManagerServlet
   @Override
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
+    updateIncomingCookies(request);
     BackEnd backend = getBackEnd();
     OmniForm omniform = getOmniForm(request);
     List<CredentialsGroup> cgs = getCredentialsGroups(request);
@@ -200,6 +203,7 @@ public class SamlAuthn extends SecurityManagerServlet
     }
     if (ids.isEmpty()) {
       maybePrompt(request, response);
+      updateOutgoingCookies(request, response);
       return;
     }
 
@@ -213,6 +217,61 @@ public class SamlAuthn extends SecurityManagerServlet
     }
 
     makeSuccessfulResponse(request, response, ids);
+    updateOutgoingCookies(request, response);
+  }
+
+  private void updateIncomingCookies(HttpServletRequest request) {
+    CookieDifferentiator cd = getCookieDifferentiator(request);
+    CookieSet cookies = cd.getNewCookies();
+    cookies.clear();
+    Cookie[] cookies2 = request.getCookies();
+    if (cookies2 != null) {
+      for (Cookie c : cookies2) {
+        cookies.add(c);
+      }
+    }
+    cd.commitStep();
+  }
+
+  private void updateOutgoingCookies(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
+    CookieDifferentiator cd = getCookieDifferentiator(request);
+    CookieSet cookies = cd.getNewCookies();
+    List<CredentialsGroup> cgs = getCredentialsGroups(request);
+    for (CredentialsGroup cg : cgs) {
+      for (DomainCredentials dc : cg.getElements()) {
+        for (CookieDifferentiator.Delta delta : dc.getCookieDifferentiator().getDifferential()) {
+          Cookie c = delta.getCookie();
+          switch (delta.getOperation()) {
+            case ADD:
+            case MODIFY:
+              if (!cookies.contains(c.getName())) {
+                cookies.add(c);
+              }
+              break;
+          }
+        }
+      }
+    }
+    cd.commitStep();
+    for (CookieDifferentiator.Delta delta : cd.getDifferential()) {
+      switch (delta.getOperation()) {
+        case ADD:
+          response.addCookie(delta.getCookie());
+          break;
+      }
+    }
+  }
+
+  private CookieDifferentiator getCookieDifferentiator(HttpServletRequest request) {
+    HttpSession session = request.getSession();
+    CookieDifferentiator cd =
+        CookieDifferentiator.class.cast(session.getAttribute(COOKIE_DIFFERENTIATOR_NAME));
+    if (cd == null) {
+      cd = new CookieDifferentiator();
+      session.setAttribute(COOKIE_DIFFERENTIATOR_NAME, cd);
+    }
+    return cd;
   }
 
   /**
