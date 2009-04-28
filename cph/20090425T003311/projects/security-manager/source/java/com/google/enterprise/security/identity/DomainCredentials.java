@@ -14,13 +14,13 @@
 
 package com.google.enterprise.security.identity;
 
+import com.google.common.collect.ImmutableList;
+import com.google.enterprise.common.CookieDifferentiator;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.VerificationStatus;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.Cookie;
@@ -37,13 +37,13 @@ public class DomainCredentials implements SecAuthnIdentity {
   private final AuthnDomain configInfo;
   private final CredentialsGroup cg;
   private VerificationStatus status;
-  private final List<Cookie> cookies;
+  private final CookieDifferentiator differentiator;
 
   DomainCredentials(AuthnDomain configInfo, CredentialsGroup cg) {
     this.configInfo = configInfo;
     this.cg = cg;
     status = VerificationStatus.TBD;
-    cookies = new ArrayList<Cookie>();
+    differentiator = new CookieDifferentiator();
     cg.addElement(this);
   }
 
@@ -77,12 +77,12 @@ public class DomainCredentials implements SecAuthnIdentity {
   }
 
   public void addCookie(Cookie c) {
-    cookies.add(c);
+    differentiator.getNewCookies().add(c);
   }
 
   // For testing:
   public void clearCookies() {
-    cookies.clear();
+    differentiator.getNewCookies().clear();
   }
 
   public VerificationStatus getVerificationStatus() {
@@ -93,12 +93,20 @@ public class DomainCredentials implements SecAuthnIdentity {
     this.status = status;
   }
 
+  public CookieDifferentiator getCookieDifferentiator() {
+    return differentiator;
+  }
+
+  public List<CookieDifferentiator.Delta> getCookieDifferential() {
+    return differentiator.getDifferential();
+  }
+
   public Collection<Cookie> getCookies() {
-    return Collections.unmodifiableCollection(cookies);
+    return ImmutableList.copyOf(differentiator.getNewCookies());
   }
 
   public Cookie getCookieNamed(String name) {
-    for (Cookie c: cookies) {
+    for (Cookie c: differentiator.getNewCookies()) {
       if (c.getName().equals(name)) {
         return c;
       }
@@ -108,7 +116,7 @@ public class DomainCredentials implements SecAuthnIdentity {
 
   private String dumpCookies() {
     StringBuilder sb = new StringBuilder();
-    for (Cookie c : cookies) {
+    for (Cookie c : differentiator.getNewCookies()) {
       sb.append(c.getName() + "::" + c.getValue() + ";");
     }
     return sb.toString();
