@@ -29,6 +29,7 @@ import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.VerificationStatus;
+import com.google.enterprise.saml.server.SamlAuthn;
 
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
@@ -72,22 +73,23 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     LOGGER.info("Trying to authenticate against " + sampleUrl);
 
     CookieDifferentiator differentiator = identity.getCookieDifferentiator();
-    CookieSet cookies = differentiator.getNewCookies();
-    logCookies(LOGGER, "original cookies", cookies);
+    CookieSet receivedCookies = differentiator.getNewCookies();
+    CookieSet userAgentCookies = SamlAuthn.getUserAgentCookies(identity.getSession());
+    logCookies(LOGGER, "original cookies", receivedCookies);
 
     // GET sampleUrl, following redirects until we hit a form; fill the form, post it; get
     // the response, remember the cookie returned to us.
     StringBuffer form = new StringBuffer();
     String formUrl;
     try {
-      formUrl = fetchLoginForm(sampleUrl, form, cookies);
+      formUrl = fetchLoginForm(sampleUrl, form, userAgentCookies, receivedCookies);
     } catch (IOException e) {
       LOGGER.info("Could not GET login form from " + sampleUrl + ": " + e.toString());
       differentiator.abortStep();
       identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
-    logCookies(LOGGER, "after fetchLoginForm", cookies);
+    logCookies(LOGGER, "after fetchLoginForm", receivedCookies);
 
     // Parse the returned login form.
     List<StringPair> param;
@@ -114,7 +116,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     // Fill in the login form and POST the result.
     LOGGER.info("POST to: " + postUrl);
     try {
-      int status = submitLoginForm(postUrl, param, cookies);
+      int status = submitLoginForm(postUrl, param, userAgentCookies, receivedCookies);
       if (status != 200) {
         LOGGER.info("Authentication failure status: " + status);
         differentiator.abortStep();
@@ -127,7 +129,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
-    logCookies(LOGGER, "after submitLoginForm", cookies);
+    logCookies(LOGGER, "after submitLoginForm", receivedCookies);
 
     // Commit the cookie changes.
     differentiator.commitStep();
@@ -151,10 +153,12 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
    *
    * @param sampleUrl A sample URL protected by forms authentication.
    * @param bodyBuffer A buffer in which the form is stored.
-   * @param cookies A container to hold any cookies collected during the operation.
+   * @param userAgentCookies Cookies received from the user agent.
+   * @param receivedCookies Cookies received from the IdP.
    * @return The URL of the form.
    */
-  private String fetchLoginForm(String sampleUrl, StringBuffer bodyBuffer, CookieSet cookies)
+  private String fetchLoginForm(String sampleUrl, StringBuffer bodyBuffer,
+                                CookieSet userAgentCookies, CookieSet receivedCookies)
       throws IOException {
     int redirectCount = 0;
     URL url = new URL(sampleUrl);
@@ -164,13 +168,9 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     int kMaxNumRedirectsToFollow = 4;
 
     while (true) {
-      CookieUtil.fetchPage(httpClient.getExchange(url),
-                           url,
-                           null, // proxy,
-                           "SecMgr", cookies,
-                           bodyBuffer,
-                           redirectBuffer, null,
-                           null); // LOGGER
+      CookieUtil.fetchPage(httpClient.getExchange(url), url, "SecMgr",
+                           userAgentCookies, receivedCookies,
+                           bodyBuffer, redirectBuffer);
       lastRedirect = redirected;
       redirected = redirectBuffer.toString();
       if (redirected.length() > 0) {
@@ -257,15 +257,15 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
    *
    * @param loginUrl The URL to post the values to.
    * @param parameters The parameters to be posted.
-   * @param cookies The cookies being submitted; new cookies are added here.
+   * @param userAgentCookies Cookies received from the user agent.
+   * @param receivedCookies Cookies received from the IdP.
    * @return An HTTP status code for the operation.
    */
-  private int submitLoginForm(
-      String loginUrl, List<StringPair> parameters, CookieSet cookies)
+  private int submitLoginForm(String loginUrl, List<StringPair> parameters,
+                              CookieSet userAgentCookies, CookieSet receivedCookies)
       throws IOException {
     int redirectCount = 0;
     URL url = new URL(loginUrl);
-    StringBuffer bodyBuffer = new StringBuffer();
     StringBuffer redirectBuffer = new StringBuffer();
     int status = 0;
     int kMaxNumRedirectsToFollow = 4;
@@ -273,12 +273,9 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     HttpExchange exchange = httpClient.postExchange(url, parameters);
 
     while (true) {
-      status = CookieUtil.fetchPage(exchange, url,
-                                    null, // proxy,
-                                    "SecMgr", cookies,
-                                    bodyBuffer,
-                                    redirectBuffer, null,
-                                    null); // LOGGER
+      status = CookieUtil.fetchPage(exchange, url, "SecMgr",
+                                    userAgentCookies, receivedCookies,
+                                    null, redirectBuffer);
       String redirected = redirectBuffer.toString();
       // TODO need smarter redirect logic for weirdo like CAS
       if (redirected.length() > 4) {

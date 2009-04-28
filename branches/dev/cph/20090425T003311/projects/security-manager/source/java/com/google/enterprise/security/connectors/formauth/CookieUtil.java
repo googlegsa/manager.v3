@@ -16,6 +16,7 @@ package com.google.enterprise.security.connectors.formauth;
 
 import com.google.enterprise.common.Base64;
 import com.google.enterprise.common.Base64DecoderException;
+import com.google.enterprise.common.CookieSet;
 import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.common.ServletBase;
 import com.google.enterprise.saml.common.GsaConstants;
@@ -31,7 +32,6 @@ import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -63,34 +63,21 @@ public final class CookieUtil {
   /** Fetch a page, using POST or GET, and do not follow redirect.
    *  @param exchange The HTTP exchange object
    *  @param url The URL to fetch
-   *  @param proxy The proxy String of form host:port if so desired
    *  @param userAgent The string to send in the user agent header
-   *  @param cookies A Collection of existing cookie to be sent, newly
-   *                 received cookies will be stored in here as well.
+   *  @param userAgentCookies Cookies received from the user agent.
+   *  @param receivedCookies Cookies received from the IdP; new cookies will be added here.
    *  @param bodyBuffer A StringBuffer to store response body. Ignored if null
    *  @param redirectBuffer A StringBuffer to store the redirect URL
    *                        if so exists; may be null
-   *  @param passwordFields A Set of password field names of which values
-   *                        should not be logged.
-   *  @param logger A Logger to log HTTP communication.  Ignored if null.
    *  @return The HTTP status code of the request.
-   *
-   *  TODO - passwordFields is not a good approach;  we cannot predict
-   *  password field names.  It would be much better to scan the html field
-   *  TYPES for a type of "password."  The enum of types is set by the html
-   *  standard, the range of possible password field names is unlimited.
-   *  I'd make that change now, except we're in a 5.0 push, and mgmt asked for
-   *  minimal changes necessary to resolve bug 858157.
    */
   public static int fetchPage(HttpExchange exchange,
                               URL url,
-                              String proxy,
                               String userAgent,
-                              Collection<Cookie> cookies,
+                              CookieSet userAgentCookies,
+                              CookieSet receivedCookies,
                               StringBuffer bodyBuffer,
-                              StringBuffer redirectBuffer,
-                              Set<String> passwordFields,
-                              Logger logger)
+                              StringBuffer redirectBuffer)
       throws IOException {
 
     if (bodyBuffer != null) {
@@ -100,8 +87,6 @@ public final class CookieUtil {
     if (redirectBuffer != null) {
       redirectBuffer.setLength(0);
     }
-
-    exchange.setProxy(proxy);
 
     // Boilerplate headers.
     exchange.setRequestHeader("Date", ServletBase.httpDateString());
@@ -115,7 +100,14 @@ public final class CookieUtil {
       exchange.setRequestHeader("User-Agent", userAgent);
     }
 
-    String cookieStr = filterCookieToSend(cookies, url);
+    CookieSet cookiesToSend = new CookieSet();
+    cookiesToSend.addAll(receivedCookies);
+    for (Cookie c : userAgentCookies) {
+      if (!receivedCookies.contains(c.getName())) {
+        cookiesToSend.add(c);
+      }
+    }
+    String cookieStr = filterCookieToSend(cookiesToSend, url);
 
     if (!undefined(cookieStr)) {
       exchange.setRequestHeader("Cookie", cookieStr);
@@ -132,80 +124,78 @@ public final class CookieUtil {
         redirectBuffer.append(redirect);
     }
 
-    if (cookies != null) {
-      List<SetCookie> newCookies = new ArrayList<SetCookie>();
-      for (String value: exchange.getResponseHeaderValues("Set-Cookie")) {
-        newCookies.addAll(SetCookieParser.parse(value));
-      }
-      for (String value: exchange.getResponseHeaderValues("Set-Cookie2")) {
-        newCookies.addAll(SetCookieParser.parse(value));
-      }
+    List<SetCookie> newCookies = new ArrayList<SetCookie>();
+    for (String value: exchange.getResponseHeaderValues("Set-Cookie")) {
+      newCookies.addAll(SetCookieParser.parse(value));
+    }
+    for (String value: exchange.getResponseHeaderValues("Set-Cookie2")) {
+      newCookies.addAll(SetCookieParser.parse(value));
+    }
 
-      // Remove duplicate cookies in old collection.  This is O(n^2) for small n.
-      Iterator<Cookie> iter2 = cookies.iterator();
-      while (iter2.hasNext()) {
-        String name = iter2.next().getName();
-        for (SetCookie sc : newCookies) {
-          if (sc.getName().equals(name)) {
-            iter2.remove();
-            break;
-          }
+    // Remove duplicate cookies in old collection.  This is O(n^2) for small n.
+    Iterator<Cookie> iter2 = receivedCookies.iterator();
+    while (iter2.hasNext()) {
+      String name = iter2.next().getName();
+      for (SetCookie sc : newCookies) {
+        if (sc.getName().equals(name)) {
+          iter2.remove();
+          break;
         }
       }
+    }
 
-      // Get the current time so we can check for expired cookies.
-      Calendar cal = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
-      long curTimeGmt = cal.getTimeInMillis();
+    // Get the current time so we can check for expired cookies.
+    Calendar cal = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
+    long curTimeGmt = cal.getTimeInMillis();
 
-      // Remove any incoming cookies that have expired.
-      Iterator<SetCookie> iter1 = newCookies.iterator();
-      while (iter1.hasNext()) {
-        SetCookie setCookie = iter1.next();
-        String name = setCookie.getName();
-        String expiresAt = setCookie.getExpires();
-        LOG.info("name=" + name + " age=" + setCookie.getMaxAge() +
-                 " exp=" + expiresAt);
+    // Remove any incoming cookies that have expired.
+    Iterator<SetCookie> iter1 = newCookies.iterator();
+    while (iter1.hasNext()) {
+      SetCookie setCookie = iter1.next();
+      String name = setCookie.getName();
+      String expiresAt = setCookie.getExpires();
+      LOG.info("name=" + name + " age=" + setCookie.getMaxAge() +
+               " exp=" + expiresAt);
 
-        // Ignore cookies with max-age=0.
-        if (setCookie.getMaxAge() == 0) {
-          // Max age is non-negative (RFC2109) and negative means
-          // attribute not present, so we just check for 0.
-          LOG.info("This cookie has expired based on max-age: " + name);
+      // Ignore cookies with max-age=0.
+      if (setCookie.getMaxAge() == 0) {
+        // Max age is non-negative (RFC2109) and negative means
+        // attribute not present, so we just check for 0.
+        LOG.info("This cookie has expired based on max-age: " + name);
+        iter1.remove();
+        continue;
+      }
+
+      // Ignore expired cookies.
+      if (expiresAt != null) {
+        // Compute expiration date of cookie, if possible.
+        // We try 2 styles of date formats.
+        long expMillis = -1;
+        try {
+          expMillis = DATE_FORMAT_RFC2109.parse(expiresAt).getTime();
+        } catch (ParseException e1) {
+          // Parsing failed, try other format.
+          try {
+            expMillis = DATE_FORMAT_ALT.parse(expiresAt).getTime();
+          } catch (ParseException e2) {
+            LOG.log(Level.WARNING,
+                    "Can't parse cookie date \"" + expiresAt + "\" for cookie " + name,
+                    e2);
+          }
+        }
+
+        if (expMillis >= 0 && expMillis <= curTimeGmt) {
+          LOG.info("This cookie has expired based on time: " + name);
           iter1.remove();
           continue;
         }
-
-        if (expiresAt != null) {
-          // Compute expiration date of cookie, if possible.
-          // We try 2 styles of date formats.
-          long expMillis = -1;
-          try {
-            expMillis = DATE_FORMAT_RFC2109.parse(expiresAt).getTime();
-          } catch (ParseException e1) {
-            // Parsing failed, try other format.
-            try {
-              expMillis = DATE_FORMAT_ALT.parse(expiresAt).getTime();
-            } catch (ParseException e2) {
-              LOG.log(Level.WARNING,
-                      "Can't parse cookie date \"" + expiresAt + "\" for cookie " + name,
-                      e2);
-            }
-          }
-
-          // Ignore expired cookies.
-          if (expMillis >= 0 && expMillis <= curTimeGmt) {
-            LOG.info("This cookie has expired based on time: " + name);
-            iter1.remove();
-            continue;
-          }
-        }
-
-        // TODO what to do with cookies that have no "domain" attribute??
-
-        // Cookie not expired, add it to set.
-        LOG.info("Add new cookie: " + name);
-        cookies.add(setCookie);
       }
+
+      // TODO what to do with cookies that have no "domain" attribute??
+
+      // Cookie not expired, add it to set.
+      LOG.info("Add new cookie: " + name);
+      receivedCookies.add(setCookie);
     }
 
     exchange.close();
