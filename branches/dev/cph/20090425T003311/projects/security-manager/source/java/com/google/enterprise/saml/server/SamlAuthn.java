@@ -20,6 +20,7 @@ import com.google.enterprise.common.GettableHttpServlet;
 import com.google.enterprise.common.PostableHttpServlet;
 import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
+import com.google.enterprise.security.connectors.formauth.CookieUtil;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
 import com.google.enterprise.security.ui.OmniForm;
@@ -240,12 +241,14 @@ public class SamlAuthn extends SecurityManagerServlet
     // Find all new IdP cookies that don't conflict with incoming cookies.
     for (CredentialsGroup cg : getCredentialsGroups(request)) {
       for (DomainCredentials dc : cg.getElements()) {
-        for (CookieDifferentiator.Delta delta : dc.getCookieDifferentiator().getDifferential()) {
+        CookieDifferentiator diff = dc.getDifferentiator();
+        diff.commitStep();
+        for (CookieDifferentiator.Delta delta : diff.getDifferential()) {
           Cookie c = delta.getCookie();
           switch (delta.getOperation()) {
             case ADD:
             case MODIFY:
-              if (!cookies.contains(c.getName())) {
+              if (!CookieUtil.hasCookieNamed(c.getName(), cookies)) {
                 newCookies.add(c);
               }
               break;

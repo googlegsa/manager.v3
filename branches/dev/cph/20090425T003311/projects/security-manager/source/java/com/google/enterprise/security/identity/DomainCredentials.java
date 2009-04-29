@@ -14,10 +14,8 @@
 
 package com.google.enterprise.security.identity;
 
-import com.google.common.collect.ImmutableList;
 import com.google.enterprise.common.CookieDifferentiator;
-import com.google.enterprise.connector.spi.SecAuthnIdentity;
-import com.google.enterprise.connector.spi.VerificationStatus;
+import com.google.enterprise.connector.spi.AbstractAuthnIdentity;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
 import java.util.Collection;
@@ -33,17 +31,16 @@ import javax.servlet.http.HttpSession;
  * per-session data, while the configuration info, which is shared by all sessions, is
  * stored in a separate object.
  */
-public class DomainCredentials implements SecAuthnIdentity {
+public class DomainCredentials extends AbstractAuthnIdentity {
 
   private final AuthnDomain configInfo;
   private final CredentialsGroup cg;
-  private VerificationStatus status;
   private final CookieDifferentiator differentiator;
 
   DomainCredentials(AuthnDomain configInfo, CredentialsGroup cg) {
+    super();
     this.configInfo = configInfo;
     this.cg = cg;
-    status = VerificationStatus.TBD;
     differentiator = new CookieDifferentiator();
     cg.addElement(this);
   }
@@ -61,10 +58,12 @@ public class DomainCredentials implements SecAuthnIdentity {
     return configInfo.getMechanism();
   }
 
+  @Override
   public String getSampleUrl() {
     return configInfo.getSampleUrl();
   }
 
+  @Override
   public HttpSession getSession() {
     return cg.getSession();
   }
@@ -73,6 +72,7 @@ public class DomainCredentials implements SecAuthnIdentity {
     return cg.getUsername();
   }
 
+  @Override
   public void setUsername(String username) {
     cg.setUsername(username);
   }
@@ -81,24 +81,12 @@ public class DomainCredentials implements SecAuthnIdentity {
     return cg.getPassword();
   }
 
-  public void addCookie(Cookie c) {
-    differentiator.getNewCookies().add(c);
-  }
-
   // For testing:
   public void clearCookies() {
     differentiator.getNewCookies().clear();
   }
 
-  public VerificationStatus getVerificationStatus() {
-    return status;
-  }
-
-  public void setVerificationStatus(VerificationStatus status) {
-    this.status = status;
-  }
-
-  public CookieDifferentiator getCookieDifferentiator() {
+  public CookieDifferentiator getDifferentiator() {
     return differentiator;
   }
 
@@ -106,17 +94,9 @@ public class DomainCredentials implements SecAuthnIdentity {
     return differentiator.getDifferential();
   }
 
+  @Override
   public Collection<Cookie> getCookies() {
-    return ImmutableList.copyOf(differentiator.getNewCookies());
-  }
-
-  public Cookie getCookieNamed(String name) {
-    for (Cookie c: differentiator.getNewCookies()) {
-      if (c.getName().equals(name)) {
-        return c;
-      }
-    }
-    return null;
+    return differentiator.getNewCookies();
   }
 
   private String dumpCookies() {
