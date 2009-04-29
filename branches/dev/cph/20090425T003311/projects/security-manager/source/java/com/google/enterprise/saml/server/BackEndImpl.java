@@ -194,13 +194,13 @@ public class BackEndImpl implements BackEnd {
         }
 
         LOGGER.info("DomainCredential " + dCred.getDomain() + " cookies: " +
-                    ServletBase.setCookieHeaderValue(dCred.getCookies()));
+                    ServletBase.setCookieHeaderValue(dCred.getCookies(), false));
         cookies.addAll(dCred.getCookies());
       }
     }
     adapter.setCookies(sessionId, CookieUtil.serializeCookies(cookies));
     LOGGER.info("Cookies sent to session manager: " +
-                ServletBase.setCookieHeaderValue(cookies));
+                ServletBase.setCookieHeaderValue(cookies, false));
 
     // TODO(con): connectors
   }
