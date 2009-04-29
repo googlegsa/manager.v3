@@ -297,10 +297,10 @@ public final class CookieUtil {
 
   /** Check if a cookie is good for a given target URL.
    *  @param cookie The cookie to be filtered
-   *  @param url The java.net.URL object to be tested against
+   *  @param url The URL object to be tested against
    *  @return If the cookie is valid to be sent to the URL.
    */
-  private static boolean isCookieGoodFor(Cookie cookie, java.net.URL url) {
+  public static boolean isCookieGoodFor(Cookie cookie, URL url) {
     if (!undefined(cookie.getDomain()) &&
         !url.getHost().endsWith(cookie.getDomain())) {
       return false;
