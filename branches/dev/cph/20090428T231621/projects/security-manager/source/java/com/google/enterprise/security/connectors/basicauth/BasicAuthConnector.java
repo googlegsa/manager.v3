@@ -14,7 +14,6 @@
 
 package com.google.enterprise.security.connectors.basicauth;
 
-import com.google.enterprise.common.HttpClientInterface;
 import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
@@ -25,6 +24,7 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.saml.server.BackEnd;
 
 import java.io.IOException;
 import java.net.URL;
@@ -32,15 +32,13 @@ import java.util.logging.Logger;
 
 public class BasicAuthConnector implements Connector, Session, AuthenticationManager {
 
-  private final HttpClientInterface httpClient;
   @SuppressWarnings("unused")
   private final String something;
 
   private static final Logger LOGGER =
     Logger.getLogger(BasicAuthConnector.class.getName());
 
-  public BasicAuthConnector(HttpClientInterface httpClient, String data) {
-    this.httpClient = httpClient;
+  public BasicAuthConnector(String data) {
     this.something = data;      // not used
   }
 
@@ -61,7 +59,7 @@ public class BasicAuthConnector implements Connector, Session, AuthenticationMan
     } catch (IOException e) {
       throw new RepositoryException(e);
     }
-    HttpExchange exchange = httpClient.getExchange(loginUrl);
+    HttpExchange exchange = BackEnd.getHttpClient().getExchange(loginUrl);
     exchange.setBasicAuthCredentials(username, password);
     exchange.setRequestHeader("User-Agent", "SecMgr");
     int status = 0;

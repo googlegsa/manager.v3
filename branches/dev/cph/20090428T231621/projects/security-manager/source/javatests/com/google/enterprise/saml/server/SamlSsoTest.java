@@ -25,6 +25,8 @@ import com.google.enterprise.saml.client.MockArtifactConsumer;
 import com.google.enterprise.saml.client.MockServiceProvider;
 import com.google.enterprise.saml.common.Metadata;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
+import com.google.enterprise.security.connectors.formauth.MockFormAuthServer1;
+import com.google.enterprise.security.connectors.formauth.MockFormAuthServer2;
 import com.google.enterprise.security.identity.AuthnDomain;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
@@ -54,6 +56,10 @@ public class SamlSsoTest extends SecurityManagerTestCase {
   private static final Logger LOGGER = Logger.getLogger(SamlSsoTest.class.getName());
   private static final String SP_URL =
       "http://localhost:8973/security-manager/mockserviceprovider";
+  private static final String FORM1_URL =
+      "http://localhost:8973/security-manager/mockformauthserver1";
+  private static final String FORM2_URL =
+      "http://localhost:8973/security-manager/mockformauthserver2";
 
   private MockHttpClient userAgent;
 
@@ -68,7 +74,7 @@ public class SamlSsoTest extends SecurityManagerTestCase {
     MockHttpTransport transport = new MockHttpTransport();
     userAgent = new MockHttpClient(transport);
     MockArtifactConsumer artifactConsumer = new MockArtifactConsumer();
-    artifactConsumer.setHttpClient(new MockHttpClient(transport));
+    BackEnd.setHttpClient(new MockHttpClient(transport));
 
     EntityDescriptor gsaEntity = metadata.getEntity(GSA_TESTING_ISSUER);
     SPSSODescriptor sp = gsaEntity.getSPSSODescriptor(SAML20P_NS);
@@ -84,6 +90,8 @@ public class SamlSsoTest extends SecurityManagerTestCase {
                               new SamlArtifactResolve());
 
     transport.registerServlet(SP_URL, new MockServiceProvider());
+    transport.registerServlet(FORM1_URL, new MockFormAuthServer1());
+    transport.registerServlet(FORM2_URL, new MockFormAuthServer2());
   }
 
   public void testGood() throws IOException, MalformedURLException {
@@ -126,10 +134,10 @@ public class SamlSsoTest extends SecurityManagerTestCase {
     MockIdentityConfig config = new MockIdentityConfig();
     List<AuthnDomainGroup> groups = config.getConfig();
     AuthnDomainGroup g1 = new AuthnDomainGroup("group1");
-    new AuthnDomain("domain1", AuthNMechanism.FORMS_AUTH, "http://localhost/login1", g1);
+    new AuthnDomain("domain1", AuthNMechanism.FORMS_AUTH, FORM1_URL, g1);
     groups.add(g1);
     AuthnDomainGroup g2 = new AuthnDomainGroup("group2");
-    new AuthnDomain("domain2", AuthNMechanism.FORMS_AUTH, "http://localhost/login2", g2);
+    new AuthnDomain("domain2", AuthNMechanism.FORMS_AUTH, FORM2_URL, g2);
     groups.add(g2);
     ConnectorManager.class.cast(Context.getInstance().getManager())
         .getBackEnd().setIdentityConfig(config);

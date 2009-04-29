@@ -15,12 +15,11 @@
 package com.google.enterprise.saml.client;
 
 import com.google.enterprise.common.GettableHttpServlet;
-import com.google.enterprise.common.HttpClientAdapter;
-import com.google.enterprise.common.HttpClientInterface;
 import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.saml.common.HttpExchangeToInTransport;
 import com.google.enterprise.saml.common.HttpExchangeToOutTransport;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
+import com.google.enterprise.saml.server.BackEnd;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -74,19 +73,6 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
   /** Required for serializable classes. */
   private static final long serialVersionUID = 1L;
   private static final Logger LOGGER = Logger.getLogger(MockArtifactConsumer.class.getName());
-
-  private HttpClientInterface httpClient;
-
-  public HttpClientInterface getHttpClient() {
-    if (httpClient == null) {
-      httpClient = new HttpClientAdapter();
-    }
-    return httpClient;
-  }
-
-  public void setHttpClient(HttpClientInterface httpClient) {
-    this.httpClient = httpClient;
-  }
 
   @Override
   public void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -152,7 +138,8 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
 
     // Encode the request
     HttpExchange exchange =
-        getHttpClient().postExchange(new URL(context.getPeerEntityEndpoint().getLocation()), null);
+        BackEnd.getHttpClient()
+        .postExchange(new URL(context.getPeerEntityEndpoint().getLocation()), null);
     HttpExchangeToOutTransport out = new HttpExchangeToOutTransport(exchange);
     context.setOutboundMessageTransport(out);
     runEncoder(new HTTPSOAP11Encoder(), context);

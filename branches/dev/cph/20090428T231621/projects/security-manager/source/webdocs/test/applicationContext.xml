@@ -29,7 +29,7 @@
   </bean>
 
   <bean id="BackEnd"
-        class="com.google.enterprise.saml.server.BackEndImpl">
+        class="com.google.enterprise.saml.server.BackEnd">
     <constructor-arg index="0" ref="SessionManager" />
     <constructor-arg index="1" ref="AuthzResponder" />
     <property name="identityConfig" ref="IdentityConfig" />

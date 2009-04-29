@@ -14,7 +14,6 @@
 
 package com.google.enterprise.security.connectors.formauth;
 
-import com.google.enterprise.common.HttpClientInterface;
 import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.common.ServletBase;
 import com.google.enterprise.common.StringPair;
@@ -26,6 +25,7 @@ import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.saml.server.BackEnd;
 
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
@@ -44,15 +44,13 @@ import javax.servlet.http.Cookie;
 
 public class FormAuthConnector implements Connector, Session, AuthenticationManager {
 
-  private final HttpClientInterface httpClient;
   @SuppressWarnings("unused")
   private final String cookieName;
 
   private static final Logger LOGGER =
     Logger.getLogger(FormAuthConnector.class.getName());
 
-  public FormAuthConnector(HttpClientInterface httpClient, String cookieName) {
-    this.httpClient = httpClient;
+  public FormAuthConnector(String cookieName) {
     this.cookieName = cookieName; // TODO for cookie cracker use
   }
 
@@ -149,7 +147,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     int kMaxNumRedirectsToFollow = 4;
 
     while (true) {
-      CookieUtil.fetchPage(httpClient.getExchange(url),
+      CookieUtil.fetchPage(BackEnd.getHttpClient().getExchange(url),
                            url,
                            null, // proxy,
                            "SecMgr", cookies,
@@ -255,7 +253,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     int status = 0;
     int kMaxNumRedirectsToFollow = 4;
     // post only once, follow redirect if needed
-    HttpExchange exchange = httpClient.postExchange(url, parameters);
+    HttpExchange exchange = BackEnd.getHttpClient().postExchange(url, parameters);
 
     while (true) {
       status = CookieUtil.fetchPage(exchange, url,
@@ -272,7 +270,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
         }
         // prepare for another fetch.
         url = new URL(url, redirected);
-        exchange = httpClient.getExchange(url);
+        exchange = BackEnd.getHttpClient().getExchange(url);
       } else {
         break;
       }
