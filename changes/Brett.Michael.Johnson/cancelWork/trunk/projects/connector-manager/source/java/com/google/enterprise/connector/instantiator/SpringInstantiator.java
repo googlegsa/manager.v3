@@ -283,12 +283,12 @@ public class SpringInstantiator implements Instantiator {
     initialize();
     LOGGER.info("Configuring connector: " + connectorName);
     if (update) {
-      connectorCache.remove(connectorName);
       Scheduler scheduler = (Scheduler) Context.getInstance().
         getBean("TraversalScheduler", Scheduler.class);
       if (scheduler != null) {
         scheduler.removeConnector(connectorName);
       }
+      connectorCache.remove(connectorName);
     }
     return instanceMap.updateConnector(
         connectorName, connectorTypeName, configMap, locale, update);
