@@ -102,7 +102,13 @@ public class ProductionManager implements Manager {
       AuthorizationManager authzManager =
           instantiator.getAuthorizationManager(connectorName);
       if (authzManager == null) {
-        // Connector can't authorize any documents so return the empty result.
+        // This is a bad situation.  This means the Connector has feed the
+        // content in such a way that it is being asked to authorize access to
+        // that content and yet it doesn't implement the AuthorizationManager
+        // interface.  Log the situation and return the empty result.
+        LOGGER.warning("Connector:" + connectorName
+            + " is being asked to authorize documents but has not implemented"
+            + " the AuthorizationManager interface.");
         return result;
       }
       AuthenticationIdentity identity =
