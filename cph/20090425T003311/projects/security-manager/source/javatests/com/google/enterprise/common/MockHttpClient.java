@@ -15,6 +15,7 @@
 package com.google.enterprise.common;
 
 import com.google.enterprise.security.connectors.formauth.CookieUtil;
+import com.google.enterprise.security.connectors.formauth.SetCookie;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -27,6 +28,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
@@ -39,6 +41,7 @@ import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
  * A mock instance of HttpClientInterface, using HttpTransport for transport.
  */
 public class MockHttpClient implements HttpClientInterface {
+  private static final Logger LOGGER = Logger.getLogger(MockHttpClient.class.getName());
 
   private final HttpTransport transport;
   private final MockHttpSession session;
@@ -83,21 +86,6 @@ public class MockHttpClient implements HttpClientInterface {
       this.request = request;
       credentials = null;
       followRedirects = false;
-
-      // Add any relevant cookies to the request.
-      // Only add those cookies that are applicable to the request URL.
-      try {
-        URL url = new URL(request.getRequestURL().toString());
-        CookieSet toSend = new CookieSet();
-        for (Cookie c : cookies) {
-          if (CookieUtil.isCookieGoodFor(c, url)) {
-            toSend.add(c);
-          }
-        }
-        request.setCookies(toSend.toArray(new Cookie[0]));
-      } catch (MalformedURLException e) {
-        // Can't parse URL, so don't set any cookies.
-      }
     }
 
     public void setProxy(String proxy) {
@@ -134,7 +122,6 @@ public class MockHttpClient implements HttpClientInterface {
           response = exchange1(makeMockHttpGet(null, getRedirectUrl(response)));
         }
       }
-      this.response = response;
       return response.getStatus();
     }
 
@@ -149,7 +136,8 @@ public class MockHttpClient implements HttpClientInterface {
 
     private MockHttpServletResponse exchange1(MockHttpServletRequest request)
         throws IOException {
-      MockHttpServletResponse response = new MockHttpServletResponse();
+
+      // Make sure that request is filled in.
       if (referrer != null) {
         request.addHeader("Referer", referrer);
       }
@@ -157,6 +145,28 @@ public class MockHttpClient implements HttpClientInterface {
         request.addHeader("Authorize", credentials);
       }
       request.setSession(session);
+
+      // Add any relevant cookies to the request.
+      // Only add those cookies that are applicable to the request URL.
+      CookieSet toSend = new CookieSet();
+      URL url;
+      try {
+        url = new URL(request.getRequestURL().toString());
+      } catch (MalformedURLException e) {
+        url = null;
+      }
+      if (url != null) {
+        for (Cookie c : cookies) {
+          if (CookieUtil.isCookieGoodFor(c, url)) {
+            toSend.add(c);
+          }
+        }
+        request.setCookies(toSend.toArray(new Cookie[0]));
+      }
+      LOGGER.info("Cookies total/sent: " + cookies.size() + "/" + toSend.size());
+
+      // Do the exchange.
+      MockHttpServletResponse response = new MockHttpServletResponse();
       try {
         transport.exchange(request, response);
       } catch (ServletException e) {
@@ -164,11 +174,21 @@ public class MockHttpClient implements HttpClientInterface {
         ee.initCause(e);
         throw ee;
       }
+      this.response = response;
       referrer = getReferrer(request);
-      for (Cookie c : response.getCookies()) {
-        cookies.remove(c);
-        cookies.add(c);
+
+      // Remember any cookies in the response.
+      CookieSet received = new CookieSet();
+      for (SetCookie sc : CookieUtil.parseHttpResponseCookies(this)) {
+        received.add(sc);
       }
+      for (Cookie c : received) {
+        if (!cookies.add(c)) {
+          cookies.remove(c);
+          cookies.add(c);
+        }
+      }
+      LOGGER.info("Cookies received/total: " + received.size() + "/" + cookies.size());
       return response;
     }
 
