@@ -73,7 +73,7 @@ public class DomainCredentials implements SecAuthnIdentity {
   }
 
   public void setUsername(String username) {
-    group.setUsername(username);
+    cg.setUsername(username);
   }
 
   public String getPassword() {
