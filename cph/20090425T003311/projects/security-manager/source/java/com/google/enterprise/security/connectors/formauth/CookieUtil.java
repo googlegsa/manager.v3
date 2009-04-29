@@ -99,11 +99,14 @@ public final class CookieUtil {
       exchange.setRequestHeader("User-Agent", userAgent);
     }
 
+    // Set up cookies to be sent.
     Collection<Cookie> cookiesToSend = new ArrayList<Cookie>();
     cookiesToSend.addAll(receivedCookies);
     subtractCookieSets(userAgentCookies, receivedCookies, cookiesToSend);
+    LOG.info("Cookies total/sent: " +
+             (userAgentCookies.size() + receivedCookies.size()) +
+             "/" + cookiesToSend.size());
     String cookieStr = filterCookieToSend(cookiesToSend, url);
-
     if (!undefined(cookieStr)) {
       exchange.setRequestHeader("Cookie", cookieStr);
     }
@@ -119,13 +122,7 @@ public final class CookieUtil {
         redirectBuffer.append(redirect);
     }
 
-    List<SetCookie> newCookies = new ArrayList<SetCookie>();
-    for (String value: exchange.getResponseHeaderValues("Set-Cookie")) {
-      newCookies.addAll(SetCookieParser.parse(value));
-    }
-    for (String value: exchange.getResponseHeaderValues("Set-Cookie2")) {
-      newCookies.addAll(SetCookieParser.parse(value));
-    }
+    List<SetCookie> newCookies = parseHttpResponseCookies(exchange);
 
     // Remove duplicate cookies in old collection.  This is O(n^2) for small n.
     Iterator<Cookie> iter2 = receivedCookies.iterator();
@@ -269,6 +266,17 @@ public final class CookieUtil {
       }
     }
     return false;
+  }
+
+  public static List<SetCookie> parseHttpResponseCookies(HttpExchange exchange) {
+    List<SetCookie> cookies = new ArrayList<SetCookie>();
+    for (String value: exchange.getResponseHeaderValues("Set-Cookie")) {
+      cookies.addAll(SetCookieParser.parse(value));
+    }
+    for (String value: exchange.getResponseHeaderValues("Set-Cookie2")) {
+      cookies.addAll(SetCookieParser.parse(value));
+    }
+    return cookies;
   }
 
   /**
