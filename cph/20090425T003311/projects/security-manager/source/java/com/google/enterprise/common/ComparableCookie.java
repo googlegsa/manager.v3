@@ -38,7 +38,7 @@ public class ComparableCookie implements Comparable<ComparableCookie> {
 
   // Private to force use of static factory method.
   private ComparableCookie(Cookie c) {
-    this.c = Cookie.class.cast(c.clone());
+    this.c = c;
   }
 
   /**
@@ -47,55 +47,7 @@ public class ComparableCookie implements Comparable<ComparableCookie> {
    * @return A copy of the wrapped cookie.
    */
   public Cookie getCookie() {
-    return Cookie.class.cast(c.clone());
-  }
-
-  /**
-   * Get the name of the cookie.
-   *
-   * @return The cookie's name.
-   */
-  public String getName() {
-    return c.getName();
-  }
-
-  /**
-   * Get the domain of the cookie.
-   *
-   * @return The cookie's domain.
-   */
-  public String getDomain() {
-    return c.getDomain();
-  }
-
-  /**
-   * Get the path of the cookie.
-   *
-   * @return The cookie's path.
-   */
-  public String getPath() {
-    return c.getPath();
-  }
-
-  /**
-   * Get the version of the cookie.
-   *
-   * @return The cookie's version.
-   */
-  public int getVersion() {
-    return c.getVersion();
-  }
-
-  /**
-   * Update the cookie's value fields.
-   *
-   * @param c2 A cookie containing the new value fields.
-   */
-  public void update(Cookie c2) {
-    c.setValue(c2.getValue());
-    c.setMaxAge(c2.getMaxAge());
-    c.setSecure(c2.getSecure());
-    c.setComment(c2.getComment());
+    return c;
   }
 
   @Override public boolean equals(Object o) {

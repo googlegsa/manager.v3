@@ -14,8 +14,6 @@
 
 package com.google.enterprise.security.connectors.formauth;
 
-import com.google.enterprise.common.CookieDifferentiator;
-import com.google.enterprise.common.CookieSet;
 import com.google.enterprise.common.HttpClientInterface;
 import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.common.ServletBase;
@@ -72,10 +70,10 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     String sampleUrl = identity.getSampleUrl();
     LOGGER.info("Trying to authenticate against " + sampleUrl);
 
-    CookieDifferentiator differentiator = identity.getCookieDifferentiator();
-    CookieSet receivedCookies = differentiator.getNewCookies();
-    CookieSet userAgentCookies = SamlAuthn.getUserAgentCookies(identity.getSession());
+    Collection<Cookie> receivedCookies = identity.getCookies();
+    Collection<Cookie> userAgentCookies = SamlAuthn.getUserAgentCookies(identity.getSession());
     logCookies(LOGGER, "original cookies", receivedCookies);
+    int nReceivedCookies = receivedCookies.size();
 
     // GET sampleUrl, following redirects until we hit a form; fill the form, post it; get
     // the response, remember the cookie returned to us.
@@ -85,7 +83,6 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       formUrl = fetchLoginForm(sampleUrl, form, userAgentCookies, receivedCookies);
     } catch (IOException e) {
       LOGGER.info("Could not GET login form from " + sampleUrl + ": " + e.toString());
-      differentiator.abortStep();
       identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
@@ -108,7 +105,6 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       }
     } catch (IOException e) {
       LOGGER.info("Could not parse login form: " + e.toString());
-      differentiator.abortStep();
       identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
@@ -119,23 +115,19 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       int status = submitLoginForm(postUrl, param, userAgentCookies, receivedCookies);
       if (status != 200) {
         LOGGER.info("Authentication failure status: " + status);
-        differentiator.abortStep();
         identity.setVerificationStatus(VerificationStatus.REFUTED);
         return new AuthenticationResponse(false, null);
       }
     } catch (IOException e) {
       LOGGER.info("Could not POST login form: " + e.toString());
-      differentiator.abortStep();
       identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
     logCookies(LOGGER, "after submitLoginForm", receivedCookies);
 
-    // Commit the cookie changes.
-    differentiator.commitStep();
-
     // We are form auth, we expect to have at least one cookie
-    if (!differentiator.hasAddedCookies()) {
+    // TODO(cph): this can fail; elements of receivedCookies can be removed.
+    if (receivedCookies.size() <= nReceivedCookies) {
       LOGGER.info("Authentication status OK but no cookie");
       identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
@@ -157,8 +149,10 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
    * @param receivedCookies Cookies received from the IdP.
    * @return The URL of the form.
    */
-  private String fetchLoginForm(String sampleUrl, StringBuffer bodyBuffer,
-                                CookieSet userAgentCookies, CookieSet receivedCookies)
+  private String fetchLoginForm(String sampleUrl,
+                                StringBuffer bodyBuffer,
+                                Collection<Cookie> userAgentCookies,
+                                Collection<Cookie> receivedCookies)
       throws IOException {
     int redirectCount = 0;
     URL url = new URL(sampleUrl);
@@ -261,8 +255,10 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
    * @param receivedCookies Cookies received from the IdP.
    * @return An HTTP status code for the operation.
    */
-  private int submitLoginForm(String loginUrl, List<StringPair> parameters,
-                              CookieSet userAgentCookies, CookieSet receivedCookies)
+  private int submitLoginForm(String loginUrl,
+                              List<StringPair> parameters,
+                              Collection<Cookie> userAgentCookies,
+                              Collection<Cookie> receivedCookies)
       throws IOException {
     int redirectCount = 0;
     URL url = new URL(loginUrl);

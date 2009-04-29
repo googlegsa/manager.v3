@@ -14,7 +14,7 @@
 
 package com.google.enterprise.common;
 
-import java.util.ArrayList;
+import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
@@ -29,7 +29,7 @@ import javax.servlet.http.Cookie;
  * modified, but such modifications don't affect the set; to change a cookie in place it
  * must be removed and then the modified copy added back.
  */
-public class CookieSet implements Set<Cookie> {
+public class CookieSet extends AbstractSet<Cookie> {
 
   protected SortedSet<ComparableCookie> cookies;
 
@@ -48,74 +48,48 @@ public class CookieSet implements Set<Cookie> {
     return cookies.iterator();
   }
 
-  /**
-   * Determine whether the set contains a cookie with the given name.
-   *
-   * @param name The cookie name to look for.
-   * @return True iff there's a cookie with that name.
-   */
-  public boolean contains(String name) {
-    if (name == null) {
-      throw new NullPointerException();
-    }
-    for (ComparableCookie cc : cookies) {
-      if (cc.getName().equals(name)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /* @Override */ public boolean add(Cookie c) {
+  @Override public boolean add(Cookie c) {
     return cookies.add(wrap(c));
   }
 
-  /* @Override */ public boolean addAll(Collection<? extends Cookie> cs) {
+  @Override public boolean addAll(Collection<? extends Cookie> cs) {
     return cookies.addAll(wrapSet(cs));
   }
 
-  /* @Override */ public void clear() {
+  @Override public void clear() {
     cookies.clear();
   }
 
-  /* @Override */ public boolean contains(Object o) {
+  @Override public boolean contains(Object o) {
     return cookies.contains(wrap(o));
   }
 
-  /* @Override */ public boolean containsAll(Collection<?> os) {
+  @Override public boolean containsAll(Collection<?> os) {
     return cookies.containsAll(wrapSet(os));
   }
 
-  /* @Override */ public boolean isEmpty() {
+  @Override public boolean isEmpty() {
     return cookies.isEmpty();
   }
 
-  /* @Override */ public Iterator<Cookie> iterator() {
+  @Override public Iterator<Cookie> iterator() {
     return new CookieIterator(cookies.iterator());
   }
 
-  /* @Override */ public boolean remove(Object o) {
+  @Override public boolean remove(Object o) {
     return cookies.remove(wrap(o));
   }
 
-  /* @Override */ public boolean removeAll(Collection<?> os) {
+  @Override public boolean removeAll(Collection<?> os) {
     return cookies.removeAll(wrapSet(os));
   }
 
-  /* @Override */ public boolean retainAll(Collection<?> os) {
+  @Override public boolean retainAll(Collection<?> os) {
     return cookies.retainAll(wrapSet(os));
   }
 
-  /* @Override */ public int size() {
+  @Override public int size() {
     return cookies.size();
-  }
-
-  /* @Override */ public Object[] toArray() {
-    return new ArrayList<Cookie>(this).toArray();
-  }
-
-  /* @Override */ public <T> T[] toArray(T[] a) {
-    return new ArrayList<Cookie>(this).toArray(a);
   }
 
   private ComparableCookie wrap(Object o) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright (C) 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,17 +21,22 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpSession;
 
 /**
- * An extension to the connector manager's identity model to support additional identity
- * information needed by the security manager: cookies, identity verification, etc.
+ * A base for implementing SecAuthnIdentity classes.
  */
-public interface SecAuthnIdentity extends AuthenticationIdentity {
+public abstract class AbstractAuthnIdentity implements SecAuthnIdentity {
+
+  private VerificationStatus status;
+
+  protected AbstractAuthnIdentity() {
+    status = VerificationStatus.TBD;
+  }
 
   /**
    * Get the session for this identity.
    *
    * @return The identity's session object.
    */
-  public HttpSession getSession();
+  public abstract HttpSession getSession();
 
   /**
    * Get the cookies associated with this identity.
@@ -40,7 +45,7 @@ public interface SecAuthnIdentity extends AuthenticationIdentity {
    *
    * @return The identity's cookies.
    */
-  public Collection<Cookie> getCookies();
+  public abstract Collection<Cookie> getCookies();
 
   /**
    * Associate a cookie with this identity.
@@ -49,37 +54,50 @@ public interface SecAuthnIdentity extends AuthenticationIdentity {
    * being multiple cookies with the same name.
    * @param c The cookie to associate.
    */
-  public void addCookie(Cookie c);
+  public void addCookie(Cookie c) {
+    getCookies().add(c);
+  }
 
   /**
    * Get an associated cookie by name.
    * @param name The name of the cookie to return.
    * @return The associated cookie, or null if no such cookie.
    */
-  public Cookie getCookieNamed(String name);
+  public Cookie getCookieNamed(String name) {
+    for (Cookie c : getCookies()) {
+      if (c.getName().equals(name)) {
+        return c;
+      }
+    }
+    return null;
+  }
 
   /**
    * Get the verification status for this identity.
    * @return The identity's verification status.
    */
-  public VerificationStatus getVerificationStatus();
+  public VerificationStatus getVerificationStatus() {
+    return status;
+  }
 
   /**
    * Set the verification status for this identity.
    * @param status The new verification status.
    */
-  public void setVerificationStatus(VerificationStatus status);
+  public void setVerificationStatus(VerificationStatus status) {
+    this.status = status;
+  }
 
   /**
    * Return a login URL for identity types that require one.
    * @return The login URL, or null if no such.
    */
-  public String getSampleUrl();
+  public abstract String getSampleUrl();
 
   /**
    * Set the identity's username.
    *
    * @param username The new username, must not be null.
    */
-  public void setUsername(String username);
+  public abstract void setUsername(String username);
 }
