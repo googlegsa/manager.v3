@@ -14,6 +14,8 @@
 
 package com.google.enterprise.common;
 
+import com.google.enterprise.security.connectors.formauth.CookieUtil;
+
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockHttpSession;
@@ -21,6 +23,7 @@ import org.springframework.mock.web.MockHttpSession;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +83,21 @@ public class MockHttpClient implements HttpClientInterface {
       this.request = request;
       credentials = null;
       followRedirects = false;
-      request.setCookies(cookies.toArray(new Cookie[0]));
+
+      // Add any relevant cookies to the request.
+      // Only add those cookies that are applicable to the request URL.
+      try {
+        URL url = new URL(request.getRequestURL().toString());
+        CookieSet toSend = new CookieSet();
+        for (Cookie c : cookies) {
+          if (CookieUtil.isCookieGoodFor(c, url)) {
+            toSend.add(c);
+          }
+        }
+        request.setCookies(toSend.toArray(new Cookie[0]));
+      } catch (MalformedURLException e) {
+        // Can't parse URL, so don't set any cookies.
+      }
     }
 
     public void setProxy(String proxy) {
