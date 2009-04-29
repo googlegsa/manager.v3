@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,7 +61,16 @@ public abstract class ServletBase extends HttpServlet {
     response.setHeader("Date", httpDateString());
   }
 
-  public static String setCookieHeaderValue(Collection<Cookie> cookies) {
+  public static String cookieHeaderValue(Collection<Cookie> cookies, boolean showValues) {
+    return convertCookies(cookies, showValues, true);
+  }
+
+  public static String setCookieHeaderValue(Collection<Cookie> cookies, boolean showValues) {
+    return convertCookies(cookies, showValues, false);
+  }
+
+  private static String convertCookies(Collection<Cookie> cookies,
+                                       boolean showValues, boolean shortForm) {
     if (cookies.size() == 0) {
       return null;
     }
@@ -70,16 +79,23 @@ public abstract class ServletBase extends HttpServlet {
       if (buffer.length() > 0) {
         buffer.append(", ");
       }
-      convertCookie(c, buffer);
+      convertCookie(c, buffer, showValues, shortForm);
     }
     return buffer.toString();
   }
 
-  private static void convertCookie(Cookie c, StringBuffer buffer) {
+  private static void convertCookie(Cookie c, StringBuffer buffer,
+                                    boolean showValues, boolean shortForm) {
     buffer.append(c.getName());
     buffer.append("=");
     if (c.getValue() != null) {
-      buffer.append(c.getValue());
+      buffer.append(
+          showValues
+          ? c.getValue()
+          : c.getValue().hashCode());
+    }
+    if (shortForm) {
+      return;
     }
     if (c.getComment() != null) {
       buffer.append("; comment=");

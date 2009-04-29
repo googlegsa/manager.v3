@@ -288,7 +288,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
   }
 
   private static void logCookies(Logger LOGGER, String tag, Collection<Cookie> cookies) {
-    String value = ServletBase.setCookieHeaderValue(cookies);
+    String value = ServletBase.setCookieHeaderValue(cookies, false);
     if (value == null) {
       value = "(none)";
     }
