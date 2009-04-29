@@ -33,7 +33,7 @@
   </bean>
 
   <bean id="BackEnd"
-        class="com.google.enterprise.saml.server.MockBackEnd">
+        class="com.google.enterprise.saml.server.BackEndImpl">
     <constructor-arg index="0" ref="SessionManager" />
     <constructor-arg index="1" ref="AuthzResponder" />
     <property name="identityConfig" ref="IdentityConfig" />

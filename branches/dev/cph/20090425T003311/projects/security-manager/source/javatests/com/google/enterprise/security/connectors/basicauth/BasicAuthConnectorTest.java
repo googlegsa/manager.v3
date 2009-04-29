@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
 
 package com.google.enterprise.security.connectors.basicauth;
 
-import com.google.enterprise.common.HttpClientInterface;
 import com.google.enterprise.common.MockHttpClient;
 import com.google.enterprise.common.MockHttpTransport;
 import com.google.enterprise.common.SecurityManagerTestCase;
+import com.google.enterprise.common.SecurityManagerUtil;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
@@ -37,7 +37,6 @@ import java.util.List;
 public class BasicAuthConnectorTest extends SecurityManagerTestCase {
 
   private List<CredentialsGroup> cgs;
-  private HttpClientInterface httpClient;
 
   @Override
   public void setUp() throws Exception {
@@ -51,7 +50,7 @@ public class BasicAuthConnectorTest extends SecurityManagerTestCase {
     MockHttpTransport transport = new MockHttpTransport();
     transport.registerServlet(cgs.get(0).getElements().get(0).getSampleUrl(),
                               new MockBasicAuthServer.Server1());
-    httpClient = new MockHttpClient(transport);
+    SecurityManagerUtil.setHttpClient(new MockHttpClient(transport));
   }
 
   public void testHttpAuthenticate() throws RepositoryException {
@@ -64,7 +63,7 @@ public class BasicAuthConnectorTest extends SecurityManagerTestCase {
     cgs.get(0).setUsername(username);
     cgs.get(0).setPassword(password);
     DomainCredentials dc = cgs.get(0).getElements().get(0);
-    BasicAuthConnector conn = new BasicAuthConnector(httpClient, dc.getSampleUrl());
+    BasicAuthConnector conn = new BasicAuthConnector(dc.getSampleUrl());
     return conn.authenticate(dc);
   }
 }
