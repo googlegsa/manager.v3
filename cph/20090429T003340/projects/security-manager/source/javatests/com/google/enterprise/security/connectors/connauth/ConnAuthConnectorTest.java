@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
 
 package com.google.enterprise.security.connectors.connauth;
 
-import com.google.enterprise.common.HttpClientInterface;
 import com.google.enterprise.common.MockHttpClient;
 import com.google.enterprise.common.MockHttpTransport;
 import com.google.enterprise.common.SecurityManagerTestCase;
+import com.google.enterprise.common.SecurityManagerUtil;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
@@ -32,7 +32,6 @@ import javax.servlet.ServletException;
 public class ConnAuthConnectorTest extends SecurityManagerTestCase {
 
   private final List<CredentialsGroup> cgs;
-  private final HttpClientInterface httpClient;
 
   public ConnAuthConnectorTest(String name) throws IOException, ServletException {
     super(name);
@@ -41,7 +40,7 @@ public class ConnAuthConnectorTest extends SecurityManagerTestCase {
     MockHttpTransport transport = new MockHttpTransport();
     transport.registerServlet(cgs.get(0).getElements().get(0).getSampleUrl(),
                               new MockCMAuthServer());
-    httpClient = new MockHttpClient(transport);
+    SecurityManagerUtil.setHttpClient(new MockHttpClient(transport));
   }
 
   public void testGood() throws RepositoryException {
@@ -59,7 +58,7 @@ public class ConnAuthConnectorTest extends SecurityManagerTestCase {
   private boolean tryCreds(String username, String password) throws RepositoryException {
     cgs.get(0).setUsername(username);
     cgs.get(0).setPassword(password);
-    ConnAuthConnector connector = new ConnAuthConnector(httpClient, "foo");
+    ConnAuthConnector connector = new ConnAuthConnector("foo");
     AuthenticationResponse response = connector.authenticate(cgs.get(0).getElements().get(0));
     assertNotNull("Null response from authenticate()", response);
     return response.isValid();
