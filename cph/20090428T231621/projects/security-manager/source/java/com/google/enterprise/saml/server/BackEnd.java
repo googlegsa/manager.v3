@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,106 +14,208 @@
 
 package com.google.enterprise.saml.server;
 
+import com.google.enterprise.common.HttpClientAdapter;
+import com.google.enterprise.common.HttpClientInterface;
+import com.google.enterprise.common.ServletBase;
 import com.google.enterprise.connector.manager.ConnectorManager;
+import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.SecAuthnContext;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
+import com.google.enterprise.security.connectors.formauth.CookieUtil;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.DomainCredentials;
 import com.google.enterprise.security.identity.IdentityConfig;
+import com.google.enterprise.security.identity.VerificationStatus;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
+import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
+import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
+import org.opensaml.util.storage.MapBasedStorageService;
+import org.opensaml.xml.parse.BasicParserPool;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Vector;
+import java.util.logging.Logger;
+
+import javax.servlet.http.Cookie;
 
 /**
- * Interface to SAML server backend. Top-level classes such as servlets should
- * do transport and marshaling only, then interact with an instance of this
- * class.
- *
+ * The BackEnd of the Security Manager.
  */
-public interface BackEnd {
+public class BackEnd {
+  private static final Logger LOGGER = Logger.getLogger(BackEnd.class.getName());
+  private static final int artifactLifetime = 600000;  // ten minutes
+  private static HttpClientInterface httpClient = null;
+
+  private final SessionManagerInterface sm;
+  private ConnectorManager manager;
+  private final AuthzResponder authzResponder;
+  private final SAMLArtifactMap artifactMap;
+  private IdentityConfig identityConfig;
+
+  protected GSASessionAdapter adapter;
+
+  // public for testing/debugging
+  public Vector<String> sessionIds;
 
   /**
-   * Set the connector manager used by this backend.
+   * Create a new backend object.
+   *
+   * @param sm The session manager to use.
+   * @param authzResponder The authorization responder to use.
    */
-  public void setConnectorManager(ConnectorManager cm);
+  public BackEnd(SessionManagerInterface sm, AuthzResponder authzResponder) {
+    this.sm = sm;
+    this.authzResponder = authzResponder;
+    artifactMap = new BasicSAMLArtifactMap(
+        new BasicParserPool(),
+        new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
+        artifactLifetime);
+    identityConfig = null;
+    adapter = new GSASessionAdapter(sm);
+    sessionIds = new Vector<String>();
+  }
 
-  /**
-   * Get the session manager used by this backend.
-   *
-   * This may migrate to the next inner layer.
-   *
-   * @return A session manager object.
-   */
-  public SessionManagerInterface getSessionManager();
+  public void setConnectorManager(ConnectorManager cm) {
+    this.manager = cm;
+  }
 
-  /**
-   * Get the SAML artifact map.
-   *
-   * The backend holds onto this map but doesn't use it.  The map is used by the servlets comprising
-   * the SAML identity provider.
-   *
-   * @return The unique artifact map for the security manager.
-   */
-  public SAMLArtifactMap getArtifactMap();
+  public SessionManagerInterface getSessionManager() {
+    return sm;
+  }
 
-  /**
-   * Is there a reasonable identity configuration?
-   *
-   * @return <code>true</code> if so.
-   */
-  public boolean isIdentityConfigured() throws IOException;
+  public boolean isIdentityConfigured() throws IOException {
+    return !getAuthnDomainGroups().isEmpty();
+  }
 
-  /**
-   * Inject the identity configuration source.
-   *
-   * @param identityConfig The identity configuration to use.
-   */
-  public void setIdentityConfig(IdentityConfig identityConfig);
+  public void setIdentityConfig(IdentityConfig identityConfig) {
+    this.identityConfig = identityConfig;
+  }
 
-  /**
-   * Get the identity configuration.
-   *
-   * @return The identity configuration as a list of authn domain groups.
-   */
-  public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException;
+  public SAMLArtifactMap getArtifactMap() {
+    return artifactMap;
+  }
 
-  /**
-   * Attempt to find a cookie that can be converted to a verified identity.
-   *
-   * @param context The authn context containing the cookies to try.
-   * @return A list of valid authentication responses.
-   */
-  public List<AuthenticationResponse> handleCookie(SecAuthnContext context);
+  public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException {
+    return
+        (identityConfig != null)
+        ? identityConfig.getConfig()
+        : new ArrayList<AuthnDomainGroup>();
+  }
 
-  /**
-   * Attempts to authenticate a given CredentialsGroup.  This method will update
-   * the provided credentialsGroup with information retrieved during the
-   * authentication process (i.e. cookies, certificates, and other credentials),
-   * and it may set this credentialsGroup as verified as a result.
-   *
-   * @param credentialsGroup The credentials group to authenticate.
-   */
-  public void authenticate(CredentialsGroup credentialsGroup);
+  public void authenticate(CredentialsGroup cg) {
+    for (DomainCredentials dCred : cg.getElements()) {
+      String expectedTypeName;
+      switch (dCred.getMechanism()) {
+        case BASIC_AUTH:
+          expectedTypeName = "BasicAuthConnector";
+          break;
+        case FORMS_AUTH:
+          expectedTypeName = "FormAuthConnector";
+          break;
+        case CONNECTORS:
+          expectedTypeName = "ConnAuthConnector";
+          break;
+        default:
+          continue;
+      }
+      for (ConnectorStatus connStatus : manager.getConnectorStatuses()) {
+        if (!connStatus.getType().equals(expectedTypeName)) {
+          continue;
+        }
+        String connectorName = connStatus.getName();
+        LOGGER.info("Got security plug-in " + connectorName);
+        AuthenticationResponse authnResponse = manager.authenticate(connectorName, dCred, null);
+        if ((null != authnResponse) && authnResponse.isValid()) {
+          LOGGER.info("Authn Success, credential verified: " + dCred.dumpInfo());
+          // TODO(cph): should this be set to REFUTED if the result is invalid?
+          dCred.setVerificationStatus(VerificationStatus.VERIFIED);
+        }
+      }
+    }
+  }
 
-  /**
-   * Process a set of SAML authorization queries.
-   *
-   * @param authzDecisionQueries A list of authorization queries to be processed.
-   * @return A list of responses, corresponding to the argument.
-   */
-  public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries);
+  // some form of authentication has already happened, the user gave us cookies,
+  // see if the cookies reveal who the user is.
+  public List<AuthenticationResponse> handleCookie(SecAuthnContext context) {
+    List<AuthenticationResponse> result = new ArrayList<AuthenticationResponse>();
+    for (ConnectorStatus connStatus: manager.getConnectorStatuses()) {
+      String connType = connStatus.getType();
+      if (! (connType.equals("SsoCookieIdentityConnector")
+             || connType.equals("regexCookieIdentityConnector"))) {
+        continue;
+      }
+      String connectorName = connStatus.getName();
+      LOGGER.info("Got security plug-in " + connectorName);
+      AuthenticationResponse authnResponse = manager.authenticate(connectorName, null, context);
+      if ((authnResponse != null) && authnResponse.isValid())
+        result.add(authnResponse);
+    }
+    return result;
+  }
 
-  /**
-   * Update the GSA session manager with the identity information we've collected.
-   *
-   * @param sessionId The session manager ID to associate the information with.
-   * @param cgs The set of identity information to be associated.
-   */
-  public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs);
+  public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
+    return authzResponder.authorizeBatch(authzDecisionQueries);
+  }
+
+  public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs) {
+    LOGGER.info("Session ID: " + sessionId);
+    sessionIds.add(sessionId);
+
+    Vector<Cookie> cookies = new Vector<Cookie>();
+
+    for (CredentialsGroup cg : cgs) {
+
+      LOGGER.info("CG " + cg.getHumanName() + " has id: " + cg.getUsername());
+
+      for (DomainCredentials dCred : cg.getElements()) {
+        // This clobbers any priorly stored basic auth credentials.
+        // The expectation is that only one basic auth module will be active
+        // at any given time, or that if multiple basic auth modules are
+        // active at once, only one of them will work.
+        if (AuthNMechanism.BASIC_AUTH == dCred.getMechanism()) {
+          if (null != cg.getUsername()) {
+            adapter.setUsername(sessionId, cg.getUsername());
+          }
+          if (null != cg.getPassword()) {
+            adapter.setPassword(sessionId, cg.getPassword());
+          }
+          // TODO(con): currently setting the domain will break functionality
+          // for most Basic Auth headrequests. Once I figure out what's going on
+          // with NtlmDomains, I'll fix this.
+          //  if (null != id.getAuthSite()) {
+          //    adapter.setDomain(sessionId, id.getAuthSite().getHostname());
+          //  }
+        }
+
+        LOGGER.info("DomainCredential " + dCred.getDomain() + " cookies: " +
+                    ServletBase.setCookieHeaderValue(dCred.getCookies()));
+        cookies.addAll(dCred.getCookies());
+      }
+    }
+    adapter.setCookies(sessionId, CookieUtil.serializeCookies(cookies));
+    LOGGER.info("Cookies sent to session manager: " +
+                ServletBase.setCookieHeaderValue(cookies));
+
+    // TODO(con): connectors
+  }
+
+  public static HttpClientInterface getHttpClient() {
+    if (httpClient == null) {
+      httpClient = new HttpClientAdapter();
+    }
+    return httpClient;
+  }
+
+  public static void setHttpClient(HttpClientInterface client) {
+    httpClient = client;
+  }
 }

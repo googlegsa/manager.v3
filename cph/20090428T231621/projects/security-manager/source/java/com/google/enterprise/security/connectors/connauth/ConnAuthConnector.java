@@ -14,7 +14,6 @@
 
 package com.google.enterprise.security.connectors.connauth;
 
-import com.google.enterprise.common.HttpClientInterface;
 import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
@@ -25,6 +24,7 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.saml.server.BackEnd;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -41,14 +41,12 @@ import java.util.logging.Logger;
 
 public class ConnAuthConnector implements Connector, Session, AuthenticationManager {
 
-  private final HttpClientInterface httpClient;
   @SuppressWarnings("unused")
   private final String spiVersion;
   private static final Logger LOGGER =
     Logger.getLogger(ConnAuthConnector.class.getName());
 
-  public ConnAuthConnector(HttpClientInterface httpClient, String spiVersion) {
-    this.httpClient = httpClient;
+  public ConnAuthConnector(String spiVersion) {
     this.spiVersion = spiVersion;
   }
 
@@ -77,7 +75,7 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
     String request = createAuthnRequest(username, password);
     HttpExchange exchange;
     try {
-      exchange = httpClient.postExchange(new URL(siteUri), null);
+      exchange = BackEnd.getHttpClient().postExchange(new URL(siteUri), null);
     } catch (MalformedURLException e2) {
       LOGGER.warning("Bad URL for connector manager: " + siteUri);
       return notfound;

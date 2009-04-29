@@ -18,7 +18,7 @@ import com.google.common.base.Preconditions;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.common.GsaConstants;
-import com.google.enterprise.saml.server.BackEndImpl;
+import com.google.enterprise.saml.server.BackEnd;
 import com.google.enterprise.security.connectors.formauth.CookieUtil;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
@@ -49,8 +49,8 @@ public class SessionReader extends HttpServlet {
     Preconditions.checkNotNull(req);
     // TODO: implement a way to retrieving specific SID/key values via browser
     // param
-    BackEndImpl backend =
-        BackEndImpl.class.cast(
+    BackEnd backend =
+        BackEnd.class.cast(
             ConnectorManager.class.cast(Context.getInstance(getServletContext()).getManager())
             .getBackEnd());
     SessionManagerInterface sm = backend.getSessionManager();

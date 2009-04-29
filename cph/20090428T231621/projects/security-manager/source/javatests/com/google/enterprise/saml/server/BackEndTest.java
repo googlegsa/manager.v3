@@ -29,15 +29,15 @@ import java.util.Vector;
 import javax.servlet.http.Cookie;
 
 /**
- * Unit test for BackEndImpl.
+ * Unit test for BackEnd.
  */
-public class BackEndImplTest extends SecurityManagerTestCase {
+public class BackEndTest extends SecurityManagerTestCase {
 
   private final List<AuthnDomainGroup> adgs;
   private LocalSessionManager sm;
-  private BackEndImpl backend;
+  private BackEnd backend;
 
-  public BackEndImplTest() {
+  public BackEndTest() {
     adgs = new ArrayList<AuthnDomainGroup>();
     adgs.add(new AuthnDomainGroup("adg1"));
     adgs.add(new AuthnDomainGroup("adg2"));
@@ -53,7 +53,7 @@ public class BackEndImplTest extends SecurityManagerTestCase {
   public void setUp() throws Exception {
     super.setUp();
     sm = new LocalSessionManager();
-    backend = new BackEndImpl(sm, new AuthzResponderImpl());
+    backend = new BackEnd(sm, new AuthzResponderImpl());
   }
 
   public void testUpdateSessionManager() {
