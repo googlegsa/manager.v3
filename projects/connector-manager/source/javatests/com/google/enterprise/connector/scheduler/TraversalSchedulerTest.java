@@ -170,7 +170,7 @@ public class TraversalSchedulerTest extends TestCase {
   }
 
   public void testRemoveConnector() {
-    String connectorName = MockInstantiator.TRAVERSER_NAME_LONG_RUNNING;
+    String connectorName = MockInstantiator.TRAVERSER_NAME_CANCELLABLE;
     List schedules = getSchedules(connectorName);
     TraversalScheduler scheduler =
       runWithSchedules(schedules, createMockInstantiator(), false);
