@@ -350,10 +350,6 @@ public class WorkQueue {
       throw new IllegalStateException(
         "Must init() WorkQueue object before canceling work.");
     }
-    if (shutdown) {
-      // if we're shutting down it doesn't matter since work will finish
-      return;
-    }
 
     if (workQueue.remove(work)) {
       // If the work is in the queue, it means no thread is operating on it
@@ -361,6 +357,7 @@ public class WorkQueue {
       LOGGER.info("Cancelling work by removing unstarted work from work"
         + " queue.");
     } else {
+      work.cancelWork();
       // See if a thread is working on this item.
       LOGGER.info("Cancelling work by interrupting the worker thread.");
       Thread thread = work.getWorkQueueThread();
