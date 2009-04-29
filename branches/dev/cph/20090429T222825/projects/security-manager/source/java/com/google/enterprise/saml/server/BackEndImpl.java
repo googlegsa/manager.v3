@@ -17,15 +17,14 @@ package com.google.enterprise.saml.server;
 import com.google.enterprise.common.ServletBase;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.ConnectorStatus;
-import com.google.enterprise.connector.manager.SecAuthnContext;
-import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.connector.spi.SecAuthnIdentity;
+import com.google.enterprise.connector.spi.VerificationStatus;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.security.connectors.formauth.CookieUtil;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
 import com.google.enterprise.security.identity.IdentityConfig;
-import com.google.enterprise.security.identity.VerificationStatus;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
@@ -110,6 +109,9 @@ public class BackEndImpl implements BackEnd {
 
   public void authenticate(CredentialsGroup cg) {
     for (DomainCredentials dCred : cg.getElements()) {
+      if (dCred.getVerificationStatus() != VerificationStatus.TBD) {
+        continue;
+      }
       String expectedTypeName;
       switch (dCred.getMechanism()) {
         case BASIC_AUTH:
@@ -130,11 +132,8 @@ public class BackEndImpl implements BackEnd {
         }
         String connectorName = connStatus.getName();
         LOGGER.info("Got security plug-in " + connectorName);
-        AuthenticationResponse authnResponse = manager.authenticate(connectorName, dCred, null);
-        if ((null != authnResponse) && authnResponse.isValid()) {
-          LOGGER.info("Authn Success, credential verified: " + dCred.dumpInfo());
-          // TODO(cph): should this be set to REFUTED if the result is invalid?
-          dCred.setVerificationStatus(VerificationStatus.VERIFIED);
+        if (manager.authenticate(connectorName, dCred)) {
+          LOGGER.info("Credential verified: " + dCred.dumpInfo());
         }
       }
     }
@@ -142,8 +141,10 @@ public class BackEndImpl implements BackEnd {
 
   // some form of authentication has already happened, the user gave us cookies,
   // see if the cookies reveal who the user is.
-  public List<AuthenticationResponse> handleCookie(SecAuthnContext context) {
-    List<AuthenticationResponse> result = new ArrayList<AuthenticationResponse>();
+  public void handleCookie(SecAuthnIdentity id) {
+    if (id.getVerificationStatus() != VerificationStatus.TBD) {
+      return;
+    }
     for (ConnectorStatus connStatus: manager.getConnectorStatuses()) {
       String connType = connStatus.getType();
       if (! (connType.equals("SsoCookieIdentityConnector")
@@ -152,11 +153,10 @@ public class BackEndImpl implements BackEnd {
       }
       String connectorName = connStatus.getName();
       LOGGER.info("Got security plug-in " + connectorName);
-      AuthenticationResponse authnResponse = manager.authenticate(connectorName, null, context);
-      if ((authnResponse != null) && authnResponse.isValid())
-        result.add(authnResponse);
+      if (manager.authenticate(connectorName, id)) {
+        LOGGER.info("Cookie(s) cracked for " + id.getDomain());
+      }
     }
-    return result;
   }
 
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {

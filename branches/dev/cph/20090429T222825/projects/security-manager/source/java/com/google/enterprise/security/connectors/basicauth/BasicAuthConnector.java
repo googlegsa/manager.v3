@@ -25,6 +25,7 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.VerificationStatus;
 
 import java.io.IOException;
 import java.net.URL;
@@ -51,6 +52,7 @@ public class BasicAuthConnector implements Connector, Session, AuthenticationMan
     String username = identity.getUsername();
     String password = identity.getPassword();
     if (username == null || password == null) {
+      identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return notfound;
     }
 
@@ -76,8 +78,10 @@ public class BasicAuthConnector implements Connector, Session, AuthenticationMan
 
     LOGGER.info("BasicAuth authenticate status: " + status);
     if (status == 200) {
+      identity.setVerificationStatus(VerificationStatus.VERIFIED);
       return new AuthenticationResponse(true, username);
     }
+    identity.setVerificationStatus(VerificationStatus.REFUTED);
     return notfound;
   }
 
