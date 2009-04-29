@@ -18,7 +18,6 @@ import com.google.enterprise.common.CookieDifferentiator;
 import com.google.enterprise.common.CookieSet;
 import com.google.enterprise.common.GettableHttpServlet;
 import com.google.enterprise.common.PostableHttpServlet;
-import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 import com.google.enterprise.security.connectors.formauth.CookieUtil;
 import com.google.enterprise.security.identity.CredentialsGroup;
@@ -90,7 +89,6 @@ public class SamlAuthn extends SecurityManagerServlet
   private static final String PROMPT_COUNTER_NAME = "SamlAuthnPromptCounter";
   private static final String OMNI_FORM_NAME = "SamlAuthnOmniForm";
   private static final String CREDENTIALS_GROUPS_NAME = "SamlAuthnCredentialsGroups";
-  private static final String COOKIE_DIFFERENTIATOR_NAME = "SamlAuthnCookieDifferentiator";
   private static final int defaultMaxPrompts = 3;
 
   private int maxPrompts;
@@ -212,9 +210,9 @@ public class SamlAuthn extends SecurityManagerServlet
     resetPromptCounter(request.getSession());
 
     // Update the Session Manager with the necessary info.
-    Cookie cookie = getUserAgentCookie(request, GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME);
-    if (cookie != null) {
-      backend.updateSessionManager(cookie.getValue(), cgs);
+    String sessionId = getGsaSessionId(request.getSession());
+    if (sessionId != null) {
+      backend.updateSessionManager(sessionId, cgs);
     }
 
     makeSuccessfulResponse(request, response, ids);
@@ -222,7 +220,7 @@ public class SamlAuthn extends SecurityManagerServlet
   }
 
   private void updateIncomingCookies(HttpServletRequest request) {
-    CookieSet cookies = getUserAgentCookies(request);
+    CookieSet cookies = getUserAgentCookies(request.getSession());
     cookies.clear();
     Cookie[] cookies2 = request.getCookies();
     if (cookies2 != null) {
@@ -230,12 +228,12 @@ public class SamlAuthn extends SecurityManagerServlet
         cookies.add(c);
       }
     }
-    getCookieDifferentiator(request).commitStep();
+    getCookieDifferentiator(request.getSession()).commitStep();
   }
 
   private void updateOutgoingCookies(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
-    CookieSet cookies = getUserAgentCookies(request);
+    CookieSet cookies = getUserAgentCookies(request.getSession());
     CookieSet newCookies = new CookieSet();
 
     // Find all new IdP cookies that don't conflict with incoming cookies.
@@ -261,47 +259,6 @@ public class SamlAuthn extends SecurityManagerServlet
     for (Cookie c : newCookies) {
       response.addCookie(c);
     }
-  }
-
-  private static CookieDifferentiator getCookieDifferentiator(HttpServletRequest request) {
-    return getCookieDifferentiator(request.getSession());
-  }
-
-  public static CookieDifferentiator getCookieDifferentiator(HttpSession session) {
-    CookieDifferentiator cd =
-        CookieDifferentiator.class.cast(session.getAttribute(COOKIE_DIFFERENTIATOR_NAME));
-    if (cd == null) {
-      cd = new CookieDifferentiator();
-      session.setAttribute(COOKIE_DIFFERENTIATOR_NAME, cd);
-    }
-    return cd;
-  }
-
-  private static CookieSet getUserAgentCookies(HttpServletRequest request) {
-    return getUserAgentCookies(request.getSession());
-  }
-
-  public static CookieSet getUserAgentCookies(HttpSession session) {
-    return getCookieDifferentiator(session).getNewCookies();
-  }
-
-  /**
-   * Get a named cookie from an incoming HTTP request.
-   *
-   * @param request An HTTP request.
-   * @param name The name of the cookie to return.
-   * @return The corresponding cookie, or null if no such cookie.
-   */
-  private Cookie getUserAgentCookie(HttpServletRequest request, String name) {
-    Cookie[] cookies = request.getCookies();
-    if (cookies != null) {
-      for (Cookie c: cookies) {
-        if (c.getName().equals(name)) {
-          return c;
-        }
-      }
-    }
-    return null;
   }
 
   private void maybePrompt(HttpServletRequest request, HttpServletResponse response)
