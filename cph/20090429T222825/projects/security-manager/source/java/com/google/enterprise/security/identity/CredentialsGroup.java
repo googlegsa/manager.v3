@@ -15,6 +15,7 @@
 package com.google.enterprise.security.identity;
 
 import com.google.common.collect.ImmutableList;
+import com.google.enterprise.connector.spi.VerificationStatus;
 
 import java.util.ArrayList;
 import java.util.List;

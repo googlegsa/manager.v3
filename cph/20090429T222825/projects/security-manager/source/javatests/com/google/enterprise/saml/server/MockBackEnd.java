@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,15 +14,13 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.common.collect.ImmutableList;
 import com.google.enterprise.connector.manager.ConnectorManager;
-import com.google.enterprise.connector.manager.SecAuthnContext;
-import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.connector.spi.SecAuthnIdentity;
+import com.google.enterprise.connector.spi.VerificationStatus;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
 import com.google.enterprise.security.identity.IdentityConfig;
-import com.google.enterprise.security.identity.VerificationStatus;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
@@ -52,8 +50,6 @@ public class MockBackEnd implements BackEnd {
   private final SAMLArtifactMap artifactMap;
   private final Map<String, String> userMap;
   private IdentityConfig identityConfig;
-  private List<AuthnDomainGroup> authnDomainGroups;
-
   /**
    * Create a new backend object.
    *
@@ -70,7 +66,6 @@ public class MockBackEnd implements BackEnd {
     userMap.put("joe", "plumber");
     userMap.put("jim", "electrician");
     identityConfig = null;
-    authnDomainGroups = null;
   }
 
   public SessionManagerInterface getSessionManager() {
@@ -94,23 +89,16 @@ public class MockBackEnd implements BackEnd {
 
   public void setIdentityConfig(IdentityConfig identityConfig) {
     this.identityConfig = identityConfig;
-    authnDomainGroups = null;
   }
 
   public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException {
-    if (authnDomainGroups == null) {
-      if (identityConfig != null) {
-        authnDomainGroups = ImmutableList.copyOf(identityConfig.getConfig());
-      }
-      if (authnDomainGroups == null) {
-        authnDomainGroups = ImmutableList.of();
-      }
-    }
-    return authnDomainGroups;
+    return
+        (identityConfig != null)
+        ? identityConfig.getConfig()
+        : new ArrayList<AuthnDomainGroup>();
   }
 
-  public List<AuthenticationResponse> handleCookie(SecAuthnContext context) {
-    return new ArrayList<AuthenticationResponse>(0);
+  public void handleCookie(SecAuthnIdentity identity) {
   }
 
   public void authenticate(CredentialsGroup cg) {

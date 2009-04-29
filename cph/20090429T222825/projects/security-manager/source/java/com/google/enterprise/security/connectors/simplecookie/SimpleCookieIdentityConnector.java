@@ -22,6 +22,7 @@ import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.VerificationStatus;
 
 import javax.servlet.http.Cookie;
 
@@ -45,12 +46,16 @@ public class SimpleCookieIdentityConnector implements Connector, Session, Authen
     if (cookie == null) {
       return notfound;
     }
-    String newIdentity = c.extract(cookieName + "=" + cookie.getValue());
-    if (newIdentity == null) {
+    String username = c.extract(cookieName + "=" + cookie.getValue());
+    if (username == null) {
       return notfound;
     }
+
+    identity.setUsername(username);
+    identity.setVerificationStatus(VerificationStatus.VERIFIED);
+
     if (idCookieName.length() > 0)
-      identity.addCookie(new Cookie(idCookieName, newIdentity));
+      identity.addCookie(new Cookie(idCookieName, username));
     return new AuthenticationResponse(true, null);
   }
 

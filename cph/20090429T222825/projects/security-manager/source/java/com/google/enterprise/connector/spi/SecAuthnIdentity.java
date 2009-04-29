@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,8 +13,6 @@
 // limitations under the License.
 
 package com.google.enterprise.connector.spi;
-
-import com.google.enterprise.security.identity.VerificationStatus;
 
 import java.util.Collection;
 
@@ -66,4 +64,11 @@ public interface SecAuthnIdentity extends AuthenticationIdentity {
    * @return The login URL, or null if no such.
    */
   public String getSampleUrl();
+
+  /**
+   * Set the identity's username.
+   *
+   * @param username The new username, must not be null.
+   */
+  public void setUsername(String username);
 }
