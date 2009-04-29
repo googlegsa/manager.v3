@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 
 import static com.google.enterprise.common.ServletTestUtil.generatePostContent;
 import static com.google.enterprise.common.ServletTestUtil.makeMockHttpGet;
@@ -36,13 +37,15 @@ import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
  */
 public class MockHttpClient implements HttpClientInterface {
 
-  final HttpTransport transport;
+  private final HttpTransport transport;
   private final MockHttpSession session;
-  String referrer;
+  private final CookieSet cookies;
+  private String referrer;
 
   public MockHttpClient(HttpTransport transport) {
     this.transport = transport;
     session = new MockHttpSession();
+    cookies = new CookieSet();
     referrer = null;
   }
 
@@ -77,6 +80,7 @@ public class MockHttpClient implements HttpClientInterface {
       this.request = request;
       credentials = null;
       followRedirects = false;
+      request.setCookies(cookies.toArray(new Cookie[0]));
     }
 
     public void setProxy(String proxy) {
@@ -144,6 +148,10 @@ public class MockHttpClient implements HttpClientInterface {
         throw ee;
       }
       referrer = getReferrer(request);
+      for (Cookie c : response.getCookies()) {
+        cookies.remove(c);
+        cookies.add(c);
+      }
       return response;
     }
 
