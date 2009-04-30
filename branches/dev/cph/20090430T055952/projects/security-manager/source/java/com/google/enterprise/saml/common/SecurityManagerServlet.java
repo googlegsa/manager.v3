@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,12 +18,19 @@ import com.google.enterprise.common.ServletBase;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.server.BackEnd;
+import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 
+import java.io.IOException;
+import java.util.List;
+
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
@@ -41,23 +48,30 @@ public abstract class SecurityManagerServlet extends ServletBase {
   /** Name of the attribute that holds the username/passwords awaiting verification. */
   protected static final String CREDENTIALS = "credentials";
 
-  public ConnectorManager getConnectorManager() {
+  /** Name of the attribute that holds the session's credentials groups. */
+  private static final String CREDENTIALS_GROUPS_NAME = "CredentialsGroups";
+
+  public static ConnectorManager getConnectorManager() {
     return ConnectorManager.class.cast(Context.getInstance().getManager());
   }
 
-  public BackEnd getBackEnd() {
+  public static BackEnd getBackEnd() {
     return getConnectorManager().getBackEnd();
   }
 
-  public EntityDescriptor getEntity(String id) throws ServletException {
+  public static SessionManagerInterface getSessionManager() {
+    return getBackEnd().getSessionManager();
+  }
+
+  public static EntityDescriptor getEntity(String id) throws ServletException {
     return getMetadata().getEntity(id);
   }
 
-  public EntityDescriptor getSmEntity() throws ServletException {
+  public static EntityDescriptor getSmEntity() throws ServletException {
     return getMetadata().getSmEntity();
   }
 
-  private Metadata getMetadata() {
+  private static Metadata getMetadata() {
     return Metadata.class.cast(Context.getInstance().getRequiredBean("Metadata", Metadata.class));
   }
 
@@ -92,5 +106,41 @@ public abstract class SecurityManagerServlet extends ServletBase {
       throw new ServletException("Unable to get SAML message context.");
     }
     return context;
+  }
+
+  /**
+   * Get a named cookie from an incoming HTTP request.
+   *
+   * @param request An HTTP request.
+   * @param name The name of the cookie to return.
+   * @return The corresponding cookie, or null if no such cookie.
+   */
+  protected Cookie getUserAgentCookie(HttpServletRequest request, String name) {
+    Cookie[] cookies = request.getCookies();
+    if (cookies != null) {
+      for (Cookie c: cookies) {
+        if (c.getName().equals(name)) {
+          return c;
+        }
+      }
+    }
+    return null;
+  }
+
+  protected static List<CredentialsGroup> getCredentialsGroups(HttpServletRequest request)
+      throws IOException {
+    HttpSession session = request.getSession();
+    List<CredentialsGroup> groups = sessionCredentialsGroups(session);
+    if (null == groups) {
+      groups = CredentialsGroup.newGroups(getBackEnd().getAuthnDomainGroups(), session);
+      session.setAttribute(CREDENTIALS_GROUPS_NAME, groups);
+    }
+    return groups;
+  }
+
+  // Exposed for debugging:
+  @SuppressWarnings("unchecked")
+  public static List<CredentialsGroup> sessionCredentialsGroups(HttpSession session) {
+    return List.class.cast(session.getAttribute(CREDENTIALS_GROUPS_NAME));
   }
 }
