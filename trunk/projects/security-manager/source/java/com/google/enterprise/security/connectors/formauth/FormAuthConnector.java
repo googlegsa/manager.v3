@@ -188,10 +188,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     HtmlCleaner cleaner = new HtmlCleaner();
     TagNode[] forms = cleaner.clean(form.toString()).getElementsByName("form", true);
     if (forms.length < 1) {
-      forms = cleaner.clean(form.toString()).getElementsByName("FORM", true);
-    }
-    if (forms.length < 1) {
-      LOGGER.info(form.toString());
+      LOGGER.info("No <form> elements in input");
       return names;
     }
     StringBuffer buffer = new StringBuffer("Got form");
@@ -210,18 +207,20 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     // one input with type "password".
     for (TagNode node : inputs) {
       String inputType = node.getAttributeByName("type");
+      // Fill in default type if none specified.
+      if (inputType == null || inputType.isEmpty()) {
+        inputType = "text";
+      }
       String inputName = node.getAttributeByName("name");
-      buffer.append("; input type=");
+      buffer.append("; type=");
       buffer.append(inputType);
       buffer.append(", name=");
       buffer.append(inputName);
-      if (inputType.equals("text")) {
+      if (inputType.equalsIgnoreCase("text")) {
         names.add(new StringPair(inputName, user));
-      }
-      if (inputType.equals("password")) {
+      } else if (inputType.equalsIgnoreCase("password")) {
         names.add(new StringPair(inputName, pass));
-      }
-      if (inputType.equalsIgnoreCase("hidden")) {
+      } else if (inputType.equalsIgnoreCase("hidden")) {
         names.add(new StringPair(inputName, node.getAttributeByName("value")));
       }
     }
