@@ -14,13 +14,11 @@
 
 package com.google.enterprise.security.identity;
 
-import com.google.enterprise.connector.spi.SecAuthnIdentity;
-import com.google.enterprise.connector.spi.VerificationStatus;
+import com.google.enterprise.connector.spi.AbstractAuthnIdentity;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import javax.servlet.http.Cookie;
@@ -32,17 +30,16 @@ import javax.servlet.http.Cookie;
  * per-session data, while the configuration info, which is shared by all sessions, is
  * stored in a separate object.
  */
-public class DomainCredentials implements SecAuthnIdentity {
+public class DomainCredentials extends AbstractAuthnIdentity {
 
   private final AuthnDomain configInfo;
   private final CredentialsGroup cg;
-  private VerificationStatus status;
   private final List<Cookie> cookies;
 
   DomainCredentials(AuthnDomain configInfo, CredentialsGroup cg) {
+    super();
     this.configInfo = configInfo;
     this.cg = cg;
-    status = VerificationStatus.TBD;
     cookies = new ArrayList<Cookie>();
     cg.addElement(this);
   }
@@ -52,62 +49,43 @@ public class DomainCredentials implements SecAuthnIdentity {
     return new DomainCredentials(null, CredentialsGroup.dummy());
   }
 
+  /* @Override */
   public String getDomain() {
     return configInfo.getName();
   }
 
+  /**
+   * Get the authentication mechanism for this identity.
+   *
+   * @return The authentication mechanism.
+   */
   public AuthNMechanism getMechanism() {
     return configInfo.getMechanism();
   }
 
+  /* @Override */
   public String getSampleUrl() {
     return configInfo.getSampleUrl();
   }
 
-  public CredentialsGroup getGroup() {
-    return cg;
-  }
-
+  /* @Override */
   public String getUsername() {
     return cg.getUsername();
   }
 
+  /* @Override */
   public void setUsername(String username) {
     cg.setUsername(username);
   }
 
+  /* @Override */
   public String getPassword() {
     return cg.getPassword();
   }
 
-  public void addCookie(Cookie c) {
-    cookies.add(c);
-  }
-
-  // For testing:
-  public void clearCookies() {
-    cookies.clear();
-  }
-
-  public VerificationStatus getVerificationStatus() {
-    return status;
-  }
-
-  public void setVerificationStatus(VerificationStatus status) {
-    this.status = status;
-  }
-
+  /* @Override */
   public Collection<Cookie> getCookies() {
-    return Collections.unmodifiableCollection(cookies);
-  }
-
-  public Cookie getCookieNamed(String name) {
-    for (Cookie c: cookies) {
-      if (c.getName().equals(name)) {
-        return c;
-      }
-    }
-    return null;
+    return cookies;
   }
 
   private String dumpCookies() {
@@ -118,6 +96,11 @@ public class DomainCredentials implements SecAuthnIdentity {
     return sb.toString();
   }
 
+  /**
+   * Generate a string giving an outline of the contents.
+   *
+   * @return The outline string.
+   */
   public String dumpInfo() {
     return getUsername() + ":" + getPassword() + ":" + dumpCookies();
   }
