@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,8 +34,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.GOOGLE_PROVIDER_NAME;
 import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
@@ -65,13 +67,24 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
   @Override
   public void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    Object isAuthenticated = req.getSession().getAttribute("isAuthenticated");
-    if (isAuthenticated == Boolean.TRUE) {
-      ifAllowed(resp);
-    } else if (isAuthenticated == Boolean.FALSE) {
-      initErrorResponse(resp, SC_FORBIDDEN);
-    } else {
+    HttpSession session = req.getSession();
+
+    // Guarantee a valid session ID.
+    if (getGsaSessionId(session) == null) {
+      String sessionId = getSessionManager().createSession();
+      resp.addCookie(new Cookie(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME, sessionId));
+      session.setAttribute(GSA_SESSION_ID_NAME, sessionId);
+    }
+
+    // MockArtifactConsumer sets a flag with the authentication decision.
+    // Read that flag and dispatch on its value.
+    Boolean isAuthenticated = Boolean.class.cast(session.getAttribute("isAuthenticated"));
+    if (isAuthenticated == null) {
       ifUnknown(resp, req.getRequestURL().toString());
+    } else if (isAuthenticated) {
+      ifAllowed(resp);
+    } else {
+      initErrorResponse(resp, SC_FORBIDDEN);
     }
   }
 
