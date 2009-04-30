@@ -252,7 +252,7 @@ public final class ServletTestUtil {
       int length = mr.getContentAsByteArray().length;
       mr.setContentLength(length);
       response.addHeader("Content-Length", String.valueOf(length));
-      String value = ServletBase.setCookieHeaderValue(Arrays.asList(mr.getCookies()));
+      String value = CookieUtil.setCookieHeaderValue(Arrays.asList(mr.getCookies()), true);
       if (value != null) {
         response.addHeader("Set-Cookie", value);
       }
