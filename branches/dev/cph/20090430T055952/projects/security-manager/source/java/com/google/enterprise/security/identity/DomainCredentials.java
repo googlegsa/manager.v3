@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpSession;
 
 /**
  * This mis-named class models the per-session info associated with verifying a particular
@@ -45,8 +46,8 @@ public class DomainCredentials extends AbstractAuthnIdentity {
   }
 
   // Used for testing only:
-  public static DomainCredentials dummy() {
-    return new DomainCredentials(null, CredentialsGroup.dummy());
+  public static DomainCredentials dummy(HttpSession session) {
+    return new DomainCredentials(null, CredentialsGroup.dummy(session));
   }
 
   /* @Override */
@@ -81,6 +82,11 @@ public class DomainCredentials extends AbstractAuthnIdentity {
   /* @Override */
   public String getPassword() {
     return cg.getPassword();
+  }
+
+  /* @Override */
+  public HttpSession getSession() {
+    return cg.getSession();
   }
 
   /* @Override */

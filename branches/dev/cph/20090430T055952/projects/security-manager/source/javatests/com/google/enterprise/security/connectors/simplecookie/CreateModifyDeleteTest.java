@@ -22,6 +22,8 @@ import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.security.identity.DomainCredentials;
 
+import org.springframework.mock.web.MockHttpSession;
+
 import java.util.Map;
 
 import javax.servlet.http.Cookie;
@@ -90,6 +92,6 @@ public class CreateModifyDeleteTest extends SecurityManagerTestCase {
   }
 
   private SecAuthnIdentity newIdentity() {
-    return DomainCredentials.dummy();
+    return DomainCredentials.dummy(new MockHttpSession());
   }
 }

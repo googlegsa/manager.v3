@@ -24,6 +24,8 @@ import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.CsvConfig;
 import com.google.enterprise.security.identity.DomainCredentials;
 
+import org.springframework.mock.web.MockHttpSession;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -36,7 +38,7 @@ public class FormAuthConnectorTest extends SecurityManagerTestCase {
   public FormAuthConnectorTest(String name) throws IOException, ServletException {
     super(name);
     List<AuthnDomainGroup> adgs = CsvConfig.readConfigFile("AuthSites.conf");
-    List<CredentialsGroup> cgs = CredentialsGroup.newGroups(adgs);
+    List<CredentialsGroup> cgs = CredentialsGroup.newGroups(adgs, new MockHttpSession());
     cg = cgs.get(0);
     MockHttpTransport transport = new MockHttpTransport();
     transport.registerServlet(cg.getElements().get(0).getSampleUrl(),

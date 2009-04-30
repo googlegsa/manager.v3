@@ -24,6 +24,8 @@ import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.CsvConfig;
 
+import org.springframework.mock.web.MockHttpSession;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -36,7 +38,7 @@ public class ConnAuthConnectorTest extends SecurityManagerTestCase {
   public ConnAuthConnectorTest(String name) throws IOException, ServletException {
     super(name);
     List<AuthnDomainGroup> adgs = CsvConfig.readConfigFile("AuthSites.conf");
-    cgs = CredentialsGroup.newGroups(adgs);
+    cgs = CredentialsGroup.newGroups(adgs, new MockHttpSession());
     MockHttpTransport transport = new MockHttpTransport();
     transport.registerServlet(cgs.get(0).getElements().get(0).getSampleUrl(),
                               new MockCMAuthServer());
