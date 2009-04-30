@@ -16,7 +16,6 @@ package com.google.enterprise.saml.server;
 
 import com.google.enterprise.common.GettableHttpServlet;
 import com.google.enterprise.common.PostableHttpServlet;
-import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
@@ -50,7 +49,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -112,6 +110,7 @@ public class SamlAuthn extends SecurityManagerServlet
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
+    updateIncomingCookies(request);
     BackEnd backend = getBackEnd();
 
     // Establish the SAML message context
@@ -137,14 +136,12 @@ public class SamlAuthn extends SecurityManagerServlet
 
     // If there are cookies we can decode, use them.
     if (tryCookies(request, response)) {
-      return;
-    }
-
-    if (backend.isIdentityConfigured()) {
+    } else if (backend.isIdentityConfigured()) {
       maybePrompt(request, response);
     } else {
       makeUnsuccessfulResponse(request, response, "Security Manager not configured");
     }
+    updateOutgoingCookies(request, response);
   }
 
   // Try to find cookies that can be decoded into identities.
@@ -181,6 +178,7 @@ public class SamlAuthn extends SecurityManagerServlet
   @Override
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
+    updateIncomingCookies(request);
     BackEnd backend = getBackEnd();
     OmniForm omniform = getOmniForm(request);
     List<CredentialsGroup> cgs = getCredentialsGroups(request);
@@ -199,6 +197,7 @@ public class SamlAuthn extends SecurityManagerServlet
     }
     if (ids.isEmpty()) {
       maybePrompt(request, response);
+      updateOutgoingCookies(request, response);
       return;
     }
 
@@ -206,12 +205,14 @@ public class SamlAuthn extends SecurityManagerServlet
     resetPromptCounter(request.getSession());
 
     // Update the Session Manager with the necessary info.
-    Cookie cookie = getUserAgentCookie(request, GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME);
-    if (cookie != null) {
-      backend.updateSessionManager(cookie.getValue(), cgs);
+    // TODO(cph): Until we finish off-boarding, the session ID should be required.
+    String sessionId = getGsaSessionId(request.getSession());
+    if (sessionId != null) {
+      backend.updateSessionManager(sessionId, cgs);
     }
 
     makeSuccessfulResponse(request, response, ids);
+    updateOutgoingCookies(request, response);
   }
 
   private void maybePrompt(HttpServletRequest request, HttpServletResponse response)
