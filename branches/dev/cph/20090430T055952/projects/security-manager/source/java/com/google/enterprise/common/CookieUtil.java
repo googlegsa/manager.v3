@@ -57,37 +57,25 @@ public final class CookieUtil {
   private CookieUtil() {
   }
 
-  /** Fetch a page, using POST or GET, and do not follow redirect.
-   *  @param exchange The HTTP exchange object
-   *  @param url The URL to fetch
-   *  @param proxy The proxy String of form host:port if so desired
-   *  @param userAgent The string to send in the user agent header
-   *  @param cookies A collection of existing cookie to be sent, newly
-   *                 received cookies will be stored in here as well.
-   *  @param bodyBuffer A StringBuffer to store response body. Ignored if null
-   *  @param redirectBuffer A StringBuffer to store the redirect URL
-   *                        if so exists; may be null
-   *  @param passwordFields A Set of password field names of which values
-   *                        should not be logged.
-   *  @param logger A Logger to log HTTP communication.  Ignored if null.
-   *  @return The HTTP status code of the request.
+  /**
+   * Fetch a page, using POST or GET, and do not follow redirect.
    *
-   *  TODO - passwordFields is not a good approach;  we cannot predict
-   *  password field names.  It would be much better to scan the html field
-   *  TYPES for a type of "password."  The enum of types is set by the html
-   *  standard, the range of possible password field names is unlimited.
-   *  I'd make that change now, except we're in a 5.0 push, and mgmt asked for
-   *  minimal changes necessary to resolve bug 858157.
+   * @param exchange The HTTP exchange object
+   * @param url The URL to fetch
+   * @param userAgent The string to send in the user agent header
+   * @param cookies A collection of existing cookie to be sent, newly
+   *                received cookies will be stored in here as well.
+   * @param bodyBuffer A StringBuffer to store response body. Ignored if null
+   * @param redirectBuffer A StringBuffer to store the redirect URL
+   *                       if so exists; may be null
+   * @return The HTTP status code of the request.
    */
   public static int fetchPage(HttpExchange exchange,
                               URL url,
-                              String proxy,
                               String userAgent,
                               Collection<Cookie> cookies,
                               StringBuffer bodyBuffer,
-                              StringBuffer redirectBuffer,
-                              Set<String> passwordFields,
-                              Logger logger)
+                              StringBuffer redirectBuffer)
       throws IOException {
 
     if (bodyBuffer != null) {
@@ -97,8 +85,6 @@ public final class CookieUtil {
     if (redirectBuffer != null) {
       redirectBuffer.setLength(0);
     }
-
-    exchange.setProxy(proxy);
 
     // Boilerplate headers.
     exchange.setRequestHeader("Date", ServletBase.httpDateString());
@@ -247,6 +233,39 @@ public final class CookieUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * Subtract one cookie collection from another and store the difference.
+   *
+   * @param minuend The cookies to start with.
+   * @param subtrahend The cookies to subtract from the minuend.
+   * @param difference The collection to store the difference in.
+   */
+  public static void subtractCookieSets(Collection<Cookie> minuend,
+                                        Collection<Cookie> subtrahend,
+                                        Collection<Cookie> difference) {
+    for (Cookie c : minuend) {
+      if (!hasCookieNamed(c.getName(), subtrahend)) {
+        difference.add(c);
+      }
+    }
+  }
+
+  /**
+   * Does the cookie collection contain a cookie with the given name?
+   *
+   * @param name The cookie name to search for.
+   * @param cookies The cookie collection to search.
+   * @return True iff the collection contains a cookie with that name.
+   */
+  public static boolean hasCookieNamed(String name, Collection<? extends Cookie> cookies) {
+    for (Cookie c : cookies) {
+      if (c.getName().equalsIgnoreCase(name)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -466,6 +485,6 @@ public final class CookieUtil {
    }
 
   private static boolean undefined(String str) {
-    return str == null || "".equals(str);
+    return str == null || str.isEmpty();
   }
 }
