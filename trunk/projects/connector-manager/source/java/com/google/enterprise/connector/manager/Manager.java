@@ -174,11 +174,12 @@ public interface Manager {
    * @param connectorName
    * @param docidList The document set represented as a list of Strings: the
    *        docid for each document
-   * @param username The username as a string
+   * @param identity An AuthenticationIdentity object that encapsulates the
+   *        user's identity
    * @return A Set of String IDs indicating which documents the user can see.
    */
   public Set<String> authorizeDocids(String connectorName,
-      List<String> docidList, String username);
+      List<String> docidList, AuthenticationIdentity identity);
 
   /**
    * Set schedule for a given Connector.

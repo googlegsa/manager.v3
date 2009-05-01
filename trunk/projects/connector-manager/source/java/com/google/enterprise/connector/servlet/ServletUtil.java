@@ -57,7 +57,6 @@ import javax.xml.transform.stream.StreamResult;
 
 /**
  * Servlet constant and utility class.
- *
  * Non-instantiable class that holds constants and XML tag constants,
  * utilities for reading/writing XML string, etc.
  *
@@ -133,6 +132,7 @@ public class ServletUtil {
   public static final String XMLTAG_AUTHZ_QUERY = "AuthorizationQuery";
   public static final String XMLTAG_CONNECTOR_QUERY = "ConnectorQuery";
   public static final String XMLTAG_IDENTITY = "Identity";
+  public static final String XMLTAG_DOMAIN_ATTRIBUTE = "domain";
   public static final String XMLTAG_RESOURCE = "Resource";
   public static final String XMLTAG_AUTHZ_RESPONSE = "AuthorizationResponse";
   public static final String XMLTAG_ANSWER = "Answer";
