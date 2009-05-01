@@ -16,12 +16,10 @@ package com.google.enterprise.saml.server;
 
 import com.google.enterprise.common.GettableHttpServlet;
 import com.google.enterprise.common.PostableHttpServlet;
-import com.google.enterprise.common.ServletBase;
-import com.google.enterprise.connector.manager.SecAuthnContext;
-import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.DomainCredentials;
 import com.google.enterprise.security.ui.OmniForm;
 import com.google.enterprise.security.ui.OmniFormHtml;
 
@@ -152,38 +150,25 @@ public class SamlAuthn extends SecurityManagerServlet
 
   // Try to find cookies that can be decoded into identities.
   private boolean tryCookies(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException {
-    // TODO(cph): these cookies should be assigned to particular CredentialsGroups.
-    //    If that's done, then we might still need to prompt for more information with the
-    //    OmniForm, after having filled in the known identities.
+      throws ServletException, IOException {
+    BackEnd backend = getBackEnd();
     List<String> ids = new ArrayList<String>();
-    for (AuthenticationResponse ar: getBackEnd().handleCookie(getAuthnContext(request))) {
-      ids.add(ar.getData());
+    for (CredentialsGroup cg : getCredentialsGroups(request)) {
+      for (DomainCredentials dc : cg.getElements()) {
+        if (dc.getUsername() == null) {
+          backend.handleCookie(dc);
+          String username = dc.getUsername();
+          if (username != null) {
+            ids.add(username);
+          }
+        }
+      }
     }
     if (ids.isEmpty()) {
       return false;
     }
     makeSuccessfulResponse(request, response, ids);
     return true;
-  }
-
-  /**
-   * Create a new authentication context from an HTTP request.
-   *
-   * @param request An HTTP request.
-   * @return An authentication context for that request.
-   */
-  private SecAuthnContext getAuthnContext(HttpServletRequest request) {
-    SecAuthnContext context = new SecAuthnContext();
-    Cookie[] cookies = request.getCookies();
-    if (cookies != null) {
-      for (Cookie c: cookies) {
-        context.addCookie(c);
-      }
-      LOGGER.info("Cookies from user agent: "
-                  + ServletBase.setCookieHeaderValue(context.getCookies()));
-    }
-    return context;
   }
 
   /**
@@ -222,13 +207,31 @@ public class SamlAuthn extends SecurityManagerServlet
     resetPromptCounter(request.getSession());
 
     // Update the Session Manager with the necessary info.
-    Cookie cookie =
-        getAuthnContext(request).getCookieNamed(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME);
+    Cookie cookie = getUserAgentCookie(request, GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME);
     if (cookie != null) {
       backend.updateSessionManager(cookie.getValue(), cgs);
     }
 
     makeSuccessfulResponse(request, response, ids);
+  }
+
+  /**
+   * Get a named cookie from an incoming HTTP request.
+   *
+   * @param request An HTTP request.
+   * @param name The name of the cookie to return.
+   * @return The corresponding cookie, or null if no such cookie.
+   */
+  private Cookie getUserAgentCookie(HttpServletRequest request, String name) {
+    Cookie[] cookies = request.getCookies();
+    if (cookies != null) {
+      for (Cookie c: cookies) {
+        if (c.getName().equals(name)) {
+          return c;
+        }
+      }
+    }
+    return null;
   }
 
   private void maybePrompt(HttpServletRequest request, HttpServletResponse response)

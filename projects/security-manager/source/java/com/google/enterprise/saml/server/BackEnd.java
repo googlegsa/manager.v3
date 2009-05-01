@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
 package com.google.enterprise.saml.server;
 
 import com.google.enterprise.connector.manager.ConnectorManager;
-import com.google.enterprise.connector.manager.SecAuthnContext;
-import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.IdentityConfig;
@@ -86,10 +85,9 @@ public interface BackEnd {
   /**
    * Attempt to find a cookie that can be converted to a verified identity.
    *
-   * @param context The authn context containing the cookies to try.
-   * @return A list of valid authentication responses.
+   * @param identity The authn identity containing the cookies to try.
    */
-  public List<AuthenticationResponse> handleCookie(SecAuthnContext context);
+  public void handleCookie(SecAuthnIdentity identity);
 
   /**
    * Attempts to authenticate a given CredentialsGroup.  This method will update

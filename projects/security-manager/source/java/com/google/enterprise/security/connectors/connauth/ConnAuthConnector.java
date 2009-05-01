@@ -25,6 +25,7 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.VerificationStatus;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -64,6 +65,7 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
     String username = identity.getUsername();
     String password = identity.getPassword();
     if (username == null || password == null) {
+      identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return notfound;
     }
     List<ConnectorUserInfo> connectorUserInfos = null;
@@ -71,6 +73,7 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
     String siteUri = identity.getSampleUrl();
     if (siteUri == null) {
       LOGGER.warning("null URL for connector manager");
+      identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return null;
     }
 
@@ -80,6 +83,7 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
       exchange = httpClient.postExchange(new URL(siteUri), null);
     } catch (MalformedURLException e2) {
       LOGGER.warning("Bad URL for connector manager: " + siteUri);
+      identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return notfound;
     }
 
@@ -87,6 +91,7 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
       exchange.setRequestBody(request.getBytes("UTF-8"));
     } catch (UnsupportedEncodingException e1) {
       LOGGER.warning("Bad Encoding: " + e1.toString());
+      identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return notfound;
     }
 
@@ -111,6 +116,7 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
     }
 
     if ((connectorUserInfos == null) || connectorUserInfos.isEmpty()) {
+      identity.setVerificationStatus(VerificationStatus.REFUTED);
       return notfound;
     }
 
@@ -128,6 +134,7 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
       data.append("/");
       data.append(user.getIdentity());
     }
+    identity.setVerificationStatus(VerificationStatus.VERIFIED);
     return new AuthenticationResponse(true, data.toString());
   }
 
