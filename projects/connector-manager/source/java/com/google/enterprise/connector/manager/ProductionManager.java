@@ -27,9 +27,8 @@ import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.SimpleAuthenticationIdentity;
+import com.google.enterprise.connector.spi.RepositoryLoginException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -96,7 +95,7 @@ public class ProductionManager implements Manager {
 
   /* @Override */
   public Set<String> authorizeDocids(String connectorName,
-      List<String> docidList, String username) {
+      List<String> docidList, AuthenticationIdentity identity) {
     Set<String> result = new HashSet<String>();
     try {
       AuthorizationManager authzManager =
@@ -111,8 +110,6 @@ public class ProductionManager implements Manager {
             + " the AuthorizationManager interface.");
         return result;
       }
-      AuthenticationIdentity identity =
-          new SimpleAuthenticationIdentity(username);
       Collection<AuthorizationResponse> results =
           authzManager.authorizeDocids(docidList, identity);
       for (AuthorizationResponse response : results) {

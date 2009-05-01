@@ -98,7 +98,7 @@ public class MockManager implements Manager {
 
   /* @Override */
   public Set<String> authorizeDocids(String connectorName,
-      List<String> docidList, String username) {
+      List<String> docidList, AuthenticationIdentity identity) {
     return new HashSet<String>(docidList);
   }
 

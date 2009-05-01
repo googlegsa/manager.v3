@@ -15,6 +15,9 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.servlet.AuthorizationParser.ConnectorQueries;
+import com.google.enterprise.connector.servlet.AuthorizationParser.QueryUrls;
+import com.google.enterprise.connector.spi.AuthenticationIdentity;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -34,7 +37,6 @@ public class AuthorizationHandler {
   PrintWriter out;
   int status;
   int numDocs;
-  private Map<String, Map<String, Map<String, ParsedUrl>>> parseMap;
   Map<String, Boolean> results;
 
   AuthorizationHandler(String xmlBody, Manager manager, PrintWriter out) {
@@ -61,14 +63,12 @@ public class AuthorizationHandler {
    */
   public void handleDoPost() {
     AuthorizationParser authorizationParser = new AuthorizationParser(xmlBody);
-    authorizationParser.parse();
     status = authorizationParser.getStatus();
     if (status == ConnectorMessageCode.ERROR_PARSING_XML_REQUEST) {
       ServletUtil.writeResponse(out,status);
       return;
     }
-    parseMap = authorizationParser.getParseMap();
-    computeResultSet();
+    computeResultSet(authorizationParser);
     generateXml();
     return;
   }
@@ -98,20 +98,19 @@ public class AuthorizationHandler {
     ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_ANSWER, true);
   }
 
-  private void computeResultSet() {
-    for (Entry<String, Map<String, Map<String, ParsedUrl>>> e : parseMap.entrySet()) {
-      String identity = e.getKey();
-      Map<String, Map<String, ParsedUrl>> urlsByConnector = e.getValue();
-      runManagerQueries(identity, urlsByConnector);
+  private void computeResultSet(AuthorizationParser authorizationParser) {
+    for (AuthenticationIdentity identity: authorizationParser.getIdentities()) {
+      ConnectorQueries queries = 
+          authorizationParser.getConnectorQueriesForIdentity(identity);
+      runManagerQueries(identity, queries);
     }
   }
 
-  private void runManagerQueries(String identity,
-      Map<String, Map<String, ParsedUrl>> urlsByConnector) {
-    for (Entry<String, Map<String, ParsedUrl>> e : urlsByConnector.entrySet()) {
-      String connectorName = e.getKey();
-      Map<String, ParsedUrl> urlsByDocid = e.getValue();
-      List<String> docidList = new ArrayList<String>(urlsByDocid.keySet());
+  private void runManagerQueries(AuthenticationIdentity identity,
+      ConnectorQueries urlsByConnector) {
+    for (String connectorName : urlsByConnector.getConnectors()) {
+      QueryUrls urlsByDocid = urlsByConnector.getQueryUrls(connectorName);
+      List<String> docidList = new ArrayList<String>(urlsByDocid.getDocids());
       Set<String> answerSet =
           manager.authorizeDocids(connectorName, docidList, identity);
       accumulateQueryResults(answerSet, urlsByDocid);
@@ -119,10 +118,9 @@ public class AuthorizationHandler {
   }
 
   private void accumulateQueryResults(Set<String> answerSet,
-      Map<String, ParsedUrl> urlsByDocid) {
-    for (Entry<String, ParsedUrl> e : urlsByDocid.entrySet()) {
-      String docid = e.getKey();
-      ParsedUrl parsedUrl = e.getValue();
+      QueryUrls urlsByDocid) {
+    for (String docid : urlsByDocid.getDocids()) {
+      ParsedUrl parsedUrl = urlsByDocid.getUrl(docid);
       Boolean permit = answerSet.contains(docid) ? Boolean.TRUE : Boolean.FALSE;
       Object isDup = results.put(parsedUrl.getUrl(), permit);
       if (isDup != null) {
