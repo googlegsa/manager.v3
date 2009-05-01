@@ -15,6 +15,7 @@
 package com.google.enterprise.security.identity;
 
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
+import com.google.enterprise.connector.spi.VerificationStatus;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
 import java.util.ArrayList;
@@ -69,6 +70,10 @@ public class DomainCredentials implements SecAuthnIdentity {
 
   public String getUsername() {
     return cg.getUsername();
+  }
+
+  public void setUsername(String username) {
+    cg.setUsername(username);
   }
 
   public String getPassword() {
