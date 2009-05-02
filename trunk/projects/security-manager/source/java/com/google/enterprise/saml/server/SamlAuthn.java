@@ -86,7 +86,6 @@ public class SamlAuthn extends SecurityManagerServlet
   private static final long serialVersionUID = 1L;
   private static final String PROMPT_COUNTER_NAME = "SamlAuthnPromptCounter";
   private static final String OMNI_FORM_NAME = "SamlAuthnOmniForm";
-  private static final String CREDENTIALS_GROUPS_NAME = "SamlAuthnCredentialsGroups";
   private static final int defaultMaxPrompts = 3;
 
   private int maxPrompts;
@@ -215,25 +214,6 @@ public class SamlAuthn extends SecurityManagerServlet
     makeSuccessfulResponse(request, response, ids);
   }
 
-  /**
-   * Get a named cookie from an incoming HTTP request.
-   *
-   * @param request An HTTP request.
-   * @param name The name of the cookie to return.
-   * @return The corresponding cookie, or null if no such cookie.
-   */
-  private Cookie getUserAgentCookie(HttpServletRequest request, String name) {
-    Cookie[] cookies = request.getCookies();
-    if (cookies != null) {
-      for (Cookie c: cookies) {
-        if (c.getName().equals(name)) {
-          return c;
-        }
-      }
-    }
-    return null;
-  }
-
   private void maybePrompt(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     HttpSession session = request.getSession();
@@ -261,7 +241,7 @@ public class SamlAuthn extends SecurityManagerServlet
     session.removeAttribute(PROMPT_COUNTER_NAME);
   }
 
-  private OmniForm getOmniForm(HttpServletRequest request)
+  private static OmniForm getOmniForm(HttpServletRequest request)
       throws IOException {
     HttpSession session = request.getSession();
     OmniForm omniform = sessionOmniForm(session);
@@ -277,24 +257,7 @@ public class SamlAuthn extends SecurityManagerServlet
     return OmniForm.class.cast(session.getAttribute(OMNI_FORM_NAME));
   }
 
-  private List<CredentialsGroup> getCredentialsGroups(HttpServletRequest request)
-      throws IOException {
-    HttpSession session = request.getSession();
-    List<CredentialsGroup> groups = sessionCredentialsGroups(session);
-    if (null == groups) {
-      groups = CredentialsGroup.newGroups(getBackEnd().getAuthnDomainGroups(), session);
-      session.setAttribute(CREDENTIALS_GROUPS_NAME, groups);
-    }
-    return groups;
-  }
-
-  // Exposed for debugging:
-  @SuppressWarnings("unchecked")
-  public static List<CredentialsGroup> sessionCredentialsGroups(HttpSession session) {
-    return List.class.cast(session.getAttribute(CREDENTIALS_GROUPS_NAME));
-  }
-
-  private String getAction(HttpServletRequest request) {
+  private static String getAction(HttpServletRequest request) {
     String url = request.getRequestURL().toString();
     int q = url.indexOf("?");
     return (q < 0) ? url : url.substring(0, q);
