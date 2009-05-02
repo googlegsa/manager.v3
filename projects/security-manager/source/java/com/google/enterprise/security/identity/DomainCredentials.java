@@ -14,7 +14,7 @@
 
 package com.google.enterprise.security.identity;
 
-import com.google.enterprise.common.CookieUtil;
+import com.google.enterprise.connector.common.CookieUtil;
 import com.google.enterprise.connector.spi.AbstractAuthnIdentity;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
