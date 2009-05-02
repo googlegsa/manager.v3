@@ -1,10 +1,10 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -66,7 +66,7 @@ public class OmniFormHtml {
       FormElement formElem = formElements.get(i);
       if (formElem.isActive()) {
         LOGGER.info("Retrieved username: " + request.getParameter("u"+i));
-        LOGGER.info("Retrieved password: " + request.getParameter("pw"+i));
+        LOGGER.info("Retrieved password: #" + request.getParameter("pw"+i).hashCode());
         formElem.setUsername(request.getParameter("u" + i));
         formElem.setPassword(request.getParameter("pw" + i));
       }
