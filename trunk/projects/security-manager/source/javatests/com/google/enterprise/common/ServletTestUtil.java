@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -130,6 +131,28 @@ public final class ServletTestUtil {
       }
     }
     out.write("\n");
+  }
+
+  /**
+   * Finalize a mock servlet request prior to using it.
+   *
+   * Should be called immediately before the servlet is called.  Fills in some fields
+   * that the mock isn't already taking care of; this wouldn't be needed if the mock was a
+   * little more complete.
+   *
+   * @param request A servlet request that is (potentially) a mock.
+   */
+  public static void finalizeRequest(HttpServletRequest request) {
+    if (request instanceof MockHttpServletRequest) {
+      MockHttpServletRequest mr = (MockHttpServletRequest) request;
+      Cookie[] cookies = mr.getCookies();
+      if (cookies != null) {
+        String value = CookieUtil.cookieHeaderValue(Arrays.asList(cookies), true);
+        if (value != null) {
+          mr.addHeader("Cookie", value);
+        }
+      }
+    }
   }
 
   public static String servletResponseToString(MockHttpServletResponse response, String tag)
@@ -254,9 +277,12 @@ public final class ServletTestUtil {
       int length = mr.getContentAsByteArray().length;
       mr.setContentLength(length);
       response.addHeader("Content-Length", String.valueOf(length));
-      String value = CookieUtil.setCookieHeaderValue(Arrays.asList(mr.getCookies()), true);
-      if (value != null) {
-        response.addHeader("Set-Cookie", value);
+      Cookie[] cookies = mr.getCookies();
+      if (cookies != null) {
+        String value = CookieUtil.setCookieHeaderValue(Arrays.asList(cookies), true);
+        if (value != null) {
+          response.addHeader("Set-Cookie", value);
+        }
       }
     }
   }
