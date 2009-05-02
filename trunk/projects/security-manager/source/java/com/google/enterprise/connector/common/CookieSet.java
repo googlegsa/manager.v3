@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.common;
 
+import com.google.common.collect.PeekingIterator;
+
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
@@ -31,21 +33,10 @@ import javax.servlet.http.Cookie;
  */
 public class CookieSet extends AbstractSet<Cookie> {
 
-  protected SortedSet<ComparableCookie> cookies;
+  private SortedSet<ComparableCookie> cookies;
 
   public CookieSet() {
     this.cookies = new TreeSet<ComparableCookie>();
-  }
-
-  /**
-   * Get an iterator of comparable cookies.
-   *
-   * This iterator exposes the underlying ComparableCookie objects.
-   *
-   * @return A comparable-cookie iterator.
-   */
-  public Iterator<ComparableCookie> comparableIterator() {
-    return cookies.iterator();
   }
 
   @Override public boolean add(Cookie c) {
@@ -92,6 +83,17 @@ public class CookieSet extends AbstractSet<Cookie> {
     return cookies.size();
   }
 
+  /**
+   * Get an iterator of comparable cookies.
+   *
+   * This iterator exposes the underlying ComparableCookie objects.
+   *
+   * @return A comparable-cookie iterator.
+   */
+  PeekingIterator<ComparableCookie> comparableIterator() {
+    return new ComparableIterator(cookies.iterator());
+  }
+
   private ComparableCookie wrap(Object o) {
     if (o == null) {
       throw new NullPointerException();
@@ -125,6 +127,40 @@ public class CookieSet extends AbstractSet<Cookie> {
 
     public void remove() {
       iter.remove();
+    }
+  }
+
+  private static class ComparableIterator implements PeekingIterator<ComparableCookie> {
+    private Iterator<ComparableCookie> iter;
+    private ComparableCookie e;
+
+    ComparableIterator(Iterator<ComparableCookie> iter) {
+      this.iter = iter;
+      e = null;
+    }
+
+    public boolean hasNext() {
+      return e != null || iter.hasNext();
+    }
+
+    public ComparableCookie next() {
+      if (e == null) {
+        return iter.next();
+      }
+      ComparableCookie result = e;
+      e = null;
+      return result;
+    }
+
+    public ComparableCookie peek() {
+      if (e == null) {
+        e = iter.next();
+      }
+      return e;
+    }
+
+    public void remove() {
+      throw new UnsupportedOperationException();
     }
   }
 }
