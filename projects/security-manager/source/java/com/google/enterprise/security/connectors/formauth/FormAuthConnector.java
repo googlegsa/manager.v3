@@ -85,6 +85,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     }
     logCookies(LOGGER, "after fetchLoginForm", cookies);
 
+    // Parse the returned login form.
     List<StringPair> param;
     String postUrl;
     try {
@@ -105,6 +106,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       return new AuthenticationResponse(false, null);
     }
 
+    // Fill in the login form and POST the result.
     LOGGER.info("POST to: " + postUrl);
     try {
       int status = submitLoginForm(postUrl, param, cookies);
@@ -131,6 +133,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     for (Cookie cookie: cookies) {
       identity.addCookie(cookie);
     }
+    // Successful login.
     identity.setVerificationStatus(VerificationStatus.VERIFIED);
     return new AuthenticationResponse(true, username);
   }
@@ -156,12 +159,9 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
 
     while (true) {
       CookieUtil.fetchPage(SecurityManagerUtil.getHttpClient().getExchange(url),
-                           url,
-                           null, // proxy,
-                           "SecMgr", cookies,
-                           bodyBuffer,
-                           redirectBuffer, null,
-                           null); // LOGGER
+                           url, "SecMgr",
+                           cookies,
+                           bodyBuffer, redirectBuffer);
       lastRedirect = redirected;
       redirected = redirectBuffer.toString();
       if (redirected.length() > 0) {
@@ -255,7 +255,6 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       throws IOException {
     int redirectCount = 0;
     URL url = new URL(loginUrl);
-    StringBuffer bodyBuffer = new StringBuffer();
     StringBuffer redirectBuffer = new StringBuffer();
     int status = 0;
     int kMaxNumRedirectsToFollow = 4;
@@ -263,12 +262,9 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     HttpExchange exchange = SecurityManagerUtil.getHttpClient().postExchange(url, parameters);
 
     while (true) {
-      status = CookieUtil.fetchPage(exchange, url,
-                                    null, // proxy,
-                                    "SecMgr", cookies,
-                                    bodyBuffer,
-                                    redirectBuffer, null,
-                                    null); // LOGGER
+      status = CookieUtil.fetchPage(exchange, url, "SecMgr",
+                                    cookies,
+                                    null, redirectBuffer);
       String redirected = redirectBuffer.toString();
       // TODO need smarter redirect logic for weirdo like CAS
       if (redirected.length() > 4) {
