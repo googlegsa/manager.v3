@@ -14,13 +14,12 @@
 
 package com.google.enterprise.saml.server;
 
-import com.google.enterprise.common.ServletBase;
+import com.google.enterprise.connector.common.CookieUtil;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.VerificationStatus;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
-import com.google.enterprise.security.connectors.formauth.CookieUtil;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
@@ -194,13 +193,13 @@ public class BackEndImpl implements BackEnd {
         }
 
         LOGGER.info("DomainCredential " + dCred.getDomain() + " cookies: " +
-                    ServletBase.setCookieHeaderValue(dCred.getCookies()));
+                    CookieUtil.setCookieHeaderValue(dCred.getCookies(), false));
         cookies.addAll(dCred.getCookies());
       }
     }
     adapter.setCookies(sessionId, CookieUtil.serializeCookies(cookies));
     LOGGER.info("Cookies sent to session manager: " +
-                ServletBase.setCookieHeaderValue(cookies));
+                CookieUtil.setCookieHeaderValue(cookies, false));
 
     // TODO(con): connectors
   }

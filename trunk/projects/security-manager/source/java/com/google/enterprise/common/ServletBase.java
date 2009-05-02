@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,9 +21,7 @@ import org.joda.time.format.DateTimeFormatter;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Collection;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletResponse;
 
@@ -59,50 +57,5 @@ public abstract class ServletBase extends HttpServlet {
 
   public static void initResponse(HttpServletResponse response) {
     response.setHeader("Date", httpDateString());
-  }
-
-  public static String setCookieHeaderValue(Collection<Cookie> cookies) {
-    if (cookies.size() == 0) {
-      return null;
-    }
-    StringBuffer buffer = new StringBuffer();
-    for (Cookie c: cookies) {
-      if (buffer.length() > 0) {
-        buffer.append(", ");
-      }
-      convertCookie(c, buffer);
-    }
-    return buffer.toString();
-  }
-
-  private static void convertCookie(Cookie c, StringBuffer buffer) {
-    buffer.append(c.getName());
-    buffer.append("=");
-    if (c.getValue() != null) {
-      buffer.append(c.getValue());
-    }
-    if (c.getComment() != null) {
-      buffer.append("; comment=");
-      buffer.append(c.getComment());
-    }
-    if (c.getDomain() != null) {
-      buffer.append("; domain=");
-      buffer.append(c.getDomain());
-    }
-    if (c.getMaxAge() > 0) {
-      buffer.append("; Max-Age=");
-      buffer.append(c.getMaxAge());
-    }
-    if (c.getPath() != null) {
-      buffer.append("; path=");
-      buffer.append(c.getPath());
-    }
-    if (c.getVersion() != -1) {
-      buffer.append("; version=");
-      buffer.append(String.valueOf(c.getVersion()));
-    }
-    if (c.getSecure()) {
-      buffer.append("; secure");
-    }
   }
 }

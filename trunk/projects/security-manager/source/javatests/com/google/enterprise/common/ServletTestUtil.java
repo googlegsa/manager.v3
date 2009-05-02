@@ -14,6 +14,8 @@
 
 package com.google.enterprise.common;
 
+import com.google.enterprise.connector.common.CookieUtil;
+
 import org.opensaml.util.URLBuilder;
 import org.opensaml.xml.util.Pair;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -252,7 +254,7 @@ public final class ServletTestUtil {
       int length = mr.getContentAsByteArray().length;
       mr.setContentLength(length);
       response.addHeader("Content-Length", String.valueOf(length));
-      String value = ServletBase.setCookieHeaderValue(Arrays.asList(mr.getCookies()));
+      String value = CookieUtil.setCookieHeaderValue(Arrays.asList(mr.getCookies()), true);
       if (value != null) {
         response.addHeader("Set-Cookie", value);
       }

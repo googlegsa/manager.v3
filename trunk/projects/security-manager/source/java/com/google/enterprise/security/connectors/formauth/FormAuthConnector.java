@@ -16,8 +16,8 @@ package com.google.enterprise.security.connectors.formauth;
 
 import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.common.SecurityManagerUtil;
-import com.google.enterprise.common.ServletBase;
 import com.google.enterprise.common.StringPair;
+import com.google.enterprise.connector.common.CookieUtil;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
@@ -325,7 +325,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
   }
 
   private static void logCookies(Logger LOGGER, String tag, Collection<Cookie> cookies) {
-    String value = ServletBase.setCookieHeaderValue(cookies);
+    String value = CookieUtil.setCookieHeaderValue(cookies, false);
     if (value == null) {
       value = "(none)";
     }
