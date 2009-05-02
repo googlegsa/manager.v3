@@ -150,7 +150,6 @@ public class Context {
   // singletons
   private Manager manager = null;
   private TraversalScheduler traversalScheduler = null;
-  private Thread schedulerThread = null;
   private TraversalContext traversalContext = null;
 
   // control variables for turning off normal functionality - testing only

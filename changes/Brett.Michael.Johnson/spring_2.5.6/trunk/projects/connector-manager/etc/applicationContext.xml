@@ -146,7 +146,6 @@
     <constructor-arg index="0" ref="Instantiator"/>
     <constructor-arg index="1" ref="Monitor"/>
     <constructor-arg index="2" ref="WorkQueue"/>
-    <constructor-arg index="3" type="int" ref="TraversalDelaySecondsDefault"/>
   </bean>
 
   <!-- This defines the number of seconds to wait after a Traversal of the
@@ -157,7 +156,7 @@
   <bean id="TraversalDelaySecondsDefault" class="java.lang.Integer">
     <constructor-arg index="0" type="int" value="300"/>
   </bean>
-  
+
 
   <!-- Spring does not like to call static setters to do injection of class
        field values.  This StaticInitializerBeanFactoryPostProcessor can
@@ -165,20 +164,25 @@
        as convenient.
   -->
   <bean class="com.google.enterprise.connector.common.StaticInitializerBeanFactoryPostProcessor">
-     <property name="classes"> 
-        <map> 
+     <property name="classes">
+        <map>
           <entry key="com.google.enterprise.connector.instantiator.InstanceInfo">
-            <map> 
+            <map>
               <entry key="connectorConfigStore" value-ref="ConnectorConfigStore"/>
               <entry key="connectorScheduleStore" value-ref="ConnectorScheduleStore"/>
               <entry key="connectorStateStore" value-ref="ConnectorStateStore"/>
               <entry key="legacyConfigStores" value-ref="LegacyConnectorConfigStores"/>
               <entry key="legacyScheduleStores" value-ref="LegacyConnectorScheduleStores"/>
               <entry key="legacyStateStores" value-ref="LegacyConnectorStateStores"/>
-            </map> 
-          </entry> 
-        </map> 
-     </property> 
+            </map>
+          </entry>
+          <entry key="com.google.enterprise.connector.scheduler.Schedule">
+            <map>
+              <entry key="defaultRetryDelaySecs" value-ref="TraversalDelaySecondsDefault"/>
+            </map>
+          </entry>
+        </map>
+     </property>
   </bean>
 
 

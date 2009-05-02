@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -82,11 +81,10 @@ public class SpringInstantiator implements Instantiator {
     this.scheduler = scheduler;
   }
 
-  /*
+  /**
    * Initializes the Context, post bean construction.
-   * NOTE: Object lock must be held to call this method.
    */
-  public void init() {
+  public synchronized void init() {
     if (typeMap != null) {
       return;
     }

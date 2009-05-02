@@ -102,7 +102,7 @@ public class MockInstantiator implements Instantiator {
   private ConnectorScheduleStore connectorScheduleStore;
   private ConnectorStateStore connectorStateStore;
 
-  private Scheduler scheduler = null;
+  private Scheduler scheduler;
 
   /* Setter Injectors */
   public void setScheduler(Scheduler scheduler) {

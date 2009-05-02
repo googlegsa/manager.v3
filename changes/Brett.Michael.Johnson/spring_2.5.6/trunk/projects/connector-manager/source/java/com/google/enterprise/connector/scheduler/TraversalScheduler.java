@@ -77,20 +77,6 @@ public class TraversalScheduler implements Scheduler {
     this.removedConnectors = new HashSet<String>();
   }
 
-  /**
-   * Create a scheduler object.
-   *
-   * @param instantiator
-   * @param monitor
-   * @param workQueue
-   * @param defaultRetryDelaySecs
-   */
-  public TraversalScheduler(Instantiator instantiator, Monitor monitor,
-      WorkQueue workQueue, int defaultRetryDelaySecs) {
-    this (instantiator, monitor, workQueue);
-    Schedule.setDefaultRetryDelayMillis(defaultRetryDelaySecs * 1000);
-  }
-
   public synchronized void init() {
     if (isInitialized) {
       return;

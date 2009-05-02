@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.scheduler;
 
-import com.google.enterprise.connector.manager.Context;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -94,10 +92,10 @@ public class Schedule {
   /**
    * Set the default RetryDelayMillisecs.
    *
-   * @param defaultValue default value for retryDelayMillis.
+   * @param defaultValue default value for retryDelay in seconds.
    */
-  public static void setDefaultRetryDelayMillis(int defaultValue) {
-    defaultRetryDelayMillis = defaultValue;
+  public static void setDefaultRetryDelaySecs(int defaultValue) {
+    defaultRetryDelayMillis = defaultValue * 1000;
   }
 
   /**
