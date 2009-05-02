@@ -18,7 +18,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.PeekingIterator;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.servlet.http.Cookie;
@@ -59,33 +58,35 @@ public class CookieDifferentiator {
   public void commitStep() {
 
     // Generate the deltas.
-    CookieStream oldStream = new CookieStream(oldCookies);
-    CookieStream newStream = new CookieStream(newCookies);
+    PeekingIterator<ComparableCookie> oldIter = oldCookies.comparableIterator();
+    PeekingIterator<ComparableCookie> newIter = newCookies.comparableIterator();
     differential.clear();
 
-    while (oldStream.hasNext() && newStream.hasNext()) {
-      ComparableCookie oldCookie = oldStream.peek();
-      ComparableCookie newCookie = newStream.peek();
+    while (oldIter.hasNext() && newIter.hasNext()) {
+      ComparableCookie oldCookie = oldIter.peek();
+      ComparableCookie newCookie = newIter.peek();
       int d = oldCookie.compareTo(newCookie);
       if (d < 0) {
         differential.add(new Delta(Operation.REMOVE, oldCookie.getCookie()));
-        oldStream.next();
+        oldIter.next();
       } else if (d > 0) {
         differential.add(new Delta(Operation.ADD, newCookie.getCookie()));
-        newStream.next();
-      } else if (!sameCookies(oldCookie.getCookie(), newCookie.getCookie())) {
-        differential.add(new Delta(Operation.MODIFY, newCookie.getCookie()));
-        oldStream.next();
-        newStream.next();
+        newIter.next();
+      } else {
+        if (!sameCookies(oldCookie.getCookie(), newCookie.getCookie())) {
+          differential.add(new Delta(Operation.MODIFY, newCookie.getCookie()));
+        }
+        oldIter.next();
+        newIter.next();
       }
     }
 
     // At most one of the next two loops will run its body.
-    while (oldStream.hasNext()) {
-      differential.add(new Delta(Operation.REMOVE, oldStream.next().getCookie()));
+    while (oldIter.hasNext()) {
+      differential.add(new Delta(Operation.REMOVE, oldIter.next().getCookie()));
     }
-    while (newStream.hasNext()) {
-      differential.add(new Delta(Operation.ADD, newStream.next().getCookie()));
+    while (newIter.hasNext()) {
+      differential.add(new Delta(Operation.ADD, newIter.next().getCookie()));
     }
 
     // Change the old set to match the new.
@@ -144,41 +145,6 @@ public class CookieDifferentiator {
 
   private static boolean sameStringIgnoreCase(String s1, String s2) {
     return (s1 == null) ? (s2 == null) : s1.equalsIgnoreCase(s2);
-  }
-
-  // Like an iterator but with an unread() method.
-  private static class CookieStream implements PeekingIterator<ComparableCookie> {
-    private Iterator<ComparableCookie> i;
-    private ComparableCookie e;
-
-    CookieStream(CookieSet cookies) {
-      i = cookies.cookies.iterator();
-      e = null;
-    }
-
-    public boolean hasNext() {
-      return e != null || i.hasNext();
-    }
-
-    public ComparableCookie next() {
-      if (e != null) {
-        ComparableCookie result = e;
-        e = null;
-        return result;
-      }
-      return i.next();
-    }
-
-    public ComparableCookie peek() {
-      if (e == null) {
-        e = i.next();
-      }
-      return e;
-    }
-
-    public void remove() {
-      throw new UnsupportedOperationException();
-    }
   }
 
   /**
