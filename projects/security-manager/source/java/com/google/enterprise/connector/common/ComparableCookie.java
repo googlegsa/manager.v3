@@ -57,7 +57,7 @@ public class ComparableCookie implements Comparable<ComparableCookie> {
     Cookie c2;
     if (o instanceof ComparableCookie) {
       c2 = ((ComparableCookie) o).getCookie();
-    } else if (o instanceof ComparableCookie) {
+    } else if (o instanceof Cookie) {
       c2 = ((Cookie) o);
     } else {
       return false;
