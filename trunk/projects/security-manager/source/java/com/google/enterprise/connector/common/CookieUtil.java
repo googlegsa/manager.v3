@@ -342,10 +342,12 @@ public final class CookieUtil {
       buffer.append(c.getName());
       buffer.append("=");
       if (c.getValue() != null) {
-        buffer.append(
-            showValues
-            ? c.getValue()
-            : c.getValue().hashCode());
+        if (showValues) {
+          buffer.append(c.getValue());
+        } else {
+          buffer.append("#");
+          buffer.append(c.getValue().hashCode());
+        }
       }
       if (shortForm) {
         continue;
@@ -359,7 +361,7 @@ public final class CookieUtil {
         buffer.append(c.getDomain());
       }
       if (c.getMaxAge() > 0) {
-        buffer.append("; Max-Age=");
+        buffer.append("; max-age=");
         buffer.append(c.getMaxAge());
       }
       if (c.getPath() != null) {
