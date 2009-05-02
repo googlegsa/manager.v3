@@ -15,10 +15,14 @@
 package com.google.enterprise.saml.common;
 
 import com.google.enterprise.common.ServletBase;
+import com.google.enterprise.connector.common.CookieDifferentiator;
+import com.google.enterprise.connector.common.CookieSet;
+import com.google.enterprise.connector.common.CookieUtil;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.server.BackEnd;
 import com.google.enterprise.security.identity.CredentialsGroup;
+import com.google.enterprise.security.identity.DomainCredentials;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import org.opensaml.common.SAMLObject;
@@ -31,6 +35,7 @@ import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
@@ -47,6 +52,12 @@ public abstract class SecurityManagerServlet extends ServletBase {
 
   /** Name of the attribute that holds the username/passwords awaiting verification. */
   protected static final String CREDENTIALS = "credentials";
+
+  /** Name of the attribute that holds the session's cookie differentiator. */
+  private static final String COOKIE_DIFFERENTIATOR_NAME = "CookieDifferentiator";
+
+  /** Name of the attribute that holds the GSA's session ID. */
+  protected static final String GSA_SESSION_ID_NAME = "GsaSessionId";
 
   /** Name of the attribute that holds the session's credentials groups. */
   private static final String CREDENTIALS_GROUPS_NAME = "CredentialsGroups";
@@ -109,22 +120,123 @@ public abstract class SecurityManagerServlet extends ServletBase {
   }
 
   /**
+   * Get a session's cookie differentiator.
+   *
+   * @param session An HTTP session.
+   * @return The cookie differentiator.
+   */
+  public static CookieDifferentiator getCookieDifferentiator(HttpSession session) {
+    CookieDifferentiator cd =
+        CookieDifferentiator.class.cast(session.getAttribute(COOKIE_DIFFERENTIATOR_NAME));
+    if (cd == null) {
+      cd = new CookieDifferentiator();
+      session.setAttribute(COOKIE_DIFFERENTIATOR_NAME, cd);
+    }
+    return cd;
+  }
+
+  /**
+   * Get a session's user-agent cookies.
+   *
+   * @param session An HTTP session.
+   * @return The cookies.
+   */
+  public static CookieSet getUserAgentCookies(HttpSession session) {
+    return getCookieDifferentiator(session).getNewCookies();
+  }
+
+  /**
    * Get a named cookie from an incoming HTTP request.
    *
-   * @param request An HTTP request.
+   * @param session An HTTP session.
    * @param name The name of the cookie to return.
    * @return The corresponding cookie, or null if no such cookie.
    */
-  protected Cookie getUserAgentCookie(HttpServletRequest request, String name) {
-    Cookie[] cookies = request.getCookies();
-    if (cookies != null) {
-      for (Cookie c: cookies) {
-        if (c.getName().equals(name)) {
-          return c;
+  public static Cookie getUserAgentCookie(HttpSession session, String name) {
+    for (Cookie c : getUserAgentCookies(session)) {
+      // According to RFC 2965, cookie names are case-insensitive.
+      if (c.getName().equalsIgnoreCase(name)) {
+        return c;
+        }
+      }
+    return null;
+  }
+
+  /**
+   * Get the GSA session ID string for a session.
+   *
+   * @param session An HTTP session.
+   * @return The session ID, or null if none available.
+   */
+  public static String getGsaSessionId(HttpSession session) {
+    String sessionId = String.class.cast(session.getAttribute(GSA_SESSION_ID_NAME));
+    if (sessionId == null) {
+      Cookie sessionCookie = getUserAgentCookie(session, GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME);
+      if (sessionCookie != null) {
+        sessionId = sessionCookie.getValue();
+        session.setAttribute(GSA_SESSION_ID_NAME, sessionId);
+      }
+    }
+    return sessionId;
+  }
+
+  /**
+   * Collect cookies from an incoming request and update our collection to match.
+   *
+   * Should be called by every servlet accepting requests from a user agent.
+   *
+   * @param request A request from a user agent.
+   */
+  protected static void updateIncomingCookies(HttpServletRequest request) {
+    CookieSet cookies = getUserAgentCookies(request.getSession());
+    cookies.clear();
+    Cookie[] cookies2 = request.getCookies();
+    if (cookies2 != null) {
+      for (Cookie c : cookies2) {
+        cookies.add(c);
+      }
+    }
+    getCookieDifferentiator(request.getSession()).commitStep();
+  }
+
+  /**
+   * Collect new cookies from the authentication connectors and forward to user agent.
+   *
+   * Each newly received cookie is sent back, unless its name conflicts with one of the
+   * cookies we've received from the user agent.
+   *
+   * @param request A request from a user agent.
+   * @param response The response being prepared to send back.
+   */
+  protected static void updateOutgoingCookies(
+      HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
+    CookieSet cookies = getUserAgentCookies(request.getSession());
+    CookieSet newCookies = new CookieSet();
+
+    // Find all new IdP cookies that don't conflict with incoming cookies.
+    for (CredentialsGroup cg : getCredentialsGroups(request)) {
+      for (DomainCredentials dc : cg.getElements()) {
+        CookieDifferentiator diff = dc.getDifferentiator();
+        diff.commitStep();
+        for (CookieDifferentiator.Delta delta : diff.getDifferential()) {
+          Cookie c = delta.getCookie();
+          switch (delta.getOperation()) {
+            case ADD:
+            case MODIFY:
+              if (!CookieUtil.hasCookieNamed(c.getName(), cookies)) {
+                newCookies.add(c);
+              }
+              break;
+          }
         }
       }
     }
-    return null;
+
+    // Send all those cookies back to the user agent.
+    for (Cookie c : newCookies) {
+      response.addCookie(c);
+    }
   }
 
   protected static List<CredentialsGroup> getCredentialsGroups(HttpServletRequest request)
