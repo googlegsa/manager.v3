@@ -14,6 +14,7 @@
 
 package com.google.enterprise.security.identity;
 
+import com.google.enterprise.common.CookieUtil;
 import com.google.enterprise.connector.spi.AbstractAuthnIdentity;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
@@ -94,20 +95,18 @@ public class DomainCredentials extends AbstractAuthnIdentity {
     return cookies;
   }
 
-  private String dumpCookies() {
-    StringBuilder sb = new StringBuilder();
-    for (Cookie c : cookies) {
-      sb.append(c.getName() + "::" + c.getValue() + ";");
-    }
-    return sb.toString();
-  }
-
   /**
    * Generate a string giving an outline of the contents.
    *
    * @return The outline string.
    */
   public String dumpInfo() {
-    return getUsername() + ":" + getPassword() + ":" + dumpCookies();
+    StringBuilder sb = new StringBuilder();
+    sb.append(getUsername());
+    sb.append(":");
+    sb.append(getPassword().hashCode());
+    sb.append("; ");
+    sb.append(CookieUtil.cookieHeaderValue(getCookies(), false));
+    return sb.toString();
   }
 }
