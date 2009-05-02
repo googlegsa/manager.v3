@@ -1,10 +1,10 @@
-// Copyright 2008 Google Inc. All Rights Reserved.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.security.connectors.formauth;
+package com.google.enterprise.connector.common;
 
 import com.google.common.collect.Lists;
 import com.google.parser.Callback;
@@ -30,12 +30,10 @@ import java.util.logging.Logger;
 /**
  * Utility for parsing the Set-Cookie and Set-Cookie2 http header. Parser
  * derived from RFC 2109 (for Set-Cookie) and RFC 2965 (for Set-Cookie2)
- *
  */
-
 public class SetCookieParser {
   private static final Logger logger_ =
-    Logger.getLogger("com.google.httputil.SetCookieParser");
+      Logger.getLogger(SetCookieParser.class.getName());
 
   private static final Parser<Result> setCookieParser_;
 

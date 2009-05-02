@@ -15,8 +15,8 @@
 package com.google.enterprise.saml.server;
 
 import com.google.enterprise.common.SecurityManagerTestCase;
+import com.google.enterprise.connector.common.CookieUtil;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
-import com.google.enterprise.security.connectors.formauth.CookieUtil;
 import com.google.enterprise.security.identity.AuthnDomain;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
@@ -26,7 +26,6 @@ import org.springframework.mock.web.MockHttpSession;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import javax.servlet.http.Cookie;
 
@@ -83,7 +82,7 @@ public class BackEndImplTest extends SecurityManagerTestCase {
     backend.updateSessionManager(sid, cgList);
     assertEquals("user", backend.adapter.getUsername(sid));
     assertEquals("password", backend.adapter.getPassword(sid));
-    Vector<Cookie> cookies = CookieUtil.deserializeCookies(backend.adapter.getCookies(sid));
+    List<Cookie> cookies = CookieUtil.deserializeCookies(backend.adapter.getCookies(sid));
     assertEquals(1, cookies.size());
     assertEquals("cookieOne", cookies.get(0).getName());
     assertEquals("cookieOneVal", cookies.get(0).getValue());

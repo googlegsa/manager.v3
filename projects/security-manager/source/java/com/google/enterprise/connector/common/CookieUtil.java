@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.security.connectors.formauth;
+package com.google.enterprise.connector.common;
 
 import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.common.ServletBase;
-import com.google.enterprise.connector.common.Base64;
-import com.google.enterprise.connector.common.Base64DecoderException;
 import com.google.enterprise.saml.common.GsaConstants;
 
 import java.io.IOException;
@@ -27,12 +25,12 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,7 +62,7 @@ public final class CookieUtil {
    *  @param url The URL to fetch
    *  @param proxy The proxy String of form host:port if so desired
    *  @param userAgent The string to send in the user agent header
-   *  @param cookies A Vector of existing cookie to be sent, newly
+   *  @param cookies A collection of existing cookie to be sent, newly
    *                 received cookies will be stored in here as well.
    *  @param bodyBuffer A StringBuffer to store response body. Ignored if null
    *  @param redirectBuffer A StringBuffer to store the redirect URL
@@ -85,7 +83,7 @@ public final class CookieUtil {
                               URL url,
                               String proxy,
                               String userAgent,
-                              Vector<Cookie> cookies,
+                              Collection<Cookie> cookies,
                               StringBuffer bodyBuffer,
                               StringBuffer redirectBuffer,
                               Set<String> passwordFields,
@@ -132,13 +130,8 @@ public final class CookieUtil {
     }
 
     if (cookies != null) {
-      List<SetCookie> newCookies = new ArrayList<SetCookie>();
-      for (String value: exchange.getResponseHeaderValues("Set-Cookie")) {
-        newCookies.addAll(SetCookieParser.parse(value));
-      }
-      for (String value: exchange.getResponseHeaderValues("Set-Cookie2")) {
-        newCookies.addAll(SetCookieParser.parse(value));
-      }
+      List<SetCookie> newCookies = parseHttpResponseCookies(exchange);
+
       // removing duplicate cookies in old Vector. We do it inefficient way
       // O(n^2) here for small Vectors
       List<Cookie> cookiesToRemove = new ArrayList<Cookie>();
@@ -220,7 +213,7 @@ public final class CookieUtil {
    * @return The absolute URL from a <code>Refresh</code> or
    *         <code>Location</code> header. Return null if none exists
    */
-  public static String getRedirectUrl(HttpExchange exchange, URL url) {
+  private static String getRedirectUrl(HttpExchange exchange, URL url) {
     int status = exchange.getStatusCode();
     if (status == 200) {
       return getRefreshUrl(exchange);
@@ -263,7 +256,7 @@ public final class CookieUtil {
    *  @param url The target URL.
    *  @return A String to be used as value of a "Cookie" header
    */
-  private static String filterCookieToSend(Vector<Cookie> cookies, URL url) {
+  private static String filterCookieToSend(Collection<Cookie> cookies, URL url) {
     if (cookies == null || cookies.size() == 0)
       return null;
     StringBuilder buffer = new StringBuilder();
@@ -280,55 +273,123 @@ public final class CookieUtil {
     return buffer.toString();
   }
 
-  /** Check if a cookie is good for a given target URL.
-   *  @param cookie The cookie to be filtered
-   *  @param url The java.net.URL object to be tested against
-   *  @return If the cookie is valid to be sent to the URL.
+  /**
+   * Check if a cookie is good for a given target URL.
+   *
+   * @param cookie The cookie to be filtered
+   * @param url The URL object to be tested against
+   * @return If the cookie is valid to be sent to the URL.
    */
-  private static boolean isCookieGoodFor(Cookie cookie, java.net.URL url) {
+  public static boolean isCookieGoodFor(Cookie cookie, URL url) {
     if (!undefined(cookie.getDomain()) &&
-        !url.getHost().endsWith(cookie.getDomain())) {
+        !url.getHost().toLowerCase().endsWith(cookie.getDomain().toLowerCase())) {
       return false;
     }
     if (!undefined(cookie.getPath()) &&
         !url.getPath().startsWith(cookie.getPath())) {
       return false;
     }
-    if (cookie.getSecure() && !"https".equals(url.getProtocol())) {
+    if (cookie.getSecure() && !"https".equalsIgnoreCase(url.getProtocol())) {
       return false;
     }
     return true;
   }
 
   /**
-   *  Return a multi-line String of Set-Cookie header, ready to
-   *  send to User-Agent.
-   *  Since the Vector may contains Cookie from user-agent and Cookie from
-   *  @param cookies Vector of Cookie
-   *  @return A String value that can be used in a Set-Cookie header.
+   * Convert a collection of cookies into a form suitable for use in a "Cookie:" header.
+   *
+   * @param cookies The cookies to convert.
+   * @param showValues If false, replace each cookie's value with its hash code.
+   *        This should be false when using the result for logging.
+   * @return The string representation of the cookies.
    */
-  public static String toSetCookieString(Vector<Cookie> cookies) {
-    StringBuilder strbuf = new StringBuilder();
-    boolean first = true;
-    for (Cookie cookie : cookies) {
-      if (first) {
-        first = false;
-      } else {
-        strbuf.append("\nSet-Cookie: ");
-      }
-
-      if (!(cookie instanceof SetCookie)) {
-        SetCookie temp = new SetCookie(cookie.getName(), cookie.getValue());
-        cookie = temp;
-      }
-
-      String cookieStr = ((SetCookie)cookie).toString();
-      LOG.fine("Set-Cookie: " + cookieStr);
-      strbuf.append(cookieStr);
-    }
-    return strbuf.toString();
+  public static String cookieHeaderValue(Collection<Cookie> cookies, boolean showValues) {
+    return convertCookies(cookies, showValues, true);
   }
 
+  /**
+   * Convert a collection of cookies into a form suitable for use in a "Set-Cookie:" header.
+   *
+   * @param cookies The cookies to convert.
+   * @param showValues If false, replace each cookie's value with its hash code.
+   *        This should be false when using the result for logging.
+   * @return The string representation of the cookies.
+   */
+  public static String setCookieHeaderValue(Collection<Cookie> cookies, boolean showValues) {
+    return convertCookies(cookies, showValues, false);
+  }
+
+  private static String convertCookies(Collection<Cookie> cookies,
+                                       boolean showValues, boolean shortForm) {
+    if (cookies.size() == 0) {
+      return null;
+    }
+    StringBuffer buffer = new StringBuffer();
+    for (Cookie c: cookies) {
+      if (buffer.length() > 0) {
+        buffer.append(shortForm ? "; " : ", ");
+      }
+      buffer.append(c.getName());
+      buffer.append("=");
+      if (c.getValue() != null) {
+        buffer.append(
+            showValues
+            ? c.getValue()
+            : c.getValue().hashCode());
+      }
+      if (shortForm) {
+        continue;
+      }
+      if (c.getComment() != null) {
+        buffer.append("; comment=");
+        buffer.append(c.getComment());
+      }
+      if (c.getDomain() != null) {
+        buffer.append("; domain=");
+        buffer.append(c.getDomain());
+      }
+      if (c.getMaxAge() > 0) {
+        buffer.append("; Max-Age=");
+        buffer.append(c.getMaxAge());
+      }
+      if (c.getPath() != null) {
+        buffer.append("; path=");
+        buffer.append(c.getPath());
+      }
+      if (c.getVersion() != -1) {
+        buffer.append("; version=");
+        buffer.append(String.valueOf(c.getVersion()));
+      }
+      if (c.getSecure()) {
+        buffer.append("; secure");
+      }
+    }
+    return buffer.toString();
+  }
+
+  /**
+   * Parse the Set-Cookie headers in an HTTP response.
+   *
+   * @param exchange The exchange containing the headers.
+   * @return A list of parsed cookies.
+   */
+  public static List<SetCookie> parseHttpResponseCookies(HttpExchange exchange) {
+    List<SetCookie> cookies = new ArrayList<SetCookie>();
+    for (String value: exchange.getResponseHeaderValues("Set-Cookie")) {
+      cookies.addAll(SetCookieParser.parse(value));
+    }
+    for (String value: exchange.getResponseHeaderValues("Set-Cookie2")) {
+      cookies.addAll(SetCookieParser.parse(value));
+    }
+    return cookies;
+  }
+
+  /**
+   * Serialize a cookie for storage in the GSA session manager.
+   *
+   * @param cookie The cookie to serialize.
+   * @return The cookie's session-manager serialization.
+   */
   public static String serializeCookie(Cookie cookie) {
     StringBuilder str = new StringBuilder(safeSerialize(cookie.getName()));
     str.append(GsaConstants.COOKIE_FIELD_SEPERATOR);
@@ -342,7 +403,13 @@ public final class CookieUtil {
     return str.toString();
   }
 
-  public static String serializeCookies(Vector<Cookie> cookies) {
+  /**
+   * Serialize a collection of cookies for storage in the GSA session manager.
+   *
+   * @param cookies The cookies to serialize.
+   * @return The cookies' session-manager serialization.
+   */
+  public static String serializeCookies(Collection<Cookie> cookies) {
     StringBuilder str = new StringBuilder();
     for (Cookie cookie : cookies) {
       str.append(serializeCookie(cookie));
@@ -356,6 +423,12 @@ public final class CookieUtil {
     return Base64.encodeWebSafe(str.getBytes(), false);
   }
 
+  /**
+   * Deserialize a cookie from the GSA session manager.
+   *
+   * @param str The cookie's session-manager serialization.
+   * @return The corresponding cookie.
+   */
   public static Cookie deserializeCookie(String str) {
     String[] elements = str.split(GsaConstants.COOKIE_FIELD_SEPERATOR);
     Cookie cookie = new Cookie(safeDeserialize(elements[0]),
@@ -367,8 +440,14 @@ public final class CookieUtil {
     return cookie;
   }
 
-  public static Vector<Cookie> deserializeCookies(String str) {
-    Vector<Cookie> cookies = new Vector<Cookie>();
+  /**
+   * Deserialize a collection of cookies from the GSA session manager.
+   *
+   * @param str The cookies' session-manager serialization.
+   * @return A list of the corresponding cookies.
+   */
+  public static List<Cookie> deserializeCookies(String str) {
+    List<Cookie> cookies = new ArrayList<Cookie>();
     String[] elements = str.split(GsaConstants.COOKIE_RECORD_SEPARATOR);
     for (String element : elements) {
       cookies.add(deserializeCookie(element));

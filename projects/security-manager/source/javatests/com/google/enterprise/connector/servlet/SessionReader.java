@@ -15,16 +15,15 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.common.base.Preconditions;
+import com.google.enterprise.connector.common.CookieUtil;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.server.BackEndImpl;
-import com.google.enterprise.security.connectors.formauth.CookieUtil;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Vector;
 import java.util.logging.Logger;
 
 import javax.servlet.http.Cookie;
@@ -91,8 +90,7 @@ public class SessionReader extends HttpServlet {
 
     StringBuilder dCookies = new StringBuilder("");
     if ("null" != cookies && !(cookies.length() != 0)) {
-      Vector<Cookie> v = CookieUtil.deserializeCookies(cookies);
-      for (Cookie c : v) {
+      for (Cookie c : CookieUtil.deserializeCookies(cookies)) {
         dCookies.append(c.getName() + ":" + c.getValue() + "<br>");
       }
     }
