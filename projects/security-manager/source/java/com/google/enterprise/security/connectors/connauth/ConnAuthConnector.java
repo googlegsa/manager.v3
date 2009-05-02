@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
 
 package com.google.enterprise.security.connectors.connauth;
 
-import com.google.enterprise.common.HttpClientInterface;
 import com.google.enterprise.common.HttpExchange;
+import com.google.enterprise.common.SecurityManagerUtil;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
@@ -42,14 +42,12 @@ import java.util.logging.Logger;
 
 public class ConnAuthConnector implements Connector, Session, AuthenticationManager {
 
-  private final HttpClientInterface httpClient;
   @SuppressWarnings("unused")
   private final String spiVersion;
   private static final Logger LOGGER =
     Logger.getLogger(ConnAuthConnector.class.getName());
 
-  public ConnAuthConnector(HttpClientInterface httpClient, String spiVersion) {
-    this.httpClient = httpClient;
+  public ConnAuthConnector(String spiVersion) {
     this.spiVersion = spiVersion;
   }
 
@@ -80,7 +78,7 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
     String request = createAuthnRequest(username, password);
     HttpExchange exchange;
     try {
-      exchange = httpClient.postExchange(new URL(siteUri), null);
+      exchange = SecurityManagerUtil.getHttpClient().postExchange(new URL(siteUri), null);
     } catch (MalformedURLException e2) {
       LOGGER.warning("Bad URL for connector manager: " + siteUri);
       identity.setVerificationStatus(VerificationStatus.INDETERMINATE);

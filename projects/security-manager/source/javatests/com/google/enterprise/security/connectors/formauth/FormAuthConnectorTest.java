@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
 
 package com.google.enterprise.security.connectors.formauth;
 
-import com.google.enterprise.common.HttpClientInterface;
 import com.google.enterprise.common.MockHttpClient;
 import com.google.enterprise.common.MockHttpTransport;
 import com.google.enterprise.common.SecurityManagerTestCase;
+import com.google.enterprise.common.SecurityManagerUtil;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
@@ -31,7 +31,6 @@ import javax.servlet.ServletException;
 
 public class FormAuthConnectorTest extends SecurityManagerTestCase {
 
-  private final HttpClientInterface httpClient;
   private final CredentialsGroup cg;
 
   public FormAuthConnectorTest(String name) throws IOException, ServletException {
@@ -42,7 +41,7 @@ public class FormAuthConnectorTest extends SecurityManagerTestCase {
     MockHttpTransport transport = new MockHttpTransport();
     transport.registerServlet(cg.getElements().get(0).getSampleUrl(),
                               new MockFormAuthServer1());
-    httpClient = new MockHttpClient(transport);
+    SecurityManagerUtil.setHttpClient(new MockHttpClient(transport));
   }
 
   public void testGood() {
@@ -62,8 +61,7 @@ public class FormAuthConnectorTest extends SecurityManagerTestCase {
     cg.setPassword(password);
     DomainCredentials dCred = cg.getElements().get(0);
     dCred.clearCookies();
-    AuthenticationResponse response =
-        (new FormAuthConnector(httpClient, "foo")).authenticate(dCred);
+    AuthenticationResponse response = (new FormAuthConnector("foo")).authenticate(dCred);
     assertNotNull("Null response from authenticate()", response);
     return response.isValid() && (dCred.getCookies().size() > 0);
   }

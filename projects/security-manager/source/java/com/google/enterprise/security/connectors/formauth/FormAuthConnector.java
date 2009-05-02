@@ -14,8 +14,8 @@
 
 package com.google.enterprise.security.connectors.formauth;
 
-import com.google.enterprise.common.HttpClientInterface;
 import com.google.enterprise.common.HttpExchange;
+import com.google.enterprise.common.SecurityManagerUtil;
 import com.google.enterprise.common.ServletBase;
 import com.google.enterprise.common.StringPair;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
@@ -45,15 +45,13 @@ import javax.servlet.http.Cookie;
 
 public class FormAuthConnector implements Connector, Session, AuthenticationManager {
 
-  private final HttpClientInterface httpClient;
   @SuppressWarnings("unused")
   private final String cookieName;
 
   private static final Logger LOGGER =
     Logger.getLogger(FormAuthConnector.class.getName());
 
-  public FormAuthConnector(HttpClientInterface httpClient, String cookieName) {
-    this.httpClient = httpClient;
+  public FormAuthConnector(String cookieName) {
     this.cookieName = cookieName; // TODO for cookie cracker use
   }
 
@@ -157,7 +155,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     int kMaxNumRedirectsToFollow = 4;
 
     while (true) {
-      CookieUtil.fetchPage(httpClient.getExchange(url),
+      CookieUtil.fetchPage(SecurityManagerUtil.getHttpClient().getExchange(url),
                            url,
                            null, // proxy,
                            "SecMgr", cookies,
@@ -262,7 +260,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     int status = 0;
     int kMaxNumRedirectsToFollow = 4;
     // post only once, follow redirect if needed
-    HttpExchange exchange = httpClient.postExchange(url, parameters);
+    HttpExchange exchange = SecurityManagerUtil.getHttpClient().postExchange(url, parameters);
 
     while (true) {
       status = CookieUtil.fetchPage(exchange, url,
@@ -279,7 +277,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
         }
         // prepare for another fetch.
         url = new URL(url, redirected);
-        exchange = httpClient.getExchange(url);
+        exchange = SecurityManagerUtil.getHttpClient().getExchange(url);
       } else {
         break;
       }
@@ -295,7 +293,8 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     return result;
   }
 
-  private static boolean anyCookiesChanged(Collection<Cookie> newCookies, Collection<Cookie> oldCookies) {
+  private static boolean anyCookiesChanged(Collection<Cookie> newCookies,
+                                           Collection<Cookie> oldCookies) {
     for (Cookie c: newCookies) {
       if (!containsCookie(oldCookies, c, true)) {
         return true;
@@ -304,7 +303,8 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     return false;
   }
 
-  private static boolean containsCookie(Collection<Cookie> cookies, Cookie cookie, boolean considerValue) {
+  private static boolean containsCookie(Collection<Cookie> cookies, Cookie cookie,
+                                        boolean considerValue) {
     for (Cookie c: cookies) {
       if (compareCookies(c, cookie, considerValue)) {
         return true;
