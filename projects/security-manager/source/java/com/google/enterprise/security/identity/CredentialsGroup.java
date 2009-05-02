@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Vector;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpSession;
 
 /**
  * This class models the per-session information for a credentials group, which is a set
@@ -32,19 +33,22 @@ import javax.servlet.http.Cookie;
 public class CredentialsGroup {
 
   private final AuthnDomainGroup configInfo;
+  private final HttpSession session;
   private final List<DomainCredentials> elements;
   private String username;
   private String password;
 
-  private CredentialsGroup(AuthnDomainGroup configInfo) {
+  private CredentialsGroup(AuthnDomainGroup configInfo, HttpSession session) {
     this.configInfo = configInfo;
+    this.session = session;
     elements = new ArrayList<DomainCredentials>();
   }
 
-  public static List<CredentialsGroup> newGroups(List<AuthnDomainGroup> adgs) {
+  public static List<CredentialsGroup> newGroups(
+      List<AuthnDomainGroup> adgs, HttpSession session) {
     List<CredentialsGroup> cgs = new ArrayList<CredentialsGroup>();
     for (AuthnDomainGroup adg : adgs) {
-      CredentialsGroup cg = new CredentialsGroup(adg);
+      CredentialsGroup cg = new CredentialsGroup(adg, session);
       for (AuthnDomain ad : adg.getElements()) {
         new DomainCredentials(ad, cg);
       }
@@ -54,8 +58,12 @@ public class CredentialsGroup {
   }
 
   // Used for testing only:
-  static CredentialsGroup dummy() {
-    return new CredentialsGroup(null);
+  static CredentialsGroup dummy(HttpSession session) {
+    return new CredentialsGroup(null, session);
+  }
+
+  public HttpSession getSession() {
+    return session;
   }
 
   public String getHumanName() {
