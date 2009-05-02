@@ -65,8 +65,8 @@ public class OmniFormHtml {
     for (int i = 0; i < formElements.size(); i++) {
       FormElement formElem = formElements.get(i);
       if (formElem.isActive()) {
-        LOGGER.info("Retrieved username: " + request.getParameter("u"+i));
-        LOGGER.info("Retrieved password: #" + request.getParameter("pw"+i).hashCode());
+        LOGGER.info("Retrieved username/password: " + request.getParameter("u"+i) +
+                    "/#" + request.getParameter("pw"+i).hashCode());
         formElem.setUsername(request.getParameter("u" + i));
         formElem.setPassword(request.getParameter("pw" + i));
       }
