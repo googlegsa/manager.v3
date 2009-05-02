@@ -17,6 +17,7 @@ package com.google.enterprise.connector.spi;
 import java.util.Collection;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpSession;
 
 /**
  * An extension to the connector manager's identity model to support additional identity
@@ -25,9 +26,18 @@ import javax.servlet.http.Cookie;
 public interface SecAuthnIdentity extends AuthenticationIdentity {
 
   /**
+   * Get the session for this identity.
+   *
+   * @return The identity's session object.
+   */
+  public HttpSession getSession();
+
+  /**
    * Get the cookies associated with this identity.
-   * Don't modify the result; the implementation should return an immutable copy.
-   * @return A collection of cookie objects.
+   *
+   * These are the cookies received from the IdP.  This collection may be modified.
+   *
+   * @return The identity's cookies.
    */
   public Collection<Cookie> getCookies();
 

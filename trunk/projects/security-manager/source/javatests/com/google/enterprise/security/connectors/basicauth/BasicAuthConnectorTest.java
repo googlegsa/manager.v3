@@ -26,6 +26,8 @@ import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
 
+import org.springframework.mock.web.MockHttpSession;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +46,7 @@ public class BasicAuthConnectorTest extends SecurityManagerTestCase {
     new AuthnDomain(
         "BasicDomain", AuthNMechanism.BASIC_AUTH,
         "http://localhost:8973/basic/", adgs.get(0));
-    cgs = CredentialsGroup.newGroups(adgs);
+    cgs = CredentialsGroup.newGroups(adgs, new MockHttpSession());
     MockHttpTransport transport = new MockHttpTransport();
     transport.registerServlet(cgs.get(0).getElements().get(0).getSampleUrl(),
                               new MockBasicAuthServer.Server1());

@@ -282,7 +282,7 @@ public class SamlAuthn extends SecurityManagerServlet
     HttpSession session = request.getSession();
     List<CredentialsGroup> groups = sessionCredentialsGroups(session);
     if (null == groups) {
-      groups = CredentialsGroup.newGroups(getBackEnd().getAuthnDomainGroups());
+      groups = CredentialsGroup.newGroups(getBackEnd().getAuthnDomainGroups(), session);
       session.setAttribute(CREDENTIALS_GROUPS_NAME, groups);
     }
     return groups;

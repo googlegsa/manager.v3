@@ -22,6 +22,8 @@ import com.google.enterprise.security.identity.AuthnDomainGroup;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.manager.LocalSessionManager;
 
+import org.springframework.mock.web.MockHttpSession;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -57,7 +59,7 @@ public class BackEndImplTest extends SecurityManagerTestCase {
   }
 
   public void testUpdateSessionManager() {
-    List<CredentialsGroup> cgs = CredentialsGroup.newGroups(adgs);
+    List<CredentialsGroup> cgs = CredentialsGroup.newGroups(adgs, new MockHttpSession());
     CredentialsGroup basicCG = cgs.get(0);
     CredentialsGroup formsCG = cgs.get(1);
     // CredentialsGroup connectorCG = cgs.get(2);
