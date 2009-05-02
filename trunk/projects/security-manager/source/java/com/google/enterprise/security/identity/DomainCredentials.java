@@ -14,13 +14,12 @@
 
 package com.google.enterprise.security.identity;
 
+import com.google.enterprise.connector.common.CookieDifferentiator;
 import com.google.enterprise.connector.common.CookieUtil;
 import com.google.enterprise.connector.spi.AbstractAuthnIdentity;
 import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpSession;
@@ -36,13 +35,13 @@ public class DomainCredentials extends AbstractAuthnIdentity {
 
   private final AuthnDomain configInfo;
   private final CredentialsGroup cg;
-  private final List<Cookie> cookies;
+  private final CookieDifferentiator differentiator;
 
   DomainCredentials(AuthnDomain configInfo, CredentialsGroup cg) {
     super();
     this.configInfo = configInfo;
     this.cg = cg;
-    cookies = new ArrayList<Cookie>();
+    differentiator = new CookieDifferentiator();
     cg.addElement(this);
   }
 
@@ -92,7 +91,16 @@ public class DomainCredentials extends AbstractAuthnIdentity {
 
   /* @Override */
   public Collection<Cookie> getCookies() {
-    return cookies;
+    return differentiator.getNewCookies();
+  }
+
+  /**
+   * Get this identity's cookie differentiator.
+   *
+   * @return The cookie differentiator.
+   */
+  public CookieDifferentiator getDifferentiator() {
+    return differentiator;
   }
 
   /**
