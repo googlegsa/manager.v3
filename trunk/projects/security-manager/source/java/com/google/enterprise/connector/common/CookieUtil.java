@@ -366,7 +366,7 @@ public final class CookieUtil {
         buffer.append("; path=");
         buffer.append(c.getPath());
       }
-      if (c.getVersion() != -1) {
+      if (c.getVersion() > 0) {
         buffer.append("; version=");
         buffer.append(String.valueOf(c.getVersion()));
       }
