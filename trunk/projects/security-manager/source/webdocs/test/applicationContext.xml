@@ -17,10 +17,38 @@
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.SpringInstantiator">
     <constructor-arg><null/></constructor-arg>
+    <property name="scheduler" ref="TraversalScheduler"/>
   </bean>
 
   <bean id="ConnectorConfigStore"
         class="com.google.enterprise.connector.persist.FileStore">
+  </bean>
+
+  <bean id="ConnectorScheduleStore"
+        class="com.google.enterprise.connector.persist.FileStore">
+  </bean>
+
+  <bean id="ConnectorStateStore"
+        class="com.google.enterprise.connector.persist.FileStore">
+  </bean>
+
+  <!-- Spring does not like to call static setters to do injection of class
+       field values.  This StaticInitializerBeanFactoryPostProcessor can
+       perform that function, even though the syntax for doing so is not
+       as convenient.
+  -->
+  <bean class="com.google.enterprise.connector.common.StaticInitializerBeanFactoryPostProcessor">
+     <property name="classes">
+        <map>
+          <entry key="com.google.enterprise.connector.instantiator.InstanceInfo">
+            <map>
+              <entry key="connectorConfigStore" value-ref="ConnectorConfigStore"/>
+              <entry key="connectorScheduleStore" value-ref="ConnectorScheduleStore"/>
+              <entry key="connectorStateStore" value-ref="ConnectorStateStore"/>
+            </map>
+          </entry>
+        </map>
+     </property>
   </bean>
 
   <bean id="IdentityConfig"
