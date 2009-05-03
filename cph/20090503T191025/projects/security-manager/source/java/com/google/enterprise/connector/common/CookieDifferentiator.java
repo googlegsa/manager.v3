@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.common;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.PeekingIterator;
 
 import java.util.ArrayList;
@@ -30,37 +29,20 @@ public class CookieDifferentiator {
 
   public enum Operation { ADD, REMOVE, MODIFY };
 
-  private final CookieSet oldCookies;
-  private final CookieSet newCookies;
-  private final List<Delta> differential;
-
-  public CookieDifferentiator() {
-    oldCookies = new CookieSet();
-    newCookies = new CookieSet();
-    differential = new ArrayList<Delta>();
+  private CookieDifferentiator() {
   }
 
   /**
-   * Get the new cookie set.
+   * Compute the differences between two cookie sets.
    *
-   * @return The new cookie set, which may be examined or modified as needed.
+   * @return A list of deltas comprising the differential.
    */
-  public CookieSet getNewCookies() {
-    return newCookies;
-  }
-
-  /**
-   * Compute the differences between the old and new sets.
-   *
-   * This compares the old cookie set to the new, computing and storing a set of
-   * differences.  Then the old cookie set is modified to match the new one.
-   */
-  public void commitStep() {
+  public static List<Delta> differentiate(CookieSet oldCookies, CookieSet newCookies) {
 
     // Generate the deltas.
     PeekingIterator<ComparableCookie> oldIter = oldCookies.comparableIterator();
     PeekingIterator<ComparableCookie> newIter = newCookies.comparableIterator();
-    differential.clear();
+    List<Delta> differential = new ArrayList<Delta>();
 
     while (oldIter.hasNext() && newIter.hasNext()) {
       ComparableCookie oldCookie = oldIter.peek();
@@ -89,40 +71,7 @@ public class CookieDifferentiator {
       differential.add(new Delta(Operation.ADD, newIter.next().getCookie()));
     }
 
-    // Change the old set to match the new.
-    oldCookies.clear();
-    oldCookies.addAll(newCookies);
-  }
-
-  /**
-   * Undo any changes made to the new cookies since the last differentiation.
-   */
-  public void abortStep() {
-    newCookies.clear();
-    newCookies.addAll(oldCookies);
-  }
-
-  /**
-   * Get the previously computed differential.
-   *
-   * @return A list of deltas comprising the differential.
-   */
-  public List<Delta> getDifferential() {
-    return ImmutableList.copyOf(differential);
-  }
-
-  /**
-   * Determine whether cookies were added in the differential.
-   *
-   * @return True iff at least one cookie was added.
-   */
-  public boolean hasAddedCookies() {
-    for (Delta delta : differential) {
-      if (delta.getOperation() == Operation.ADD) {
-        return true;
-      }
-    }
-    return false;
+    return differential;
   }
 
   // Compare ALL of the cookies' fields.
