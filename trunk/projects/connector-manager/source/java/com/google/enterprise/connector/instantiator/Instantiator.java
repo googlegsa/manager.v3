@@ -21,6 +21,7 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.scheduler.Scheduler;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.Locale;
@@ -221,4 +222,11 @@ public interface Instantiator {
    * Shutdown all the Connector instances.
    */
   public void shutdown();
+
+  /**
+   * Set the Scheduler.  Used for Dependency Injection.
+   *
+   * @param scheduler a Scheduler.
+   */
+  public void setScheduler(Scheduler scheduler);
 }

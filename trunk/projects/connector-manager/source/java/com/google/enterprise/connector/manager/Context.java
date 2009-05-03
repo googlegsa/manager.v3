@@ -18,6 +18,7 @@ import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.pusher.GsaFeedConnection;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
 import com.google.enterprise.connector.spi.TraversalContext;
@@ -149,7 +150,6 @@ public class Context {
   // singletons
   private Manager manager = null;
   private TraversalScheduler traversalScheduler = null;
-  private Thread schedulerThread = null;
   private TraversalContext traversalContext = null;
 
   // control variables for turning off normal functionality - testing only
@@ -274,8 +274,7 @@ public class Context {
   }
 
   /**
-   * Start up the scheduler.
-   *
+   * Start up the Scheduler.
    */
   private void startScheduler() {
     if (traversalScheduler != null) {
@@ -285,8 +284,17 @@ public class Context {
         (TraversalScheduler) getRequiredBean("TraversalScheduler",
             TraversalScheduler.class);
     traversalScheduler.init();
-    schedulerThread = new Thread(traversalScheduler, "TraversalScheduler");
-    schedulerThread.start();
+  }
+
+  /**
+   * Start up the Instantiator.
+   */
+  private void startInstantiator() {
+    SpringInstantiator instantiator =
+        (SpringInstantiator) getBean("Instantiator", SpringInstantiator.class);
+    if (instantiator != null) {
+      instantiator.init();
+    }
   }
 
   /**
@@ -299,6 +307,7 @@ public class Context {
     if (applicationContext == null) {
       setServletContext();
     }
+    startInstantiator();
     if (isFeeding) {
       startScheduler();
     }
@@ -484,7 +493,6 @@ public class Context {
     return manager;
   }
 
-
   /**
    * Gets the singleton TraversalContext.
    *
@@ -504,7 +512,6 @@ public class Context {
     }
     return traversalContext;
   }
-
 
   /**
    * Throws out the current context instance and gets another one. For testing

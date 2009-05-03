@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -45,6 +44,7 @@ public class SpringInstantiator implements Instantiator {
   TypeMap typeMap = null;
   InstanceMap instanceMap = null;
   Pusher pusher;
+  Scheduler scheduler;
   Map<String, ConnectorInterfaces> connectorCache;
 
   /**
@@ -71,15 +71,25 @@ public class SpringInstantiator implements Instantiator {
     this.instanceMap = new InstanceMap(typeMap);
   }
 
-  /*
-   * Initializes the Context, post bean construction.
-   * NOTE: Object lock must be held to call this method.
+  /**
+   * Set the Scheduler.
+   *
+   * @param scheduler a Scheduler.
    */
-  private void initialize() {
+  /* Setter Injector */
+  public void setScheduler(Scheduler scheduler) {
+    this.scheduler = scheduler;
+  }
+
+  /**
+   * Initializes the Context, post bean construction.
+   */
+  public synchronized void init() {
     if (typeMap != null) {
       return;
     }
     LOGGER.info("Initializing instantiator");
+
     typeMap = new TypeMap();
     instanceMap = new InstanceMap(typeMap);
   }
@@ -103,10 +113,7 @@ public class SpringInstantiator implements Instantiator {
    *      #removeConnector(java.lang.String)
    */
   public synchronized void removeConnector(String connectorName) {
-    initialize();
     LOGGER.info("Dropping connector: " + connectorName);
-    Scheduler scheduler = (Scheduler) Context.getInstance().
-        getBean("TraversalScheduler", Scheduler.class);
     connectorCache.remove(connectorName);
     instanceMap.removeConnector(connectorName);
     if (scheduler != null) {
@@ -139,7 +146,6 @@ public class SpringInstantiator implements Instantiator {
 
   private synchronized InstanceInfo getInstanceInfo(String connectorName)
       throws ConnectorNotFoundException {
-    initialize();
     InstanceInfo instanceInfo = instanceMap.get(connectorName);
     if (instanceInfo == null) {
       throw new ConnectorNotFoundException("Connector not found: "
@@ -198,7 +204,6 @@ public class SpringInstantiator implements Instantiator {
    */
   public synchronized ConnectorType getConnectorType(String connectorTypeName)
       throws ConnectorTypeNotFoundException {
-    initialize();
     TypeInfo typeInfo = typeMap.getTypeInfo(connectorTypeName);
     if (typeInfo == null) {
       throw new ConnectorTypeNotFoundException("Connector Type not found: "
@@ -214,7 +219,6 @@ public class SpringInstantiator implements Instantiator {
    *      #getConnectorTypeNames()
    */
   public synchronized Set<String> getConnectorTypeNames() {
-    initialize();
     return Collections.unmodifiableSet(new TreeSet<String>(typeMap.keySet()));
   }
 
@@ -237,10 +241,7 @@ public class SpringInstantiator implements Instantiator {
    */
   public void restartConnectorTraversal(String connectorName)
       throws ConnectorNotFoundException {
-    initialize();
     LOGGER.info("Restarting traversal for Connector: " + connectorName);
-    Scheduler scheduler = (Scheduler) Context.getInstance().
-        getBean("TraversalScheduler", Scheduler.class);
     setConnectorState(connectorName, null);
     if (scheduler != null) {
       scheduler.removeConnector(connectorName);
@@ -255,7 +256,6 @@ public class SpringInstantiator implements Instantiator {
    *      #getConnectorNames()
    */
   public synchronized Set<String> getConnectorNames() {
-    initialize();
     return Collections.unmodifiableSet(new TreeSet<String>(instanceMap.keySet()));
   }
 
@@ -280,11 +280,8 @@ public class SpringInstantiator implements Instantiator {
       String connectorTypeName, Map<String, String> configMap, Locale locale,
       boolean update) throws ConnectorNotFoundException,
       ConnectorExistsException, InstantiatorException {
-    initialize();
     LOGGER.info("Configuring connector: " + connectorName);
     if (update) {
-      Scheduler scheduler = (Scheduler) Context.getInstance().
-        getBean("TraversalScheduler", Scheduler.class);
       if (scheduler != null) {
         scheduler.removeConnector(connectorName);
       }

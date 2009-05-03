@@ -24,6 +24,7 @@ import com.google.enterprise.connector.instantiator.InstanceInfo.NullDirectoryEx
 import com.google.enterprise.connector.instantiator.InstanceInfo.NullTypeInfoException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.PropertyProcessingFailureException;
 import com.google.enterprise.connector.instantiator.TypeInfo.TypeInfoException;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.TestCase;
@@ -43,6 +44,12 @@ public class InstanceInfoTest extends TestCase {
 
   private static final Logger LOGGER =
       Logger.getLogger(InstanceInfoTest.class.getName());
+
+  @Override
+  protected void setUp() throws Exception {
+    // Force initialization of test context.
+    Context.getInstance().getApplicationContext();
+  }
 
   /**
    * Test method for

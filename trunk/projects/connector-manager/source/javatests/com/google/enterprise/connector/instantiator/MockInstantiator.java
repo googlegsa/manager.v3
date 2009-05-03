@@ -102,6 +102,14 @@ public class MockInstantiator implements Instantiator {
   private ConnectorScheduleStore connectorScheduleStore;
   private ConnectorStateStore connectorStateStore;
 
+  private Scheduler scheduler;
+
+  /* Setter Injectors */
+  public void setScheduler(Scheduler scheduler) {
+    this.scheduler = scheduler;
+  }
+
+
   public MockInstantiator() {
     this(new MockConnectorConfigStore(), new MockConnectorScheduleStore(),
          new MockConnectorStateStore());
@@ -258,8 +266,6 @@ public class MockInstantiator implements Instantiator {
    *      #restartConnectorTraversal(java.lang.String)
    */
   public void restartConnectorTraversal(String connectorName) {
-    Scheduler scheduler = (Scheduler) Context.getInstance().
-        getBean("TraversalScheduler", Scheduler.class);
     ConnectorInstance inst = connectorMap.get(connectorName);
     if (scheduler != null) {
       scheduler.removeConnector(connectorName);
@@ -278,8 +284,6 @@ public class MockInstantiator implements Instantiator {
   public void removeConnector(String connectorName) {
     ConnectorInstance inst = connectorMap.remove(connectorName);
     if (inst != null) {
-      Scheduler scheduler = (Scheduler) Context.getInstance().
-          getBean("TraversalScheduler", Scheduler.class);
       StoreContext context = inst.getStoreContext();
       inst.getStateStore().removeConnectorState(context);
       connectorScheduleStore.removeConnectorSchedule(context);

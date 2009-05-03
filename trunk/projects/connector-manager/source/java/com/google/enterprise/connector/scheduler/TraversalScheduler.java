@@ -60,6 +60,7 @@ public class TraversalScheduler implements Scheduler {
 
   /**
    * Create a scheduler object.
+   *
    * @param instantiator
    * @param monitor
    * @param workQueue
@@ -83,6 +84,7 @@ public class TraversalScheduler implements Scheduler {
     workQueue.init();
     isInitialized = true;
     isShutdown = false;
+    new Thread(this, "TraversalScheduler").start();
   }
 
   public synchronized void shutdown(boolean interrupt, long timeoutInMillis) {
