@@ -30,6 +30,7 @@ import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -53,8 +54,11 @@ public abstract class SecurityManagerServlet extends ServletBase {
   /** Name of the attribute that holds the username/passwords awaiting verification. */
   protected static final String CREDENTIALS = "credentials";
 
-  /** Name of the attribute that holds the session's cookie differentiator. */
-  private static final String COOKIE_DIFFERENTIATOR_NAME = "CookieDifferentiator";
+  /** Name of the attribute that holds the session's incoming cookie set. */
+  private static final String INCOMING_COOKIES_NAME = "IncomingCookies";
+
+  /** Name of the attribute that holds the session's outgoing cookie set. */
+  private static final String OUTGOING_COOKIES_NAME = "OutgoingCookies";
 
   /** Name of the attribute that holds the GSA's session ID. */
   protected static final String GSA_SESSION_ID_NAME = "GsaSessionId";
@@ -120,29 +124,22 @@ public abstract class SecurityManagerServlet extends ServletBase {
   }
 
   /**
-   * Get a session's cookie differentiator.
-   *
-   * @param session An HTTP session.
-   * @return The cookie differentiator.
-   */
-  public static CookieDifferentiator getCookieDifferentiator(HttpSession session) {
-    CookieDifferentiator cd =
-        CookieDifferentiator.class.cast(session.getAttribute(COOKIE_DIFFERENTIATOR_NAME));
-    if (cd == null) {
-      cd = new CookieDifferentiator();
-      session.setAttribute(COOKIE_DIFFERENTIATOR_NAME, cd);
-    }
-    return cd;
-  }
-
-  /**
-   * Get a session's user-agent cookies.
+   * Get a session's incoming user-agent cookies.
    *
    * @param session An HTTP session.
    * @return The cookies.
    */
   public static CookieSet getUserAgentCookies(HttpSession session) {
-    return getCookieDifferentiator(session).getNewCookies();
+    return getCookieSet(session, INCOMING_COOKIES_NAME);
+  }
+
+  private static CookieSet getCookieSet(HttpSession session, String name) {
+    CookieSet cookies = CookieSet.class.cast(session.getAttribute(name));
+    if (cookies == null) {
+      cookies = new CookieSet();
+      session.setAttribute(name, cookies);
+    }
+    return cookies;
   }
 
   /**
@@ -188,15 +185,14 @@ public abstract class SecurityManagerServlet extends ServletBase {
    * @param request A request from a user agent.
    */
   protected static void updateIncomingCookies(HttpServletRequest request) {
-    CookieSet cookies = getUserAgentCookies(request.getSession());
-    cookies.clear();
-    Cookie[] cookies2 = request.getCookies();
-    if (cookies2 != null) {
-      for (Cookie c : cookies2) {
-        cookies.add(c);
-      }
+    HttpSession session = request.getSession();
+    CookieSet incoming = getUserAgentCookies(session);
+    incoming.clear();
+    Cookie[] cookies = request.getCookies();
+    if (cookies != null) {
+      CookieUtil.subtractCookieSets(
+          Arrays.asList(cookies), getOutgoingCookies(session), incoming);
     }
-    getCookieDifferentiator(request.getSession()).commitStep();
   }
 
   /**
@@ -211,32 +207,38 @@ public abstract class SecurityManagerServlet extends ServletBase {
   protected static void updateOutgoingCookies(
       HttpServletRequest request, HttpServletResponse response)
       throws IOException {
-    CookieSet cookies = getUserAgentCookies(request.getSession());
-    CookieSet newCookies = new CookieSet();
+    HttpSession session = request.getSession();
 
     // Find all new IdP cookies that don't conflict with incoming cookies.
+    CookieSet newOutgoing = new CookieSet();
+    CookieSet incoming = getUserAgentCookies(session);
     for (CredentialsGroup cg : getCredentialsGroups(request)) {
       for (DomainCredentials dc : cg.getElements()) {
-        CookieDifferentiator diff = dc.getDifferentiator();
-        diff.commitStep();
-        for (CookieDifferentiator.Delta delta : diff.getDifferential()) {
-          Cookie c = delta.getCookie();
-          switch (delta.getOperation()) {
-            case ADD:
-            case MODIFY:
-              if (!CookieUtil.hasCookieNamed(c.getName(), cookies)) {
-                newCookies.add(c);
-              }
-              break;
-          }
-        }
+        CookieUtil.subtractCookieSets(
+            dc.getCookies(), incoming, newOutgoing);
       }
     }
 
-    // Send all those cookies back to the user agent.
-    for (Cookie c : newCookies) {
-      response.addCookie(c);
+    // Send back any changes not previously sent.
+    CookieSet outgoing = getOutgoingCookies(session);
+    for (CookieDifferentiator.Delta delta :
+             CookieDifferentiator.differentiate(outgoing, newOutgoing)) {
+      switch (delta.getOperation()) {
+        case ADD:
+        case MODIFY:
+          response.addCookie(delta.getCookie());
+          break;
+      }
     }
+    setOutgoingCookies(session, newOutgoing);
+  }
+
+  private static CookieSet getOutgoingCookies(HttpSession session) {
+    return getCookieSet(session, OUTGOING_COOKIES_NAME);
+  }
+
+  private static void setOutgoingCookies(HttpSession session, CookieSet cookies) {
+    session.setAttribute(OUTGOING_COOKIES_NAME, cookies);
   }
 
   protected static List<CredentialsGroup> getCredentialsGroups(HttpServletRequest request)
