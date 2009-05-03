@@ -25,7 +25,7 @@ import com.google.enterprise.connector.servlet.ServletUtil;
  */
 public class ManagerMain {
   public static void main(String[] args) throws Exception {
-    System.out.println(ServletUtil.MANAGER_NAME + " "
+    System.out.println(ServletUtil.MANAGER_NAME + " v"
                        + JarUtils.getJarVersion(ManagerMain.class));
   }
 }
