@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.scheduler;
 
-import com.google.enterprise.connector.manager.Context;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +21,9 @@ import java.util.List;
  * A traversal schedule.
  */
 public class Schedule {
+
+  private static int defaultRetryDelayMillis = (5 * 60 * 1000);
+
   private String connectorName;
   private boolean disabled;
   private int load;
@@ -89,6 +90,15 @@ public class Schedule {
   }
 
   /**
+   * Set the default RetryDelayMillisecs.
+   *
+   * @param defaultValue default value for retryDelay in seconds.
+   */
+  public static void setDefaultRetryDelaySecs(int defaultValue) {
+    defaultRetryDelayMillis = defaultValue * 1000;
+  }
+
+  /**
    * Utility method to parse out the delay field.  Currently only used when
    * sending the schedule string back to a GSA that has not been updated to
    * parse the delay field from the schedule.
@@ -128,25 +138,12 @@ public class Schedule {
     }
   }
 
-  private static final int DEFAULT_RETRY_DELAY_MILLIS = 5 * 60 * 1000;
-  private static int defaultRetryDelayMillis = -1;
   /**
    * Return the default retryDelayMillis value.
    * This can be defined in the Context by specifying
-   * TraversalDelaySecondsDefault value.  If the delay
-   * was not specified in the Context, then the default
-   * value of 5 minutes is returned.
+   * TraversalDelaySecondsDefault value.
    */
   public static int defaultRetryDelayMillis() {
-    if (defaultRetryDelayMillis <= 0) {
-      Integer retryDelaySecs = (Integer) Context.getInstance().getBean(
-          "TraversalDelaySecondsDefault", Integer.class);
-      if (retryDelaySecs == null || retryDelaySecs <= 0) {
-        defaultRetryDelayMillis = DEFAULT_RETRY_DELAY_MILLIS;
-      } else {
-        defaultRetryDelayMillis = retryDelaySecs * 1000;
-      }
-    }
     return defaultRetryDelayMillis;
   }
 
@@ -177,7 +174,7 @@ public class Schedule {
         intervals = strs[3];
       } else {
         // This is a legacy string without the retryDelay.  Resplit.
-        retryDelayMillis = defaultRetryDelayMillis();
+        retryDelayMillis = defaultRetryDelayMillis;
         strs = schedule.trim().split(":", 3);
         intervals = strs[2];
       }
