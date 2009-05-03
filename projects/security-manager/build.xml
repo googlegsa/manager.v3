@@ -86,6 +86,7 @@
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
         <fileset dir="${connector-dist.dir}" includes="**/*.jar" />
         <pathelement location="${connector-thirdparty.dir}/prod/servlet-api.jar" />
+        <pathelement location="${connector-thirdparty.dir}/prod/spring.jar" />
       </classpath>
     </javac>
   </target>
@@ -99,6 +100,7 @@
         <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
         <fileset dir="${connector-dist.dir}" includes="**/*.jar" />
         <pathelement location="${connector-thirdparty.dir}/prod/servlet-api.jar" />
+        <pathelement location="${connector-thirdparty.dir}/prod/spring.jar" />
       </classpath>
     </javac>
   </target>
@@ -113,6 +115,7 @@
         <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
         <fileset dir="${connector-dist.dir}" includes="**/*.jar" />
         <pathelement location="${connector-thirdparty.dir}/prod/servlet-api.jar" />
+        <pathelement location="${connector-thirdparty.dir}/prod/spring.jar" />
       </classpath>
     </javac>
   </target>
@@ -150,6 +153,7 @@
         <fileset dir="${connector-dist.dir}" includes="**/*.jar" />
         <fileset dir="${jar.dir}" includes="*.jar" />
         <pathelement location="${connector-thirdparty.dir}/prod/servlet-api.jar" />
+        <pathelement location="${connector-thirdparty.dir}/prod/spring.jar" />
         <pathelement location="${tests.classes}" />
         <path refid="cobertura_classpath" />
         <pathelement path="${java.class.path}" />
@@ -236,7 +240,8 @@
       <lib dir="${jar.dir}" includes="*.jar" excludes="security-tests.jar" />
       <lib file="${connector-dist.dir}/connector-spi.jar" />
       <lib file="${connector-dist.dir}/connector.jar" />
-      <lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
+      <lib file="${connector-thirdparty.dir}/prod/spring.jar" />
+      <lib dir="${thirdparty.prod.jars}" includes="*.jar" />
       <webinf dir="${prod.webdocs}" includes="applicationContext.xml,saml-metadata.xml,AuthSites.conf" />
       <manifest>
         <attribute name="Implementation-Title" value="Security Manager" />
@@ -255,7 +260,8 @@
       <lib dir="${jar.dir}" includes="*.jar" />
       <lib file="${connector-dist.dir}/connector-spi.jar" />
       <lib file="${connector-dist.dir}/connector.jar" />
-      <lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
+      <lib file="${connector-thirdparty.dir}/prod/spring.jar" />
+      <lib dir="${thirdparty.prod.jars}" includes="*.jar" />
       <webinf dir="${tests.webdocs}" includes="applicationContext.xml,saml-metadata.xml,AuthSites.conf" />
       <!-- Next line is specific to testing: -->
       <lib dir="${thirdparty.tests.jars}" includes="*.jar" />
@@ -366,6 +372,7 @@
         <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
         <fileset dir="${connector-dist.dir}" includes="**/*.jar" />
         <pathelement location="${connector-thirdparty.dir}/prod/servlet-api.jar" />
+        <pathelement location="${connector-thirdparty.dir}/prod/spring.jar" />
         <pathelement location="${regressions.classes}" />
         <pathelement location="${tests.classes}" />
         <pathelement path="${java.class.path}" />
