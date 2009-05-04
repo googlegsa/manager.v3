@@ -18,6 +18,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
+import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
 import com.google.enterprise.saml.server.BackEnd;
 
@@ -82,6 +83,7 @@ public class ConnectorManager extends ProductionManager {
       this.getConnectorConfig(connectorName);
     } catch (ConnectorNotFoundException e) {
       this.setConnectorConfig(connectorName, connectorTypeName, configData, language, update);
+      this.setSchedule(connectorName, (new Schedule()).toString());
     }
   }
 
