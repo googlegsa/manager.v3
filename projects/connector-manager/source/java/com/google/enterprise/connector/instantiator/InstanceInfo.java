@@ -486,7 +486,7 @@ public final class InstanceInfo {
     if (legacyConfigStores != null) {
       for (ConnectorConfigStore legacyStore : legacyConfigStores) {
         Properties properties =
-          legacyStore.getConnectorConfiguration(info.storeContext);
+            legacyStore.getConnectorConfiguration(info.storeContext);
         if (properties != null) {
           LOGGER.config("Migrating configuration information for connector "
                         + info.connectorName + " from legacy storage "

@@ -104,7 +104,7 @@ public class AuthorizationParserTest extends TestCase {
 
   private boolean compareDomains(String domain1, String domain2) {
     if (domain1 == null) {
-      return (domain1 == null);
+      return (domain2 == null);
     }
     return domain1.equals(domain2);
   }
