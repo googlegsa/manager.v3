@@ -103,12 +103,6 @@ public class MockInstantiator implements Instantiator {
 
   private Scheduler scheduler;
 
-  /* Setter Injectors */
-  public void setScheduler(Scheduler scheduler) {
-    this.scheduler = scheduler;
-  }
-
-
   public MockInstantiator() {
     this(new MockConnectorConfigStore(), new MockConnectorScheduleStore(),
          new MockConnectorStateStore());
@@ -120,6 +114,11 @@ public class MockInstantiator implements Instantiator {
     this.connectorScheduleStore = schedStore;
     this.connectorStateStore = stateStore;
     this.connectorMap = new HashMap<String, ConnectorInstance>();
+  }
+
+  /* Setter Injectors */
+  public void setScheduler(Scheduler scheduler) {
+    this.scheduler = scheduler;
   }
 
   public synchronized void shutdown() {
