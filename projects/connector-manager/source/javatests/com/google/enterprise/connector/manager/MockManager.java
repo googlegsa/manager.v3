@@ -165,6 +165,7 @@ public class MockManager implements Manager {
     return statuses;
   }
 
+  @SuppressWarnings("unused")
   public ConfigureResponse setConfig(String connectorName,
       Map<String, String> configData, String language) {
     return null;
