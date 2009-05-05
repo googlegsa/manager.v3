@@ -86,6 +86,7 @@ public class ConnAuthConnector implements Connector, Session, AuthenticationMana
     }
 
     try {
+      exchange.setRequestHeader("Content-Type", "text/xml");
       exchange.setRequestBody(request.getBytes("UTF-8"));
     } catch (UnsupportedEncodingException e1) {
       LOGGER.warning("Bad Encoding: " + e1.toString());

@@ -198,8 +198,10 @@ public class HttpClientAdapter implements HttpClientInterface {
       String method = httpMethod.getName();
       if ("POST".equalsIgnoreCase(method)) {
         PostMethod pm = PostMethod.class.cast(httpMethod);
-        String contentType = pm.getRequestHeader("Content-Type").toString();
-        System.out.println("My content-type is " + contentType);
+        Header contentTypeHeader = pm.getRequestHeader("Content-Type");
+        String contentType = null;
+        if (contentTypeHeader != null)
+          contentType = contentTypeHeader.toString();
         pm.setRequestEntity(new ByteArrayRequestEntity(requestContent, contentType));
       }
     }
