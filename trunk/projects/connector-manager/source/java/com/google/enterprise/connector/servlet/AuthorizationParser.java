@@ -143,7 +143,8 @@ public class AuthorizationParser {
     }
   }
   
-  private boolean matchesIdentity(AuthenticationIdentity id, String username, 
+  // Package-level visibility for testing.
+  static boolean matchesIdentity(AuthenticationIdentity id, String username, 
       String domain) {
     if (username == null && id.getUsername() != null) {
       return false;
@@ -151,10 +152,10 @@ public class AuthorizationParser {
     if (!username.equals(id.getUsername())) {
       return false;
     }
-    if (domain == null && id.getDomain() != null) {
-      return false;
-    }
-    return (domain.equals(id.getDomain()));
+    // A null domain is considered a match for an empty string domain.
+    String domain1 = (domain == null) ? "" : domain;
+    String domain2 = (id.getDomain() == null) ? "" : id.getDomain();
+    return (domain1.equals(domain2));
   }
 
   private AuthenticationIdentity findIdentity(String username, String domain) {
