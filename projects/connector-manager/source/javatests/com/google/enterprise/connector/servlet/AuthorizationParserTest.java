@@ -102,22 +102,13 @@ public class AuthorizationParserTest extends TestCase {
           + "</AuthorizationQuery>\n"
           + "";
 
-  private boolean compareDomains(String domain1, String domain2) {
-    if (domain1 == null) {
-      return (domain2 == null);
-    }
-    return domain1.equals(domain2);
-  }
-
   private ConnectorQueries getConnectorQueriesByIdentity(AuthorizationParser p,
       AuthenticationIdentity identity) {
     ConnectorQueries result = null;
     for (AuthenticationIdentity i : p.getIdentities()) {
       String username = identity.getUsername();
       String domain = identity.getDomain();
-      System.out.println("getConnectorQueriesByIdentity: username: " + username + "  domain: " + domain + "   i.getUsername(): " + i.getUsername() + "   i.getDomain(): " + i.getDomain()); // DEBUGGING
-      if (username.equals(i.getUsername()) &&
-          compareDomains(domain, i.getDomain())) {
+      if (AuthorizationParser.matchesIdentity(i, username, domain)) {
         assertNull("Should be only one identity with username \""
             + username + "\" and domain \"" + domain + "\"", result);
         result = p.getConnectorQueriesForIdentity(i);
