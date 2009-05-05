@@ -29,4 +29,3 @@ public class ManagerMain {
                        + JarUtils.getJarVersion(ManagerMain.class));
   }
 }
-
