@@ -153,15 +153,9 @@ public class AuthorizationParser {
       return false;
     }
     // A null domain is considered a match for an empty string domain.
-    /* TODO: Choose one or the other.  Is null equivalent to empty string here?
     String domain1 = (domain == null) ? "" : domain;
     String domain2 = (id.getDomain() == null) ? "" : id.getDomain();
     return (domain1.equals(domain2));
-    */
-    if (domain == null) {
-      return (id.getDomain() == null);
-    }
-    return (domain.equals(id.getDomain()));
   }
 
   private AuthenticationIdentity findIdentity(String username, String domain) {
