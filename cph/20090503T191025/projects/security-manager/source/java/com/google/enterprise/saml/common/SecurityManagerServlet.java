@@ -32,6 +32,7 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
@@ -193,7 +194,7 @@ public abstract class SecurityManagerServlet extends ServletBase {
       CookieUtil.subtractCookieSets(
           Arrays.asList(cookies), getOutgoingCookies(session), incoming);
     }
-    CookieUtil.logRequestCookies("Incoming cookies from user agent", incoming);
+    CookieUtil.logRequestCookies(Level.INFO, "Incoming cookies from user agent", incoming);
   }
 
   /**
@@ -234,7 +235,7 @@ public abstract class SecurityManagerServlet extends ServletBase {
       }
     }
     setOutgoingCookies(session, newOutgoing);
-    CookieUtil.logResponseCookies("Outgoing cookies to user agent", toSend);
+    CookieUtil.logResponseCookies(Level.INFO, "Outgoing cookies to user agent", toSend);
   }
 
   private static CookieSet getOutgoingCookies(HttpSession session) {

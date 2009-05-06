@@ -107,7 +107,7 @@ public final class CookieUtil {
     if (!undefined(cookieStr)) {
       exchange.setRequestHeader("Cookie", cookieStr);
     }
-    logRequestCookies("Cookies sent to " + url.toString(), cookiesToSend);
+    logRequestCookies(Level.INFO, "Cookies sent to " + url.toString(), cookiesToSend);
 
     int status = exchange.exchange();
 
@@ -121,7 +121,7 @@ public final class CookieUtil {
     }
 
     List<SetCookie> newCookies = parseHttpResponseCookies(exchange);
-    logResponseCookies("Cookies received from " + url.toString(), newCookies);
+    logResponseCookies(Level.INFO, "Cookies received from " + url.toString(), newCookies);
 
     // Remove duplicate cookies in old collection.  This is O(n^2) for small n.
     Iterator<Cookie> iter2 = receivedCookies.iterator();
@@ -467,14 +467,16 @@ public final class CookieUtil {
     return cookies;
   }
 
-  public static void logRequestCookies(String tag, Collection<? extends Cookie> cookies) {
+  public static void logRequestCookies(
+      Level level, String tag, Collection<? extends Cookie> cookies) {
     String serial = cookieHeaderValue(cookies, false);
-    LOG.info(tag + ": " + (undefined(serial) ? "(none)" : serial));
+    LOG.log(level, tag + ": " + (undefined(serial) ? "(none)" : serial));
   }
 
-  public static void logResponseCookies(String tag, Collection<? extends Cookie> cookies) {
+  public static void logResponseCookies(
+      Level level, String tag, Collection<? extends Cookie> cookies) {
     String serial = setCookieHeaderValue(cookies, false);
-    LOG.info(tag + ": " + (undefined(serial) ? "(none)" : serial));
+    LOG.log(level, tag + ": " + (undefined(serial) ? "(none)" : serial));
   }
 
   private static String safeDeserialize(String str) {
