@@ -193,6 +193,7 @@ public abstract class SecurityManagerServlet extends ServletBase {
       CookieUtil.subtractCookieSets(
           Arrays.asList(cookies), getOutgoingCookies(session), incoming);
     }
+    CookieUtil.logRequestCookies("Incoming cookies from user agent", incoming);
   }
 
   /**
@@ -220,17 +221,20 @@ public abstract class SecurityManagerServlet extends ServletBase {
     }
 
     // Send back any changes not previously sent.
-    CookieSet outgoing = getOutgoingCookies(session);
+    CookieSet toSend = new CookieSet();
     for (CookieDifferentiator.Delta delta :
-             CookieDifferentiator.differentiate(outgoing, newOutgoing)) {
+             CookieDifferentiator.differentiate(getOutgoingCookies(session), newOutgoing)) {
       switch (delta.getOperation()) {
         case ADD:
         case MODIFY:
-          response.addCookie(delta.getCookie());
+          Cookie c = delta.getCookie();
+          response.addCookie(c);
+          toSend.add(c);
           break;
       }
     }
     setOutgoingCookies(session, newOutgoing);
+    CookieUtil.logResponseCookies("Outgoing cookies to user agent", toSend);
   }
 
   private static CookieSet getOutgoingCookies(HttpSession session) {

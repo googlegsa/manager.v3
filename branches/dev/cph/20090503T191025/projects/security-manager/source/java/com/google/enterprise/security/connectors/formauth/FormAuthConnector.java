@@ -71,7 +71,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     Collection<Cookie> receivedCookies = identity.getCookies();
     Collection<Cookie> userAgentCookies =
         SecurityManagerServlet.getUserAgentCookies(identity.getSession());
-    logCookies(LOGGER, "original cookies", receivedCookies);
+    CookieUtil.logResponseCookies("original cookies", receivedCookies);
     int nReceivedCookies = receivedCookies.size();
 
     // GET sampleUrl, following redirects until we hit a form; fill the form, post it; get
@@ -85,7 +85,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
-    logCookies(LOGGER, "after fetchLoginForm", receivedCookies);
+    CookieUtil.logResponseCookies("after fetchLoginForm", receivedCookies);
 
     // Parse the returned login form.
     List<StringPair> param;
@@ -109,7 +109,6 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     }
 
     // Fill in the login form and POST the result.
-    LOGGER.info("POST to: " + postUrl);
     try {
       int status = submitLoginForm(postUrl, param, userAgentCookies, receivedCookies);
       if (status != 200) {
@@ -122,7 +121,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
-    logCookies(LOGGER, "after submitLoginForm", receivedCookies);
+    CookieUtil.logResponseCookies("after submitLoginForm", receivedCookies);
 
     // We are form auth, we expect to have at least one cookie
     // TODO(cph): this can fail; elements of receivedCookies can be removed.
@@ -267,6 +266,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     // post only once, follow redirect if needed
     HttpExchange exchange = SecurityManagerUtil.getHttpClient().postExchange(url, parameters);
 
+    LOGGER.info("POST to: " + loginUrl);
     while (true) {
       status = CookieUtil.fetchPage(exchange, url, "SecMgr",
                                     userAgentCookies, receivedCookies,
@@ -285,14 +285,6 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       }
     }
     return status;
-  }
-
-  private static void logCookies(Logger LOGGER, String tag, Collection<Cookie> cookies) {
-    String value = CookieUtil.setCookieHeaderValue(cookies, false);
-    if (value == null) {
-      value = "(none)";
-    }
-    LOGGER.info(tag + ": " + value);
   }
 
   public Session login() {
