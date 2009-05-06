@@ -18,6 +18,7 @@
   <property name="classes" value="${prod}/classes" />
   <property name="dtds" value="source/dtds" />
   <property name="webdocs" value="source/webdocs" />
+  <property name="webcontent" value="source/html" />
 
   <property name="tests.src" value="source/javatests" />
   <property name="tests.build" value="${build}/tests" />
@@ -221,6 +222,7 @@
 
     <tstamp />
     <war warfile="${war.dir}/${ant.project.name}.war" webxml="${webdocs}/web.xml">
+      <fileset dir="${webcontent}" />
       <lib dir="${jar.dir}" includes="*.jar" excludes="connector-tests.jar" />
       <lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
       <webinf dir="etc" includes="**" />
@@ -239,6 +241,7 @@
 
     <tstamp />
     <war warfile="${war.dir}/${ant.project.name}_debug.war" webxml="${webdocs}/web.xml">
+      <fileset dir="${webcontent}" />
       <lib dir="${jar.dir}" includes="*.jar" />
       <lib dir="${thirdparty.prod.jars}" includes="*.jar" excludes="servlet-api.jar" />
       <webinf dir="etc" includes="**" />
