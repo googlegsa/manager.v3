@@ -37,6 +37,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.Cookie;
@@ -71,7 +72,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
     Collection<Cookie> receivedCookies = identity.getCookies();
     Collection<Cookie> userAgentCookies =
         SecurityManagerServlet.getUserAgentCookies(identity.getSession());
-    CookieUtil.logResponseCookies("original cookies", receivedCookies);
+    CookieUtil.logResponseCookies(Level.INFO, "original cookies", receivedCookies);
     int nReceivedCookies = receivedCookies.size();
 
     // GET sampleUrl, following redirects until we hit a form; fill the form, post it; get
@@ -85,7 +86,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
-    CookieUtil.logResponseCookies("after fetchLoginForm", receivedCookies);
+    CookieUtil.logResponseCookies(Level.INFO, "after fetchLoginForm", receivedCookies);
 
     // Parse the returned login form.
     List<StringPair> param;
@@ -121,7 +122,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
       identity.setVerificationStatus(VerificationStatus.INDETERMINATE);
       return new AuthenticationResponse(false, null);
     }
-    CookieUtil.logResponseCookies("after submitLoginForm", receivedCookies);
+    CookieUtil.logResponseCookies(Level.INFO, "after submitLoginForm", receivedCookies);
 
     // We are form auth, we expect to have at least one cookie
     // TODO(cph): this can fail; elements of receivedCookies can be removed.
