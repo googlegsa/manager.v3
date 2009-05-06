@@ -136,12 +136,12 @@ public class SamlAuthn extends SecurityManagerServlet
 
     // If there are cookies we can decode, use them.
     if (tryCookies(request, response)) {
+      // do nothing
     } else if (backend.isIdentityConfigured()) {
       maybePrompt(request, response);
     } else {
       makeUnsuccessfulResponse(request, response, "Security Manager not configured");
     }
-    updateOutgoingCookies(request, response);
   }
 
   // Try to find cookies that can be decoded into identities.
@@ -197,7 +197,6 @@ public class SamlAuthn extends SecurityManagerServlet
     }
     if (ids.isEmpty()) {
       maybePrompt(request, response);
-      updateOutgoingCookies(request, response);
       return;
     }
 
@@ -212,13 +211,13 @@ public class SamlAuthn extends SecurityManagerServlet
     }
 
     makeSuccessfulResponse(request, response, ids);
-    updateOutgoingCookies(request, response);
   }
 
   private void maybePrompt(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     HttpSession session = request.getSession();
     if (shouldPrompt(session)) {
+      updateOutgoingCookies(request, response);
       PrintWriter writer = initNormalResponse(response);
       writer.print(getOmniForm(request).generateForm());
       writer.close();
@@ -328,6 +327,11 @@ public class SamlAuthn extends SecurityManagerServlet
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         existingSamlMessageContext(request.getSession());
     // Encode the response message
+    try {
+      updateOutgoingCookies(request, response);
+    } catch (IOException e) {
+      throw new ServletException(e);
+    }
     initResponse(response);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(response, true));
     HTTPArtifactEncoder encoder = new HTTPArtifactEncoder(null, null, getBackEnd().getArtifactMap());
