@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.mock;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthorizationManager;
@@ -28,7 +27,6 @@ public class SimpleMockAuthorizationManager implements AuthorizationManager {
 
   public Collection<AuthorizationResponse> authorizeDocids(Collection<String> docids,
       AuthenticationIdentity identity) {
-    Preconditions.checkContentsNotNull(docids);
     List<AuthorizationResponse> result = new ArrayList<AuthorizationResponse>();
     for (String s : docids) {
       AuthorizationResponse a;
