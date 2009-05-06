@@ -341,7 +341,7 @@ public final class CookieUtil {
       }
       buffer.append(c.getName());
       buffer.append("=");
-      if (c.getValue() != null) {
+      if (!undefined(c.getValue())) {
         if (showValues) {
           buffer.append(c.getValue());
         } else {
@@ -352,19 +352,19 @@ public final class CookieUtil {
       if (shortForm) {
         continue;
       }
-      if (c.getComment() != null) {
+      if (!undefined(c.getComment())) {
         buffer.append("; comment=");
         buffer.append(c.getComment());
       }
-      if (c.getDomain() != null) {
+      if (!undefined(c.getDomain())) {
         buffer.append("; domain=");
         buffer.append(c.getDomain());
       }
-      if (c.getMaxAge() > 0) {
+      if (c.getMaxAge() >= 0) {
         buffer.append("; max-age=");
         buffer.append(c.getMaxAge());
       }
-      if (c.getPath() != null) {
+      if (!undefined(c.getPath())) {
         buffer.append("; path=");
         buffer.append(c.getPath());
       }
