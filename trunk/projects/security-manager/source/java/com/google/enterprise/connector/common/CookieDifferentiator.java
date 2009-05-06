@@ -28,7 +28,7 @@ import javax.servlet.http.Cookie;
  */
 public class CookieDifferentiator {
 
-  public enum Operation { ADD, REMOVE, MODIFY };
+  public enum Operation { ADD, REMOVE, MODIFY }
 
   private final CookieSet oldCookies;
   private final CookieSet newCookies;
