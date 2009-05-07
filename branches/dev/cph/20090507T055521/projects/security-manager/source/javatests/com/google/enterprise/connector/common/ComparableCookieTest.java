@@ -39,9 +39,21 @@ public class ComparableCookieTest extends SecurityManagerTestCase {
   private final Runner runTestEquals;
   private final Runner runTestHashCode;
 
+  private final Method setValueMethod;
+  private final Method setCommentMethod;
+  private final Method setVersionMethod;
+  private final Method setMaxAgeMethod;
+  private final Method setSecureMethod;
+
   public ComparableCookieTest() throws Exception {
-    runTestEquals = new BasicRunner("testEquals");
-    runTestHashCode = new BasicRunner("testHashCode");
+    runTestEquals = new EqualsRunner();
+    runTestHashCode = new HashCodeRunner();
+
+    setValueMethod = Cookie.class.getMethod("setValue", String.class);
+    setCommentMethod = Cookie.class.getMethod("setComment", String.class);
+    setVersionMethod = Cookie.class.getMethod("setVersion", Integer.TYPE);
+    setMaxAgeMethod = Cookie.class.getMethod("setMaxAge", Integer.TYPE);
+    setSecureMethod = Cookie.class.getMethod("setSecure", Boolean.TYPE);
   }
 
   public void testEquals() throws Exception {
@@ -54,32 +66,27 @@ public class ComparableCookieTest extends SecurityManagerTestCase {
     runValueInvarianceTests(runTestHashCode);
   }
 
-  private static void runValueInvarianceTests(Runner runner) throws Exception {
-    runOverModifiedPairs(runner, "setValue", String.class, VALUES);
-    runOverModifiedPairs(runner, "setComment", String.class, COMMENTS);
-    runOverModifiedPairs(runner, "setVersion", Integer.TYPE, VERSIONS);
-    runOverModifiedPairs(runner, "setMaxAge", Integer.TYPE, MAXAGES);
-    runOverModifiedPairs(runner, "setSecure", Boolean.TYPE, SECURES);
+  private void runValueInvarianceTests(Runner runner) throws Exception {
+    runOverModifiedPairs(runner, setValueMethod, VALUES);
+    runOverModifiedPairs(runner, setCommentMethod, COMMENTS);
+    runOverModifiedPairs(runner, setVersionMethod, VERSIONS);
+    runOverModifiedPairs(runner, setMaxAgeMethod, MAXAGES);
+    runOverModifiedPairs(runner, setSecureMethod, SECURES);
   }
 
   private interface Runner {
     public void run(TestElement element) throws Exception;
   }
 
-  private static class BasicRunner implements Runner {
-
-    private final String methodName;
-    private final Method method;
-
-    public BasicRunner(String methodName) throws Exception {
-      this.methodName = methodName;
-      method = TestElement.class.getMethod(methodName);
-    }
-
+  private static class EqualsRunner implements Runner {
     public void run(TestElement element) throws Exception {
-      if (!Boolean.class.cast(method.invoke(element))) {
-        fail(methodName + ": " + element.getMessage());
-      }
+      element.testEquals();
+    }
+  }
+
+  private static class HashCodeRunner implements Runner {
+    public void run(TestElement element) throws Exception {
+      element.testHashCode();
     }
   }
 
@@ -107,10 +114,9 @@ public class ComparableCookieTest extends SecurityManagerTestCase {
     return ComparableCookie.wrap(c);
   }
 
-  private static <T> void runOverModifiedPairs(
-      Runner runner, String setterName, Class<T> fieldType, T[] values)
+  private static <T> void runOverModifiedPairs(Runner runner, Method setter, T[] values)
       throws Exception {
-    runOverPairs(new ModifiedPairRunner<T>(runner, setterName, fieldType, values));
+    runOverPairs(new ModifiedPairRunner<T>(runner, setter, values));
   }
 
   private static class ModifiedPairRunner<T> implements Runner {
@@ -119,12 +125,10 @@ public class ComparableCookieTest extends SecurityManagerTestCase {
     private final Method setter;
     private final T[] values;
 
-    public ModifiedPairRunner(Runner runner,
-                              String setterName, Class<T> fieldType,
-                              T[] values)
+    public ModifiedPairRunner(Runner runner, Method setter, T[] values)
       throws Exception {
       this.runner = runner;
-      this.setter = Cookie.class.getMethod(setterName, fieldType);
+      this.setter = setter;
       this.values = values;
     }
 
@@ -178,29 +182,23 @@ public class ComparableCookieTest extends SecurityManagerTestCase {
       return cc2;
     }
 
-    public String getMessage() {
-      return message;
-    }
-
     public TestElement copy() {
       return new TestElement(cc1, cc2);
     }
 
-    public boolean testEquals() {
+    public void testEquals() {
       if (sameStringIgnoreCase(cc1.getCookie().getName(), cc2.getCookie().getName())
           && sameStringIgnoreCase(cc1.getCookie().getDomain(), cc2.getCookie().getDomain())
           && sameString(cc1.getCookie().getPath(), cc2.getCookie().getPath())) {
-        return cc1.equals(cc2);
+        assertTrue(message, cc1.equals(cc2));
       } else {
-        return !cc1.equals(cc2);
+        assertFalse(message, cc1.equals(cc2));
       }
     }
 
-    public boolean testHashCode() {
+    public void testHashCode() {
       if (cc1.equals(cc2)) {
-        return cc1.hashCode() == cc2.hashCode();
-      } else {
-        return true;
+        assertEquals(message, cc1.hashCode(), cc2.hashCode());
       }
     }
   }
