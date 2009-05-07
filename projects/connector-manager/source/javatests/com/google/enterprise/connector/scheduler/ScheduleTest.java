@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.scheduler;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
@@ -30,8 +29,12 @@ public class ScheduleTest extends TestCase {
   final String strNoDelay = "connector1:60:1-2:3-5";
   final String strIntervals = "1-2:3-5";
   final String strWithDisabled = "#connector1:60:0:1-2:3-5";
-  final String illegalStrWithDelay = "connector2:60:0:";
-  final String illegalStrNoDelay = "connector2:60:";
+  final String strWithDelayNoIntervals = "connector2:60:0:";
+  final String strWithDefaultDelayNoIntervals = "connector2:60:300000:";
+  final String strNoDelayNoIntervals = "connector2:60:";
+  final String[] illegalSchedules = { "connector1", "connector2:60", "connector2:60:0",
+      "connector1:60:0:1", "connector1:xyx:0:1", "connector1:60:0:xyzzy",
+      "connector1:60:0:1-2:3", "connector1:60:0:1-2:3:" };
 
   public void testSerialization() {
     List<ScheduleTimeInterval> intervals =
@@ -43,75 +46,93 @@ public class ScheduleTest extends TestCase {
     intervals.add(interval1);
     intervals.add(interval2);
     Schedule schedule = new Schedule("connector1", false, 60, 0, intervals);
-    Assert.assertEquals(strWithDelay, schedule.toString());
+    assertEquals(strWithDelay, schedule.toString());
 
     Schedule schedule1 = new Schedule("connector1", false, 60, 0, strIntervals);
-    Assert.assertEquals(strWithDelay, schedule1.toString());
+    assertEquals(strWithDelay, schedule1.toString());
 
     Schedule schedule2 = new Schedule("whatever", false, 30, 42, intervals);
     schedule2.readString(strWithDelay);
-    Assert.assertEquals(strWithDelay, schedule2.toString());
+    assertEquals(strWithDelay, schedule2.toString());
     schedule2.readString(strNoDelay);
-    Assert.assertEquals(strWithDefaultDelay, schedule2.toString());
+    assertEquals(strWithDefaultDelay, schedule2.toString());
 
     Schedule schedule3 = new Schedule(strWithDelay);
-    Assert.assertEquals(strWithDelay, schedule3.toString());
+    assertEquals(strWithDelay, schedule3.toString());
 
     // Missing delay becomes Default.
     Schedule schedule4 = new Schedule(strNoDelay);
-    Assert.assertEquals(strWithDefaultDelay, schedule4.toString());
+    assertEquals(strWithDefaultDelay, schedule4.toString());
 
-    try {
-      new Schedule("connector2", false, 60, 0,
-          new ArrayList<ScheduleTimeInterval>(0));
-      fail("IllegalArgumentException expected");
-    } catch (IllegalArgumentException e) {
-      // Expected exception occurred.
-    }
+    // Empty Schedules are now permitted.
+    Schedule schedule5 = new Schedule("connector2", false, 60, 0,
+                                      (List<ScheduleTimeInterval>) null);
+    assertNotNull(schedule5.getTimeIntervals());
+    assertEquals(0, schedule5.getTimeIntervals().size());
+    assertEquals(strWithDelayNoIntervals, schedule5.toString());
 
-    try {
-      Schedule schedule6 = new Schedule("whatever", false, 30, 42, intervals);
-      schedule6.readString(illegalStrWithDelay);
-      fail("IllegalArgumentException expected");
-    } catch (IllegalArgumentException e) {
-      // Expected exception occurred.
-    }
+    Schedule schedule5a = new Schedule("connector2", false, 60, 0,
+                                       new ArrayList<ScheduleTimeInterval>(0));
+    assertNotNull(schedule5a.getTimeIntervals());
+    assertEquals(0, schedule5a.getTimeIntervals().size());
+    assertEquals(strWithDelayNoIntervals, schedule5a.toString());
 
-    try {
-      new Schedule(illegalStrWithDelay);
-      fail("IllegalArgumentException expected");
-    } catch (IllegalArgumentException e) {
-      // Expected exception occurred.
-    }
+    Schedule schedule5b = new Schedule("connector2", false, 60, 0, "");
+    assertNotNull(schedule5b.getTimeIntervals());
+    assertEquals(0, schedule5b.getTimeIntervals().size());
+    assertEquals(strWithDelayNoIntervals, schedule5b.toString());
 
-    try {
-      new Schedule(illegalStrNoDelay);
-      fail("IllegalArgumentException expected");
-    } catch (IllegalArgumentException e) {
-      // Expected exception occurred.
-    }
+    Schedule schedule5c = new Schedule(strWithDelayNoIntervals);
+    assertEquals(strWithDelayNoIntervals, schedule5c.toString());
 
+    Schedule schedule5d = new Schedule(strNoDelayNoIntervals);
+    assertEquals(strWithDefaultDelayNoIntervals, schedule5d.toString());
+
+    // Test Disabled Schedules.
     Schedule schedule9 = new Schedule("connector1", true, 60, 0, intervals);
-    Assert.assertEquals(strWithDisabled, schedule9.toString());
+    assertEquals(strWithDisabled, schedule9.toString());
 
     Schedule schedule10 = new Schedule(strWithDisabled);
-    Assert.assertEquals(strWithDisabled, schedule10.toString());
+    assertEquals(strWithDisabled, schedule10.toString());
+
+    for (String badSched : illegalSchedules) {
+      try {
+        new Schedule(badSched);
+        fail("IllegalArgumentException expected for invalid schedule \""
+             + badSched + "\"");
+      } catch (IllegalArgumentException e) {
+        // Expected exception occurred.
+        assertEquals("Invalid schedule string format: \"" + badSched + "\"",
+                     e.getMessage());
+      }
+    }
   }
 
   public void testToLegacyString() {
-    Assert.assertEquals(strNoDelay, Schedule.toLegacyString(strWithDelay));
-    Assert.assertEquals(strNoDelay, Schedule.toLegacyString(strNoDelay));
-    try {
-      Schedule.toLegacyString(illegalStrWithDelay);
-      fail("IllegalArgumentException expected");
-    } catch (IllegalArgumentException e) {
-      // Expected exception occurred.
-    }
-    try {
-      Schedule.toLegacyString(illegalStrNoDelay);
-      fail("IllegalArgumentException expected");
-    } catch (IllegalArgumentException e) {
-      // Expected exception occurred.
+    // Identity should work.
+    assertEquals(strNoDelay, Schedule.toLegacyString(strNoDelay));
+
+    // Legacy format doesn't include delay.
+    assertEquals(strNoDelay, Schedule.toLegacyString(strWithDelay));
+
+    // Legacy format doesn't include disabled.
+    assertEquals(strNoDelay, Schedule.toLegacyString(strWithDisabled));
+
+    // Legacy format does support no time intervals.
+    assertEquals(strNoDelayNoIntervals, Schedule.toLegacyString(strWithDelayNoIntervals));
+    assertEquals(strNoDelayNoIntervals, Schedule.toLegacyString(strNoDelayNoIntervals));
+
+    // Invalid schedule strings should throw IllegalArgumentException.
+    for (String badSched : illegalSchedules) {
+      try {
+        Schedule.toLegacyString(badSched);
+        fail("IllegalArgumentException expected for invalid schedule \""
+             + badSched + "\"");
+      } catch (IllegalArgumentException e) {
+        // Expected exception occurred.
+        assertEquals("Invalid schedule string format: \"" + badSched + "\"",
+                     e.getMessage());
+      }
     }
   }
 }

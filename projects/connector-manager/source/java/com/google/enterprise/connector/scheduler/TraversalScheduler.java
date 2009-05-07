@@ -117,13 +117,11 @@ public class TraversalScheduler implements Scheduler {
         // Looks like the connector just got deleted.  Don't schedule it.
         continue;
       }
-      if (null == scheduleStr) {
-        LOGGER.info("Could not find schedule for connector: " + connectorName);
-        continue;
-      }
-      Schedule schedule = new Schedule(scheduleStr);
-      if (!schedule.isDisabled()) {
-        schedules.add(schedule);
+      if (scheduleStr != null) {
+        Schedule schedule = new Schedule(scheduleStr);
+        if (!schedule.isDisabled()) {
+          schedules.add(schedule);
+        }
       }
     }
     removedConnectors.clear();
