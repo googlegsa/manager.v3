@@ -180,12 +180,12 @@ public class SamlAuthn extends SecurityManagerServlet
       throws ServletException, IOException {
     updateIncomingCookies(request);
     BackEnd backend = getBackEnd();
-    OmniForm omniform = getOmniForm(request);
-    List<CredentialsGroup> cgs = getCredentialsGroups(request);
 
+    // Run all possible verifications given the user's input.
+    OmniForm omniform = getOmniForm(request);
     omniform.handleFormSubmit(request);
     List<String> ids = new ArrayList<String>();
-    for (CredentialsGroup cg : cgs) {
+    for (CredentialsGroup cg : getCredentialsGroups(request)) {
       if (!cg.isVerified() && cg.isVerifiable()) {
         backend.authenticate(cg);
         if (cg.isVerified()) {
@@ -195,6 +195,9 @@ public class SamlAuthn extends SecurityManagerServlet
         }
       }
     }
+
+    // Now decide whether we need more input.
+    // TODO(cph): this heuristic is WRONG!
     if (ids.isEmpty()) {
       maybePrompt(request, response);
       updateOutgoingCookies(request, response);
@@ -203,13 +206,6 @@ public class SamlAuthn extends SecurityManagerServlet
 
     // This sequence is done; reset for next.
     resetPromptCounter(request.getSession());
-
-    // Update the Session Manager with the necessary info.
-    // TODO(cph): Until we finish off-boarding, the session ID should be required.
-    String sessionId = getGsaSessionId(request.getSession());
-    if (sessionId != null) {
-      backend.updateSessionManager(sessionId, cgs);
-    }
 
     makeSuccessfulResponse(request, response, ids);
     updateOutgoingCookies(request, response);
@@ -269,6 +265,18 @@ public class SamlAuthn extends SecurityManagerServlet
                                       List<String> ids)
       throws ServletException {
     LOGGER.info("Verified IDs: " + idsToString(ids));
+
+    // Update the Session Manager with the necessary info.
+    // TODO(cph): Until we finish off-boarding, the session ID should be required.
+    String sessionId = getGsaSessionId(request.getSession());
+    if (sessionId != null) {
+      try {
+        getBackEnd().updateSessionManager(sessionId, getCredentialsGroups(request));
+      } catch (IOException e) {
+        throw new ServletException(e);
+      }
+    }
+
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         existingSamlMessageContext(request.getSession());
 

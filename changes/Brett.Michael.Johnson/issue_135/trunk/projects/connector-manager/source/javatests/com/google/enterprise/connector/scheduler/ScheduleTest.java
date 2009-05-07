@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.scheduler;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
@@ -103,6 +102,8 @@ public class ScheduleTest extends TestCase {
              + badSched + "\"");
       } catch (IllegalArgumentException e) {
         // Expected exception occurred.
+        assertEquals("Invalid schedule string format: \"" + badSched + "\"",
+                     e.getMessage());
       }
     }
   }
@@ -129,6 +130,8 @@ public class ScheduleTest extends TestCase {
              + badSched + "\"");
       } catch (IllegalArgumentException e) {
         // Expected exception occurred.
+        assertEquals("Invalid schedule string format: \"" + badSched + "\"",
+                     e.getMessage());
       }
     }
   }

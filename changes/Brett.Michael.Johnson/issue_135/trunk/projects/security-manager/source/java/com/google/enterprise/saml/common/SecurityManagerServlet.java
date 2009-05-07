@@ -62,10 +62,6 @@ public abstract class SecurityManagerServlet extends ServletBase {
   /** Name of the attribute that holds the session's credentials groups. */
   private static final String CREDENTIALS_GROUPS_NAME = "CredentialsGroups";
 
-  public static final String GSA_ARTIFACT_HANDLER_NAME = "SamlArtifactConsumer";
-  public static final String GSA_ARTIFACT_PARAM_NAME = "SAMLart";
-  public static final String GSA_RELAY_STATE_PARAM_NAME = "RelayState";
-
   /** Name of the cookie in which we store the sessionId */
   public static final String AUTHN_SESSION_ID_COOKIE_NAME = "GSA_SESSION_ID";
 
