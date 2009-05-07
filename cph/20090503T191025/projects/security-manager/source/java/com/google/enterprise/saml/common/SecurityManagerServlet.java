@@ -31,6 +31,7 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -211,7 +212,7 @@ public abstract class SecurityManagerServlet extends ServletBase {
       throws IOException {
     HttpSession session = request.getSession();
 
-    // Find all new IdP cookies that don't conflict with incoming cookies.
+    // Find all IdP cookies that don't conflict with incoming cookies.
     CookieSet newOutgoing = new CookieSet();
     CookieSet incoming = getUserAgentCookies(session);
     for (CredentialsGroup cg : getCredentialsGroups(request)) {
@@ -222,19 +223,11 @@ public abstract class SecurityManagerServlet extends ServletBase {
     }
 
     // Send back any changes not previously sent.
-    CookieSet toSend = new CookieSet();
-    for (CookieDifferentiator.Delta delta :
-             CookieDifferentiator.differentiate(getOutgoingCookies(session), newOutgoing)) {
-      switch (delta.getOperation()) {
-        case ADD:
-        case MODIFY:
-          Cookie c = delta.getCookie();
-          response.addCookie(c);
-          toSend.add(c);
-          break;
-      }
-    }
+    CookieSet toSend = CookieDifferentiator.differentiate(getOutgoingCookies(session), newOutgoing);
     setOutgoingCookies(session, newOutgoing);
+    for (Cookie c : toSend) {
+      response.addCookie(c);
+    }
     CookieUtil.logResponseCookies(Level.INFO, "Outgoing cookies to user agent", toSend);
   }
 

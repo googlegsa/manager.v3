@@ -16,9 +16,6 @@ package com.google.enterprise.connector.common;
 
 import com.google.common.collect.PeekingIterator;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.servlet.http.Cookie;
 
 /**
@@ -26,8 +23,6 @@ import javax.servlet.http.Cookie;
  * differences between them.
  */
 public class CookieDifferentiator {
-
-  public enum Operation { ADD, REMOVE, MODIFY };
 
   private CookieDifferentiator() {
   }
@@ -37,26 +32,28 @@ public class CookieDifferentiator {
    *
    * @return A list of deltas comprising the differential.
    */
-  public static List<Delta> differentiate(CookieSet oldCookies, CookieSet newCookies) {
+  public static CookieSet differentiate(CookieSet oldCookies, CookieSet newCookies) {
 
     // Generate the deltas.
     PeekingIterator<ComparableCookie> oldIter = oldCookies.comparableIterator();
     PeekingIterator<ComparableCookie> newIter = newCookies.comparableIterator();
-    List<Delta> differential = new ArrayList<Delta>();
+    CookieSet differential = new CookieSet();
 
     while (oldIter.hasNext() && newIter.hasNext()) {
       ComparableCookie oldCookie = oldIter.peek();
       ComparableCookie newCookie = newIter.peek();
       int d = oldCookie.compareTo(newCookie);
       if (d < 0) {
-        differential.add(new Delta(Operation.REMOVE, oldCookie.getCookie()));
+        Cookie c = Cookie.class.cast(oldCookie.getCookie().clone());
+        c.setMaxAge(0);
+        differential.add(c);
         oldIter.next();
       } else if (d > 0) {
-        differential.add(new Delta(Operation.ADD, newCookie.getCookie()));
+        differential.add(newCookie.getCookie());
         newIter.next();
       } else {
         if (!sameCookies(oldCookie.getCookie(), newCookie.getCookie())) {
-          differential.add(new Delta(Operation.MODIFY, newCookie.getCookie()));
+          differential.add(newCookie.getCookie());
         }
         oldIter.next();
         newIter.next();
@@ -65,10 +62,12 @@ public class CookieDifferentiator {
 
     // At most one of the next two loops will run its body.
     while (oldIter.hasNext()) {
-      differential.add(new Delta(Operation.REMOVE, oldIter.next().getCookie()));
+      Cookie c = Cookie.class.cast(oldIter.next().getCookie().clone());
+      c.setMaxAge(0);
+      differential.add(c);
     }
     while (newIter.hasNext()) {
-      differential.add(new Delta(Operation.ADD, newIter.next().getCookie()));
+      differential.add(newIter.next().getCookie());
     }
 
     return differential;
@@ -94,40 +93,5 @@ public class CookieDifferentiator {
 
   private static boolean sameStringIgnoreCase(String s1, String s2) {
     return (s1 == null) ? (s2 == null) : s1.equalsIgnoreCase(s2);
-  }
-
-  /**
-   * An object that represents one difference between an old and a new cookie set.  A
-   * sequence of these objects provides all the information needed to transform the old
-   * set to the new one.  The operation specifies what change to make, while the cookie
-   * specifies what the change is to be made on.
-   */
-  public static class Delta {
-
-    private final Operation operation;
-    private final Cookie cookie;
-
-    Delta(Operation operation, Cookie cookie) {
-      this.operation = operation;
-      this.cookie = Cookie.class.cast(cookie.clone());
-    }
-
-    /**
-     * Get the operation for this delta.
-     *
-     * @return The operation.
-     */
-    public Operation getOperation() {
-      return operation;
-    }
-
-    /**
-     * Get the cookie for this delta.
-     *
-     * @return The cookie.
-     */
-    public Cookie getCookie() {
-      return cookie;
-    }
   }
 }
