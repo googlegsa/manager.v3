@@ -75,8 +75,8 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
       throws ServletException, IOException {
     HttpServletResponseAdapter result = new HttpServletResponseAdapter(resp, true);
     HttpSession session = req.getSession();
-    String artifact = req.getParameter(GSA_ARTIFACT_PARAM_NAME);
-    String relayState = req.getParameter(GSA_RELAY_STATE_PARAM_NAME);
+    String artifact = req.getParameter("SAMLart");
+    String relayState = req.getParameter("RelayState");
     if (artifact == null) {
       LOGGER.log(Level.WARNING, "No artifact in message.");
       initErrorResponse(resp, SC_INTERNAL_SERVER_ERROR);
