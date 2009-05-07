@@ -106,14 +106,12 @@ public final class CookieUtil {
     Collection<Cookie> cookiesToSend = new ArrayList<Cookie>();
     cookiesToSend.addAll(receivedCookies);
     subtractCookieSets(userAgentCookies, receivedCookies, cookiesToSend);
-    LOG.info("Cookies total/sent: " +
-             (userAgentCookies.size() + receivedCookies.size()) +
-             "/" + cookiesToSend.size());
     filterCookiesToSend(cookiesToSend, url);
     String cookieStr = cookieHeaderValue(cookiesToSend, true);
     if (!undefined(cookieStr)) {
       exchange.setRequestHeader("Cookie", cookieStr);
     }
+    logRequestCookies(Level.INFO, "Cookies sent to " + url.toString(), cookiesToSend);
 
     int status = exchange.exchange();
 
@@ -127,6 +125,7 @@ public final class CookieUtil {
     }
 
     List<SetCookie> newCookies = parseHttpResponseCookies(exchange);
+    logResponseCookies(Level.INFO, "Cookies received from " + url.toString(), newCookies);
 
     // Remove duplicate cookies in old collection.  This is O(n^2) for small n.
     Iterator<Cookie> iter2 = receivedCookies.iterator();
@@ -317,7 +316,7 @@ public final class CookieUtil {
    *        This should be false when using the result for logging.
    * @return The string representation of the cookies.
    */
-  public static String cookieHeaderValue(Collection<Cookie> cookies, boolean showValues) {
+  public static String cookieHeaderValue(Collection<? extends Cookie> cookies, boolean showValues) {
     return convertCookies(cookies, showValues, true);
   }
 
@@ -329,11 +328,12 @@ public final class CookieUtil {
    *        This should be false when using the result for logging.
    * @return The string representation of the cookies.
    */
-  public static String setCookieHeaderValue(Collection<Cookie> cookies, boolean showValues) {
+  public static String setCookieHeaderValue(
+      Collection<? extends Cookie> cookies, boolean showValues) {
     return convertCookies(cookies, showValues, false);
   }
 
-  private static String convertCookies(Collection<Cookie> cookies,
+  private static String convertCookies(Collection<? extends Cookie> cookies,
                                        boolean showValues, boolean shortForm) {
     if (cookies.size() == 0) {
       return null;
@@ -345,7 +345,7 @@ public final class CookieUtil {
       }
       buffer.append(c.getName());
       buffer.append("=");
-      if (c.getValue() != null) {
+      if (!undefined(c.getValue())) {
         if (showValues) {
           buffer.append(c.getValue());
         } else {
@@ -356,19 +356,19 @@ public final class CookieUtil {
       if (shortForm) {
         continue;
       }
-      if (c.getComment() != null) {
+      if (!undefined(c.getComment())) {
         buffer.append("; comment=");
         buffer.append(c.getComment());
       }
-      if (c.getDomain() != null) {
+      if (!undefined(c.getDomain())) {
         buffer.append("; domain=");
         buffer.append(c.getDomain());
       }
-      if (c.getMaxAge() > 0) {
+      if (c.getMaxAge() >= 0) {
         buffer.append("; max-age=");
         buffer.append(c.getMaxAge());
       }
-      if (c.getPath() != null) {
+      if (!undefined(c.getPath())) {
         buffer.append("; path=");
         buffer.append(c.getPath());
       }
@@ -469,6 +469,18 @@ public final class CookieUtil {
       cookies.add(deserializeCookie(element));
     }
     return cookies;
+  }
+
+  public static void logRequestCookies(
+      Level level, String tag, Collection<? extends Cookie> cookies) {
+    String serial = cookieHeaderValue(cookies, false);
+    LOG.log(level, tag + ": " + (undefined(serial) ? "(none)" : serial));
+  }
+
+  public static void logResponseCookies(
+      Level level, String tag, Collection<? extends Cookie> cookies) {
+    String serial = setCookieHeaderValue(cookies, false);
+    LOG.log(level, tag + ": " + (undefined(serial) ? "(none)" : serial));
   }
 
   private static String safeDeserialize(String str) {
