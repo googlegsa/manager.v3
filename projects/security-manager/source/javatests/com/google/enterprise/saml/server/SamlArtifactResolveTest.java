@@ -14,10 +14,13 @@
 
 package com.google.enterprise.saml.server;
 
+import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
+
 import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.common.Metadata;
 
 import org.opensaml.saml2.core.StatusCode;
@@ -29,10 +32,6 @@ import org.springframework.mock.web.MockServletConfig;
 import java.io.IOException;
 
 import javax.servlet.ServletException;
-
-import static com.google.enterprise.common.ServletTestUtil.makeMockHttpPost;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeResponse;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeStatus;
 
 /**
  * Unit test for SamlArtifactResolve handler.
@@ -71,7 +70,7 @@ public class SamlArtifactResolveTest extends SecurityManagerTestCase {
         "                           Version=\"2.0\"\n" +
         "                           xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\">\n" +
         "      <saml:Issuer xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">" +
-        GsaConstants.GSA_TESTING_ISSUER +
+        GSA_TESTING_ISSUER +
         "</saml:Issuer>\n" +
         "      <samlp:Artifact>" + encodedArtifact + "</samlp:Artifact>\n" +
         "    </samlp:ArtifactResolve>\n" +
@@ -82,7 +81,7 @@ public class SamlArtifactResolveTest extends SecurityManagerTestCase {
     BackEnd backend = ConnectorManager.class.cast(Context.getInstance().getManager()).getBackEnd();
     backend.getArtifactMap().put(
         encodedArtifact,
-        GsaConstants.GSA_TESTING_ISSUER,
+        GSA_TESTING_ISSUER,
         metadata.getSmEntity().getEntityID(),
         makeResponse(null, makeStatus(StatusCode.SUCCESS_URI)));
 

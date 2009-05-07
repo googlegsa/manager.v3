@@ -17,7 +17,6 @@ package com.google.enterprise.security.identity;
 import com.google.enterprise.connector.common.CookieDifferentiator;
 import com.google.enterprise.connector.common.CookieUtil;
 import com.google.enterprise.connector.spi.AbstractAuthnIdentity;
-import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
 import java.util.Collection;
 
@@ -60,7 +59,7 @@ public class DomainCredentials extends AbstractAuthnIdentity {
    *
    * @return The authentication mechanism.
    */
-  public AuthNMechanism getMechanism() {
+  public AuthnMechanism getMechanism() {
     return configInfo.getMechanism();
   }
 

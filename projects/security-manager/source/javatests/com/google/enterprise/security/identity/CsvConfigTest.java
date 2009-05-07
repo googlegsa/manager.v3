@@ -15,7 +15,6 @@
 package com.google.enterprise.security.identity;
 
 import com.google.enterprise.common.SecurityManagerTestCase;
-import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -38,7 +37,7 @@ public class CsvConfigTest extends SecurityManagerTestCase {
         assertEquals(2, group.getElements().size());
         AuthnDomain leizBasicDomain = group.getElements().get(0);
         assertEquals("http://leiz.mtv.corp.google.com/basic/", leizBasicDomain.getName());
-        assertEquals(AuthNMechanism.BASIC_AUTH, leizBasicDomain.getMechanism());
+        assertEquals(AuthnMechanism.BASIC_AUTH, leizBasicDomain.getMechanism());
         assertEquals("http://leiz.mtv.corp.google.com/basic/", leizBasicDomain.getSampleUrl());
         continue;
       }

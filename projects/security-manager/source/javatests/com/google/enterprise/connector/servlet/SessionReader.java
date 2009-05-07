@@ -18,8 +18,8 @@ import com.google.common.base.Preconditions;
 import com.google.enterprise.connector.common.CookieUtil;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.saml.common.GsaConstants;
 import com.google.enterprise.saml.server.BackEndImpl;
+import com.google.enterprise.saml.server.GSASessionAdapter;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import java.io.IOException;
@@ -73,16 +73,11 @@ public class SessionReader extends HttpServlet {
   }
 
   private String readSession(SessionManagerInterface sm, String sessionId) {
-    String user = denullify(sm.getValue(sessionId, GsaConstants.AUTHN_MECH_PREFIX
-        + GsaConstants.AuthNMechanism.BASIC_AUTH.toString()
-        + GsaConstants.AUTHN_MECH_ID));
-    String domain = denullify(sm.getValue(sessionId, GsaConstants.AUTHN_MECH_BASIC_AUTH_USER_DOMAIN_KEY));
-    String password = denullify(sm.getValue(sessionId, GsaConstants.AUTHN_MECH_PREFIX
-        + GsaConstants.AuthNMechanism.BASIC_AUTH.toString()
-        + GsaConstants.AUTHN_MECH_TOKEN));
-    String cookies = denullify(sm.getValue(sessionId, GsaConstants.AUTHN_MECH_PREFIX
-        + GsaConstants.AuthNMechanism.FORMS_AUTH.toString()
-        + GsaConstants.AUTHN_MECH_TOKEN));
+    GSASessionAdapter adapter = new GSASessionAdapter(sm);
+    String user = denullify(adapter.getUsername(sessionId));
+    String domain = denullify(adapter.getDomain(sessionId));
+    String password = denullify(adapter.getPassword(sessionId));
+    String cookies = denullify(adapter.getCookies(sessionId));
     LOGGER.info("ReadSession user string: " + user);
     LOGGER.info("ReadSession domain string: " + domain);
     LOGGER.info("ReadSession password string: " + password);

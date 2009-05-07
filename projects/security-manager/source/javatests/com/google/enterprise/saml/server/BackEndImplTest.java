@@ -16,9 +16,9 @@ package com.google.enterprise.saml.server;
 
 import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.common.CookieUtil;
-import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.security.identity.AuthnDomain;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
+import com.google.enterprise.security.identity.AuthnMechanism;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.manager.LocalSessionManager;
 
@@ -44,9 +44,9 @@ public class BackEndImplTest extends SecurityManagerTestCase {
     adgs.add(new AuthnDomainGroup("adg2"));
     adgs.add(new AuthnDomainGroup("adg3"));
 
-    new AuthnDomain("basicDomain", AuthNMechanism.BASIC_AUTH, "basic_loginurl", adgs.get(0));
-    new AuthnDomain("formsDomain", AuthNMechanism.FORMS_AUTH, "forms_loginurl", adgs.get(1));
-    new AuthnDomain("connectorDomain", AuthNMechanism.CONNECTORS, "connector_loginurl",
+    new AuthnDomain("basicDomain", AuthnMechanism.BASIC_AUTH, "basic_loginurl", adgs.get(0));
+    new AuthnDomain("formsDomain", AuthnMechanism.FORMS_AUTH, "forms_loginurl", adgs.get(1));
+    new AuthnDomain("connectorDomain", AuthnMechanism.CONNECTORS, "connector_loginurl",
                     adgs.get(2));
   }
 

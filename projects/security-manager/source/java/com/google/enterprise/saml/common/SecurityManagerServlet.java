@@ -14,6 +14,8 @@
 
 package com.google.enterprise.saml.common;
 
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
+
 import com.google.enterprise.common.ServletBase;
 import com.google.enterprise.connector.common.CookieDifferentiator;
 import com.google.enterprise.connector.common.CookieSet;
@@ -38,8 +40,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
-
 /**
  * Useful utilities for writing servlets.
  */
@@ -61,6 +61,13 @@ public abstract class SecurityManagerServlet extends ServletBase {
 
   /** Name of the attribute that holds the session's credentials groups. */
   private static final String CREDENTIALS_GROUPS_NAME = "CredentialsGroups";
+
+  public static final String GSA_ARTIFACT_HANDLER_NAME = "SamlArtifactConsumer";
+  public static final String GSA_ARTIFACT_PARAM_NAME = "SAMLart";
+  public static final String GSA_RELAY_STATE_PARAM_NAME = "RelayState";
+
+  /** Name of the cookie in which we store the sessionId */
+  public static final String AUTHN_SESSION_ID_COOKIE_NAME = "GSA_SESSION_ID";
 
   public static ConnectorManager getConnectorManager() {
     return ConnectorManager.class.cast(Context.getInstance().getManager());
@@ -171,7 +178,7 @@ public abstract class SecurityManagerServlet extends ServletBase {
   public static String getGsaSessionId(HttpSession session) {
     String sessionId = String.class.cast(session.getAttribute(GSA_SESSION_ID_NAME));
     if (sessionId == null) {
-      Cookie sessionCookie = getUserAgentCookie(session, GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME);
+      Cookie sessionCookie = getUserAgentCookie(session, AUTHN_SESSION_ID_COOKIE_NAME);
       if (sessionCookie != null) {
         sessionId = sessionCookie.getValue();
         session.setAttribute(GSA_SESSION_ID_NAME, sessionId);

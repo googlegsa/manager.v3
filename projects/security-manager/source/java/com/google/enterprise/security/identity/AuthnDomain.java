@@ -14,7 +14,6 @@
 
 package com.google.enterprise.security.identity;
 
-import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
 /**
  * This mis-named class models the configuration info for a set of DomainCredential
@@ -26,10 +25,10 @@ import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 public class AuthnDomain {
 
   private final String name;              // The name must be unique.
-  private final AuthNMechanism mechanism; // The mechanism to be used.
+  private final AuthnMechanism mechanism; // The mechanism to be used.
   private final String sampleUrl;         // A sample URL to GET for verification.
 
-  public AuthnDomain(String name, AuthNMechanism mechanism, String sampleUrl,
+  public AuthnDomain(String name, AuthnMechanism mechanism, String sampleUrl,
                      AuthnDomainGroup adg) {
     this.name = name;
     this.mechanism = mechanism;
@@ -41,7 +40,7 @@ public class AuthnDomain {
     return name;
   }
 
-  public AuthNMechanism getMechanism() {
+  public AuthnMechanism getMechanism() {
     return mechanism;
   }
 

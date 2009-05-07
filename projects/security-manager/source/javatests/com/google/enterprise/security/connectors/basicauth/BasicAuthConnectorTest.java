@@ -20,9 +20,9 @@ import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.common.SecurityManagerUtil;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.security.identity.AuthnDomain;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
+import com.google.enterprise.security.identity.AuthnMechanism;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
 
@@ -44,7 +44,7 @@ public class BasicAuthConnectorTest extends SecurityManagerTestCase {
     List<AuthnDomainGroup> adgs = new ArrayList<AuthnDomainGroup>();
     adgs.add(new AuthnDomainGroup("ADG1"));
     new AuthnDomain(
-        "BasicDomain", AuthNMechanism.BASIC_AUTH,
+        "BasicDomain", AuthnMechanism.BASIC_AUTH,
         "http://localhost:8973/basic/", adgs.get(0));
     cgs = CredentialsGroup.newGroups(adgs, new MockHttpSession());
     MockHttpTransport transport = new MockHttpTransport();
