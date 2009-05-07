@@ -343,44 +343,63 @@ public final class CookieUtil {
       if (buffer.length() > 0) {
         buffer.append(shortForm ? "; " : ", ");
       }
-      buffer.append(c.getName());
-      buffer.append("=");
-      if (!undefined(c.getValue())) {
-        if (showValues) {
-          buffer.append(c.getValue());
-        } else {
-          buffer.append("#");
-          buffer.append(c.getValue().hashCode());
-        }
-      }
-      if (shortForm) {
-        continue;
-      }
-      if (!undefined(c.getComment())) {
-        buffer.append("; comment=");
-        buffer.append(c.getComment());
-      }
-      if (!undefined(c.getDomain())) {
-        buffer.append("; domain=");
-        buffer.append(c.getDomain());
-      }
-      if (c.getMaxAge() >= 0) {
-        buffer.append("; max-age=");
-        buffer.append(c.getMaxAge());
-      }
-      if (!undefined(c.getPath())) {
-        buffer.append("; path=");
-        buffer.append(c.getPath());
-      }
-      if (c.getVersion() > 0) {
-        buffer.append("; version=");
-        buffer.append(String.valueOf(c.getVersion()));
-      }
-      if (c.getSecure()) {
-        buffer.append("; secure");
-      }
+      convertCookie1(c, showValues, shortForm, buffer);
     }
     return buffer.toString();
+  }
+
+  public static String cookieHeaderValue(Cookie c, boolean showValues) {
+    return convertCookie(c, showValues, true);
+  }
+
+  public static String setCookieHeaderValue(Cookie c, boolean showValues) {
+    return convertCookie(c, showValues, false);
+  }
+
+  private static String convertCookie(Cookie c, boolean showValues, boolean shortForm) {
+    StringBuffer buffer = new StringBuffer();
+    convertCookie1(c, showValues, shortForm, buffer);
+    return buffer.toString();
+  }
+
+  private static void convertCookie1(Cookie c, boolean showValues, boolean shortForm,
+                                StringBuffer buffer) {
+    buffer.append(c.getName());
+    buffer.append("=");
+    if (!undefined(c.getValue())) {
+      if (showValues) {
+        buffer.append(c.getValue());
+      } else {
+        buffer.append("#");
+        buffer.append(c.getValue().hashCode());
+      }
+    }
+    if (shortForm) {
+      return;
+    }
+    if (!undefined(c.getComment())) {
+      buffer.append("; comment=");
+      buffer.append(c.getComment());
+    }
+    if (!undefined(c.getDomain())) {
+      buffer.append("; domain=");
+      buffer.append(c.getDomain());
+    }
+    if (c.getMaxAge() >= 0) {
+      buffer.append("; max-age=");
+      buffer.append(c.getMaxAge());
+    }
+    if (!undefined(c.getPath())) {
+      buffer.append("; path=");
+      buffer.append(c.getPath());
+    }
+    if (c.getVersion() > 0) {
+      buffer.append("; version=");
+      buffer.append(String.valueOf(c.getVersion()));
+    }
+    if (c.getSecure()) {
+      buffer.append("; secure");
+    }
   }
 
   /**
