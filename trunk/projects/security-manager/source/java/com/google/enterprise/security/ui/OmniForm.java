@@ -16,7 +16,6 @@ package com.google.enterprise.security.ui;
 
 import com.google.enterprise.security.identity.CredentialsGroup;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,9 +41,8 @@ public class OmniForm {
    * I haven't figured out the right way to do so and keep the generate/submit
    * methods consistent for all UI implementations.  Perhaps we must restrict
    * UI implementations to ones that can be returned as HTTP content.
-   * @throws IOException
    */
-  public OmniForm(List<CredentialsGroup> groups, OmniFormHtml omniFormHtml) throws IOException {
+  public OmniForm(List<CredentialsGroup> groups, OmniFormHtml omniFormHtml) {
     this.omniHtml = omniFormHtml;
 
     this.formElements = new ArrayList<FormElement>();

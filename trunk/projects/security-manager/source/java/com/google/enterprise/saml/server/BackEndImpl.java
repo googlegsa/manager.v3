@@ -19,8 +19,8 @@ import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.VerificationStatus;
-import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
+import com.google.enterprise.security.identity.AuthnMechanism;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.DomainCredentials;
 import com.google.enterprise.security.identity.IdentityConfig;
@@ -177,7 +177,7 @@ public class BackEndImpl implements BackEnd {
         // The expectation is that only one basic auth module will be active
         // at any given time, or that if multiple basic auth modules are
         // active at once, only one of them will work.
-        if (AuthNMechanism.BASIC_AUTH == dCred.getMechanism()) {
+        if (AuthnMechanism.BASIC_AUTH == dCred.getMechanism()) {
           if (null != cg.getUsername()) {
             adapter.setUsername(sessionId, cg.getUsername());
           }

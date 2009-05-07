@@ -23,6 +23,8 @@ import junit.framework.TestCase;
  */
 public class SecurityManagerTestCase extends TestCase {
 
+  public static final String GSA_TESTING_ISSUER = "http://google.com/enterprise/gsa/testing";
+
   public SecurityManagerTestCase() {
     super();
   }

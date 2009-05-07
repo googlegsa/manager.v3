@@ -15,7 +15,6 @@
 package com.google.enterprise.security.identity;
 
 import com.google.enterprise.common.FileUtil;
-import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -69,7 +68,7 @@ public class CsvConfig implements IdentityConfig {
         LOGGER.severe("Invalid configuration line, skipping: \n" + nextLine);
         continue;
       }
-      AuthNMechanism authMech = authNMechFromString(nextLine[3]);
+      AuthnMechanism authMech = authNMechFromString(nextLine[3]);
       if (null == authMech) {
         LOGGER.severe("Invalid AuthnMechanism for this line, " +
             "skipping this site: \n" + nextLine);
@@ -88,9 +87,9 @@ public class CsvConfig implements IdentityConfig {
     return new ArrayList<AuthnDomainGroup>(adgMap.values());
   }
 
-  public AuthNMechanism authNMechFromString(String mech) {
+  public AuthnMechanism authNMechFromString(String mech) {
     try {
-      return AuthNMechanism.valueOf(mech);
+      return AuthnMechanism.valueOf(mech);
     } catch (IllegalArgumentException e) {
       return null;
     }

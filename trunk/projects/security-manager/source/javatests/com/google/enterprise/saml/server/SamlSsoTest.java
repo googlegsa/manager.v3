@@ -14,6 +14,10 @@
 
 package com.google.enterprise.saml.server;
 
+import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
+
 import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.common.MockHttpClient;
 import com.google.enterprise.common.MockHttpTransport;
@@ -25,11 +29,11 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.saml.client.MockArtifactConsumer;
 import com.google.enterprise.saml.client.MockServiceProvider;
 import com.google.enterprise.saml.common.Metadata;
-import com.google.enterprise.saml.common.GsaConstants.AuthNMechanism;
 import com.google.enterprise.security.connectors.formauth.MockFormAuthServer1;
 import com.google.enterprise.security.connectors.formauth.MockFormAuthServer2;
 import com.google.enterprise.security.identity.AuthnDomain;
 import com.google.enterprise.security.identity.AuthnDomainGroup;
+import com.google.enterprise.security.identity.AuthnMechanism;
 import com.google.enterprise.security.identity.CredentialsGroup;
 import com.google.enterprise.security.identity.MockIdentityConfig;
 
@@ -45,13 +49,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-
-import static com.google.enterprise.saml.common.GsaConstants.GSA_TESTING_ISSUER;
-
-import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
-
-import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
-import static javax.servlet.http.HttpServletResponse.SC_OK;
 
 public class SamlSsoTest extends SecurityManagerTestCase {
   private static final Logger LOGGER = Logger.getLogger(SamlSsoTest.class.getName());
@@ -135,10 +132,10 @@ public class SamlSsoTest extends SecurityManagerTestCase {
     MockIdentityConfig config = new MockIdentityConfig();
     List<AuthnDomainGroup> groups = config.getConfig();
     AuthnDomainGroup g1 = new AuthnDomainGroup("group1");
-    new AuthnDomain("domain1", AuthNMechanism.FORMS_AUTH, FORM1_URL, g1);
+    new AuthnDomain("domain1", AuthnMechanism.FORMS_AUTH, FORM1_URL, g1);
     groups.add(g1);
     AuthnDomainGroup g2 = new AuthnDomainGroup("group2");
-    new AuthnDomain("domain2", AuthNMechanism.FORMS_AUTH, FORM2_URL, g2);
+    new AuthnDomain("domain2", AuthnMechanism.FORMS_AUTH, FORM2_URL, g2);
     groups.add(g2);
     ConnectorManager.class.cast(Context.getInstance().getManager())
         .getBackEnd().setIdentityConfig(config);

@@ -14,8 +14,19 @@
 
 package com.google.enterprise.saml.client;
 
+import static com.google.enterprise.saml.common.OpenSamlUtil.GOOGLE_PROVIDER_NAME;
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnRequest;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
+import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
+import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
+
 import com.google.enterprise.common.GettableHttpServlet;
-import com.google.enterprise.saml.common.GsaConstants;
+import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.saml.common.SecurityManagerServlet;
 
 import org.opensaml.common.SAMLObject;
@@ -39,19 +50,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import static com.google.enterprise.saml.common.OpenSamlUtil.GOOGLE_PROVIDER_NAME;
-import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
-import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeAuthnRequest;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
-import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
-
-import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
-import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
-
-import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
-
 /**
  * The MockServiceProvider class implements a servlet pretending to be the part of a SAML Service
  * Provider that receives a service request from a user agent and initiates an authn request to
@@ -72,7 +70,7 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
     // Guarantee a valid session ID.
     if (getGsaSessionId(session) == null) {
       String sessionId = getSessionManager().createSession();
-      resp.addCookie(new Cookie(GsaConstants.AUTHN_SESSION_ID_COOKIE_NAME, sessionId));
+      resp.addCookie(new Cookie(AUTHN_SESSION_ID_COOKIE_NAME, sessionId));
       session.setAttribute(GSA_SESSION_ID_NAME, sessionId);
     }
 
@@ -98,7 +96,7 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
   private void ifUnknown(HttpServletResponse resp, String relayState) throws ServletException {
     SAMLMessageContext<SAMLObject, AuthnRequest, NameID> context = makeSamlMessageContext();
 
-    EntityDescriptor localEntity = getEntity(GsaConstants.GSA_TESTING_ISSUER);
+    EntityDescriptor localEntity = getEntity(SecurityManagerTestCase.GSA_TESTING_ISSUER);
     SPSSODescriptor sp = localEntity.getSPSSODescriptor(SAML20P_NS);
     initializeLocalEntity(context, localEntity, sp, Endpoint.DEFAULT_ELEMENT_NAME);
     {

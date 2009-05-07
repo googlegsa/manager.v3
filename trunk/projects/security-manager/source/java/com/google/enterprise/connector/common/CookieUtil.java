@@ -16,7 +16,6 @@ package com.google.enterprise.connector.common;
 
 import com.google.enterprise.common.HttpExchange;
 import com.google.enterprise.common.ServletBase;
-import com.google.enterprise.saml.common.GsaConstants;
 
 import java.io.IOException;
 import java.net.URL;
@@ -50,6 +49,11 @@ public final class CookieUtil {
     DATE_FORMAT_RFC2109.setTimeZone(TimeZone.getTimeZone("GMT"));
     DATE_FORMAT_ALT.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
+  
+  // Cookie serialization constants.  Must match the GSA
+  private static final String COOKIE_FIELD_SEPARATOR = "====";
+  private static final String COOKIE_RECORD_SEPARATOR = "::::";
+
   private static final Logger LOG =
       Logger.getLogger(CookieUtil.class.getName());
 
@@ -404,13 +408,13 @@ public final class CookieUtil {
    */
   public static String serializeCookie(Cookie cookie) {
     StringBuilder str = new StringBuilder(safeSerialize(cookie.getName()));
-    str.append(GsaConstants.COOKIE_FIELD_SEPERATOR);
+    str.append(COOKIE_FIELD_SEPARATOR);
     str.append(safeSerialize(cookie.getValue()));
-    str.append(GsaConstants.COOKIE_FIELD_SEPERATOR);
+    str.append(COOKIE_FIELD_SEPARATOR);
     str.append(safeSerialize(cookie.getPath()));
-    str.append(GsaConstants.COOKIE_FIELD_SEPERATOR);
+    str.append(COOKIE_FIELD_SEPARATOR);
     str.append(safeSerialize(cookie.getDomain()));
-    str.append(GsaConstants.COOKIE_FIELD_SEPERATOR);
+    str.append(COOKIE_FIELD_SEPARATOR);
     str.append(safeSerialize(String.valueOf(cookie.getMaxAge())));
     return str.toString();
   }
@@ -425,7 +429,7 @@ public final class CookieUtil {
     StringBuilder str = new StringBuilder();
     for (Cookie cookie : cookies) {
       str.append(serializeCookie(cookie));
-      str.append(GsaConstants.COOKIE_RECORD_SEPARATOR);
+      str.append(COOKIE_RECORD_SEPARATOR);
     }
     return str.toString();
   }
@@ -442,7 +446,7 @@ public final class CookieUtil {
    * @return The corresponding cookie.
    */
   public static Cookie deserializeCookie(String str) {
-    String[] elements = str.split(GsaConstants.COOKIE_FIELD_SEPERATOR);
+    String[] elements = str.split(COOKIE_FIELD_SEPARATOR);
     Cookie cookie = new Cookie(safeDeserialize(elements[0]),
                                safeDeserialize(elements[1]));
     cookie.setPath(safeDeserialize(elements[2]));
@@ -460,7 +464,7 @@ public final class CookieUtil {
    */
   public static List<Cookie> deserializeCookies(String str) {
     List<Cookie> cookies = new ArrayList<Cookie>();
-    String[] elements = str.split(GsaConstants.COOKIE_RECORD_SEPARATOR);
+    String[] elements = str.split(COOKIE_RECORD_SEPARATOR);
     for (String element : elements) {
       cookies.add(deserializeCookie(element));
     }

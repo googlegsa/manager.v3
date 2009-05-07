@@ -14,8 +14,20 @@
 
 package com.google.enterprise.saml.client;
 
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
+import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResolve;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
+import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
+import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
+import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
+import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
+
 import com.google.enterprise.common.GettableHttpServlet;
 import com.google.enterprise.common.HttpExchange;
+import com.google.enterprise.common.SecurityManagerTestCase;
 import com.google.enterprise.common.SecurityManagerUtil;
 import com.google.enterprise.saml.common.HttpExchangeToInTransport;
 import com.google.enterprise.saml.common.HttpExchangeToOutTransport;
@@ -46,22 +58,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-
-import static com.google.enterprise.saml.common.GsaConstants.GSA_ARTIFACT_PARAM_NAME;
-import static com.google.enterprise.saml.common.GsaConstants.GSA_RELAY_STATE_PARAM_NAME;
-import static com.google.enterprise.saml.common.GsaConstants.GSA_TESTING_ISSUER;
-import static com.google.enterprise.saml.common.OpenSamlUtil.initializeLocalEntity;
-import static com.google.enterprise.saml.common.OpenSamlUtil.initializePeerEntity;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeArtifactResolve;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeIssuer;
-import static com.google.enterprise.saml.common.OpenSamlUtil.makeSamlMessageContext;
-import static com.google.enterprise.saml.common.OpenSamlUtil.runDecoder;
-import static com.google.enterprise.saml.common.OpenSamlUtil.runEncoder;
-
-import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
-import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
-
-import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 
 /**
  * The MockArtifactConsumer class implements a servlet pretending to be the part of a SAML Service
@@ -116,7 +112,7 @@ public class MockArtifactConsumer extends SecurityManagerServlet implements Gett
     SAMLMessageContext<ArtifactResponse, ArtifactResolve, NameID> context =
         makeSamlMessageContext();
 
-    EntityDescriptor localEntity = getEntity(GSA_TESTING_ISSUER);
+    EntityDescriptor localEntity = getEntity(SecurityManagerTestCase.GSA_TESTING_ISSUER);
     initializeLocalEntity(context, localEntity, localEntity.getSPSSODescriptor(SAML20P_NS),
                           Endpoint.DEFAULT_ELEMENT_NAME);
     {

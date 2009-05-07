@@ -14,8 +14,6 @@
 
 package com.google.enterprise.security.ui;
 
-import com.google.enterprise.security.ui.FormElement;
-
 import java.util.List;
 import java.util.logging.Logger;
 
