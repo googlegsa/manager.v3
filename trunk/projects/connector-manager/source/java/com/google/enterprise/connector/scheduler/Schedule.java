@@ -40,7 +40,7 @@ public class Schedule {
    * Construct an empty, disabled Schedule.
    */
   public Schedule() {
-    this(null, true, 0, -1, "1-1");
+    this(null, true, 0, -1, (List<ScheduleTimeInterval>) null);
   }
 
 
@@ -70,14 +70,11 @@ public class Schedule {
    */
   public Schedule(String connectorName, boolean disabled, int load,
       int retryDelayMillis, List<ScheduleTimeInterval> timeIntervals) {
-    if ((null == timeIntervals) || (timeIntervals.isEmpty())) {
-      throw new IllegalArgumentException();
-    }
     this.connectorName = connectorName;
     this.load = load;
     this.disabled = disabled;
     this.retryDelayMillis = retryDelayMillis;
-    this.timeIntervals = timeIntervals;
+    setTimeIntervals(timeIntervals);
   }
 
   /**
@@ -86,6 +83,9 @@ public class Schedule {
    * @param scheduleProto String readable by readString() method
    */
   public Schedule(String scheduleProto) {
+    if (scheduleProto == null || scheduleProto.trim().length() == 0) {
+      scheduleProto = "#:0:-1:";
+    }
     readString(scheduleProto);
   }
 
@@ -99,43 +99,17 @@ public class Schedule {
   }
 
   /**
-   * Utility method to parse out the delay field.  Currently only used when
-   * sending the schedule string back to a GSA that has not been updated to
-   * parse the delay field from the schedule.
+   * Return a legacy representation of the supplied schedule.
+   * Legacy schedules do not have a delay field or disabled flag.
+   * Only sent to a GSA that does not understand the delay field.
    *
-   * Done in a safe manner so it won't mangle a given legacy schedule.
-   *
-   * @param schedule a schedule string that contains a delay field.
-   * @return a schedule string without the delay field.
+   * @param scheduleStr a schedule string.
+   * @return a schedule string without the delay field or disabled flag.
    */
-  public static String toLegacyString(String schedule) {
-    String[] fields = schedule.split(":");
-    try {
-      if (fields[2].indexOf('-') <= 0) {
-        // It's a delay, get rid of it
-        StringBuilder result = new StringBuilder();
-        if (fields[0].charAt(0) == '#') {
-          // Legacy doesn't support disabled either.
-          result.append(fields[0].substring(1));
-        } else {
-          result.append(fields[0]);
-        }
-        result.append(":").append(fields[1]);
-
-        if (fields.length == 3) {
-          throw new IllegalArgumentException();
-        } else {
-          for (int i = 3; i < fields.length; i++) {
-            result.append(":").append(fields[i]);
-          }
-        }
-        return result.toString();
-      }
-      // else, it's already legacy
-      return schedule;
-    } catch(ArrayIndexOutOfBoundsException aioobe) {
-      throw new IllegalArgumentException();
-    }
+  public static String toLegacyString(String scheduleStr) {
+    Schedule schedule = new Schedule(scheduleStr);
+    return (schedule.connectorName + ":" + schedule.load + ":"
+            + schedule.getTimeIntervalsAsString());
   }
 
   /**
@@ -155,10 +129,8 @@ public class Schedule {
    *    OR
    *    <connectorName>:<load>:<timeIntervals>
    * e.g. "connector1:60:86400000:1-2:3-5", "connector1:60:1-2:3-5"
-   *
    */
   public void readString(String schedule) {
-    String exceptionReason = "Invalid schedule string format: " + schedule;
     try {
       String[] strs = schedule.trim().split(":", 4);
       if (strs[0].charAt(0) == '#') {
@@ -169,7 +141,7 @@ public class Schedule {
       }
       load = Integer.parseInt(strs[1]);
       String intervals;
-      if (strs[2].indexOf('-') <= 0) {
+      if ((strs.length > 3) && (strs[2].indexOf('-') <= 0)) {
         retryDelayMillis = Integer.parseInt(strs[2]);
         intervals = strs[3];
       } else {
@@ -178,12 +150,10 @@ public class Schedule {
         strs = schedule.trim().split(":", 3);
         intervals = strs[2];
       }
-      timeIntervals = parseTimeIntervals(intervals);
-      if (timeIntervals.size() < 1) {
-        throw new IllegalArgumentException(exceptionReason);
-      }
-    } catch(ArrayIndexOutOfBoundsException aioobe) {
-      throw new IllegalArgumentException(exceptionReason);
+      setTimeIntervals(parseTimeIntervals(intervals));
+    } catch(Exception e) {
+      throw new IllegalArgumentException("Invalid schedule string format: \""
+                                         + schedule + "\"");
     }
   }
 
@@ -195,6 +165,9 @@ public class Schedule {
    */
   private static List<ScheduleTimeInterval> parseTimeIntervals(
       String intervals) {
+    if (intervals == null || (intervals.trim().length() == 0)) {
+      return null;
+    }
     String[] strs = intervals.trim().split(":");
     List<ScheduleTimeInterval> timeIntervals =
       new ArrayList<ScheduleTimeInterval> (strs.length);
@@ -255,11 +228,16 @@ public class Schedule {
   }
 
   public void setTimeIntervals(List<ScheduleTimeInterval> timeIntervals) {
-    this.timeIntervals = timeIntervals;
+    // If we have a null List, make it an empty one.
+    if (timeIntervals == null) {
+      this.timeIntervals = new ArrayList<ScheduleTimeInterval>(0);
+    } else {
+      this.timeIntervals = timeIntervals;
+    }
   }
 
   public void setTimeIntervals(String timeIntervals) {
-    this.timeIntervals = parseTimeIntervals(timeIntervals);
+    setTimeIntervals(parseTimeIntervals(timeIntervals));
   }
 
   public boolean isDisabled() {
@@ -271,7 +249,8 @@ public class Schedule {
   }
 
   /**
-   * @return String of the form: e.g. "1-2:3-5"
+   * @return String of the form: e.g. "1-2:3-5",
+   *         or empty string if Schedule has no timeIntervals.
    */
   public String getTimeIntervalsAsString() {
     StringBuilder buf = new StringBuilder();
