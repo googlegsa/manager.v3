@@ -222,6 +222,16 @@ public abstract class SecurityManagerServlet extends ServletBase {
       }
     }
 
+    // Remove any cookies missing their domains; the user-agent can't use those since
+    // they're implicitly scoped to the IdP.
+    Iterator<Cookie> iter = newOutgoing.iterator();
+    while (iter.hasNext()) {
+      String domain = iter.next().getDomain();
+      if (domain == null || domain.isEmpty()) {
+        iter.remove();
+      }
+    }
+
     // Send back any changes not previously sent.
     CookieSet toSend = CookieDifferentiator.differentiate(getOutgoingCookies(session), newOutgoing);
     setOutgoingCookies(session, newOutgoing);
