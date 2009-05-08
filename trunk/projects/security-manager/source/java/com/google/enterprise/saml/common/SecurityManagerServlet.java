@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
@@ -197,6 +198,7 @@ public abstract class SecurityManagerServlet extends ServletBase {
       CookieUtil.subtractCookieSets(
           Arrays.asList(cookies), getOutgoingCookies(session), incoming);
     }
+    CookieUtil.logRequestCookies(Level.INFO, "Incoming cookies from user agent", incoming);
   }
 
   /**
@@ -239,6 +241,7 @@ public abstract class SecurityManagerServlet extends ServletBase {
     for (Cookie c : toSend) {
       response.addCookie(c);
     }
+    CookieUtil.logResponseCookies(Level.INFO, "Outgoing cookies to user agent", toSend);
   }
 
   private static CookieSet getOutgoingCookies(HttpSession session) {
