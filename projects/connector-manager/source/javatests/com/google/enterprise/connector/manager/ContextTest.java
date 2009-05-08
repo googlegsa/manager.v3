@@ -46,7 +46,9 @@ public class ContextTest extends TestCase {
     System.out.println("Beans application context: " + contextName);
     for (int i = 0; i < beanList.length; i++) {
       Object bean = ac.getBean(beanList[i]);
-      System.out.println(beanList[i] + " " + bean.getClass().toString());
+      if (bean != null) {
+        System.out.println(beanList[i] + " " + bean.getClass().toString());
+      }
     }
   }
 }

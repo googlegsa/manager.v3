@@ -87,28 +87,20 @@ public final class InstanceInfo {
 
   /* **** Getters and Setters **** */
 
-  public static void setConnectorConfigStore(ConnectorConfigStore store) {
-    configStore = store;
+  public static void setConnectorStores(ConnectorConfigStore configStor,
+      ConnectorScheduleStore schedStor, ConnectorStateStore stateStor) {
+    configStore = configStor;
+    schedStore = schedStor;
+    stateStore = new GenerationalStateStore(stateStor);
   }
 
-  public static void setConnectorScheduleStore(ConnectorScheduleStore store) {
-    schedStore = store;
-  }
-
-  public static void setConnectorStateStore(ConnectorStateStore store) {
-    stateStore = new GenerationalStateStore(store);
-  }
-
-  public static void setLegacyConfigStores(Collection<ConnectorConfigStore> stores) {
-    legacyConfigStores = stores;
-  }
-
-  public static void setLegacyScheduleStores(Collection<ConnectorScheduleStore> stores) {
-    legacyScheduleStores = stores;
-  }
-
-  public static void setLegacyStateStores(Collection<ConnectorStateStore> stores) {
-    legacyStateStores = stores;
+  public static void setLegacyStores(
+      Collection<ConnectorConfigStore> configStores,
+      Collection<ConnectorScheduleStore> schedStores,
+      Collection<ConnectorStateStore> stateStores) {
+    legacyConfigStores = configStores;
+    legacyScheduleStores = schedStores;
+    legacyStateStores = stateStores;
   }
 
   /**
