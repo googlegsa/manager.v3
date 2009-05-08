@@ -14,7 +14,7 @@
 
 package com.google.enterprise.security.identity;
 
-import com.google.enterprise.connector.common.CookieDifferentiator;
+import com.google.enterprise.connector.common.CookieSet;
 import com.google.enterprise.connector.common.CookieUtil;
 import com.google.enterprise.connector.spi.AbstractAuthnIdentity;
 
@@ -34,13 +34,13 @@ public class DomainCredentials extends AbstractAuthnIdentity {
 
   private final AuthnDomain configInfo;
   private final CredentialsGroup cg;
-  private final CookieDifferentiator differentiator;
+  private final CookieSet cookies;
 
   DomainCredentials(AuthnDomain configInfo, CredentialsGroup cg) {
     super();
     this.configInfo = configInfo;
     this.cg = cg;
-    differentiator = new CookieDifferentiator();
+    cookies = new CookieSet();
     cg.addElement(this);
   }
 
@@ -90,16 +90,7 @@ public class DomainCredentials extends AbstractAuthnIdentity {
 
   /* @Override */
   public Collection<Cookie> getCookies() {
-    return differentiator.getNewCookies();
-  }
-
-  /**
-   * Get this identity's cookie differentiator.
-   *
-   * @return The cookie differentiator.
-   */
-  public CookieDifferentiator getDifferentiator() {
-    return differentiator;
+    return cookies;
   }
 
   /**
@@ -110,7 +101,7 @@ public class DomainCredentials extends AbstractAuthnIdentity {
   public String dumpInfo() {
     StringBuilder sb = new StringBuilder();
     sb.append(getUsername());
-    sb.append(":");
+    sb.append(":#");
     sb.append(getPassword().hashCode());
     sb.append("; ");
     sb.append(CookieUtil.cookieHeaderValue(getCookies(), false));
