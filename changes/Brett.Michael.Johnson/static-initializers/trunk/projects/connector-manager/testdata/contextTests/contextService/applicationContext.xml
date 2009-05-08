@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+
+  <bean id="TestServiceOne"
+        class="com.google.enterprise.connector.manager.TestService">
+    <property name="serviceName" value="TestServiceOne"/>
+  </bean>
+
+  <bean id="TestServiceTwo"
+        class="com.google.enterprise.connector.manager.TestService">
+    <property name="serviceName" value="TestServiceTwo"/>
+  </bean>
+
+  <bean id="TestServiceThree"
+        class="com.google.enterprise.connector.manager.TestService">
+    <property name="serviceName" value="TestServiceThree"/>
+  </bean>
+
+  <bean id="OrderedServices"
+        class="org.springframework.beans.factory.config.MapFactoryBean">
+    <property name="targetMapClass" value="java.util.TreeMap"/>
+    <property name="sourceMap">
+      <map>
+        <entry key="1" value-ref="TestServiceThree"/>
+        <entry key="2" value-ref="TestServiceTwo"/>
+      </map>
+    </property>
+  </bean>
+
+  <bean id="TestEventListener"
+        class="com.google.enterprise.connector.listener.TestListener">
+    <property name="listenerName" value="AppContextTestListener"/>
+  </bean>
+
+</beans>
