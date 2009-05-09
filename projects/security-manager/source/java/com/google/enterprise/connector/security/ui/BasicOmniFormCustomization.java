@@ -198,11 +198,11 @@ public class BasicOmniFormCustomization implements OmniFormCustomization {
    * @return true if the config was parsed properly
    */
   private boolean parsePropertiesConfig(Properties config) {
-    Enumeration e = config.propertyNames();
+    Enumeration<?> e = config.propertyNames();
 
     boolean success = true;
     while (e.hasMoreElements()) {
-      String item = (String) e.nextElement();
+      String item = String.class.cast(e.nextElement());
       if (isGlobalOption(item)) {
         globals.put(parseGlobalOption(item), config.getProperty(item));
       } else if (isCredentialOption(item)) {
