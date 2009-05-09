@@ -14,31 +14,24 @@
         class="com.google.enterprise.connector.persist.FileStore">
   </bean>
 
-  <!-- Spring does not like to call static setters to do injection of class
-       field values.  This StaticInitializerBeanFactoryPostProcessor can
-       perform that function, even though the syntax for doing so is not
-       as convenient.
-  -->
-  <bean class="com.google.enterprise.connector.common.StaticInitializerBeanFactoryPostProcessor">
-     <property name="classes">
-        <map>
-          <entry key="com.google.enterprise.connector.instantiator.InstanceInfo">
-            <map>
-              <entry key="connectorConfigStore" value-ref="ConnectorConfigStore"/>
-              <entry key="connectorScheduleStore" value-ref="ConnectorScheduleStore"/>
-              <entry key="connectorStateStore" value-ref="ConnectorStateStore"/>
-            </map>
-          </entry>
-        </map>
-     </property>
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.instantiator.InstanceInfo.setConnectorStores"/>
+    <property name="arguments">
+      <list>
+        <ref bean="ConnectorConfigStore"/>
+        <ref bean="ConnectorScheduleStore"/>
+        <ref bean="ConnectorStateStore"/>
+      </list>
+    </property>
   </bean>
 
   <bean id="SessionManager"
-        class="com.google.enterprise.security.manager.LocalSessionManager">
+        class="com.google.enterprise.connector.security.manager.LocalSessionManager">
   </bean>
 
   <bean id="AuthzResponder"
-        class="com.google.enterprise.saml.server.AuthzResponderImpl">
+        class="com.google.enterprise.connector.saml.server.AuthzResponderImpl">
   </bean>
 
   <bean id="Instantiator"
@@ -48,12 +41,12 @@
   </bean>
 
   <bean id="IdentityConfig"
-	class="com.google.enterprise.security.identity.CsvConfig">
+	class="com.google.enterprise.connector.security.identity.CsvConfig">
     <constructor-arg index="0" value="AuthSites.conf" />
   </bean>
 
   <bean id="BackEnd"
-        class="com.google.enterprise.saml.server.BackEndImpl">
+        class="com.google.enterprise.connector.saml.server.BackEndImpl">
     <constructor-arg index="0" ref="SessionManager" />
     <constructor-arg index="1" ref="AuthzResponder" />
     <property name="identityConfig" ref="IdentityConfig" />
@@ -82,7 +75,7 @@
   </bean>
 
   <bean id="Metadata"
-	class="com.google.enterprise.saml.common.Metadata">
+	class="com.google.enterprise.connector.saml.common.Metadata">
     <constructor-arg index="0" value="saml-metadata.xml" />
     <constructor-arg index="1" value="http://google.com/enterprise/security-manager" />
   </bean>

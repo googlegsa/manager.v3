@@ -15,11 +15,11 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.common.base.Preconditions;
-import com.google.enterprise.connector.common.CookieUtil;
+import com.google.enterprise.connector.common.cookie.CookieUtil;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.saml.server.BackEndImpl;
-import com.google.enterprise.saml.server.GSASessionAdapter;
+import com.google.enterprise.connector.saml.server.BackEndImpl;
+import com.google.enterprise.connector.saml.server.GSASessionAdapter;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import java.io.IOException;
