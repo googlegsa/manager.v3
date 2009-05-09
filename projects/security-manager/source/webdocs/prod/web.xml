@@ -302,7 +302,7 @@
 
   <servlet>
     <servlet-name>SamlAuthn</servlet-name>
-    <servlet-class>com.google.enterprise.saml.server.SamlAuthn</servlet-class>
+    <servlet-class>com.google.enterprise.connector.saml.server.SamlAuthn</servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>SamlAuthn</servlet-name>
@@ -311,7 +311,9 @@
 
   <servlet>
     <servlet-name>SamlArtifactResolve</servlet-name>
-    <servlet-class>com.google.enterprise.saml.server.SamlArtifactResolve</servlet-class>
+    <servlet-class>
+      com.google.enterprise.connector.saml.server.SamlArtifactResolve
+    </servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>SamlArtifactResolve</servlet-name>
@@ -320,7 +322,7 @@
 
   <servlet>
     <servlet-name>SamlAuthz</servlet-name>
-    <servlet-class>com.google.enterprise.saml.server.SamlAuthz</servlet-class>
+    <servlet-class>com.google.enterprise.connector.saml.server.SamlAuthz</servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>SamlAuthz</servlet-name>

@@ -19,7 +19,7 @@ import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
-import com.google.enterprise.saml.server.BackEnd;
+import com.google.enterprise.connector.saml.server.BackEnd;
 
 import java.util.List;
 import java.util.Map;

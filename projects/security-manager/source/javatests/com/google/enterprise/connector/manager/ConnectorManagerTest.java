@@ -14,7 +14,7 @@
 
 package com.google.enterprise.connector.manager;
 
-import com.google.enterprise.common.SecurityManagerTestCase;
+import com.google.enterprise.connector.common.SecurityManagerTestCase;
 
 import java.util.Set;
 

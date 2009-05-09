@@ -15,7 +15,7 @@
 package com.google.enterprise.connector.mock;
 
 import com.google.common.collect.ImmutableList;
-import com.google.enterprise.common.SecurityManagerTestCase;
+import com.google.enterprise.connector.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.RepositoryException;
