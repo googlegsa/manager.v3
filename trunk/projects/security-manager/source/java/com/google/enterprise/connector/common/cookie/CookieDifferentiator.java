@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.common.cookie;
 
 import com.google.common.collect.PeekingIterator;
-import com.google.enterprise.connector.common.cookie.ComparableCookie;
 
 import javax.servlet.http.Cookie;
 
@@ -36,25 +35,25 @@ public class CookieDifferentiator {
    */
   public static CookieSet differentiate(CookieSet oldCookies, CookieSet newCookies) {
 
-    PeekingIterator<ComparableCookie> oldIter = oldCookies.comparableIterator();
-    PeekingIterator<ComparableCookie> newIter = newCookies.comparableIterator();
+    PeekingIterator<Cookie> oldIter = oldCookies.peekingIterator();
+    PeekingIterator<Cookie> newIter = newCookies.peekingIterator();
     CookieSet differential = new CookieSet();
 
     while (oldIter.hasNext() && newIter.hasNext()) {
-      ComparableCookie oldCookie = oldIter.peek();
-      ComparableCookie newCookie = newIter.peek();
-      int d = oldCookie.compareTo(newCookie);
+      Cookie oldCookie = oldIter.peek();
+      Cookie newCookie = newIter.peek();
+      int d = ComparableCookie.compareCookies(oldCookie, newCookie);
       if (d < 0) {
-        Cookie c = Cookie.class.cast(oldCookie.getCookie().clone());
+        Cookie c = Cookie.class.cast(oldCookie.clone());
         c.setMaxAge(0);
         differential.add(c);
         oldIter.next();
       } else if (d > 0) {
-        differential.add(newCookie.getCookie());
+        differential.add(newCookie);
         newIter.next();
       } else {
-        if (!sameCookies(oldCookie.getCookie(), newCookie.getCookie())) {
-          differential.add(newCookie.getCookie());
+        if (!sameCookies(oldCookie, newCookie)) {
+          differential.add(newCookie);
         }
         oldIter.next();
         newIter.next();
@@ -63,12 +62,12 @@ public class CookieDifferentiator {
 
     // At most one of the next two loops will run its body.
     while (oldIter.hasNext()) {
-      Cookie c = Cookie.class.cast(oldIter.next().getCookie().clone());
+      Cookie c = Cookie.class.cast(oldIter.next().clone());
       c.setMaxAge(0);
       differential.add(c);
     }
     while (newIter.hasNext()) {
-      differential.add(newIter.next().getCookie());
+      differential.add(newIter.next());
     }
 
     return differential;
