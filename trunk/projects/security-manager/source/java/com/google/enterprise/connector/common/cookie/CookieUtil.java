@@ -41,16 +41,10 @@ import javax.servlet.http.Cookie;
  */
 public final class CookieUtil {
   // RFC 2109, sect 10.1.2, says: Wdy, DD-Mon-YY HH:MM:SS GMT
-  private static final DateFormat DATE_FORMAT_RFC2109 =
-      new SimpleDateFormat("EEE, dd-MMM-yyyy HH:mm:ss zzz");
+  private static final String DATE_FORMAT_RFC2109 = "EEE, dd-MMM-yyyy HH:mm:ss zzz";
   // ..and to be flexible we accept a variation.
-  private static final DateFormat DATE_FORMAT_ALT =
-      new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
-  static {
-    DATE_FORMAT_RFC2109.setTimeZone(TimeZone.getTimeZone("GMT"));
-    DATE_FORMAT_ALT.setTimeZone(TimeZone.getTimeZone("GMT"));
-  }
-  
+  private static final String DATE_FORMAT_ALT = "EEE, dd MMM yyyy HH:mm:ss zzz";
+
   // Cookie serialization constants.  Must match the GSA
   private static final String COOKIE_FIELD_SEPARATOR = "====";
   private static final String COOKIE_RECORD_SEPARATOR = "::::";
@@ -165,11 +159,11 @@ public final class CookieUtil {
         // We try 2 styles of date formats.
         long expMillis = -1;
         try {
-          expMillis = DATE_FORMAT_RFC2109.parse(expiresAt).getTime();
+          expMillis = parseDate(DATE_FORMAT_RFC2109, expiresAt);
         } catch (ParseException e1) {
           // Parsing failed, try other format.
           try {
-            expMillis = DATE_FORMAT_ALT.parse(expiresAt).getTime();
+            expMillis = parseDate(DATE_FORMAT_ALT, expiresAt);
           } catch (ParseException e2) {
             LOG.log(Level.WARNING,
                     "Can't parse cookie date \"" + expiresAt + "\" for cookie " + name,
@@ -237,6 +231,12 @@ public final class CookieUtil {
       }
     }
     return null;
+  }
+
+  private static long parseDate(String formatString, String s) throws ParseException {
+    DateFormat format = new SimpleDateFormat(formatString);
+    format.setTimeZone(TimeZone.getTimeZone("GMT"));
+    return format.parse(s).getTime();
   }
 
   /**

@@ -187,7 +187,7 @@ public class SamlAuthz extends SecurityManagerServlet {
    * resetting the HashMap whenever a new Document is being parsed.
    * Alternatively, trash this and use OpenSAML's SOAP libraries.
    */
-  class MultiAuthzQueryDecisionHandler implements ContentHandler {
+  static class MultiAuthzQueryDecisionHandler implements ContentHandler {
 
     private HashMap<String, ArrayList<String>> urlToId;
 

@@ -15,6 +15,7 @@
 package com.google.enterprise.sessionmanager;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Mock Session manager that does only 1 level of key-value mapping
@@ -25,11 +26,12 @@ import java.util.HashMap;
  */
 public class MockSessionManager implements SessionManagerInterface {
 
-  HashMap<String,String> stringMap;
-  HashMap<String,byte[]> byteMap;
+  private final Map<String, String> stringMap;
+  private final Map<String, byte[]> byteMap;
 
   public MockSessionManager() {
-    stringMap = new HashMap<String,String>();
+    stringMap = new HashMap<String, String>();
+    byteMap = new HashMap<String, byte[]>();
   }
 
   public boolean sessionExists(String sessionId) {

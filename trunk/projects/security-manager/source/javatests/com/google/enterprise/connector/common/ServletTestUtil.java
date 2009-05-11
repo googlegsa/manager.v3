@@ -240,7 +240,7 @@ public final class ServletTestUtil {
     request.setContentType("application/x-www-form-urlencoded");
     request.setCharacterEncoding("UTF-8");
     request.addHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
-    request.addHeader("Content-Length", (new Integer(content.length)).toString());
+    request.addHeader("Content-Length", Integer.valueOf(content.length).toString());
   }
 
   private static void writePostParams(HttpServletRequest request, Writer out) throws IOException {

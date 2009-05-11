@@ -16,6 +16,7 @@ package com.google.enterprise.connector.security.ui;
 
 import com.google.enterprise.connector.security.identity.CredentialsGroup;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -60,7 +61,7 @@ public class OmniForm {
    *
    * @return an html string
    */
-  public String generateForm() {
+  public String generateForm() throws IOException {
     for (FormElement formElem : formElements) {
       formElem.setActive(!formElemToCG.get(formElem).isVerified());
     }

@@ -28,7 +28,7 @@ public class SetCookie extends Cookie {
 
   public int[] ports;
   public String commentURL;
-  public static int[] EMPTY_PORT = new int[1];
+  static final int[] EMPTY_PORT = new int[1];
 
   public SetCookie(String name, String value) {
     super(name, value);
