@@ -50,60 +50,78 @@ public class ComparableCookie implements Comparable<ComparableCookie> {
     return c;
   }
 
-  // RFC 2965 says name and domain are case insensitive.
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (o == this) return true;
     if (o == null) return false;
-    Cookie c2;
     if (o instanceof ComparableCookie) {
-      c2 = ((ComparableCookie) o).getCookie();
-    } else if (o instanceof Cookie) {
-      c2 = ((Cookie) o);
-    } else {
-      return false;
+      return equalCookies(c, ((ComparableCookie) o).getCookie());
     }
+    if (o instanceof Cookie) {
+      return equalCookies(c, ((Cookie) o));
+    }
+    return false;
+  }
+
+  // RFC 2965 says name and domain are case insensitive.
+  public static boolean equalCookies(Cookie c1, Cookie c2) {
     return
-        equalStringsIgnoreCase(c.getName(), c2.getName())
-        && equalStringsIgnoreCase(c.getDomain(), c2.getDomain())
-        && equalStrings(c.getPath(), c2.getPath());
+        equalStringsIgnoreCase(c1.getName(), c2.getName())
+        && equalStringsIgnoreCase(c1.getDomain(), c2.getDomain())
+        && equalStrings(c1.getPath(), c2.getPath());
   }
 
   private static boolean equalStrings(String s1, String s2) {
-    return (s1 == null) ? (s2 == null) : s1.equals(s2);
+    return deNull(s1).equals(deNull(s2));
   }
 
   private static boolean equalStringsIgnoreCase(String s1, String s2) {
-    return (s1 == null) ? (s2 == null) : s1.equalsIgnoreCase(s2);
+    return deNull(s1).equalsIgnoreCase(deNull(s2));
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
+    return cookieHashCode(c);
+  }
+
+  public static int cookieHashCode(Cookie c) {
     int result = 17;
-    result = (31 * result) + ((c.getName() == null) ? 0 : c.getName().hashCode());
-    result = (31 * result) + ((c.getDomain() == null) ? 0 : c.getDomain().hashCode());
-    result = (31 * result) + ((c.getPath() == null) ? 0 : c.getPath().hashCode());
+    result = (31 * result) + hashStringIgnoreCase(c.getName());
+    result = (31 * result) + hashStringIgnoreCase(c.getDomain());
+    result = (31 * result) + hashString(c.getPath());
     return result;
   }
 
-  /* @Override */ public int compareTo(ComparableCookie cc) {
-    Cookie c2 = cc.getCookie();
-    int d = compareStringsIgnoreCase(c.getName(), c2.getName());
+  private static int hashString(String s) {
+    return deNull(s).hashCode();
+  }
+
+  private static int hashStringIgnoreCase(String s) {
+    return deNull(s).toLowerCase().hashCode();
+  }
+
+  /* @Override */
+  public int compareTo(ComparableCookie cc) {
+    return compareCookies(c, cc.getCookie());
+  }
+
+  public static int compareCookies(Cookie c1, Cookie c2) {
+    int d = compareStringsIgnoreCase(c1.getName(), c2.getName());
     if (d != 0) { return d; }
-    d = compareStringsIgnoreCase(c.getDomain(), c2.getDomain());
+    d = compareStringsIgnoreCase(c1.getDomain(), c2.getDomain());
     if (d != 0) { return d; }
-    return compareStrings(c.getPath(), c2.getPath());
+    return compareStrings(c1.getPath(), c2.getPath());
   }
 
   private static int compareStrings(String s1, String s2) {
-    return
-        (s1 == null)
-        ? ((s2 == null) ? 0 : -1)
-        : ((s2 == null) ? 1 : s1.compareTo(s2));
+    return deNull(s1).compareTo(deNull(s2));
   }
 
   private static int compareStringsIgnoreCase(String s1, String s2) {
-    return
-        (s1 == null)
-        ? ((s2 == null) ? 0 : -1)
-        : ((s2 == null) ? 1 : s1.compareToIgnoreCase(s2));
+    return deNull(s1).compareToIgnoreCase(deNull(s2));
+  }
+
+  private static String deNull(String s) {
+    return ((s == null) ? "" : s);
   }
 }
