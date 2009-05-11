@@ -110,7 +110,7 @@ public class CookieSet extends AbstractSet<Cookie> {
     return cs;
   }
 
-  private class CookieIterator implements Iterator<Cookie> {
+  private static class CookieIterator implements Iterator<Cookie> {
 
     private final Iterator<ComparableCookie> iter;
 

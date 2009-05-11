@@ -61,7 +61,7 @@ public class BasicOmniFormCustomization implements OmniFormCustomization {
    * through and the internal Map objects may contain only half the
    * configuration.
    */
-  public BasicOmniFormCustomization(String fileName) {
+  public BasicOmniFormCustomization(String fileName) throws IOException {
     this.fileName = fileName;
     readConfig();
   }
@@ -142,17 +142,22 @@ public class BasicOmniFormCustomization implements OmniFormCustomization {
   /**
    * Read config from file.
    */
-  public void readConfig() {
+  public void readConfig() throws IOException {
     if (fileName == null) {
       LOGGER.log(Level.WARNING,
           "Attempted to load config when filename is null");
       return;
     }
+    FileInputStream fis = null;
     try {
-      FileInputStream fis = new FileInputStream(fileName);
+      fis = new FileInputStream(fileName);
       readConfig(fis);
     } catch (FileNotFoundException e) {
       LOGGER.log(Level.SEVERE, "Could not find file", e);
+    } finally {
+      if (fis != null) {
+        fis.close();
+      }
     }
   }
 
@@ -166,11 +171,15 @@ public class BasicOmniFormCustomization implements OmniFormCustomization {
     }
   }
 
-  public void saveConfigToFile(String fileName) {
+  public void saveConfigToFile(String fileName) throws IOException {
+    FileOutputStream fos = null;
     try {
-      saveConfig(new FileOutputStream(fileName));
-    } catch (FileNotFoundException e) {
-      LOGGER.log(Level.SEVERE, "Could not save config file", e);
+      fos = new FileOutputStream(fileName);
+      saveConfig(fos);
+    } finally {
+      if (fos != null) {
+        fos.close();
+      }
     }
   }
 
@@ -290,5 +299,10 @@ public class BasicOmniFormCustomization implements OmniFormCustomization {
       return false;
     }
     return toString().equals(obj.toString());
+  }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
   }
 }

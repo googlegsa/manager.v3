@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,12 +28,10 @@ public class LocalSession implements SessionInterface {
 
   private final Map<String, SessionValue> s;
   private String krb5Identity;
-  private String krb5CcacheFilename;
 
   public LocalSession() {
     s = new HashMap<String, SessionValue>();
     krb5Identity = null;
-    krb5CcacheFilename = null;
   }
 
   public boolean keyExists(String key) {
@@ -89,7 +87,7 @@ public class LocalSession implements SessionInterface {
   }
 
   public String getKrb5CcacheFilename() {
-    return krb5CcacheFilename;
+    return null;
   }
 
   /**

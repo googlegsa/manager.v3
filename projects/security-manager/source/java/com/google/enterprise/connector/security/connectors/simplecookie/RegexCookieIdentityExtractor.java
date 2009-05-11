@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 
 public class RegexCookieIdentityExtractor implements CookieIdentityExtractor {
 
-  final Pattern pattern;
+  private final Pattern pattern;
 
   public RegexCookieIdentityExtractor(String pattern) {
     this.pattern = Pattern.compile(pattern);
@@ -34,8 +34,6 @@ public class RegexCookieIdentityExtractor implements CookieIdentityExtractor {
     if (result != null) {
       return result;
     }
-    result = m.group();
     return null;
   }
-
 }
