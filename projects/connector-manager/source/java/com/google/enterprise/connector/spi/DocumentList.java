@@ -17,32 +17,32 @@ package com.google.enterprise.connector.spi;
 /**
  * Interface that represents a list of documents to be traversed.
  * Documents are accessed through an iterator-like method:
- * <code>{@link #nextDocument()}</code>, which returns the next available
- * <code>{@link Document}</code> or null if there are no more.
- * Important: a <code>Document</code> object obtained by calling
- * <code>{@link #nextDocument()}</code> is invalidated by the next
- * call to <code>{@link #nextDocument()}</code>. Typically, the caller will
+ * {@link #nextDocument()}, which returns the next available
+ * {@link Document} or <code>null</code> if there are no more.
+ * Important: a {@link Document} object obtained by calling
+ * {@link #nextDocument()} is invalidated by the next
+ * call to {@link #nextDocument()}. Typically, the caller will
  * store the current Document in a loop variable, so that it is clear that
  * this rule is observed; see the example code below.
  * <p>
  * In addition, a this interface has a special method
- * <code>{@link #checkpoint()}</code>, which produces a String that
+ * {@link #checkpoint()}, which produces a String that
  * encapsulates the traversal state. The consumer may call
- * <code>{@link #checkpoint()}</code> at any time. The implementation should
+ * {@link #checkpoint()} at any time. The implementation should
  * return a non-null String that, if supplied to
- * <code>{@link TraversalManager#resumeTraversal(String)}</code>, would cause
+ * {@link TraversalManager#resumeTraversal(String)}, would cause
  * traversal to resume from the next unprocessed document.
  * </ul>
- * Boundary cases are important for <code>{@link #checkpoint()}</code>:
+ * Boundary cases are important for {@link #checkpoint()}:
  * <ul>
- * <li>If <code>{@link #checkpoint()}</code> is called before any calls to
- * <code>{@link #nextDocument()}</code>, then traversal should resume with
+ * <li>If {@link #checkpoint()} is called before any calls to
+ * {@link #nextDocument()}, then traversal should resume with
  * the Document that would have been returned by the first call to
- * <code>{@link #nextDocument()}</code>.
- * <li>If <code>{@link #checkpoint()}</code> is called after a call to
- * <code>{@link #nextDocument()}</code> that returns a valid document, then
+ * {@link #nextDocument()}.
+ * <li>If {@link #checkpoint()} is called after a call to
+ * {@link #nextDocument()} that returns a valid document, then
  * traversal should resume with the Document that would have been returned by
- * the next call to <code>{@link #nextDocument()}</code>.
+ * the next call to {@link #nextDocument()}.
  * </ul>
  * The typical pattern for consuming an object that implements this interface
  * is this (disregarding exception handling):
@@ -58,13 +58,12 @@ package com.google.enterprise.connector.spi;
  * </pre>
  *
  * Note: because of the restriction that the next call to
- * <code>nextDocument()</code> invalidates the previous Document, and there
- * are similar restrictions in the <code>{@link Document}</code> interface,
- * it is possible to provide a single stateful object that implements
- * <code>{@link DocumentList}</code>, <code>{@link Document}</code> and
- * <code>{@link Property}</code>, by returning <code>this</code> (or
- * <code>null</code>) to all calls to <code>nextDocument()</code> and
- * <code>Document.findProperty(String)</code>. However, if preferred, the
+ * {@link #nextDocument()} invalidates the previous Document, and there
+ * are similar restrictions in the {@link Document} interface, it is possible
+ * to provide a single stateful object that implements {@link DocumentList},
+ * {@link Document} and {@link Property}, by returning <code>this</code>
+ * (or <code>null</code>) to all calls to {@link #nextDocument()} and
+ * {@link Document#findProperty(String)}. However, if preferred, the
  * implementor may also use separate objects for each of those interfaces.
  */
 public interface DocumentList {
@@ -76,11 +75,11 @@ public interface DocumentList {
    *         otherwise.
    * @throws RepositoryException if a repository access error occurs.
    *         The Connector Manager will stop processing the DocumentList,
-   *         call <code>checkpoint()</code> and wait a short period of
+   *         call {@link #checkpoint()} and wait a short period of
    *         time before resuming traversal.
    * @throws RepositoryDocumentException if this specific document
    *         has unrecoverable errors.  This document will be skipped,
-   *         and <code>nextDocument()</code> or <code>checkpoint()</code>
+   *         and <code>nextDocument()</code> or {@link #checkpoint()}
    *         may be subsequently called.
    */
   public Document nextDocument() throws RepositoryException;
@@ -94,7 +93,13 @@ public interface DocumentList {
    * available, etc.) It will persist this string, so that it can be recovered
    * after a crash if necessary. When it chooses to restart traversal, it will
    * supply this string in a call to
-   * <code>{@link TraversalManager#resumeTraversal(String)}</code>.
+   * {@link TraversalManager#resumeTraversal(String)}.
+   * <p>
+   * If <code>null</code> is returned, then no new checkpoint will be saved,
+   * and the existing checkpoint will be supplied to
+   * {@link TraversalManager#startTraversal()} or
+   * {@link TraversalManager#resumeTraversal(String)},
+   * in effect, restarting the traversal from the last saved checkpoint.
    *
    * @return A non-<code>null</code> <code>String</code> that can be supplied
    *         subsequently to {@link TraversalManager#resumeTraversal(String)}.
