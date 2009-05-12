@@ -133,9 +133,9 @@ public class BasicOmniFormCustomization implements OmniFormCustomization {
       config.load(is);
       parsePropertiesConfig(config);
     } catch (IOException e) {
-      LOGGER.log(Level.SEVERE, "Could not read config", e);
+      LOGGER.log(Level.WARNING, "Could not read config", e);
     } catch (IllegalArgumentException e) {
-      LOGGER.log(Level.SEVERE, "Could not parse config", e);
+      LOGGER.warning("Could not parse config");
     }
   }
 
@@ -144,8 +144,7 @@ public class BasicOmniFormCustomization implements OmniFormCustomization {
    */
   public void readConfig() throws IOException {
     if (fileName == null) {
-      LOGGER.log(Level.WARNING,
-          "Attempted to load config when filename is null");
+      LOGGER.warning("Attempted to load config when filename is null");
       return;
     }
     FileInputStream fis = null;
@@ -153,7 +152,7 @@ public class BasicOmniFormCustomization implements OmniFormCustomization {
       fis = new FileInputStream(fileName);
       readConfig(fis);
     } catch (FileNotFoundException e) {
-      LOGGER.log(Level.SEVERE, "Could not find file", e);
+      LOGGER.warning("Could not find config file");
     } finally {
       if (fis != null) {
         fis.close();
@@ -167,7 +166,7 @@ public class BasicOmniFormCustomization implements OmniFormCustomization {
     try {
       config.store(os, "OmniForm Customization Options");
     } catch (IOException e) {
-      LOGGER.log(Level.SEVERE, "Could not save config file", e);
+      LOGGER.log(Level.WARNING, "Could not save config file", e);
     }
   }
 
@@ -282,7 +281,7 @@ public class BasicOmniFormCustomization implements OmniFormCustomization {
   private String getCredentialGroup(String item) throws IllegalArgumentException {
     String[] parts = item.split(":");
     if (parts.length != 3) {
-      LOGGER.severe("Problem with format");
+      LOGGER.warning("Problem with format");
       throw new IllegalArgumentException("Argument did not have valid group: " + item);
     }
     return parts[2];
