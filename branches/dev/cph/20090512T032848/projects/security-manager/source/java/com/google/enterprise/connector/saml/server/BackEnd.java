@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.saml.server;
 
 import com.google.enterprise.connector.manager.ConnectorManager;
+import com.google.enterprise.connector.security.identity.CredentialsGroup;
 import com.google.enterprise.connector.security.identity.IdentityConfig;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
@@ -23,6 +24,7 @@ import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -76,6 +78,34 @@ public interface BackEnd {
   public void setIdentityConfig(IdentityConfig identityConfig);
 
   /**
+   * Get the prompt limit.
+   *
+   * This is the number of times the back end will prompt the user before giving up.
+   *
+   * @return The prompt limit.
+   */
+  public int getMaxPrompts();
+
+  /**
+   * Set the prompt limit.
+   *
+   * This is the number of times the back end will prompt the user before giving up.
+   *
+   * @param maxPrompts The new prompt limit.
+   */
+  public void setMaxPrompts(int maxPrompts);
+
+  /**
+   * Get the credentials groups for a session.
+   *
+   * @param request An HTTP request to identity the session.
+   * @return A list of the credentials groups for that session.
+   * @throws IOException
+   */
+  public List<CredentialsGroup> getCredentialsGroups(HttpServletRequest request)
+      throws IOException;
+
+  /**
    * Perform the authentication process for the security manager.
    *
    * This method may be called more than once before authentication is finished, so it
@@ -83,6 +113,7 @@ public interface BackEnd {
    *
    * @param request The current HTTP request.
    * @param response The HTTP response to fill in before returning.
+   * @throws IOException
    */
   public void authenticate(HttpServletRequest request, HttpServletResponse response)
       throws IOException;
@@ -94,4 +125,12 @@ public interface BackEnd {
    * @return A list of responses, corresponding to the argument.
    */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries);
+
+  /**
+   * Update the GSA session manager with the identity information we've collected.
+   *
+   * @param sessionId The session manager ID to associate the information with.
+   * @param cgs The set of identity information to be associated.
+   */
+  public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs);
 }
