@@ -21,6 +21,8 @@ import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeAuthn
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeSamlMessageContext;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runEncoder;
+import static com.google.enterprise.connector.saml.server.BackEndImpl.getUserAgentCookie;
+import static com.google.enterprise.connector.saml.server.BackEndImpl.GSA_SESSION_ID_COOKIE_NAME;
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
@@ -64,14 +66,13 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
 
   @Override
   public void doGet(HttpServletRequest req, HttpServletResponse resp)
-      throws ServletException, IOException {
+      throws IOException {
     HttpSession session = req.getSession();
 
     // Guarantee a valid session ID.
-    if (getGsaSessionId(session) == null) {
+    if (getUserAgentCookie(session, GSA_SESSION_ID_COOKIE_NAME) == null) {
       String sessionId = getSessionManager().createSession();
-      resp.addCookie(new Cookie(AUTHN_SESSION_ID_COOKIE_NAME, sessionId));
-      session.setAttribute(GSA_SESSION_ID_NAME, sessionId);
+      resp.addCookie(new Cookie(GSA_SESSION_ID_COOKIE_NAME, sessionId));
     }
 
     // MockArtifactConsumer sets a flag with the authentication decision.
@@ -93,7 +94,7 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
     out.close();
   }
 
-  private void ifUnknown(HttpServletResponse resp, String relayState) throws ServletException {
+  private void ifUnknown(HttpServletResponse resp, String relayState) throws IOException {
     SAMLMessageContext<SAMLObject, AuthnRequest, NameID> context = makeSamlMessageContext();
 
     EntityDescriptor localEntity = getEntity(SecurityManagerTestCase.GSA_TESTING_ISSUER);

@@ -33,8 +33,6 @@ import org.springframework.mock.web.MockServletConfig;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
-
 /**
  * Unit test for SamlArtifactResolve handler.
  */
@@ -58,7 +56,7 @@ public class SamlArtifactResolveTest extends SecurityManagerTestCase {
    * @throws MarshallingException
    */
   public void testPostHandler()
-      throws ServletException, IOException, MarshallingException {
+      throws IOException, MarshallingException {
     MockHttpServletRequest mockRequest = makeMockHttpPost(null, "http://localhost/");
     MockHttpServletResponse mockResponse = new MockHttpServletResponse();
 
