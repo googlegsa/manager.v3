@@ -55,6 +55,10 @@ public class BackEndImpl implements BackEnd {
   private final AuthzResponder authzResponder;
   private final SAMLArtifactMap artifactMap;
   private IdentityConfig identityConfig;
+  
+  // temporary: to permit testing with no session manager
+  // todo: remove this with the entire session manager
+  private boolean dontUseSessionManager = false;
 
   protected GSASessionAdapter adapter;
 
@@ -163,6 +167,10 @@ public class BackEndImpl implements BackEnd {
   }
 
   public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs) {
+    if (dontUseSessionManager) {
+      LOGGER.info("Bypassing session manager");
+      return;
+    }
     LOGGER.info("Session ID: " + sessionId);
     sessionIds.add(sessionId);
 
@@ -202,5 +210,9 @@ public class BackEndImpl implements BackEnd {
                 CookieUtil.setCookieHeaderValue(cookies, false));
 
     // TODO(con): connectors
+  }
+
+  public void setDontUseSessionManager(boolean dontUseSessionManager) {
+    this.dontUseSessionManager = dontUseSessionManager;
   }
 }
