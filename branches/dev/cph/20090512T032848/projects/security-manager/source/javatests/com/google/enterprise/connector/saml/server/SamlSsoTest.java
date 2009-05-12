@@ -25,7 +25,7 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.saml.client.MockArtifactConsumer;
 import com.google.enterprise.connector.saml.client.MockServiceProvider;
 import com.google.enterprise.connector.saml.common.Metadata;
-import com.google.enterprise.connector.saml.common.SecurityManagerServlet;
+import com.google.enterprise.connector.common.ServletBase;
 import com.google.enterprise.connector.security.connectors.formauth.MockFormAuthServer1;
 import com.google.enterprise.connector.security.connectors.formauth.MockFormAuthServer2;
 import com.google.enterprise.connector.security.identity.AuthnDomain;
@@ -67,7 +67,7 @@ public class SamlSsoTest extends SecurityManagerTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    Metadata metadata = SecurityManagerServlet.getMetadata();
+    Metadata metadata = ServletBase.getMetadata();
 
     // Initialize transport
     MockHttpTransport transport = new MockHttpTransport();
@@ -90,7 +90,7 @@ public class SamlSsoTest extends SecurityManagerTestCase {
     transport.registerServlet(SP_URL, new MockServiceProvider());
     transport.registerServlet(FORM1_URL, new MockFormAuthServer1());
     transport.registerServlet(FORM2_URL, new MockFormAuthServer2());
-    BackEndImpl.class.cast(SecurityManagerServlet.getBackEnd()).setMaxPrompts(1);
+    BackEndImpl.class.cast(ServletBase.getBackEnd()).setMaxPrompts(1);
   }
 
   public void testGood() throws IOException, MalformedURLException {
@@ -161,7 +161,7 @@ public class SamlSsoTest extends SecurityManagerTestCase {
   private HttpExchange trySingleCredential(String username, String password)
       throws IOException, MalformedURLException {
     AuthnDomainGroup adg =
-        SecurityManagerServlet.getBackEnd().getIdentityConfig().getConfig().get(0);
+        ServletBase.getBackEnd().getIdentityConfig().getConfig().get(0);
     List<StringPair> params = new ArrayList<StringPair>();
     addCredential(username, password, adg, params);
     return tryCredentials(params);
