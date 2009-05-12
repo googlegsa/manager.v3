@@ -14,20 +14,20 @@
 
 package com.google.enterprise.connector.security.ui;
 
-import static com.google.enterprise.connector.security.ui.OmniFormCustomization.FormGlobalOption;
-import static com.google.enterprise.connector.security.ui.OmniFormCustomization.FormGlobalOption.*;
-import static com.google.enterprise.connector.security.ui.OmniFormCustomization.PerCredentialOption;
-import static com.google.enterprise.connector.security.ui.OmniFormCustomization.PerCredentialOption.*;
-
 import com.google.enterprise.connector.common.FileUtil;
-import com.google.enterprise.connector.security.ui.FormElement;
+import com.google.enterprise.connector.security.ui.OmniFormCustomization.FormGlobalOption;
+import com.google.enterprise.connector.security.ui.OmniFormCustomization.PerCredentialOption;
 
-import java.util.List;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
+
+import static com.google.enterprise.connector.security.ui.OmniFormCustomization.FormGlobalOption.*;
+import static com.google.enterprise.connector.security.ui.OmniFormCustomization.PerCredentialOption.*;
 
 /**
  * This class is responsible for generating the HTML for an Omniform.
@@ -68,7 +68,7 @@ public class OmniFormHtml {
    * Main constructor.
    * @param actionUrl URL to post form to on submission
    */
-  public OmniFormHtml(String actionUrl) {
+  public OmniFormHtml(String actionUrl) throws IOException {
     this.actionUrl = actionUrl;
     customization =
         new BasicOmniFormCustomization(FileUtil.getContextFile(fileName).toString());
@@ -87,7 +87,7 @@ public class OmniFormHtml {
    * in which the FormElements is presented corresponds to the order of the
    * input FormElement list.
    */
-  public String generateForm(List<FormElement> formElements) {
+  public String generateForm(List<FormElement> formElements) throws IOException {
     loadCustomization();
 
     if (!options.get(OVERRIDE_FORM_HTML).isEmpty()) {
@@ -316,7 +316,7 @@ public class OmniFormHtml {
    * Loads the customization configuration from the OmniFormCustomization.
    * Marked package-private for testing purposes.
    */
-  void loadCustomization() {
+  void loadCustomization() throws IOException {
     // TODO(martincochran): implement a file-change listener in
     // BasicOmniFormCustomization so that it isn't necessary to do this.
     // When this is done, change customization to be of type

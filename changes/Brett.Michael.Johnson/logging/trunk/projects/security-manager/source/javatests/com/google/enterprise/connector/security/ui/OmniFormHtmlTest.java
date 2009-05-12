@@ -14,21 +14,20 @@
 
 package com.google.enterprise.connector.security.ui;
 
-import static com.google.enterprise.connector.security.ui.OmniFormCustomization.FormGlobalOption;
-import static com.google.enterprise.connector.security.ui.OmniFormCustomization.FormGlobalOption.*;
-import static com.google.enterprise.connector.security.ui.OmniFormCustomization.PerCredentialOption;
-import static com.google.enterprise.connector.security.ui.OmniFormCustomization.PerCredentialOption.*;
-import com.google.enterprise.connector.security.ui.BasicOmniFormCustomization;
-import com.google.enterprise.connector.security.ui.FormElement;
-import com.google.enterprise.connector.security.ui.OmniFormHtml;
+import com.google.enterprise.connector.security.ui.OmniFormCustomization.FormGlobalOption;
+import com.google.enterprise.connector.security.ui.OmniFormCustomization.PerCredentialOption;
 
 import junit.framework.TestCase;
 
+import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
+
+import static com.google.enterprise.connector.security.ui.OmniFormCustomization.FormGlobalOption.*;
+import static com.google.enterprise.connector.security.ui.OmniFormCustomization.PerCredentialOption.*;
 
 /**
  * Tests the basic HTML output of the omniform works with and
@@ -98,7 +97,7 @@ public class OmniFormHtmlTest extends TestCase {
 
   // Test that a page with empty forms can be generated with
   // correct-looking html.
-  public void testDefaultHtml() {
+  public void testDefaultHtml() throws IOException {
     List<FormElement> empty = Collections.emptyList();
     String form = omniFormHtml.generateForm(empty);
 
@@ -128,7 +127,7 @@ public class OmniFormHtmlTest extends TestCase {
   /**
    * Test that the global customizations show up in the page.
    */
-  public void testCustomHtml() {
+  public void testCustomHtml() throws IOException {
     List<FormElement> empty = Collections.emptyList();
 
     customization.setGlobalOptions(globals);
@@ -164,7 +163,7 @@ public class OmniFormHtmlTest extends TestCase {
   /**
    * Test the default HTML is generated correctly for a form area.
    */
-  public void testDefaultSingleFormArea() {
+  public void testDefaultSingleFormArea() throws IOException {
     FormElement element = new FormElement(kCredentialGroup);
 
     omniFormHtml.loadCustomization();
@@ -186,7 +185,7 @@ public class OmniFormHtmlTest extends TestCase {
    * Test that the global customizations show up when no
    * per-credential customizations are used.
    */
-  public void testGlobalCustomSingleFormArea() {
+  public void testGlobalCustomSingleFormArea() throws IOException {
     FormElement element = new FormElement(kCredentialGroup);
 
     customization.setGlobalOptions(globals);
@@ -208,7 +207,7 @@ public class OmniFormHtmlTest extends TestCase {
   /**
    * Test that the local customizations show up when used.
    */
-  public void testGlobalCustomSingleFormAreaWithLocalOverride() {
+  public void testGlobalCustomSingleFormAreaWithLocalOverride() throws IOException {
     FormElement element = new FormElement(kCredentialGroup);
 
     customization.setGlobalOptions(globals);
@@ -259,7 +258,7 @@ public class OmniFormHtmlTest extends TestCase {
   /**
    * Test that the default header string is generated correctly.
    */
-  public void testDefaultHeaderString() {
+  public void testDefaultHeaderString() throws IOException {
     List<FormElement> empty = Collections.emptyList();
 
     omniFormHtml.loadCustomization();
@@ -275,7 +274,7 @@ public class OmniFormHtmlTest extends TestCase {
    * Test that javascript is correctly inserted into the
    * header string.
    */
-  public void testDefaultHeaderStringWithJavascript() {
+  public void testDefaultHeaderStringWithJavascript() throws IOException {
     List<FormElement> empty = Collections.emptyList();
 
     globals.put(SUBMIT_BUTTON_JAVASCRIPT, kCustomJavascript);
@@ -294,7 +293,7 @@ public class OmniFormHtmlTest extends TestCase {
    * Tests that the style string is correctly inserted into the form
    * in cases where OVERRIDE_FORM_HTML is set.
    */
-  public void testInsertStyleString() {
+  public void testInsertStyleString() throws IOException {
     String goodHtml = "<html><head>";
     String styleString = "<style type=\"text/css\">\n" +
         "body\n{\nfont: " + kCustomFont + "\n}\n" +

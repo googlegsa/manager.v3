@@ -20,6 +20,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
@@ -50,7 +51,17 @@ public class CsvConfig implements IdentityConfig {
   }
 
   public List<AuthnDomainGroup> getConfig() throws IOException {
-    return getConfig(new FileReader(FileUtil.getContextFile(configFile)));
+    Reader in = null;
+    List<AuthnDomainGroup> adgs;
+    try {
+      in = new FileReader(FileUtil.getContextFile(configFile));
+      adgs = getConfig(in);
+    } finally {
+      if (in != null) {
+        in.close();
+      }
+    }
+    return adgs;
   }
 
   /**
@@ -65,13 +76,13 @@ public class CsvConfig implements IdentityConfig {
     HashMap<String,AuthnDomainGroup> adgMap = new HashMap<String,AuthnDomainGroup>();
     while ((nextLine = reader.readNext()) != null) {
       if (nextLine.length < 5) {
-        LOGGER.severe("Invalid configuration line, skipping: \n" + nextLine);
+        LOGGER.severe("Invalid configuration line, skipping: " + Arrays.toString(nextLine));
         continue;
       }
       AuthnMechanism authMech = authNMechFromString(nextLine[3]);
       if (null == authMech) {
-        LOGGER.severe("Invalid AuthnMechanism for this line, " +
-            "skipping this site: \n" + nextLine);
+        LOGGER.severe("Invalid AuthnMechanism for this line, skipping: "
+                      + Arrays.toString(nextLine));
         continue;
       }
 
