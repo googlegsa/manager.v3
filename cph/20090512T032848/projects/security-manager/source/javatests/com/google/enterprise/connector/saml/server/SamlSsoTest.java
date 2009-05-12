@@ -90,7 +90,7 @@ public class SamlSsoTest extends SecurityManagerTestCase {
     transport.registerServlet(SP_URL, new MockServiceProvider());
     transport.registerServlet(FORM1_URL, new MockFormAuthServer1());
     transport.registerServlet(FORM2_URL, new MockFormAuthServer2());
-    BackEndImpl.class.cast(ServletBase.getBackEnd()).setMaxPrompts(1);
+    ServletBase.getBackEnd().setMaxPrompts(1);
   }
 
   public void testGood() throws IOException, MalformedURLException {

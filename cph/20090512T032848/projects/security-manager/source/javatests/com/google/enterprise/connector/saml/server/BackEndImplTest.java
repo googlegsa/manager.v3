@@ -71,7 +71,7 @@ public class BackEndImplTest extends SecurityManagerTestCase {
     String sid = sm.createSession();
     List<CredentialsGroup> cgList = new ArrayList<CredentialsGroup>();
     cgList.add(basicCG);
-    BackEndImpl.class.cast(backend).updateSessionManager(sid, cgList);
+    backend.updateSessionManager(sid, cgList);
     assertEquals("user", backend.adapter.getUsername(sid));
     assertEquals("password", backend.adapter.getPassword(sid));
 
@@ -81,7 +81,7 @@ public class BackEndImplTest extends SecurityManagerTestCase {
 
     sid = sm.createSession();
     cgList.add(formsCG);
-    BackEndImpl.class.cast(backend).updateSessionManager(sid, cgList);
+    backend.updateSessionManager(sid, cgList);
     assertEquals("user", backend.adapter.getUsername(sid));
     assertEquals("password", backend.adapter.getPassword(sid));
     List<Cookie> cookies = CookieUtil.deserializeCookies(backend.adapter.getCookies(sid));

@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
@@ -119,14 +120,17 @@ public class BackEndImpl implements BackEnd {
     maxPrompts = defaultMaxPrompts;
   }
 
+  /* @Override */
   public void setConnectorManager(ConnectorManager cm) {
     this.manager = cm;
   }
 
+  /* @Override */
   public SessionManagerInterface getSessionManager() {
     return sm;
   }
 
+  /* @Override */
   public IdentityConfig getIdentityConfig() {
     if (identityConfig == null) {
       throw new IllegalStateException("No IdentityConfig has been provided");
@@ -134,22 +138,32 @@ public class BackEndImpl implements BackEnd {
     return identityConfig;
   }
 
+  /* @Override */
   public void setIdentityConfig(IdentityConfig identityConfig) {
     this.identityConfig = identityConfig;
   }
 
+  /* @Override */
   public SAMLArtifactMap getArtifactMap() {
     return artifactMap;
   }
 
+  /* @Override */
+  public int getMaxPrompts() {
+    return maxPrompts;
+  }
+
+  /* @Override */
   public void setMaxPrompts(int maxPrompts) {
     this.maxPrompts = maxPrompts;
   }
 
+  /* @Override */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
     return authzResponder.authorizeBatch(authzDecisionQueries);
   }
 
+  /* @Override */
   public void authenticate(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     updateIncomingCookies(request);
@@ -339,6 +353,7 @@ public class BackEndImpl implements BackEnd {
     session.removeAttribute(PROMPT_COUNTER_NAME);
   }
 
+  /* @Override */
   public List<CredentialsGroup> getCredentialsGroups(HttpServletRequest request)
       throws IOException {
     HttpSession session = request.getSession();
@@ -483,8 +498,8 @@ public class BackEndImpl implements BackEnd {
     return null;
   }
 
-  // Non-private for testing.
-  void updateSessionManager(String sessionId, List<CredentialsGroup> cgs) {
+  /* @Override */
+  public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs) {
     if (dontUseSessionManager) {
       LOGGER.info("Bypassing session manager");
       return;
