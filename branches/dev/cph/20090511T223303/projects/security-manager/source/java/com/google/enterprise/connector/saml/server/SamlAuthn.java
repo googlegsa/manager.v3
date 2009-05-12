@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.saml.server;
 
+import com.google.common.base.Preconditions;
 import com.google.enterprise.connector.common.GettableHttpServlet;
 import com.google.enterprise.connector.common.PostableHttpServlet;
 import com.google.enterprise.connector.saml.common.SecurityManagerServlet;
@@ -265,16 +266,19 @@ public class SamlAuthn extends SecurityManagerServlet
                                       List<String> ids)
       throws ServletException {
     LOGGER.info("Verified IDs: " + idsToString(ids));
-
+   
+    List<CredentialsGroup> credentialsGroups = null;
+    
     // Update the Session Manager with the necessary info.
     // TODO(cph): Until we finish off-boarding, the session ID should be required.
     String sessionId = getGsaSessionId(request.getSession());
     if (sessionId != null) {
       try {
-        getBackEnd().updateSessionManager(sessionId, getCredentialsGroups(request));
+        credentialsGroups = getCredentialsGroups(request);
       } catch (IOException e) {
         throw new ServletException(e);
       }
+      getBackEnd().updateSessionManager(sessionId, credentialsGroups);
     }
 
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
@@ -295,18 +299,28 @@ public class SamlAuthn extends SecurityManagerServlet
     // Generate <Response>
     Response samlResponse =
         makeResponse(context.getInboundSAMLMessage(), makeStatus(StatusCode.SUCCESS_URI));
-    if (ids.size() > 1) {
-      Attribute attribute = makeAttribute("secondary-ids");
-      for (String id: ids.subList(1, ids.size())) {
-        attribute.getAttributeValues().add(makeAttributeValue(id));
-      }
-      AttributeStatement attrStatement = makeAttributeStatement();
-      attrStatement.getAttributes().add(attribute);
-      assertion.getAttributeStatements().add(attrStatement);
-    }
+
+    // Add metadata attribute for serialized identities
+    addIdentityMetadataAttribute(assertion, credentialsGroups);
+
     samlResponse.getAssertions().add(assertion);
     context.setOutboundSAMLMessage(samlResponse);
     doRedirect(request, response);
+  }
+
+  private void addIdentityMetadataAttribute(Assertion assertion,
+      List<CredentialsGroup> credentialsGroups) {
+    Preconditions.checkNotNull(credentialsGroups);
+    Attribute attribute = makeAttribute("serialized-ids");
+    for (CredentialsGroup cg : credentialsGroups) {
+      for (DomainCredentials dCred : cg.getElements()) {
+        String serializedId = dCred.toJson();
+        attribute.getAttributeValues().add(makeAttributeValue(serializedId));       
+      }
+    }
+    AttributeStatement attrStatement = makeAttributeStatement();
+    attrStatement.getAttributes().add(attribute);
+    assertion.getAttributeStatements().add(attrStatement);
   }
 
   private String idsToString(List<String> ids) {

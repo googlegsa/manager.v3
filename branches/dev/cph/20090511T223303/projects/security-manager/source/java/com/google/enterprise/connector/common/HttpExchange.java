@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public interface HttpExchange {
    * @param password
    */
   public void setNtlmAuthCredentials(String domain, String username, String password);
-  
+
   /**
    * Tell exchange whether to follow redirects.
    * Default is to not follow them.
@@ -77,21 +77,21 @@ public interface HttpExchange {
   /**
    * Perform the HTTP exchange.
    * @return The status code from the exchange.
-   * @throw IOException if there's a transport error
+   * @throws IOException if there's a transport error
    */
   public int exchange() throws IOException;
 
   /**
    * Get the response entity (body) as a string.
    * @return The entity.
-   * @throw IOException if there's a transport error
+   * @throws IOException if there's a transport error
    */
   public String getResponseEntityAsString() throws IOException;
 
   /**
    * Get the response entity (body) as an input stream.
    * @return The entity input stream.
-   * @throw IOException if there's a transport error
+   * @throws IOException if there's a transport error
    */
   public InputStream getResponseEntityAsStream() throws IOException;
 
@@ -126,5 +126,4 @@ public interface HttpExchange {
    * Close the exchange and reclaim its resources.
    */
   public void close();
-
 }
