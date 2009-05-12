@@ -14,26 +14,22 @@
 
 package com.google.enterprise.connector.saml.server;
 
-import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
-import static javax.servlet.http.HttpServletResponse.SC_OK;
-import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
-
+import com.google.enterprise.connector.common.HttpExchange;
+import com.google.enterprise.connector.common.MockHttpClient;
 import com.google.enterprise.connector.common.MockHttpTransport;
 import com.google.enterprise.connector.common.SecurityManagerTestCase;
+import com.google.enterprise.connector.common.SecurityManagerUtil;
+import com.google.enterprise.connector.common.StringPair;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.common.MockHttpClient;
-import com.google.enterprise.connector.common.*;
-import com.google.enterprise.connector.saml.common.Metadata;
-import com.google.enterprise.connector.saml.server.SamlArtifactResolve;
-import com.google.enterprise.connector.saml.server.SamlAuthn;
 import com.google.enterprise.connector.saml.client.MockArtifactConsumer;
 import com.google.enterprise.connector.saml.client.MockServiceProvider;
+import com.google.enterprise.connector.saml.common.Metadata;
 import com.google.enterprise.connector.security.connectors.formauth.MockFormAuthServer1;
 import com.google.enterprise.connector.security.connectors.formauth.MockFormAuthServer2;
+import com.google.enterprise.connector.security.identity.AuthnDomain;
 import com.google.enterprise.connector.security.identity.AuthnDomainGroup;
 import com.google.enterprise.connector.security.identity.AuthnMechanism;
-import com.google.enterprise.connector.security.identity.*;
 import com.google.enterprise.connector.security.identity.CredentialsGroup;
 import com.google.enterprise.connector.security.identity.MockIdentityConfig;
 
@@ -49,6 +45,11 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+
+import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
+
+import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static javax.servlet.http.HttpServletResponse.SC_OK;
 
 public class SamlSsoTest extends SecurityManagerTestCase {
   private static final Logger LOGGER = Logger.getLogger(SamlSsoTest.class.getName());
