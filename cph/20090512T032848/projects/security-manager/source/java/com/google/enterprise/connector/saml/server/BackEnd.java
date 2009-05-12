@@ -64,7 +64,7 @@ public interface BackEnd {
    * Get the identity configuration.
    *
    * @return The identity configuration.
-   * @throw IllegalStateException if no identity configure has been set.
+   * @throws IllegalStateException if no identity configure has been set.
    */
   public IdentityConfig getIdentityConfig();
 
