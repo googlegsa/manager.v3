@@ -26,11 +26,11 @@ public class MockAuthnIdentity extends AbstractAuthnIdentity {
 
   private final CookieSet cookies;
   private final String sampleUrl;
-  
+
   private String username;
   private String domain;
   private String password;
-  
+
   public MockAuthnIdentity(String sampleUrl) {
     this.cookies = new CookieSet();
     this.sampleUrl = sampleUrl;
@@ -39,37 +39,37 @@ public class MockAuthnIdentity extends AbstractAuthnIdentity {
     password = null;
   }
 
-  @Override
+  /* @Override */
   public Collection<Cookie> getCookies() {
     return cookies;
   }
 
-  @Override
+  /* @Override */
   public String getSampleUrl() {
     return sampleUrl;
   }
 
-  @Override
+  /* @Override */
   public HttpSession getSession() {
     return null;
   }
 
-  @Override
+  /* @Override */
   public void setUsername(String username) {
     this.username = username;
   }
 
-  @Override
+  /* @Override */
   public String getDomain() {
     return domain;
   }
 
-  @Override
+  /* @Override */
   public String getPassword() {
     return password;
   }
 
-  @Override
+  /* @Override */
   public String getUsername() {
     return username;
   }
