@@ -14,9 +14,11 @@
 
 package com.google.enterprise.connector.security.connectors.basicauth;
 
-import com.google.enterprise.connector.common.StringPair;
+import com.google.enterprise.connector.common.Base64;
+import com.google.enterprise.connector.common.Base64DecoderException;
 import com.google.enterprise.connector.common.GettableHttpServlet;
-import com.google.enterprise.connector.common.*;
+import com.google.enterprise.connector.common.PostableHttpServlet;
+import com.google.enterprise.connector.common.StringPair;
 import com.google.enterprise.connector.saml.common.SecurityManagerServlet;
 
 import java.io.IOException;
