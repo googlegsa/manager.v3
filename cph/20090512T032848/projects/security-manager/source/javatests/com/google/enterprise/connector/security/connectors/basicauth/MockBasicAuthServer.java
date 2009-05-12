@@ -14,10 +14,12 @@
 
 package com.google.enterprise.connector.security.connectors.basicauth;
 
-import com.google.enterprise.connector.common.StringPair;
+import com.google.enterprise.connector.common.Base64;
+import com.google.enterprise.connector.common.Base64DecoderException;
 import com.google.enterprise.connector.common.GettableHttpServlet;
-import com.google.enterprise.connector.common.*;
-import com.google.enterprise.connector.saml.common.SecurityManagerServlet;
+import com.google.enterprise.connector.common.PostableHttpServlet;
+import com.google.enterprise.connector.common.ServletBase;
+import com.google.enterprise.connector.common.StringPair;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -31,7 +33,7 @@ import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public abstract class MockBasicAuthServer extends SecurityManagerServlet
+public abstract class MockBasicAuthServer extends ServletBase
     implements GettableHttpServlet, PostableHttpServlet {
   private static final long serialVersionUID = 1L;
   private static final Logger LOGGER =
