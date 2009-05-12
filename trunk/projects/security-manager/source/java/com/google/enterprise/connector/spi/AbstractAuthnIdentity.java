@@ -14,6 +14,9 @@
 
 package com.google.enterprise.connector.spi;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import javax.servlet.http.Cookie;
 
 /**
@@ -71,5 +74,46 @@ public abstract class AbstractAuthnIdentity implements SecAuthnIdentity {
    */
   public void setVerificationStatus(VerificationStatus status) {
     this.status = status;
+  }
+
+  /**
+   * Generate a json representation of the contents.
+   * 
+   * @return The json string.
+   */
+  public String toJson() {
+    JSONObject jo = new JSONObject();
+    try {
+      jo.put("username", getUsername());
+      jo.put("password", getPassword());
+      jo.put("domain", getDomain());
+      for (Cookie c : getCookies()) {
+        jo.accumulate("cookies", cookieToJsonObject(c));
+      }
+      jo.put("verificationStatus", getVerificationStatus().toString());
+      jo.put("sampleUrl", getSampleUrl());
+    } catch (JSONException e) {
+      // this should never happen -- because our data was validated already
+      throw new IllegalStateException(e);
+    }
+    return jo.toString();
+  }
+
+  private static JSONObject cookieToJsonObject(Cookie c) {
+    JSONObject jo = new JSONObject();
+    try {
+      jo.put("secure", c.getSecure());
+      jo.put("comment", c.getComment());
+      jo.put("domain", c.getDomain());
+      jo.put("maxAge", c.getMaxAge());
+      jo.put("name", c.getName());
+      jo.put("path", c.getPath());
+      jo.put("value", c.getValue());
+      jo.put("version", c.getVersion());
+    } catch (JSONException e) {
+      // this should never happen -- because our data was validated already
+      throw new IllegalStateException(e);
+    }
+    return jo;
   }
 }
