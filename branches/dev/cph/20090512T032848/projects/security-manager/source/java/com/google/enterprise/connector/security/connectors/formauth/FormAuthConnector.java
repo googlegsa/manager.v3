@@ -18,6 +18,7 @@ import com.google.enterprise.connector.common.HttpExchange;
 import com.google.enterprise.connector.common.SecurityManagerUtil;
 import com.google.enterprise.connector.common.StringPair;
 import com.google.enterprise.connector.common.cookie.CookieUtil;
+import com.google.enterprise.connector.saml.server.BackEndImpl;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
@@ -27,7 +28,6 @@ import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.VerificationStatus;
-import com.google.enterprise.connector.saml.common.SecurityManagerServlet;
 
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
@@ -71,7 +71,7 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
 
     Collection<Cookie> receivedCookies = identity.getCookies();
     Collection<Cookie> userAgentCookies =
-        SecurityManagerServlet.getUserAgentCookies(identity.getSession());
+        BackEndImpl.getUserAgentCookies(identity.getSession());
     CookieUtil.logResponseCookies(Level.INFO, "original cookies", receivedCookies);
     int nReceivedCookies = receivedCookies.size();
 
@@ -191,7 +191,6 @@ public class FormAuthConnector implements Connector, Session, AuthenticationMana
    */
   private List<StringPair> parseLoginForm(StringBuffer form, String user, String pass,
       String[] action) throws IOException {
-    LOGGER.info("Form to parse: " + form.toString());
     List<StringPair> names = new ArrayList<StringPair>();
 
     HtmlCleaner cleaner = new HtmlCleaner();

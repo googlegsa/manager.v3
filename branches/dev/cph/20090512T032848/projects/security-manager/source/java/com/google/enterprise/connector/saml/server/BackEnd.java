@@ -15,9 +15,6 @@
 package com.google.enterprise.connector.saml.server;
 
 import com.google.enterprise.connector.manager.ConnectorManager;
-import com.google.enterprise.connector.spi.SecAuthnIdentity;
-import com.google.enterprise.connector.security.identity.AuthnDomainGroup;
-import com.google.enterprise.connector.security.identity.CredentialsGroup;
 import com.google.enterprise.connector.security.identity.IdentityConfig;
 import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
@@ -26,8 +23,10 @@ import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Interface to SAML server backend. Top-level classes such as servlets should
@@ -62,11 +61,12 @@ public interface BackEnd {
   public SAMLArtifactMap getArtifactMap();
 
   /**
-   * Is there a reasonable identity configuration?
+   * Get the identity configuration.
    *
-   * @return <code>true</code> if so.
+   * @return The identity configuration.
+   * @throw IllegalStateException if no identity configure has been set.
    */
-  public boolean isIdentityConfigured() throws IOException;
+  public IdentityConfig getIdentityConfig();
 
   /**
    * Inject the identity configuration source.
@@ -76,28 +76,16 @@ public interface BackEnd {
   public void setIdentityConfig(IdentityConfig identityConfig);
 
   /**
-   * Get the identity configuration.
+   * Perform the authentication process for the security manager.
    *
-   * @return The identity configuration as a list of authn domain groups.
-   */
-  public List<AuthnDomainGroup> getAuthnDomainGroups() throws IOException;
-
-  /**
-   * Attempt to find a cookie that can be converted to a verified identity.
+   * This method may be called more than once before authentication is finished, so it
+   * must be able to figure out what it needs to do when called.
    *
-   * @param identity The authn identity containing the cookies to try.
+   * @param request The current HTTP request.
+   * @param response The HTTP response to fill in before returning.
    */
-  public void handleCookie(SecAuthnIdentity identity);
-
-  /**
-   * Attempts to authenticate a given CredentialsGroup.  This method will update
-   * the provided credentialsGroup with information retrieved during the
-   * authentication process (i.e. cookies, certificates, and other credentials),
-   * and it may set this credentialsGroup as verified as a result.
-   *
-   * @param credentialsGroup The credentials group to authenticate.
-   */
-  public void authenticate(CredentialsGroup credentialsGroup);
+  public void authenticate(HttpServletRequest request, HttpServletResponse response)
+      throws IOException;
 
   /**
    * Process a set of SAML authorization queries.
@@ -106,12 +94,4 @@ public interface BackEnd {
    * @return A list of responses, corresponding to the argument.
    */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries);
-
-  /**
-   * Update the GSA session manager with the identity information we've collected.
-   *
-   * @param sessionId The session manager ID to associate the information with.
-   * @param cgs The set of identity information to be associated.
-   */
-  public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs);
 }
