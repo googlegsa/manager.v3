@@ -14,9 +14,10 @@
 
 package com.google.enterprise.connector.common.cookie;
 
-import com.google.enterprise.connector.common.ServletBase;
+import com.google.enterprise.connector.common.Base64;
+import com.google.enterprise.connector.common.Base64DecoderException;
 import com.google.enterprise.connector.common.HttpExchange;
-import com.google.enterprise.connector.common.*;
+import com.google.enterprise.connector.common.ServletBase;
 
 import java.io.IOException;
 import java.net.URL;
