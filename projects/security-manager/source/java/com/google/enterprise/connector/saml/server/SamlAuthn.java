@@ -46,10 +46,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -110,11 +108,11 @@ public class SamlAuthn extends SecurityManagerServlet
    */
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException {
+      throws IOException {
     updateIncomingCookies(request);
     BackEnd backend = getBackEnd();
 
-    // Establish the SAML message context
+    // Establish the SAML message context.
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         newSamlMessageContext(request.getSession());
     {
@@ -123,11 +121,11 @@ public class SamlAuthn extends SecurityManagerServlet
                             SingleSignOnService.DEFAULT_ELEMENT_NAME);
     }
 
-    // Decode the request
+    // Decode the request.
     context.setInboundMessageTransport(new HttpServletRequestAdapter(request));
     runDecoder(new HTTPRedirectDeflateDecoder(), context);
 
-    // Select entity for response
+    // Select entity for response.
     {
       EntityDescriptor peerEntity = getEntity(context.getInboundMessageIssuer());
       initializePeerEntity(context, peerEntity, peerEntity.getSPSSODescriptor(SAML20P_NS),
@@ -147,7 +145,7 @@ public class SamlAuthn extends SecurityManagerServlet
 
   // Try to find cookies that can be decoded into identities.
   private boolean tryCookies(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException {
+      throws IOException {
     BackEnd backend = getBackEnd();
     List<String> ids = new ArrayList<String>();
     for (CredentialsGroup cg : getCredentialsGroups(request)) {
@@ -178,7 +176,7 @@ public class SamlAuthn extends SecurityManagerServlet
    */
   @Override
   public void doPost(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException {
+      throws IOException {
     updateIncomingCookies(request);
     BackEnd backend = getBackEnd();
 
@@ -213,7 +211,7 @@ public class SamlAuthn extends SecurityManagerServlet
   }
 
   private void maybePrompt(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException {
+      throws IOException {
     HttpSession session = request.getSession();
     if (shouldPrompt(session)) {
       PrintWriter writer = initNormalResponse(response);
@@ -264,43 +262,38 @@ public class SamlAuthn extends SecurityManagerServlet
   // We have at least one verified identity.  The first identity is considered the primary.
   private void makeSuccessfulResponse(HttpServletRequest request, HttpServletResponse response,
                                       List<String> ids)
-      throws ServletException {
+      throws IOException {
     LOGGER.info("Verified IDs: " + idsToString(ids));
-   
-    List<CredentialsGroup> credentialsGroups = null;
-    
+
+    List<CredentialsGroup> credentialsGroups = getCredentialsGroups(request);
+
     // Update the Session Manager with the necessary info.
     // TODO(cph): Until we finish off-boarding, the session ID should be required.
     String sessionId = getGsaSessionId(request.getSession());
     if (sessionId != null) {
-      try {
-        credentialsGroups = getCredentialsGroups(request);
-      } catch (IOException e) {
-        throw new ServletException(e);
-      }
       getBackEnd().updateSessionManager(sessionId, credentialsGroups);
     }
 
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         existingSamlMessageContext(request.getSession());
 
-    // Generate <Assertion> with <AuthnStatement>
+    // Generate <Assertion> with <AuthnStatement>.
     Assertion assertion =
         makeAssertion(makeIssuer(getSmEntity().getEntityID()), makeSubject(ids.get(0)));
     assertion.getAuthnStatements().add(makeAuthnStatement(AuthnContext.IP_PASSWORD_AUTHN_CTX));
 
-    // Generate <Conditions> with <AudienceRestriction>
+    // Generate <Conditions> with <AudienceRestriction>.
     Conditions conditions = makeConditions();
     AudienceRestriction restriction = makeAudienceRestriction();
     restriction.getAudiences().add(makeAudience(context.getInboundMessageIssuer()));
     conditions.getAudienceRestrictions().add(restriction);
     assertion.setConditions(conditions);
 
-    // Generate <Response>
+    // Generate <Response>.
     Response samlResponse =
         makeResponse(context.getInboundSAMLMessage(), makeStatus(StatusCode.SUCCESS_URI));
 
-    // Add metadata attribute for serialized identities
+    // Add metadata attribute for serialized identities.
     addIdentityMetadataAttribute(assertion, credentialsGroups);
 
     samlResponse.getAssertions().add(assertion);
@@ -315,7 +308,7 @@ public class SamlAuthn extends SecurityManagerServlet
     for (CredentialsGroup cg : credentialsGroups) {
       for (DomainCredentials dCred : cg.getElements()) {
         String serializedId = dCred.toJson();
-        attribute.getAttributeValues().add(makeAttributeValue(serializedId));       
+        attribute.getAttributeValues().add(makeAttributeValue(serializedId));
       }
     }
     AttributeStatement attrStatement = makeAttributeStatement();
@@ -336,8 +329,8 @@ public class SamlAuthn extends SecurityManagerServlet
 
   private void makeUnsuccessfulResponse(HttpServletRequest request, HttpServletResponse response,
                                         String message)
-      throws ServletException {
-    LOGGER.log(Level.WARNING, message);
+      throws IOException {
+    LOGGER.warning(message);
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         existingSamlMessageContext(request.getSession());
     context.setOutboundSAMLMessage(makeResponse(context.getInboundSAMLMessage(),
@@ -346,13 +339,14 @@ public class SamlAuthn extends SecurityManagerServlet
   }
 
   private void doRedirect(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException {
+      throws IOException {
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         existingSamlMessageContext(request.getSession());
-    // Encode the response message
+    // Encode the response message.
     initResponse(response);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(response, true));
-    HTTPArtifactEncoder encoder = new HTTPArtifactEncoder(null, null, getBackEnd().getArtifactMap());
+    HTTPArtifactEncoder encoder =
+        new HTTPArtifactEncoder(null, null, getBackEnd().getArtifactMap());
     encoder.setPostEncoding(false);
     runEncoder(encoder, context);
   }
