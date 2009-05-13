@@ -215,4 +215,8 @@ public class BackEndImpl implements BackEnd {
   public void setDontUseSessionManager(boolean dontUseSessionManager) {
     this.dontUseSessionManager = dontUseSessionManager;
   }
+
+  public boolean isDontUseSessionManager() {
+    return dontUseSessionManager;
+  }
 }
