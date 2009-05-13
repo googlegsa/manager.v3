@@ -11,6 +11,31 @@ list of known issues and workarounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
+Release 2 Unstable Development
+===========================
+
+Introduction
+------------
+
+Summary of Changes
+------------------
+  * Fix Issue 131: "Domain" gets removed when CM creates AuthenticationIdentity
+                   for the Connector.  This has compatibility implications for
+                   connector writers.  See the Compatibility section below.
+
+Version Compatibility
+---------------------
+Connector authors should note the Issue 131 change to the AuthenticationIdentity
+Interface, adding the Domain element and getDomain() method.  Older versions
+of the Google Search Appliance do not supply the domain, so connectors often
+required a configuration setting that specified the Windows domain used.
+Connectors that implemented this work-around should continue to do so for the
+indefinite future.  However, if the connector received a domain from the GSA,
+that domain should be used in deference to any locally configured domain.
+For additional details, please see:
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=131
+
+
 Release 1.3.2, Apr 07, 2009
 ===========================
 
@@ -87,22 +112,6 @@ Summary of Changes
 
   * Fix Issue 130: Wrong error messaged displayed if error status is returned
                    from SetConnectorConfig servlet.
-
-  * Fix Issue 131: "Domain" gets removed when CM creates AuthenticationIdentity
-                   for the Connector.  This has compatibility implications for
-                   connector writers.  See the Compatibility section below.
-
-Version Compatibility
----------------------
-Connector authors should note the Issue 131 change to the AuthenticationIdentity
-Interface, adding the Domain element and getDomain() method.  Older versions
-of the Google Search Appliance do not supply the domain, so connectors often
-required a configuration setting that specified the Windows domain used.
-Connectors that implemented this work-around should continue to do so for the
-indefinite future.  However, if the connector received a domain from the GSA,
-that domain should be used in deference to any locally configured domain.
-For additional details, please see:
-http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=131
 
 
 Release 1.3.0, Jan 13, 2009
