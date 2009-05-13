@@ -191,13 +191,15 @@ public class SamlAuthn extends ServletBase
     doRedirect(request, response);
   }
 
-  private static void doRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  private static void doRedirect(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         existingSamlMessageContext(request.getSession());
-    // Encode the response message
+    // Encode the response message.
     initResponse(response);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(response, true));
-    HTTPArtifactEncoder encoder = new HTTPArtifactEncoder(null, null, getBackEnd().getArtifactMap());
+    HTTPArtifactEncoder encoder =
+        new HTTPArtifactEncoder(null, null, getBackEnd().getArtifactMap());
     encoder.setPostEncoding(false);
     runEncoder(encoder, context);
   }
