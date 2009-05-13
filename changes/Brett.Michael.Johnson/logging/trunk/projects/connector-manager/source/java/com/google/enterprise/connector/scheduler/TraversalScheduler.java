@@ -153,8 +153,7 @@ public class TraversalScheduler implements Scheduler {
   }
 
   /**
-   * Determines whether scheduler should run.  Assumes caller holds instance
-   * lock.
+   * Determines whether scheduler should run.
    *
    * @return true if we are in a running state and scheduler should run or
    *         continue running.
@@ -188,7 +187,7 @@ public class TraversalScheduler implements Scheduler {
   }
 
   public void run() {
-    NDC.push("Traverse Scheduler");
+    NDC.push("Traverse");
     try {
       while (isRunningState()) {
         try {
@@ -196,7 +195,7 @@ public class TraversalScheduler implements Scheduler {
             if (!isRunningState()) {
               break;
             }
-            NDC.push("Traverse " + schedule.getConnectorName());
+            NDC.pushAppend(schedule.getConnectorName());
             try {
               runSchedule(schedule);
             } finally {

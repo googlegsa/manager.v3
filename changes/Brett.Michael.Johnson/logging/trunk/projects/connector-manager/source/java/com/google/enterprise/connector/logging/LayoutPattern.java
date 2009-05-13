@@ -21,13 +21,161 @@ import java.util.logging.LogRecord;
 import java.util.logging.Formatter;
 
 /**
- * Log message layout pattern for text (non-XML) format messages.
+ * Log message layout pattern for text (non-XML) format messages. It is
+ * a flexible layout configurable with pattern string.  The pattern
+ * string syntax is based upon the one used by the Log4j PatternLayout
+ * class.  However, since this class is built on top of java.util.logging,
+ * not all of the log4j conversion patterns are supported.
+ *
+ * <p>The goal of this class is to {@link #format format} a
+ * {@link java.util.logging.LogRecord} and return the results as a String.
+ * The results depend on the <em>conversion pattern</em> used.
+ *
+ * <p>A conversion pattern is composed of literal text and format
+ * control expressions called <em>conversion specifiers</em>.
+ *
+ * <p>Each conversion specifier starts with a percent sign (%) and is
+ * followed by optional <em>format modifiers</em> and a <em>conversion
+ * character</em>.  The conversion character specifies the type of
+ * data, e.g.  log message, level, date, thread name. The format
+ * modifiers control such things as field width, padding, left and
+ * right justification.
+ *
+ * <p>For example, given the layout conversion pattern
+ * <b>"%-4p&nbsp;[%t]:&nbsp;%m%n"</b>, then the code:
+ * <pre>
+     Logger logger = getClass().getLogger();
+     logger.info("Message 1");
+     logger.warn("Message 2");
+  </pre>
+   would yield the output:
+  <pre>
+      INFO [main]: Message 1
+      WARN [main]: Message 2
+  </pre>
+ *
+ * The recognized conversion characters are:
+ *
+ * <p> <table border="0" CELLPADDING="8">
+ *
+ * <tr><td align="center" valign="top"><b>C</b></td>
+ * <td>Used to output the class name of the caller
+ * issuing the logging request. This conversion specifier
+ * can be optionally followed by <em>precision specifier</em>,
+ * that is a decimal constant in brackets.
+ *
+ * <p>If a precision specifier is given, then only the corresponding
+ * number of right-most components of the class name will be
+ * printed. By default the class name is output in fully qualified form.
+ *
+ * <p>For example, for the class name "com.google.enterprise.SomeClass",
+ * the pattern <b>%C{1}</b> will output "SomeClass".
+ * </td>
+ * </tr>
+ *
+ * <tr><td align="center" valign="top"><b>d</b></td>
+ * <td>Used to output the date of the logging event. The date conversion
+ * specifier may be followed by a <em>date format specifier</em> enclosed
+ * between braces.  For example, <b>%d{HH:mm:ss,SSS}</b> or
+ * <b>%d{dd&nbsp;MMM&nbsp;yyyy&nbsp;HH:mm:ss,SSS}</b>.  If no
+ * date format specifier is given, then ISO8601 format is assumed.
+ *
+ * <p>The date format specifier accepts the same syntax as the
+ * time pattern string of the {@link java.text.SimpleDateFormat}.
+ * </td>
+ * </tr>
+ *
+ * <tr><td align="center" valign="top"><b>f</b></td>
+ * <td>Expands to the output returned by the Base Formatter for this record.
+ * This returns the fully formatted output of the underlying Formatter,
+ * for instance, the output of
+ * <code>java.util.logging.SimpleFormatter.format()</code>.
+ *
+ * <p>This can be useful when embellishing Base Formatter output with
+ * diagnostic information.  For instance,  a layout pattern like:
+ * <b>"[%T&nbsp;%t&nbsp;%X{connectorName}]&nbsp;%f"</b> would prepend a
+ * formatted log message with the ThreadID, ThreadName, and ConnectorName.
+ * </td>
+ * </tr>
+ *
+ * <tr><td align="center" valign="top"><b>m</b></td>
+ * <td>Outputs the application supplied message associated with
+ * the logging event.</td>
+ * </tr>
+ *
+ * <tr><td align="center" valign="top"><b>M</b></td>
+ * <td>Outputs the method name where the logging request was issued.</td>
+ * </tr>
+ *
+ * <tr><td align="center" valign="top"><b>n</b></td>
+ * <td>Outputs the platform dependent line separator character or characters.
+ * </td>
+ * </tr>
+ *
+ * <tr><td align="center" valign="top"><b>p</b></td>
+ * <td>Outputs the priority of the logging event. This
+ * cooresponds to the java.util.logging.Level of the LogRecord.</td>
+ * </tr>
+ *
+ * <tr><td align="center" valign="top"><b>t</b></td>
+ * <td>Outputs the name of the thread that generated the
+ * logging event.</td>
+ * </tr>
+ *
+ * <tr><td align="center" valign="top"><b>T</b></td>
+ * <td>Outputs the Id of the thread that generated the
+ * logging event.</td>
+ * </tr>
+ *
+ * <tr><td align="center" valign="top"><b>x</b></td>
+ * <td>Outputs the {@link NDC} (nested diagnostic context) associated
+ * with the thread that generated the logging event.
+ * </td>
+ * </tr>
+ *
+ * <tr><td align="center" valign="top"><b>X</b></td>
+ * <td>Outputs the {@link MDC} (mapped diagnostic context) associated
+ * with the thread that generated the logging event. The <b>X</b>
+ * conversion character <em>must</em> be followed by the key for the
+ * map placed between braces, as in <b>%X{clientNumber}</b> where
+ * <code>clientNumber</code> is the key. The value in the MDC
+ * corresponding to the key will be output.
+ * </td>
+ * </tr>
+ *
+ * <tr><td align="center" valign="top"><b>%</b></td>
+ * <td>The sequence %% outputs a single percent sign.</td>
+ * </tr>
+ * </table>
+ *
+ * <p>By default the relevant information is output as is. However,
+ * with the aid of format modifiers it is possible to change the
+ * minimum field width, the maximum field width, and justification.
+ *
+ * <p>The optional format modifier is placed between the percent sign
+ * and the conversion character.
+ *
+ * <p>The first optional format modifier is the <em>left justification
+ * flag</em> which is just the minus (-) character. Then comes the
+ * optional <em>minimum field width</em> modifier. This is a decimal
+ * constant that represents the minimum number of characters to
+ * output. If the data item requires fewer characters, it is padded on
+ * either the left or the right until the minimum width is
+ * reached. The default is to pad on the left (right justify) but you
+ * can specify right padding with the left justification flag. The
+ * padding character is space. If the data item is larger than the
+ * minimum field width, the field is expanded to accommodate the
+ * data. The value is never truncated.
+ *
+ * <p>This behavior can be changed using the <em>maximum field
+ * width</em> modifier which is designated by a period followed by a
+ * decimal constant. If the data item is longer than the maximum
+ * field, then the extra characters are removed from the end.
  */
 public class LayoutPattern {
-  private static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd' 'HH:mm:ss";
   private static final String NL = System.getProperty("line.separator");
 
-  private AbstractElement[] formatElements;
+  private FormatElement[] formatElements;
   private Formatter baseFormatter;
 
   /**
@@ -54,13 +202,13 @@ public class LayoutPattern {
   /**
    * Compile the format string into an array format elements
    * that can be more quickly evaluated when formatting log entries.
-   * An example format string might look like:
-   *  "[%T %t %X{ConnectorName}] %d %C %M%n%p: %m%n"
+   * An example format string might look like:<pre>
+   *   "[%T %t %X{ConnectorName}] %d %C %M%n%p: %m%n"</pre>
    *
    * @param format logging conversion format String
    */
   private void parse(String format) {
-    ArrayList<AbstractElement> elems = new ArrayList<AbstractElement>();
+    ArrayList<FormatElement> elems = new ArrayList<FormatElement>();
     if (format != null && format.length() > 0) {
       String[] strs = format.split("%", -1);
       boolean inConversion = false;
@@ -90,83 +238,79 @@ public class LayoutPattern {
           skipCount++;
         }
         String modifier = (skipCount > 0) ? str.substring(0, skipCount) : null;
-        AbstractElement elem = null;
+        FormatElement elem = null;
         String arg = null;
         switch (str.charAt(skipCount++)) {
-        case 'C': if ((arg = getArg(str, skipCount, strLen)) != null) {
-                    elem = new ClassNameElement(Integer.parseInt(arg));
-                    skipCount += arg.length() + 2;
-                  } else {
-                    elem = new ClassNameElement();
-                  }
-                  break;
-        case 'd': if ((arg = getArg(str, skipCount, strLen)) != null) {
-                    elem = new DateElement(arg);
-                    skipCount += arg.length() + 2;
-                  } else {
-                    elem = new DateElement(DEFAULT_DATE_FORMAT);
-                  }
-                  break;
-        case 'f': if (baseFormatter == null) {
-                    throw new IllegalArgumentException(
-                        "%f format conversion requires a base Formatter");
-                  }
-                  elem = new FormattedRecordElement();
-                  break;
-        case 'M': elem = new MethodNameElement();
-                  break;
-        case 'm': elem = new MessageElement();
-                  break;
-        case 'N': elem = new SequenceNumberElement();
-                  break;
-        case 'n': elem = new StringElement(NL);
-                  break;
-        case 'p': elem = new LevelElement();
-                  break;
-        case 'T': elem = new ThreadIdElement();
-                  break;
-        case 't': elem = new ThreadNameElement();
-                  break;
-        case 'x': elem = new NDCElement();
-                  break;
-        case 'X': if ((arg = getArg(str, skipCount, strLen)) != null) {
-                    elem = new MDCElement(arg);
-                    skipCount += arg.length() + 2;
-                  } else {
-                    throw new IllegalArgumentException(
-                        "MDC format conversion must specify key "
-                        + str.substring(skipCount));
-                  }
-                  break;
-        default:  // Unimplemented format Conversion.  Skip it.
-                  break;
+          case 'C': if ((arg = getArg(str, skipCount, strLen)) != null) {
+                      elem = new ClassNameElement(Integer.parseInt(arg));
+                      skipCount += arg.length() + 2;
+                    } else {
+                      elem = new ClassNameElement();
+                    }
+                    break;
+          case 'd': if ((arg = getArg(str, skipCount, strLen)) != null) {
+                      elem = new DateElement(arg);
+                      skipCount += arg.length() + 2;
+                    } else {
+                      elem = new DateElement();
+                    }
+                    break;
+          case 'f': if (baseFormatter == null) {
+                      throw new IllegalArgumentException(
+                          "%f format conversion requires a base Formatter");
+                    }
+                    elem = new FormattedRecordElement();
+                    break;
+          case 'M': elem = new MethodNameElement();
+                    break;
+          case 'm': elem = new MessageElement();
+                    break;
+          case 'N': elem = new SequenceNumberElement();
+                    break;
+          case 'n': elem = new StringElement(NL);
+                    break;
+          case 'p': elem = new LevelElement();
+                    break;
+          case 'T': elem = new ThreadIdElement();
+                    break;
+          case 't': elem = new ThreadNameElement();
+                    break;
+          case 'x': elem = new NDCElement();
+                    break;
+          case 'X': if ((arg = getArg(str, skipCount, strLen)) != null) {
+                      elem = new MDCElement(arg);
+                      skipCount += arg.length() + 2;
+                    } else {
+                      throw new IllegalArgumentException(
+                          "MDC format conversion must specify key "
+                          + str.substring(skipCount));
+                    }
+                    break;
+          default:  // Unimplemented format Conversion.  Skip it.
+                    break;
         }
 
         // Add the format element to the list of compiled elements.
         if (elem != null) {
-          // If the format conversion had a modifier, wrap it around the element.
+          // If format conversion had a modifier, wrap it around the element.
           if (modifier != null) {
-            if (elem instanceof BasicElement) {
-              elem = new BasicModifier(modifier, (BasicElement) elem);
-            } else if (elem instanceof LogRecordElement) {
-              elem = new LogRecordModifier(modifier, (LogRecordElement) elem);
-            }
+            elem = new ModifierElement(modifier, elem);
           }
           elems.add(elem);
         }
 
-        // if there is anything left in the token, consider it a string constant.
+        // If there's anything left in the token, consider it a string constant.
         if (skipCount < strLen) {
           elems.add(new StringElement(str.substring(skipCount)));
         }
       }
     }
-    formatElements = elems.toArray(new AbstractElement[elems.size()]);
+    formatElements = elems.toArray(new FormatElement[elems.size()]);
   }
 
   /**
    * Parse out an argument from the format string.  Looks for an argument
-   * like <code>{xyzzy}</code> ocurring at the start offset of the string.
+   * like <code>{xyzzy}</code> occurring at the start offset of the string.
    * If found, the substring between the braces is returned.  Otherwise null
    * is returned.
    *
@@ -185,55 +329,49 @@ public class LayoutPattern {
   }
 
   /**
-   * Format the supplied LogRecord according to the layout format.
+   * Format the supplied LogRecord according to the layout conversion pattern.
    *
    * @param logRecord  The LogRecord to format.
    * @return a formatted log entry String.
    */
   public String format(LogRecord logRecord) {
     StringBuilder str = new StringBuilder();
-    for (AbstractElement elem : formatElements) {
-      if (elem instanceof LogRecordString) {
-        str.append(((LogRecordString)elem).toString(logRecord));
-      } else if (elem instanceof BasicString) {
-        str.append(((BasicString)elem).toString());
-      } else if (elem instanceof LogRecordFormat) {
-        ((LogRecordFormat)elem).format(str, logRecord);
-      } else if (elem instanceof BasicFormat) {
-        ((BasicFormat)elem).format(str);
-      }
+    for (FormatElement elem : formatElements) {
+      elem.format(str, logRecord);
     }
     return str.toString();
   }
 
   /* *** Compiled Format Elements *** */
 
-  private abstract class AbstractElement {
-  }
-
-  private interface BasicString {
-    public String toString();
-  }
-
-  private interface LogRecordString {
-    public String toString(LogRecord logRecord);
-  }
-
-  private interface BasicFormat {
-    public void format(StringBuilder builder);
-  }
-
-  private interface LogRecordFormat {
+  private interface FormatElement {
     public void format(StringBuilder builder, LogRecord logRecord);
   }
 
-  private abstract class AbstractModifier extends AbstractElement {
-    protected boolean leftJustified;
-    protected int minWidth;
-    protected int maxWidth;
 
-    /* Parse the modifier string in the form of: "-minWidth.maxWidth" */
-    protected void parse(String modifier) {
+  /**
+   * Modifier wraps another FormatElement, adding padding, justification,
+   * truncation, etc.
+   */
+  private class ModifierElement implements FormatElement {
+    private boolean leftJustified;
+    private int minWidth;
+    private int maxWidth;
+    private FormatElement base;
+
+    /**
+     * Wrap the supplied base FormatElement, modifying its output
+     * with padding, justification, and/or truncation.
+     */
+    public ModifierElement(String modifier, FormatElement base) {
+      this.base = base;
+      this.parse(modifier);
+    }
+
+    /**
+     * Parse the modifier string in the form of: "-minWidth.maxWidth"
+     */
+    private void parse(String modifier) {
       int start;
       if (modifier.charAt(0) == '-') {
         leftJustified = true;
@@ -264,13 +402,16 @@ public class LayoutPattern {
       }
     }
 
-    protected void format(StringBuilder builder, String value) {
-      int len = value.length();
+    // @Override
+    public void format(StringBuilder builder, LogRecord record) {
+      StringBuilder baseBuilder = new StringBuilder();
+      base.format(baseBuilder, record);
+      int len = baseBuilder.length();
       if (len >= minWidth && len <= maxWidth) {
-        builder.append(value);
+        builder.append(baseBuilder);
       } else if (len < minWidth) {
         if (leftJustified) {
-          builder.append(value);
+          builder.append(baseBuilder);
           for (; len < minWidth; len++) {
             builder.append(' ');
           }
@@ -278,185 +419,155 @@ public class LayoutPattern {
           for (; len < minWidth; len++) {
             builder.append(' ');
           }
-          builder.append(value);
+          builder.append(baseBuilder);
         }
       } else { // len > maxWidth
-        builder.append(value.substring(0, maxWidth));
+        builder.append(baseBuilder, 0, maxWidth);
       }
     }
   }
 
-  // Wraps a BasicElement, adding precision modifier.
-  private class BasicModifier extends AbstractModifier implements BasicFormat {
-    private BasicElement base;
-
-    BasicModifier(String modifier, BasicElement base) {
-      parse(modifier);
-      this.base = base;
-    }
-
-    public void format(StringBuilder builder) {
-      format(builder, base.toString());
-    }
-  }
-
-  // Wraps a LogRecordElement, adding precision modifier.
-  private class LogRecordModifier extends AbstractModifier implements LogRecordFormat {
-    private LogRecordElement base;
-
-    LogRecordModifier(String modifier, LogRecordElement base) {
-      parse(modifier);
-      this.base = base;
-    }
-
-    public void format(StringBuilder builder, LogRecord logRecord) {
-      format(builder, base.toString(logRecord));
-    }
-  }
-
-  private abstract class BasicElement extends AbstractElement implements BasicString {
-  }
 
   // String constant.
-  private class StringElement extends BasicElement {
+  private class StringElement implements FormatElement {
     private String string;
     public StringElement(String string) {
       this.string = string;
     }
-    @Override
-    public String toString() {
-      return string;
+    // @Override
+    public void format(StringBuilder builder, LogRecord ignored) {
+      builder.append(string);
     }
-  }
-
-  // Formats items from the LogRecord.
-  private abstract class LogRecordElement extends AbstractElement implements LogRecordString {
-    abstract public String toString(LogRecord logRecord);
   }
 
   // %C - Class Name.  %C{n} shows the rightmost n segments of the
   // fully qualified class name.
-  private class ClassNameElement extends LogRecordElement {
+  private class ClassNameElement implements FormatElement {
     private int segments = 0;
     public ClassNameElement() {}
     public ClassNameElement(int numSegments) {
       this.segments = numSegments;
     }
-    @Override
-    public String toString(LogRecord logRecord) {
+    // @Override
+    public void format(StringBuilder builder, LogRecord logRecord) {
       String name = logRecord.getSourceClassName();
       if (segments > 0) {
         int start = name.length();
         for (int i = 0; i < segments; i++) {
           if ((start = name.lastIndexOf('.', start - 1)) < 0) {
-            return name;
+            builder.append(name);
+            return;
           }
         }
-        return name.substring(start + 1);
+        builder.append(name.substring(start + 1));
+      } else {
+        builder.append(name);
       }
-      return name;
     }
   }
 
   // %d{date-format} - Date.  The date-format specifier uses the same syntax
   // as java.text.SimpleDateFormat.  ISO8601 is the default.
-  private class DateElement extends LogRecordElement {
+  private class DateElement implements FormatElement {
+    private static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd' 'HH:mm:ss";
     private SimpleDateFormat dateFormat;
     public DateElement() {
-      this.dateFormat = new SimpleDateFormat();
+      this(DEFAULT_DATE_FORMAT);
     }
     public DateElement(String dateFormat) {
       this.dateFormat = new SimpleDateFormat(dateFormat);
     }
-    @Override
-    public String toString(LogRecord logRecord) {
-      return dateFormat.format(new Date(logRecord.getMillis()));
+    // @Override
+    public void format(StringBuilder builder, LogRecord logRecord) {
+      builder.append(dateFormat.format(new Date(logRecord.getMillis())));
     }
   }
 
   // %f - Base Formatter Formatted Record.
   // This returns the fully formatted output of the underlying Formatter.
-  // For intstance, the output of java.util.logging.SimpleFormatter.format().
-  // This can be usefull when embellishing Base Formatter output with
+  // For instance, the output of java.util.logging.SimpleFormatter.format().
+  // This can be useful when embellishing Base Formatter output with
   // MDC information.  For instance, given a layout pattern like:
   // "[%T %t %X{connectorName}] %f" would prepend a formatted log message
   // with the ThreadID, ThreadName, and ConnectorName.
-  private class FormattedRecordElement extends LogRecordElement {
-    @Override
-    public String toString(LogRecord logRecord) {
-      return (baseFormatter != null) ? baseFormatter.format(logRecord) : "";
+  private class FormattedRecordElement implements FormatElement {
+    // @Override
+    public void format(StringBuilder builder, LogRecord logRecord) {
+      if (baseFormatter != null) {
+        builder.append(baseFormatter.format(logRecord));
+      }
     }
   }
 
   // %M - Method Name.
-  private class MethodNameElement extends LogRecordElement {
-    @Override
-    public String toString(LogRecord logRecord) {
-      return logRecord.getSourceMethodName();
+  private class MethodNameElement implements FormatElement {
+    // @Override
+    public void format(StringBuilder builder, LogRecord logRecord) {
+      builder.append(logRecord.getSourceMethodName());
     }
   }
 
   // %m - Message.
-  private class MessageElement extends LogRecordElement {
-    @Override
-    public String toString(LogRecord logRecord) {
+  private class MessageElement implements FormatElement {
+    // @Override
+    public void format(StringBuilder builder, LogRecord logRecord) {
       if (baseFormatter == null) {
-        return logRecord.getMessage();
+        builder.append(logRecord.getMessage());
       } else {
-        return baseFormatter.formatMessage(logRecord);
+        builder.append(baseFormatter.formatMessage(logRecord));
       }
     }
   }
 
   // %N - Sequence Number.
-  private class SequenceNumberElement extends LogRecordElement {
-    @Override
-    public String toString(LogRecord logRecord) {
-      return Long.toString(logRecord.getSequenceNumber());
+  private class SequenceNumberElement implements FormatElement {
+    // @Override
+    public void format(StringBuilder builder, LogRecord logRecord) {
+      builder.append(logRecord.getSequenceNumber());
     }
   }
 
   // %p - Priority/Level.
-  private class LevelElement extends LogRecordElement {
-    @Override
-    public String toString(LogRecord logRecord) {
-      return logRecord.getLevel().getName();
+  private class LevelElement implements FormatElement {
+    // @Override
+    public void format(StringBuilder builder, LogRecord logRecord) {
+      builder.append(logRecord.getLevel().getName());
     }
   }
 
   // %T - Thread ID.
-  private class ThreadIdElement extends LogRecordElement {
-    @Override
-    public String toString(LogRecord logRecord) {
-      return Long.toString(Thread.currentThread().getId());
+  private class ThreadIdElement implements FormatElement {
+    // @Override
+    public void format(StringBuilder builder, LogRecord logRecord) {
+      builder.append(Thread.currentThread().getId());
     }
   }
 
   // %t - Thread Name.
-  private class ThreadNameElement extends LogRecordElement {
-    @Override
-    public String toString(LogRecord logRecord) {
-      return Thread.currentThread().getName();
+  private class ThreadNameElement implements FormatElement {
+    // @Override
+    public void format(StringBuilder builder, LogRecord logRecord) {
+      builder.append(Thread.currentThread().getName());
     }
   }
 
   // %X - MDC value for key.
-  private class MDCElement extends BasicElement {
+  private class MDCElement implements FormatElement {
     private String key;
     public MDCElement(String key) {
       this.key = key;
     }
-    @Override
-    public String toString() {
-      return MDC.get(key);
+    // @Override
+    public void format(StringBuilder builder, LogRecord ignored) {
+      builder.append(MDC.get(key));
     }
   }
 
   // %x - NDC value for thread.
-  private class NDCElement extends BasicElement {
-  @Override
-  public String toString() {
-      return NDC.peek();
+  private class NDCElement implements FormatElement {
+    // @Override
+    public void format(StringBuilder builder, LogRecord ignored) {
+      builder.append(NDC.peek());
     }
   }
 }

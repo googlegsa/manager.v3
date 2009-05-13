@@ -30,12 +30,8 @@ public class SetManagerConfig extends ConnectorManagerServlet {
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
     NDC.push("Config Manager");
-    try {
-      SetManagerConfigHandler hdl =
-          new SetManagerConfigHandler(manager, xmlBody);
-      ServletUtil.writeResponse(out, hdl.getStatus());
-    } finally {
-      NDC.remove();
-    }
+    SetManagerConfigHandler hdl = new SetManagerConfigHandler(manager, xmlBody);
+    ServletUtil.writeResponse(out, hdl.getStatus());
+    NDC.pop();
   }
 }

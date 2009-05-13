@@ -40,13 +40,10 @@ public class SetSchedule extends ConnectorManagerServlet {
   @Override
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
-    NDC.push("Config Schedule");
-    try {
-      ConnectorMessageCode status = handleDoPost(xmlBody, manager);
-      ServletUtil.writeResponse(out, status);
-    } finally {
-      NDC.remove();
-    }
+    NDC.push("Config");
+    ConnectorMessageCode status = handleDoPost(xmlBody, manager);
+    ServletUtil.writeResponse(out, status);
+    NDC.pop();
   }
 
   /**

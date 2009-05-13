@@ -54,7 +54,7 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
     String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
     PrintWriter out = res.getWriter();
     res.setContentType(ServletUtil.MIMETYPE_XML);
-    NDC.push("Config" + connectorType);
+    NDC.push("Config " + connectorType);
     try {
       ServletContext servletContext = this.getServletContext();
       Manager manager = Context.getInstance(servletContext).getManager();
@@ -85,7 +85,7 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
       GetConfigForm.handleDoGet(configResponse, status, out);
     } finally {
       out.close();
-      NDC.remove();
+      NDC.clear();
     }
   }
 
@@ -116,7 +116,7 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
           out, status, configRes);
     } finally {
       out.close();
-      NDC.remove();
+      NDC.pop();
     }
   }
 }

@@ -88,7 +88,7 @@ public class GetConfig extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException, FileNotFoundException {
-    NDC.push("Support Get Config");
+    NDC.push("Support");
     try {
       Context context = Context.getInstance(this.getServletContext());
 
@@ -111,14 +111,17 @@ public class GetConfig extends HttpServlet {
       } else if (fileName.equalsIgnoreCase(archiveName)) {
         res.setContentType(ServletUtil.MIMETYPE_ZIP);
         ServletOutputStream out = res.getOutputStream();
-        handleDoGet(context.getCommonDirPath(), out);
-        out.close();
+        try {
+          handleDoGet(context.getCommonDirPath(), out);
+        } finally {
+          out.close();
+        }
       } else {
         // Force a redirect to the archive file.
         res.sendRedirect(res.encodeRedirectURL(archiveName));
       }
     } finally {
-      NDC.remove();
+      NDC.clear();
     }
   }
 

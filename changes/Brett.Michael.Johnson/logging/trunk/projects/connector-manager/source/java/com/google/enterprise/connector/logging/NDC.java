@@ -18,64 +18,63 @@ import java.util.Stack;
 import java.util.EmptyStackException;
 
 /**
- * Traditional Nested Diagnostic Context.
+ * Traditional Nested Diagnostic Context.  The interface is similar
+ * to the NDC class presented by the widely-used log4j.
+ *
+ * <p>This maintains a stack of diagnostic context messages that
+ * is maintained on a per-thread basis.  It is primarily used
+ * to add per-thread context while logging.
+ *
+ * <p>When entering a new context, a thread might call {@link #push(String)}
+ * or {@link #pushAppend(String)} to add a new context message at the top
+ * of the stack.  When leaving the context, the thread should call
+ * {@link #pop} to restore the previous context message.
+ *
+ * <p>If the context message stack is no longer needed, it may be
+ * cleared by calling {@link #clear}.  This discards any messages
+ * left on the stack, but retains the ThreadLocal used to maintain
+ * the stack.  This is useful if the thread will be reused in the
+ * future, and desire diagnostic context.  For instance, threads
+ * in a thread-pool handling servlet requests could create a new
+ * context when a thread is taken from the pool and given a request
+ * packet.  The context message could uniquely identify the request
+ * by requestor, port, cookie, etc.  Once the request has been
+ * serviced, the thread could clear the NDC stack just before being
+ * returned to the thread-pool.
+ *
+ * <p>When a thread will be unlikely to use a diagnostic context in
+ * the future, it should call {@link #remove} to release the ThreadLocal
+ * resources used by the context.  This is especially important if
+ * when the thread exits, so these resources may get garbage collected.
+
+ * <p>A child thread automatically inherits a <em>copy</em> of the
+ * nested diagnostic context of its parent.
  */
-public class NDC {
-  private static final String EMPTY_STRING = "";
-  private static ThreadLocal<Stack<String>> stack =
-      new ThreadLocal<Stack<String>>();
+ public class NDC {
+   private static final String EMPTY_STRING = "";
+   private static InheritableThreadLocal<Stack<String>> stack =
+       new InheritableThreadLocal<Stack<String>>();
 
   /**
-   * Clear any nested diagnostic information, if any.
+   * Clear any nested diagnostic information, if any, but maintain the
+   * NDC ThreadLocal.  This is useful for threads that will be reused
+   * with a diagnostic context, such as those in a thread-pool.
    */
-  static void clear() {
+  public static void clear() {
     getContextStack().clear();
   }
 
   /**
-   * Clone the diagnostic context for the current thread.
+   * Return the current nesting depth of this diagnostic context.
    */
-  @SuppressWarnings("unchecked")    // clone() returns Object.
-  static Stack<String> cloneStack() {
-    return (Stack<String>)(getContextStack().clone());
-  }
-
-  /**
-   * Get the NDC context at the top of the stack.
-   */
-  static String get() {
-    return peek();
-  }
-
-  /**
-   * Get the current depth of the context stack.
-   */
-  static int getDepth() {
+  public static int getDepth() {
     return getContextStack().size();
-  }
-
-  /**
-   * Inherit the diagnostic context from anther thread.
-   */
-  static void inherit(Stack<String> newStack) {
-    remove();
-    stack.set(newStack);
-  }
-
-  /**
-   * Peek at the context at the top of the stack.
-   */
-  static String peek() {
-    try {
-      return getContextStack().peek();
-    } catch (EmptyStackException e) {
-      return EMPTY_STRING;
-    }
   }
 
   /**
    * Push new diagnostic context information for the current thread.
    *
+   * @param message The new diagnostic context information.
    */
   public static void push(String message) {
     getContextStack().push(message);
@@ -85,6 +84,9 @@ public class NDC {
    * Push new diagnostic context information for the current thread.
    * The new context information is formed by appending the supplied
    * message to the current context.
+   *
+   * @param message The new diagnostic context information to append
+   *        to the current context.
    */
   public static void pushAppend(String message) {
     String current = peek();
@@ -95,9 +97,26 @@ public class NDC {
     }
   }
 
+  /**
+   * Looks at the last diagnostic context at the top of the context
+   * stack without removing it.
+   *
+   * @return The value that was pushed last.  If the stack is empty
+   *         the empty string is returned.
+   */
+  public static String peek() {
+    try {
+      return getContextStack().peek();
+    } catch (EmptyStackException e) {
+      return EMPTY_STRING;
+    }
+  }
 
   /**
    * Remove the String at the top of the context stack and return it.
+   *
+   * @return The value that was pushed last.  If the stack is empty
+   *         the empty string is returned.
    */
   public static String pop() {
     try {
@@ -108,12 +127,17 @@ public class NDC {
   }
 
   /**
-   * Remove the diagnostic context from the thread.
+   * Remove the diagnostic context from the thread.  This clears the
+   * context stack and removes the NDC ThreadLocal.
+   *
+   * <p>Each thread that created a diagnostic context by calling
+   * {@link #push push()} should call this method before exiting.
+   * Otherwise, the memory used by the thread cannot be reclaimed by the VM.
    */
   public static void remove() {
-    Stack<String> mdcStack = stack.get();
-    if (mdcStack != null) {
-      mdcStack.clear();
+    Stack<String> ndcStack = stack.get();
+    if (ndcStack != null) {
+      ndcStack.clear();
     }
     stack.remove();
   }
@@ -121,13 +145,15 @@ public class NDC {
   /**
    * Return this thread's context stack.  If this thread has no
    * context stack, create one.
+   *
+   * @return The contextStack.
    */
   private static Stack<String> getContextStack() {
-    Stack<String> mdcStack = stack.get();
-    if (mdcStack == null) {
-      mdcStack = new Stack<String>();
-      stack.set(mdcStack);
+    Stack<String> ndcStack = stack.get();
+    if (ndcStack == null) {
+      ndcStack = new Stack<String>();
+      stack.set(ndcStack);
     }
-    return mdcStack;
+    return ndcStack;
   }
- }
+}

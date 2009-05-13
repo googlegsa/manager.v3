@@ -85,7 +85,7 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
       processDoGet(connectorName, lang, manager, out);
     } finally {
       out.close();
-      NDC.remove();
+      NDC.clear();
     }
   }
 
@@ -98,7 +98,8 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
    * @throws IOException
    */
   @Override
-  protected void doPost(HttpServletRequest req, HttpServletResponse res) throws IOException {
+  protected void doPost(HttpServletRequest req, HttpServletResponse res)
+      throws IOException {
     doGet(req, res);
   }
 

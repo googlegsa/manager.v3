@@ -49,7 +49,7 @@ public class TestConnectivity extends HttpServlet {
       handleDoGet(out);
     } finally {
       out.close();
-      NDC.remove();
+      NDC.clear();
     }
   }
 

@@ -16,8 +16,6 @@ package com.google.enterprise.connector.logging;
 
 import junit.framework.TestCase;
 
-import java.util.Stack;
-
 /**
  * Unit Test for Nested Diagnostic Context (NDC).
  */
@@ -31,7 +29,7 @@ public class NDCTest extends TestCase {
     NDC.remove();
   }
 
-  // Test clear().
+  /** Test clear(). */
   public void testClear() {
     NDC.clear();
     assertTrue(NDC.getDepth() == 0);
@@ -47,7 +45,7 @@ public class NDCTest extends TestCase {
   }
 
 
-  // Test normal push/pop usage.
+  /** Test normal push/pop usage. */
   public void testPushPop() {
     NDC.clear();
 
@@ -81,7 +79,40 @@ public class NDCTest extends TestCase {
     assertTrue(NDC.getDepth() == 0);
   }
 
-  // Test more pops than pushes.
+  /** Test pushAppend usage. */
+  public void testPushAppend() {
+    NDC.clear();
+
+    NDC.pushAppend(message1);
+    assertEquals(message1, NDC.peek());
+    assertTrue(NDC.getDepth() == 1);
+
+    NDC.pushAppend(message2);
+    assertEquals(message1 + " " + message2, NDC.peek());
+    assertTrue(NDC.getDepth() == 2);
+
+    NDC.pushAppend(message3);
+    assertEquals(message1 + " " + message2 + " " + message3, NDC.peek());
+    assertTrue(NDC.getDepth() == 3);
+
+    String value;
+
+    NDC.pop();
+    assertEquals(message1 + " " + message2, NDC.peek());
+    assertTrue(NDC.getDepth() == 2);
+
+    NDC.pop();
+    assertEquals(message1, NDC.peek());
+    assertTrue(NDC.getDepth() == 1);
+
+    value = NDC.pop();
+    assertEquals(message1, value);
+    assertEquals("", NDC.peek());
+    assertTrue(NDC.getDepth() == 0);
+  }
+
+
+  /** Test more pops than pushes. */
   public void testExtraPop() {
     NDC.clear();
 
@@ -98,64 +129,7 @@ public class NDCTest extends TestCase {
     assertTrue(NDC.getDepth() == 0);
   }
 
-  // Test get()
-  public void testGet() {
-    NDC.clear();
-
-    NDC.push(message1);
-    assertEquals(message1, NDC.get());
-    assertEquals(message1, NDC.peek());
-    assertTrue(NDC.getDepth() == 1);
-
-    NDC.pop();
-    assertEquals("", NDC.peek());
-    assertTrue(NDC.getDepth() == 0);
-  }
-
-  // Test inherit().
-  public void testInherit() {
-    NDC.clear();
-
-    NDC.push(message1);
-    assertEquals(message1, NDC.peek());
-    assertTrue(NDC.getDepth() == 1);
-
-    NDC.push(message2);
-    assertEquals(message2, NDC.peek());
-    assertTrue(NDC.getDepth() == 2);
-
-    NDC.push(message3);
-    assertEquals(message3, NDC.peek());
-    assertTrue(NDC.getDepth() == 3);
-
-    Stack<String> stack = NDC.cloneStack();
-    NDC.clear();
-    assertEquals("", NDC.peek());
-    assertTrue(NDC.getDepth() == 0);
-
-    NDC.inherit(stack);
-    assertEquals(message3, NDC.peek());
-    assertTrue(NDC.getDepth() == 3);
-
-    String value;
-
-    value = NDC.pop();
-    assertEquals(message3, value);
-    assertEquals(message2, NDC.peek());
-    assertTrue(NDC.getDepth() == 2);
-
-    value = NDC.pop();
-    assertEquals(message2, value);
-    assertEquals(message1, NDC.peek());
-    assertTrue(NDC.getDepth() == 1);
-
-    value = NDC.pop();
-    assertEquals(message1, value);
-    assertEquals("", NDC.peek());
-    assertTrue(NDC.getDepth() == 0);
-  }
-
-  // Test NDC values are different between threads.
+  /** Test NDC values are different between threads. */
   public void testThreadLocal() {
     NDC.clear();
 
@@ -165,7 +139,9 @@ public class NDCTest extends TestCase {
 
     Thread t = new OtherThread("NDCChildThread");
     t.start();
-    try { Thread.sleep(500); } catch (InterruptedException e) {}
+    try {
+      Thread.sleep(500);
+    } catch (InterruptedException e) {}
     assertEquals(message1, NDC.peek());
     assertTrue(NDC.getDepth() == 1);
 
@@ -174,7 +150,9 @@ public class NDCTest extends TestCase {
     assertTrue(NDC.getDepth() == 2);
 
     // Wait for child thread to exit.
-    try { t.join(); } catch (InterruptedException e) {}
+    try {
+      t.join();
+    } catch (InterruptedException e) {}
 
     // Make sure our context is unmolested.
     assertEquals(message3, NDC.peek());
@@ -186,23 +164,24 @@ public class NDCTest extends TestCase {
       super(name);
     }
 
-	@Override
+    @Override
     public void run() {
       assertTrue(NDC.getDepth() == 0);
       NDC.push(message2);
       assertEquals(message2, NDC.peek());
       assertTrue(NDC.getDepth() == 1);
 
-      try { Thread.sleep(750); } catch (InterruptedException e) {}
+      try {
+        Thread.sleep(750);
+      } catch (InterruptedException e) {}
       assertEquals(message2, NDC.peek());
       assertTrue(NDC.getDepth() == 1);
 
-      NDC.clear();
       NDC.remove();
     }
   }
 
-  // Test remove().
+  /** Test remove(). */
   public void testRemove() {
     NDC.clear();
 

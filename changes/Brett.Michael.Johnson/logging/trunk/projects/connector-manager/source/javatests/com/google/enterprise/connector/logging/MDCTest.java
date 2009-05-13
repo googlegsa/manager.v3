@@ -32,7 +32,7 @@ public class MDCTest extends TestCase {
     MDC.remove();
   }
 
-  // Test put/get and Clear.
+  /** Test put/get and clear. */
   public void testPutGetClear() {
     String value;
     MDC.put(key1, value1);
@@ -43,7 +43,7 @@ public class MDCTest extends TestCase {
     assertEquals(value, "");
   }
 
-  // Test put/get/re-put/get.
+  /** Test put/get/re-put/get. */
   public void testPutGetPutGet() {
     MDC.clear();
     MDC.put(key1, value1);
@@ -52,7 +52,7 @@ public class MDCTest extends TestCase {
     assertEquals(value2, MDC.get(key1));
   }
 
-  // Test put/get multiple keys/values.
+  /** Test put/get multiple keys/values. */
   public void testPutGetX2() {
     MDC.clear();
     MDC.put(key1, value1);
@@ -66,7 +66,7 @@ public class MDCTest extends TestCase {
     assertEquals("", MDC.get(key2));
   }
 
-  // Test remove.
+  /** Test remove. */
   public void testRemove() {
     MDC.clear();
     MDC.put(key1, value1);
@@ -82,7 +82,7 @@ public class MDCTest extends TestCase {
     assertEquals("", MDC.get(key2));
   }
 
-  // Test remove a key/value pair that don't exist.
+  /** Test remove a key/value pair that don't exist. */
   public void testRemoveNotExists() {
     MDC.clear();
     assertEquals("", MDC.get(key3));
@@ -90,49 +90,17 @@ public class MDCTest extends TestCase {
     assertEquals("", MDC.get(key3));
   }
 
-  // Test push/pop
-  public void testPushPop() {
-    MDC.clear();
-    MDC.put(key1, value1);
-    assertEquals(value1, MDC.get(key1));
-
-    MDC.push();
-    assertEquals(value1, MDC.get(key1));
-    MDC.put(key2, value2);
-    assertEquals(value2, MDC.get(key2));
-    assertEquals(value1, MDC.get(key1));
-
-    MDC.push();
-    assertEquals(value1, MDC.get(key1));
-    assertEquals(value2, MDC.get(key2));
-    MDC.put(key3, value3);
-    assertEquals(value3, MDC.get(key3));
-
-    MDC.pop();
-    assertEquals(value1, MDC.get(key1));
-    assertEquals(value2, MDC.get(key2));
-    assertEquals("", MDC.get(key3));
-
-    MDC.pop();
-    assertEquals(value1, MDC.get(key1));
-    assertEquals("", MDC.get(key2));
-    assertEquals("", MDC.get(key3));
-
-    MDC.pop();
-    assertEquals(value1, MDC.get(key1));
-    assertEquals("", MDC.get(key2));
-    assertEquals("", MDC.get(key3));
-  }
-
-  // Test NDC values are different between threads.
+  /** Test MDC values are different between threads. */
   public void testThreadLocal() {
     MDC.clear();
     MDC.put(key1, value1);
     assertEquals(value1, MDC.get(key1));
 
-    Thread t = new OtherThread("NDCChildThread");
+    Thread t = new OtherThread("MDCChildThread");
     t.start();
-    try { Thread.sleep(500); } catch (InterruptedException e) {}
+    try {
+      Thread.sleep(500);
+    } catch (InterruptedException e) {}
     assertEquals(value1, MDC.get(key1));
     MDC.put(key1, value3);
     assertEquals(value3, MDC.get(key1));
@@ -141,7 +109,9 @@ public class MDCTest extends TestCase {
     assertEquals("", MDC.get(key2));
 
     // Wait for child thread to exit.
-    try { t.join(); } catch (InterruptedException e) {}
+    try {
+      t.join();
+    } catch (InterruptedException e) {}
 
     // Make sure our context is unmolested.
     assertEquals(value3, MDC.get(key1));
@@ -151,7 +121,7 @@ public class MDCTest extends TestCase {
     public OtherThread(String name) {
       super(name);
     }
-    
+
     @Override
     public void run() {
       // Make sure context is not inherited.
@@ -163,12 +133,13 @@ public class MDCTest extends TestCase {
       MDC.put(key2, value2);
       assertEquals(value2, MDC.get(key2));
 
-      try { Thread.sleep(750); } catch (InterruptedException e) {}
+      try {
+        Thread.sleep(750);
+      } catch (InterruptedException e) {}
       assertEquals(value2, MDC.get(key1));
       assertEquals(value2, MDC.get(key2));
 
-      NDC.clear();
-      NDC.remove();
+      MDC.remove();
     }
   }
 }

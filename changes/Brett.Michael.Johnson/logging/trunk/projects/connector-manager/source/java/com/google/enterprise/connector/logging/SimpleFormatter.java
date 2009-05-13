@@ -14,8 +14,8 @@
 
 package com.google.enterprise.connector.logging;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 
@@ -24,9 +24,7 @@ import java.util.logging.LogRecord;
  * adding MDC and NDC Logging capabilities.
  */
 public class SimpleFormatter extends java.util.logging.SimpleFormatter {
-  public final String DEBUGGING_PATTERN = "%d{MMM dd, yyyy h:mm:ss a} [%T %t - %x] %C{3}.%M()%n%p: %m%n";
-  public final String DEFAULT_PATTERN = "%d{MMM dd, yyyy h:mm:ss a} [%x] %C %M%n%p: %m%n";
-  public final String ONE_LINE_PATTERN = "%d [%x] %p: %C{3}.%M(): %m%n";
+  private final String DEFAULT_PATTERN = "%d{MMM dd, yyyy h:mm:ss a} [%x] %C %M%n%p: %m%n";
 
   // The default layout pattern resembles java.util.logging.SimpleFormatter,
   // with an addtional NDC component.
@@ -47,12 +45,12 @@ public class SimpleFormatter extends java.util.logging.SimpleFormatter {
     String output = layout.format(record);
     Throwable thrown = record.getThrown();
     if (thrown != null) {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      PrintStream ps = new PrintStream(baos);
-      thrown.printStackTrace(ps);
-      ps.flush();
-      output += baos.toString();
-      ps.close();
+      StringWriter sw = new StringWriter();
+      PrintWriter pw = new PrintWriter(sw);
+      thrown.printStackTrace(pw);
+      pw.flush();
+      output += sw.toString();
+      pw.close();
     }
     return output;
   }

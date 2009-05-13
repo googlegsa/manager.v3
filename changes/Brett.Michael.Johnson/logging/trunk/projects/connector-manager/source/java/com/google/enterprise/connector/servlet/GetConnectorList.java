@@ -72,7 +72,7 @@ public class GetConnectorList extends HttpServlet {
       handleDoPost(manager, out);
     } finally {
       out.close();
-      NDC.remove();
+      NDC.clear();
     }
   }
 

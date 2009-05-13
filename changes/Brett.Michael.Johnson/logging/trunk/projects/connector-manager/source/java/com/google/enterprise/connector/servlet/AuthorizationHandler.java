@@ -74,7 +74,7 @@ public class AuthorizationHandler {
       computeResultSet(authorizationParser);
       generateXml();
     } finally {
-      NDC.remove();
+      NDC.pop();
     }
   }
 

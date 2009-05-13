@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.common;
 
+import com.google.enterprise.connector.logging.NDC;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -403,6 +405,7 @@ public class WorkQueue {
 
     @Override
     public void run() {
+      NDC.push("Traverse");
       long nextCheckTimeout = killThreadTimeout;
       while (!shutdown) {
         try {
@@ -416,6 +419,7 @@ public class WorkQueue {
         }
         nextCheckTimeout = interruptAllTimedOutItems();
       }
+      NDC.remove();
     }
   }
 
@@ -438,6 +442,7 @@ public class WorkQueue {
 
     @Override
     public void run() {
+      NDC.push("Traverse");
       while (!shutdown) {
         try {
           Set<WorkQueueThread> newThreads = new HashSet<WorkQueueThread>();
@@ -463,6 +468,7 @@ public class WorkQueue {
           LOGGER.log(Level.WARNING, "Lifethread interrupted: ", e);
         }
       }
+      NDC.remove();
     }
   }
 }

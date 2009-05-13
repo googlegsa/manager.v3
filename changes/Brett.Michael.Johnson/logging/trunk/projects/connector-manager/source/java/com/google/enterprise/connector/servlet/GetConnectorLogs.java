@@ -290,7 +290,7 @@ public class GetConnectorLogs extends HttpServlet {
         }
       }
     } finally {
-      NDC.remove();
+      NDC.clear();
     }
   }
 

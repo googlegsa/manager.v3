@@ -66,133 +66,169 @@ public class LayoutPatternTest extends TestCase {
     assertEquals(expected, output);
   }
 
-  // Test constant string.  Should go through unmolested.
+  /** Test constant string.  Should go through unmolested. */
   public void testConstantString() {
     String pattern = "The quick brown fox jumped over the lazy dog's back.";
     checkFormat(pattern, pattern);
   }
 
-  // Test empty string.  Should go through unmolested.
+  /** Test empty string.  Should go through unmolested. */
   public void testEmptyString() {
     checkFormat("", "");
   }
 
-  // Just a single format element.
+  /** Just a single format element. */
   public void testMessageString() {
     checkFormat("%m", logMessage);
   }
 
-  // Just a single format element, with some additional text.
+  /** Just a single format element, with some additional text. */
   public void testMessageString1() {
     String pattern = "Neil said, %m";
     String expected = "Neil said, " + logMessage;
     checkFormat(pattern, expected);
   }
 
-  // Just a single format element, with some additional text.
+  /** Just a single format element, with some additional text. */
   public void testMessageString2() {
     String pattern = "%m - Neil";
     String expected = logMessage + " - Neil";
     checkFormat(pattern, expected);
   }
 
-  // Just a single format element, with some surrounding text.
+  /** Just a single format element, with some surrounding text. */
   public void testMessageString3() {
     String pattern = "Neil said, %m Buzz was silent.";
     String expected = "Neil said, " + logMessage + " Buzz was silent.";
     checkFormat(pattern, expected);
   }
 
-  // Two adjacent format elements.
+  /** Two adjacent format elements. */
   public void testTwoAdjacent() {
     checkFormat("%m%m", logMessage + logMessage);
   }
 
-  // Test '%%' is quoted percent.
+  /** Test '%%' is quoted percent. */
   public void testPercentPercent() {
     checkFormat("%%", "%");
   }
 
-  // Test '%%' is quoted percent, and some additional text.
+  /** Test '%%' is quoted percent, and some additional text. */
   public void testPercentPercent1() {
     checkFormat("50%%", "50%");
   }
 
-  // Test '%%' is quoted percent, and some additional text.
+  /** Test '%%' is quoted percent, and some additional text. */
   public void testPercentPercent2() {
     checkFormat("%% percent", "% percent");
   }
 
-  // Test '%%' is quoted percent, and some surrounding text.
+  /** Test '%%' is quoted percent, and some surrounding text. */
   public void testPercentPercent3() {
     checkFormat("50%% off!", "50% off!");
   }
 
-  // Test unimplemented Conversion, should be silently dropped.
+  /** Test '%%%%' is quoted percent, should return '%%'. */
+  public void testPercentPercent4() {
+    checkFormat("%%%%", "%%");
+  }
+
+  /**
+   * Test '%%' is quoted percent, followed by what looks like a
+   * conversion char.
+   */
+  public void testPercentPercent5() {
+    checkFormat("%%C", "%C");
+  }
+
+  /**
+   * Test '%%' is quoted percent, followed by what looks like a
+   * modifier + conversion char.
+   */
+  public void testPercentPercent6() {
+    checkFormat("%%-5C", "%-5C");
+  }
+
+  /** Test '%%' is quoted percent, followed by valid conversion char. */
+  public void testPercentPercent7() {
+    checkFormat("%%%M", "%moonWalk");
+  }
+
+  /** Test '%%' is quoted percent, followed by modified conversion char. */
+  public void testPercentPercent8() {
+    checkFormat("%%%-10M", "%moonWalk  ");
+  }
+
+  /** Test '%%' is quoted percent, followed by valid conversion char. */
+  public void testPercentPercent9() {
+    checkFormat("%%-5C", "%-5C");
+  }
+
+  /** Test unimplemented Conversion, should be silently dropped. */
   public void testUnimplemented() {
     checkFormat("%F", "");
   }
 
-  // Test unimplemented Conversion, should be silently dropped.
+  /** Test unimplemented Conversion, should be silently dropped. */
   public void testUnimplemented1() {
     checkFormat("Not %F implemented", "Not  implemented");
   }
 
-  // Test thread id and name.
+  /** Test thread id and name. */
   public void testThreadIdName() {
     String pattern = "%T - %t";
     String expected = threadId + " - " + threadName;
     checkFormat(pattern, expected);
   }
 
-  // Test className and methodName.
+  /** Test className and methodName. */
   public void testClassAndMethodName() {
     String pattern = "%C - %M";
     String expected = className + " - " + methodName;
     checkFormat(pattern, expected);
   }
 
-  // Test %n newline.
+  /** Test %n newline. */
   public void testNewLine() {
     String pattern = "line1%nline2";
     String expected = "line1" + System.getProperty("line.separator") + "line2";
     checkFormat(pattern, expected);
   }
 
-  // Test SequenceNumber.
+  /** Test SequenceNumber. */
   public void testSequenceNumber() {
     checkFormat("Apollo %N", "Apollo 11");
   }
 
-  // Test Default Date format.
+  /** Test Default Date format. */
   public void testDefaultDate() {
     String pattern = "%d";
     String expected = "1969-08-20 20:17:40";
     checkFormat(pattern, expected);
   }
 
-  // Test Default Date format with additional text.
+  /** Test Default Date format with additional text. */
   public void testDefaultDate1() {
     String pattern = "%d moon landing";
     String expected = "1969-08-20 20:17:40 moon landing";
     checkFormat(pattern, expected);
   }
 
-  // Test non-default Date format.
+  /** Test non-default Date format. */
   public void testFormattedDate() {
     String pattern = "%d{yyyy-MM-dd'T'HH:mm'Z'}";
     String expected = "1969-08-20T20:17Z";
     checkFormat(pattern, expected);
   }
 
-  // Test non-default Date format with some text.
+  /** Test non-default Date format with some text. */
   public void testFormattedDate1() {
     String pattern = "%d{yyyy-MM-dd'T'HH:mm'Z'} touch down";
     String expected = "1969-08-20T20:17Z touch down";
     checkFormat(pattern, expected);
   }
 
-  // Test invalid Date format.
+  /** Test invalid Date format. */
   public void testInvalidDateFormat() {
     String pattern = "%d{xyzzy}";
     String expected = "xyzzy";
@@ -204,112 +240,112 @@ public class LayoutPatternTest extends TestCase {
     }
   }
 
-  // Test partial ClassName with %C{n}.  Just leaf classname.
+  /** Test partial ClassName with %C{n}. Just leaf classname. */
   public void testPartialClassName() {
     checkFormat("%C{1}", "LunarModule");
   }
 
-  // Test partial ClassName with %C{n}.  4 segments.
+  /** Test partial ClassName with %C{n}.  4 segments. */
   public void testPartialClassName1() {
     checkFormat("%C{4}", "nasa.apollo.lander.LunarModule");
   }
 
-  // Test partial ClassName with %C{n}.  5 segments - the exact size.
+  /** Test partial ClassName with %C{n}.  5 segments - the exact size. */
   public void testPartialClassName2() {
     checkFormat("%C{5}", className);
   }
 
-  // Test partial ClassName with %C{n}.  Should give the whole thing.
+  /** Test partial ClassName with %C{n}.  Should give the whole thing. */
   public void testPartialClassName3() {
     checkFormat("%C{10}", className);
   }
 
-  // Test partial ClassName with %C{n}.  Should give the whole thing.
+  /** Test partial ClassName with %C{n}.  Should give the whole thing. */
   public void testPartialClassName4() {
     checkFormat("%C{0}", className);
   }
 
-  // Test format Modifier minWidth.
+  /** Test format Modifier minWidth. */
   public void testModifierMinWidth() {
     checkFormat("%10M", "  moonWalk");
   }
 
-  // Test format Modifier minWidth.
+  /** Test format Modifier minWidth. */
   public void testModifierMinWidth2() {
     checkFormat("%5M", "moonWalk");
   }
 
-  // Test format Modifier minWidth - left justified.
+  /** Test format Modifier minWidth - left justified. */
   public void testModifierLeftJustified() {
     checkFormat("%-10M", "moonWalk  ");
   }
 
-  // Test format Modifier minWidth - left justified.
+  /** Test format Modifier minWidth - left justified. */
   public void testModifierLeftJustified1() {
     checkFormat("%-5M", "moonWalk");
   }
 
-  // Test format Modifier maxWidth.
+  /** Test format Modifier maxWidth. */
   public void testModifierMaxWidth() {
     checkFormat("%.33m", "That's one small step for [a] man");
   }
 
-  // Test format Modifier maxWidth.
+  /** Test format Modifier maxWidth. */
   public void testModifierMaxWidth1() {
     checkFormat("%.133m", logMessage);
   }
 
-  // Test format Modifier minWidth:maxWidth.
+  /** Test format Modifier minWidth:maxWidth. */
   public void testModifierMinMaxWidth() {
     checkFormat("%10.133m", logMessage);
   }
 
-  // Test format Modifier minWidth:maxWidth.
+  /** Test format Modifier minWidth:maxWidth. */
   public void testModifierMinMaxWidth1() {
     checkFormat("%10.133M", "  moonWalk");
   }
 
-  // Test format Modifier minWidth:maxWidth.
+  /** Test format Modifier minWidth:maxWidth. */
   public void testModifierMinMaxWidth2() {
     checkFormat("%5.133M", "moonWalk");
   }
 
-  // Test format Modifier minWidth:maxWidth.
+  /** Test format Modifier minWidth:maxWidth. */
   public void testModifierMinMaxWidth3() {
     checkFormat("%5.33m", "That's one small step for [a] man");
   }
 
-  // Test format Modifier -minWidth:maxWidth.
+  /** Test format Modifier -minWidth:maxWidth. */
   public void testModifierMinMaxWidthLeftJustified() {
     checkFormat("%-10.133m", logMessage);
   }
 
-  // Test format Modifier -minWidth:maxWidth.
+  /** Test format Modifier -minWidth:maxWidth. */
   public void testModifierMinMaxWidthLeftJustified1() {
     checkFormat("%-10.133M", "moonWalk  ");
   }
 
-  // Test format Modifier -minWidth:maxWidth.
+  /** Test format Modifier -minWidth:maxWidth. */
   public void testModifierMinMaxWidthLeftJustified2() {
     checkFormat("%-5.133M", "moonWalk");
   }
 
-  // Test format Modifier -minWidth:maxWidth.
+  /** Test format Modifier -minWidth:maxWidth. */
   public void testModifierMinMaxWidthLeftJustified3() {
     checkFormat("%-5.33m", "That's one small step for [a] man");
   }
 
-  // Test format Modifier 0 minWidth.
+  /** Test format Modifier 0 minWidth. */
   public void testModifierMinWidth0() {
     checkFormat("%0M", "moonWalk");
   }
 
-  // Test format Modifier 0 maxWidth.
+  /** Test format Modifier 0 maxWidth. */
   public void testModifierMaxWidth0() {
     checkFormat("%.0M", "");
   }
 
-  // Test Wrapped formatter
+  /** Test Wrapped formatter */
   public void testWrappedFormatter() {
     Formatter simpleFormatter = new SimpleFormatter();
     String simpleOutput = simpleFormatter.format(logRecord);
@@ -320,27 +356,21 @@ public class LayoutPatternTest extends TestCase {
     assertEquals(output, expected);
   }
 
-  // Replicate SimpleFormatter.
+  /** Replicate SimpleFormatter. */
   public void testReplicateSimpleFormatter() {
     Formatter simpleFormatter = new SimpleFormatter();
     String simpleOutput = simpleFormatter.format(logRecord);
-    System.out.println("vvvv SimpleFormatter Output vvvv");
-    System.out.println(simpleOutput);
-    System.out.println("^^^^ SimpleFormatter Output ^^^^");
 
     // Try to replicate the SimpleFormatter layout.
     String pattern = "%d{MMM dd, yyyy h:mm:ss a} %C %M%n%p: %m%n";
 
     LayoutPattern layout = new LayoutPattern(pattern);
     String output = layout.format(logRecord);
-    System.out.println("vvvv My Formatter Output vvvv");
-    System.out.println(output);
-    System.out.println("^^^^ My Formatter Output ^^^^");
 
     assertEquals(output, simpleOutput);
   }
 
-  // Test NDC logging with %x.
+  /** Test NDC logging with %x. */
   public void testNDC() {
     String pattern = "[%x] %M";
     // No context should be empty string.
@@ -359,7 +389,7 @@ public class LayoutPatternTest extends TestCase {
     checkFormat(pattern, "[] moonWalk");
   }
 
-  // Test MDC logging with %X.
+  /** Test MDC logging with %X. */
   public void testMDC() {
     String pattern = "[%X{Astronaut}] %M";
     // No context should be empty string.
@@ -380,29 +410,7 @@ public class LayoutPatternTest extends TestCase {
     MDC.clear();
   }
 
-  // Test MDC logging with %X and push/pop.
-  public void testMDC1() {
-    String pattern = "[%X{Astronaut}] %M";
-    // No context should be empty string.
-    checkFormat(pattern, "[] moonWalk");
-
-    MDC.put("Astronaut", "Neil Armstrong");
-    checkFormat(pattern, "[Neil Armstrong] moonWalk");
-
-    MDC.push();
-    MDC.put("Astronaut", "Buzz Aldrin");
-    checkFormat(pattern, "[Buzz Aldrin] moonWalk");
-
-    MDC.pop();
-    checkFormat(pattern, "[Neil Armstrong] moonWalk");
-
-    MDC.remove("Astronaut");
-    checkFormat(pattern, "[] moonWalk");
-
-    MDC.clear();
-  }
-
-  // Test MDC logging with %X and multiple key/value pairs.
+  /** Test MDC logging with %X and multiple key/value pairs. */
   public void testMDC2() {
     String pattern = "[%X{Astronaut} %X{WingMan}] %M";
     // No context should be empty string.

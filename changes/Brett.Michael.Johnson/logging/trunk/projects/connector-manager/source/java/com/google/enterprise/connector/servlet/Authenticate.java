@@ -39,11 +39,8 @@ public class Authenticate extends ConnectorManagerServlet {
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
     NDC.push("AuthN");
-    try {
-      handleDoPost(xmlBody, manager, out);
-    } finally {
-      NDC.remove();
-    }
+    handleDoPost(xmlBody, manager, out);
+    NDC.pop();
   }
 
   /**

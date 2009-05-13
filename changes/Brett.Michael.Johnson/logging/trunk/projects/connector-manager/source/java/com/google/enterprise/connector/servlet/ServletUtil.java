@@ -649,7 +649,7 @@ public class ServletUtil {
    *
    * @param req An HttpServletRequest
    * @param res An HttpServletResponse
-   * @returns true
+   * @return true
    */
   public static boolean dumpServletRequest(HttpServletRequest req,
       HttpServletResponse res) throws IOException {
@@ -715,7 +715,7 @@ public class ServletUtil {
    *
    * @param gsaHost the GSA feed host
    * @param remoteAddr the IP address of the caller
-   * @returns true if request came from an acceptable IP address.
+   * @return true if request came from an acceptable IP address.
    */
   public static boolean allowedRemoteAddr(String gsaHost, String remoteAddr) {
     try {

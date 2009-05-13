@@ -79,7 +79,7 @@ public class UpdateConnector extends HttpServlet {
                             req.getContextPath()));
     } finally {
       out.close();
-      NDC.remove();
+      NDC.clear();
     }
   }
 
@@ -100,7 +100,7 @@ public class UpdateConnector extends HttpServlet {
     res.setCharacterEncoding("UTF-8");
     PrintWriter out = res.getWriter();
 
-    NDC.push("Config" +  connectorType + connectorName);
+    NDC.push("Config " +  connectorType + " " + connectorName);
     try {
       String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
       Map<String, String> configData = new TreeMap<String, String>();
@@ -129,7 +129,7 @@ public class UpdateConnector extends HttpServlet {
       ConnectorManagerGetServlet.writeConfigureResponse(out, status, configRes);
     } finally {
       out.close();
-      NDC.remove();
+      NDC.clear();
     }
   }
 

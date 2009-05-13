@@ -67,14 +67,14 @@ public class GetConnectorInstanceList extends HttpServlet {
       throws IOException {
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
-    NDC.push("Config Manager GetConnectorInstanceList");
+    NDC.push("Config Manager");
     try {
       ServletContext servletContext = this.getServletContext();
       Manager manager = Context.getInstance(servletContext).getManager();
       handleDoPost(manager, out);
     } finally {
       out.close();
-      NDC.remove();
+      NDC.clear();
     }
   }
 

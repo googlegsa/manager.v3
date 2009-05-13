@@ -96,7 +96,7 @@ public class GetConfigForm extends HttpServlet {
       }
     } finally {
       out.close();
-      NDC.remove();
+      NDC.clear();
     }
   }
 
