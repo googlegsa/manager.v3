@@ -32,7 +32,8 @@ public class LayoutPatternTest extends TestCase {
   private String className = "gov.nasa.apollo.lander.LunarModule";
   private String methodName = "moonWalk";
   private long threadId;
-  private String threadName;
+  private String threadName = "Armstrong";
+  private SimpleFormatter simpleFormatter = new SimpleFormatter();
 
   @Override
   protected void setUp() throws Exception {
@@ -44,11 +45,10 @@ public class LayoutPatternTest extends TestCase {
     logRecord.setMillis(cal.getTimeInMillis());
     logRecord.setSourceClassName(className);
     logRecord.setSourceMethodName(methodName);
-    threadId = Thread.currentThread().getId();
 
+    threadId = Thread.currentThread().getId();
     logRecord.setThreadID((int)(threadId));
-    Thread.currentThread().setName("Armstrong");
-    threadName = Thread.currentThread().getName();
+    Thread.currentThread().setName(threadName);
   }
 
   @Override
@@ -345,20 +345,26 @@ public class LayoutPatternTest extends TestCase {
     checkFormat("%.0M", "");
   }
 
-  /** Test Wrapped formatter */
+  /** Test Wrapped formatter - %f */
   public void testWrappedFormatter() {
-    Formatter simpleFormatter = new SimpleFormatter();
     String simpleOutput = simpleFormatter.format(logRecord);
-
     LayoutPattern layout = new LayoutPattern("%-4N [%T %t] %f", simpleFormatter);
     String output = layout.format(logRecord);
     String expected = "11   [" + threadId + " Armstrong] " + simpleOutput;
     assertEquals(output, expected);
   }
 
+  /** Test Wrapped formatter - %m */
+  public void testWrappedFormatter1() {
+    String simpleOutput = simpleFormatter.format(logRecord);
+    LayoutPattern layout = new LayoutPattern("%-4N [%t] %m", simpleFormatter);
+    String output = layout.format(logRecord);
+    String expected = "11   [Armstrong] " + logMessage;
+    assertEquals(output, expected);
+  }
+
   /** Replicate SimpleFormatter. */
   public void testReplicateSimpleFormatter() {
-    Formatter simpleFormatter = new SimpleFormatter();
     String simpleOutput = simpleFormatter.format(logRecord);
 
     // Try to replicate the SimpleFormatter layout.
