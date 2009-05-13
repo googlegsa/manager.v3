@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 
-import javax.servlet.ServletException;
+import java.io.IOException;
 
 public class Metadata {
 
@@ -34,7 +34,7 @@ public class Metadata {
     this.provider = null;
   }
 
-  public EntityDescriptor getEntity(String id) throws ServletException {
+  public EntityDescriptor getEntity(String id) throws IOException {
     EntityDescriptor entity;
     try {
       if (provider == null) {
@@ -42,7 +42,7 @@ public class Metadata {
       }
       entity = provider.getEntityDescriptor(id);
     } catch (MetadataProviderException e) {
-      throw new ServletException(e);
+      throw new IOException(e);
     }
     if (entity == null) {
       throw new IllegalArgumentException("Unknown issuer: " + id);
@@ -50,7 +50,7 @@ public class Metadata {
     return entity;
   }
 
-  public EntityDescriptor getSmEntity() throws ServletException {
+  public EntityDescriptor getSmEntity() throws IOException {
     return getEntity(smEntityId);
   }
 }

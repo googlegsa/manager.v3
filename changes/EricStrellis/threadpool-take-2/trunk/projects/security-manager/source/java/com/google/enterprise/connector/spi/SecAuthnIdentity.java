@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.spi;
 
+import com.google.enterprise.connector.security.identity.AuthnMechanism;
+
 import java.util.Collection;
 
 import javax.servlet.http.Cookie;
@@ -81,4 +83,11 @@ public interface SecAuthnIdentity extends AuthenticationIdentity {
    * @param username The new username, must not be null.
    */
   public void setUsername(String username);
+
+  /**
+   * Get the authentication mechanism for this identity.
+   * 
+   * @return The authentication mechanism.
+   */
+  public AuthnMechanism getMechanism();
 }

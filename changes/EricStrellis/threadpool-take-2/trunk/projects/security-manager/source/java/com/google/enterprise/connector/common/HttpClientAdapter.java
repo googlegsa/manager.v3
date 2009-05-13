@@ -57,6 +57,9 @@ public class HttpClientAdapter implements HttpClientInterface {
     IdleConnectionTimeoutThread idleConnectionTimeoutThread
         = new IdleConnectionTimeoutThread();
     idleConnectionTimeoutThread.setTimeoutInterval(IDLE_TIMEOUT);
+    // TODO(?): Findbugs: The constructor starts a thread. This is likely to be
+    // wrong if the class is ever extended/subclassed, since the thread will be
+    // started before the subclass constructor is started.
     idleConnectionTimeoutThread.start();
     idleConnectionTimeoutThread.addConnectionManager(connectionManager);
   }

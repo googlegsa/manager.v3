@@ -14,18 +14,17 @@
 
 package com.google.enterprise.connector.security.connectors.basicauth;
 
-import com.google.enterprise.connector.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.common.MockHttpClient;
 import com.google.enterprise.connector.common.MockHttpTransport;
-import com.google.enterprise.connector.common.*;
-import com.google.enterprise.connector.spi.AuthenticationResponse;
-import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.common.SecurityManagerTestCase;
+import com.google.enterprise.connector.common.SecurityManagerUtil;
+import com.google.enterprise.connector.security.identity.AuthnDomain;
 import com.google.enterprise.connector.security.identity.AuthnDomainGroup;
 import com.google.enterprise.connector.security.identity.AuthnMechanism;
-import com.google.enterprise.connector.security.identity.*;
 import com.google.enterprise.connector.security.identity.CredentialsGroup;
 import com.google.enterprise.connector.security.identity.DomainCredentials;
-import com.google.enterprise.connector.security.connectors.basicauth.BasicAuthConnector;
+import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.connector.spi.RepositoryException;
 
 import org.springframework.mock.web.MockHttpSession;
 

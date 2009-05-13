@@ -1,9 +1,28 @@
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.google.enterprise.connector.traversal;
 
+/**
+ * Holder for the result of running {@link Traverser#runBatch(int)}
+ */
 public class BatchResult {
   final TraversalDelayPolicy delayPolicy;
   final int countProcessed;
 
+  /**
+   * Construct a new {@link BatchResult}.
+   */
   public BatchResult(TraversalDelayPolicy delayPolicy, int countProcessed) {
     this.delayPolicy = delayPolicy;
     this.countProcessed = countProcessed;
@@ -19,7 +38,7 @@ public class BatchResult {
 
   // TODO(strellis): Remove this when Traverser returns one of these
   public static BatchResult newBatchResultFromLegacyBatchResult(int legacyBatchResult) {
-      int countProcessed = legacyBatchResult < 0 ? 0 : legacyBatchResult;
+      int countProcessed = (legacyBatchResult < 0) ? 0 : legacyBatchResult;
       TraversalDelayPolicy delayPolicy =
         TraversalDelayPolicy.getTraversalDealyPolicyFromLegacyBatchResult(legacyBatchResult);
       return new BatchResult(delayPolicy, countProcessed);
@@ -36,14 +55,26 @@ public class BatchResult {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj) return true;
-    if (obj == null) return false;
-    if (getClass() != obj.getClass()) return false;
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
     BatchResult other = (BatchResult) obj;
-    if (countProcessed != other.countProcessed) return false;
+    if (countProcessed != other.countProcessed) {
+      return false;
+    }
     if (delayPolicy == null) {
-      if (other.delayPolicy != null) return false;
-    } else if (!delayPolicy.equals(other.delayPolicy)) return false;
+      if (other.delayPolicy != null) {
+        return false;
+      }
+    } else if (!delayPolicy.equals(other.delayPolicy)) {
+      return false;
+    }
     return true;
   }
 

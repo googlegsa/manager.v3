@@ -64,7 +64,7 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
 
   @Override
   public void doGet(HttpServletRequest req, HttpServletResponse resp)
-      throws ServletException, IOException {
+      throws IOException {
     HttpSession session = req.getSession();
 
     // Guarantee a valid session ID.
@@ -93,7 +93,7 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
     out.close();
   }
 
-  private void ifUnknown(HttpServletResponse resp, String relayState) throws ServletException {
+  private void ifUnknown(HttpServletResponse resp, String relayState) throws IOException {
     SAMLMessageContext<SAMLObject, AuthnRequest, NameID> context = makeSamlMessageContext();
 
     EntityDescriptor localEntity = getEntity(SecurityManagerTestCase.GSA_TESTING_ISSUER);

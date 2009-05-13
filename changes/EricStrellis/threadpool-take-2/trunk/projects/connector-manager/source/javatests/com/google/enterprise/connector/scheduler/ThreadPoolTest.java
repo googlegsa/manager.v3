@@ -24,8 +24,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Unit tests for {@link ThreadPool}
- * @author EricStrellis@gmail.com (Eric Strellis)
- *
  */
 public class ThreadPoolTest extends TestCase {
   //TODO(strellis): add test of cancel timer popping during submit - after the
@@ -174,10 +172,6 @@ public class ThreadPoolTest extends TestCase {
       handles.add(threadPool.submit(task));
     }
     take(tasks.size(), taskRunningQ, 1000);
-    assertCancelCount(0, tasks);
-    verifyRunning(handles);
-    assertIsExiting(false, tasks);
-
     take(tasks.size(), taskCanceledQ, 1000);
     verifyCompleted(handles);
     assertCancelCount(1, tasks);

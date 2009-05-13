@@ -202,7 +202,6 @@ public class TraversalScheduler implements Scheduler {
       return;
     }
     if (shouldRun(schedule)) {
-      BatchResultRecorder resultRecorder =  new TraversalBatchResultRecorder(schedule);
       Traverser traverser = getTraverser(connectorName);
       if (traverser == null) {
         return;
@@ -211,10 +210,14 @@ public class TraversalScheduler implements Scheduler {
       if (batchHint <= 0) {
         return;
       }
+      BatchResultRecorder resultRecorder =  new TraversalBatchResultRecorder(schedule);
       Cancelable batch = new CancelableBatch(traverser, connectorName, resultRecorder, batchHint);
       synchronized (this) {
         if(!removedConnectors.contains(connectorName)) {
-          taskHandles.put(connectorName, threadPool.submit(batch));
+          TaskHandle taskHandle = threadPool.submit(batch);
+          if (taskHandle != null) {
+            taskHandles.put(connectorName, taskHandle);
+          }
         }
       }
     }
@@ -261,7 +264,6 @@ public class TraversalScheduler implements Scheduler {
           hostLoadManager.connectorFinishedTraversal(connectorName, retryDelayMillis);
           if (retryDelayMillis == Schedule.POLLING_DISABLED) {
             disableConnectorInstance(schedule);
-            schedule.setDisabled(true);
           }
           break;
 

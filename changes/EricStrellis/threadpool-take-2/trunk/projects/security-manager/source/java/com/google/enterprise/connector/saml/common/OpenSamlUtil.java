@@ -1,4 +1,4 @@
-// Copyright (C) 2008, 2009 Google Inc.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -80,10 +80,10 @@ import org.opensaml.xml.parse.BasicParserPool;
 import org.opensaml.xml.security.SecurityException;
 
 import java.io.File;
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
-import javax.servlet.ServletException;
 import javax.xml.namespace.QName;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
@@ -938,36 +938,36 @@ public final class OpenSamlUtil {
   }
 
   /**
-   * Run a message encoder, translating exceptions into ServletException.
+   * Run a message encoder.
    *
    * @param encoder The message encoder to run.
    * @param context The message context to pass to the encoder.
-   * @throws ServletException
+   * @throws IOException if unable to encode message.
    */
   public static void runEncoder(MessageEncoder encoder, MessageContext context)
-      throws ServletException {
+      throws IOException {
     try {
       encoder.encode(context);
     } catch (MessageEncodingException e) {
-      throw new ServletException(e);
+      throw new IOException(e);
     }
   }
 
   /**
-   * Run a message decoder, translating exceptions into ServletException.
+   * Run a message decoder.
    *
    * @param decoder The message decoder to run.
    * @param context The message context to pass to the decoder.
-   * @throws ServletException
+   * @throws IOException if unable to decode message.
    */
   public static void runDecoder(MessageDecoder decoder, MessageContext context)
-      throws ServletException {
+      throws IOException {
     try {
       decoder.decode(context);
     } catch (MessageDecodingException e) {
-      throw new ServletException(e);
+      throw new IOException(e);
     } catch (SecurityException e) {
-      throw new ServletException(e);
+      throw new IOException(e);
     }
   }
 
