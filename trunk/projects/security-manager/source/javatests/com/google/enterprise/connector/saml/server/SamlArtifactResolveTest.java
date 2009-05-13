@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,16 +14,10 @@
 
 package com.google.enterprise.connector.saml.server;
 
-import static com.google.enterprise.connector.common.ServletTestUtil.makeMockHttpPost;
-import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeResponse;
-import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeStatus;
-
 import com.google.enterprise.connector.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.saml.common.Metadata;
-import com.google.enterprise.connector.saml.server.BackEnd;
-import com.google.enterprise.connector.saml.server.SamlArtifactResolve;
 
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.xml.io.MarshallingException;
@@ -33,7 +27,9 @@ import org.springframework.mock.web.MockServletConfig;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
+import static com.google.enterprise.connector.common.ServletTestUtil.makeMockHttpPost;
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeResponse;
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeStatus;
 
 /**
  * Unit test for SamlArtifactResolve handler.
@@ -58,7 +54,7 @@ public class SamlArtifactResolveTest extends SecurityManagerTestCase {
    * @throws MarshallingException
    */
   public void testPostHandler()
-      throws ServletException, IOException, MarshallingException {
+      throws IOException, MarshallingException {
     MockHttpServletRequest mockRequest = makeMockHttpPost(null, "http://localhost/");
     MockHttpServletResponse mockResponse = new MockHttpServletResponse();
 

@@ -35,7 +35,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -83,11 +82,11 @@ public abstract class SecurityManagerServlet extends ServletBase {
     return getBackEnd().getSessionManager();
   }
 
-  public static EntityDescriptor getEntity(String id) throws ServletException {
+  public static EntityDescriptor getEntity(String id) throws IOException {
     return getMetadata().getEntity(id);
   }
 
-  public static EntityDescriptor getSmEntity() throws ServletException {
+  public static EntityDescriptor getSmEntity() throws IOException {
     return getMetadata().getSmEntity();
   }
 
@@ -113,17 +112,16 @@ public abstract class SecurityManagerServlet extends ServletBase {
    *
    * @param session The current session object.
    * @return A new message context.
-   * @throws ServletException if there's no context in the session.
+   * @throws IllegalStateException if there's no context in the session.
    */
   public static <TI extends SAMLObject, TO extends SAMLObject, TN extends SAMLObject>
-        SAMLMessageContext<TI, TO, TN> existingSamlMessageContext(HttpSession session)
-      throws ServletException {
+        SAMLMessageContext<TI, TO, TN> existingSamlMessageContext(HttpSession session) {
     // Restore context and signal error if none.
     @SuppressWarnings("unchecked")
     SAMLMessageContext<TI, TO, TN> context =
         (SAMLMessageContext<TI, TO, TN>) session.getAttribute(SAML_CONTEXT);
     if (context == null) {
-      throw new ServletException("Unable to get SAML message context.");
+      throw new IllegalStateException("Unable to get SAML message context.");
     }
     return context;
   }

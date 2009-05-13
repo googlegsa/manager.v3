@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,9 +32,9 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
+import java.io.IOException;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -62,7 +62,7 @@ public class SamlArtifactResolve extends SecurityManagerServlet implements Posta
 
   @Override
   public void doPost(HttpServletRequest req, HttpServletResponse resp)
-      throws ServletException {
+      throws IOException {
     BackEnd backend = getBackEnd();
 
     // Establish the SAML message context
