@@ -57,6 +57,9 @@ public class ComparableCookie implements Comparable<ComparableCookie> {
     if (o instanceof ComparableCookie) {
       return equalCookies(c, ((ComparableCookie) o).getCookie());
     }
+    // TODO(?): Findbugs: This equals method is checking to see if the argument
+    // is some incompatible type (i.e., a class that is neither a supertype nor
+    // subtype of the class that defines the equals method).
     if (o instanceof Cookie) {
       return equalCookies(c, ((Cookie) o));
     }
