@@ -54,11 +54,7 @@ public class DomainCredentials extends AbstractAuthnIdentity {
     return configInfo.getName();
   }
 
-  /**
-   * Get the authentication mechanism for this identity.
-   *
-   * @return The authentication mechanism.
-   */
+  /* @Override */
   public AuthnMechanism getMechanism() {
     return configInfo.getMechanism();
   }
