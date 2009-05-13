@@ -17,7 +17,7 @@ package com.google.enterprise.connector.security.connectors.formauth;
 import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.common.GettableHttpServlet;
 import com.google.enterprise.connector.common.PostableHttpServlet;
-import com.google.enterprise.connector.saml.common.SecurityManagerServlet;
+import com.google.enterprise.connector.common.ServletBase;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -28,7 +28,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public abstract class MockFormAuthServer extends SecurityManagerServlet
+public abstract class MockFormAuthServer extends ServletBase
     implements GettableHttpServlet, PostableHttpServlet {
   private static final long serialVersionUID = 1L;
 
