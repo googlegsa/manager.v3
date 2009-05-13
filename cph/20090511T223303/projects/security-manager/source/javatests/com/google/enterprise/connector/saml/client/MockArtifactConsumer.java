@@ -14,24 +14,12 @@
 
 package com.google.enterprise.connector.saml.client;
 
-import static com.google.enterprise.connector.saml.common.OpenSamlUtil.initializeLocalEntity;
-import static com.google.enterprise.connector.saml.common.OpenSamlUtil.initializePeerEntity;
-import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeArtifactResolve;
-import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeIssuer;
-import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeSamlMessageContext;
-import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runDecoder;
-import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runEncoder;
-import com.google.enterprise.connector.saml.common.SecurityManagerServlet;
-import com.google.enterprise.connector.saml.common.HttpExchangeToInTransport;
-
-import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
-import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
-
 import com.google.enterprise.connector.common.GettableHttpServlet;
 import com.google.enterprise.connector.common.HttpExchange;
 import com.google.enterprise.connector.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.common.SecurityManagerUtil;
+import com.google.enterprise.connector.common.ServletBase;
+import com.google.enterprise.connector.saml.common.HttpExchangeToInTransport;
 import com.google.enterprise.connector.saml.common.HttpExchangeToOutTransport;
 
 import org.opensaml.common.SAMLObject;
@@ -60,12 +48,25 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.initializeLocalEntity;
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.initializePeerEntity;
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeArtifactResolve;
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeIssuer;
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeSamlMessageContext;
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runDecoder;
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runEncoder;
+
+import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
+
+import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+
 /**
  * The MockArtifactConsumer class implements a servlet pretending to be the part of a SAML Service
  * Provider that receives a service request from the user agent and initiates an authn request from
  * an identity provider.
  */
-public class MockArtifactConsumer extends SecurityManagerServlet implements GettableHttpServlet {
+public class MockArtifactConsumer extends ServletBase implements GettableHttpServlet {
 
   /** Required for serializable classes. */
   private static final long serialVersionUID = 1L;

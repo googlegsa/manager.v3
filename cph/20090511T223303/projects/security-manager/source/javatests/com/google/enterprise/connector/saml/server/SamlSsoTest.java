@@ -25,6 +25,7 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.saml.client.MockArtifactConsumer;
 import com.google.enterprise.connector.saml.client.MockServiceProvider;
 import com.google.enterprise.connector.saml.common.Metadata;
+import com.google.enterprise.connector.common.ServletBase;
 import com.google.enterprise.connector.security.connectors.formauth.MockFormAuthServer1;
 import com.google.enterprise.connector.security.connectors.formauth.MockFormAuthServer2;
 import com.google.enterprise.connector.security.identity.AuthnDomain;
@@ -66,8 +67,7 @@ public class SamlSsoTest extends SecurityManagerTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    Metadata metadata =
-        Metadata.class.cast(Context.getInstance().getRequiredBean("Metadata", Metadata.class));
+    Metadata metadata = ServletBase.getMetadata();
 
     // Initialize transport
     MockHttpTransport transport = new MockHttpTransport();
@@ -82,7 +82,6 @@ public class SamlSsoTest extends SecurityManagerTestCase {
     EntityDescriptor smEntity = metadata.getSmEntity();
     IDPSSODescriptor idp = smEntity.getIDPSSODescriptor(SAML20P_NS);
     SamlAuthn samlAuthn = new SamlAuthn();
-    samlAuthn.setMaxPrompts(1);
     transport.registerServlet(idp.getSingleSignOnServices().get(0),
                               samlAuthn);
     transport.registerServlet(idp.getDefaultArtificateResolutionService(),
@@ -91,6 +90,7 @@ public class SamlSsoTest extends SecurityManagerTestCase {
     transport.registerServlet(SP_URL, new MockServiceProvider());
     transport.registerServlet(FORM1_URL, new MockFormAuthServer1());
     transport.registerServlet(FORM2_URL, new MockFormAuthServer2());
+    ServletBase.getBackEnd().setMaxPrompts(1);
   }
 
   public void testGood() throws IOException, MalformedURLException {
@@ -150,7 +150,7 @@ public class SamlSsoTest extends SecurityManagerTestCase {
 
   private int countGoodGroups() {
     int nGood = 0;
-    for (CredentialsGroup group: SamlAuthn.sessionCredentialsGroups(userAgent.getSession())) {
+    for (CredentialsGroup group: BackEndImpl.sessionCredentialsGroups(userAgent.getSession())) {
       if (group.isVerified()) {
         nGood += 1;
       }
@@ -161,8 +161,7 @@ public class SamlSsoTest extends SecurityManagerTestCase {
   private HttpExchange trySingleCredential(String username, String password)
       throws IOException, MalformedURLException {
     AuthnDomainGroup adg =
-        ConnectorManager.class.cast(Context.getInstance().getManager())
-        .getBackEnd().getAuthnDomainGroups().get(0);
+        ServletBase.getBackEnd().getIdentityConfig().getConfig().get(0);
     List<StringPair> params = new ArrayList<StringPair>();
     addCredential(username, password, adg, params);
     return tryCredentials(params);

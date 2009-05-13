@@ -14,8 +14,8 @@
 
 package com.google.enterprise.connector.saml.server;
 
+import com.google.enterprise.connector.common.ServletBase;
 import com.google.enterprise.connector.saml.common.OpenSamlUtil;
-import com.google.enterprise.connector.saml.common.SecurityManagerServlet;
 
 import org.apache.xerces.parsers.SAXParser;
 import org.opensaml.common.SAMLObject;
@@ -55,7 +55,7 @@ import javax.xml.soap.SOAPMessage;
  * a SOAP-bound batch of SAML Responses that each contain an
  * AuthzDecisionStatement.
  */
-public class SamlAuthz extends SecurityManagerServlet {
+public class SamlAuthz extends ServletBase {
 
   private static final long serialVersionUID = 1L;
   public static final String HARDCODED_SUBJECT_NAME = "ruth_test1";

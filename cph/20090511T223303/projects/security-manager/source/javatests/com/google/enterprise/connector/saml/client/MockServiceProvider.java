@@ -21,13 +21,15 @@ import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeAuthn
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeSamlMessageContext;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runEncoder;
+import static com.google.enterprise.connector.saml.server.BackEndImpl.getUserAgentCookie;
+import static com.google.enterprise.connector.saml.server.BackEndImpl.GSA_SESSION_ID_COOKIE_NAME;
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
 
 import com.google.enterprise.connector.common.GettableHttpServlet;
 import com.google.enterprise.connector.common.SecurityManagerTestCase;
-import com.google.enterprise.connector.saml.common.SecurityManagerServlet;
+import com.google.enterprise.connector.common.ServletBase;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -55,7 +57,7 @@ import javax.servlet.http.HttpSession;
  * Provider that receives a service request from a user agent and initiates an authn request to
  * an identity provider.
  */
-public class MockServiceProvider extends SecurityManagerServlet implements GettableHttpServlet {
+public class MockServiceProvider extends ServletBase implements GettableHttpServlet {
   private static final long serialVersionUID = 1L;
 
   public MockServiceProvider() throws ServletException {
@@ -68,10 +70,9 @@ public class MockServiceProvider extends SecurityManagerServlet implements Getta
     HttpSession session = req.getSession();
 
     // Guarantee a valid session ID.
-    if (getGsaSessionId(session) == null) {
+    if (getUserAgentCookie(session, GSA_SESSION_ID_COOKIE_NAME) == null) {
       String sessionId = getSessionManager().createSession();
-      resp.addCookie(new Cookie(AUTHN_SESSION_ID_COOKIE_NAME, sessionId));
-      session.setAttribute(GSA_SESSION_ID_NAME, sessionId);
+      resp.addCookie(new Cookie(GSA_SESSION_ID_COOKIE_NAME, sessionId));
     }
 
     // MockArtifactConsumer sets a flag with the authentication decision.
