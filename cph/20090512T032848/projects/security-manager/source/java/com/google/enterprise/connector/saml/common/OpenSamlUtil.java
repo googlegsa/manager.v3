@@ -994,7 +994,7 @@ public final class OpenSamlUtil {
    *
    * @param decoder The message decoder to run.
    * @param context The message context to pass to the decoder.
-   * @throws IOException if unable to encode message.
+   * @throws IOException if unable to decode message.
    */
   public static void runDecoder(MessageDecoder decoder, MessageContext context)
       throws IOException {
