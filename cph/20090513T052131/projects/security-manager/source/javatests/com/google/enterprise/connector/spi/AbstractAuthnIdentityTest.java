@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.spi;
 
+import com.google.enterprise.connector.security.identity.AuthnMechanism;
+
 import junit.framework.TestCase;
 
 import org.json.JSONArray;
@@ -26,6 +28,7 @@ public class AbstractAuthnIdentityTest extends TestCase {
 
   public void testToJsonSimple() throws JSONException {
     MockAuthnIdentity id = new MockAuthnIdentity("http://foo.com/bar");
+    id.setAuthnMechanism(AuthnMechanism.BASIC_AUTH);
     Cookie c1 = makeSnickerDoodle();
     id.addCookie(c1);
     Cookie c2 = makeOatmealCookie();
@@ -42,6 +45,8 @@ public class AbstractAuthnIdentityTest extends TestCase {
     verifyString(id.getSampleUrl(), jo, "sampleUrl");
     verifyString(id.getUsername(), jo, "username");
     verifyString(id.getVerificationStatus().toString(), jo, "verificationStatus");
+    verifyString(AbstractAuthnIdentity.mechToTypeString(id.getMechanism()), 
+        jo, "type");
     JSONArray ja = jo.getJSONArray("cookies");
     assertEquals(2, ja.length());
     for (int i = 0; i < 2; i++) {
@@ -106,5 +111,4 @@ public class AbstractAuthnIdentityTest extends TestCase {
       assertEquals(s, jo.getString(key));
     }
   }
-
 }
