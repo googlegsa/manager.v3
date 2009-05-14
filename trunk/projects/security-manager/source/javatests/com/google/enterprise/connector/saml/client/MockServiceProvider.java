@@ -21,8 +21,6 @@ import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeAuthn
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeSamlMessageContext;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runEncoder;
-import static com.google.enterprise.connector.saml.server.BackEndImpl.getUserAgentCookie;
-import static com.google.enterprise.connector.saml.server.BackEndImpl.GSA_SESSION_ID_COOKIE_NAME;
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
@@ -47,7 +45,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -68,12 +65,6 @@ public class MockServiceProvider extends ServletBase implements GettableHttpServ
   public void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws IOException {
     HttpSession session = req.getSession();
-
-    // Guarantee a valid session ID.
-    if (getUserAgentCookie(session, GSA_SESSION_ID_COOKIE_NAME) == null) {
-      String sessionId = getSessionManager().createSession();
-      resp.addCookie(new Cookie(GSA_SESSION_ID_COOKIE_NAME, sessionId));
-    }
 
     // MockArtifactConsumer sets a flag with the authentication decision.
     // Read that flag and dispatch on its value.

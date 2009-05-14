@@ -20,7 +20,6 @@ import com.google.enterprise.connector.common.cookie.CookieSet;
 import com.google.enterprise.connector.common.cookie.CookieUtil;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.ConnectorStatus;
-import com.google.enterprise.connector.security.identity.AuthnMechanism;
 import com.google.enterprise.connector.security.identity.CredentialsGroup;
 import com.google.enterprise.connector.security.identity.DomainCredentials;
 import com.google.enterprise.connector.security.identity.IdentityConfig;
@@ -28,7 +27,6 @@ import com.google.enterprise.connector.security.ui.OmniForm;
 import com.google.enterprise.connector.security.ui.OmniFormHtml;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.VerificationStatus;
-import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
@@ -42,7 +40,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
@@ -82,21 +79,11 @@ public class BackEndImpl implements BackEnd {
   /** Name of the attribute that holds the session's outgoing cookie set. */
   private static final String OUTGOING_COOKIES_NAME = "OutgoingCookies";
 
-  /** Name of the cookie in which we store the sessionId */
-  public static final String GSA_SESSION_ID_COOKIE_NAME = "GSA_SESSION_ID";
-
-  private final SessionManagerInterface sm;
   private ConnectorManager manager;
   private final AuthzResponder authzResponder;
   private final SAMLArtifactMap artifactMap;
   private IdentityConfig identityConfig;
   private int maxPrompts;
-
-  // temporary: to permit testing with no session manager
-  // todo: remove this with the entire session manager
-  private boolean dontUseSessionManager = false;
-
-  protected GSASessionAdapter adapter;
 
   // public for testing/debugging
   public Vector<String> sessionIds;
@@ -104,18 +91,15 @@ public class BackEndImpl implements BackEnd {
   /**
    * Create a new backend object.
    *
-   * @param sm The session manager to use.
    * @param authzResponder The authorization responder to use.
    */
-  public BackEndImpl(SessionManagerInterface sm, AuthzResponder authzResponder) {
-    this.sm = sm;
+  public BackEndImpl(AuthzResponder authzResponder) {
     this.authzResponder = authzResponder;
     artifactMap = new BasicSAMLArtifactMap(
         new BasicParserPool(),
         new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
         artifactLifetime);
     identityConfig = null;
-    adapter = new GSASessionAdapter(sm);
     sessionIds = new Vector<String>();
     maxPrompts = defaultMaxPrompts;
   }
@@ -123,11 +107,6 @@ public class BackEndImpl implements BackEnd {
   /* @Override */
   public void setConnectorManager(ConnectorManager cm) {
     this.manager = cm;
-  }
-
-  /* @Override */
-  public SessionManagerInterface getSessionManager() {
-    return sm;
   }
 
   /* @Override */
@@ -293,12 +272,6 @@ public class BackEndImpl implements BackEnd {
       HttpServletRequest request, HttpServletResponse response, List<String> ids)
       throws IOException {
     updateOutgoingCookies(request, response);
-
-    Cookie sessionCookie = getUserAgentCookie(request.getSession(), GSA_SESSION_ID_COOKIE_NAME);
-    if (sessionCookie != null) {
-      updateSessionManager(sessionCookie.getValue(), getCredentialsGroups(request));
-    }
-
     SamlAuthn.makeSuccessfulSamlSsoResponse(request, response, ids);
     setIdleState(request.getSession());
   }
@@ -496,60 +469,5 @@ public class BackEndImpl implements BackEnd {
         }
       }
     return null;
-  }
-
-  /* @Override */
-  public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs) {
-    if (dontUseSessionManager) {
-      LOGGER.info("Bypassing session manager");
-      return;
-    }
-
-    LOGGER.info("Session ID: " + sessionId);
-    sessionIds.add(sessionId);
-
-    List<Cookie> cookies = new ArrayList<Cookie>();
-    for (CredentialsGroup cg : cgs) {
-
-      LOGGER.info("CG " + cg.getHumanName() + " has id: " + cg.getUsername());
-
-      for (DomainCredentials dCred : cg.getElements()) {
-        // This clobbers any priorly stored basic auth credentials.
-        // The expectation is that only one basic auth module will be active
-        // at any given time, or that if multiple basic auth modules are
-        // active at once, only one of them will work.
-        if (AuthnMechanism.BASIC_AUTH == dCred.getMechanism()) {
-          if (null != cg.getUsername()) {
-            adapter.setUsername(sessionId, cg.getUsername());
-          }
-          if (null != cg.getPassword()) {
-            adapter.setPassword(sessionId, cg.getPassword());
-          }
-          // TODO(con): currently setting the domain will break functionality
-          // for most Basic Auth headrequests. Once I figure out what's going on
-          // with NtlmDomains, I'll fix this.
-          //  if (null != id.getAuthSite()) {
-          //    adapter.setDomain(sessionId, id.getAuthSite().getHostname());
-          //  }
-        }
-
-        LOGGER.info("DomainCredential " + dCred.getDomain() + " cookies: " +
-                    CookieUtil.setCookieHeaderValue(dCred.getCookies(), false));
-        cookies.addAll(dCred.getCookies());
-      }
-    }
-    adapter.setCookies(sessionId, CookieUtil.serializeCookies(cookies));
-    LOGGER.info("Cookies sent to session manager: " +
-                CookieUtil.setCookieHeaderValue(cookies, false));
-
-    // TODO(con): connectors
-  }
-
-  public void setDontUseSessionManager(boolean dontUseSessionManager) {
-    this.dontUseSessionManager = dontUseSessionManager;
-  }
-
-  public boolean isDontUseSessionManager() {
-    return dontUseSessionManager;
   }
 }

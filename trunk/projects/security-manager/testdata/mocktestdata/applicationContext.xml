@@ -26,10 +26,6 @@
     </property>
   </bean>
 
-  <bean id="SessionManager"
-        class="com.google.enterprise.connector.security.manager.LocalSessionManager">
-  </bean>
-
   <bean id="AuthzResponder"
         class="com.google.enterprise.connector.saml.server.AuthzResponderImpl">
   </bean>
@@ -47,8 +43,7 @@
 
   <bean id="BackEnd"
         class="com.google.enterprise.connector.saml.server.BackEndImpl">
-    <constructor-arg index="0" ref="SessionManager" />
-    <constructor-arg index="1" ref="AuthzResponder" />
+    <constructor-arg index="0" ref="AuthzResponder" />
     <property name="identityConfig" ref="IdentityConfig" />
   </bean>
 
