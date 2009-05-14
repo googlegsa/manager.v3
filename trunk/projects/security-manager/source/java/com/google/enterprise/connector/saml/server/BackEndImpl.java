@@ -170,17 +170,17 @@ public class BackEndImpl implements BackEnd {
 
     switch (getAuthnState(request.getSession())) {
       case IDLE:
-        authenticate_idle(request, response);
+        authenticateIdle(request, response);
         break;
       case IN_OMNIFORM:
-        authenticate_in_omniform(request, response);
+        authenticateInOmniform(request, response);
         break;
       default:
         throw new IllegalStateException("Unknown authentication state");
     }
   }
 
-  private void authenticate_idle(HttpServletRequest request, HttpServletResponse response)
+  private void authenticateIdle(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     // If there are cookies we can decode, use them.
     List<String> ids = tryCookies(request);
@@ -230,7 +230,7 @@ public class BackEndImpl implements BackEnd {
     }
   }
 
-  private void authenticate_in_omniform(HttpServletRequest request, HttpServletResponse response)
+  private void authenticateInOmniform(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
 
     getOmniForm(request).handleFormSubmit(request);
