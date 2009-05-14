@@ -20,6 +20,7 @@ import com.google.enterprise.connector.common.cookie.CookieSet;
 import com.google.enterprise.connector.common.cookie.CookieUtil;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.ConnectorStatus;
+import com.google.enterprise.connector.saml.client.SamlSsoClient;
 import com.google.enterprise.connector.security.identity.AuthnMechanism;
 import com.google.enterprise.connector.security.identity.CredentialsGroup;
 import com.google.enterprise.connector.security.identity.DomainCredentials;
@@ -62,7 +63,7 @@ public class BackEndImpl implements BackEnd {
   private static final int artifactLifetime = 600000;  // ten minutes
   private static final int defaultMaxPrompts = 3;
 
-  private enum AuthnState { IDLE, IN_OMNIFORM }
+  private enum AuthnState { IDLE, IN_OMNIFORM, IN_SAML_CLIENT }
 
   /** Name of the attribute that holds the session's authentication state. */
   private static final String AUTHN_STATE_NAME = "AuthnState";
@@ -168,7 +169,11 @@ public class BackEndImpl implements BackEnd {
       throws IOException {
     updateIncomingCookies(request);
 
-    switch (getAuthnState(request.getSession())) {
+    HttpSession session = request.getSession();
+    if (getAuthnState(session) == AuthnState.IN_SAML_CLIENT) {
+      setAuthnState(session, AuthnState.IDLE);
+    }
+    switch (getAuthnState(session)) {
       case IDLE:
         authenticateIdle(request, response);
         break;
@@ -186,6 +191,8 @@ public class BackEndImpl implements BackEnd {
     List<String> ids = tryCookies(request);
     if (!ids.isEmpty()) {
       successfulSamlResponse(request, response, ids);
+    } else if (trySamlServer(request, response)) {
+      // Do nothing.
     } else if (!getCredentialsGroups(request).isEmpty()) {
       maybePrompt(request, response);
     } else {
@@ -228,6 +235,25 @@ public class BackEndImpl implements BackEnd {
         LOGGER.info("Cookie(s) cracked for " + id.getDomain());
       }
     }
+  }
+
+  private boolean trySamlServer(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
+    HttpSession session = request.getSession();
+    for (CredentialsGroup cg : getCredentialsGroups(request)) {
+      for (DomainCredentials dc : cg.getElements()) {
+        if (! (dc.getMechanism() == AuthnMechanism.SAML
+               && dc.getVerificationStatus() == VerificationStatus.TBD
+               && dc.getUsername() == null)) {
+          continue;
+        }
+        updateOutgoingCookies(request, response);
+        setAuthnState(session, AuthnState.IN_SAML_CLIENT);
+        SamlSsoClient.startSamlRequest(request, response, dc);
+        return true;
+      }
+    }
+    return false;
   }
 
   private void authenticateInOmniform(HttpServletRequest request, HttpServletResponse response)
@@ -299,31 +325,38 @@ public class BackEndImpl implements BackEnd {
       updateSessionManager(sessionCookie.getValue(), getCredentialsGroups(request));
     }
 
+    setAuthnState(request.getSession(), AuthnState.IDLE);
     SamlAuthn.makeSuccessfulSamlSsoResponse(request, response, ids);
-    setIdleState(request.getSession());
   }
 
   private void unsuccessfulSamlResponse(
       HttpServletRequest request, HttpServletResponse response, String message)
       throws IOException {
     updateOutgoingCookies(request, response);
+    setAuthnState(request.getSession(), AuthnState.IDLE);
     SamlAuthn.makeUnsuccessfulSamlSsoResponse(request, response, message);
-    setIdleState(request.getSession());
   }
 
   private void maybePrompt(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     HttpSession session = request.getSession();
-    int n = getPromptCounter(session);
-    if (n < maxPrompts) {
-      PrintWriter writer = ServletBase.initNormalResponse(response);
-      writer.print(getOmniForm(request).generateForm());
-      writer.close();
+
+    if (getAuthnState(session) == AuthnState.IN_OMNIFORM) {
+      int n = getPromptCounter(session);
+      if (n >= maxPrompts) {
+        unsuccessfulSamlResponse(request, response, "Incorrect username or password");
+        return;
+      }
       setPromptCounter(session, n + 1);
-      setAuthnState(session, AuthnState.IN_OMNIFORM);
     } else {
-      unsuccessfulSamlResponse(request, response, "Incorrect username or password");
+      setAuthnState(session, AuthnState.IN_OMNIFORM);
+      setPromptCounter(session, 1);
     }
+
+    updateOutgoingCookies(request, response);
+    PrintWriter writer = ServletBase.initNormalResponse(response);
+    writer.print(getOmniForm(request).generateForm());
+    writer.close();
   }
 
   private AuthnState getAuthnState(HttpSession session) {
@@ -332,12 +365,17 @@ public class BackEndImpl implements BackEnd {
   }
 
   private void setAuthnState(HttpSession session, AuthnState state) {
-    session.setAttribute(AUTHN_STATE_NAME, state);
-  }
-
-  private void setIdleState(HttpSession session) {
-    setAuthnState(session, AuthnState.IDLE);
-    resetPromptCounter(session);
+    if (state == AuthnState.IDLE) {
+      session.removeAttribute(AUTHN_STATE_NAME);
+    } else {
+      session.setAttribute(AUTHN_STATE_NAME, state);
+    }
+    if (state != AuthnState.IN_OMNIFORM) {
+      resetPromptCounter(session);
+    }
+    if (state != AuthnState.IN_SAML_CLIENT) {
+      SamlSsoClient.eraseSamlClientState(session);
+    }
   }
 
   private int getPromptCounter(HttpSession session) {
