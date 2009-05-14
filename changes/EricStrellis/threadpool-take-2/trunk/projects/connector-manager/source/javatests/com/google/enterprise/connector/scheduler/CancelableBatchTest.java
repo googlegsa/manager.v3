@@ -48,7 +48,6 @@ public class CancelableBatchTest extends TestCase {
   private static class MockBatchResultRecorder implements BatchResultRecorder {
     private BatchResult myResult;
 
-    @Override
     public void recordResult(BatchResult result) {
       if (myResult != null) {
         throw new IllegalStateException("Cant set batch result twice");
@@ -71,12 +70,10 @@ public class CancelableBatchTest extends TestCase {
       this.legacyResult = legacyResult;
     }
 
-    @Override
     public void cancelBatch() {
       throw new UnsupportedOperationException();
     }
 
-    @Override
     public int runBatch(int batchHint) {
       assertEquals(expectBatchHint, batchHint);
       return legacyResult;

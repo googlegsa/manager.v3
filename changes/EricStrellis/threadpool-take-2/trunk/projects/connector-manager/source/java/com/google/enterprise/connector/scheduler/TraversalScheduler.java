@@ -255,8 +255,7 @@ public class TraversalScheduler implements Scheduler {
     TraversalBatchResultRecorder(Schedule schedule) {
       this.schedule = schedule;
     }
-    @Override
-    public void recordResult(BatchResult result) {
+     public void recordResult(BatchResult result) {
       String connectorName = schedule.getConnectorName();
       int retryDelayMillis = schedule.getRetryDelayMillis();
       switch (result.getDelayPolicy()) {

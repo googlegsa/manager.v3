@@ -198,7 +198,6 @@ public class ThreadPool {
       this.cancelable = cancelable;
     }
 
-    @Override
     public void run() {
       try {
         cancelable.run();
@@ -214,14 +213,13 @@ public class ThreadPool {
    * The {@link TimeoutTask} should be scheduled to run when the
    * interval for the {@link Cancelable} to run expires.
    */
-  private class TimeoutTask implements Runnable {
+  private static class TimeoutTask implements Runnable {
     volatile TaskHandle handle;
 
     void setHandle(TaskHandle handle) {
       this.handle = handle;
     }
 
-    @Override
     public void run() {
       if (handle == null) {
         throw new IllegalStateException("Must set handle before run()");
@@ -239,7 +237,7 @@ public class ThreadPool {
     private void completeTask() throws InterruptedException {
       Future<?> future = completionService.take();
       try {
-        Object o = future.get();
+        future.get();
       } catch (ExecutionException e) {
         Throwable cause = e.getCause();
         // TODO(strellis): Should we call cancelable.cancel() if we get an
@@ -252,7 +250,6 @@ public class ThreadPool {
       }
     }
 
-    @Override
     public void run() {
       try {
         while (!Thread.currentThread().isInterrupted()) {

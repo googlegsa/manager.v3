@@ -239,7 +239,6 @@ public class ThreadPoolTest extends TestCase {
       this.runningQ = runningQ;
       this.stoppingQ = stoppingQ;
     }
-    @Override
     public void run() {
       try {
         runningQ.put(this);
@@ -254,16 +253,18 @@ public class ThreadPoolTest extends TestCase {
     //Cancelable writes to this Q so test can block Cancelable is running.
     private final BlockingQueue<Object> taskRunningQ;
     private volatile boolean isExiting = false;
+    //This is an instance variable so findbugs wont
+    //issue a diagnostic for our hanging code
+    public boolean dontChangeMe = true;
     HangingCancelable(BlockingQueue<Object> taskRunningQ) {
       this.taskRunningQ = taskRunningQ;
     }
-    @Override
     public void run() {
       try {
         taskRunningQ.add(this);
         synchronized (this) {
 
-          while (true) {
+          while (dontChangeMe) {
             try {
               wait();
             } catch (InterruptedException ie) {
@@ -294,7 +295,6 @@ public class ThreadPoolTest extends TestCase {
       this.taskCanceledQ = taskCanceledQ;
     }
 
-    @Override
     public void run() {
       try {
         taskRunningQ.add(this);
@@ -319,8 +319,7 @@ public class ThreadPoolTest extends TestCase {
       return cancelCount;
     }
 
-    @Override
-    public void cancel() {
+     public void cancel() {
       cancelCount++;
     }
   }

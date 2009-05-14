@@ -49,12 +49,10 @@ public class CancelableBatch implements Cancelable {
       this.batchHint = batchHint;
   }
 
-  @Override
   public void cancel() {
    traverser.cancelBatch();
   }
 
-  @Override
   public void run() {
     LOGGER.finest("Begin runBatch; traverserName = " + traverserName
         + "batchHint = " + batchHint);
