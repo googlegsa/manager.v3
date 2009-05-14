@@ -147,7 +147,9 @@ public class SamlAuthn extends ServletBase
         makeResponse(context.getInboundSAMLMessage(), makeStatus(StatusCode.SUCCESS_URI));
 
     // Add metadata attribute for serialized identities.
-    addIdentityMetadataAttribute(assertion, getBackEnd().getCredentialsGroups(request));
+    if (BackEndImpl.class.cast(getBackEnd()).isDontUseSessionManager()) {
+      addIdentityMetadataAttribute(assertion, getBackEnd().getCredentialsGroups(request));
+    }
 
     samlResponse.getAssertions().add(assertion);
     context.setOutboundSAMLMessage(samlResponse);

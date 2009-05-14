@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.spi;
 
 import com.google.enterprise.connector.common.cookie.CookieSet;
+import com.google.enterprise.connector.security.identity.AuthnMechanism;
 import com.google.enterprise.connector.spi.AbstractAuthnIdentity;
 
 import java.util.Collection;
@@ -25,18 +26,17 @@ import javax.servlet.http.HttpSession;
 public class MockAuthnIdentity extends AbstractAuthnIdentity {
 
   private final CookieSet cookies;
-  private final String sampleUrl;
-
   private String username;
-  private String domain;
   private String password;
+  private String domain;
+  private String sampleUrl;
+  private AuthnMechanism authnMechanism;
+
 
   public MockAuthnIdentity(String sampleUrl) {
     this.cookies = new CookieSet();
     this.sampleUrl = sampleUrl;
     username = null;
-    domain = null;
-    password = null;
   }
 
   /* @Override */
@@ -72,5 +72,26 @@ public class MockAuthnIdentity extends AbstractAuthnIdentity {
   /* @Override */
   public String getUsername() {
     return username;
+  }
+
+  /* @Override */
+  public AuthnMechanism getMechanism() {
+    return authnMechanism;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
+  }
+
+  public void setDomain(String domain) {
+    this.domain = domain;
+  }
+
+  public void setSampleUrl(String sampleUrl) {
+    this.sampleUrl = sampleUrl;
+  }
+
+  public void setAuthnMechanism(AuthnMechanism authnMechanism) {
+    this.authnMechanism = authnMechanism;
   }
 }

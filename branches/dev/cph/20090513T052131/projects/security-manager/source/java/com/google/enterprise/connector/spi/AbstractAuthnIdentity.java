@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,6 +14,9 @@
 
 package com.google.enterprise.connector.spi;
 
+import com.google.enterprise.connector.security.identity.AuthnMechanism;
+
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -31,10 +34,11 @@ public abstract class AbstractAuthnIdentity implements SecAuthnIdentity {
   }
 
   /**
-   * Associate a cookie with this identity.
-   * If the cookie's name is the same as a previously associated cookie, the
-   * implementation is allowed to overwrite the previous cookie, so don't count on there
-   * being multiple cookies with the same name.
+   * Associate a cookie with this identity. If the cookie's name is the same as
+   * a previously associated cookie, the implementation is allowed to overwrite
+   * the previous cookie, so don't count on there being multiple cookies with
+   * the same name.
+   * 
    * @param c The cookie to associate.
    */
   public void addCookie(Cookie c) {
@@ -43,6 +47,7 @@ public abstract class AbstractAuthnIdentity implements SecAuthnIdentity {
 
   /**
    * Get an associated cookie by name.
+   * 
    * @param name The name of the cookie to return.
    * @return The associated cookie, or null if no such cookie.
    */
@@ -62,6 +67,7 @@ public abstract class AbstractAuthnIdentity implements SecAuthnIdentity {
 
   /**
    * Get the verification status for this identity.
+   * 
    * @return The identity's verification status.
    */
   public VerificationStatus getVerificationStatus() {
@@ -70,6 +76,7 @@ public abstract class AbstractAuthnIdentity implements SecAuthnIdentity {
 
   /**
    * Set the verification status for this identity.
+   * 
    * @param status The new verification status.
    */
   public void setVerificationStatus(VerificationStatus status) {
@@ -82,23 +89,32 @@ public abstract class AbstractAuthnIdentity implements SecAuthnIdentity {
    * @return The json string.
    */
   public String toJson() {
+    JSONObject jo = toJsonObject();
+    return jo.toString();
+  }
+
+  protected JSONObject toJsonObject() {
     JSONObject jo = new JSONObject();
     try {
       jo.put("username", getUsername());
       jo.put("password", getPassword());
       jo.put("domain", getDomain());
-      for (Cookie c : getCookies()) {
-        jo.accumulate("cookies", cookieToJsonObject(c));
+      if (getCookies().size() > 0) {
+        jo.put("cookies", new JSONArray());
+        for (Cookie c : getCookies()) {
+          jo.accumulate("cookies", cookieToJsonObject(c));
+        }
       }
       jo.put("verificationStatus", getVerificationStatus().toString());
       jo.put("sampleUrl", getSampleUrl());
+      jo.put("type", mechToTypeString(getMechanism()));
     } catch (JSONException e) {
       // this should never happen -- because our data was validated already
       throw new IllegalStateException(e);
     }
-    return jo.toString();
+    return jo;
   }
-
+  
   private static JSONObject cookieToJsonObject(Cookie c) {
     JSONObject jo = new JSONObject();
     try {
@@ -115,5 +131,34 @@ public abstract class AbstractAuthnIdentity implements SecAuthnIdentity {
       throw new IllegalStateException(e);
     }
     return jo;
+  }
+
+  public static String mechToTypeString(AuthnMechanism m) {
+    String type = null;
+    // we use string constants, rather than simply this.getMechanism().toString()    // to emphasize that these constant string listed here are part of the
+    // protocol.  If the enum names change, these names should not
+    switch (m) {
+      case BASIC_AUTH:
+        type = "BASIC_AUTH";
+        break;
+      case FORMS_AUTH:
+        type = "FORMS_AUTH";
+        break;
+      case SAML:
+        type = "SAML";
+        break;
+      case SSL:
+        type = "SSL";
+        break;
+      case CONNECTORS:
+        type = "CONNECTORS";
+        break;
+      case SPNEGO_KERBEROS:
+        type = "SPNEGO_KERBEROS";
+        break;
+      default:
+        break;
+    }
+    return type;
   }
 }
