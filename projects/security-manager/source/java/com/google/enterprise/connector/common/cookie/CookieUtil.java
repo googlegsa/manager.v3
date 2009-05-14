@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.common.cookie;
 
-import com.google.enterprise.connector.common.Base64;
-import com.google.enterprise.connector.common.Base64DecoderException;
 import com.google.enterprise.connector.common.HttpExchange;
 import com.google.enterprise.connector.common.ServletBase;
 
@@ -45,10 +43,6 @@ public final class CookieUtil {
   private static final String DATE_FORMAT_RFC2109 = "EEE, dd-MMM-yyyy HH:mm:ss zzz";
   // ..and to be flexible we accept a variation.
   private static final String DATE_FORMAT_ALT = "EEE, dd MMM yyyy HH:mm:ss zzz";
-
-  // Cookie serialization constants.  Must match the GSA
-  private static final String COOKIE_FIELD_SEPARATOR = "====";
-  private static final String COOKIE_RECORD_SEPARATOR = "::::";
 
   private static final Logger LOG =
       Logger.getLogger(CookieUtil.class.getName());
@@ -402,77 +396,6 @@ public final class CookieUtil {
     return cookies;
   }
 
-  /**
-   * Serialize a cookie for storage in the GSA session manager.
-   *
-   * @param cookie The cookie to serialize.
-   * @return The cookie's session-manager serialization.
-   */
-  public static String serializeCookie(Cookie cookie) {
-    StringBuilder str = new StringBuilder(safeSerialize(cookie.getName()));
-    str.append(COOKIE_FIELD_SEPARATOR);
-    str.append(safeSerialize(cookie.getValue()));
-    str.append(COOKIE_FIELD_SEPARATOR);
-    str.append(safeSerialize(cookie.getPath()));
-    str.append(COOKIE_FIELD_SEPARATOR);
-    str.append(safeSerialize(cookie.getDomain()));
-    str.append(COOKIE_FIELD_SEPARATOR);
-    str.append(safeSerialize(String.valueOf(cookie.getMaxAge())));
-    return str.toString();
-  }
-
-  /**
-   * Serialize a collection of cookies for storage in the GSA session manager.
-   *
-   * @param cookies The cookies to serialize.
-   * @return The cookies' session-manager serialization.
-   */
-  public static String serializeCookies(Collection<Cookie> cookies) {
-    StringBuilder str = new StringBuilder();
-    for (Cookie cookie : cookies) {
-      str.append(serializeCookie(cookie));
-      str.append(COOKIE_RECORD_SEPARATOR);
-    }
-    return str.toString();
-  }
-
-  private static String safeSerialize(String str) {
-    if (str == null) str = "";
-    return Base64.encodeWebSafe(str.getBytes(), false);
-  }
-
-  /**
-   * Deserialize a cookie from the GSA session manager.
-   *
-   * @param str The cookie's session-manager serialization.
-   * @return The corresponding cookie.
-   */
-  public static Cookie deserializeCookie(String str) {
-    String[] elements = str.split(COOKIE_FIELD_SEPARATOR);
-    Cookie cookie = new Cookie(safeDeserialize(elements[0]),
-                               safeDeserialize(elements[1]));
-    cookie.setPath(safeDeserialize(elements[2]));
-    cookie.setDomain(safeDeserialize(elements[3]));
-    Integer maxAge = new Integer(safeDeserialize(elements[4]));
-    cookie.setMaxAge(maxAge);
-    return cookie;
-  }
-
-  /**
-   * Deserialize a collection of cookies from the GSA session manager.
-   *
-   * @param str The cookies' session-manager serialization.
-   * @return A list of the corresponding cookies.
-   */
-  public static List<Cookie> deserializeCookies(String str) {
-    List<Cookie> cookies = new ArrayList<Cookie>();
-    String[] elements = str.split(COOKIE_RECORD_SEPARATOR);
-    for (String element : elements) {
-      cookies.add(deserializeCookie(element));
-    }
-    return cookies;
-  }
-
   public static void logRequestCookies(
       Level level, String tag, Collection<? extends Cookie> cookies) {
     String serial = cookieHeaderValue(cookies, false);
@@ -484,16 +407,6 @@ public final class CookieUtil {
     String serial = setCookieHeaderValue(cookies, false);
     LOG.log(level, tag + ": " + (undefined(serial) ? "(none)" : serial));
   }
-
-  private static String safeDeserialize(String str) {
-     try {
-       return new String(Base64.decode(str));
-     } catch (Base64DecoderException e) {
-       // Should not happen if the cookie was serialized by us
-       LOG.warning("Error while deserializing. Original string = <" + str + ">.");
-       return "";
-     }
-   }
 
   private static boolean undefined(String str) {
     return str == null || str.isEmpty();

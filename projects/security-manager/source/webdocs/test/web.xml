@@ -349,15 +349,6 @@
   </servlet-mapping>
 
   <servlet>
-    <servlet-name>SessionReader</servlet-name>
-    <servlet-class>com.google.enterprise.connector.servlet.SessionReader</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>SessionReader</servlet-name>
-    <url-pattern>/sessionReader</url-pattern>
-  </servlet-mapping>
-
-  <servlet>
     <servlet-name>MockServiceProvider</servlet-name>
     <servlet-class>
       com.google.enterprise.connector.saml.client.MockServiceProvider
