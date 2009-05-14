@@ -78,6 +78,14 @@ public interface SecAuthnIdentity extends AuthenticationIdentity {
   public String getSampleUrl();
 
   /**
+   * The authority for this identity. This string uniquely identifies this
+   * identity among all others a user may have. Typically, this will be a URI.
+   *
+   * @return The authority for this identity, should not be {@code null}.
+   */
+  public String getAuthority();
+
+  /**
    * Set the identity's username.
    *
    * @param username The new username, must not be null.
@@ -86,7 +94,7 @@ public interface SecAuthnIdentity extends AuthenticationIdentity {
 
   /**
    * Get the authentication mechanism for this identity.
-   * 
+   *
    * @return The authentication mechanism.
    */
   public AuthnMechanism getMechanism();

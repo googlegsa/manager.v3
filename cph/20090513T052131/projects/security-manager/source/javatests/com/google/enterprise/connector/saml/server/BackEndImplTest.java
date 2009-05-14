@@ -46,10 +46,12 @@ public class BackEndImplTest extends SecurityManagerTestCase {
     adgs.add(new AuthnDomainGroup("adg2"));
     adgs.add(new AuthnDomainGroup("adg3"));
 
-    new AuthnDomain("basicDomain", AuthnMechanism.BASIC_AUTH, "basic_loginurl", adgs.get(0));
-    new AuthnDomain("formsDomain", AuthnMechanism.FORMS_AUTH, "forms_loginurl", adgs.get(1));
-    new AuthnDomain("connectorDomain", AuthnMechanism.CONNECTORS, "connector_loginurl",
-                    adgs.get(2));
+    new AuthnDomain("basicDomain", AuthnMechanism.BASIC_AUTH,
+                    "basic_loginurl", "basic_authority", adgs.get(0));
+    new AuthnDomain("formsDomain", AuthnMechanism.FORMS_AUTH,
+                    "forms_loginurl", "forms_authority", adgs.get(1));
+    new AuthnDomain("connectorDomain", AuthnMechanism.CONNECTORS,
+                    "connector_loginurl", "connector_authority", adgs.get(2));
   }
 
   @Override
