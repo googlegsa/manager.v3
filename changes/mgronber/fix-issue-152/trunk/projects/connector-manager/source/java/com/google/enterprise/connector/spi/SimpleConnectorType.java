@@ -191,6 +191,7 @@ public class SimpleConnectorType implements ConnectorType {
         buf.append(INPUT);
         if (key.equalsIgnoreCase(PASSWORD)) {
           appendAttribute(buf, TYPE, PASSWORD);
+          appendAttribute(buf, VALUE, value);
         } else {
           appendAttribute(buf, TYPE, TEXT);
           appendAttribute(buf, VALUE, value);
