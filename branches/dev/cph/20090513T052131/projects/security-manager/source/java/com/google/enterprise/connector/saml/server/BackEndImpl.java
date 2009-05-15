@@ -326,7 +326,7 @@ public class BackEndImpl implements BackEnd {
     }
 
     setAuthnState(request.getSession(), AuthnState.IDLE);
-    SamlAuthn.makeSuccessfulSamlSsoResponse(request, response, ids);
+    SamlAuthn.makeSuccessfulSamlSsoResponse(request, response, artifactMap, ids);
   }
 
   private void unsuccessfulSamlResponse(
@@ -334,7 +334,7 @@ public class BackEndImpl implements BackEnd {
       throws IOException {
     updateOutgoingCookies(request, response);
     setAuthnState(request.getSession(), AuthnState.IDLE);
-    SamlAuthn.makeUnsuccessfulSamlSsoResponse(request, response, message);
+    SamlAuthn.makeUnsuccessfulSamlSsoResponse(request, response, artifactMap, message);
   }
 
   private void maybePrompt(HttpServletRequest request, HttpServletResponse response)
