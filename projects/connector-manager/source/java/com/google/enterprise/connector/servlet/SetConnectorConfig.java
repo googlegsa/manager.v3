@@ -33,7 +33,6 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Admin servlet to set connector config.
- *
  */
 public class SetConnectorConfig extends ConnectorManagerServlet {
   private static final Logger LOGGER =
@@ -105,8 +104,8 @@ public class SetConnectorConfig extends ConnectorManagerServlet {
       status = new ConnectorMessageCode(
           ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
     }
-    ConnectorManagerGetServlet.writeConfigureResponse(
-        out, status, configRes);
+    ConnectorManagerGetServlet.writeConfigureResponse(out, status, configRes,
+        handler.isUpdate());
     out.close();
   }
 }
