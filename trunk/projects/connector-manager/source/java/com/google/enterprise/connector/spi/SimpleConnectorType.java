@@ -193,8 +193,8 @@ public class SimpleConnectorType implements ConnectorType {
           appendAttribute(buf, TYPE, PASSWORD);
         } else {
           appendAttribute(buf, TYPE, TEXT);
-          appendAttribute(buf, VALUE, value);
         }
+        appendAttribute(buf, VALUE, value);
       }
       appendAttribute(buf, NAME, key);
       appendEndRow(buf);

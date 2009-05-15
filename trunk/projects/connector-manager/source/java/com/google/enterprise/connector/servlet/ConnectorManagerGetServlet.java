@@ -97,15 +97,23 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
     doGet(req, res);
   }
 
+  public static void writeConfigureResponse(PrintWriter out,
+      ConnectorMessageCode status, ConfigureResponse configRes) {
+    writeConfigureResponse(out, status, configRes, true);
+  }
+  
   /**
    * Write connector configuration to XML response
    *
    * @param out PrintWriter servlet response writer
    * @param status ConnectorMessageCode the servlet call status
    * @param configRes ConfigureResponse
+   * @param doObfuscate set to true to obfuscate any sensitive values in the
+   *        form snippet contained in the response.
    */
   public static void writeConfigureResponse(PrintWriter out,
-      ConnectorMessageCode status, ConfigureResponse configRes) {
+      ConnectorMessageCode status, ConfigureResponse configRes,
+      boolean doObfuscate) {
     ServletUtil.writeRootTag(out, false);
     // Have to check the configRes for a well formed HTML snippet before
     // committing to given status.
@@ -116,7 +124,9 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
       if (Context.getInstance().gsaAdminRequiresPrefix()) {
         formSnippet = ServletUtil.prependCmPrefix(formSnippet);
       }
-      formSnippet = ServletUtil.filterSensitiveData(formSnippet);
+      if (doObfuscate) {
+        formSnippet = ServletUtil.filterSensitiveData(formSnippet);
+      }
       if (formSnippet == null) {
         // Form snippet was not well formed.  Change status to reflect XML
         // parsing error.
