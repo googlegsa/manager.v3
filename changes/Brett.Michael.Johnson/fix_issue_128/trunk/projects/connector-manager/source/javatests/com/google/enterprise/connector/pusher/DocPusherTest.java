@@ -483,7 +483,9 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
-   * TODO: write the doc comment
+   * Pushes the document through {@link DocPusher}, parses the resulting
+   * XML feed record to check for invalid characters, and asserts that it
+   * contains the given string.
    */
   private void assertParsedFeedContains(Document document, String expected)
       throws Exception {

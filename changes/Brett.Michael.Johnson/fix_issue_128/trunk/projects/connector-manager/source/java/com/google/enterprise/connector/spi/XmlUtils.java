@@ -71,21 +71,6 @@ public class XmlUtils {
   /**
    * XML encodes an attribute value, escaping some characters as
    * character entities, and dropping invalid control characters.
-   *
-   * @see #appendAttrValue
-   */
-  public static void XmlEncodeAttrValue(String val, StringBuilder buf) {
-    try {
-      appendAttrValue(val, buf);
-    } catch (IOException e) {
-      // This can't happen with StringBuilder.
-      throw new AssertionError(e);
-    }
-  }
-
-  /**
-   * XML encodes an attribute value, escaping some characters as
-   * character entities, and dropping invalid control characters.
    * <p>
    * Only four characters need to be encoded, according to
    * http://www.w3.org/TR/REC-xml/#NT-AttValue: < & " '. Actually,
@@ -103,7 +88,7 @@ public class XmlUtils {
    * above, 0xD800 to 0xDFFF. So we allow just 0x09, 0x0A, 0x0D,
    * and the range 0x20 to 0xFFFD.
    */
-  public static void appendAttrValue(String val, Appendable buf)
+  private static void appendAttrValue(String val, Appendable buf)
       throws IOException {
     for (int i = 0; i < val.length(); i++) {
       char c = val.charAt(i);
@@ -152,24 +137,4 @@ public class XmlUtils {
     XmlEncodeAttrValue(attrValue, buf);
     buf.append("\"");
   }
-
-  /**
-   * Used to write out an attribute for an element.  Surrounding whitespace will
-   * not be added to the buffer.  The given value will be XML Encoded before
-   * appending to the buffer.
-   *
-   * <p>For example, given attrName="foo" and attrValue="val&lt;bar" writes out:
-   * <pre>foo="val&amp;lt;bar"</pre>
-   * @param attrName the attribute name.
-   * @param attrValue the attribute value.
-   * @param buf the StringBuilder to append the attribute.
-   */
-  public static void xmlAppendAttrValuePair(String attrName, String attrValue,
-      StringBuilder buf) {
-    buf.append(attrName);
-    buf.append("=\"");
-    XmlEncodeAttrValue(attrValue, buf);
-    buf.append("\"");
-  }
-
 }

@@ -139,7 +139,11 @@ public class SimpleConnectorType implements ConnectorType {
   private void appendAttribute(StringBuilder buf, String attrName,
       String attrValue) {
     buf.append(" ");
-    XmlUtils.xmlAppendAttrValuePair(attrName, attrValue, buf);
+
+    // FIXME: When XmlUtils moves to Appendable.
+    StringBuffer tmp = new StringBuffer();
+    XmlUtils.xmlAppendAttrValuePair(attrName, attrValue, tmp);
+    buf.append(tmp.toString());
   }
 
   /**
@@ -193,8 +197,8 @@ public class SimpleConnectorType implements ConnectorType {
           appendAttribute(buf, TYPE, PASSWORD);
         } else {
           appendAttribute(buf, TYPE, TEXT);
-          appendAttribute(buf, VALUE, value);
         }
+        appendAttribute(buf, VALUE, value);
       }
       appendAttribute(buf, NAME, key);
       appendEndRow(buf);
