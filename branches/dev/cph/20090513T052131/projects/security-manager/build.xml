@@ -218,6 +218,7 @@
     <delete dir="${tests.data}/mocktestdata/connectors" />
     <delete dir="${catalina.base}" />
     <delete file="${coverage.file}" />
+    <delete file="velocity.log" />
   </target>
 
   <!-- ======================Installation targets====================== -->

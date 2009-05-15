@@ -66,7 +66,6 @@ import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runDecode
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runEncoder;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
-import static org.opensaml.common.xml.SAMLConstants.SAML2_POST_BINDING_URI;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
 
@@ -112,6 +111,7 @@ public class SamlSsoClient extends ServletBase
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
+    LOGGER.info("Received assertion via artifact binding");
     consumeAssertion(request, response, decodeArtifactResponse(request));
   }
 
@@ -119,6 +119,7 @@ public class SamlSsoClient extends ServletBase
   @Override
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
+    LOGGER.info("Received assertion via POST binding");
     consumeAssertion(request, response, decodePostResponse(request));
   }
 
@@ -226,7 +227,7 @@ public class SamlSsoClient extends ServletBase
       EntityDescriptor peerEntity = getEntity(getSamlClientId(request.getSession()).getAuthority());
       initializePeerEntity(context, peerEntity, peerEntity.getIDPSSODescriptor(SAML20P_NS),
           SingleSignOnService.DEFAULT_ELEMENT_NAME,
-          SAML2_POST_BINDING_URI);
+          SAML2_REDIRECT_BINDING_URI);
     }
 
     context.setInboundMessageTransport(new HttpServletRequestAdapter(request));

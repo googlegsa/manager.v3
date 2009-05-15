@@ -127,7 +127,7 @@ public class SamlSsoTest extends SecurityManagerTestCase {
 
   public void testMultipleGood() throws IOException, MalformedURLException {
     List<AuthnDomainGroup> adgs = setUpMultipleConfig();
-    List<StringPair> params = new ArrayList<StringPair>();
+    List<StringPair> params = newParams();
     addCredential("joe", "plumber", adgs.get(0), params);
     addCredential("jim", "electrician", adgs.get(1), params);
     assertResults(SC_OK, 2, tryFormCredentials("testMultipleGood", params));
@@ -135,7 +135,7 @@ public class SamlSsoTest extends SecurityManagerTestCase {
 
   public void testMultiplePartial() throws IOException, MalformedURLException {
     List<AuthnDomainGroup> adgs = setUpMultipleConfig();
-    List<StringPair> params = new ArrayList<StringPair>();
+    List<StringPair> params = newParams();
     addCredential("joe", "plumber", adgs.get(0), params);
     addCredential("jim", "plumber", adgs.get(1), params);
     assertResults(SC_FORBIDDEN, 1, tryFormCredentials("testMultiplePartial", params));
@@ -143,7 +143,7 @@ public class SamlSsoTest extends SecurityManagerTestCase {
 
   public void testMultipleBad() throws IOException, MalformedURLException {
     List<AuthnDomainGroup> adgs = setUpMultipleConfig();
-    List<StringPair> params = new ArrayList<StringPair>();
+    List<StringPair> params = newParams();
     addCredential("joe", "electrician", adgs.get(0), params);
     addCredential("jim", "plumber", adgs.get(1), params);
     assertResults(SC_FORBIDDEN, 0, tryFormCredentials("testMultipleBad", params));
@@ -164,7 +164,12 @@ public class SamlSsoTest extends SecurityManagerTestCase {
 
   public void testSamlArtifact() throws IOException, MalformedURLException {
     setUpSaml(SAML_IDP1_ENTITY_ID);
-    assertResults(SC_OK, 1, tryNonFormCredentials("testSamlArtifact"));
+    assertResults(SC_OK, 1, startTest("testSamlArtifact"));
+  }
+
+  public void testSamlPost() throws IOException, MalformedURLException {
+    setUpSaml(SAML_IDP2_ENTITY_ID);
+    assertResults(SC_OK, 1, tryFormCredentials("testSamlPost", newParams()));
   }
 
   private void setUpSaml(String entityId) {
@@ -194,7 +199,7 @@ public class SamlSsoTest extends SecurityManagerTestCase {
       throws IOException, MalformedURLException {
     AuthnDomainGroup adg =
         ServletBase.getBackEnd().getIdentityConfig().getConfig().get(0);
-    List<StringPair> params = new ArrayList<StringPair>();
+    List<StringPair> params = newParams();
     addCredential(username, password, adg, params);
     return tryFormCredentials(tag, params);
   }
@@ -211,21 +216,21 @@ public class SamlSsoTest extends SecurityManagerTestCase {
     LOGGER.info("start test: " + tag);
 
     // Initial request to service provider.
-    HttpExchange exchange1 = userAgent.getExchange(new URL(SP_URL));
-    exchange1.setFollowRedirects(true);
-    int status = exchange1.exchange();
+    HttpExchange exchange1 = startTest(tag);
+    assertEquals("Incorrect response status code", SC_OK, exchange1.getStatusCode());
 
     // Parse credentials-gathering form.
-    assertEquals("Incorrect response status code", SC_OK, status);
     HtmlCleaner cleaner = new HtmlCleaner();
-    TagNode[] forms =
-        cleaner.clean(exchange1.getResponseEntityAsString()).getElementsByName("form", true);
-    assertEquals("Wrong number of forms in response", 1, forms.length);
-    String method = forms[0].getAttributeByName("method");
-    assertNotNull("<form> missing method attribute", method);
+    TagNode form = getUniqueElement(cleaner.clean(exchange1.getResponseEntityAsString()), "form");
+    String method = getRequiredAttribute(form, "method");
     assertTrue("<form> method not POST", "POST".equalsIgnoreCase(method));
-    String action = forms[0].getAttributeByName("action");
-    assertNotNull("<form> missing action attribute", action);
+    String action = getRequiredAttribute(form, "action");
+    for (TagNode input : form.getElementsByName("input", true)) {
+      if ("hidden".equalsIgnoreCase(input.getAttributeByName("type"))) {
+        params.add(new StringPair(getRequiredAttribute(input, "name"),
+                                  getRequiredAttribute(input, "value")));
+      }
+    }
 
     // Submit credentials-gathering form.
     HttpExchange exchange2 = userAgent.postExchange(new URL(action), params);
@@ -234,7 +239,7 @@ public class SamlSsoTest extends SecurityManagerTestCase {
     return exchange2;
   }
 
-  private HttpExchange tryNonFormCredentials(String tag)
+  private HttpExchange startTest(String tag)
       throws IOException, MalformedURLException {
     LOGGER.info("start test: " + tag);
 
@@ -243,5 +248,21 @@ public class SamlSsoTest extends SecurityManagerTestCase {
     exchange1.setFollowRedirects(true);
     exchange1.exchange();
     return exchange1;
+  }
+
+  private static TagNode getUniqueElement(TagNode node, String name) {
+    TagNode[] nodes = node.getElementsByName(name, true);
+    assertEquals("Wrong number of <" + name + "> elements in response", 1, nodes.length);
+    return nodes[0];
+  }
+
+  private static String getRequiredAttribute(TagNode node, String name) {
+    String value = node.getAttributeByName(name);
+    assertNotNull("Missing " + name + " attribute", value);
+    return value;
+  }
+
+  private static List<StringPair> newParams() {
+    return new ArrayList<StringPair>();
   }
 }
