@@ -18,6 +18,9 @@ import com.google.enterprise.connector.common.GettableHttpServlet;
 import com.google.enterprise.connector.common.ServletBase;
 
 import org.opensaml.common.binding.SAMLMessageContext;
+import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
+import org.opensaml.common.binding.artifact.SAMLArtifactMap;
+import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
 import org.opensaml.saml2.binding.decoding.HTTPRedirectDeflateDecoder;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.NameID;
@@ -25,7 +28,9 @@ import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SingleSignOnService;
+import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
+import org.opensaml.xml.parse.BasicParserPool;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,16 +46,31 @@ import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runDecode
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
+import static org.opensaml.common.xml.SAMLConstants.SAML2_POST_BINDING_URI;
 
 public class MockSamlIdp extends ServletBase
     implements GettableHttpServlet {
 
+  private static final int artifactLifetime = 600000;  // ten minutes
+  private static final SAMLArtifactMap artifactMap =
+      new BasicSAMLArtifactMap(
+          new BasicParserPool(),
+          new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
+          artifactLifetime);
+
   private final String localEntityId;
   private final String responseId;
+  private final boolean usePost;
 
-  public MockSamlIdp(String localEntityId, String responseId) {
+  public MockSamlIdp(String localEntityId, String responseId, boolean usePost) {
     this.localEntityId = localEntityId;
     this.responseId = responseId;
+    this.usePost = usePost;
+  }
+
+  // For MockSamlArtifactResolver.
+  static SAMLArtifactMap getArtifactMap() {
+    return artifactMap;
   }
 
   @Override
@@ -75,15 +95,17 @@ public class MockSamlIdp extends ServletBase
       EntityDescriptor peerEntity = getEntity(context.getInboundMessageIssuer());
       initializePeerEntity(context, peerEntity, peerEntity.getSPSSODescriptor(SAML20P_NS),
                            AssertionConsumerService.DEFAULT_ELEMENT_NAME,
-                           SAML2_ARTIFACT_BINDING_URI);
+                           usePost ? SAML2_POST_BINDING_URI : SAML2_ARTIFACT_BINDING_URI);
     }
 
     if (responseId != null) {
       List<String> ids = new ArrayList<String>(1);
       ids.add(responseId);
-      SamlAuthn.makeSuccessfulSamlSsoResponse(request, response, ids);
+      SamlAuthn.makeSuccessfulSamlSsoResponse(
+          request, response, usePost ? null : artifactMap, ids);
     } else {
-      SamlAuthn.makeUnsuccessfulSamlSsoResponse(request, response, "Unable to authenticate");
+      SamlAuthn.makeUnsuccessfulSamlSsoResponse(
+          request, response, usePost ? null : artifactMap, "Unable to authenticate");
     }
   }
 }

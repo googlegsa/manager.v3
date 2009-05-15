@@ -22,8 +22,10 @@ import com.google.enterprise.connector.security.identity.CredentialsGroup;
 import com.google.enterprise.connector.security.identity.DomainCredentials;
 
 import org.opensaml.common.binding.SAMLMessageContext;
+import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.saml2.binding.decoding.HTTPRedirectDeflateDecoder;
 import org.opensaml.saml2.binding.encoding.HTTPArtifactEncoder;
+import org.opensaml.saml2.binding.encoding.HTTPPostEncoder;
 import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.Attribute;
 import org.opensaml.saml2.core.AttributeStatement;
@@ -123,7 +125,8 @@ public class SamlAuthn extends ServletBase
 
   // We have at least one verified identity.  The first identity is considered the primary.
   public static void makeSuccessfulSamlSsoResponse(
-      HttpServletRequest request, HttpServletResponse response, List<String> ids)
+      HttpServletRequest request, HttpServletResponse response,
+      SAMLArtifactMap artifactMap, List<String> ids)
       throws IOException {
     LOGGER.info("Verified IDs: " + idsToString(ids));
 
@@ -153,7 +156,7 @@ public class SamlAuthn extends ServletBase
 
     samlResponse.getAssertions().add(assertion);
     context.setOutboundSAMLMessage(samlResponse);
-    doRedirect(request, response);
+    encodeResponse(request, response, artifactMap);
   }
 
   private static void addIdentityMetadataAttribute(Assertion assertion,
@@ -183,26 +186,32 @@ public class SamlAuthn extends ServletBase
   }
 
   public static void makeUnsuccessfulSamlSsoResponse(
-      HttpServletRequest request, HttpServletResponse response, String message)
+      HttpServletRequest request, HttpServletResponse response,
+      SAMLArtifactMap artifactMap, String message)
       throws IOException {
     LOGGER.warning(message);
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         existingSamlMessageContext(request.getSession());
     context.setOutboundSAMLMessage(makeResponse(context.getInboundSAMLMessage(),
                                                 makeStatus(StatusCode.AUTHN_FAILED_URI, message)));
-    doRedirect(request, response);
+    encodeResponse(request, response, artifactMap);
   }
 
-  private static void doRedirect(HttpServletRequest request, HttpServletResponse response)
+  private static void encodeResponse(
+      HttpServletRequest request, HttpServletResponse response, SAMLArtifactMap artifactMap)
       throws IOException {
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
         existingSamlMessageContext(request.getSession());
     // Encode the response message.
     initResponse(response);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(response, true));
-    HTTPArtifactEncoder encoder =
-        new HTTPArtifactEncoder(null, null, getBackEnd().getArtifactMap());
-    encoder.setPostEncoding(false);
-    runEncoder(encoder, context);
+
+    if (artifactMap != null) {
+      HTTPArtifactEncoder encoder = new HTTPArtifactEncoder(null, null, artifactMap);
+      encoder.setPostEncoding(false);
+      runEncoder(encoder, context);
+    } else {
+      runEncoder(new HTTPPostEncoder(null, null), context);
+    }
   }
 }
