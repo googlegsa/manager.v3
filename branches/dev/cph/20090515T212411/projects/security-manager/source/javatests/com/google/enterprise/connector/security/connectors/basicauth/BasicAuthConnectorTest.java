@@ -43,9 +43,11 @@ public class BasicAuthConnectorTest extends SecurityManagerTestCase {
     super.setUp();
     List<AuthnDomainGroup> adgs = new ArrayList<AuthnDomainGroup>();
     adgs.add(new AuthnDomainGroup("ADG1"));
-    new AuthnDomain(
-        "BasicDomain", AuthnMechanism.BASIC_AUTH,
-        "http://localhost:8973/basic/", adgs.get(0));
+    new AuthnDomain("BasicDomain",
+                    AuthnMechanism.BASIC_AUTH,
+                    "http://localhost:8973/basic/",
+                    "BasicAuthority",
+                    adgs.get(0));
     cgs = CredentialsGroup.newGroups(adgs, new MockHttpSession());
     MockHttpTransport transport = new MockHttpTransport();
     transport.registerServlet(cgs.get(0).getElements().get(0).getSampleUrl(),
