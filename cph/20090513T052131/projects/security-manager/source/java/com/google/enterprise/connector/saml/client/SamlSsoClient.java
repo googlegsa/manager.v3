@@ -21,6 +21,7 @@ import com.google.enterprise.connector.common.SecurityManagerUtil;
 import com.google.enterprise.connector.common.ServletBase;
 import com.google.enterprise.connector.saml.common.HttpExchangeToInTransport;
 import com.google.enterprise.connector.saml.common.HttpExchangeToOutTransport;
+import com.google.enterprise.connector.security.identity.DomainCredentials;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.VerificationStatus;
 
@@ -128,8 +129,8 @@ public class SamlSsoClient extends ServletBase
     LOGGER.info("status code = " + code);
     SecAuthnIdentity id = getSamlClientId(request.getSession());
     if (code.equals(StatusCode.SUCCESS_URI)) {
-      id.setVerificationStatus(VerificationStatus.VERIFIED);
       extractResponseInfo(samlResponse, id);
+      id.setVerificationStatus(VerificationStatus.VERIFIED);
     } else if (code.equals(StatusCode.AUTHN_FAILED_URI)) {
       id.setVerificationStatus(VerificationStatus.REFUTED);
     } else {
@@ -147,6 +148,7 @@ public class SamlSsoClient extends ServletBase
     }
     Assertion assertion = assertions.get(0);
     id.setUsername(assertion.getSubject().getNameID().getValue());
+    LOGGER.info("Credential verified: " + DomainCredentials.class.cast(id).dumpInfo());
   }
 
   // The OpenSAML HTTPArtifactDecoder isn't implemented, so we must manually decode the

@@ -102,9 +102,6 @@ public final class OpenSamlUtil {
    */
   public static final String GOOGLE_PROVIDER_NAME = "Google Search Appliance";
 
-  /** Name of the session attribute that holds a SAML message context. */
-  private static final String SAML_CONTEXT_NAME = "samlMessageContext";
-
   static {
     try {
       DefaultBootstrap.bootstrap();
@@ -945,12 +942,14 @@ public final class OpenSamlUtil {
    * Create a new SAML message context and associate it with a session.
    *
    * @param session A session object.
+   * @param attributeName The session attribute name to use.
    * @return A new message context.
    */
   public static <TI extends SAMLObject, TO extends SAMLObject, TN extends SAMLObject>
-        SAMLMessageContext<TI, TO, TN> newSamlMessageContext(HttpSession session) {
+        SAMLMessageContext<TI, TO, TN> newSamlMessageContext(
+            HttpSession session, String attributeName) {
     SAMLMessageContext<TI, TO, TN> context = makeSamlMessageContext();
-    session.setAttribute(SAML_CONTEXT_NAME, context);
+    session.setAttribute(attributeName, context);
     return context;
   }
 
@@ -958,15 +957,17 @@ public final class OpenSamlUtil {
    * Fetch a SAML message context from a session.
    *
    * @param session A session object.
-   * @return A new message context.
+   * @param attributeName The session attribute name to use.
+   * @return An existing message context.
    * @throws IllegalStateException if there's no context in the session.
    */
   public static <TI extends SAMLObject, TO extends SAMLObject, TN extends SAMLObject>
-        SAMLMessageContext<TI, TO, TN> existingSamlMessageContext(HttpSession session) {
+        SAMLMessageContext<TI, TO, TN> existingSamlMessageContext(
+            HttpSession session, String attributeName) {
     // Restore context and signal error if none.
     @SuppressWarnings("unchecked")
     SAMLMessageContext<TI, TO, TN> context =
-        (SAMLMessageContext<TI, TO, TN>) session.getAttribute(SAML_CONTEXT_NAME);
+        (SAMLMessageContext<TI, TO, TN>) session.getAttribute(attributeName);
     if (context == null) {
       throw new IllegalStateException("Unable to get SAML message context.");
     }

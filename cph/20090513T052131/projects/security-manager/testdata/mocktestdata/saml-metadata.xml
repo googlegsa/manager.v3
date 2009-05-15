@@ -74,21 +74,35 @@
 
   </EntityDescriptor>
 
-  <!-- Description of the Mock SAML IdP -->
+  <!-- Description of the Mock SAML IdPs -->
+
   <EntityDescriptor
-      entityID="http://example.com/saml-idp">
+      entityID="http://example.com/saml-idp-1">
 
     <IDPSSODescriptor
 	protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
       <SingleSignOnService
 	  Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
-	  Location="http://localhost:8973/security-manager/mocksamlidp"
+	  Location="http://localhost:8973/security-manager/mocksamlidp1"
 	  />
       <ArtifactResolutionService
 	  index="0"
 	  isDefault="true"
 	  Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
-	  Location="http://localhost:8973/security-manager/mocksamlartifact"
+	  Location="http://localhost:8973/security-manager/mocksamlartifact1"
+	  />
+    </IDPSSODescriptor>
+
+  </EntityDescriptor>
+
+  <EntityDescriptor
+      entityID="http://example.com/saml-idp-2">
+
+    <IDPSSODescriptor
+	protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+      <SingleSignOnService
+	  Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+	  Location="http://localhost:8973/security-manager/mocksamlidp2"
 	  />
     </IDPSSODescriptor>
 

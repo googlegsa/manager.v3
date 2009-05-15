@@ -187,34 +187,37 @@ public class BackEndImpl implements BackEnd {
 
   private void authenticateIdle(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
-    // If there are cookies we can decode, use them.
-    List<String> ids = tryCookies(request);
-    if (!ids.isEmpty()) {
-      successfulSamlResponse(request, response, ids);
-    } else if (trySamlServer(request, response)) {
-      // Do nothing.
-    } else if (!getCredentialsGroups(request).isEmpty()) {
-      maybePrompt(request, response);
-    } else {
-      unsuccessfulSamlResponse(request, response, "Security Manager not configured");
+    tryCookies(request);
+    if (!needCredentials(request)) {
+      successfulSamlResponse(request, response);
+      return;
     }
+    if (trySamlServer(request, response)) {
+      return;
+    }
+    tryOmniForm(request, response);
+  }
+
+  private boolean needCredentials(HttpServletRequest request) throws IOException {
+    for (CredentialsGroup cg : getCredentialsGroups(request)) {
+      if (!cg.isVerified()) {
+        LOGGER.info("Credentials group not verified: " + cg.getHumanName());
+        return true;
+      }
+      LOGGER.info("Credentials group verified: " + cg.getHumanName());
+    }
+    return false;
   }
 
   // Try to find cookies that can be decoded into identities.
-  private List<String> tryCookies(HttpServletRequest request) throws IOException {
-    List<String> ids = new ArrayList<String>();
+  private void tryCookies(HttpServletRequest request) throws IOException {
     for (CredentialsGroup cg : getCredentialsGroups(request)) {
       for (DomainCredentials dc : cg.getElements()) {
         if (dc.getUsername() == null) {
           handleCookie(dc);
-          String username = dc.getUsername();
-          if (username != null) {
-            ids.add(username);
-          }
         }
       }
     }
-    return ids;
   }
 
   // some form of authentication has already happened, the user gave us cookies,
@@ -256,31 +259,39 @@ public class BackEndImpl implements BackEnd {
     return false;
   }
 
+  private void tryOmniForm(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
+    HttpSession session = request.getSession();
+    setAuthnState(session, AuthnState.IN_OMNIFORM);
+    setPromptCounter(session, 1);
+    writePrompt(request, response);
+  }
+
   private void authenticateInOmniform(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
 
     getOmniForm(request).handleFormSubmit(request);
 
     // Run all possible verifications given the user's input.
-    List<String> ids = new ArrayList<String>();
     for (CredentialsGroup cg : getCredentialsGroups(request)) {
       if (!cg.isVerified() && cg.isVerifiable()) {
         authenticateCredentialsGroup(cg);
-        if (cg.isVerified()) {
-          ids.add(cg.getUsername());
-        } else {
-          LOGGER.info("Credentials group unfulfilled: " + cg.getHumanName());
-        }
       }
     }
-    // Now decide whether we need more input.
-    // TODO(cph): this heuristic is WRONG!
-    if (ids.isEmpty()) {
-      maybePrompt(request, response);
+
+    if (!needCredentials(request)) {
+      successfulSamlResponse(request, response);
       return;
     }
 
-    successfulSamlResponse(request, response, ids);
+    HttpSession session = request.getSession();
+    int n = getPromptCounter(session);
+    if (n >= maxPrompts) {
+      unsuccessfulSamlResponse(request, response, "Incorrect username or password");
+      return;
+    }
+    setPromptCounter(session, n + 1);
+    writePrompt(request, response);
   }
 
   private void authenticateCredentialsGroup(CredentialsGroup cg) {
@@ -315,18 +326,30 @@ public class BackEndImpl implements BackEnd {
     }
   }
 
-  private void successfulSamlResponse(
-      HttpServletRequest request, HttpServletResponse response, List<String> ids)
+  private void successfulSamlResponse(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     updateOutgoingCookies(request, response);
 
+    List<CredentialsGroup> cgs = getCredentialsGroups(request);
+
     Cookie sessionCookie = getUserAgentCookie(request.getSession(), GSA_SESSION_ID_COOKIE_NAME);
     if (sessionCookie != null) {
-      updateSessionManager(sessionCookie.getValue(), getCredentialsGroups(request));
+      updateSessionManager(sessionCookie.getValue(), cgs);
     }
 
     setAuthnState(request.getSession(), AuthnState.IDLE);
-    SamlAuthn.makeSuccessfulSamlSsoResponse(request, response, artifactMap, ids);
+    SamlAuthn.makeSuccessfulSamlSsoResponse(
+        response, SamlAuthn.getSamlSsoContext(request), artifactMap,
+        getVerifiedId(cgs), dontUseSessionManager ? cgs : null);
+  }
+
+  private String getVerifiedId(List<CredentialsGroup> cgs) {
+    for (CredentialsGroup cg : cgs) {
+      if (cg.isVerified()) {
+        return cg.getUsername();
+      }
+    }
+    throw new IllegalStateException("No verified ID available");
   }
 
   private void unsuccessfulSamlResponse(
@@ -334,25 +357,12 @@ public class BackEndImpl implements BackEnd {
       throws IOException {
     updateOutgoingCookies(request, response);
     setAuthnState(request.getSession(), AuthnState.IDLE);
-    SamlAuthn.makeUnsuccessfulSamlSsoResponse(request, response, artifactMap, message);
+    SamlAuthn.makeUnsuccessfulSamlSsoResponse(
+        response, SamlAuthn.getSamlSsoContext(request), artifactMap, message);
   }
 
-  private void maybePrompt(HttpServletRequest request, HttpServletResponse response)
+  private void writePrompt(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
-    HttpSession session = request.getSession();
-
-    if (getAuthnState(session) == AuthnState.IN_OMNIFORM) {
-      int n = getPromptCounter(session);
-      if (n >= maxPrompts) {
-        unsuccessfulSamlResponse(request, response, "Incorrect username or password");
-        return;
-      }
-      setPromptCounter(session, n + 1);
-    } else {
-      setAuthnState(session, AuthnState.IN_OMNIFORM);
-      setPromptCounter(session, 1);
-    }
-
     updateOutgoingCookies(request, response);
     PrintWriter writer = ServletBase.initNormalResponse(response);
     writer.print(getOmniForm(request).generateForm());
@@ -571,14 +581,15 @@ public class BackEndImpl implements BackEnd {
           //  }
         }
 
-        LOGGER.info("DomainCredential " + dCred.getDomain() + " cookies: " +
-                    CookieUtil.setCookieHeaderValue(dCred.getCookies(), false));
+        CookieUtil.logResponseCookies(
+            Level.INFO,
+            "DomainCredential " + dCred.getDomain() + " cookies",
+            dCred.getCookies());
         cookies.addAll(dCred.getCookies());
       }
     }
     adapter.setCookies(sessionId, CookieUtil.serializeCookies(cookies));
-    LOGGER.info("Cookies sent to session manager: " +
-                CookieUtil.setCookieHeaderValue(cookies, false));
+    CookieUtil.logResponseCookies(Level.INFO, "Cookies sent to session manager", cookies);
 
     // TODO(con): connectors
   }
