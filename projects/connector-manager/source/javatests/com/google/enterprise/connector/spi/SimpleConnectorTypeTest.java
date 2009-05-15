@@ -86,7 +86,7 @@ public class SimpleConnectorTypeTest extends TestCase {
           + "<td><input type=\"text\" value=\"max\" name=\"user\"/></td>\r\n"
           + "</tr>\r\n"
           + "<tr>\r\n"
-          + "<td><font color=red>password</font></td>\r\n"
+          + "<td><font color=\"red\">password</font></td>\r\n"
           + "<td><input type=\"password\" name=\"password\"/></td>\r\n"
           + "</tr>\r\n"
           + "<input type=\"hidden\" value=\"heaven\" name=\"destination\"/>\r\n"
@@ -120,7 +120,7 @@ public class SimpleConnectorTypeTest extends TestCase {
           + "<td><input type=\"text\" value=\"max\" name=\"user\"/></td>\r\n"
           + "</tr>\r\n"
           + "<tr>\r\n"
-          + "<td><font color=red>password</font></td>\r\n"
+          + "<td><font color=\"red\">password</font></td>\r\n"
           + "<td><input type=\"password\" name=\"password\"/></td>\r\n"
           + "</tr>\r\n";
       Assert.assertEquals(expectedResult, configForm);

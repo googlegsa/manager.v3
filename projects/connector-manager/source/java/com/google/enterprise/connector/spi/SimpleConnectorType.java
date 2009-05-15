@@ -221,7 +221,7 @@ public class SimpleConnectorType implements ConnectorType {
     buf.append(TR_START);
     buf.append(TD_START);
     if (red) {
-      buf.append("<font color=red>");
+      buf.append("<font color=\"red\">");
     }
     buf.append(key);
     if (red) {
