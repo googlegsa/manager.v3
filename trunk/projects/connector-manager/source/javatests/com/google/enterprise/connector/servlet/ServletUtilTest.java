@@ -410,7 +410,11 @@ public class ServletUtilTest extends TestCase {
   private void appendAttribute(StringBuilder buf, String attrName,
       String attrValue) {
     buf.append(" ");
-    XmlUtils.xmlAppendAttrValuePair(attrName, attrValue, buf);
+
+    // FIXME: When XmlUtils moves to Appendable.
+    StringBuffer tmp = new StringBuffer();
+    XmlUtils.xmlAppendAttrValuePair(attrName, attrValue, tmp);
+    buf.append(tmp.toString());
   }
 
   private void obfuscateValues(Map<String, String> clearConfig,
