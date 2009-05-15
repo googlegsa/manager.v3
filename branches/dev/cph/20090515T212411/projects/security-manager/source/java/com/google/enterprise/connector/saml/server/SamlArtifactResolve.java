@@ -65,51 +65,52 @@ public class SamlArtifactResolve extends ServletBase implements PostableHttpServ
   @Override
   public void doPost(HttpServletRequest req, HttpServletResponse resp)
       throws IOException {
-    BackEnd backend = getBackEnd();
+    resolveArtifact(req, resp, getSmEntityId(), getBackEnd().getArtifactMap());
+  }
 
-    // Establish the SAML message context
+  // Exposed for use in testing.
+  static void resolveArtifact(HttpServletRequest req, HttpServletResponse resp,
+                              String localEntityId, SAMLArtifactMap artifactMap)
+      throws IOException {
+
+    // Establish the SAML message context.
     SAMLMessageContext<ArtifactResolve, ArtifactResponse, NameID> context =
         makeSamlMessageContext();
-    EntityDescriptor localEntity = getSmEntity();
+    EntityDescriptor localEntity = getEntity(localEntityId);
     initializeLocalEntity(context, localEntity, localEntity.getIDPSSODescriptor(SAML20P_NS),
                           ArtifactResolutionService.DEFAULT_ELEMENT_NAME);
 
-    // Decode the request
+    // Decode the request.
     context.setInboundMessageTransport(new HttpServletRequestAdapter(req));
     runDecoder(new HTTPSOAP11Decoder(), context);
     ArtifactResolve artifactResolve = context.getInboundSAMLMessage();
 
-    // Select entity for response
+    // Select entity for response.
     EntityDescriptor peerEntity = getEntity(context.getInboundMessageIssuer());
     initializePeerEntity(context, peerEntity, peerEntity.getSPSSODescriptor(SAML20P_NS),
                          Endpoint.DEFAULT_ELEMENT_NAME,
                          SAML2_SOAP11_BINDING_URI);
 
-    // Create response
+    // Create response.
     ArtifactResponse artifactResponse =
         makeArtifactResponse(artifactResolve, makeStatus(StatusCode.SUCCESS_URI));
     artifactResponse.setIssuer(makeIssuer(localEntity.getEntityID()));
 
-    // Look up artifact and add any resulting object to response
+    // Look up artifact and add any resulting object to response.
     String encodedArtifact = artifactResolve.getArtifact().getArtifact();
-    SAMLArtifactMap artifactMap = backend.getArtifactMap();
     if (artifactMap.contains(encodedArtifact)) {
-      LOGGER.info("local Entity ID: " + localEntity.getEntityID());
-      LOGGER.info("peer entity ID: " + peerEntity.getEntityID());
       SAMLArtifactMapEntry entry = artifactMap.get(encodedArtifact);
-      LOGGER.info("artifact issuer: " + entry.getIssuerId());
-      LOGGER.info("artifact relying party: " + entry.getRelyingPartyId());
       if ((!entry.isExpired())
           && localEntity.getEntityID().equals(entry.getIssuerId())
           && peerEntity.getEntityID().equals(entry.getRelyingPartyId())) {
         artifactResponse.setMessage(entry.getSamlMessage());
         LOGGER.info("Artifact resolved");
       }
-      // Always remove the artifact after use
+      // Always remove the artifact after use.
       artifactMap.remove(encodedArtifact);
     }
 
-    // Encode response
+    // Encode response.
     context.setOutboundSAMLMessage(artifactResponse);
     String message = "Artifact Response as XML:";
     // todo: change this level to FINEST once we're comfortable

@@ -78,6 +78,10 @@ public abstract class ServletBase extends HttpServlet {
     return getMetadata().getSmEntity();
   }
 
+  public static String getSmEntityId() {
+    return getMetadata().getSmEntityId();
+  }
+
   public static Metadata getMetadata() {
     return Metadata.class.cast(Context.getInstance().getRequiredBean("Metadata", Metadata.class));
   }
