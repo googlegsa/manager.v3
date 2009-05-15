@@ -33,8 +33,6 @@ import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.xml.parse.BasicParserPool;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -58,6 +56,9 @@ public class MockSamlIdp extends ServletBase
           new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
           artifactLifetime);
 
+  /** Name of the session attribute that holds a SAML message context. */
+  private static final String SAML_CONTEXT_NAME = "MockSamlIdp.samlMessageContext";
+
   private final String localEntityId;
   private final String responseId;
   private final boolean usePost;
@@ -79,7 +80,7 @@ public class MockSamlIdp extends ServletBase
 
     // Establish the SAML message context.
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
-        newSamlMessageContext(request.getSession());
+        newSamlMessageContext(request.getSession(), SAML_CONTEXT_NAME);
     {
       EntityDescriptor localEntity = getEntity(localEntityId);
       initializeLocalEntity(context, localEntity, localEntity.getIDPSSODescriptor(SAML20P_NS),
@@ -99,13 +100,11 @@ public class MockSamlIdp extends ServletBase
     }
 
     if (responseId != null) {
-      List<String> ids = new ArrayList<String>(1);
-      ids.add(responseId);
       SamlAuthn.makeSuccessfulSamlSsoResponse(
-          request, response, usePost ? null : artifactMap, ids);
+          response, context, usePost ? null : artifactMap, responseId, null);
     } else {
       SamlAuthn.makeUnsuccessfulSamlSsoResponse(
-          request, response, usePost ? null : artifactMap, "Unable to authenticate");
+          response, context, usePost ? null : artifactMap, "Unable to authenticate");
     }
   }
 }

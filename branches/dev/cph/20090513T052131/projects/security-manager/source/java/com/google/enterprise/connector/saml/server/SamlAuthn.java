@@ -79,6 +79,9 @@ public class SamlAuthn extends ServletBase
     implements GettableHttpServlet, PostableHttpServlet {
   private static final Logger LOGGER = Logger.getLogger(SamlAuthn.class.getName());
 
+  /** Name of the session attribute that holds a SAML message context. */
+  private static final String SAML_CONTEXT_NAME = "samlMessageContext";
+
   public SamlAuthn() {
   }
 
@@ -94,7 +97,7 @@ public class SamlAuthn extends ServletBase
 
     // Establish the SAML message context.
     SAMLMessageContext<AuthnRequest, Response, NameID> context =
-        newSamlMessageContext(request.getSession());
+        newSamlMessageContext(request.getSession(), SAML_CONTEXT_NAME);
     {
       EntityDescriptor localEntity = getSmEntity();
       initializeLocalEntity(context, localEntity, localEntity.getIDPSSODescriptor(SAML20P_NS),
@@ -123,19 +126,20 @@ public class SamlAuthn extends ServletBase
     getBackEnd().authenticate(request, response);
   }
 
+  static SAMLMessageContext<AuthnRequest, Response, NameID> getSamlSsoContext(HttpServletRequest request) {
+    return existingSamlMessageContext(request.getSession(), SAML_CONTEXT_NAME);
+  }
+
   // We have at least one verified identity.  The first identity is considered the primary.
   public static void makeSuccessfulSamlSsoResponse(
-      HttpServletRequest request, HttpServletResponse response,
-      SAMLArtifactMap artifactMap, List<String> ids)
+      HttpServletResponse response,
+      SAMLMessageContext<AuthnRequest, Response, NameID> context,
+      SAMLArtifactMap artifactMap, String verifiedId, List<CredentialsGroup> cgs)
       throws IOException {
-    LOGGER.info("Verified IDs: " + idsToString(ids));
-
-    SAMLMessageContext<AuthnRequest, Response, NameID> context =
-        existingSamlMessageContext(request.getSession());
 
     // Generate <Assertion> with <AuthnStatement>.
     Assertion assertion =
-        makeAssertion(makeIssuer(getSmEntity().getEntityID()), makeSubject(ids.get(0)));
+        makeAssertion(makeIssuer(getSmEntity().getEntityID()), makeSubject(verifiedId));
     assertion.getAuthnStatements().add(makeAuthnStatement(AuthnContext.IP_PASSWORD_AUTHN_CTX));
 
     // Generate <Conditions> with <AudienceRestriction>.
@@ -150,13 +154,13 @@ public class SamlAuthn extends ServletBase
         makeResponse(context.getInboundSAMLMessage(), makeStatus(StatusCode.SUCCESS_URI));
 
     // Add metadata attribute for serialized identities.
-    if (BackEndImpl.class.cast(getBackEnd()).isDontUseSessionManager()) {
-      addIdentityMetadataAttribute(assertion, getBackEnd().getCredentialsGroups(request));
+    if (cgs != null) {
+      addIdentityMetadataAttribute(assertion, cgs);
     }
 
     samlResponse.getAssertions().add(assertion);
     context.setOutboundSAMLMessage(samlResponse);
-    encodeResponse(request, response, artifactMap);
+    encodeResponse(response, context, artifactMap);
   }
 
   private static void addIdentityMetadataAttribute(Assertion assertion,
@@ -174,34 +178,22 @@ public class SamlAuthn extends ServletBase
     assertion.getAttributeStatements().add(attrStatement);
   }
 
-  private static String idsToString(List<String> ids) {
-    StringBuffer buffer = new StringBuffer();
-    for (String id: ids) {
-      if (buffer.length() > 0) {
-        buffer.append(", ");
-      }
-      buffer.append(id);
-    }
-    return buffer.toString();
-  }
-
   public static void makeUnsuccessfulSamlSsoResponse(
-      HttpServletRequest request, HttpServletResponse response,
+      HttpServletResponse response,
+      SAMLMessageContext<AuthnRequest, Response, NameID> context,
       SAMLArtifactMap artifactMap, String message)
       throws IOException {
     LOGGER.warning(message);
-    SAMLMessageContext<AuthnRequest, Response, NameID> context =
-        existingSamlMessageContext(request.getSession());
     context.setOutboundSAMLMessage(makeResponse(context.getInboundSAMLMessage(),
                                                 makeStatus(StatusCode.AUTHN_FAILED_URI, message)));
-    encodeResponse(request, response, artifactMap);
+    encodeResponse(response, context, artifactMap);
   }
 
   private static void encodeResponse(
-      HttpServletRequest request, HttpServletResponse response, SAMLArtifactMap artifactMap)
+      HttpServletResponse response,
+      SAMLMessageContext<AuthnRequest, Response, NameID> context,
+      SAMLArtifactMap artifactMap)
       throws IOException {
-    SAMLMessageContext<AuthnRequest, Response, NameID> context =
-        existingSamlMessageContext(request.getSession());
     // Encode the response message.
     initResponse(response);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(response, true));
