@@ -15,6 +15,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Manager;
 
 import java.io.PrintWriter;
@@ -28,8 +29,9 @@ public class SetManagerConfig extends ConnectorManagerServlet {
   @Override
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
-    SetManagerConfigHandler hdl =
-        new SetManagerConfigHandler(manager, xmlBody);
+    NDC.push("Config Manager");
+    SetManagerConfigHandler hdl = new SetManagerConfigHandler(manager, xmlBody);
     ServletUtil.writeResponse(out, hdl.getStatus());
+    NDC.pop();
   }
 }

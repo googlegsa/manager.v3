@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -64,24 +65,28 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
     res.setCharacterEncoding("UTF-8");
     PrintWriter out = res.getWriter();
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
-    if (connectorName == null || connectorName.length() < 1) {
-      ServletUtil.writeResponse(out, new ConnectorMessageCode(
-          ConnectorMessageCode.RESPONSE_NULL_CONNECTOR));
-      LOGGER.warning(ServletUtil.LOG_RESPONSE_NULL_CONNECTOR);
+    NDC.push("Config " + connectorName);
+    try {
+      if (connectorName == null || connectorName.length() < 1) {
+        ServletUtil.writeResponse(out, new ConnectorMessageCode(
+            ConnectorMessageCode.RESPONSE_NULL_CONNECTOR));
+        LOGGER.warning(ServletUtil.LOG_RESPONSE_NULL_CONNECTOR);
+        return;
+      }
+
+      String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
+      if (lang == null || lang.length() < 1) {
+        lang = null;
+      }
+
+      ServletContext servletContext = this.getServletContext();
+      Manager manager = Context.getInstance(servletContext).getManager();
+
+      processDoGet(connectorName, lang, manager, out);
+    } finally {
       out.close();
-      return;
+      NDC.clear();
     }
-
-    String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
-    if (lang == null || lang.length() < 1) {
-      lang = null;
-    }
-
-    ServletContext servletContext = this.getServletContext();
-    Manager manager = Context.getInstance(servletContext).getManager();
-
-    processDoGet(connectorName, lang, manager, out);
-    out.close();
   }
 
   /**
@@ -93,7 +98,8 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
    * @throws IOException
    */
   @Override
-  protected void doPost(HttpServletRequest req, HttpServletResponse res) throws IOException {
+  protected void doPost(HttpServletRequest req, HttpServletResponse res)
+      throws IOException {
     doGet(req, res);
   }
 
@@ -157,5 +163,4 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
     }
     ServletUtil.writeRootTag(out, true);
   }
-
 }

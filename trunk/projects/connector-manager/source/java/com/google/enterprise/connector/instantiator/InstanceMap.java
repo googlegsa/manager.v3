@@ -31,6 +31,7 @@ import java.util.logging.Logger;
 
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.StringUtils;
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
@@ -103,6 +104,7 @@ public class InstanceMap extends TreeMap<String, InstanceInfo> {
       File directory = directories[i];
       String name = directory.getName();
       if (!name.startsWith(".")) {
+        NDC.pushAppend(name);
         try {
           InstanceInfo instanceInfo =
               InstanceInfo.fromDirectory(name, directory, typeInfo);
@@ -111,6 +113,8 @@ public class InstanceMap extends TreeMap<String, InstanceInfo> {
           }
         } catch (InstantiatorException e) {
           LOGGER.log(Level.WARNING, "Problem creating connector instance", e);
+        } finally {
+          NDC.pop();
         }
       }
     }

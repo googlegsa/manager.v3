@@ -18,6 +18,7 @@ import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.common.WorkQueueItem;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.monitor.Monitor;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.traversal.Traverser;
@@ -152,13 +153,12 @@ public class TraversalScheduler implements Scheduler {
   }
 
   /**
-   * Determines whether scheduler should run.  Assumes caller holds instance
-   * lock.
+   * Determines whether scheduler should run.
    *
    * @return true if we are in a running state and scheduler should run or
    *         continue running.
    */
-  private boolean isRunningState() {
+  private synchronized boolean isRunningState() {
     return isInitialized && !isShutdown;
   }
 
@@ -187,66 +187,79 @@ public class TraversalScheduler implements Scheduler {
   }
 
   public void run() {
-    while (true) {
-      try {
-        synchronized (this) {
-          if (!isRunningState()) {
-            LOGGER.info("TraversalScheduler thread is stopping due to "
-                + "shutdown or not being initialized.");
-            return;
-          }
-        }
-        for (Schedule schedule : getSchedules()) {
-          if (shouldRun(schedule)) {
-            String connectorName = schedule.getConnectorName();
-            TraversalWorkQueueItem runnable;
-            synchronized (this) {
-              runnable = (TraversalWorkQueueItem) runnables.get(connectorName);
-              if (null == runnable) {
-                runnable = new TraversalWorkQueueItem(connectorName);
-                runnables.put(connectorName, runnable);
-              }
-            }
-            // Check if the item is already running here to avoid deadlock.
-            boolean alreadyRunning = !runnable.isFinished();
-            synchronized (this) {
-              if (!isRunningState()) {
-                  LOGGER.info("TraversalScheduler thread is stopping due to "
-                    + "shutdown or not being initialized.");
-                  return;
-              }
-              if (alreadyRunning) {
-                // LOGGER.finer("Traversal work for connector "
-                //              + connectorName + " is still running.");
-                continue;
-              }
-              if (removedConnectors.contains(connectorName)) {
-                LOGGER.info("Connector was removed so no work for it will be "
-                  + "done: " + connectorName);
-                continue;
-              }
-
-              // In the case where the work queue item is being reused need to
-              // reset the finished status so the number of documents is reported
-              // after it finishes.
-              runnable.setFinished(false);
-              workQueue.addWork(runnable);
-            }
-          }
-        }
-        updateMonitor();
-
-        // Give someone else a chance to run.
+    NDC.push("Traverse");
+    try {
+      while (isRunningState()) {
         try {
-          synchronized (this) {
-            wait(1000);
+          for (Schedule schedule : getSchedules()) {
+            if (!isRunningState()) {
+              break;
+            }
+            NDC.pushAppend(schedule.getConnectorName());
+            try {
+              runSchedule(schedule);
+            } finally {
+              NDC.pop();
+            }
           }
-        } catch (InterruptedException e) {
-          // May have been interrupted for shutdown.
+          if (!isRunningState()) {
+            break;
+          }
+
+          updateMonitor();
+
+          // Give someone else a chance to run.
+          try {
+            synchronized (this) {
+              wait(1000);
+            }
+          } catch (InterruptedException e) {
+            // May have been interrupted for shutdown.
+          }
+        } catch (Throwable t) {
+          LOGGER.log(Level.SEVERE,
+              "TraversalScheduler caught unexpected Throwable: ", t);
         }
-      } catch (Throwable t) {
-        LOGGER.log(Level.SEVERE,
-            "TraversalScheduler caught unexpected Throwable: ", t);
+      }
+      LOGGER.info("TraversalScheduler thread is stopping due to "
+                  + "shutdown or not being initialized.");
+    } finally {
+      NDC.remove();
+    }
+  }
+
+  private void runSchedule(Schedule schedule) {
+    if (shouldRun(schedule)) {
+      String connectorName = schedule.getConnectorName();
+      TraversalWorkQueueItem runnable;
+      synchronized (this) {
+        runnable = (TraversalWorkQueueItem) runnables.get(connectorName);
+        if (null == runnable) {
+          runnable = new TraversalWorkQueueItem(connectorName);
+          runnables.put(connectorName, runnable);
+        }
+      }
+      if (!isRunningState()) {
+        return;
+      }
+      // Check if the item is already running here to avoid deadlock.
+      if (!runnable.isFinished()) {
+        // LOGGER.finer("Traversal work for connector "
+        //              + connectorName + " is still running.");
+        return;
+      }
+      synchronized (this) {
+        if (removedConnectors.contains(connectorName)) {
+          LOGGER.info("Connector was removed so no work for it will "
+                      + "be done: " + connectorName);
+          return;
+        }
+
+        // In the case where the work queue item is being reused need
+        // to reset the finished status so the number of documents is
+        // reported after it finishes.
+        runnable.setFinished(false);
+        workQueue.addWork(runnable);
       }
     }
   }
@@ -286,6 +299,7 @@ public class TraversalScheduler implements Scheduler {
 
     @Override
     public void doWork() {
+      NDC.push("Traverse " + connectorName);
       int batchHint = hostLoadManager.determineBatchHint(connectorName);
       int batchDone = Traverser.ERROR_WAIT;
       try {
@@ -337,6 +351,7 @@ public class TraversalScheduler implements Scheduler {
         synchronized(this) {
           traverser = null;
           finished = true;
+          NDC.pop();
           notifyAll();
         }
       }

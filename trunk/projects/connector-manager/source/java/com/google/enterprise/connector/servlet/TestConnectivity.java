@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.logging.NDC;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.logging.Logger;
@@ -39,11 +41,16 @@ public class TestConnectivity extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
-    LOGGER.info("Hello from the TestConnectivity servlet!");
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
-    handleDoGet(out);
-    out.close();
+    NDC.push("Support Manager");
+    try {
+      LOGGER.info("Hello from the TestConnectivity servlet!");
+      handleDoGet(out);
+    } finally {
+      out.close();
+      NDC.clear();
+    }
   }
 
   /**

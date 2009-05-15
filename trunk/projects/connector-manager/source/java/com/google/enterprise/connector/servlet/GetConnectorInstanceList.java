@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.common.JarUtils;
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
@@ -66,10 +67,15 @@ public class GetConnectorInstanceList extends HttpServlet {
       throws IOException {
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
-    ServletContext servletContext = this.getServletContext();
-    Manager manager = Context.getInstance(servletContext).getManager();
-    handleDoPost(manager, out);
-    out.close();
+    NDC.push("Config Manager");
+    try {
+      ServletContext servletContext = this.getServletContext();
+      Manager manager = Context.getInstance(servletContext).getManager();
+      handleDoPost(manager, out);
+    } finally {
+      out.close();
+      NDC.clear();
+    }
   }
 
   /**

@@ -3,7 +3,7 @@
 <project name="connector-manager" default="connector_manager" basedir=".">
 
   <!-- ========================= PROPERTIES ============================= -->
-  <property name="version" value="1.0" />
+  <property name="version" value="2.0" />
 
   <!-- Define Directories. -->
   <property name="projects.dir" value=".." />
@@ -26,10 +26,13 @@
   <property name="tests.todir" value="tests_outdir" />
   <property name="tests.data" value="testdata" />
   <property name="jar.dir" value="${dist}/jarfile" />
+
+  <property name="logging.jarfile" value="${jar.dir}/connector-logging.jar" />
   <property name="spi.jarfile" value="${jar.dir}/connector-spi.jar" />
   <property name="util.jarfile" value="${jar.dir}/connector-util.jar" />
   <property name="connector.jarfile" value="${jar.dir}/connector.jar" />
   <property name="tests.jarfile" value="${jar.dir}/connector-tests.jar" />
+
   <property name="thirdparty.prod.jars" value="third-party/prod" />
   <property name="thirdparty.tests.jars" value="third-party/tests" />
   <property name="junit.jarfile" value="${thirdparty.prod.jars}/junit.jar" />
@@ -151,6 +154,15 @@
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </jar>
+    <jar jarfile="${logging.jarfile}">
+      <fileset dir="${classes}" includes="**/logging/**" excludes="**/javatests/**" />
+      <manifest>
+        <attribute name="Implementation-Title" value="Connector Manager Logging"/>
+        <attribute name="Implementation-Version"
+                   value="${version} (build ${svnversion}  ${TODAY})"/>
+        <attribute name="Implementation-Vendor" value="Google Inc."/>
+      </manifest>
+    </jar>
     <jar jarfile="${util.jarfile}">
       <fileset dir="${classes}">
         <include name="**/servlet/ConnectorMessageCode.class" />
@@ -169,7 +181,7 @@
       </manifest>
     </jar>
     <jar jarfile="${connector.jarfile}">
-      <fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**" />
+      <fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**, **/logging/**"/>
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager Impl"/>
         <attribute name="Implementation-Version"

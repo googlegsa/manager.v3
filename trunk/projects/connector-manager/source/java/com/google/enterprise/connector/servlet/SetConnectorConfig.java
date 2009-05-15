@@ -15,97 +15,44 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.enterprise.connector.instantiator.InstantiatorException;
-import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Manager;
-import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 
 /**
  * Admin servlet to set connector config.
  */
 public class SetConnectorConfig extends ConnectorManagerServlet {
-  private static final Logger LOGGER =
-    Logger.getLogger(SetConnectorConfig.class.getName());
-
-  /**
-   * doGet just call doPost.
-   * @param req
-   * @param res
-   * @throws IOException
-   */
-  @Override
-  protected void doGet(HttpServletRequest req, HttpServletResponse res)
-      throws IOException {
-    ConnectorMessageCode status = new ConnectorMessageCode();
-    String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
-    String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
-    PrintWriter out = res.getWriter();
-    res.setContentType(ServletUtil.MIMETYPE_XML);
-
-    ServletContext servletContext = this.getServletContext();
-    Manager manager = Context.getInstance(servletContext).getManager();
-    String formSnippet = null;
-    ConfigureResponse configResponse = null;
-    try {
-      configResponse = manager.getConfigForm(connectorType, language);
-      if (configResponse != null) {
-        formSnippet = configResponse.getFormSnippet();
-      }
-    } catch (ConnectorTypeNotFoundException e) {
-      status = new ConnectorMessageCode(
-          ConnectorMessageCode.EXCEPTION_CONNECTOR_TYPE_NOT_FOUND,
-          connectorType);
-      ServletUtil.writeResponse(out, status);
-      LOGGER.log(Level.WARNING,
-          ServletUtil.LOG_EXCEPTION_CONNECTOR_TYPE_NOT_FOUND, e);
-    } catch (InstantiatorException e) {
-      status.setMessageId(ConnectorMessageCode.EXCEPTION_INSTANTIATOR);
-      ServletUtil.writeResponse(out, status);
-      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_INSTANTIATOR, e);
-    }
-
-    if (formSnippet == null) {
-      formSnippet = ServletUtil.DEFAULT_FORM;
-    }
-
-    GetConfigForm.handleDoGet(configResponse, status, out);
-    out.close();
-  }
-
   /**
    * Writes the XML response for setting the connector config.
    */
   @Override
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
-    SetConnectorConfigHandler handler =
-        new SetConnectorConfigHandler(xmlBody, manager);
-    ConfigureResponse configRes = handler.getConfigRes();
-    ConnectorMessageCode status;
-    if (configRes == null) {
-      status = handler.getStatus();
-      if (!status.isSuccess()) {
-        // Avoid a bug in GSA that displays "No connector configuration
-        // returned by the connector manager.", rather than the error status.
-        configRes = new ConfigureResponse(null, null, null);
+    NDC.push("Config");
+    try {
+      SetConnectorConfigHandler handler =
+          new SetConnectorConfigHandler(xmlBody, manager);
+      ConfigureResponse configRes = handler.getConfigRes();
+      ConnectorMessageCode status;
+      if (configRes == null) {
+        status = handler.getStatus();
+        if (!status.isSuccess()) {
+          // Avoid a bug in GSA that displays "No connector configuration
+          // returned by the connector manager.", rather than the error status.
+          configRes = new ConfigureResponse(null, null, null);
+        }
+      } else {
+        status = new ConnectorMessageCode(
+            ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
       }
-    } else {
-      status = new ConnectorMessageCode(
-          ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
+      ConnectorManagerGetServlet.writeConfigureResponse(
+          out, status, configRes, handler.isUpdate());
+    } finally {
+      out.close();
+      NDC.pop();
     }
-    ConnectorManagerGetServlet.writeConfigureResponse(out, status, configRes,
-        handler.isUpdate());
-    out.close();
   }
 }
