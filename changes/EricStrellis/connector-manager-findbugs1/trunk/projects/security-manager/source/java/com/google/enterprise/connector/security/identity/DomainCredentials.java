@@ -65,6 +65,11 @@ public class DomainCredentials extends AbstractAuthnIdentity {
   }
 
   /* @Override */
+  public String getAuthority() {
+    return configInfo.getAuthority();
+  }
+
+  /* @Override */
   public String getUsername() {
     return cg.getUsername();
   }
@@ -97,10 +102,15 @@ public class DomainCredentials extends AbstractAuthnIdentity {
   public String dumpInfo() {
     StringBuilder sb = new StringBuilder();
     sb.append(getUsername());
-    sb.append(":#");
-    sb.append(getPassword().hashCode());
-    sb.append("; ");
-    sb.append(CookieUtil.cookieHeaderValue(getCookies(), false));
+    if (getPassword() != null) {
+      sb.append(":#");
+      sb.append(getPassword().hashCode());
+    }
+    String cookieString = CookieUtil.cookieHeaderValue(getCookies(), false);
+    if (cookieString != null) {
+      sb.append("; ");
+      sb.append(cookieString);
+    }
     return sb.toString();
   }
 }

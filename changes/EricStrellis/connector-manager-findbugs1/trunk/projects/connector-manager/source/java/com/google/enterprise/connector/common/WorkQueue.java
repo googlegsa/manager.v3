@@ -481,7 +481,7 @@ public class WorkQueue {
             threads.addAll(newThreads);
           }
           synchronized (this) {
-            while (!shutdownNow) {
+            if (!shutdownNow) {
               wait(LIFE_THREAD_WAIT_TIMEOUT);
             }
           }
