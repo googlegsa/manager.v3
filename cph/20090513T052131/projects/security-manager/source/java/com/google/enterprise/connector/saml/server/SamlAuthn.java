@@ -15,12 +15,14 @@
 package com.google.enterprise.connector.saml.server;
 
 import com.google.common.base.Preconditions;
+import com.google.enterprise.connector.common.FileUtil;
 import com.google.enterprise.connector.common.GettableHttpServlet;
 import com.google.enterprise.connector.common.PostableHttpServlet;
 import com.google.enterprise.connector.common.ServletBase;
 import com.google.enterprise.connector.security.identity.CredentialsGroup;
 import com.google.enterprise.connector.security.identity.DomainCredentials;
 
+import org.apache.velocity.app.VelocityEngine;
 import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.saml2.binding.decoding.HTTPRedirectDeflateDecoder;
@@ -203,7 +205,15 @@ public class SamlAuthn extends ServletBase
       encoder.setPostEncoding(false);
       runEncoder(encoder, context);
     } else {
-      runEncoder(new HTTPPostEncoder(null, null), context);
+      VelocityEngine ve = new VelocityEngine();
+      try {
+        ve.init();
+      } catch (Exception e) {
+        throw new IOException(e);
+      }
+      runEncoder(
+          new HTTPPostEncoder(ve, FileUtil.getContextFile("saml-post-template.xhtml").toString()),
+          context);
     }
   }
 }
