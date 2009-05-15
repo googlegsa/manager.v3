@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
@@ -81,6 +82,7 @@ public class SetConnectorConfigHandler {
       // Unfortunately, we cannot do this for existing connectors.
       this.connectorName = this.connectorName.toLowerCase();
     }
+    NDC.pushAppend(this.connectorName);
     this.configData = ServletUtil.getAllAttributes(
         root, ServletUtil.XMLTAG_PARAMETERS);
     if (this.configData.isEmpty()) {
@@ -121,6 +123,7 @@ public class SetConnectorConfigHandler {
       this.status.setMessageId(ConnectorMessageCode.EXCEPTION_THROWABLE);
       LOGGER.log(Level.WARNING, "", t);
     }
+    NDC.pop();
   }
 
   public ConnectorMessageCode getStatus() {

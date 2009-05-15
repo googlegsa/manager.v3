@@ -105,7 +105,7 @@ public class PropertiesUtils {
    *
    * @param properties to encode into a String
    * @param comment optional comment string to pass to Properties.store()
-   * @returns a String object with containing the properties.
+   * @return a String object with containing the properties.
    * @throws PropertiesException
    */
   public static String storeToString(Properties properties, String comment)
@@ -131,7 +131,7 @@ public class PropertiesUtils {
    * load properties from strings created by toString();
    *
    * @param propertiesString
-   * @returns a Properties object, or null if null string
+   * @return a Properties object, or null if null string
    * @throws PropertiesException
    */
   public static Properties loadFromString(String propertiesString)
@@ -212,7 +212,7 @@ public class PropertiesUtils {
    * Make a Properties object from a Map, copying all the keys and values.
    *
    * @param sourceMap a Map representing properties key-value map
-   * @returns new Properties object that may be modified without altering
+   * @return new Properties object that may be modified without altering
    *          the source properties.
    */
   public static Properties fromMap(Map<String, String> sourceMap) {
@@ -229,7 +229,7 @@ public class PropertiesUtils {
    * copying all the keys and values.
    *
    * @param sourceProperties Properties representing properties key-value map.
-   * @returns a Map&lt;String, String&gt; representation of the source
+   * @return a Map&lt;String, String&gt; representation of the source
    *          Properties.
    */
   public static Map<String, String> toMap(Properties sourceProperties) {
@@ -251,7 +251,7 @@ public class PropertiesUtils {
    * which makes a shallow copy.
    *
    * @param sourceProperties a source set of Properties.
-   * @returns new Properties object that may be modified without altering
+   * @return new Properties object that may be modified without altering
    * the source properties.
    */
   public static Properties copy(Properties sourceProperties) {

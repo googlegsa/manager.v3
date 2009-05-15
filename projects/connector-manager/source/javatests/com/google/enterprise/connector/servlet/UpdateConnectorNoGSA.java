@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.ConnectorManagerException;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
@@ -54,41 +55,56 @@ public class UpdateConnectorNoGSA extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
-    String language = null;
-    String connectorName = null;
-    StringWriter writer = new StringWriter();
-    writer.write("<" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">");
+    NDC.push("Config");
+    try {
+      String language = null;
+      String connectorName = null;
+      StringWriter writer = new StringWriter();
+      try {
+        writer.write("<" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">");
 
-    Enumeration<?> names = req.getParameterNames();
-    for (Enumeration<?> e = names; e.hasMoreElements();) {
-      String name = (String) e.nextElement();
-      if (name.equalsIgnoreCase(ServletUtil.QUERY_PARAM_LANG)) {
-        language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
-      } else if (name.equalsIgnoreCase(ServletUtil.XMLTAG_CONNECTOR_NAME)) {
-        connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
-        writer.write("  <" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">"
-            + connectorName + "</" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">\n");
-      } else if (name.equalsIgnoreCase(ServletUtil.XMLTAG_CONNECTOR_TYPE)) {
-        String connectorType =
-            req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
-        writer.write("  <" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">"
-            + connectorType + "</" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">\n");
-      } else {
-        writer.write("  <" + ServletUtil.XMLTAG_PARAMETERS + " name=\"" + name
-            + "\" value=\"" + req.getParameter(name) + "\"/>\n");
+        Enumeration<?> names = req.getParameterNames();
+        for (Enumeration<?> e = names; e.hasMoreElements();) {
+          String name = (String) e.nextElement();
+          if (name.equalsIgnoreCase(ServletUtil.QUERY_PARAM_LANG)) {
+            language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
+          } else if (name.equalsIgnoreCase(ServletUtil.XMLTAG_CONNECTOR_NAME)) {
+            connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
+            NDC.pushAppend(connectorName);
+            writer.write("  <" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">"
+                + connectorName + "</" + ServletUtil.XMLTAG_CONNECTOR_NAME
+                + ">\n");
+          } else if (name.equalsIgnoreCase(ServletUtil.XMLTAG_CONNECTOR_TYPE)) {
+            String connectorType =
+                req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
+            NDC.pushAppend(connectorType);
+            writer.write("  <" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">"
+                + connectorType + "</" + ServletUtil.XMLTAG_CONNECTOR_TYPE
+                + ">\n");
+          } else {
+            writer.write("  <" + ServletUtil.XMLTAG_PARAMETERS + " name=\""
+                + name + "\" value=\"" + req.getParameter(name) + "\"/>\n");
+          }
+        }
+        writer.write("</" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">");
+      } finally {
+        writer.close();
       }
+
+      PrintWriter out = res.getWriter();
+      try {
+        res.setContentType(ServletUtil.MIMETYPE_HTML);
+
+        ServletContext servletContext = this.getServletContext();
+        Manager manager = Context.getInstance(servletContext).getManager();
+        out.print(UpdateConnector.handleDoGet(manager, writer.getBuffer()
+            .toString(), connectorName, language, req.getContextPath()));
+      } finally {
+        out.close();
+      }
+    } finally {
+      NDC.clear();
     }
-    writer.write("</" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">");
-    writer.close();
-
-    PrintWriter out = res.getWriter();
-    res.setContentType(ServletUtil.MIMETYPE_HTML);
-
-    ServletContext servletContext = this.getServletContext();
-    Manager manager = Context.getInstance(servletContext).getManager();
-    out.print(UpdateConnector.handleDoGet(manager, writer.getBuffer()
-        .toString(), connectorName, language, req.getContextPath()));
-    out.close();
   }
 
   /**
@@ -102,35 +118,41 @@ public class UpdateConnectorNoGSA extends HttpServlet {
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
     ConnectorMessageCode status = new ConnectorMessageCode();
-    String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
-    Map<String, String> configData = new TreeMap<String, String>();
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
     String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
-    Enumeration<?> names = req.getParameterNames();
-    for (Enumeration<?> e = names; e.hasMoreElements();) {
-      String name = (String) e.nextElement();
-      configData.put(name, req.getParameter(name));
-    }
-
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
-    ServletContext servletContext = this.getServletContext();
-    Manager manager = Context.getInstance(servletContext).getManager();
-    ConfigureResponse configRes = null;
+
+    NDC.push("Config " + connectorName);
     try {
-      configRes = manager.setConnectorConfig(connectorName, connectorType,
-          configData, lang, true);
-    } catch (ConnectorManagerException e) {
-      status = new ConnectorMessageCode(
-          ConnectorMessageCode.EXCEPTION_CONNECTOR_MANAGER);
-      LOGGER.log(Level.WARNING,
-          ServletUtil.LOG_EXCEPTION_CONNECTOR_MANAGER, e);
+      String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
+      Map<String, String> configData = new TreeMap<String, String>();
+      Enumeration<?> names = req.getParameterNames();
+      for (Enumeration<?> e = names; e.hasMoreElements();) {
+        String name = (String) e.nextElement();
+        configData.put(name, req.getParameter(name));
+      }
+
+      ServletContext servletContext = this.getServletContext();
+      Manager manager = Context.getInstance(servletContext).getManager();
+      ConfigureResponse configRes = null;
+      try {
+        configRes = manager.setConnectorConfig(connectorName, connectorType,
+                                               configData, lang, true);
+      } catch (ConnectorManagerException e) {
+        status = new ConnectorMessageCode(
+            ConnectorMessageCode.EXCEPTION_CONNECTOR_MANAGER);
+        LOGGER.log(Level.WARNING,
+            ServletUtil.LOG_EXCEPTION_CONNECTOR_MANAGER, e);
+      }
+      if (configRes != null) {
+        status = new ConnectorMessageCode(
+            ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
+      }
+      ConnectorManagerGetServlet.writeConfigureResponse(out, status, configRes);
+    } finally {
+      out.close();
+      NDC.clear();
     }
-    if (configRes != null) {
-      status =
-        new ConnectorMessageCode(ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
-    }
-    ConnectorManagerGetServlet.writeConfigureResponse(out, status, configRes);
-    out.close();
   }
 }

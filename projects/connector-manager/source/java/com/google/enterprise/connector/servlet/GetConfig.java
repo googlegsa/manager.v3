@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 
 import java.io.IOException;
@@ -87,32 +88,40 @@ public class GetConfig extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException, FileNotFoundException {
-    Context context = Context.getInstance(this.getServletContext());
+    NDC.push("Support");
+    try {
+      Context context = Context.getInstance(this.getServletContext());
 
-    // Only allow incoming connections from the GSA or localhost.
-    if (!ServletUtil.allowedRemoteAddr(context.getGsaFeedHost(),
-                                       req.getRemoteAddr())) {
-      res.sendError(HttpServletResponse.SC_FORBIDDEN);
-      return;
-    }
+      // Only allow incoming connections from the GSA or localhost.
+      if (!ServletUtil.allowedRemoteAddr(context.getGsaFeedHost(),
+                                         req.getRemoteAddr())) {
+        res.sendError(HttpServletResponse.SC_FORBIDDEN);
+        return;
+      }
 
-    // Fetch the name of the archive file to return. getPathInfo() returns
-    // items with a leading '/', so we want to pull off only the basename.
-    // WARNING: For security reasons, the PathInfo parameter must never
-    // be passed directly to a File() or shell command.
-    String fileName = baseName(req.getPathInfo());
-    if (fileName == null) {
-      // Force a redirect to the archive file.
-      res.sendRedirect(res.encodeRedirectURL(
-          baseName(req.getServletPath()) + "/" + archiveName));
-    } else if (fileName.equalsIgnoreCase(archiveName)) {
-      res.setContentType(ServletUtil.MIMETYPE_ZIP);
-      ServletOutputStream out = res.getOutputStream();
-      handleDoGet(context.getCommonDirPath(), out);
-      out.close();
-    } else {
-      // Force a redirect to the archive file.
-      res.sendRedirect(res.encodeRedirectURL(archiveName));
+      // Fetch the name of the archive file to return. getPathInfo() returns
+      // items with a leading '/', so we want to pull off only the basename.
+      // WARNING: For security reasons, the PathInfo parameter must never
+      // be passed directly to a File() or shell command.
+      String fileName = baseName(req.getPathInfo());
+      if (fileName == null) {
+        // Force a redirect to the archive file.
+        res.sendRedirect(res.encodeRedirectURL(
+            baseName(req.getServletPath()) + "/" + archiveName));
+      } else if (fileName.equalsIgnoreCase(archiveName)) {
+        res.setContentType(ServletUtil.MIMETYPE_ZIP);
+        ServletOutputStream out = res.getOutputStream();
+        try {
+          handleDoGet(context.getCommonDirPath(), out);
+        } finally {
+          out.close();
+        }
+      } else {
+        // Force a redirect to the archive file.
+        res.sendRedirect(res.encodeRedirectURL(archiveName));
+      }
+    } finally {
+      NDC.clear();
     }
   }
 

@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
@@ -39,8 +40,10 @@ public class SetSchedule extends ConnectorManagerServlet {
   @Override
   protected void processDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
+    NDC.push("Config");
     ConnectorMessageCode status = handleDoPost(xmlBody, manager);
     ServletUtil.writeResponse(out, status);
+    NDC.pop();
   }
 
   /**
@@ -61,6 +64,7 @@ public class SetSchedule extends ConnectorManagerServlet {
 
     String connectorName = ServletUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_CONNECTOR_NAME);
+    NDC.pushAppend(connectorName);
     int load = Integer.parseInt(ServletUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_LOAD));
     boolean disabled = (ServletUtil.getFirstElementByTagName(root,
@@ -100,6 +104,7 @@ public class SetSchedule extends ConnectorManagerServlet {
       LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_PERSISTENT_STORE, e);
     }
 
+    NDC.pop();
     return status;
   }
 }
