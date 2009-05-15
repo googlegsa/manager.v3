@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.spi;
 
+import java.io.IOException;
+
 /**
  * Utility class containing methods used to encode and construct XML for the
  * Connector Manager.
@@ -51,34 +53,69 @@ public class XmlUtils {
     return buf.toString();
   }
 
-  /* StringBuffer Interface */
-
+  /**
+   * XML encodes an attribute value, encoding some characters as
+   * character entities, and dropping invalid control characters.
+   *
+   * @see #appendAttrValue
+   */
   public static void XmlEncodeAttrValue(String val, StringBuffer buf) {
+    try {
+      appendAttrValue(val, buf);
+    } catch (IOException e) {
+      // This can't happen with StringBuffer.
+      throw new AssertionError(e);
+    }
+  }
+
+  /**
+   * XML encodes an attribute value, escaping some characters as
+   * character entities, and dropping invalid control characters.
+   * <p>
+   * Only four characters need to be encoded, according to
+   * http://www.w3.org/TR/REC-xml/#NT-AttValue: &lt; &amp; " '. Actually,
+   * we could only encode one of the quote characters if we knew
+   * that that was the one used to wrap the value, but we'll play
+   * it safe and encode both.
+   * <p>
+   * We drop invalid XML characters, following
+   * http://www.w3.org/TR/2000/REC-xml-20001006#NT-Char:
+   * <pre>
+   * Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+   * </pre>
+   * Java uses UTF-16 internally, so Unicode characters U+10000 to
+   * U+10FFFF are encoded using the surrogate characters excluded
+   * above, 0xD800 to 0xDFFF. So we allow just 0x09, 0x0A, 0x0D,
+   * and the range 0x20 to 0xFFFD.
+   */
+  private static void appendAttrValue(String val, Appendable buf)
+      throws IOException {
     for (int i = 0; i < val.length(); i++) {
       char c = val.charAt(i);
-      /**
-       * Only these characters need to be encoded, according to
-       * http://www.w3.org/TR/REC-xml/#NT-AttValue. Actually, we could only
-       * encode one of the quote characters if we knew that that was the one
-       * used to wrap the value, but we'll play it safe and encode both. TODO:
-       * what happens to white-space?
-       */
       switch (c) {
-      case '<':
-        buf.append(XML_LESS_THAN);
-        break;
-      case '&':
-        buf.append(XML_AMPERSAND);
-        break;
-      case '"':
-        buf.append(XML_QUOTE);
-        break;
-      case '\'':
-        buf.append(XML_APOSTROPHE);
-        break;
-      default:
-        buf.append(c);
-        break;
+        case '<':
+          buf.append(XML_LESS_THAN);
+          break;
+        case '&':
+          buf.append(XML_AMPERSAND);
+          break;
+        case '"':
+          buf.append(XML_QUOTE);
+          break;
+        case '\'':
+          buf.append(XML_APOSTROPHE);
+          break;
+        case '\t':
+        case '\n':
+        case '\r':
+          // TODO: what happens to white-space?
+          buf.append(c);
+          break;
+        default:
+           if (c >= 0x20 && c <= 0xFFFD) {
+            buf.append(c);
+           }
+          break;
       }
     }
   }
@@ -101,57 +138,4 @@ public class XmlUtils {
     XmlEncodeAttrValue(attrValue, buf);
     buf.append("\"");
   }
-
-
-  /* StringBuilder Interface */
-
-  public static void XmlEncodeAttrValue(String val, StringBuilder buf) {
-    for (int i = 0; i < val.length(); i++) {
-      char c = val.charAt(i);
-      /**
-       * Only these characters need to be encoded, according to
-       * http://www.w3.org/TR/REC-xml/#NT-AttValue. Actually, we could only
-       * encode one of the quote characters if we knew that that was the one
-       * used to wrap the value, but we'll play it safe and encode both. TODO:
-       * what happens to white-space?
-       */
-      switch (c) {
-      case '<':
-        buf.append(XML_LESS_THAN);
-        break;
-      case '&':
-        buf.append(XML_AMPERSAND);
-        break;
-      case '"':
-        buf.append(XML_QUOTE);
-        break;
-      case '\'':
-        buf.append(XML_APOSTROPHE);
-        break;
-      default:
-        buf.append(c);
-        break;
-      }
-    }
-  }
-
-  /**
-   * Used to write out an attribute for an element.  Surrounding whitespace will
-   * not be added to the buffer.  The given value will be XML Encoded before
-   * appending to the buffer.
-   *
-   * <p>For example, given attrName="foo" and attrValue="val&lt;bar" writes out:
-   * <pre>foo="val&amp;lt;bar"</pre>
-   * @param attrName the attribute name.
-   * @param attrValue the attribute value.
-   * @param buf the StringBuilder to append the attribute.
-   */
-  public static void xmlAppendAttrValuePair(String attrName, String attrValue,
-      StringBuilder buf) {
-    buf.append(attrName);
-    buf.append("=\"");
-    XmlEncodeAttrValue(attrValue, buf);
-    buf.append("\"");
-  }
-
 }

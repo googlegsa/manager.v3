@@ -20,6 +20,7 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
+import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
@@ -33,6 +34,8 @@ import com.google.enterprise.connector.spi.Value;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
+
+import org.xml.sax.SAXParseException;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -430,6 +433,89 @@ public class DocPusherTest extends TestCase {
         // but xml-sensitive characters have been replaced with entities
         "content=\"\u5317\u4eac\u5e02\"/>", resultXML);
 
+  }
+
+  /**
+   * Test invalid XML characters in metadata values. This is a test
+   * that only the control characters we want stripped are stripped.
+   */
+  public void testInvalidXmlChars() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\""
+        // Note double escaping in the lines below, since this is a json string.
+        + ",\"control\":\""
+        + "\\u0000\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007"
+        + "\\u0008\\u0009\\u000A\\u000B\\u000C\\u000D\\u000E\\u000F"
+        + "\\u0010\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017"
+        + "\\u0018\\u0019\\u001A\\u001B\\u001C\\u001D\\u001E\\u001F"
+        + "\\uFFFE\\uFFFF"
+        + "\"" + "}\r\n" + "";
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
+
+    assertParsedFeedContains(document,
+        "<meta name=\"control\" content=\"\t\n\r\"/>");
+  }
+
+  /**
+   * Test (almost) all XML characters in metadata values. We already
+   * tested U+0009, U+000A, and U+000D in testInvalidXmlChars. Here we
+   * just test U+0020 to U+FFFD. This tests that we do not need to drop
+   * any other characters on the floor for XML parsing.
+   */
+  public void testValidXmlChars() throws Exception {
+    StringBuilder buf = new StringBuilder();
+    buf.append("{\"timestamp\":\"10\",\"docid\":\"doc3\""
+        + ",\"content\":\"now is the time\""
+        // Note double escaping in the lines below, since this is a json string.
+        + ",\"control\":\"");
+    for (int i = 0x20; i <= 0xFFFD; i++) {
+      buf.append("\\u");
+      String hex = Integer.toHexString(i);
+      for (int j = hex.length(); j < 4; j++) {
+        buf.append('0');
+      }
+      buf.append(hex);
+    }
+    buf.append("\"" + "}\r\n" + "");
+    String json1 = buf.toString();
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
+
+    assertParsedFeedContains(document, "<meta name=\"control\" content=\" ");
+  }
+
+  /**
+   * Pushes the document through {@link DocPusher}, parses the resulting
+   * XML feed record to check for invalid characters, and asserts that it
+   * contains the given string.
+   */
+  private void assertParsedFeedContains(Document document, String expected)
+      throws Exception {
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection);
+    dpusher.take(document, "junit");
+    String resultXML = mockFeedConnection.getFeed();
+
+    // Strip off the DOCTYPE so that the document parses, since we
+    // don't have the DTD.
+    resultXML = resultXML.substring(resultXML.indexOf("<gsafeed>"));
+    assertNotNull("Parse error",
+        ServletUtil.parse(resultXML, new FatalErrorHandler(), null));
+
+    // Do this after the XML parsing, since that's the main test.
+    assertStringContains(expected, resultXML);
+  }
+
+  /**
+   * Overrides the production class <code>SAXParseErrorHandler</code>
+   * to throw an exception for fatal errors, to make diagnosing test
+   * failures easier.
+   */
+  private static class FatalErrorHandler extends SAXParseErrorHandler {
+    @Override
+    public void fatalError(SAXParseException e) {
+      super.fatalError(e);
+      throw new RuntimeException(e.getMessage(), e);
+    }
   }
 
   /**

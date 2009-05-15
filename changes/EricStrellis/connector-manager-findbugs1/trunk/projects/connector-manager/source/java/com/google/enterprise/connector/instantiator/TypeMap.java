@@ -107,8 +107,7 @@ public class TypeMap extends TreeMap<String, TypeInfo> {
     }
 
     typesDirectory = new File(baseDirectory, "connectors");
-    if (!typesDirectory.exists())
-    {
+    if (!typesDirectory.exists()) {
       if (!typesDirectory.mkdirs()) {
         throw new IllegalStateException("Can't create connector types directory "
             + typesDirectory.getPath());
@@ -135,6 +134,7 @@ public class TypeMap extends TreeMap<String, TypeInfo> {
           LOGGER.warning("Type " + typeName
               + " has a valid definition but no type directory - skipping it");
           iter.remove();
+          return;
         }
       }
       if (!typesDirectory.isDirectory()) {

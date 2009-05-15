@@ -16,6 +16,7 @@ package com.google.enterprise.connector.saml.server;
 
 import com.google.enterprise.connector.common.PostableHttpServlet;
 import com.google.enterprise.connector.common.ServletBase;
+import com.google.enterprise.connector.saml.common.SamlLogUtil;
 
 import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
@@ -33,6 +34,7 @@ import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
 import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
@@ -109,6 +111,10 @@ public class SamlArtifactResolve extends ServletBase implements PostableHttpServ
 
     // Encode response
     context.setOutboundSAMLMessage(artifactResponse);
+    String message = "Artifact Response as XML:";
+    // todo: change this level to FINEST once we're comfortable
+    // with adjusting log levels in tomcat
+    SamlLogUtil.logXml(LOGGER, Level.INFO, message, artifactResponse);
     initResponse(resp);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(resp, true));
     runEncoder(new HTTPSOAP11Encoder(), context);

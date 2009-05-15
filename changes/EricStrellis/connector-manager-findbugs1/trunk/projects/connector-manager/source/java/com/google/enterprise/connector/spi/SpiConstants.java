@@ -380,6 +380,5 @@ public class SpiConstants {
       }
       return true;
     }
-
   }
 }

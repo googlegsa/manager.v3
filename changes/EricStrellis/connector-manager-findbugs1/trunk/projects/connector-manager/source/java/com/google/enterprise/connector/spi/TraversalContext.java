@@ -57,7 +57,7 @@ public interface TraversalContext {
    * it may use this to select the best rendition to supply for indexing.
    *
    * @param mimeTypes a set of mime types.
-   * @returns the most preferred mime type from the Set.
+   * @return the most preferred mime type from the Set.
    */
   String preferredMimeType(Set<String> mimeTypes);
 }

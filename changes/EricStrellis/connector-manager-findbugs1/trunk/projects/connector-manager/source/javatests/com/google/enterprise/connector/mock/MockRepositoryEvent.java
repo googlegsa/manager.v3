@@ -101,8 +101,6 @@ public class MockRepositoryEvent {
       }
       return true;
     }
-
-
   }
 
   private final EventType type;

@@ -16,6 +16,7 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -58,40 +59,45 @@ public class GetConfigForm extends HttpServlet {
     res.setCharacterEncoding("UTF-8");
     PrintWriter out = res.getWriter();
 
-    if (connectorTypeName == null || connectorTypeName.length() < 1) {
-      ServletUtil.writeResponse(
-          out, ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_TYPE);
-      LOGGER.log(Level.WARNING, ServletUtil.LOG_RESPONSE_NULL_CONNECTOR_TYPE);
-      out.close();
-      return;
-    }
-    String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
-    if (language == null || language.length() < 1) {
-      LOGGER.log(Level.WARNING, "Language is null");
-      language = ServletUtil.DEFAULT_LANGUAGE;
-    }
-
-    ServletContext servletContext = this.getServletContext();
-    Manager manager = Context.getInstance(servletContext).getManager();
-
+    NDC.push("Config " + connectorTypeName);
     try {
-      ConfigureResponse configResponse =
-          manager.getConfigForm(connectorTypeName, language);
-      handleDoGet(configResponse, status, out);
-    } catch (ConnectorTypeNotFoundException e) {
-      status = new ConnectorMessageCode(
-          ConnectorMessageCode.EXCEPTION_CONNECTOR_TYPE_NOT_FOUND,
-              connectorTypeName);
-      ServletUtil.writeResponse(out, status);
-      LOGGER.log(Level.WARNING,
-          ServletUtil.LOG_EXCEPTION_CONNECTOR_TYPE_NOT_FOUND, e);
-    } catch (InstantiatorException e) {
-      status.setMessageId(ConnectorMessageCode.EXCEPTION_INSTANTIATOR);
-      ServletUtil.writeResponse(out, status);
-      LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_INSTANTIATOR, e);
-    }
 
-    out.close();
+      if (connectorTypeName == null || connectorTypeName.length() < 1) {
+        ServletUtil.writeResponse(
+            out, ConnectorMessageCode.RESPONSE_NULL_CONNECTOR_TYPE);
+        LOGGER.log(Level.WARNING, ServletUtil.LOG_RESPONSE_NULL_CONNECTOR_TYPE);
+        return;
+      }
+
+      String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
+      if (language == null || language.length() < 1) {
+        LOGGER.log(Level.WARNING, "Language is null");
+        language = ServletUtil.DEFAULT_LANGUAGE;
+      }
+
+      ServletContext servletContext = this.getServletContext();
+      Manager manager = Context.getInstance(servletContext).getManager();
+
+      try {
+        ConfigureResponse configResponse =
+            manager.getConfigForm(connectorTypeName, language);
+        handleDoGet(configResponse, status, out);
+      } catch (ConnectorTypeNotFoundException e) {
+        status = new ConnectorMessageCode(
+            ConnectorMessageCode.EXCEPTION_CONNECTOR_TYPE_NOT_FOUND,
+            connectorTypeName);
+        ServletUtil.writeResponse(out, status);
+        LOGGER.log(Level.WARNING,
+            ServletUtil.LOG_EXCEPTION_CONNECTOR_TYPE_NOT_FOUND, e);
+      } catch (InstantiatorException e) {
+        status.setMessageId(ConnectorMessageCode.EXCEPTION_INSTANTIATOR);
+        ServletUtil.writeResponse(out, status);
+        LOGGER.log(Level.WARNING, ServletUtil.LOG_EXCEPTION_INSTANTIATOR, e);
+      }
+    } finally {
+      out.close();
+      NDC.clear();
+    }
   }
 
   /**

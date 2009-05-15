@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer;
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 
 import java.io.IOException;
@@ -38,16 +39,26 @@ public class StartUp extends HttpServlet {
 
   @Override
   public void init() {
-    LOGGER.info("init");
-    ServletContext servletContext = this.getServletContext();
-    doConnectorManagerStartup(servletContext);
-    LOGGER.info("init done");
+    NDC.push("Init");
+    try {
+      LOGGER.info("init");
+      ServletContext servletContext = this.getServletContext();
+      doConnectorManagerStartup(servletContext);
+      LOGGER.info("init done");
+    } finally {
+      NDC.remove();
+    }
   }
 
   @Override
   public void destroy() {
-    LOGGER.info("destroy");
-    Context.getInstance().shutdown(true);
+    NDC.push("Shutdown");
+    try {
+      LOGGER.info("destroy");
+      Context.getInstance().shutdown(true);
+    } finally {
+      NDC.remove();
+    }
   }
 
   @Override

@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.servlet.AuthorizationParser.ConnectorQueries;
 import com.google.enterprise.connector.servlet.AuthorizationParser.QueryUrls;
@@ -62,15 +63,19 @@ public class AuthorizationHandler {
    * Writes an answer for each resource from the request.
    */
   public void handleDoPost() {
-    AuthorizationParser authorizationParser = new AuthorizationParser(xmlBody);
-    status = authorizationParser.getStatus();
-    if (status == ConnectorMessageCode.ERROR_PARSING_XML_REQUEST) {
-      ServletUtil.writeResponse(out,status);
-      return;
+    NDC.push("AuthZ");
+    try {
+      AuthorizationParser authorizationParser = new AuthorizationParser(xmlBody);
+      status = authorizationParser.getStatus();
+      if (status == ConnectorMessageCode.ERROR_PARSING_XML_REQUEST) {
+        ServletUtil.writeResponse(out,status);
+        return;
+      }
+      computeResultSet(authorizationParser);
+      generateXml();
+    } finally {
+      NDC.pop();
     }
-    computeResultSet(authorizationParser);
-    generateXml();
-    return;
   }
 
   private void generateXml() {
@@ -100,20 +105,30 @@ public class AuthorizationHandler {
 
   private void computeResultSet(AuthorizationParser authorizationParser) {
     for (AuthenticationIdentity identity: authorizationParser.getIdentities()) {
-      ConnectorQueries queries = 
-          authorizationParser.getConnectorQueriesForIdentity(identity);
-      runManagerQueries(identity, queries);
+      NDC.pushAppend(identity.getUsername());
+      try {
+        ConnectorQueries queries =
+            authorizationParser.getConnectorQueriesForIdentity(identity);
+        runManagerQueries(identity, queries);
+      } finally {
+        NDC.pop();
+      }
     }
   }
 
   private void runManagerQueries(AuthenticationIdentity identity,
       ConnectorQueries urlsByConnector) {
     for (String connectorName : urlsByConnector.getConnectors()) {
-      QueryUrls urlsByDocid = urlsByConnector.getQueryUrls(connectorName);
-      List<String> docidList = new ArrayList<String>(urlsByDocid.getDocids());
-      Set<String> answerSet =
-          manager.authorizeDocids(connectorName, docidList, identity);
-      accumulateQueryResults(answerSet, urlsByDocid);
+      NDC.pushAppend(connectorName);
+      try {
+        QueryUrls urlsByDocid = urlsByConnector.getQueryUrls(connectorName);
+        List<String> docidList = new ArrayList<String>(urlsByDocid.getDocids());
+        Set<String> answerSet =
+            manager.authorizeDocids(connectorName, docidList, identity);
+        accumulateQueryResults(answerSet, urlsByDocid);
+      } finally {
+        NDC.pop();
+      }
     }
   }
 

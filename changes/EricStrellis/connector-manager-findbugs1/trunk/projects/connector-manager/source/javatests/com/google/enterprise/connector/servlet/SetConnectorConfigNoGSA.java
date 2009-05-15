@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -53,7 +54,7 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
     String language = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
     res.setContentType(ServletUtil.MIMETYPE_HTML);
     PrintWriter out = res.getWriter();
-
+    NDC.push("Config " + connectorTypeName);
     try {
       ServletContext servletContext = this.getServletContext();
       Manager manager = Context.getInstance(servletContext).getManager();
@@ -97,6 +98,7 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
       out.println("</TABLE></FORM></BODY></HTML>");
     } finally {
       out.close();
+      NDC.clear();
     }
   }
 
@@ -113,38 +115,45 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
     String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
     StringWriter writer = new StringWriter();
+    NDC.push("Config " + connectorName);
     try {
-      writer.write("<" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">");
-      writer.write("  <" + ServletUtil.QUERY_PARAM_LANG + ">"
-          + lang + "</" + ServletUtil.QUERY_PARAM_LANG + ">\n");
-      writer.write("  <" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">"
-          + connectorName + "</" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">");
-      writer.write("  <" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">"
-          + connectorType + "</" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">");
-      writer.write("  <" + ServletUtil.XMLTAG_PARAMETERS
-          + " name=\"name1\" value=\"" + req.getParameter("name1") + "\"/>");
-      writer.write("  <" + ServletUtil.XMLTAG_PARAMETERS
-          + " name=\"name2\" value=\"" + req.getParameter("name2") + "\"/>");
-      writer.write("  <" + ServletUtil.XMLTAG_PARAMETERS
-          + " name=\"name3\" value=\"" + req.getParameter("name3") + "\"/>");
-      writer.write("</" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">");
-    } finally {
-      writer.close();
-    }
+      try {
+        writer.write("<" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">");
+        writer.write("  <" + ServletUtil.QUERY_PARAM_LANG + ">"
+            + lang + "</" + ServletUtil.QUERY_PARAM_LANG + ">\n");
+        writer.write("  <" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">"
+            + connectorName + "</" + ServletUtil.XMLTAG_CONNECTOR_NAME + ">");
+        writer.write("  <" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">"
+            + connectorType + "</" + ServletUtil.XMLTAG_CONNECTOR_TYPE + ">");
+        writer.write("  <" + ServletUtil.XMLTAG_PARAMETERS
+            + " name=\"name1\" value=\"" + req.getParameter("name1") + "\"/>");
+        writer.write("  <" + ServletUtil.XMLTAG_PARAMETERS
+            + " name=\"name2\" value=\"" + req.getParameter("name2") + "\"/>");
+        writer.write("  <" + ServletUtil.XMLTAG_PARAMETERS
+            + " name=\"name3\" value=\"" + req.getParameter("name3") + "\"/>");
+        writer.write("</" + ServletUtil.XMLTAG_CONNECTOR_CONFIG + ">");
+      } finally {
+        writer.close();
+      }
 
-    res.setContentType(ServletUtil.MIMETYPE_XML);
-    PrintWriter out = res.getWriter();
-    try {
-      ServletContext servletContext = this.getServletContext();
-      Manager manager = Context.getInstance(servletContext).getManager();
-      SetConnectorConfigHandler handler = new SetConnectorConfigHandler(
-          writer.getBuffer().toString(), manager);
-      ConfigureResponse configRes = handler.getConfigRes();
-      ConnectorMessageCode status = (configRes == null) ? handler.getStatus() :
-          new ConnectorMessageCode(ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
-      ConnectorManagerGetServlet.writeConfigureResponse(out, status, configRes);
+      res.setContentType(ServletUtil.MIMETYPE_XML);
+      PrintWriter out = res.getWriter();
+      try {
+        ServletContext servletContext = this.getServletContext();
+        Manager manager = Context.getInstance(servletContext).getManager();
+        SetConnectorConfigHandler handler = new SetConnectorConfigHandler(
+            writer.getBuffer().toString(), manager);
+        ConfigureResponse configRes = handler.getConfigRes();
+        ConnectorMessageCode status = (configRes == null)? handler.getStatus() :
+            new ConnectorMessageCode(
+                ConnectorMessageCode.INVALID_CONNECTOR_CONFIG);
+        ConnectorManagerGetServlet.writeConfigureResponse(out, status,
+                                                          configRes);
+      } finally {
+        out.close();
+      }
     } finally {
-      out.close();
+      NDC.clear();
     }
   }
 }

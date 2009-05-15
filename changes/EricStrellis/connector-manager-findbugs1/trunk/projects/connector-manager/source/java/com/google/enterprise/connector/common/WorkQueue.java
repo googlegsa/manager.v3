@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.common;
 
+import com.google.enterprise.connector.logging.NDC;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -49,8 +51,10 @@ public class WorkQueue {
   private boolean isInitialized;  // true after one-time init done
   private boolean shutdown;       // true when shutdown is initiated
 
-  private final LinkedList<WorkQueueItem> workQueue;    // Queue used for added work.
-  private final Map<WorkQueueItem, Long> absTimeoutMap; // Map of expected timeouts.
+  private final LinkedList<WorkQueueItem> workQueue; // Queue used for added
+                                                     // work.
+  private final Map<WorkQueueItem, Long> absTimeoutMap; // Map of expected
+                                                        // timeouts.
 
   private final int numThreads;
   // Access is protected by "threads" instance lock.
@@ -189,7 +193,8 @@ public class WorkQueue {
         lifeThread.shutdown();
         lifeThread.join(timeoutInMillis);
       } catch (InterruptedException e) {
-        LOGGER.log(Level.WARNING, "Interrupted Exception while waiting for lifeThread: ", e);
+        LOGGER.log(Level.WARNING,
+            "Interrupted Exception while waiting for lifeThread: ", e);
       }
       if (interrupterThread != null) {
         interrupterThread.shutdown();
@@ -203,14 +208,15 @@ public class WorkQueue {
         }
       }
     }
-    //
-    //don't hold lock while sleeping.
+
+    // Don't hold lock while sleeping.
     long endTime = System.currentTimeMillis() + timeoutInMillis;
     while (isAnyThreadWorking() && System.currentTimeMillis() < endTime) {
       try {
         Thread.sleep(200);
       } catch (InterruptedException e) {
-        LOGGER.log(Level.WARNING, "Interrupted Exception while waiting for worker threads: ", e);
+        LOGGER.log(Level.WARNING,
+            "Interrupted Exception while waiting for worker threads: ", e);
       }
     }
     synchronized (this) {
@@ -409,6 +415,7 @@ public class WorkQueue {
 
     @Override
     public void run() {
+      NDC.push("Traverse");
       long nextCheckTimeout = killThreadTimeout;
       while (true) {
         try {
@@ -426,6 +433,7 @@ public class WorkQueue {
         }
         nextCheckTimeout = interruptAllTimedOutItems();
       }
+      NDC.remove();
     }
   }
 
@@ -450,6 +458,7 @@ public class WorkQueue {
 
     @Override
     public void run() {
+      NDC.push("Traverse");
       while (true) {
         synchronized (this) {
           if (shutdownNow) {
@@ -480,6 +489,7 @@ public class WorkQueue {
           LOGGER.log(Level.WARNING, "Lifethread interrupted: ", e);
         }
       }
+      NDC.remove();
     }
   }
 }
