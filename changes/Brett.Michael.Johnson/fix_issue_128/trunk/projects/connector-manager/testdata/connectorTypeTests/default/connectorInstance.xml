@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+  <bean id="DefaultEncryptedPropertyPlaceholderConfigurator"
+        class="com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer">
+    <property name="properties">
+      <props>
+        <prop key="Color">red</prop>
+        <prop key="RepositoryFile">MockRepositoryEventLog1.txt</prop>
+        <prop key="Username">default_user</prop>
+      </props>
+    </property>
+  </bean>
+  <bean id="SimpleTestConnectorInstance"
+        class="com.google.enterprise.connector.instantiator.SimpleTestConnector">
+    <property name="color" value="${Color}"/>
+    <property name="repositoryFileName" value="${RepositoryFile}"/>
+    <property name="username" value="${Username}"/>
+    <property name="workDirName" value="${googleWorkDir}"/>
+  </bean>
+</beans>
