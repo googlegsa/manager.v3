@@ -18,7 +18,6 @@ package com.google.enterprise.connector.common;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.spec.KeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.logging.Logger;
@@ -154,20 +153,22 @@ public class SecurePasswordHasher {
       return new Fingerprint(parts[0], parts[1], parts[2], iterations);
     }
 
+    @Override
     public String toString() {
       return hash + ":" + seed + ":" + algorithm + ":" + iterations;
     }
 
+    @Override
     public int hashCode() {
       return toString().hashCode();
     }
 
+    @Override
     public boolean equals(Object obj) {
       if (!(obj instanceof Fingerprint)) {
         return false;
       }
-      Fingerprint hash = (Fingerprint) obj;
-      return toString().equals(obj.toString());
+      return toString().equals(((Fingerprint) obj).toString());
     }
   }
 
