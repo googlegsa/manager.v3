@@ -187,7 +187,7 @@ public abstract class Value {
       new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
   private static final SimpleDateFormat ISO8601_DATE_FORMAT_DATE =
       new SimpleDateFormat("yyyy-MM-dd");
-  public static final SimpleDateFormat RFC822_DATE_FORMAT =
+  private static final SimpleDateFormat RFC822_DATE_FORMAT =
       new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss z");
 
   static {

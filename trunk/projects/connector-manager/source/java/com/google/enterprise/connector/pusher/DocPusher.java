@@ -72,7 +72,7 @@ public class DocPusher implements Pusher {
    * being constructed.  Once sufficient information has been appended to this
    * buffer its contents will be logged and it will be nulled.
    */
-  private ThreadLocal<StringBuffer> feedLogRecord =
+  private final ThreadLocal<StringBuffer> feedLogRecord =
       new ThreadLocal<StringBuffer>();
   private static Set<String> propertySkipSet;
 
@@ -115,7 +115,7 @@ public class DocPusher implements Pusher {
 
   private static final String CONNECTOR_AUTHMETHOD = "httpbasic";
 
-  private FeedConnection feedConnection;
+  private final FeedConnection feedConnection;
   private String gsaResponse;
   private boolean feedWarning;
 
@@ -227,7 +227,7 @@ public class DocPusher implements Pusher {
     if (metadataAllowed) {
       xmlWrapMetadata(prefix, document);
     }
-    if (feedType != XML_FEED_METADATA_AND_URL  && contentAllowed) {
+    if (!feedType.equals(XML_FEED_METADATA_AND_URL)  && contentAllowed) {
       prefix.append("<");
       prefix.append(XML_CONTENT);
       prefix.append(" ");
@@ -547,7 +547,7 @@ public class DocPusher implements Pusher {
 
     // build record
     String searchurl = null;
-    if (feedType == XML_FEED_METADATA_AND_URL) {
+    if (feedType.equals(XML_FEED_METADATA_AND_URL)) {
       searchurl = getOptionalString(document, SpiConstants.PROPNAME_SEARCHURL);
       // check that this looks like a URL
       try {
@@ -567,7 +567,7 @@ public class DocPusher implements Pusher {
     }
 
     InputStream encodedContentStream = null;
-    if (feedType != XML_FEED_METADATA_AND_URL) {
+    if (!feedType.equals(XML_FEED_METADATA_AND_URL)) {
       InputStream contentStream = getNonNullContentStream(
           getOptionalStream(document, SpiConstants.PROPNAME_CONTENT),
           getOptionalString(document, SpiConstants.PROPNAME_TITLE));

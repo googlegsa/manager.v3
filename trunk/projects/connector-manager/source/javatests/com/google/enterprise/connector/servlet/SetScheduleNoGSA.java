@@ -77,7 +77,7 @@ public class SetScheduleNoGSA extends HttpServlet {
     if (forTime.equalsIgnoreCase("some")) {
       timeIntervals = req.getParameter(ServletUtil.XMLTAG_TIME_INTERVALS);
     } else {
-      timeIntervals = new String("0-24");
+      timeIntervals = "0-24";
     }
     StringWriter writer = new StringWriter();
     writer.write("<" + ServletUtil.XMLTAG_CONNECTOR_SCHEDULES + ">\n");

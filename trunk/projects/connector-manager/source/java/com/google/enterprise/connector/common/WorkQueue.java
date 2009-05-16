@@ -51,12 +51,14 @@ public class WorkQueue {
   private boolean isInitialized;  // true after one-time init done
   private boolean shutdown;       // true when shutdown is initiated
 
-  private LinkedList<WorkQueueItem> workQueue;    // Queue used for added work.
-  private Map<WorkQueueItem, Long> absTimeoutMap; // Map of expected timeouts.
+  private final LinkedList<WorkQueueItem> workQueue; // Queue used for added
+                                                     // work.
+  private final Map<WorkQueueItem, Long> absTimeoutMap; // Map of expected
+                                                        // timeouts.
 
-  private int numThreads;
+  private final int numThreads;
   // Access is protected by "threads" instance lock.
-  private Set<WorkQueueThread> threads;
+  private final Set<WorkQueueThread> threads;
 
   private InterrupterThread interrupterThread; // Looks for long running threads.
   private LifeThread lifeThread;               // Looks for hung threads.
@@ -179,31 +181,35 @@ public class WorkQueue {
    * @param timeoutInMillis wait at least this timeout for threads to complete
    *        before just returning
    */
-  public synchronized void shutdown(boolean interrupt, long timeoutInMillis) {
-    if (!isInitialized || shutdown) {
-      return;
-    }
-    shutdown = true;
-    workQueue.clear();
+  public void shutdown(boolean interrupt, long timeoutInMillis) {
+    synchronized (this) {
+      if (!isInitialized || shutdown) {
+        return;
+      }
+      shutdown = true;
+      workQueue.clear();
 
-    try {
-      lifeThread.shutdown();
-      lifeThread.join(timeoutInMillis);
-    } catch (InterruptedException e) {
-      LOGGER.log(Level.WARNING,
-          "Interrupted Exception while waiting for lifeThread: ", e);
-    }
-    if (interrupterThread != null) {
-      interrupterThread.shutdown();
-    }
+      try {
+        lifeThread.shutdown();
+        lifeThread.join(timeoutInMillis);
+      } catch (InterruptedException e) {
+        LOGGER.log(Level.WARNING,
+            "Interrupted Exception while waiting for lifeThread: ", e);
+      }
+      if (interrupterThread != null) {
+        interrupterThread.shutdown();
+      }
 
-    if (interrupt) {
-      synchronized (threads) {
-        for (WorkQueueThread thread : threads) {
-          thread.interruptAndKill();
+      if (interrupt) {
+        synchronized (threads) {
+          for (WorkQueueThread thread : threads) {
+            thread.interruptAndKill();
+          }
         }
       }
     }
+
+    // Don't hold lock while sleeping.
     long endTime = System.currentTimeMillis() + timeoutInMillis;
     while (isAnyThreadWorking() && System.currentTimeMillis() < endTime) {
       try {
@@ -213,8 +219,9 @@ public class WorkQueue {
             "Interrupted Exception while waiting for worker threads: ", e);
       }
     }
-
-    isInitialized = false;
+    synchronized (this) {
+      isInitialized = false;
+    }
   }
 
   /**
@@ -393,12 +400,15 @@ public class WorkQueue {
    */
   private class InterrupterThread extends Thread {
 
+    private boolean shutdownNow = false;
+
     public InterrupterThread(String name) {
       super(name);
     }
 
     public void shutdown() {
       synchronized (this) {
+        shutdownNow = true;
         notifyAll();
       }
     }
@@ -407,10 +417,14 @@ public class WorkQueue {
     public void run() {
       NDC.push("Traverse");
       long nextCheckTimeout = killThreadTimeout;
-      while (!shutdown) {
+      while (true) {
         try {
           synchronized (this) {
-            wait(nextCheckTimeout);
+            if (shutdownNow) {
+              break;
+            } else {
+              wait(nextCheckTimeout);
+            }
           }
         } catch (InterruptedException e) {
           // Thread was signaled to determine whether there are new work
@@ -429,6 +443,7 @@ public class WorkQueue {
   private class LifeThread extends Thread {
     // Timeout in milliseconds.
     private static final int LIFE_THREAD_WAIT_TIMEOUT = 60 * 1000;
+    private boolean shutdownNow = false;
 
     public LifeThread(String name) {
       super(name);
@@ -436,6 +451,7 @@ public class WorkQueue {
 
     public void shutdown() {
       synchronized (this) {
+        shutdownNow = true;
         notifyAll();
       }
     }
@@ -443,7 +459,12 @@ public class WorkQueue {
     @Override
     public void run() {
       NDC.push("Traverse");
-      while (!shutdown) {
+      while (true) {
+        synchronized (this) {
+          if (shutdownNow) {
+            break;
+          }
+        }
         try {
           Set<WorkQueueThread> newThreads = new HashSet<WorkQueueThread>();
           Set<WorkQueueThread> deadThreads = new HashSet<WorkQueueThread>();
@@ -460,7 +481,7 @@ public class WorkQueue {
             threads.addAll(newThreads);
           }
           synchronized (this) {
-            if (!shutdown) {
+            if (!shutdownNow) {
               wait(LIFE_THREAD_WAIT_TIMEOUT);
             }
           }

@@ -107,11 +107,11 @@ public class TypeMap extends TreeMap<String, TypeInfo> {
     }
 
     typesDirectory = new File(baseDirectory, "connectors");
-    typesDirectory.mkdirs();
-
     if (!typesDirectory.exists()) {
-      throw new IllegalStateException("Can't create connector types directory "
-          + typesDirectory.getPath());
+      if (!typesDirectory.mkdirs()) {
+        throw new IllegalStateException("Can't create connector types directory "
+            + typesDirectory.getPath());
+      }
     }
 
     if (!typesDirectory.isDirectory()) {
@@ -130,13 +130,14 @@ public class TypeMap extends TreeMap<String, TypeInfo> {
       TypeInfo typeInfo = getTypeInfo(typeName);
       File connectorTypeDir = new File(typesDirectory, typeName);
       if (!connectorTypeDir.exists()) {
-        connectorTypeDir.mkdirs();
+        if(!connectorTypeDir.mkdirs()) {
+          LOGGER.warning("Type " + typeName
+              + " has a valid definition but no type directory - skipping it");
+          iter.remove();
+          return;
+        }
       }
-      if (!typesDirectory.exists()) {
-        LOGGER.warning("Type " + typeName
-            + " has a valid definition but no type directory - skipping it");
-        iter.remove();
-      } else if (!typesDirectory.isDirectory()) {
+      if (!typesDirectory.isDirectory()) {
         LOGGER.warning("Unexpected file " + connectorTypeDir.getPath()
             + " blocks creation of instances directory for type " + typeName
             + " - skipping it");

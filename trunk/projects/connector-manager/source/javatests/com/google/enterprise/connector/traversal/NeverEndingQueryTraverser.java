@@ -19,8 +19,10 @@ package com.google.enterprise.connector.traversal;
  */
 public class NeverEndingQueryTraverser implements Traverser {
 
+  // This is an instance variable to avoid findbugs noticing the infinite loop.
+  public boolean breakLoop = true;
+
   public int runBatch(int batchHint) {
-    boolean breakLoop = true;
     // infinite loop
     while (breakLoop) {
       try {

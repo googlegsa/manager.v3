@@ -77,7 +77,7 @@ public class SpringInstantiator implements Instantiator {
    * @param scheduler a Scheduler.
    */
   /* Setter Injector */
-  public void setScheduler(Scheduler scheduler) {
+  public synchronized void setScheduler(Scheduler scheduler) {
     this.scheduler = scheduler;
   }
 
