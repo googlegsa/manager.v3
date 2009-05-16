@@ -65,11 +65,6 @@ public class DomainCredentials extends AbstractAuthnIdentity {
   }
 
   /* @Override */
-  public String getAuthority() {
-    return configInfo.getAuthority();
-  }
-
-  /* @Override */
   public String getUsername() {
     return cg.getUsername();
   }
