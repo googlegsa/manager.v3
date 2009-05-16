@@ -238,8 +238,7 @@
     <tstamp />
     <war warfile="${prod.warfile}" webxml="${prod.webdocs}/web.xml">
       <lib dir="${jar.dir}" includes="*.jar" excludes="security-tests.jar" />
-      <lib file="${connector-dist.dir}/connector-spi.jar" />
-      <lib file="${connector-dist.dir}/connector.jar" />
+      <lib dir="${connector-dist.dir}" includes="*.jar" />
       <lib file="${connector-thirdparty.dir}/prod/spring.jar" />
       <lib dir="${thirdparty.prod.jars}" includes="*.jar" />
       <webinf dir="${prod.webdocs}" includes="applicationContext.xml,saml-metadata.xml,AuthSites.conf" />
@@ -258,8 +257,7 @@
     <tstamp />
     <war warfile="${tests.warfile}" webxml="${tests.webdocs}/web.xml">
       <lib dir="${jar.dir}" includes="*.jar" />
-      <lib file="${connector-dist.dir}/connector-spi.jar" />
-      <lib file="${connector-dist.dir}/connector.jar" />
+      <lib dir="${connector-dist.dir}" includes="*.jar" />
       <lib file="${connector-thirdparty.dir}/prod/spring.jar" />
       <lib dir="${thirdparty.prod.jars}" includes="*.jar" />
       <webinf dir="${tests.webdocs}" includes="applicationContext.xml,saml-metadata.xml,AuthSites.conf" />
