@@ -133,10 +133,10 @@ public class SamlSsoTest extends SecurityManagerTestCase {
     MockIdentityConfig config = new MockIdentityConfig();
     List<AuthnDomainGroup> groups = config.getConfig();
     AuthnDomainGroup g1 = new AuthnDomainGroup("group1");
-    new AuthnDomain("domain1", AuthnMechanism.FORMS_AUTH, FORM1_URL, g1);
+    new AuthnDomain("domain1", AuthnMechanism.FORMS_AUTH, FORM1_URL, "authority1", g1);
     groups.add(g1);
     AuthnDomainGroup g2 = new AuthnDomainGroup("group2");
-    new AuthnDomain("domain2", AuthnMechanism.FORMS_AUTH, FORM2_URL, g2);
+    new AuthnDomain("domain2", AuthnMechanism.FORMS_AUTH, FORM2_URL, "authority2", g2);
     groups.add(g2);
     ConnectorManager.class.cast(Context.getInstance().getManager())
         .getBackEnd().setIdentityConfig(config);

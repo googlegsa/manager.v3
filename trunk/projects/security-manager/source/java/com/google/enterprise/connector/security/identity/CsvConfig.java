@@ -90,9 +90,12 @@ public class CsvConfig implements IdentityConfig {
       if (!adgMap.containsKey(adgName)) {
         adgMap.put(adgName, new AuthnDomainGroup(adgName));
       }
-      new AuthnDomain(nextLine[1] + nextLine[2], authMech,
-          "".equals(nextLine[4]) ? nextLine[1] + nextLine[2] : nextLine[4],
-          adgMap.get(adgName));
+      String url = nextLine[1] + nextLine[2];
+      String sampleUrl = nextLine[4];
+      if (sampleUrl.isEmpty()) {
+        sampleUrl = url;
+      }
+      new AuthnDomain(url, authMech, sampleUrl, sampleUrl, adgMap.get(adgName));
     }
 
     return new ArrayList<AuthnDomainGroup>(adgMap.values());
