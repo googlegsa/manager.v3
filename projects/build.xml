@@ -2,7 +2,7 @@
 <project name="google-enterprise-connector-manager" default="everything" basedir=".">
 
   <!-- ========================= PROPERTIES ============================= -->
-        <property file="version.properties"/>
+  <property file="version.properties"/>
 
   <!-- Define Directories. -->
   <property name="connector-manager.dir" value="connector-manager" />
@@ -51,6 +51,12 @@
 
   <target name="build-all" depends="test-connectorA,test-connectorB,connector-manager"/>
 
+  <target name="spi-javadoc">
+    <ant dir="${connector-manager.dir}" target="spi-javadoc">
+      <property name="version" value="${version}" />
+    </ant>
+  </target>    
+
   <target name="make-install-dir">
     <mkdir dir="${install.dir}" />
   </target>
@@ -72,7 +78,7 @@
     </ant>
   </target>
 
-  <target name="download-connector-manager" depends="connector-manager-war-prod,make-downloads-dir">
+  <target name="download-connector-manager" depends="connector-manager-war-prod,spi-javadoc,make-downloads-dir">
     <copy file="${trunk.dir}/COPYING" tofile="${trunk.dir}/LICENSE"/>
     <tar destfile="${downloads.dir}/connector-manager-${version}.tar">
       <tarfileset dir="${connector-manager.dir}/dist/connector-manager"
