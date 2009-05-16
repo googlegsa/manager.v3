@@ -11,22 +11,64 @@ list of known issues and workarounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
-Release 2 Unstable Development
-===========================
+Release 2.0.0 Unstable Development
+==================================
 
 Introduction
 ------------
+This is an upgrade release with some enhancements.  Users of previous
+releases are encouraged to upgrade.  It also contains some new features.
+Users of previous releases should check the "Version Compatibility" section
+below for instructions on how to use existing data with this new release.
 
 Summary of Changes
 ------------------
-  * Fix Issue 131: "Domain" gets removed when CM creates AuthenticationIdentity
-                   for the Connector.  This has compatibility implications for
-                   connector writers.  See the Compatibility section below.
+  * Issues 79, 127, 134, 135: Connector Traversal Schedule improvements
+       that allow traversals to be disabled, paused, resumed, or to be empty.
+
+  * Issue 94: Enhanced documentation with regards to the meaning of
+       a null return value from DocumentList.checkpoint().
+
+  * Issue 107: Connector Instance name added to log messages makes it much
+       easier to troubleshoot problems with multiple Connector instances.
+       This has deployment configuration issues in manual deployments and
+       upgrading existing deployments.  See the Compatibility section below.
+
+  * Issues 111, 119, 142: Infrastructure upgrades to Java 5 language features,
+       faster Base64 encoding in feeds, and deployment using Apache
+       Tomcat 6.0.18 and Spring Framework 2.5.6.
+
+  * Issue 114: Changes to connectorInstance.xml make it easier to add new
+       configuration parameters and to change the default values of existing
+       ones in the future, even if a customer has a customized configuration..
+
+  * Issue 122: The Connector's name is now passed to the connector via its
+       configuration properties so that connectors may know their own name.
+
+  * Issues 126, 145: Enhanced reliability and error handling in the
+       AuthenticationManager and AuthorizationManager.
+
+  * Issue 128: Invalid characters are now either removed or properly quoted
+       in the Feed XML attribute values.
+
+  * Issues 131, 148: "Domain" gets removed when the Connector Manager creates ***** change syntax
+       an AuthenticationIdentity for the Connector. This has compatibility
+       implications for connector writers.  See Compatibility section below.
+
+  * Issues 133, 152: Fixed problems that would corrupt the Connector's
+       configuration or leave a partially constructed connector directory
+       on disk if an error occurred when creating a new Connector instance.
+
+  * Issues 146, 149: The Connector Manager servlet now has a simple main page
+       it may be useful for connectivity test, rather than returning a 404.
+
 
 Version Compatibility
 ---------------------
-Connector authors should note the Issue 131 change to the AuthenticationIdentity
-Interface, adding the Domain element and getDomain() method.  Older versions
+Connector authors should note the Issues 131 and 148 changes to the
+AuthenticationIdentity Interface, adding the Domain element and getDomain()
+method.  The AuthenticationIdentity supplied to the Connector's
+AuthenticationManager and the AuthorizationManager.  Older versions
 of the Google Search Appliance do not supply the domain, so connectors often
 required a configuration setting that specified the Windows domain used.
 Connectors that implemented this work-around should continue to do so for the
@@ -34,6 +76,26 @@ indefinite future.  However, if the connector received a domain from the GSA,
 that domain should be used in deference to any locally configured domain.
 For additional details, please see:
 http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=131
+http://code.google.com/p/google-enterprise-connector-manager/issues/detail?id=148
+
+The Issue 107 changes provide enhanced logging capabilities that make it
+easier to troubleshoot installations with multiple Connector instances.
+This feature requires the configuration of a custom log formatter.
+The Google Connectors Installer will automatically configure this properly.
+However manual installations will require two small changes to enable this
+feature:
+ - In $TOMCAT_HOME/webapps/connector-manager/WEB-INF/classes/logging.properties,
+   change the FileHandler.formatter to our custom formatter:
+   java.util.logging.FileHandler.formatter=com.google.enterprise.connector.logging.SimpleFormatter
+
+ - If $TOMCAT_HOME/webapps/connector-manager/WEB-INF/classes/logging.properties
+   specifies using the java.util.logging.FileHandler, then you must add the
+   new connector-logging.jar file to the system classpath that Tomcat uses at
+   startup.  Tomcat ignores the CLASSPATH environment variable and builds a
+   custom classpath using the $TOMCAT_HOME/bin/setclasspath.sh or
+   $TOMCAT_HOME/bin/setclasspath.bat scripts.  Modify these scripts, adding
+   connector-logging.jar to the CLASSPATH constructed: For instance:
+   CLASSPATH="$CLASSPATH":"$BASEDIR"/webapps/connector-manager/WEB-INF/lib/connector-logging.jar
 
 
 Release 1.3.2, Apr 07, 2009
