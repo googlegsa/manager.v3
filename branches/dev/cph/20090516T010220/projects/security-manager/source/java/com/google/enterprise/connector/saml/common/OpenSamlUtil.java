@@ -84,7 +84,6 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
-import javax.servlet.http.HttpSession;
 import javax.xml.namespace.QName;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
@@ -101,9 +100,6 @@ public final class OpenSamlUtil {
    * The human-readable name of the service provider.
    */
   public static final String GOOGLE_PROVIDER_NAME = "Google Search Appliance";
-
-  /** Name of the session attribute that holds a SAML message context. */
-  private static final String SAML_CONTEXT_NAME = "samlMessageContext";
 
   static {
     try {
@@ -939,38 +935,6 @@ public final class OpenSamlUtil {
   public static <TI extends SAMLObject, TO extends SAMLObject, TN extends SAMLObject>
         SAMLMessageContext<TI, TO, TN> makeSamlMessageContext() {
     return new BasicSAMLMessageContext<TI, TO, TN>();
-  }
-
-  /**
-   * Create a new SAML message context and associate it with a session.
-   *
-   * @param session A session object.
-   * @return A new message context.
-   */
-  public static <TI extends SAMLObject, TO extends SAMLObject, TN extends SAMLObject>
-        SAMLMessageContext<TI, TO, TN> newSamlMessageContext(HttpSession session) {
-    SAMLMessageContext<TI, TO, TN> context = makeSamlMessageContext();
-    session.setAttribute(SAML_CONTEXT_NAME, context);
-    return context;
-  }
-
-  /**
-   * Fetch a SAML message context from a session.
-   *
-   * @param session A session object.
-   * @return A new message context.
-   * @throws IllegalStateException if there's no context in the session.
-   */
-  public static <TI extends SAMLObject, TO extends SAMLObject, TN extends SAMLObject>
-        SAMLMessageContext<TI, TO, TN> existingSamlMessageContext(HttpSession session) {
-    // Restore context and signal error if none.
-    @SuppressWarnings("unchecked")
-    SAMLMessageContext<TI, TO, TN> context =
-        (SAMLMessageContext<TI, TO, TN>) session.getAttribute(SAML_CONTEXT_NAME);
-    if (context == null) {
-      throw new IllegalStateException("Unable to get SAML message context.");
-    }
-    return context;
   }
 
   /**
