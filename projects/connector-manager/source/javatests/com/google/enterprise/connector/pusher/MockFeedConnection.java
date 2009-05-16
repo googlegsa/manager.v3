@@ -28,20 +28,15 @@ import java.io.IOException;
  */
 public class MockFeedConnection implements FeedConnection {
 
-  StringBuffer buf = null;
+  private final StringBuffer buf = new StringBuffer(2080);
 
   public String getFeed() {
-    String result;
-    if (buf == null) {
-      result = "";
-    }
-    result = buf.toString();
-    buf = new StringBuffer(2048);
+    String result = buf.toString();
+    buf.setLength(0);
     return result;
   }
 
   public MockFeedConnection() {
-    buf = new StringBuffer(2048);
   }
 
   public String sendData(String dataSource, FeedData feedData)

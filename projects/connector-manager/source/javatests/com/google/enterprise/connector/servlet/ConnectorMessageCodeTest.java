@@ -25,10 +25,9 @@ public class ConnectorMessageCodeTest extends TestCase {
   private static final String MESSAGE_STRING = "foo exists";
   private static final String MESSAGE_STRING_PAR = "Node %s is empty";
   private static final String NEW_MESSAGE = "This is a new message";
-  private static final Object[] PARAMS1 = {new String("foo")};
-  private static final Object[] PARAMS2 =
-      {new String("foo"), new String("bar")};
-  private static final Object[] NEW_PARAMS = {new String("new foo")};
+  private static final Object[] PARAMS1 = {"foo"};
+  private static final Object[] PARAMS2 = {"foo", "bar"};
+  private static final Object[] NEW_PARAMS = {"new foo"};
 
   private ConnectorMessageCode defaultCode;
   private ConnectorMessageCode successCode;

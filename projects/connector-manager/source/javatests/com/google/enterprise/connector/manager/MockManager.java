@@ -198,7 +198,7 @@ public class MockManager implements Manager {
   /* @Override */
   public void removeConnector(String connectorName)
       throws ConnectorNotFoundException, PersistentStoreException {
-    if (connectorName == "connector2") {
+    if ("connector2".equals(connectorName)) {
       throw new ConnectorNotFoundException();
     }
     LOGGER.info("Removing connector: " + connectorName);

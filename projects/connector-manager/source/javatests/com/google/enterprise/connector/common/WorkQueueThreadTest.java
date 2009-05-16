@@ -76,7 +76,7 @@ public class WorkQueueThreadTest extends TestCase {
   }
 
   private static class TestItem extends WorkQueueItem {
-    private String str;
+    private final String str;
     private boolean isFinished;
     private boolean workIsStarted;
     private boolean workIsDone;
@@ -93,8 +93,8 @@ public class WorkQueueThreadTest extends TestCase {
     }
 
     public void finishWork() {
-      this.isFinished = true;
       synchronized (this) {
+        this.isFinished = true;
         notifyAll();
       }
     }

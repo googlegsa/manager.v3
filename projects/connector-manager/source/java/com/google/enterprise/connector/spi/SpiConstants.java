@@ -247,7 +247,7 @@ public class SpiConstants {
 
     private static final ActionType[] PRIVATE_VALUES = {ADD, DELETE};
 
-    private String tag;
+    private final String tag;
 
     ActionType(String m) {
         tag = m;
@@ -278,6 +278,32 @@ public class SpiConstants {
     public int compareTo(ActionType actionType) {
         return ordinal - actionType.ordinal;
     }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ordinal;
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null) {
+        return false;
+      }
+      if (getClass() != obj.getClass()) {
+        return false;
+      }
+      ActionType other = (ActionType) obj;
+      if (ordinal != other.ordinal) {
+        return false;
+      }
+      return true;
+    }
   }
 
   /**
@@ -297,7 +323,7 @@ public class SpiConstants {
     private static final RoleType[] PRIVATE_VALUES =
         {PEEKER, READER, WRITER, OWNER};
 
-    private String tag;
+    private final String tag;
 
     RoleType(String m) {
         tag = m;
@@ -327,6 +353,32 @@ public class SpiConstants {
 
     public int compareTo(RoleType roleType) {
         return ordinal - roleType.ordinal;
+    }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ordinal;
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null) {
+        return false;
+      }
+      if (getClass() != obj.getClass()) {
+        return false;
+      }
+      RoleType other = (RoleType) obj;
+      if (ordinal != other.ordinal) {
+        return false;
+      }
+      return true;
     }
   }
 }

@@ -362,8 +362,8 @@ public class DocPusherTest extends TestCase {
    */
   private Document createSimpleDocument(Map<String, ?> props) {
     Map<String, List<Value>> spiValues = new HashMap<String, List<Value>>();
-    for (String key : props.keySet()) {
-      Object obj = props.get(key);
+    for (Map.Entry<String,  ?>entry : props.entrySet()) {
+      Object obj = entry.getValue();
       Value val = null;
       if (obj instanceof String) {
         val = Value.getStringValue((String) obj);
@@ -376,7 +376,7 @@ public class DocPusherTest extends TestCase {
       }
       List<Value> values = new ArrayList<Value>();
       values.add(val);
-      spiValues.put(key, values);
+      spiValues.put(entry.getKey(), values);
     }
     return new SimpleDocument(spiValues);
   }
@@ -813,10 +813,17 @@ public class DocPusherTest extends TestCase {
    * Test separate feed logging.
    */
   private static final String TEST_LOG_FILE = "testdata/FeedLogFile";
-  public void testFeedLogging() throws Exception {
-    // Delete the Log file it it exists.
-    (new File(TEST_LOG_FILE)).delete();
 
+  private void deleteOldFile(String path) {
+    // Delete the Log file it it exists.
+    File logFile = new File(path);
+    if (logFile.exists() && !logFile.delete()) {
+      fail();
+    }
+  }
+
+  public void testFeedLogging() throws Exception {
+    deleteOldFile(TEST_LOG_FILE);
     try {
       // Setup logging on the DocPusher class.
       FileHandler fh = new FileHandler(TEST_LOG_FILE, 10000, 1);
@@ -867,61 +874,64 @@ public class DocPusherTest extends TestCase {
       resultXML = mockFeedConnection.getFeed();
       assertFeedInLog(resultXML, TEST_LOG_FILE);
     } finally {
-      // Clean up the log file.
-      (new File(TEST_LOG_FILE)).delete();
+      deleteOldFile(TEST_LOG_FILE);
     }
   }
 
   private void assertFeedInLog(String resultXML, String logFileName)
       throws IOException {
     BufferedReader logIn = new BufferedReader(new FileReader(logFileName));
-    BufferedReader xmlIn = new BufferedReader(new StringReader(resultXML));
+    try {
+      BufferedReader xmlIn = new BufferedReader(new StringReader(resultXML));
 
-    xmlIn.mark(resultXML.length());
-    String xmlLine = xmlIn.readLine();
-    String logLine;
-    boolean isMatch = false;
-    boolean inContent = false;
-    while ((logLine = logIn.readLine()) != null) {
-      if (logLine.indexOf(xmlLine) >= 0) {
-        assertEquals(xmlLine, logLine.substring(7));
-        // We match the first line - start comparing record
-        isMatch = true;
-        while ((xmlLine = xmlIn.readLine()) != null) {
-          logLine = logIn.readLine();
-          if (inContent) {
-            inContent = false;
-            if (!"...content...".equals(logLine)) {
-              isMatch = false;
-              break;
-            }
-          } else {
-            if ("...content...".equals(logLine)) {
-              // Content outside of <content></content> element?
-              isMatch = false;
-              break;
-            }
-            if (xmlLine.indexOf("<content") >= 0) {
-              inContent = true;
-            }
-            if (!xmlLine.equals(logLine)) {
-              isMatch = false;
-              break;
+      xmlIn.mark(resultXML.length());
+      String xmlLine = xmlIn.readLine();
+      String logLine;
+      boolean isMatch = false;
+      boolean inContent = false;
+      while ((logLine = logIn.readLine()) != null) {
+        if (logLine.indexOf(xmlLine) >= 0) {
+          assertEquals(xmlLine, logLine.substring(7));
+          // We match the first line - start comparing record
+          isMatch = true;
+          while ((xmlLine = xmlIn.readLine()) != null) {
+            logLine = logIn.readLine();
+            if (inContent) {
+              inContent = false;
+              if (!"...content...".equals(logLine)) {
+                isMatch = false;
+                break;
+              }
+            } else {
+              if ("...content...".equals(logLine)) {
+                // Content outside of <content></content> element?
+                isMatch = false;
+                break;
+              }
+              if (xmlLine.indexOf("<content") >= 0) {
+                inContent = true;
+              }
+              if (!xmlLine.equals(logLine)) {
+                isMatch = false;
+                break;
+              }
             }
           }
-        }
-        if (isMatch) {
-          break;
+          if (isMatch) {
+            break;
+          } else {
+            // Need to reset the xmlIn and reload the xmlLine
+            xmlIn.reset();
+            xmlLine = xmlIn.readLine();
+          }
         } else {
-          // Need to reset the xmlIn and reload the xmlLine
-          xmlIn.reset();
-          xmlLine = xmlIn.readLine();
+          continue;
         }
-      } else {
-        continue;
       }
+      assertTrue("Overall match", isMatch);
+    } finally {
+      logIn.close();
     }
-    assertTrue("Overall match", isMatch);
   }
 
   private static final String TEST_DIR = "testdata/contextTests/docPusher/";
@@ -943,10 +953,14 @@ public class DocPusherTest extends TestCase {
     String propFileName = TEST_DIR + APPLICATION_PROPERTIES;
     Properties props = new Properties();
     InputStream inStream = new FileInputStream(propFileName);
-    props.load(inStream);
+    try {
+      props.load(inStream);
+    } finally {
+      inStream.close();
+    }
     String tffName = (String) props.get(Context.TEED_FEED_FILE_PROPERTY_KEY);
     // Make sure the teed feed file does not exist
-    (new File(tffName)).delete();
+    deleteOldFile(tffName);
 
     // Create the Document.
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
@@ -976,16 +990,20 @@ public class DocPusherTest extends TestCase {
   private void assertFeedTeed(String resultXML, String tffName)
       throws IOException {
     BufferedReader tffIn = new BufferedReader(new FileReader(tffName));
-    StringReader xmlIn = new StringReader(resultXML);
-    int tffChar;
-    int xmlChar;
-    while (true) {
-      tffChar = tffIn.read();
-      xmlChar = xmlIn.read();
-      if (tffChar == -1 && xmlChar == -1) {
-        return;
+    try {
+      StringReader xmlIn = new StringReader(resultXML);
+      int tffChar;
+      int xmlChar;
+      while (true) {
+        tffChar = tffIn.read();
+        xmlChar = xmlIn.read();
+        if (tffChar == -1 && xmlChar == -1) {
+          return;
+        }
+        assertEquals(tffChar, xmlChar);
       }
-      assertEquals(tffChar, xmlChar);
+    } finally {
+      tffIn.close();
     }
   }
 
@@ -1603,7 +1621,7 @@ public class DocPusherTest extends TestCase {
   /**
    * A FeedConnection that throws FeedException when fed.
    */
-  private class BadFeedConnection1 implements FeedConnection {
+  private static class BadFeedConnection1 implements FeedConnection {
     public String sendData(String dataSource, FeedData feedData)
         throws FeedException {
       throw new FeedException("Anorexic FeedConnection");
@@ -1613,7 +1631,7 @@ public class DocPusherTest extends TestCase {
   /**
    * A FeedConnection that returns a bad response.
    */
-  private class BadFeedConnection2 extends MockFeedConnection {
+  private static class BadFeedConnection2 extends MockFeedConnection {
   @Override
     public String sendData(String dataSource, FeedData feedData)
         throws RepositoryException {
@@ -1625,7 +1643,7 @@ public class DocPusherTest extends TestCase {
   /**
    * An InputStream that throws IOExceptions when read.
    */
-  private class BadInputStream extends InputStream {
+  private static class BadInputStream extends InputStream {
     // Make it look like there is something to read.
   @Override
   public int available() {
@@ -1649,13 +1667,13 @@ public class DocPusherTest extends TestCase {
   /**
    * A Document with Properties that fail.
    */
-  private class BadDocument implements Document {
+  private static class BadDocument implements Document {
 
     // The wrapped Document.
-    private Document baseDocument;
+    private final Document baseDocument;
 
     // Map of bad Properties.
-    private HashMap<String, Class<? extends Throwable>> badProperties;
+    private final HashMap<String, Class<? extends Throwable>> badProperties;
 
     /**
      * Constructor wraps an existing Document.

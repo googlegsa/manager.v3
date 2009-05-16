@@ -20,11 +20,6 @@ package com.google.enterprise.connector.persist;
  */
 public class ConnectorTypeNotFoundException extends PersistentStoreException {
   /**
-   * Root failure cause
-   */
-  protected Throwable rootCause;
-
-  /**
    * Constructs a new ConnectorTypeNotFoundException with no message and no root
    * cause.
    */
