@@ -53,4 +53,8 @@ public class Metadata {
   public EntityDescriptor getSmEntity() throws IOException {
     return getEntity(smEntityId);
   }
+
+  public String getSmEntityId() {
+    return smEntityId;
+  }
 }
