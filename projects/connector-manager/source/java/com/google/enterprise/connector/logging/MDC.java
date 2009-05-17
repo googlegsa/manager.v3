@@ -109,10 +109,6 @@ public class MDC {
    * the memory used by the thread cannot be reclaimed by the VM.
    */
   public static void remove() {
-    HashMap<String, String> mdcContext = context.get();
-    if (mdcContext != null) {
-      mdcContext.clear();
-    }
     context.remove();
   }
 

@@ -136,10 +136,6 @@ import java.util.EmptyStackException;
    * Otherwise, the memory used by the thread cannot be reclaimed by the VM.
    */
   public static void remove() {
-    Stack<String> ndcStack = stack.get();
-    if (ndcStack != null) {
-      ndcStack.clear();
-    }
     stack.remove();
   }
 
