@@ -67,7 +67,9 @@ public abstract class ServletBase extends HttpServlet {
   }
 
   public static BackEnd getBackEnd() {
-    return getConnectorManager().getBackEnd();
+    BackEnd backend = 
+      BackEnd.class.cast(Context.getInstance().getRequiredBean("BackEnd", BackEnd.class));
+    return backend;
   }
 
   public static EntityDescriptor getEntity(String id) throws IOException {

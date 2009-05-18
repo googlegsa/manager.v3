@@ -20,6 +20,7 @@ import com.google.enterprise.connector.common.cookie.CookieSet;
 import com.google.enterprise.connector.common.cookie.CookieUtil;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.ConnectorStatus;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.security.identity.CredentialsGroup;
 import com.google.enterprise.connector.security.identity.DomainCredentials;
 import com.google.enterprise.connector.security.identity.IdentityConfig;
@@ -79,7 +80,6 @@ public class BackEndImpl implements BackEnd {
   /** Name of the attribute that holds the session's outgoing cookie set. */
   private static final String OUTGOING_COOKIES_NAME = "OutgoingCookies";
 
-  private ConnectorManager manager;
   private final AuthzResponder authzResponder;
   private final SAMLArtifactMap artifactMap;
   private IdentityConfig identityConfig;
@@ -102,11 +102,6 @@ public class BackEndImpl implements BackEnd {
     identityConfig = null;
     sessionIds = new Vector<String>();
     maxPrompts = defaultMaxPrompts;
-  }
-
-  /* @Override */
-  public void setConnectorManager(ConnectorManager cm) {
-    this.manager = cm;
   }
 
   /* @Override */
@@ -195,6 +190,8 @@ public class BackEndImpl implements BackEnd {
     if (id.getVerificationStatus() != VerificationStatus.TBD) {
       return;
     }
+    ConnectorManager manager = 
+      ConnectorManager.class.cast(Context.getInstance().getManager());
     for (ConnectorStatus connStatus: manager.getConnectorStatuses()) {
       String connType = connStatus.getType();
       if (! (connType.equals("SsoCookieIdentityConnector")
@@ -255,6 +252,8 @@ public class BackEndImpl implements BackEnd {
         default:
           continue;
       }
+      ConnectorManager manager = 
+        ConnectorManager.class.cast(Context.getInstance().getManager());
       for (ConnectorStatus connStatus : manager.getConnectorStatuses()) {
         if (!connStatus.getType().equals(expectedTypeName)) {
           continue;
