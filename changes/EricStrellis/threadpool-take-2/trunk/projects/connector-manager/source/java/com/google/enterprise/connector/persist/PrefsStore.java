@@ -208,7 +208,7 @@ public class PrefsStore implements ConnectorScheduleStore, ConnectorStateStore,
    * Clear out all persistent state (schedules and state).
    * @return true if successful
    */
-  public boolean clear() {
+  public synchronized boolean clear() {
     boolean result = true;
     if (prefs != null) {
       try {

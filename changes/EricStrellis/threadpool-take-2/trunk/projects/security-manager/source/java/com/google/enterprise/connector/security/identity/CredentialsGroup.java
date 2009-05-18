@@ -75,7 +75,7 @@ public class CredentialsGroup {
   }
 
   public void setUsername(String username) {
-    if ((username != null) && (username.length() == 0)) {
+    if (username != null && username.isEmpty()) {
       username = null;
     }
     maybeResetVerification(this.username, username);
@@ -87,7 +87,7 @@ public class CredentialsGroup {
   }
 
   public void setPassword(String password) {
-    if ((password != null) && (password.length() == 0)) {
+    if (password != null && password.isEmpty()) {
       password = null;
     }
     maybeResetVerification(this.password, password);
@@ -115,7 +115,7 @@ public class CredentialsGroup {
   }
 
   public boolean isVerified() {
-    if (!isVerifiable()) {
+    if (username == null) {
       return false;
     }
     for (DomainCredentials element: elements) {

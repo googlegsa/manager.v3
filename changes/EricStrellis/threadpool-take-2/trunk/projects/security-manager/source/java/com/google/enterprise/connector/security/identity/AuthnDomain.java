@@ -27,12 +27,14 @@ public class AuthnDomain {
   private final String name;              // The name must be unique.
   private final AuthnMechanism mechanism; // The mechanism to be used.
   private final String sampleUrl;         // A sample URL to GET for verification.
+  private final String authority;         // A URI identifying the identity's authority.
 
   public AuthnDomain(String name, AuthnMechanism mechanism, String sampleUrl,
-                     AuthnDomainGroup adg) {
+                     String authority, AuthnDomainGroup adg) {
     this.name = name;
     this.mechanism = mechanism;
     this.sampleUrl = sampleUrl;
+    this.authority = authority;
     adg.addElement(this);
   }
 
@@ -46,5 +48,9 @@ public class AuthnDomain {
 
   public String getSampleUrl() {
     return sampleUrl;
+  }
+
+  public String getAuthority() {
+    return authority;
   }
 }

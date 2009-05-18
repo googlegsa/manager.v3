@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,7 +38,7 @@ public abstract class AbstractAuthnIdentity implements SecAuthnIdentity {
    * a previously associated cookie, the implementation is allowed to overwrite
    * the previous cookie, so don't count on there being multiple cookies with
    * the same name.
-   * 
+   *
    * @param c The cookie to associate.
    */
   public void addCookie(Cookie c) {
@@ -47,7 +47,7 @@ public abstract class AbstractAuthnIdentity implements SecAuthnIdentity {
 
   /**
    * Get an associated cookie by name.
-   * 
+   *
    * @param name The name of the cookie to return.
    * @return The associated cookie, or null if no such cookie.
    */
@@ -67,7 +67,7 @@ public abstract class AbstractAuthnIdentity implements SecAuthnIdentity {
 
   /**
    * Get the verification status for this identity.
-   * 
+   *
    * @return The identity's verification status.
    */
   public VerificationStatus getVerificationStatus() {
@@ -76,7 +76,7 @@ public abstract class AbstractAuthnIdentity implements SecAuthnIdentity {
 
   /**
    * Set the verification status for this identity.
-   * 
+   *
    * @param status The new verification status.
    */
   public void setVerificationStatus(VerificationStatus status) {
@@ -85,7 +85,7 @@ public abstract class AbstractAuthnIdentity implements SecAuthnIdentity {
 
   /**
    * Generate a json representation of the contents.
-   * 
+   *
    * @return The json string.
    */
   public String toJson() {
@@ -107,6 +107,7 @@ public abstract class AbstractAuthnIdentity implements SecAuthnIdentity {
       }
       jo.put("verificationStatus", getVerificationStatus().toString());
       jo.put("sampleUrl", getSampleUrl());
+      jo.put("authority", getAuthority());
       jo.put("type", mechToTypeString(getMechanism()));
     } catch (JSONException e) {
       // this should never happen -- because our data was validated already
@@ -114,7 +115,7 @@ public abstract class AbstractAuthnIdentity implements SecAuthnIdentity {
     }
     return jo;
   }
-  
+
   private static JSONObject cookieToJsonObject(Cookie c) {
     JSONObject jo = new JSONObject();
     try {

@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.common.StringUtils;
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 
@@ -33,7 +34,6 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * An abstract class for Connector Manager servlets.
  * It contains an abstract method "processDoPost".
- *
  */
 public abstract class ConnectorManagerServlet extends HttpServlet {
   private static final Logger LOGGER =
@@ -67,6 +67,7 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
   /**
    * Returns an XML response including full status (ConnectorMessageCode) to
    * the HTTP POST request.
+   *
    * @param req
    * @param res
    * @throws IOException
@@ -74,27 +75,31 @@ public abstract class ConnectorManagerServlet extends HttpServlet {
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
-    Enumeration<?> headerNames = req.getHeaderNames();
-    while (headerNames.hasMoreElements()) {
-      String name = (String) headerNames.nextElement();
-      LOGGER.log(Level.INFO, "HEADER " + name + ": " + req.getHeader(name));
-    }
     BufferedReader reader = req.getReader();
     res.setContentType(ServletUtil.MIMETYPE_XML);
     res.setCharacterEncoding("UTF-8");
     PrintWriter out = res.getWriter();
-    String xmlBody = StringUtils.readAllToString(reader);
-    if (xmlBody == null || xmlBody.length() < 1) {
-      ServletUtil.writeResponse(
-          out, ConnectorMessageCode.RESPONSE_EMPTY_REQUEST);
-      LOGGER.log(Level.WARNING, ServletUtil.LOG_RESPONSE_EMPTY_REQUEST);
-      out.close();
-      return;
-    }
+    try {
+      Enumeration<?> headerNames = req.getHeaderNames();
+      while (headerNames.hasMoreElements()) {
+        String name = (String) headerNames.nextElement();
+        LOGGER.log(Level.INFO, "HEADER " + name + ": " + req.getHeader(name));
+      }
+      String xmlBody = StringUtils.readAllToString(reader);
+      if (xmlBody == null || xmlBody.length() < 1) {
+        ServletUtil.writeResponse(
+            out, ConnectorMessageCode.RESPONSE_EMPTY_REQUEST);
+        LOGGER.log(Level.WARNING, ServletUtil.LOG_RESPONSE_EMPTY_REQUEST);
+        return;
+      }
 
-    ServletContext servletContext = this.getServletContext();
-    Manager manager = Context.getInstance(servletContext).getManager();
-    processDoPost(xmlBody, manager, out);
-    out.close();
+      ServletContext servletContext = this.getServletContext();
+      Manager manager = Context.getInstance(servletContext).getManager();
+      processDoPost(xmlBody, manager, out);
+
+    } finally {
+      out.close();
+      NDC.clear();
+    }
   }
 }

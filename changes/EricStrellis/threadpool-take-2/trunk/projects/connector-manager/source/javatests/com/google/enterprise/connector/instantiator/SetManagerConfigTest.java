@@ -141,13 +141,21 @@ public class SetManagerConfigTest extends TestCase {
   private Properties loadProperties(String propFileName) throws IOException {
     Properties props = new Properties();
     InputStream inStream = new FileInputStream(propFileName);
-    props.load(inStream);
+    try {
+      props.load(inStream);
+    } finally {
+      inStream.close();
+    }
     return props;
   }
 
   private void storeProperties(Properties props, String propFileName,
       String comments) throws IOException {
     OutputStream outStream = new FileOutputStream(propFileName);
-    props.store(outStream, comments);
+    try {
+      props.store(outStream, comments);
+    } finally {
+      outStream.close();
+    }
   }
 }

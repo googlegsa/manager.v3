@@ -67,7 +67,7 @@ public class MockRepositoryProperty {
         Collections.unmodifiableList(Arrays.asList(PRIVATE_VALUES));
 
 
-    private String tag;
+    private final String tag;
 
     private PropertyType(String t) {
       tag = t;
@@ -88,6 +88,32 @@ public class MockRepositoryProperty {
         }
       }
       return UNDEFINED;
+    }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ordinal;
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null) {
+        return false;
+      }
+      if (getClass() != obj.getClass()) {
+        return false;
+      }
+      PropertyType other = (PropertyType) obj;
+      if (ordinal != other.ordinal) {
+        return false;
+      }
+      return true;
     }
 
     public int compareTo(PropertyType propertyType) {

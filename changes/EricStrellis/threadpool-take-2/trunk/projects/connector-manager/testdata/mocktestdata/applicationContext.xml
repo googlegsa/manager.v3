@@ -47,7 +47,7 @@
   <bean id="ThreadPool"
         class="com.google.enterprise.connector.scheduler.ThreadPool">
     <constructor-arg index="0" type="long" value="5000" />
-   </bean>
+  </bean>
 
   <bean id="Manager"
         class="com.google.enterprise.connector.manager.ProductionManager">

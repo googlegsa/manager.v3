@@ -18,8 +18,6 @@ import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.saml.common.Metadata;
 import com.google.enterprise.connector.saml.server.BackEnd;
-import com.google.enterprise.sessionmanager.SessionManagerInterface;
-
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -72,16 +70,16 @@ public abstract class ServletBase extends HttpServlet {
     return getConnectorManager().getBackEnd();
   }
 
-  public static SessionManagerInterface getSessionManager() {
-    return getBackEnd().getSessionManager();
-  }
-
   public static EntityDescriptor getEntity(String id) throws IOException {
     return getMetadata().getEntity(id);
   }
 
   public static EntityDescriptor getSmEntity() throws IOException {
     return getMetadata().getSmEntity();
+  }
+
+  public static String getSmEntityId() {
+    return getMetadata().getSmEntityId();
   }
 
   public static Metadata getMetadata() {

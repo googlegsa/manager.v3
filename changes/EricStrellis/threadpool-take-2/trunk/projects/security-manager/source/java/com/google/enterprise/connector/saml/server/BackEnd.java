@@ -17,14 +17,12 @@ package com.google.enterprise.connector.saml.server;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.security.identity.CredentialsGroup;
 import com.google.enterprise.connector.security.identity.IdentityConfig;
-import com.google.enterprise.sessionmanager.SessionManagerInterface;
 
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.Response;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -42,15 +40,6 @@ public interface BackEnd {
    * Set the connector manager used by this backend.
    */
   public void setConnectorManager(ConnectorManager cm);
-
-  /**
-   * Get the session manager used by this backend.
-   *
-   * This may migrate to the next inner layer.
-   *
-   * @return A session manager object.
-   */
-  public SessionManagerInterface getSessionManager();
 
   /**
    * Get the SAML artifact map.
@@ -125,12 +114,4 @@ public interface BackEnd {
    * @return A list of responses, corresponding to the argument.
    */
   public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries);
-
-  /**
-   * Update the GSA session manager with the identity information we've collected.
-   *
-   * @param sessionId The session manager ID to associate the information with.
-   * @param cgs The set of identity information to be associated.
-   */
-  public void updateSessionManager(String sessionId, Collection<CredentialsGroup> cgs);
 }

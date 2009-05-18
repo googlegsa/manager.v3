@@ -11,8 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package com.google.enterprise.connector.scheduler;
 
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.Traverser;
@@ -23,7 +25,7 @@ import java.util.logging.Logger;
  * A {@link Cancelable} for running a {@link Connector} batch using
  * a {@link Traverser}
  */
-public class CancelableBatch implements Cancelable {
+class CancelableBatch implements Cancelable {
   private static final Logger LOGGER =
     Logger.getLogger(CancelableBatch.class.getName());
 
@@ -34,19 +36,20 @@ public class CancelableBatch implements Cancelable {
 
   /**
    * Construct a {@link CancelableBatch}.
+   *
    * @param traverser {@link Traverser} for running the batch.
    * @param traverserName traverser name for logging purposes.
-   * @param batchResultRecorder {@link BatchResultRecorder} for
-   *    recording the result of running the batch.
-   * @param batchHint hint as to the number of documents to
-   *    process in the batch.
+   * @param batchResultRecorder {@link BatchResultRecorder} for recording the
+   *        result of running the batch.
+   * @param batchHint hint as to the number of documents to process in the
+   *        batch.
    */
   CancelableBatch(Traverser traverser, String traverserName,
       BatchResultRecorder batchResultRecorder, int batchHint) {
-      this.traverser = traverser;
-      this.traverserName = traverserName;
-      this.batchResultRecorder = batchResultRecorder;
-      this.batchHint = batchHint;
+    this.traverser = traverser;
+    this.traverserName = traverserName;
+    this.batchResultRecorder = batchResultRecorder;
+    this.batchHint = batchHint;
   }
 
   public void cancel() {
@@ -54,23 +57,30 @@ public class CancelableBatch implements Cancelable {
   }
 
   public void run() {
-    LOGGER.finest("Begin runBatch; traverserName = " + traverserName
-        + "batchHint = " + batchHint);
-    int legacyBatchResult = traverser.runBatch(batchHint);
-    BatchResult batchResult = BatchResult.newBatchResultFromLegacyBatchResult(legacyBatchResult);
-    LOGGER.finest("Traverser " + traverserName +" batchDone with result = " + batchResult);
-    //TODO(strellis): The original code did not record a result if the
-    //    batch was canceled. I think a cancel was probably possible
-    //    after the check and before recording results. Should I
-    //    replace that check?
-    batchResultRecorder.recordResult(batchResult);
+    NDC.push("Traverse " + traverserName);
+    try {
+      LOGGER.fine("Begin runBatch; traverserName = " + traverserName
+          + "batchHint = " + batchHint);
+      int legacyBatchResult = traverser.runBatch(batchHint);
+      BatchResult batchResult =
+          BatchResult.newBatchResultFromLegacyBatchResult(legacyBatchResult);
+      LOGGER.fine("Traverser " + traverserName + " batchDone with result = "
+          + batchResult);
+      // TODO(strellis): The original code did not record a result if the
+      // batch was canceled. I think a cancel was probably possible
+      // after the check and before recording results. Should I
+      // replace that check?
+      batchResultRecorder.recordResult(batchResult);
+    } finally {
+      NDC.remove();
+    }
   }
 
   @Override
   public String toString() {
     return "CancelableBatch traverser: "
         + traverser
-        + " batchHint"
+        + " batchHint: "
         + batchHint;
   }
 }

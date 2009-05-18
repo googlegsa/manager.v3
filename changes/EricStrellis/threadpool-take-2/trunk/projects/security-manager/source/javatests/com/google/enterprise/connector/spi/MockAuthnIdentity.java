@@ -30,13 +30,18 @@ public class MockAuthnIdentity extends AbstractAuthnIdentity {
   private String password;
   private String domain;
   private String sampleUrl;
-  private AuthnMechanism authnMechanism;
+  private String authority;
+  private AuthnMechanism mechanism;
 
 
   public MockAuthnIdentity(String sampleUrl) {
     this.cookies = new CookieSet();
     this.sampleUrl = sampleUrl;
     username = null;
+    password = null;
+    domain = null;
+    authority = null;
+    mechanism = null;
   }
 
   /* @Override */
@@ -47,6 +52,11 @@ public class MockAuthnIdentity extends AbstractAuthnIdentity {
   /* @Override */
   public String getSampleUrl() {
     return sampleUrl;
+  }
+
+  /* @Override */
+  public String getAuthority() {
+    return authority;
   }
 
   /* @Override */
@@ -76,7 +86,7 @@ public class MockAuthnIdentity extends AbstractAuthnIdentity {
 
   /* @Override */
   public AuthnMechanism getMechanism() {
-    return authnMechanism;
+    return mechanism;
   }
 
   public void setPassword(String password) {
@@ -91,7 +101,11 @@ public class MockAuthnIdentity extends AbstractAuthnIdentity {
     this.sampleUrl = sampleUrl;
   }
 
-  public void setAuthnMechanism(AuthnMechanism authnMechanism) {
-    this.authnMechanism = authnMechanism;
+  public void setAuthority(String authority) {
+    this.authority = authority;
+  }
+
+  public void setMechanism(AuthnMechanism mechanism) {
+    this.mechanism = mechanism;
   }
 }

@@ -127,7 +127,7 @@ public class MockRepositoryEventList {
       throw new RuntimeException(e);
     } finally {
       try {
-        isr.close();
+        br.close();
       } catch (IOException e) {
         throw new RuntimeException(e);
       }

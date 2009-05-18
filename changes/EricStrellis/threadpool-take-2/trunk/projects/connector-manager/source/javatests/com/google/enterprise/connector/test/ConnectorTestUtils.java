@@ -217,6 +217,9 @@ public class ConnectorTestUtils {
   }
 
   public static void deleteFile(String file) {
-    new File(file).delete();
+    File f = new File(file);
+    if (f.exists() && !f.delete()) {
+      throw new IllegalStateException("Deletion failed " + file);
+    }
   }
 }

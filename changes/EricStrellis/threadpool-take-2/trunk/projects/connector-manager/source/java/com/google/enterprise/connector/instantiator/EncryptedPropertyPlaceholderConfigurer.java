@@ -177,8 +177,12 @@ public class EncryptedPropertyPlaceholderConfigurer extends
     try {
       File f = new File(keyStorePasswdPath);
       BufferedReader in = new BufferedReader(new FileReader(f));
-      String passwd = in.readLine();
-      return passwd;
+      try {
+        String passwd = in.readLine();
+        return passwd;
+      } finally {
+        in.close();
+      }
     } catch (FileNotFoundException e) {
       LOGGER.log(Level.FINE, "Keystore passwd file does not exist");
     } catch (IOException e) {

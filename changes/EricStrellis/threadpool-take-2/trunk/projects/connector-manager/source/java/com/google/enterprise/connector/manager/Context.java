@@ -538,7 +538,8 @@ public class Context {
     if (!isFeeding) {
       started = false;
     } else if (null != traversalScheduler) {
-      traversalScheduler.shutdown(force, ThreadPool.DEFAULT_MAXIMUM_TASK_LIFE_MILLIS);
+      traversalScheduler.shutdown(force,
+          ThreadPool.DEFAULT_SHUTDOWN_TIMEOUT_MILLIS);
       started = false;
     }
   }

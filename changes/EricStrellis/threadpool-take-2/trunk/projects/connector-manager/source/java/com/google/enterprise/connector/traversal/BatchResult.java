@@ -1,24 +1,25 @@
-// Copyright 2006-2009 Google Inc.  All Rights Reserved.
+// Copyright 2006-2009 Google Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package com.google.enterprise.connector.traversal;
 
 /**
  * Holder for the result of running {@link Traverser#runBatch(int)}
  */
 public class BatchResult {
-  final TraversalDelayPolicy delayPolicy;
-  final int countProcessed;
+  private final TraversalDelayPolicy delayPolicy;
+  private final int countProcessed;
 
   /**
    * Construct a new {@link BatchResult}.
@@ -36,12 +37,14 @@ public class BatchResult {
     return countProcessed;
   }
 
-  // TODO(strellis): Remove this when Traverser returns one of these
-  public static BatchResult newBatchResultFromLegacyBatchResult(int legacyBatchResult) {
-      int countProcessed = (legacyBatchResult < 0) ? 0 : legacyBatchResult;
-      TraversalDelayPolicy delayPolicy =
-        TraversalDelayPolicy.getTraversalDealyPolicyFromLegacyBatchResult(legacyBatchResult);
-      return new BatchResult(delayPolicy, countProcessed);
+  // TODO(strellis): Remove this when Traverser returns one of these.
+  public static BatchResult newBatchResultFromLegacyBatchResult(
+      int legacyBatchResult) {
+    int countProcessed = (legacyBatchResult < 0) ? 0 : legacyBatchResult;
+    TraversalDelayPolicy delayPolicy =
+        TraversalDelayPolicy
+            .getTraversalDealyPolicyFromLegacyBatchResult(legacyBatchResult);
+    return new BatchResult(delayPolicy, countProcessed);
   }
 
   @Override
@@ -49,7 +52,8 @@ public class BatchResult {
     final int prime = 31;
     int result = 1;
     result = prime * result + countProcessed;
-    result = prime * result + ((delayPolicy == null) ? 0 : delayPolicy.hashCode());
+    result =
+        prime * result + ((delayPolicy == null) ? 0 : delayPolicy.hashCode());
     return result;
   }
 
@@ -80,6 +84,7 @@ public class BatchResult {
 
   @Override
   public String toString() {
-    return "BatchResult: delayPolicy = " + delayPolicy + " countProcessed = " + countProcessed;
+    return "BatchResult: delayPolicy = " + delayPolicy + " countProcessed = "
+        + countProcessed;
   }
 }

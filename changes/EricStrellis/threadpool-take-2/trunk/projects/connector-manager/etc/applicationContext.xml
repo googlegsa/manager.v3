@@ -151,8 +151,8 @@
   <bean id="ThreadPool"
         class="com.google.enterprise.connector.schedule.ThreadPool">
     <!-- Number of milliseconds before worker thread is considered timed out.
-         A value of 0 means it never times out. Default: 40 minutes -->
-    <constructor-arg index="0" type="long" value="2400000"/>
+         A value of 0 means it never times out. Default: 60 minutes -->
+    <constructor-arg index="0" type="long" value="3600000"/>
   </bean>
 
   <bean id="Manager"

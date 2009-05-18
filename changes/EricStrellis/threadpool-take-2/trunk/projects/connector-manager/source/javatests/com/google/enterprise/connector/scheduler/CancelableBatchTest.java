@@ -1,10 +1,10 @@
-// Copyright 2006-2009 Google Inc.  All Rights Reserved.
+// Copyright 2009 Google Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,27 +22,29 @@ import junit.framework.TestCase;
 
 public class CancelableBatchTest extends TestCase {
 
-  public void testRunBatchPositiveCount() throws Exception{
+  public void testRunBatchPositiveCount() throws Exception {
     runBatch(3, 3, 4, TraversalDelayPolicy.IMMEDIATE);
   }
 
-  public void testRunBatchErrorWait() throws Exception{
+  public void testRunBatchErrorWait() throws Exception {
     runBatch(Traverser.ERROR_WAIT, 0, 4, TraversalDelayPolicy.ERROR);
   }
 
-  public void testRunBatchNoWait() throws Exception{
+  public void testRunBatchNoWait() throws Exception {
     runBatch(Traverser.POLLING_WAIT, 0, 4, TraversalDelayPolicy.POLL);
   }
 
-  private void runBatch(final int legacyResult, final int expectCount, final int batchHint,
-      final TraversalDelayPolicy expectDelayPolicy) throws Exception {
+  private void runBatch(final int legacyResult, final int expectCount,
+      final int batchHint, final TraversalDelayPolicy expectDelayPolicy)
+      throws Exception {
     MockTraverser traverser = new MockTraverser(batchHint, legacyResult);
     MockBatchResultRecorder recorder = new MockBatchResultRecorder();
-    CancelableBatch batch = new CancelableBatch(traverser, "connector1", recorder, batchHint);
+    CancelableBatch batch =
+        new CancelableBatch(traverser, "connector1", recorder, batchHint);
     batch.run();
     BatchResult batchResult = recorder.getBatchResult();
     assertEquals(new BatchResult(expectDelayPolicy, expectCount), batchResult);
-    //TODO(strellis): validate retryDelayMillis or remove it from batchRecorder
+    // TODO(strellis): validate retryDelayMillis or remove it from batchRecorder
   }
 
   private static class MockBatchResultRecorder implements BatchResultRecorder {
@@ -63,7 +65,6 @@ public class CancelableBatchTest extends TestCase {
   private static class MockTraverser implements Traverser {
     private final int expectBatchHint;
     private final int legacyResult;
-
 
     MockTraverser(int expectBatchHint, int legacyResult) {
       this.expectBatchHint = expectBatchHint;
