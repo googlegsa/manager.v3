@@ -94,15 +94,13 @@ public class DocPusher implements Pusher {
   private static final String XML_LAST_MODIFIED = "last-modified";
   // private static final String XML_LOCK = "lock";
   private static final String XML_AUTHMETHOD = "authmethod";
-  // private static final String XML_NAME = "name";
+  private static final String XML_NAME = "name";
   private static final String XML_ENCODING = "encoding";
 
   // private static final String XML_FEED_FULL = "full";
   private static final String XML_FEED_METADATA_AND_URL = "metadata-and-url";
   private static final String XML_FEED_INCREMENTAL = "incremental";
-  // private static final String XML_BASE64BINARY = "base64binary";
-  private static final String XML_ADD = "add";
-  private static final String XML_DELETE = "delete";
+  private static final String XML_BASE64BINARY = "base64binary";
 
   private static final String CONNECTOR_AUTHMETHOD = "httpbasic";
 
@@ -171,34 +169,26 @@ public class DocPusher implements Pusher {
       StringBuilder feedLogBuilder) throws RepositoryException, IOException {
     boolean metadataAllowed = true;
     boolean contentAllowed = true;
-    // build prefix
+
     StringBuilder prefix = new StringBuilder();
     prefix.append("<");
     prefix.append(XML_RECORD);
-    prefix.append(" ");
     XmlUtils.xmlAppendAttr(XML_URL, searchUrl, prefix);
-    if (displayUrl != null && displayUrl.length() > 0) {
-      prefix.append(" ");
-      XmlUtils.xmlAppendAttr(XML_DISPLAY_URL, displayUrl, prefix);
-    }
+    XmlUtils.xmlAppendAttr(XML_DISPLAY_URL, displayUrl, prefix);
+
     if (actionType != null) {
-      prefix.append(" ");
       if (actionType == ActionType.ADD) {
-        XmlUtils.xmlAppendAttr(XML_ACTION, XML_ADD, prefix);
+        XmlUtils.xmlAppendAttr(XML_ACTION, actionType.toString(), prefix);
       } else if (actionType == ActionType.DELETE) {
-        XmlUtils.xmlAppendAttr(XML_ACTION, XML_DELETE, prefix);
+        XmlUtils.xmlAppendAttr(XML_ACTION, actionType.toString(), prefix);
         metadataAllowed = false;
         contentAllowed = false;
       }
     }
-    if (mimetype != null) {
-      prefix.append(" ");
-      XmlUtils.xmlAppendAttr(XML_MIMETYPE, mimetype, prefix);
-    }
-    if (lastModified != null) {
-      prefix.append(" ");
-      XmlUtils.xmlAppendAttr(XML_LAST_MODIFIED, lastModified, prefix);
-    }
+
+    XmlUtils.xmlAppendAttr(XML_MIMETYPE, mimetype, prefix);
+    XmlUtils.xmlAppendAttr(XML_LAST_MODIFIED, lastModified, prefix);
+
     try {
       ValueImpl v = (ValueImpl) Value.getSingleValue(document,
           SpiConstants.PROPNAME_ISPUBLIC);
@@ -208,7 +198,6 @@ public class DocPusher implements Pusher {
           // TODO(martyg): When the GSA is ready to take ACLUSERS and ACLGROUPS,
           // this is the place where those properties should be pulled out of
           // meta data and into the proper ACL Entry element.
-          prefix.append(" ");
           XmlUtils.xmlAppendAttr(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD, prefix);
         }
       }
@@ -220,20 +209,20 @@ public class DocPusher implements Pusher {
     if (metadataAllowed) {
       xmlWrapMetadata(prefix, document);
     }
-    if (!feedType.equals(XML_FEED_METADATA_AND_URL)  && contentAllowed) {
+
+    StringBuilder suffix = new StringBuilder();
+
+    // If including document content, wrap it with <content> tags.
+    if (contentAllowed && !XML_FEED_METADATA_AND_URL.equals(feedType)) {
       prefix.append("<");
       prefix.append(XML_CONTENT);
-      prefix.append(" ");
-      XmlUtils.xmlAppendAttr(XML_ENCODING, "base64binary", prefix);
+      XmlUtils.xmlAppendAttr(XML_ENCODING, XML_BASE64BINARY, prefix);
       prefix.append(">\n");
-    }
 
-    // build suffix
-    StringBuilder suffix = new StringBuilder();
-    if (feedType != XML_FEED_METADATA_AND_URL && contentAllowed) {
       suffix.append('\n');
       XmlUtils.xmlAppendEndTag(XML_CONTENT, suffix);
     }
+
     XmlUtils.xmlAppendEndTag(XML_RECORD, suffix);
 
     InputStream is = stringWrappedInputStream(prefix.toString(),
@@ -374,8 +363,7 @@ public class DocPusher implements Pusher {
 
     buf.append("<");
     buf.append(XML_META);
-    buf.append(" ");
-    XmlUtils.xmlAppendAttr("name", name, buf);
+    XmlUtils.xmlAppendAttr(XML_NAME, name, buf);
     buf.append(" content=\"");
 
     // Mark the beginning of the values:

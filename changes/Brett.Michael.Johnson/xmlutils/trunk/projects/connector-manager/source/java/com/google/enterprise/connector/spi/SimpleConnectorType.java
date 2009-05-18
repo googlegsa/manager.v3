@@ -139,7 +139,6 @@ public class SimpleConnectorType implements ConnectorType {
 
   private void appendAttribute(StringBuilder buf, String attrName,
       String attrValue) {
-    buf.append(" ");
     try {
       XmlUtils.xmlAppendAttr(attrName, attrValue, buf);
     } catch (IOException e) {

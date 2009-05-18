@@ -130,9 +130,10 @@ public class XmlUtils {
   }
 
   /**
-   * Used to write out an attribute for an element.  Surrounding whitespace will
-   * not be added to the buffer.  The given value will be XML Encoded before
-   * appending to the buffer.
+   * Used to write out an attribute for an element.  If the attribute
+   * value is non-null and non-empty, then the attribute is written out,
+   * preceded by a single space.
+   * The given value will be XML Encoded before appending to the buffer.
    *
    * <p>For example, given attrName="foo" and attrValue="val&lt;bar" writes out:
    * <pre>foo="val&amp;lt;bar"</pre>
@@ -144,10 +145,13 @@ public class XmlUtils {
    */
   public static void xmlAppendAttr(String attrName, String attrValue,
       Appendable buf) throws IOException {
-    buf.append(attrName);
-    buf.append("=\"");
-    xmlAppendAttrValue(attrValue, buf);
-    buf.append('"');
+    if (attrValue != null && attrValue.length() > 0) {
+      buf.append(' ');
+      buf.append(attrName);
+      buf.append("=\"");
+      xmlAppendAttrValue(attrValue, buf);
+      buf.append('"');
+    }
   }
 
   /**
