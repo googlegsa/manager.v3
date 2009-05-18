@@ -414,7 +414,7 @@ public class ServletUtilTest extends TestCase {
       XmlUtils.xmlAppendAttr(attrName, attrValue, buf);
     } catch (IOException e) {
       // Can't happen with StringBuilder.
-      throw new AssertionError(e);
+      fail("Unexpected exception: " + e.getMessage());
     }
   }
 

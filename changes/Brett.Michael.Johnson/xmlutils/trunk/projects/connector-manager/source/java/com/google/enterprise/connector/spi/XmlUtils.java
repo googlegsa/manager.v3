@@ -81,6 +81,7 @@ public class XmlUtils {
    *
    * <p>For example, given attrName="foo" and attrValue="val&lt;bar" writes out:
    * <pre>foo="val&amp;lt;bar"</pre>
+   *
    * @param attrName the attribute name.
    * @param attrValue the attribute value.
    * @param buf the StringBuffer to append the attribute.
@@ -137,6 +138,7 @@ public class XmlUtils {
    *
    * <p>For example, given attrName="foo" and attrValue="val&lt;bar" writes out:
    * <pre>foo="val&amp;lt;bar"</pre>
+   *
    * @param attrName the attribute name.
    * @param attrValue the attribute value.
    * @param buf the Appendable to which is appended the attribute value pair.

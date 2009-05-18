@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.saml.server;
 
-import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.security.identity.CredentialsGroup;
 import com.google.enterprise.connector.security.identity.IdentityConfig;
 
@@ -35,11 +34,6 @@ import javax.servlet.http.HttpServletResponse;
  *
  */
 public interface BackEnd {
-
-  /**
-   * Set the connector manager used by this backend.
-   */
-  public void setConnectorManager(ConnectorManager cm);
 
   /**
    * Get the SAML artifact map.

@@ -19,8 +19,6 @@ import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
-import com.google.enterprise.connector.saml.server.BackEnd;
-
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -35,20 +33,9 @@ public class ConnectorManager extends ProductionManager {
 
   private static final Logger LOGGER = Logger.getLogger(ConnectorManager.class.getName());
 
-  private BackEnd backEnd;
-
   public ConnectorManager() {
     super();
     Logger.getLogger(TraversalScheduler.class.getName()).setLevel(Level.WARNING);
-  }
-
-  public BackEnd getBackEnd() {
-    return backEnd;
-  }
-
-  public void setBackEnd(BackEnd backEnd) {
-    backEnd.setConnectorManager(this);
-    this.backEnd = backEnd;
   }
 
   @Override
