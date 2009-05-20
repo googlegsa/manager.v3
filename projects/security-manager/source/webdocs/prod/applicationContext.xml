@@ -60,18 +60,16 @@
         class="com.google.enterprise.connector.scheduler.TraversalScheduler">
     <constructor-arg index="0" ref="Instantiator" />
     <constructor-arg index="1" ref="Monitor" />
-    <constructor-arg index="2" ref="WorkQueue" />
+    <constructor-arg index="2" ref="ThreadPool" />
   </bean>
 
   <bean id="Monitor"
         class="com.google.enterprise.connector.monitor.HashMapMonitor">
   </bean>
 
-  <bean id="WorkQueue"
-        class="com.google.enterprise.connector.common.WorkQueue">
-    <constructor-arg index="0" type="int" value="2" />
-    <constructor-arg index="1" type="long" value="5000" />
-    <constructor-arg index="2" type="long" value="5000" />
+  <bean id="ThreadPool"
+       class="com.google.enterprise.connector.scheduler.ThreadPool">
+    <constructor-arg index="0" type="long" value="5000" />
   </bean>
 
   <bean id="Metadata"
