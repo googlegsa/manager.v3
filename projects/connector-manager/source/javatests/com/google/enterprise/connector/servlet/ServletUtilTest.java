@@ -21,6 +21,7 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -409,12 +410,12 @@ public class ServletUtilTest extends TestCase {
 
   private void appendAttribute(StringBuilder buf, String attrName,
       String attrValue) {
-    buf.append(" ");
-
-    // FIXME: When XmlUtils moves to Appendable.
-    StringBuffer tmp = new StringBuffer();
-    XmlUtils.xmlAppendAttrValuePair(attrName, attrValue, tmp);
-    buf.append(tmp.toString());
+    try {
+      XmlUtils.xmlAppendAttr(attrName, attrValue, buf);
+    } catch (IOException e) {
+      // Can't happen with StringBuilder.
+      fail("Unexpected exception: " + e.getMessage());
+    }
   }
 
   private void obfuscateValues(Map<String, String> clearConfig,
