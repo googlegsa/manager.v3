@@ -52,7 +52,7 @@
   </bean>
 
   <bean id="ThreadPool"
-        class="com.google.enterprise.connector.schedule.ThreadPool">
+        class="com.google.enterprise.connector.scheduler.ThreadPool">
     <constructor-arg index="0" type="long" value="1800000" />
   </bean>
 
