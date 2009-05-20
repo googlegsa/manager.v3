@@ -329,4 +329,15 @@
     <url-pattern>/samlauthz</url-pattern>
   </servlet-mapping>
 
+  <!-- Define servlets that are only for testing the Security Manager application -->
+
+  <servlet>
+    <servlet-name>HelloWorld</servlet-name>
+    <servlet-class>com.google.enterprise.connector.servlet.HelloWorld</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>HelloWorld</servlet-name>
+    <url-pattern>/helloWorld</url-pattern>
+  </servlet-mapping>
+
 </web-app>
