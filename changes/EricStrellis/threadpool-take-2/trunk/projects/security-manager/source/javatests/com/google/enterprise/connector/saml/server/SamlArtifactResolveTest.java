@@ -14,8 +14,11 @@
 
 package com.google.enterprise.connector.saml.server;
 
+import static com.google.enterprise.connector.common.ServletTestUtil.makeMockHttpPost;
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeResponse;
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeStatus;
+
 import com.google.enterprise.connector.common.SecurityManagerTestCase;
-import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.saml.common.Metadata;
 
@@ -26,10 +29,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockServletConfig;
 
 import java.io.IOException;
-
-import static com.google.enterprise.connector.common.ServletTestUtil.makeMockHttpPost;
-import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeResponse;
-import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeStatus;
 
 /**
  * Unit test for SamlArtifactResolve handler.
@@ -76,7 +75,8 @@ public class SamlArtifactResolveTest extends SecurityManagerTestCase {
         "</soap11:Envelope>\n";
     mockRequest.setContent(entity.getBytes("UTF-8"));
 
-    BackEnd backend = ConnectorManager.class.cast(Context.getInstance().getManager()).getBackEnd();
+    BackEnd backend = 
+      BackEnd.class.cast(Context.getInstance().getRequiredBean("BackEnd", BackEnd.class));
     backend.getArtifactMap().put(
         encodedArtifact,
         GSA_TESTING_ISSUER,

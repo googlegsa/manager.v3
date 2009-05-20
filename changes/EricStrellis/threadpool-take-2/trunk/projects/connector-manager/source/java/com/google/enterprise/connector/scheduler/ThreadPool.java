@@ -56,17 +56,10 @@ import java.util.logging.Logger;
  * <LI> Cancel the <b>time out task</b> for the completed task.
  * <LI> Log exceptions that indicate the task did not complete normally.
  * </OL>
- * <p>
  */
 public class ThreadPool {
   private static final Logger LOGGER =
       Logger.getLogger(ThreadPool.class.getName());
-
-  /**
-   * A suggested default amount of time to let tasks run before automatic
-   * cancellation.
-   */
-  public static final long DEFAULT_MAXIMUM_TASK_LIFE_MILLIS = 60 * 60 * 1000;
 
   /**
    * The default amount of time in to wait for tasks to complete during during
@@ -117,7 +110,7 @@ public class ThreadPool {
    * @param maximumLifeMillis Time in milliseconds to allow a task to run before
    *        automatic cancellation.
    */
-  ThreadPool(long maximumLifeMillis) {
+  public ThreadPool(long maximumLifeMillis) {
     this.maximumTaskLifeMillis = maximumLifeMillis;
     completionExecutor.execute(new CompletionTask());
   }

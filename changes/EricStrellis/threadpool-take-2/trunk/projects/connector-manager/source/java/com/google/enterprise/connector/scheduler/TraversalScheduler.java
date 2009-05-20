@@ -133,8 +133,7 @@ public class TraversalScheduler implements Scheduler {
   }
 
   /**
-   * Determines whether scheduler should run.  Assumes caller holds instance
-   * lock.
+   * Determines whether scheduler should run.
    *
    * @return true if we are in a running state and scheduler should run or
    *         continue running.
@@ -236,12 +235,10 @@ public class TraversalScheduler implements Scheduler {
     try {
       while (true) {
         try {
-          synchronized (this) {
-            if (!isRunningState()) {
-              LOGGER.info("TraversalScheduler thread is stopping due to "
-                  + "shutdown or not being initialized.");
-              return;
-            }
+          if (!isRunningState()) {
+            LOGGER.info("TraversalScheduler thread is stopping due to "
+                + "shutdown or not being initialized.");
+            return;
           }
           scheduleBatches();
           updateMonitor();

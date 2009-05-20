@@ -44,7 +44,8 @@ public class CancelableBatchTest extends TestCase {
     batch.run();
     BatchResult batchResult = recorder.getBatchResult();
     assertEquals(new BatchResult(expectDelayPolicy, expectCount), batchResult);
-    // TODO(strellis): validate retryDelayMillis or remove it from batchRecorder
+    // TODO(strellis): Validate retryDelayMillis or remove it from
+    // BtchRecorder.
   }
 
   private static class MockBatchResultRecorder implements BatchResultRecorder {

@@ -45,7 +45,7 @@ public enum TraversalDelayPolicy {
    * <LI>If legacyPolicy is less than or equal to 0 then 0 or more documents
    * were returned by the batch and the next batch may proceed without delay.
    * <LI>If legacyPolicy equals {@link Traverser#ERROR_WAIT} (-2) an error
-   * occurred ant the next batch should delay for the error retry interval.
+   * occurred and the next batch should delay for the error retry interval.
    * <LI>If legacyPolicy equals {@link Traverser#POLLING_WAIT}(-1) the traversal
    * completed and the batch should wait for the connectors retry delay
    * interval.
