@@ -148,16 +148,11 @@
   <bean id="Monitor"
         class="com.google.enterprise.connector.monitor.HashMapMonitor"/>
 
-  <bean id="WorkQueue"
-        class="com.google.enterprise.connector.common.WorkQueue">
-    <!-- Number of worker threads processing the queue. -->
-    <constructor-arg index="0" type="int" value="10"/>
+  <bean id="ThreadPool"
+        class="com.google.enterprise.connector.schedule.ThreadPool">
     <!-- Number of milliseconds before worker thread is considered timed out.
-         A value of 0 means it never times out. Default: 20 minutes -->
-    <constructor-arg index="2" type="long" value="1200000"/>
-    <!-- Number of milliseconds after a timed-out worker thread is interrupted
-         before it is killed outright. Default: 10 minutes -->
-    <constructor-arg index="1" type="long" value="600000"/>
+         A value of 0 means it never times out. Default: 60 minutes -->
+    <constructor-arg index="0" type="long" value="3600000"/>
   </bean>
 
   <bean id="Manager"
@@ -169,7 +164,7 @@
         class="com.google.enterprise.connector.scheduler.TraversalScheduler">
     <constructor-arg index="0" ref="Instantiator"/>
     <constructor-arg index="1" ref="Monitor"/>
-    <constructor-arg index="2" ref="WorkQueue"/>
+    <constructor-arg index="2" ref="ThreadPool"/>
   </bean>
 
   <!-- This defines the number of seconds to wait after a Traversal of the

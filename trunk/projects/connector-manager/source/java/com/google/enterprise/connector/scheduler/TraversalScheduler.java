@@ -14,21 +14,18 @@
 
 package com.google.enterprise.connector.scheduler;
 
-import com.google.enterprise.connector.common.WorkQueue;
-import com.google.enterprise.connector.common.WorkQueueItem;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.monitor.Monitor;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.Traverser;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -37,6 +34,18 @@ import java.util.logging.Logger;
 /**
  * Scheduler that schedules connector traversal.  This class is thread safe.
  * Must initialize TraversalScheduler before running it.
+ *
+ * <p> This facility includes a schedule thread that runs a loop.
+ * Each iteration it asks the instantiator for the schedule
+ * for each Connector Instance and runs batches for those that
+ * are
+ * <OL>
+ * <LI> scheduled to run.
+ * <LI> have not exhausted their quota for the current time interval.
+ * <LI> are not currently running.
+ * </OL>
+ * The implementation must handle the situation that a Connector
+ * Instance is running.
  */
 public class TraversalScheduler implements Scheduler {
   public static final String SCHEDULER_CURRENT_TIME = "/Scheduler/currentTime";
@@ -44,45 +53,41 @@ public class TraversalScheduler implements Scheduler {
   private static final Logger LOGGER =
     Logger.getLogger(TraversalScheduler.class.getName());
 
-  private Instantiator instantiator;
-  private Monitor monitor;
-  private WorkQueue workQueue;
-  private HostLoadManager hostLoadManager;
+  private final Instantiator instantiator;
+  private final Monitor monitor;
+  private final ThreadPool threadPool;
+  private final HostLoadManager hostLoadManager;
+  // Guarded by instance lock.
+  private final Map<String, TaskHandle> taskHandles =
+      new HashMap<String, TaskHandle>();
+  // Set of connectors removed. Needed so that we only schedule connectors
+  // that haven't been removed. Protected by instance lock.
+  private final Set<String> removedConnectors = new HashSet<String>();
 
-  private boolean isInitialized;  // Protected by instance lock.
-  private boolean isShutdown;     // Protected by instance lock.
-
-  // Map of runnables that are currently scheduled.  Protected by instance lock.
-  private Map<String, WorkQueueItem> runnables;
-
-  // Set of connectors removed.  Needed so that we only schedule connectors
-  // that haven't been removed.  Protected by instance lock.
-  private Set<String> removedConnectors;
+  private boolean isInitialized; // Protected by instance lock.
+  private boolean isShutdown; // Protected by instance lock.
 
   /**
    * Create a scheduler object.
    *
    * @param instantiator
    * @param monitor
-   * @param workQueue
+   * @param threadPool
    */
   public TraversalScheduler(Instantiator instantiator, Monitor monitor,
-      WorkQueue workQueue) {
+      ThreadPool threadPool) {
     this.instantiator = instantiator;
     this.monitor = monitor;
-    this.workQueue = workQueue;
+    this.threadPool = threadPool;
     this.isInitialized = false;
     this.isShutdown = false;
     this.hostLoadManager = new HostLoadManager(instantiator);
-    this.runnables = new HashMap<String, WorkQueueItem>();
-    this.removedConnectors = new HashSet<String>();
   }
 
   public synchronized void init() {
     if (isInitialized) {
       return;
     }
-    workQueue.init();
     isInitialized = true;
     isShutdown = false;
     new Thread(this, "TraversalScheduler").start();
@@ -93,40 +98,15 @@ public class TraversalScheduler implements Scheduler {
     if (isShutdown) {
       return;
     }
-    workQueue.shutdown(interrupt, timeoutInMillis);
+    try {
+      threadPool.shutdown(interrupt, timeoutInMillis);
+    } catch (InterruptedException ie) {
+      // TODO(strellis): how should this be handled.
+      LOGGER.log(Level.SEVERE, "TraversalScheduler shutdown interrupted: ", ie);
+    }
     instantiator.shutdown();
     isInitialized = false;
     isShutdown = true;
-  }
-
-  /**
-   * Return a traversal schedule as store in the configuration and schedule
-   * stores.  As a side effect, clear the removedConnectors Set.
-   *
-   * @return a schedule of traversal work
-   */
-  private synchronized List<Schedule> getSchedules() {
-    List<Schedule> schedules = new ArrayList<Schedule>();
-    for (String connectorName : instantiator.getConnectorNames()) {
-      if (removedConnectors.contains(connectorName)) {
-        continue;
-      }
-      String scheduleStr = null;
-      try {
-        scheduleStr = instantiator.getConnectorSchedule(connectorName);
-      } catch (ConnectorNotFoundException e) {
-        // Looks like the connector just got deleted.  Don't schedule it.
-        continue;
-      }
-      if (scheduleStr != null) {
-        Schedule schedule = new Schedule(scheduleStr);
-        if (!schedule.isDisabled()) {
-          schedules.add(schedule);
-        }
-      }
-    }
-    removedConnectors.clear();
-    return schedules;
   }
 
   private void updateMonitor() {
@@ -169,45 +149,99 @@ public class TraversalScheduler implements Scheduler {
    *
    * @param connectorName name of the connector instance
    */
-  public void removeConnector(String connectorName) {
-    synchronized (this) {
-      // Let scheduler know not to schedule more work for this connector.
-      removedConnectors.add(connectorName);
-
-      // Interrupt any work that is already getting done.
-      TraversalWorkQueueItem runnable =
-        (TraversalWorkQueueItem) runnables.remove(connectorName);
-      if (null != runnable) {
-        workQueue.cancelWork(runnable);
+  public synchronized void removeConnector(String connectorName) {
+      TaskHandle taskHandle = taskHandles.get(connectorName);
+      if (taskHandle != null) {
+        taskHandle.cancel();
       }
+
+      removedConnectors.add(connectorName);
 
       // Tell the load manager to forget about this connector.
       hostLoadManager.removeConnector(connectorName);
+  }
+
+  private Traverser getTraverser(String connectorName) {
+    Traverser traverser = null;
+    try {
+      traverser = instantiator.getTraverser(connectorName);
+    } catch (ConnectorNotFoundException cnfe) {
+      LOGGER.log(Level.WARNING, "Connector not found - this is normal if you "
+          + " recently reconfigured your connector instance." + cnfe);
+    } catch (InstantiatorException ie) {
+      LOGGER.log(Level.WARNING, "Connector not found - this is normal if you "
+          + " recently reconfigured your connector instance." + ie);
+    }
+    return traverser;
+  }
+
+  private void scheduleBatches() {
+    for (String connectorName : instantiator.getConnectorNames()) {
+      NDC.pushAppend(connectorName);
+      try {
+        scheduleABatch(connectorName);
+      } finally {
+        NDC.pop();
+      }
+    }
+  }
+
+  private void scheduleABatch(String connectorName) {
+    synchronized (this) {
+      removedConnectors.clear();
+    }
+    String scheduleStr = null;
+    try {
+      scheduleStr = instantiator.getConnectorSchedule(connectorName);
+    } catch (ConnectorNotFoundException e) {
+      // Looks like the connector just got deleted.  Don't schedule it.
+      return;
+    }
+    Schedule schedule = new Schedule(scheduleStr);
+    if (schedule.isDisabled()) {
+      return;
+    }
+    TaskHandle handle = taskHandles.get(connectorName);
+    if (handle != null && !handle.isDone()) {
+      return;
+    }
+    if (shouldRun(schedule)) {
+      Traverser traverser = getTraverser(connectorName);
+      if (traverser == null) {
+        return;
+      }
+      int batchHint = hostLoadManager.determineBatchHint(connectorName);
+      if (batchHint <= 0) {
+        return;
+      }
+      BatchResultRecorder resultRecorder =
+          new TraversalBatchResultRecorder(schedule);
+      Cancelable batch =
+          new CancelableBatch(traverser, connectorName, resultRecorder,
+              batchHint);
+      synchronized (this) {
+        if (!removedConnectors.contains(connectorName)) {
+          TaskHandle taskHandle = threadPool.submit(batch);
+          if (taskHandle != null) {
+            taskHandles.put(connectorName, taskHandle);
+          }
+        }
+      }
     }
   }
 
   public void run() {
     NDC.push("Traverse");
     try {
-      while (isRunningState()) {
+      while (true) {
         try {
-          for (Schedule schedule : getSchedules()) {
-            if (!isRunningState()) {
-              break;
-            }
-            NDC.pushAppend(schedule.getConnectorName());
-            try {
-              runSchedule(schedule);
-            } finally {
-              NDC.pop();
-            }
-          }
           if (!isRunningState()) {
-            break;
+            LOGGER.info("TraversalScheduler thread is stopping due to "
+                + "shutdown or not being initialized.");
+            return;
           }
-
+          scheduleBatches();
           updateMonitor();
-
           // Give someone else a chance to run.
           try {
             synchronized (this) {
@@ -221,163 +255,68 @@ public class TraversalScheduler implements Scheduler {
               "TraversalScheduler caught unexpected Throwable: ", t);
         }
       }
-      LOGGER.info("TraversalScheduler thread is stopping due to "
-                  + "shutdown or not being initialized.");
     } finally {
       NDC.remove();
     }
   }
 
-  private void runSchedule(Schedule schedule) {
-    if (shouldRun(schedule)) {
+  /**
+   * A {@link BatchResultRecorder} that records results by updating the
+   * {@link HostLoadManager}.
+   */
+  private class TraversalBatchResultRecorder implements BatchResultRecorder {
+    private final Schedule schedule;
+
+    TraversalBatchResultRecorder(Schedule schedule) {
+      this.schedule = schedule;
+    }
+
+    /**
+     * Record the result of running abatch with the {@link HostLoadManager}
+     */
+    public void recordResult(BatchResult result) {
       String connectorName = schedule.getConnectorName();
-      TraversalWorkQueueItem runnable;
-      synchronized (this) {
-        runnable = (TraversalWorkQueueItem) runnables.get(connectorName);
-        if (null == runnable) {
-          runnable = new TraversalWorkQueueItem(connectorName);
-          runnables.put(connectorName, runnable);
-        }
+      int retryDelayMillis = schedule.getRetryDelayMillis();
+      int count = result.getCountProcessed();
+      if (count > 0) {
+        hostLoadManager.updateNumDocsTraversed(connectorName, count);
       }
-      if (!isRunningState()) {
-        return;
-      }
-      // Check if the item is already running here to avoid deadlock.
-      if (!runnable.isFinished()) {
-        // LOGGER.finer("Traversal work for connector "
-        //              + connectorName + " is still running.");
-        return;
-      }
-      synchronized (this) {
-        if (removedConnectors.contains(connectorName)) {
-          LOGGER.info("Connector was removed so no work for it will "
-                      + "be done: " + connectorName);
-          return;
-        }
+      switch (result.getDelayPolicy()) {
+        case POLL:
+          hostLoadManager.connectorFinishedTraversal(connectorName,
+              retryDelayMillis);
+          if (retryDelayMillis == Schedule.POLLING_DISABLED) {
+            disableConnectorInstance(schedule);
+          }
+          break;
 
-        // In the case where the work queue item is being reused need
-        // to reset the finished status so the number of documents is
-        // reported after it finishes.
-        runnable.setFinished(false);
-        workQueue.addWork(runnable);
+        case ERROR:
+          hostLoadManager.connectorFinishedTraversal(connectorName,
+              Traverser.ERROR_WAIT_MILLIS);
+          break;
+
+        case IMMEDIATE:
+          // This means the batch did not complete so we leave the
+          // hostLoadManager in peace.
+          break;
+
+        default:
+          throw new IllegalArgumentException("result = " + result);
       }
     }
-  }
 
-  private class TraversalWorkQueueItem extends WorkQueueItem {
-    private String connectorName;
-    private int numDocsTraversed;
-    private boolean finished;
-    private Traverser traverser;
-
-    public TraversalWorkQueueItem(String connectorName) {
-      this.connectorName = connectorName;
-      this.numDocsTraversed = 0;
-      this.finished = true;
-      this.traverser = null;
-    }
-
-    public synchronized void setFinished(boolean isFinished) {
-      this.finished = isFinished;
-    }
-
-    public synchronized boolean isFinished() {
-      return this.finished;
-    }
-
-    private Traverser getTraverser() {
-      Traverser traverser = null;
+    private void disableConnectorInstance(Schedule schedule) {
+      String connectorInstanceName = schedule.getConnectorName();
+      schedule.setDisabled(true);
       try {
-        traverser = instantiator.getTraverser(connectorName);
+        instantiator.setConnectorSchedule(connectorInstanceName, schedule
+            .toString());
+        LOGGER.info("Traversal complete. Automatically pausing "
+            + "traversal for connector " + connectorInstanceName);
       } catch (ConnectorNotFoundException cnfe) {
-        cnfe.printStackTrace();
-      } catch (InstantiatorException ie) {
-        ie.printStackTrace();
+        LOGGER.log(Level.INFO, "Connector removed during schedule save: "
+            + connectorInstanceName);
       }
-      return traverser;
-    }
-
-    @Override
-    public void doWork() {
-      NDC.push("Traverse " + connectorName);
-      int batchHint = hostLoadManager.determineBatchHint(connectorName);
-      int batchDone = Traverser.ERROR_WAIT;
-      try {
-        traverser = getTraverser();
-        if (null != traverser) {
-          int numDocs = 0;
-          if (batchHint > 0) {
-            LOGGER.finest("Begin runBatch; batchHint = " + batchHint);
-            batchDone = traverser.runBatch(batchHint);
-            numDocs = (batchDone < 0) ? 0 : batchDone;
-            if (isFinished()) {
-              LOGGER.finest("End runBatch; Batch was canceled.");
-              return;      // If we got canceled, bail out.
-            }
-            LOGGER.finest("End runBatch; batchDone = " + batchDone);
-          }
-          if (numDocs > 0) {
-            hostLoadManager.updateNumDocsTraversed(connectorName, numDocs);
-          }
-        }
-        if (batchDone < 0 && batchHint > 0) {
-          try {
-            Schedule schedule =
-                new Schedule(instantiator.getConnectorSchedule(connectorName));
-            if (batchDone == Traverser.POLLING_WAIT) {
-              // If we have reached the end of the ECM content, and we are
-              // not polling for new content, then disable this schedule.
-              hostLoadManager.connectorFinishedTraversal(connectorName,
-                  schedule.getRetryDelayMillis());
-              if (schedule.getRetryDelayMillis() == Schedule.POLLING_DISABLED) {
-                schedule.setDisabled(true);
-                instantiator.setConnectorSchedule(connectorName,
-                    schedule.toString());
-                LOGGER.info("Traversal complete. Automatically pausing "
-                  + "traversal for connector " + connectorName);
-              }
-            } else if (batchDone == Traverser.ERROR_WAIT) {
-              hostLoadManager.connectorFinishedTraversal(connectorName,
-                  Traverser.ERROR_WAIT_MILLIS);
-            } else {
-              hostLoadManager.connectorFinishedTraversal(connectorName,
-                  schedule.getRetryDelayMillis());
-            }
-          } catch (ConnectorNotFoundException cnfe) {
-            // Connector was apparently deleted.  Not a problem.
-          }
-        }
-      } finally {
-        synchronized(this) {
-          traverser = null;
-          finished = true;
-          NDC.pop();
-          notifyAll();
-        }
-      }
-    }
-
-    @Override
-    public synchronized void cancelWork() {
-      if (traverser != null) {
-        traverser.cancelBatch();
-        traverser = null;
-      }
-      setFinished(true);
-      notifyAll();
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder();
-      sb.append("TraversalWorkQueueItem[");
-      sb.append("this=" + hashCode());
-      sb.append(";connectorName=" + connectorName);
-      sb.append(";traverser=" + traverser);
-      sb.append(";numDocsTraversed=" + numDocsTraversed);
-      sb.append(";isFinished=" + finished);
-      sb.append("]");
-      return sb.toString();
     }
   }
 }

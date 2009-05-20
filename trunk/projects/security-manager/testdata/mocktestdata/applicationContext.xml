@@ -51,16 +51,16 @@
         class="com.google.enterprise.connector.monitor.HashMapMonitor">
   </bean>
 
-  <bean id="WorkQueue"
-        class="com.google.enterprise.connector.common.WorkQueue">
-    <constructor-arg index="0" type="int" value="20" />
+  <bean id="ThreadPool"
+        class="com.google.enterprise.connector.schedule.ThreadPool">
+    <constructor-arg index="0" type="long" value="1800000" />
   </bean>
 
   <bean id="TraversalScheduler"
         class="com.google.enterprise.connector.scheduler.TraversalScheduler">
     <constructor-arg index="0" ref="Instantiator" />
     <constructor-arg index="1" ref="Monitor" />
-    <constructor-arg index="2" ref="WorkQueue" />
+    <constructor-arg index="2" ref="ThreadPool" />
   </bean>
 
   <bean id="Manager"

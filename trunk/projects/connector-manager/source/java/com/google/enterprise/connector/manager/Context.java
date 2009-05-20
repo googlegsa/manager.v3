@@ -14,12 +14,12 @@
 
 package com.google.enterprise.connector.manager;
 
-import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.PropertiesException;
-import com.google.enterprise.connector.common.WorkQueue;
+import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.pusher.GsaFeedConnection;
+import com.google.enterprise.connector.scheduler.ThreadPool;
 import com.google.enterprise.connector.scheduler.TraversalScheduler;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.traversal.ProductionTraversalContext;
@@ -538,7 +538,8 @@ public class Context {
     if (!isFeeding) {
       started = false;
     } else if (null != traversalScheduler) {
-      traversalScheduler.shutdown(force, WorkQueue.DEFAULT_SHUTDOWN_TIMEOUT);
+      traversalScheduler.shutdown(force,
+          ThreadPool.DEFAULT_SHUTDOWN_TIMEOUT_MILLIS);
       started = false;
     }
   }
