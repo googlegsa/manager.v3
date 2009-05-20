@@ -65,15 +65,6 @@ public class DocPusher implements Pusher {
       Logger.getLogger(FEED_WRAPPER_LOGGER.getName() + ".FEED");
   private static final Level FEED_LOG_LEVEL = Level.FINER;
 
-  /**
-   * This field is used to construct a feed record in parallel to the main feed
-   * InputStream construction.  It is only used if the feed logging level is set
-   * to the appropriate level.  It only exists during the time the main feed is
-   * being constructed.  Once sufficient information has been appended to this
-   * buffer its contents will be logged and it will be nulled.
-   */
-  private final ThreadLocal<StringBuffer> feedLogRecord =
-      new ThreadLocal<StringBuffer>();
   private static Set<String> propertySkipSet;
 
   static {
@@ -103,15 +94,13 @@ public class DocPusher implements Pusher {
   private static final String XML_LAST_MODIFIED = "last-modified";
   // private static final String XML_LOCK = "lock";
   private static final String XML_AUTHMETHOD = "authmethod";
-  // private static final String XML_NAME = "name";
+  private static final String XML_NAME = "name";
   private static final String XML_ENCODING = "encoding";
 
   // private static final String XML_FEED_FULL = "full";
   private static final String XML_FEED_METADATA_AND_URL = "metadata-and-url";
   private static final String XML_FEED_INCREMENTAL = "incremental";
-  // private static final String XML_BASE64BINARY = "base64binary";
-  private static final String XML_ADD = "add";
-  private static final String XML_DELETE = "delete";
+  private static final String XML_BASE64BINARY = "base64binary";
 
   private static final String CONNECTOR_AUTHMETHOD = "httpbasic";
 
@@ -170,41 +159,36 @@ public class DocPusher implements Pusher {
 
   /*
    * Generate the record tag for the xml data.
+   *
+   * @throws IOException only from Appendable, and that can't really
+   *         happen when using StringBuilder.
    */
   private InputStream xmlWrapRecord(String searchUrl, String displayUrl,
       String lastModified, InputStream content, String mimetype,
-      ActionType actionType, Document document, String feedType)
-      throws RepositoryException {
+      ActionType actionType, Document document, String feedType,
+      StringBuilder feedLogBuilder) throws RepositoryException, IOException {
     boolean metadataAllowed = true;
     boolean contentAllowed = true;
-    // build prefix
-    StringBuffer prefix = new StringBuffer();
+
+    StringBuilder prefix = new StringBuilder();
     prefix.append("<");
     prefix.append(XML_RECORD);
-    prefix.append(" ");
-    XmlUtils.xmlAppendAttrValuePair(XML_URL, searchUrl, prefix);
-    if (displayUrl != null && displayUrl.length() > 0) {
-      prefix.append(" ");
-      XmlUtils.xmlAppendAttrValuePair(XML_DISPLAY_URL, displayUrl, prefix);
-    }
+    XmlUtils.xmlAppendAttr(XML_URL, searchUrl, prefix);
+    XmlUtils.xmlAppendAttr(XML_DISPLAY_URL, displayUrl, prefix);
+
     if (actionType != null) {
-      prefix.append(" ");
       if (actionType == ActionType.ADD) {
-        XmlUtils.xmlAppendAttrValuePair(XML_ACTION, XML_ADD, prefix);
+        XmlUtils.xmlAppendAttr(XML_ACTION, actionType.toString(), prefix);
       } else if (actionType == ActionType.DELETE) {
-        XmlUtils.xmlAppendAttrValuePair(XML_ACTION, XML_DELETE, prefix);
+        XmlUtils.xmlAppendAttr(XML_ACTION, actionType.toString(), prefix);
         metadataAllowed = false;
         contentAllowed = false;
       }
     }
-    if (mimetype != null) {
-      prefix.append(" ");
-      XmlUtils.xmlAppendAttrValuePair(XML_MIMETYPE, mimetype, prefix);
-    }
-    if (lastModified != null) {
-      prefix.append(" ");
-      XmlUtils.xmlAppendAttrValuePair(XML_LAST_MODIFIED, lastModified, prefix);
-    }
+
+    XmlUtils.xmlAppendAttr(XML_MIMETYPE, mimetype, prefix);
+    XmlUtils.xmlAppendAttr(XML_LAST_MODIFIED, lastModified, prefix);
+
     try {
       ValueImpl v = (ValueImpl) Value.getSingleValue(document,
           SpiConstants.PROPNAME_ISPUBLIC);
@@ -214,9 +198,7 @@ public class DocPusher implements Pusher {
           // TODO(martyg): When the GSA is ready to take ACLUSERS and ACLGROUPS,
           // this is the place where those properties should be pulled out of
           // meta data and into the proper ACL Entry element.
-          prefix.append(" ");
-          XmlUtils.xmlAppendAttrValuePair(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD,
-              prefix);
+          XmlUtils.xmlAppendAttr(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD, prefix);
         }
       }
     } catch (IllegalArgumentException e) {
@@ -227,36 +209,31 @@ public class DocPusher implements Pusher {
     if (metadataAllowed) {
       xmlWrapMetadata(prefix, document);
     }
-    if (!feedType.equals(XML_FEED_METADATA_AND_URL)  && contentAllowed) {
+
+    StringBuilder suffix = new StringBuilder();
+
+    // If including document content, wrap it with <content> tags.
+    if (contentAllowed && !XML_FEED_METADATA_AND_URL.equals(feedType)) {
       prefix.append("<");
       prefix.append(XML_CONTENT);
-      prefix.append(" ");
-      XmlUtils.xmlAppendAttrValuePair(XML_ENCODING, "base64binary", prefix);
+      XmlUtils.xmlAppendAttr(XML_ENCODING, XML_BASE64BINARY, prefix);
       prefix.append(">\n");
+
+      suffix.append('\n');
+      XmlUtils.xmlAppendEndTag(XML_CONTENT, suffix);
     }
 
-    // build suffix
-    StringBuffer suffix = new StringBuffer();
-    if (feedType != XML_FEED_METADATA_AND_URL && contentAllowed) {
-      suffix.append('\n').append(XmlUtils.xmlWrapEnd(XML_CONTENT));
-    }
-    suffix.append(XmlUtils.xmlWrapEnd(XML_RECORD));
+    XmlUtils.xmlAppendEndTag(XML_RECORD, suffix);
 
-    InputStream is = null;
-    if (contentAllowed) {
-      is = stringWrappedInputStream(prefix.toString(), content,
-          suffix.toString());
-    } else {
-      is = stringWrappedInputStream(prefix.toString(), null,
-          suffix.toString());
-    }
+    InputStream is = stringWrappedInputStream(prefix.toString(),
+        ((contentAllowed) ? content : null), suffix.toString());
 
-    if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-      feedLogRecord.get().append(prefix);
+    if (feedLogBuilder != null) {
+      feedLogBuilder.append(prefix);
       if (contentAllowed && content != null) {
-        feedLogRecord.get().append("...content...");
+        feedLogBuilder.append("...content...");
       }
-      feedLogRecord.get().append(suffix);
+      feedLogBuilder.append(suffix);
     }
 
     return is;
@@ -268,9 +245,12 @@ public class DocPusher implements Pusher {
    *
    * @param buf string buffer
    * @param document Document
+   * @throws RepositoryException if error reading Property from Document
+   * @throws IOException only from Appendable, and that can't really
+   *         happen when using StringBuilder.
    */
-  private static void xmlWrapMetadata(StringBuffer buf, Document document)
-      throws RepositoryException {
+  private static void xmlWrapMetadata(StringBuilder buf, Document document)
+      throws RepositoryException, IOException {
     Set<String> propertyNames = document.getPropertyNames();
     if (propertyNames == null) {
       LOGGER.log(Level.WARNING, "Property names set is empty");
@@ -280,7 +260,7 @@ public class DocPusher implements Pusher {
       return;
     }
 
-    buf.append(XmlUtils.xmlWrapStart(XML_METADATA));
+    XmlUtils.xmlAppendStartTag(XML_METADATA, buf);
     buf.append("\n");
 
     for (String name : propertyNames) {
@@ -300,7 +280,7 @@ public class DocPusher implements Pusher {
         wrapOneProperty(buf, name, property);
       }
     }
-    buf.append(XmlUtils.xmlWrapEnd(XML_METADATA));
+    XmlUtils.xmlAppendEndTag(XML_METADATA, buf);
   }
 
   /**
@@ -344,9 +324,8 @@ public class DocPusher implements Pusher {
         // Add ACL Entry (scope=role pair) to the list.
         Value roleVal = null;
         while ((roleVal = scopeRoleProp.nextValue()) != null) {
-          String aclRole = roleVal.toString();
-          StringBuffer aclEntry = new StringBuffer(aclScope).append("=").
-              append(aclRole);
+          StringBuilder aclEntry = new StringBuilder(aclScope).append("=")
+              .append(roleVal.toString());
           aclEntryList.add(Value.getStringValue(aclEntry.toString()));
           aclPropWasModified = true;
         }
@@ -369,20 +348,22 @@ public class DocPusher implements Pusher {
    * Wrap a single Property and append to string buffer. Does nothing if the
    * Property's value is null or zero-length.
    *
-   * @param buf string buffer
+   * @param buf string builder
    * @param name the property's name
    * @param property Property
+   * @throws RepositoryException if error reading Property from Document
+   * @throws IOException only from Appendable, and that can't really
+   *         happen when using StringBuilder.
    */
-  private static void wrapOneProperty(StringBuffer buf, String name,
-      Property property) throws RepositoryException {
+  private static void wrapOneProperty(StringBuilder buf, String name,
+      Property property) throws RepositoryException, IOException {
     // In case there are only null values, we want to "roll back" the
     // XML_META tag. So save our current length:
     int indexMetaStart = buf.length();
 
     buf.append("<");
     buf.append(XML_META);
-    buf.append(" ");
-    XmlUtils.xmlAppendAttrValuePair("name", name, buf);
+    XmlUtils.xmlAppendAttr(XML_NAME, name, buf);
     buf.append(" content=\"");
 
     // Mark the beginning of the values:
@@ -403,15 +384,22 @@ public class DocPusher implements Pusher {
     }
   }
 
-  private static void wrapOneValue(StringBuffer buf, ValueImpl value,
-      String delimiter) {
-    String valString = "";
-    valString = value.toFeedXml();
-    if (valString.length() == 0) {
-      return;
+  /**
+   * Wrap a single Property Value and append to string buffer.
+   * Does nothing if the Property's value is null or zero-length.
+   *
+   * @param buf string builder
+   * @param value a Property Value
+   * @throws IOException only from Appendable, and that can't really
+   *         happen when using StringBuilder.
+   */
+  private static void wrapOneValue(StringBuilder buf, ValueImpl value,
+      String delimiter) throws IOException {
+    String valString = value.toFeedXml();
+    if (valString != null && valString.length() > 0) {
+      buf.append(delimiter);
+      XmlUtils.xmlAppendAttrValue(valString, buf);
     }
-    buf.append(delimiter);
-    XmlUtils.XmlEncodeAttrValue(valString, buf);
   }
 
   /*
@@ -522,28 +510,32 @@ public class DocPusher implements Pusher {
 
   /*
    * Builds the xml string for a given document.
+   *
+   * @throws IOException only from Appendable, and that can't really
+   *         happen when using StringBuilder.
    */
   protected InputStream buildXmlData(Document document, String connectorName,
-      String feedType, boolean loggingContent) throws RepositoryException {
+      String feedType, boolean loggingContent) throws RepositoryException,
+                                                      IOException {
     // build prefix
-    StringBuffer prefix = new StringBuffer();
+    StringBuilder prefix = new StringBuilder();
     prefix.append(XML_START);
-    prefix.append(XmlUtils.xmlWrapStart(XML_GSAFEED));
-    prefix.append(XmlUtils.xmlWrapStart(XML_HEADER));
-    prefix.append(XmlUtils.xmlWrapStart(XML_DATASOURCE));
+    XmlUtils.xmlAppendStartTag(XML_GSAFEED, prefix);
+    XmlUtils.xmlAppendStartTag(XML_HEADER, prefix);
+    XmlUtils.xmlAppendStartTag(XML_DATASOURCE, prefix);
     prefix.append(connectorName);
-    prefix.append(XmlUtils.xmlWrapEnd(XML_DATASOURCE));
-    prefix.append(XmlUtils.xmlWrapStart(XML_FEEDTYPE));
+    XmlUtils.xmlAppendEndTag(XML_DATASOURCE, prefix);
+    XmlUtils.xmlAppendStartTag(XML_FEEDTYPE, prefix);
     prefix.append(feedType);
-    prefix.append(XmlUtils.xmlWrapEnd(XML_FEEDTYPE));
-    prefix.append(XmlUtils.xmlWrapEnd(XML_HEADER));
-    prefix.append(XmlUtils.xmlWrapStart(XML_GROUP));
+    XmlUtils.xmlAppendEndTag(XML_FEEDTYPE, prefix);
+    XmlUtils.xmlAppendEndTag(XML_HEADER, prefix);
+    XmlUtils.xmlAppendStartTag(XML_GROUP, prefix);
     prefix.append("\n");
 
     // build suffix
-    StringBuffer suffix = new StringBuffer();
-    suffix.append(XmlUtils.xmlWrapEnd(XML_GROUP));
-    suffix.append(XmlUtils.xmlWrapEnd(XML_GSAFEED));
+    StringBuilder suffix = new StringBuilder();
+    XmlUtils.xmlAppendEndTag(XML_GROUP, suffix);
+    XmlUtils.xmlAppendEndTag(XML_GSAFEED, suffix);
 
     // build record
     String searchurl = null;
@@ -611,23 +603,26 @@ public class DocPusher implements Pusher {
       }
     }
 
+
+    /* This is used to construct a feed record in parallel to the main feed
+     * InputStream construction.  It is only used if the feed logging level
+     * is set to the appropriate level.
+     */
+    StringBuilder feedLogBuilder = null;
     if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-      feedLogRecord.set(new StringBuffer());
-      feedLogRecord.get().append(prefix);
+      feedLogBuilder = new StringBuilder(prefix);
     }
 
     InputStream recordInputStream = xmlWrapRecord(searchurl, displayUrl,
         lastModified, encodedContentStream, mimetype, actionType, document,
-        feedType);
+        feedType, feedLogBuilder);
 
     InputStream is = stringWrappedInputStream(prefix.toString(),
         recordInputStream, suffix.toString());
 
-    if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-      feedLogRecord.get().append(suffix);
-      FEED_LOGGER.log(FEED_LOG_LEVEL,
-          feedLogRecord.get().toString());
-      feedLogRecord.set(null);
+    if (feedLogBuilder != null) {
+      feedLogBuilder.append(suffix);
+      FEED_LOGGER.log(FEED_LOG_LEVEL, feedLogBuilder.toString());
     }
 
     return is;
@@ -685,7 +680,7 @@ public class DocPusher implements Pusher {
   private static String constructGoogleConnectorUrl(String connectorName,
       String docid) {
     String searchurl;
-    StringBuffer buf = new StringBuffer(ServletUtil.PROTOCOL);
+    StringBuilder buf = new StringBuilder(ServletUtil.PROTOCOL);
     buf.append(connectorName);
     buf.append(".localhost/doc?docid=");
     buf.append(docid);
@@ -749,6 +744,13 @@ public class DocPusher implements Pusher {
       feedType = getFeedType(document);
       xmlData = buildXmlData(document, connectorName, feedType,
                              (osFilename != null));
+    } catch (IOException ioe) {
+      // The only way to get an IOException here is if one was thrown by
+      // Appendable as we were building up the XML in a StringBuilder.
+      // And StringBuilder should never throw IOException.
+      LOGGER.log(Level.WARNING,
+          "Rethrowing IOException as RepositoryDocumentException", ioe);
+      throw new RepositoryDocumentException(ioe);
     } catch (RuntimeException e) {
       LOGGER.log(Level.WARNING,
           "Rethrowing RuntimeException as RepositoryDocumentException", e);
