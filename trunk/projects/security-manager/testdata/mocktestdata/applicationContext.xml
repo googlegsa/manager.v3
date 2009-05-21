@@ -52,10 +52,17 @@
   </bean>
 
   <bean id="ThreadPool"
-        class="com.google.enterprise.connector.scheduler.ThreadPool">
-    <constructor-arg index="0" type="long" value="1800000" />
+        class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.scheduler.ThreadPool.newThreadPool"/>
+    <property name="arguments">
+      <list>
+        <!-- Number of seconds to let tasks run before automatic cancel. -->
+        <value>1800</value>
+      </list>
+    </property>
   </bean>
-
+  
   <bean id="TraversalScheduler"
         class="com.google.enterprise.connector.scheduler.TraversalScheduler">
     <constructor-arg index="0" ref="Instantiator" />
