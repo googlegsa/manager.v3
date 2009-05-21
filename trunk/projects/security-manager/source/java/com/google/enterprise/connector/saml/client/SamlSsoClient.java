@@ -18,7 +18,6 @@ import com.google.enterprise.connector.common.GettableHttpServlet;
 import com.google.enterprise.connector.common.HttpExchange;
 import com.google.enterprise.connector.common.PostableHttpServlet;
 import com.google.enterprise.connector.common.SecurityManagerUtil;
-import com.google.enterprise.connector.common.ServletBase;
 import com.google.enterprise.connector.saml.common.HttpExchangeToInTransport;
 import com.google.enterprise.connector.saml.common.HttpExchangeToOutTransport;
 import com.google.enterprise.connector.security.identity.DomainCredentials;
@@ -64,12 +63,13 @@ import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeIssue
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeSamlMessageContext;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runEncoder;
+import com.google.enterprise.connector.servlet.SecurityManagerServlet;
 
 import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_SOAP11_BINDING_URI;
 
-public class SamlSsoClient extends ServletBase
+public class SamlSsoClient extends SecurityManagerServlet
     implements GettableHttpServlet, PostableHttpServlet {
   private static final Logger LOGGER = Logger.getLogger(SamlSsoClient.class.getName());
   private static final String CLIENT_ID_NAME = "SamlSsoClient.clientId";
@@ -81,11 +81,11 @@ public class SamlSsoClient extends ServletBase
 
     SAMLMessageContext<SAMLObject, AuthnRequest, NameID> context = makeSamlMessageContext();
 
-    EntityDescriptor localEntity = ServletBase.getSmEntity();
+    EntityDescriptor localEntity = SecurityManagerServlet.getSmEntity();
     SPSSODescriptor sp = localEntity.getSPSSODescriptor(SAML20P_NS);
     initializeLocalEntity(context, localEntity, sp, Endpoint.DEFAULT_ELEMENT_NAME);
     {
-      EntityDescriptor peerEntity = ServletBase.getEntity(id.getAuthority());
+      EntityDescriptor peerEntity = SecurityManagerServlet.getEntity(id.getAuthority());
       initializePeerEntity(context, peerEntity, peerEntity.getIDPSSODescriptor(SAML20P_NS),
           SingleSignOnService.DEFAULT_ELEMENT_NAME,
           SAML2_REDIRECT_BINDING_URI);
@@ -102,7 +102,7 @@ public class SamlSsoClient extends ServletBase
     //context.setRelayState();
 
     // Send the request via redirect to the user agent
-    ServletBase.initResponse(response);
+    SecurityManagerServlet.initResponse(response);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(response, true));
     runEncoder(new HTTPRedirectDeflateEncoder(), context);
   }

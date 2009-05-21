@@ -15,7 +15,7 @@
 package com.google.enterprise.connector.saml.server;
 
 import com.google.enterprise.connector.common.GettableHttpServlet;
-import com.google.enterprise.connector.common.ServletBase;
+import com.google.enterprise.connector.servlet.SecurityManagerServlet;
 
 import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
@@ -46,7 +46,7 @@ import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
 import static org.opensaml.common.xml.SAMLConstants.SAML2_POST_BINDING_URI;
 
-public class MockSamlIdp extends ServletBase
+public class MockSamlIdp extends SecurityManagerServlet
     implements GettableHttpServlet {
 
   private static final int artifactLifetime = 600000;  // ten minutes

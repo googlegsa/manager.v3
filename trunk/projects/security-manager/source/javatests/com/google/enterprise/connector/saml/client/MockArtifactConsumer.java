@@ -18,9 +18,9 @@ import com.google.enterprise.connector.common.GettableHttpServlet;
 import com.google.enterprise.connector.common.HttpExchange;
 import com.google.enterprise.connector.common.SecurityManagerTestCase;
 import com.google.enterprise.connector.common.SecurityManagerUtil;
-import com.google.enterprise.connector.common.ServletBase;
 import com.google.enterprise.connector.saml.common.HttpExchangeToInTransport;
 import com.google.enterprise.connector.saml.common.HttpExchangeToOutTransport;
+import com.google.enterprise.connector.servlet.SecurityManagerServlet;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -66,7 +66,7 @@ import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
  * Provider that receives a service request from the user agent and initiates an authn request from
  * an identity provider.
  */
-public class MockArtifactConsumer extends ServletBase implements GettableHttpServlet {
+public class MockArtifactConsumer extends SecurityManagerServlet implements GettableHttpServlet {
 
   /** Required for serializable classes. */
   private static final long serialVersionUID = 1L;
