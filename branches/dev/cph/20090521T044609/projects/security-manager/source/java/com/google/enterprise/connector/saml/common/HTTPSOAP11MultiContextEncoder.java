@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc. All Rights Reserved.
+// Copyright 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -75,27 +75,28 @@ public class HTTPSOAP11MultiContextEncoder extends BaseSAML2MessageEncoder {
     return false;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   protected void doEncode(MessageContext messageContext) throws MessageEncodingException {
     if (!(messageContext instanceof SAMLMessageContext)) {
-      log.error("Invalid message context type, this encoder only support SAMLMessageContext");
+      log.error("Invalid message context type, this encoder only supports SAMLMessageContext");
       throw new MessageEncodingException(
-          "Invalid message context type, this encoder only support SAMLMessageContext");
+          "Invalid message context type, this encoder only supports SAMLMessageContext");
     }
+    @SuppressWarnings("unchecked")
+    SAMLMessageContext<SAMLObject, SAMLObject, SAMLObject> samlMsgCtx =
+        (SAMLMessageContext<SAMLObject, SAMLObject, SAMLObject>) messageContext;
 
     if (!(messageContext.getOutboundMessageTransport() instanceof HTTPOutTransport)) {
-      log
-          .error("Invalid outbound message transport type, this encoder only support HTTPOutTransport");
+      log.error(
+          "Invalid outbound message transport type, this encoder only supports HTTPOutTransport");
       throw new MessageEncodingException(
-          "Invalid outbound message transport type, this encoder only support HTTPOutTransport");
+          "Invalid outbound message transport type, this encoder only supports HTTPOutTransport");
     }
+    outTransport = (HTTPOutTransport) messageContext.getOutboundMessageTransport();
 
     if (envelope == null) {
       buildSOAPMessage();
     }
-
-    SAMLMessageContext samlMsgCtx = (SAMLMessageContext) messageContext;
 
     SAMLObject samlMessage = samlMsgCtx.getOutboundSAMLMessage();
     if (samlMessage == null) {
@@ -110,7 +111,6 @@ public class HTTPSOAP11MultiContextEncoder extends BaseSAML2MessageEncoder {
     }
 
     body.getUnknownXMLObjects().add(samlMessage);
-    outTransport = (HTTPOutTransport) messageContext.getOutboundMessageTransport();
   }
 
   public void finish() throws MessageEncodingException {
@@ -135,19 +135,22 @@ public class HTTPSOAP11MultiContextEncoder extends BaseSAML2MessageEncoder {
   /**
    * Builds the SOAP message to be encoded.
    */
-  @SuppressWarnings("unchecked")
   protected void buildSOAPMessage() {
     if (log.isDebugEnabled()) {
       log.debug("Building SOAP message");
     }
     XMLObjectBuilderFactory builderFactory = Configuration.getBuilderFactory();
 
+    @SuppressWarnings("unchecked")
     SOAPObjectBuilder<Envelope> envBuilder =
         (SOAPObjectBuilder<Envelope>) builderFactory.getBuilder(Envelope.DEFAULT_ELEMENT_NAME);
     envelope = envBuilder.buildObject();
+
+    @SuppressWarnings("unchecked")
     SOAPObjectBuilder<Body> bodyBuilder =
         (SOAPObjectBuilder<Body>) builderFactory.getBuilder(Body.DEFAULT_ELEMENT_NAME);
     body = bodyBuilder.buildObject();
+
     envelope.setBody(body);
   }
 }
