@@ -125,7 +125,7 @@
     <antcall target="run_tests_1" />
   </target>
 
-  <target name="coverage_report">
+  <target name="coverage_report" depends="compile_tests">
     <delete file="${coverage.file}" />
     <cobertura-instrument todir="${instrumented.dir}">
       <fileset dir="${classes}" >
