@@ -8,14 +8,21 @@
       entityID="http://google.com/enterprise/gsa/testing">
 
     <SPSSODescriptor
-	protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+  protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
       <AssertionConsumerService
-	  index="0"
-	  isDefault="true"
-	  Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact"
-	  Location="http://localhost:8973/security-manager/mockartifactconsumer"
-	  />
+    index="0"
+    isDefault="true"
+    Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact"
+    Location="http://localhost:8973/security-manager/mockartifactconsumer"
+    />
     </SPSSODescriptor>
+
+    <PDPDescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+      <AuthzService
+    Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
+    Location="http://localhost:8973/security-manager/samlauthz"
+    />
+    </PDPDescriptor>
 
     <Organization>
       <OrganizationName>google.com</OrganizationName>
@@ -42,7 +49,7 @@
 	  />
     </IDPSSODescriptor>
 
-    <PDPDescriptor>
+    <PDPDescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
       <AuthzService
 	  Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
 	  Location="http://localhost:8973/security-manager/samlauthz"
