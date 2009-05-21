@@ -15,14 +15,14 @@
 package com.google.enterprise.connector.saml.server;
 
 import com.google.enterprise.connector.common.PostableHttpServlet;
-import com.google.enterprise.connector.common.ServletBase;
+import com.google.enterprise.connector.servlet.SecurityManagerServlet;
 
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class MockSamlArtifactResolve extends ServletBase implements PostableHttpServlet {
+public class MockSamlArtifactResolve extends SecurityManagerServlet implements PostableHttpServlet {
   private final String localEntityId;
 
   public MockSamlArtifactResolve(String localEntityId) {

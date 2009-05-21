@@ -18,9 +18,9 @@ import com.google.common.base.Preconditions;
 import com.google.enterprise.connector.common.FileUtil;
 import com.google.enterprise.connector.common.GettableHttpServlet;
 import com.google.enterprise.connector.common.PostableHttpServlet;
-import com.google.enterprise.connector.common.ServletBase;
 import com.google.enterprise.connector.security.identity.CredentialsGroup;
 import com.google.enterprise.connector.security.identity.DomainCredentials;
+import com.google.enterprise.connector.servlet.SecurityManagerServlet;
 
 import org.apache.velocity.app.VelocityEngine;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -76,7 +76,7 @@ import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
  * Handler for SAML authentication requests.  These requests are sent by a service provider, in our
  * case the Google Search Appliance.  This is one part of the security manager's identity provider.
  */
-public class SamlAuthn extends ServletBase
+public class SamlAuthn extends SecurityManagerServlet
     implements GettableHttpServlet, PostableHttpServlet {
   private static final Logger LOGGER = Logger.getLogger(SamlAuthn.class.getName());
 
