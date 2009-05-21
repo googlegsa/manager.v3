@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.saml.server;
 
-import static com.google.enterprise.connector.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeSamlMessageContext;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runDecoder;
@@ -52,7 +51,6 @@ import org.opensaml.saml2.core.Statement;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.Subject;
 import org.opensaml.saml2.metadata.AuthzService;
-import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.PDPDescriptor;
 import org.opensaml.ws.message.encoder.MessageEncodingException;
@@ -134,8 +132,7 @@ public class SamlAuthzTest extends SecurityManagerTestCase {
     samlAuthz.setAuthorizer(ALLOW_ALL);
 
     SAMLMessageContext<Response, AuthzDecisionQuery, NameID> context = makeSamlMessageContext();
-    EntityDescriptor localEntity = metadata.getEntity(SecurityManagerTestCase.GSA_TESTING_ISSUER);
-    AuthzDecisionQuery decisionQuery = setupDecisionQuery(localEntity, username, resource);
+    AuthzDecisionQuery decisionQuery = setupDecisionQuery(username, resource);
     SamlLogUtil.logXml(LOGGER, Level.INFO, "Authz Decision Query ", decisionQuery);
 
     context.setOutboundSAMLMessage(decisionQuery);
@@ -180,13 +177,12 @@ public class SamlAuthzTest extends SecurityManagerTestCase {
     assertEquals(resource, authzDecisionStatement.getResource());
   }
 
-  private AuthzDecisionQuery setupDecisionQuery(EntityDescriptor localEntity, String username,
-      String resource) {
+  private AuthzDecisionQuery setupDecisionQuery(String username, String resource) {
     Subject subject = OpenSamlUtil.makeSubject(username);
     Action action = OpenSamlUtil.makeAction(Action.HTTP_GET_ACTION, Action.GHPP_NS_URI);
     AuthzDecisionQuery decisionQuery =
         OpenSamlUtil.makeAuthzDecisionQuery(subject, resource, action);
-    decisionQuery.setIssuer(makeIssuer(localEntity.getEntityID()));
+    decisionQuery.setIssuer(makeIssuer(SecurityManagerTestCase.GSA_TESTING_ISSUER));
     return decisionQuery;
   }
 
@@ -338,19 +334,13 @@ public class SamlAuthzTest extends SecurityManagerTestCase {
   private HttpExchange setupMultiContextExchange(
       SAMLMessageContext<Response, AuthzDecisionQuery, NameID> context, List<StringPair> queries)
       throws IOException, MalformedURLException {
-    EntityDescriptor localEntity = metadata.getEntity(SecurityManagerTestCase.GSA_TESTING_ISSUER);
-    PDPDescriptor descriptor = localEntity.getPDPDescriptor(SAML20P_NS);
-    assertNotNull(descriptor);
-    initializeLocalEntity(context, localEntity, descriptor, Endpoint.DEFAULT_ELEMENT_NAME);
-
     URL authzUrl = new URL(authzService.getLocation());
     HttpExchange exchange = relyingParty.postExchange(authzUrl, null);
     HttpExchangeToOutTransport out = new HttpExchangeToOutTransport(exchange);
 
     HTTPSOAP11MultiContextEncoder multiContextEncoder = new HTTPSOAP11MultiContextEncoder();
     for (StringPair sp : queries) {
-      AuthzDecisionQuery decisionQuery =
-          setupDecisionQuery(localEntity, sp.getName(), sp.getValue());
+      AuthzDecisionQuery decisionQuery = setupDecisionQuery(sp.getName(), sp.getValue());
       SamlLogUtil.logXml(LOGGER, Level.INFO, "Authz Decision Query ", decisionQuery);
       context.setOutboundSAMLMessage(decisionQuery);
       context.setOutboundMessageTransport(out);
