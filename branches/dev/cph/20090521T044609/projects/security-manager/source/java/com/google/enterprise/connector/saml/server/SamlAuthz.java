@@ -151,13 +151,11 @@ public class SamlAuthz extends ServletBase implements PostableHttpServlet {
       Response response =
           OpenSamlUtil.makeResponse(authzDecisionQuery, OpenSamlUtil
               .makeStatus(StatusCode.SUCCESS_URI));
-      response.setIssuer(makeIssuer(localEntity.getEntityID()));
+      response.setIssuer(makeIssuer(localEntityId));
 
-      Subject responseSubject = OpenSamlUtil.makeSubject();
-      responseSubject.setNameID(OpenSamlUtil.makeNameId(username));
+      Subject responseSubject = OpenSamlUtil.makeSubject(username);
 
-      Assertion assertion =
-          OpenSamlUtil.makeAssertion(makeIssuer(localEntity.getEntityID()), responseSubject);
+      Assertion assertion = OpenSamlUtil.makeAssertion(makeIssuer(localEntityId), responseSubject);
       assertion.getAuthzDecisionStatements().add(authzDecisionStatement);
       response.getAssertions().add(assertion);
 
