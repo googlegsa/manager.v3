@@ -66,14 +66,21 @@
   <bean id="Monitor"
         class="com.google.enterprise.connector.monitor.HashMapMonitor">
   </bean>
-
+  
   <bean id="ThreadPool"
-       class="com.google.enterprise.connector.scheduler.ThreadPool">
-    <constructor-arg index="0" type="long" value="5000" />
+        class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.scheduler.ThreadPool.newThreadPool"/>
+    <property name="arguments">
+      <list>
+        <!-- Number of seconds to let tasks run before automatic cancel. -->
+        <value>5</value>
+      </list>
+    </property>
   </bean>
-
+  
   <bean id="Metadata"
-	class="com.google.enterprise.connector.saml.common.Metadata">
+	      class="com.google.enterprise.connector.saml.common.Metadata">
     <constructor-arg index="0" value="saml-metadata.xml" />
     <constructor-arg index="1" value="http://google.com/enterprise/security-manager" />
   </bean>

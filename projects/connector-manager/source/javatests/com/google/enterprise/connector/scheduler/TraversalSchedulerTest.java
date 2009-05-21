@@ -66,7 +66,9 @@ public class TraversalSchedulerTest extends TestCase {
   private TraversalScheduler runWithSchedules(List<Schedule> schedules,
       Instantiator instantiator, boolean shutdown) {
     storeSchedules(schedules, instantiator);
-    ThreadPool threadPool = new ThreadPool(5000);
+    ThreadPool threadPool =
+        ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(5000);
+
     TraversalScheduler scheduler =
         new TraversalScheduler(instantiator, new HashMapMonitor(), threadPool);
     scheduler.init();

@@ -105,13 +105,34 @@ public class ThreadPool {
       new ScheduledThreadPoolExecutor(1);
 
   /**
+   * Create a new {@ThreadPool}.
+   *
+   * @param maximumTaskLifeSeconds the number of seconds to allow a task to run
+   *        before automatic cancellation.
+   */
+  public static ThreadPool newThreadPool(long maximumTaskLifeSeconds) {
+    return new ThreadPool(maximumTaskLifeSeconds * 1000);
+  }
+
+  /**
+   * Create a new {@ThreadPool}.
+   *
+   * @param maximumTaskLifeMillis the number of milliseconds to allow a task to
+   *        run before automatic cancellation.
+   */
+  public static ThreadPool newThreadPoolWithMaximumTaskLifeMillis(
+      long maximumTaskLifeMillis) {
+    return new ThreadPool(maximumTaskLifeMillis);
+  }
+
+  /**
    * Create a {@link ThreadPool}.
    *
-   * @param maximumLifeMillis Time in milliseconds to allow a task to run before
-   *        automatic cancellation.
+   * @param maximumTaskLifeMillis Time in milliseconds to allow a task to run
+   *        before automatic cancellation.
    */
-  public ThreadPool(long maximumLifeMillis) {
-    this.maximumTaskLifeMillis = maximumLifeMillis;
+  private ThreadPool(long maximumTaskLifeMillis) {
+    this.maximumTaskLifeMillis = maximumTaskLifeMillis;
     completionExecutor.execute(new CompletionTask());
   }
 
