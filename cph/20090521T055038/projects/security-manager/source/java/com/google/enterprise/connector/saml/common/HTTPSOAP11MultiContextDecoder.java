@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc. All Rights Reserved.
+// Copyright 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class HTTPSOAP11MultiContextDecoder extends BaseSAML2MessageDecoder {
   private final Logger log = LoggerFactory.getLogger(HTTPSOAP11MultiContextDecoder.class);
 
   /** QNames of understood SOAP headers. */
-  private List<QName> understoodHeaders;
+  private final List<QName> understoodHeaders = new ArrayList<QName>();
 
   /** QName of SOAP mustUnderstand header attribute. */
   private final QName soapMustUnderstand = new QName(SAMLConstants.SOAP11ENV_NS, "mustUnderstand");
@@ -61,12 +61,11 @@ public class HTTPSOAP11MultiContextDecoder extends BaseSAML2MessageDecoder {
 
   /**
    * Constructor.
-   * 
+   *
    * @param pool parser pool used to deserialize messages
    */
   public HTTPSOAP11MultiContextDecoder(ParserPool pool) {
     super(pool);
-    understoodHeaders = new ArrayList<QName>();
   }
 
   public String getBindingURI() {
@@ -81,7 +80,7 @@ public class HTTPSOAP11MultiContextDecoder extends BaseSAML2MessageDecoder {
 
   /**
    * Gets the SOAP header names that are understood by the application.
-   * 
+   *
    * @return SOAP header names that are understood by the application
    */
   public List<QName> getUnderstoodHeaders() {
@@ -90,7 +89,7 @@ public class HTTPSOAP11MultiContextDecoder extends BaseSAML2MessageDecoder {
 
   /**
    * Sets the SOAP header names that are understood by the application.
-   * 
+   *
    * @param headerNames SOAP header names that are understood by the application
    */
   public void setUnderstoodHeaders(List<QName> headerNames) {
@@ -100,7 +99,6 @@ public class HTTPSOAP11MultiContextDecoder extends BaseSAML2MessageDecoder {
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   protected void doDecode(MessageContext messageContext) throws MessageDecodingException {
     if (!(messageContext instanceof SAMLMessageContext)) {
@@ -108,15 +106,10 @@ public class HTTPSOAP11MultiContextDecoder extends BaseSAML2MessageDecoder {
       throw new MessageDecodingException(
           "Invalid message context type, this decoder only support SAMLMessageContext");
     }
+    @SuppressWarnings("unchecked")
+    SAMLMessageContext<SAMLObject, SAMLObject, SAMLObject> samlMsgCtx =
+        (SAMLMessageContext<SAMLObject, SAMLObject, SAMLObject>) messageContext;
 
-    if (!(messageContext.getInboundMessageTransport() instanceof HTTPInTransport)) {
-      log
-          .error("Invalid inbound message transport type, this decoder only support HTTPInTransport");
-      throw new MessageDecodingException(
-          "Invalid inbound message transport type, this decoder only support HTTPInTransport");
-    }
-
-    SAMLMessageContext samlMsgCtx = (SAMLMessageContext) messageContext;
     samlMsgCtx.setInboundMessage(soapMessage);
     if (soapMessage == null) {
       start(samlMsgCtx);
@@ -145,21 +138,21 @@ public class HTTPSOAP11MultiContextDecoder extends BaseSAML2MessageDecoder {
           "Unexpected SOAP body content.  Expected a SAML request but recieved "
               + incomingMessage.getElementQName());
     }
-
     SAMLObject samlMessage = (SAMLObject) incomingMessage;
-    log.debug("Decoded SOAP messaged which included SAML message of type {}", samlMessage
-        .getElementQName());
+
+    log.debug("Decoded SOAP messaged which included SAML message of type {}",
+              samlMessage.getElementQName());
     samlMsgCtx.setInboundSAMLMessage(samlMessage);
 
     populateMessageContext(samlMsgCtx);
   }
 
   /**
-   * Checks that, if any SOAP headers, require understand that they are in the
-   * understood header list.
-   * 
+   * Checks that all SOAP headers that require understanding are in the understood header
+   * list.
+   *
    * @param headers SOAP headers to check
-   * 
+   *
    * @throws MessageDecodingException thrown if a SOAP header requires
    *         understanding but is not understood by the decoder
    */
@@ -178,23 +171,32 @@ public class HTTPSOAP11MultiContextDecoder extends BaseSAML2MessageDecoder {
           if (!understoodHeaders.contains(header.getElementQName())) {
             throw new MessageDecodingException(
                 "SOAP decoder encountered a  header, "
-                    + header.getElementQName()
-                    + ", that requires undestanding however this decoder does not understand that header");
+                + header.getElementQName()
+                + ", that requires undestanding, "
+                + "however this decoder does not understand that header");
           }
         }
       }
     }
   }
 
-  @SuppressWarnings("unchecked")
-  private void start(SAMLMessageContext samlMsgCtx) throws MessageDecodingException {
+  private void start(SAMLMessageContext<SAMLObject, SAMLObject, SAMLObject> samlMsgCtx)
+      throws MessageDecodingException {
+    if (!(samlMsgCtx.getInboundMessageTransport() instanceof HTTPInTransport)) {
+      log.error(
+          "Invalid inbound message transport type, this decoder only support HTTPInTransport");
+      throw new MessageDecodingException(
+          "Invalid inbound message transport type, this decoder only support HTTPInTransport");
+    }
     HTTPInTransport inTransport = (HTTPInTransport) samlMsgCtx.getInboundMessageTransport();
+
     if (!inTransport.getHTTPMethod().equalsIgnoreCase("POST")) {
-      throw new MessageDecodingException("This message deocoder only supports the HTTP POST method");
+      throw new MessageDecodingException(
+          "This message deocoder only supports the HTTP POST method");
     }
 
     log.debug("Unmarshalling SOAP message");
-    soapMessage = (Envelope) unmarshallMessage(inTransport.getIncomingStream());
+    soapMessage = Envelope.class.cast(unmarshallMessage(inTransport.getIncomingStream()));
 
     Header messageHeader = soapMessage.getHeader();
     if (messageHeader != null) {

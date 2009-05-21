@@ -69,7 +69,7 @@ public class SamlAuthz extends ServletBase implements PostableHttpServlet {
   private static final Logger LOGGER = Logger.getLogger(SamlAuthz.class.getName());
 
   private static final Authorizer DENY_ALL_AUTHORIZER = new SamlAuthz.Authorizer() {
-    @Override
+    /* @Override */
     public Set<String> authorize(String username, Collection<String> resources) {
       return new HashSet<String>();
     }
@@ -141,7 +141,7 @@ public class SamlAuthz extends ServletBase implements PostableHttpServlet {
 
       // Create decision statement
       // Note: for now, we disregard the Action in the query and just assert that
-      // http get is permitted or denied.  
+      // http get is permitted or denied.
       // Todo: change this?  Perhaps return indeterminate for anything except get
       Action responseAction = OpenSamlUtil.makeAction(Action.HTTP_GET_ACTION, Action.GHPP_NS_URI);
       AuthzDecisionStatement authzDecisionStatement = makeAuthzDecisionStatement(resource, d);
@@ -151,13 +151,11 @@ public class SamlAuthz extends ServletBase implements PostableHttpServlet {
       Response response =
           OpenSamlUtil.makeResponse(authzDecisionQuery, OpenSamlUtil
               .makeStatus(StatusCode.SUCCESS_URI));
-      response.setIssuer(makeIssuer(localEntity.getEntityID()));
+      response.setIssuer(makeIssuer(localEntityId));
 
-      Subject responseSubject = OpenSamlUtil.makeSubject();
-      responseSubject.setNameID(OpenSamlUtil.makeNameId(username));
+      Subject responseSubject = OpenSamlUtil.makeSubject(username);
 
-      Assertion assertion =
-          OpenSamlUtil.makeAssertion(makeIssuer(localEntity.getEntityID()), responseSubject);
+      Assertion assertion = OpenSamlUtil.makeAssertion(makeIssuer(localEntityId), responseSubject);
       assertion.getAuthzDecisionStatements().add(authzDecisionStatement);
       response.getAssertions().add(assertion);
 
@@ -166,7 +164,7 @@ public class SamlAuthz extends ServletBase implements PostableHttpServlet {
 
       String message = "authzDecisionStatement as XML:";
       SamlLogUtil.logXml(LOGGER, Level.INFO, message, authzDecisionStatement);
-      
+
       initResponse(resp);
       context.setOutboundMessageTransport(httpServletResponseAdapter);
       runEncoder(multiContextEncoder, context);
