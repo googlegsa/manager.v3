@@ -22,6 +22,7 @@
       <OrganizationDisplayName>Google Inc.</OrganizationDisplayName>
       <OrganizationURL>http://www.google.com/</OrganizationURL>
     </Organization>
+
   </EntityDescriptor>
 
   <!-- Description of the Security Manager -->
@@ -42,6 +43,22 @@
 	  />
     </IDPSSODescriptor>
 
+    <SPSSODescriptor
+	protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+      <AssertionConsumerService
+	  index="0"
+	  isDefault="true"
+	  Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+	  Location="http://localhost:8973/security-manager/assertionconsumer"
+	  />
+      <AssertionConsumerService
+	  index="1"
+	  isDefault="false"
+	  Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact"
+	  Location="http://localhost:8973/security-manager/assertionconsumer"
+	  />
+    </SPSSODescriptor>
+
     <PDPDescriptor>
       <AuthzService
 	  Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
@@ -54,6 +71,41 @@
       <OrganizationDisplayName>Google Inc.</OrganizationDisplayName>
       <OrganizationURL>http://www.google.com/</OrganizationURL>
     </Organization>
+
+  </EntityDescriptor>
+
+  <!-- Description of the Mock SAML IdPs -->
+
+  <EntityDescriptor
+      entityID="http://example.com/saml-idp-1">
+
+    <IDPSSODescriptor
+	protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+      <SingleSignOnService
+	  Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+	  Location="http://localhost:8973/security-manager/mocksamlidp1"
+	  />
+      <ArtifactResolutionService
+	  index="0"
+	  isDefault="true"
+	  Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
+	  Location="http://localhost:8973/security-manager/mocksamlartifact1"
+	  />
+    </IDPSSODescriptor>
+
+  </EntityDescriptor>
+
+  <EntityDescriptor
+      entityID="http://example.com/saml-idp-2">
+
+    <IDPSSODescriptor
+	protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+      <SingleSignOnService
+	  Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+	  Location="http://localhost:8973/security-manager/mocksamlidp2"
+	  />
+    </IDPSSODescriptor>
+
   </EntityDescriptor>
 
 </EntitiesDescriptor>

@@ -177,7 +177,7 @@ public class ThreadPoolTest extends TestCase {
   }
 
   public void testTimeToLiveWithSlowBatch() throws Exception {
-    final int count = 13;
+    final int count = 2;
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(count);
     BlockingQueue<Object> taskCanceledQ = new ArrayBlockingQueue<Object>(count);
     ThreadPool threadPool = ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(
