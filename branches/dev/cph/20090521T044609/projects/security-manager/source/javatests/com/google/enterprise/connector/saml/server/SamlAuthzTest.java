@@ -82,8 +82,8 @@ public class SamlAuthzTest extends SecurityManagerTestCase {
 
   private MockHttpClient relyingParty;
   private Metadata metadata;
-  AuthzService authzService;
-  SamlAuthz samlAuthz;
+  private AuthzService authzService;
+  private SamlAuthz samlAuthz;
 
   private static final SamlAuthz.Authorizer ALLOW_ALL = new SamlAuthz.Authorizer() {
     /* @Override */
