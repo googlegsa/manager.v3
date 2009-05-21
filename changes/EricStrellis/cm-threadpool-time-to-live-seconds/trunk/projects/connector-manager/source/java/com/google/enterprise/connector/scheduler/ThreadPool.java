@@ -107,8 +107,8 @@ public class ThreadPool {
   /**
    * Create a new {@ThreadPool}.
    *
-   * @param maximumTaskLifeSeconds the number of seconds to allow
-   * a task to run before automatic cancellation.
+   * @param maximumTaskLifeSeconds the number of seconds to allow a task to run
+   *        before automatic cancellation.
    */
   public static ThreadPool newThreadPool(long maximumTaskLifeSeconds) {
     return new ThreadPool(maximumTaskLifeSeconds * 1000);
@@ -117,8 +117,8 @@ public class ThreadPool {
   /**
    * Create a new {@ThreadPool}.
    *
-   * @param maximumTaskLifeMillis the number of milliseconds to allow
-   * a task to run before automatic cancellation.
+   * @param maximumTaskLifeMillis the number of milliseconds to allow a task to
+   *        run before automatic cancellation.
    */
   public static ThreadPool newThreadPoolWithMaximumTaskLifeMillis(
       long maximumTaskLifeMillis) {
