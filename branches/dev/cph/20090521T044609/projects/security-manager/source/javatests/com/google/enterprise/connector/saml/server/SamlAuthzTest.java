@@ -86,14 +86,14 @@ public class SamlAuthzTest extends SecurityManagerTestCase {
   SamlAuthz samlAuthz;
 
   private static final SamlAuthz.Authorizer ALLOW_ALL = new SamlAuthz.Authorizer() {
-    @Override
+    /* @Override */
     public Set<String> authorize(String username, Collection<String> resources) {
       return new HashSet<String>(resources);
     }
   };
 
   private static final SamlAuthz.Authorizer ALLOW_BY_SUBSTRING = new SamlAuthz.Authorizer() {
-    @Override
+    /* @Override */
     public Set<String> authorize(String username, Collection<String> resources) {
       Set<String> result = new HashSet<String>();
       for (String resource : resources) {
@@ -369,9 +369,6 @@ public class SamlAuthzTest extends SecurityManagerTestCase {
       SAMLMessageContext<Response, AuthzDecisionQuery, NameID> context) throws IOException {
     // Decode the responses
     context.setInboundMessageTransport(in);
-
-    List<SAMLMessageContext<Response, AuthzDecisionQuery, NameID>> contexts =
-        new ArrayList<SAMLMessageContext<Response, AuthzDecisionQuery, NameID>>();
 
     SAMLMessageDecoder decoder = new HTTPSOAP11MultiContextDecoder();
 
