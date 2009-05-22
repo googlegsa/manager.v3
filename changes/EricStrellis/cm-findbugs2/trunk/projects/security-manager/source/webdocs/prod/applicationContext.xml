@@ -6,10 +6,6 @@
         class="com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer">
   </bean>
 
-  <bean id="AuthzResponder"
-        class="com.google.enterprise.connector.saml.server.AuthzResponderImpl">
-  </bean>
-
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.SpringInstantiator">
     <constructor-arg><null/></constructor-arg>
@@ -47,7 +43,6 @@
 
   <bean id="BackEnd"
         class="com.google.enterprise.connector.saml.server.BackEndImpl">
-    <constructor-arg index="0" ref="AuthzResponder" />
     <property name="identityConfig" ref="IdentityConfig" />
   </bean>
 
@@ -60,22 +55,27 @@
         class="com.google.enterprise.connector.scheduler.TraversalScheduler">
     <constructor-arg index="0" ref="Instantiator" />
     <constructor-arg index="1" ref="Monitor" />
-    <constructor-arg index="2" ref="WorkQueue" />
+    <constructor-arg index="2" ref="ThreadPool" />
   </bean>
 
   <bean id="Monitor"
         class="com.google.enterprise.connector.monitor.HashMapMonitor">
   </bean>
-
-  <bean id="WorkQueue"
-        class="com.google.enterprise.connector.common.WorkQueue">
-    <constructor-arg index="0" type="int" value="2" />
-    <constructor-arg index="1" type="long" value="5000" />
-    <constructor-arg index="2" type="long" value="5000" />
+  
+  <bean id="ThreadPool"
+        class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.scheduler.ThreadPool.newThreadPool"/>
+    <property name="arguments">
+      <list>
+        <!-- Number of seconds to let tasks run before automatic cancel. -->
+        <value>5</value>
+      </list>
+    </property>
   </bean>
-
+  
   <bean id="Metadata"
-	class="com.google.enterprise.connector.saml.common.Metadata">
+	      class="com.google.enterprise.connector.saml.common.Metadata">
     <constructor-arg index="0" value="saml-metadata.xml" />
     <constructor-arg index="1" value="http://google.com/enterprise/security-manager" />
   </bean>

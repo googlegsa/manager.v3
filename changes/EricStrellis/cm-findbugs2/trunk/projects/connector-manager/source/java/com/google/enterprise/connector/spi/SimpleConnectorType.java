@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.spi;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -138,12 +139,12 @@ public class SimpleConnectorType implements ConnectorType {
 
   private void appendAttribute(StringBuilder buf, String attrName,
       String attrValue) {
-    buf.append(" ");
-
-    // FIXME: When XmlUtils moves to Appendable.
-    StringBuffer tmp = new StringBuffer();
-    XmlUtils.xmlAppendAttrValuePair(attrName, attrValue, tmp);
-    buf.append(tmp.toString());
+    try {
+      XmlUtils.xmlAppendAttr(attrName, attrValue, buf);
+    } catch (IOException e) {
+      // Can't happen with StringBuilder.
+      throw new AssertionError(e);
+    }
   }
 
   /**

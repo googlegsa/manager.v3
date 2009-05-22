@@ -147,7 +147,7 @@ public class ConnectorInterfaces {
         // By only creating the Traverser after successfully getting
         // a TraversalManager, we avoid caching a Traverser with a
         // null TraversalManager (which lead to a subsequent null-pointer
-        // exception).  With a null Traverser, WorkQueueItems do nothing.
+        // exception).
         // And without a cached (but invalid) Traverser, we will try
         // again on the next call to getTraverser() to get a valid one.
       } catch (Exception e) {

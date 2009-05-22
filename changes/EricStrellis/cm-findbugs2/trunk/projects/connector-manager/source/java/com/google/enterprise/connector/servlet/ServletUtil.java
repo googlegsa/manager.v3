@@ -871,35 +871,40 @@ public class ServletUtil {
   }
 
   /**
-   * When the user edits the configuration we populate her form with obfuscated
-   * values for sensitive keys. This function replaces the obfuscated values we
-   * added with clear ones.
+   * Replace obfuscated values in configData with clear values.
    *
-   * The checks below distinguishes between obfuscated returned values we added
-   * and clear ones the user added. A value is considered obfuscated by us if:
+   * <p> When a user edits a configuration we populate the the edit form with
+   * values from configData. First we obfuscate sensitive data such as passwords
+   * in configData to avoid displaying the values. We retain the clear
+   * values in previousConfigData. After the user edits the form this
+   * function replaces any still obfuscated values that the user did not change
+   * with the saved clear values from previousConfigData. Values the user did
+   * change will no longer be obfuscated and are left as the user entered
+   * them.
+   *
+   * <p> This function employs the following heuristic to determine if a value
+   * is obfuscated:
    * <OL>
-   * <LI>The down shifted key contains the word 'password'
-   * (SecurityUtils.isKeySensitive());
-   * <LI>The value is sequence of '*' characters (isObfuscated()).
+   * <LI>{@link SecurityUtils#isKeySensitive(String)} returns true.
+   * <LI>The value is sequence of '*' characters (isObfuscated() returns true).
    * <LI>The returned value length equals the clear value length.
    * </OL>
    *
-   * Below are some illustrative examples:
+   * <p> Below are some illustrative examples:
    * <OL>
-   * <LI>Returned value we added that will be replaced by the clear value: key =
-   * 'my password', clear value = 'dog', returned value = '***'.
-   * <LI>Returned value the user added: key = 'mom', clear value = 'cat',
-   * returned value = '***'. Here the key is not sensitive because ignoring case
-   * key does not contain the password'.
-   * <LI>Returned value the user added: key = 'password' clear value = "fish",
-   * value = '*****'. Here the length of the returned value does not match the
-   * length of the clear value.
-   * <LI>Returned value the user added that we mistakenly decide we added: key =
-   * 'password', clear value = 'oops', returned value = '****' actually
-   * entered by the user. Here we will retain the old value oops though the
-   * user wants us to change it to '****'. Fortunately this only occurs if
-   * the user chooses a sequence of stars with the same length
-   * as the original value for a new sensitive value.
+   * <LI>Obfuscated value that will be replaced by a clear value: key is
+   * sensitive, clear value = 'dog', configData value = "***".
+   * <LI>Clear value that will <b>not</b> be replaced: key is <b>not</b>
+   * sensitive, clear value = 'cat', configData value = "***".
+   * <LI>Clear value that will <b>not</b> be replaced: key is sensitive, clear
+   * value = "fish", configDataValue = "*". Here the length of the configData
+   * value does <b>not</b> match the length of the clear value.
+   * <LI>Clear value that will <b>not</b> be replaced: the key is sensitive,
+   * clear value = "oops", configData value = "****" after the user entered
+   * "****" in the form. Here {@link ServletUtil#replaceSensitiveData(Map, Map)}
+   * will assume the value is obfuscated though it is not. This confusion only
+   * occurs if the user enters a sequence of stars with the same length as the
+   * original clear value for an obfuscated one.
    * </OL>
    *
    * @param configData the updated properties that may still include some

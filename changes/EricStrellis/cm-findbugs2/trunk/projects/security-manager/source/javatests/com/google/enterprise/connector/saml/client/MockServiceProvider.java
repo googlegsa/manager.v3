@@ -27,7 +27,7 @@ import static org.opensaml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
 
 import com.google.enterprise.connector.common.GettableHttpServlet;
 import com.google.enterprise.connector.common.SecurityManagerTestCase;
-import com.google.enterprise.connector.common.ServletBase;
+import com.google.enterprise.connector.servlet.SecurityManagerServlet;
 
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -54,7 +54,7 @@ import javax.servlet.http.HttpSession;
  * Provider that receives a service request from a user agent and initiates an authn request to
  * an identity provider.
  */
-public class MockServiceProvider extends ServletBase implements GettableHttpServlet {
+public class MockServiceProvider extends SecurityManagerServlet implements GettableHttpServlet {
   private static final long serialVersionUID = 1L;
 
   public MockServiceProvider() throws ServletException {
