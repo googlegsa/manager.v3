@@ -1,10 +1,10 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,248 +14,170 @@
 
 package com.google.enterprise.connector.saml.server;
 
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.initializeLocalEntity;
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeAuthzDecisionStatement;
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeIssuer;
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeSamlMessageContext;
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runDecoder;
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runEncoder;
+import static org.opensaml.common.xml.SAMLConstants.SAML20P_NS;
+
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import com.google.enterprise.connector.common.PostableHttpServlet;
+import com.google.enterprise.connector.saml.common.HTTPSOAP11MultiContextDecoder;
+import com.google.enterprise.connector.saml.common.HTTPSOAP11MultiContextEncoder;
 import com.google.enterprise.connector.saml.common.OpenSamlUtil;
+import com.google.enterprise.connector.saml.common.SamlLogUtil;
 import com.google.enterprise.connector.servlet.SecurityManagerServlet;
 
-import org.apache.xerces.parsers.SAXParser;
-import org.opensaml.common.SAMLObject;
+import org.opensaml.common.binding.SAMLMessageContext;
+import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.saml2.core.Action;
 import org.opensaml.saml2.core.Assertion;
+import org.opensaml.saml2.core.AuthzDecisionQuery;
 import org.opensaml.saml2.core.AuthzDecisionStatement;
 import org.opensaml.saml2.core.DecisionTypeEnumeration;
+import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.StatusCode;
-import org.opensaml.xml.io.Marshaller;
-import org.opensaml.xml.io.MarshallerFactory;
-import org.w3c.dom.Element;
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
+import org.opensaml.saml2.core.Subject;
+import org.opensaml.saml2.metadata.AuthzService;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.ws.message.encoder.MessageEncodingException;
+import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
+import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.soap.MessageFactory;
-import javax.xml.soap.SOAPException;
-import javax.xml.soap.SOAPMessage;
 
-/**
- * SamlAuthz handler.  Accepts a SOAP-bound batch of SAML AuthzDecisionQueries,
- * performs authz on each query with a designated backend, and replies with
- * a SOAP-bound batch of SAML Responses that each contain an
- * AuthzDecisionStatement.
- */
-public class SamlAuthz extends SecurityManagerServlet {
+public class SamlAuthz extends SecurityManagerServlet implements PostableHttpServlet {
 
+  /** Required for serializable classes. */
   private static final long serialVersionUID = 1L;
-  public static final String HARDCODED_SUBJECT_NAME = "ruth_test1";
-  public static final String HARDCODED_AUTHZ_NAMESPACE = "urn:oasis:names:tc:SAML:1.0:action:ghpp";
+  private static final Logger LOGGER = Logger.getLogger(SamlAuthz.class.getName());
 
-  private static final Logger LOGGER =
-      Logger.getLogger(SamlAuthz.class.getName());
+  private static final Authorizer DENY_ALL_AUTHORIZER = new SamlAuthz.Authorizer() {
+    /* @Override */
+    public Set<String> authorize(String username, Collection<String> resources) {
+      return new HashSet<String>();
+    }
+  };
+  private Authorizer authorizer = DENY_ALL_AUTHORIZER;
 
-  /**
-   * For now, responds with "yes" for all AuthzDecisionQueries with a
-   * SOAP-bound batch of SAML Responses compliant to the GSA AuthZ SPI
-   * (with in batched Authz mode).
-   */
+  public void setAuthorizer(Authorizer authorizer) {
+    this.authorizer = authorizer;
+  }
+
   @Override
-  public void doPost(HttpServletRequest request,
-                     HttpServletResponse response)
-      throws IOException {
-    handleDoPost(request, response);
+  public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    authorize(req, resp);
   }
 
-  /**
-   * Actual post handler, factored out for the sake of unit testing.
-   */
-  protected void handleDoPost(HttpServletRequest req, HttpServletResponse res)
-      throws IOException {
+  private void authorize(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 
-    BufferedReader reader = new BufferedReader(req.getReader());
-    LOGGER.info("Content Length: " + req.getContentLength());
-    LOGGER.info("Content Type moo: " + req.getContentType());
-    SAXParser p = new SAXParser();
-    MultiAuthzQueryDecisionHandler ch = new MultiAuthzQueryDecisionHandler();
-    p.setContentHandler(ch);
+    List<SAMLMessageContext<AuthzDecisionQuery, Response, NameID>> contexts =
+        new ArrayList<SAMLMessageContext<AuthzDecisionQuery, Response, NameID>>();
+
+    String localEntityId = getSmEntityId();
+    HttpServletRequestAdapter httpServletRequestAdapter = new HttpServletRequestAdapter(req);
+    SAMLMessageDecoder decoder = new HTTPSOAP11MultiContextDecoder();
+
+    Multimap<String, String> resourcesByUsername = ArrayListMultimap.create();
+
+    EntityDescriptor localEntity = getEntity(localEntityId);
+
+    while (true) {
+      SAMLMessageContext<AuthzDecisionQuery, Response, NameID> context = makeSamlMessageContext();
+      initializeLocalEntity(context, localEntity, localEntity.getPDPDescriptor(SAML20P_NS),
+          AuthzService.DEFAULT_ELEMENT_NAME);
+      context.setInboundMessageTransport(httpServletRequestAdapter);
+
+      // Decode a request
+      try {
+        runDecoder(decoder, context);
+      } catch (IndexOutOfBoundsException e) {
+        // normal indication that there are no more messages to decode
+        break;
+      }
+      AuthzDecisionQuery authzDecisionQuery = context.getInboundSAMLMessage();
+      String message = "authzDecisionQuery as XML:";
+      SamlLogUtil.logXml(LOGGER, Level.INFO, message, authzDecisionQuery);
+      contexts.add(context);
+
+      String resource = authzDecisionQuery.getResource();
+      String username = authzDecisionQuery.getSubject().getNameID().getValue();
+      resourcesByUsername.put(username, resource);
+    }
+
+    Map<String, Set<String>> authorizedResourcesByUsername = new HashMap<String, Set<String>>();
+    for (String username : resourcesByUsername.keySet()) {
+      authorizedResourcesByUsername.put(username, authorizer.authorize(username,
+          resourcesByUsername.get(username)));
+    }
+
+    HTTPSOAP11MultiContextEncoder multiContextEncoder = new HTTPSOAP11MultiContextEncoder();
+    HttpServletResponseAdapter httpServletResponseAdapter = 
+      new HttpServletResponseAdapter(resp, true);
+
+    for (SAMLMessageContext<AuthzDecisionQuery, Response, NameID> context : contexts) {
+      AuthzDecisionQuery authzDecisionQuery = context.getInboundSAMLMessage();
+      String resource = authzDecisionQuery.getResource();
+      String username = authzDecisionQuery.getSubject().getNameID().getValue();
+
+      Set<String> set = authorizedResourcesByUsername.get(username);
+      DecisionTypeEnumeration d =
+          set.contains(resource) ? DecisionTypeEnumeration.PERMIT : DecisionTypeEnumeration.DENY;
+
+      // Create decision statement
+      // Note: for now, we disregard the Action in the query and just assert that
+      // http get is permitted or denied.
+      // Todo: change this?  Perhaps return indeterminate for anything except get
+      Action responseAction = OpenSamlUtil.makeAction(Action.HTTP_GET_ACTION, Action.GHPP_NS_URI);
+      AuthzDecisionStatement authzDecisionStatement = makeAuthzDecisionStatement(resource, d);
+      authzDecisionStatement.getActions().add(responseAction);
+
+      // Create a response
+      Response response =
+          OpenSamlUtil.makeResponse(authzDecisionQuery, OpenSamlUtil
+              .makeStatus(StatusCode.SUCCESS_URI));
+      response.setIssuer(makeIssuer(localEntityId));
+
+      Subject responseSubject = OpenSamlUtil.makeSubject(username);
+
+      Assertion assertion = OpenSamlUtil.makeAssertion(makeIssuer(localEntityId), responseSubject);
+      assertion.getAuthzDecisionStatements().add(authzDecisionStatement);
+      response.getAssertions().add(assertion);
+
+      // Encode response.
+      context.setOutboundSAMLMessage(response);
+
+      String message = "authzDecisionStatement as XML:";
+      SamlLogUtil.logXml(LOGGER, Level.INFO, message, authzDecisionStatement);
+
+      initResponse(resp);
+      context.setOutboundMessageTransport(httpServletResponseAdapter);
+      runEncoder(multiContextEncoder, context);
+    }
     try {
-      p.parse(new InputSource(reader));
-    } catch (SAXException e) {
-      e.printStackTrace();
+      multiContextEncoder.finish();
+    } catch (MessageEncodingException e) {
+      throw new IOException(e);
     }
-
-    List<SAMLObject> responses = new ArrayList<SAMLObject>();
-    // TODO get Subject for each query
-    for (String url : ch.getUrls()) {
-      LOGGER.info("url found: " + url);
-      LOGGER.info("with id: " + ch.getIdForUrl(url));
-      responses.add(generateDecisionResponse(url, ch.getIdForUrl(url), HARDCODED_SUBJECT_NAME,
-                                             DecisionTypeEnumeration.PERMIT));
-    }
-
-    SOAPMessage soapMsg = soapify(responses);
-
-    try {
-      soapMsg.writeTo(res.getOutputStream());
-    } catch (SOAPException e) {
-      e.printStackTrace();
-    }
-
   }
 
-  /**
-   * Generate a SAML Response object for a given URL, ID string, subject, and
-   * decision.  The Response object should be compliant to the GSA AuthZ SPI,
-   * i.e. it contains a unique ID and an Assertion element containing an
-   * AuthzDecisionStatement.
-   *
-   * @return a Response SAMLObject
-   */
-  private Response generateDecisionResponse(String url, String id, String subject,
-      DecisionTypeEnumeration decision) {
-    Response response =
-        OpenSamlUtil.makeResponse(null, OpenSamlUtil.makeStatus(StatusCode.SUCCESS_URI));
-    response.setID(id);
-    Assertion assertion = OpenSamlUtil.makeAssertion(
-        OpenSamlUtil.makeIssuer("localhost"),
-        OpenSamlUtil.makeSubject(subject));
-    AuthzDecisionStatement decisionStmt =
-        OpenSamlUtil.makeAuthzDecisionStatement(
-            url, decision, OpenSamlUtil.makeAction(Action.HTTP_GET_ACTION, Action.GHPP_NS_URI));
-    decisionStmt.getActions().get(0).setNamespace(HARDCODED_AUTHZ_NAMESPACE);
-    assertion.getAuthzDecisionStatements().add(decisionStmt);
-    response.getAssertions().add(assertion);
-    return response;
-  }
-
-  /**
-   * For a given SAMLObject, generate a SOAP message that envelopes the
-   * SAMLObject.
-   * <p/>
-   * TODO(con): Combine this with the soapify method from SamlArtifactResolve
-   * and move it into a common utility class.
-   *
-   * @param samlObjects a SAMLObject
-   * @return a SOAPMessage, or null on failure
-   */
-  private SOAPMessage soapify(List<SAMLObject> samlObjects) {
-    // Get the marshaller factory
-    MarshallerFactory marshallerFactory = org.opensaml.Configuration.getMarshallerFactory();
-
-    // Get the Subject marshaller
-    Marshaller marshaller = marshallerFactory.getMarshaller(samlObjects.get(0));
-
-    try {
-      MessageFactory msgFactory = MessageFactory.newInstance();
-      SOAPMessage soapMessage = msgFactory.createMessage();
-
-      // Marshall the Subject
-      for (SAMLObject samlObject : samlObjects) {
-
-        Element respElement = marshaller.marshall(samlObject);
-        soapMessage.getSOAPPart().getEnvelope().getBody()
-            .addDocument(respElement.getOwnerDocument());
-      }
-      return soapMessage;
-    } catch (Exception e) {
-      LOGGER.log(Level.SEVERE,
-          "Failed to convert SAML object to a SOAP message:\n", e);
-    }
-    return null;
-  }
-
-  /**
-   * ContentHandler implementation to parse an Authz SOAP message with SAX.
-   * <p/>
-   * At present, this class does nothing more than gather the URLs and the
-   * Request IDs associated with each URL.  Eventually, we want to gather
-   * user information as well to do proper authz.
-   * <p/>
-   * TODO(con): Make instances of this class more reusable.  At present the
-   * expectation is that a new MAQDHandler is created per batch of documents.
-   * Making this reusable would involve some kind of state-tracking and
-   * resetting the HashMap whenever a new Document is being parsed.
-   * Alternatively, trash this and use OpenSAML's SOAP libraries.
-   */
-  static class MultiAuthzQueryDecisionHandler implements ContentHandler {
-
-    private HashMap<String, ArrayList<String>> urlToId;
-
-    public MultiAuthzQueryDecisionHandler() {
-      urlToId = new HashMap<String, ArrayList<String>>();
-    }
-
-    public Set<String> getUrls() {
-      return urlToId.keySet();
-    }
-
-    public String getIdForUrl(String url) {
-      if (urlToId.containsKey(url)) {
-        ArrayList<String> foo = urlToId.get(url);
-        return foo.get(0);
-      }
-      return null;
-    }
-
-    public String getSubjectForUrl(String url) {
-      if (urlToId.containsKey(url)) {
-        ArrayList<String> foo = urlToId.get(url);
-        return foo.get(1);
-      }
-      return null;
-    }
-
-    public void setDocumentLocator(Locator locator) {
-    }
-
-    public void startDocument() {
-    }
-
-    public void endDocument() {
-    }
-
-    public void startPrefixMapping(String prefix, String uri) {
-    }
-
-    public void endPrefixMapping(String prefix) {
-    }
-
-    public void startElement(String namespaceUri, String localName, String qName,
-        Attributes attributes) {
-      if (localName.equals("AuthzDecisionQuery")) {
-        String url = attributes.getValue("", "Resource");
-        String id = attributes.getValue("", "ID");
-        ArrayList<String> foo = new ArrayList<String>(2);
-        foo.add(0, id);
-        urlToId.put(url, foo);
-      }
-    }
-
-    public void endElement(String namespaceUri, String localName, String qName) {
-    }
-
-    public void characters(char[] ch, int start, int length) {
-      // TODO I want to figure out the subject
-    }
-
-    public void ignorableWhitespace(char[] ch, int start, int length) {
-    }
-
-    public void processingInstruction(String target, String data) {
-    }
-
-    public void skippedEntity(String name) {
-    }
-
+  public static interface Authorizer {
+    Set<String> authorize(String username, Collection<String> resources);
   }
 }

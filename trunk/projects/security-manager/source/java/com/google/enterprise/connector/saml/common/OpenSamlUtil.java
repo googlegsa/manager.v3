@@ -514,15 +514,13 @@ public final class OpenSamlUtil {
    *
    * @param resource The resource referred to by this access decision.
    * @param decision The access decision made by the authorization service.
-   * @param action The action granted on the given resource.
    * @return A new <code>AuthzDecisionStatement</code> object.
    */
   public static AuthzDecisionStatement makeAuthzDecisionStatement(String resource,
-      DecisionTypeEnumeration decision, Action action) {
+      DecisionTypeEnumeration decision) {
     AuthzDecisionStatement statement = authzDecisionStatementBuilder.buildObject();
     statement.setResource(resource);
     statement.setDecision(decision);
-    statement.getActions().add(action);
     return statement;
   }
 
