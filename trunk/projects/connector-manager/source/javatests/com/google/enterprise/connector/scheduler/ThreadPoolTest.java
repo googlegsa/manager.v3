@@ -161,7 +161,7 @@ public class ThreadPoolTest extends TestCase {
     assertNull(handle);
   }
 
-  private final static long SHORT_TASK_LIFE_MILLIS = 100;
+  private final static long SHORT_TASK_LIFE_MILLIS = 250;
 
   public void testTimeToLiveWithHungBatch() throws Exception {
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(10);
