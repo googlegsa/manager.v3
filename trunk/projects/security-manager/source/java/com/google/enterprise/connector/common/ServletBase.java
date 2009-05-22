@@ -14,15 +14,10 @@
 
 package com.google.enterprise.connector.common;
 
-import com.google.enterprise.connector.manager.ConnectorManager;
-import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.saml.common.Metadata;
-import com.google.enterprise.connector.saml.server.BackEnd;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.opensaml.saml2.metadata.EntityDescriptor;
 
 import java.io.IOException;
 import java.io.PrintWriter;
