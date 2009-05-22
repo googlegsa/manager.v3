@@ -200,8 +200,15 @@ public class ThreadPoolTest extends TestCase {
   }
 
   private void assertIsExiting(boolean expect,
-      List<VerifyInterruptedCancelable> tasks) {
+      List<VerifyInterruptedCancelable> tasks) throws InterruptedException{
     for (VerifyInterruptedCancelable task : tasks) {
+      long timeToGiveUp = System.currentTimeMillis() + 3000;
+      while (System.currentTimeMillis() < timeToGiveUp) {
+        if (task.isExiting() == expect) {
+          return;
+        }
+        Thread.sleep(10);
+      }
       assertEquals(expect, task.isExiting());
     }
   }
