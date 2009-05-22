@@ -28,14 +28,13 @@ import com.google.enterprise.connector.security.identity.DomainCredentials;
 import com.google.enterprise.connector.security.identity.IdentityConfig;
 import com.google.enterprise.connector.security.ui.OmniForm;
 import com.google.enterprise.connector.security.ui.OmniFormHtml;
+import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.VerificationStatus;
 
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
-import org.opensaml.saml2.core.AuthzDecisionQuery;
-import org.opensaml.saml2.core.Response;
 import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
@@ -44,6 +43,7 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -81,7 +81,6 @@ public class BackEndImpl implements BackEnd {
   /** Name of the attribute that holds the session's outgoing cookie set. */
   private static final String OUTGOING_COOKIES_NAME = "OutgoingCookies";
 
-  private final AuthzResponder authzResponder;
   private final SAMLArtifactMap artifactMap;
   private IdentityConfig identityConfig;
   private int maxPrompts;
@@ -92,10 +91,8 @@ public class BackEndImpl implements BackEnd {
   /**
    * Create a new backend object.
    *
-   * @param authzResponder The authorization responder to use.
    */
-  public BackEndImpl(AuthzResponder authzResponder) {
-    this.authzResponder = authzResponder;
+  public BackEndImpl() {
     artifactMap = new BasicSAMLArtifactMap(
         new BasicParserPool(),
         new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
@@ -131,11 +128,6 @@ public class BackEndImpl implements BackEnd {
   /* @Override */
   public void setMaxPrompts(int maxPrompts) {
     this.maxPrompts = maxPrompts;
-  }
-
-  /* @Override */
-  public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
-    return authzResponder.authorizeBatch(authzDecisionQueries);
   }
 
   /* @Override */
@@ -514,6 +506,12 @@ public class BackEndImpl implements BackEnd {
         return c;
         }
       }
+    return null;
+  }
+
+  /* @Override */
+  public Set<String> authorizeDocids(List<String> docidList, AuthenticationIdentity identity) {
+    // TODO Auto-generated method stub
     return null;
   }
 }
