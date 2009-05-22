@@ -81,11 +81,11 @@ public class SamlSsoClient extends SecurityManagerServlet
 
     SAMLMessageContext<SAMLObject, AuthnRequest, NameID> context = makeSamlMessageContext();
 
-    EntityDescriptor localEntity = SecurityManagerServlet.getSmEntity();
+    EntityDescriptor localEntity = getSmEntity();
     SPSSODescriptor sp = localEntity.getSPSSODescriptor(SAML20P_NS);
     initializeLocalEntity(context, localEntity, sp, Endpoint.DEFAULT_ELEMENT_NAME);
     {
-      EntityDescriptor peerEntity = SecurityManagerServlet.getEntity(id.getAuthority());
+      EntityDescriptor peerEntity = getEntity(id.getAuthority());
       initializePeerEntity(context, peerEntity, peerEntity.getIDPSSODescriptor(SAML20P_NS),
           SingleSignOnService.DEFAULT_ELEMENT_NAME,
           SAML2_REDIRECT_BINDING_URI);
@@ -102,7 +102,7 @@ public class SamlSsoClient extends SecurityManagerServlet
     //context.setRelayState();
 
     // Send the request via redirect to the user agent
-    SecurityManagerServlet.initResponse(response);
+    initResponse(response);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(response, true));
     runEncoder(new HTTPRedirectDeflateEncoder(), context);
   }
