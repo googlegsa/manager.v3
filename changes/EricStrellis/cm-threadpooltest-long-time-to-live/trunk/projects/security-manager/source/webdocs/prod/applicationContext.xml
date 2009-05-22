@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<!-- This is the application context for production.  -->
+<beans>
+  <bean id="EncryptedPropertyPlaceholderConfigurer"
+        class="com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer">
+  </bean>
+
+  <bean id="AuthzResponder"
+        class="com.google.enterprise.connector.saml.server.AuthzResponderImpl">
+  </bean>
+
+  <bean id="Instantiator"
+        class="com.google.enterprise.connector.instantiator.SpringInstantiator">
+    <constructor-arg><null/></constructor-arg>
+    <property name="scheduler" ref="TraversalScheduler"/>
+  </bean>
+
+  <bean id="ConnectorConfigStore"
+        class="com.google.enterprise.connector.persist.FileStore">
+  </bean>
+
+  <bean id="ConnectorScheduleStore"
+        class="com.google.enterprise.connector.persist.FileStore">
+  </bean>
+
+  <bean id="ConnectorStateStore"
+        class="com.google.enterprise.connector.persist.FileStore">
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.instantiator.InstanceInfo.setConnectorStores"/>
+    <property name="arguments">
+      <list>
+        <ref bean="ConnectorConfigStore"/>
+        <ref bean="ConnectorScheduleStore"/>
+        <ref bean="ConnectorStateStore"/>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="IdentityConfig"
+	class="com.google.enterprise.connector.security.identity.CsvConfig">
+    <constructor-arg index="0" value="AuthSites.conf" />
+  </bean>
+
+  <bean id="BackEnd"
+        class="com.google.enterprise.connector.saml.server.BackEndImpl">
+    <constructor-arg index="0" ref="AuthzResponder" />
+    <property name="identityConfig" ref="IdentityConfig" />
+  </bean>
+
+  <bean id="Manager"
+        class="com.google.enterprise.connector.manager.ConnectorManager">
+    <property name="instantiator" ref="Instantiator" />
+  </bean>
+
+  <bean id="TraversalScheduler"
+        class="com.google.enterprise.connector.scheduler.TraversalScheduler">
+    <constructor-arg index="0" ref="Instantiator" />
+    <constructor-arg index="1" ref="Monitor" />
+    <constructor-arg index="2" ref="ThreadPool" />
+  </bean>
+
+  <bean id="Monitor"
+        class="com.google.enterprise.connector.monitor.HashMapMonitor">
+  </bean>
+  
+  <bean id="ThreadPool"
+        class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.scheduler.ThreadPool.newThreadPool"/>
+    <property name="arguments">
+      <list>
+        <!-- Number of seconds to let tasks run before automatic cancel. -->
+        <value>5</value>
+      </list>
+    </property>
+  </bean>
+  
+  <bean id="Metadata"
+	      class="com.google.enterprise.connector.saml.common.Metadata">
+    <constructor-arg index="0" value="saml-metadata.xml" />
+    <constructor-arg index="1" value="http://google.com/enterprise/security-manager" />
+  </bean>
+</beans>
