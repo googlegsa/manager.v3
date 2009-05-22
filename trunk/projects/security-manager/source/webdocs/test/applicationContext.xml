@@ -6,10 +6,6 @@
         class="com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer">
   </bean>
 
-  <bean id="AuthzResponder"
-        class="com.google.enterprise.connector.saml.server.AuthzResponderImpl">
-  </bean>
-
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.SpringInstantiator">
     <constructor-arg><null/></constructor-arg>
@@ -47,7 +43,6 @@
 
   <bean id="BackEnd"
         class="com.google.enterprise.connector.saml.server.BackEndImpl">
-    <constructor-arg index="0" ref="AuthzResponder" />
     <property name="identityConfig" ref="IdentityConfig" />
   </bean>
 

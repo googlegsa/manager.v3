@@ -16,13 +16,13 @@ package com.google.enterprise.connector.saml.server;
 
 import com.google.enterprise.connector.security.identity.CredentialsGroup;
 import com.google.enterprise.connector.security.identity.IdentityConfig;
+import com.google.enterprise.connector.spi.AuthenticationIdentity;
 
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
-import org.opensaml.saml2.core.AuthzDecisionQuery;
-import org.opensaml.saml2.core.Response;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -102,10 +102,13 @@ public interface BackEnd {
       throws IOException;
 
   /**
-   * Process a set of SAML authorization queries.
+   * Gets authorization for a set of documents by ID.
    *
-   * @param authzDecisionQueries A list of authorization queries to be processed.
-   * @return A list of responses, corresponding to the argument.
+   * @param docidList The document set represented as a list of Strings: the
+   *        docid for each document
+   * @param identity An AuthenticationIdentity object that encapsulates the
+   *        user's identity
+   * @return A Set of String IDs indicating which documents the user can see.
    */
-  public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries);
+  public Set<String> authorizeDocids(List<String> docidList, AuthenticationIdentity identity);
 }
