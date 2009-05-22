@@ -41,7 +41,7 @@ public class SecurityManagerServlet extends ServletBase {
     return backend;
   }
 
-    public static EntityDescriptor getEntity(String id) throws IOException {
+  public static EntityDescriptor getEntity(String id) throws IOException {
     return getMetadata().getEntity(id);
   }
 
