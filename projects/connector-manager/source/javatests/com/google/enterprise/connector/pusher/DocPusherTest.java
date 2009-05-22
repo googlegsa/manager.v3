@@ -824,9 +824,10 @@ public class DocPusherTest extends TestCase {
 
   public void testFeedLogging() throws Exception {
     deleteOldFile(TEST_LOG_FILE);
+    FileHandler fh = null;
     try {
       // Setup logging on the DocPusher class.
-      FileHandler fh = new FileHandler(TEST_LOG_FILE, 10000, 1);
+      fh = new FileHandler(TEST_LOG_FILE, 10000, 1);
       SimpleFormatter sf = new SimpleFormatter();
       fh.setFormatter(sf);
       DocPusher.getFeedLogger().addHandler(fh);
@@ -874,6 +875,9 @@ public class DocPusherTest extends TestCase {
       resultXML = mockFeedConnection.getFeed();
       assertFeedInLog(resultXML, TEST_LOG_FILE);
     } finally {
+      if (fh != null) {
+        fh.close();
+      }
       deleteOldFile(TEST_LOG_FILE);
     }
   }
