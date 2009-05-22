@@ -59,7 +59,7 @@
 	  />
     </SPSSODescriptor>
 
-    <PDPDescriptor>
+    <PDPDescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
       <AuthzService
 	  Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
 	  Location="http://localhost:8973/security-manager/samlauthz"
