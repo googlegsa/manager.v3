@@ -63,10 +63,10 @@ public class TestService implements ContextService {
   /**
    * Marker used to note service action.
    */
-  public class TestServiceToken {
-    private String service;
-    private String action;
-    private boolean actionForced;
+  public static class TestServiceToken {
+    private final String service;
+    private final String action;
+    private final boolean actionForced;
 
     public TestServiceToken(String serviceName, String action) {
       this(serviceName, action, false);

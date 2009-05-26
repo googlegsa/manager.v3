@@ -38,13 +38,13 @@ public class QueryTraverser implements Traverser {
   private static final Logger LOGGER =
       Logger.getLogger(QueryTraverser.class.getName());
 
-  private Pusher pusher;
-  private TraversalManager queryTraversalManager;
+  private final Pusher pusher;
+  private final TraversalManager queryTraversalManager;
   private TraversalStateStore stateStore;
-  private String connectorName;
+  private final String connectorName;
 
   // Synchronize access to cancelWork.
-  private Object cancelLock = new Object();
+  private final Object cancelLock = new Object();
   private boolean cancelWork = false;
 
   public QueryTraverser(Pusher pusher, TraversalManager traversalManager,
@@ -53,11 +53,12 @@ public class QueryTraverser implements Traverser {
     this.queryTraversalManager = traversalManager;
     this.stateStore = stateStore;
     this.connectorName = connectorName;
-    if (this.queryTraversalManager instanceof TraversalContextAware) {
+    if (queryTraversalManager instanceof TraversalContextAware) {
+      TraversalContextAware contextAware =
+          (TraversalContextAware)queryTraversalManager;
       try {
         TraversalContext tc = Context.getInstance().getTraversalContext();
-        ((TraversalContextAware)this.queryTraversalManager)
-            .setTraversalContext(tc);
+        contextAware.setTraversalContext(tc);
       } catch (Exception e) {
         LOGGER.log(Level.WARNING, "Unable to set TraversalContext", e);
       }

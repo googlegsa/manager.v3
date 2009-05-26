@@ -42,9 +42,6 @@ public class ConnectorInterfaces {
   AuthenticationManager authenticationManager = null;
   AuthorizationManager authorizationManager = null;
 
-  String username = null;
-  String password = null;
-
   /**
    * This constructor is the normal constructor
    * @param connectorName

@@ -37,7 +37,6 @@ public class AuthorizationHandler {
   Manager manager;
   PrintWriter out;
   int status;
-  int numDocs;
   Map<String, Boolean> results;
 
   AuthorizationHandler(String xmlBody, Manager manager, PrintWriter out) {
@@ -65,7 +64,8 @@ public class AuthorizationHandler {
   public void handleDoPost() {
     NDC.push("AuthZ");
     try {
-      AuthorizationParser authorizationParser = new AuthorizationParser(xmlBody);
+      AuthorizationParser authorizationParser =
+          new AuthorizationParser(xmlBody);
       status = authorizationParser.getStatus();
       if (status == ConnectorMessageCode.ERROR_PARSING_XML_REQUEST) {
         ServletUtil.writeResponse(out,status);

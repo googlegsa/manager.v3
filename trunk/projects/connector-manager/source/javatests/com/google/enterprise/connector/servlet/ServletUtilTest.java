@@ -373,18 +373,18 @@ public class ServletUtilTest extends TestCase {
 
   private String makeConfigForm(Map<String, String> configMap) {
     StringBuilder buf = new StringBuilder(2048);
-    for (String key : configMap.keySet()) {
-      appendStartRow(buf, key);
+    for (Map.Entry<String, String> entry : configMap.entrySet()) {
+      appendStartRow(buf, entry.getKey());
       buf.append(OPEN_ELEMENT);
       buf.append(INPUT);
-      if (SecurityUtils.isKeySensitive(key)) {
+      if (SecurityUtils.isKeySensitive(entry.getKey())) {
         appendAttribute(buf, TYPE, PASSWORD);
       } else {
         appendAttribute(buf, TYPE, TEXT);
       }
-      appendAttribute(buf, NAME, key);
+      appendAttribute(buf, NAME, entry.getKey());
       if (configMap != null) {
-        String value = configMap.get(key);
+        String value = entry.getValue();
         if (value != null) {
           appendAttribute(buf, VALUE, value);
         }
@@ -420,11 +420,10 @@ public class ServletUtilTest extends TestCase {
 
   private void obfuscateValues(Map<String, String> clearConfig,
        Map<String, String> obfuscatedConfig) {
-    for (String key : clearConfig.keySet()) {
-      String clearValue = clearConfig.get(key);
-      obfuscatedConfig.put(key,
-          (SecurityUtils.isKeySensitive(key)) ?
-              ServletUtil.obfuscateValue(clearValue) : clearValue);
+    for (Map.Entry<String, String> entry : clearConfig.entrySet()) {
+      obfuscatedConfig.put(entry.getKey(),
+          (SecurityUtils.isKeySensitive(entry.getKey())) ?
+              ServletUtil.obfuscateValue(entry.getValue()) : entry.getValue());
     }
   }
 
