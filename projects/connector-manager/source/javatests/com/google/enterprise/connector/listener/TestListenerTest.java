@@ -101,7 +101,7 @@ public class TestListenerTest extends TestCase {
     return context.getRequiredBean(name, requiredType);
   }
 
-  private class TestSource {
+  private static class TestSource {
     String name;
     String value;
 
@@ -111,7 +111,7 @@ public class TestListenerTest extends TestCase {
     }
   }
 
-  private class TestEvent extends ApplicationEvent {
+  private static class TestEvent extends ApplicationEvent {
     public TestEvent(TestSource source) {
       super(source);
     }

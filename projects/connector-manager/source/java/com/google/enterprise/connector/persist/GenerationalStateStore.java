@@ -31,7 +31,7 @@ public class GenerationalStateStore implements ConnectorStateStore {
 
   // This instance's generations of connector instances.
   // May be older than the most current ones stored above.
-  private HashMap<String, Long> myGenerations;
+  private final HashMap<String, Long> myGenerations;
 
   // The underlying ConnectorStateStore
   private ConnectorStateStore baseStore;
@@ -125,7 +125,7 @@ public class GenerationalStateStore implements ConnectorStateStore {
     Long generation = myGenerations.get(connectorName);
     if (generation == null) {
       // If we have no generation yet, get the most current one.
-      generation = new Long(currentGeneration(context));
+      generation = Long.valueOf(currentGeneration(context));
       myGenerations.put(connectorName, generation);
     }
     return generation;
@@ -156,7 +156,7 @@ public class GenerationalStateStore implements ConnectorStateStore {
     synchronized (generations) {
       Long generation = generations.get(context.getConnectorName());
       generations.put(context.getConnectorName(),
-          new Long((generation == null) ? 1 : generation + 1));
+          Long.valueOf((generation == null) ? 1 : generation + 1));
     }
   }
 }
