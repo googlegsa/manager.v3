@@ -92,7 +92,7 @@ public class Base64FilterInputStreamTest extends TestCase {
    * ByteArrayInputStream that returns a single byte at a time even if you
    * request more.
    */
-  private class SingleByteArrayInputStream extends ByteArrayInputStream {
+  private static class SingleByteArrayInputStream extends ByteArrayInputStream {
     public SingleByteArrayInputStream(byte[] bytes) {
       super(bytes);
     }

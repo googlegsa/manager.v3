@@ -20,7 +20,31 @@ import java.util.logging.Formatter;
 import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 
-/* TODO: Add MDC logging. */
+/**
+ * A custom log {@code Formatter} that generates XML format log events.
+ * The style of the generated XML can either resemble
+ * {@code java.util.logging.XMLFormatter} ouput (the default) or
+ * {@code Log4j XMLLayout} output (viewable in the Chainsaw log analyzer).
+ *
+ * <p>To select this Formatter, configure it via the
+ * {@code FileHandler.formatter} property in {@code logging.properties}.
+ * For instance: <pre><code>
+     java.util.logging.FileHandler.formatter=com.google.enterprise.connector.logging.XmlFormatter
+   </code></pre>
+ *
+ * <p>To generate Log4j-compatible XML output, configure it via the
+ * {@code XmlFormatter.format} property in {@code logging.properties}.
+ * A property value of {@code log4j} or {@code chainsaw} will trigger
+ * the generation of Log4j-compatible XML output.  Otherwise, java.util.logging
+ * style output will be produced.
+ * For instance: <pre><code>
+     com.google.enterprise.connector.logging.XmlFormatter.format=log4j
+   </code></pre>
+ */
+/* TODO: Add MDC logging.
+ * TODO: Use XmlUtils when it is extracted into a utility jar.  But it, too,
+ * must then get added to the system classpath to be available to logging.jar.
+ */
 public class XmlFormatter extends Formatter {
   private static final String NL = System.getProperty("line.separator");
 
@@ -69,6 +93,7 @@ public class XmlFormatter extends Formatter {
    * than log4jFormatter, but NDC data doesn't work in Chainsaw.
    */
   private class UtilLoggingXmlFormatter extends java.util.logging.XMLFormatter {
+    @Override
     public String format(LogRecord record) {
       String output = super.format(record);
       String ndc = NDC.peek();
@@ -93,7 +118,6 @@ public class XmlFormatter extends Formatter {
     }
   }
 
-
   /**
    * A log formatter resembling the Log4j XMLFormatter,
    * based upon java.util.logging.LogRecord rather than
@@ -102,6 +126,7 @@ public class XmlFormatter extends Formatter {
    * is viewable using Chainsaw.
    */
   private class Log4jXmlFormatter extends SimpleFormatter {
+    @Override
     public String format(LogRecord record) {
       StringBuilder buf = new StringBuilder();
 

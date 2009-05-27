@@ -51,7 +51,7 @@ public class InstanceMap extends TreeMap<String, InstanceInfo> {
   private static final Logger LOGGER =
       Logger.getLogger(InstanceMap.class.getName());
 
-  private TypeMap typeMap;
+  private final TypeMap typeMap;
 
   public InstanceMap(TypeMap typeMap) {
     if (typeMap == null) {
@@ -275,8 +275,7 @@ public class InstanceMap extends TreeMap<String, InstanceInfo> {
             + " for connector " + name);
       }
     } else {
-      connectorDir.mkdirs();
-      if (!connectorDir.exists()) {
+      if (!connectorDir.mkdirs()) {
         throw new InstantiatorException("Can't create "
             + "connector directory at " + connectorDir.getAbsolutePath()
             + " for connector " + name);
@@ -316,8 +315,10 @@ public class InstanceMap extends TreeMap<String, InstanceInfo> {
         FileInputStream in2 = new FileInputStream(configXml);
         String conf1 = StringUtils.streamToStringAndThrow(in1);
         String conf2 = StringUtils.streamToStringAndThrow(in2);
-        if (conf1.equals(conf2)) {
-          configXml.delete();
+        if (conf1.equals(conf2) && !configXml.delete()) {
+          LOGGER.log(Level.WARNING, "Can't delete connectorInstance.xml "
+              + " from connector directory at " + connectorDir.getAbsolutePath()
+              + " for connector " + name);
         }
       } catch (IOException ioe) {
         LOGGER.log(Level.WARNING, "Can't delete connectorInstance.xml "
@@ -370,7 +371,7 @@ public class InstanceMap extends TreeMap<String, InstanceInfo> {
    *
    * @see com.google.enterprise.connector.spi.ConnectorFactory
    */
-  private class ConnectorInstanceFactory implements ConnectorFactory {
+  private static class ConnectorInstanceFactory implements ConnectorFactory {
     String connectorName;
     File connectorDir;
     TypeInfo typeInfo;
@@ -410,7 +411,9 @@ public class InstanceMap extends TreeMap<String, InstanceInfo> {
         if (info == null) {
           return null;
         }
-        connectors.add(info);
+        synchronized (this) {
+          connectors.add(info);
+        }
         return info.getConnector();
       } catch (InstantiatorException e) {
         throw new RepositoryException(

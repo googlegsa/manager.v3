@@ -24,17 +24,20 @@ import java.util.List;
  */
 public class ScheduleTest extends TestCase {
 
-  final String strWithDelay = "connector1:60:0:1-2:3-5";
-  final String strWithDefaultDelay = "connector1:60:300000:1-2:3-5";
-  final String strNoDelay = "connector1:60:1-2:3-5";
-  final String strIntervals = "1-2:3-5";
-  final String strWithDisabled = "#connector1:60:0:1-2:3-5";
-  final String strWithDelayNoIntervals = "connector2:60:0:";
-  final String strWithDefaultDelayNoIntervals = "connector2:60:300000:";
-  final String strNoDelayNoIntervals = "connector2:60:";
-  final String[] illegalSchedules = { "connector1", "connector2:60", "connector2:60:0",
-      "connector1:60:0:1", "connector1:xyx:0:1", "connector1:60:0:xyzzy",
-      "connector1:60:0:1-2:3", "connector1:60:0:1-2:3:" };
+  private static final String strWithDelay = "connector1:60:0:1-2:3-5";
+  private static final String strWithDefaultDelay =
+      "connector1:60:300000:1-2:3-5";
+  private static final String strNoDelay = "connector1:60:1-2:3-5";
+  private static final String strIntervals = "1-2:3-5";
+  private static final String strWithDisabled = "#connector1:60:0:1-2:3-5";
+  private static final String strWithDelayNoIntervals = "connector2:60:0:";
+  private static final String strWithDefaultDelayNoIntervals =
+      "connector2:60:300000:";
+  private static final String strNoDelayNoIntervals = "connector2:60:";
+  private static final String[] illegalSchedules =
+      {"connector1", "connector2:60", "connector2:60:0", "connector1:60:0:1",
+          "connector1:xyx:0:1", "connector1:60:0:xyzzy",
+          "connector1:60:0:1-2:3", "connector1:60:0:1-2:3:"};
 
   public void testSerialization() {
     List<ScheduleTimeInterval> intervals =
@@ -119,8 +122,10 @@ public class ScheduleTest extends TestCase {
     assertEquals(strNoDelay, Schedule.toLegacyString(strWithDisabled));
 
     // Legacy format does support no time intervals.
-    assertEquals(strNoDelayNoIntervals, Schedule.toLegacyString(strWithDelayNoIntervals));
-    assertEquals(strNoDelayNoIntervals, Schedule.toLegacyString(strNoDelayNoIntervals));
+    assertEquals(strNoDelayNoIntervals,
+        Schedule.toLegacyString(strWithDelayNoIntervals));
+    assertEquals(strNoDelayNoIntervals,
+        Schedule.toLegacyString(strNoDelayNoIntervals));
 
     // Invalid schedule strings should throw IllegalArgumentException.
     for (String badSched : illegalSchedules) {

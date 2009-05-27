@@ -24,10 +24,10 @@ import java.util.Map;
  */
 public class HashMapMonitor implements Monitor {
 
-  private Map<String, Object> vars;
+  private final Map<String, Object> vars;
 
   public HashMapMonitor() {
-    vars = new HashMap<String, Object>();
+    vars = Collections.synchronizedMap(new HashMap<String, Object>());
   }
 
   /* (non-Javadoc)
@@ -40,17 +40,19 @@ public class HashMapMonitor implements Monitor {
     }
   }
 
-  /* (non-Javadoc)
-   * @see com.google.enterprise.connector.monitor.Monitor#setVariables(java.util.Map)
+  /*
+   * (non-Javadoc)
+   *
+   * @see
+   * com.google.enterprise.connector.monitor.Monitor#setVariables(java.util.Map)
    */
   public void setVariables(Map<String, ?> props) {
     synchronized (vars) {
-      for (String key : props.keySet()) {
-        Object value = props.get(key);
-        if (null == value) {
-          vars.remove(key);
+      for (Map.Entry<String, ?> entry : props.entrySet()) {
+        if (null == entry.getValue()) {
+          vars.remove(entry.getKey());
         } else {
-          vars.put(key, value);
+          vars.put(entry.getKey(), entry.getValue());
         }
       }
     }

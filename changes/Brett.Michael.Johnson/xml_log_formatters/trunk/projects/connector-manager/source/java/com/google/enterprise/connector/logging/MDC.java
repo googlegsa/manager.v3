@@ -47,14 +47,10 @@ import java.util.HashMap;
  * the future, it should call {@link #remove()} to release the ThreadLocal
  * resources used by the context.  This is especially important if
  * when the thread exits, so these resources may get garbage collected.
- *
- * <p>A child thread automatically inherits a <em>copy</em> of the mapped
- * diagnostic context of its parent.
  */
 public class MDC {
-
-  protected static InheritableThreadLocal<HashMap<String, String>> context =
-      new InheritableThreadLocal<HashMap<String, String>>();
+  protected static ThreadLocal<HashMap<String, String>> context =
+      new ThreadLocal<HashMap<String, String>>();
 
   /**
    * Put a context <code>value</code> as identified by <code>key</code>

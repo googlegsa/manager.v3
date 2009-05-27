@@ -77,8 +77,8 @@ public class SimpleDocumentTest extends TestCase {
    */
   private SimpleDocument createSimpleDocument(Map<String, Object> props) {
     Map<String, List<Value>> spiValues = new HashMap<String, List<Value>>();
-    for (String key : props.keySet()) {
-      Object obj = props.get(key);
+    for (Map.Entry<String, Object> entry : props.entrySet()) {
+      Object obj = entry.getValue();
       Value val = null;
       if (obj instanceof String) {
         val = Value.getStringValue((String) obj);
@@ -89,7 +89,7 @@ public class SimpleDocumentTest extends TestCase {
       }
       List<Value> values = new ArrayList<Value>();
       values.add(val);
-      spiValues.put(key, values);
+      spiValues.put(entry.getKey(), values);
     }
     return new SimpleDocument(spiValues);
   }
