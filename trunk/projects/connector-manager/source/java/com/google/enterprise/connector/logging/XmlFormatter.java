@@ -23,23 +23,23 @@ import java.util.logging.LogRecord;
 /**
  * A custom log {@code Formatter} that generates XML format log events.
  * The style of the generated XML can either resemble
- * {@code java.util.logging.XMLFormatter} ouput (the default) or
+ * {@code java.util.logging.XMLFormatter} output (the default) or
  * {@code Log4j XMLLayout} output (viewable in the Chainsaw log analyzer).
- *
- * <p>To select this Formatter, configure it via the
+ * <p>
+ * To select this Formatter, configure it via the
  * {@code FileHandler.formatter} property in {@code logging.properties}.
  * For instance: <pre><code>
-     java.util.logging.FileHandler.formatter=com.google.enterprise.connector.logging.XmlFormatter
-   </code></pre>
- *
- * <p>To generate Log4j-compatible XML output, configure it via the
+ *    java.util.logging.FileHandler.formatter=com.google.enterprise.connector.logging.XmlFormatter
+ * </code></pre>
+ * <p>
+ * To generate Log4j-compatible XML output, configure it via the
  * {@code XmlFormatter.format} property in {@code logging.properties}.
  * A property value of {@code log4j} or {@code chainsaw} will trigger
  * the generation of Log4j-compatible XML output.  Otherwise, java.util.logging
  * style output will be produced.
  * For instance: <pre><code>
-     com.google.enterprise.connector.logging.XmlFormatter.format=log4j
-   </code></pre>
+ *    com.google.enterprise.connector.logging.XmlFormatter.format=log4j
+ * </code></pre>
  */
 /* TODO: Add MDC logging.
  * TODO: Use XmlUtils when it is extracted into a utility jar.  But it, too,
@@ -49,19 +49,19 @@ public class XmlFormatter extends Formatter {
   private static final String NL = System.getProperty("line.separator");
 
   // Constants used by the java.util.logging compatible formatter.
-  private final String recordTag = "<record>";
-  private final int recordTagLen = recordTag.length();
+  private static final String RECORD_TAG = "<record>";
+  private static final int RECORD_TAG_LEN = RECORD_TAG.length();
 
   // Constants used by the log4j compatible formatter.
-  private static final String eventTag = "log4j:event";
-  private static final String locationTag = "log4j:locationInfo";
-  private static final String messageTag = "log4j:message";
-  private static final String ndcTag = "log4j:NDC";
-  private static final String throwableTag = "log4j:throwable";
-  private static final String cdataStart = "<![CDATA[";
-  private static final String cdataEnd = "]]>";
+  private static final String EVENT_TAG = "log4j:event";
+  private static final String LOCATION_TAG = "log4j:locationInfo";
+  private static final String MESSAGE_TAG = "log4j:message";
+  private static final String NDC_TAG = "log4j:NDC";
+  private static final String THROWABLE_TAG = "log4j:throwable";
+  private static final String CDATA_START = "<![CDATA[";
+  private static final String CDATA_END = "]]>";
 
-  // Which underlying formatter are we using? Either the log4j-compatible
+  // Contains the underlying formatter being used; either the log4j compatible
   // formatter or the java.util.logging compatible formatter.
   private Formatter formatter;
 
@@ -92,15 +92,16 @@ public class XmlFormatter extends Formatter {
    * adding NDC Logging capabilities. The output is easier to read
    * than log4jFormatter, but NDC data doesn't work in Chainsaw.
    */
-  private class UtilLoggingXmlFormatter extends java.util.logging.XMLFormatter {
+  private static class UtilLoggingXmlFormatter
+      extends java.util.logging.XMLFormatter {
     @Override
     public String format(LogRecord record) {
       String output = super.format(record);
       String ndc = NDC.peek();
       if (ndc != null && ndc.length() > 0) {
-        int point = output.indexOf(recordTag);
+        int point = output.indexOf(RECORD_TAG);
         if (point >= 0) {
-          point += recordTagLen;
+          point += RECORD_TAG_LEN;
           if (ndc.indexOf('&') >= 0) {
             ndc = ndc.replaceAll("&", "&amp;");
           }
@@ -125,13 +126,13 @@ public class XmlFormatter extends Formatter {
    * XML output that resembles log4j output, so that it
    * is viewable using Chainsaw.
    */
-  private class Log4jXmlFormatter extends SimpleFormatter {
+  private static class Log4jXmlFormatter extends SimpleFormatter {
     @Override
     public String format(LogRecord record) {
       StringBuilder buf = new StringBuilder();
 
       // Start event element.
-      buf.append('<').append(eventTag);
+      buf.append('<').append(EVENT_TAG);
       appendAttr(buf, "logger", record.getLoggerName());
       appendAttr(buf, "timestamp", Long.toString(record.getMillis()));
       appendAttr(buf, "level", record.getLevel().getName());
@@ -141,17 +142,17 @@ public class XmlFormatter extends Formatter {
       // Add NDC element.
       String ndc = NDC.peek();
       if (ndc != null && ndc.length() > 0) {
-        appendCdata(buf, ndcTag, ndc);
+        appendCdata(buf, NDC_TAG, ndc);
       }
 
       // Add location element.
-      buf.append('<').append(locationTag);
+      buf.append('<').append(LOCATION_TAG);
       appendAttr(buf, "class", record.getSourceClassName());
       appendAttr(buf, "method", record.getSourceMethodName());
       buf.append(" file=\"\" line=\"\"/>").append(NL);
 
       // Add message element.
-      appendCdata(buf, messageTag, super.formatMessage(record));
+      appendCdata(buf, MESSAGE_TAG, super.formatMessage(record));
 
       // Add throwable element.
       Throwable thrown = record.getThrown();
@@ -160,12 +161,12 @@ public class XmlFormatter extends Formatter {
         PrintWriter pw = new PrintWriter(sw);
         thrown.printStackTrace(pw);
         pw.flush();
-        appendCdata(buf, throwableTag, sw.toString());
+        appendCdata(buf, THROWABLE_TAG, sw.toString());
         pw.close();
       }
 
       // Close the event element.
-      buf.append("</").append(eventTag).append('>').append(NL).append(NL);
+      buf.append("</").append(EVENT_TAG).append('>').append(NL).append(NL);
 
       return buf.toString();
     }
@@ -250,14 +251,14 @@ public class XmlFormatter extends Formatter {
    * @param str String to enclose in CDATA tags.
    */
   private static void appendCdata(StringBuilder buf, String tag, String str) {
-    if (str.indexOf(cdataStart) >= 0) {
-      str = str.replaceAll(cdataStart, " ");
+    if (str.indexOf(CDATA_START) >= 0) {
+      str = str.replaceAll(CDATA_START, " ");
     }
-    if (str.indexOf(cdataEnd) >= 0) {
-      str = str.replaceAll(cdataEnd, " ");
+    if (str.indexOf(CDATA_END) >= 0) {
+      str = str.replaceAll(CDATA_END, " ");
     }
     buf.append('<').append(tag).append('>');
-    buf.append(cdataStart).append(str).append(cdataEnd);
+    buf.append(CDATA_START).append(str).append(CDATA_END);
     buf.append("</").append(tag).append('>').append(NL);
   }
 }
