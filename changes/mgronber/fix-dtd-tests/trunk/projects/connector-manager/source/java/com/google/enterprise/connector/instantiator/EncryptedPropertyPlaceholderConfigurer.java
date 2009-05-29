@@ -13,6 +13,8 @@
 // limitations under the License.
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.common.Base64;
+import com.google.enterprise.connector.common.Base64DecoderException;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
 
@@ -222,7 +224,6 @@ public class EncryptedPropertyPlaceholderConfigurer extends
     return key;
   }
 
-  @SuppressWarnings("restriction")
   public static String encryptString(String plainText) {
     try {
       SecretKey key = getSecretKey();
@@ -234,7 +235,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       // Encrypt
       byte[] enc = encryptor.doFinal(utf8);
       // Encode bytes to base64 to get a string
-      return new sun.misc.BASE64Encoder().encode(enc);
+      return Base64.encode(enc);
     } catch (NoSuchAlgorithmException e) {
       String msg = "Could not encrypt password: provider does not have algorithm";
       LOGGER.log(Level.SEVERE, msg);
@@ -267,7 +268,6 @@ public class EncryptedPropertyPlaceholderConfigurer extends
     }
   }
 
-  @SuppressWarnings("restriction")
   public static String decryptString(String cipherText) {
     try {
       Key secretKey = getSecretKey();
@@ -276,7 +276,7 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       decryptor.init(Cipher.DECRYPT_MODE, secretKey);
 
       // Decode base64 to get bytes
-      byte[] dec = new sun.misc.BASE64Decoder().decodeBuffer(cipherText);
+      byte[] dec = Base64.decode(cipherText);
       // Decrypt
       byte[] utf8 = decryptor.doFinal(dec);
       // Decode using utf-8
@@ -308,6 +308,9 @@ public class EncryptedPropertyPlaceholderConfigurer extends
       LOGGER.log(Level.SEVERE, "Could not decrypt password");
       throw new RuntimeException("Could not decrypt password");
     } catch (IllegalBlockSizeException e) {
+      LOGGER.log(Level.SEVERE, "Could not decrypt password");
+      throw new RuntimeException("Could not decrypt password");
+    } catch (Base64DecoderException e) {
       LOGGER.log(Level.SEVERE, "Could not decrypt password");
       throw new RuntimeException("Could not decrypt password");
     }
