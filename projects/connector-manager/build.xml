@@ -118,12 +118,9 @@
         <pathelement location="${projects.dir}/test-connectorA/dist/jar/testconnectorA.jar" />
         <pathelement location="${projects.dir}/test-connectorB/dist/jar/testconnectorB.jar" />
         <pathelement location="${tests.classes}" />
+        <pathelement location="${dtds}" />
         <pathelement path="${java.class.path}" />
-        <!-- The following line is needed because some tests use tesdata in
-             ${tests.src}/com/google/enterprise/connector/testdata
-             TODO: refactor those tests to use the testdata directory that all the other tests use:
-             "testdata" (relative to this directory)
-        -->
+        <!-- Needed for those tests that must find resources on the classpath. -->
         <pathelement location="${tests.src}" />
       </classpath>
       <formatter type="xml" />
