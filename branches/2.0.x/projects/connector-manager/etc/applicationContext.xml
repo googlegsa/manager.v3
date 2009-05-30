@@ -294,6 +294,7 @@
         <value>application/pdf</value>
         <value>application/postscript</value>
         <value>application/vnd.framemaker</value>
+        <value>application/vnd.mif</value>
         <value>application/vnd.kde.kpresenter</value>
         <value>application/vnd.kde.kspread</value>
         <value>application/vnd.kde.kword</value>
