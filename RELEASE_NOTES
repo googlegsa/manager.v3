@@ -85,8 +85,10 @@ The Google Connectors Installer will automatically configure this properly.
 However manual installations will require two small changes to enable this
 feature:
  - In $TOMCAT_HOME/webapps/connector-manager/WEB-INF/classes/logging.properties,
-   change the FileHandler.formatter to our custom formatter:
+   change the FileHandler.formatter to one of our custom formatters:
    java.util.logging.FileHandler.formatter=com.google.enterprise.connector.logging.SimpleFormatter
+     or
+   java.util.logging.FileHandler.formatter=com.google.enterprise.connector.logging.XmlFormatter
 
  - If $TOMCAT_HOME/webapps/connector-manager/WEB-INF/classes/logging.properties
    specifies using the java.util.logging.FileHandler, then you must add the
