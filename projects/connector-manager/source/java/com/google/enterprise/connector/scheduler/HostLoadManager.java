@@ -180,18 +180,14 @@ public class HostLoadManager {
     Object value = connectorNameToFinishTime.get(connectorName);
     if (value != null) {
       long finishTime = ((Long)value).longValue();
-      long now = System.currentTimeMillis();
-      if (now < finishTime) {
-        return true;
-      }
-      int maxDocsPerPeriod = (int)
-          ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
-      int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
-      int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
-      if (remainingDocsToTraverse <= 0) {
+      if (System.currentTimeMillis() < finishTime) {
         return true;
       }
     }
-    return false;
+    int maxDocsPerPeriod =
+        (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
+    int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
+    int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
+    return (remainingDocsToTraverse <= 0);
   }
 }
