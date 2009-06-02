@@ -86,11 +86,9 @@ public class HostLoadManagerTest extends TestCase {
     // sleep a period (and then some) so that batchHint is reset
     try {
       // extra time in ms in case sleeping the period is not long enough
-      final long extraTime = 200;
-      Thread.sleep(periodInMillis + extraTime);
+      Thread.sleep(periodInMillis + 200);
     } catch (InterruptedException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      // Ignore.
     }
     assertEquals(60, hostLoadManager.determineBatchHint(connectorName));
     hostLoadManager.updateNumDocsTraversed(connectorName, 15);
@@ -104,19 +102,17 @@ public class HostLoadManagerTest extends TestCase {
     addLoad(connectorName, 60);
     HostLoadManager hostLoadManager =
       new HostLoadManager(instantiator, periodInMillis);
-    assertEquals(false, hostLoadManager.shouldDelay(connectorName));
+    assertFalse(hostLoadManager.shouldDelay(connectorName));
     hostLoadManager.connectorFinishedTraversal(connectorName, 100);
-    assertEquals(true, hostLoadManager.shouldDelay(connectorName));
+    assertTrue(hostLoadManager.shouldDelay(connectorName));
     // sleep more than 100ms the time set in MockConnectorSchedule
     // so that this connector can be allowed to run again without delay
     try {
-      final long sleepTime = 250;
-      Thread.sleep(sleepTime);
+      Thread.sleep(250);
     } catch (InterruptedException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      // Ignore.
     }
-    assertEquals(false, hostLoadManager.shouldDelay(connectorName));
+    assertFalse(hostLoadManager.shouldDelay(connectorName));
   }
 
   public void testLoadDelay() {
@@ -125,19 +121,17 @@ public class HostLoadManagerTest extends TestCase {
     addLoad(connectorName, 60);
     HostLoadManager hostLoadManager =
         new HostLoadManager(instantiator, periodInMillis);
-    assertEquals(false, hostLoadManager.shouldDelay(connectorName));
+    assertFalse(hostLoadManager.shouldDelay(connectorName));
     hostLoadManager.updateNumDocsTraversed(connectorName, 60);
-    assertEquals(true, hostLoadManager.shouldDelay(connectorName));
+    assertTrue(hostLoadManager.shouldDelay(connectorName));
 
     // Sleep more than 1000ms the time set in MockConnectorSchedule
     // so that this connector can be allowed to run again without delay.
     try {
-      final long sleepTime = 1250;
-      Thread.sleep(sleepTime);
+      Thread.sleep(1250);
     } catch (InterruptedException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      // Ignore.
     }
-    assertEquals(false, hostLoadManager.shouldDelay(connectorName));
+    assertFalse(hostLoadManager.shouldDelay(connectorName));
   }
 }
