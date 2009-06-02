@@ -118,7 +118,7 @@ public class HostLoadManager {
       int numDocsTraversed) {
     synchronized (connectorNameToNumDocsTraversed) {
       int numDocs = getNumDocsTraversedThisPeriod(connectorName);
-      connectorNameToNumDocsTraversed.put(connectorName, 
+      connectorNameToNumDocsTraversed.put(connectorName,
           new Integer(numDocs + numDocsTraversed));
     }
   }
@@ -179,17 +179,17 @@ public class HostLoadManager {
         if (now < finishTime + retryDelayMillis) {
           return true;
         }
-        int maxDocsPerPeriod = (int)
-            ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
-        int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
-        int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
-        if (remainingDocsToTraverse <= 0) {
-          return true;
-        }
       } catch (ConnectorNotFoundException e) {
         // Connector seems to have been deleted.
         removeConnector(connectorName);
       }
+    }
+    int maxDocsPerPeriod = (int)
+        ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
+    int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
+    int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
+    if (remainingDocsToTraverse <= 0) {
+      return true;
     }
     return false;
   }
