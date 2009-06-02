@@ -47,6 +47,7 @@ public class HostLoadManagerTest extends TestCase {
     final String connectorName = "cn1";
     addLoad(connectorName, 60);
     HostLoadManager hostLoadManager = new HostLoadManager(instantiator);
+    assertEquals(60, hostLoadManager.determineBatchHint(connectorName));
     hostLoadManager.updateNumDocsTraversed(connectorName, 60);
     assertEquals(0, hostLoadManager.determineBatchHint(connectorName));
   }
@@ -110,6 +111,28 @@ public class HostLoadManagerTest extends TestCase {
     // so that this connector can be allowed to run again without delay
     try {
       final long sleepTime = 250;
+      Thread.sleep(sleepTime);
+    } catch (InterruptedException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    assertEquals(false, hostLoadManager.shouldDelay(connectorName));
+  }
+
+  public void testLoadDelay() {
+    final long periodInMillis = 1000; // Must be at least 1000.
+    final String connectorName = "cn1";
+    addLoad(connectorName, 60);
+    HostLoadManager hostLoadManager =
+        new HostLoadManager(instantiator, periodInMillis);
+    assertEquals(false, hostLoadManager.shouldDelay(connectorName));
+    hostLoadManager.updateNumDocsTraversed(connectorName, 60);
+    assertEquals(true, hostLoadManager.shouldDelay(connectorName));
+
+    // Sleep more than 1000ms the time set in MockConnectorSchedule
+    // so that this connector can be allowed to run again without delay.
+    try {
+      final long sleepTime = 1250;
       Thread.sleep(sleepTime);
     } catch (InterruptedException e) {
       // TODO Auto-generated catch block
