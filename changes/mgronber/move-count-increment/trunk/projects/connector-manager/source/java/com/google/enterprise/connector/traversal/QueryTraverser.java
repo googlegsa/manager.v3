@@ -144,7 +144,7 @@ public class QueryTraverser implements Traverser {
         Document nextDocument = null;
         String docid = null;
         try {
-          if (counter == batchHint) {
+          if (counter >= batchHint) {
             break;
           }
           LOGGER.finer("Pulling next document from connector " + connectorName);
