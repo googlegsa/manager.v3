@@ -169,7 +169,7 @@ public class ThreadPool {
    * accepted. After {@link ThreadPool#shutdown(boolean, long)} returns this
    * will always return null.
    */
-  TaskHandle submit(Cancelable cancelable) {
+  public TaskHandle submit(Cancelable cancelable) {
     // When timeoutTask is run it will cancel 'cancelable'.
     TimeoutTask timeoutTask = new TimeoutTask();
     // timeoutFuture will be used to cancel timeoutTask when 'cancelable'
