@@ -243,8 +243,7 @@ public class InstantiatorTest extends TestCase {
 
 
   private class Issue63ChildThread extends Thread {
-    volatile boolean didFinish = false;
-    volatile Exception myException;
+    public volatile boolean didFinish = false;
     @Override
     public void run() {
       try {
@@ -252,24 +251,22 @@ public class InstantiatorTest extends TestCase {
         // Get the Traverser for our connector instance.
         oldTraverser = instantiator.getTraverser("connector1");
         newTraverser = instantiator.getTraverser("connector1");
-        if (oldTraverser != newTraverser) {
-          throw new Exception("oldTraverser = " + oldTraverser
-              + " must match newTraverser = " + newTraverser);
-        }
+        assertSame(oldTraverser, newTraverser);
 
         // Sleep for a few seconds, allowing the test thread time
         // to update the connector.
-        Thread.sleep(3 * 1000);
+        try {
+          Thread.sleep(3 * 1000);
+        } catch (InterruptedException ie) {
+          fail("Unexpected thread interruption.");
+        }
 
         // Get the Traverser for our connector instance.
         // It should be a new traverser reflecting the updated connector.
         newTraverser = instantiator.getTraverser("connector1");
-        if (oldTraverser == newTraverser) {
-          throw new Exception("oldTraverser = " + oldTraverser
-              + " must match newTraverser = " + newTraverser);
-        }
+        assertNotSame(oldTraverser, newTraverser);
       } catch (Exception e) {
-        myException = e;
+        fail(e.getMessage());
       }
       didFinish = true;
     }
@@ -283,7 +280,9 @@ public class InstantiatorTest extends TestCase {
    * @throws ConnectorExistsException
    * @throws ConnectorNotFoundException
    */
-  public final void testIssue63Synchronization() throws Exception {
+  public final void testIssue63Synchronization() throws JSONException,
+      InstantiatorException, ConnectorTypeNotFoundException,
+      ConnectorNotFoundException, ConnectorExistsException {
 
     // Create a connector.
     String name = "connector1";
@@ -320,9 +319,6 @@ public class InstantiatorTest extends TestCase {
       fail("Unexpected thread interruption.");
     }
     assertTrue(child.didFinish);
-    if (child.myException != null) {
-      throw new Exception("Unexpected exception in child.", child.myException);
-    }
 
     instantiator.removeConnector(name);
   }

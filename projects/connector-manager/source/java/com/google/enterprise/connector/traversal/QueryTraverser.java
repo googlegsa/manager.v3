@@ -38,13 +38,13 @@ public class QueryTraverser implements Traverser {
   private static final Logger LOGGER =
       Logger.getLogger(QueryTraverser.class.getName());
 
-  private final Pusher pusher;
-  private final TraversalManager queryTraversalManager;
+  private Pusher pusher;
+  private TraversalManager queryTraversalManager;
   private TraversalStateStore stateStore;
-  private final String connectorName;
+  private String connectorName;
 
   // Synchronize access to cancelWork.
-  private final Object cancelLock = new Object();
+  private Object cancelLock = new Object();
   private boolean cancelWork = false;
 
   public QueryTraverser(Pusher pusher, TraversalManager traversalManager,
@@ -53,12 +53,11 @@ public class QueryTraverser implements Traverser {
     this.queryTraversalManager = traversalManager;
     this.stateStore = stateStore;
     this.connectorName = connectorName;
-    if (queryTraversalManager instanceof TraversalContextAware) {
-      TraversalContextAware contextAware =
-          (TraversalContextAware)queryTraversalManager;
+    if (this.queryTraversalManager instanceof TraversalContextAware) {
       try {
         TraversalContext tc = Context.getInstance().getTraversalContext();
-        contextAware.setTraversalContext(tc);
+        ((TraversalContextAware)this.queryTraversalManager)
+            .setTraversalContext(tc);
       } catch (Exception e) {
         LOGGER.log(Level.WARNING, "Unable to set TraversalContext", e);
       }
@@ -144,21 +143,11 @@ public class QueryTraverser implements Traverser {
         Document nextDocument = null;
         String docid = null;
         try {
-          if (counter >= batchHint) {
-            break;
-          }
           LOGGER.finer("Pulling next document from connector " + connectorName);
           nextDocument = resultSet.nextDocument();
           if (nextDocument == null) {
             break;
           } else {
-            // Since there are a couple of places below that could throw
-            // exceptions but not exit the while loop, the counter should be
-            // incremented here to insure it represents documents returned from
-            // the list.  Note the call to nextDocument() could also throw a
-            // RepositoryDocumentException signaling a skipped document in which
-            // case the call will not be counted against the batchHint.
-            counter++;
             // Fetch DocId to use in messages.
             try {
               docid = Value.getSingleValueString(nextDocument,
@@ -174,6 +163,10 @@ public class QueryTraverser implements Traverser {
           LOGGER.finer("Sending document (" + docid + ") from connector "
               + connectorName + " to Pusher");
           pusher.take(nextDocument, connectorName);
+          counter++;
+          if (counter == batchHint) {
+            break;
+          }
         } catch (RepositoryDocumentException e) {
           // Skip individual documents that fail.  Proceed on to the next one.
           LOGGER.log(Level.WARNING, "Skipping document (" + docid

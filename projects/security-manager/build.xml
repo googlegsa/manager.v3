@@ -125,7 +125,7 @@
     <antcall target="run_tests_1" />
   </target>
 
-  <target name="coverage_report" depends="compile_tests">
+  <target name="coverage_report">
     <delete file="${coverage.file}" />
     <cobertura-instrument todir="${instrumented.dir}">
       <fileset dir="${classes}" >
@@ -218,7 +218,6 @@
     <delete dir="${tests.data}/mocktestdata/connectors" />
     <delete dir="${catalina.base}" />
     <delete file="${coverage.file}" />
-    <delete file="velocity.log" />
   </target>
 
   <!-- ======================Installation targets====================== -->

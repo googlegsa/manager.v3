@@ -20,30 +20,28 @@ import com.google.enterprise.connector.common.cookie.CookieSet;
 import com.google.enterprise.connector.common.cookie.CookieUtil;
 import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.manager.ConnectorStatus;
-import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.saml.client.SamlSsoClient;
-import com.google.enterprise.connector.security.identity.AuthnMechanism;
 import com.google.enterprise.connector.security.identity.CredentialsGroup;
 import com.google.enterprise.connector.security.identity.DomainCredentials;
 import com.google.enterprise.connector.security.identity.IdentityConfig;
 import com.google.enterprise.connector.security.ui.OmniForm;
 import com.google.enterprise.connector.security.ui.OmniFormHtml;
-import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.SecAuthnIdentity;
 import com.google.enterprise.connector.spi.VerificationStatus;
 
 import org.opensaml.common.binding.artifact.BasicSAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
+import org.opensaml.saml2.core.AuthzDecisionQuery;
+import org.opensaml.saml2.core.Response;
 import org.opensaml.util.storage.MapBasedStorageService;
 import org.opensaml.xml.parse.BasicParserPool;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -61,7 +59,7 @@ public class BackEndImpl implements BackEnd {
   private static final int artifactLifetime = 600000;  // ten minutes
   private static final int defaultMaxPrompts = 3;
 
-  private enum AuthnState { IDLE, IN_OMNIFORM, IN_SAML_CLIENT }
+  private enum AuthnState { IDLE, IN_OMNIFORM }
 
   /** Name of the attribute that holds the session's authentication state. */
   private static final String AUTHN_STATE_NAME = "AuthnState";
@@ -81,6 +79,8 @@ public class BackEndImpl implements BackEnd {
   /** Name of the attribute that holds the session's outgoing cookie set. */
   private static final String OUTGOING_COOKIES_NAME = "OutgoingCookies";
 
+  private ConnectorManager manager;
+  private final AuthzResponder authzResponder;
   private final SAMLArtifactMap artifactMap;
   private IdentityConfig identityConfig;
   private int maxPrompts;
@@ -91,8 +91,10 @@ public class BackEndImpl implements BackEnd {
   /**
    * Create a new backend object.
    *
+   * @param authzResponder The authorization responder to use.
    */
-  public BackEndImpl() {
+  public BackEndImpl(AuthzResponder authzResponder) {
+    this.authzResponder = authzResponder;
     artifactMap = new BasicSAMLArtifactMap(
         new BasicParserPool(),
         new MapBasedStorageService<String, SAMLArtifactMapEntry>(),
@@ -100,6 +102,11 @@ public class BackEndImpl implements BackEnd {
     identityConfig = null;
     sessionIds = new Vector<String>();
     maxPrompts = defaultMaxPrompts;
+  }
+
+  /* @Override */
+  public void setConnectorManager(ConnectorManager cm) {
+    this.manager = cm;
   }
 
   /* @Override */
@@ -131,15 +138,16 @@ public class BackEndImpl implements BackEnd {
   }
 
   /* @Override */
+  public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries) {
+    return authzResponder.authorizeBatch(authzDecisionQueries);
+  }
+
+  /* @Override */
   public void authenticate(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     updateIncomingCookies(request);
 
-    HttpSession session = request.getSession();
-    if (getAuthnState(session) == AuthnState.IN_SAML_CLIENT) {
-      setAuthnState(session, AuthnState.IDLE);
-    }
-    switch (getAuthnState(session)) {
+    switch (getAuthnState(request.getSession())) {
       case IDLE:
         authenticateIdle(request, response);
         break;
@@ -153,37 +161,32 @@ public class BackEndImpl implements BackEnd {
 
   private void authenticateIdle(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
-    tryCookies(request);
-    if (!needCredentials(request)) {
-      successfulSamlResponse(request, response);
-      return;
+    // If there are cookies we can decode, use them.
+    List<String> ids = tryCookies(request);
+    if (!ids.isEmpty()) {
+      successfulSamlResponse(request, response, ids);
+    } else if (!getCredentialsGroups(request).isEmpty()) {
+      maybePrompt(request, response);
+    } else {
+      unsuccessfulSamlResponse(request, response, "Security Manager not configured");
     }
-    if (trySamlServer(request, response)) {
-      return;
-    }
-    tryOmniForm(request, response);
-  }
-
-  private boolean needCredentials(HttpServletRequest request) throws IOException {
-    for (CredentialsGroup cg : getCredentialsGroups(request)) {
-      if (!cg.isVerified()) {
-        LOGGER.info("Credentials group not verified: " + cg.getHumanName());
-        return true;
-      }
-      LOGGER.info("Credentials group verified: " + cg.getHumanName());
-    }
-    return false;
   }
 
   // Try to find cookies that can be decoded into identities.
-  private void tryCookies(HttpServletRequest request) throws IOException {
+  private List<String> tryCookies(HttpServletRequest request) throws IOException {
+    List<String> ids = new ArrayList<String>();
     for (CredentialsGroup cg : getCredentialsGroups(request)) {
       for (DomainCredentials dc : cg.getElements()) {
         if (dc.getUsername() == null) {
           handleCookie(dc);
+          String username = dc.getUsername();
+          if (username != null) {
+            ids.add(username);
+          }
         }
       }
     }
+    return ids;
   }
 
   // some form of authentication has already happened, the user gave us cookies,
@@ -192,8 +195,6 @@ public class BackEndImpl implements BackEnd {
     if (id.getVerificationStatus() != VerificationStatus.TBD) {
       return;
     }
-    ConnectorManager manager =
-      ConnectorManager.class.cast(Context.getInstance().getManager());
     for (ConnectorStatus connStatus: manager.getConnectorStatuses()) {
       String connType = connStatus.getType();
       if (! (connType.equals("SsoCookieIdentityConnector")
@@ -208,58 +209,31 @@ public class BackEndImpl implements BackEnd {
     }
   }
 
-  private boolean trySamlServer(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-    HttpSession session = request.getSession();
-    for (CredentialsGroup cg : getCredentialsGroups(request)) {
-      for (DomainCredentials dc : cg.getElements()) {
-        if (! (dc.getMechanism() == AuthnMechanism.SAML
-               && dc.getVerificationStatus() == VerificationStatus.TBD
-               && dc.getUsername() == null)) {
-          continue;
-        }
-        updateOutgoingCookies(request, response);
-        setAuthnState(session, AuthnState.IN_SAML_CLIENT);
-        SamlSsoClient.startSamlRequest(request, response, dc);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private void tryOmniForm(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-    HttpSession session = request.getSession();
-    setAuthnState(session, AuthnState.IN_OMNIFORM);
-    setPromptCounter(session, 1);
-    writePrompt(request, response);
-  }
-
   private void authenticateInOmniform(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
 
     getOmniForm(request).handleFormSubmit(request);
 
     // Run all possible verifications given the user's input.
+    List<String> ids = new ArrayList<String>();
     for (CredentialsGroup cg : getCredentialsGroups(request)) {
       if (!cg.isVerified() && cg.isVerifiable()) {
         authenticateCredentialsGroup(cg);
+        if (cg.isVerified()) {
+          ids.add(cg.getUsername());
+        } else {
+          LOGGER.info("Credentials group unfulfilled: " + cg.getHumanName());
+        }
       }
     }
-
-    if (!needCredentials(request)) {
-      successfulSamlResponse(request, response);
+    // Now decide whether we need more input.
+    // TODO(cph): this heuristic is WRONG!
+    if (ids.isEmpty()) {
+      maybePrompt(request, response);
       return;
     }
 
-    HttpSession session = request.getSession();
-    int n = getPromptCounter(session);
-    if (n >= maxPrompts) {
-      unsuccessfulSamlResponse(request, response, "Incorrect username or password");
-      return;
-    }
-    setPromptCounter(session, n + 1);
-    writePrompt(request, response);
+    successfulSamlResponse(request, response, ids);
   }
 
   private void authenticateCredentialsGroup(CredentialsGroup cg) {
@@ -281,8 +255,6 @@ public class BackEndImpl implements BackEnd {
         default:
           continue;
       }
-      ConnectorManager manager =
-        ConnectorManager.class.cast(Context.getInstance().getManager());
       for (ConnectorStatus connStatus : manager.getConnectorStatuses()) {
         if (!connStatus.getType().equals(expectedTypeName)) {
           continue;
@@ -296,40 +268,35 @@ public class BackEndImpl implements BackEnd {
     }
   }
 
-  private void successfulSamlResponse(HttpServletRequest request, HttpServletResponse response)
+  private void successfulSamlResponse(
+      HttpServletRequest request, HttpServletResponse response, List<String> ids)
       throws IOException {
     updateOutgoingCookies(request, response);
-    setAuthnState(request.getSession(), AuthnState.IDLE);
-    List<CredentialsGroup> cgs = getCredentialsGroups(request);
-    SamlAuthn.makeSuccessfulSamlSsoResponse(
-        response, SamlAuthn.getSamlSsoContext(request), artifactMap,
-        getVerifiedId(cgs), cgs);
-  }
-
-  private String getVerifiedId(List<CredentialsGroup> cgs) {
-    for (CredentialsGroup cg : cgs) {
-      if (cg.isVerified()) {
-        return cg.getUsername();
-      }
-    }
-    throw new IllegalStateException("No verified ID available");
+    SamlAuthn.makeSuccessfulSamlSsoResponse(request, response, ids);
+    setIdleState(request.getSession());
   }
 
   private void unsuccessfulSamlResponse(
       HttpServletRequest request, HttpServletResponse response, String message)
       throws IOException {
     updateOutgoingCookies(request, response);
-    setAuthnState(request.getSession(), AuthnState.IDLE);
-    SamlAuthn.makeUnsuccessfulSamlSsoResponse(
-        response, SamlAuthn.getSamlSsoContext(request), artifactMap, message);
+    SamlAuthn.makeUnsuccessfulSamlSsoResponse(request, response, message);
+    setIdleState(request.getSession());
   }
 
-  private void writePrompt(HttpServletRequest request, HttpServletResponse response)
+  private void maybePrompt(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
-    updateOutgoingCookies(request, response);
-    PrintWriter writer = ServletBase.initNormalResponse(response);
-    writer.print(getOmniForm(request).generateForm());
-    writer.close();
+    HttpSession session = request.getSession();
+    int n = getPromptCounter(session);
+    if (n < maxPrompts) {
+      PrintWriter writer = ServletBase.initNormalResponse(response);
+      writer.print(getOmniForm(request).generateForm());
+      writer.close();
+      setPromptCounter(session, n + 1);
+      setAuthnState(session, AuthnState.IN_OMNIFORM);
+    } else {
+      unsuccessfulSamlResponse(request, response, "Incorrect username or password");
+    }
   }
 
   private AuthnState getAuthnState(HttpSession session) {
@@ -338,17 +305,12 @@ public class BackEndImpl implements BackEnd {
   }
 
   private void setAuthnState(HttpSession session, AuthnState state) {
-    if (state == AuthnState.IDLE) {
-      session.removeAttribute(AUTHN_STATE_NAME);
-    } else {
-      session.setAttribute(AUTHN_STATE_NAME, state);
-    }
-    if (state != AuthnState.IN_OMNIFORM) {
-      resetPromptCounter(session);
-    }
-    if (state != AuthnState.IN_SAML_CLIENT) {
-      SamlSsoClient.eraseSamlClientState(session);
-    }
+    session.setAttribute(AUTHN_STATE_NAME, state);
+  }
+
+  private void setIdleState(HttpSession session) {
+    setAuthnState(session, AuthnState.IDLE);
+    resetPromptCounter(session);
   }
 
   private int getPromptCounter(HttpSession session) {
@@ -506,12 +468,6 @@ public class BackEndImpl implements BackEnd {
         return c;
         }
       }
-    return null;
-  }
-
-  /* @Override */
-  public Set<String> authorizeDocids(List<String> docidList, AuthenticationIdentity identity) {
-    // TODO Auto-generated method stub
     return null;
   }
 }

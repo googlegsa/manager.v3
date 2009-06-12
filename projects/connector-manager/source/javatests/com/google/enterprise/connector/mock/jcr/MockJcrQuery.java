@@ -34,9 +34,12 @@ import javax.jcr.query.QueryResult;
  */
 public class MockJcrQuery implements Query {
 
-  private final String statement;
+  MockRepositoryDateTime from;
+  MockRepositoryDateTime to;
+  MockRepositoryDocumentStore store;
+  String statement = null;
 
-  private final List<MockRepositoryDocument> internalQuery;
+  List<MockRepositoryDocument> internalQuery;
 
   /**
    * Creates a MockJcrQuery object from a date range.  This is intended to be
@@ -50,6 +53,9 @@ public class MockJcrQuery implements Query {
    */
   public MockJcrQuery(MockRepositoryDateTime from, MockRepositoryDateTime to,
       MockRepositoryDocumentStore store) {
+    this.from = from;
+    this.to = to;
+    this.store = store;
     this.statement = "Query for documents between " + from.toString() + " and "
         + to.toString();
     this.internalQuery = store.dateRange(from, to);
@@ -64,6 +70,9 @@ public class MockJcrQuery implements Query {
    */
   public MockJcrQuery(MockRepositoryDateTime from,
       MockRepositoryDocumentStore store) {
+    this.from = from;
+    this.to = null;
+    this.store = store;
     this.statement = "Query for documents from " + from.toString();
     this.internalQuery = store.dateRange(from);
   }

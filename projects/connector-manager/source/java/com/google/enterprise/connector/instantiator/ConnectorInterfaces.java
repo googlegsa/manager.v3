@@ -42,6 +42,9 @@ public class ConnectorInterfaces {
   AuthenticationManager authenticationManager = null;
   AuthorizationManager authorizationManager = null;
 
+  String username = null;
+  String password = null;
+
   /**
    * This constructor is the normal constructor
    * @param connectorName
@@ -89,7 +92,7 @@ public class ConnectorInterfaces {
         // TODO(ziff): think about how this could be re-tried
         throw new InstantiatorException(e);
       } catch (Exception e) {
-        throw new InstantiatorException(e);
+        throw new InstantiatorException(e);          
       }
     }
     return authenticationManager;
@@ -108,7 +111,7 @@ public class ConnectorInterfaces {
         // TODO(ziff): think about how this could be re-tried
         throw new InstantiatorException(e);
       } catch (Exception e) {
-        throw new InstantiatorException(e);
+        throw new InstantiatorException(e);          
       }
     }
     return authorizationManager;
@@ -147,11 +150,11 @@ public class ConnectorInterfaces {
         // By only creating the Traverser after successfully getting
         // a TraversalManager, we avoid caching a Traverser with a
         // null TraversalManager (which lead to a subsequent null-pointer
-        // exception).
+        // exception).  With a null Traverser, WorkQueueItems do nothing.
         // And without a cached (but invalid) Traverser, we will try
         // again on the next call to getTraverser() to get a valid one.
       } catch (Exception e) {
-        throw new InstantiatorException(e);
+        throw new InstantiatorException(e);          
       }
     }
     return traverser;
@@ -169,7 +172,7 @@ public class ConnectorInterfaces {
       // TODO(ziff): think about how this could be re-tried
       throw new InstantiatorException(e);
     } catch (Exception e) {
-      throw new InstantiatorException(e);
+      throw new InstantiatorException(e);          
     }
     return s;
   }
