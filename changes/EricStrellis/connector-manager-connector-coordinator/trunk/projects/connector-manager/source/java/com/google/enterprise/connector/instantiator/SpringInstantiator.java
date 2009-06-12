@@ -142,7 +142,7 @@ public class SpringInstantiator implements Instantiator {
           new ConnectorCoordinatorImpl(connectorName, pusher, threadPool);
       ConnectorCoordinator existing =
           coordinatorMap.putIfAbsent(connectorName, ci);
-      connectorCoordinator =  (existing == null) ? ci : existing;
+      connectorCoordinator = (existing == null) ? ci : existing;
     }
     return connectorCoordinator;
   }

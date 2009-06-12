@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.common.PropertiesUtils;
@@ -197,7 +198,6 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     if (instanceInfo == null) {
       return null;
     } else {
-      //interfaces.getTraversalState(trversalState);
       return instanceInfo.getConnectorState();
     }
   }
@@ -223,7 +223,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
         File connectorDir = instanceInfo.getConnectorDir();
         response = resetConfig(connectorDir, typeInfo, configMap, locale);
       } else {
-        // an existing connector is being given a new type - drop then add
+        // An existing connector is being given a new type - drop then add.
         removeConnector();
         response = createNewConnector(newTypeInfo, configMap, locale);
         if (response != null) {
@@ -251,7 +251,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       int batchHint) throws ConnectorNotFoundException {
     verifyConnectorInstanceAvailable();
     if (taskHandle != null && !taskHandle.isDone()) {
-      return; // return false?
+      return; // TODO(strellis): Return false?
     }
     taskHandle = null;
     batchKey = new Object();

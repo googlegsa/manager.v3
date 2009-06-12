@@ -117,8 +117,8 @@ public class ConnectorInterfaces {
   /**
    * @return the connector
    */
-  // TODO(strellis) remove this method or make it private so all connector
-  // access is through InstanceInfo
+  // TODO(strellis) Remove this method or make it private so all connector
+  // access is through InstanceInfo.
   Connector getConnector() {
     return connector;
   }

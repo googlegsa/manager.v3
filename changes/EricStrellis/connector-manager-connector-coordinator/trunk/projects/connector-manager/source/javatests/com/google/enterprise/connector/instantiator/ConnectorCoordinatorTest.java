@@ -150,7 +150,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     final ConnectorCoordinatorImpl instance =
         new ConnectorCoordinatorImpl(name, pusher, threadPool);
     assertFalse(instance.exists());
-    /**
+    /*
      * Test creation of a connector of type TestConnectorA. The type should
      * already have been created.
      */
@@ -163,7 +163,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     try {
       updateConnectorTest(instance, typeName, language, false,
           jsonConfigString);
-      fail(); // Exception expected.
+      fail("Exception expected.");
     } catch (ConnectorExistsException e) {
       // Expected.
     }
@@ -186,7 +186,7 @@ public class ConnectorCoordinatorTest extends TestCase {
             + "RepositoryFile:MockRepositoryEventLog3.txt}";
     try {
       updateConnectorTest(instance, typeName, language, true, jsonConfigString);
-      fail(); // Exception expected.
+      fail("Exception expected.");
     } catch (ConnectorNotFoundException e) {
       // Expected.
     }

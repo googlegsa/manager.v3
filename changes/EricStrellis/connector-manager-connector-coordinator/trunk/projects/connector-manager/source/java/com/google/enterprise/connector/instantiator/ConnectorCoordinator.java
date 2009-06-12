@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.persist.ConnectorExistsException;
@@ -54,11 +55,11 @@ public interface ConnectorCoordinator extends TraversalStateStore {
    * configured usable connector instance. This function is for reporting
    * purposes only. Concurrent operations by other threads can invalidate
    * the result of calling this quickly so in code such as
-   * <code>
+   * <pre>
    * if (c.exists()) {
-   *    doSomething();
-   *  }
-   * </code>
+   *   doSomething();
+   * }
+   * </pre>
    * The {@link ConnectorCoordinator} may not exist when <code>doSomething()
    * </code> actually runs.
    */
