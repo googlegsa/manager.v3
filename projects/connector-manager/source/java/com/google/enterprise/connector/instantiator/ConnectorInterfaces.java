@@ -32,10 +32,10 @@ import com.google.enterprise.connector.traversal.TraversalStateStore;
  */
 public class ConnectorInterfaces {
 
-  final String connectorName;
-  final Connector connector;
-  final Pusher pusher;
-  final TraversalStateStore stateStore;
+  private final String connectorName;
+  private final Connector connector;
+  private final Pusher pusher;
+  private final TraversalStateStore stateStore;
 
   // these are lazily constructed
   Traverser traverser = null;
@@ -117,6 +117,8 @@ public class ConnectorInterfaces {
   /**
    * @return the connector
    */
+  // TODO(strellis) Remove this method or make it private so all connector
+  // access is through InstanceInfo.
   Connector getConnector() {
     return connector;
   }

@@ -36,26 +36,29 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- *
+ * Unit test for {@link SpringInstantiator}.
  */
 public class InstantiatorTest extends TestCase {
 
   private static final String TEST_DIR_NAME = "testdata/tempInstantiatorTests";
-  private static final String TEST_CONFIG_FILE = "classpath*:config/connectorType.xml";
-  private File baseDirectory;
+  private static final String TEST_CONFIG_FILE =
+      "classpath*:config/connectorType.xml";
+  private final File baseDirectory  = new File(TEST_DIR_NAME);
   private Instantiator instantiator;
 
   @Override
   protected void setUp() throws Exception {
-    // Make sure that the test directory does not exist
-    baseDirectory = new File(TEST_DIR_NAME);
     assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
     // Then recreate it empty
     assertTrue(baseDirectory.mkdirs());
 
+    createInstantiator();
+    assertEquals(0, connectorCount());
+  }
+
+  private void createInstantiator() {
     instantiator = new SpringInstantiator(new MockPusher(),
         new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
-    assertEquals(0, connectorCount());
   }
 
   @Override
@@ -144,8 +147,8 @@ public class InstantiatorTest extends TestCase {
 
     {
       /*
-       * Test update of a connector instance of type TestConnectorA.
-       * The instance was created in an earlier test.
+       * Test update of a connector instance of type TestConnectorB, to type
+       * TestConnectorA. The instance was created in an earlier test.
        */
       String name = "connector3";
       String typeName = "TestConnectorA";
@@ -184,8 +187,8 @@ public class InstantiatorTest extends TestCase {
 
     {
       /*
-       * Test update of a non-existing connector instance of type TestConnectorB.
-       * It should throw a ConnectorNotFoundException.
+       * Test update of a non-existing connector instance of type
+       * TestConnectorB. It should throw a ConnectorNotFoundException.
        */
       String name = "connectorNew";
       String typeName = "TestConnectorB";
@@ -275,6 +278,32 @@ public class InstantiatorTest extends TestCase {
     }
   }
 
+  public final void testStartWithConnector() throws Exception {
+    final String name = "connector1";
+    final String typeName = "TestConnectorA";
+    final String language = "en";
+
+    {
+      /*
+       * Test creation of a connector of type TestConnectorA.
+       * The type should already have been created.
+       */
+      String jsonConfigString =
+          "{Username:foo, Password:bar, Color:red, "
+          + "RepositoryFile:MockRepositoryEventLog3.txt}";
+      updateConnectorTest(instantiator, name, typeName, language,
+                          false, jsonConfigString);
+      instantiator.shutdown();
+    }
+
+    createInstantiator();
+
+    {
+      String readTypeName = instantiator.getConnectorTypeName(name);
+      assertEquals(typeName, readTypeName);
+    }
+  }
+
   /**
    * Tests the synchronization problems that surfaced with Issue 63.
    *
@@ -355,7 +384,8 @@ public class InstantiatorTest extends TestCase {
     if (update)
       oldTraverser = instantiator.getTraverser(name);
 
-    Map<String, String> config = new JsonObjectAsMap(new JSONObject(jsonConfigString));
+    Map<String, String> config =
+        new JsonObjectAsMap(new JSONObject(jsonConfigString));
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
     instantiator.setConnectorConfig(name, typeName, config, locale, update);
 

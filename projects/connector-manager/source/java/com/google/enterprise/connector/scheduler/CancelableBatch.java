@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.scheduler;
 
+import com.google.enterprise.connector.instantiator.ConnectorCoordinatorImpl;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.traversal.BatchResult;
@@ -25,7 +26,7 @@ import java.util.logging.Logger;
  * A {@link Cancelable} for running a {@link Connector} batch using
  * a {@link Traverser}
  */
-class CancelableBatch implements Cancelable {
+public class CancelableBatch implements Cancelable {
   private static final Logger LOGGER =
     Logger.getLogger(CancelableBatch.class.getName());
 
@@ -33,6 +34,9 @@ class CancelableBatch implements Cancelable {
   final String traverserName;
   final BatchResultRecorder batchResultRecorder;
   final int batchHint;
+  // TODO(strellis): Add batch key support.
+  final Object batchKey = null;
+  final ConnectorCoordinatorImpl connectorInstance = null;
 
   /**
    * Construct a {@link CancelableBatch}.
@@ -44,7 +48,7 @@ class CancelableBatch implements Cancelable {
    * @param batchHint hint as to the number of documents to process in the
    *        batch.
    */
-  CancelableBatch(Traverser traverser, String traverserName,
+  public CancelableBatch(Traverser traverser, String traverserName,
       BatchResultRecorder batchResultRecorder, int batchHint) {
     this.traverser = traverser;
     this.traverserName = traverserName;
@@ -54,6 +58,11 @@ class CancelableBatch implements Cancelable {
 
   public void cancel() {
    traverser.cancelBatch();
+  }
+
+  public void timeOut() {
+    // TODO(strellis): Enhance ThreadPool to call this.
+    connectorInstance.cancelBatch(batchKey);
   }
 
   public void run() {
@@ -66,10 +75,10 @@ class CancelableBatch implements Cancelable {
           BatchResult.newBatchResultFromLegacyBatchResult(legacyBatchResult);
       LOGGER.fine("Traverser " + traverserName + " batchDone with result = "
           + batchResult);
-      // TODO(strellis): The original code did not record a result if the
-      // batch was canceled. I think a cancel was probably possible
-      // after the check and before recording results. Should I
-      // replace that check?
+      // TODO(strellis): Employ batch key to assure the completion is only
+      // recorded if the current batch is still running? One problem with
+      // doing this is that work for a canceled batch will not be
+      // applied to the host load calculation.
       batchResultRecorder.recordResult(batchResult);
     } finally {
       NDC.remove();

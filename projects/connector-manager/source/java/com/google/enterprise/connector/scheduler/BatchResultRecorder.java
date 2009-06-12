@@ -23,5 +23,6 @@ public interface BatchResultRecorder {
   /**
    *  Record the result of running a single batch.
    */
+  // TODO (strellis): Make this take a batch key.
   public void recordResult(BatchResult result);
 }

@@ -196,27 +196,12 @@ public interface Instantiator {
       throws ConnectorNotFoundException;
 
   /**
-   * Sets the remembered traversal state of a named connector.
+   * Returns the named {@link ConnectorCoordinator}.
    *
-   * @param connectorName
-   * @param connectorState String to store or null to erase any previously
-   *        saved traversal state.
    * @throws ConnectorNotFoundException if the named connector is not found
-   * @throws IllegalStateException if state store is disabled for this connector
    */
-  public void setConnectorState(String connectorName, String connectorState)
-      throws ConnectorNotFoundException;
-
-  /**
-   * Gets the remembered traversal state of a named connector.
-   *
-   * @param connectorName
-   * @return the state, or null if no state has been stored for this connector
-   * @throws ConnectorNotFoundException if the named connector is not found
-   * @throws IllegalStateException if state store is disabled for this connector
-   */
-  public String getConnectorState(String connectorName)
-      throws ConnectorNotFoundException;
+  public ConnectorCoordinator getConnectorCoordinator(
+      String connectorName) throws ConnectorNotFoundException;
 
   /**
    * Shutdown all the Connector instances.
