@@ -40,7 +40,7 @@ public class QueryTraverser implements Traverser {
 
   private final Pusher pusher;
   private final TraversalManager queryTraversalManager;
-  private TraversalStateStore stateStore;
+  private final TraversalStateStore stateStore;
   private final String connectorName;
 
   // Synchronize access to cancelWork.
@@ -68,7 +68,6 @@ public class QueryTraverser implements Traverser {
   public void cancelBatch() {
     synchronized(cancelLock) {
       cancelWork = true;
-      stateStore = null;
     }
     LOGGER.fine("Cancelling traversal for connector " + connectorName);
   }
@@ -79,7 +78,7 @@ public class QueryTraverser implements Traverser {
     }
   }
 
-  public synchronized int runBatch(int batchHint) {
+  public int runBatch(int batchHint) {
     if (isCancelled()) {
         LOGGER.warning("Attempting to run a cancelled QueryTraverser");
         return Traverser.ERROR_WAIT;

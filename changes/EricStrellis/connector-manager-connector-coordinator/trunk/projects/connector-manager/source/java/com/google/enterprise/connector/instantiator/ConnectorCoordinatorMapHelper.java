@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.logging.NDC;
@@ -22,6 +23,7 @@ import java.io.FileFilter;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 /**
  * Utility functions for operations on a {@link ConcurrentMap} of
  * {@link String} connector coordinator name to {@link ConnectorCoordinator}
@@ -66,7 +68,7 @@ public class ConnectorCoordinatorMapHelper {
       TypeInfo typeInfo, Pusher pusher, ThreadPool threadPool) {
     File typeDirectory = typeInfo.getConnectorTypeDir();
 
-    // find the subdirectories
+    // Find the subdirectories.
     FileFilter fileFilter = new FileFilter() {
       public boolean accept(File file) {
         return file.isDirectory() && !file.getName().startsWith(".");
@@ -75,11 +77,11 @@ public class ConnectorCoordinatorMapHelper {
     File[] directories = typeDirectory.listFiles(fileFilter);
 
     if (directories == null) {
-      // this just means the directory is empty
+      // This just means the directory is empty.
       return;
     }
 
-    // process each one
+    // Process each one.
     for (int i = 0; i < directories.length; i++) {
       File directory = directories[i];
       String name = directory.getName();

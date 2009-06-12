@@ -57,7 +57,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       Logger.getLogger(ConnectorCoordinatorImpl.class.getName());
 
   /**
-   * Invariant context
+   * Invariant context.
    */
   private final String name;
   private final Pusher pusher;
@@ -69,6 +69,26 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
    * or neither is.
    */
   private TypeInfo typeInfo;
+
+  // TODO(strellis): Simplify the connector checkpoint storage.
+  //
+  // The connector checkpoint is ultimately held in a backing
+  // ConnectorStateStore which can be accessed through instanceInfo.
+  // instanceInfo wraps the backing stateStore in a GenerationalStore to avoid
+  // concurrency problems related to a traversal that was started before a
+  // connector reconfiguration/traversal restart changing the checkpoint.
+  // The methods store/getTraversalState access checkpoints through
+  // instanceInfo directly. These methods are currently only used by
+  // restartConnectorTraversal.
+  //
+  // In addition ConnectorInterfaces holds a reference to a
+  // ConnectorTraversalStore which wraps the backing ConnectorStateStore
+  // held by instanceInfo. This ConnectorTraversalStateStore provides
+  // needed integration with the GenerationalStore mechanism. It also implements
+  // the TraversalStateStore interface rather than the ConnectorStateStore
+  // interface. The QueryTraverser accesses checkpoint information through
+  // the ConnectorTraversalStore that is wrapped in ConnectorInterfaces and
+  // is backed by the same ConnectorStateStore held by instanceInfo.
   private InstanceInfo instanceInfo;
 
   /**
@@ -104,7 +124,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
   public synchronized void removeConnector() {
     LOGGER.info("Dropping connector: " + name);
     try {
-      if (!isInstanceInfo()) {
+      if (!hasInstanceInfo()) {
         return;
       }
       shutdownConnector(true);
@@ -119,7 +139,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
   }
 
   public synchronized boolean exists() {
-    return isInstanceInfo();
+    return hasInstanceInfo();
   }
 
   public synchronized AuthenticationManager getAuthenticationManager()
@@ -167,9 +187,9 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
   // get/setTraversalState and throw ConnectorNotFoundException for consistency
   // with other methods or should they retain their historical names and
   // behavior as defined by TraversalStateStore.
-  public synchronized void storeTraversalState(String connectorState) {
+  public synchronized void storeTraversalState(String traversalState) {
     if (instanceInfo != null) {
-      instanceInfo.setConnectorState(connectorState);
+      instanceInfo.setConnectorState(traversalState);
     }
   }
 
@@ -177,16 +197,11 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     if (instanceInfo == null) {
       return null;
     } else {
+      //interfaces.getTraversalState(trversalState);
       return instanceInfo.getConnectorState();
     }
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.persist.ConnectorConfigStore
-   * #getConnectorTypeName(java.lang.String)
-   */
   public synchronized String getConnectorTypeName()
       throws ConnectorNotFoundException {
     return getInstanceInfo().getTypeInfo().getConnectorTypeName();
@@ -199,7 +214,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     LOGGER.info("Configuring connector: " + name);
     resetInterfaces();
     ConfigureResponse response = null;
-    if (isInstanceInfo()) {
+    if (hasInstanceInfo()) {
       if (!update) {
         throw new ConnectorExistsException();
       }
@@ -290,10 +305,10 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
   }
 
   private void shutdownConnector(boolean delete) {
-    if (interfaces != null
-        && interfaces.getConnector() instanceof ConnectorShutdownAware) {
+    if (instanceInfo != null
+        && instanceInfo.getConnector() instanceof ConnectorShutdownAware) {
       ConnectorShutdownAware csa =
-          (ConnectorShutdownAware) interfaces.getConnector();
+          (ConnectorShutdownAware) instanceInfo.getConnector();
       try {
         csa.shutdown();
       } catch (Exception e) {
@@ -312,12 +327,11 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     }
   }
 
-
   private void resetInterfaces() {
     interfaces = null;
   }
 
-  private boolean isInstanceInfo() {
+  private boolean hasInstanceInfo() {
     return instanceInfo != null;
   }
 
@@ -329,7 +343,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     typeInfo = null;
   }
 
-  // Visible for testing
+  // Visible for testing.
   InstanceInfo getInstanceInfo() throws ConnectorNotFoundException {
     verifyConnectorInstanceAvailable();
     return instanceInfo;
@@ -360,7 +374,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     if (typeInfo != null) {
       throw new IllegalStateException("Create new connector with type set");
     }
-    if (isInstanceInfo()) {
+    if (hasInstanceInfo()) {
       throw new IllegalStateException("Create new connector with existing set");
     }
     File connectorDir = makeConnectorDirectory(name, newTypeInfo);
@@ -461,7 +475,8 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     return null;
   }
 
-  private static File makeConnectorDirectoryFile(String name, TypeInfo typeInfo) {
+  private static File makeConnectorDirectoryFile(String name,
+      TypeInfo typeInfo) {
     File connectorTypeDir = typeInfo.getConnectorTypeDir();
     return new File(connectorTypeDir, name);
   }
@@ -541,7 +556,6 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     }
   }
 
-  // YY
   private static class ConnectorInstanceFactory implements ConnectorFactory {
     final String connectorName;
     final File connectorDir;

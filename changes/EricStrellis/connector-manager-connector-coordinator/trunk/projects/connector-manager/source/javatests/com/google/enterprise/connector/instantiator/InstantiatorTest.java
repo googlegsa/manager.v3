@@ -284,7 +284,7 @@ public class InstantiatorTest extends TestCase {
     final String language = "en";
 
     {
-       /*
+      /*
        * Test creation of a connector of type TestConnectorA.
        * The type should already have been created.
        */

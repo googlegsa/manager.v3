@@ -19,8 +19,8 @@ import com.google.enterprise.connector.jcr.JcrConnector;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
-import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorConfigStore;
+import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorScheduleStore;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.GenerationalStateStore;
@@ -49,20 +49,19 @@ import com.google.enterprise.connector.traversal.LongRunningQueryTraverser;
 import com.google.enterprise.connector.traversal.NeverEndingQueryTraverser;
 import com.google.enterprise.connector.traversal.NoopQueryTraverser;
 import com.google.enterprise.connector.traversal.QueryTraverser;
-import com.google.enterprise.connector.traversal.Traverser;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
+import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.jcr.Repository;
-import javax.naming.OperationNotSupportedException;
 
 /**
  *
@@ -365,8 +364,8 @@ public class MockInstantiator implements Instantiator {
 
   }
 
-  public ConnectorCoordinatorImpl getConnectorCoordinator(String connectorName)
-      throws ConnectorNotFoundException {
+  public ConnectorCoordinatorImpl getConnectorCoordinator(
+      String connectorName) {
     // TODO(strellis): Implement this.
     throw new UnsupportedOperationException();
   }

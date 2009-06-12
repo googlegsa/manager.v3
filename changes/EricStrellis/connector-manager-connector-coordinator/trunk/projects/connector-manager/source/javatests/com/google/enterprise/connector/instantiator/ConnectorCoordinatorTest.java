@@ -24,7 +24,6 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import org.json.JSONException;
@@ -40,24 +39,21 @@ import java.util.Map;
 public class ConnectorCoordinatorTest extends TestCase {
   // TODO(strellis): Add tests for batch control operations.
   private static final String TEST_DIR_NAME = "testdata/tempInstantiatorTests";
-  private File baseDirectory;
+  private final File baseDirectory = new File(TEST_DIR_NAME);
   private TypeMap typeMap;
   private final Pusher pusher = null;
   private final ThreadPool threadPool = null;
 
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
-    baseDirectory = new File(TEST_DIR_NAME);
-    Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
-    Assert.assertTrue(baseDirectory.mkdirs());
+    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    assertTrue(baseDirectory.mkdirs());
     typeMap = new TypeMap("classpath*:config/connectorType.xml", TEST_DIR_NAME);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
-    super.tearDown();
+    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
   }
 
   public void testCreateDestroy() throws Exception {
@@ -65,7 +61,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     final ConnectorCoordinatorImpl instance =
         new ConnectorCoordinatorImpl(name, pusher, threadPool);
     assertFalse(instance.exists());
-    /**
+    /*
      * Test creation of a connector of type TestConnectorA. The type should
      * already have been created.
      */
@@ -86,7 +82,7 @@ public class ConnectorCoordinatorTest extends TestCase {
         new ConnectorCoordinatorImpl(name, pusher, threadPool);
     assertFalse(instance.exists());
     {
-      /**
+      /*
        * Test creation of a connector of type TestConnectorB. The type should
        * already have been created.
        */
@@ -98,7 +94,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     }
 
     {
-      /**
+      /*
        * Test update of a connector instance of type TestConnectorB. The
        * instance was created in an earlier test.
        */
@@ -117,7 +113,7 @@ public class ConnectorCoordinatorTest extends TestCase {
         new ConnectorCoordinatorImpl(name, pusher, threadPool);
     assertFalse(instance.exists());
     {
-      /**
+      /*
        * Test creation of a connector second instance of type TestConnectorB.
        */
       String typeName = "TestConnectorB";
@@ -131,14 +127,12 @@ public class ConnectorCoordinatorTest extends TestCase {
     {
       InstanceInfo instanceInfo = instance.getInstanceInfo();
       assertTrue(instance.exists());
-      //
       // Remember the connector directory for the original type so we can
       // verify that it was removed when we change the type.
       File originalConnectorDir = instanceInfo.getConnectorDir();
       assertTrue(originalConnectorDir.exists());
 
-
-      /**
+      /*
        * Test update of a connector instance of type TestConnectorA. The
        * instance was created in an earlier test.
        */
@@ -169,9 +163,9 @@ public class ConnectorCoordinatorTest extends TestCase {
     try {
       updateConnectorTest(instance, typeName, language, false,
           jsonConfigString);
-      fail();
+      fail(); // Exception expected.
     } catch (ConnectorExistsException e) {
-      // expected
+      // Expected.
     }
     removeConnector(instance);
   }
@@ -181,7 +175,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     final ConnectorCoordinatorImpl instance =
         new ConnectorCoordinatorImpl(name, pusher, threadPool);
     assertFalse(instance.exists());
-    /**
+    /*
      * Test creation of a connector of type TestConnectorA. The type should
      * already have been created.
      */
@@ -192,9 +186,9 @@ public class ConnectorCoordinatorTest extends TestCase {
             + "RepositoryFile:MockRepositoryEventLog3.txt}";
     try {
       updateConnectorTest(instance, typeName, language, true, jsonConfigString);
-      fail();
+      fail(); // Exception expected.
     } catch (ConnectorNotFoundException e) {
-      // expected
+      // Expected.
     }
   }
 
@@ -211,22 +205,22 @@ public class ConnectorCoordinatorTest extends TestCase {
     assertNull(response);
     InstanceInfo instanceInfo = instance.getInstanceInfo();
     File connectorDir = instanceInfo.getConnectorDir();
-    Assert.assertTrue(connectorDir.exists());
-    Assert.assertEquals(instance.getName(), instanceInfo.getName());
+    assertTrue(connectorDir.exists());
+    assertEquals(instance.getName(), instanceInfo.getName());
 
-    // the password will be decrypted in the InstanceInfo
+    // The password will be decrypted in the InstanceInfo.
     Map<String, String> instanceProps = instanceInfo.getConnectorConfig();
     String instancePasswd = instanceProps.get("Password");
     String plainPasswd = config.get("Password");
-    Assert.assertEquals(instancePasswd, plainPasswd);
+    assertEquals(instancePasswd, plainPasswd);
 
-    // verify that the googleConnectorName property is intact.
+    // Verify that the googleConnectorName property is intact.
     assertTrue(
         instanceProps.containsKey(PropertiesUtils.GOOGLE_CONNECTOR_NAME));
     assertEquals(instance.getName(), instanceProps
         .get(PropertiesUtils.GOOGLE_CONNECTOR_NAME));
 
-    // verify that the google*WorkDir properties are intact.
+    // Verify that the google*WorkDir properties are intact.
     assertTrue(instanceProps.containsKey(PropertiesUtils.GOOGLE_WORK_DIR));
     assertTrue(instanceProps
         .containsKey(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR));
@@ -241,6 +235,5 @@ public class ConnectorCoordinatorTest extends TestCase {
     instance.removeConnector();
     assertFalse(instance.exists());
     assertFalse(connectorDir.exists());
-
   }
 }

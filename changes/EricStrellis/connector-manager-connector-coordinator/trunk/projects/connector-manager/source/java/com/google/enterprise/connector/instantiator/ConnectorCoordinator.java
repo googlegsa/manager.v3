@@ -28,7 +28,6 @@ import java.util.Map;
 
 /**
  * Management interface for a connector instance.
- *
  * <p>
  * This interface provides a single point of control to allow for proper
  * synchronization between concurrent
@@ -36,16 +35,17 @@ import java.util.Map;
  * <LI>Configuration operations
  * <LI>Running of traversals
  * </OL>
- * <p> Note that a {@link ConnectorCoordinator} may be created with a name but
- * not a complete full configuration for purposes of providing synchronization
- * during the creation process. The configuration can be specified using
+ * <p>
+ * Note that a {@link ConnectorCoordinator} may be created with a name but not a
+ * complete full configuration for purposes of providing synchronization during
+ * the creation process. The configuration can be specified using
  * {@link #setConnectorConfig(TypeInfo, Map, Locale, boolean)} The
  * {@link #exists()} method will return false for a {@link ConnectorCoordinator}
  * without a complete configuration. In addition many of the methods in this
  * interface will throw a {@link ConnectorNotFoundException} if the
  * {@link ConnectorCoordinator} does not have a complete configuration.
- *
- * <p> It is expected the caller will guarantee that each
+ * <p>
+ * It is expected the caller will guarantee that each
  * {@link ConnectorCoordinator} in the system has a unique name.
  */
 public interface ConnectorCoordinator extends TraversalStateStore {
@@ -165,15 +165,15 @@ public interface ConnectorCoordinator extends TraversalStateStore {
    * Sets the configuration for this {@link ConnectorCoordinator}. If this
    * {@link ConnectorCoordinator} supports persistence this will persist the new
    * configuration.
-   *
-   * <p> Upon success this function returns
+   * <p>
+   * Upon success this function returns
    * <OL>
    * <LI>null
    * <LI> {@link ConfigureResponse} with a null message
    * <LI> {@link ConfigureResponse} with a zero length message
    * </OL>
-   *
-   * <p>Upon success if this modifies the configuration parameters then calling
+   * <p>
+   * Upon success if this modifies the configuration parameters then calling
    * {@link ConfigureResponse#getConfigData()} on the returned value returns the
    * updated configuration parameters.
    *

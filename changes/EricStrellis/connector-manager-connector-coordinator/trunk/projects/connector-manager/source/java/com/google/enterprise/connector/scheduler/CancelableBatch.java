@@ -34,7 +34,7 @@ public class CancelableBatch implements Cancelable {
   final String traverserName;
   final BatchResultRecorder batchResultRecorder;
   final int batchHint;
-  // TODO(strellis): add batch key support;
+  // TODO(strellis): Add batch key support.
   final Object batchKey = null;
   final ConnectorCoordinatorImpl connectorInstance = null;
 
