@@ -82,7 +82,7 @@ public class SimpleTestConnector implements Connector {
     return new SimpleTestSession();
   }
 
-  public class SimpleTestSession implements Session {
+  public static class SimpleTestSession implements Session {
     public AuthenticationManager getAuthenticationManager() {
       return new SimpleAuthenticationManager();
     }
@@ -96,13 +96,13 @@ public class SimpleTestConnector implements Connector {
     }
   }
 
-  public class SimpleAuthenticationManager implements AuthenticationManager {
+  public static class SimpleAuthenticationManager implements AuthenticationManager {
     public AuthenticationResponse authenticate(AuthenticationIdentity id) {
       return new AuthenticationResponse(true, "admin");
     }
   }
 
-  public class SimpleAuthorizationManager implements AuthorizationManager {
+  public static class SimpleAuthorizationManager implements AuthorizationManager {
     public Collection<AuthorizationResponse> authorizeDocids(
         Collection<String> col, AuthenticationIdentity id) {
       List<AuthorizationResponse> l = new ArrayList<AuthorizationResponse>();
@@ -113,7 +113,7 @@ public class SimpleTestConnector implements Connector {
     }
   }
 
-  public class SimpleTraversalManager implements TraversalManager {
+  public static class SimpleTraversalManager implements TraversalManager {
     private boolean documentServed = false;
 
     public void setBatchHint(int hint) {
@@ -165,8 +165,8 @@ public class SimpleTestConnector implements Connector {
      */
     private SimpleDocument createSimpleDocument(Map<String, Object> props) {
       Map<String, List<Value>> spiValues = new HashMap<String, List<Value>>();
-      for (String key : props.keySet()) {
-        Object obj = props.get(key);
+      for (Map.Entry<String, Object> entry : props.entrySet()) {
+        Object obj = entry.getValue();
         Value val = null;
         if (obj instanceof String) {
           val = Value.getStringValue((String) obj);
@@ -177,7 +177,7 @@ public class SimpleTestConnector implements Connector {
         }
         List<Value> values = new ArrayList<Value>();
         values.add(val);
-        spiValues.put(key, values);
+        spiValues.put(entry.getKey(), values);
       }
       return new SimpleDocument(spiValues);
     }

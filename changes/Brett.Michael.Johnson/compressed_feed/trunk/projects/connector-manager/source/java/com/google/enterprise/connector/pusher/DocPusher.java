@@ -572,6 +572,8 @@ public class DocPusher implements Pusher {
           getOptionalString(document, SpiConstants.PROPNAME_TITLE));
 
       if (null != contentStream) {
+        // TODO: Don't compress tiny content or already compressed data
+        // (based on mimetype).
         if (useCompression) {
           encodedContentStream = new Base64FilterInputStream(
               new CompressedFilterInputStream(contentStream), loggingContent);

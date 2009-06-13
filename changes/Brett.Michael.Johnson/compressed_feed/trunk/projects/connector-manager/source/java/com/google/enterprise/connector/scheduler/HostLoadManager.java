@@ -36,20 +36,20 @@ public class HostLoadManager {
 
   private static final long MINUTE_IN_MILLIS = 60 * 1000;
   private long startTimeInMillis;
-  private Map<String, Integer> connectorNameToNumDocsTraversed;
-  private Map<String, Long> connectorNameToFinishTime;
+  private final Map<String, Integer> connectorNameToNumDocsTraversed;
+  private final Map<String, Long> connectorNameToFinishTime;
 
   /**
    * Number of milliseconds before we ignore previously fed documents.  In
    * particular, we limit our feed rate during the duration
    * [startTimeInMillis, startTimeInMillis + periodInMillis].
    */
-  private long periodInMillis;
+  private final long periodInMillis;
 
   /**
    * Used for determining the loads of the schedules.
    */
-  private Instantiator instantiator;
+  private final Instantiator instantiator;
 
   /**
    * By default, the HostLoadManager will use a one minute period for
@@ -121,7 +121,7 @@ public class HostLoadManager {
     synchronized (connectorNameToNumDocsTraversed) {
       int numDocs = getNumDocsTraversedThisPeriod(connectorName);
       connectorNameToNumDocsTraversed.put(connectorName,
-          new Integer(numDocs + numDocsTraversed));
+          Integer.valueOf(numDocs + numDocsTraversed));
     }
   }
 
@@ -135,7 +135,7 @@ public class HostLoadManager {
    */
   public void connectorFinishedTraversal(String connectorName,
                                          int retryDelayMillis) {
-    Long finishTime = new Long(((retryDelayMillis < 0) ? Long.MAX_VALUE :
+    Long finishTime = Long.valueOf(((retryDelayMillis < 0) ? Long.MAX_VALUE :
         (System.currentTimeMillis() + retryDelayMillis)));
     connectorNameToFinishTime.put(connectorName, finishTime);
   }
@@ -180,18 +180,14 @@ public class HostLoadManager {
     Object value = connectorNameToFinishTime.get(connectorName);
     if (value != null) {
       long finishTime = ((Long)value).longValue();
-      long now = System.currentTimeMillis();
-      if (now < finishTime) {
-        return true;
-      }
-      int maxDocsPerPeriod = (int)
-          ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
-      int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
-      int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
-      if (remainingDocsToTraverse <= 0) {
+      if (System.currentTimeMillis() < finishTime) {
         return true;
       }
     }
-    return false;
+    int maxDocsPerPeriod =
+        (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
+    int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
+    int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
+    return (remainingDocsToTraverse <= 0);
   }
 }

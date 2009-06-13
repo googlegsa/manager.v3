@@ -275,6 +275,7 @@ public class DocPusherTest extends TestCase {
   }
 
   private class CompressedFeedConnection extends MockFeedConnection {
+    @Override
     public String getContentEncodings() {
       return super.getContentEncodings() + ", base64compressed";
     }
@@ -1689,18 +1690,21 @@ public class DocPusherTest extends TestCase {
    * A FeedConnection that returns a bad response.
    */
   private static class BadFeedConnection2 extends MockFeedConnection {
-  @Override
+    @Override
     public String sendData(String dataSource, FeedData feedData)
         throws RepositoryException {
       super.sendData(dataSource, feedData);
       return "Bulimic FeedConnection";
     }
+    @Override
     public int getBacklogCount() {
       return -1;
     }
+    @Override
     public int getScheduleFormat() {
       return 1;
     }
+    @Override
     public String getContentEncodings() {
       return "base64binary";
     }
@@ -1711,20 +1715,20 @@ public class DocPusherTest extends TestCase {
    */
   private static class BadInputStream extends InputStream {
     // Make it look like there is something to read.
-  @Override
-  public int available() {
+    @Override
+    public int available() {
       return 69;
     }
     // Override read methods, always throwing IOException.
-  @Override
+    @Override
     public int read() throws IOException {
       throw new IOException("This stream is unreadable");
     }
-  @Override
+    @Override
     public int read(byte[] b) throws IOException {
       throw new IOException("This stream is unreadable");
     }
-  @Override
+    @Override
     public int read(byte[] b, int o, int l) throws IOException {
       throw new IOException("This stream is unreadable");
     }

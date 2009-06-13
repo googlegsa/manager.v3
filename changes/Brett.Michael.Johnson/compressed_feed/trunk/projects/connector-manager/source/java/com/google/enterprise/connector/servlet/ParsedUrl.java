@@ -17,7 +17,7 @@ package com.google.enterprise.connector.servlet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class ParsedUrl {
+public class ParsedUrl {
   private static final Pattern URL_PATTERN =
       Pattern.compile("^" + ServletUtil.PROTOCOL + "([^./]*)(?:[^/]*)?"
           + "(?:/[dD][oO][cC]\\?(?:[^&]*&)*[dD][oO][cC][iI][dD]=([^&]*))?");

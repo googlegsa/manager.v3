@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.test;
+package com.google.enterprise.connector.common;
 
 import com.google.enterprise.connector.common.StringUtils;
 
@@ -23,9 +23,9 @@ import java.io.BufferedReader;
 import java.io.StringReader;
 import java.util.logging.Logger;
 
-public class ConnectorTestUtilsTest extends TestCase {
+public class StringUtilsTest extends TestCase {
   private static final Logger logger =
-      Logger.getLogger(ConnectorTestUtilsTest.class.getName());
+      Logger.getLogger(StringUtilsTest.class.getName());
 
   String expectedContents = "now is the time for all \n"
     + "good men to come to the aid \n" + "of their country \n";
@@ -34,21 +34,14 @@ public class ConnectorTestUtilsTest extends TestCase {
     String testString = "now is the time for all \n"
       + "good men to come to the aid \n" + "# this is a comment \n"
       + "of their country // wow!";
-    // System.out.println(testString);
     StringReader sr = new StringReader(testString);
     BufferedReader br = new BufferedReader(sr);
     String contents = StringUtils.streamToString(br);
-    // System.out.println(contents);
-    // System.out.println("length of contents " + contents.length());
-    // System.out.println(expectedContents);
-    // System.out.println("length of expected contents " +
-    // expectedContents.length());
     Assert.assertTrue(expectedContents.equals(contents));
   }
 
   public void testStreamToStringFromFile() {
-    String contents = StringUtils.
-      streamToString("/com/google/enterprise/connector/testdata/testFile1.txt");
+    String contents = StringUtils.streamToString("testFile1.txt");
     logger.info(contents);
     logger.info("length of contents " + contents.length());
     String expectedContents = "now is the time for all \n"

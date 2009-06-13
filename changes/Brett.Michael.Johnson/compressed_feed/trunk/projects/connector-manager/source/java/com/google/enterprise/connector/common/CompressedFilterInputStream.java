@@ -25,7 +25,7 @@ import java.util.zip.Deflater;
 public class CompressedFilterInputStream extends FilterInputStream {
   private Deflater deflater;
 
-  // Approx. equal to the size of the buffer in GsaFeedConnection.
+  // Approximately equal to the size of the buffer in GsaFeedConnection.
   private byte[] inputBuff = new byte[32768];
   private byte[] oneByte = new byte[1];
 
@@ -43,16 +43,15 @@ public class CompressedFilterInputStream extends FilterInputStream {
   // Supported, but shouldn't really happen in our environment.
   @Override
   public int read() throws IOException {
-    int rtn;
-    while ((rtn = read(oneByte, 0, 1)) == 0) ;
-    return (rtn < 0) ? rtn : (((int) oneByte[0]) & 0xFF);
+    int rtn = read(oneByte, 0, 1);
+    return (rtn < 0) ? rtn : (oneByte[0] & 0xFF);
   }
 
   @Override
   public int read(byte b[], int off, int len) throws IOException {
     int rtn = 0;
     do {
-      // If the compresser needs more input, get some.
+      // If the compressor needs more input, get some.
       if (deflater.needsInput()) {
         int bytesRead = fillbuff(inputBuff);
         if (bytesRead < 0) {
@@ -85,7 +84,7 @@ public class CompressedFilterInputStream extends FilterInputStream {
     while (bytesRead < len) {
       int val = in.read(b, off + bytesRead, len - bytesRead);
       if (val == -1) {
-        return (bytesRead > 0) ? bytesRead : -1;
+        return (bytesRead > 0) ? bytesRead : val;
       }
       bytesRead += val;
     }

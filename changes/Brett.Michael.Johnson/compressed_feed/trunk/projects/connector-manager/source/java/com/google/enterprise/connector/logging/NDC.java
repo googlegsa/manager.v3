@@ -46,14 +46,11 @@ import java.util.EmptyStackException;
  * the future, it should call {@link #remove} to release the ThreadLocal
  * resources used by the context.  This is especially important if
  * when the thread exits, so these resources may get garbage collected.
-
- * <p>A child thread automatically inherits a <em>copy</em> of the
- * nested diagnostic context of its parent.
  */
  public class NDC {
    private static final String EMPTY_STRING = "";
-   private static InheritableThreadLocal<Stack<String>> stack =
-       new InheritableThreadLocal<Stack<String>>();
+   private static ThreadLocal<Stack<String>> stack =
+       new ThreadLocal<Stack<String>>();
 
   /**
    * Clear any nested diagnostic information, if any, but maintain the

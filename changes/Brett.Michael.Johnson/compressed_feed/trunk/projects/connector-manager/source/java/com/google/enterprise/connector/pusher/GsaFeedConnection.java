@@ -57,6 +57,13 @@ public class GsaFeedConnection implements FeedConnection {
 
   private URL url = null;
 
+  // All current GSAs only support legacy Schedule formats.
+  private int scheduleFormat = 1;
+
+  // Content encodings supported by GSA.
+  // TODO: Get compressed encoding support from server.
+  private String contentEncodings = "base64binary";
+
   private static final Logger LOGGER =
       Logger.getLogger(GsaFeedConnection.class.getName());
 
@@ -67,6 +74,14 @@ public class GsaFeedConnection implements FeedConnection {
   public synchronized void setFeedHostAndPort(String host, int port)
       throws MalformedURLException {
     url = new URL("http", host, port, "/xmlfeed");
+  }
+
+  public void setScheduleFormat(int scheduleFormatVersion) {
+    this.scheduleFormat = scheduleFormatVersion;
+  }
+
+  public void setContentEncodings(String contentEncodings) {
+    this.contentEncodings = contentEncodings;
   }
 
   private static final void writeMultipartControlHeader(
@@ -208,12 +223,11 @@ public class GsaFeedConnection implements FeedConnection {
 
   //@Override
   public int getScheduleFormat() {
-    return 1; // All current GSAs only support legacy Schedule formats.
+    return scheduleFormat;
   }
 
   //@Override
   public String getContentEncodings() {
-    // TODO: Get compressed encoding support from server.
-    return "base64binary";
+    return contentEncodings;
   }
 }

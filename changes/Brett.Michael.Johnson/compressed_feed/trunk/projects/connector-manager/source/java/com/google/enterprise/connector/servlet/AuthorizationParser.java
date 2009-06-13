@@ -28,7 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * This class parses the xml body of an Authorization request. 
+ * This class parses the xml body of an Authorization request.
  * </p>
  * An authorization is a sequence of {@code ConnectorQuery} elements.  Each
  * {@code ConnectorQuery} has a single {@code Identity} element and a sequence
@@ -48,13 +48,13 @@ import java.util.logging.Logger;
  */
 public class AuthorizationParser {
 
-  private static final Logger LOGGER = 
+  private static final Logger LOGGER =
       Logger.getLogger(AuthorizationParser.class.getName());
 
-  private String xmlBody;
+  private final String xmlBody;
   private int status;
   private int numDocs;
-  private Map<AuthenticationIdentity, ConnectorQueries> parseMap;
+  private final Map<AuthenticationIdentity, ConnectorQueries> parseMap;
 
   public AuthorizationParser(String xmlBody) {
     this.xmlBody = xmlBody;
@@ -85,7 +85,7 @@ public class AuthorizationParser {
    * item.
    */
   private void parse() {
-    Element root = ServletUtil.parseAndGetRootElement(xmlBody, 
+    Element root = ServletUtil.parseAndGetRootElement(xmlBody,
         ServletUtil.XMLTAG_AUTHZ_QUERY);
 
     if (root == null) {
@@ -93,7 +93,7 @@ public class AuthorizationParser {
       return;
     }
 
-    NodeList queryList = 
+    NodeList queryList =
         root.getElementsByTagName(ServletUtil.XMLTAG_CONNECTOR_QUERY);
 
     if (queryList.getLength() == 0) {
@@ -119,12 +119,12 @@ public class AuthorizationParser {
   }
 
   private void parseIdentityGroup(Element queryItem) {
-    String username = ServletUtil.getFirstElementByTagName(queryItem, 
+    String username = ServletUtil.getFirstElementByTagName(queryItem,
         ServletUtil.XMLTAG_IDENTITY);
     String domain =
         ServletUtil.getFirstAttribute(queryItem, ServletUtil.XMLTAG_IDENTITY,
             ServletUtil.XMLTAG_DOMAIN_ATTRIBUTE);
-    List<String> resources = ServletUtil.getAllElementsByTagName(queryItem, 
+    List<String> resources = ServletUtil.getAllElementsByTagName(queryItem,
         ServletUtil.XMLTAG_RESOURCE);
     if (resources.isEmpty()) {
       status = ConnectorMessageCode.RESPONSE_NULL_RESOURCE;
@@ -142,14 +142,14 @@ public class AuthorizationParser {
       parseResource(urlsByConnector, url);
     }
   }
-  
+
   // Package-level visibility for testing.
-  static boolean matchesIdentity(AuthenticationIdentity id, String username, 
+  static boolean matchesIdentity(AuthenticationIdentity id, String username,
       String domain) {
     if (username == null && id.getUsername() != null) {
       return false;
     }
-    if (!username.equals(id.getUsername())) {
+    if (!id.getUsername().equals(username)) {
       return false;
     }
     // A null domain is considered a match for an empty string domain.
@@ -181,7 +181,7 @@ public class AuthorizationParser {
       status = p.getStatus();
     }
   }
-  
+
   public int getNumDocs() {
     return numDocs;
   }
@@ -199,7 +199,7 @@ public class AuthorizationParser {
     return parseMap.keySet();
   }
 
-  public ConnectorQueries getConnectorQueriesForIdentity(AuthenticationIdentity 
+  public ConnectorQueries getConnectorQueriesForIdentity(AuthenticationIdentity
       identity) {
     return parseMap.get(identity);
   }
@@ -215,7 +215,7 @@ public class AuthorizationParser {
    * decision.
    */
   public static class ConnectorQueries {
-    private Map<String, QueryUrls> queryMap;
+    private final Map<String, QueryUrls> queryMap;
 
     /*
      * Private constructor so this class can only be constructed by

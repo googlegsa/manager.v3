@@ -161,7 +161,7 @@ public class ThreadPoolTest extends TestCase {
     assertNull(handle);
   }
 
-  private final static long SHORT_TASK_LIFE_MILLIS = 250;
+  private final static long SHORT_TASK_LIFE_MILLIS = 500;
 
   public void testTimeToLiveWithHungBatch() throws Exception {
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(10);
@@ -346,7 +346,7 @@ public class ThreadPoolTest extends TestCase {
       try {
         taskRunningQ.add(this);
         while (true) {
-          Thread.sleep(10000);
+          Thread.sleep(100000);
         }
       } catch (InterruptedException ie) {
         // Expected

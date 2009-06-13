@@ -1,4 +1,4 @@
-// Copyright 2006-2009 Google Inc.  All Rights Reserved.
+// Copyright 2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ import junit.framework.TestCase;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.zip.Deflater;
 
@@ -56,6 +55,7 @@ public class CompressedFilterInputStreamTest extends TestCase {
   private static byte[] mediumExpected;
   private static byte[] bigExpected;
 
+  @Override
   protected void setUp() throws Exception {
     mediumInput = mediumString.getBytes();
 
@@ -94,6 +94,7 @@ public class CompressedFilterInputStreamTest extends TestCase {
     return output;
   }
 
+  /* These are extremely useful when debugging these tests.
   static final String hex = "0123456789ABCDEF";
   private static String toHex(byte[] input) {
     return toHex(input, 0, input.length);
@@ -109,8 +110,11 @@ public class CompressedFilterInputStreamTest extends TestCase {
     }
     return(buf.toString().trim());
   }
+  */
 
-  /** Test read() one byte. */
+  /**
+   * Test read() one byte.
+   */
   public void testRead() throws IOException {
     checkRead(emptyInput, emptyExpected);
     checkRead(tinyInput, tinyExpected);
@@ -133,7 +137,9 @@ public class CompressedFilterInputStreamTest extends TestCase {
     assertTrue(Arrays.equals(expected, result));
   }
 
-  /** Test read(byte[] dest, int off, int len); */
+  /**
+   * Test read(byte[] dest, int off, int len);
+   */
   public void testReadArray() throws IOException {
     checkReadArray(emptyInput, emptyExpected);
     checkReadArray(tinyInput, tinyExpected);
