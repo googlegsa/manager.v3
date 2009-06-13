@@ -152,6 +152,34 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
+   * Test Take for a compressed content feed.
+   */
+  public void testTakeCompressedContent() throws Exception {
+    String[] expectedXml = new String[1];
+    String feedType = "incremental";
+    String record = "<record url=\""
+        + ServletUtil.PROTOCOL
+        + "junit.localhost"
+        + ServletUtil.DOCID
+        + "doc10\""
+        + " mimetype=\""
+        + SpiConstants.DEFAULT_MIMETYPE
+        + "\" last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
+        + "<metadata>\n"
+        + "<meta name=\"contentfile\" content=\"testdata/mocktestdata/i18n.html\"/>\n"
+        + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
+        + "<meta name=\"google:mimetype\" content=\"text/html\"/>\n"
+        + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
+        + "</metadata>\n" + "<content encoding=\"base64compressed\">\n"
+        + "eJyzySjJzbE73Hd449HFh1cWHd54eCmQse7wNhDryJ7D647uQ4jY6INVAwBbqCBF"
+        + "\n</content>\n" + "</record>\n";
+
+    expectedXml[0] = buildExpectedXML(feedType, record);
+    takeFeed(expectedXml, "MockRepositoryEventLog8.txt", true);
+  }
+
+
+  /**
    * Test Take for isPublic.
    */
   public void testTakeIsPublic() throws Exception {
@@ -246,8 +274,20 @@ public class DocPusherTest extends TestCase {
     takeFeed(expectedXml, "MockRepositoryEventLog8.txt");
   }
 
+  private class CompressedFeedConnection extends MockFeedConnection {
+    @Override
+    public String getContentEncodings() {
+      return super.getContentEncodings() + ", base64compressed";
+    }
+  }
+
   private void takeFeed(String[] expectedXml, String repository)
       throws Exception {
+    takeFeed(expectedXml, repository, false);
+  }
+
+  private void takeFeed(String[] expectedXml, String repository,
+      boolean useCompression) throws Exception {
     String gsaExpectedResponse = GsaFeedConnection.SUCCESS_RESPONSE;
     String gsaActualResponse;
 
@@ -256,8 +296,13 @@ public class DocPusherTest extends TestCase {
     QueryManager qm = new MockJcrQueryManager(r.getStore());
     TraversalManager qtm = new JcrTraversalManager(qm);
 
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection);
+    MockFeedConnection feedConnection;
+    if (useCompression) {
+      feedConnection = new CompressedFeedConnection();
+    } else {
+      feedConnection = new MockFeedConnection();
+    }
+    DocPusher dpusher = new DocPusher(feedConnection);
 
     DocumentList documentList = qtm.startTraversal();
 
@@ -268,7 +313,7 @@ public class DocPusherTest extends TestCase {
       Assert.assertFalse(i == expectedXml.length);
       dpusher.take(document, "junit");
       System.out.println("Test " + i + " assertions");
-      String resultXML = mockFeedConnection.getFeed();
+      String resultXML = feedConnection.getFeed();
       gsaActualResponse = dpusher.getGsaResponse();
       Assert.assertEquals(expectedXml[i], resultXML);
       Assert.assertEquals(gsaExpectedResponse, gsaActualResponse);
@@ -1630,17 +1675,38 @@ public class DocPusherTest extends TestCase {
         throws FeedException {
       throw new FeedException("Anorexic FeedConnection");
     }
+    public int getBacklogCount() {
+      return -1;
+    }
+    public int getScheduleFormat() {
+      return 1;
+    }
+    public String getContentEncodings() {
+      return "base64binary";
+    }
   }
 
   /**
    * A FeedConnection that returns a bad response.
    */
   private static class BadFeedConnection2 extends MockFeedConnection {
-  @Override
+    @Override
     public String sendData(String dataSource, FeedData feedData)
         throws RepositoryException {
       super.sendData(dataSource, feedData);
       return "Bulimic FeedConnection";
+    }
+    @Override
+    public int getBacklogCount() {
+      return -1;
+    }
+    @Override
+    public int getScheduleFormat() {
+      return 1;
+    }
+    @Override
+    public String getContentEncodings() {
+      return "base64binary";
     }
   }
 
@@ -1649,20 +1715,20 @@ public class DocPusherTest extends TestCase {
    */
   private static class BadInputStream extends InputStream {
     // Make it look like there is something to read.
-  @Override
-  public int available() {
+    @Override
+    public int available() {
       return 69;
     }
     // Override read methods, always throwing IOException.
-  @Override
+    @Override
     public int read() throws IOException {
       throw new IOException("This stream is unreadable");
     }
-  @Override
+    @Override
     public int read(byte[] b) throws IOException {
       throw new IOException("This stream is unreadable");
     }
-  @Override
+    @Override
     public int read(byte[] b, int o, int l) throws IOException {
       throw new IOException("This stream is unreadable");
     }

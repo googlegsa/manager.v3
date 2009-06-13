@@ -39,6 +39,7 @@ public class NullFeedConnection implements FeedConnection {
     LOGGER.info("Using Null FeedConnection.  Fed Content will be discarded.");
   }
 
+  //@Override
   public String sendData(String dataSource, FeedData feedData)
       throws RepositoryException {
     try {
@@ -62,5 +63,20 @@ public class NullFeedConnection implements FeedConnection {
       }
     }
     return GsaFeedConnection.SUCCESS_RESPONSE;
+  }
+
+  //@Override
+  public int getBacklogCount() {
+    return -1;
+  }
+
+  //@Override
+  public int getScheduleFormat() {
+    return 1;
+  }
+
+  //@Override
+  public String getContentEncodings() {
+    return "base64binary, base64compressed";
   }
 }
