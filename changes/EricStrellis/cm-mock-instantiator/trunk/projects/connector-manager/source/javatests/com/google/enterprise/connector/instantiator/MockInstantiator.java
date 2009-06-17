@@ -60,7 +60,7 @@ import javax.jcr.Repository;
 
 /**
  * Mock implementation of {@link Instantiator} that comes with support for
- * adding predfined connectors {@link #setupTestTraversers()} and support
+ * adding predefined connectors {@link #setupTestTraversers()} and support
  * for clients to add there own using {@link #setupConnector(String, String)}
  * or {@link #setupTraverser(String, Traverser)};
  */
@@ -121,22 +121,26 @@ public class MockInstantiator implements Instantiator {
   }
 
   /**
-   * Create and register a suite of test connectors with this
+   * Creates and registers a suite of test connectors with this
    * {@link Instantiator}.
    */
   public void setupTestTraversers() {
     setupConnector(TRAVERSER_NAME1, "MockRepositoryEventLog1.txt");
     setupConnector(TRAVERSER_NAME2, "MockRepositoryEventLog1.txt");
     setupTraverser(TRAVERSER_NAME_NOOP, new NoopQueryTraverser());
-    setupTraverser(TRAVERSER_NAME_LONG_RUNNING, new LongRunningQueryTraverser());
-    setupTraverser(TRAVERSER_NAME_NEVER_ENDING, new NeverEndingQueryTraverser());
-    setupTraverser(TRAVERSER_NAME_INTERRUPTIBLE, new InterruptibleQueryTraverser());
-    setupTraverser(TRAVERSER_NAME_CANCELLABLE, new CancellableQueryTraverser());
+    setupTraverser(TRAVERSER_NAME_LONG_RUNNING,
+        new LongRunningQueryTraverser());
+    setupTraverser(TRAVERSER_NAME_NEVER_ENDING,
+        new NeverEndingQueryTraverser());
+    setupTraverser(TRAVERSER_NAME_INTERRUPTIBLE,
+        new InterruptibleQueryTraverser());
+    setupTraverser(TRAVERSER_NAME_CANCELLABLE,
+        new CancellableQueryTraverser());
   }
 
   /**
-   * Create and register a {@link Connector} for the provided {@link Traverser}
-   * with this {@link Instantiator}.
+   * Creates and registers a {@link Connector} for the provided
+   * {@link Traverser} with this {@link Instantiator}.
    */
   public void setupTraverser(String traverserName, Traverser traverser) {
     StoreContext storeContext = new StoreContext(traverserName);
@@ -152,8 +156,8 @@ public class MockInstantiator implements Instantiator {
   }
 
   /**
-   * create a {@link JcrConnector} with a backing {@link MockRepository} and
-   * register the created connector with this {@link Instantiator}.
+   * Creates a {@link JcrConnector} with a backing {@link MockRepository} and
+   * registers the created connector with this {@link Instantiator}.
    */
   public void setupConnector(String connectorName, String resourceName) {
     MockRepositoryEventList mrel = new MockRepositoryEventList(resourceName);
@@ -162,13 +166,9 @@ public class MockInstantiator implements Instantiator {
     Connector connector = new JcrConnector(repository);
 
     TraversalManager traversalManager;
-    AuthenticationManager authenticationManager;
-    AuthorizationManager authorizationManager;
     try {
       Session session = connector.login();
       traversalManager = session.getTraversalManager();
-      authenticationManager = session.getAuthenticationManager();
-      authorizationManager = session.getAuthorizationManager();
     } catch (Exception e) {
       // won't happen
       e.printStackTrace();
@@ -184,7 +184,7 @@ public class MockInstantiator implements Instantiator {
   }
 
   public ConnectorType getConnectorType(String connectorTypeName) {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   public Traverser getTraverser(String connectorName)
@@ -201,12 +201,13 @@ public class MockInstantiator implements Instantiator {
     return new MockTraversalStateStore(connectorName);
   }
 
-  public void restartConnectorTraversal(String connectorName) throws ConnectorNotFoundException {
-    ConnectorCoordinator inst = connectorMap.get(connectorName);
+  public void restartConnectorTraversal(String connectorName)
+      throws ConnectorNotFoundException {
+    ConnectorCoordinator cc = connectorMap.get(connectorName);
     if (scheduler != null) {
       scheduler.removeConnector(connectorName);
     }
-    inst.restartConnectorTraversal();
+    cc.restartConnectorTraversal();
   }
 
   public String getConnectorInstancePrototype(String connectorTypeName) {
@@ -218,20 +219,32 @@ public class MockInstantiator implements Instantiator {
   }
 
   public void removeConnector(String connectorName) {
-    ConnectorCoordinator inst = connectorMap.remove(connectorName);
-    if (inst != null) {
-      inst.removeConnector();
+    ConnectorCoordinator cc = connectorMap.remove(connectorName);
+    if (cc != null) {
+      cc.removeConnector();
       if (scheduler != null) {
         scheduler.removeConnector(connectorName);
       }
     }
   }
 
+  /**
+   * Returns an {@Link AuthenticationManager} that throws
+   * {@link UnsupportedOperationException} for all
+   * {@link AuthenticationManager#authenticate(AuthenticationIdentity)}
+   * calls.
+   */
   public AuthenticationManager getAuthenticationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorCoordinator(connectorName).getAuthenticationManager();
   }
 
+  /**
+   * Returns an {@Link AuthorizationManager} that
+   * {@link UnsupportedOperationException} for all
+   * {@link AuthorizationManager#authorizeDocids(Collection,
+   * AuthenticationIdentity)} calls.
+   */
   public AuthorizationManager getAuthorizationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorCoordinator(connectorName).getAuthorizationManager();
@@ -253,12 +266,14 @@ public class MockInstantiator implements Instantiator {
 
   public ConfigureResponse setConnectorConfig(String connectorName,
       String typeName, Map<String, String> configKeys, Locale locale,
-      boolean update) throws ConnectorNotFoundException, ConnectorExistsException, InstantiatorException {
-    ConnectorCoordinator inst = getConnectorCoordinator(connectorName);
-    if (!inst.getConnectorTypeName().equals(typeName)) {
-      throw new UnsupportedOperationException("MockInstantiator does not support changing a connectors type");
+      boolean update) throws ConnectorNotFoundException,
+      ConnectorExistsException, InstantiatorException {
+    ConnectorCoordinator cc = getConnectorCoordinator(connectorName);
+    if (!cc.getConnectorTypeName().equals(typeName)) {
+      throw new UnsupportedOperationException(
+          "MockInstantiator does not support changing a connectors type");
     }
-    return inst.setConnectorConfig(null, configKeys, locale, update);
+    return cc.setConnectorConfig(null, configKeys, locale, update);
   }
 
   public Map<String, String> getConnectorConfig(String connectorName)
@@ -268,7 +283,8 @@ public class MockInstantiator implements Instantiator {
 
   public void setConnectorSchedule(String connectorName,
       String connectorSchedule) throws ConnectorNotFoundException {
-    getConnectorCoordinator(connectorName).setConnectorSchedule(connectorSchedule);
+    getConnectorCoordinator(connectorName).setConnectorSchedule(
+        connectorSchedule);
   }
 
   public String getConnectorSchedule(String connectorName)

@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.common.Base64FilterInputStream;
+import com.google.enterprise.connector.common.CompressedFilterInputStream;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
@@ -101,12 +102,14 @@ public class DocPusher implements Pusher {
   private static final String XML_FEED_METADATA_AND_URL = "metadata-and-url";
   private static final String XML_FEED_INCREMENTAL = "incremental";
   private static final String XML_BASE64BINARY = "base64binary";
+  private static final String XML_BASE64COMPRESSED = "base64compressed";
 
   private static final String CONNECTOR_AUTHMETHOD = "httpbasic";
 
   private final FeedConnection feedConnection;
   private String gsaResponse;
   private boolean feedWarning;
+  private boolean useCompression;
 
   /**
    *
@@ -115,6 +118,9 @@ public class DocPusher implements Pusher {
   public DocPusher(FeedConnection feedConnection) {
     this.feedConnection = feedConnection;
     this.feedWarning = false;
+    String supportedEncodings =
+        feedConnection.getContentEncodings().toLowerCase();
+    this.useCompression = (supportedEncodings.indexOf("base64compressed") >= 0);
   }
 
   public static Logger getFeedLogger() {
@@ -216,7 +222,8 @@ public class DocPusher implements Pusher {
     if (contentAllowed && !XML_FEED_METADATA_AND_URL.equals(feedType)) {
       prefix.append("<");
       prefix.append(XML_CONTENT);
-      XmlUtils.xmlAppendAttr(XML_ENCODING, XML_BASE64BINARY, prefix);
+      XmlUtils.xmlAppendAttr(XML_ENCODING,
+          (useCompression) ? XML_BASE64COMPRESSED : XML_BASE64BINARY, prefix);
       prefix.append(">\n");
 
       suffix.append('\n');
@@ -565,8 +572,15 @@ public class DocPusher implements Pusher {
           getOptionalString(document, SpiConstants.PROPNAME_TITLE));
 
       if (null != contentStream) {
-        encodedContentStream =
-            new Base64FilterInputStream(contentStream, loggingContent);
+        // TODO: Don't compress tiny content or already compressed data
+        // (based on mimetype).
+        if (useCompression) {
+          encodedContentStream = new Base64FilterInputStream(
+              new CompressedFilterInputStream(contentStream), loggingContent);
+        } else {
+          encodedContentStream =
+              new Base64FilterInputStream(contentStream, loggingContent);
+        }
       }
     }
 

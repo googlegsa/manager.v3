@@ -57,6 +57,13 @@ public class GsaFeedConnection implements FeedConnection {
 
   private URL url = null;
 
+  // All current GSAs only support legacy Schedule formats.
+  private int scheduleFormat = 1;
+
+  // Content encodings supported by GSA.
+  // TODO: Get compressed encoding support from server.
+  private String contentEncodings = "base64binary";
+
   private static final Logger LOGGER =
       Logger.getLogger(GsaFeedConnection.class.getName());
 
@@ -67,6 +74,14 @@ public class GsaFeedConnection implements FeedConnection {
   public synchronized void setFeedHostAndPort(String host, int port)
       throws MalformedURLException {
     url = new URL("http", host, port, "/xmlfeed");
+  }
+
+  public void setScheduleFormat(int scheduleFormatVersion) {
+    this.scheduleFormat = scheduleFormatVersion;
+  }
+
+  public void setContentEncodings(String contentEncodings) {
+    this.contentEncodings = contentEncodings;
   }
 
   private static final void writeMultipartControlHeader(
@@ -81,6 +96,7 @@ public class GsaFeedConnection implements FeedConnection {
     outputStream.write("\n".getBytes());
   }
 
+  //@Override
   public String sendData(String dataSource, FeedData feedData)
       throws FeedException, RepositoryException {
     String feedType = ((GsaFeedData)feedData).getFeedType();
@@ -197,5 +213,21 @@ public class GsaFeedConnection implements FeedConnection {
       }
     }
     return buf.toString();
+  }
+
+  //@Override
+  public int getBacklogCount() {
+    // TODO: Get backlog count from server.
+    return -1;
+  }
+
+  //@Override
+  public int getScheduleFormat() {
+    return scheduleFormat;
+  }
+
+  //@Override
+  public String getContentEncodings() {
+    return contentEncodings;
   }
 }

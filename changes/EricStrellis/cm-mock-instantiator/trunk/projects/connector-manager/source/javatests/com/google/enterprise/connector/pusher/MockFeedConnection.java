@@ -39,6 +39,7 @@ public class MockFeedConnection implements FeedConnection {
   public MockFeedConnection() {
   }
 
+  //@Override
   public String sendData(String dataSource, FeedData feedData)
       throws RepositoryException {
     try {
@@ -50,5 +51,20 @@ public class MockFeedConnection implements FeedConnection {
       throw new RepositoryDocumentException("I/O error reading data", e);
     }
     return GsaFeedConnection.SUCCESS_RESPONSE;
+  }
+
+  //@Override
+  public int getBacklogCount() {
+    return -1;
+  }
+
+  //@Override
+  public int getScheduleFormat() {
+    return 1;
+  }
+
+  //@Override
+  public String getContentEncodings() {
+    return "base64binary";
   }
 }

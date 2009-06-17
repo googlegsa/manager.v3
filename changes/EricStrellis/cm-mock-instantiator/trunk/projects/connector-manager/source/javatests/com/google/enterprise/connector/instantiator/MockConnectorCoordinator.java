@@ -114,19 +114,16 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     return interfaces.getTraverser();
   }
 
-  @Override
   public void removeConnector() {
     stateStore.removeConnectorState(storeContext);
     scheduleStore.removeConnectorSchedule(storeContext);
     configStore.removeConnectorConfiguration(storeContext);
   }
 
-  @Override
   public void restartConnectorTraversal() {
     stateStore.removeConnectorState(storeContext);
   }
 
-  @Override
   public ConfigureResponse setConnectorConfig(TypeInfo newTypeInfo,
       Map<String, String> configMap, Locale locale, boolean update) {
     configStore.storeConnectorConfiguration(
