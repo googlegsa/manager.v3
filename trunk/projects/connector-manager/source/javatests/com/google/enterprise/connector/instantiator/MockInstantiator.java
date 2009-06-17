@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2009 Google Inc.
+// Copyright 2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.jcr.JcrConnector;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
 import com.google.enterprise.connector.persist.ConnectorConfigStore;
+import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorScheduleStore;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
@@ -38,9 +38,7 @@ import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.AuthorizationResponse;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
-import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.CancellableQueryTraverser;
@@ -56,15 +54,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.jcr.Repository;
 
 /**
- *
+ * Mock implementation of {@link Instantiator} that comes with support for
+ * adding predefined connectors {@link #setupTestTraversers()} and support
+ * for clients to add there own using {@link #setupConnector(String, String)}
+ * or {@link #setupTraverser(String, Traverser)};
  */
 public class MockInstantiator implements Instantiator {
   public static final String TRAVERSER_NAME1 = "foo";
@@ -74,11 +72,6 @@ public class MockInstantiator implements Instantiator {
   public static final String TRAVERSER_NAME_NEVER_ENDING = "neverending";
   public static final String TRAVERSER_NAME_INTERRUPTIBLE = "interruptible";
   public static final String TRAVERSER_NAME_CANCELLABLE = "cancellable";
-
-  private static final ConnectorType CONNECTOR_TYPE = null;
-
-  private static final Logger LOGGER =
-      Logger.getLogger(MockInstantiator.class.getName());
 
   private static final AuthenticationManager nullAuthenticationManager =
       new AuthenticationManager() {
@@ -96,10 +89,10 @@ public class MockInstantiator implements Instantiator {
         }
       };
 
-  private final Map<String, ConnectorHolder> connectorMap;
-  private final ConnectorConfigStore connectorConfigStore;
-  private final ConnectorScheduleStore connectorScheduleStore;
-  private final ConnectorStateStore connectorStateStore;
+  private final Map<String, ConnectorCoordinator> connectorMap;
+  private final ConnectorConfigStore configStore;
+  private final ConnectorScheduleStore scheduleStore;
+  private final ConnectorStateStore stateStore;
 
   private Scheduler scheduler;
 
@@ -110,50 +103,62 @@ public class MockInstantiator implements Instantiator {
 
   public MockInstantiator(ConnectorConfigStore configStore,
       ConnectorScheduleStore schedStore, ConnectorStateStore stateStore) {
-    this.connectorConfigStore = configStore;
-    this.connectorScheduleStore = schedStore;
-    this.connectorStateStore = stateStore;
-    this.connectorMap = new HashMap<String, ConnectorHolder>();
+    this.configStore = configStore;
+    this.scheduleStore = schedStore;
+    this.stateStore = stateStore;
+    this.connectorMap = new HashMap<String, ConnectorCoordinator>();
   }
 
-  /* Setter Injectors */
   public void setScheduler(Scheduler scheduler) {
     this.scheduler = scheduler;
   }
 
   public synchronized void shutdown() {
-    for (String name : connectorMap.keySet()) {
-      ConnectorHolder instance = connectorMap.get(name);
-      Connector connector = instance.getConnectorInterfaces().getConnector();
-      if (connector != null && (connector instanceof ConnectorShutdownAware)) {
-        try {
-          ((ConnectorShutdownAware)connector).shutdown();
-        } catch (RepositoryException e) {
-          LOGGER.log(Level.WARNING, "Problem shutting down connector "
-                     + name, e);
-        }
-      }
+    for (Map.Entry<String, ConnectorCoordinator> e : connectorMap.entrySet()) {
+      e.getValue().shutdown();
     }
     connectorMap.clear();
   }
 
+  /**
+   * Creates and registers a suite of test connectors with this
+   * {@link Instantiator}.
+   */
   public void setupTestTraversers() {
     setupConnector(TRAVERSER_NAME1, "MockRepositoryEventLog1.txt");
     setupConnector(TRAVERSER_NAME2, "MockRepositoryEventLog1.txt");
     setupTraverser(TRAVERSER_NAME_NOOP, new NoopQueryTraverser());
-    setupTraverser(TRAVERSER_NAME_LONG_RUNNING, new LongRunningQueryTraverser());
-    setupTraverser(TRAVERSER_NAME_NEVER_ENDING, new NeverEndingQueryTraverser());
-    setupTraverser(TRAVERSER_NAME_INTERRUPTIBLE, new InterruptibleQueryTraverser());
-    setupTraverser(TRAVERSER_NAME_CANCELLABLE, new CancellableQueryTraverser());
+    setupTraverser(TRAVERSER_NAME_LONG_RUNNING,
+        new LongRunningQueryTraverser());
+    setupTraverser(TRAVERSER_NAME_NEVER_ENDING,
+        new NeverEndingQueryTraverser());
+    setupTraverser(TRAVERSER_NAME_INTERRUPTIBLE,
+        new InterruptibleQueryTraverser());
+    setupTraverser(TRAVERSER_NAME_CANCELLABLE,
+        new CancellableQueryTraverser());
   }
 
+  /**
+   * Creates and registers a {@link Connector} for the provided
+   * {@link Traverser} with this {@link Instantiator}.
+   */
   public void setupTraverser(String traverserName, Traverser traverser) {
-    connectorMap.put(traverserName, new ConnectorHolder(
+    StoreContext storeContext = new StoreContext(traverserName);
+    ConnectorInterfaces interfaces =
         new ConnectorInterfaces(traverserName, traverser,
-            nullAuthenticationManager, nullAuthorizationManager),
-        connectorStateStore));
+            nullAuthenticationManager, nullAuthorizationManager);
+    GenerationalStateStore gStateStore =
+        new GenerationalStateStore(stateStore, storeContext);
+    ConnectorCoordinator cc =
+        new MockConnectorCoordinator(traverserName, interfaces, gStateStore,
+            configStore, scheduleStore, storeContext);
+    connectorMap.put(traverserName, cc);
   }
 
+  /**
+   * Creates a {@link JcrConnector} with a backing {@link MockRepository} and
+   * registers the created connector with this {@link Instantiator}.
+   */
   public void setupConnector(String connectorName, String resourceName) {
     MockRepositoryEventList mrel = new MockRepositoryEventList(resourceName);
     MockRepository mockRepository = new MockRepository(mrel);
@@ -161,13 +166,9 @@ public class MockInstantiator implements Instantiator {
     Connector connector = new JcrConnector(repository);
 
     TraversalManager traversalManager;
-    AuthenticationManager authenticationManager;
-    AuthorizationManager authorizationManager;
     try {
       Session session = connector.login();
       traversalManager = session.getTraversalManager();
-      authenticationManager = session.getAuthenticationManager();
-      authorizationManager = session.getAuthorizationManager();
     } catch (Exception e) {
       // won't happen
       e.printStackTrace();
@@ -179,32 +180,16 @@ public class MockInstantiator implements Instantiator {
                            new MockTraversalStateStore(connectorName),
                            connectorName);
 
-    connectorMap.put(connectorName, new ConnectorHolder(
-        new ConnectorInterfaces(connectorName, queryTraverser,
-            authenticationManager, authorizationManager),
-        connectorStateStore));
+    setupTraverser(connectorName, queryTraverser);
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.instantiator.Instantiator
-   *      #getConfigurer(java.lang.String)
-   */
   public ConnectorType getConnectorType(String connectorTypeName) {
-    return CONNECTOR_TYPE;
+    throw new UnsupportedOperationException();
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.instantiator.Instantiator
-   *      #getTraverser(java.lang.String)
-   */
   public Traverser getTraverser(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
-    return getConnectorHolder(connectorName)
-        .getConnectorInterfaces().getTraverser();
+    return getConnectorCoordinator(connectorName).getTraverser();
   }
 
   /**
@@ -216,59 +201,13 @@ public class MockInstantiator implements Instantiator {
     return new MockTraversalStateStore(connectorName);
   }
 
-  /**
-   * TraversalStateStore implementation used by the Traverser to
-   * maintain state between batches.
-   */
-  private class MockTraversalStateStore implements TraversalStateStore {
-    private final GenerationalStateStore store;
-    private final StoreContext storeContext;
-
-    public MockTraversalStateStore(String connectorName) {
-      this.storeContext = new StoreContext(connectorName);
-      this.store = new GenerationalStateStore(connectorStateStore,
-                                              storeContext);
-    }
-
-    /**
-     * Store traversal state.
-     *
-     * @param state a String representation of the state to store.
-     *        If null, any previous stored state is discarded.
-     * @throws IllegalStateException if the store is no longer valid.
-     */
-    public void storeTraversalState(String state) {
-      if (state == null) {
-        store.removeConnectorState(storeContext);
-      } else {
-        store.storeConnectorState(storeContext, state);
-      }
-    }
-
-    /**
-     * Return a stored traversal state.
-     *
-     * @returns String representation of the stored state, or
-     *          null if no state is stored.
-     * @throws IllegalStateException if the store is no longer valid.
-     */
-    public String getTraversalState() {
-      return store.getConnectorState(storeContext);
-    }
-  }
-
-  /*
-   * (non-Javadoc)
-   *
-   * @see com.google.enterprise.connector.instantiator.Instantiator
-   *      #restartConnectorTraversal(java.lang.String)
-   */
-  public void restartConnectorTraversal(String connectorName) {
-    ConnectorHolder inst = connectorMap.get(connectorName);
+  public void restartConnectorTraversal(String connectorName)
+      throws ConnectorNotFoundException {
+    ConnectorCoordinator cc = connectorMap.get(connectorName);
     if (scheduler != null) {
       scheduler.removeConnector(connectorName);
     }
-    inst.getStateStore().removeConnectorState(inst.getStoreContext());
+    cc.restartConnectorTraversal();
   }
 
   public String getConnectorInstancePrototype(String connectorTypeName) {
@@ -280,26 +219,35 @@ public class MockInstantiator implements Instantiator {
   }
 
   public void removeConnector(String connectorName) {
-    ConnectorHolder inst = connectorMap.remove(connectorName);
-    if (inst != null) {
-      StoreContext context = inst.getStoreContext();
-      inst.getStateStore().removeConnectorState(context);
-      connectorScheduleStore.removeConnectorSchedule(context);
-      connectorConfigStore.removeConnectorConfiguration(context);
+    ConnectorCoordinator cc = connectorMap.remove(connectorName);
+    if (cc != null) {
+      cc.removeConnector();
       if (scheduler != null) {
         scheduler.removeConnector(connectorName);
       }
     }
   }
 
+  /**
+   * Returns an {@Link AuthenticationManager} that throws
+   * {@link UnsupportedOperationException} for all
+   * {@link AuthenticationManager#authenticate(AuthenticationIdentity)}
+   * calls.
+   */
   public AuthenticationManager getAuthenticationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
-    return getConnectorInterfaces(connectorName).getAuthenticationManager();
+    return getConnectorCoordinator(connectorName).getAuthenticationManager();
   }
 
+  /**
+   * Returns an {@Link AuthorizationManager} that
+   * {@link UnsupportedOperationException} for all
+   * {@link AuthorizationManager#authorizeDocids(Collection,
+   * AuthenticationIdentity)} calls.
+   */
   public AuthorizationManager getAuthorizationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
-    return getConnectorInterfaces(connectorName).getAuthorizationManager();
+    return getConnectorCoordinator(connectorName).getAuthorizationManager();
   }
 
   public ConfigureResponse getConfigFormForConnector(String connectorName,
@@ -313,64 +261,49 @@ public class MockInstantiator implements Instantiator {
 
   public String getConnectorTypeName(String connectorName)
       throws ConnectorNotFoundException {
-    return getConnectorHolder(connectorName).getTypeName();
+    return getConnectorCoordinator(connectorName).getConnectorTypeName();
   }
 
   public ConfigureResponse setConnectorConfig(String connectorName,
       String typeName, Map<String, String> configKeys, Locale locale,
-      boolean update) throws ConnectorNotFoundException {
-    getConnectorHolder(connectorName).setTypeName(typeName);
-    connectorConfigStore.storeConnectorConfiguration(
-        getConnectorHolder(connectorName).getStoreContext(),
-        PropertiesUtils.fromMap(configKeys));
-    return null;
+      boolean update) throws ConnectorNotFoundException,
+      ConnectorExistsException, InstantiatorException {
+    ConnectorCoordinator cc = getConnectorCoordinator(connectorName);
+    if (!cc.getConnectorTypeName().equals(typeName)) {
+      throw new UnsupportedOperationException(
+          "MockInstantiator does not support changing a connectors type");
+    }
+    return cc.setConnectorConfig(null, configKeys, locale, update);
   }
 
   public Map<String, String> getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException {
-    Properties props = connectorConfigStore.getConnectorConfiguration(
-        getConnectorHolder(connectorName).getStoreContext());
-    if (props == null) {
-      return new HashMap<String, String>();
-    } else {
-      return PropertiesUtils.toMap(props);
-    }
+    return getConnectorCoordinator(connectorName).getConnectorConfig();
   }
 
   public void setConnectorSchedule(String connectorName,
       String connectorSchedule) throws ConnectorNotFoundException {
-    connectorScheduleStore.storeConnectorSchedule(
-        getConnectorHolder(connectorName).getStoreContext(),
+    getConnectorCoordinator(connectorName).setConnectorSchedule(
         connectorSchedule);
   }
 
   public String getConnectorSchedule(String connectorName)
       throws ConnectorNotFoundException {
-    return connectorScheduleStore.getConnectorSchedule(
-        getConnectorHolder(connectorName).getStoreContext());
+    return getConnectorCoordinator(connectorName).getConnectorSchedule();
   }
 
-  public void setConnectorState(String connectorName, String connectorState)
+  public void setConnectorState(String connectorName, String state)
       throws ConnectorNotFoundException {
-    ConnectorHolder inst = getConnectorHolder(connectorName);
-    inst.getStateStore().storeConnectorState(inst.getStoreContext(),
-                                             connectorState);
+
+    getConnectorCoordinator(connectorName).storeTraversalState(state);
   }
 
   public String getConnectorState(String connectorName)
       throws ConnectorNotFoundException {
-    ConnectorHolder inst = getConnectorHolder(connectorName);
-    return inst.getStateStore().getConnectorState(inst.getStoreContext());
-
+    return getConnectorCoordinator(connectorName).getTraversalState();
   }
 
-  public ConnectorCoordinatorImpl getConnectorCoordinator(
-      String connectorName) {
-    // TODO(strellis): Implement this.
-    throw new UnsupportedOperationException();
-  }
-
-  private ConnectorHolder getConnectorHolder(String connectorName)
+  public ConnectorCoordinator getConnectorCoordinator(String connectorName)
       throws ConnectorNotFoundException {
     if (connectorMap.containsKey(connectorName)) {
       return connectorMap.get(connectorName);
@@ -379,44 +312,29 @@ public class MockInstantiator implements Instantiator {
           + connectorName);
     }
   }
-
-  private ConnectorInterfaces getConnectorInterfaces(String connectorName)
-      throws ConnectorNotFoundException {
-    return getConnectorHolder(connectorName).getConnectorInterfaces();
-  }
-
-  static class ConnectorHolder {
-    private final ConnectorInterfaces connectorInterfaces;
-    private final GenerationalStateStore stateStore;
+  /**
+   * TraversalStateStore implementation used by the Traverser to
+   * maintain state between batches.
+   */
+  private class MockTraversalStateStore implements TraversalStateStore {
+    private final GenerationalStateStore store;
     private final StoreContext storeContext;
-    private String typeName;
 
-    public ConnectorHolder(ConnectorInterfaces connectorInterfaces,
-                             ConnectorStateStore baseStore) {
-      this.connectorInterfaces = connectorInterfaces;
-      storeContext = new StoreContext(connectorInterfaces.getConnectorName());
-      stateStore = new GenerationalStateStore(baseStore, storeContext);
-      typeName = "";
+    public MockTraversalStateStore(String connectorName) {
+      this.storeContext = new StoreContext(connectorName);
+      this.store = new GenerationalStateStore(stateStore, storeContext);
     }
 
-    public GenerationalStateStore getStateStore() {
-      return stateStore;
+     public void storeTraversalState(String state) {
+      if (state == null) {
+        store.removeConnectorState(storeContext);
+      } else {
+        store.storeConnectorState(storeContext, state);
+      }
     }
 
-    public StoreContext getStoreContext() {
-      return storeContext;
-    }
-
-    public ConnectorInterfaces getConnectorInterfaces() {
-      return connectorInterfaces;
-    }
-
-    public void setTypeName(String typeName) {
-      this.typeName = typeName;
-    }
-
-    public String getTypeName() {
-      return typeName;
+    public String getTraversalState() {
+      return store.getConnectorState(storeContext);
     }
   }
 }
