@@ -28,33 +28,35 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Pool for running {@link Cancelable}, time limited tasks.
+ * Pool for running {@link TimedCancelable}, time limited tasks.
  *
- * <p> Users are provided a {@link TaskHandle} for each task. The
- * {@link TaskHandle} supports canceling the task and determining if the task
- * is done running.
+ * <p>
+ * Users are provided a {@link TaskHandle} for each task. The {@link TaskHandle}
+ * supports canceling the task and determining if the task is done running.
  *
- * <p> The ThreadPool enforces a configurable maximum time interval for tasks.
- * Each task is guarded by a <b>time out task</b> that will cancel the primary
- * task if the primary task does not complete within the allowed interval.
+ * <p>
+ * The ThreadPool enforces a configurable maximum time interval for tasks. Each
+ * task is guarded by a <b>time out task</b> that will cancel the primary task
+ * if the primary task does not complete within the allowed interval.
  *
- * <p> Task cancellation includes two actions that are visible for the task
- * task's {@link Cancelable}
+ * <p>
+ * Task cancellation includes two actions that are visible for the task task's
+ * {@link TimedCancelable}
  * <OL>
- * <LI>Calling {@link Future#cancel(boolean)} to send the task an
- * interrupt and mark it as done.
- * <LI>Calling {@link Cancelable#cancel()} to send the task a second signal that
- * it is being canceled. This signal has the benefit that it does not depend on
- * the tasks interrupt handling policy.
+ * <LI>Calling {@link Future#cancel(boolean)} to send the task an interrupt and
+ * mark it as done.
+ * <LI>Calling {@link TimedCancelable#cancel()} to send the task a second signal
+ * that it is being canceled. This signal has the benefit that it does not
+ * depend on the tasks interrupt handling policy.
  * </OL>
  * Once a task has been canceled its {@link TaskHandle#isDone()} method will
  * immediately start returning true.
  *
- * <p> {@link ThreadPool} performs the following processing when a task
- * completes
+ * <p>
+ * {@link ThreadPool} performs the following processing when a task completes
  * <OL>
- * <LI> Cancel the <b>time out task</b> for the completed task.
- * <LI> Log exceptions that indicate the task did not complete normally.
+ * <LI>Cancel the <b>time out task</b> for the completed task.
+ * <LI>Log exceptions that indicate the task did not complete normally.
  * </OL>
  */
 public class ThreadPool {
@@ -138,7 +140,7 @@ public class ThreadPool {
 
   /**
    * Shut down the {@link ThreadPool}. After this returns
-   * {@link ThreadPool#submit(Cancelable)} will return null.
+   * {@link ThreadPool#submit(TimedCancelable)} will return null.
    *
    * @param interrupt <tt>true</tt> if the threads executing tasks task should
    *        be interrupted; otherwise, in-progress tasks are allowed to complete
@@ -169,9 +171,9 @@ public class ThreadPool {
    * accepted. After {@link ThreadPool#shutdown(boolean, long)} returns this
    * will always return null.
    */
-  public TaskHandle submit(Cancelable cancelable) {
+  public TaskHandle submit(TimedCancelable cancelable) {
     // When timeoutTask is run it will cancel 'cancelable'.
-    TimeoutTask timeoutTask = new TimeoutTask();
+    TimeoutTask timeoutTask = new TimeoutTask(cancelable);
     // timeoutFuture will be used to cancel timeoutTask when 'cancelable'
     // completes.
     FutureTask<?> timeoutFuture = new FutureTask<Object>(timeoutTask, null);
@@ -187,9 +189,7 @@ public class ThreadPool {
         new FutureTask<Object>(cancelTimeoutRunnable, null);
     TaskHandle handle =
         new TaskHandle(cancelable, taskFuture, System.currentTimeMillis());
-    // Before running timeoutTask we must pass it 'taskHandle' so it can
-    // perform a cancel.
-    timeoutTask.setHandle(handle);
+    timeoutTask.setTaskHandle(handle);
     try {
       // Schedule timeoutTask to run when 'cancelable's maximum run interval
       // has expired.
@@ -208,22 +208,22 @@ public class ThreadPool {
   }
 
   /**
-   * A {@link Runnable} for running {@link Cancelable} that has been guarded by
-   * a timeout task. This will cancel the timeout task when the
-   * {@link Cancelable} completes. If the timeout task has already run then
+   * A {@link Runnable} for running {@link TimedCancelable} that has been
+   * guarded by a timeout task. This will cancel the timeout task when the
+   * {@link TimedCancelable} completes. If the timeout task has already run then
    * canceling it has no effect.
    */
   private class CancelTimeoutRunnable implements Runnable {
     private final Future<?> timeoutFuture;
-    private final Cancelable cancelable;
+    private final TimedCancelable cancelable;
 
     /**
      * Constructs a {@link CancelTimeoutRunnable}.
      *
-     * @param cancelable the {@link Cancelable} this runs.
+     * @param cancelable the {@link TimedCancelable} this runs.
      * @param timeoutFuture the {@link Future} for canceling the timeout task.
      */
-    CancelTimeoutRunnable(Cancelable cancelable, Future<?> timeoutFuture) {
+    CancelTimeoutRunnable(TimedCancelable cancelable, Future<?> timeoutFuture) {
       this.timeoutFuture = timeoutFuture;
       this.cancelable = cancelable;
     }
@@ -239,22 +239,28 @@ public class ThreadPool {
   }
 
   /**
-   * A task that cancels another task that is running a {@link Cancelable}. The
-   * {@link TimeoutTask} should be scheduled to run when the interval for the
-   * {@link Cancelable} to run expires.
+   * A task that cancels another task that is running a {@link TimedCancelable}.
+   * The {@link TimeoutTask} should be scheduled to run when the interval for
+   * the {@link TimedCancelable} to run expires.
    */
   private static class TimeoutTask implements Runnable {
-    volatile TaskHandle handle;
+    final TimedCancelable timedCancelable;
+    private volatile TaskHandle taskHandle;
 
-    void setHandle(TaskHandle handle) {
-      this.handle = handle;
+    TimeoutTask(TimedCancelable timedCancelable) {
+      this.timedCancelable = timedCancelable;
     }
 
     public void run() {
-      if (handle == null) {
-        throw new IllegalStateException("Must set handle before run()");
+      if (taskHandle == null) {
+        throw new IllegalStateException(
+            "Run TimeoutTask called with null taskHandle.");
       }
-      handle.cancel();
+      timedCancelable.timeout(taskHandle);
+    }
+
+    void setTaskHandle(TaskHandle taskHandle) {
+      this.taskHandle = taskHandle;
     }
   }
 
