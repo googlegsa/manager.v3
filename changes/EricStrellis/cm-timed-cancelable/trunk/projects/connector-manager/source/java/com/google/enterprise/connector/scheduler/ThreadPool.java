@@ -30,31 +30,33 @@ import java.util.logging.Logger;
 /**
  * Pool for running {@link TimedCancelable}, time limited tasks.
  *
- * <p> Users are provided a {@link TaskHandle} for each task. The
- * {@link TaskHandle} supports canceling the task and determining if the task
- * is done running.
+ * <p>
+ * Users are provided a {@link TaskHandle} for each task. The {@link TaskHandle}
+ * supports canceling the task and determining if the task is done running.
  *
- * <p> The ThreadPool enforces a configurable maximum time interval for tasks.
- * Each task is guarded by a <b>time out task</b> that will cancel the primary
- * task if the primary task does not complete within the allowed interval.
+ * <p>
+ * The ThreadPool enforces a configurable maximum time interval for tasks. Each
+ * task is guarded by a <b>time out task</b> that will cancel the primary task
+ * if the primary task does not complete within the allowed interval.
  *
- * <p> Task cancellation includes two actions that are visible for the task
- * task's {@link TimedCancelable}
+ * <p>
+ * Task cancellation includes two actions that are visible for the task task's
+ * {@link TimedCancelable}
  * <OL>
- * <LI>Calling {@link Future#cancel(boolean)} to send the task an
- * interrupt and mark it as done.
- * <LI>Calling {@link TimedCancelable#cancel()} to send the task a second signal that
- * it is being canceled. This signal has the benefit that it does not depend on
- * the tasks interrupt handling policy.
+ * <LI>Calling {@link Future#cancel(boolean)} to send the task an interrupt and
+ * mark it as done.
+ * <LI>Calling {@link TimedCancelable#cancel()} to send the task a second signal
+ * that it is being canceled. This signal has the benefit that it does not
+ * depend on the tasks interrupt handling policy.
  * </OL>
  * Once a task has been canceled its {@link TaskHandle#isDone()} method will
  * immediately start returning true.
  *
- * <p> {@link ThreadPool} performs the following processing when a task
- * completes
+ * <p>
+ * {@link ThreadPool} performs the following processing when a task completes
  * <OL>
- * <LI> Cancel the <b>time out task</b> for the completed task.
- * <LI> Log exceptions that indicate the task did not complete normally.
+ * <LI>Cancel the <b>time out task</b> for the completed task.
+ * <LI>Log exceptions that indicate the task did not complete normally.
  * </OL>
  */
 public class ThreadPool {
@@ -206,8 +208,8 @@ public class ThreadPool {
   }
 
   /**
-   * A {@link Runnable} for running {@link TimedCancelable} that has been guarded by
-   * a timeout task. This will cancel the timeout task when the
+   * A {@link Runnable} for running {@link TimedCancelable} that has been
+   * guarded by a timeout task. This will cancel the timeout task when the
    * {@link TimedCancelable} completes. If the timeout task has already run then
    * canceling it has no effect.
    */
@@ -237,9 +239,9 @@ public class ThreadPool {
   }
 
   /**
-   * A task that cancels another task that is running a {@link TimedCancelable}. The
-   * {@link TimeoutTask} should be scheduled to run when the interval for the
-   * {@link TimedCancelable} to run expires.
+   * A task that cancels another task that is running a {@link TimedCancelable}.
+   * The {@link TimeoutTask} should be scheduled to run when the interval for
+   * the {@link TimedCancelable} to run expires.
    */
   private static class TimeoutTask implements Runnable {
     final TimedCancelable timedCancelable;
