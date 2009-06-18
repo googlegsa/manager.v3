@@ -216,7 +216,7 @@ public class TraversalScheduler implements Scheduler {
       }
       BatchResultRecorder resultRecorder =
           new TraversalBatchResultRecorder(schedule);
-      Cancelable batch =
+      TimedCancelable batch =
           new CancelableBatch(traverser, connectorName, resultRecorder,
               batchHint);
       synchronized (this) {

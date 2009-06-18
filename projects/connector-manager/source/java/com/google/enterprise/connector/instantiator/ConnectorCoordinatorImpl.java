@@ -21,7 +21,7 @@ import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.scheduler.BatchResultRecorder;
-import com.google.enterprise.connector.scheduler.Cancelable;
+import com.google.enterprise.connector.scheduler.TimedCancelable;
 import com.google.enterprise.connector.scheduler.CancelableBatch;
 import com.google.enterprise.connector.scheduler.TaskHandle;
 import com.google.enterprise.connector.scheduler.ThreadPool;
@@ -257,7 +257,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     batchKey = new Object();
     try {
       Traverser traverser = getTraverser();
-      Cancelable batch =
+      TimedCancelable batch =
           new CancelableBatch(traverser, name, resultRecorder, batchHint);
       taskHandle = threadPool.submit(batch);
     } catch (ConnectorNotFoundException cnfe) {

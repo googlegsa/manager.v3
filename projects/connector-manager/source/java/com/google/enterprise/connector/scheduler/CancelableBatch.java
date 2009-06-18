@@ -23,10 +23,10 @@ import com.google.enterprise.connector.traversal.Traverser;
 import java.util.logging.Logger;
 
 /**
- * A {@link Cancelable} for running a {@link Connector} batch using
+ * A {@link TimedCancelable} for running a {@link Connector} batch using
  * a {@link Traverser}
  */
-public class CancelableBatch implements Cancelable {
+public class CancelableBatch implements TimedCancelable {
   private static final Logger LOGGER =
     Logger.getLogger(CancelableBatch.class.getName());
 
@@ -60,9 +60,8 @@ public class CancelableBatch implements Cancelable {
    traverser.cancelBatch();
   }
 
-  public void timeOut() {
-    // TODO(strellis): Enhance ThreadPool to call this.
-    connectorInstance.cancelBatch(batchKey);
+  public void timeout(TaskHandle taskHandle) {
+    taskHandle.cancel();
   }
 
   public void run() {

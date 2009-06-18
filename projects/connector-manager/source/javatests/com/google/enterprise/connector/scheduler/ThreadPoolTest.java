@@ -46,6 +46,8 @@ public class ThreadPoolTest extends TestCase {
     stoppingQ.put(this);
     verifyCompleted(taskHandle);
     assert (0 == task.getCancelCount());
+    assertEquals(0, task.getTimeoutCount());
+
   }
 
   public void testRunMany() throws Exception {
@@ -67,6 +69,7 @@ public class ThreadPoolTest extends TestCase {
     put(tasks.size(), taskStoppingQ);
     verifyCompleted(taskHandles);
     assertCancelCount(0, tasks);
+    assertTimeoutCount(0, tasks);
   }
 
   public void testCancel() throws Exception {
@@ -94,9 +97,10 @@ public class ThreadPoolTest extends TestCase {
     take(tasks.size(), taskCanceledQ);
     verifyCompleted(handles);
     assertCancelCount(1, tasks);
+    assertTimeoutCount(0, tasks);
   }
 
-  public void testCancelHung() throws Exception {
+  public void testTimeoutHung() throws Exception {
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(10);
     ThreadPool threadPool = ThreadPool.newThreadPool(
         DEFAULT_MAXIMUM_TASK_LIFE_SECONDS);
@@ -132,6 +136,7 @@ public class ThreadPoolTest extends TestCase {
     take(tasks.size(), taskCanceledQ);
     verifyCompleted(handles);
     assertCancelCount(0, tasks);
+    assertTimeoutCount(0, tasks);
   }
 
   public void testShutdownWithHung() throws Exception {
@@ -148,6 +153,7 @@ public class ThreadPoolTest extends TestCase {
     // a problem we will need to explicitly cancel the task during shutdown.
     assertFalse(task.isExiting());
     assertEquals(0, task.getCancelCount());
+    assertEquals(0, task.getTimeoutCount());
   }
 
   public void testSubmitAfterShutdown() throws Exception {
@@ -174,6 +180,7 @@ public class ThreadPoolTest extends TestCase {
     verifyCompleted(taskHandel);
     assertFalse(task.isExiting());
     assertEquals(1, task.getCancelCount());
+    assertEquals(1, task.getTimeoutCount());
   }
 
   public void testTimeToLiveWithSlowBatch() throws Exception {
@@ -196,6 +203,7 @@ public class ThreadPoolTest extends TestCase {
     take(tasks.size(), taskCanceledQ);
     verifyCompleted(handles);
     assertCancelCount(1, tasks);
+    assertTimeoutCount(1, tasks);
     assertIsExiting(true, tasks);
   }
 
@@ -268,6 +276,13 @@ public class ThreadPoolTest extends TestCase {
       List<? extends CancelableTask> tasks) {
     for (CancelableTask task : tasks) {
       assertEquals(expectCount, task.getCancelCount());
+    }
+  }
+
+  private void assertTimeoutCount(int expectCount,
+      List<? extends CancelableTask> tasks) {
+    for (CancelableTask task : tasks) {
+      assertEquals(expectCount, task.getTimeoutCount());
     }
   }
 
@@ -361,8 +376,9 @@ public class ThreadPoolTest extends TestCase {
     }
   }
 
-  private abstract static class CancelableTask implements Cancelable {
-    private int cancelCount;
+  private abstract static class CancelableTask implements TimedCancelable {
+    private volatile int cancelCount;
+    private volatile int timeoutCount;
 
     public int getCancelCount() {
       return cancelCount;
@@ -370,6 +386,15 @@ public class ThreadPoolTest extends TestCase {
 
     public void cancel() {
       cancelCount++;
+    }
+
+    public int getTimeoutCount() {
+      return timeoutCount;
+    }
+
+    public void timeout(TaskHandle taskHandle) {
+      timeoutCount++;
+      taskHandle.cancel();
     }
   }
 }
