@@ -79,7 +79,65 @@ public class AuthenticateTest extends TestCase {
     doTest(xmlBody, expectedResult, "fooDomain", "fooUser", "fooPassword");
   }
 
-  private void doTest(String xmlBody, String expectedResult, String domain, 
+  public void testWithTwoConnectorNameElements() {
+    String xmlBody =
+      "<AuthnRequest>\n" +
+      "  <Connectors>\n" +
+      "    <Connectorname>connector1</Connectorname>\n" +
+      "    <Connectorname>connector2</Connectorname>\n" +
+      "  </Connectors>\n" +
+      "  <Credentials>\n" +
+      "    <Username>fooUser</Username>\n" +
+      "    <Domain>fooDomain</Domain>" +
+      "    <Password>fooPassword</Password>\n" +
+      "  </Credentials>\n" +
+      "</AuthnRequest>";
+
+    String expectedResult =
+      "<CmResponse>\n" +
+      "  <AuthnResponse>\n" +
+      "    <Success ConnectorName=\"connector1\">\n" +
+      "      <Identity>fooUser</Identity>\n" +
+      "    </Success>\n" +
+      "    <Success ConnectorName=\"connector2\">\n" +
+      "      <Identity>fooUser</Identity>\n" +
+      "    </Success>\n" +
+      "  </AuthnResponse>\n" +
+      "</CmResponse>\n";
+    // This shows that the proposed extension is ignored against current CMs.
+    doTest(xmlBody, expectedResult, "fooDomain", "fooUser", "fooPassword");
+  }
+
+  public void testWithOneConnectorNameElement() {
+    String xmlBody =
+      "<AuthnRequest>\n" +
+      "  <Connectors>\n" +
+      "    <Connectorname>connector1</Connectorname>\n" +
+      "  </Connectors>\n" +
+      "  <Credentials>\n" +
+      "    <Username>fooUser</Username>\n" +
+      "    <Domain>fooDomain</Domain>" +
+      "    <Password>fooPassword</Password>\n" +
+      "  </Credentials>\n" +
+      "</AuthnRequest>";
+
+    // In the next CM, this expected result should be changed to have only one
+    // "Success" element.
+    String expectedResult =
+      "<CmResponse>\n" +
+      "  <AuthnResponse>\n" +
+      "    <Success ConnectorName=\"connector1\">\n" +
+      "      <Identity>fooUser</Identity>\n" +
+      "    </Success>\n" +
+      "    <Success ConnectorName=\"connector2\">\n" +
+      "      <Identity>fooUser</Identity>\n" +
+      "    </Success>\n" +
+      "  </AuthnResponse>\n" +
+      "</CmResponse>\n";
+    doTest(xmlBody, expectedResult, "fooDomain", "fooUser", "fooPassword");
+  }
+
+  private void doTest(String xmlBody, String expectedResult, String domain,
       String username, String password) {
     LOGGER.info("xmlBody: " + xmlBody);
     MockManager manager = MockManager.getInstance();
@@ -92,7 +150,7 @@ public class AuthenticateTest extends TestCase {
     StringBuffer result = writer.getBuffer();
     LOGGER.info(result.toString());
     LOGGER.info(expectedResult);
-    Assert.assertEquals (StringUtils.normalizeNewlines(expectedResult),
+    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult),
         StringUtils.normalizeNewlines(result.toString()));
     out.close();
   }
