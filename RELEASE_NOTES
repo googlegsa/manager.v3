@@ -51,7 +51,7 @@ Summary of Changes
   * Issue 128: Invalid characters are now either removed or properly quoted
        in the Feed XML attribute values.
 
-  * Issues 131, 148: "Domain" gets removed when the Connector Manager creates ***** change syntax
+  * Issues 131, 148: "Domain" gets preserved when the Connector Manager creates
        an AuthenticationIdentity for the Connector. This has compatibility
        implications for connector writers.  See Compatibility section below.
 
