@@ -63,7 +63,7 @@ public class XmlFormatter extends Formatter {
 
   // Contains the underlying formatter being used; either the log4j compatible
   // formatter or the java.util.logging compatible formatter.
-  private Formatter formatter;
+  private Formatter formatter = null;
 
   public XmlFormatter() {
     // Load the format from logging.properties.
@@ -76,9 +76,11 @@ public class XmlFormatter extends Formatter {
       format = format.trim().toLowerCase();
       if ("log4j".equals(format) || "chainsaw".equals(format)) {
         formatter = new Log4jXmlFormatter();
-      } else {
-        formatter = new UtilLoggingXmlFormatter();
       }
+    }
+
+    if (formatter == null) {
+      formatter = new UtilLoggingXmlFormatter();
     }
   }
 
