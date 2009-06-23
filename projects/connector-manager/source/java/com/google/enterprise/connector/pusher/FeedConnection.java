@@ -54,7 +54,7 @@ public interface FeedConnection {
   public int getBacklogCount();
 
   /**
-   * Return the version of serialized {@link Schedule} string supported.
+   * Return the version of serialized {@code Schedule} string supported.
    * The Schedule versions are:
    *  <ul>
    *  <li>0 - Unknown</li>
