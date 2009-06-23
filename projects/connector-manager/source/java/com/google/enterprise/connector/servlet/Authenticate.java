@@ -21,6 +21,8 @@ import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.SimpleAuthenticationIdentity;
 
 import java.io.PrintWriter;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -70,6 +72,19 @@ public class Authenticate extends ConnectorManagerServlet {
       return;
     }
 
+    Set<String> requestedConnectors = null;
+    NodeList connectorList =
+        root.getElementsByTagName(ServletUtil.XMLTAG_CONNECTOR_NAME);
+    if (connectorList.getLength() > 0) {
+      requestedConnectors = new HashSet<String>();
+      for (int i = 0; i < connectorList.getLength(); i++) {
+        String name = connectorList.item(i).getTextContent();
+        if (name != null) {
+          requestedConnectors.add(name);
+        }
+      }
+    }
+
     ServletUtil.writeRootTag(out, false);
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_AUTHN_RESPONSE, false);
 
@@ -83,6 +98,10 @@ public class Authenticate extends ConnectorManagerServlet {
         (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_DOMAIN);
     for (ConnectorStatus connector : manager.getConnectorStatuses()) {
       String connectorName = connector.getName();
+      if (requestedConnectors != null &&
+          !requestedConnectors.contains(connectorName)) {
+        continue;
+      }
       NDC.pushAppend(connectorName);
       try {
         AuthenticationIdentity identity =

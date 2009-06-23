@@ -83,8 +83,8 @@ public class AuthenticateTest extends TestCase {
     String xmlBody =
       "<AuthnRequest>\n" +
       "  <Connectors>\n" +
-      "    <Connectorname>connector1</Connectorname>\n" +
-      "    <Connectorname>connector2</Connectorname>\n" +
+      "    <ConnectorName>connector1</ConnectorName>\n" +
+      "    <ConnectorName>connector2</ConnectorName>\n" +
       "  </Connectors>\n" +
       "  <Credentials>\n" +
       "    <Username>fooUser</Username>\n" +
@@ -104,7 +104,6 @@ public class AuthenticateTest extends TestCase {
       "    </Success>\n" +
       "  </AuthnResponse>\n" +
       "</CmResponse>\n";
-    // This shows that the proposed extension is ignored against current CMs.
     doTest(xmlBody, expectedResult, "fooDomain", "fooUser", "fooPassword");
   }
 
@@ -112,7 +111,7 @@ public class AuthenticateTest extends TestCase {
     String xmlBody =
       "<AuthnRequest>\n" +
       "  <Connectors>\n" +
-      "    <Connectorname>connector1</Connectorname>\n" +
+      "    <ConnectorName>connector1</ConnectorName>\n" +
       "  </Connectors>\n" +
       "  <Credentials>\n" +
       "    <Username>fooUser</Username>\n" +
@@ -121,15 +120,10 @@ public class AuthenticateTest extends TestCase {
       "  </Credentials>\n" +
       "</AuthnRequest>";
 
-    // In the next CM, this expected result should be changed to have only one
-    // "Success" element.
     String expectedResult =
       "<CmResponse>\n" +
       "  <AuthnResponse>\n" +
       "    <Success ConnectorName=\"connector1\">\n" +
-      "      <Identity>fooUser</Identity>\n" +
-      "    </Success>\n" +
-      "    <Success ConnectorName=\"connector2\">\n" +
       "      <Identity>fooUser</Identity>\n" +
       "    </Success>\n" +
       "  </AuthnResponse>\n" +
