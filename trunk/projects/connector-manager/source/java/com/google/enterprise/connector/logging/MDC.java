@@ -49,7 +49,7 @@ import java.util.HashMap;
  * when the thread exits, so these resources may get garbage collected.
  */
 public class MDC {
-  protected static ThreadLocal<HashMap<String, String>> context =
+  protected static final ThreadLocal<HashMap<String, String>> context =
       new ThreadLocal<HashMap<String, String>>();
 
   /**
@@ -120,4 +120,4 @@ public class MDC {
     }
     return mdcContext;
   }
- }
+}
