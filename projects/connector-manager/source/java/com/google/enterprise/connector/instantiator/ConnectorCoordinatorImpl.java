@@ -352,7 +352,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       }
       return result;
     } catch (InstantiatorException ie) {
-      removeConnectorDirectory(name, connectorDir, typeInfo);
+      removeConnectorDirectory(name, connectorDir, newTypeInfo);
       throw (ie);
     }
   }
