@@ -37,9 +37,6 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- */
 public class InstanceInfoTest extends TestCase {
 
   private static final Logger LOGGER =

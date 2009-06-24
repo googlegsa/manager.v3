@@ -28,8 +28,8 @@
 
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.SpringInstantiator">
-    <constructor-arg><null/></constructor-arg>
-    <property name="scheduler" ref="TraversalScheduler"/>
+    <constructor-arg index="0" ref="Pusher" />
+    <constructor-arg index="1" ref="ThreadPool" />
   </bean>
 
   <bean id="IdentityConfig"
@@ -49,7 +49,7 @@
   <bean id="ThreadPool"
         class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
     <property name="staticMethod"
-              value="com.google.enterprise.connector.scheduler.ThreadPool.newThreadPool"/>
+              value="com.google.enterprise.connector.instantiator.ThreadPool.newThreadPool"/>
     <property name="arguments">
       <list>
         <!-- Number of seconds to let tasks run before automatic cancel. -->
@@ -62,7 +62,6 @@
         class="com.google.enterprise.connector.scheduler.TraversalScheduler">
     <constructor-arg index="0" ref="Instantiator" />
     <constructor-arg index="1" ref="Monitor" />
-    <constructor-arg index="2" ref="ThreadPool" />
   </bean>
 
   <bean id="Manager"

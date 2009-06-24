@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.traversal;
 
 import com.google.enterprise.connector.instantiator.MockInstantiator;
+import com.google.enterprise.connector.instantiator.ThreadPool;
 import com.google.enterprise.connector.jcr.JcrTraversalManager;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
@@ -51,47 +52,52 @@ public class QueryTraverserTest extends TestCase {
   }
 
   private void runTestBatches(int batchSize) {
-    MockRepositoryEventList mrel =
+    ThreadPool threadPool =
+      ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(5000);
+    MockInstantiator instantiator = new MockInstantiator(threadPool);
+    try {
+      MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
-    String connectorName = "foo";
-    MockInstantiator instantiator = new MockInstantiator();
-    Traverser traverser =
-      createTraverser(mrel, connectorName, instantiator);
+      String connectorName = "foo";
+      Traverser traverser = createTraverser(mrel, connectorName, instantiator);
 
-    System.out.println();
-    System.out.println("Running batch test batchsize " + batchSize);
+      System.out.println();
+      System.out.println("Running batch test batchsize " + batchSize);
 
-    int totalDocsProcessed = 0;
-    int batchNumber = 0;
-    while (true) {
-      int docsProcessed = 0;
-      boolean exceptionThrown = false;
-      try {
-        docsProcessed = traverser.runBatch(batchSize);
-        if (docsProcessed <= 0) {
-          break;
+      int totalDocsProcessed = 0;
+      int batchNumber = 0;
+      while (true) {
+        int docsProcessed = 0;
+        boolean exceptionThrown = false;
+        try {
+          docsProcessed = traverser.runBatch(batchSize);
+          if (docsProcessed <= 0) {
+            break;
+          }
+        } catch (IllegalArgumentException e) {
+          exceptionThrown = true;
+          assertTrue("Batch size = " + batchSize + "; " + e, batchSize <= 0);
+          return;
+        } finally {
+          if (!exceptionThrown) {
+            assertTrue(batchSize > 0);
+          }
         }
-      } catch (IllegalArgumentException e) {
-        exceptionThrown = true;
-        assertTrue("Batch size = " + batchSize + "; " + e, batchSize <= 0);
-        return;
-      } finally {
-        if (!exceptionThrown) {
-          assertTrue(batchSize > 0);
+        totalDocsProcessed += docsProcessed;
+        String state = "";
+        try {
+          state = instantiator.getConnectorState(connectorName);
+        } catch (ConnectorNotFoundException e) {
+          fail("Connector " + connectorName + " Not Found: " + e.toString());
         }
+        System.out.println("Batch# " + batchNumber + " docs " + docsProcessed
+            + " checkpoint " + state);
+        batchNumber++;
       }
-      totalDocsProcessed += docsProcessed;
-      String state = "";
-      try {
-        state = instantiator.getConnectorState(connectorName);
-      } catch (ConnectorNotFoundException e) {
-        fail("Connector " + connectorName + " Not Found: " + e.toString());
-      }
-      System.out.println("Batch# " + batchNumber + " docs " + docsProcessed +
-                         " checkpoint " + state);
-      batchNumber++;
+      assertEquals(4, totalDocsProcessed);
+    } finally {
+      instantiator.shutdown(true, 5000);
     }
-    assertEquals(4, totalDocsProcessed);
   }
 
   /**
@@ -148,14 +154,20 @@ public class QueryTraverserTest extends TestCase {
       fail("Unable to initialize largefile.txt: " + e.toString());
     }
 
-    MockRepositoryEventList mrel =
-      new MockRepositoryEventList("MockRepositoryEventLogLargeFile.txt");
-    String connectorName = "foo";
-    MockInstantiator instantiator = new MockInstantiator();
-    Traverser traverser = createTraverser(mrel, connectorName, instantiator);
-    int docsProcessed = 0;
-    do {
-      docsProcessed = traverser.runBatch(1);
-    } while (docsProcessed > 0);
+    ThreadPool threadPool =
+        ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(5000);
+    MockInstantiator instantiator = new MockInstantiator(threadPool);
+    try {
+      MockRepositoryEventList mrel =
+          new MockRepositoryEventList("MockRepositoryEventLogLargeFile.txt");
+      String connectorName = "foo";
+      Traverser traverser = createTraverser(mrel, connectorName, instantiator);
+      int docsProcessed = 0;
+      do {
+        docsProcessed = traverser.runBatch(1);
+      } while (docsProcessed > 0);
+    } finally {
+      instantiator.shutdown(true, 5000);
+    }
   }
 }

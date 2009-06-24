@@ -20,11 +20,6 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.Pusher;
-import com.google.enterprise.connector.scheduler.BatchResultRecorder;
-import com.google.enterprise.connector.scheduler.TimedCancelable;
-import com.google.enterprise.connector.scheduler.CancelableBatch;
-import com.google.enterprise.connector.scheduler.TaskHandle;
-import com.google.enterprise.connector.scheduler.ThreadPool;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -33,7 +28,10 @@ import com.google.enterprise.connector.spi.ConnectorFactory;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.BatchResult;
+import com.google.enterprise.connector.traversal.QueryTraverser;
+import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import java.io.File;
@@ -71,25 +69,6 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
    */
   private TypeInfo typeInfo;
 
-  // TODO(strellis): Simplify the connector checkpoint storage.
-  //
-  // The connector checkpoint is ultimately held in a backing
-  // ConnectorStateStore which can be accessed through instanceInfo.
-  // instanceInfo wraps the backing stateStore in a GenerationalStore to avoid
-  // concurrency problems related to a traversal that was started before a
-  // connector reconfiguration/traversal restart changing the checkpoint.
-  // The methods store/getTraversalState access checkpoints through
-  // instanceInfo directly. These methods are currently only used by
-  // restartConnectorTraversal.
-  //
-  // In addition ConnectorInterfaces holds a reference to a
-  // ConnectorTraversalStore which wraps the backing ConnectorStateStore
-  // held by instanceInfo. This ConnectorTraversalStateStore provides
-  // needed integration with the GenerationalStore mechanism. It also implements
-  // the TraversalStateStore interface rather than the ConnectorStateStore
-  // interface. The QueryTraverser accesses checkpoint information through
-  // the ConnectorTraversalStore that is wrapped in ConnectorInterfaces and
-  // is backed by the same ConnectorStateStore held by instanceInfo.
   private InstanceInfo instanceInfo;
 
   /**
@@ -101,8 +80,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
    * Context set when a batch is run.
    */
   private TaskHandle taskHandle;
-  private Object batchKey;
-  private BatchResultRecorder batchResultRecorder;
+  private Object currentBatchKey;
 
   ConnectorCoordinatorImpl(String name, Pusher pusher, ThreadPool threadPool) {
     this.name = name;
@@ -153,9 +131,9 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     return getConnectorInterfaces().getAuthorizationManager();
   }
 
-  public synchronized Traverser getTraverser()
+  public synchronized TraversalManager getTraversalManager()
       throws ConnectorNotFoundException, InstantiatorException {
-    return getConnectorInterfaces().getTraverser();
+    return getConnectorInterfaces().getTraversalManager();
   }
 
   public synchronized ConfigureResponse getConfigForm(Locale locale)
@@ -184,10 +162,6 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     return getInstanceInfo().getConnectorSchedule();
   }
 
-  // TODO (strellis): Should store/getTraversalState be called
-  // get/setTraversalState and throw ConnectorNotFoundException for consistency
-  // with other methods or should they retain their historical names and
-  // behavior as defined by TraversalStateStore.
   public synchronized void storeTraversalState(String traversalState) {
     if (instanceInfo != null) {
       instanceInfo.setConnectorState(traversalState);
@@ -251,14 +225,20 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       int batchHint) throws ConnectorNotFoundException {
     verifyConnectorInstanceAvailable();
     if (taskHandle != null && !taskHandle.isDone()) {
-      return; // TODO(strellis): Return false?
+      return;
     }
     taskHandle = null;
-    batchKey = new Object();
+    currentBatchKey = new Object();
+    BatchCoordinator batchResultProcessor =
+        new BatchCoordinator(instanceInfo.getTraversalStateStore(),
+            resultRecorder);
     try {
-      Traverser traverser = getTraverser();
-      TimedCancelable batch =
-          new CancelableBatch(traverser, name, resultRecorder, batchHint);
+      TraversalManager traversalManager =
+          getConnectorInterfaces().getTraversalManager();
+      Traverser traverser = new QueryTraverser(pusher, traversalManager,
+          batchResultProcessor, getName());
+      TimedCancelable batch =  new CancelableBatch(traverser,
+          name, batchResultProcessor, batchResultProcessor, batchHint);
       taskHandle = threadPool.submit(batch);
     } catch (ConnectorNotFoundException cnfe) {
       LOGGER.log(Level.WARNING, "Connector not found - this is normal if you "
@@ -269,30 +249,15 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     }
   }
 
-  public synchronized void completeBatch(Object batchKey,
-      String connectorSchedule, BatchResult batchResult)
-      throws ConnectorNotFoundException {
-    if (this.batchKey == batchKey) {
-      if (connectorSchedule != null) {
-        setConnectorSchedule(connectorSchedule);
-      }
-      // TODO(strellis): Host Load manager needs additional synchronization.
-      // Take care not to introduce inconsistent lock order deadlocks.
-      batchResultRecorder.recordResult(batchResult);
-    }
-  }
-
   public synchronized void shutdown() {
     shutdownConnector(false);
     resetInstanceInfo();
     resetInterfaces();
   }
 
-  public synchronized void cancelBatch(Object batchKey) {
-    if (this.batchKey == batchKey) {
-      resetBatch();
-      resetInterfaces();
-    }
+  private void cancelBatch() {
+    resetBatch();
+    resetInterfaces();
   }
 
   private void resetBatch() {
@@ -300,8 +265,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       taskHandle.cancel();
     }
     taskHandle = null;
-    batchKey = null;
-    batchResultRecorder = null;
+    currentBatchKey = null;
   }
 
   private void shutdownConnector(boolean delete) {
@@ -329,6 +293,10 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
 
   private void resetInterfaces() {
     interfaces = null;
+    // TODO (strellis): Verify calling cancel from shutdown is appropriate.
+    if (taskHandle != null) {
+      taskHandle.cancel();
+    }
   }
 
   private boolean hasInstanceInfo() {
@@ -354,7 +322,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       throws ConnectorNotFoundException {
     if (instanceInfo == null) {
       throw new ConnectorNotFoundException("Connector instance " + name
-          + " not avaliable.");
+          + " not available.");
     }
   }
 
@@ -362,9 +330,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       throws ConnectorNotFoundException {
     if (interfaces == null) {
       InstanceInfo info = getInstanceInfo();
-      interfaces =
-          new ConnectorInterfaces(name, info.getConnector(), pusher, info
-              .getTraversalStateStore());
+      interfaces = new ConnectorInterfaces(name, info.getConnector());
     }
     return interfaces;
   }
@@ -432,6 +398,112 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     instanceInfo = newInstanceInfo;
     typeInfo = newTypeInfo;
     return null;
+  }
+
+  /**
+   * Coordinate operations that apply to a running batch with other changes that
+   * affect this [@link {@link ConnectorCoordinatorImpl}.
+   * <p>
+   * The {@link ConnectorCoordinatorImpl} monitor is used to guard batch
+   * operations.
+   * <p>
+   * To avoid long held locks the {@link ConnectorCoordinatorImpl} monitor is
+   * not held while a batch runs or even between the time a batch is canceled
+   * and the time its background processing completes. Therefore, a lingering
+   * batch may attempt to record completion information, modify the checkpoint
+   * or timeout after the lingering batch has been canceled. These operations
+   * may even occur after a new batch has started. To avoid corrupting the
+   * {@link ConnectorCoordinatorImpl} state this class employs the batchKey
+   * protocol to disable completion operations that are performed on behalf of
+   * lingering batches. Here is how the protocol works
+   * <OL>
+   * <LI>To start a batch starts while holding the
+   * {@link ConnectorCoordinatorImpl} monitor assign the batch a unique key.
+   * Store the key in ConnectorCoordinator.this.currentBatchKey. Also create a
+   * {@link BatchCoordinator} with BatchCoordinator.requiredBatchKey set to the
+   * key for the batch.
+   * <LI>To cancel a batch while holding the ConnectorCoordinatorImpl monitor,
+   * null out ConnectorCoordinator.this.currentBatchKey.
+   * <LI>The {@link BatchCoordinator} performs all completion operations for a
+   * batch and prevents operations on behalf of non current batches. To check
+   * while holding the {@link ConnectorCoordinatorImpl} monitor it
+   * verifies that
+   * BatchCoordinator.requiredBatchKey equals
+   * ConnectorCoordinator.this.currentBatchKey.
+   * </OL>
+   */
+  private class BatchCoordinator implements TraversalStateStore,
+      BatchResultRecorder, BatchTimeout {
+    private final Object requiredBatchKey;
+    private final TraversalStateStore traversalStateStore;
+    private final BatchResultRecorder batchResultRecorder;
+
+    /**
+     * Creates a BatchCoordinator
+     * @param traversalStateStore store for connector checkpoints for use
+     *     when the batch is still active.
+     * @param batchResultRecorder store for recording batch results
+     *    for use when the batch is still active.
+     */
+    BatchCoordinator(TraversalStateStore traversalStateStore,
+        BatchResultRecorder batchResultRecorder) {
+      this.requiredBatchKey = currentBatchKey;
+      this.traversalStateStore = traversalStateStore;
+      this.batchResultRecorder = batchResultRecorder;
+    }
+
+    public String getTraversalState() {
+      synchronized (ConnectorCoordinatorImpl.this) {
+        if (ConnectorCoordinatorImpl.this.currentBatchKey == requiredBatchKey) {
+          return traversalStateStore.getTraversalState();
+        } else {
+          throw new BatchCompletedException();
+        }
+      }
+    }
+
+    public void storeTraversalState(String state) {
+      synchronized (ConnectorCoordinatorImpl.this) {
+        if (ConnectorCoordinatorImpl.this.currentBatchKey == requiredBatchKey) {
+          traversalStateStore.storeTraversalState(state);
+        } else {
+          throw new BatchCompletedException();
+        }
+      }
+    }
+
+    public void recordResult(BatchResult result) {
+      synchronized (ConnectorCoordinatorImpl.this) {
+        // TODO(strellis): This does not record changes made by a canceled
+        // batch with the HostLoadManager. Investigate recording them.
+        if (ConnectorCoordinatorImpl.this.currentBatchKey == requiredBatchKey) {
+          batchResultRecorder.recordResult(result);
+        } else {
+          LOGGER.warning(
+              "Batch result for prevously completed batch ignored connector = "
+              + name + " result = " + result + " batchKey = "
+              + requiredBatchKey);
+        }
+      }
+    }
+
+    public void timeout() {
+      synchronized (ConnectorCoordinatorImpl.this) {
+        if (ConnectorCoordinatorImpl.this.currentBatchKey == requiredBatchKey) {
+          ConnectorCoordinatorImpl.this.cancelBatch();
+        } else {
+          LOGGER.warning(
+              "Timeout for previously completed batch ignored connector = "
+              + name + " batchKey = " + requiredBatchKey);
+        }
+      }
+    }
+  }
+
+  // TODO(strellis): Add this Exception to throws for BatchRecorder,
+  //     TraversalStateStore, BatchTimeout interfaces and catch this
+  //     specific exception rather than IllegalStateException.
+  private static class BatchCompletedException extends IllegalStateException {
   }
 
   private static ConfigureResponse validateConfig(String name,
