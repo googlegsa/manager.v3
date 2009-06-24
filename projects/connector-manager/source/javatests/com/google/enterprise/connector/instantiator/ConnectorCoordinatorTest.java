@@ -19,7 +19,6 @@ import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.Pusher;
-import com.google.enterprise.connector.scheduler.ThreadPool;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;

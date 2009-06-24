@@ -18,13 +18,10 @@ import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.pusher.Pusher;
-import com.google.enterprise.connector.scheduler.Scheduler;
-import com.google.enterprise.connector.scheduler.ThreadPool;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.Collections;
 import java.util.Locale;
@@ -33,6 +30,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -47,16 +45,16 @@ public class SpringInstantiator implements Instantiator {
   TypeMap typeMap = null;
   final ConcurrentMap<String, ConnectorCoordinator> coordinatorMap;
   final Pusher pusher;
-  Scheduler scheduler;
-  final ThreadPool threadPool = null;
+  final ThreadPool threadPool;
 
   /**
    * Normal constructor.
    *
    * @param pusher
    */
-  public SpringInstantiator(Pusher pusher) {
+  public SpringInstantiator(Pusher pusher, ThreadPool threadPool) {
     this.pusher = pusher;
+    this.threadPool = threadPool;
     this.coordinatorMap = new ConcurrentHashMap<String, ConnectorCoordinator>();
     // NOTE: we can't call initialize() here because then there would be a
     // circular dependency on the Context, which hasn't been constructed yet
@@ -68,21 +66,12 @@ public class SpringInstantiator implements Instantiator {
    * @param pusher
    * @param typeMap
    */
-  public SpringInstantiator(Pusher pusher, TypeMap typeMap) {
-    this(pusher);
+  public SpringInstantiator(Pusher pusher, ThreadPool threadPool,
+      TypeMap typeMap) {
+    this(pusher, threadPool);
     this.typeMap = typeMap;
     ConnectorCoordinatorMapHelper.fillFromTypes(typeMap, coordinatorMap, pusher,
         threadPool);
-  }
-
-  /**
-   * Set the Scheduler.
-   *
-   * @param scheduler a Scheduler.
-   */
-  /* Setter Injector */
-  public synchronized void setScheduler(Scheduler scheduler) {
-    this.scheduler = scheduler;
   }
 
   /**
@@ -101,20 +90,22 @@ public class SpringInstantiator implements Instantiator {
   /**
    * Shutdown all connector instances.
    */
-  public void shutdown() {
+  public void shutdown(boolean interrupt, long timeoutMillis) {
     for (ConnectorCoordinator cc : coordinatorMap.values()) {
       cc.shutdown();
     }
+    try {
+      threadPool.shutdown(interrupt, timeoutMillis);
+    } catch (InterruptedException ie) {
+      LOGGER.log(Level.SEVERE, "TraversalScheduler shutdown interrupted: ", ie);
+    }
   }
 
-  public synchronized void removeConnector(String connectorName) {
+  public void removeConnector(String connectorName) {
     LOGGER.info("Dropping connector: " + connectorName);
     ConnectorCoordinator existing = coordinatorMap.get(connectorName);
     if (existing != null) {
       existing.removeConnector();
-    }
-    if (scheduler != null) {
-      scheduler.removeConnector(connectorName);
     }
   }
 
@@ -181,18 +172,10 @@ public class SpringInstantiator implements Instantiator {
     return Collections.unmodifiableSet(new TreeSet<String>(typeMap.keySet()));
   }
 
-  public Traverser getTraverser(String connectorName)
-      throws ConnectorNotFoundException, InstantiatorException {
-    return getConnectorCoordinator(connectorName).getTraverser();
-  }
-
-  public synchronized void restartConnectorTraversal(String connectorName)
+  public void restartConnectorTraversal(String connectorName)
       throws ConnectorNotFoundException {
     LOGGER.info("Restarting traversal for Connector: " + connectorName);
     getConnectorCoordinator(connectorName).restartConnectorTraversal();
-    if (scheduler != null) {
-      scheduler.removeConnector(connectorName);
-    }
   }
 
   public Set<String> getConnectorNames() {
@@ -216,11 +199,6 @@ public class SpringInstantiator implements Instantiator {
       boolean update) throws ConnectorNotFoundException,
       ConnectorExistsException, InstantiatorException {
     LOGGER.info("Configuring connector: " + connectorName);
-    if (update) {
-      if (scheduler != null) {
-        scheduler.removeConnector(connectorName);
-      }
-    }
     try {
       TypeInfo typeInfo = getTypeInfo(connectorTypeName);
       ConnectorCoordinator ci = getOrAddConnectorCoordinator(connectorName);

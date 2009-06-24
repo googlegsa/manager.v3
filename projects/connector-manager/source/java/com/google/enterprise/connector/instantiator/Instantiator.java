@@ -21,8 +21,6 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.scheduler.Scheduler;
-import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.Locale;
 import java.util.Map;
@@ -62,17 +60,6 @@ public interface Instantiator {
       throws ConnectorNotFoundException, InstantiatorException;
 
   /**
-   * Finds a named connector.
-   *
-   * @param connectorName
-   * @return the Connector, fully instantiated
-   * @throws ConnectorNotFoundException
-   * @throws InstantiatorException
-   */
-  public Traverser getTraverser(String connectorName)
-      throws ConnectorNotFoundException, InstantiatorException;
-
-  /**
    * Restart the Traverser for the named connector.
    * This resets the Traverser, re-indexing the repository from scratch.
    *
@@ -82,7 +69,6 @@ public interface Instantiator {
    */
   public void restartConnectorTraversal(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException;
-
 
   /**
    * Removes a named connector.
@@ -206,12 +192,5 @@ public interface Instantiator {
   /**
    * Shutdown all the Connector instances.
    */
-  public void shutdown();
-
-  /**
-   * Set the Scheduler.  Used for Dependency Injection.
-   *
-   * @param scheduler a Scheduler.
-   */
-  public void setScheduler(Scheduler scheduler);
+  public void shutdown(boolean interrupt, long timeoutMillis);
 }

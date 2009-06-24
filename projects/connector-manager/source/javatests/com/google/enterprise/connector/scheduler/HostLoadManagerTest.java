@@ -24,7 +24,7 @@ import junit.framework.TestCase;
  */
 public class HostLoadManagerTest extends TestCase {
 
-  private MockInstantiator instantiator = new MockInstantiator();
+  private final MockInstantiator instantiator = new MockInstantiator(null);
 
   private void addLoad(String connectorName, int load) {
     Schedule schedule = new Schedule(connectorName + ":" + load + ":100:0-0");

@@ -17,16 +17,17 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.persist.ConnectorConfigStore;
 import com.google.enterprise.connector.persist.ConnectorScheduleStore;
-import com.google.enterprise.connector.persist.GenerationalStateStore;
+import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.StoreContext;
-import com.google.enterprise.connector.scheduler.BatchResultRecorder;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.BatchResult;
+import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.HashMap;
@@ -46,54 +47,57 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
 
   private final String name;
   private final ConnectorInterfaces interfaces;
-  private final GenerationalStateStore stateStore;
+  private final Traverser traverser;
+
+  private final TraversalStateStore stateStore;
   private final ConnectorConfigStore configStore;
   private final ConnectorScheduleStore scheduleStore;
 
   private final StoreContext storeContext;
+  private final ThreadPool threadPool;
   private String typeName;
 
-  MockConnectorCoordinator(String name, ConnectorInterfaces connectorInterfaces,
-      GenerationalStateStore stateStore, ConnectorConfigStore configStore,
-      ConnectorScheduleStore scheduleStore, StoreContext storeContext) {
+  // Batch context
+  TaskHandle taskHandle;
+
+  MockConnectorCoordinator(String name,
+      ConnectorInterfaces connectorInterfaces, Traverser traverser,
+      ConnectorStateStore stateStore, ConnectorConfigStore configStore,
+      ConnectorScheduleStore scheduleStore, StoreContext storeContext,
+      ThreadPool threadPool) {
     this.name = name;
     this.interfaces = connectorInterfaces;
-    this.stateStore = stateStore;
+    this.traverser = traverser;
+    this.stateStore = new MockTraversalStateStore(stateStore, storeContext);
     this.configStore = configStore;
     this.scheduleStore = scheduleStore;
     this.storeContext = storeContext;
+    this.threadPool = threadPool;
   }
 
-   public void cancelBatch(Object batchKey) {
-     // TODO(strellis): implement this
+   private void cancelBatch() {
      throw new UnsupportedOperationException();
-  }
-
-  public void completeBatch(Object batchKey, String connectorSchedule,
-      BatchResult batchResult) {
-    // TODO(strellis): implement this
-    throw new UnsupportedOperationException();
   }
 
   public boolean exists() {
     return true;
   }
 
-  public AuthenticationManager getAuthenticationManager()
+  public synchronized AuthenticationManager getAuthenticationManager()
       throws InstantiatorException {
     return interfaces.getAuthenticationManager();
   }
 
-  public AuthorizationManager getAuthorizationManager()
+  public synchronized AuthorizationManager getAuthorizationManager()
       throws InstantiatorException {
     return interfaces.getAuthorizationManager();
   }
 
-   public ConfigureResponse getConfigForm(Locale locale) {
+   public synchronized ConfigureResponse getConfigForm(Locale locale) {
     throw new UnsupportedOperationException();
   }
 
-   public Map<String, String> getConnectorConfig() {
+   public synchronized Map<String, String> getConnectorConfig() {
     Properties props = configStore.getConnectorConfiguration(storeContext);
     if (props == null) {
       return new HashMap<String, String>();
@@ -102,26 +106,28 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     }
   }
 
-  public String getConnectorSchedule() {
+  public synchronized String getConnectorSchedule() {
     return scheduleStore.getConnectorSchedule(storeContext);
   }
 
-   public String getConnectorTypeName() {
+  public synchronized String getConnectorTypeName() {
     return typeName;
   }
 
-  public Traverser getTraverser() throws InstantiatorException {
-    return interfaces.getTraverser();
+  public TraversalManager  getTraversalManager() throws InstantiatorException {
+    return interfaces.getTraversalManager();
   }
 
-  public void removeConnector() {
-    stateStore.removeConnectorState(storeContext);
+  public synchronized void removeConnector() {
+    cancelBatch();
+    stateStore.storeTraversalState(null);
     scheduleStore.removeConnectorSchedule(storeContext);
     configStore.removeConnectorConfiguration(storeContext);
   }
 
-  public void restartConnectorTraversal() {
-    stateStore.removeConnectorState(storeContext);
+  public synchronized void restartConnectorTraversal() {
+    cancelBatch();
+    stateStore.storeTraversalState(null);
   }
 
   public ConfigureResponse setConnectorConfig(TypeInfo newTypeInfo,
@@ -131,12 +137,12 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     return null;
   }
 
-  public void setConnectorSchedule(String connectorSchedule) {
+  public synchronized void setConnectorSchedule(String connectorSchedule) {
     scheduleStore.storeConnectorSchedule(
         storeContext, connectorSchedule);
   }
 
-  public void shutdown() {
+  public synchronized void shutdown() {
     Connector connector = interfaces.getConnector();
     if (connector != null && (connector instanceof ConnectorShutdownAware)) {
       try {
@@ -148,15 +154,61 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     }
   }
 
-  public void startBatch(BatchResultRecorder resultRecorder, int batchHint) {
-    throw new UnsupportedOperationException();
+  public synchronized void startBatch(BatchResultRecorder resultRecorder,
+      int batchHint) {
+    if (taskHandle != null && !taskHandle.isDone()) {
+      return; // TODO(strellis): Return false?
+    }
+    taskHandle = null;
+    BatchCoordinator batchResultProcessor =
+        new BatchCoordinator(stateStore, resultRecorder);
+    TimedCancelable batch =
+        new CancelableBatch(traverser, name, batchResultProcessor,
+            batchResultProcessor, batchHint);
+    taskHandle = threadPool.submit(batch);
   }
 
   public String getTraversalState() {
-    return stateStore.getConnectorState(storeContext);
+    return stateStore.getTraversalState();
   }
 
-  public void storeTraversalState(String state) {
-    stateStore.storeConnectorState(storeContext, state);
+  public synchronized void storeTraversalState(String state) {
+    stateStore.storeTraversalState(state);
+  }
+
+  private class BatchCoordinator implements TraversalStateStore,
+      BatchResultRecorder, BatchTimeout {
+    private final TraversalStateStore traversalStateStore;
+    private final BatchResultRecorder batchResultRecorder;
+
+    BatchCoordinator(TraversalStateStore traversalStateStore,
+        BatchResultRecorder batchResultRecorder) {
+      this.traversalStateStore = traversalStateStore;
+      this.batchResultRecorder = batchResultRecorder;
+    }
+
+    public String getTraversalState() {
+      synchronized (MockConnectorCoordinator.this) {
+          return traversalStateStore.getTraversalState();
+      }
+    }
+
+    public void storeTraversalState(String state) {
+      synchronized (MockConnectorCoordinator.this) {
+          traversalStateStore.storeTraversalState(state);
+      }
+    }
+
+    public void recordResult(BatchResult result) {
+      synchronized (MockConnectorCoordinator.this) {
+        batchResultRecorder.recordResult(result);
+      }
+    }
+
+    public void timeout() {
+      synchronized (MockConnectorCoordinator.this) {
+          throw new UnsupportedOperationException();
+      }
+    }
   }
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.scheduler;
+package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
@@ -39,8 +39,10 @@ public class CancelableBatchTest extends TestCase {
       throws Exception {
     MockTraverser traverser = new MockTraverser(batchHint, legacyResult);
     MockBatchResultRecorder recorder = new MockBatchResultRecorder();
+    MockBatchTimeout batchTimeout = new MockBatchTimeout();
     CancelableBatch batch =
-        new CancelableBatch(traverser, "connector1", recorder, batchHint);
+        new CancelableBatch(traverser, "connector1", recorder, batchTimeout,
+            batchHint);
     batch.run();
     BatchResult batchResult = recorder.getBatchResult();
     assertEquals(new BatchResult(expectDelayPolicy, expectCount), batchResult);
@@ -79,6 +81,12 @@ public class CancelableBatchTest extends TestCase {
     public int runBatch(int batchHint) {
       assertEquals(expectBatchHint, batchHint);
       return legacyResult;
+    }
+  }
+
+  private static class MockBatchTimeout implements BatchTimeout {
+    public void timeout() {
+     throw new UnsupportedOperationException();
     }
   }
 }

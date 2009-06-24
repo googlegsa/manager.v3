@@ -16,11 +16,10 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.scheduler.BatchResultRecorder;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
-import com.google.enterprise.connector.traversal.BatchResult;
+import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
 
@@ -99,7 +98,7 @@ public interface ConnectorCoordinator extends TraversalStateStore {
       throws ConnectorNotFoundException, InstantiatorException;
 
   /**
-   * Returns the {@link Traverser} for this
+   * Returns the {@link TraversalManager} for this
    * {@link ConnectorCoordinator}
    *
    * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
@@ -107,12 +106,12 @@ public interface ConnectorCoordinator extends TraversalStateStore {
    * @throws InstantiatorException if unable to instantiate the requested
    *         {@link Traverser}
    */
-  public Traverser getTraverser() throws ConnectorNotFoundException,
-      InstantiatorException;
+  public TraversalManager getTraversalManager()
+      throws ConnectorNotFoundException, InstantiatorException;
 
   /**
    * Returns {@link ConfigureResponse} with a configuration form or a
-   * message indicuating the problem.
+   * message indicating the problem.
     *
    * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
    *         does not exist.
@@ -215,29 +214,6 @@ public interface ConnectorCoordinator extends TraversalStateStore {
    */
   public void startBatch(BatchResultRecorder resultRecorder, int batchHint)
       throws ConnectorNotFoundException;
-
-  /**
-   * Completes a running batch for this {@link ConnectorCoordinator}. This takes
-   * no action if the batch identified by the passed in batchKey is no longer
-   * running.
-   *
-   * @param batchKey the key for the batch to complete.
-   * @param connectorSchedule the new value for the schedule or null if the
-   *        schedule should not be changed.
-   * @param batchResult the result from running the batch.
-   * @throws ConnectorNotFoundException
-   */
-  public void completeBatch(Object batchKey, String connectorSchedule,
-      BatchResult batchResult) throws ConnectorNotFoundException;
-
-  /**
-   * Cancels a running batch for this {@link ConnectorCoordinator}. This takes
-   * no action if the batch identified by the passed in batchKey is no longer
-   * running.
-   *
-   * @param batchKey the key for the batch to complete.
-   */
-  public void cancelBatch(Object batchKey);
 
   /**
    * Shuts down this {@link ConnectorCoordinator} if {@link #exists()}.

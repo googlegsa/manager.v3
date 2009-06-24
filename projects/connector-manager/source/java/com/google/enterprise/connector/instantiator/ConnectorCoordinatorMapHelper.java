@@ -16,7 +16,6 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.pusher.Pusher;
-import com.google.enterprise.connector.scheduler.ThreadPool;
 
 import java.io.File;
 import java.io.FileFilter;

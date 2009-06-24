@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.scheduler;
+package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.instantiator.ConnectorCoordinatorImpl;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.traversal.BatchResult;
@@ -33,10 +32,8 @@ public class CancelableBatch implements TimedCancelable {
   final Traverser traverser;
   final String traverserName;
   final BatchResultRecorder batchResultRecorder;
+  final BatchTimeout batchTimeout;
   final int batchHint;
-  // TODO(strellis): Add batch key support.
-  final Object batchKey = null;
-  final ConnectorCoordinatorImpl connectorInstance = null;
 
   /**
    * Construct a {@link CancelableBatch}.
@@ -49,11 +46,13 @@ public class CancelableBatch implements TimedCancelable {
    *        batch.
    */
   public CancelableBatch(Traverser traverser, String traverserName,
-      BatchResultRecorder batchResultRecorder, int batchHint) {
+      BatchResultRecorder batchResultRecorder, BatchTimeout batchTimeout,
+      int batchHint) {
     this.traverser = traverser;
     this.traverserName = traverserName;
     this.batchResultRecorder = batchResultRecorder;
     this.batchHint = batchHint;
+    this.batchTimeout = batchTimeout;
   }
 
   public void cancel() {
@@ -61,7 +60,7 @@ public class CancelableBatch implements TimedCancelable {
   }
 
   public void timeout(TaskHandle taskHandle) {
-    taskHandle.cancel();
+     batchTimeout.timeout();
   }
 
   public void run() {
@@ -74,10 +73,6 @@ public class CancelableBatch implements TimedCancelable {
           BatchResult.newBatchResultFromLegacyBatchResult(legacyBatchResult);
       LOGGER.fine("Traverser " + traverserName + " batchDone with result = "
           + batchResult);
-      // TODO(strellis): Employ batch key to assure the completion is only
-      // recorded if the current batch is still running? One problem with
-      // doing this is that work for a canceled batch will not be
-      // applied to the host load calculation.
       batchResultRecorder.recordResult(batchResult);
     } finally {
       NDC.remove();

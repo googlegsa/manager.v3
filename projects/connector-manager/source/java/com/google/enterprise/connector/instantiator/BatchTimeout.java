@@ -1,10 +1,10 @@
-// Copyright (C) 2009 Google Inc.
+// Copyright 2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,17 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.scheduler;
-
-import com.google.enterprise.connector.traversal.BatchResult;
+package com.google.enterprise.connector.instantiator;
 
 /**
- * Recorder for batch completions.
+ * Interface for timing out a batch.
  */
-public interface BatchResultRecorder {
+public interface BatchTimeout {
   /**
-   *  Record the result of running a single batch.
+   * Times out the batch.
    */
-  // TODO (strellis): Make this take a batch key.
-  public void recordResult(BatchResult result);
+  void timeout();
 }
