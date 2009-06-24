@@ -236,11 +236,11 @@ public class InstantiatorTest extends TestCase {
 
     instantiator.removeConnector("connector3");
     try {
-      TraversalManager traversalManager =
-        instantiator.getConnectorCoordinator("connector3").getTraversalManager();
-      fail();
+      instantiator.getConnectorCoordinator("connector3").getTraversalManager();
+      fail("Exception expected.");
     } catch (ConnectorNotFoundException e3) {
-      // Expected
+      assertEquals("Connector instance connector3 not available.",
+          e3.getMessage());
     }
     assertFalse(connectorExists("connector3"));
 

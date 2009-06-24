@@ -115,7 +115,6 @@ public class MockInstantiator implements Instantiator {
     this.threadPool = threadPool;
   }
 
-
   public synchronized void shutdown(boolean interrupt, long timeoutMillis) {
     for (Map.Entry<String, ConnectorCoordinator> e : connectorMap.entrySet()) {
       e.getValue().shutdown();

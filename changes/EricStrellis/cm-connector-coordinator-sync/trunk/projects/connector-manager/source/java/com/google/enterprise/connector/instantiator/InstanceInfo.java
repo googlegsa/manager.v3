@@ -421,6 +421,13 @@ public final class InstanceInfo {
     return traversalStateStore;
   }
 
+  /**
+   * Wrapper class to provide a {@link TraversalStateStore} interface to
+   * the stateStore. This interface is handy for clients because it avoids
+   * the need for them to manage the storeContext. Operations
+   * against this {@link Object} are applied to stateStore after
+   * minor interface conversions.
+   */
   private class ConnectorTraversalStateStore implements TraversalStateStore {
     /**
      * Store traversal state.

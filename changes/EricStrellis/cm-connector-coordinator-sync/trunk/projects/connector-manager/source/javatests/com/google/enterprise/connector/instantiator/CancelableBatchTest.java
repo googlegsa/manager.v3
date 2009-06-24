@@ -85,8 +85,6 @@ public class CancelableBatchTest extends TestCase {
   }
 
   private static class MockBatchTimeout implements BatchTimeout {
-
-    @Override
     public void timeout() {
      throw new UnsupportedOperationException();
     }

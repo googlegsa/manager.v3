@@ -175,6 +175,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
   public synchronized void storeTraversalState(String state) {
     stateStore.storeTraversalState(state);
   }
+
   private class BatchCoordinator implements TraversalStateStore,
       BatchResultRecorder, BatchTimeout {
     private final TraversalStateStore traversalStateStore;

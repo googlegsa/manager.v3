@@ -231,10 +231,10 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     currentBatchKey = new Object();
     BatchCoordinator batchResultProcessor =
         new BatchCoordinator(instanceInfo.getTraversalStateStore(),
-            resultRecorder, currentBatchKey);
+            resultRecorder);
     try {
       TraversalManager traversalManager =
-        getConnectorInterfaces().getTraversalManager();
+          getConnectorInterfaces().getTraversalManager();
       Traverser traverser = new QueryTraverser(pusher, traversalManager,
           batchResultProcessor, getName());
       TimedCancelable batch =  new CancelableBatch(traverser,
@@ -322,7 +322,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       throws ConnectorNotFoundException {
     if (instanceInfo == null) {
       throw new ConnectorNotFoundException("Connector instance " + name
-          + " not avaliable.");
+          + " not available.");
     }
   }
 
@@ -438,8 +438,15 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     private final TraversalStateStore traversalStateStore;
     private final BatchResultRecorder batchResultRecorder;
 
+    /**
+     * Creates a BatchCoordinator
+     * @param traversalStateStore store for connector checkpoints for use
+     *     when the batch is still active.
+     * @param batchResultRecorder store for recording batch results
+     *    for use when the batch is still active.
+     */
     BatchCoordinator(TraversalStateStore traversalStateStore,
-        BatchResultRecorder batchResultRecorder, Object batchKeyForResult) {
+        BatchResultRecorder batchResultRecorder) {
       this.requiredBatchKey = currentBatchKey;
       this.traversalStateStore = traversalStateStore;
       this.batchResultRecorder = batchResultRecorder;
@@ -473,7 +480,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
           batchResultRecorder.recordResult(result);
         } else {
           LOGGER.warning(
-              "Batch result for prevously completed batch ignored connector="
+              "Batch result for prevously completed batch ignored connector = "
               + name + " result = " + result + " batchKey = "
               + requiredBatchKey);
         }
@@ -493,6 +500,9 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     }
   }
 
+  // TODO(strellis): Add this Exception to throws for BatchRecorder,
+  //     TraversalStateStore, BatchTimeout interfaces and catch this
+  //     specific exception rather than IllegalStateException.
   private static class BatchCompletedException extends IllegalStateException {
   }
 
@@ -537,7 +547,8 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     return null;
   }
 
-  private static File makeConnectorDirectoryFile(String name, TypeInfo typeInfo) {
+  private static File makeConnectorDirectoryFile(String name,
+      TypeInfo typeInfo) {
     File connectorTypeDir = typeInfo.getConnectorTypeDir();
     return new File(connectorTypeDir, name);
   }

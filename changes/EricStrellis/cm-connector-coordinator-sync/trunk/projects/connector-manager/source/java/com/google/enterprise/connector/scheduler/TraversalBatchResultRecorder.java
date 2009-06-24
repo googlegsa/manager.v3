@@ -85,7 +85,7 @@ public class TraversalBatchResultRecorder implements BatchResultRecorder {
       LOGGER.info("Traversal complete. Automatically pausing "
           + "traversal for connector " + connectorInstanceName);
     } catch (ConnectorNotFoundException cnfe) {
-      LOGGER.log(Level.INFO, "Connector removed during schedule save: "
+      LOGGER.info("Connector removed during schedule save: "
           + connectorInstanceName);
     }
   }

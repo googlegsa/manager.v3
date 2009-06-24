@@ -18,7 +18,6 @@ import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.pusher.Pusher;
-import com.google.enterprise.connector.scheduler.Scheduler;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -46,7 +45,6 @@ public class SpringInstantiator implements Instantiator {
   TypeMap typeMap = null;
   final ConcurrentMap<String, ConnectorCoordinator> coordinatorMap;
   final Pusher pusher;
-  Scheduler scheduler;
   final ThreadPool threadPool;
 
   /**

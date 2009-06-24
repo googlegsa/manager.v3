@@ -20,7 +20,6 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.TraversalManager;
-import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
 
@@ -107,8 +106,8 @@ public interface ConnectorCoordinator extends TraversalStateStore {
    * @throws InstantiatorException if unable to instantiate the requested
    *         {@link Traverser}
    */
-  public TraversalManager getTraversalManager() throws ConnectorNotFoundException,
-      InstantiatorException;
+  public TraversalManager getTraversalManager()
+      throws ConnectorNotFoundException, InstantiatorException;
 
   /**
    * Returns {@link ConfigureResponse} with a configuration form or a

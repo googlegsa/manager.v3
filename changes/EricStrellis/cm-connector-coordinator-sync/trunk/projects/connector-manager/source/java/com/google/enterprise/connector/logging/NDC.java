@@ -49,7 +49,7 @@ import java.util.EmptyStackException;
  */
  public class NDC {
    private static final String EMPTY_STRING = "";
-   private static ThreadLocal<Stack<String>> stack =
+   private static final ThreadLocal<Stack<String>> stack =
        new ThreadLocal<Stack<String>>();
 
   /**
