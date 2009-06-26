@@ -384,7 +384,6 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     }
 
     // Tell old connector instance to shut down, as it is being replaced.
-    // TODO(strellis): Send cancel to the the old connector here?
     shutdownConnector(false);
 
     // Only after validateConfig and instantiation succeeds do we

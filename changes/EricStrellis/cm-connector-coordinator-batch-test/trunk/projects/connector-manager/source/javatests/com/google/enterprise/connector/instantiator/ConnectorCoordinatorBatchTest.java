@@ -60,7 +60,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
       "testdata/connectorCoordinatorBatchTest/config/connectorType.xml";
 
   private static final String TEST_DIR_NAME =
-    "testdata/temp/ConnectorCoordinatorBatchTests";
+      "testdata/temp/ConnectorCoordinatorBatchTests";
 
   @Override
   protected void setUp() throws Exception {
@@ -95,7 +95,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     Assert.assertNotNull(typeInfo);
 
     File connectorTypeDir =
-      new File(connectorDir, typeInfo.getConnectorTypeName());
+        new File(connectorDir, typeInfo.getConnectorTypeName());
 
     if (!ConnectorTestUtils.deleteAllFiles(connectorTypeDir) ||
         !connectorTypeDir.mkdirs()) {
@@ -132,7 +132,6 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
     runBatch(resultRecorder, 1, 1, 0);
 
-    //
     // Run a second batch for the same connector coordinator to confirm
     // resumeTraversal rather than startTraversal is called.
     runBatch(resultRecorder, 1, 1, 1);
@@ -237,7 +236,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     runBatch(resultRecorder, 2, 2, 0);
   }
 
-  static class PushedDocument {
+  private static class PushedDocument {
     private final Document document;
     private final String connectorName;
 
@@ -261,7 +260,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     }
   }
 
-  static class RecordingPusher implements Pusher {
+  private static class RecordingPusher implements Pusher {
     private final BlockingQueue<PushedDocument> pushedDocuments =
         new ArrayBlockingQueue<PushedDocument>(100);
 
@@ -284,7 +283,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     }
   }
 
-  static class MockBatchResultRecorder implements BatchResultRecorder {
+  private static class MockBatchResultRecorder implements BatchResultRecorder {
     private final BlockingQueue<BatchResult> resultQueue =
         new ArrayBlockingQueue<BatchResult>(10);
 

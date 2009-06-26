@@ -53,7 +53,7 @@ import java.util.logging.Logger;
 public class SyncingConnector implements Connector,
     ConnectorShutdownAware {
   private static final Logger LOGGER =
-    Logger.getLogger(SyncingConnector.class.getName());
+      Logger.getLogger(SyncingConnector.class.getName());
 
   /**
    * Milliseconds a traversal will block polling traversalResults for a
@@ -73,6 +73,7 @@ public class SyncingConnector implements Connector,
    * {@link TraversalManager#resumeTraversal(String)} call. Note these calls
    * block until a {@link DocumentList} has been queued or the {@link
    * SyncingConnector#POLL_TIME_LIMIT_MILLIS} milliseconds have elapsed.
+   *
    * @return A {@link List} with the queued document.
    */
   static List<SimpleDocument> createaAndQueueDocumentList() {
@@ -100,6 +101,7 @@ public class SyncingConnector implements Connector,
   public void delete() {
     tracker.incrementDeleteCount();
   }
+
   public void shutdown() {
     tracker.incrementShutdownCount();
   }
@@ -117,9 +119,11 @@ public class SyncingConnector implements Connector,
    public AuthenticationManager getAuthenticationManager() {
      throw new UnsupportedOperationException();
     }
+
     public AuthorizationManager getAuthorizationManager() {
       throw new UnsupportedOperationException();
     }
+
     public TraversalManager getTraversalManager() {
       return new SyncingConnectorTraversalManager();
     }
@@ -132,14 +136,17 @@ public class SyncingConnector implements Connector,
       tracker.traversingStarted();
       return poll();
     }
+
     public void setBatchHint(int batchHint) {
       // Ignored.
     }
+
     public DocumentList startTraversal() {
       tracker.incrementStartTraversalCount();
       tracker.traversingStarted();
       return poll();
     }
+
     private DocumentList poll() {
       try {
         DocumentList result = traversalResults.poll(POLL_TIME_LIMIT_MILLIS,
@@ -164,13 +171,13 @@ public class SyncingConnector implements Connector,
     // start/resumeTraversal. Tests read from the queue to block until
     // the traversal is underway.
     private final BlockingQueue<Object> traversingQueue =
-      new ArrayBlockingQueue<Object>(200);
+        new ArrayBlockingQueue<Object>(200);
 
     // BlockingQueueConnectorTraversalManager writes to this queue
     // when a poll is interrupted. Tests read from the queue to block until
     // the interrupt occurs.
     private final BlockingQueue<Object> traversingInterrupted =
-      new ArrayBlockingQueue<Object>(200);
+        new ArrayBlockingQueue<Object>(200);
 
     private int loginCount;
     private int deleteCount;
@@ -183,6 +190,7 @@ public class SyncingConnector implements Connector,
     public final void traversingStarted() {
       traversingQueue.add(new Object());
     }
+
     public final void blockUntilTraversing() throws InterruptedException {
       traversingQueue.poll(POLL_TIME_LIMIT_MILLIS, TimeUnit.MILLISECONDS);
     }
@@ -197,27 +205,35 @@ public class SyncingConnector implements Connector,
         throw new InterruptedException("poll timed out");
       }
     }
+
     public int getLoginCount() {
       return loginCount;
     }
+
     public synchronized void incrementLoginCount() {
       loginCount++;
     }
+
     public synchronized int getDeleteCount() {
       return deleteCount;
     }
+
     public synchronized void incrementDeleteCount() {
       deleteCount++;
     }
+
     public synchronized int getShutdownCount() {
       return shutdownCount;
     }
+
     public synchronized void incrementShutdownCount() {
       shutdownCount++;
     }
+
     public synchronized int getInterruptedCount() {
       return interruptedCount;
     }
+
     public void incrementInterruptedCount() {
       interruptedCount++;
     }
