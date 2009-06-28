@@ -154,10 +154,10 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     }
   }
 
-  public synchronized void startBatch(BatchResultRecorder resultRecorder,
+  public synchronized boolean startBatch(BatchResultRecorder resultRecorder,
       int batchHint) {
     if (taskHandle != null && !taskHandle.isDone()) {
-      return; // TODO(strellis): Return false?
+      return false;
     }
     taskHandle = null;
     BatchCoordinator batchResultProcessor =
@@ -166,6 +166,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
         new CancelableBatch(traverser, name, batchResultProcessor,
             batchResultProcessor, batchHint);
     taskHandle = threadPool.submit(batch);
+    return true;
   }
 
   public String getTraversalState() {

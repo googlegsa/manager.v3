@@ -77,7 +77,8 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
   private ConnectorInterfaces interfaces;
 
   /**
-   * Context set when a batch is run.
+   * Context set when a batch is run. This must be cleared and any
+   * running batch must be canceled when interfaces is reset.
    */
   private TaskHandle taskHandle;
   private Object currentBatchKey;
@@ -221,11 +222,11 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     return getInstanceInfo().getConnectorConfig();
   }
 
-  public synchronized void startBatch(BatchResultRecorder resultRecorder,
+  public synchronized boolean startBatch(BatchResultRecorder resultRecorder,
       int batchHint) throws ConnectorNotFoundException {
     verifyConnectorInstanceAvailable();
     if (taskHandle != null && !taskHandle.isDone()) {
-      return;
+      return false;
     }
     taskHandle = null;
     currentBatchKey = new Object();
@@ -240,6 +241,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       TimedCancelable batch =  new CancelableBatch(traverser,
           name, batchResultProcessor, batchResultProcessor, batchHint);
       taskHandle = threadPool.submit(batch);
+      return true;
     } catch (ConnectorNotFoundException cnfe) {
       LOGGER.log(Level.WARNING, "Connector not found - this is normal if you "
           + " recently reconfigured your connector instance." + cnfe);
@@ -247,17 +249,13 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       LOGGER.log(Level.WARNING, "Connector not found - this is normal if you "
           + " recently reconfigured your connector instance." + ie);
     }
+    return false;
   }
 
   public synchronized void shutdown() {
+    resetInterfaces();
     shutdownConnector(false);
     resetInstanceInfo();
-    resetInterfaces();
-  }
-
-  private void cancelBatch() {
-    resetBatch();
-    resetInterfaces();
   }
 
   private void resetBatch() {
@@ -292,12 +290,9 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
   }
 
   private void resetInterfaces() {
+    resetBatch();
     interfaces = null;
-    // TODO (strellis): Verify calling cancel from shutdown is appropriate.
-    if (taskHandle != null) {
-      taskHandle.cancel();
-    }
-  }
+ }
 
   private boolean hasInstanceInfo() {
     return instanceInfo != null;
@@ -348,7 +343,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       ConfigureResponse result = null;
       result = resetConfig(connectorDir, newTypeInfo, config, locale);
       if (result != null && result.getMessage() != null) {
-        removeConnectorDirectory(name, connectorDir, typeInfo);
+        removeConnectorDirectory(name, connectorDir, newTypeInfo);
       }
       return result;
     } catch (InstantiatorException ie) {
@@ -389,7 +384,6 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     }
 
     // Tell old connector instance to shut down, as it is being replaced.
-    // TODO(strellis): Send cancel to the the old connector here?
     shutdownConnector(false);
 
     // Only after validateConfig and instantiation succeeds do we
@@ -415,7 +409,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
    * may even occur after a new batch has started. To avoid corrupting the
    * {@link ConnectorCoordinatorImpl} state this class employs the batchKey
    * protocol to disable completion operations that are performed on behalf of
-   * lingering batches. Here is how the protocol works
+   * lingering batches. Here is how the protocol works.
    * <OL>
    * <LI>To start a batch starts while holding the
    * {@link ConnectorCoordinatorImpl} monitor assign the batch a unique key.
@@ -490,7 +484,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     public void timeout() {
       synchronized (ConnectorCoordinatorImpl.this) {
         if (ConnectorCoordinatorImpl.this.currentBatchKey == requiredBatchKey) {
-          ConnectorCoordinatorImpl.this.cancelBatch();
+          ConnectorCoordinatorImpl.this.resetInterfaces();
         } else {
           LOGGER.warning(
               "Timeout for previously completed batch ignored connector = "
