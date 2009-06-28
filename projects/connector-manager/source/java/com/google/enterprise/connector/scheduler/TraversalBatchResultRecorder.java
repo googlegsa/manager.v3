@@ -20,7 +20,6 @@ import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.Traverser;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**

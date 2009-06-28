@@ -209,10 +209,11 @@ public interface ConnectorCoordinator extends TraversalStateStore {
    * Starts running a batch for this {@link ConnectorCoordinator} if a batch is
    * not already running.
    *
+   * @return true if this call started a batch
    * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
    *         does not exist.
    */
-  public void startBatch(BatchResultRecorder resultRecorder, int batchHint)
+  public boolean startBatch(BatchResultRecorder resultRecorder, int batchHint)
       throws ConnectorNotFoundException;
 
   /**
