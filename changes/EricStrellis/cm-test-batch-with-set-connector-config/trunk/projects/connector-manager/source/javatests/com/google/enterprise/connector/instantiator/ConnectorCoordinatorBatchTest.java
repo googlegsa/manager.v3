@@ -75,6 +75,23 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     connectorDir.delete();
     assertTrue(connectorDir.mkdirs());
     locale = I18NUtil.getLocaleFromStandardLocaleString(EN);
+
+    Resource r = new FileSystemResource(CONNECTOR_TYPE_RESOURCE_NAME);
+    TypeInfo ti = TypeInfo.fromSpringResourceAndThrow(r);
+    Assert.assertNotNull(ti);
+
+    File connectorTypeDir =
+        new File(connectorDir, ti.getConnectorTypeName());
+
+    if (!ConnectorTestUtils.deleteAllFiles(connectorTypeDir) ||
+        !connectorTypeDir.mkdirs()) {
+      throw new Exception("Failed to create type dir " + connectorTypeDir);
+    }
+
+    LOGGER.info("connector type dir = " + connectorTypeDir);
+
+    ti.setConnectorTypeDir(connectorTypeDir);
+    typeInfo = ti;
   }
 
   @Override
@@ -93,29 +110,13 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   private void createPusherAndCoordinator(long batchTimeout) throws Exception {
-    Resource r = new FileSystemResource(CONNECTOR_TYPE_RESOURCE_NAME);
-    TypeInfo ti = TypeInfo.fromSpringResourceAndThrow(r);
-    Assert.assertNotNull(ti);
-
-    File connectorTypeDir =
-        new File(connectorDir, ti.getConnectorTypeName());
-
-    if (!ConnectorTestUtils.deleteAllFiles(connectorTypeDir) ||
-        !connectorTypeDir.mkdirs()) {
-      throw new Exception("Failed to create type dir " + connectorTypeDir);
-    }
-
-    LOGGER.info("connector type dir = " + connectorTypeDir);
-
-    ti.setConnectorTypeDir(connectorTypeDir);
     ThreadPool threadPool =
         ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(batchTimeout);
     recordingPusher = new RecordingPusher();
     ConnectorCoordinator cc =
         new ConnectorCoordinatorImpl("c1", recordingPusher, threadPool);
     Map<String, String> config = new HashMap<String, String>();
-    cc.setConnectorConfig(ti, config, locale, false);
-    typeInfo = ti;
+    cc.setConnectorConfig(typeInfo, config, locale, false);
     coordinator = cc;
   }
 
