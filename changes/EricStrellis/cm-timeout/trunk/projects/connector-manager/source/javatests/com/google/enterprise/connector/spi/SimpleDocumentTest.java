@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.spi;
 
+import com.google.enterprise.connector.test.ConnectorTestUtils;
+
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
@@ -40,7 +42,7 @@ public class SimpleDocumentTest extends TestCase {
     props.put(SpiConstants.PROPNAME_CONTENTURL,
         "http://www.comtesturl.com/test");
 
-    document = createSimpleDocument(props);
+    document = ConnectorTestUtils.createSimpleDocument(props);
   }
 
   @Override
@@ -69,28 +71,5 @@ public class SimpleDocumentTest extends TestCase {
     assertTrue(propNames.contains(SpiConstants.PROPNAME_DOCID));
     assertTrue(propNames.contains(SpiConstants.PROPNAME_CONTENT));
     assertTrue(propNames.contains(SpiConstants.PROPNAME_CONTENTURL));
-  }
-
-  /**
-   * Utility method to convert {@link Map} of Java Objects into a
-   * {@link SimpleDocument}.
-   */
-  private SimpleDocument createSimpleDocument(Map<String, Object> props) {
-    Map<String, List<Value>> spiValues = new HashMap<String, List<Value>>();
-    for (Map.Entry<String, Object> entry : props.entrySet()) {
-      Object obj = entry.getValue();
-      Value val = null;
-      if (obj instanceof String) {
-        val = Value.getStringValue((String) obj);
-      } else if (obj instanceof Calendar) {
-        val = Value.getDateValue((Calendar) obj);
-      } else {
-        throw new AssertionError(obj);
-      }
-      List<Value> values = new ArrayList<Value>();
-      values.add(val);
-      spiValues.put(entry.getKey(), values);
-    }
-    return new SimpleDocument(spiValues);
   }
 }

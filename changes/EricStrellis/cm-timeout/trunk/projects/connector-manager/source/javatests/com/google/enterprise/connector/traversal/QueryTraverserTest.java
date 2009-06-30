@@ -27,10 +27,10 @@ import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.TestCase;
 
@@ -219,7 +219,7 @@ public class QueryTraverserTest extends TestCase {
 
     synchronized Document newDocument() {
       String id = Long.toString(documentCount++);
-      return SimpleDocument.createSimpleDocument(id);
+      return ConnectorTestUtils.createSimpleDocument(id);
     }
 
     synchronized long getDocumentCount() {

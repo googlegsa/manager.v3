@@ -23,6 +23,7 @@ import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.SimpleDocumentList;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -266,7 +267,7 @@ public class SyncingConnector implements Connector,
   }
 
   public static List<SimpleDocument>  createDocumentList(String docId) {
-    SimpleDocument document = SimpleDocument.createSimpleDocument(docId);
+    SimpleDocument document = ConnectorTestUtils.createSimpleDocument(docId);
     List<SimpleDocument> docList = new LinkedList<SimpleDocument>();
     docList.add(document);
     return docList;

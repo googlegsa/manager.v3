@@ -15,6 +15,9 @@
 package com.google.enterprise.connector.test;
 
 import com.google.enterprise.connector.servlet.ServletUtil;
+import com.google.enterprise.connector.spi.SimpleDocument;
+import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.Value;
 
 import junit.framework.Assert;
 
@@ -24,6 +27,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -101,4 +108,58 @@ public class ConnectorTestUtils {
       throw new IllegalStateException("Deletion failed " + file);
     }
   }
+
+  /**
+   * Creates a {@link SimpleDocument} with the provided id and a
+   * minimal set of additional properties.
+   */
+  public static SimpleDocument createSimpleDocument(String docId) {
+    Map<String, Object> props = createSimpleDocumentBasicProperties(docId);
+    return createSimpleDocument(props);
+  }
+
+  /**
+   * Creates a {@link Map} with basic properties filled for
+   * constructing a {@link SimpleDocument}
+   */
+  public static Map<String, Object> createSimpleDocumentBasicProperties(
+      String docId) {
+    Map<String, Object> props = new HashMap<String, Object>();
+    Calendar cal = Calendar.getInstance();
+    cal.setTimeInMillis(10 * 1000);
+    props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
+    props.put(SpiConstants.PROPNAME_DOCID, docId);
+    props.put(SpiConstants.PROPNAME_MIMETYPE, "text/plain");
+    props.put(SpiConstants.PROPNAME_CONTENT, "now is the time");
+    props.put(SpiConstants.PROPNAME_DISPLAYURL,
+        "http://www.comtesturl.com/test?" + docId);
+    return props;
+  }
+
+  /**
+   * Creates a {@link SimpleDocument} with the properties in the provided
+   * {@link Map}.
+   */
+  public static SimpleDocument createSimpleDocument(Map<String,
+      Object> props) {
+    Map<String, List<Value>> spiValues = new HashMap<String, List<Value>>();
+    for (Map.Entry<String, Object> entry : props.entrySet()) {
+      Object obj = entry.getValue();
+      Value val = null;
+      if (obj instanceof String) {
+        val = Value.getStringValue((String) obj);
+      } else if (obj instanceof Calendar) {
+        val = Value.getDateValue((Calendar) obj);
+      } else if (obj instanceof InputStream) {
+        val = Value.getBinaryValue((InputStream) obj);
+      } else {
+        throw new AssertionError(obj);
+      }
+      List<Value> values = new ArrayList<Value>();
+      values.add(val);
+      spiValues.put(entry.getKey(), values);
+    }
+    return new SimpleDocument(spiValues);
+  }
+
 }
