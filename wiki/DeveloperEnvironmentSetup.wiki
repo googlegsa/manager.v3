@@ -14,7 +14,7 @@ Install a subversion (svn) client.  See the [http://code.google.com/p/google-ent
 
 For building tests, download the JSR-170 api: jcr-1.0.jar.  See the [http://jcp.org/en/jsr/detail?id=170 JSR-170] Site.
 
-Note on the JDK version: the connector manager is designed so that it can be built and run using JDK 1.4.2.  It should work fine with newer JDKs.
+Note on the JDK version: the connector manager is designed so that it can be built and run using JDK 1.5.0.  It should work fine with newer JDKs.
 
 == Checking out the Connector Manager Code ==
 
@@ -50,8 +50,8 @@ Use a shell or command window and change directory into the {{{connector-manager
 For clarity, the following directions assume that you will create a new eclipse workspace for this development.  This is not required.  It is possible to use an existing eclipse workspace, but the steps you would then follow would be subtly different, depending on the state of your current workspace. 
 
   # Start up eclipse.  Point it to a new workspace.  This workspace should be a new directory, independent from the directory into which you checked out the connector-manager svn repository.
-  # Go to {{{Window->Preferences->Java->Compiler}}}.  Set Compiler Compliance Level to 1.4.
-  # Go to {{{Window->Preferences->Java->Installed JREs}}}.  Make sure you have a 1.4.2 JRE or JDK and make it the default for this workspace.
+  # Go to {{{Window->Preferences->Java->Compiler}}}.  Set Compiler Compliance Level to 1.5.
+  # Go to {{{Window->Preferences->Java->Installed JREs}}}.  Make sure you have a 1.5.0 JRE or JDK and make it the default for this workspace.
   # Create the following four projects, {{{connector-manager}}}, {{{third_party}}}, {{{test-connectorA}}} and {{{test-connectorB}}}.  For each one, follow these steps (replace {{{project-name}}} appropriately.
     * {{{File->New->Project}}}.  Choose {{{Java Project}}} and click {{{Next}}}
     * Fill in the project-name.
