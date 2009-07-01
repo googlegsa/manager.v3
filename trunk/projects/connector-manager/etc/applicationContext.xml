@@ -155,7 +155,7 @@
        TraversalTimeLimitSecondsDefault which is a more gentle limit.
   -->
   <bean id="ThreadPoolCancelTimeSecondsDefault" class="java.lang.Long">
-    <constructor-arg index="0" type="long" value="1800"/>
+    <constructor-arg index="0" type="long" value="3600"/>
   </bean>
 
   <bean id="ThreadPool"
