@@ -6,6 +6,15 @@
         class="com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer">
   </bean>
 
+  <bean id="FeedConnection"
+        class="com.google.enterprise.connector.pusher.MockFeedConnection">
+  </bean>
+
+  <bean id="Pusher"
+        class="com.google.enterprise.connector.pusher.DocPusher">
+    <constructor-arg index="0" ref="FeedConnection" />
+  </bean>
+
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.SpringInstantiator">
     <constructor-arg index="0" ref="Pusher" />
@@ -61,14 +70,22 @@
         class="com.google.enterprise.connector.monitor.HashMapMonitor">
   </bean>
   
+  <!-- This defines the number of seconds a task such a a Traversal
+       may run before it it is cancelled. The default is 60 minutes 
+       (3600 seconds). This value should exceed 
+       TraversalTimeLimitSecondsDefault which is a more gentle limit.
+  -->
+  <bean id="ThreadPoolCancelTimeSecondsDefault" class="java.lang.Long">
+    <constructor-arg index="0" type="long" value="3600"/>
+  </bean>
+
   <bean id="ThreadPool"
         class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
     <property name="staticMethod"
               value="com.google.enterprise.connector.instantiator.ThreadPool.newThreadPool"/>
     <property name="arguments">
       <list>
-        <!-- Number of seconds to let tasks run before automatic cancel. -->
-        <value>5</value>
+	<ref bean="ThreadPoolCancelTimeSecondsDefault"/>
       </list>
     </property>
   </bean>
