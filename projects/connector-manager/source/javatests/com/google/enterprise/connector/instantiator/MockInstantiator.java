@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.jcr.JcrConnector;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
@@ -178,7 +179,7 @@ public class MockInstantiator implements Instantiator {
     QueryTraverser queryTraverser =
         new QueryTraverser(pusher, traversalManager,
             new MockTraversalStateStore(stateStore, connectorName),
-            connectorName);
+            connectorName, Context.getInstance().getTraversalContext());
 
     setupTraverser(connectorName, queryTraverser);
   }

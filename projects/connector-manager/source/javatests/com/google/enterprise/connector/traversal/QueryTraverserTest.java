@@ -17,12 +17,20 @@ package com.google.enterprise.connector.traversal;
 import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.instantiator.ThreadPool;
 import com.google.enterprise.connector.jcr.JcrTraversalManager;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.MockPusher;
+import com.google.enterprise.connector.pusher.Pusher;
+import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.DocumentList;
+import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.TestCase;
 
@@ -116,7 +124,8 @@ public class QueryTraverserTest extends TestCase {
     MockPusher pusher = new MockPusher(System.out);
 
     Traverser traverser = new QueryTraverser(pusher, qtm,
-        instantiator.getTraversalStateStore(connectorName), connectorName);
+        instantiator.getTraversalStateStore(connectorName), connectorName,
+        Context.getInstance().getTraversalContext());
 
     instantiator.setupTraverser(connectorName, traverser);
     return traverser;
@@ -145,7 +154,7 @@ public class QueryTraverserTest extends TestCase {
   /**
    * Test that we are indeed streaming the file.
    */
-  public final void testLargeFileStream() {
+  public void testLargeFileStream() {
     try {
       // This has internal knowledge of the contents of
       // MockRepositoryEventLogLargeFile.txt used below.
@@ -169,5 +178,143 @@ public class QueryTraverserTest extends TestCase {
     } finally {
       instantiator.shutdown(true, 5000);
     }
+  }
+
+  public void testTimeout() {
+    final String CONNECTOR_NAME = "fred flinstone";
+    ValidatingPusher pusher = new ValidatingPusher(CONNECTOR_NAME);
+    NeverEndingDocumentlistTraversalManager traversalManager =
+      new NeverEndingDocumentlistTraversalManager();
+    TraversalStateStore stateStore = new RecordingTraversalStateStore();
+    ProductionTraversalContext context = new ProductionTraversalContext();
+    context.setTraversalTimeLimitSeconds(1);
+    QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
+        stateStore, CONNECTOR_NAME, context);
+    int result = queryTraverser.runBatch(100);
+    assertTrue(result > 0);
+    assertEquals(traversalManager.getDocumentCount(), result);
+    assertEquals(Long.toString(traversalManager.getDocumentCount()),
+        stateStore.getTraversalState());
+    assertEquals(traversalManager.getDocumentCount(), pusher.getPushCount());
+  }
+
+  /**
+   * A {@link TraversalManager} for a {@link NeverEndingDocumentList}.
+   */
+  private static class NeverEndingDocumentlistTraversalManager implements
+      TraversalManager {
+    private long documentCount;
+
+    public DocumentList resumeTraversal(String checkPoint) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void setBatchHint(int batchHint) {
+      // Ignored.
+    }
+
+    public DocumentList startTraversal() {
+      return new NeverEndingDocumentList(this);
+    }
+
+    synchronized Document newDocument() {
+      String id = Long.toString(documentCount++);
+      return ConnectorTestUtils.createSimpleDocument(id);
+    }
+
+    synchronized long getDocumentCount() {
+      return documentCount;
+    }
+  }
+
+  /**
+   * {@link DocumentList} that returns a new document every 100
+   * milliseconds until interrupted.
+   */
+  private static class NeverEndingDocumentList implements DocumentList {
+    private final NeverEndingDocumentlistTraversalManager traversalManager;
+
+    public NeverEndingDocumentList(
+        NeverEndingDocumentlistTraversalManager traversalManager) {
+      this.traversalManager = traversalManager;
+    }
+
+    public String checkpoint() {
+      return Long.toString(traversalManager.getDocumentCount());
+    }
+
+    /**
+     * Returns a new {@link Document} with an
+     * SpiConstants.PROPNAME_DOCID property set to the number
+     * previously returned.
+     *
+     * @throws RepositoryException interrupted while sleeping.
+     */
+    public Document nextDocument() throws RepositoryException {
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException ie) {
+        throw new RepositoryException("Unexpected interrupt", ie);
+      }
+      return traversalManager.newDocument();
+    }
+  }
+
+  /**
+   * A {@link Pusher} that performs validations
+   * @see ValidatingPusher#take(Document, String) for details.
+   */
+  private static class ValidatingPusher implements Pusher {
+    private final String connectorName;
+    private volatile long pushCount;
+
+    ValidatingPusher(String connectorName) {
+      this.connectorName = connectorName;
+    }
+
+    /**
+     * Performs the following validations and increments the count
+     * of pushed documents if all the validations pass.
+     * <OL>
+     * <LI>SpiConstants.PROPNAME_DOCID property of {@link Document}
+     * matches the number of documents pushed (formatted as a {@link String}).
+     * <LI>connectorName matches the connector name passed to
+     * {@link ValidatingPusher#ValidatingPusher(String)}.
+     * </OL>
+     */
+    public void take(Document document, String connectorName)
+        throws RepositoryException{
+      String expectId = Long.toString(pushCount);
+      String gotId =
+        Value.getSingleValueString(document, SpiConstants.PROPNAME_DOCID);
+      assertEquals(expectId, gotId);
+      assertEquals(this.connectorName, connectorName);
+      pushCount++;
+    }
+
+    /**
+     * Returns the number of documents that have been pushed.
+     */
+    public long getPushCount() {
+      return pushCount;
+    }
+  }
+
+  /**
+   * A {@link TraversalStateStore} that remembers the last saved state in
+   * memory for testing purposes.
+   */
+  private static class RecordingTraversalStateStore
+      implements TraversalStateStore {
+    private String state;
+
+    public String getTraversalState() {
+      return state;
+    }
+
+    public void storeTraversalState(String state) {
+      this.state = state;
+    }
+
   }
 }

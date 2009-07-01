@@ -42,10 +42,12 @@ public class SpringInstantiator implements Instantiator {
   private static final Logger LOGGER =
       Logger.getLogger(SpringInstantiator.class.getName());
 
-  TypeMap typeMap = null;
   final ConcurrentMap<String, ConnectorCoordinator> coordinatorMap;
   final Pusher pusher;
   final ThreadPool threadPool;
+
+  // State that is filled in by init.
+  TypeMap typeMap;
 
   /**
    * Normal constructor.
@@ -56,7 +58,7 @@ public class SpringInstantiator implements Instantiator {
     this.pusher = pusher;
     this.threadPool = threadPool;
     this.coordinatorMap = new ConcurrentHashMap<String, ConnectorCoordinator>();
-    // NOTE: we can't call initialize() here because then there would be a
+    // NOTE: we can't call init() here because then there would be a
     // circular dependency on the Context, which hasn't been constructed yet
   }
 
@@ -70,8 +72,7 @@ public class SpringInstantiator implements Instantiator {
       TypeMap typeMap) {
     this(pusher, threadPool);
     this.typeMap = typeMap;
-    ConnectorCoordinatorMapHelper.fillFromTypes(typeMap, coordinatorMap, pusher,
-        threadPool);
+    init(typeMap);
   }
 
   /**
@@ -80,11 +81,14 @@ public class SpringInstantiator implements Instantiator {
   public synchronized void init() {
     if (typeMap == null) {
       LOGGER.info("Initializing instantiator");
-
+      init(new TypeMap());
       typeMap = new TypeMap();
-      ConnectorCoordinatorMapHelper.fillFromTypes(typeMap, coordinatorMap,
-          pusher, threadPool);
     }
+  }
+
+  private void init(TypeMap typeMap) {
+    ConnectorCoordinatorMapHelper.fillFromTypes(typeMap, coordinatorMap,
+        pusher, threadPool);
   }
 
   /**
@@ -126,6 +130,10 @@ public class SpringInstantiator implements Instantiator {
 
   private ConnectorCoordinator getOrAddConnectorCoordinator(
       String connectorName) {
+    if (typeMap == null) {
+      throw new IllegalStateException(
+          "Init must be called before accessing connectors.");
+    }
     ConnectorCoordinator connectorCoordinator =
         coordinatorMap.get(connectorName);
     if (connectorCoordinator == null) {

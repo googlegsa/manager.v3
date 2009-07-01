@@ -14,14 +14,13 @@
 
 package com.google.enterprise.connector.traversal;
 
-import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.pusher.FeedException;
 import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
-import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
+import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.spi.TraversalContextAware;
@@ -42,23 +41,25 @@ public class QueryTraverser implements Traverser {
   private final TraversalManager queryTraversalManager;
   private final TraversalStateStore stateStore;
   private final String connectorName;
+  private final TraversalContext traversalContext;
 
   // Synchronize access to cancelWork.
   private final Object cancelLock = new Object();
   private boolean cancelWork = false;
 
   public QueryTraverser(Pusher pusher, TraversalManager traversalManager,
-                        TraversalStateStore stateStore, String connectorName) {
+                        TraversalStateStore stateStore, String connectorName,
+                        TraversalContext traversalContext) {
     this.pusher = pusher;
     this.queryTraversalManager = traversalManager;
     this.stateStore = stateStore;
     this.connectorName = connectorName;
+    this.traversalContext = traversalContext;
     if (queryTraversalManager instanceof TraversalContextAware) {
       TraversalContextAware contextAware =
           (TraversalContextAware)queryTraversalManager;
       try {
-        TraversalContext tc = Context.getInstance().getTraversalContext();
-        contextAware.setTraversalContext(tc);
+        contextAware.setTraversalContext(traversalContext);
       } catch (Exception e) {
         LOGGER.log(Level.WARNING, "Unable to set TraversalContext", e);
       }
@@ -79,6 +80,9 @@ public class QueryTraverser implements Traverser {
   }
 
   public int runBatch(int batchHint) {
+    final long timeoutTime = System.currentTimeMillis()
+      + traversalContext.traversalTimeLimitSeconds() * 1000;
+
     if (isCancelled()) {
         LOGGER.warning("Attempting to run a cancelled QueryTraverser");
         return Traverser.ERROR_WAIT;
@@ -137,6 +141,12 @@ public class QueryTraverser implements Traverser {
         if (Thread.currentThread().isInterrupted() || isCancelled()) {
           LOGGER.fine("Traversal for connector " + connectorName
                       + " has been interrupted...breaking out of batch run.");
+          break;
+        }
+
+        if (System.currentTimeMillis() >= timeoutTime) {
+          LOGGER.fine("Traversal for connector " + connectorName
+              + " is completing due to time limit.");
           break;
         }
 
