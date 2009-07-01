@@ -139,6 +139,7 @@
     </property>
   </bean>
 
+
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.SpringInstantiator">
     <constructor-arg index="0" ref="Pusher" />
@@ -148,14 +149,22 @@
   <bean id="Monitor"
         class="com.google.enterprise.connector.monitor.HashMapMonitor"/>
 
+  <!-- This defines the number of seconds a task such a a Traversal
+       may run before it it is cancelled. The default is 60 minutes 
+       (3600 seconds). This value should exceed 
+       TraversalTimeLimitSecondsDefault which is a more gentle limit.
+  -->
+  <bean id="ThreadPoolCancelTimeSecondsDefault" class="java.lang.Long">
+    <constructor-arg index="0" type="long" value="1800"/>
+  </bean>
+
   <bean id="ThreadPool"
         class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
     <property name="staticMethod"
               value="com.google.enterprise.connector.instantiator.ThreadPool.newThreadPool"/>
     <property name="arguments">
       <list>
-        <!-- Number of seconds to let tasks run before automatic cancel. -->
-        <value>3600</value>
+	<ref bean="ThreadPoolCancelTimeSecondsDefault"/>
       </list>
     </property>
   </bean>
@@ -190,6 +199,13 @@
     </property>
   </bean>
 
+  <!-- This defines the number of seconds a Traversal will run before
+       gracefully exiting. The default is 30 minutes (1800 seconds).
+  -->
+  <bean id="TraversalTimeLimitSecondsDefault" class="java.lang.Long">
+    <constructor-arg index="0" type="long" value="1800"/>
+  </bean>
+
   <!-- The TraversalContext is supplied to the Connector's TraversalManager,
        so that it may make more intelligent decisions about what types of
        content to feed.
@@ -198,6 +214,7 @@
         class="com.google.enterprise.connector.traversal.ProductionTraversalContext">
     <property name="fileSizeLimitInfo" ref="FileSizeLimitInfo"/>
     <property name="mimeTypeMap" ref="MimeTypeMap"/>
+    <property name="traversalTimeLimitSeconds" ref="TraversalTimeLimitSecondsDefault"/>
   </bean>
 
   <bean id="FileSizeLimitInfo"

@@ -25,12 +25,11 @@ import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.Property;
-import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
-import com.google.enterprise.connector.spi.SimpleDocument;
+import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
-import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -46,14 +45,12 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.SimpleFormatter;
@@ -352,7 +349,7 @@ public class DocPusherTest extends TestCase {
     Map<String, Object> props = getTestDocumentConfig();
     props.put(SpiConstants.PROPNAME_ACTION,
         SpiConstants.ActionType.DELETE.toString());
-    Document document = createSimpleDocument(props);
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
 
     try {
       String resultXML = feedDocument(document);
@@ -372,7 +369,7 @@ public class DocPusherTest extends TestCase {
                  props.get(SpiConstants.PROPNAME_DOCID));
     minProps.put(SpiConstants.PROPNAME_ACTION,
                  props.get(SpiConstants.PROPNAME_ACTION));
-    document = createSimpleDocument(minProps);
+    document = ConnectorTestUtils.createSimpleDocument(minProps);
 
     try {
       String resultXML = feedDocument(document);
@@ -387,7 +384,7 @@ public class DocPusherTest extends TestCase {
     // Now include optional last-modified.
     minProps.put(SpiConstants.PROPNAME_LASTMODIFIED,
                  props.get(SpiConstants.PROPNAME_LASTMODIFIED));
-    document = createSimpleDocument(minProps);
+    document = ConnectorTestUtils.createSimpleDocument(minProps);
 
     try {
       String resultXML = feedDocument(document);
@@ -399,31 +396,6 @@ public class DocPusherTest extends TestCase {
     } catch (Exception e) {
       fail("No content document take");
     }
-  }
-
-  /**
-   * Utility method to convert {@link Map} of Java Objects into a
-   * {@link SimpleDocument}.
-   */
-  private Document createSimpleDocument(Map<String, ?> props) {
-    Map<String, List<Value>> spiValues = new HashMap<String, List<Value>>();
-    for (Map.Entry<String,  ?>entry : props.entrySet()) {
-      Object obj = entry.getValue();
-      Value val = null;
-      if (obj instanceof String) {
-        val = Value.getStringValue((String) obj);
-      } else if (obj instanceof Calendar) {
-        val = Value.getDateValue((Calendar) obj);
-      } else if (obj instanceof InputStream) {
-        val = Value.getBinaryValue((InputStream) obj);
-      } else {
-        throw new AssertionError(obj);
-      }
-      List<Value> values = new ArrayList<Value>();
-      values.add(val);
-      spiValues.put(entry.getKey(), values);
-    }
-    return new SimpleDocument(spiValues);
   }
 
   /**
@@ -1076,20 +1048,11 @@ public class DocPusherTest extends TestCase {
   }
 
   private Document getTestDocument() {
-    return createSimpleDocument(getTestDocumentConfig());
+    return ConnectorTestUtils.createSimpleDocument(getTestDocumentConfig());
   }
 
   private Map<String, Object> getTestDocumentConfig() {
-    Map<String, Object> props = new HashMap<String, Object>();
-    Calendar cal = Calendar.getInstance();
-    cal.setTimeInMillis(10 * 1000);
-    props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
-    props.put(SpiConstants.PROPNAME_DOCID, "doc1");
-    props.put(SpiConstants.PROPNAME_MIMETYPE, "text/plain");
-    props.put(SpiConstants.PROPNAME_CONTENT, "now is the time");
-    props.put(SpiConstants.PROPNAME_DISPLAYURL,
-        "http://www.comtesturl.com/test");
-    return props;
+    return ConnectorTestUtils.createSimpleDocumentBasicProperties("doc1");
   }
 
   /**
@@ -1368,7 +1331,7 @@ public class DocPusherTest extends TestCase {
     Map<String, Object> config = getTestDocumentConfig();
     config.put(SpiConstants.PROPNAME_SEARCHURL,
                "Not even remotely a \\ valid % URL");
-    Document doc = createSimpleDocument(config);
+    Document doc = ConnectorTestUtils.createSimpleDocument(config);
 
     // Failure to get metadata should throw RepositoryDocumentException
     try {
@@ -1617,7 +1580,7 @@ public class DocPusherTest extends TestCase {
   public void testContentReadError() throws Exception {
     Map<String, Object> props = getTestDocumentConfig();
     props.put(SpiConstants.PROPNAME_CONTENT, new BadInputStream());
-    Document document = createSimpleDocument(props);
+    Document document = ConnectorTestUtils.createSimpleDocument(props);
 
     // IO error on content should throw RepositoryDocumentException.
     try {

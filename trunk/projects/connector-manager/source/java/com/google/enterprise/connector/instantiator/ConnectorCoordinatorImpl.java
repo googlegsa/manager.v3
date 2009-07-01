@@ -91,9 +91,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
 
   ConnectorCoordinatorImpl(InstanceInfo instanceInfo, Pusher pusher,
       ThreadPool threadPool) {
-    this.name = instanceInfo.getName();
-    this.pusher = pusher;
-    this.threadPool = threadPool;
+    this(instanceInfo.getName(), pusher, threadPool);
     this.instanceInfo = instanceInfo;
   }
 
@@ -237,7 +235,8 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       TraversalManager traversalManager =
           getConnectorInterfaces().getTraversalManager();
       Traverser traverser = new QueryTraverser(pusher, traversalManager,
-          batchResultProcessor, getName());
+          batchResultProcessor, getName(),
+          Context.getInstance().getTraversalContext());
       TimedCancelable batch =  new CancelableBatch(traverser,
           name, batchResultProcessor, batchResultProcessor, batchHint);
       taskHandle = threadPool.submit(batch);

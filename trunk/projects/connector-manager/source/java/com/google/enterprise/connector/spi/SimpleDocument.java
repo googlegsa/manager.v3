@@ -20,7 +20,7 @@ import java.util.Set;
 
 public class SimpleDocument implements Document {
 
-  private Map<String, List<Value>> properties;
+  private final Map<String, List<Value>> properties;
 
   public SimpleDocument(Map<String, List<Value>> properties) {
     this.properties = properties;

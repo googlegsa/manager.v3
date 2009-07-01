@@ -60,4 +60,12 @@ public interface TraversalContext {
    * @return the most preferred mime type from the Set.
    */
   String preferredMimeType(Set<String> mimeTypes);
+
+  /**
+   * Returns the time in seconds for traversals to complete. Both
+   * {@link TraversalManager#startTraversal()} and
+   * {@link TraversalManager#resumeTraversal(String)} can avoid interrupts due
+   * to timeouts by returning within this amount of time.
+   */
+  long traversalTimeLimitSeconds();
 }

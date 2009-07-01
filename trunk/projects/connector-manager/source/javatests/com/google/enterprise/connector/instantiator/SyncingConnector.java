@@ -22,16 +22,11 @@ import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.SimpleDocumentList;
-import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
-import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.test.ConnectorTestUtils;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -271,39 +266,10 @@ public class SyncingConnector implements Connector,
     }
   }
 
-  private static List<SimpleDocument>  createDocumentList(String docId) {
-    Calendar cal = Calendar.getInstance();
-    cal.setTimeInMillis(10 * 1000);
-
-    Map<String, Object> props = new HashMap<String, Object>();
-    props.put(SpiConstants.PROPNAME_DOCID, docId);
-    props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
-    props.put(SpiConstants.PROPNAME_DISPLAYURL, "http://myserver/docid=1");
-    props.put(SpiConstants.PROPNAME_CONTENT, "Hello World!");
-    SimpleDocument document = createSimpleDocument(props);
-
+  public static List<SimpleDocument>  createDocumentList(String docId) {
+    SimpleDocument document = ConnectorTestUtils.createSimpleDocument(docId);
     List<SimpleDocument> docList = new LinkedList<SimpleDocument>();
     docList.add(document);
     return docList;
-  }
-
-  private static SimpleDocument createSimpleDocument(Map<String,
-      Object> props) {
-    Map<String, List<Value>> spiValues = new HashMap<String, List<Value>>();
-    for (Map.Entry<String, Object> entry : props.entrySet()) {
-      Object obj = entry.getValue();
-      Value val = null;
-      if (obj instanceof String) {
-        val = Value.getStringValue((String) obj);
-      } else if (obj instanceof Calendar) {
-        val = Value.getDateValue((Calendar) obj);
-      } else {
-        throw new AssertionError(obj);
-      }
-      List<Value> values = new ArrayList<Value>();
-      values.add(val);
-      spiValues.put(entry.getKey(), values);
-    }
-    return new SimpleDocument(spiValues);
   }
 }
