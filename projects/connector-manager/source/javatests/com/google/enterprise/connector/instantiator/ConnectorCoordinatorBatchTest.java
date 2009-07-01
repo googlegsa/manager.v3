@@ -53,8 +53,10 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   private final static long SHORT_TRAVERSAL_TIME_LIMIT_MILLIS = 500;
 
   ConnectorCoordinator coordinator;
+  TypeInfo typeInfo;
   RecordingPusher recordingPusher;
   File connectorDir;
+  Locale locale;
 
   private static final String CONNECTOR_TYPE_RESOURCE_NAME =
       "testdata/connectorCoordinatorBatchTest/config/connectorType.xml";
@@ -72,6 +74,24 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     connectorDir = File.createTempFile("zzCm", "_cmType", baseDirectory);
     connectorDir.delete();
     assertTrue(connectorDir.mkdirs());
+    locale = I18NUtil.getLocaleFromStandardLocaleString(EN);
+
+    Resource r = new FileSystemResource(CONNECTOR_TYPE_RESOURCE_NAME);
+    TypeInfo ti = TypeInfo.fromSpringResourceAndThrow(r);
+    Assert.assertNotNull(ti);
+
+    File connectorTypeDir =
+        new File(connectorDir, ti.getConnectorTypeName());
+
+    if (!ConnectorTestUtils.deleteAllFiles(connectorTypeDir) ||
+        !connectorTypeDir.mkdirs()) {
+      throw new Exception("Failed to create type dir " + connectorTypeDir);
+    }
+
+    LOGGER.info("connector type dir = " + connectorTypeDir);
+
+    ti.setConnectorTypeDir(connectorTypeDir);
+    typeInfo = ti;
   }
 
   @Override
@@ -90,27 +110,11 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   private void createPusherAndCoordinator(long batchTimeout) throws Exception {
-    Resource r = new FileSystemResource(CONNECTOR_TYPE_RESOURCE_NAME);
-    TypeInfo typeInfo = TypeInfo.fromSpringResourceAndThrow(r);
-    Assert.assertNotNull(typeInfo);
-
-    File connectorTypeDir =
-        new File(connectorDir, typeInfo.getConnectorTypeName());
-
-    if (!ConnectorTestUtils.deleteAllFiles(connectorTypeDir) ||
-        !connectorTypeDir.mkdirs()) {
-      throw new Exception("Failed to create type dir " + connectorTypeDir);
-    }
-
-    LOGGER.info("connector type dir = " + connectorTypeDir);
-
-    typeInfo.setConnectorTypeDir(connectorTypeDir);
     ThreadPool threadPool =
         ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(batchTimeout);
     recordingPusher = new RecordingPusher();
     ConnectorCoordinator cc =
         new ConnectorCoordinatorImpl("c1", recordingPusher, threadPool);
-    Locale locale = I18NUtil.getLocaleFromStandardLocaleString(EN);
     Map<String, String> config = new HashMap<String, String>();
     cc.setConnectorConfig(typeInfo, config, locale, false);
     coordinator = cc;
@@ -218,6 +222,29 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     // Run a second batch to confirm we create a new connector
     // and call start traversal after the cancel.
     runBatch(resultRecorder, 2, 2, 0);
+  }
+
+  public void testSeConnectorConfig() throws Exception {
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_MILLIS);
+    MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
+    coordinator.startBatch(resultRecorder, 3);
+    SyncingConnector.Tracker tracker =
+        SyncingConnector.getTracker();
+    tracker.blockUntilTraversing();
+    assertEquals(1, tracker.getStartTraversalCount());
+
+    Map<String, String> configMap = coordinator.getConnectorConfig();
+    configMap.put("hi", "mom");
+    coordinator.setConnectorConfig(typeInfo, configMap, locale, true);
+    tracker.blockUntilTraversingInterrupted();
+    assertEquals(1, tracker.getLoginCount());
+    assertEquals(1, tracker.getInterruptedCount());
+    assertEquals(1, tracker.getStartTraversalCount());
+
+    // Run a second batch to confirm we create a new connector
+    // and call start traversal after the cancel.
+    runBatch(resultRecorder, 2, 2, 0);
+
   }
 
   public void testTimeoutBatch() throws Exception {
