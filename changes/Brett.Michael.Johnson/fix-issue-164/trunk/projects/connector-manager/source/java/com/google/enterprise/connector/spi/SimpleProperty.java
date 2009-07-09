@@ -14,16 +14,16 @@
 
 package com.google.enterprise.connector.spi;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
 public class SimpleProperty implements Property {
 
-  Value value;              // For single value.
-  Iterator<Value> iterator; // For multiple values.
+  final Iterator<Value> iterator;
 
   public SimpleProperty(Value value) {
-    this.value = value;
+    this(Collections.singletonList(value));
   }
 
   public SimpleProperty(List<Value> values) {
@@ -31,13 +31,6 @@ public class SimpleProperty implements Property {
   }
 
   public Value nextValue() {
-    if (value != null) {
-      Value retval = value;
-      value = null;
-      return retval;
-    } else if (iterator != null && iterator.hasNext()) {
-      return iterator.next();
-    }
-    return null;
+    return (iterator.hasNext()) ? iterator.next() : null;
   }
 }
