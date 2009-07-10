@@ -32,7 +32,7 @@ public class SimplePropertyTest extends TestCase {
     // We should get our value back, but only once.
     Value value = property.nextValue();
     assertNotNull(value);
-    assertEquals(value, expected);
+    assertEquals(expected, value);
 
     // Next fetch should yield null.
     value = property.nextValue();
@@ -84,7 +84,7 @@ public class SimplePropertyTest extends TestCase {
     for (Value expected : list) {
       Value value = property.nextValue();
       assertNotNull(value);
-      assertEquals(value, expected);
+      assertEquals(expected, value);
     }
 
     // All subsequent fetches should yield null.
