@@ -1,0 +1,133 @@
+#summary Advanced Diagnostic Context Logging in Connector Manager v2.0.
+#labels Phase-Deploy
+
+= Introduction =
+
+Google Enterprise Connector Manager version 2.0 provides enhanced 
+logging capabilities that makes it easier to troubleshoot installations
+employing multiple Connector Instances.  The log records now contain
+additional context-specific information, most notably the name of the
+connector instance generating the message.
+
+= Details =
+
+The new logging mechanism implements the Nested Diagnostic Context (NDC) 
+and Mapped Diagnostic Context (MDC) patterns as described by Neil Harrison 
+in the article "Patterns for Logging Diagnostic Messages" in the book 
+"[http://portal.acm.org/citation.cfm?id=273448 Pattern Languages of Program Design 3]".  
+The 
+[http://code.google.com/p/google-enterprise-connector-manager/source/browse/trunk/projects/connector-manager/source/java/com/google/enterprise/connector/logging/MDC.java MDC]
+and 
+[http://code.google.com/p/google-enterprise-connector-manager/source/browse/trunk/projects/connector-manager/source/java/com/google/enterprise/connector/logging/NDC.java NDC] 
+interface closely resembles the one provided by the Apache Log4j implementation,
+primarily as an aid for the large number of developers and administrators 
+familiar with log4j.
+
+Whereas earlier versions of the Connector Manager relied strictly on 
+Java's native logging, the new enhanced diagnostic context logging 
+feature requires the configuration of a custom log [http://java.sun.com/j2se/1.5.0/docs/api/java/util/logging/Formatter.html Formatter].
+Two new log Formatters are provided: 
+[http://code.google.com/p/google-enterprise-connector-manager/source/browse/trunk/projects/connector-manager/source/java/com/google/enterprise/connector/logging/SimpleFormatter.java SimpleFormatter] 
+and 
+[http://code.google.com/p/google-enterprise-connector-manager/source/browse/trunk/projects/connector-manager/source/java/com/google/enterprise/connector/logging/XmlFormatter.java XmlFormatter].
+
+By default, these Google Connector Log Formatters generate output similar 
+to the java.util.logging Formatters of the same name, with the discrete
+addition of the diagnostic context.  However, the output of each may
+be modified via a format property in the Connector Manager's 
+`logging.properties` file.
+
+The default message layout for the `SimpleFormatter` includes the 
+diagnostic context in square brackets after the message timestamp.
+The default message layout for the `XmlFormatter` adds an `<NDC>`
+XML element that contains the diagnostic context.
+
+
+== Changing the Format of the Generated Log Messages ==
+
+The Google Connectors Installer sets up the `SimpleFormatter` with 
+its default log message layout.  This layout is similar to the 
+`java.util.logging.SimpleFormatter` produced by previous versions of the 
+Google Enterprise Connector deployments.
+
+A Connector administrator may select the desired log `Formatter` and modify
+the layout of the generated messages by setting certain properties in the
+`$CATALINA_HOME/webapps/connector-manager/WEB-INF/classes/logging.properties`
+file.
+
+
+== Configuring the SimpleFormatter ==
+
+The Google Connector Logging SimpleFormatter is the log formatter set up
+by the Google Connector Installer.
+
+To enable the SimpleFormatter, set the `FileHandler` property in `logging.properties`
+as follows:<br>
+`java.util.logging.FileHandler.formatter=com.google.enterprise.connector.logging.SimpleFormatter`
+
+By default, the `SimpleFormatter` generates output that resembles that
+of `java.util.logging.SimpleFormatter`.  The NDC context is inserted
+just after the timestamp on the first line of the log message.
+
+The output of the `SimpleFormatter` can be tailored using a layout pattern
+string specified as the `format` property value.  As an aid to administrators,
+the syntax of the layout pattern string is similar to the Log4j PatternLayout.
+However, since this logger is based upon java.util.logging.LogRecord, not all
+of Log4j's conversion patterns are supported.  The layout pattern syntax 
+is described in the 
+[http://code.google.com/p/google-enterprise-connector-manager/source/browse/trunk/projects/connector-manager/source/java/com/google/enterprise/connector/logging/LayoutPattern.java com.google.enterprise.connector.logging.LayoutPattern]
+javadoc.
+
+For example, the default `SimpleFormatter` output uses the layout pattern:<br>
+`com.google.enterprise.connector.logging.SimpleFormatter.format=%d{MMM dd, yyyy h:mm:ss a} [%x] %C %M%n%p: %m%n`
+
+For a condensed, the 1-line layout, suitable for grepping, try:<br>
+`com.google.enterprise.connector.logging.SimpleFormatter.format=%d [%x] %p: %C{3}.%M(): %m%n`
+
+
+== Configuring the XmlFormatter ==
+
+To enable the `XmlFormatter`, set the `FileHandler` property in `logging.properties`
+as follows:
+`java.util.logging.FileHandler.formatter=com.google.enterprise.connector.logging.XmlFormatter`
+
+The `XmlFormatter` has limited configuration options, supporting only two
+different output formats.  The default XmlFormatter output resembles the
+output of `java.util.logging.XMLFormatter`, with the addition of an `<NDC>`
+element containing the NDC diagnostic context.
+
+Unfortunately, the additional `<NDC>` XML element in the default format is 
+not recognized by the popular 
+[http://logging.apache.org/chainsaw/index.html Apache Chainsaw log viewer].  
+The Connector Logging XmlFormatter can be configured to produce output 
+resembling that of the Apache Log4j logger, which is viewable in Chainsaw.
+
+To enable the default XML format, set the `format` property to `default`:
+`com.google.enterprise.connector.logging.XmlFormatter.format=default`
+
+To enable Log4j-compatible XML format, set the `format` property to `log4j`
+or `chainsaw`:
+`com.google.enterprise.connector.logging.XmlFormatter.format=log4j`
+
+Note: A bug in the `XmlFormatter` that shipped with Connector Manager v2.0.0
+requires a `format` property to be specified, even if that property value 
+is `default`.  The `format` property must be specified, and it must not be
+empty.
+
+
+== Configuring the Tomcat Server to Enable Connector Diagnostic Logging ==
+
+The Google Connectors Installer will automatically configure use of 
+the new Google Connector SimpleFormatter with its default layout.
+However, manual Connector installations will require small changes 
+to the Tomcat configuration to enable this feature.
+
+You must add the new `connector-logging.jar` file to the system classpath that 
+Tomcat uses at startup.  Tomcat ignores the `CLASSPATH` environment variable and 
+builds a custom classpath using the `$CATALINA_HOME/bin/setclasspath.sh` or
+`$CATALINA_HOME/bin/setclasspath.bat` scripts.  Modify these scripts, adding
+`connector-logging.jar` to the `CLASSPATH` constructed: For instance:
+`CLASSPATH="$CLASSPATH":"$BASEDIR"/webapps/connector-manager/WEB-INF/lib/connector-logging.jar`
+If configuring the Connector as a Microsoft Windows service, you must also
+add `connector-logging.jar` to the `PR_CLASSPATH` constructed in `service.bat`
+before installing the service.
