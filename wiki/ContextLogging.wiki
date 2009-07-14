@@ -1,15 +1,13 @@
 #summary Advanced Diagnostic Context Logging in Connector Manager v2.0.
 #labels Phase-Deploy
 
-= Introduction =
+= Advanced Diagnostic Context Logging in Connector Manager v2.0 =
 
 Google Enterprise Connector Manager version 2.0 provides enhanced 
 logging capabilities that makes it easier to troubleshoot installations
 employing multiple Connector Instances.  The log records now contain
 additional context-specific information, most notably the name of the
 connector instance generating the message.
-
-= Details =
 
 The new logging mechanism implements the Nested Diagnostic Context (NDC) 
 and Mapped Diagnostic Context (MDC) patterns as described by Neil Harrison 
