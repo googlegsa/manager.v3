@@ -19,7 +19,7 @@ The
 [http://code.google.com/p/google-enterprise-connector-manager/source/browse/trunk/projects/connector-manager/source/java/com/google/enterprise/connector/logging/MDC.java MDC]
 and 
 [http://code.google.com/p/google-enterprise-connector-manager/source/browse/trunk/projects/connector-manager/source/java/com/google/enterprise/connector/logging/NDC.java NDC] 
-interface closely resembles the one provided by the Apache Log4j implementation,
+interface closely resembles those provided by the Apache Log4j implementation,
 primarily as an aid for the large number of developers and administrators 
 familiar with log4j.
 
@@ -45,7 +45,7 @@ XML element that contains the diagnostic context.
 
 == Changing the Format of the Generated Log Messages ==
 
-The Google Connectors Installer sets up the `SimpleFormatter` with 
+The Google Connectors Installer sets up the `!SimpleFormatter` with 
 its default log message layout.  This layout is similar to the 
 `java.util.logging.SimpleFormatter` produced by previous versions of the 
 Google Enterprise Connector deployments.
