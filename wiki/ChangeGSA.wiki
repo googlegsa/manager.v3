@@ -1,0 +1,31 @@
+#summary Changing the GSA Feed Host for Connector Manager v2.0
+
+= Changing the GSA Feed Host for Connector Manager v2.0 =
+
+Connector Manager version 1.3 implemented a latch property
+that attempts to prevent malicious re-assignments of the GSA
+feed host.  Connector Manager version 2.0 adds an HTTP address
+filter that restricts communication with the Connector Manager
+to either the machine running the Connector Manager (localhost)
+or its configured GSA.
+
+When installing a new connector using the Google Connector
+Installer v2.0 (GCI) wizard, the GSA Feed Host is automatically
+configured to the GSA specified during the installation.
+
+However, associating a Connector Manager with a different
+GSA now requires four (4) separate manual configuration steps.
+The Connector Manager is now more secure, at the expense of
+the Connector Administrator and Support Staff.
+
+If the Administrator wishes to change a Connector Manager
+Feed Host, he must do the following:
+
+  # Shutdown the Connector's Tomcat server.<br><br>
+  # On the Connector Manager server, edit the file:<br>`$TOMCAT_HOME/conf/server.xml`<br>Locate the !RemoteAddrValve configuration line:<br>`<Valve className="org.apache.catalina.valves.RemoteAddrValve" allow="127.0.0.1,..." />`<br>Either replace the old GSA IP address with the new GSA IP address, or simply add the new GSA IP address to the list of allowed addresses.  The Remote Address Filter configuration allows regular expressions.  For details, see the [http://tomcat.apache.org/tomcat-6.0-doc/config/valve.html Apache Tomcat Valve] documentation.<br><br>
+  # On the Connector Manager server, edit the file:<br>`$TOMCAT_HOME/webapps/connector-manager/WEB-INF/applicationContext.properties`<br>Locate the `manager.locked` property and change its value to `false`.<br><br>
+  # Restart the Connector's Tomcat server.<br><br>
+  # On the new GSA Admin UI, go to *Crawl and Index > Feeds* page and add the IP address of the Connector Manager to the *List of Trusted IP Addresses*.<br><br>
+  # On the new GSA Admin UI, go to *Connector Administration > Connector Managers* and add the Connector Manager.
+
+*Note:* `$TOMCAT_HOME` represents the Apache Tomcat installation directory. For Connectors installed using GCI, this would be the Tomcat directory in the Connector Installation.
