@@ -107,7 +107,7 @@ To enable Log4j-compatible XML format, set the `format` property to `log4j`
 or `chainsaw`:
 `com.google.enterprise.connector.logging.XmlFormatter.format=log4j`
 
-Note: A bug in the `XmlFormatter` that shipped with Connector Manager v2.0.0
+*Note:* A bug in the `XmlFormatter` that shipped with Connector Manager v2.0.0
 requires a `format` property to be specified, even if that property value 
 is `default`.  The `format` property must be specified, and it must not be
 empty.
