@@ -1,7 +1,7 @@
 #summary The New TraversalContext Interface in v1.3.
 #labels Phase-Design,Phase-Implementation,Phase-Deploy
 
-= Introduction =
+= The New TraversalContext Interface in v1.3 =
 
 The Connector Manager provides a TraversalContext implementation
 to Connectors so that they may better determine what types of
