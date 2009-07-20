@@ -37,7 +37,7 @@ For instance, the Connector might use TraversalContext information to:
   * Skip a Document entirely.
 
 
-==Making your Connector TraversalContextAware==
+==Making your Connector !TraversalContextAware==
 
 If a Connector's `TraversalManager` implementation adds the 
 `com.google.enterprise.connector.spi.TraversalContextAware` interface,
@@ -65,7 +65,7 @@ class MyTraversalManager
 
 ==Using the TraversalContext to more Intelligently Feed Content==
 
-If a `TraversalContext` is provided, the Connector's TraversalManager
+If a `TraversalContext` is provided, the Connector's !TraversalManager
 may then use it to tailor its Document feed.  For instance, in
 the following code snippet, the `TraversalContext` is used to determine
 whether or not to supply a `google:content` property for a Document.
