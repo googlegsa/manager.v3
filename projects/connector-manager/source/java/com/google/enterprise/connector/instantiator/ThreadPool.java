@@ -23,6 +23,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -78,7 +79,9 @@ public class ThreadPool {
    * ExecutorService for running submitted tasks. Tasks are only submitted
    * through completionService.
    */
-  private final ExecutorService executor = Executors.newCachedThreadPool();
+  private final ExecutorService executor =
+    Executors.newCachedThreadPool(
+        new ThreadNamingThreadFactory("ThreadPoolExecutor"));
 
   /**
    * CompletionService for running submitted tasks. All tasks are submitted
@@ -95,7 +98,8 @@ public class ThreadPool {
    * tasks.
    */
   private final ExecutorService completionExecutor =
-      Executors.newSingleThreadExecutor();
+      Executors.newSingleThreadExecutor(
+          new ThreadNamingThreadFactory("ThreadPoolCompletion"));
 
   /**
    * Dedicated ScheduledThreadPoolExecutor for running time out tasks. Each
@@ -104,7 +108,8 @@ public class ThreadPool {
    * cancels the primary task.
    */
   private final ScheduledThreadPoolExecutor timeoutService =
-      new ScheduledThreadPoolExecutor(1);
+      new ScheduledThreadPoolExecutor(1,
+          new ThreadNamingThreadFactory("ThreadPoolTimeout"));
 
   /**
    * Create a new {@ThreadPool}.
@@ -162,6 +167,7 @@ public class ThreadPool {
       return executor.awaitTermination(waitMillis, TimeUnit.MILLISECONDS);
     } finally {
       completionExecutor.shutdownNow();
+      timeoutService.shutdownNow();
     }
   }
 
@@ -296,6 +302,24 @@ public class ThreadPool {
         Thread.currentThread().interrupt();
       }
       LOGGER.info("Completion task shutdown.");
+    }
+  }
+
+  /**
+   * A {@link ThreadFactory} that adds a prefix to thread names assigned
+   * by {@link Executors#defaultThreadFactory()} to provide diagnostic
+   * context in stack traces.
+   */
+  private static class ThreadNamingThreadFactory implements ThreadFactory {
+    private final ThreadFactory delegate = Executors.defaultThreadFactory();
+    private final String namePrefix;
+    ThreadNamingThreadFactory(String namePrefix) {
+      this.namePrefix = namePrefix + "-";
+    }
+    public Thread newThread(Runnable r) {
+      Thread t = delegate.newThread(r);
+      t.setName(namePrefix + t.getName());
+      return t;
     }
   }
 }
