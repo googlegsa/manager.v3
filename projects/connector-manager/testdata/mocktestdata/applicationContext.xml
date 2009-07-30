@@ -40,13 +40,9 @@
     <constructor-arg index="1" ref="ThreadPool" />
   </bean>
 
-  <bean id="Monitor"
-        class="com.google.enterprise.connector.monitor.HashMapMonitor">
-  </bean>
-
-  <!-- This defines the number of seconds a task such a a Traversal
-       may run before it it is cancelled. The default is 60 minutes 
-       (3600 seconds). This value should exceed 
+  <!-- This defines the number of seconds a task such as a Traversal
+       may run before it it is cancelled. The default is 60 minutes
+       (3600 seconds). This value should exceed
        TraversalTimeLimitSecondsDefault which is a more gentle limit.
   -->
   <bean id="ThreadPoolCancelTimeSecondsDefault" class="java.lang.Long">
@@ -59,7 +55,7 @@
               value="com.google.enterprise.connector.instantiator.ThreadPool.newThreadPool"/>
     <property name="arguments">
       <list>
-	<ref bean="ThreadPoolCancelTimeSecondsDefault"/>
+        <ref bean="ThreadPoolCancelTimeSecondsDefault"/>
       </list>
     </property>
   </bean>
@@ -72,6 +68,5 @@
   <bean id="TraversalScheduler"
         class="com.google.enterprise.connector.scheduler.TraversalScheduler">
     <constructor-arg index="0" ref="Instantiator" />
-    <constructor-arg index="1" ref="Monitor" />
   </bean>
 </beans>

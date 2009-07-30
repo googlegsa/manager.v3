@@ -37,10 +37,6 @@
     <constructor-arg index="2" ref="ConnectorStateStore" />
   </bean>
 
-  <bean id="Monitor"
-        class="com.google.enterprise.connector.monitor.HashMapMonitor">
-  </bean>
-
   <bean id="Manager"
         class="com.google.enterprise.connector.manager.MockManager">
   </bean>

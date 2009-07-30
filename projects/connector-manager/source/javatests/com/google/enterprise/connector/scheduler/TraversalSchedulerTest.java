@@ -21,7 +21,6 @@ import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.instantiator.ThreadPool;
 import com.google.enterprise.connector.instantiator.TypeMap;
-import com.google.enterprise.connector.monitor.HashMapMonitor;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -66,8 +65,7 @@ public class TraversalSchedulerTest extends TestCase {
   private TraversalScheduler runWithSchedules(List<Schedule> schedules,
       Instantiator instantiator, boolean shutdown) {
     storeSchedules(schedules, instantiator);
-    TraversalScheduler scheduler =
-        new TraversalScheduler(instantiator, new HashMapMonitor());
+    TraversalScheduler scheduler = new TraversalScheduler(instantiator);
     scheduler.init();
     Thread thread = new Thread(scheduler, "TraversalScheduler");
     thread.start();
