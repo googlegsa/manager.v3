@@ -18,13 +18,9 @@ import com.google.enterprise.connector.instantiator.BatchResultRecorder;
 import com.google.enterprise.connector.instantiator.ConnectorCoordinator;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.logging.NDC;
-import com.google.enterprise.connector.monitor.Monitor;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 
 import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -51,7 +47,6 @@ public class TraversalScheduler implements Runnable {
     Logger.getLogger(TraversalScheduler.class.getName());
 
   private final Instantiator instantiator;
-  private final Monitor monitor;
   private final HostLoadManager hostLoadManager;
 
   private boolean isInitialized; // Protected by instance lock.
@@ -61,11 +56,9 @@ public class TraversalScheduler implements Runnable {
    * Create a scheduler object.
    *
    * @param instantiator
-   * @param monitor
    */
-  public TraversalScheduler(Instantiator instantiator, Monitor monitor) {
+  public TraversalScheduler(Instantiator instantiator) {
     this.instantiator = instantiator;
-    this.monitor = monitor;
     this.isInitialized = false;
     this.isShutdown = false;
     this.hostLoadManager = new HostLoadManager(instantiator);
@@ -88,13 +81,6 @@ public class TraversalScheduler implements Runnable {
     instantiator.shutdown(interrupt, timeoutInMillis);
     isInitialized = false;
     isShutdown = true;
-  }
-
-  private void updateMonitor() {
-    // TODO: Change this when we figure out what we really want to monitor.
-    Map<String, Date> vars = new HashMap<String, Date>();
-    vars.put(SCHEDULER_CURRENT_TIME, new Date());
-    monitor.setVariables(vars);
   }
 
   private boolean shouldRun(Schedule schedule) {
@@ -176,7 +162,6 @@ public class TraversalScheduler implements Runnable {
             return;
           }
           scheduleBatches();
-          updateMonitor();
           // Give someone else a chance to run.
           try {
             synchronized (this) {
