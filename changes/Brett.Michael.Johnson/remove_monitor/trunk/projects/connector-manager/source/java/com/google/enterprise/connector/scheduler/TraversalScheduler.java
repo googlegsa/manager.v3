@@ -21,9 +21,6 @@ import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 
 import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

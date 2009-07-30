@@ -51,7 +51,7 @@
     <property name="identityConfig" ref="IdentityConfig" />
   </bean>
 
-  <!-- This defines the number of seconds a task such a a Traversal
+  <!-- This defines the number of seconds a task such as a Traversal
        may run before it it is cancelled. The default is 60 minutes
        (3600 seconds). This value should exceed
        TraversalTimeLimitSecondsDefault which is a more gentle limit.
