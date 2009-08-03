@@ -201,9 +201,6 @@ public class DocPusher implements Pusher {
       if (v != null) {
         boolean isPublic = v.toBoolean();
         if (!isPublic) {
-          // TODO(martyg): When the GSA is ready to take ACLUSERS and ACLGROUPS,
-          // this is the place where those properties should be pulled out of
-          // meta data and into the proper ACL Entry element.
           XmlUtils.xmlAppendAttr(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD, prefix);
         }
       }
