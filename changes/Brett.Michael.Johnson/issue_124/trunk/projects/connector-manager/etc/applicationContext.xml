@@ -38,7 +38,7 @@
 
   <!-- Resume feeding if the backlog falls below this value. -->
   <bean id="FeedBacklogFloor" class="java.lang.Integer">
-    <constructor-arg index="0" type="int" value="5000"/>
+    <constructor-arg index="0" type="int" value="15000"/>
   </bean>
 
   <!-- How often to check for feed backlog (in seconds). -->

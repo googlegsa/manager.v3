@@ -82,7 +82,7 @@ public class GsaFeedConnection implements FeedConnection {
   private int backlogCeiling = 50000;
 
   // BacklogCount Floor. Stop throttling feed if backlog drops below floor.
-  private int backlogFloor = 5000;
+  private int backlogFloor = 15000;
 
   // True if the feed is throttled back due to excessive backlog.
   private boolean isBacklogged = false;
@@ -90,7 +90,7 @@ public class GsaFeedConnection implements FeedConnection {
   // Time of last backlog check.
   private long lastBacklogCheck;
 
-  // How often to check for backlog.
+  // How often to check for backlog (in milliseconds).
   private long backlogCheckInterval = 15 * 60 * 1000L;
 
   private static final Logger LOGGER =
@@ -110,10 +110,10 @@ public class GsaFeedConnection implements FeedConnection {
   /**
    * Set the backlog check parameters. The Feed connection can check to see
    * if the GSA is falling behind processing feeds by calling the GSA's
-   * <code>getbacklogcount</code> servlet. If the number of outstanding feed
-   * items exceeds the <code>ceiling</code>, then the GSA is considered
+   * {@code getbacklogcount} servlet. If the number of outstanding feed
+   * items exceeds the {@code ceiling}, then the GSA is considered
    * backlogged.  If the number of outstanding feed items then drops below
-   * the <code>floor</code>, it may be considered no longer backlogged.
+   * the {@code floor}, it may be considered no longer backlogged.
    *
    * @param floor backlog count floor value, below which the GSA is no
    *        longer considered backlogged.
@@ -121,7 +121,6 @@ public class GsaFeedConnection implements FeedConnection {
    *        considered backlogged.
    * @param interval number of seconds to wait between backlog count checks.
    */
-  /* TODO: This could be set from applicationContext.xml via Spring. */
   public void setBacklogCheck(int floor, int ceiling, int interval) {
     backlogFloor = floor;
     backlogCeiling = ceiling;
@@ -285,7 +284,7 @@ public class GsaFeedConnection implements FeedConnection {
       long now = System.currentTimeMillis();
       if ((now - lastBacklogCheck) > backlogCheckInterval) {
         lastBacklogCheck = now;
-        // If disk was full and still is, delay.
+        // If we got a feed error and the feed is still down, delay.
         if (gotFeedError) {
           if (isFeedAvailable()) {
             gotFeedError = false;
@@ -377,8 +376,13 @@ public class GsaFeedConnection implements FeedConnection {
     return -1;
   }
 
-
   /**
+   * Tests for feed error conditions such as insufficient disk space,
+   * unauthorized clients, etc.  If the /xmlfeed command is sent with no
+   * arguments the server will return an error message and a 200 response
+   * code if it can't accept feeds.  If it can continue to accept feeds, then
+   * it will return a 400 bad request since it's missing required parameters.
+   *
    * @return True if feed host is likely to accept a feed request.
    */
   private boolean isFeedAvailable() {
