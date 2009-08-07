@@ -24,6 +24,40 @@
     <constructor-arg index="1" type="int" value="${gsa.feed.port}"/>
   </bean>
 
+  <!-- This is used to throttle back the document feed if the GSA has fallen
+       behind processing outstanding feed items.  We periodically poll the
+       GSA, asking for the count of unprocessed feed items (the backlog count).
+       We also define a ceiling and a floor for the backlog count.  If the
+       backlog count exceeds the ceiling we pause the feed.  We resume the
+       feed once the backlog count drops down below the floor value.
+  -->
+  <!-- Stop feeding if the backlog exceeds this value. -->
+  <bean id="FeedBacklogCeiling" class="java.lang.Integer">
+    <constructor-arg index="0" type="int" value="50000"/>
+  </bean>
+
+  <!-- Resume feeding if the backlog falls below this value. -->
+  <bean id="FeedBacklogFloor" class="java.lang.Integer">
+    <constructor-arg index="0" type="int" value="15000"/>
+  </bean>
+
+  <!-- How often to check for feed backlog (in seconds). -->
+  <bean id="FeedBacklogCheckIntervalSeconds" class="java.lang.Integer">
+    <constructor-arg index="0" type="int" value="900"/>
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="targetObject" ref="FeedConnection"/>
+    <property name="targetMethod" value="setBacklogCheck"/>
+    <property name="arguments">
+      <list>
+        <ref bean="FeedBacklogFloor"/>
+        <ref bean="FeedBacklogCeiling"/>
+        <ref bean="FeedBacklogCheckIntervalSeconds"/>
+      </list>
+    </property>
+  </bean>
+
   <bean id="Pusher"
         class="com.google.enterprise.connector.pusher.DocPusher">
     <constructor-arg index="0" ref="FeedConnection"/>
@@ -139,13 +173,6 @@
     </property>
   </bean>
 
-  <bean id="Instantiator"
-        class="com.google.enterprise.connector.instantiator.SpringInstantiator">
-    <constructor-arg index="0" ref="Pusher" />
-    <constructor-arg index="1" ref="ThreadPool" />
-  </bean>
-
-
   <!-- This defines the number of seconds a task such as a Traversal
        may run before it it is cancelled. The default is 60 minutes
        (3600 seconds). This value should exceed
@@ -166,14 +193,27 @@
     </property>
   </bean>
 
+  <bean id="Instantiator"
+        class="com.google.enterprise.connector.instantiator.SpringInstantiator">
+    <constructor-arg index="0" ref="Pusher" />
+    <constructor-arg index="1" ref="ThreadPool" />
+  </bean>
+
   <bean id="Manager"
         class="com.google.enterprise.connector.manager.ProductionManager">
     <property name="instantiator" ref="Instantiator"/>
   </bean>
 
+  <bean id="HostLoadManager"
+        class="com.google.enterprise.connector.scheduler.HostLoadManager">
+    <constructor-arg index="0" ref="Instantiator"/>
+    <constructor-arg index="1" ref="FeedConnection"/>
+  </bean>
+
   <bean id="TraversalScheduler"
         class="com.google.enterprise.connector.scheduler.TraversalScheduler">
     <constructor-arg index="0" ref="Instantiator"/>
+    <constructor-arg index="1" ref="HostLoadManager"/>
   </bean>
 
   <!-- This defines the number of seconds to wait after a Traversal of the

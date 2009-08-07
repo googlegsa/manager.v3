@@ -65,7 +65,8 @@ public class TraversalSchedulerTest extends TestCase {
   private TraversalScheduler runWithSchedules(List<Schedule> schedules,
       Instantiator instantiator, boolean shutdown) {
     storeSchedules(schedules, instantiator);
-    TraversalScheduler scheduler = new TraversalScheduler(instantiator);
+    TraversalScheduler scheduler = new TraversalScheduler(instantiator,
+        new HostLoadManager(instantiator, null));
     scheduler.init();
     Thread thread = new Thread(scheduler, "TraversalScheduler");
     thread.start();

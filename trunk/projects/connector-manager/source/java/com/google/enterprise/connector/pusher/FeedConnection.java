@@ -42,16 +42,16 @@ public interface FeedConnection {
       throws FeedException, RepositoryException;
 
   /**
-   * Returns the count of unprocessed Feed items. The Feed host may temporarily
-   * stop processing Feed items during periodic maintenance, when resetting the
-   * index, during system configuration, or due to certain error conditions.
-   * The Feed client may make use of the backlog count to throttle back its
-   * feeds.
+   * Returns true if the Feed host has large number of unprocessed Feed items.
+   * The Feed host may temporarily stop processing Feed items during periodic
+   * maintenance, when resetting the index, during system configuration, or
+   * due to certain error conditions. If backlogged, the Feed client may choose
+   * to throttle back its feeds until the backlog clears.
    *
-   * @return number of outstanding feed items, or -1 if this feature is not
-   *         supported.
+   * @return true if the Feed host is known to be backlogged processing feeds,
+   *         false otherwise.
    */
-  public int getBacklogCount();
+  public boolean isBacklogged();
 
   /**
    * Return the version of serialized {@code Schedule} string supported.

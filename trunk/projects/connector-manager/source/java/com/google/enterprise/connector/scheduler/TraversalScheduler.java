@@ -55,13 +55,15 @@ public class TraversalScheduler implements Runnable {
   /**
    * Create a scheduler object.
    *
-   * @param instantiator
+   * @param instantiator used to get schedule for connector instances
+   * @param hostLoadManager used for controlling feed rate
    */
-  public TraversalScheduler(Instantiator instantiator) {
+  public TraversalScheduler(Instantiator instantiator,
+                            HostLoadManager hostLoadManager) {
     this.instantiator = instantiator;
+    this.hostLoadManager = hostLoadManager;
     this.isInitialized = false;
     this.isShutdown = false;
-    this.hostLoadManager = new HostLoadManager(instantiator);
   }
 
   public synchronized void init() {
@@ -161,7 +163,9 @@ public class TraversalScheduler implements Runnable {
                 + "shutdown or not being initialized.");
             return;
           }
-          scheduleBatches();
+          if (!hostLoadManager.shouldDelay()) {
+            scheduleBatches();
+          }
           // Give someone else a chance to run.
           try {
             synchronized (this) {
