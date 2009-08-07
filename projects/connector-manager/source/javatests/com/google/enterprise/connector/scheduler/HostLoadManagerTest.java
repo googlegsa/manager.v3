@@ -46,7 +46,7 @@ public class HostLoadManagerTest extends TestCase {
   public void testMaxFeedRateLimit() {
     final String connectorName = "cn1";
     addLoad(connectorName, 60);
-    HostLoadManager hostLoadManager = new HostLoadManager(instantiator);
+    HostLoadManager hostLoadManager = new HostLoadManager(instantiator, null);
     assertEquals(60, hostLoadManager.determineBatchHint(connectorName));
     hostLoadManager.updateNumDocsTraversed(connectorName, 60);
     assertEquals(0, hostLoadManager.determineBatchHint(connectorName));
@@ -55,7 +55,7 @@ public class HostLoadManagerTest extends TestCase {
   public void testMultipleUpdates() {
     final String connectorName = "cn1";
     addLoad(connectorName, 60);
-    HostLoadManager hostLoadManager = new HostLoadManager(instantiator);
+    HostLoadManager hostLoadManager = new HostLoadManager(instantiator, null);
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
@@ -67,7 +67,7 @@ public class HostLoadManagerTest extends TestCase {
     final String connectorName2 = "cn2";
     addLoad(connectorName1, 60);
     addLoad(connectorName2, 60);
-    HostLoadManager hostLoadManager = new HostLoadManager(instantiator);
+    HostLoadManager hostLoadManager = new HostLoadManager(instantiator, null);
     hostLoadManager.updateNumDocsTraversed(connectorName1, 60);
     assertEquals(0, hostLoadManager.determineBatchHint(connectorName1));
 
@@ -80,7 +80,7 @@ public class HostLoadManagerTest extends TestCase {
     final String connectorName = "cn1";
     addLoad(connectorName, 3600);
     HostLoadManager hostLoadManager =
-      new HostLoadManager(instantiator, periodInMillis);
+      new HostLoadManager(instantiator, null, periodInMillis);
     hostLoadManager.updateNumDocsTraversed(connectorName, 55);
     assertEquals(5, hostLoadManager.determineBatchHint(connectorName));
     // sleep a period (and then some) so that batchHint is reset
@@ -93,7 +93,6 @@ public class HostLoadManagerTest extends TestCase {
     assertEquals(60, hostLoadManager.determineBatchHint(connectorName));
     hostLoadManager.updateNumDocsTraversed(connectorName, 15);
     assertEquals(45, hostLoadManager.determineBatchHint(connectorName));
-
   }
 
   public void testRetryDelay() {
@@ -101,7 +100,7 @@ public class HostLoadManagerTest extends TestCase {
     final String connectorName = "cn1";
     addLoad(connectorName, 60);
     HostLoadManager hostLoadManager =
-      new HostLoadManager(instantiator, periodInMillis);
+      new HostLoadManager(instantiator, null, periodInMillis);
     assertFalse(hostLoadManager.shouldDelay(connectorName));
     hostLoadManager.connectorFinishedTraversal(connectorName, 100);
     assertTrue(hostLoadManager.shouldDelay(connectorName));
@@ -120,7 +119,7 @@ public class HostLoadManagerTest extends TestCase {
     final String connectorName = "cn1";
     addLoad(connectorName, 60);
     HostLoadManager hostLoadManager =
-        new HostLoadManager(instantiator, periodInMillis);
+        new HostLoadManager(instantiator, null, periodInMillis);
     assertFalse(hostLoadManager.shouldDelay(connectorName));
     hostLoadManager.updateNumDocsTraversed(connectorName, 60);
     assertTrue(hostLoadManager.shouldDelay(connectorName));

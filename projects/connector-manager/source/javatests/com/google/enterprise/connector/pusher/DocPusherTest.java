@@ -1637,8 +1637,8 @@ public class DocPusherTest extends TestCase {
         throws FeedException {
       throw new FeedException("Anorexic FeedConnection");
     }
-    public int getBacklogCount() {
-      return -1;
+    public boolean isBacklogged() {
+      return false;
     }
     public int getScheduleFormat() {
       return 1;
@@ -1659,8 +1659,8 @@ public class DocPusherTest extends TestCase {
       return "Bulimic FeedConnection";
     }
     @Override
-    public int getBacklogCount() {
-      return -1;
+    public boolean isBacklogged() {
+      return false;
     }
     @Override
     public int getScheduleFormat() {

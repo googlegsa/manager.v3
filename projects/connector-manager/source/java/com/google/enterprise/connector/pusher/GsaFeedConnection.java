@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -46,6 +47,12 @@ public class GsaFeedConnection implements FeedConnection {
       "Error - Unauthorized Request";
 
   /**
+   * The GSA's response when it runs out of disk space.
+   */
+  public static final String DISKFULL_RESPONSE =
+      "Feed not accepted due to insufficient disk space.";
+
+  /**
    * The GSA's response when there was an internal error.
    */
   public static final String INTERNAL_ERROR_RESPONSE = "Internal Error";
@@ -55,14 +62,36 @@ public class GsaFeedConnection implements FeedConnection {
   // the feed XML will never contain "<<".
   private static final String BOUNDARY = "<<";
 
-  private URL url = null;
-
   // All current GSAs only support legacy Schedule formats.
   private int scheduleFormat = 1;
 
   // Content encodings supported by GSA.
   // TODO: Get compressed encoding support from server.
   private String contentEncodings = "base64binary";
+
+  // True if we recently got a feed error of some sort.
+  private boolean gotFeedError = false;
+
+  // XmlFeed URL
+  private URL feedUrl = null;
+
+  // BacklogCount URL
+  private URL backlogUrl = null;
+
+  // BacklogCount Ceiling. Throttle back feed if backlog exceeds the ceiling.
+  private int backlogCeiling = 50000;
+
+  // BacklogCount Floor. Stop throttling feed if backlog drops below floor.
+  private int backlogFloor = 15000;
+
+  // True if the feed is throttled back due to excessive backlog.
+  private boolean isBacklogged = false;
+
+  // Time of last backlog check.
+  private long lastBacklogCheck;
+
+  // How often to check for backlog (in milliseconds).
+  private long backlogCheckInterval = 15 * 60 * 1000L;
 
   private static final Logger LOGGER =
       Logger.getLogger(GsaFeedConnection.class.getName());
@@ -73,7 +102,29 @@ public class GsaFeedConnection implements FeedConnection {
 
   public synchronized void setFeedHostAndPort(String host, int port)
       throws MalformedURLException {
-    url = new URL("http", host, port, "/xmlfeed");
+    feedUrl = new URL("http", host, port, "/xmlfeed");
+    backlogUrl = new URL("http", host, port, "/getbacklogcount");
+    lastBacklogCheck = 0L;
+  }
+
+  /**
+   * Set the backlog check parameters. The Feed connection can check to see
+   * if the GSA is falling behind processing feeds by calling the GSA's
+   * {@code getbacklogcount} servlet. If the number of outstanding feed
+   * items exceeds the {@code ceiling}, then the GSA is considered
+   * backlogged.  If the number of outstanding feed items then drops below
+   * the {@code floor}, it may be considered no longer backlogged.
+   *
+   * @param floor backlog count floor value, below which the GSA is no
+   *        longer considered backlogged.
+   * @param ceiling backlog count ceiling value, above which the GSA is
+   *        considered backlogged.
+   * @param interval number of seconds to wait between backlog count checks.
+   */
+  public void setBacklogCheck(int floor, int ceiling, int interval) {
+    backlogFloor = floor;
+    backlogCeiling = ceiling;
+    backlogCheckInterval = interval * 1000L;
   }
 
   public void setScheduleFormat(int scheduleFormatVersion) {
@@ -99,6 +150,18 @@ public class GsaFeedConnection implements FeedConnection {
   //@Override
   public String sendData(String dataSource, FeedData feedData)
       throws FeedException, RepositoryException {
+    try {
+      String response = sendFeedData(dataSource, feedData);
+      gotFeedError = !response.equalsIgnoreCase(SUCCESS_RESPONSE);
+      return response;
+    } catch (FeedException fe) {
+      gotFeedError = true;
+      throw fe;
+    }
+  }
+
+  private String sendFeedData(String dataSource, FeedData feedData)
+      throws FeedException, RepositoryException {
     String feedType = ((GsaFeedData)feedData).getFeedType();
     InputStream data = ((GsaFeedData)feedData).getData();
     OutputStream outputStream;
@@ -106,7 +169,7 @@ public class GsaFeedConnection implements FeedConnection {
     try {
       LOGGER.finest("Opening feed connection.");
       synchronized (this) {
-        uc = url.openConnection();
+        uc = feedUrl.openConnection();
       }
       uc.setDoInput(true);
       uc.setDoOutput(true);
@@ -216,9 +279,154 @@ public class GsaFeedConnection implements FeedConnection {
   }
 
   //@Override
-  public int getBacklogCount() {
-    // TODO: Get backlog count from server.
+  public synchronized boolean isBacklogged() {
+    if (lastBacklogCheck != Long.MAX_VALUE) {
+      long now = System.currentTimeMillis();
+      if ((now - lastBacklogCheck) > backlogCheckInterval) {
+        lastBacklogCheck = now;
+        // If we got a feed error and the feed is still down, delay.
+        if (gotFeedError) {
+          if (isFeedAvailable()) {
+            gotFeedError = false;
+          } else {
+            // Feed is still unavailable.
+            return true;
+          }
+        }
+        try {
+          int backlogCount = getBacklogCount();
+          if (backlogCount >= 0) {
+            if (isBacklogged) {
+              // If we were backlogged, but have dropped below the
+              // floor value, then we are no longer backlogged.
+              if (backlogCount < backlogFloor) {
+                isBacklogged = false;
+                LOGGER.fine("Resuming traversal after feed backlog clears.");
+              }
+            } else if (backlogCount > backlogCeiling) {
+              // If the backlogcount exceeds the ceiling value,
+              // then we are definitely backlogged.
+              isBacklogged = true;
+              LOGGER.fine("Pausing traversal due to excessive feed backlog.");
+            }
+          }
+        } catch (UnsupportedOperationException e) {
+          // This older GSA does not support getbacklogcount.
+          // Assume never backlogged and don't check again.
+          isBacklogged = false;
+          lastBacklogCheck = Long.MAX_VALUE;
+          LOGGER.fine("Older GSA lacks backlogcount support.");
+        }
+      }
+    }
+    return isBacklogged;
+  }
+
+  /**
+   * @return the current feed backlog count of the GSA,
+   *         or -1 if the count is unavailable.
+   * @throws UnsupportedOperationException if the GSA does
+   *         not support getbacklogcount.
+   */
+  private int getBacklogCount() {
+    HttpURLConnection conn = null;
+    BufferedReader br = null;
+    String str = null;
+    StringBuilder buf = new StringBuilder();
+    try {
+      LOGGER.finest("Opening backlogcount connection.");
+      synchronized (this) {
+        conn = (HttpURLConnection)backlogUrl.openConnection();
+      }
+      conn.connect();
+      int responseCode = conn.getResponseCode();
+      if (responseCode == HttpURLConnection.HTTP_OK) {
+        br = new BufferedReader(new InputStreamReader(conn.getInputStream(),
+                                                      "UTF8"));
+        while ((str = br.readLine()) != null) {
+          buf.append(str);
+        }
+        str = buf.toString();
+        if (LOGGER.isLoggable(Level.FINEST)) {
+          LOGGER.finest("Received backlogcount: " + str);
+        }
+        return Integer.parseInt(str.trim());
+      } else if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+        throw new UnsupportedOperationException(
+            "Older GSA lacks backlogcount support.");
+      }
+    } catch (IOException ioe) {
+      LOGGER.log(Level.SEVERE, "IOException while reading backlogcount", ioe);
+    } catch (NumberFormatException nfe) {
+      LOGGER.log(Level.SEVERE, "Invalid backlogcount: " + str, nfe);
+    } finally {
+      try {
+        if (br != null) {
+          br.close();
+        }
+        if (conn != null) {
+          conn.disconnect();
+        }
+      } catch (IOException e) {
+        LOGGER.log(Level.SEVERE, "IOException after reading backlogcount", e);
+      }
+    }
+    // If we get here something bad happened.  It is not the case that the
+    // GSA doesn't support getbacklogcount, but we still failed to retrieve it.
     return -1;
+  }
+
+  /**
+   * Tests for feed error conditions such as insufficient disk space,
+   * unauthorized clients, etc.  If the /xmlfeed command is sent with no
+   * arguments the server will return an error message and a 200 response
+   * code if it can't accept feeds.  If it can continue to accept feeds, then
+   * it will return a 400 bad request since it's missing required parameters.
+   *
+   * @return True if feed host is likely to accept a feed request.
+   */
+  private boolean isFeedAvailable() {
+    HttpURLConnection conn = null;
+    BufferedReader br = null;
+    String str = null;
+    StringBuilder buf = new StringBuilder();
+    try {
+      LOGGER.finest("Opening xmlfeed connection.");
+      synchronized (this) {
+        conn = (HttpURLConnection)feedUrl.openConnection();
+      }
+      conn.connect();
+      int responseCode = conn.getResponseCode();
+      if (responseCode == HttpURLConnection.HTTP_OK) {
+        br = new BufferedReader(new InputStreamReader(conn.getInputStream(),
+                                                      "UTF8"));
+        while ((str = br.readLine()) != null) {
+          buf.append(str);
+        }
+        str = buf.toString();
+        if (LOGGER.isLoggable(Level.FINEST)) {
+          LOGGER.finest("Received response: " + str);
+        }
+        return str.contains(SUCCESS_RESPONSE);
+      } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
+        // The expected responseCode if no error conditions are present.
+        return true;
+      }
+    } catch (IOException ioe) {
+      LOGGER.log(Level.SEVERE, "IOException while reading feed status", ioe);
+    } finally {
+      try {
+        if (br != null) {
+          br.close();
+        }
+        if (conn != null) {
+          conn.disconnect();
+        }
+      } catch (IOException e) {
+        LOGGER.log(Level.SEVERE, "IOException after reading feed status", e);
+      }
+    }
+    return false;
   }
 
   //@Override

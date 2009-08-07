@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.scheduler;
 
 import com.google.enterprise.connector.instantiator.Instantiator;
+import com.google.enterprise.connector.pusher.FeedConnection;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 
 import java.util.Collections;
@@ -52,21 +53,33 @@ public class HostLoadManager {
   private final Instantiator instantiator;
 
   /**
+   * Used for determining feed backlog status.
+   */
+  private final FeedConnection feedConnection;
+
+  /**
    * By default, the HostLoadManager will use a one minute period for
    * calculating the batchHint.
    *
-   * @param instantiator used to get schedule for connector instances
+   * @param instantiator used to get Schedule for Connector instances
+   * @param feedConnection used to get FeedConnection backlog status
    */
-  public HostLoadManager(Instantiator instantiator) {
-    this(instantiator, MINUTE_IN_MILLIS);
+  public HostLoadManager(Instantiator instantiator,
+                         FeedConnection feedConnection) {
+    this(instantiator, feedConnection, MINUTE_IN_MILLIS);
   }
 
   /**
+   * Constructor used by unit tests.
+   *
    * @param instantiator used to get schedule for connector instances
+   * @param feedConnection used to get FeedConnection backlog status
    * @param periodInMillis time period in which we enforce the maxFeedRate
    */
-  public HostLoadManager(Instantiator instantiator, long periodInMillis) {
+  public HostLoadManager(Instantiator instantiator,
+                         FeedConnection feedConnection, long periodInMillis) {
     this.instantiator = instantiator;
+    this.feedConnection = feedConnection;
     this.periodInMillis = periodInMillis;
     startTimeInMillis = System.currentTimeMillis();
     connectorNameToNumDocsTraversed =
@@ -176,7 +189,16 @@ public class HostLoadManager {
     return (remainingDocsToTraverse > 0) ? remainingDocsToTraverse : 0;
   }
 
+  /**
+   * Return true if this connector instance should not be scheduled
+   * for traversal at this time.
+   *
+   * @param connectorName name of the connector instance
+   * @return true if the connector should not run at this time
+   */
   public boolean shouldDelay(String connectorName) {
+    // Is the connector waiting after a finished traversal pass
+    // or waiting for an error condition to clear?
     Object value = connectorNameToFinishTime.get(connectorName);
     if (value != null) {
       long finishTime = ((Long)value).longValue();
@@ -184,10 +206,23 @@ public class HostLoadManager {
         return true;
       }
     }
+
+    // Has the connector exceeded it maximum number of documents per minute?
     int maxDocsPerPeriod =
         (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
     int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
     int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
     return (remainingDocsToTraverse <= 0);
+  }
+
+  /**
+   * Return true if systemic conditions indicate that traversals should
+   * not happen at this time.  Perhaps the GSA is backlogged  or the
+   * feedergate has died or the Connector Manager is being reconfigured.
+   *
+   * @return true if traversals should not run at this time.
+   */
+  public boolean shouldDelay() {
+    return (feedConnection != null) ? feedConnection.isBacklogged() : false;
   }
 }

@@ -54,8 +54,8 @@ public class MockFeedConnection implements FeedConnection {
   }
 
   //@Override
-  public int getBacklogCount() {
-    return -1;
+  public boolean isBacklogged() {
+    return false;
   }
 
   //@Override
