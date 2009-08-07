@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+  <bean id="FeedConnection"
+        class="com.google.enterprise.connector.pusher.MockFeedConnection">
+  </bean>
+
+  <bean id="Pusher"
+        class="com.google.enterprise.connector.pusher.DocPusher">
+    <constructor-arg index="0" ref="FeedConnection" />
+  </bean>
+
+  <bean id="ConnectorScheduleStore"
+        class="com.google.enterprise.connector.persist.MockConnectorScheduleStore">
+  </bean>
+
+  <bean id="ConnectorStateStore"
+        class="com.google.enterprise.connector.persist.MockConnectorStateStore">
+  </bean>
+
+  <bean id="ConnectorConfigStore"
+        class="com.google.enterprise.connector.persist.FileStore">
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.instantiator.InstanceInfo.setConnectorStores"/>
+    <property name="arguments">
+      <list>
+        <ref bean="ConnectorConfigStore"/>
+        <ref bean="ConnectorScheduleStore"/>
+        <ref bean="ConnectorStateStore"/>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="Instantiator"
+        class="com.google.enterprise.connector.instantiator.SpringInstantiator">
+    <constructor-arg index="0" ref="Pusher" />
+    <constructor-arg index="1" ref="ThreadPool" />
+  </bean>
+
+  <!-- This defines the number of seconds a task such as a Traversal
+       may run before it it is cancelled. The default is 60 minutes
+       (3600 seconds). This value should exceed
+       TraversalTimeLimitSecondsDefault which is a more gentle limit.
+  -->
+  <bean id="ThreadPoolCancelTimeSecondsDefault" class="java.lang.Long">
+    <constructor-arg index="0" type="long" value="5"/>
+  </bean>
+
+  <bean id="ThreadPool"
+        class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.instantiator.ThreadPool.newThreadPool"/>
+    <property name="arguments">
+      <list>
+        <ref bean="ThreadPoolCancelTimeSecondsDefault"/>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="Manager"
+        class="com.google.enterprise.connector.manager.ProductionManager">
+    <property name="instantiator" ref="Instantiator" />
+  </bean>
+
+  <bean id="TraversalScheduler"
+        class="com.google.enterprise.connector.scheduler.TraversalScheduler">
+    <constructor-arg index="0" ref="Instantiator" />
+  </bean>
+</beans>
