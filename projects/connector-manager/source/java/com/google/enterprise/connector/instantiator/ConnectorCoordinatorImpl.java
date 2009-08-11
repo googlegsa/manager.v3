@@ -93,6 +93,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       ThreadPool threadPool) {
     this(instanceInfo.getName(), pusher, threadPool);
     this.instanceInfo = instanceInfo;
+    this.typeInfo = instanceInfo.getTypeInfo();
   }
 
   public String getName() {
@@ -137,8 +138,8 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
 
   public synchronized ConfigureResponse getConfigForm(Locale locale)
       throws ConnectorNotFoundException, InstantiatorException {
-    ConnectorType connectorType = typeInfo.getConnectorType();
     Map<String, String> configMap = getInstanceInfo().getConnectorConfig();
+    ConnectorType connectorType = typeInfo.getConnectorType();
     try {
       return connectorType.getPopulatedConfigForm(configMap, locale);
     } catch (Exception e) {
