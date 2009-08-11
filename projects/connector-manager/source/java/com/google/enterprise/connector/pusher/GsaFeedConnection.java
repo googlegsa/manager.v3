@@ -357,8 +357,10 @@ public class GsaFeedConnection implements FeedConnection {
       }
     } catch (IOException ioe) {
       LOGGER.log(Level.SEVERE, "IOException while reading backlogcount", ioe);
-    } catch (NumberFormatException nfe) {
-      LOGGER.log(Level.SEVERE, "Invalid backlogcount: " + str, nfe);
+    } catch (NumberFormatException ignored) {
+      // Got a non-integer backlog count - probably an error message,
+      // which we have already logged (at Finest).  Simply return -1,
+      // indicating that the backlogcount is not currently available.
     } finally {
       try {
         if (br != null) {
