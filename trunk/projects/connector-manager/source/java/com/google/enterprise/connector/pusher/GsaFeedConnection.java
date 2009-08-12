@@ -356,7 +356,7 @@ public class GsaFeedConnection implements FeedConnection {
             "Older GSA lacks backlogcount support.");
       }
     } catch (IOException ioe) {
-      LOGGER.log(Level.SEVERE, "IOException while reading backlogcount", ioe);
+      LOGGER.finest("Error while reading backlogcount: " + ioe.getMessage());
     } catch (NumberFormatException ignored) {
       // Got a non-integer backlog count - probably an error message,
       // which we have already logged (at Finest).  Simply return -1,
@@ -370,7 +370,7 @@ public class GsaFeedConnection implements FeedConnection {
           conn.disconnect();
         }
       } catch (IOException e) {
-        LOGGER.log(Level.SEVERE, "IOException after reading backlogcount", e);
+        LOGGER.finest("Error after reading backlogcount: " + e.getMessage());
       }
     }
     // If we get here something bad happened.  It is not the case that the
@@ -412,10 +412,11 @@ public class GsaFeedConnection implements FeedConnection {
         return str.contains(SUCCESS_RESPONSE);
       } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
         // The expected responseCode if no error conditions are present.
+        LOGGER.finest("Xmlfeed connection seems to be accepting new feeds.");
         return true;
       }
     } catch (IOException ioe) {
-      LOGGER.log(Level.SEVERE, "IOException while reading feed status", ioe);
+      LOGGER.finest("Error while reading feed status: " + ioe.getMessage());
     } finally {
       try {
         if (br != null) {
@@ -425,7 +426,7 @@ public class GsaFeedConnection implements FeedConnection {
           conn.disconnect();
         }
       } catch (IOException e) {
-        LOGGER.log(Level.SEVERE, "IOException after reading feed status", e);
+        LOGGER.finest("Error after reading feed status: " + e.getMessage());
       }
     }
     return false;
