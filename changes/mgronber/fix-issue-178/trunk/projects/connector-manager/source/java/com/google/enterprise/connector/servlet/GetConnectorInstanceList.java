@@ -84,6 +84,7 @@ public class GetConnectorInstanceList extends HttpServlet {
    * @param manager a Manager
    * @param out PrintWriter where the response is written
    */
+  @SuppressWarnings("deprecation")
   public static void handleDoPost(Manager manager, PrintWriter out) {
     ServletUtil.writeRootTag(out, false);
     ServletUtil.writeManagerSplash(out);
@@ -124,28 +125,17 @@ public class GetConnectorInstanceList extends HttpServlet {
           .toString(connectorStatus.getStatus()));
 
       String schedule = connectorStatus.getSchedule();
-      // TODO: Remove this when pre-6.2 GSA's no longer need to be supported.
-      String oldConnectorScheduleXmlTag = "ConnectorSchedule";
       if (schedule == null) {
         LOGGER.log(Level.WARNING, connectorStatus.getName() + ": " +
             ServletUtil.LOG_RESPONSE_NULL_SCHEDULE);
         // TODO: Remove this when pre-6.2 GSA's no longer need to be supported.
-        ServletUtil.writeEmptyXMLElement(out, 3, oldConnectorScheduleXmlTag);
+        ServletUtil.writeEmptyXMLElement(out, 3,
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
         // Add element using proper tag that can be handled by new GSAs.
         ServletUtil.writeEmptyXMLElement(out, 3,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES);
       } else {
         StringBuilder buffer = new StringBuilder();
-        // TODO: Remove this when pre-6.2 GSA's no longer need to be supported.
-        buffer.append('\n');
-        ServletUtil.writeXMLTagWithAttrs(buffer, 3,
-            oldConnectorScheduleXmlTag,
-            ServletUtil.ATTRIBUTE_VERSION + "1" + ServletUtil.QUOTE,
-            false);
-        buffer.append(Schedule.toLegacyString(schedule));
-        ServletUtil.writeXMLTag(buffer, 0,
-            oldConnectorScheduleXmlTag, true);
-
         // Put out new style Schedules element.
         ServletUtil.writeXMLTagWithAttrs(buffer, 3,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
@@ -154,6 +144,16 @@ public class GetConnectorInstanceList extends HttpServlet {
         buffer.append(schedule);
         ServletUtil.writeXMLTag(buffer, 0,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES, true);
+
+        // TODO: Remove this when pre-6.2 GSA's no longer need to be supported.
+        buffer.append('\n');
+        ServletUtil.writeXMLTagWithAttrs(buffer, 3,
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULE,
+            ServletUtil.ATTRIBUTE_VERSION + "1" + ServletUtil.QUOTE,
+            false);
+        buffer.append(Schedule.toLegacyString(schedule));
+        ServletUtil.writeXMLTag(buffer, 0,
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULE, true);
 
         out.println(buffer.toString());
       }
