@@ -84,6 +84,7 @@ public class GetConnectorInstanceList extends HttpServlet {
    * @param manager a Manager
    * @param out PrintWriter where the response is written
    */
+  @SuppressWarnings("deprecation")
   public static void handleDoPost(Manager manager, PrintWriter out) {
     ServletUtil.writeRootTag(out, false);
     ServletUtil.writeManagerSplash(out);
@@ -127,11 +128,15 @@ public class GetConnectorInstanceList extends HttpServlet {
       if (schedule == null) {
         LOGGER.log(Level.WARNING, connectorStatus.getName() + ": " +
             ServletUtil.LOG_RESPONSE_NULL_SCHEDULE);
+        // TODO: Remove this when pre-6.2 GSA's no longer need to be supported.
         ServletUtil.writeEmptyXMLElement(out, 3,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
+        // Add element using proper tag that can be handled by new GSAs.
+        ServletUtil.writeEmptyXMLElement(out, 3,
+            ServletUtil.XMLTAG_CONNECTOR_SCHEDULES);
       } else {
-        // Put out new style Schedules element.
         StringBuilder buffer = new StringBuilder();
+        // Put out new style Schedules element.
         ServletUtil.writeXMLTagWithAttrs(buffer, 3,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
             ServletUtil.ATTRIBUTE_VERSION + "3" + ServletUtil.QUOTE,
@@ -140,7 +145,7 @@ public class GetConnectorInstanceList extends HttpServlet {
         ServletUtil.writeXMLTag(buffer, 0,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES, true);
 
-        // Also put out old-style Schedule element for legacy GSAs.
+        // TODO: Remove this when pre-6.2 GSA's no longer need to be supported.
         buffer.append('\n');
         ServletUtil.writeXMLTagWithAttrs(buffer, 3,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULE,
@@ -149,6 +154,7 @@ public class GetConnectorInstanceList extends HttpServlet {
         buffer.append(Schedule.toLegacyString(schedule));
         ServletUtil.writeXMLTag(buffer, 0,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULE, true);
+
         out.println(buffer.toString());
       }
       ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_CONNECTOR_INSTANCE,
