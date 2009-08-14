@@ -139,6 +139,7 @@ public class ServletUtil {
   public static final String XMLTAG_DECISION = "Decision";
 
   public static final String XMLTAG_CONNECTOR_SCHEDULES = "ConnectorSchedules";
+  @Deprecated
   public static final String XMLTAG_CONNECTOR_SCHEDULE = "ConnectorSchedule";
   public static final String XMLTAG_DISABLED = "disabled";
   public static final String XMLTAG_LOAD = "load";

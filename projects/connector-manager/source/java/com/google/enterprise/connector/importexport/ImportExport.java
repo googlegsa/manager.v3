@@ -162,6 +162,7 @@ public class ImportExport {
    * Deserializes connectors from XML.
    * @return a List of ImportExportConnectors
    */
+  @SuppressWarnings("deprecation")
   public static List<ImportExportConnector> fromXmlConnectorsElement(
       Element connectorsElement) {
     List<ImportExportConnector> connectors =
@@ -177,7 +178,13 @@ public class ImportExport {
       String type = ServletUtil.getFirstElementByTagName(
           connectorElement, ServletUtil.XMLTAG_CONNECTOR_TYPE);
       String scheduleString = ServletUtil.getFirstElementByTagName(
-          connectorElement, ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
+          connectorElement, ServletUtil.XMLTAG_CONNECTOR_SCHEDULES);
+      // TODO: Remove this when v2.0 and older no longer needs to be supported.
+      if (scheduleString == null) {
+        // Could be dealing with old format.
+        scheduleString = ServletUtil.getFirstElementByTagName(
+            connectorElement, ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
+      }
       Element configElement = (Element) connectorElement.getElementsByTagName(
           ServletUtil.XMLTAG_CONNECTOR_CONFIG).item(0);
       Map<String, String> config = ServletUtil.getAllAttributes(
@@ -223,8 +230,15 @@ public class ImportExport {
           pw, 2, ServletUtil.XMLTAG_CONNECTOR_NAME, name);
       ServletUtil.writeXMLElement(
           pw, 2, ServletUtil.XMLTAG_CONNECTOR_TYPE, type);
-      ServletUtil.writeXMLElement(
-          pw, 2, ServletUtil.XMLTAG_CONNECTOR_SCHEDULE, scheduleString);
+      StringBuilder builder = new StringBuilder();
+      ServletUtil.writeXMLTagWithAttrs(builder, 2,
+          ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
+          ServletUtil.ATTRIBUTE_VERSION + "3" + ServletUtil.QUOTE,
+          false);
+      builder.append(scheduleString);
+      ServletUtil.writeXMLTag(builder, 0,
+          ServletUtil.XMLTAG_CONNECTOR_SCHEDULES, true);
+      pw.println(builder.toString());
       ServletUtil.writeXMLTag(
           pw, 2, ServletUtil.XMLTAG_CONNECTOR_CONFIG, false);
       for (Map.Entry<String, String> me : config.entrySet()) {
