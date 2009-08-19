@@ -70,7 +70,7 @@ public class ConnectorMessageCode {
   public static final int ATTEMPT_TO_DELETE_ACTIVE_MANAGER = 5410;
 
   public static final int INVALID_CONNECTOR_NAME = 5411;
-  public static final int MISSING_OR_UNKNOWN_SCHEDULE_VERSION = 5412;
+  public static final int MISSING_OR_UNKNOWN_CONNECTOR_SCHEDULE_VERSION = 5412;
   public static final int OVERLAP_BAD_SCHEDULE = 5413;
   public static final int CONNECTOR_DISCONNECTED = 5414;
   public static final int CONNECTOR_MANAGER_DISCONNECTED = 5415;
