@@ -26,25 +26,25 @@ import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStreamReader;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Reader;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -241,7 +241,8 @@ public class ImportExport {
       pw.println(builder.toString());
       ServletUtil.writeXMLTag(
           pw, 2, ServletUtil.XMLTAG_CONNECTOR_CONFIG, false);
-      for (Map.Entry<String, String> me : config.entrySet()) {
+      Map<String, String> sorted = new TreeMap<String, String>(config);
+      for (Map.Entry<String, String> me : sorted.entrySet()) {
         String attributeString = ServletUtil.ATTRIBUTE_NAME + me.getKey()
             + ServletUtil.QUOTE + ServletUtil.ATTRIBUTE_VALUE
             + me.getValue() + ServletUtil.QUOTE;
