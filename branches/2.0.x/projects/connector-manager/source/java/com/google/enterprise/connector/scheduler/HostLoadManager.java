@@ -31,13 +31,12 @@ public class HostLoadManager {
   private static final Logger LOGGER =
       Logger.getLogger(HostLoadManager.class.getName());
 
-  // size of batches for traversal
-  private static final int BATCH_SIZE = 100;
-
   private static final long MINUTE_IN_MILLIS = 60 * 1000;
   private long startTimeInMillis;
   private Map<String, Integer> connectorNameToNumDocsTraversed;
   private Map<String, Long> connectorNameToFinishTime;
+  // Default batch size to something reasonable.
+  private int batchSize = 500;
 
   /**
    * Number of milliseconds before we ignore previously fed documents.  In
@@ -59,6 +58,20 @@ public class HostLoadManager {
    */
   public HostLoadManager(Instantiator instantiator) {
     this(instantiator, MINUTE_IN_MILLIS);
+  }
+
+  /*
+   * Only used for testing.
+   */
+  int getBatchSize() {
+    return batchSize;
+  }
+
+  /**
+   * @param batchSize the batchSize to set
+   */
+  public void setBatchSize(int batchSize) {
+    this.batchSize = batchSize;
   }
 
   /**
@@ -170,8 +183,8 @@ public class HostLoadManager {
           + "  docsTraversed = " + docsTraversed
           + "  remainingDocsToTraverse = " + remainingDocsToTraverse);
     }
-    if (remainingDocsToTraverse > BATCH_SIZE) {
-      remainingDocsToTraverse = BATCH_SIZE;
+    if (remainingDocsToTraverse > batchSize) {
+      remainingDocsToTraverse = batchSize;
     }
     return (remainingDocsToTraverse > 0) ? remainingDocsToTraverse : 0;
   }

@@ -67,13 +67,13 @@ public class TraversalScheduler implements Scheduler {
    * @param workQueue
    */
   public TraversalScheduler(Instantiator instantiator, Monitor monitor,
-      WorkQueue workQueue) {
+      WorkQueue workQueue, HostLoadManager hostLoadManager) {
     this.instantiator = instantiator;
+    this.hostLoadManager = hostLoadManager;
     this.monitor = monitor;
     this.workQueue = workQueue;
     this.isInitialized = false;
     this.isShutdown = false;
-    this.hostLoadManager = new HostLoadManager(instantiator);
     this.runnables = new HashMap<String, WorkQueueItem>();
     this.removedConnectors = new HashSet<String>();
   }
