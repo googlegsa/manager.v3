@@ -68,7 +68,8 @@ public class TraversalSchedulerTest extends TestCase {
     storeSchedules(schedules, instantiator);
     WorkQueue workQueue = new WorkQueue(2, 5000);
     TraversalScheduler scheduler =
-      new TraversalScheduler(instantiator, new HashMapMonitor(), workQueue);
+        new TraversalScheduler(instantiator, new HashMapMonitor(), workQueue,
+            new HostLoadManager(instantiator));
     scheduler.init();
     Thread thread = new Thread(scheduler, "TraversalScheduler");
     thread.start();

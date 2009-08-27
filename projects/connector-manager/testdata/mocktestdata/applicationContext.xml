@@ -56,10 +56,17 @@
     <property name="instantiator" ref="Instantiator" />
   </bean>
 
+  <bean id="HostLoadManager"
+        class="com.google.enterprise.connector.scheduler.HostLoadManager">
+    <constructor-arg index="0" ref="Instantiator"/>
+    <property name="batchSize" value="500"/>
+  </bean>
+
   <bean id="TraversalScheduler"
         class="com.google.enterprise.connector.scheduler.TraversalScheduler">
     <constructor-arg index="0" ref="Instantiator" />
     <constructor-arg index="1" ref="Monitor" />
     <constructor-arg index="2" ref="WorkQueue" />
+    <constructor-arg index="3" ref="HostLoadManager" />
   </bean>
 </beans>
