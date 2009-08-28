@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.scheduler;
 
 import com.google.enterprise.connector.instantiator.MockInstantiator;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 
 import junit.framework.TestCase;
@@ -132,5 +133,26 @@ public class HostLoadManagerTest extends TestCase {
       // Ignore.
     }
     assertFalse(hostLoadManager.shouldDelay(connectorName));
+  }
+
+  public void testBatchSize() {
+    // Need to test through Spring to make sure the property works.
+    Context.refresh();
+    Context context = Context.getInstance();
+    context.setStandaloneContext("testdata/mocktestdata/applicationContext.xml",
+        null);
+    // Get the HostLoadManager bean.
+    HostLoadManager hostLoadManager = (HostLoadManager) context.getRequiredBean(
+        "HostLoadManager", HostLoadManager.class);
+    assertEquals(500, hostLoadManager.getBatchSize());
+
+    // Now get one from a different context.
+    Context.refresh();
+    context = Context.getInstance();
+    context.setStandaloneContext(
+        "testdata/schedulerTests/applicationContext.xml", null);
+    hostLoadManager = (HostLoadManager) context.getRequiredBean(
+        "HostLoadManager", HostLoadManager.class);
+    assertEquals(200, hostLoadManager.getBatchSize());
   }
 }

@@ -208,6 +208,7 @@
         class="com.google.enterprise.connector.scheduler.HostLoadManager">
     <constructor-arg index="0" ref="Instantiator"/>
     <constructor-arg index="1" ref="FeedConnection"/>
+    <property name="batchSize" value="500">
   </bean>
 
   <bean id="TraversalScheduler"
