@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.common.Base64FilterInputStream;
-import com.google.enterprise.connector.common.ByteArraysOutputStream;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
@@ -31,12 +30,10 @@ import com.google.enterprise.connector.spiimpl.BinaryValue;
 import com.google.enterprise.connector.spiimpl.DateValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
 
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -79,11 +76,6 @@ public class DocPusher implements Pusher {
    * Once the accumulated feed exceeds this value, close it and sumbit.
    */
   private static int maxFeedSize = 1024 * 1024;
-
-  /**
-   * Size of a couple IO buffers.
-   */
-  private static int ioBufferSize = 32 * 1024;
 
   /**
    * This field is used to construct a feed record in parallel to the main feed
@@ -157,29 +149,16 @@ public class DocPusher implements Pusher {
    * don't get too close to the GSA's absolute maximum
    * size of 1GB.
    *
-   * @param maxFeedSize maximum size to accumulated in
+   * @param maximumFeedSize maximum size to accumulated in
    * feed, before sending the feed on to the GSA.
    */
-  public void setMaximumFeedSize(int maxFeedSize) {
+  public void setMaximumFeedSize(int maximumFeedSize) {
     if (maxFeedSize > (900 * 1024 * 1024)) {
       // Don't exceed the GSA maximum feed size of 1GB.
-      this.maxFeedSize = 900 * 1024 * 1024;
+      maxFeedSize = 900 * 1024 * 1024;
     } else {
-      this.maxFeedSize = maxFeedSize;
+      maxFeedSize = maximumFeedSize;
     }
-  }
-
-  /**
-   * Set the size of Input/Output buffers used for
-   * reading document content from the Repository and
-   * generating FeedLog entries.  Larger buffer sizes
-   * reduce the number of I/O requests to the Repository,
-   * but increase the risk of an OutOfMemory error.
-   *
-   * @param ioBufferSize
-   */
-  public void setInputOutputBufferSize(int ioBufferSize) {
-    this.ioBufferSize = ioBufferSize;
   }
 
   /**
@@ -740,7 +719,18 @@ public class DocPusher implements Pusher {
     // send the feed off to the GSA.
     XmlFeed feed = xmlFeed.get();
     if (feed != null) {
-      if (feedType != feed.getFeedType() || feed.size() > maxFeedSize) {
+      if (feedType != feed.getFeedType()) {
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("A new feedType, " + feedType
+              + ", requires a new feed for " + connectorName
+              + ". Closing feed and sending to GSA.");
+        }
+        submitFeed();
+      } else if (feed.size() > ((maxFeedSize/10)*8)) {
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("Feed for " + connectorName + " has grown to "
+              + feed.size() + " bytes. Closing feed and sending to GSA.");
+        }
         submitFeed();
       }
     }
@@ -750,7 +740,10 @@ public class DocPusher implements Pusher {
         LOGGER.fine("Creating new " + feedType + " feed for " + connectorName);
       }
       try {
-        xmlFeed.set(feed = new XmlFeed(connectorName, feedType));
+        xmlFeed.set(feed = new XmlFeed(connectorName, feedType, maxFeedSize));
+      } catch (OutOfMemoryError me) {
+        throw new PushException("Unable to allocate feed buffer.  Try reducing"
+                                + " the maximumFeedSize setting.", me);
       } catch (IOException ioe) {
         throw new PushException("Error creating feed", ioe);
       }
@@ -771,15 +764,30 @@ public class DocPusher implements Pusher {
     }
 
     boolean isThrowing = false;
+    int resetPoint = feed.size();
     try {
       feed.readFrom(xmlData);
+      feed.incrementRecordCount();
       if (LOGGER.isLoggable(Level.FINER)) {
         LOGGER.finer("Document "
             + getRequiredString(document, SpiConstants.PROPNAME_DOCID)
             + " from connector " + connectorName + " added to feed.");
       }
+    } catch (OutOfMemoryError me) {
+      if ((feed.size() - resetPoint) < maxFeedSize/2) {
+        // If this was a large document, skip it.
+        feed.reset(resetPoint);
+        throw new RepositoryDocumentException("Out of memory, skipping.", me);
+      } else {
+        throw new PushException("Out of memory building feed, retrying.", me);
+      }
+    } catch (RepositoryDocumentException rde) {
+      // Skipping this document, remove it from the feed.
+      feed.reset(resetPoint);
+      throw rde;
     } catch (IOException ioe) {
       LOGGER.log(Level.SEVERE, "IOException while reading: skipping", ioe);
+      feed.reset(resetPoint);
       Throwable t = ioe.getCause();
       isThrowing = true;
       if (t != null && (t instanceof RepositoryException)) {
@@ -809,6 +817,7 @@ public class DocPusher implements Pusher {
    * @throws RepositoryException
    */
   public void flush() throws PushException, FeedException, RepositoryException {
+    LOGGER.fine("Flushing accumulated feed to GSA");
     submitFeed();
   }
 
@@ -816,7 +825,9 @@ public class DocPusher implements Pusher {
    * Cancel any feed being constructed.  Any accumulated feed data is lost.
    */
   public void cancel() {
-    if (xmlFeed.get() != null) {
+    XmlFeed feed;
+    if ((feed = xmlFeed.get()) != null) {
+      LOGGER.fine("Discarding accumulated feed for " + feed.dataSource);
       xmlFeed.remove();
     }
     if (feedLog.get() == null) {
@@ -837,6 +848,15 @@ public class DocPusher implements Pusher {
     if ((feed = xmlFeed.get()) == null) {
       return;
     }
+
+    String feedType = feed.getFeedType();
+    String connectorName = feed.getDataSource();
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Submitting " + feedType + " feed for " + connectorName
+          + " to the GSA. " + feed.getRecordCount() + " records totaling "
+          + feed.size() + " bytes.");
+    }
+
     xmlFeed.remove();
     try {
       feed.close();
@@ -868,12 +888,6 @@ public class DocPusher implements Pusher {
       }
     }
 
-    String feedType = feed.getFeedType();
-    String connectorName = feed.getDataSource();
-    if (LOGGER.isLoggable(Level.FINE)) {
-      LOGGER.fine("Submitting accumulated " + feedType + " feed for "
-                  + connectorName + " to the GSA");
-    }
     GsaFeedData feedData = new GsaFeedData(feedType, feed);
     gsaResponse = feedConnection.sendData(connectorName, feedData);
     if (!gsaResponse.equals(GsaFeedConnection.SUCCESS_RESPONSE)) {
@@ -925,16 +939,18 @@ public class DocPusher implements Pusher {
     return suffix.toString();
   }
 
-  class XmlFeed extends ByteArraysOutputStream {
+  class XmlFeed extends ByteArrayOutputStream {
     private String dataSource;
     private String feedType;
     private boolean isClosed;
-    private byte[] inputBuffer;
+    private int recordCount;
 
-    public XmlFeed(String dataSource, String feedType) throws IOException {
-      super(maxFeedSize);
-      isClosed = false;
-      inputBuffer = new byte[ioBufferSize];
+    public XmlFeed(String dataSource, String feedType, int feedSize) throws IOException {
+      super(feedSize);
+      this.dataSource = dataSource;
+      this.feedType = feedType;
+      this.recordCount = 0;
+      this.isClosed = false;
       String prefix = xmlFeedPrefix(dataSource, feedType);
       write(prefix.getBytes(XML_DEFAULT_ENCODING));
       if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
@@ -951,14 +967,65 @@ public class DocPusher implements Pusher {
       return feedType;
     }
 
-    // Read the data from the InputStream and add it to the feed.
-    public synchronized void readFrom(InputStream is) throws IOException {
-      int bytesRead;
-      while ((bytesRead = is.read(inputBuffer)) >= 0) {
-        write(inputBuffer, 0, bytesRead);
-      }
+    /**
+     * Bumps the count of records stored in this feed.
+     */
+    public synchronized void incrementRecordCount() {
+      recordCount++;
     }
 
+    /**
+     * Return the count of records.
+     */
+    public synchronized int getRecordCount() {
+      return recordCount;
+    }
+
+    /**
+     * Resets the size of this ByteArrayOutputStream to the
+     * specified {@code size}, effectively discarding any
+     * data that may have been written passed that point.
+     * <p>
+     * This method may be used to reduce the size of the data stored,
+     * but not to increase it.  In other words, the specified {@code size}
+     * cannot be greater than the current size.
+     *
+     * @param size new data size.
+     */
+    public synchronized void reset(int size) {
+      if (size < 0 || size > super.count) {
+        throw new IllegalArgumentException(
+            "New size must not be negative or greater than the current size.");
+      }
+      super.count = size;
+    }
+
+    /**
+     * Reads the complete contents of the supplied InputStream
+     * directly into buffer of this ByteArrayOutputStream.
+     * This avoids the data copy that would occur if using
+     * {@code InputStream.read(byte[], int, int)}, followed by
+     * {@code ByteArrayOutputStream.write(byte[], int, int)}.
+     *
+     * @param in the InputStream from which to read the data.
+     * @throws IOException if an I/O error occurs.
+     */
+    public synchronized void readFrom(InputStream in) throws IOException {
+      int bytes = 0;
+      do {
+        super.count += bytes;
+        if (super.count >= super.buf.length) {
+          // Need to grow buffer.
+          int incr = Math.min(super.buf.length, 8 * 1024 * 1024);
+          byte[] newbuf = new byte[super.buf.length + incr];
+          System.arraycopy(super.buf, 0, newbuf, 0, super.buf.length);
+          super.buf = newbuf;
+        }
+        bytes = in.read(super.buf, super.count, super.buf.length - super.count);
+      } while (bytes != -1);
+    }
+
+    @Override
     public synchronized void close() throws IOException {
       if (!isClosed) {
         isClosed = true;

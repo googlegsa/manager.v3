@@ -115,6 +115,7 @@ public class QueryTraverser implements Traverser {
         resultSet = queryTraversalManager.startTraversal();
       } catch (Exception e) {
         LOGGER.log(Level.WARNING, "startTraversal threw exception: ", e);
+        return Traverser.ERROR_WAIT;
       }
     } else {
       try {
@@ -122,6 +123,7 @@ public class QueryTraverser implements Traverser {
         resultSet = queryTraversalManager.resumeTraversal(connectorState);
       } catch (Exception e) {
         LOGGER.log(Level.WARNING, "resumeTraversal threw exception: ", e);
+        return Traverser.ERROR_WAIT;
       }
     }
 
@@ -170,6 +172,10 @@ public class QueryTraverser implements Traverser {
           pusher.take(nextDocument, connectorName);
           counter++;
           if (counter == batchHint) {
+            // Wrap up any accumulated feed data and send it off.
+            if (!isCancelled()) {
+              pusher.flush();
+            }
             break;
           }
         } catch (RepositoryDocumentException e) {
@@ -195,13 +201,13 @@ public class QueryTraverser implements Traverser {
         }
       }
     } catch (RepositoryException e) {
+      // Drop the entire batch on the floor.  Do not call checkpoint
+      // (as there is a discrepancy between what the Connector thinks
+      // it has fed, and what actually has been pushed).
       LOGGER.log(Level.SEVERE, "Repository Exception during traversal.", e);
-      if (counter == 0) {
-        // If we blew up on the first document, it may be an indication that
-        // there is a systemic Connector problem (for instance, loss of
-        // connectivity to its repository).  Wait a while, then try again.
-        counter = Traverser.ERROR_WAIT;
-      }
+      resultSet = null;
+      counter = Traverser.ERROR_WAIT;
+      pusher.cancel();
     } catch (PushException e) {
       LOGGER.log(Level.SEVERE, "Push Exception during traversal.", e);
       // Drop the entire batch on the floor.  Do not call checkpoint

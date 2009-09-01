@@ -14,11 +14,9 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.common.ByteArraysOutputStream;
-import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.RepositoryDocumentException;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
@@ -28,7 +26,7 @@ import java.io.IOException;
  */
 public class MockFeedConnection implements FeedConnection {
 
-  private final StringBuffer buf = new StringBuffer(2080);
+  private final StringBuffer buf = new StringBuffer(4096);
 
   public String getFeed() {
     String result = buf.toString();
@@ -41,10 +39,14 @@ public class MockFeedConnection implements FeedConnection {
 
   public String sendData(String dataSource, FeedData feedData)
       throws RepositoryException {
-    ByteArraysOutputStream data = ((GsaFeedData)feedData).getData();
-    String dataStr = data.toString();
-    buf.append(dataStr);
-    System.out.println(dataStr);
+    try {
+      ByteArrayOutputStream data = ((GsaFeedData)feedData).getData();
+      String dataStr = data.toString("UTF-8");
+      buf.append(dataStr);
+      System.out.println(dataStr);
+    } catch (IOException e) {
+      throw new RepositoryException("Error sending data", e);
+    }
     return GsaFeedConnection.SUCCESS_RESPONSE;
   }
 }

@@ -14,12 +14,9 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.common.ByteArraysOutputStream;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.RepositoryDocumentException;
 
-import java.io.IOException;
-import java.util.logging.Level;
+import java.io.ByteArrayOutputStream;
 import java.util.logging.Logger;
 
 /**
@@ -41,7 +38,7 @@ public class NullFeedConnection implements FeedConnection {
 
   public String sendData(String dataSource, FeedData feedData)
       throws RepositoryException {
-    ByteArraysOutputStream data = ((GsaFeedData)feedData).getData();
+    ByteArrayOutputStream data = ((GsaFeedData)feedData).getData();
     LOGGER.fine("Null FeedConnection discarded " + data.size() + " bytes.");
     return GsaFeedConnection.SUCCESS_RESPONSE;
   }

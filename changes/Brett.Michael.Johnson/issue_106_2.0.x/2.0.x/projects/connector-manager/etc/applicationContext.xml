@@ -32,20 +32,9 @@
          efficiency of sending feed data to the GSA.  Too many small feeds
          may overrun the GSA's feed processor.  However, specifying too large
          a feed size reduces concurrency and will likely result in OutOfMemory
-         errors in the Java VM.  Large values also make roll-back after feed
-         failures more expensive.  The default value of 50MB will typically
-         send 50 - 100 documents per content feed file (many more for
-         meta-data-and-url feeds).
+         errors in the Java VM, especially if using multiple Connector Instances.
     -->
-    <property name="maximumFeedSize" value="52428800"/>
-    <!-- This specifies the size in bytes of the Input/Output buffers used
-         when reading content from the Repository and sending it to the GSA.
-         The above-mentioned feed file will grow in increments of this value.
-         Larger buffers theoretically reduce the number I/O requests to the
-         Repository, but increase the likelyhood of an OutOfMemory Errors.
-         The default value of 1MB should be sufficient for most cases.
-    -->
-    <property name="inputOutputBufferSize" value="1048576"/>
+    <property name="maximumFeedSize" value="20971520"/>
   </bean>
 
   <!-- Create a Handler for the Feed Logger and add it to the logger. -->
@@ -187,7 +176,7 @@
   <bean id="HostLoadManager"
         class="com.google.enterprise.connector.scheduler.HostLoadManager">
     <constructor-arg index="0" ref="Instantiator"/>
-    <property name="batchSize" value="500">
+    <property name="batchSize" value="500"/>
   </bean>
 
   <bean id="TraversalScheduler"

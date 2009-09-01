@@ -14,12 +14,11 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.common.ByteArraysOutputStream;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.RepositoryDocumentException;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -84,7 +83,7 @@ public class GsaFeedConnection implements FeedConnection {
   public String sendData(String dataSource, FeedData feedData)
       throws FeedException, RepositoryException {
     String feedType = ((GsaFeedData)feedData).getFeedType();
-    ByteArraysOutputStream data = ((GsaFeedData)feedData).getData();
+    ByteArrayOutputStream data = ((GsaFeedData)feedData).getData();
     OutputStream outputStream;
     HttpURLConnection uc;
     StringBuilder buf = new StringBuilder();
