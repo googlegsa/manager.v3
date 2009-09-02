@@ -110,7 +110,7 @@ or `chainsaw`:
 *Note:* A bug in the `XmlFormatter` that shipped with Connector Manager v2.0.0
 requires a `format` property to be specified, even if that property value 
 is `default`.  The `format` property must be specified, and it must not be
-empty.
+empty.  This issue was fixed in the Connector Manager v2.0.2 patch release.
 
 
 == Configuring the Tomcat Server to Enable Connector Diagnostic Logging ==
