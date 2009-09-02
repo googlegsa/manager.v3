@@ -766,7 +766,7 @@ public class DocPusher implements Pusher {
     InputStream xmlData = null;
     try {
       xmlData = buildXmlData(document, connectorName, feedType,
-                             (Context.getInstance().getTeedFeedFile() != null));
+          (Context.getInstance().getTeedFeedFile() != null));
     } catch (RuntimeException e) {
       LOGGER.log(Level.WARNING,
           "Rethrowing RuntimeException as RepositoryDocumentException", e);
@@ -963,7 +963,7 @@ public class DocPusher implements Pusher {
       String prefix = xmlFeedPrefix(dataSource, feedType);
       write(prefix.getBytes(XML_DEFAULT_ENCODING));
       if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-        feedLog.set(new StringBuilder());
+        feedLog.set(new StringBuilder(256 * 1024));
         feedLog.get().append(prefix);
       }
     }

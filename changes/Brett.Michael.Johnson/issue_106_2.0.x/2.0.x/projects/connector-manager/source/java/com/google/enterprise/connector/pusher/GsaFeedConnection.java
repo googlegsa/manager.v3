@@ -104,7 +104,7 @@ public class GsaFeedConnection implements FeedConnection {
 
       LOGGER.finest("Opening feed connection.");
       synchronized (this) {
-        uc = (HttpURLConnection)url.openConnection();
+        uc = (HttpURLConnection) url.openConnection();
       }
       uc.setDoInput(true);
       uc.setDoOutput(true);
