@@ -173,8 +173,8 @@ public class HostLoadManager {
    * @return hint to the number of documents traverser should traverse
    */
   public int determineBatchHint(String connectorName) {
-    int maxDocsPerPeriod =
-        (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
+    int maxDocsPerPeriod = (int)
+        ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f) + 0.5);
     int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
     int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
     if (LOGGER.isLoggable(Level.FINEST)) {
@@ -197,8 +197,8 @@ public class HostLoadManager {
         return true;
       }
     }
-    int maxDocsPerPeriod =
-        (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
+    int maxDocsPerPeriod = (int)
+        ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f) + 0.5);
     int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
     int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
     return (remainingDocsToTraverse <= 0);

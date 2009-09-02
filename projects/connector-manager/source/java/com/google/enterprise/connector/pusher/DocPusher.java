@@ -29,10 +29,10 @@ import com.google.enterprise.connector.spi.SpiConstants.ActionType;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
 import com.google.enterprise.connector.spiimpl.DateValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
+import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
-import java.io.File;
+import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -66,16 +66,35 @@ public class DocPusher implements Pusher {
   private static final Level FEED_LOG_LEVEL = Level.FINER;
 
   /**
+   * This is used to build up a multi-record feed.  Documents are added
+   * to the feed until the size of the feed exceeds the maxFeedSize
+   * or we are finished with the batch of documents. The feed is then
+   * submitted to the feed connection.
+   */
+  private final ThreadLocal<XmlFeed> xmlFeed = new ThreadLocal<XmlFeed>();
+
+  /**
+   * Once the accumulated feed exceeds this value, close it and sumbit.
+   */
+  // Default value is smallish 1MB, for the convenience of unit testing.
+  private static int maxFeedSize = 1024 * 1024;
+
+  /**
+   * Configured maximum file size supported.
+   */
+  private FileSizeLimitInfo fileSizeLimit = new FileSizeLimitInfo();
+
+  /**
    * This field is used to construct a feed record in parallel to the main feed
    * InputStream construction.  It is only used if the feed logging level is set
    * to the appropriate level.  It only exists during the time the main feed is
    * being constructed.  Once sufficient information has been appended to this
    * buffer its contents will be logged and it will be nulled.
    */
-  private final ThreadLocal<StringBuffer> feedLogRecord =
-      new ThreadLocal<StringBuffer>();
-  private static Set<String> propertySkipSet;
+  private final ThreadLocal<StringBuilder> feedLog =
+      new ThreadLocal<StringBuilder>();
 
+  private static Set<String> propertySkipSet;
   static {
     propertySkipSet = new HashSet<String>();
     propertySkipSet.add(SpiConstants.PROPNAME_CONTENT);
@@ -117,7 +136,6 @@ public class DocPusher implements Pusher {
 
   private final FeedConnection feedConnection;
   private String gsaResponse;
-  private boolean feedWarning;
 
   /**
    *
@@ -125,11 +143,36 @@ public class DocPusher implements Pusher {
    */
   public DocPusher(FeedConnection feedConnection) {
     this.feedConnection = feedConnection;
-    this.feedWarning = false;
   }
 
   public static Logger getFeedLogger() {
     return FEED_WRAPPER_LOGGER;
+  }
+
+  /**
+   * Set the maximum size of an accumulated feed file.
+   * The pusher might actually exceed this maximum by
+   * the size of a single document's feed record, so
+   * don't get too close to the GSA's absolute maximum
+   * size of 1GB.
+   *
+   * @param maximumFeedSize maximum size to accumulated in
+   *        feed, before sending the feed on to the GSA.
+   */
+  public void setMaximumFeedSize(int maximumFeedSize) {
+    if (maxFeedSize > (900 * 1024 * 1024)) {
+      // Don't exceed the GSA maximum feed size of 1GB.
+      maxFeedSize = 900 * 1024 * 1024;
+    } else {
+      maxFeedSize = maximumFeedSize;
+    }
+  }
+
+  /**
+   * Set the maximum size of the document content.
+   */
+  public void setFileSizeLimitInfo(FileSizeLimitInfo fileSizeLimitInfo) {
+    this.fileSizeLimit = fileSizeLimitInfo;
   }
 
   /**
@@ -252,11 +295,12 @@ public class DocPusher implements Pusher {
     }
 
     if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-      feedLogRecord.get().append(prefix);
+      StringBuilder log = feedLog.get();
+      log.append(prefix);
       if (contentAllowed && content != null) {
-        feedLogRecord.get().append("...content...");
+        log.append("...content...");
       }
-      feedLogRecord.get().append(suffix);
+      log.append(suffix);
     }
 
     return is;
@@ -525,27 +569,7 @@ public class DocPusher implements Pusher {
    */
   protected InputStream buildXmlData(Document document, String connectorName,
       String feedType, boolean loggingContent) throws RepositoryException {
-    // build prefix
-    StringBuffer prefix = new StringBuffer();
-    prefix.append(XML_START);
-    prefix.append(XmlUtils.xmlWrapStart(XML_GSAFEED));
-    prefix.append(XmlUtils.xmlWrapStart(XML_HEADER));
-    prefix.append(XmlUtils.xmlWrapStart(XML_DATASOURCE));
-    prefix.append(connectorName);
-    prefix.append(XmlUtils.xmlWrapEnd(XML_DATASOURCE));
-    prefix.append(XmlUtils.xmlWrapStart(XML_FEEDTYPE));
-    prefix.append(feedType);
-    prefix.append(XmlUtils.xmlWrapEnd(XML_FEEDTYPE));
-    prefix.append(XmlUtils.xmlWrapEnd(XML_HEADER));
-    prefix.append(XmlUtils.xmlWrapStart(XML_GROUP));
-    prefix.append("\n");
-
-    // build suffix
-    StringBuffer suffix = new StringBuffer();
-    suffix.append(XmlUtils.xmlWrapEnd(XML_GROUP));
-    suffix.append(XmlUtils.xmlWrapEnd(XML_GSAFEED));
-
-    // build record
+    // Build an XML feed record for the document.
     String searchurl = null;
     if (feedType.equals(XML_FEED_METADATA_AND_URL)) {
       searchurl = getOptionalString(document, SpiConstants.PROPNAME_SEARCHURL);
@@ -573,8 +597,8 @@ public class DocPusher implements Pusher {
           getOptionalString(document, SpiConstants.PROPNAME_TITLE));
 
       if (null != contentStream) {
-        encodedContentStream =
-            new Base64FilterInputStream(contentStream, loggingContent);
+        encodedContentStream = new Base64FilterInputStream(
+            new BigDocumentFilterInputStream(contentStream), loggingContent);
       }
     }
 
@@ -611,26 +635,8 @@ public class DocPusher implements Pusher {
       }
     }
 
-    if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-      feedLogRecord.set(new StringBuffer());
-      feedLogRecord.get().append(prefix);
-    }
-
-    InputStream recordInputStream = xmlWrapRecord(searchurl, displayUrl,
-        lastModified, encodedContentStream, mimetype, actionType, document,
-        feedType);
-
-    InputStream is = stringWrappedInputStream(prefix.toString(),
-        recordInputStream, suffix.toString());
-
-    if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-      feedLogRecord.get().append(suffix);
-      FEED_LOGGER.log(FEED_LOG_LEVEL,
-          feedLogRecord.get().toString());
-      feedLogRecord.set(null);
-    }
-
-    return is;
+    return xmlWrapRecord(searchurl, displayUrl, lastModified,
+        encodedContentStream, mimetype, actionType, document, feedType);
   }
 
   /**
@@ -701,35 +707,6 @@ public class DocPusher implements Pusher {
     }
   }
 
-  // FilterInputStream which "tees" all content to an OutputStream.
-  // (named after the UNIX 'tee' command)
-  private static class TeeInputStream extends FilterInputStream {
-    protected OutputStream out;
-
-    public TeeInputStream(InputStream in, OutputStream out) {
-      super(in);
-      this.out = out;
-    }
-
-    @Override
-    public int read() throws IOException {
-      int retval = super.read();
-      if (retval != -1) {
-        out.write(retval);
-      }
-      return retval;
-    }
-
-    @Override
-    public int read(byte[] b, int off, int len) throws IOException {
-      int retval = super.read(b, off, len);
-      if (retval != -1) {
-        out.write(b, off, retval);
-      }
-      return retval;
-    }
-  }
-
   /**
    * Takes a Document and sends a the feed to the GSA.
    *
@@ -742,76 +719,380 @@ public class DocPusher implements Pusher {
    */
   public void take(Document document, String connectorName)
       throws PushException, FeedException, RepositoryException {
-    String feedType = null;
-    InputStream xmlData = null;
-    String osFilename = Context.getInstance().getTeedFeedFile();
+    String feedType;
     try {
       feedType = getFeedType(document);
+    } catch (RuntimeException e) {
+      LOGGER.log(Level.WARNING,
+          "Rethrowing RuntimeException as RepositoryDocumentException", e);
+      throw new RepositoryDocumentException(e);
+    }
+
+    // All feeds in a feed file must be of the same type.
+    // If the feed would change type, or if the feed file is full,
+    // send the feed off to the GSA.
+    XmlFeed feed = xmlFeed.get();
+    if (feed != null) {
+      if (feedType != feed.getFeedType()) {
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("A new feedType, " + feedType
+              + ", requires a new feed for " + connectorName
+              + ". Closing feed and sending to GSA.");
+        }
+        submitFeed();
+      } else if (feed.size() > ((maxFeedSize / 10) * 8)) {
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("Feed for " + connectorName + " has grown to "
+              + feed.size() + " bytes. Closing feed and sending to GSA.");
+        }
+        submitFeed();
+      }
+    }
+
+    if ((feed = xmlFeed.get()) == null) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("Creating new " + feedType + " feed for " + connectorName);
+      }
+      try {
+        xmlFeed.set(feed = new XmlFeed(connectorName, feedType, maxFeedSize));
+      } catch (OutOfMemoryError me) {
+        throw new PushException("Unable to allocate feed buffer.  Try reducing"
+                                + " the maximumFeedSize setting.", me);
+      } catch (IOException ioe) {
+        throw new PushException("Error creating feed", ioe);
+      }
+    }
+
+    InputStream xmlData = null;
+    try {
       xmlData = buildXmlData(document, connectorName, feedType,
-                             (osFilename != null));
+          (Context.getInstance().getTeedFeedFile() != null));
     } catch (RuntimeException e) {
       LOGGER.log(Level.WARNING,
           "Rethrowing RuntimeException as RepositoryDocumentException", e);
       throw new RepositoryDocumentException(e);
     }
     if (xmlData == null) {
-      LOGGER.log(Level.WARNING,
-          "Skipped this document for feeding, continuing");
+      LOGGER.warning("Skipped this document for feeding, continuing");
       return;
     }
-    // Setup the teedFeedFile if declared
-    InputStream is = xmlData;
-    File osFile = null;
-    OutputStream os = null;
-    if (osFilename != null) {
-      osFile = new File(osFilename);
-      try {
-        os = new BufferedOutputStream(new FileOutputStream(osFile, true), 32768);
-        is = new TeeInputStream(xmlData, os);
-        if (!feedWarning && FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-          LOGGER.log(Level.WARNING, "Both TeedFeedFile Logging and FeedLogging"
-              + " are enabled.  Performance may be severely constrained. "
-              + " Persist only for short-term troubleshooting purposes.");
-          feedWarning = true;
-        }
-      } catch (IOException e) {
-        LOGGER.log(Level.WARNING, "cannot write file: " +
-            osFile.getAbsolutePath(), e);
-      }
-    }
+
+    boolean isThrowing = false;
+    int resetPoint = feed.size();
     try {
-      GsaFeedData feedData = new GsaFeedData(feedType, is);
-      gsaResponse = feedConnection.sendData(connectorName, feedData);
-      if (!gsaResponse.equals(GsaFeedConnection.SUCCESS_RESPONSE)) {
-        String eMessage = gsaResponse;
-        if (GsaFeedConnection.UNAUTHORIZED_RESPONSE.equals(gsaResponse)) {
-          eMessage += ": Client is not authorized to send feeds. Make "
-              + "sure the GSA is configured to trust feeds from your host.";
-        } else if (GsaFeedConnection.INTERNAL_ERROR_RESPONSE.equals(gsaResponse)) {
-          eMessage += ": Check GSA status or feed format.";
-        }
-        throw new PushException(eMessage);
-      }
+      feed.readFrom(xmlData);
+      feed.incrementRecordCount();
       if (LOGGER.isLoggable(Level.FINER)) {
         LOGGER.finer("Document "
             + getRequiredString(document, SpiConstants.PROPNAME_DOCID)
-            + " from connector " + connectorName + " sent.");
+            + " from connector " + connectorName + " added to feed.");
+      }
+    } catch (OutOfMemoryError me) {
+      feed.reset(resetPoint);
+      throw new PushException("Out of memory building feed, retrying.", me);
+    } catch (RepositoryDocumentException rde) {
+      // Skipping this document, remove it from the feed.
+      feed.reset(resetPoint);
+      throw rde;
+    } catch (IOException ioe) {
+      LOGGER.log(Level.SEVERE, "IOException while reading: skipping", ioe);
+      feed.reset(resetPoint);
+      Throwable t = ioe.getCause();
+      isThrowing = true;
+      if (t != null && (t instanceof RepositoryException)) {
+        throw (RepositoryException) t;
+      } else {
+        throw new RepositoryDocumentException("I/O error reading data", ioe);
       }
     } finally {
       try {
         xmlData.close();
       } catch (IOException e) {
-        LOGGER.log(Level.WARNING, "Rethrowing IOException as PushException", e);
-        throw new PushException("IOException: " + e.getMessage(), e);
-      }
-      if (os != null) {
-        try {
-          os.close();
-        } catch (IOException e) {
-          LOGGER.log(Level.WARNING, "cannot close file: " +
-              osFile.getAbsolutePath());
+        if (!isThrowing) {
+          LOGGER.log(Level.WARNING,
+              "Rethrowing IOException as PushException", e);
+          throw new PushException("IOException: " + e.getMessage(), e);
         }
       }
+    }
+  }
+
+  /**
+   * Finish a feed.  No more documents are anticipated.
+   * If there is an outstanding feed file, submit it to the GSA.
+   *
+   * @throws PushException if Pusher problem
+   * @throws FeedException if transient Feed problem
+   * @throws RepositoryException
+   */
+  public void flush() throws PushException, FeedException, RepositoryException {
+    LOGGER.fine("Flushing accumulated feed to GSA");
+    submitFeed();
+  }
+
+  /**
+   * Cancels any feed being constructed.  Any accumulated feed data is lost.
+   */
+  public void cancel() {
+    XmlFeed feed = xmlFeed.get();
+    if (feed != null) {
+      LOGGER.fine("Discarding accumulated feed for " + feed.dataSource);
+      xmlFeed.remove();
+    }
+    if (feedLog.get() == null) {
+      feedLog.remove();
+    }
+  }
+
+  /**
+   * Takes the XmlFeed and sends the feed to the GSA.
+   *
+   * @throws PushException if Pusher problem
+   * @throws FeedException if transient Feed problem
+   * @throws RepositoryException
+   */
+  private void submitFeed()
+      throws PushException, FeedException, RepositoryException {
+    XmlFeed feed = xmlFeed.get();
+    if (feed == null) {
+      return;
+    }
+
+    String feedType = feed.getFeedType();
+    String connectorName = feed.getDataSource();
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Submitting " + feedType + " feed for " + connectorName
+          + " to the GSA. " + feed.getRecordCount() + " records totaling "
+          + feed.size() + " bytes.");
+    }
+
+    xmlFeed.remove();
+    try {
+      feed.close();
+    } catch (IOException ioe) {
+      throw new PushException("Error closing feed", ioe);
+    }
+
+    // Write the Feed to the TeedFeedFile, if one was specified.
+    String teedFeedFilename = Context.getInstance().getTeedFeedFile();
+    if (teedFeedFilename != null) {
+      OutputStream os = null;
+      try {
+        os = new FileOutputStream(teedFeedFilename, true);
+        feed.writeTo(os);
+      } catch (IOException e) {
+        LOGGER.log(Level.WARNING, "Cannot write to file: "
+            + teedFeedFilename, e);
+      } finally {
+        if (os != null) {
+          try {
+            os.close();
+          } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Cannot close file: "
+                + teedFeedFilename, e);
+          }
+        }
+      }
+    }
+
+    GsaFeedData feedData = new GsaFeedData(feedType, feed);
+    gsaResponse = feedConnection.sendData(connectorName, feedData);
+    if (!gsaResponse.equals(GsaFeedConnection.SUCCESS_RESPONSE)) {
+      String eMessage = gsaResponse;
+      if (GsaFeedConnection.UNAUTHORIZED_RESPONSE.equals(gsaResponse)) {
+        eMessage += ": Client is not authorized to send feeds. Make "
+            + "sure the GSA is configured to trust feeds from your host.";
+      }
+      if (GsaFeedConnection.INTERNAL_ERROR_RESPONSE.equals(gsaResponse)) {
+        eMessage += ": Check GSA status or feed format.";
+      }
+      throw new PushException(eMessage);
+    }
+  }
+
+  /**
+   * Construct the XML header for a feed file.
+   *
+   * @param dataSource The dataSource for the feed.
+   * @param feedType The type of feed.
+   * @return XML feed header string.
+   */
+   private String xmlFeedPrefix(String dataSource, String feedType) {
+    // Build prefix.
+    StringBuffer prefix = new StringBuffer();
+    prefix.append(XML_START).append('\n');
+    prefix.append(XmlUtils.xmlWrapStart(XML_GSAFEED)).append('\n');
+    prefix.append(XmlUtils.xmlWrapStart(XML_HEADER)).append('\n');
+    prefix.append(XmlUtils.xmlWrapStart(XML_DATASOURCE));
+    prefix.append(dataSource);
+    prefix.append(XmlUtils.xmlWrapEnd(XML_DATASOURCE));
+    prefix.append(XmlUtils.xmlWrapStart(XML_FEEDTYPE));
+    prefix.append(feedType);
+    prefix.append(XmlUtils.xmlWrapEnd(XML_FEEDTYPE));
+    prefix.append(XmlUtils.xmlWrapEnd(XML_HEADER));
+    prefix.append(XmlUtils.xmlWrapStart(XML_GROUP)).append('\n');
+    return prefix.toString();
+  }
+
+  /**
+   * Construct the XML footer for a feed file.
+   *
+   * @return XML feed suffix string.
+   */
+  private String xmlFeedSuffix() {
+    // Build suffix.
+    StringBuffer suffix = new StringBuffer();
+    suffix.append(XmlUtils.xmlWrapEnd(XML_GROUP));
+    suffix.append(XmlUtils.xmlWrapEnd(XML_GSAFEED));
+    return suffix.toString();
+  }
+
+  class XmlFeed extends ByteArrayOutputStream {
+    private String dataSource;
+    private String feedType;
+    private boolean isClosed;
+    private int recordCount;
+
+    public XmlFeed(String dataSource, String feedType, int feedSize)
+        throws IOException {
+      super(feedSize);
+      this.dataSource = dataSource;
+      this.feedType = feedType;
+      this.recordCount = 0;
+      this.isClosed = false;
+      String prefix = xmlFeedPrefix(dataSource, feedType);
+      write(prefix.getBytes(XML_DEFAULT_ENCODING));
+      if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
+        feedLog.set(new StringBuilder(256 * 1024));
+        feedLog.get().append(prefix);
+      }
+    }
+
+    public String getDataSource() {
+      return dataSource;
+    }
+
+    public String getFeedType() {
+      return feedType;
+    }
+
+    /**
+     * Bumps the count of records stored in this feed.
+     */
+    public synchronized void incrementRecordCount() {
+      recordCount++;
+    }
+
+    /**
+     * Return the count of records.
+     */
+    public synchronized int getRecordCount() {
+      return recordCount;
+    }
+
+    /**
+     * Resets the size of this ByteArrayOutputStream to the
+     * specified {@code size}, effectively discarding any
+     * data that may have been written passed that point.
+     * <p>
+     * This method may be used to reduce the size of the data stored,
+     * but not to increase it.  In other words, the specified {@code size}
+     * cannot be greater than the current size.
+     *
+     * @param size new data size.
+     */
+    public synchronized void reset(int size) {
+      if (size < 0 || size > super.count) {
+        throw new IllegalArgumentException(
+            "New size must not be negative or greater than the current size.");
+      }
+      super.count = size;
+    }
+
+    /**
+     * Reads the complete contents of the supplied InputStream
+     * directly into buffer of this ByteArrayOutputStream.
+     * This avoids the data copy that would occur if using
+     * {@code InputStream.read(byte[], int, int)}, followed by
+     * {@code ByteArrayOutputStream.write(byte[], int, int)}.
+     *
+     * @param in the InputStream from which to read the data.
+     * @throws IOException if an I/O error occurs.
+     */
+    public synchronized void readFrom(InputStream in) throws IOException {
+      int bytes = 0;
+      do {
+        super.count += bytes;
+        if (super.count >= super.buf.length) {
+          // Need to grow buffer.
+          int incr = Math.min(super.buf.length, 8 * 1024 * 1024);
+          byte[] newbuf = new byte[super.buf.length + incr];
+          System.arraycopy(super.buf, 0, newbuf, 0, super.buf.length);
+          super.buf = newbuf;
+        }
+        bytes = in.read(super.buf, super.count, super.buf.length - super.count);
+      } while (bytes != -1);
+    }
+
+    @Override
+    public synchronized void close() throws IOException {
+      if (!isClosed) {
+        isClosed = true;
+        String suffix = xmlFeedSuffix();
+        write(suffix.getBytes(XML_DEFAULT_ENCODING));
+        if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
+          feedLog.get().append(suffix);
+          FEED_LOGGER.log(FEED_LOG_LEVEL, feedLog.get().toString());
+          feedLog.remove();
+        }
+      }
+    }
+  }
+
+  /**
+   * A FilterInput stream that protects against large documents.
+   * If we have read more than FileSizeLimitInfo.maxDocumentSize
+   * bytes from the input, abort the read by throwing an IOException.
+   */
+  public class BigDocumentFilterInputStream extends FilterInputStream {
+    private final long maxDocumentSize;
+    private long currentDocumentSize;
+
+    public BigDocumentFilterInputStream(InputStream in) {
+      super(in);
+      this.maxDocumentSize = fileSizeLimit.maxDocumentSize();
+    }
+
+    @Override
+    public int read() throws IOException {
+      int val = super.read();
+      if (val != -1) {
+        if (++currentDocumentSize > maxDocumentSize) {
+          throw new IOException("Maximum Document size exceeded.");
+        }
+      }
+      return val;
+    }
+
+    @Override
+    public int read(byte b[], int off, int len) throws IOException {
+      int bytesRead = 0;
+      if (currentDocumentSize <= maxDocumentSize) {
+        bytesRead = super.read(b, off,
+            (int) Math.min(len, maxDocumentSize - currentDocumentSize + 1));
+      }
+      if (bytesRead != -1) {
+        currentDocumentSize += bytesRead;
+        if (currentDocumentSize > maxDocumentSize) {
+          throw new IOException("Maximum Document size exceeded.");
+        }
+      }
+      return bytesRead;
+    }
+
+    @Override
+    public boolean markSupported() {
+      return false;
     }
   }
 }

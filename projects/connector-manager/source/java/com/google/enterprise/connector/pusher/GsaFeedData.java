@@ -14,7 +14,7 @@
 
 package com.google.enterprise.connector.pusher;
 
-import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
 
 /**
  * Class used to encapsulate the feed data to be sent using the
@@ -22,9 +22,9 @@ import java.io.InputStream;
  */
 public class GsaFeedData implements FeedData {
   private String feedType;
-  private InputStream data;
+  private ByteArrayOutputStream data;
 
-  public GsaFeedData(String feedType, InputStream data) {
+  public GsaFeedData(String feedType, ByteArrayOutputStream data) {
     this.feedType = feedType;
     this.data = data;
   }
@@ -35,10 +35,10 @@ public class GsaFeedData implements FeedData {
   public void setFeedType(String feedType) {
     this.feedType = feedType;
   }
-  public InputStream getData() {
+  public ByteArrayOutputStream getData() {
     return data;
   }
-  public void setData(InputStream data) {
+  public void setData(ByteArrayOutputStream data) {
     this.data = data;
   }
 }

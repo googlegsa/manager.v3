@@ -115,6 +115,7 @@ public class QueryTraverser implements Traverser {
         resultSet = queryTraversalManager.startTraversal();
       } catch (Exception e) {
         LOGGER.log(Level.WARNING, "startTraversal threw exception: ", e);
+        return Traverser.ERROR_WAIT;
       }
     } else {
       try {
@@ -122,6 +123,7 @@ public class QueryTraverser implements Traverser {
         resultSet = queryTraversalManager.resumeTraversal(connectorState);
       } catch (Exception e) {
         LOGGER.log(Level.WARNING, "resumeTraversal threw exception: ", e);
+        return Traverser.ERROR_WAIT;
       }
     }
 
@@ -146,6 +148,11 @@ public class QueryTraverser implements Traverser {
           LOGGER.finer("Pulling next document from connector " + connectorName);
           nextDocument = resultSet.nextDocument();
           if (nextDocument == null) {
+            // No more documents.  Wrap up any accumulated feed data
+            // and send it off.
+            if (!isCancelled()) {
+              pusher.flush();
+            }
             break;
           } else {
             // Fetch DocId to use in messages.
@@ -165,38 +172,43 @@ public class QueryTraverser implements Traverser {
           pusher.take(nextDocument, connectorName);
           counter++;
           if (counter == batchHint) {
+            // Wrap up any accumulated feed data and send it off.
+            if (!isCancelled()) {
+              pusher.flush();
+            }
             break;
           }
         } catch (RepositoryDocumentException e) {
           // Skip individual documents that fail.  Proceed on to the next one.
           LOGGER.log(Level.WARNING, "Skipping document (" + docid
               + ") from connector " + connectorName, e);
-        } catch (OutOfMemoryError e) {
-          System.runFinalization();
-          System.gc();
-          try {
-            LOGGER.warning("Out of JVM Heap Space.  Most likely document ("
-                           + docid + ") is too large.  To fix, increase heap "
-                           + "space or reduce size of document.");
-            LOGGER.log(Level.FINEST, e.getMessage(), e);
-          } catch (Throwable t) {
-            // OutOfMemory state may prevent us from logging the error.
-            // Don't make matters worse by rethrowing something meaningless.
-          }
         } catch (RuntimeException e) {
           // Skip individual documents that fail.  Proceed on to the next one.
           LOGGER.log(Level.WARNING, "Skipping document (" + docid
               + ") from connector " + connectorName, e);
         }
       }
-    } catch (RepositoryException e) {
-      LOGGER.log(Level.SEVERE, "Repository Exception during traversal.", e);
-      if (counter == 0) {
-        // If we blew up on the first document, it may be an indication that
-        // there is a systemic Connector problem (for instance, loss of
-        // connectivity to its repository).  Wait a while, then try again.
-        counter = Traverser.ERROR_WAIT;
+    } catch (OutOfMemoryError e) {
+      resultSet = null;
+      counter = Traverser.ERROR_WAIT;
+      pusher.cancel();
+      System.runFinalization();
+      System.gc();
+      try {
+        LOGGER.severe("Out of JVM Heap Space.  Will retry later.");
+        LOGGER.log(Level.FINEST, e.getMessage(), e);
+      } catch (Throwable t) {
+        // OutOfMemory state may prevent us from logging the error.
+        // Don't make matters worse by rethrowing something meaningless.
       }
+    } catch (RepositoryException e) {
+      // Drop the entire batch on the floor.  Do not call checkpoint
+      // (as there is a discrepancy between what the Connector thinks
+      // it has fed, and what actually has been pushed).
+      LOGGER.log(Level.SEVERE, "Repository Exception during traversal.", e);
+      resultSet = null;
+      counter = Traverser.ERROR_WAIT;
+      pusher.cancel();
     } catch (PushException e) {
       LOGGER.log(Level.SEVERE, "Push Exception during traversal.", e);
       // Drop the entire batch on the floor.  Do not call checkpoint
@@ -204,6 +216,7 @@ public class QueryTraverser implements Traverser {
       // it has fed, and what actually has been pushed).
       resultSet = null;
       counter = Traverser.ERROR_WAIT;
+      pusher.cancel();
     } catch (FeedException e) {
       LOGGER.log(Level.SEVERE, "Feed Exception during traversal.", e);
       // Drop the entire batch on the floor.  Do not call checkpoint
@@ -211,6 +224,7 @@ public class QueryTraverser implements Traverser {
       // it has fed, and what actually has been pushed).
       resultSet = null;
       counter = Traverser.ERROR_WAIT;
+      pusher.cancel();
     } catch (Throwable t) {
       LOGGER.log(Level.SEVERE, "Uncaught Exception during traversal.", t);
       // Drop the entire batch on the floor.  Do not call checkpoint
@@ -218,11 +232,13 @@ public class QueryTraverser implements Traverser {
       // it has fed, and what actually has been pushed).
       resultSet = null;
       counter = Traverser.ERROR_WAIT;
+      pusher.cancel();
     } finally {
       // If we have cancelled the work, abandon the batch.
       if (isCancelled()) {
         resultSet = null;
         counter = Traverser.ERROR_WAIT;
+        pusher.cancel();
       }
 
       // Checkpoint completed work as well as skip past troublesome documents
