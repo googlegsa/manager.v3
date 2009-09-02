@@ -27,6 +27,16 @@
   <bean id="Pusher"
         class="com.google.enterprise.connector.pusher.DocPusher">
     <constructor-arg index="0" ref="FeedConnection"/>
+    <!-- The size in bytes of an accumulated feed file.  DocPusher tries to
+         collect many feed Documents into a single feed file to improve the
+         efficiency of sending feed data to the GSA.  Too many small feeds
+         may overrun the GSA's feed processor.  However, specifying too large
+         a feed size reduces concurrency and will likely result in OutOfMemory
+         errors in the Java VM, especially if using multiple Connector Instances.
+         The default feed size is 10MB.
+    -->
+    <property name="maximumFeedSize" value="10485760"/>
+    <property name="fileSizeLimitInfo" ref="FileSizeLimitInfo"/>
   </bean>
 
   <!-- Create a Handler for the Feed Logger and add it to the logger. -->
@@ -168,7 +178,7 @@
   <bean id="HostLoadManager"
         class="com.google.enterprise.connector.scheduler.HostLoadManager">
     <constructor-arg index="0" ref="Instantiator"/>
-    <property name="batchSize" value="500">
+    <property name="batchSize" value="500"/>
   </bean>
 
   <bean id="TraversalScheduler"

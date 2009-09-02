@@ -267,6 +267,7 @@ public class DocPusherTest extends TestCase {
       System.out.println("Test " + i + " output");
       Assert.assertFalse(i == expectedXml.length);
       dpusher.take(document, "junit");
+      dpusher.flush();
       System.out.println("Test " + i + " assertions");
       String resultXML = mockFeedConnection.getFeed();
       gsaActualResponse = dpusher.getGsaResponse();
@@ -290,6 +291,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(document, "junit");
+    dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
@@ -394,6 +396,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(document, "junit");
+    dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
@@ -415,6 +418,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(document, "junit");
+    dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("<meta name=\"special\" " +
@@ -493,6 +497,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(document, "junit");
+    dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
     // Strip off the DOCTYPE so that the document parses, since we
@@ -533,6 +538,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(document, "junit");
+    dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
@@ -555,6 +561,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(document, "junit");
+    dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringNotContains("action=\"add\"", resultXML);
@@ -567,6 +574,7 @@ public class DocPusherTest extends TestCase {
 
     document = JcrDocumentTest.makeDocumentFromJson(addActionJson);
     dpusher.take(document, "junit");
+    dpusher.flush();
     resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("action=\"add\"", resultXML);
@@ -579,6 +587,7 @@ public class DocPusherTest extends TestCase {
 
     document = JcrDocumentTest.makeDocumentFromJson(deleteActionJson);
     dpusher.take(document, "junit");
+    dpusher.flush();
     resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("action=\"delete\"", resultXML);
@@ -591,6 +600,7 @@ public class DocPusherTest extends TestCase {
 
     document = JcrDocumentTest.makeDocumentFromJson(bogusActionJson);
     dpusher.take(document, "junit");
+    dpusher.flush();
     resultXML = mockFeedConnection.getFeed();
 
     assertStringNotContains("action=", resultXML);
@@ -806,6 +816,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(document, "junit");
+    dpusher.flush();
     return mockFeedConnection.getFeed();
   }
 
@@ -847,6 +858,7 @@ public class DocPusherTest extends TestCase {
               + "}\r\n" + "";
       document = JcrDocumentTest.makeDocumentFromJson(jsonIncremental);
       dpusher.take(document, "junit");
+      dpusher.flush();
       resultXML = mockFeedConnection.getFeed();
       assertFeedInLog(resultXML, TEST_LOG_FILE);
 
@@ -859,6 +871,7 @@ public class DocPusherTest extends TestCase {
               + "}\r\n" + "";
       document = JcrDocumentTest.makeDocumentFromJson(jsonMetaAndUrl);
       dpusher.take(document, "junit");
+      dpusher.flush();
       resultXML = mockFeedConnection.getFeed();
       assertFeedInLog(resultXML, TEST_LOG_FILE);
 
@@ -872,6 +885,7 @@ public class DocPusherTest extends TestCase {
               + "}\r\n" + "";
       document = JcrDocumentTest.makeDocumentFromJson(jsonMsWord);
       dpusher.take(document, "junit");
+      dpusher.flush();
       resultXML = mockFeedConnection.getFeed();
       assertFeedInLog(resultXML, TEST_LOG_FILE);
     } finally {
@@ -978,11 +992,13 @@ public class DocPusherTest extends TestCase {
       MockFeedConnection mockFeedConnection = new MockFeedConnection();
       DocPusher dpusher = new DocPusher(mockFeedConnection);
       dpusher.take(document, "junit");
+      dpusher.flush();
       String resultXML = mockFeedConnection.getFeed();
       assertFeedTeed(resultXML, tffName);
 
       // Now send the feed again and compare with existing teed feed file.
       dpusher.take(document, "junit");
+      dpusher.flush();
       String secondResultXML = mockFeedConnection.getFeed();
       assertFeedTeed(resultXML + secondResultXML, tffName);
     } finally {
@@ -1023,8 +1039,8 @@ public class DocPusherTest extends TestCase {
 
   private String buildExpectedXML(String feedType, String record) {
     String rawData = "<?xml version=\'1.0\' encoding=\'UTF-8\'?>"
-        + "<!DOCTYPE gsafeed PUBLIC \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">"
-        + "<gsafeed><header><datasource>junit</datasource>\n" + "<feedtype>"
+        + "<!DOCTYPE gsafeed PUBLIC \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">\n"
+        + "<gsafeed>\n<header>\n<datasource>junit</datasource>\n" + "<feedtype>"
         + feedType + "</feedtype>\n" + "</header>\n" + "<group>\n" + record
         + "</group>\n" + "</gsafeed>\n";
     return rawData;
@@ -1596,6 +1612,7 @@ public class DocPusherTest extends TestCase {
       FeedConnection badFeedConnection = new BadFeedConnection1();
       DocPusher dpusher = new DocPusher(badFeedConnection);
       dpusher.take(document, "junit");
+      dpusher.flush();
       fail("Expected FeedException, but got none.");
     } catch (FeedException expected) {
       assertEquals("Anorexic FeedConnection", expected.getMessage());
@@ -1614,6 +1631,7 @@ public class DocPusherTest extends TestCase {
       FeedConnection badFeedConnection = new BadFeedConnection2();
       DocPusher dpusher = new DocPusher(badFeedConnection);
       dpusher.take(document, "junit");
+      dpusher.flush();
       fail("Expected PushException, but got none.");
     } catch (PushException expected) {
       assertEquals("Bulimic FeedConnection", expected.getMessage());

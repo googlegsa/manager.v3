@@ -19,7 +19,8 @@ package com.google.enterprise.connector.traversal;
  */
 public class FileSizeLimitInfo {
 
-  private long maxDocumentSize = Long.MAX_VALUE;
+  // Default maximum document size is 30MB - maximum supported by GSA.
+  private long maxDocumentSize = 30L * 1024 * 1024;
 
   public void setMaxDocumentSize(long maxDocumentSize) {
     this.maxDocumentSize = maxDocumentSize;
