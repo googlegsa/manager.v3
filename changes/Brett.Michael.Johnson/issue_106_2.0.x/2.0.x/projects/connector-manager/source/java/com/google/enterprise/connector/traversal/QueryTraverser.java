@@ -182,23 +182,24 @@ public class QueryTraverser implements Traverser {
           // Skip individual documents that fail.  Proceed on to the next one.
           LOGGER.log(Level.WARNING, "Skipping document (" + docid
               + ") from connector " + connectorName, e);
-        } catch (OutOfMemoryError e) {
-          System.runFinalization();
-          System.gc();
-          try {
-            LOGGER.warning("Out of JVM Heap Space.  Most likely document ("
-                           + docid + ") is too large.  To fix, increase heap "
-                           + "space or reduce size of document.");
-            LOGGER.log(Level.FINEST, e.getMessage(), e);
-          } catch (Throwable t) {
-            // OutOfMemory state may prevent us from logging the error.
-            // Don't make matters worse by rethrowing something meaningless.
-          }
         } catch (RuntimeException e) {
           // Skip individual documents that fail.  Proceed on to the next one.
           LOGGER.log(Level.WARNING, "Skipping document (" + docid
               + ") from connector " + connectorName, e);
         }
+      }
+    } catch (OutOfMemoryError e) {
+      resultSet = null;
+      counter = Traverser.ERROR_WAIT;
+      pusher.cancel();
+      System.runFinalization();
+      System.gc();
+      try {
+        LOGGER.severe("Out of JVM Heap Space.  Will retry later.");
+        LOGGER.log(Level.FINEST, e.getMessage(), e);
+      } catch (Throwable t) {
+        // OutOfMemory state may prevent us from logging the error.
+        // Don't make matters worse by rethrowing something meaningless.
       }
     } catch (RepositoryException e) {
       // Drop the entire batch on the floor.  Do not call checkpoint

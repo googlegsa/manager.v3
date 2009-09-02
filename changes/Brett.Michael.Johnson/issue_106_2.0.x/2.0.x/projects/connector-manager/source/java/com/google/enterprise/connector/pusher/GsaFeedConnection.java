@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.servlet.ServletUtil;
-import com.google.enterprise.connector.spi.RepositoryException;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -81,9 +80,9 @@ public class GsaFeedConnection implements FeedConnection {
   }
 
   public String sendData(String dataSource, FeedData feedData)
-      throws FeedException, RepositoryException {
-    String feedType = ((GsaFeedData)feedData).getFeedType();
-    ByteArrayOutputStream data = ((GsaFeedData)feedData).getData();
+      throws FeedException {
+    String feedType = ((GsaFeedData) feedData).getFeedType();
+    ByteArrayOutputStream data = ((GsaFeedData) feedData).getData();
     OutputStream outputStream;
     HttpURLConnection uc;
     StringBuilder buf = new StringBuilder();
@@ -109,7 +108,8 @@ public class GsaFeedConnection implements FeedConnection {
       }
       uc.setDoInput(true);
       uc.setDoOutput(true);
-      uc.setFixedLengthStreamingMode(prefix.length + data.size() + suffix.length);
+      uc.setFixedLengthStreamingMode(prefix.length + data.size()
+          + suffix.length);
       uc.setRequestProperty("Content-Type", "multipart/form-data; boundary="
           + BOUNDARY);
       outputStream = uc.getOutputStream();

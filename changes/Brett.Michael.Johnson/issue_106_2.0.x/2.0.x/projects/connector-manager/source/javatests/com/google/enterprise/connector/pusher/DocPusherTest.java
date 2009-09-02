@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.common.StringUtils; // DEBUGGING
 import com.google.enterprise.connector.jcr.JcrDocumentTest;
 import com.google.enterprise.connector.jcr.JcrTraversalManager;
 import com.google.enterprise.connector.manager.Context;
@@ -1010,11 +1009,6 @@ public class DocPusherTest extends TestCase {
 
   private void assertFeedTeed(String resultXML, String tffName)
       throws IOException {
-    { // DEBUGGING
-      System.out.println("assertFeedTeed Expected:\n" + resultXML + "--- end of expected ---");
-      System.out.println("assertFeedTeed Actual:\n" + StringUtils.streamToString(new FileInputStream(tffName)) + "--- end of actual ---");
-    }
-
     BufferedReader tffIn = new BufferedReader(new FileReader(tffName));
     try {
       StringReader xmlIn = new StringReader(resultXML);

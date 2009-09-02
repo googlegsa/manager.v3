@@ -38,8 +38,8 @@ public interface Pusher {
       throws PushException, FeedException, RepositoryException;
 
   /**
-   * Finish processing a document feed.  If the caller anticicpates no
-   * further calls to {@link take(Document, String)} will be made,
+   * Finishes processing a document feed.  If the caller anticipates no
+   * further calls to {@link #take(Document, String)} will be made,
    * this method should be called, so that the Pusher may send a cached,
    * accumulated Feed to the feed processor.
    *
@@ -52,7 +52,7 @@ public interface Pusher {
       throws PushException, FeedException, RepositoryException;
 
   /**
-   * Cancel a feed.  Discard any accumulated feed data.
+   * Cancels a feed.  Discard any accumulated feed data.
    */
   public void cancel();
 }

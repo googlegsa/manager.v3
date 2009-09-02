@@ -29,11 +29,12 @@ import com.google.enterprise.connector.spi.SpiConstants.ActionType;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
 import com.google.enterprise.connector.spiimpl.DateValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
+import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -66,7 +67,7 @@ public class DocPusher implements Pusher {
 
   /**
    * This is used to build up a multi-record feed.  Documents are added
-   * to the feed until the size of the feed exceeds the maxFeedSize.
+   * to the feed until the size of the feed exceeds the maxFeedSize
    * or we are finished with the batch of documents. The feed is then
    * submitted to the feed connection.
    */
@@ -75,7 +76,13 @@ public class DocPusher implements Pusher {
   /**
    * Once the accumulated feed exceeds this value, close it and sumbit.
    */
+  // Default value is smallish 1MB, for the convenience of unit testing.
   private static int maxFeedSize = 1024 * 1024;
+
+  /**
+   * Configured maximum file size supported.
+   */
+  private FileSizeLimitInfo fileSizeLimit = new FileSizeLimitInfo();
 
   /**
    * This field is used to construct a feed record in parallel to the main feed
@@ -150,7 +157,7 @@ public class DocPusher implements Pusher {
    * size of 1GB.
    *
    * @param maximumFeedSize maximum size to accumulated in
-   * feed, before sending the feed on to the GSA.
+   *        feed, before sending the feed on to the GSA.
    */
   public void setMaximumFeedSize(int maximumFeedSize) {
     if (maxFeedSize > (900 * 1024 * 1024)) {
@@ -159,6 +166,13 @@ public class DocPusher implements Pusher {
     } else {
       maxFeedSize = maximumFeedSize;
     }
+  }
+
+  /**
+   * Set the maximum size of the document content.
+   */
+  public void setFileSizeLimitInfo(FileSizeLimitInfo fileSizeLimitInfo) {
+    this.fileSizeLimit = fileSizeLimitInfo;
   }
 
   /**
@@ -583,8 +597,8 @@ public class DocPusher implements Pusher {
           getOptionalString(document, SpiConstants.PROPNAME_TITLE));
 
       if (null != contentStream) {
-        encodedContentStream =
-            new Base64FilterInputStream(contentStream, loggingContent);
+        encodedContentStream = new Base64FilterInputStream(
+            new BigDocumentFilterInputStream(contentStream), loggingContent);
       }
     }
 
@@ -726,7 +740,7 @@ public class DocPusher implements Pusher {
               + ". Closing feed and sending to GSA.");
         }
         submitFeed();
-      } else if (feed.size() > ((maxFeedSize/10)*8)) {
+      } else if (feed.size() > ((maxFeedSize / 10) * 8)) {
         if (LOGGER.isLoggable(Level.FINE)) {
           LOGGER.fine("Feed for " + connectorName + " has grown to "
               + feed.size() + " bytes. Closing feed and sending to GSA.");
@@ -774,13 +788,8 @@ public class DocPusher implements Pusher {
             + " from connector " + connectorName + " added to feed.");
       }
     } catch (OutOfMemoryError me) {
-      if ((feed.size() - resetPoint) < maxFeedSize/2) {
-        // If this was a large document, skip it.
-        feed.reset(resetPoint);
-        throw new RepositoryDocumentException("Out of memory, skipping.", me);
-      } else {
-        throw new PushException("Out of memory building feed, retrying.", me);
-      }
+      feed.reset(resetPoint);
+      throw new PushException("Out of memory building feed, retrying.", me);
     } catch (RepositoryDocumentException rde) {
       // Skipping this document, remove it from the feed.
       feed.reset(resetPoint);
@@ -809,7 +818,7 @@ public class DocPusher implements Pusher {
   }
 
   /**
-   * Finish a feed.  No more docuemnts are anticipated.
+   * Finish a feed.  No more documents are anticipated.
    * If there is an outstanding feed file, submit it to the GSA.
    *
    * @throws PushException if Pusher problem
@@ -822,11 +831,11 @@ public class DocPusher implements Pusher {
   }
 
   /**
-   * Cancel any feed being constructed.  Any accumulated feed data is lost.
+   * Cancels any feed being constructed.  Any accumulated feed data is lost.
    */
   public void cancel() {
-    XmlFeed feed;
-    if ((feed = xmlFeed.get()) != null) {
+    XmlFeed feed = xmlFeed.get();
+    if (feed != null) {
       LOGGER.fine("Discarding accumulated feed for " + feed.dataSource);
       xmlFeed.remove();
     }
@@ -844,8 +853,8 @@ public class DocPusher implements Pusher {
    */
   private void submitFeed()
       throws PushException, FeedException, RepositoryException {
-    XmlFeed feed;
-    if ((feed = xmlFeed.get()) == null) {
+    XmlFeed feed = xmlFeed.get();
+    if (feed == null) {
       return;
     }
 
@@ -866,23 +875,21 @@ public class DocPusher implements Pusher {
 
     // Write the Feed to the TeedFeedFile, if one was specified.
     String teedFeedFilename = Context.getInstance().getTeedFeedFile();
-    File osFile = null;
-    OutputStream os = null;
     if (teedFeedFilename != null) {
+      OutputStream os = null;
       try {
-        osFile = new File(teedFeedFilename);
         os = new FileOutputStream(teedFeedFilename, true);
         feed.writeTo(os);
       } catch (IOException e) {
         LOGGER.log(Level.WARNING, "Cannot write to file: "
-            + osFile.getAbsolutePath(), e);
+            + teedFeedFilename, e);
       } finally {
         if (os != null) {
           try {
             os.close();
           } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Cannot close file: "
-                + osFile.getAbsolutePath(), e);
+                + teedFeedFilename, e);
           }
         }
       }
@@ -895,7 +902,8 @@ public class DocPusher implements Pusher {
       if (GsaFeedConnection.UNAUTHORIZED_RESPONSE.equals(gsaResponse)) {
         eMessage += ": Client is not authorized to send feeds. Make "
             + "sure the GSA is configured to trust feeds from your host.";
-      } else if (GsaFeedConnection.INTERNAL_ERROR_RESPONSE.equals(gsaResponse)) {
+      }
+      if (GsaFeedConnection.INTERNAL_ERROR_RESPONSE.equals(gsaResponse)) {
         eMessage += ": Check GSA status or feed format.";
       }
       throw new PushException(eMessage);
@@ -945,7 +953,8 @@ public class DocPusher implements Pusher {
     private boolean isClosed;
     private int recordCount;
 
-    public XmlFeed(String dataSource, String feedType, int feedSize) throws IOException {
+    public XmlFeed(String dataSource, String feedType, int feedSize)
+        throws IOException {
       super(feedSize);
       this.dataSource = dataSource;
       this.feedType = feedType;
@@ -1037,6 +1046,53 @@ public class DocPusher implements Pusher {
           feedLog.remove();
         }
       }
+    }
+  }
+
+  /**
+   * A FilterInput stream that protects against large documents.
+   * If we have read more than FileSizeLimitInfo.maxDocumentSize
+   * bytes from the input, abort the read by throwing an IOException.
+   */
+  public class BigDocumentFilterInputStream extends FilterInputStream {
+    private final long maxDocumentSize;
+    private long currentDocumentSize;
+
+    public BigDocumentFilterInputStream(InputStream in) {
+      super(in);
+      this.maxDocumentSize = fileSizeLimit.maxDocumentSize();
+    }
+
+    @Override
+    public int read() throws IOException {
+      int val = super.read();
+      if (val != -1) {
+        if (++currentDocumentSize > maxDocumentSize) {
+          throw new IOException("Maximum Document size exceeded.");
+        }
+      }
+      return val;
+    }
+
+    @Override
+    public int read(byte b[], int off, int len) throws IOException {
+      int bytesRead = 0;
+      if (currentDocumentSize <= maxDocumentSize) {
+        bytesRead = super.read(b, off,
+            (int) Math.min(len, maxDocumentSize - currentDocumentSize + 1));
+      }
+      if (bytesRead != -1) {
+        currentDocumentSize += bytesRead;
+        if (currentDocumentSize > maxDocumentSize) {
+          throw new IOException("Maximum Document size exceeded.");
+        }
+      }
+      return bytesRead;
+    }
+
+    @Override
+    public boolean markSupported() {
+      return false;
     }
   }
 }
