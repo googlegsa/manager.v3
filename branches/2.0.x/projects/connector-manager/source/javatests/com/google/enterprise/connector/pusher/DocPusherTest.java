@@ -896,23 +896,48 @@ public class DocPusherTest extends TestCase {
     }
   }
 
+  // The feed log doesn't contain the xml feed headers and footers.
+  private static final String[] xmlSkip = {
+    "<?xml", "<gsafeed>", "<header>", "<datasource>", "<feedtype>", "<group>",
+    "</group>", "</header>", "</gsafeed>" };
+
+  // Should we skip this line?
+  private boolean shouldSkip(String line) {
+    if (line != null) {
+      for (String skip : xmlSkip) {
+        if (line.startsWith(skip)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // Read a line from the XML feed, skipping header and footer lines.
+  private String xmlReadLine(BufferedReader xmlIn) throws IOException {
+    String xmlLine;
+    while (shouldSkip(xmlLine = xmlIn.readLine())) {
+      // Skip over header and footer lines.
+    }
+    return xmlLine;
+  }
+
   private void assertFeedInLog(String resultXML, String logFileName)
       throws IOException {
     BufferedReader logIn = new BufferedReader(new FileReader(logFileName));
     try {
       BufferedReader xmlIn = new BufferedReader(new StringReader(resultXML));
-
       xmlIn.mark(resultXML.length());
-      String xmlLine = xmlIn.readLine();
+      String xmlLine = xmlReadLine(xmlIn);
       String logLine;
       boolean isMatch = false;
       boolean inContent = false;
       while ((logLine = logIn.readLine()) != null) {
         if (logLine.indexOf(xmlLine) >= 0) {
-          assertEquals(xmlLine, logLine.substring(7));
+          assertEquals(xmlLine, logLine);
           // We match the first line - start comparing record
           isMatch = true;
-          while ((xmlLine = xmlIn.readLine()) != null) {
+          while ((xmlLine = xmlReadLine(xmlIn)) != null) {
             logLine = logIn.readLine();
             if (inContent) {
               inContent = false;
@@ -940,7 +965,7 @@ public class DocPusherTest extends TestCase {
           } else {
             // Need to reset the xmlIn and reload the xmlLine
             xmlIn.reset();
-            xmlLine = xmlIn.readLine();
+            xmlLine = xmlReadLine(xmlIn);
           }
         } else {
           continue;
