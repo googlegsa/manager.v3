@@ -916,8 +916,9 @@ public class DocPusherTest extends TestCase {
   // Read a line from the XML feed, skipping header and footer lines.
   private String xmlReadLine(BufferedReader xmlIn) throws IOException {
     String xmlLine;
-    while (shouldSkip(xmlLine = xmlIn.readLine()))
-      ; // Skip over header and footer lines.
+    while (shouldSkip(xmlLine = xmlIn.readLine())) {
+      // Skip over header and footer lines.
+    }
     return xmlLine;
   }
 
