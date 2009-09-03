@@ -598,7 +598,8 @@ public class DocPusher implements Pusher {
 
       if (null != contentStream) {
         encodedContentStream = new Base64FilterInputStream(
-            new BigDocumentFilterInputStream(contentStream), loggingContent);
+            new BigDocumentFilterInputStream(contentStream,
+            fileSizeLimit.maxDocumentSize()), loggingContent);
       }
     }
 
@@ -754,7 +755,14 @@ public class DocPusher implements Pusher {
         LOGGER.fine("Creating new " + feedType + " feed for " + connectorName);
       }
       try {
-        xmlFeed.set(feed = new XmlFeed(connectorName, feedType, maxFeedSize));
+        feed = new XmlFeed(connectorName, feedType, maxFeedSize);
+        xmlFeed.set(feed);
+        if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
+          StringBuilder log = new StringBuilder(256 * 1024);
+          log.append("Records generated for ").append(feedType);
+          log.append(" feed of ").append(connectorName).append(":\n");
+          feedLog.set(log);
+        }
       } catch (OutOfMemoryError me) {
         throw new PushException("Unable to allocate feed buffer.  Try reducing"
                                 + " the maximumFeedSize setting.", me);
@@ -839,7 +847,7 @@ public class DocPusher implements Pusher {
       LOGGER.fine("Discarding accumulated feed for " + feed.dataSource);
       xmlFeed.remove();
     }
-    if (feedLog.get() == null) {
+    if (feedLog.get() != null) {
       feedLog.remove();
     }
   }
@@ -873,23 +881,32 @@ public class DocPusher implements Pusher {
       throw new PushException("Error closing feed", ioe);
     }
 
+    // Write the generated feedLog to the feed logger.
+    if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
+      FEED_LOGGER.log(FEED_LOG_LEVEL, feedLog.get().toString());
+      feedLog.remove();
+    }
+
     // Write the Feed to the TeedFeedFile, if one was specified.
     String teedFeedFilename = Context.getInstance().getTeedFeedFile();
     if (teedFeedFilename != null) {
+      boolean isThrowing = false;
       OutputStream os = null;
       try {
         os = new FileOutputStream(teedFeedFilename, true);
         feed.writeTo(os);
       } catch (IOException e) {
-        LOGGER.log(Level.WARNING, "Cannot write to file: "
-            + teedFeedFilename, e);
+        isThrowing = true;
+        throw new FeedException("Cannot write to file: " + teedFeedFilename, e);
       } finally {
         if (os != null) {
           try {
             os.close();
           } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "Cannot close file: "
-                + teedFeedFilename, e);
+            if (!isThrowing) {
+              throw new FeedException(
+                   "Cannot write to file: " + teedFeedFilename, e);
+            }
           }
         }
       }
@@ -910,46 +927,9 @@ public class DocPusher implements Pusher {
     }
   }
 
-  /**
-   * Construct the XML header for a feed file.
-   *
-   * @param dataSource The dataSource for the feed.
-   * @param feedType The type of feed.
-   * @return XML feed header string.
-   */
-   private String xmlFeedPrefix(String dataSource, String feedType) {
-    // Build prefix.
-    StringBuffer prefix = new StringBuffer();
-    prefix.append(XML_START).append('\n');
-    prefix.append(XmlUtils.xmlWrapStart(XML_GSAFEED)).append('\n');
-    prefix.append(XmlUtils.xmlWrapStart(XML_HEADER)).append('\n');
-    prefix.append(XmlUtils.xmlWrapStart(XML_DATASOURCE));
-    prefix.append(dataSource);
-    prefix.append(XmlUtils.xmlWrapEnd(XML_DATASOURCE));
-    prefix.append(XmlUtils.xmlWrapStart(XML_FEEDTYPE));
-    prefix.append(feedType);
-    prefix.append(XmlUtils.xmlWrapEnd(XML_FEEDTYPE));
-    prefix.append(XmlUtils.xmlWrapEnd(XML_HEADER));
-    prefix.append(XmlUtils.xmlWrapStart(XML_GROUP)).append('\n');
-    return prefix.toString();
-  }
-
-  /**
-   * Construct the XML footer for a feed file.
-   *
-   * @return XML feed suffix string.
-   */
-  private String xmlFeedSuffix() {
-    // Build suffix.
-    StringBuffer suffix = new StringBuffer();
-    suffix.append(XmlUtils.xmlWrapEnd(XML_GROUP));
-    suffix.append(XmlUtils.xmlWrapEnd(XML_GSAFEED));
-    return suffix.toString();
-  }
-
-  class XmlFeed extends ByteArrayOutputStream {
-    private String dataSource;
-    private String feedType;
+  private static class XmlFeed extends ByteArrayOutputStream {
+    private final String dataSource;
+    private final String feedType;
     private boolean isClosed;
     private int recordCount;
 
@@ -962,10 +942,43 @@ public class DocPusher implements Pusher {
       this.isClosed = false;
       String prefix = xmlFeedPrefix(dataSource, feedType);
       write(prefix.getBytes(XML_DEFAULT_ENCODING));
-      if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-        feedLog.set(new StringBuilder(256 * 1024));
-        feedLog.get().append(prefix);
-      }
+    }
+
+    /**
+     * Construct the XML header for a feed file.
+     *
+     * @param dataSource The dataSource for the feed.
+     * @param feedType The type of feed.
+     * @return XML feed header string.
+     */
+    private String xmlFeedPrefix(String dataSource, String feedType) {
+      // Build prefix.
+      StringBuffer prefix = new StringBuffer();
+      prefix.append(XML_START).append('\n');
+      prefix.append(XmlUtils.xmlWrapStart(XML_GSAFEED)).append('\n');
+      prefix.append(XmlUtils.xmlWrapStart(XML_HEADER)).append('\n');
+      prefix.append(XmlUtils.xmlWrapStart(XML_DATASOURCE));
+      prefix.append(dataSource);
+      prefix.append(XmlUtils.xmlWrapEnd(XML_DATASOURCE));
+      prefix.append(XmlUtils.xmlWrapStart(XML_FEEDTYPE));
+      prefix.append(feedType);
+      prefix.append(XmlUtils.xmlWrapEnd(XML_FEEDTYPE));
+      prefix.append(XmlUtils.xmlWrapEnd(XML_HEADER));
+      prefix.append(XmlUtils.xmlWrapStart(XML_GROUP)).append('\n');
+      return prefix.toString();
+    }
+
+    /**
+     * Construct the XML footer for a feed file.
+     *
+     * @return XML feed suffix string.
+     */
+    private String xmlFeedSuffix() {
+      // Build suffix.
+      StringBuffer suffix = new StringBuffer();
+      suffix.append(XmlUtils.xmlWrapEnd(XML_GROUP));
+      suffix.append(XmlUtils.xmlWrapEnd(XML_GSAFEED));
+      return suffix.toString();
     }
 
     public String getDataSource() {
@@ -994,6 +1007,8 @@ public class DocPusher implements Pusher {
      * Resets the size of this ByteArrayOutputStream to the
      * specified {@code size}, effectively discarding any
      * data that may have been written passed that point.
+     * Like {@code reset()}, this method retains the previously
+     * allocated buffer.
      * <p>
      * This method may be used to reduce the size of the data stored,
      * but not to increase it.  In other words, the specified {@code size}
@@ -1002,11 +1017,11 @@ public class DocPusher implements Pusher {
      * @param size new data size.
      */
     public synchronized void reset(int size) {
-      if (size < 0 || size > super.count) {
+      if (size < 0 || size > count) {
         throw new IllegalArgumentException(
             "New size must not be negative or greater than the current size.");
       }
-      super.count = size;
+      count = size;
     }
 
     /**
@@ -1022,15 +1037,15 @@ public class DocPusher implements Pusher {
     public synchronized void readFrom(InputStream in) throws IOException {
       int bytes = 0;
       do {
-        super.count += bytes;
-        if (super.count >= super.buf.length) {
+        count += bytes;
+        if (count >= buf.length) {
           // Need to grow buffer.
-          int incr = Math.min(super.buf.length, 8 * 1024 * 1024);
-          byte[] newbuf = new byte[super.buf.length + incr];
-          System.arraycopy(super.buf, 0, newbuf, 0, super.buf.length);
-          super.buf = newbuf;
+          int incr = Math.min(buf.length, 8 * 1024 * 1024);
+          byte[] newbuf = new byte[buf.length + incr];
+          System.arraycopy(buf, 0, newbuf, 0, buf.length);
+          buf = newbuf;
         }
-        bytes = in.read(super.buf, super.count, super.buf.length - super.count);
+        bytes = in.read(buf, count, buf.length - count);
       } while (bytes != -1);
     }
 
@@ -1040,11 +1055,6 @@ public class DocPusher implements Pusher {
         isClosed = true;
         String suffix = xmlFeedSuffix();
         write(suffix.getBytes(XML_DEFAULT_ENCODING));
-        if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-          feedLog.get().append(suffix);
-          FEED_LOGGER.log(FEED_LOG_LEVEL, feedLog.get().toString());
-          feedLog.remove();
-        }
       }
     }
   }
@@ -1054,17 +1064,21 @@ public class DocPusher implements Pusher {
    * If we have read more than FileSizeLimitInfo.maxDocumentSize
    * bytes from the input, abort the read by throwing an IOException.
    */
-  public class BigDocumentFilterInputStream extends FilterInputStream {
+  private static class BigDocumentFilterInputStream extends FilterInputStream {
     private final long maxDocumentSize;
     private long currentDocumentSize;
 
-    public BigDocumentFilterInputStream(InputStream in) {
+    public BigDocumentFilterInputStream(InputStream in, long maxDocumentSize) {
       super(in);
-      this.maxDocumentSize = fileSizeLimit.maxDocumentSize();
+      this.maxDocumentSize = maxDocumentSize;
+      this.currentDocumentSize = 0;
     }
 
     @Override
     public int read() throws IOException {
+      if (currentDocumentSize > maxDocumentSize) {
+        throw new IllegalStateException("Read passed maximum Document size");
+      }
       int val = super.read();
       if (val != -1) {
         if (++currentDocumentSize > maxDocumentSize) {
@@ -1076,11 +1090,11 @@ public class DocPusher implements Pusher {
 
     @Override
     public int read(byte b[], int off, int len) throws IOException {
-      int bytesRead = 0;
-      if (currentDocumentSize <= maxDocumentSize) {
-        bytesRead = super.read(b, off,
-            (int) Math.min(len, maxDocumentSize - currentDocumentSize + 1));
+      if (currentDocumentSize > maxDocumentSize) {
+        throw new IllegalStateException("Read passed maximum Document size");
       }
+      int bytesRead = super.read(b, off,
+          (int) Math.min(len, maxDocumentSize - currentDocumentSize + 1));
       if (bytesRead != -1) {
         currentDocumentSize += bytesRead;
         if (currentDocumentSize > maxDocumentSize) {
