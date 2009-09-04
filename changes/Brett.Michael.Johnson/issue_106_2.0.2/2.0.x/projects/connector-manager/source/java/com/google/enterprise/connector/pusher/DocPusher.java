@@ -1110,6 +1110,8 @@ public class DocPusher implements Pusher {
 
     // Reset the feed to its position when we started reading this stream,
     // and start reading from the alternate input.
+    // TODO: WARNING: this strategy will not work if using the
+    // CompressedFilterInputStream or chunked HTTP transfer.
     private void switchToAlternate() {
       useAlternate = true;
       feed.reset(resetPoint);
