@@ -65,6 +65,8 @@ public class DocPusher implements Pusher {
       Logger.getLogger(FEED_WRAPPER_LOGGER.getName() + ".FEED");
   private static final Level FEED_LOG_LEVEL = Level.FINER;
 
+  private static final byte[] SPACE_CHAR = { 0x20 };  // UTF-8 space
+
   /**
    * This is used to build up a multi-record feed.  Documents are added
    * to the feed until the size of the feed exceeds the maxFeedSize
@@ -595,8 +597,8 @@ public class DocPusher implements Pusher {
       InputStream encodedContentStream =
           new Base64FilterInputStream(
               new BigEmptyDocumentFilterInputStream(
-                   getOptionalStream(document, SpiConstants.PROPNAME_CONTENT),
-                   fileSizeLimit.maxDocumentSize()),
+                  getOptionalStream(document, SpiConstants.PROPNAME_CONTENT),
+                  fileSizeLimit.maxDocumentSize()),
               loggingContent);
 
       InputStream encodedAlternateStream =
@@ -653,37 +655,28 @@ public class DocPusher implements Pusher {
    *
    * @param title from the feed item
    * @return an InputStream containing the alternate content
-   * @throws RepositoryDocumentException if the alternate content string
-   *         cannot be UTF-8-encoded into a ByteArrayInputStream.
    */
-  private InputStream getAlternateContent(String title)
-      throws RepositoryException {
-    try {
-      byte[] bytes = null;
-      // Alternate content is a string that is substituted for null or empty
-      // content streams, in order to make sure the GSA indexes the feed item.
-      // If the feed item supplied a title property, we build an HTML fragment
-      // containing that title.  This provides better looking search result
-      // entries.
-      if (title != null && title.trim().length() > 0) {
-        try {
-          String t = "<html><title>" + title.trim() + "</title></html>";
-          bytes = t.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException uee) {
-          // Don't be fancy.  Try the single space content.
-        }
+  private static InputStream getAlternateContent(String title) {
+    byte[] bytes = null;
+    // Alternate content is a string that is substituted for null or empty
+    // content streams, in order to make sure the GSA indexes the feed item.
+    // If the feed item supplied a title property, we build an HTML fragment
+    // containing that title.  This provides better looking search result
+    // entries.
+    if (title != null && title.trim().length() > 0) {
+      try {
+        String t = "<html><title>" + title.trim() + "</title></html>";
+        bytes = t.getBytes("UTF-8");
+      } catch (UnsupportedEncodingException uee) {
+        // Don't be fancy.  Try the single space content.
       }
-      // If no title is available, we supply a single space as the content.
-      if (bytes == null) {
-        bytes = " ".getBytes("UTF-8");
-      }
-      return new ByteArrayInputStream(bytes);
-    } catch (IOException e) {
-      throw new RepositoryDocumentException(
-          "Failed to create alternate content stream: " + e.toString());
     }
+    // If no title is available, we supply a single space as the content.
+    if (bytes == null) {
+      bytes = SPACE_CHAR;
+    }
+    return new ByteArrayInputStream(bytes);
   }
-
 
   /**
    * Form a Google connector URL.
@@ -1153,9 +1146,9 @@ public class DocPusher implements Pusher {
   /**
    * A FilterInput stream that protects against large documents and empty
    * documents.  If we have read more than FileSizeLimitInfo.maxDocumentSize
-   * bytes from the input, or if we get EOF after reading zero bytes, we
-   * throw a subclass of IOException that signals DocPusher to use alternate
-   * content.
+   * bytes from the input, or if we get EOF after reading zero bytes,
+   * we throw a subclass of IOException that is used as a signal for
+   * AlternateContentFilterInputStream to switch to alternate content.
    */
   private static class BigEmptyDocumentFilterInputStream
       extends FilterInputStream {
