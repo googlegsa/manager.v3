@@ -65,6 +65,8 @@ public class DocPusher implements Pusher {
       Logger.getLogger(FEED_WRAPPER_LOGGER.getName() + ".FEED");
   private static final Level FEED_LOG_LEVEL = Level.FINER;
 
+  private static final byte[] SPACE_CHAR = { 0x20 };  // UTF-8 space
+
   /**
    * This is used to build up a multi-record feed.  Documents are added
    * to the feed until the size of the feed exceeds the maxFeedSize
@@ -590,17 +592,21 @@ public class DocPusher implements Pusher {
       searchurl = constructGoogleConnectorUrl(connectorName, docid);
     }
 
-    InputStream encodedContentStream = null;
+    InputStream contentStream = null;
     if (!feedType.equals(XML_FEED_METADATA_AND_URL)) {
-      InputStream contentStream = getNonNullContentStream(
-          getOptionalStream(document, SpiConstants.PROPNAME_CONTENT),
-          getOptionalString(document, SpiConstants.PROPNAME_TITLE));
+      InputStream encodedContentStream =
+          new Base64FilterInputStream(
+              new BigEmptyDocumentFilterInputStream(
+                  getOptionalStream(document, SpiConstants.PROPNAME_CONTENT),
+                  fileSizeLimit.maxDocumentSize()),
+              loggingContent);
 
-      if (null != contentStream) {
-        encodedContentStream = new Base64FilterInputStream(
-            new BigDocumentFilterInputStream(contentStream,
-            fileSizeLimit.maxDocumentSize()), loggingContent);
-      }
+      InputStream encodedAlternateStream =
+          new Base64FilterInputStream(getAlternateContent(
+              getOptionalString(document, SpiConstants.PROPNAME_TITLE)), false);
+
+      contentStream = new AlternateContentFilterInputStream(
+          encodedContentStream, encodedAlternateStream, xmlFeed.get());
     }
 
     String lastModified = null;
@@ -637,49 +643,39 @@ public class DocPusher implements Pusher {
     }
 
     return xmlWrapRecord(searchurl, displayUrl, lastModified,
-        encodedContentStream, mimetype, actionType, document, feedType);
+        contentStream, mimetype, actionType, document, feedType);
   }
 
   /**
-   * Inspect the content stream for a feed item, and if it's null or empty,
-   * substitute a string which will insure that the feed items gets indexed by
-   * the GSA.
+   * Construct the alternate content data for a feed item.  If the feed item
+   * has null or empty content, or if the feed item has excessively large
+   * content, substitute this data which will insure that the feed item gets
+   * indexed by the GSA. The alternate content consists of the item's title,
+   * or a single space, if it lacks a title.
    *
-   * @param contentStream from the feed item
    * @param title from the feed item
-   * @return an InputStream which is guaranteed to be non-null.
-   * @throws RepositoryDocumentException if the default content string
-   *         cannot be UTF-8-encoded into a ByteArrayInputStream.
+   * @return an InputStream containing the alternate content
    */
-  private static InputStream getNonNullContentStream(InputStream contentStream,
-      String title) throws RepositoryException {
-    if (contentStream != null) {  // TODO: "or empty"?
-      return contentStream;
-    }
-    try {
-      byte[] bytes = null;
-      // Default content is a string that is substituted for null or empty
-      // content streams, in order to make sure the GSA indexes the feed item.
-      // If the feed item supplied a title property, we build an HTML fragment
-      // containing that title.  This provides better looking search result
-      // entries.
-      if (title != null && title.trim().length() > 0) {
-        try {
-          String t = "<html><title>" + title.trim() + "</title></html>";
-          bytes = t.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException uee) {
-          // Don't be fancy.  Try the single space content.
-        }
+  private static InputStream getAlternateContent(String title) {
+    byte[] bytes = null;
+    // Alternate content is a string that is substituted for null or empty
+    // content streams, in order to make sure the GSA indexes the feed item.
+    // If the feed item supplied a title property, we build an HTML fragment
+    // containing that title.  This provides better looking search result
+    // entries.
+    if (title != null && title.trim().length() > 0) {
+      try {
+        String t = "<html><title>" + title.trim() + "</title></html>";
+        bytes = t.getBytes("UTF-8");
+      } catch (UnsupportedEncodingException uee) {
+        // Don't be fancy.  Try the single space content.
       }
-      // If no title is available, we supply a single space as the content.
-      if (bytes == null) {
-        bytes = " ".getBytes("UTF-8");
-      }
-      return new ByteArrayInputStream(bytes);
-    } catch (IOException e) {
-      throw new RepositoryDocumentException(
-          "Failed to create default content stream: " + e.toString());
     }
+    // If no title is available, we supply a single space as the content.
+    if (bytes == null) {
+      bytes = SPACE_CHAR;
+    }
+    return new ByteArrayInputStream(bytes);
   }
 
   /**
@@ -1060,15 +1056,111 @@ public class DocPusher implements Pusher {
   }
 
   /**
-   * A FilterInput stream that protects against large documents.
-   * If we have read more than FileSizeLimitInfo.maxDocumentSize
-   * bytes from the input, abort the read by throwing an IOException.
+   * A FilterInput stream that protects against large documents and empty
+   * documents.  If we have read more than FileSizeLimitInfo.maxDocumentSize
+   * bytes from the input, we reset the feed to before we started reading
+   * content, then provide the alternate content.  Similarly, if we get EOF
+   * after reading zero bytes, we provide the alternate content.
    */
-  private static class BigDocumentFilterInputStream extends FilterInputStream {
+  private static class AlternateContentFilterInputStream
+      extends FilterInputStream {
+    private boolean useAlternate;
+    private InputStream alternate;
+    private final XmlFeed feed;
+    private int resetPoint;
+
+    /**
+     * @param in InputStream containing raw document content
+     * @param alternate InputStream containing alternate content to provide
+     * @param feed XmlFeed under constructions (used for reseting size)
+     */
+    public AlternateContentFilterInputStream(InputStream in,
+        InputStream alternate, XmlFeed feed) {
+      super(in);
+      this.useAlternate = false;
+      this.alternate = alternate;
+      this.feed = feed;
+      this.resetPoint = -1;
+    }
+
+    // Reset the feed to its position when we started reading this stream,
+    // and start reading from the alternate input.
+    // TODO: WARNING: this strategy will not work if using chunked HTTP transfer.
+    private void switchToAlternate() {
+      feed.reset(resetPoint);
+      useAlternate = true;
+    }
+
+    @Override
+    public int read() throws IOException {
+      if (resetPoint == -1) {
+        // If I have read nothing yet, remember the reset point in the feed.
+        resetPoint = feed.size();
+      }
+      if (!useAlternate) {
+        try {
+          return super.read();
+        } catch (EmptyDocumentException e) {
+          switchToAlternate();
+        } catch (BigDocumentException e) {
+          LOGGER.finer("Document content exceeds the maximum configured "
+                       + "document size, discarding content.");
+          switchToAlternate();
+        }
+      }
+      return alternate.read();
+    }
+
+    @Override
+    public int read(byte b[], int off, int len) throws IOException {
+      if (resetPoint == -1) {
+        // If I have read nothing yet, remember the reset point in the feed.
+        resetPoint = feed.size();
+      }
+      if (!useAlternate) {
+        try {
+          return super.read(b, off, len);
+        } catch (EmptyDocumentException e) {
+          switchToAlternate();
+        } catch (BigDocumentException e) {
+          LOGGER.finer("Document content exceeds the maximum configured "
+                       + "document size, discarding content.");
+          switchToAlternate();
+        }
+      }
+      return alternate.read(b, off, len);
+    }
+
+    @Override
+    public boolean markSupported() {
+      return false;
+    }
+
+    @Override
+    public void close() throws IOException {
+      super.close();
+      alternate.close();
+    }
+  }
+
+  /**
+   * A FilterInput stream that protects against large documents and empty
+   * documents.  If we have read more than FileSizeLimitInfo.maxDocumentSize
+   * bytes from the input, or if we get EOF after reading zero bytes,
+   * we throw a subclass of IOException that is used as a signal for
+   * AlternateContentFilterInputStream to switch to alternate content.
+   */
+  private static class BigEmptyDocumentFilterInputStream
+      extends FilterInputStream {
     private final long maxDocumentSize;
     private long currentDocumentSize;
 
-    public BigDocumentFilterInputStream(InputStream in, long maxDocumentSize) {
+    /**
+     * @param in InputStream containing raw document content
+     * @param maxDocumentSize maximum allowed size in bytes of data read from in
+     */
+    public BigEmptyDocumentFilterInputStream(InputStream in,
+                                             long maxDocumentSize) {
       super(in);
       this.maxDocumentSize = maxDocumentSize;
       this.currentDocumentSize = 0;
@@ -1076,30 +1168,33 @@ public class DocPusher implements Pusher {
 
     @Override
     public int read() throws IOException {
-      if (currentDocumentSize > maxDocumentSize) {
-        throw new IllegalStateException("Read passed maximum Document size");
+      if (in == null) {
+        throw new EmptyDocumentException();
       }
       int val = super.read();
-      if (val != -1) {
-        if (++currentDocumentSize > maxDocumentSize) {
-          throw new IOException("Maximum Document size exceeded.");
+      if (val == -1) {
+        if (currentDocumentSize == 0) {
+          throw new EmptyDocumentException();
         }
+      } else if (++currentDocumentSize > maxDocumentSize) {
+        throw new BigDocumentException();
       }
       return val;
     }
 
     @Override
     public int read(byte b[], int off, int len) throws IOException {
-      if (currentDocumentSize > maxDocumentSize) {
-        throw new IllegalStateException("Read passed maximum Document size");
+      if (in == null) {
+        throw new EmptyDocumentException();
       }
       int bytesRead = super.read(b, off,
           (int) Math.min(len, maxDocumentSize - currentDocumentSize + 1));
-      if (bytesRead != -1) {
-        currentDocumentSize += bytesRead;
-        if (currentDocumentSize > maxDocumentSize) {
-          throw new IOException("Maximum Document size exceeded.");
+      if (bytesRead == -1) {
+        if (currentDocumentSize == 0) {
+          throw new EmptyDocumentException();
         }
+      } else if ((currentDocumentSize += bytesRead) > maxDocumentSize) {
+        throw new BigDocumentException();
       }
       return bytesRead;
     }
@@ -1107,6 +1202,33 @@ public class DocPusher implements Pusher {
     @Override
     public boolean markSupported() {
       return false;
+    }
+
+    @Override
+    public void close() throws IOException {
+      if (in != null) {
+        super.close();
+      }
+    }
+  }
+
+  /**
+   * Subclass of IOException that is thrown when maximumDocumentSize
+   * is exceeded.
+   */
+  private static class BigDocumentException extends IOException {
+    public BigDocumentException() {
+      super("Maximum Document size exceeded.");
+    }
+  }
+
+  /**
+   * Subclass of IOException that is thrown when the document has
+   * no content.
+   */
+  private static class EmptyDocumentException extends IOException {
+    public EmptyDocumentException() {
+      super("Document has no content.");
     }
   }
 }
