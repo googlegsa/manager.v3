@@ -47,6 +47,21 @@ Summary of Changes
   * Fixed a rounding error in the HostLoadManager documents-per-minute
     computation.
 
+  * The Connector Manager now enforces the FileSizeLimitInfo.maxDocumentSize
+    configuration property.  This property sets the maximum size of a Document's
+    content and is specified in applicationContext.xml.  The default value is
+    30 megabytes.  When constructing a document feed, if the number of bytes
+    read from the Document's content exceeds the maxDocumentSize, the
+    content will be discarded.  The Document's meta-data will be supplied in
+    the feed, but its content will not.
+
+    It is still preferable for TraversalContextAware Connector implementations
+    to make use of the maxDocumentSize supplied in TraversalContext to avoid
+    feeding the content of large documents.  If the Connector knows in advance
+    that a Document's content will exceed the maximum size, it can avoid the
+    Connector Manager pulling megabytes of data from the Repository, only to
+    have it discarded.
+
 
 Release 2.0.0,  01 June 2009
 ============================
