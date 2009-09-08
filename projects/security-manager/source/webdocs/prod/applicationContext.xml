@@ -6,19 +6,14 @@
         class="com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer">
   </bean>
 
-  <bean id="FeedConnection"
-        class="com.google.enterprise.connector.pusher.MockFeedConnection">
-  </bean>
-
-  <bean id="Pusher"
-        class="com.google.enterprise.connector.pusher.DocPusher">
-    <constructor-arg index="0" ref="FeedConnection" />
+  <bean id="AuthzResponder"
+        class="com.google.enterprise.connector.saml.server.AuthzResponderImpl">
   </bean>
 
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.SpringInstantiator">
-    <constructor-arg index="0" ref="Pusher" />
-    <constructor-arg index="1" ref="ThreadPool" />
+    <constructor-arg><null/></constructor-arg>
+    <property name="scheduler" ref="TraversalScheduler"/>
   </bean>
 
   <bean id="ConnectorConfigStore"
@@ -46,54 +41,42 @@
   </bean>
 
   <bean id="IdentityConfig"
-        class="com.google.enterprise.connector.security.identity.CsvConfig">
+	class="com.google.enterprise.connector.security.identity.CsvConfig">
     <constructor-arg index="0" value="AuthSites.conf" />
   </bean>
 
   <bean id="BackEnd"
         class="com.google.enterprise.connector.saml.server.BackEndImpl">
+    <constructor-arg index="0" ref="AuthzResponder" />
     <property name="identityConfig" ref="IdentityConfig" />
   </bean>
 
   <bean id="Manager"
         class="com.google.enterprise.connector.manager.ConnectorManager">
     <property name="instantiator" ref="Instantiator" />
-  </bean>
-
-  <bean id="HostLoadManager"
-        class="com.google.enterprise.connector.scheduler.HostLoadManager">
-    <constructor-arg index="0" ref="Instantiator"/>
-    <constructor-arg index="1" ref="FeedConnection"/>
+    <property name="backEnd" ref="BackEnd" />
   </bean>
 
   <bean id="TraversalScheduler"
         class="com.google.enterprise.connector.scheduler.TraversalScheduler">
     <constructor-arg index="0" ref="Instantiator" />
-    <constructor-arg index="1" ref="HostLoadManager"/>
+    <constructor-arg index="1" ref="Monitor" />
+    <constructor-arg index="2" ref="WorkQueue" />
   </bean>
 
-  <!-- This defines the number of seconds a task such as a Traversal
-       may run before it it is cancelled. The default is 60 minutes
-       (3600 seconds). This value should exceed
-       TraversalTimeLimitSecondsDefault which is a more gentle limit.
-  -->
-  <bean id="ThreadPoolCancelTimeSecondsDefault" class="java.lang.Long">
-    <constructor-arg index="0" type="long" value="3600"/>
+  <bean id="Monitor"
+        class="com.google.enterprise.connector.monitor.HashMapMonitor">
   </bean>
 
-  <bean id="ThreadPool"
-        class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-    <property name="staticMethod"
-              value="com.google.enterprise.connector.instantiator.ThreadPool.newThreadPool"/>
-    <property name="arguments">
-      <list>
-        <ref bean="ThreadPoolCancelTimeSecondsDefault"/>
-      </list>
-    </property>
+  <bean id="WorkQueue"
+        class="com.google.enterprise.connector.common.WorkQueue">
+    <constructor-arg index="0" type="int" value="2" />
+    <constructor-arg index="1" type="long" value="5000" />
+    <constructor-arg index="2" type="long" value="5000" />
   </bean>
 
   <bean id="Metadata"
-        class="com.google.enterprise.connector.saml.common.Metadata">
+	class="com.google.enterprise.connector.saml.common.Metadata">
     <constructor-arg index="0" value="saml-metadata.xml" />
     <constructor-arg index="1" value="http://google.com/enterprise/security-manager" />
   </bean>

@@ -38,10 +38,12 @@ import javax.jcr.PropertyIterator;
  */
 public class MockJcrPropertyIterator implements PropertyIterator {
 
-  private final Iterator<MockJcrProperty> propIterator;
+  List<MockJcrProperty> propList;
+  Iterator<MockJcrProperty> propIterator = null;
 
   public MockJcrPropertyIterator(List<MockJcrProperty> propList) {
-    this.propIterator = propList.iterator();
+    this.propList = propList;
+    propIterator = propList.iterator();
   }
 
   public Property nextProperty() {

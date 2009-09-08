@@ -79,59 +79,7 @@ public class AuthenticateTest extends TestCase {
     doTest(xmlBody, expectedResult, "fooDomain", "fooUser", "fooPassword");
   }
 
-  public void testWithTwoConnectorNameElements() {
-    String xmlBody =
-      "<AuthnRequest>\n" +
-      "  <Connectors>\n" +
-      "    <ConnectorName>connector1</ConnectorName>\n" +
-      "    <ConnectorName>connector2</ConnectorName>\n" +
-      "  </Connectors>\n" +
-      "  <Credentials>\n" +
-      "    <Username>fooUser</Username>\n" +
-      "    <Domain>fooDomain</Domain>" +
-      "    <Password>fooPassword</Password>\n" +
-      "  </Credentials>\n" +
-      "</AuthnRequest>";
-
-    String expectedResult =
-      "<CmResponse>\n" +
-      "  <AuthnResponse>\n" +
-      "    <Success ConnectorName=\"connector1\">\n" +
-      "      <Identity>fooUser</Identity>\n" +
-      "    </Success>\n" +
-      "    <Success ConnectorName=\"connector2\">\n" +
-      "      <Identity>fooUser</Identity>\n" +
-      "    </Success>\n" +
-      "  </AuthnResponse>\n" +
-      "</CmResponse>\n";
-    doTest(xmlBody, expectedResult, "fooDomain", "fooUser", "fooPassword");
-  }
-
-  public void testWithOneConnectorNameElement() {
-    String xmlBody =
-      "<AuthnRequest>\n" +
-      "  <Connectors>\n" +
-      "    <ConnectorName>connector1</ConnectorName>\n" +
-      "  </Connectors>\n" +
-      "  <Credentials>\n" +
-      "    <Username>fooUser</Username>\n" +
-      "    <Domain>fooDomain</Domain>" +
-      "    <Password>fooPassword</Password>\n" +
-      "  </Credentials>\n" +
-      "</AuthnRequest>";
-
-    String expectedResult =
-      "<CmResponse>\n" +
-      "  <AuthnResponse>\n" +
-      "    <Success ConnectorName=\"connector1\">\n" +
-      "      <Identity>fooUser</Identity>\n" +
-      "    </Success>\n" +
-      "  </AuthnResponse>\n" +
-      "</CmResponse>\n";
-    doTest(xmlBody, expectedResult, "fooDomain", "fooUser", "fooPassword");
-  }
-
-  private void doTest(String xmlBody, String expectedResult, String domain,
+  private void doTest(String xmlBody, String expectedResult, String domain, 
       String username, String password) {
     LOGGER.info("xmlBody: " + xmlBody);
     MockManager manager = MockManager.getInstance();
@@ -144,7 +92,7 @@ public class AuthenticateTest extends TestCase {
     StringBuffer result = writer.getBuffer();
     LOGGER.info(result.toString());
     LOGGER.info(expectedResult);
-    Assert.assertEquals(StringUtils.normalizeNewlines(expectedResult),
+    Assert.assertEquals (StringUtils.normalizeNewlines(expectedResult),
         StringUtils.normalizeNewlines(result.toString()));
     out.close();
   }

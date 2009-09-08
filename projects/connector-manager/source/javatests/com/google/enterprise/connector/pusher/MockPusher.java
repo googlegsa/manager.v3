@@ -70,6 +70,14 @@ public class MockPusher implements Pusher {
     totalDocs++;
   }
 
+  public void flush() {
+    printStream.flush();
+  }
+
+  public void cancel() {
+    totalDocs = 0;
+  }
+
   private void processProperty(String name, Property property)
       throws RepositoryException {
     InputStream contentStream = null;

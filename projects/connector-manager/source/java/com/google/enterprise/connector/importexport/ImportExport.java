@@ -26,25 +26,25 @@ import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Reader;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -162,7 +162,6 @@ public class ImportExport {
    * Deserializes connectors from XML.
    * @return a List of ImportExportConnectors
    */
-  @SuppressWarnings("deprecation")
   public static List<ImportExportConnector> fromXmlConnectorsElement(
       Element connectorsElement) {
     List<ImportExportConnector> connectors =
@@ -178,13 +177,7 @@ public class ImportExport {
       String type = ServletUtil.getFirstElementByTagName(
           connectorElement, ServletUtil.XMLTAG_CONNECTOR_TYPE);
       String scheduleString = ServletUtil.getFirstElementByTagName(
-          connectorElement, ServletUtil.XMLTAG_CONNECTOR_SCHEDULES);
-      // TODO: Remove this when v2.0 and older no longer needs to be supported.
-      if (scheduleString == null) {
-        // Could be dealing with old format.
-        scheduleString = ServletUtil.getFirstElementByTagName(
-            connectorElement, ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
-      }
+          connectorElement, ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
       Element configElement = (Element) connectorElement.getElementsByTagName(
           ServletUtil.XMLTAG_CONNECTOR_CONFIG).item(0);
       Map<String, String> config = ServletUtil.getAllAttributes(
@@ -230,19 +223,11 @@ public class ImportExport {
           pw, 2, ServletUtil.XMLTAG_CONNECTOR_NAME, name);
       ServletUtil.writeXMLElement(
           pw, 2, ServletUtil.XMLTAG_CONNECTOR_TYPE, type);
-      StringBuilder builder = new StringBuilder();
-      ServletUtil.writeXMLTagWithAttrs(builder, 2,
-          ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
-          ServletUtil.ATTRIBUTE_VERSION + "3" + ServletUtil.QUOTE,
-          false);
-      builder.append(scheduleString);
-      ServletUtil.writeXMLTag(builder, 0,
-          ServletUtil.XMLTAG_CONNECTOR_SCHEDULES, true);
-      pw.println(builder.toString());
+      ServletUtil.writeXMLElement(
+          pw, 2, ServletUtil.XMLTAG_CONNECTOR_SCHEDULE, scheduleString);
       ServletUtil.writeXMLTag(
           pw, 2, ServletUtil.XMLTAG_CONNECTOR_CONFIG, false);
-      Map<String, String> sorted = new TreeMap<String, String>(config);
-      for (Map.Entry<String, String> me : sorted.entrySet()) {
+      for (Map.Entry<String, String> me : config.entrySet()) {
         String attributeString = ServletUtil.ATTRIBUTE_NAME + me.getKey()
             + ServletUtil.QUOTE + ServletUtil.ATTRIBUTE_VALUE
             + me.getValue() + ServletUtil.QUOTE;

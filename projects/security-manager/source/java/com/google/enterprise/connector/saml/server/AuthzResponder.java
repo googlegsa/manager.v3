@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc.  All Rights Reserved.
+// Copyright 2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,14 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.instantiator;
+package com.google.enterprise.connector.saml.server;
+
+import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.core.AuthzDecisionQuery;
+
+import java.util.List;
 
 /**
- * Interface for timing out a batch.
+ * Interface for responding to SAML AuthzDecisionQueries, either in singular
+ * or batched forms.
  */
-public interface BatchTimeout {
-  /**
-   * Times out the batch.
-   */
-  void timeout();
+public interface AuthzResponder {
+
+  public Response authorize(AuthzDecisionQuery query);
+
+  public List<Response> authorizeBatch(List<AuthzDecisionQuery> queries);
 }

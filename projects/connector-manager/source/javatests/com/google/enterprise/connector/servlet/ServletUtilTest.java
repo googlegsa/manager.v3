@@ -21,7 +21,6 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -174,8 +173,7 @@ public class ServletUtilTest extends TestCase {
     String configForm =
         "<tr>"
         + "<td>Sensitive input to force parsing</td>"
-        + "<td><input name=\"Password\" type=\"password\""
-        + " value=\"protected\"/></td>"
+        + "<td><input name=\"Password\" type=\"password\" value=\"protected\"/></td>"
         + "</tr>"
         + "<tr>"
         + "<td>HTML and XML &amp; &lt;</td>"
@@ -187,8 +185,7 @@ public class ServletUtilTest extends TestCase {
         + "</tr>"
         + "<tr>"
         + "<td>Value has non-252 but needs to be preserved</td>"
-        + "<td><input name=\"ValueHas\" type=\"text\""
-        + " value=\"clear1&#10;clear2&#xA;clear3\"/></td>"
+        + "<td><input name=\"ValueHas\" type=\"text\" value=\"clear1&#10;clear2&#xA;clear3\"/></td>"
         + "</tr>"
         + "<tr>"
         + "<td>Two words</td>"
@@ -204,43 +201,30 @@ public class ServletUtilTest extends TestCase {
         + "</tr>";
     String expectedForm =
         "<tr>"
-        + "<td colspan=\"1\" rowspan=\"1\">"
-        + "Sensitive input to force parsing</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Password\""
-        + " type=\"password\" value=\"*********\"></td>"
+        + "<td colspan=\"1\" rowspan=\"1\">Sensitive input to force parsing</td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Password\" type=\"password\" value=\"*********\"></td>"
         + "</tr>"
         + "<tr>"
         + "<td colspan=\"1\" rowspan=\"1\">HTML and XML &amp; &lt;</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"HtmlAndXml\""
-        + " type=\"text\" value=\"clear\"></td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"HtmlAndXml\" type=\"text\" value=\"clear\"></td>"
         + "</tr>"
         + "<tr>"
-        + "<td colspan=\"1\" rowspan=\"1\">"
-        + "Some&nbsp;of&nbsp;the&nbsp;other 252 &copy; &copy; &copy;</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Other252\""
-        + " type=\"text\" value=\"clear\"></td>"
+        + "<td colspan=\"1\" rowspan=\"1\">Some&nbsp;of&nbsp;the&nbsp;other 252 &copy; &copy; &copy;</td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Other252\" type=\"text\" value=\"clear\"></td>"
         + "</tr>"
         + "<tr>"
-        + "<td colspan=\"1\" rowspan=\"1\">"
-        + "Value has non-252 but needs to be preserved</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"ValueHas\""
-        + " type=\"text\" value=\"clear1"
-        + System.getProperty("line.separator")
-        + "clear2"
-        + System.getProperty("line.separator")
-        + "clear3\"></td>"
+        + "<td colspan=\"1\" rowspan=\"1\">Value has non-252 but needs to be preserved</td>"
+        + "<td colspan=\"1\" rowspan=\"1\"><input name=\"ValueHas\" type=\"text\" value=\"clear1\nclear2\nclear3\"></td>"
         + "</tr>"
         + "<tr>"
         + "<td colspan=\"1\" rowspan=\"1\">Two words</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><textarea cols=\"40\""
-        + " name=\"url\" rows=\"5\">"
+        + "<td colspan=\"1\" rowspan=\"1\"><textarea cols=\"40\" name=\"url\" rows=\"5\">"
         + "http://www.example.com/doc?a=b&amp;c=d"
         + "</textarea></td>"
         + "</tr>"
         + "<tr>"
         + "<td colspan=\"1\" rowspan=\"1\">Two words</td>"
-        + "<td colspan=\"1\" rowspan=\"1\"><textarea cols=\"40\""
-        + " name=\"quote\" rows=\"5\">"
+        + "<td colspan=\"1\" rowspan=\"1\"><textarea cols=\"40\" name=\"quote\" rows=\"5\">"
         + "Is that a &dagger; I see before me?"
         + "</textarea></td>"
         + "</tr>";
@@ -388,18 +372,18 @@ public class ServletUtilTest extends TestCase {
 
   private String makeConfigForm(Map<String, String> configMap) {
     StringBuilder buf = new StringBuilder(2048);
-    for (Map.Entry<String, String> entry : configMap.entrySet()) {
-      appendStartRow(buf, entry.getKey());
+    for (String key : configMap.keySet()) {
+      appendStartRow(buf, key);
       buf.append(OPEN_ELEMENT);
       buf.append(INPUT);
-      if (SecurityUtils.isKeySensitive(entry.getKey())) {
+      if (SecurityUtils.isKeySensitive(key)) {
         appendAttribute(buf, TYPE, PASSWORD);
       } else {
         appendAttribute(buf, TYPE, TEXT);
       }
-      appendAttribute(buf, NAME, entry.getKey());
+      appendAttribute(buf, NAME, key);
       if (configMap != null) {
-        String value = entry.getValue();
+        String value = configMap.get(key);
         if (value != null) {
           appendAttribute(buf, VALUE, value);
         }
@@ -425,20 +409,21 @@ public class ServletUtilTest extends TestCase {
 
   private void appendAttribute(StringBuilder buf, String attrName,
       String attrValue) {
-    try {
-      XmlUtils.xmlAppendAttr(attrName, attrValue, buf);
-    } catch (IOException e) {
-      // Can't happen with StringBuilder.
-      fail("Unexpected exception: " + e.getMessage());
-    }
+    buf.append(" ");
+
+    // FIXME: When XmlUtils moves to Appendable.
+    StringBuffer tmp = new StringBuffer();
+    XmlUtils.xmlAppendAttrValuePair(attrName, attrValue, tmp);
+    buf.append(tmp.toString());
   }
 
   private void obfuscateValues(Map<String, String> clearConfig,
        Map<String, String> obfuscatedConfig) {
-    for (Map.Entry<String, String> entry : clearConfig.entrySet()) {
-      obfuscatedConfig.put(entry.getKey(),
-          (SecurityUtils.isKeySensitive(entry.getKey())) ?
-              ServletUtil.obfuscateValue(entry.getValue()) : entry.getValue());
+    for (String key : clearConfig.keySet()) {
+      String clearValue = clearConfig.get(key);
+      obfuscatedConfig.put(key,
+          (SecurityUtils.isKeySensitive(key)) ?
+              ServletUtil.obfuscateValue(clearValue) : clearValue);
     }
   }
 

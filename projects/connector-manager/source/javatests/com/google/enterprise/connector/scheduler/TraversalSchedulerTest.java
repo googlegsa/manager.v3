@@ -15,12 +15,13 @@
 package com.google.enterprise.connector.scheduler;
 
 import com.google.enterprise.connector.common.I18NUtil;
+import com.google.enterprise.connector.common.WorkQueue;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.instantiator.SpringInstantiator;
-import com.google.enterprise.connector.instantiator.ThreadPool;
 import com.google.enterprise.connector.instantiator.TypeMap;
+import com.google.enterprise.connector.monitor.HashMapMonitor;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -39,12 +40,12 @@ import java.util.List;
 
 /**
  * Tests the Scheduler.
+ *
  */
 public class TraversalSchedulerTest extends TestCase {
 
   private static final String TEST_DIR_NAME = "testdata/tempSchedulerTests";
-  private static final String TEST_CONFIG_FILE =
-    "classpath*:config/connectorType.xml";
+  private static final String TEST_CONFIG_FILE = "classpath*:config/connectorType.xml";
   private File baseDirectory;
 
   @Override
@@ -65,8 +66,10 @@ public class TraversalSchedulerTest extends TestCase {
   private TraversalScheduler runWithSchedules(List<Schedule> schedules,
       Instantiator instantiator, boolean shutdown) {
     storeSchedules(schedules, instantiator);
-    TraversalScheduler scheduler = new TraversalScheduler(instantiator,
-        new HostLoadManager(instantiator, null));
+    WorkQueue workQueue = new WorkQueue(2, 5000);
+    TraversalScheduler scheduler =
+        new TraversalScheduler(instantiator, new HashMapMonitor(), workQueue,
+            new HostLoadManager(instantiator));
     scheduler.init();
     Thread thread = new Thread(scheduler, "TraversalScheduler");
     thread.start();
@@ -93,8 +96,7 @@ public class TraversalSchedulerTest extends TestCase {
    * Create an object that can return all connector instances referenced in
    * MockInstantiator.
    */
-  private void storeSchedules(List<Schedule> schedules,
-      Instantiator instantiator) {
+  private void storeSchedules(List<Schedule> schedules, Instantiator instantiator) {
     for (Schedule schedule : schedules) {
       String connectorName = schedule.getConnectorName();
       String connectorSchedule = schedule.toString();
@@ -107,18 +109,14 @@ public class TraversalSchedulerTest extends TestCase {
   }
 
   private Instantiator createMockInstantiator() {
-    ThreadPool threadPool =
-      ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(5000);
-    MockInstantiator instantiator = new MockInstantiator(threadPool);
+    MockInstantiator instantiator = new MockInstantiator();
     instantiator.setupTestTraversers();
     return instantiator;
   }
 
   private Instantiator createRealInstantiator() {
-    ThreadPool threadPool =
-      ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(5000);
     Instantiator instantiator = new SpringInstantiator(
-        new MockPusher(), threadPool, new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
+        new MockPusher(), new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
 
     // Instantiate a couple of connectors.
     addConnector(instantiator, "connectorA", "TestConnectorA",
@@ -163,14 +161,30 @@ public class TraversalSchedulerTest extends TestCase {
         new ScheduleTime(0)));
 
     List<Schedule> schedules = new ArrayList<Schedule>();
-    Schedule schedule = new Schedule(traverserName, false, 60, delay,
-        intervals);
+    Schedule schedule = new Schedule(traverserName, false, 60, delay, intervals);
     schedules.add(schedule);
     return schedules;
   }
 
   private List<Schedule> getSchedules(String traverserName) {
     return getSchedules(traverserName, 0);
+  }
+
+  public void testRemoveConnector() {
+    String connectorName = MockInstantiator.TRAVERSER_NAME_CANCELLABLE;
+    List<Schedule> schedules = getSchedules(connectorName);
+    TraversalScheduler scheduler =
+      runWithSchedules(schedules, createMockInstantiator(), false);
+
+    // sleep to give it a chance to schedule something
+    try {
+      Thread.sleep(100);
+    } catch (InterruptedException ie) {
+      ie.printStackTrace();
+      fail(ie.toString());
+    }
+
+    scheduler.removeConnector(connectorName);
   }
 
   public void testNoopTraverser() {
@@ -200,9 +214,8 @@ public class TraversalSchedulerTest extends TestCase {
    * Test a traverser that can get interrupted.
    */
   public void testInterruptibleTraverser() {
-    runWithSchedules(
-        getSchedules(MockInstantiator.TRAVERSER_NAME_INTERRUPTIBLE),
-        createMockInstantiator());
+    runWithSchedules(getSchedules(MockInstantiator.TRAVERSER_NAME_INTERRUPTIBLE),
+                     createMockInstantiator());
   }
 
   /**

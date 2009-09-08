@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.common.Base64FilterInputStream;
-import com.google.enterprise.connector.common.CompressedFilterInputStream;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
@@ -30,10 +29,10 @@ import com.google.enterprise.connector.spi.SpiConstants.ActionType;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
 import com.google.enterprise.connector.spiimpl.DateValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
+import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
-import java.io.File;
+import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -66,8 +65,38 @@ public class DocPusher implements Pusher {
       Logger.getLogger(FEED_WRAPPER_LOGGER.getName() + ".FEED");
   private static final Level FEED_LOG_LEVEL = Level.FINER;
 
-  private static Set<String> propertySkipSet;
+  private static final byte[] SPACE_CHAR = { 0x20 };  // UTF-8 space
 
+  /**
+   * This is used to build up a multi-record feed.  Documents are added
+   * to the feed until the size of the feed exceeds the maxFeedSize
+   * or we are finished with the batch of documents. The feed is then
+   * submitted to the feed connection.
+   */
+  private final ThreadLocal<XmlFeed> xmlFeed = new ThreadLocal<XmlFeed>();
+
+  /**
+   * Once the accumulated feed exceeds this value, close it and sumbit.
+   */
+  // Default value is smallish 1MB, for the convenience of unit testing.
+  private static int maxFeedSize = 1024 * 1024;
+
+  /**
+   * Configured maximum file size supported.
+   */
+  private FileSizeLimitInfo fileSizeLimit = new FileSizeLimitInfo();
+
+  /**
+   * This field is used to construct a feed record in parallel to the main feed
+   * InputStream construction.  It is only used if the feed logging level is set
+   * to the appropriate level.  It only exists during the time the main feed is
+   * being constructed.  Once sufficient information has been appended to this
+   * buffer its contents will be logged and it will be nulled.
+   */
+  private final ThreadLocal<StringBuilder> feedLog =
+      new ThreadLocal<StringBuilder>();
+
+  private static Set<String> propertySkipSet;
   static {
     propertySkipSet = new HashSet<String>();
     propertySkipSet.add(SpiConstants.PROPNAME_CONTENT);
@@ -95,21 +124,20 @@ public class DocPusher implements Pusher {
   private static final String XML_LAST_MODIFIED = "last-modified";
   // private static final String XML_LOCK = "lock";
   private static final String XML_AUTHMETHOD = "authmethod";
-  private static final String XML_NAME = "name";
+  // private static final String XML_NAME = "name";
   private static final String XML_ENCODING = "encoding";
 
   // private static final String XML_FEED_FULL = "full";
   private static final String XML_FEED_METADATA_AND_URL = "metadata-and-url";
   private static final String XML_FEED_INCREMENTAL = "incremental";
-  private static final String XML_BASE64BINARY = "base64binary";
-  private static final String XML_BASE64COMPRESSED = "base64compressed";
+  // private static final String XML_BASE64BINARY = "base64binary";
+  private static final String XML_ADD = "add";
+  private static final String XML_DELETE = "delete";
 
   private static final String CONNECTOR_AUTHMETHOD = "httpbasic";
 
   private final FeedConnection feedConnection;
   private String gsaResponse;
-  private boolean feedWarning;
-  private boolean useCompression;
 
   /**
    *
@@ -117,14 +145,36 @@ public class DocPusher implements Pusher {
    */
   public DocPusher(FeedConnection feedConnection) {
     this.feedConnection = feedConnection;
-    this.feedWarning = false;
-    String supportedEncodings =
-        feedConnection.getContentEncodings().toLowerCase();
-    this.useCompression = (supportedEncodings.indexOf("base64compressed") >= 0);
   }
 
   public static Logger getFeedLogger() {
     return FEED_WRAPPER_LOGGER;
+  }
+
+  /**
+   * Set the maximum size of an accumulated feed file.
+   * The pusher might actually exceed this maximum by
+   * the size of a single document's feed record, so
+   * don't get too close to the GSA's absolute maximum
+   * size of 1GB.
+   *
+   * @param maximumFeedSize maximum size to accumulated in
+   *        feed, before sending the feed on to the GSA.
+   */
+  public void setMaximumFeedSize(int maximumFeedSize) {
+    if (maxFeedSize > (900 * 1024 * 1024)) {
+      // Don't exceed the GSA maximum feed size of 1GB.
+      maxFeedSize = 900 * 1024 * 1024;
+    } else {
+      maxFeedSize = maximumFeedSize;
+    }
+  }
+
+  /**
+   * Set the maximum size of the document content.
+   */
+  public void setFileSizeLimitInfo(FileSizeLimitInfo fileSizeLimitInfo) {
+    this.fileSizeLimit = fileSizeLimitInfo;
   }
 
   /**
@@ -165,43 +215,53 @@ public class DocPusher implements Pusher {
 
   /*
    * Generate the record tag for the xml data.
-   *
-   * @throws IOException only from Appendable, and that can't really
-   *         happen when using StringBuilder.
    */
   private InputStream xmlWrapRecord(String searchUrl, String displayUrl,
       String lastModified, InputStream content, String mimetype,
-      ActionType actionType, Document document, String feedType,
-      StringBuilder feedLogBuilder) throws RepositoryException, IOException {
+      ActionType actionType, Document document, String feedType)
+      throws RepositoryException {
     boolean metadataAllowed = true;
     boolean contentAllowed = true;
-
-    StringBuilder prefix = new StringBuilder();
+    // build prefix
+    StringBuffer prefix = new StringBuffer();
     prefix.append("<");
     prefix.append(XML_RECORD);
-    XmlUtils.xmlAppendAttr(XML_URL, searchUrl, prefix);
-    XmlUtils.xmlAppendAttr(XML_DISPLAY_URL, displayUrl, prefix);
-
+    prefix.append(" ");
+    XmlUtils.xmlAppendAttrValuePair(XML_URL, searchUrl, prefix);
+    if (displayUrl != null && displayUrl.length() > 0) {
+      prefix.append(" ");
+      XmlUtils.xmlAppendAttrValuePair(XML_DISPLAY_URL, displayUrl, prefix);
+    }
     if (actionType != null) {
+      prefix.append(" ");
       if (actionType == ActionType.ADD) {
-        XmlUtils.xmlAppendAttr(XML_ACTION, actionType.toString(), prefix);
+        XmlUtils.xmlAppendAttrValuePair(XML_ACTION, XML_ADD, prefix);
       } else if (actionType == ActionType.DELETE) {
-        XmlUtils.xmlAppendAttr(XML_ACTION, actionType.toString(), prefix);
+        XmlUtils.xmlAppendAttrValuePair(XML_ACTION, XML_DELETE, prefix);
         metadataAllowed = false;
         contentAllowed = false;
       }
     }
-
-    XmlUtils.xmlAppendAttr(XML_MIMETYPE, mimetype, prefix);
-    XmlUtils.xmlAppendAttr(XML_LAST_MODIFIED, lastModified, prefix);
-
+    if (mimetype != null) {
+      prefix.append(" ");
+      XmlUtils.xmlAppendAttrValuePair(XML_MIMETYPE, mimetype, prefix);
+    }
+    if (lastModified != null) {
+      prefix.append(" ");
+      XmlUtils.xmlAppendAttrValuePair(XML_LAST_MODIFIED, lastModified, prefix);
+    }
     try {
       ValueImpl v = (ValueImpl) Value.getSingleValue(document,
           SpiConstants.PROPNAME_ISPUBLIC);
       if (v != null) {
         boolean isPublic = v.toBoolean();
         if (!isPublic) {
-          XmlUtils.xmlAppendAttr(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD, prefix);
+          // TODO(martyg): When the GSA is ready to take ACLUSERS and ACLGROUPS,
+          // this is the place where those properties should be pulled out of
+          // meta data and into the proper ACL Entry element.
+          prefix.append(" ");
+          XmlUtils.xmlAppendAttrValuePair(XML_AUTHMETHOD, CONNECTOR_AUTHMETHOD,
+              prefix);
         }
       }
     } catch (IllegalArgumentException e) {
@@ -212,32 +272,37 @@ public class DocPusher implements Pusher {
     if (metadataAllowed) {
       xmlWrapMetadata(prefix, document);
     }
-
-    StringBuilder suffix = new StringBuilder();
-
-    // If including document content, wrap it with <content> tags.
-    if (contentAllowed && !XML_FEED_METADATA_AND_URL.equals(feedType)) {
+    if (!feedType.equals(XML_FEED_METADATA_AND_URL)  && contentAllowed) {
       prefix.append("<");
       prefix.append(XML_CONTENT);
-      XmlUtils.xmlAppendAttr(XML_ENCODING,
-          (useCompression) ? XML_BASE64COMPRESSED : XML_BASE64BINARY, prefix);
+      prefix.append(" ");
+      XmlUtils.xmlAppendAttrValuePair(XML_ENCODING, "base64binary", prefix);
       prefix.append(">\n");
-
-      suffix.append('\n');
-      XmlUtils.xmlAppendEndTag(XML_CONTENT, suffix);
     }
 
-    XmlUtils.xmlAppendEndTag(XML_RECORD, suffix);
+    // build suffix
+    StringBuffer suffix = new StringBuffer();
+    if (feedType != XML_FEED_METADATA_AND_URL && contentAllowed) {
+      suffix.append('\n').append(XmlUtils.xmlWrapEnd(XML_CONTENT));
+    }
+    suffix.append(XmlUtils.xmlWrapEnd(XML_RECORD));
 
-    InputStream is = stringWrappedInputStream(prefix.toString(),
-        ((contentAllowed) ? content : null), suffix.toString());
+    InputStream is = null;
+    if (contentAllowed) {
+      is = stringWrappedInputStream(prefix.toString(), content,
+          suffix.toString());
+    } else {
+      is = stringWrappedInputStream(prefix.toString(), null,
+          suffix.toString());
+    }
 
-    if (feedLogBuilder != null) {
-      feedLogBuilder.append(prefix);
+    if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
+      StringBuilder log = feedLog.get();
+      log.append(prefix);
       if (contentAllowed && content != null) {
-        feedLogBuilder.append("...content...");
+        log.append("...content...");
       }
-      feedLogBuilder.append(suffix);
+      log.append(suffix);
     }
 
     return is;
@@ -249,12 +314,9 @@ public class DocPusher implements Pusher {
    *
    * @param buf string buffer
    * @param document Document
-   * @throws RepositoryException if error reading Property from Document
-   * @throws IOException only from Appendable, and that can't really
-   *         happen when using StringBuilder.
    */
-  private static void xmlWrapMetadata(StringBuilder buf, Document document)
-      throws RepositoryException, IOException {
+  private static void xmlWrapMetadata(StringBuffer buf, Document document)
+      throws RepositoryException {
     Set<String> propertyNames = document.getPropertyNames();
     if (propertyNames == null) {
       LOGGER.log(Level.WARNING, "Property names set is empty");
@@ -264,7 +326,7 @@ public class DocPusher implements Pusher {
       return;
     }
 
-    XmlUtils.xmlAppendStartTag(XML_METADATA, buf);
+    buf.append(XmlUtils.xmlWrapStart(XML_METADATA));
     buf.append("\n");
 
     for (String name : propertyNames) {
@@ -284,7 +346,7 @@ public class DocPusher implements Pusher {
         wrapOneProperty(buf, name, property);
       }
     }
-    XmlUtils.xmlAppendEndTag(XML_METADATA, buf);
+    buf.append(XmlUtils.xmlWrapEnd(XML_METADATA));
   }
 
   /**
@@ -328,8 +390,9 @@ public class DocPusher implements Pusher {
         // Add ACL Entry (scope=role pair) to the list.
         Value roleVal = null;
         while ((roleVal = scopeRoleProp.nextValue()) != null) {
-          StringBuilder aclEntry = new StringBuilder(aclScope).append("=")
-              .append(roleVal.toString());
+          String aclRole = roleVal.toString();
+          StringBuffer aclEntry = new StringBuffer(aclScope).append("=").
+              append(aclRole);
           aclEntryList.add(Value.getStringValue(aclEntry.toString()));
           aclPropWasModified = true;
         }
@@ -352,22 +415,20 @@ public class DocPusher implements Pusher {
    * Wrap a single Property and append to string buffer. Does nothing if the
    * Property's value is null or zero-length.
    *
-   * @param buf string builder
+   * @param buf string buffer
    * @param name the property's name
    * @param property Property
-   * @throws RepositoryException if error reading Property from Document
-   * @throws IOException only from Appendable, and that can't really
-   *         happen when using StringBuilder.
    */
-  private static void wrapOneProperty(StringBuilder buf, String name,
-      Property property) throws RepositoryException, IOException {
+  private static void wrapOneProperty(StringBuffer buf, String name,
+      Property property) throws RepositoryException {
     // In case there are only null values, we want to "roll back" the
     // XML_META tag. So save our current length:
     int indexMetaStart = buf.length();
 
     buf.append("<");
     buf.append(XML_META);
-    XmlUtils.xmlAppendAttr(XML_NAME, name, buf);
+    buf.append(" ");
+    XmlUtils.xmlAppendAttrValuePair("name", name, buf);
     buf.append(" content=\"");
 
     // Mark the beginning of the values:
@@ -388,22 +449,15 @@ public class DocPusher implements Pusher {
     }
   }
 
-  /**
-   * Wrap a single Property Value and append to string buffer.
-   * Does nothing if the Property's value is null or zero-length.
-   *
-   * @param buf string builder
-   * @param value a Property Value
-   * @throws IOException only from Appendable, and that can't really
-   *         happen when using StringBuilder.
-   */
-  private static void wrapOneValue(StringBuilder buf, ValueImpl value,
-      String delimiter) throws IOException {
-    String valString = value.toFeedXml();
-    if (valString != null && valString.length() > 0) {
-      buf.append(delimiter);
-      XmlUtils.xmlAppendAttrValue(valString, buf);
+  private static void wrapOneValue(StringBuffer buf, ValueImpl value,
+      String delimiter) {
+    String valString = "";
+    valString = value.toFeedXml();
+    if (valString.length() == 0) {
+      return;
     }
+    buf.append(delimiter);
+    XmlUtils.XmlEncodeAttrValue(valString, buf);
   }
 
   /*
@@ -514,34 +568,10 @@ public class DocPusher implements Pusher {
 
   /*
    * Builds the xml string for a given document.
-   *
-   * @throws IOException only from Appendable, and that can't really
-   *         happen when using StringBuilder.
    */
   protected InputStream buildXmlData(Document document, String connectorName,
-      String feedType, boolean loggingContent) throws RepositoryException,
-                                                      IOException {
-    // build prefix
-    StringBuilder prefix = new StringBuilder();
-    prefix.append(XML_START);
-    XmlUtils.xmlAppendStartTag(XML_GSAFEED, prefix);
-    XmlUtils.xmlAppendStartTag(XML_HEADER, prefix);
-    XmlUtils.xmlAppendStartTag(XML_DATASOURCE, prefix);
-    prefix.append(connectorName);
-    XmlUtils.xmlAppendEndTag(XML_DATASOURCE, prefix);
-    XmlUtils.xmlAppendStartTag(XML_FEEDTYPE, prefix);
-    prefix.append(feedType);
-    XmlUtils.xmlAppendEndTag(XML_FEEDTYPE, prefix);
-    XmlUtils.xmlAppendEndTag(XML_HEADER, prefix);
-    XmlUtils.xmlAppendStartTag(XML_GROUP, prefix);
-    prefix.append("\n");
-
-    // build suffix
-    StringBuilder suffix = new StringBuilder();
-    XmlUtils.xmlAppendEndTag(XML_GROUP, suffix);
-    XmlUtils.xmlAppendEndTag(XML_GSAFEED, suffix);
-
-    // build record
+      String feedType, boolean loggingContent) throws RepositoryException {
+    // Build an XML feed record for the document.
     String searchurl = null;
     if (feedType.equals(XML_FEED_METADATA_AND_URL)) {
       searchurl = getOptionalString(document, SpiConstants.PROPNAME_SEARCHURL);
@@ -562,23 +592,21 @@ public class DocPusher implements Pusher {
       searchurl = constructGoogleConnectorUrl(connectorName, docid);
     }
 
-    InputStream encodedContentStream = null;
+    InputStream contentStream = null;
     if (!feedType.equals(XML_FEED_METADATA_AND_URL)) {
-      InputStream contentStream = getNonNullContentStream(
-          getOptionalStream(document, SpiConstants.PROPNAME_CONTENT),
-          getOptionalString(document, SpiConstants.PROPNAME_TITLE));
+      InputStream encodedContentStream =
+          new Base64FilterInputStream(
+              new BigEmptyDocumentFilterInputStream(
+                  getOptionalStream(document, SpiConstants.PROPNAME_CONTENT),
+                  fileSizeLimit.maxDocumentSize()),
+              loggingContent);
 
-      if (null != contentStream) {
-        // TODO: Don't compress tiny content or already compressed data
-        // (based on mimetype).
-        if (useCompression) {
-          encodedContentStream = new Base64FilterInputStream(
-              new CompressedFilterInputStream(contentStream), loggingContent);
-        } else {
-          encodedContentStream =
-              new Base64FilterInputStream(contentStream, loggingContent);
-        }
-      }
+      InputStream encodedAlternateStream =
+          new Base64FilterInputStream(getAlternateContent(
+              getOptionalString(document, SpiConstants.PROPNAME_TITLE)), false);
+
+      contentStream = new AlternateContentFilterInputStream(
+          encodedContentStream, encodedAlternateStream, xmlFeed.get());
     }
 
     String lastModified = null;
@@ -614,71 +642,40 @@ public class DocPusher implements Pusher {
       }
     }
 
-
-    /* This is used to construct a feed record in parallel to the main feed
-     * InputStream construction.  It is only used if the feed logging level
-     * is set to the appropriate level.
-     */
-    StringBuilder feedLogBuilder = null;
-    if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-      feedLogBuilder = new StringBuilder(prefix);
-    }
-
-    InputStream recordInputStream = xmlWrapRecord(searchurl, displayUrl,
-        lastModified, encodedContentStream, mimetype, actionType, document,
-        feedType, feedLogBuilder);
-
-    InputStream is = stringWrappedInputStream(prefix.toString(),
-        recordInputStream, suffix.toString());
-
-    if (feedLogBuilder != null) {
-      feedLogBuilder.append(suffix);
-      FEED_LOGGER.log(FEED_LOG_LEVEL, feedLogBuilder.toString());
-    }
-
-    return is;
+    return xmlWrapRecord(searchurl, displayUrl, lastModified,
+        contentStream, mimetype, actionType, document, feedType);
   }
 
   /**
-   * Inspect the content stream for a feed item, and if it's null or empty,
-   * substitute a string which will insure that the feed items gets indexed by
-   * the GSA.
+   * Construct the alternate content data for a feed item.  If the feed item
+   * has null or empty content, or if the feed item has excessively large
+   * content, substitute this data which will insure that the feed item gets
+   * indexed by the GSA. The alternate content consists of the item's title,
+   * or a single space, if it lacks a title.
    *
-   * @param contentStream from the feed item
    * @param title from the feed item
-   * @return an InputStream which is guaranteed to be non-null.
-   * @throws RepositoryDocumentException if the default content string
-   *         cannot be UTF-8-encoded into a ByteArrayInputStream.
+   * @return an InputStream containing the alternate content
    */
-  private static InputStream getNonNullContentStream(InputStream contentStream,
-      String title) throws RepositoryException {
-    if (contentStream != null) {  // TODO: "or empty"?
-      return contentStream;
-    }
-    try {
-      byte[] bytes = null;
-      // Default content is a string that is substituted for null or empty
-      // content streams, in order to make sure the GSA indexes the feed item.
-      // If the feed item supplied a title property, we build an HTML fragment
-      // containing that title.  This provides better looking search result
-      // entries.
-      if (title != null && title.trim().length() > 0) {
-        try {
-          String t = "<html><title>" + title.trim() + "</title></html>";
-          bytes = t.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException uee) {
-          // Don't be fancy.  Try the single space content.
-        }
+  private static InputStream getAlternateContent(String title) {
+    byte[] bytes = null;
+    // Alternate content is a string that is substituted for null or empty
+    // content streams, in order to make sure the GSA indexes the feed item.
+    // If the feed item supplied a title property, we build an HTML fragment
+    // containing that title.  This provides better looking search result
+    // entries.
+    if (title != null && title.trim().length() > 0) {
+      try {
+        String t = "<html><title>" + title.trim() + "</title></html>";
+        bytes = t.getBytes("UTF-8");
+      } catch (UnsupportedEncodingException uee) {
+        // Don't be fancy.  Try the single space content.
       }
-      // If no title is available, we supply a single space as the content.
-      if (bytes == null) {
-        bytes = " ".getBytes("UTF-8");
-      }
-      return new ByteArrayInputStream(bytes);
-    } catch (IOException e) {
-      throw new RepositoryDocumentException(
-          "Failed to create default content stream: " + e.toString());
     }
+    // If no title is available, we supply a single space as the content.
+    if (bytes == null) {
+      bytes = SPACE_CHAR;
+    }
+    return new ByteArrayInputStream(bytes);
   }
 
   /**
@@ -691,7 +688,7 @@ public class DocPusher implements Pusher {
   private static String constructGoogleConnectorUrl(String connectorName,
       String docid) {
     String searchurl;
-    StringBuilder buf = new StringBuilder(ServletUtil.PROTOCOL);
+    StringBuffer buf = new StringBuffer(ServletUtil.PROTOCOL);
     buf.append(connectorName);
     buf.append(".localhost/doc?docid=");
     buf.append(docid);
@@ -707,35 +704,6 @@ public class DocPusher implements Pusher {
     }
   }
 
-  // FilterInputStream which "tees" all content to an OutputStream.
-  // (named after the UNIX 'tee' command)
-  private static class TeeInputStream extends FilterInputStream {
-    protected OutputStream out;
-
-    public TeeInputStream(InputStream in, OutputStream out) {
-      super(in);
-      this.out = out;
-    }
-
-    @Override
-    public int read() throws IOException {
-      int retval = super.read();
-      if (retval != -1) {
-        out.write(retval);
-      }
-      return retval;
-    }
-
-    @Override
-    public int read(byte[] b, int off, int len) throws IOException {
-      int retval = super.read(b, off, len);
-      if (retval != -1) {
-        out.write(b, off, retval);
-      }
-      return retval;
-    }
-  }
-
   /**
    * Takes a Document and sends a the feed to the GSA.
    *
@@ -748,83 +716,519 @@ public class DocPusher implements Pusher {
    */
   public void take(Document document, String connectorName)
       throws PushException, FeedException, RepositoryException {
-    String feedType = null;
-    InputStream xmlData = null;
-    String osFilename = Context.getInstance().getTeedFeedFile();
+    String feedType;
     try {
       feedType = getFeedType(document);
-      xmlData = buildXmlData(document, connectorName, feedType,
-                             (osFilename != null));
-    } catch (IOException ioe) {
-      // The only way to get an IOException here is if one was thrown by
-      // Appendable as we were building up the XML in a StringBuilder.
-      // And StringBuilder should never throw IOException.
+    } catch (RuntimeException e) {
       LOGGER.log(Level.WARNING,
-          "Rethrowing IOException as RepositoryDocumentException", ioe);
-      throw new RepositoryDocumentException(ioe);
+          "Rethrowing RuntimeException as RepositoryDocumentException", e);
+      throw new RepositoryDocumentException(e);
+    }
+
+    // All feeds in a feed file must be of the same type.
+    // If the feed would change type, or if the feed file is full,
+    // send the feed off to the GSA.
+    XmlFeed feed = xmlFeed.get();
+    if (feed != null) {
+      if (feedType != feed.getFeedType()) {
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("A new feedType, " + feedType
+              + ", requires a new feed for " + connectorName
+              + ". Closing feed and sending to GSA.");
+        }
+        submitFeed();
+      } else if (feed.size() > ((maxFeedSize / 10) * 8)) {
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("Feed for " + connectorName + " has grown to "
+              + feed.size() + " bytes. Closing feed and sending to GSA.");
+        }
+        submitFeed();
+      }
+    }
+
+    if ((feed = xmlFeed.get()) == null) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("Creating new " + feedType + " feed for " + connectorName);
+      }
+      try {
+        feed = new XmlFeed(connectorName, feedType, maxFeedSize);
+        xmlFeed.set(feed);
+        if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
+          StringBuilder log = new StringBuilder(256 * 1024);
+          log.append("Records generated for ").append(feedType);
+          log.append(" feed of ").append(connectorName).append(":\n");
+          feedLog.set(log);
+        }
+      } catch (OutOfMemoryError me) {
+        throw new PushException("Unable to allocate feed buffer.  Try reducing"
+                                + " the maximumFeedSize setting.", me);
+      } catch (IOException ioe) {
+        throw new PushException("Error creating feed", ioe);
+      }
+    }
+
+    InputStream xmlData = null;
+    try {
+      xmlData = buildXmlData(document, connectorName, feedType,
+          (Context.getInstance().getTeedFeedFile() != null));
     } catch (RuntimeException e) {
       LOGGER.log(Level.WARNING,
           "Rethrowing RuntimeException as RepositoryDocumentException", e);
       throw new RepositoryDocumentException(e);
     }
     if (xmlData == null) {
-      LOGGER.log(Level.WARNING,
-          "Skipped this document for feeding, continuing");
+      LOGGER.warning("Skipped this document for feeding, continuing");
       return;
     }
-    // Setup the teedFeedFile if declared
-    InputStream is = xmlData;
-    File osFile = null;
-    OutputStream os = null;
-    if (osFilename != null) {
-      osFile = new File(osFilename);
-      try {
-        os = new BufferedOutputStream(new FileOutputStream(osFile, true), 32768);
-        is = new TeeInputStream(xmlData, os);
-        if (!feedWarning && FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-          LOGGER.log(Level.WARNING, "Both TeedFeedFile Logging and FeedLogging"
-              + " are enabled.  Performance may be severely constrained. "
-              + " Persist only for short-term troubleshooting purposes.");
-          feedWarning = true;
-        }
-      } catch (IOException e) {
-        LOGGER.log(Level.WARNING, "cannot write file: " +
-            osFile.getAbsolutePath(), e);
-      }
-    }
+
+    boolean isThrowing = false;
+    int resetPoint = feed.size();
     try {
-      GsaFeedData feedData = new GsaFeedData(feedType, is);
-      gsaResponse = feedConnection.sendData(connectorName, feedData);
-      if (!gsaResponse.equals(GsaFeedConnection.SUCCESS_RESPONSE)) {
-        String eMessage = gsaResponse;
-        if (GsaFeedConnection.UNAUTHORIZED_RESPONSE.equals(gsaResponse)) {
-          eMessage += ": Client is not authorized to send feeds. Make "
-              + "sure the GSA is configured to trust feeds from your host.";
-        } else if (GsaFeedConnection.INTERNAL_ERROR_RESPONSE.equals(gsaResponse)) {
-          eMessage += ": Check GSA status or feed format.";
-        }
-        throw new PushException(eMessage);
-      }
+      feed.readFrom(xmlData);
+      feed.incrementRecordCount();
       if (LOGGER.isLoggable(Level.FINER)) {
         LOGGER.finer("Document "
             + getRequiredString(document, SpiConstants.PROPNAME_DOCID)
-            + " from connector " + connectorName + " sent.");
+            + " from connector " + connectorName + " added to feed.");
+      }
+    } catch (OutOfMemoryError me) {
+      feed.reset(resetPoint);
+      throw new PushException("Out of memory building feed, retrying.", me);
+    } catch (RepositoryDocumentException rde) {
+      // Skipping this document, remove it from the feed.
+      feed.reset(resetPoint);
+      throw rde;
+    } catch (IOException ioe) {
+      LOGGER.log(Level.SEVERE, "IOException while reading: skipping", ioe);
+      feed.reset(resetPoint);
+      Throwable t = ioe.getCause();
+      isThrowing = true;
+      if (t != null && (t instanceof RepositoryException)) {
+        throw (RepositoryException) t;
+      } else {
+        throw new RepositoryDocumentException("I/O error reading data", ioe);
       }
     } finally {
       try {
         xmlData.close();
       } catch (IOException e) {
-        LOGGER.log(Level.WARNING, "Rethrowing IOException as PushException", e);
-        throw new PushException("IOException: " + e.getMessage(), e);
-      }
-      if (os != null) {
-        try {
-          os.close();
-        } catch (IOException e) {
-          LOGGER.log(Level.WARNING, "cannot close file: " +
-              osFile.getAbsolutePath());
+        if (!isThrowing) {
+          LOGGER.log(Level.WARNING,
+              "Rethrowing IOException as PushException", e);
+          throw new PushException("IOException: " + e.getMessage(), e);
         }
       }
+    }
+  }
+
+  /**
+   * Finish a feed.  No more documents are anticipated.
+   * If there is an outstanding feed file, submit it to the GSA.
+   *
+   * @throws PushException if Pusher problem
+   * @throws FeedException if transient Feed problem
+   * @throws RepositoryException
+   */
+  public void flush() throws PushException, FeedException, RepositoryException {
+    LOGGER.fine("Flushing accumulated feed to GSA");
+    submitFeed();
+  }
+
+  /**
+   * Cancels any feed being constructed.  Any accumulated feed data is lost.
+   */
+  public void cancel() {
+    XmlFeed feed = xmlFeed.get();
+    if (feed != null) {
+      LOGGER.fine("Discarding accumulated feed for " + feed.dataSource);
+      xmlFeed.remove();
+    }
+    if (feedLog.get() != null) {
+      feedLog.remove();
+    }
+  }
+
+  /**
+   * Takes the XmlFeed and sends the feed to the GSA.
+   *
+   * @throws PushException if Pusher problem
+   * @throws FeedException if transient Feed problem
+   * @throws RepositoryException
+   */
+  private void submitFeed()
+      throws PushException, FeedException, RepositoryException {
+    XmlFeed feed = xmlFeed.get();
+    if (feed == null) {
+      return;
+    }
+
+    String feedType = feed.getFeedType();
+    String connectorName = feed.getDataSource();
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Submitting " + feedType + " feed for " + connectorName
+          + " to the GSA. " + feed.getRecordCount() + " records totaling "
+          + feed.size() + " bytes.");
+    }
+
+    xmlFeed.remove();
+    try {
+      feed.close();
+    } catch (IOException ioe) {
+      throw new PushException("Error closing feed", ioe);
+    }
+
+    // Write the generated feedLog to the feed logger.
+    if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
+      FEED_LOGGER.log(FEED_LOG_LEVEL, feedLog.get().toString());
+      feedLog.remove();
+    }
+
+    // Write the Feed to the TeedFeedFile, if one was specified.
+    String teedFeedFilename = Context.getInstance().getTeedFeedFile();
+    if (teedFeedFilename != null) {
+      boolean isThrowing = false;
+      OutputStream os = null;
+      try {
+        os = new FileOutputStream(teedFeedFilename, true);
+        feed.writeTo(os);
+      } catch (IOException e) {
+        isThrowing = true;
+        throw new FeedException("Cannot write to file: " + teedFeedFilename, e);
+      } finally {
+        if (os != null) {
+          try {
+            os.close();
+          } catch (IOException e) {
+            if (!isThrowing) {
+              throw new FeedException(
+                   "Cannot write to file: " + teedFeedFilename, e);
+            }
+          }
+        }
+      }
+    }
+
+    GsaFeedData feedData = new GsaFeedData(feedType, feed);
+    gsaResponse = feedConnection.sendData(connectorName, feedData);
+    if (!gsaResponse.equals(GsaFeedConnection.SUCCESS_RESPONSE)) {
+      String eMessage = gsaResponse;
+      if (GsaFeedConnection.UNAUTHORIZED_RESPONSE.equals(gsaResponse)) {
+        eMessage += ": Client is not authorized to send feeds. Make "
+            + "sure the GSA is configured to trust feeds from your host.";
+      }
+      if (GsaFeedConnection.INTERNAL_ERROR_RESPONSE.equals(gsaResponse)) {
+        eMessage += ": Check GSA status or feed format.";
+      }
+      throw new PushException(eMessage);
+    }
+  }
+
+  private static class XmlFeed extends ByteArrayOutputStream {
+    private final String dataSource;
+    private final String feedType;
+    private boolean isClosed;
+    private int recordCount;
+
+    public XmlFeed(String dataSource, String feedType, int feedSize)
+        throws IOException {
+      super(feedSize);
+      this.dataSource = dataSource;
+      this.feedType = feedType;
+      this.recordCount = 0;
+      this.isClosed = false;
+      String prefix = xmlFeedPrefix(dataSource, feedType);
+      write(prefix.getBytes(XML_DEFAULT_ENCODING));
+    }
+
+    /**
+     * Construct the XML header for a feed file.
+     *
+     * @param dataSource The dataSource for the feed.
+     * @param feedType The type of feed.
+     * @return XML feed header string.
+     */
+    private String xmlFeedPrefix(String dataSource, String feedType) {
+      // Build prefix.
+      StringBuffer prefix = new StringBuffer();
+      prefix.append(XML_START).append('\n');
+      prefix.append(XmlUtils.xmlWrapStart(XML_GSAFEED)).append('\n');
+      prefix.append(XmlUtils.xmlWrapStart(XML_HEADER)).append('\n');
+      prefix.append(XmlUtils.xmlWrapStart(XML_DATASOURCE));
+      prefix.append(dataSource);
+      prefix.append(XmlUtils.xmlWrapEnd(XML_DATASOURCE));
+      prefix.append(XmlUtils.xmlWrapStart(XML_FEEDTYPE));
+      prefix.append(feedType);
+      prefix.append(XmlUtils.xmlWrapEnd(XML_FEEDTYPE));
+      prefix.append(XmlUtils.xmlWrapEnd(XML_HEADER));
+      prefix.append(XmlUtils.xmlWrapStart(XML_GROUP)).append('\n');
+      return prefix.toString();
+    }
+
+    /**
+     * Construct the XML footer for a feed file.
+     *
+     * @return XML feed suffix string.
+     */
+    private String xmlFeedSuffix() {
+      // Build suffix.
+      StringBuffer suffix = new StringBuffer();
+      suffix.append(XmlUtils.xmlWrapEnd(XML_GROUP));
+      suffix.append(XmlUtils.xmlWrapEnd(XML_GSAFEED));
+      return suffix.toString();
+    }
+
+    public String getDataSource() {
+      return dataSource;
+    }
+
+    public String getFeedType() {
+      return feedType;
+    }
+
+    /**
+     * Bumps the count of records stored in this feed.
+     */
+    public synchronized void incrementRecordCount() {
+      recordCount++;
+    }
+
+    /**
+     * Return the count of records.
+     */
+    public synchronized int getRecordCount() {
+      return recordCount;
+    }
+
+    /**
+     * Resets the size of this ByteArrayOutputStream to the
+     * specified {@code size}, effectively discarding any
+     * data that may have been written passed that point.
+     * Like {@code reset()}, this method retains the previously
+     * allocated buffer.
+     * <p>
+     * This method may be used to reduce the size of the data stored,
+     * but not to increase it.  In other words, the specified {@code size}
+     * cannot be greater than the current size.
+     *
+     * @param size new data size.
+     */
+    public synchronized void reset(int size) {
+      if (size < 0 || size > count) {
+        throw new IllegalArgumentException(
+            "New size must not be negative or greater than the current size.");
+      }
+      count = size;
+    }
+
+    /**
+     * Reads the complete contents of the supplied InputStream
+     * directly into buffer of this ByteArrayOutputStream.
+     * This avoids the data copy that would occur if using
+     * {@code InputStream.read(byte[], int, int)}, followed by
+     * {@code ByteArrayOutputStream.write(byte[], int, int)}.
+     *
+     * @param in the InputStream from which to read the data.
+     * @throws IOException if an I/O error occurs.
+     */
+    public synchronized void readFrom(InputStream in) throws IOException {
+      int bytes = 0;
+      do {
+        count += bytes;
+        if (count >= buf.length) {
+          // Need to grow buffer.
+          int incr = Math.min(buf.length, 8 * 1024 * 1024);
+          byte[] newbuf = new byte[buf.length + incr];
+          System.arraycopy(buf, 0, newbuf, 0, buf.length);
+          buf = newbuf;
+        }
+        bytes = in.read(buf, count, buf.length - count);
+      } while (bytes != -1);
+    }
+
+    @Override
+    public synchronized void close() throws IOException {
+      if (!isClosed) {
+        isClosed = true;
+        String suffix = xmlFeedSuffix();
+        write(suffix.getBytes(XML_DEFAULT_ENCODING));
+      }
+    }
+  }
+
+  /**
+   * A FilterInput stream that protects against large documents and empty
+   * documents.  If we have read more than FileSizeLimitInfo.maxDocumentSize
+   * bytes from the input, we reset the feed to before we started reading
+   * content, then provide the alternate content.  Similarly, if we get EOF
+   * after reading zero bytes, we provide the alternate content.
+   */
+  private static class AlternateContentFilterInputStream
+      extends FilterInputStream {
+    private boolean useAlternate;
+    private InputStream alternate;
+    private final XmlFeed feed;
+    private int resetPoint;
+
+    /**
+     * @param in InputStream containing raw document content
+     * @param alternate InputStream containing alternate content to provide
+     * @param feed XmlFeed under constructions (used for reseting size)
+     */
+    public AlternateContentFilterInputStream(InputStream in,
+        InputStream alternate, XmlFeed feed) {
+      super(in);
+      this.useAlternate = false;
+      this.alternate = alternate;
+      this.feed = feed;
+      this.resetPoint = -1;
+    }
+
+    // Reset the feed to its position when we started reading this stream,
+    // and start reading from the alternate input.
+    // TODO: WARNING: this strategy will not work if using chunked HTTP transfer.
+    private void switchToAlternate() {
+      feed.reset(resetPoint);
+      useAlternate = true;
+    }
+
+    @Override
+    public int read() throws IOException {
+      if (resetPoint == -1) {
+        // If I have read nothing yet, remember the reset point in the feed.
+        resetPoint = feed.size();
+      }
+      if (!useAlternate) {
+        try {
+          return super.read();
+        } catch (EmptyDocumentException e) {
+          switchToAlternate();
+        } catch (BigDocumentException e) {
+          LOGGER.finer("Document content exceeds the maximum configured "
+                       + "document size, discarding content.");
+          switchToAlternate();
+        }
+      }
+      return alternate.read();
+    }
+
+    @Override
+    public int read(byte b[], int off, int len) throws IOException {
+      if (resetPoint == -1) {
+        // If I have read nothing yet, remember the reset point in the feed.
+        resetPoint = feed.size();
+      }
+      if (!useAlternate) {
+        try {
+          return super.read(b, off, len);
+        } catch (EmptyDocumentException e) {
+          switchToAlternate();
+        } catch (BigDocumentException e) {
+          LOGGER.finer("Document content exceeds the maximum configured "
+                       + "document size, discarding content.");
+          switchToAlternate();
+        }
+      }
+      return alternate.read(b, off, len);
+    }
+
+    @Override
+    public boolean markSupported() {
+      return false;
+    }
+
+    @Override
+    public void close() throws IOException {
+      super.close();
+      alternate.close();
+    }
+  }
+
+  /**
+   * A FilterInput stream that protects against large documents and empty
+   * documents.  If we have read more than FileSizeLimitInfo.maxDocumentSize
+   * bytes from the input, or if we get EOF after reading zero bytes,
+   * we throw a subclass of IOException that is used as a signal for
+   * AlternateContentFilterInputStream to switch to alternate content.
+   */
+  private static class BigEmptyDocumentFilterInputStream
+      extends FilterInputStream {
+    private final long maxDocumentSize;
+    private long currentDocumentSize;
+
+    /**
+     * @param in InputStream containing raw document content
+     * @param maxDocumentSize maximum allowed size in bytes of data read from in
+     */
+    public BigEmptyDocumentFilterInputStream(InputStream in,
+                                             long maxDocumentSize) {
+      super(in);
+      this.maxDocumentSize = maxDocumentSize;
+      this.currentDocumentSize = 0;
+    }
+
+    @Override
+    public int read() throws IOException {
+      if (in == null) {
+        throw new EmptyDocumentException();
+      }
+      int val = super.read();
+      if (val == -1) {
+        if (currentDocumentSize == 0) {
+          throw new EmptyDocumentException();
+        }
+      } else if (++currentDocumentSize > maxDocumentSize) {
+        throw new BigDocumentException();
+      }
+      return val;
+    }
+
+    @Override
+    public int read(byte b[], int off, int len) throws IOException {
+      if (in == null) {
+        throw new EmptyDocumentException();
+      }
+      int bytesRead = super.read(b, off,
+          (int) Math.min(len, maxDocumentSize - currentDocumentSize + 1));
+      if (bytesRead == -1) {
+        if (currentDocumentSize == 0) {
+          throw new EmptyDocumentException();
+        }
+      } else if ((currentDocumentSize += bytesRead) > maxDocumentSize) {
+        throw new BigDocumentException();
+      }
+      return bytesRead;
+    }
+
+    @Override
+    public boolean markSupported() {
+      return false;
+    }
+
+    @Override
+    public void close() throws IOException {
+      if (in != null) {
+        super.close();
+      }
+    }
+  }
+
+  /**
+   * Subclass of IOException that is thrown when maximumDocumentSize
+   * is exceeded.
+   */
+  private static class BigDocumentException extends IOException {
+    public BigDocumentException() {
+      super("Maximum Document size exceeded.");
+    }
+  }
+
+  /**
+   * Subclass of IOException that is thrown when the document has
+   * no content.
+   */
+  private static class EmptyDocumentException extends IOException {
+    public EmptyDocumentException() {
+      super("Document has no content.");
     }
   }
 }

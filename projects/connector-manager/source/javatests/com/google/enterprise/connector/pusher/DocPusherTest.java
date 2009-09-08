@@ -25,11 +25,12 @@ import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.Property;
-import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.RepositoryDocumentException;
+import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
-import com.google.enterprise.connector.test.ConnectorTestUtils;
+import com.google.enterprise.connector.spi.Value;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -45,11 +46,14 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
+import java.util.Properties;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.SimpleFormatter;
@@ -148,34 +152,6 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
-   * Test Take for a compressed content feed.
-   */
-  public void testTakeCompressedContent() throws Exception {
-    String[] expectedXml = new String[1];
-    String feedType = "incremental";
-    String record = "<record url=\""
-        + ServletUtil.PROTOCOL
-        + "junit.localhost"
-        + ServletUtil.DOCID
-        + "doc10\""
-        + " mimetype=\""
-        + SpiConstants.DEFAULT_MIMETYPE
-        + "\" last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
-        + "<metadata>\n"
-        + "<meta name=\"contentfile\" content=\"testdata/mocktestdata/i18n.html\"/>\n"
-        + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
-        + "<meta name=\"google:mimetype\" content=\"text/html\"/>\n"
-        + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
-        + "</metadata>\n" + "<content encoding=\"base64compressed\">\n"
-        + "eJyzySjJzbE73Hd449HFh1cWHd54eCmQse7wNhDryJ7D647uQ4jY6INVAwBbqCBF"
-        + "\n</content>\n" + "</record>\n";
-
-    expectedXml[0] = buildExpectedXML(feedType, record);
-    takeFeed(expectedXml, "MockRepositoryEventLog8.txt", true);
-  }
-
-
-  /**
    * Test Take for isPublic.
    */
   public void testTakeIsPublic() throws Exception {
@@ -270,20 +246,8 @@ public class DocPusherTest extends TestCase {
     takeFeed(expectedXml, "MockRepositoryEventLog8.txt");
   }
 
-  private class CompressedFeedConnection extends MockFeedConnection {
-    @Override
-    public String getContentEncodings() {
-      return super.getContentEncodings() + ", base64compressed";
-    }
-  }
-
   private void takeFeed(String[] expectedXml, String repository)
       throws Exception {
-    takeFeed(expectedXml, repository, false);
-  }
-
-  private void takeFeed(String[] expectedXml, String repository,
-      boolean useCompression) throws Exception {
     String gsaExpectedResponse = GsaFeedConnection.SUCCESS_RESPONSE;
     String gsaActualResponse;
 
@@ -292,13 +256,8 @@ public class DocPusherTest extends TestCase {
     QueryManager qm = new MockJcrQueryManager(r.getStore());
     TraversalManager qtm = new JcrTraversalManager(qm);
 
-    MockFeedConnection feedConnection;
-    if (useCompression) {
-      feedConnection = new CompressedFeedConnection();
-    } else {
-      feedConnection = new MockFeedConnection();
-    }
-    DocPusher dpusher = new DocPusher(feedConnection);
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection);
 
     DocumentList documentList = qtm.startTraversal();
 
@@ -308,8 +267,9 @@ public class DocPusherTest extends TestCase {
       System.out.println("Test " + i + " output");
       Assert.assertFalse(i == expectedXml.length);
       dpusher.take(document, "junit");
+      dpusher.flush();
       System.out.println("Test " + i + " assertions");
-      String resultXML = feedConnection.getFeed();
+      String resultXML = mockFeedConnection.getFeed();
       gsaActualResponse = dpusher.getGsaResponse();
       Assert.assertEquals(expectedXml[i], resultXML);
       Assert.assertEquals(gsaExpectedResponse, gsaActualResponse);
@@ -331,6 +291,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(document, "junit");
+    dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
@@ -348,7 +309,7 @@ public class DocPusherTest extends TestCase {
     Map<String, Object> props = getTestDocumentConfig();
     props.put(SpiConstants.PROPNAME_ACTION,
         SpiConstants.ActionType.DELETE.toString());
-    Document document = ConnectorTestUtils.createSimpleDocument(props);
+    Document document = createSimpleDocument(props);
 
     try {
       String resultXML = feedDocument(document);
@@ -368,7 +329,7 @@ public class DocPusherTest extends TestCase {
                  props.get(SpiConstants.PROPNAME_DOCID));
     minProps.put(SpiConstants.PROPNAME_ACTION,
                  props.get(SpiConstants.PROPNAME_ACTION));
-    document = ConnectorTestUtils.createSimpleDocument(minProps);
+    document = createSimpleDocument(minProps);
 
     try {
       String resultXML = feedDocument(document);
@@ -383,7 +344,7 @@ public class DocPusherTest extends TestCase {
     // Now include optional last-modified.
     minProps.put(SpiConstants.PROPNAME_LASTMODIFIED,
                  props.get(SpiConstants.PROPNAME_LASTMODIFIED));
-    document = ConnectorTestUtils.createSimpleDocument(minProps);
+    document = createSimpleDocument(minProps);
 
     try {
       String resultXML = feedDocument(document);
@@ -395,6 +356,31 @@ public class DocPusherTest extends TestCase {
     } catch (Exception e) {
       fail("No content document take");
     }
+  }
+
+  /**
+   * Utility method to convert {@link Map} of Java Objects into a
+   * {@link SimpleDocument}.
+   */
+  private Document createSimpleDocument(Map<String, ?> props) {
+    Map<String, List<Value>> spiValues = new HashMap<String, List<Value>>();
+    for (Map.Entry<String,  ?>entry : props.entrySet()) {
+      Object obj = entry.getValue();
+      Value val = null;
+      if (obj instanceof String) {
+        val = Value.getStringValue((String) obj);
+      } else if (obj instanceof Calendar) {
+        val = Value.getDateValue((Calendar) obj);
+      } else if (obj instanceof InputStream) {
+        val = Value.getBinaryValue((InputStream) obj);
+      } else {
+        throw new AssertionError(obj);
+      }
+      List<Value> values = new ArrayList<Value>();
+      values.add(val);
+      spiValues.put(entry.getKey(), values);
+    }
+    return new SimpleDocument(spiValues);
   }
 
   /**
@@ -410,6 +396,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(document, "junit");
+    dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
@@ -431,6 +418,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(document, "junit");
+    dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("<meta name=\"special\" " +
@@ -509,6 +497,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(document, "junit");
+    dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
     // Strip off the DOCTYPE so that the document parses, since we
@@ -549,6 +538,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(document, "junit");
+    dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
@@ -571,6 +561,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(document, "junit");
+    dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringNotContains("action=\"add\"", resultXML);
@@ -583,6 +574,7 @@ public class DocPusherTest extends TestCase {
 
     document = JcrDocumentTest.makeDocumentFromJson(addActionJson);
     dpusher.take(document, "junit");
+    dpusher.flush();
     resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("action=\"add\"", resultXML);
@@ -595,6 +587,7 @@ public class DocPusherTest extends TestCase {
 
     document = JcrDocumentTest.makeDocumentFromJson(deleteActionJson);
     dpusher.take(document, "junit");
+    dpusher.flush();
     resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("action=\"delete\"", resultXML);
@@ -607,6 +600,7 @@ public class DocPusherTest extends TestCase {
 
     document = JcrDocumentTest.makeDocumentFromJson(bogusActionJson);
     dpusher.take(document, "junit");
+    dpusher.flush();
     resultXML = mockFeedConnection.getFeed();
 
     assertStringNotContains("action=", resultXML);
@@ -822,6 +816,7 @@ public class DocPusherTest extends TestCase {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection);
     dpusher.take(document, "junit");
+    dpusher.flush();
     return mockFeedConnection.getFeed();
   }
 
@@ -863,6 +858,7 @@ public class DocPusherTest extends TestCase {
               + "}\r\n" + "";
       document = JcrDocumentTest.makeDocumentFromJson(jsonIncremental);
       dpusher.take(document, "junit");
+      dpusher.flush();
       resultXML = mockFeedConnection.getFeed();
       assertFeedInLog(resultXML, TEST_LOG_FILE);
 
@@ -875,6 +871,7 @@ public class DocPusherTest extends TestCase {
               + "}\r\n" + "";
       document = JcrDocumentTest.makeDocumentFromJson(jsonMetaAndUrl);
       dpusher.take(document, "junit");
+      dpusher.flush();
       resultXML = mockFeedConnection.getFeed();
       assertFeedInLog(resultXML, TEST_LOG_FILE);
 
@@ -888,6 +885,7 @@ public class DocPusherTest extends TestCase {
               + "}\r\n" + "";
       document = JcrDocumentTest.makeDocumentFromJson(jsonMsWord);
       dpusher.take(document, "junit");
+      dpusher.flush();
       resultXML = mockFeedConnection.getFeed();
       assertFeedInLog(resultXML, TEST_LOG_FILE);
     } finally {
@@ -898,23 +896,48 @@ public class DocPusherTest extends TestCase {
     }
   }
 
+  // The feed log doesn't contain the xml feed headers and footers.
+  private static final String[] xmlSkip = {
+    "<?xml", "<gsafeed>", "<header>", "<datasource>", "<feedtype>", "<group>",
+    "</group>", "</header>", "</gsafeed>" };
+
+  // Should we skip this line?
+  private boolean shouldSkip(String line) {
+    if (line != null) {
+      for (String skip : xmlSkip) {
+        if (line.startsWith(skip)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // Read a line from the XML feed, skipping header and footer lines.
+  private String xmlReadLine(BufferedReader xmlIn) throws IOException {
+    String xmlLine;
+    while (shouldSkip(xmlLine = xmlIn.readLine())) {
+      // Skip over header and footer lines.
+    }
+    return xmlLine;
+  }
+
   private void assertFeedInLog(String resultXML, String logFileName)
       throws IOException {
     BufferedReader logIn = new BufferedReader(new FileReader(logFileName));
     try {
       BufferedReader xmlIn = new BufferedReader(new StringReader(resultXML));
-
       xmlIn.mark(resultXML.length());
-      String xmlLine = xmlIn.readLine();
+      String xmlLine = xmlReadLine(xmlIn);
       String logLine;
       boolean isMatch = false;
       boolean inContent = false;
       while ((logLine = logIn.readLine()) != null) {
         if (logLine.indexOf(xmlLine) >= 0) {
-          assertEquals(xmlLine, logLine.substring(7));
+          assertEquals(xmlLine, logLine);
           // We match the first line - start comparing record
           isMatch = true;
-          while ((xmlLine = xmlIn.readLine()) != null) {
+          while ((xmlLine = xmlReadLine(xmlIn)) != null) {
             logLine = logIn.readLine();
             if (inContent) {
               inContent = false;
@@ -942,7 +965,7 @@ public class DocPusherTest extends TestCase {
           } else {
             // Need to reset the xmlIn and reload the xmlLine
             xmlIn.reset();
-            xmlLine = xmlIn.readLine();
+            xmlLine = xmlReadLine(xmlIn);
           }
         } else {
           continue;
@@ -994,11 +1017,13 @@ public class DocPusherTest extends TestCase {
       MockFeedConnection mockFeedConnection = new MockFeedConnection();
       DocPusher dpusher = new DocPusher(mockFeedConnection);
       dpusher.take(document, "junit");
+      dpusher.flush();
       String resultXML = mockFeedConnection.getFeed();
       assertFeedTeed(resultXML, tffName);
 
       // Now send the feed again and compare with existing teed feed file.
       dpusher.take(document, "junit");
+      dpusher.flush();
       String secondResultXML = mockFeedConnection.getFeed();
       assertFeedTeed(resultXML + secondResultXML, tffName);
     } finally {
@@ -1039,19 +1064,28 @@ public class DocPusherTest extends TestCase {
 
   private String buildExpectedXML(String feedType, String record) {
     String rawData = "<?xml version=\'1.0\' encoding=\'UTF-8\'?>"
-        + "<!DOCTYPE gsafeed PUBLIC \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">"
-        + "<gsafeed><header><datasource>junit</datasource>\n" + "<feedtype>"
+        + "<!DOCTYPE gsafeed PUBLIC \"-//Google//DTD GSA Feeds//EN\" \"gsafeed.dtd\">\n"
+        + "<gsafeed>\n<header>\n<datasource>junit</datasource>\n" + "<feedtype>"
         + feedType + "</feedtype>\n" + "</header>\n" + "<group>\n" + record
         + "</group>\n" + "</gsafeed>\n";
     return rawData;
   }
 
   private Document getTestDocument() {
-    return ConnectorTestUtils.createSimpleDocument(getTestDocumentConfig());
+    return createSimpleDocument(getTestDocumentConfig());
   }
 
   private Map<String, Object> getTestDocumentConfig() {
-    return ConnectorTestUtils.createSimpleDocumentBasicProperties("doc1");
+    Map<String, Object> props = new HashMap<String, Object>();
+    Calendar cal = Calendar.getInstance();
+    cal.setTimeInMillis(10 * 1000);
+    props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
+    props.put(SpiConstants.PROPNAME_DOCID, "doc1");
+    props.put(SpiConstants.PROPNAME_MIMETYPE, "text/plain");
+    props.put(SpiConstants.PROPNAME_CONTENT, "now is the time");
+    props.put(SpiConstants.PROPNAME_DISPLAYURL,
+        "http://www.comtesturl.com/test");
+    return props;
   }
 
   /**
@@ -1330,7 +1364,7 @@ public class DocPusherTest extends TestCase {
     Map<String, Object> config = getTestDocumentConfig();
     config.put(SpiConstants.PROPNAME_SEARCHURL,
                "Not even remotely a \\ valid % URL");
-    Document doc = ConnectorTestUtils.createSimpleDocument(config);
+    Document doc = createSimpleDocument(config);
 
     // Failure to get metadata should throw RepositoryDocumentException
     try {
@@ -1579,7 +1613,7 @@ public class DocPusherTest extends TestCase {
   public void testContentReadError() throws Exception {
     Map<String, Object> props = getTestDocumentConfig();
     props.put(SpiConstants.PROPNAME_CONTENT, new BadInputStream());
-    Document document = ConnectorTestUtils.createSimpleDocument(props);
+    Document document = createSimpleDocument(props);
 
     // IO error on content should throw RepositoryDocumentException.
     try {
@@ -1603,6 +1637,7 @@ public class DocPusherTest extends TestCase {
       FeedConnection badFeedConnection = new BadFeedConnection1();
       DocPusher dpusher = new DocPusher(badFeedConnection);
       dpusher.take(document, "junit");
+      dpusher.flush();
       fail("Expected FeedException, but got none.");
     } catch (FeedException expected) {
       assertEquals("Anorexic FeedConnection", expected.getMessage());
@@ -1621,6 +1656,7 @@ public class DocPusherTest extends TestCase {
       FeedConnection badFeedConnection = new BadFeedConnection2();
       DocPusher dpusher = new DocPusher(badFeedConnection);
       dpusher.take(document, "junit");
+      dpusher.flush();
       fail("Expected PushException, but got none.");
     } catch (PushException expected) {
       assertEquals("Bulimic FeedConnection", expected.getMessage());
@@ -1637,38 +1673,17 @@ public class DocPusherTest extends TestCase {
         throws FeedException {
       throw new FeedException("Anorexic FeedConnection");
     }
-    public boolean isBacklogged() {
-      return false;
-    }
-    public int getScheduleFormat() {
-      return 1;
-    }
-    public String getContentEncodings() {
-      return "base64binary";
-    }
   }
 
   /**
    * A FeedConnection that returns a bad response.
    */
   private static class BadFeedConnection2 extends MockFeedConnection {
-    @Override
+  @Override
     public String sendData(String dataSource, FeedData feedData)
         throws RepositoryException {
       super.sendData(dataSource, feedData);
       return "Bulimic FeedConnection";
-    }
-    @Override
-    public boolean isBacklogged() {
-      return false;
-    }
-    @Override
-    public int getScheduleFormat() {
-      return 1;
-    }
-    @Override
-    public String getContentEncodings() {
-      return "base64binary";
     }
   }
 
@@ -1677,20 +1692,20 @@ public class DocPusherTest extends TestCase {
    */
   private static class BadInputStream extends InputStream {
     // Make it look like there is something to read.
-    @Override
-    public int available() {
+  @Override
+  public int available() {
       return 69;
     }
     // Override read methods, always throwing IOException.
-    @Override
+  @Override
     public int read() throws IOException {
       throw new IOException("This stream is unreadable");
     }
-    @Override
+  @Override
     public int read(byte[] b) throws IOException {
       throw new IOException("This stream is unreadable");
     }
-    @Override
+  @Override
     public int read(byte[] b, int o, int l) throws IOException {
       throw new IOException("This stream is unreadable");
     }

@@ -24,43 +24,19 @@
     <constructor-arg index="1" type="int" value="${gsa.feed.port}"/>
   </bean>
 
-  <!-- This is used to throttle back the document feed if the GSA has fallen
-       behind processing outstanding feed items.  We periodically poll the
-       GSA, asking for the count of unprocessed feed items (the backlog count).
-       We also define a ceiling and a floor for the backlog count.  If the
-       backlog count exceeds the ceiling we pause the feed.  We resume the
-       feed once the backlog count drops down below the floor value.
-  -->
-  <!-- Stop feeding if the backlog exceeds this value. -->
-  <bean id="FeedBacklogCeiling" class="java.lang.Integer">
-    <constructor-arg index="0" type="int" value="50000"/>
-  </bean>
-
-  <!-- Resume feeding if the backlog falls below this value. -->
-  <bean id="FeedBacklogFloor" class="java.lang.Integer">
-    <constructor-arg index="0" type="int" value="15000"/>
-  </bean>
-
-  <!-- How often to check for feed backlog (in seconds). -->
-  <bean id="FeedBacklogCheckIntervalSeconds" class="java.lang.Integer">
-    <constructor-arg index="0" type="int" value="900"/>
-  </bean>
-
-  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-    <property name="targetObject" ref="FeedConnection"/>
-    <property name="targetMethod" value="setBacklogCheck"/>
-    <property name="arguments">
-      <list>
-        <ref bean="FeedBacklogFloor"/>
-        <ref bean="FeedBacklogCeiling"/>
-        <ref bean="FeedBacklogCheckIntervalSeconds"/>
-      </list>
-    </property>
-  </bean>
-
   <bean id="Pusher"
         class="com.google.enterprise.connector.pusher.DocPusher">
     <constructor-arg index="0" ref="FeedConnection"/>
+    <!-- The size in bytes of an accumulated feed file.  DocPusher tries to
+         collect many feed Documents into a single feed file to improve the
+         efficiency of sending feed data to the GSA.  Too many small feeds
+         may overrun the GSA's feed processor.  However, specifying too large
+         a feed size reduces concurrency and will likely result in OutOfMemory
+         errors in the Java VM, especially if using multiple Connector Instances.
+         The default feed size is 10MB.
+    -->
+    <property name="maximumFeedSize" value="10485760"/>
+    <property name="fileSizeLimitInfo" ref="FileSizeLimitInfo"/>
   </bean>
 
   <!-- Create a Handler for the Feed Logger and add it to the logger. -->
@@ -173,30 +149,25 @@
     </property>
   </bean>
 
-  <!-- This defines the number of seconds a task such as a Traversal
-       may run before it it is cancelled. The default is 60 minutes
-       (3600 seconds). This value should exceed
-       TraversalTimeLimitSecondsDefault which is a more gentle limit.
-  -->
-  <bean id="ThreadPoolCancelTimeSecondsDefault" class="java.lang.Long">
-    <constructor-arg index="0" type="long" value="3600"/>
-  </bean>
-
-  <bean id="ThreadPool"
-        class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-    <property name="staticMethod"
-              value="com.google.enterprise.connector.instantiator.ThreadPool.newThreadPool"/>
-    <property name="arguments">
-      <list>
-        <ref bean="ThreadPoolCancelTimeSecondsDefault"/>
-      </list>
-    </property>
-  </bean>
-
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.SpringInstantiator">
-    <constructor-arg index="0" ref="Pusher" />
-    <constructor-arg index="1" ref="ThreadPool" />
+    <constructor-arg ref="Pusher"/>
+    <property name="scheduler" ref="TraversalScheduler"/>
+  </bean>
+
+  <bean id="Monitor"
+        class="com.google.enterprise.connector.monitor.HashMapMonitor"/>
+
+  <bean id="WorkQueue"
+        class="com.google.enterprise.connector.common.WorkQueue">
+    <!-- Number of worker threads processing the queue. -->
+    <constructor-arg index="0" type="int" value="10"/>
+    <!-- Number of milliseconds before worker thread is considered timed out.
+         A value of 0 means it never times out. Default: 20 minutes -->
+    <constructor-arg index="2" type="long" value="1200000"/>
+    <!-- Number of milliseconds after a timed-out worker thread is interrupted
+         before it is killed outright. Default: 10 minutes -->
+    <constructor-arg index="1" type="long" value="600000"/>
   </bean>
 
   <bean id="Manager"
@@ -207,14 +178,15 @@
   <bean id="HostLoadManager"
         class="com.google.enterprise.connector.scheduler.HostLoadManager">
     <constructor-arg index="0" ref="Instantiator"/>
-    <constructor-arg index="1" ref="FeedConnection"/>
     <property name="batchSize" value="500"/>
   </bean>
 
   <bean id="TraversalScheduler"
         class="com.google.enterprise.connector.scheduler.TraversalScheduler">
     <constructor-arg index="0" ref="Instantiator"/>
-    <constructor-arg index="1" ref="HostLoadManager"/>
+    <constructor-arg index="1" ref="Monitor"/>
+    <constructor-arg index="2" ref="WorkQueue"/>
+    <constructor-arg index="3" ref="HostLoadManager"/>
   </bean>
 
   <!-- This defines the number of seconds to wait after a Traversal of the
@@ -236,13 +208,6 @@
     </property>
   </bean>
 
-  <!-- This defines the number of seconds a Traversal will run before
-       gracefully exiting. The default is 30 minutes (1800 seconds).
-  -->
-  <bean id="TraversalTimeLimitSecondsDefault" class="java.lang.Long">
-    <constructor-arg index="0" type="long" value="1800"/>
-  </bean>
-
   <!-- The TraversalContext is supplied to the Connector's TraversalManager,
        so that it may make more intelligent decisions about what types of
        content to feed.
@@ -251,7 +216,6 @@
         class="com.google.enterprise.connector.traversal.ProductionTraversalContext">
     <property name="fileSizeLimitInfo" ref="FileSizeLimitInfo"/>
     <property name="mimeTypeMap" ref="MimeTypeMap"/>
-    <property name="traversalTimeLimitSeconds" ref="TraversalTimeLimitSecondsDefault"/>
   </bean>
 
   <bean id="FileSizeLimitInfo"

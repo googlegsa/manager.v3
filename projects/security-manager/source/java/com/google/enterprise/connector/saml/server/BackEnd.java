@@ -14,15 +14,16 @@
 
 package com.google.enterprise.connector.saml.server;
 
+import com.google.enterprise.connector.manager.ConnectorManager;
 import com.google.enterprise.connector.security.identity.CredentialsGroup;
 import com.google.enterprise.connector.security.identity.IdentityConfig;
-import com.google.enterprise.connector.spi.AuthenticationIdentity;
 
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
+import org.opensaml.saml2.core.AuthzDecisionQuery;
+import org.opensaml.saml2.core.Response;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -34,6 +35,11 @@ import javax.servlet.http.HttpServletResponse;
  *
  */
 public interface BackEnd {
+
+  /**
+   * Set the connector manager used by this backend.
+   */
+  public void setConnectorManager(ConnectorManager cm);
 
   /**
    * Get the SAML artifact map.
@@ -102,13 +108,10 @@ public interface BackEnd {
       throws IOException;
 
   /**
-   * Gets authorization for a set of documents by ID.
+   * Process a set of SAML authorization queries.
    *
-   * @param docidList The document set represented as a list of Strings: the
-   *        docid for each document
-   * @param identity An AuthenticationIdentity object that encapsulates the
-   *        user's identity
-   * @return A Set of String IDs indicating which documents the user can see.
+   * @param authzDecisionQueries A list of authorization queries to be processed.
+   * @return A list of responses, corresponding to the argument.
    */
-  public Set<String> authorizeDocids(List<String> docidList, AuthenticationIdentity identity);
+  public List<Response> authorize(List<AuthzDecisionQuery> authzDecisionQueries);
 }

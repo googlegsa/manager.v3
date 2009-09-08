@@ -22,9 +22,9 @@ import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
-import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
+import com.google.enterprise.connector.traversal.Traverser;
 
 import junit.framework.TestCase;
 
@@ -36,31 +36,26 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Unit test for {@link SpringInstantiator}.
+ *
  */
 public class InstantiatorTest extends TestCase {
 
   private static final String TEST_DIR_NAME = "testdata/tempInstantiatorTests";
-  private static final String TEST_CONFIG_FILE =
-      "classpath*:config/connectorType.xml";
-  private final File baseDirectory  = new File(TEST_DIR_NAME);
+  private static final String TEST_CONFIG_FILE = "classpath*:config/connectorType.xml";
+  private File baseDirectory;
   private Instantiator instantiator;
 
   @Override
   protected void setUp() throws Exception {
+    // Make sure that the test directory does not exist
+    baseDirectory = new File(TEST_DIR_NAME);
     assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
     // Then recreate it empty
     assertTrue(baseDirectory.mkdirs());
 
-    createInstantiator();
-    assertEquals(0, connectorCount());
-  }
-
-  private void createInstantiator() {
-    ThreadPool threadPool =
-      ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(5000);
-    instantiator = new SpringInstantiator(new MockPusher(), threadPool,
+    instantiator = new SpringInstantiator(new MockPusher(),
         new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
+    assertEquals(0, connectorCount());
   }
 
   @Override
@@ -149,8 +144,8 @@ public class InstantiatorTest extends TestCase {
 
     {
       /*
-       * Test update of a connector instance of type TestConnectorB, to type
-       * TestConnectorA. The instance was created in an earlier test.
+       * Test update of a connector instance of type TestConnectorA.
+       * The instance was created in an earlier test.
        */
       String name = "connector3";
       String typeName = "TestConnectorA";
@@ -189,8 +184,8 @@ public class InstantiatorTest extends TestCase {
 
     {
       /*
-       * Test update of a non-existing connector instance of type
-       * TestConnectorB. It should throw a ConnectorNotFoundException.
+       * Test update of a non-existing connector instance of type TestConnectorB.
+       * It should throw a ConnectorNotFoundException.
        */
       String name = "connectorNew";
       String typeName = "TestConnectorB";
@@ -236,78 +231,44 @@ public class InstantiatorTest extends TestCase {
 
     instantiator.removeConnector("connector3");
     try {
-      instantiator.getConnectorCoordinator("connector3").getTraversalManager();
-      fail("Exception expected.");
+      Traverser traverser = instantiator.getTraverser("connector3");
+      assertNull(traverser);
     } catch (ConnectorNotFoundException e3) {
-      assertEquals("Connector instance connector3 not available.",
-          e3.getMessage());
+      assertTrue(true);
     }
     assertFalse(connectorExists("connector3"));
 
     assertEquals(0, connectorCount());
   }
 
+
   private class Issue63ChildThread extends Thread {
-    volatile boolean didFinish = false;
-    volatile Exception myException;
+    public volatile boolean didFinish = false;
     @Override
     public void run() {
       try {
+        Traverser oldTraverser, newTraverser;
         // Get the Traverser for our connector instance.
-        TraversalManager oldTraversalManager =
-            instantiator.getConnectorCoordinator("connector1")
-                .getTraversalManager();
-        TraversalManager newTraversalManager =
-            instantiator.getConnectorCoordinator("connector1")
-                .getTraversalManager();
-        if (oldTraversalManager != newTraversalManager) {
-          throw new Exception("oldTraverser = " + oldTraversalManager
-              + " must match newTraverser = " + newTraversalManager);
-        }
+        oldTraverser = instantiator.getTraverser("connector1");
+        newTraverser = instantiator.getTraverser("connector1");
+        assertSame(oldTraverser, newTraverser);
 
         // Sleep for a few seconds, allowing the test thread time
         // to update the connector.
-        Thread.sleep(3 * 1000);
+        try {
+          Thread.sleep(3 * 1000);
+        } catch (InterruptedException ie) {
+          fail("Unexpected thread interruption.");
+        }
 
         // Get the Traverser for our connector instance.
         // It should be a new traverser reflecting the updated connector.
-        newTraversalManager =
-          instantiator.getConnectorCoordinator("connector1")
-              .getTraversalManager();
-        if (oldTraversalManager == newTraversalManager) {
-          throw new Exception("oldTraverser = " + oldTraversalManager
-              + " must match newTraverser = " + newTraversalManager);
-        }
+        newTraverser = instantiator.getTraverser("connector1");
+        assertNotSame(oldTraverser, newTraverser);
       } catch (Exception e) {
-        myException = e;
+        fail(e.getMessage());
       }
       didFinish = true;
-    }
-  }
-
-  public final void testStartWithConnector() throws Exception {
-    final String name = "connector1";
-    final String typeName = "TestConnectorA";
-    final String language = "en";
-
-    {
-      /*
-       * Test creation of a connector of type TestConnectorA.
-       * The type should already have been created.
-       */
-      String jsonConfigString =
-          "{Username:foo, Password:bar, Color:red, "
-          + "RepositoryFile:MockRepositoryEventLog3.txt}";
-      updateConnectorTest(instantiator, name, typeName, language,
-                          false, jsonConfigString);
-      instantiator.shutdown(true, 5000);
-    }
-
-    createInstantiator();
-
-    {
-      String readTypeName = instantiator.getConnectorTypeName(name);
-      assertEquals(typeName, readTypeName);
     }
   }
 
@@ -319,7 +280,9 @@ public class InstantiatorTest extends TestCase {
    * @throws ConnectorExistsException
    * @throws ConnectorNotFoundException
    */
-  public final void testIssue63Synchronization() throws Exception {
+  public final void testIssue63Synchronization() throws JSONException,
+      InstantiatorException, ConnectorTypeNotFoundException,
+      ConnectorNotFoundException, ConnectorExistsException {
 
     // Create a connector.
     String name = "connector1";
@@ -356,9 +319,6 @@ public class InstantiatorTest extends TestCase {
       fail("Unexpected thread interruption.");
     }
     assertTrue(child.didFinish);
-    if (child.myException != null) {
-      throw new Exception("Unexpected exception in child.", child.myException);
-    }
 
     instantiator.removeConnector(name);
   }
@@ -387,13 +347,11 @@ public class InstantiatorTest extends TestCase {
       String jsonConfigString) throws JSONException, InstantiatorException,
       ConnectorTypeNotFoundException, ConnectorNotFoundException,
       ConnectorExistsException {
-    TraversalManager oldTraversersalManager = null;
+    Traverser oldTraverser = null;
     if (update)
-      oldTraversersalManager =
-          instantiator.getConnectorCoordinator(name).getTraversalManager();
+      oldTraverser = instantiator.getTraverser(name);
 
-    Map<String, String> config =
-        new JsonObjectAsMap(new JSONObject(jsonConfigString));
+    Map<String, String> config = new JsonObjectAsMap(new JSONObject(jsonConfigString));
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
     instantiator.setConnectorConfig(name, typeName, config, locale, update);
 
@@ -409,13 +367,13 @@ public class InstantiatorTest extends TestCase {
     AuthenticationManager authn = instantiator.getAuthenticationManager(name);
     assertNotNull(authn);
 
-    TraversalManager traversalManager = instantiator.getConnectorCoordinator(name).getTraversalManager();
-    assertNotNull(traversalManager);
+    Traverser traverser = instantiator.getTraverser(name);
+    assertNotNull(traverser);
 
     // If this is an update, make sure that we get a different traverser.
     // Regression test for Issues 35, 63.
     if (update)
-      assertNotSame(oldTraversersalManager, traversalManager);
+      assertNotSame(oldTraverser, traverser);
 
     // the password will be decrypted in the InstanceInfo
     Map<String, String> instanceProps = instantiator.getConnectorConfig(name);
