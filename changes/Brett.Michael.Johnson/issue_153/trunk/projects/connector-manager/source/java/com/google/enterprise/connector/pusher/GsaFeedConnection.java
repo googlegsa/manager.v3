@@ -66,7 +66,6 @@ public class GsaFeedConnection implements FeedConnection {
   private int scheduleFormat = 1;
 
   // Content encodings supported by GSA.
-  // TODO: Get compressed encoding support from server.
   private String contentEncodings = null;
 
   // True if we recently got a feed error of some sort.
@@ -424,11 +423,10 @@ public class GsaFeedConnection implements FeedConnection {
    * Get the response to a URL request.  The response is returned
    * as an HttpResponse containing the HTTP ResponseCode and the
    * returned content as a String. The content String is only returned
-   * if the repsonse code was OK.
+   * if the response code was OK.
    *
    * @param url the URL to request
    * @param name the name of the feature requested (for logging)
-   *
    * @return HttpResponse representing response to an HTTP GET.
    *         or null if the GSA is unavailable.
    * @throws UnsupportedOperationException if the GSA does
