@@ -176,7 +176,7 @@ public class MimeTypeMap {
    * Return the most preferred mime type from a Set of candidates.
    * Mime types with higher support levels are preferred over those
    * with lower support levels.  For those with equal support levels,
-   * non-'x-*' subtypes are preferred over 'x-*' subtypes, and mimetyps
+   * non-'x-*' subtypes are preferred over 'x-*' subtypes, and mimetypes
    * with subtypes are preferred over those without.
    *
    * @param mimeTypes a Set of mime type Strings.
