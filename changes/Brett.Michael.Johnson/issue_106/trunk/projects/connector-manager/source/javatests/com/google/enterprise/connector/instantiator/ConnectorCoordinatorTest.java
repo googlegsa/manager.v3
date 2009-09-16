@@ -18,7 +18,7 @@ import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.pusher.Pusher;
+import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
@@ -40,7 +40,7 @@ public class ConnectorCoordinatorTest extends TestCase {
   private static final String TEST_DIR_NAME = "testdata/tempInstantiatorTests";
   private final File baseDirectory = new File(TEST_DIR_NAME);
   private TypeMap typeMap;
-  private final Pusher pusher = null;
+  private final PusherFactory pusherFactory = null;
   private final ThreadPool threadPool = null;
 
   @Override
@@ -58,7 +58,7 @@ public class ConnectorCoordinatorTest extends TestCase {
   public void testCreateDestroy() throws Exception {
     final String name = "connector1";
     final ConnectorCoordinatorImpl instance =
-        new ConnectorCoordinatorImpl(name, pusher, threadPool);
+        new ConnectorCoordinatorImpl(name, pusherFactory, threadPool);
     assertFalse(instance.exists());
     /*
      * Test creation of a connector of type TestConnectorA. The type should
@@ -78,7 +78,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     final String language = "en";
     final String name = "connector2";
     final ConnectorCoordinatorImpl instance =
-        new ConnectorCoordinatorImpl(name, pusher, threadPool);
+        new ConnectorCoordinatorImpl(name, pusherFactory, threadPool);
     assertFalse(instance.exists());
     {
       /*
@@ -109,7 +109,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     final String language = "en";
     final String name = "connector2";
     final ConnectorCoordinatorImpl instance =
-        new ConnectorCoordinatorImpl(name, pusher, threadPool);
+        new ConnectorCoordinatorImpl(name, pusherFactory, threadPool);
     assertFalse(instance.exists());
     {
       /*
@@ -147,7 +147,7 @@ public class ConnectorCoordinatorTest extends TestCase {
   public void testCreateExising() throws Exception {
     final String name = "connector1";
     final ConnectorCoordinatorImpl instance =
-        new ConnectorCoordinatorImpl(name, pusher, threadPool);
+        new ConnectorCoordinatorImpl(name, pusherFactory, threadPool);
     assertFalse(instance.exists());
     /*
      * Test creation of a connector of type TestConnectorA. The type should
@@ -172,7 +172,7 @@ public class ConnectorCoordinatorTest extends TestCase {
   public void testUpdateMissing() throws Exception {
     final String name = "connector1";
     final ConnectorCoordinatorImpl instance =
-        new ConnectorCoordinatorImpl(name, pusher, threadPool);
+        new ConnectorCoordinatorImpl(name, pusherFactory, threadPool);
     assertFalse(instance.exists());
     /*
      * Test creation of a connector of type TestConnectorA. The type should

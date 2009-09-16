@@ -131,13 +131,6 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     recordCount++;
   }
 
-  /**
-   * Return the data source for all records in this Feed.
-   */
-  public String getDataSource() {
-    return dataSource;
-  }
-
   /*
    * FeedData Interface.
    */
@@ -147,6 +140,13 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
   public String getFeedType() {
     return feedType;
+  }
+
+  /**
+   * Return the data source for all records in this Feed.
+   */
+  public String getDataSource() {
+    return dataSource;
   }
 
   /*

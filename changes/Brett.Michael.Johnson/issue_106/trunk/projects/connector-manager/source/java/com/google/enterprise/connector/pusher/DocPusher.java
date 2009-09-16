@@ -40,13 +40,37 @@ import java.util.logging.Logger;
 public class DocPusher implements Pusher {
   private static final Logger LOGGER =
       Logger.getLogger(DocPusher.class.getName());
+
+  private static final byte[] SPACE_CHAR = { 0x20 };  // UTF-8 space
+
+  /**
+   * Separate Logger for Feed Logging.
+   */
   private static final Logger FEED_WRAPPER_LOGGER =
       Logger.getLogger(LOGGER.getName() + ".FEED_WRAPPER");
   private static final Logger FEED_LOGGER =
       Logger.getLogger(FEED_WRAPPER_LOGGER.getName() + ".FEED");
   private static final Level FEED_LOG_LEVEL = Level.FINER;
 
-  private static final byte[] SPACE_CHAR = { 0x20 };  // UTF-8 space
+  /**
+   * Configured maximum document size and maximum feed file size supported.
+   */
+  private static FileSizeLimitInfo fileSizeLimit = new FileSizeLimitInfo();
+
+  /**
+   * FeedConnection that is the sink for our generated XmlFeeds.
+   */
+  private final FeedConnection feedConnection;
+
+  /**
+   * Encoding method to use for Document content.
+   */
+  private String contentEncoding;
+
+  /**
+   * The Connector name that is the dataSource for this Feed.
+   */
+  private final String connectorName;
 
   /**
    * This is used to build up a multi-record feed.  Documents are added to the
@@ -54,12 +78,7 @@ public class DocPusher implements Pusher {
    * or we are finished with the batch of documents. The feed is then
    * submitted to the feed connection.
    */
-  private final ThreadLocal<XmlFeed> xmlFeed = new ThreadLocal<XmlFeed>();
-
-  /**
-   * Configured maximum document size and maximum feed file size supported.
-   */
-  private FileSizeLimitInfo fileSizeLimit = new FileSizeLimitInfo();
+  private XmlFeed xmlFeed = null;
 
   /**
    * This field is used to construct a feed record in parallel to the main feed
@@ -68,19 +87,20 @@ public class DocPusher implements Pusher {
    * being constructed.  Once sufficient information has been appended to this
    * buffer its contents will be logged and it will be nulled.
    */
-  private final ThreadLocal<StringBuilder> feedLog =
-      new ThreadLocal<StringBuilder>();
+  private StringBuilder feedLog = null;
 
-  private final FeedConnection feedConnection;
+  // For use by unit tests.
   private String gsaResponse;
-  private String contentEncoding;
 
   /**
    *
-   * @param feedConnection a connection
+   * @param feedConnection a FeedConnection
+   * @param connectorName The connector name that is the source of the feed
    */
-  public DocPusher(FeedConnection feedConnection) {
+  public DocPusher(FeedConnection feedConnection, String connectorName) {
     this.feedConnection = feedConnection;
+    this.connectorName = connectorName;
+
     String supportedEncodings =
         feedConnection.getContentEncodings().toLowerCase();
     this.contentEncoding =
@@ -91,10 +111,13 @@ public class DocPusher implements Pusher {
   /**
    * Set the maximum size of the document content and feed files.
    */
-  public void setFileSizeLimitInfo(FileSizeLimitInfo fileSizeLimitInfo) {
-    this.fileSizeLimit = fileSizeLimitInfo;
+  public static void setFileSizeLimitInfo(FileSizeLimitInfo fileSizeLimitInfo) {
+    fileSizeLimit = fileSizeLimitInfo;
   }
 
+  /**
+   * Return the Feed Logger.
+   */
   public static Logger getFeedLogger() {
     return FEED_WRAPPER_LOGGER;
   }
@@ -104,7 +127,7 @@ public class DocPusher implements Pusher {
    *
    * @return gsaResponse response from GSA.
    */
-  protected String getGsaResponse() {
+  protected synchronized String getGsaResponse() {
     return gsaResponse;
   }
 
@@ -112,13 +135,12 @@ public class DocPusher implements Pusher {
    * Takes a Document and sends a the feed to the GSA.
    *
    * @param document Document corresponding to the document.
-   * @param connectorName The connector name that fed this document
    * @throws PushException if Pusher problem
    * @throws FeedException if transient Feed problem
    * @throws RepositoryDocumentException if fatal Document problem
    * @throws RepositoryException if transient Repository problem
    */
-  public void take(Document document, String connectorName)
+  public synchronized void take(Document document)
       throws PushException, FeedException, RepositoryException {
     String feedType;
     try {
@@ -132,39 +154,35 @@ public class DocPusher implements Pusher {
     // All feeds in a feed file must be of the same type.
     // If the feed would change type, or if the feed file is full,
     // send the feed off to the GSA.
-    XmlFeed feed = xmlFeed.get();
     int maxFeedSize = (int) fileSizeLimit.maxFeedSize();
-    if (feed != null) {
-      if (feedType != feed.getFeedType()) {
+    if (xmlFeed != null) {
+      if (feedType != xmlFeed.getFeedType()) {
         if (LOGGER.isLoggable(Level.FINE)) {
           LOGGER.fine("A new feedType, " + feedType
               + ", requires a new feed for " + connectorName
               + ". Closing feed and sending to GSA.");
         }
-        submitFeed();
-      } else if (feed.size() > ((maxFeedSize / 10) * 8)) {
+        flush();
+      } else if (xmlFeed.size() > ((maxFeedSize / 10) * 8)) {
         if (LOGGER.isLoggable(Level.FINE)) {
           LOGGER.fine("Feed for " + connectorName + " has grown to "
-              + feed.size() + " bytes. Closing feed and sending to GSA.");
+              + xmlFeed.size() + " bytes. Closing feed and sending to GSA.");
         }
-        submitFeed();
+        flush();
       }
     }
 
-    if ((feed = xmlFeed.get()) == null) {
+    if (xmlFeed == null) {
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("Creating new " + feedType + " feed for " + connectorName);
       }
       try {
-        StringBuilder log = null;
         if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-          log = new StringBuilder(256 * 1024);
-          log.append("Records generated for ").append(feedType);
-          log.append(" feed of ").append(connectorName).append(":\n");
-          feedLog.set(log);
+          feedLog = new StringBuilder(256 * 1024);
+          feedLog.append("Records generated for ").append(feedType);
+          feedLog.append(" feed of ").append(connectorName).append(":\n");
         }
-        feed = new XmlFeed(connectorName, feedType, maxFeedSize, log);
-        xmlFeed.set(feed);
+        xmlFeed = new XmlFeed(connectorName, feedType, maxFeedSize, feedLog);
       } catch (OutOfMemoryError me) {
         throw new PushException("Unable to allocate feed buffer.  Try reducing"
                                 + " the maxFeedSize setting.", me);
@@ -174,31 +192,31 @@ public class DocPusher implements Pusher {
     }
 
     boolean isThrowing = false;
-    int resetPoint = feed.size();
+    int resetPoint = xmlFeed.size();
     InputStream contentStream = null;
     try {
       contentStream = getContentStream(document, feedType);
-      feed.addRecord(document, contentStream, contentEncoding);
+      xmlFeed.addRecord(document, contentStream, contentEncoding);
       if (LOGGER.isLoggable(Level.FINER)) {
         LOGGER.finer("Document "
             + DocUtils.getRequiredString(document, SpiConstants.PROPNAME_DOCID)
             + " from connector " + connectorName + " added to feed.");
       }
     } catch (OutOfMemoryError me) {
-      feed.reset(resetPoint);
+      xmlFeed.reset(resetPoint);
       throw new PushException("Out of memory building feed, retrying.", me);
     } catch (RuntimeException e) {
-      feed.reset(resetPoint);
+      xmlFeed.reset(resetPoint);
       LOGGER.log(Level.WARNING,
           "Rethrowing RuntimeException as RepositoryDocumentException", e);
       throw new RepositoryDocumentException(e);
     } catch (RepositoryDocumentException rde) {
       // Skipping this document, remove it from the feed.
-      feed.reset(resetPoint);
+      xmlFeed.reset(resetPoint);
       throw rde;
     } catch (IOException ioe) {
       LOGGER.log(Level.SEVERE, "IOException while reading: skipping", ioe);
-      feed.reset(resetPoint);
+      xmlFeed.reset(resetPoint);
       Throwable t = ioe.getCause();
       isThrowing = true;
       if (t != null && (t instanceof RepositoryException)) {
@@ -229,58 +247,65 @@ public class DocPusher implements Pusher {
    * @throws FeedException if transient Feed problem
    * @throws RepositoryException
    */
-  public void flush() throws PushException, FeedException, RepositoryException {
+  public void flush()
+      throws PushException, FeedException, RepositoryException {
     LOGGER.fine("Flushing accumulated feed to GSA");
-    submitFeed();
+    XmlFeed feed;
+    String logMessage;
+    synchronized(this) {
+      feed = xmlFeed;
+      xmlFeed = null;
+      if (feedLog != null) {
+        logMessage = feedLog.toString();
+        feedLog = null;
+      } else {
+        logMessage = null;
+      }
+    }
+    submitFeed(feed, logMessage);
   }
 
   /**
    * Cancels any feed being constructed.  Any accumulated feed data is lost.
    */
-  public void cancel() {
-    XmlFeed feed = xmlFeed.get();
-    if (feed != null) {
-      LOGGER.fine("Discarding accumulated feed for " + feed.getDataSource());
-      xmlFeed.remove();
+  public synchronized void cancel() {
+    if (xmlFeed != null) {
+      LOGGER.fine("Discarding accumulated feed for " + connectorName);
+      xmlFeed = null;
     }
-    if (feedLog.get() != null) {
-      feedLog.remove();
+    if (feedLog != null) {
+      feedLog = null;
     }
   }
 
   /**
    * Takes the XmlFeed and sends the feed to the GSA.
    *
+   * @param feed an XmlFeed
+   * @param logMessage a Feed Log message
    * @throws PushException if Pusher problem
    * @throws FeedException if transient Feed problem
    * @throws RepositoryException
    */
-  private void submitFeed()
+  private void submitFeed(XmlFeed feed, String logMessage)
       throws PushException, FeedException, RepositoryException {
-    XmlFeed feed = xmlFeed.get();
-    if (feed == null) {
-      return;
-    }
 
     String feedType = feed.getFeedType();
-    String connectorName = feed.getDataSource();
     if (LOGGER.isLoggable(Level.FINE)) {
       LOGGER.fine("Submitting " + feedType + " feed for " + connectorName
           + " to the GSA. " + feed.getRecordCount() + " records totaling "
           + feed.size() + " bytes.");
     }
 
-    xmlFeed.remove();
     try {
       feed.close();
     } catch (IOException ioe) {
       throw new PushException("Error closing feed", ioe);
     }
 
-    // Write the generated feedLog to the feed logger.
-    if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-      FEED_LOGGER.log(FEED_LOG_LEVEL, feedLog.get().toString());
-      feedLog.remove();
+    // Write the generated feedLog message to the feed logger.
+    if (logMessage != null && FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
+      FEED_LOGGER.log(FEED_LOG_LEVEL, logMessage);
     }
 
     // Write the Feed to the TeedFeedFile, if one was specified.
@@ -308,8 +333,7 @@ public class DocPusher implements Pusher {
       }
     }
 
-    GsaFeedData feedData = new GsaFeedData(feedType, feed);
-    gsaResponse = feedConnection.sendData(connectorName, feedData);
+    gsaResponse = feedConnection.sendData(feed);
     if (!gsaResponse.equals(GsaFeedConnection.SUCCESS_RESPONSE)) {
       String eMessage = gsaResponse;
       if (GsaFeedConnection.UNAUTHORIZED_RESPONSE.equals(gsaResponse)) {
@@ -341,7 +365,7 @@ public class DocPusher implements Pusher {
           false);
 
       contentStream = new AlternateContentFilterInputStream(
-          encodedContentStream, encodedAlternateStream, xmlFeed.get());
+          encodedContentStream, encodedAlternateStream, xmlFeed);
     }
     return contentStream;
   }

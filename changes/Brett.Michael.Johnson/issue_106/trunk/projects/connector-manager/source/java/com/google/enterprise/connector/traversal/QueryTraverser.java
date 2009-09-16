@@ -17,6 +17,7 @@ package com.google.enterprise.connector.traversal;
 import com.google.enterprise.connector.pusher.FeedException;
 import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.pusher.Pusher;
+import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
@@ -37,7 +38,7 @@ public class QueryTraverser implements Traverser {
   private static final Logger LOGGER =
       Logger.getLogger(QueryTraverser.class.getName());
 
-  private final Pusher pusher;
+  private final PusherFactory pusherFactory;
   private final TraversalManager queryTraversalManager;
   private final TraversalStateStore stateStore;
   private final String connectorName;
@@ -47,10 +48,10 @@ public class QueryTraverser implements Traverser {
   private final Object cancelLock = new Object();
   private boolean cancelWork = false;
 
-  public QueryTraverser(Pusher pusher, TraversalManager traversalManager,
-                        TraversalStateStore stateStore, String connectorName,
-                        TraversalContext traversalContext) {
-    this.pusher = pusher;
+  public QueryTraverser(PusherFactory pusherFactory,
+      TraversalManager traversalManager, TraversalStateStore stateStore,
+      String connectorName, TraversalContext traversalContext) {
+    this.pusherFactory = pusherFactory;
     this.queryTraversalManager = traversalManager;
     this.stateStore = stateStore;
     this.connectorName = connectorName;
@@ -138,7 +139,11 @@ public class QueryTraverser implements Traverser {
       return Traverser.POLLING_WAIT;
     }
 
+    Pusher pusher = null;
     try {
+      // Get a Pusher for feeding the returned Documents.
+      pusher = pusherFactory.newPusher(connectorName);
+
       while (counter < batchHint) {
         if (Thread.currentThread().isInterrupted() || isCancelled()) {
           LOGGER.fine("Traversal for connector " + connectorName
@@ -180,7 +185,7 @@ public class QueryTraverser implements Traverser {
           }
           LOGGER.finer("Sending document (" + docid + ") from connector "
               + connectorName + " to Pusher");
-          pusher.take(nextDocument, connectorName);
+          pusher.take(nextDocument);
         } catch (RepositoryDocumentException e) {
           // Skip individual documents that fail.  Proceed on to the next one.
           LOGGER.log(Level.WARNING, "Skipping document (" + docid
@@ -223,7 +228,9 @@ public class QueryTraverser implements Traverser {
       // it has fed, and what actually has been pushed).
       resultSet = null;
       counter = Traverser.ERROR_WAIT;
-      pusher.cancel();
+      if (pusher != null) {
+        pusher.cancel();
+      }
     } catch (FeedException e) {
       LOGGER.log(Level.SEVERE, "Feed Exception during traversal.", e);
       // Drop the entire batch on the floor.  Do not call checkpoint

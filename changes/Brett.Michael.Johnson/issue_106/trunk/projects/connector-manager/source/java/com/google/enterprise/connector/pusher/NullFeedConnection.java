@@ -35,8 +35,8 @@ public class NullFeedConnection implements FeedConnection {
   }
 
   //@Override
-  public String sendData(String dataSource, FeedData feedData) {
-    ByteArrayOutputStream data = ((GsaFeedData) feedData).getData();
+  public String sendData(FeedData feedData) {
+    ByteArrayOutputStream data = (XmlFeed) feedData;
     LOGGER.fine("Null FeedConnection discarded " + data.size() + " bytes.");
     return GsaFeedConnection.SUCCESS_RESPONSE;
   }
@@ -44,11 +44,6 @@ public class NullFeedConnection implements FeedConnection {
   //@Override
   public boolean isBacklogged() {
     return false;
-  }
-
-  //@Override
-  public int getScheduleFormat() {
-    return 1;
   }
 
   //@Override

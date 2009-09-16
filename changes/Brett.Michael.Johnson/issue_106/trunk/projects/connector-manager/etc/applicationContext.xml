@@ -58,12 +58,6 @@
     </property>
   </bean>
 
-  <bean id="Pusher"
-        class="com.google.enterprise.connector.pusher.DocPusher">
-    <constructor-arg index="0" ref="FeedConnection"/>
-    <property name="fileSizeLimitInfo" ref="FileSizeLimitInfo"/>
-  </bean>
-
   <!-- Create a Handler for the Feed Logger and add it to the logger. -->
   <bean id="FeedFormatter" class="java.util.logging.SimpleFormatter"/>
 
@@ -109,6 +103,16 @@
     <property name="arguments">
       <list>
         <value>${feedLoggingLevel}</value>
+      </list>
+    </property>
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.pusher.DocPusher.setFileSizeLimitInfo"/>
+    <property name="arguments">
+      <list>
+        <ref bean="FileSizeLimitInfo"/>
       </list>
     </property>
   </bean>
@@ -194,9 +198,14 @@
     </property>
   </bean>
 
+  <bean id="PusherFactory"
+        class="com.google.enterprise.connector.pusher.DocPusherFactory">
+    <constructor-arg index="0" ref="FeedConnection" />
+  </bean>
+
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.SpringInstantiator">
-    <constructor-arg index="0" ref="Pusher" />
+    <constructor-arg index="0" ref="PusherFactory" />
     <constructor-arg index="1" ref="ThreadPool" />
   </bean>
 

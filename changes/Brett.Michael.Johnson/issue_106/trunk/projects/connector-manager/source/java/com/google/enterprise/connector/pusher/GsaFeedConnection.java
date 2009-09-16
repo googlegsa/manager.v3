@@ -61,8 +61,6 @@ public class GsaFeedConnection implements FeedConnection {
   private static final String BOUNDARY = "<<";
 
   private static final String CRLF = "\r\n";
-  // All current GSAs only support legacy Schedule formats.
-  private int scheduleFormat = 1;
 
   // Content encodings supported by GSA.
   private String contentEncodings = null;
@@ -130,16 +128,12 @@ public class GsaFeedConnection implements FeedConnection {
     backlogCheckInterval = interval * 1000L;
   }
 
-  public void setScheduleFormat(int scheduleFormatVersion) {
-    this.scheduleFormat = scheduleFormatVersion;
-  }
-
   public void setContentEncodings(String contentEncodings) {
     this.contentEncodings = contentEncodings;
   }
 
   private static final void controlHeader(StringBuilder builder,
-                                          String name, String mimetype) {
+        String name, String mimetype) {
     builder.append("--").append(BOUNDARY).append(CRLF);
     builder.append("Content-Disposition: form-data;");
     builder.append(" name=\"").append(name).append("\"").append(CRLF);
@@ -148,10 +142,10 @@ public class GsaFeedConnection implements FeedConnection {
   }
 
   //@Override
-  public String sendData(String dataSource, FeedData feedData)
+  public String sendData(FeedData feedData)
       throws FeedException {
     try {
-      String response = sendFeedData(dataSource, feedData);
+      String response = sendFeedData((XmlFeed)feedData);
       gotFeedError = !response.equalsIgnoreCase(SUCCESS_RESPONSE);
       return response;
     } catch (FeedException fe) {
@@ -160,10 +154,10 @@ public class GsaFeedConnection implements FeedConnection {
     }
   }
 
-  private String sendFeedData(String dataSource, FeedData feedData)
+  private String sendFeedData(XmlFeed feed)
       throws FeedException {
-    String feedType = ((GsaFeedData)feedData).getFeedType();
-    ByteArrayOutputStream data = ((GsaFeedData) feedData).getData();
+    String feedType = feed.getFeedType();
+    String dataSource = feed.getDataSource();
     OutputStream outputStream;
     HttpURLConnection uc;
     StringBuilder buf = new StringBuilder();
@@ -189,7 +183,7 @@ public class GsaFeedConnection implements FeedConnection {
       }
       uc.setDoInput(true);
       uc.setDoOutput(true);
-      uc.setFixedLengthStreamingMode(prefix.length + data.size()
+      uc.setFixedLengthStreamingMode(prefix.length + feed.size()
           + suffix.length);
       uc.setRequestProperty("Content-Type", "multipart/form-data; boundary="
           + BOUNDARY);
@@ -206,7 +200,7 @@ public class GsaFeedConnection implements FeedConnection {
       // best to close the url connection and read the result.
       try {
         outputStream.write(prefix);
-        data.writeTo(outputStream);
+        feed.writeTo(outputStream);
         outputStream.write(suffix);
         outputStream.flush();
       } catch (IOException e) {
@@ -262,11 +256,6 @@ public class GsaFeedConnection implements FeedConnection {
       }
     }
     return buf.toString();
-  }
-
-  //@Override
-  public int getScheduleFormat() {
-    return scheduleFormat;
   }
 
   //@Override

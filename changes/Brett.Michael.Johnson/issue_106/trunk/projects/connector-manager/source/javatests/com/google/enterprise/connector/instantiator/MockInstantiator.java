@@ -29,7 +29,6 @@ import com.google.enterprise.connector.persist.MockConnectorScheduleStore;
 import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.persist.StoreContext;
 import com.google.enterprise.connector.pusher.MockPusher;
-import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
@@ -175,9 +174,8 @@ public class MockInstantiator implements Instantiator {
       e.printStackTrace();
       throw new RuntimeException();
     }
-    Pusher pusher = new MockPusher(System.out);
     QueryTraverser queryTraverser =
-        new QueryTraverser(pusher, traversalManager,
+        new QueryTraverser(new MockPusher(), traversalManager,
             new MockTraversalStateStore(stateStore, connectorName),
             connectorName, Context.getInstance().getTraversalContext());
 

@@ -28,7 +28,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 
 
-public class MockPusher implements Pusher {
+public class MockPusher implements Pusher, PusherFactory {
 
   private int totalDocs;
   private PrintStream printStream;
@@ -42,8 +42,11 @@ public class MockPusher implements Pusher {
     printStream = ps;
   }
 
-  public void take(Document document, String connectorName)
-      throws RepositoryException {
+  public Pusher newPusher(String connectorName) {
+    return this;
+  }
+
+  public void take(Document document) throws RepositoryException {
     printStream.println("<document>");
 
     // first take care of some special attributes

@@ -17,7 +17,7 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
-import com.google.enterprise.connector.pusher.Pusher;
+import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -43,7 +43,7 @@ public class SpringInstantiator implements Instantiator {
       Logger.getLogger(SpringInstantiator.class.getName());
 
   final ConcurrentMap<String, ConnectorCoordinator> coordinatorMap;
-  final Pusher pusher;
+  final PusherFactory pusherFactory;
   final ThreadPool threadPool;
 
   // State that is filled in by init.
@@ -52,10 +52,12 @@ public class SpringInstantiator implements Instantiator {
   /**
    * Normal constructor.
    *
-   * @param pusher
+   * @param pusherFactory
+   * @param threadPool
    */
-  public SpringInstantiator(Pusher pusher, ThreadPool threadPool) {
-    this.pusher = pusher;
+  public SpringInstantiator(PusherFactory pusherFactory,
+                            ThreadPool threadPool) {
+    this.pusherFactory = pusherFactory;
     this.threadPool = threadPool;
     this.coordinatorMap = new ConcurrentHashMap<String, ConnectorCoordinator>();
     // NOTE: we can't call init() here because then there would be a
@@ -65,12 +67,13 @@ public class SpringInstantiator implements Instantiator {
   /**
    * Constructor used by unit tests.  Provides a specific test Context.
    *
-   * @param pusher
+   * @param pusherFactory
+   * @param threadPool
    * @param typeMap
    */
-  public SpringInstantiator(Pusher pusher, ThreadPool threadPool,
-      TypeMap typeMap) {
-    this(pusher, threadPool);
+  public SpringInstantiator(PusherFactory pusherFactory,
+      ThreadPool threadPool, TypeMap typeMap) {
+    this(pusherFactory, threadPool);
     this.typeMap = typeMap;
     init(typeMap);
   }
@@ -88,7 +91,7 @@ public class SpringInstantiator implements Instantiator {
 
   private void init(TypeMap typeMap) {
     ConnectorCoordinatorMapHelper.fillFromTypes(typeMap, coordinatorMap,
-        pusher, threadPool);
+        pusherFactory, threadPool);
   }
 
   /**
@@ -137,8 +140,8 @@ public class SpringInstantiator implements Instantiator {
     ConnectorCoordinator connectorCoordinator =
         coordinatorMap.get(connectorName);
     if (connectorCoordinator == null) {
-      ConnectorCoordinator ci =
-          new ConnectorCoordinatorImpl(connectorName, pusher, threadPool);
+      ConnectorCoordinator ci = new
+          ConnectorCoordinatorImpl(connectorName, pusherFactory, threadPool);
       ConnectorCoordinator existing =
           coordinatorMap.putIfAbsent(connectorName, ci);
       connectorCoordinator = (existing == null) ? ci : existing;
