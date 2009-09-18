@@ -17,7 +17,6 @@ package com.google.enterprise.connector.pusher;
 import com.google.enterprise.connector.servlet.ServletUtil;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;

@@ -16,6 +16,7 @@ package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.common.Base64FilterInputStream;
 import com.google.enterprise.connector.common.CompressedFilterInputStream;
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -30,6 +31,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.LinkedList;
+import java.util.ListIterator;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -73,6 +83,19 @@ public class DocPusher implements Pusher {
   private final String connectorName;
 
   /**
+   * ExcecutorService that submits a Feed to the GSA in a separate thread.
+   * This allows us to overlap I/O reading content from the Repository
+   * in the traversal thread, and submitting content to the GSA in
+   * a submitFeed thread.
+   */
+  private final ExecutorService feedSender;
+
+  /**
+   * This is the list of outstanding asynchronous feed submissions.
+   */
+  private final LinkedList<FutureTask<String>> submissions;
+
+  /**
    * This is used to build up a multi-record feed.  Documents are added to the
    * feed until the size of the feed exceeds the FileSizeLimitInfo.maxFeedSize
    * or we are finished with the batch of documents. The feed is then
@@ -101,11 +124,16 @@ public class DocPusher implements Pusher {
     this.feedConnection = feedConnection;
     this.connectorName = connectorName;
 
+    // Check to see if the GSA supports compressed content feeds.
     String supportedEncodings =
         feedConnection.getContentEncodings().toLowerCase();
     this.contentEncoding =
         (supportedEncodings.indexOf(XmlFeed.XML_BASE64COMPRESSED) >= 0) ?
         XmlFeed.XML_BASE64COMPRESSED : XmlFeed.XML_BASE64BINARY;
+
+    // Initialize background feed submission.
+    this.submissions = new LinkedList<FutureTask<String>>();
+    this.feedSender = Executors.newSingleThreadExecutor();
   }
 
   /**
@@ -127,7 +155,7 @@ public class DocPusher implements Pusher {
    *
    * @return gsaResponse response from GSA.
    */
-  protected synchronized String getGsaResponse() {
+  protected String getGsaResponse() {
     return gsaResponse;
   }
 
@@ -140,8 +168,13 @@ public class DocPusher implements Pusher {
    * @throws RepositoryDocumentException if fatal Document problem
    * @throws RepositoryException if transient Repository problem
    */
-  public synchronized void take(Document document)
+  public void take(Document document)
       throws PushException, FeedException, RepositoryException {
+    if (feedSender.isShutdown()) {
+      throw new IllegalStateException("Pusher is shut down");
+    }
+    checkSubmissions();
+
     String feedType;
     try {
       feedType = DocUtils.getFeedType(document);
@@ -162,13 +195,13 @@ public class DocPusher implements Pusher {
               + ", requires a new feed for " + connectorName
               + ". Closing feed and sending to GSA.");
         }
-        flush();
+        submitFeed();
       } else if (xmlFeed.size() > ((maxFeedSize / 10) * 8)) {
         if (LOGGER.isLoggable(Level.FINE)) {
           LOGGER.fine("Feed for " + connectorName + " has grown to "
               + xmlFeed.size() + " bytes. Closing feed and sending to GSA.");
         }
-        flush();
+        submitFeed();
       }
     }
 
@@ -247,28 +280,31 @@ public class DocPusher implements Pusher {
    * @throws FeedException if transient Feed problem
    * @throws RepositoryException
    */
-  public void flush()
-      throws PushException, FeedException, RepositoryException {
+  public void flush() throws PushException, FeedException, RepositoryException {
     LOGGER.fine("Flushing accumulated feed to GSA");
-    XmlFeed feed;
-    String logMessage;
-    synchronized(this) {
-      feed = xmlFeed;
-      xmlFeed = null;
-      if (feedLog != null) {
-        logMessage = feedLog.toString();
-        feedLog = null;
-      } else {
-        logMessage = null;
+    checkSubmissions();
+    if (!feedSender.isShutdown()) {
+      submitFeed();
+      feedSender.shutdown();
+    }
+    while (!feedSender.isTerminated()) {
+      try {
+        feedSender.awaitTermination(10, TimeUnit.SECONDS);
+      } catch (InterruptedException ie) {
+        checkSubmissions();
+        if (!submissions.isEmpty()) {
+          throw new FeedException("Interrupted while waiting for feeds.");
+        }
       }
     }
-    submitFeed(feed, logMessage);
+    checkSubmissions();
   }
 
   /**
    * Cancels any feed being constructed.  Any accumulated feed data is lost.
    */
-  public synchronized void cancel() {
+  public void cancel() {
+    // Discard any feed under construction.
     if (xmlFeed != null) {
       LOGGER.fine("Discarding accumulated feed for " + connectorName);
       xmlFeed = null;
@@ -276,10 +312,46 @@ public class DocPusher implements Pusher {
     if (feedLog != null) {
       feedLog = null;
     }
+    // Cancel any feeds under asynchronous submission.
+    feedSender.shutdownNow();
   }
 
   /**
-   * Takes the XmlFeed and sends the feed to the GSA.
+   * Checks on asynchronously submitted feeds to see if they completed
+   * or failed.  If any of the submissions failed, throw an Exception.
+   */
+  public void checkSubmissions()
+      throws PushException, FeedException, RepositoryException {
+    ListIterator<FutureTask<String>> iter = submissions.listIterator();
+    while (iter.hasNext()) {
+      FutureTask<String> future = iter.next();
+      if (future.isDone()) {
+        iter.remove();
+        try {
+          gsaResponse = future.get();
+        } catch (InterruptedException ie) {
+          // Shouldn't happen if isDone.
+        } catch (ExecutionException ee) {
+          Throwable cause = ee.getCause();
+          if (cause == null) {
+            cause = ee;
+          }
+          if (cause instanceof PushException) {
+            throw (PushException) cause;
+          } else if (cause instanceof FeedException) {
+            throw (FeedException) cause;
+          } else if (cause instanceof RepositoryException) {
+            throw (RepositoryException) cause;
+          } else {
+            throw new FeedException("Error submitting feed", cause);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Takes the accumulated XmlFeed and sends the feed to the GSA.
    *
    * @param feed an XmlFeed
    * @param logMessage a Feed Log message
@@ -287,8 +359,27 @@ public class DocPusher implements Pusher {
    * @throws FeedException if transient Feed problem
    * @throws RepositoryException
    */
-  private void submitFeed(XmlFeed feed, String logMessage)
+  private void submitFeed()
       throws PushException, FeedException, RepositoryException {
+    if (xmlFeed == null) {
+      return;
+    }
+
+    final XmlFeed feed = xmlFeed;
+    xmlFeed = null;
+    final String logMessage;
+    if (feedLog != null) {
+      logMessage = feedLog.toString();
+      feedLog = null;
+    } else {
+      logMessage = null;
+    }
+
+    try {
+      feed.close();
+    } catch (IOException ioe) {
+      throw new PushException("Error closing feed", ioe);
+    }
 
     String feedType = feed.getFeedType();
     if (LOGGER.isLoggable(Level.FINE)) {
@@ -298,10 +389,40 @@ public class DocPusher implements Pusher {
     }
 
     try {
-      feed.close();
-    } catch (IOException ioe) {
-      throw new PushException("Error closing feed", ioe);
+      // Send the feed to the GSA in a separate thread.
+      FutureTask<String> future = new FutureTask<String> (
+          new Callable<String>() {
+            public String call()
+                throws PushException, FeedException, RepositoryException {
+              try {
+                NDC.push("Feed " + feed.getDataSource());
+                return submitFeed(feed, logMessage);
+              } finally {
+                NDC.remove();
+              }
+            }
+          }
+        );
+      feedSender.execute(future);
+      // Add the future to list of outstanding submissions.
+      submissions.add(future);
+    } catch (RejectedExecutionException ree) {
+      throw new FeedException("Asynchronous feed was rejected. ", ree);
     }
+  }
+
+  /**
+   * Takes the supplied XmlFeed and sends that feed to the GSA.
+   *
+   * @param feed an XmlFeed
+   * @param logMessage a Feed Log message
+   * @return response String from GSA
+   * @throws PushException if Pusher problem
+   * @throws FeedException if transient Feed problem
+   * @throws RepositoryException
+   */
+  private String submitFeed(XmlFeed feed, String logMessage)
+      throws PushException, FeedException, RepositoryException {
 
     // Write the generated feedLog message to the feed logger.
     if (logMessage != null && FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
@@ -333,7 +454,7 @@ public class DocPusher implements Pusher {
       }
     }
 
-    gsaResponse = feedConnection.sendData(feed);
+    String gsaResponse = feedConnection.sendData(feed);
     if (!gsaResponse.equals(GsaFeedConnection.SUCCESS_RESPONSE)) {
       String eMessage = gsaResponse;
       if (GsaFeedConnection.UNAUTHORIZED_RESPONSE.equals(gsaResponse)) {
@@ -345,6 +466,7 @@ public class DocPusher implements Pusher {
       }
       throw new PushException(eMessage);
     }
+    return gsaResponse;
   }
 
   /**
@@ -358,11 +480,11 @@ public class DocPusher implements Pusher {
           new BigEmptyDocumentFilterInputStream(
               DocUtils.getOptionalStream(document,
               SpiConstants.PROPNAME_CONTENT), fileSizeLimit.maxDocumentSize()),
-          (Context.getInstance().getTeedFeedFile() != null));
+          (Context.getInstance().getTeedFeedFile() != null), 1024 * 1024);
 
       InputStream encodedAlternateStream = getEncodedStream(getAlternateContent(
           DocUtils.getOptionalString(document, SpiConstants.PROPNAME_TITLE)),
-          false);
+          false, 1024);
 
       contentStream = new AlternateContentFilterInputStream(
           encodedContentStream, encodedAlternateStream, xmlFeed);
@@ -376,10 +498,11 @@ public class DocPusher implements Pusher {
    */
   // TODO: Don't compress tiny content or already compressed data
   // (based on mimetype).  This is harder than it sounds.
-  private InputStream getEncodedStream(InputStream content, boolean wrapLines) {
+  private InputStream getEncodedStream(InputStream content, boolean wrapLines,
+                                       int ioBufferSize) {
     if (XmlFeed.XML_BASE64COMPRESSED.equals(contentEncoding)) {
       return new Base64FilterInputStream(
-          new CompressedFilterInputStream(content), wrapLines);
+          new CompressedFilterInputStream(content, ioBufferSize), wrapLines);
     } else {
       return new Base64FilterInputStream(content, wrapLines);
      }
