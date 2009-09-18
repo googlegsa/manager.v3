@@ -381,13 +381,6 @@ public class DocPusher implements Pusher {
       throw new PushException("Error closing feed", ioe);
     }
 
-    String feedType = feed.getFeedType();
-    if (LOGGER.isLoggable(Level.FINE)) {
-      LOGGER.fine("Submitting " + feedType + " feed for " + connectorName
-          + " to the GSA. " + feed.getRecordCount() + " records totaling "
-          + feed.size() + " bytes.");
-    }
-
     try {
       // Send the feed to the GSA in a separate thread.
       FutureTask<String> future = new FutureTask<String> (
@@ -423,6 +416,12 @@ public class DocPusher implements Pusher {
    */
   private String submitFeed(XmlFeed feed, String logMessage)
       throws PushException, FeedException, RepositoryException {
+
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Submitting " + feed.getFeedType() + " feed for "
+          + feed.getDataSource() + " to the GSA. " + feed.getRecordCount()
+          + " records totaling " + feed.size() + " bytes.");
+    }
 
     // Write the generated feedLog message to the feed logger.
     if (logMessage != null && FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {

@@ -64,7 +64,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test Take for a URL/metadata feed when google:searchurl exists.
    */
-  public void _testTakeUrlMeta() throws Exception {
+  public void testTakeUrlMeta() throws Exception {
     String[] expectedXml = new String[1];
     String feedType = "metadata-and-url";
     String record = "<record url=\"http://www.sometesturl.com/test\""
@@ -86,7 +86,7 @@ public class DocPusherTest extends TestCase {
    * file is almost the same as MockRepositoryEventLog5.txt but has a metadata
    * item with empty content in it
    */
-  public void _testTakeUrlMetaNulls() throws Exception {
+  public void testTakeUrlMetaNulls() throws Exception {
     String[] expectedXml = new String[1];
     String feedType = "metadata-and-url";
     String record = "<record url=\"http://www.sometesturl.com/test\""
@@ -107,7 +107,7 @@ public class DocPusherTest extends TestCase {
    * is a SMB URL.
    * Regression Test for Connector Manager Issue 100
    */
-  public void _testTakeSmbUrlMeta() throws Exception {
+  public void testTakeSmbUrlMeta() throws Exception {
     String[] expectedXml = new String[1];
     String feedType = "metadata-and-url";
     String record = "<record url=\"smb://localhost/share/test\""
@@ -126,7 +126,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test Take for a content feed.
    */
-  public void _testTakeContent() throws Exception {
+  public void testTakeContent() throws Exception {
     String[] expectedXml = new String[1];
     String feedType = "incremental";
     String record = "<record url=\""
@@ -150,7 +150,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test Take for a compressed content feed.
    */
-  public void _testTakeCompressedContent() throws Exception {
+  public void testTakeCompressedContent() throws Exception {
     String[] expectedXml = new String[1];
     String feedType = "incremental";
     String record = "<record url=\""
@@ -178,7 +178,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test Take for isPublic.
    */
-  public void _testTakeIsPublic() throws Exception {
+  public void testTakeIsPublic() throws Exception {
     String[] expectedXml = new String[4];
     String feedType = "incremental";
 
@@ -331,7 +331,7 @@ public class DocPusherTest extends TestCase {
    * Test whether MockRepostitoryEventList, MockRepository, and DocPusher can
    * handle I18N'd content.
    */
-  public void _testI18N() throws Exception {
+  public void testI18N() throws Exception {
     String[] expectedXml = new String[1];
     String feedType = "incremental";
     String url = ServletUtil.PROTOCOL + "junit.localhost" + ServletUtil.DOCID
@@ -408,7 +408,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test basic metadata representation.
    */
-  public void _testSimpleDoc() throws Exception {
+  public void testSimpleDoc() throws Exception {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
@@ -432,7 +432,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test minimal properties allowed for delete document.
    */
-  public void _testSimpleDeleteDoc() {
+  public void testSimpleDeleteDoc() {
     Map<String, Object> props = getTestDocumentConfig();
     props.put(SpiConstants.PROPNAME_ACTION,
         SpiConstants.ActionType.DELETE.toString());
@@ -488,7 +488,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test displayurl.
    */
-  public void _testDisplayUrl() throws Exception {
+  public void testDisplayUrl() throws Exception {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
         + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
@@ -508,7 +508,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test special characters in metadata values.
    */
-  public void _testSpecials() throws Exception {
+  public void testSpecials() throws Exception {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\""
         // note double escaping in the line below, since this is a json string
@@ -545,7 +545,7 @@ public class DocPusherTest extends TestCase {
    * Test invalid XML characters in metadata values. This is a test
    * that only the control characters we want stripped are stripped.
    */
-  public void _testInvalidXmlChars() throws Exception {
+  public void testInvalidXmlChars() throws Exception {
     String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"content\":\"now is the time\""
         // Note double escaping in the lines below, since this is a json string.
@@ -568,7 +568,7 @@ public class DocPusherTest extends TestCase {
    * just test U+0020 to U+FFFD. This tests that we do not need to drop
    * any other characters on the floor for XML parsing.
    */
-  public void _testValidXmlChars() throws Exception {
+  public void testValidXmlChars() throws Exception {
     StringBuilder buf = new StringBuilder();
     buf.append("{\"timestamp\":\"10\",\"docid\":\"doc3\""
         + ",\"content\":\"now is the time\""
@@ -628,7 +628,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Tests a word document.
    */
-  public void _testWordDoc() throws Exception {
+  public void testWordDoc() throws Exception {
     final String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
         + ",\"google:mimetype\":\"application/msword\""
         + ",\"contentfile\":\"testdata/mocktestdata/test.doc\""
@@ -653,7 +653,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test action.
    */
-  public void _testAction() throws Exception {
+  public void testAction() throws Exception {
     String defaultActionJson = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
       + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
       + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
@@ -715,7 +715,7 @@ public class DocPusherTest extends TestCase {
    * Test ACL related properties.  See the 'content' of the document for details
    * on what is being tested.
    */
-  public void _testUserAcl() throws Exception {
+  public void testUserAcl() throws Exception {
     String userAcl = "{\"timestamp\":\"20\""
         + ",\"docid\":\"user_acl\""
         + ",\"content\":\"this document has user only ACL\""
@@ -728,7 +728,7 @@ public class DocPusherTest extends TestCase {
     assertStringNotContains("<meta name=\"acl\"", resultXML);
   }
 
-  public void _testUserRoleAcl() throws Exception {
+  public void testUserRoleAcl() throws Exception {
     String userRoleAcl = "{\"timestamp\":\"30\""
         + ",\"docid\":\"user_role_acl\""
         + ",\"content\":\"this document has user with role ACL\""
@@ -751,7 +751,7 @@ public class DocPusherTest extends TestCase {
         resultXML);
   }
 
-  public void _testUserScopedRoleAcl() throws Exception {
+  public void testUserScopedRoleAcl() throws Exception {
     String userScopedRoleAcl = "{\"timestamp\":\"40\""
         + ",\"docid\":\"user_scoped_role_acl\""
         + ",\"content\":\"this document has scoped user with role ACL\""
@@ -774,7 +774,7 @@ public class DocPusherTest extends TestCase {
         resultXML);
   }
 
-  public void _testUserGroupAcl() throws Exception {
+  public void testUserGroupAcl() throws Exception {
     String userGroupAcl = "{\"timestamp\":\"50\""
         + ",\"docid\":\"user_group_acl\""
         + ",\"content\":\"this document has scoped user and group ACL\""
@@ -789,7 +789,7 @@ public class DocPusherTest extends TestCase {
         + " content=\"eng\"/>", resultXML);
   }
 
-  public void _testUserGroupRoleAcl() throws Exception {
+  public void testUserGroupRoleAcl() throws Exception {
     String userGroupRoleAcl = "{\"timestamp\":\"60\""
         + ",\"docid\":\"user_group_role_acl\""
         + ",\"content\":\"this document has scoped user and group role ACL\""
@@ -813,7 +813,7 @@ public class DocPusherTest extends TestCase {
         resultXML);
   }
 
-  public void _testUserReaderAcl() throws Exception {
+  public void testUserReaderAcl() throws Exception {
     String userReaderAcl = "{\"timestamp\":\"70\""
         + ",\"docid\":\"user_reader_acl\""
         + ",\"content\":\"this document has one reader\",acl:joe"
@@ -824,7 +824,7 @@ public class DocPusherTest extends TestCase {
         + " content=\"joe\"/>", resultXML);
   }
 
-  public void _testUserOwnerAcl() throws Exception {
+  public void testUserOwnerAcl() throws Exception {
     String userOwnerAcl = "{\"timestamp\":\"80\""
         + ",\"docid\":\"user_owner_acl\""
         + ",\"content\":\"this document has one owner\""
@@ -839,7 +839,7 @@ public class DocPusherTest extends TestCase {
         resultXML);
   }
 
-  public void _testUserScopedOwnerAcl() throws Exception {
+  public void testUserScopedOwnerAcl() throws Exception {
     String userScopedOwnerAcl = "{\"timestamp\":\"90\""
         + ",\"docid\":\"user_scoped_owner_acl\""
         + ",\"content\":\"this document has one owner\""
@@ -854,7 +854,7 @@ public class DocPusherTest extends TestCase {
         resultXML);
   }
 
-  public void _testSameUserGroupAcl() throws Exception {
+  public void testSameUserGroupAcl() throws Exception {
     String sameUserGroupAcl = "{\"timestamp\":\"100\""
         + ",\"docid\":\"same_user_group_acl\""
         + ",\"content\":\"this document has a user id and group id the same with different roles\""
@@ -873,7 +873,7 @@ public class DocPusherTest extends TestCase {
         resultXML);
   }
 
-  public void _testSomeUserRoleAcl() throws Exception {
+  public void testSomeUserRoleAcl() throws Exception {
     String someUserRoleAcl = "{\"timestamp\":\"110\""
         + ",\"docid\":\"some_user_role_acl\""
         + ",\"content\":\"this document has one user with extra roles\""
@@ -889,7 +889,7 @@ public class DocPusherTest extends TestCase {
         + " content=\"eng, root\"/>", resultXML);
   }
 
-  public void _testSomeGroupRoleAcl() throws Exception {
+  public void testSomeGroupRoleAcl() throws Exception {
     String someGroupRoleAcl = "{\"timestamp\":\"120\""
         + ",\"docid\":\"some_group_role_acl\""
         + ",\"content\":\"this document has one group with extra roles\""
@@ -938,7 +938,7 @@ public class DocPusherTest extends TestCase {
     }
   }
 
-  public void _testFeedLogging() throws Exception {
+  public void testFeedLogging() throws Exception {
     deleteOldFile(TEST_LOG_FILE);
     FileHandler fh = null;
     try {
@@ -1093,7 +1093,7 @@ public class DocPusherTest extends TestCase {
   /**
    * Test using teed feed file.
    */
-  public void _testTeedFeed() throws Exception {
+  public void testTeedFeed() throws Exception {
     // Setup context where the teedFeedFile is set.
     Context.refresh();
     Context context = Context.getInstance();
@@ -1193,7 +1193,7 @@ public class DocPusherTest extends TestCase {
    * a RepositoryDocumentException.
    * Regression test for Issue 108.
    */
-  public void _testNoDocid() throws Exception {
+  public void testNoDocid() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_DOCID, null);
 
@@ -1214,7 +1214,7 @@ public class DocPusherTest extends TestCase {
    * throws a RepositoryDocumentException.
    * Regression test for Issue 108.
    */
-  public void _testBadDocid1() throws Exception {
+  public void testBadDocid1() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_DOCID,
                      IllegalArgumentException.class);
@@ -1236,7 +1236,7 @@ public class DocPusherTest extends TestCase {
    * throws a RepositoryDocumentException.
    * Regression test for Issue 108.
    */
-  public void _testBadDocid2() throws Exception {
+  public void testBadDocid2() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_DOCID, RuntimeException.class);
 
@@ -1257,7 +1257,7 @@ public class DocPusherTest extends TestCase {
    * throws a RepositoryDocumentException.
    * Regression test for Issue 108.
    */
-  public void _testBadDocid3() throws Exception {
+  public void testBadDocid3() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_DOCID,
                      RepositoryDocumentException.class);
@@ -1278,7 +1278,7 @@ public class DocPusherTest extends TestCase {
    * Test that failure to retrieve a required metadata field, google:docid,
    * propagates a thrown RepositoryException.
    */
-  public void _testBadDocid4() throws Exception {
+  public void testBadDocid4() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_DOCID, RepositoryException.class);
 
@@ -1300,7 +1300,7 @@ public class DocPusherTest extends TestCase {
    * Test that lack of a optional metadata field, google:lastmodified,
    * does not throw an Exception, and also does not appear in the feed.
    */
-  public void _testNoLastModified() throws Exception, Throwable {
+  public void testNoLastModified() throws Exception, Throwable {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_LASTMODIFIED, null);
 
@@ -1317,7 +1317,7 @@ public class DocPusherTest extends TestCase {
    * Test that failure to retrieve a optional metadata field,
    * google:lastmodified, throws a RepositoryDocumentException.
    */
-  public void _testBadLastModified2() throws Exception {
+  public void testBadLastModified2() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_LASTMODIFIED,
                      RuntimeException.class);
@@ -1338,7 +1338,7 @@ public class DocPusherTest extends TestCase {
    * Test that failure to retrieve a optional metadata field,
    * google:lastmodified, throws a RepositoryDocumentException.
    */
-  public void _testBadLastModified3() throws Exception {
+  public void testBadLastModified3() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_LASTMODIFIED,
                      RepositoryDocumentException.class);
@@ -1359,7 +1359,7 @@ public class DocPusherTest extends TestCase {
    * Test that failure to retrieve a optional metadata field,
    * google:lastmodified, propagates a thrown RepositoryException.
    */
-  public void _testBadLastModified4() throws Exception {
+  public void testBadLastModified4() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_LASTMODIFIED,
                      RepositoryException.class);
@@ -1382,7 +1382,7 @@ public class DocPusherTest extends TestCase {
    * Test that lack of an arbitrary repository metadata field, foo,
    * does not throw an Exception, and also does not appear in the feed.
    */
-  public void _testNoFooProperty() throws Exception, Throwable {
+  public void testNoFooProperty() throws Exception, Throwable {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty("foo", null);
 
@@ -1399,7 +1399,7 @@ public class DocPusherTest extends TestCase {
    * Test that failure to retrieve a repository metadata field,
    * foo, throws a RepositoryDocumentException.
    */
-  public void _testBadFoo1() throws Exception {
+  public void testBadFoo1() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty("foo", RuntimeException.class);
 
@@ -1418,7 +1418,7 @@ public class DocPusherTest extends TestCase {
    * Test that failure to retrieve a optional metadata field,
    * foo, throws a RepositoryDocumentException.
    */
-  public void _testBadFoo2() throws Exception {
+  public void testBadFoo2() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty("foo", RepositoryDocumentException.class);
 
@@ -1437,7 +1437,7 @@ public class DocPusherTest extends TestCase {
    * Test that failure to retrieve a optional metadata field,
    * foo, propagates a thrown RepositoryException.
    */
-  public void _testBadFoo3() throws Exception {
+  public void testBadFoo3() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty("foo", RepositoryException.class);
 
@@ -1460,7 +1460,7 @@ public class DocPusherTest extends TestCase {
    * The searchUrl is looked at pretty early in DocPusher.take()
    * and handled specially.
    */
-  public void _testBadSearchUrl1() throws Exception {
+  public void testBadSearchUrl1() throws Exception {
     Map<String, Object> config = getTestDocumentConfig();
     config.put(SpiConstants.PROPNAME_SEARCHURL,
                "Not even remotely a \\ valid % URL");
@@ -1483,7 +1483,7 @@ public class DocPusherTest extends TestCase {
    * The searchUrl is looked at pretty early in DocPusher.take()
    * and handled specially.
    */
-  public void _testBadSearchUrl2() throws Exception {
+  public void testBadSearchUrl2() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_SEARCHURL, RuntimeException.class);
 
@@ -1505,7 +1505,7 @@ public class DocPusherTest extends TestCase {
    * The searchUrl is looked at pretty early in DocPusher.take()
    * and handled specially.
    */
-  public void _testBadSearchUrl3() throws Exception {
+  public void testBadSearchUrl3() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_SEARCHURL,
                      RepositoryDocumentException.class);
@@ -1528,7 +1528,7 @@ public class DocPusherTest extends TestCase {
    * The searchUrl is looked at pretty early in DocPusher.take()
    * and handled specially.
    */
-  public void _testBadSearchUrl4() throws Exception {
+  public void testBadSearchUrl4() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_SEARCHURL,
                      RepositoryException.class);
@@ -1551,7 +1551,7 @@ public class DocPusherTest extends TestCase {
    * Test that failure to specify a Display URL is not fatal.
    * The displayUrl is handled specially in DocPusher.take().
    */
-  public void _testNoDisplayUrl1() throws Exception {
+  public void testNoDisplayUrl1() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_DISPLAYURL, null);
 
@@ -1565,7 +1565,7 @@ public class DocPusherTest extends TestCase {
    * google:displayurl, throws a RepositoryDocumentException.
    * The displayUrl is handled specially in DocPusher.take().
    */
-  public void _testBadDisplayUrl2() throws Exception {
+  public void testBadDisplayUrl2() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_DISPLAYURL, RuntimeException.class);
 
@@ -1586,7 +1586,7 @@ public class DocPusherTest extends TestCase {
    * google:displayurl, throws a RepositoryDocumentException.
    * The displayUrl is handled specially in DocPusher.take().
    */
-  public void _testBadDisplayUrl3() throws Exception {
+  public void testBadDisplayUrl3() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_DISPLAYURL,
                      RepositoryDocumentException.class);
@@ -1608,7 +1608,7 @@ public class DocPusherTest extends TestCase {
    * google:displayurl, propagates a thrown RepositoryException.
    * The displayUrl is handled specially in DocPusher.take().
    */
-  public void _testBadDisplayUrl4() throws Exception {
+  public void testBadDisplayUrl4() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_DISPLAYURL,
                      RepositoryException.class);
@@ -1631,7 +1631,7 @@ public class DocPusherTest extends TestCase {
    * Test that failure to specify document Content is not fatal.
    * The Content is handled specially in DocPusher.take().
    */
-  public void _testNoContent() throws Exception {
+  public void testNoContent() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_CONTENT, null);
 
@@ -1644,7 +1644,7 @@ public class DocPusherTest extends TestCase {
    * google:content, throws a RepositoryDocumentException.
    * The content stream is handled specially in DocPusher.take().
    */
-  public void _testBadContent2() throws Exception {
+  public void testBadContent2() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_CONTENT, RuntimeException.class);
 
@@ -1665,7 +1665,7 @@ public class DocPusherTest extends TestCase {
    * google:content, throws a RepositoryDocumentException.
    * The content is handled specially in DocPusher.take().
    */
-  public void _testBadContent3() throws Exception {
+  public void testBadContent3() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_CONTENT,
                      RepositoryDocumentException.class);
@@ -1687,7 +1687,7 @@ public class DocPusherTest extends TestCase {
    * google:content, propagates a thrown RepositoryException.
    * The content is handled specially in DocPusher.take().
    */
-  public void _testBadContent4() throws Exception {
+  public void testBadContent4() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_CONTENT,
                      RepositoryException.class);
@@ -1710,7 +1710,7 @@ public class DocPusherTest extends TestCase {
    * Test that if DocPusher gets a read error on the document content stream,
    * it throws a RepositoryDocumentException.
    */
-  public void _testContentReadError() throws Exception {
+  public void testContentReadError() throws Exception {
     Map<String, Object> props = getTestDocumentConfig();
     props.put(SpiConstants.PROPNAME_CONTENT, new BadInputStream());
     Document document = ConnectorTestUtils.createSimpleDocument(props);
@@ -1731,7 +1731,7 @@ public class DocPusherTest extends TestCase {
    * Test that if DocPusher gets a FeedException, it propagates
    * unimpeded.
    */
-  public void _testBadFeed1() throws Exception {
+  public void testBadFeed1() throws Exception {
     Document document = getTestDocument();
     try {
       FeedConnection badFeedConnection = new BadFeedConnection1();
@@ -1750,7 +1750,7 @@ public class DocPusherTest extends TestCase {
    * Test that if DocPusher gets a bad response from the
    * feed, it throws a PushException.
    */
-  public void _testBadFeed2() throws Exception {
+  public void testBadFeed2() throws Exception {
     Document document = getTestDocument();
     try {
       FeedConnection badFeedConnection = new BadFeedConnection2();

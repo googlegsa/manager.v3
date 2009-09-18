@@ -38,33 +38,57 @@ public class ImportExportTest extends TestCase {
       + "  </ConnectorInstance>\n"
       + "</ConnectorInstances>\n";
   private static final String NEW_FORMAT_NULL_SCHEDULE =
-      "<ConnectorInstances>\n"
-      + "  <ConnectorInstance>\n"
-      + "    <ConnectorName>connector-01</ConnectorName>\n"
-      + "    <ConnectorType>TestConnector</ConnectorType>\n"
+      "<ConnectorInstances>"
+      + System.getProperty("line.separator")
+      + "  <ConnectorInstance>"
+      + System.getProperty("line.separator")
+      + "    <ConnectorName>connector-01</ConnectorName>"
+      + System.getProperty("line.separator")
+      + "    <ConnectorType>TestConnector</ConnectorType>"
+      + System.getProperty("line.separator")
       + "    <ConnectorSchedules version=\"3\">#null:0:-1:"
-      + "</ConnectorSchedules>\n"
-      + "    <ConnectorConfig>\n"
-      + "      <Param name=\"color\" value=\"red\"/>\n"
-      + "      <Param name=\"password\" value=\"pwd\"/>\n"
-      + "      <Param name=\"username\" value=\"name\"/>\n"
-      + "    </ConnectorConfig>\n"
-      + "  </ConnectorInstance>\n"
-      + "</ConnectorInstances>\n";
+      + "</ConnectorSchedules>"
+      + System.getProperty("line.separator")
+      + "    <ConnectorConfig>"
+      + System.getProperty("line.separator")
+      + "      <Param name=\"color\" value=\"red\"/>"
+      + System.getProperty("line.separator")
+      + "      <Param name=\"password\" value=\"pwd\"/>"
+      + System.getProperty("line.separator")
+      + "      <Param name=\"username\" value=\"name\"/>"
+      + System.getProperty("line.separator")
+      + "    </ConnectorConfig>"
+      + System.getProperty("line.separator")
+      + "  </ConnectorInstance>"
+      + System.getProperty("line.separator")
+      + "</ConnectorInstances>"
+      + System.getProperty("line.separator");
   private static final String NEW_FORMAT_WITH_SCHEDULE =
-      "<ConnectorInstances>\n"
-      + "  <ConnectorInstance>\n"
-      + "    <ConnectorName>connector-02</ConnectorName>\n"
-      + "    <ConnectorType>TestConnector</ConnectorType>\n"
+      "<ConnectorInstances>"
+    + System.getProperty("line.separator")
+      + "  <ConnectorInstance>"
+      + System.getProperty("line.separator")
+      + "    <ConnectorName>connector-02</ConnectorName>"
+      + System.getProperty("line.separator")
+      + "    <ConnectorType>TestConnector</ConnectorType>"
+      + System.getProperty("line.separator")
       + "    <ConnectorSchedules version=\"3\">connector-02:100:300000:0-0"
-      + "</ConnectorSchedules>\n"
-      + "    <ConnectorConfig>\n"
-      + "      <Param name=\"color\" value=\"red\"/>\n"
-      + "      <Param name=\"password\" value=\"pwd\"/>\n"
-      + "      <Param name=\"username\" value=\"name\"/>\n"
-      + "    </ConnectorConfig>\n"
-      + "  </ConnectorInstance>\n"
-      + "</ConnectorInstances>\n";
+      + "</ConnectorSchedules>"
+      + System.getProperty("line.separator")
+      + "    <ConnectorConfig>"
+      + System.getProperty("line.separator")
+      + "      <Param name=\"color\" value=\"red\"/>"
+      + System.getProperty("line.separator")
+      + "      <Param name=\"password\" value=\"pwd\"/>"
+      + System.getProperty("line.separator")
+      + "      <Param name=\"username\" value=\"name\"/>"
+      + System.getProperty("line.separator")
+      + "    </ConnectorConfig>"
+      + System.getProperty("line.separator")
+      + "  </ConnectorInstance>"
+      + System.getProperty("line.separator")
+      + "</ConnectorInstances>"
+      + System.getProperty("line.separator");
   private static final Map<String, String> CONFIG_MAP =
       new HashMap<String, String>() {{
         put("username", "name");
