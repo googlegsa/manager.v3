@@ -22,12 +22,22 @@ public class BatchSize {
   private final int maximum;
 
   /**
+   * Construct a new {@link BatchSize} with a hint and maximum of 0.
+   */
+  public BatchSize() {
+    this(0, 0);
+  }
+
+  /**
    * Construct a new {@link BatchSize}.
    *
    * @param batchHint optimal number of documents to return in this batch.
    * @param batchMaximum maximum number of documents to return in this batch.
    */
   public BatchSize(int batchHint, int batchMaximum) {
+    if (batchHint < 0 || batchMaximum < 0 || batchMaximum < batchHint) {
+      throw new IllegalArgumentException("Batch Size cannot be negative.");
+    }
     this.hint = batchHint;
     this.maximum = batchMaximum;
   }

@@ -25,7 +25,6 @@ import junit.framework.TestCase;
  * Test HostLoadManager class.
  */
 public class HostLoadManagerTest extends TestCase {
-
   private final MockInstantiator instantiator = new MockInstantiator(null);
 
   private void addLoad(String connectorName, int load) {
@@ -78,9 +77,15 @@ public class HostLoadManagerTest extends TestCase {
   }
 
   public void testPeriod() {
-    final long periodInMillis = 1000;
     final String connectorName = "cn1";
+
+    // NOTE: HostLoadManager.determineBatchSize() and shouldDelay() make the
+    // assumption that periodInMillis is a minute.  We skew these values here
+    // in such a way that their calculations come out the same, but we don't
+    // have multi-minute waits in the unit tests.
+    final long periodInMillis = 1000;
     addLoad(connectorName, 3600);
+
     HostLoadManager hostLoadManager =
       new HostLoadManager(instantiator, null, periodInMillis);
     hostLoadManager.updateNumDocsTraversed(connectorName, 55);
@@ -98,9 +103,15 @@ public class HostLoadManagerTest extends TestCase {
   }
 
   public void testRetryDelay() {
-    final long periodInMillis = 1000;
     final String connectorName = "cn1";
-    addLoad(connectorName, 60);
+
+    // NOTE: HostLoadManager.determineBatchSize() and shouldDelay() make the
+    // assumption that periodInMillis is a minute.  We skew these values here
+    // in such a way that their calculations come out the same, but we don't
+    // have multi-minute waits in the unit tests.
+    final long periodInMillis = 1000;
+    addLoad(connectorName, 3600);
+
     HostLoadManager hostLoadManager =
       new HostLoadManager(instantiator, null, periodInMillis);
     assertFalse(hostLoadManager.shouldDelay(connectorName));
@@ -117,13 +128,51 @@ public class HostLoadManagerTest extends TestCase {
   }
 
   public void testLoadDelay() {
-    final long periodInMillis = 1000; // Must be at least 1000.
     final String connectorName = "cn1";
-    addLoad(connectorName, 60);
+
+    // NOTE: HostLoadManager.determineBatchSize() and shouldDelay() make the
+    // assumption that periodInMillis is a minute.  We skew these values here
+    // in such a way that their calculations come out the same, but we don't
+    // have multi-minute waits in the unit tests.
+    final long periodInMillis = 1000;
+    addLoad(connectorName, 3600);
+
     HostLoadManager hostLoadManager =
         new HostLoadManager(instantiator, null, periodInMillis);
     assertFalse(hostLoadManager.shouldDelay(connectorName));
     hostLoadManager.updateNumDocsTraversed(connectorName, 60);
+    assertTrue(hostLoadManager.shouldDelay(connectorName));
+
+    // Sleep more than 1000ms the time set in MockConnectorSchedule
+    // so that this connector can be allowed to run again without delay.
+    try {
+      Thread.sleep(1250);
+    } catch (InterruptedException e) {
+      // Ignore.
+    }
+    assertFalse(hostLoadManager.shouldDelay(connectorName));
+  }
+
+  // Test that if we have nearly reached the load level, we
+  // won't OK a traversal requesting a tiny number of documents.
+  public void testLoadDelay2() {
+    final String connectorName = "cn1";
+
+    // NOTE: HostLoadManager.determineBatchSize() and shouldDelay make the
+    // assumption that periodInMillis is a minute.  We skew these values here
+    // in such a way that their calculations come out the same, but we don't
+    // have multi-minute waits in the unit tests.
+    final long periodInMillis = 1000;
+    addLoad(connectorName, 3600);
+
+    HostLoadManager hostLoadManager =
+        new HostLoadManager(instantiator, null, periodInMillis);
+    assertFalse(hostLoadManager.shouldDelay(connectorName));
+    hostLoadManager.updateNumDocsTraversed(connectorName, 59);
+
+    // We should delay rather than ask for a batch of 1.
+    BatchSize batchSize = hostLoadManager.determineBatchSize(connectorName);
+    assertEquals(1, batchSize.getHint());
     assertTrue(hostLoadManager.shouldDelay(connectorName));
 
     // Sleep more than 1000ms the time set in MockConnectorSchedule
@@ -157,16 +206,29 @@ public class HostLoadManagerTest extends TestCase {
     assertEquals(200, hostLoadManager.getBatchSize());
   }
 
+  // The new determineBatchSize logic treats both the hint and the load
+  // as "suggestions", or "desired targets".  The traversal might
+  // return more than the batchHint, and the number of docs processed in
+  // a period might exceed the load.  This flexibility allows the connectors
+  // to work more efficiently without expending a great deal of effort
+  // trying to hit the batch size exactly.  However, poorly behaved
+  // connectors could attempt to vastly exceed the recommended batch size,
+  // so the BatchSize.maximum constraint puts a ceiling on the number of
+  // documents that will be processed from the DocumentList.
   public void testDetermineBatchSize() {
     final String connectorName = "cn1";
     addLoad(connectorName, 60);
     HostLoadManager hostLoadManager = new HostLoadManager(instantiator, null);
     BatchSize batchSize = hostLoadManager.determineBatchSize(connectorName);
     assertEquals(60, batchSize.getHint());
-    assertEquals(60, batchSize.getMaximum());
-    hostLoadManager.setBatchSize(30);
+    assertEquals(120, batchSize.getMaximum());
+    hostLoadManager.setBatchSize(40);
     batchSize = hostLoadManager.determineBatchSize(connectorName);
-    assertEquals(30, batchSize.getHint());
+    assertEquals(40, batchSize.getHint());
+    assertEquals(80, batchSize.getMaximum());
+    hostLoadManager.setBatchSize(10);
+    batchSize = hostLoadManager.determineBatchSize(connectorName);
+    assertEquals(10, batchSize.getHint());
     assertEquals(60, batchSize.getMaximum());
   }
 }

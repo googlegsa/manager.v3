@@ -200,10 +200,13 @@ public class HostLoadManager {
     }
 
     if (remainingDocsToTraverse > 0) {
-      return new BatchSize(Math.min(batchSize, remainingDocsToTraverse),
-                           remainingDocsToTraverse);
+      int hint = Math.min(batchSize, remainingDocsToTraverse);
+      // Allow the connector to return upto twice as much as we
+      // ask for, even if it exceeds the load target.
+      int max =  Math.max(hint * 2, remainingDocsToTraverse);
+      return new BatchSize(hint, max);
     } else {
-      return new BatchSize(0, 0);
+      return new BatchSize();
     }
   }
 
@@ -225,12 +228,14 @@ public class HostLoadManager {
       }
     }
 
-    // Has the connector exceeded it maximum number of documents per minute?
+    // Has the connector exceeded its maximum number of documents per minute?
     int maxDocsPerPeriod =
         (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
     int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
     int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
-    return (remainingDocsToTraverse <= 0);
+    // Avoid asking for tiny batches if we are near the load limit.
+    int min = Math.min((maxDocsPerPeriod / 10), 50);
+    return (remainingDocsToTraverse <= min);
   }
 
   /**
