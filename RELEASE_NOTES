@@ -11,6 +11,58 @@ list of known issues and workarounds.
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
 
+Release 2.0.2,  02 Sept 2009
+============================
+
+Introduction
+------------
+This is a patch release that addresses performance issues and
+fixes several small problems discovered in the previous release.
+Users of previous releases are encouraged to upgrade.
+
+
+Summary of Changes
+------------------
+  * Issue 162: Fixed a NullPointerException in logging XmlFormatter.
+    This fix now allows use of the XmlFormatter without requiring a
+    format to be specified.
+
+  * Fixed a NullPointerException in context logging on shutdown.
+
+  * Issue 106: Added support for feeding multiple documents to the GSA
+    in a single feed file.  Previously, the Connector Manager would create
+    a new feed file for each Document.  This was inefficient and could
+    result in slow feed performance.  The Connector Manager will now
+    accumulate feed data into a single feed per connector traversal.
+    Once that feed exceeds a set size or when the traversal batch
+    completes, the feed is wrapped up and sent to the GSA.  The default
+    maxFeedSize is 10MB, and is configurable in applicationContext.xml.
+
+  * Issue 180: Increased the default size of traversal batches from 100
+    documents to 500 documents.  This provides improved efficiency in most
+    connectors.  The size of traversal batches can now be configured
+    by setting the batchSize property of the HostLoadManager bean
+    in applicationContext.xml.
+
+  * Fixed a rounding error in the HostLoadManager documents-per-minute
+    computation.
+
+  * The Connector Manager now enforces the FileSizeLimitInfo.maxDocumentSize
+    configuration property.  This property sets the maximum size of a Document's
+    content and is specified in applicationContext.xml.  The default value is
+    30 megabytes.  When constructing a document feed, if the number of bytes
+    read from the Document's content exceeds the maxDocumentSize, the
+    content will be discarded.  The Document's meta-data will be supplied in
+    the feed, but its content will not.
+
+    It is still preferable for TraversalContextAware Connector implementations
+    to make use of the maxDocumentSize supplied in TraversalContext to avoid
+    feeding the content of large documents.  If the Connector knows in advance
+    that a Document's content will exceed the maximum size, it can avoid the
+    Connector Manager pulling megabytes of data from the Repository, only to
+    have it discarded.
+
+
 Release 2.0.0,  01 June 2009
 ============================
 

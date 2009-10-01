@@ -23,11 +23,9 @@ import java.util.zip.Deflater;
  * Compresses an input stream using java.util.zip.Deflater.
  */
 public class CompressedFilterInputStream extends FilterInputStream {
-  private Deflater deflater;
-
-  // Approximately equal to the size of the buffer in GsaFeedConnection.
-  private byte[] inputBuff = new byte[32768];
-  private byte[] oneByte = new byte[1];
+  private final Deflater deflater;
+  private final byte[] inputBuff;
+  private final byte[] oneByte = new byte[1];
 
   /**
    * Given some InputStream, create an InputStream that compresses the
@@ -36,9 +34,22 @@ public class CompressedFilterInputStream extends FilterInputStream {
    * @param in an InputStream providing source data for compressing.
    */
   public CompressedFilterInputStream(InputStream in) {
+    this(in, 32768);
+  }
+
+  /**
+   * Given some InputStream, create an InputStream that compresses the
+   * input stream using java.util.zip.Deflate.
+   *
+   * @param in an InputStream providing source data for compressing.
+   * @param bufferSize size in bytes of I/O buffer used.
+   */
+  public CompressedFilterInputStream(InputStream in, int bufferSize) {
     super(in);
     deflater = new Deflater();
+    inputBuff = new byte[bufferSize];
   }
+
 
   // Supported, but shouldn't really happen in our environment.
   @Override

@@ -14,12 +14,7 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.RepositoryDocumentException;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.logging.Level;
+import java.io.ByteArrayOutputStream;
 import java.util.logging.Logger;
 
 /**
@@ -40,39 +35,15 @@ public class NullFeedConnection implements FeedConnection {
   }
 
   //@Override
-  public String sendData(String dataSource, FeedData feedData)
-      throws RepositoryException {
-    try {
-      InputStream data = ((GsaFeedData)feedData).getData();
-      int bytesRead = 0;
-      int val = 0;
-      byte[] bytebuf = new byte[32768];
-      // Consume the input stream, but discard the contents.
-      while ((val = data.read(bytebuf)) != -1) {
-        bytesRead += val;
-      }
-      LOGGER.fine("Null FeedConnection discarded " + bytesRead + " bytes.");
-    } catch (IOException ioe) {
-      LOGGER.log(Level.SEVERE,
-                 "IOException while reading: skipping", ioe);
-      Throwable t = ioe.getCause();
-      if (t != null && (t instanceof RepositoryException)) {
-        throw (RepositoryException) t;
-      } else {
-        throw new RepositoryDocumentException(ioe);
-      }
-    }
+  public String sendData(FeedData feedData) {
+    ByteArrayOutputStream data = (XmlFeed) feedData;
+    LOGGER.fine("Null FeedConnection discarded " + data.size() + " bytes.");
     return GsaFeedConnection.SUCCESS_RESPONSE;
   }
 
   //@Override
   public boolean isBacklogged() {
     return false;
-  }
-
-  //@Override
-  public int getScheduleFormat() {
-    return 1;
   }
 
   //@Override

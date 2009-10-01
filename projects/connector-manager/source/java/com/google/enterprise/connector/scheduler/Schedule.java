@@ -30,6 +30,22 @@ public class Schedule {
   private int retryDelayMillis; // maximum of ~24 days
   private List<ScheduleTimeInterval> timeIntervals;
 
+  /*
+   * TODO: Either formalize the versions of serialized {@code Schedule} strings,
+   * or convert the serialized format to XML (or both).
+   * The current Schedule versions are:
+   *  <ul>
+   *  <li>0 - Unknown</li>
+   *  <li>1 - <code>connectorName:hostLoad:timeIntervals...</code></li>
+   *  <li>2 - <code>connectorName:hostLoad:retryDelayMillis:timeIntervals...</code>
+   *          adds retryDelayMillis.</li>
+   *  <li>3 - <code>#connectorName:hostLoad:retryDelayMillis:timeIntervals...</code>
+   *          where leading '#' indicates disabled schedule, and a
+   *          retryDelayMillis value of -1 indicates traverse to until
+   *          no new content, then automatically disable.</li>
+   *  </ul>
+   */
+
   /**
    * Signal to the Traverser that it should traverse the ECM repository
    * until there is not new content, then stop.

@@ -15,7 +15,7 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.logging.NDC;
-import com.google.enterprise.connector.pusher.Pusher;
+import com.google.enterprise.connector.pusher.PusherFactory;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -39,19 +39,20 @@ public class ConnectorCoordinatorMapHelper {
    * Initializes <b>instanceMap</b> to contain a {@link ConnectorCoordinator}
    * for each connector defined in the provided {@link TypeMap}.
    *
-   * @param pusher the {@link Pusher} for pushing documents to the GSA.
+   * @param pusherFactory creates {@link Pusher}s for pushing documents
+   *        to the GSA.
    * @param threadPool the {@link ThreadPool} for running traversals.
    */
   static void fillFromTypes(TypeMap typeMap,
-      ConcurrentMap<String, ConnectorCoordinator> instanceMap, Pusher pusher,
-      ThreadPool threadPool) {
+      ConcurrentMap<String, ConnectorCoordinator> instanceMap,
+      PusherFactory pusherFactory, ThreadPool threadPool) {
     for (String typeName : typeMap.keySet()) {
       TypeInfo typeInfo = typeMap.getTypeInfo(typeName);
       if (typeInfo == null) {
         LOGGER.log(Level.WARNING, "Skipping " + typeName);
         continue;
       }
-      processTypeDirectory(instanceMap, typeInfo, pusher, threadPool);
+      processTypeDirectory(instanceMap, typeInfo, pusherFactory, threadPool);
     }
   }
 
@@ -59,12 +60,13 @@ public class ConnectorCoordinatorMapHelper {
    * Initializes <b>instanceMap</b> to contain a {@link ConnectorCoordinator}
    * for each connector defined in the provided {@link TypeInfo}.
    *
-   * @param pusher the {@link Pusher} for pushing documents to the GSA.
+   * @param pusherFactory creates {@link Pusher}s for pushing documents
+   *        to the GSA.
    * @param threadPool the {@link ThreadPool} for running traversals.
    */
   private static void processTypeDirectory(
       ConcurrentMap<String, ConnectorCoordinator> instanceMap,
-      TypeInfo typeInfo, Pusher pusher, ThreadPool threadPool) {
+      TypeInfo typeInfo, PusherFactory pusherFactory, ThreadPool threadPool) {
     File typeDirectory = typeInfo.getConnectorTypeDir();
 
     // Find the subdirectories.
@@ -90,7 +92,8 @@ public class ConnectorCoordinatorMapHelper {
             InstanceInfo.fromDirectory(name, directory, typeInfo);
         if (instanceInfo != null) {
           ConnectorCoordinator fromType =
-              new ConnectorCoordinatorImpl(instanceInfo, pusher, threadPool);
+              new ConnectorCoordinatorImpl(instanceInfo, pusherFactory,
+                                           threadPool);
           ConnectorCoordinator current =
               instanceMap.putIfAbsent(name, fromType);
           if (current != null) {

@@ -17,6 +17,7 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.Pusher;
+import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SimpleDocument;
@@ -112,7 +113,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   private void createPusherAndCoordinator(long batchTimeout) throws Exception {
     ThreadPool threadPool =
         ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(batchTimeout);
-    recordingPusher = new RecordingPusher();
+    recordingPusher = new RecordingPusher("c1");
     ConnectorCoordinator cc =
         new ConnectorCoordinatorImpl("c1", recordingPusher, threadPool);
     Map<String, String> config = new HashMap<String, String>();
@@ -287,12 +288,32 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     }
   }
 
-  private static class RecordingPusher implements Pusher {
+  private static class RecordingPusher implements Pusher, PusherFactory {
     private final BlockingQueue<PushedDocument> pushedDocuments =
         new ArrayBlockingQueue<PushedDocument>(100);
+    private final String connectorName;
 
-    public void take(Document document, String connectorName) {
+    RecordingPusher(String connectorName) {
+      this.connectorName = connectorName;
+    }
+
+    /**
+     * Performs the following validations:
+     * connectorName matches the connector name passed to constructor.
+     */
+    public Pusher newPusher(String connectorName) {
+      assertEquals(this.connectorName, connectorName);
+      return this;
+    }
+
+    public void take(Document document) {
       pushedDocuments.add(new PushedDocument(document, connectorName));
+    }
+
+    public void flush() {
+    }
+
+    public void cancel() {
     }
 
     int getCountPending() {
