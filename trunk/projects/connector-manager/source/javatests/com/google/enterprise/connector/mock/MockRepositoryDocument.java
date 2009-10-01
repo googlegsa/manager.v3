@@ -15,7 +15,7 @@
 package com.google.enterprise.connector.mock;
 
 import com.google.enterprise.connector.common.StringUtils;
-import com.google.enterprise.connector.pusher.DocPusher;
+import com.google.enterprise.connector.pusher.XmlFeed;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -78,7 +78,7 @@ public class MockRepositoryDocument {
           }
           inputStream =
             new ByteArrayInputStream(
-              content.getBytes(DocPusher.XML_DEFAULT_ENCODING));
+              content.getBytes(XmlFeed.XML_DEFAULT_ENCODING));
         } catch (UnsupportedEncodingException e) {
           // TODO Auto-generated catch block
           e.printStackTrace();

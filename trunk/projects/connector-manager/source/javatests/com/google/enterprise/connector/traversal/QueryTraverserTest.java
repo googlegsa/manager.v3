@@ -24,6 +24,7 @@ import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.pusher.Pusher;
+import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -119,11 +120,9 @@ public class QueryTraverserTest extends TestCase {
       String connectorName, MockInstantiator instantiator) {
     MockRepository r = new MockRepository(mrel);
     QueryManager qm = new MockJcrQueryManager(r.getStore());
-
     TraversalManager qtm = new JcrTraversalManager(qm);
-    MockPusher pusher = new MockPusher(System.out);
 
-    Traverser traverser = new QueryTraverser(pusher, qtm,
+    Traverser traverser = new QueryTraverser(new MockPusher(System.out), qtm,
         instantiator.getTraversalStateStore(connectorName), connectorName,
         Context.getInstance().getTraversalContext());
 
@@ -264,7 +263,7 @@ public class QueryTraverserTest extends TestCase {
    * A {@link Pusher} that performs validations
    * @see ValidatingPusher#take(Document, String) for details.
    */
-  private static class ValidatingPusher implements Pusher {
+  private static class ValidatingPusher implements Pusher, PusherFactory {
     private final String connectorName;
     private volatile long pushCount;
 
@@ -273,23 +272,38 @@ public class QueryTraverserTest extends TestCase {
     }
 
     /**
+     * Performs the following validations:
+     * <OL>
+     * <LI>connectorName matches the connector name passed to
+     * {@link ValidatingPusher#ValidatingPusher(String)}.
+     * </OL>
+     */
+    public Pusher newPusher(String connectorName) {
+      assertEquals(this.connectorName, connectorName);
+      return this;
+    }
+
+    /**
      * Performs the following validations and increments the count
      * of pushed documents if all the validations pass.
      * <OL>
      * <LI>SpiConstants.PROPNAME_DOCID property of {@link Document}
      * matches the number of documents pushed (formatted as a {@link String}).
-     * <LI>connectorName matches the connector name passed to
-     * {@link ValidatingPusher#ValidatingPusher(String)}.
      * </OL>
      */
-    public void take(Document document, String connectorName)
-        throws RepositoryException{
+    public void take(Document document) throws RepositoryException{
       String expectId = Long.toString(pushCount);
       String gotId =
         Value.getSingleValueString(document, SpiConstants.PROPNAME_DOCID);
       assertEquals(expectId, gotId);
-      assertEquals(this.connectorName, connectorName);
       pushCount++;
+    }
+
+    public void flush() {
+    }
+
+    public void cancel() {
+      pushCount = 0;
     }
 
     /**

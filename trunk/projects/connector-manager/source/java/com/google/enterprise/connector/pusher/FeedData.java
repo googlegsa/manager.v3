@@ -29,4 +29,16 @@ public interface FeedData {
    * @return an indication of the type of feed data encapsulated by this object.
    */
   public String getFeedType();
+
+  /**
+   * Returns the named source for the feed data.
+   *
+   * The data source name should match the regex [a-zA-Z_][a-zA-Z0-9_-]*,
+   * the first character must be a letter or underscore, the rest of the
+   * characters can be alphanumeric, dash, or underscore.
+   *
+   * @return the data source name.
+   */
+  public String getDataSource();
+
 }

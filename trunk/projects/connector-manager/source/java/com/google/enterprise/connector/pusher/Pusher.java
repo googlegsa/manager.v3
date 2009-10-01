@@ -28,12 +28,30 @@ public interface Pusher {
    * Takes an spi Document and pushes it along, presumably to the GSA Feed.
    *
    * @param document A Document
-   * @param connectorName The name of the Connector sending the Document
    * @throws RepositoryException if transient error accessing the Repository
    * @throws RepositoryDocumentException if fatal error accessing the Document
-   * @throws FeedException if a transient error occurs in the Pusher
+   * @throws FeedException if a transient Feed error occurs in the Pusher
    * @throws PushException if a transient error occurs in the Pusher
    */
-  public void take(Document document, String connectorName)
+  public void take(Document document)
       throws PushException, FeedException, RepositoryException;
+
+  /**
+   * Finishes processing a document feed.  If the caller anticipates no
+   * further calls to {@link #take(Document, String)} will be made,
+   * this method should be called, so that the Pusher may send a cached,
+   * accumulated Feed to the feed processor.
+   *
+   * @throws RepositoryException if transient error accessing the Repository
+   * @throws RepositoryDocumentException if fatal error accessing the Document
+   * @throws FeedException if a transient Feed error occurs in the Pusher
+   * @throws PushException if a transient error occurs in the Pusher
+   */
+  public void flush()
+      throws PushException, FeedException, RepositoryException;
+
+  /**
+   * Cancels a feed.  Discard any accumulated feed data.
+   */
+  public void cancel();
 }

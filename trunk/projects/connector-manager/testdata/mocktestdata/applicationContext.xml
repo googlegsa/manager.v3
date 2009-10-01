@@ -5,8 +5,8 @@
         class="com.google.enterprise.connector.pusher.MockFeedConnection">
   </bean>
 
-  <bean id="Pusher"
-        class="com.google.enterprise.connector.pusher.DocPusher">
+  <bean id="PusherFactory"
+        class="com.google.enterprise.connector.pusher.DocPusherFactory">
     <constructor-arg index="0" ref="FeedConnection" />
   </bean>
 
@@ -36,7 +36,7 @@
 
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.SpringInstantiator">
-    <constructor-arg index="0" ref="Pusher" />
+    <constructor-arg index="0" ref="PusherFactory" />
     <constructor-arg index="1" ref="ThreadPool" />
   </bean>
 

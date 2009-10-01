@@ -15,18 +15,15 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.servlet.ServletUtil;
-import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.RepositoryDocumentException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
+import java.net.HttpURLConnection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -62,8 +59,7 @@ public class GsaFeedConnection implements FeedConnection {
   // the feed XML will never contain "<<".
   private static final String BOUNDARY = "<<";
 
-  // All current GSAs only support legacy Schedule formats.
-  private int scheduleFormat = 1;
+  private static final String CRLF = "\r\n";
 
   // Content encodings supported by GSA.
   private String contentEncodings = null;
@@ -131,31 +127,24 @@ public class GsaFeedConnection implements FeedConnection {
     backlogCheckInterval = interval * 1000L;
   }
 
-  public void setScheduleFormat(int scheduleFormatVersion) {
-    this.scheduleFormat = scheduleFormatVersion;
-  }
-
   public void setContentEncodings(String contentEncodings) {
     this.contentEncodings = contentEncodings;
   }
 
-  private static final void writeMultipartControlHeader(
-      OutputStream outputStream,
-      String name,
-      String mimetype)
-      throws IOException {
-    outputStream.write(("--" + BOUNDARY + "\n").getBytes());
-    outputStream.write(("Content-Disposition: form-data;").getBytes());
-    outputStream.write((" name=\"" + name + "\"\n").getBytes());
-    outputStream.write(("Content-Type: " + mimetype + "\n").getBytes());
-    outputStream.write("\n".getBytes());
+  private static final void controlHeader(StringBuilder builder,
+        String name, String mimetype) {
+    builder.append("--").append(BOUNDARY).append(CRLF);
+    builder.append("Content-Disposition: form-data;");
+    builder.append(" name=\"").append(name).append("\"").append(CRLF);
+    builder.append("Content-Type: ").append(mimetype).append(CRLF);
+    builder.append(CRLF);
   }
 
   //@Override
-  public String sendData(String dataSource, FeedData feedData)
-      throws FeedException, RepositoryException {
+  public String sendData(FeedData feedData)
+      throws FeedException {
     try {
-      String response = sendFeedData(dataSource, feedData);
+      String response = sendFeedData((XmlFeed)feedData);
       gotFeedError = !response.equalsIgnoreCase(SUCCESS_RESPONSE);
       return response;
     } catch (FeedException fe) {
@@ -164,19 +153,37 @@ public class GsaFeedConnection implements FeedConnection {
     }
   }
 
-  private String sendFeedData(String dataSource, FeedData feedData)
-      throws FeedException, RepositoryException {
-    String feedType = ((GsaFeedData)feedData).getFeedType();
-    InputStream data = ((GsaFeedData)feedData).getData();
+  private String sendFeedData(XmlFeed feed)
+      throws FeedException {
+    String feedType = feed.getFeedType();
+    String dataSource = feed.getDataSource();
     OutputStream outputStream;
-    URLConnection uc;
+    HttpURLConnection uc;
+    StringBuilder buf = new StringBuilder();
+    byte[] prefix;
+    byte[] suffix;
     try {
+      // Build prefix.
+      controlHeader(buf, "datasource", ServletUtil.MIMETYPE_TEXT_PLAIN);
+      buf.append(dataSource).append(CRLF);
+      controlHeader(buf, "feedtype", ServletUtil.MIMETYPE_TEXT_PLAIN);
+      buf.append(feedType).append(CRLF);
+      controlHeader(buf, "data", ServletUtil.MIMETYPE_XML);
+      prefix = buf.toString().getBytes("UTF-8");
+
+      // Build suffix.
+      buf.setLength(0);
+      buf.append(CRLF).append("--").append(BOUNDARY).append("--").append(CRLF);
+      suffix = buf.toString().getBytes("UTF-8");
+
       LOGGER.finest("Opening feed connection.");
       synchronized (this) {
-        uc = feedUrl.openConnection();
+        uc = (HttpURLConnection) feedUrl.openConnection();
       }
       uc.setDoInput(true);
       uc.setDoOutput(true);
+      uc.setFixedLengthStreamingMode(prefix.length + feed.size()
+          + suffix.length);
       uc.setRequestProperty("Content-Type", "multipart/form-data; boundary="
           + BOUNDARY);
       outputStream = uc.getOutputStream();
@@ -185,47 +192,15 @@ public class GsaFeedConnection implements FeedConnection {
     }
 
     boolean isThrowing = false;
-    StringBuilder buf = new StringBuilder();
+    buf.setLength(0);
     try {
-      LOGGER.finest("Writing to feed connection.");
+      LOGGER.finest("Writing feed data to feed connection.");
       // If there is an exception during this read/write, we do our
       // best to close the url connection and read the result.
       try {
-        writeMultipartControlHeader(outputStream,
-                                    "datasource",
-                                    ServletUtil.MIMETYPE_TEXT_PLAIN);
-        outputStream.write((dataSource + "\n").getBytes());
-
-        writeMultipartControlHeader(outputStream,
-                                    "feedtype",
-                                    ServletUtil.MIMETYPE_TEXT_PLAIN);
-        outputStream.write((feedType + "\n").getBytes());
-
-        writeMultipartControlHeader(outputStream,
-                                    "data",
-                                    ServletUtil.MIMETYPE_XML);
-        byte[] bytebuf = new byte[32768];
-        int val;
-        while (true) {
-          // Handle input exceptions differently than output exceptions.
-          try {
-            if ((val = data.read(bytebuf)) == -1) {
-              break;
-            }
-          } catch (IOException ioe) {
-            LOGGER.log(Level.SEVERE,
-                       "IOException while reading: skipping", ioe);
-            Throwable t = ioe.getCause();
-            isThrowing = true;
-            if (t != null && (t instanceof RepositoryException)) {
-              throw (RepositoryException) t;
-            } else {
-              throw new RepositoryDocumentException(ioe);
-            }
-          }
-          outputStream.write(bytebuf, 0, val);
-        }
-        outputStream.write(("\n--" + BOUNDARY + "--\n").getBytes());
+        outputStream.write(prefix);
+        feed.writeTo(outputStream);
+        outputStream.write(suffix);
         outputStream.flush();
       } catch (IOException e) {
         LOGGER.log(Level.SEVERE,
@@ -280,11 +255,6 @@ public class GsaFeedConnection implements FeedConnection {
       }
     }
     return buf.toString();
-  }
-
-  //@Override
-  public int getScheduleFormat() {
-    return scheduleFormat;
   }
 
   //@Override
@@ -376,7 +346,7 @@ public class GsaFeedConnection implements FeedConnection {
   /**
    * Tests for feed error conditions such as insufficient disk space,
    * unauthorized clients, etc.  If the /xmlfeed command is sent with no
-   * arguments the server will return an error message and a 200 response
+   * arguments, the server will return an error message and a 200 response
    * code if it can't accept feeds.  If it can continue to accept feeds, then
    * it will return a 400 bad request since it's missing required parameters.
    *
