@@ -31,7 +31,8 @@ public class Schedule {
   private List<ScheduleTimeInterval> timeIntervals;
 
   /*
-   * TODO: Formalize the versions of serialized {@code Schedule} strings.
+   * TODO: Either formalize the versions of serialized {@code Schedule} strings,
+   * or convert the serialized format to XML (or both).
    * The current Schedule versions are:
    *  <ul>
    *  <li>0 - Unknown</li>

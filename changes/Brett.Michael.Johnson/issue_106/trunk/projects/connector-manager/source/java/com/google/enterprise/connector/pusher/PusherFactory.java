@@ -19,15 +19,14 @@ package com.google.enterprise.connector.pusher;
  * use by a {@link Traverser}.
  */
 public interface PusherFactory {
-
   /**
-   * Create a new {@link Pusher} instance appropriate for the supplied dataSource.
+   * Create a new {@link Pusher} instance appropriate for the supplied
+   * dataSource.
    *
    * @param dataSource a data source for a {@link Feed}, typically the name
-   *                   of a connector instance.
+   *        of a connector instance.
    * @return a {@link Pusher}
    * @throws PushException if no Pusher is assigned to the dataSource.
    */
   public Pusher newPusher(String dataSource) throws PushException;
-
 }

@@ -116,6 +116,8 @@ public class DocPusher implements Pusher {
   private String gsaResponse;
 
   /**
+   * Creates a {@code DocPusher} object from the specified
+   * {@code feedConnection} and {@code connectorName}.
    *
    * @param feedConnection a FeedConnection
    * @param connectorName The connector name that is the source of the feed

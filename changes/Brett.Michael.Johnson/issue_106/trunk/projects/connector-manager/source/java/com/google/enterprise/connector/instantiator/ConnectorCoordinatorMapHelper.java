@@ -40,7 +40,7 @@ public class ConnectorCoordinatorMapHelper {
    * for each connector defined in the provided {@link TypeMap}.
    *
    * @param pusherFactory creates {@link Pusher}s for pushing documents
-   *                      to the GSA.
+   *        to the GSA.
    * @param threadPool the {@link ThreadPool} for running traversals.
    */
   static void fillFromTypes(TypeMap typeMap,
@@ -61,7 +61,7 @@ public class ConnectorCoordinatorMapHelper {
    * for each connector defined in the provided {@link TypeInfo}.
    *
    * @param pusherFactory creates {@link Pusher}s for pushing documents
-   *                      to the GSA.
+   *        to the GSA.
    * @param threadPool the {@link ThreadPool} for running traversals.
    */
   private static void processTypeDirectory(
@@ -92,7 +92,8 @@ public class ConnectorCoordinatorMapHelper {
             InstanceInfo.fromDirectory(name, directory, typeInfo);
         if (instanceInfo != null) {
           ConnectorCoordinator fromType =
-              new ConnectorCoordinatorImpl(instanceInfo, pusherFactory, threadPool);
+              new ConnectorCoordinatorImpl(instanceInfo, pusherFactory,
+                                           threadPool);
           ConnectorCoordinator current =
               instanceMap.putIfAbsent(name, fromType);
           if (current != null) {

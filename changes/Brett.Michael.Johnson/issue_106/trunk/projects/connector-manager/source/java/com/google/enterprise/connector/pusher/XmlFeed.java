@@ -150,7 +150,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   }
 
   /*
-   * ByteArrayInputStream (and related) Interface.
+   * ByteArrayOutputStream (and related) Interface.
    */
 
   /**

@@ -107,7 +107,7 @@ public class GsaFeedConnection implements FeedConnection {
     lastBacklogCheck = 0L;
   }
 
- /**
+  /**
    * Set the backlog check parameters. The Feed connection can check to see
    * if the GSA is falling behind processing feeds by calling the GSA's
    * {@code getbacklogcount} servlet. If the number of outstanding feed
@@ -346,7 +346,7 @@ public class GsaFeedConnection implements FeedConnection {
   /**
    * Tests for feed error conditions such as insufficient disk space,
    * unauthorized clients, etc.  If the /xmlfeed command is sent with no
-   * arguments the server will return an error message and a 200 response
+   * arguments, the server will return an error message and a 200 response
    * code if it can't accept feeds.  If it can continue to accept feeds, then
    * it will return a 400 bad request since it's missing required parameters.
    *
