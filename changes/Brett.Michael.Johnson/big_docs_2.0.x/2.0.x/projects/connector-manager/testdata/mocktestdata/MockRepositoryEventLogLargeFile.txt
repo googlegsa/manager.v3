@@ -1,2 +1,0 @@
-# Mock repository event log with large file
-{"timestamp":"100000","type":"save","docid":"largefile","google:mimetype":"text/plain","contentfile":"testdata/tmp/largefile.txt"}
