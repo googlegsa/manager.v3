@@ -1122,10 +1122,12 @@ public class DocPusher implements Pusher {
           return super.read(b, off, len);
         } catch (EmptyDocumentException e) {
           switchToAlternate();
+          return 0;
         } catch (BigDocumentException e) {
           LOGGER.finer("Document content exceeds the maximum configured "
                        + "document size, discarding content.");
           switchToAlternate();
+          return 0;
         }
       }
       return alternate.read(b, off, len);
