@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.importexport;
 
 import com.google.enterprise.connector.common.StringUtils;
+import com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Context;
@@ -271,13 +272,29 @@ public class ImportExport {
 
   /**
    * A utility to import/export connectors from/to an XML file.
-   * usage: <code>ImportExport (export|import|import-no-remove)
-   *        &lt;filename&gt;filename</code>
+   * <pre>
+   * usage: ImportExport (export|import|import-no-remove) &lt;filename&gt;
+   * </pre>
+   *
+   * <p>Use -Dkeystore.file=&lt;filename&gt; to set the keystore filename if the
+   * WebApp is not using the default value. 
    */
   public static final void main(String[] args) throws Exception {
+    // Setup all the pathnames.
     Context context = Context.getInstance();
     context.setStandaloneContext("WEB-INF/applicationContext.xml",
                                  new File("WEB-INF").getAbsolutePath());
+    String ksFilename = System.getProperty("keystore.file",
+        "connector_manager.keystore");
+    EncryptedPropertyPlaceholderConfigurer.setKeyStorePath(
+        new File("WEB-INF/" + ksFilename).getAbsolutePath());
+
+    // At this point the beans have been created, however, the
+    // SpringInstantiator attached to the ProductionManager has not been
+    // initialized.  Need to initialize before using the Manager.
+    context.setFeeding(false);
+    context.start();
+
     Manager manager = context.getManager();
 
     if (args.length == 2 && args[0].equals("export")) {
