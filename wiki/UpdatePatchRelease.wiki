@@ -1,5 +1,5 @@
+#summary Instructions for manually installing a minor update or patch release.
 #labels Phase-Deploy,Phase-Support
-# Instructions for manually installing a minor update or patch release.
 
 == Introduction ==
 
