@@ -10,8 +10,28 @@ list of known issues and workarounds.
 
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
+Release 2.0.4, 09 October 2009
+===============================
 
-Release 2.0.2,  02 Sept 2009
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+previous release.  Users of previous releases are encouraged to upgrade if they
+are pushing large documents or using the ImportExport utility.
+
+
+Summary of Changes
+------------------
+  * r2259: This change fixes an error in handling big documents. The code for
+    supplying the alternate content (title or space) for documents that exceed
+    the maximum document size was broken. The alternate content was the right
+    size, but was read into the wrong location of the I/O buffer.
+
+  * r2263: Fixed ImportExport utility on the branch.  There was a series of
+    failures with the current ImportExport utility.
+
+
+Release 2.0.2, 02 Sept 2009
 ============================
 
 Introduction
@@ -63,7 +83,7 @@ Summary of Changes
     have it discarded.
 
 
-Release 2.0.0,  01 June 2009
+Release 2.0.0, 01 June 2009
 ============================
 
 Introduction
