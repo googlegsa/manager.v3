@@ -139,7 +139,6 @@ public class ServletUtil {
   public static final String XMLTAG_DECISION = "Decision";
 
   public static final String XMLTAG_CONNECTOR_SCHEDULES = "ConnectorSchedules";
-  @Deprecated
   public static final String XMLTAG_CONNECTOR_SCHEDULE = "ConnectorSchedule";
   public static final String XMLTAG_DISABLED = "disabled";
   public static final String XMLTAG_LOAD = "load";
@@ -872,56 +871,24 @@ public class ServletUtil {
   }
 
   /**
-   * Replace obfuscated values in configData with clear values.
+   * Utility function to replace any sensitive values in the given config data
+   * that are obfuscated with open values from the previous configuration.
    *
-   * <p> When a user edits a configuration we populate the the edit form with
-   * values from configData. First we obfuscate sensitive data such as passwords
-   * in configData to avoid displaying the values. We retain the clear
-   * values in previousConfigData. After the user edits the form this
-   * function replaces any still obfuscated values that the user did not change
-   * with the saved clear values from previousConfigData. Values the user did
-   * change will no longer be obfuscated and are left as the user entered
-   * them.
-   *
-   * <p> This function employs the following heuristic to determine if a value
-   * is obfuscated:
-   * <OL>
-   * <LI>{@link SecurityUtils#isKeySensitive(String)} returns true.
-   * <LI>The value is sequence of '*' characters (isObfuscated() returns true).
-   * <LI>The returned value length equals the clear value length.
-   * </OL>
-   *
-   * <p> Below are some illustrative examples:
-   * <OL>
-   * <LI>Obfuscated value that will be replaced by a clear value: key is
-   * sensitive, clear value = 'dog', configData value = "***".
-   * <LI>Clear value that will <b>not</b> be replaced: key is <b>not</b>
-   * sensitive, clear value = 'cat', configData value = "***".
-   * <LI>Clear value that will <b>not</b> be replaced: key is sensitive, clear
-   * value = "fish", configDataValue = "*". Here the length of the configData
-   * value does <b>not</b> match the length of the clear value.
-   * <LI>Clear value that will <b>not</b> be replaced: the key is sensitive,
-   * clear value = "oops", configData value = "****" after the user entered
-   * "****" in the form. Here {@link ServletUtil#replaceSensitiveData(Map, Map)}
-   * will assume the value is obfuscated though it is not. This confusion only
-   * occurs if the user enters a sequence of stars with the same length as the
-   * original clear value for an obfuscated one.
-   * </OL>
-   *
-   * @param configData the updated properties that may still include some
+   * @param configData the updated config properties that may still include some
    *        obfuscated values.
    * @param previousConfigData the current or previous set of properties that
    *        have all the values in the clear.
    */
   public static void replaceSensitiveData(Map<String, String> configData,
-      Map<String, String> previousConfigData) {
-    for (Map.Entry<String, String> entry : configData.entrySet()) {
-      if (SecurityUtils.isKeySensitive(entry.getKey())
-          && isObfuscated(entry.getValue())) {
-        String clearValue = previousConfigData.get(entry.getKey());
-        if (entry.getValue().length() == clearValue.length()) {
-          configData.put(entry.getKey(), clearValue);
-        }
+      Map<String, String>  previousConfigData) {
+    for (String key : configData.keySet()) {
+      // Revert if the key is sensitive and the string is still obfuscated and
+      // hasn't changed in length.
+      if (SecurityUtils.isKeySensitive(key) &&
+          isObfuscated(configData.get(key)) &&
+          (configData.get(key).length() ==
+              previousConfigData.get(key).length())) {
+        configData.put(key, previousConfigData.get(key));
       }
     }
   }

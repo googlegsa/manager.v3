@@ -14,17 +14,12 @@
 
 package com.google.enterprise.connector.spi;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
 public class SimpleProperty implements Property {
 
-  final Iterator<Value> iterator;
-
-  public SimpleProperty(Value value) {
-    this(Collections.singletonList(value));
-  }
+  Iterator<Value> iterator;
 
   public SimpleProperty(List<Value> values) {
     this.iterator = values.iterator();

@@ -17,6 +17,7 @@ package com.google.enterprise.connector.pusher;
 import com.google.enterprise.connector.servlet.ServletUtil;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -44,12 +45,6 @@ public class GsaFeedConnection implements FeedConnection {
       "Error - Unauthorized Request";
 
   /**
-   * The GSA's response when it runs out of disk space.
-   */
-  public static final String DISKFULL_RESPONSE =
-      "Feed not accepted due to insufficient disk space.";
-
-  /**
    * The GSA's response when there was an internal error.
    */
   public static final String INTERNAL_ERROR_RESPONSE = "Internal Error";
@@ -61,35 +56,7 @@ public class GsaFeedConnection implements FeedConnection {
 
   private static final String CRLF = "\r\n";
 
-  // Content encodings supported by GSA.
-  private String contentEncodings = null;
-
-  // True if we recently got a feed error of some sort.
-  private boolean gotFeedError = false;
-
-  // XmlFeed URL
-  private URL feedUrl = null;
-
-  // XmlFeed DTD URL
-  private URL dtdUrl = null;
-
-  // BacklogCount URL
-  private URL backlogUrl = null;
-
-  // BacklogCount Ceiling. Throttle back feed if backlog exceeds the ceiling.
-  private int backlogCeiling = 50000;
-
-  // BacklogCount Floor. Stop throttling feed if backlog drops below floor.
-  private int backlogFloor = 15000;
-
-  // True if the feed is throttled back due to excessive backlog.
-  private boolean isBacklogged = false;
-
-  // Time of last backlog check.
-  private long lastBacklogCheck;
-
-  // How often to check for backlog (in milliseconds).
-  private long backlogCheckInterval = 15 * 60 * 1000L;
+  private URL url = null;
 
   private static final Logger LOGGER =
       Logger.getLogger(GsaFeedConnection.class.getName());
@@ -100,39 +67,11 @@ public class GsaFeedConnection implements FeedConnection {
 
   public synchronized void setFeedHostAndPort(String host, int port)
       throws MalformedURLException {
-    feedUrl = new URL("http", host, port, "/xmlfeed");
-    dtdUrl = new URL("http", host, port, "/getdtd");
-    contentEncodings = null;
-    backlogUrl = new URL("http", host, port, "/getbacklogcount");
-    lastBacklogCheck = 0L;
-  }
-
-  /**
-   * Set the backlog check parameters. The Feed connection can check to see
-   * if the GSA is falling behind processing feeds by calling the GSA's
-   * {@code getbacklogcount} servlet. If the number of outstanding feed
-   * items exceeds the {@code ceiling}, then the GSA is considered
-   * backlogged.  If the number of outstanding feed items then drops below
-   * the {@code floor}, it may be considered no longer backlogged.
-   *
-   * @param floor backlog count floor value, below which the GSA is no
-   *        longer considered backlogged.
-   * @param ceiling backlog count ceiling value, above which the GSA is
-   *        considered backlogged.
-   * @param interval number of seconds to wait between backlog count checks.
-   */
-  public void setBacklogCheck(int floor, int ceiling, int interval) {
-    backlogFloor = floor;
-    backlogCeiling = ceiling;
-    backlogCheckInterval = interval * 1000L;
-  }
-
-  public void setContentEncodings(String contentEncodings) {
-    this.contentEncodings = contentEncodings;
+    url = new URL("http", host, port, "/xmlfeed");
   }
 
   private static final void controlHeader(StringBuilder builder,
-        String name, String mimetype) {
+                                          String name, String mimetype) {
     builder.append("--").append(BOUNDARY).append(CRLF);
     builder.append("Content-Disposition: form-data;");
     builder.append(" name=\"").append(name).append("\"").append(CRLF);
@@ -140,23 +79,10 @@ public class GsaFeedConnection implements FeedConnection {
     builder.append(CRLF);
   }
 
-  //@Override
-  public String sendData(FeedData feedData)
+  public String sendData(String dataSource, FeedData feedData)
       throws FeedException {
-    try {
-      String response = sendFeedData((XmlFeed)feedData);
-      gotFeedError = !response.equalsIgnoreCase(SUCCESS_RESPONSE);
-      return response;
-    } catch (FeedException fe) {
-      gotFeedError = true;
-      throw fe;
-    }
-  }
-
-  private String sendFeedData(XmlFeed feed)
-      throws FeedException {
-    String feedType = feed.getFeedType();
-    String dataSource = feed.getDataSource();
+    String feedType = ((GsaFeedData) feedData).getFeedType();
+    ByteArrayOutputStream data = ((GsaFeedData) feedData).getData();
     OutputStream outputStream;
     HttpURLConnection uc;
     StringBuilder buf = new StringBuilder();
@@ -178,11 +104,11 @@ public class GsaFeedConnection implements FeedConnection {
 
       LOGGER.finest("Opening feed connection.");
       synchronized (this) {
-        uc = (HttpURLConnection) feedUrl.openConnection();
+        uc = (HttpURLConnection) url.openConnection();
       }
       uc.setDoInput(true);
       uc.setDoOutput(true);
-      uc.setFixedLengthStreamingMode(prefix.length + feed.size()
+      uc.setFixedLengthStreamingMode(prefix.length + data.size()
           + suffix.length);
       uc.setRequestProperty("Content-Type", "multipart/form-data; boundary="
           + BOUNDARY);
@@ -199,7 +125,7 @@ public class GsaFeedConnection implements FeedConnection {
       // best to close the url connection and read the result.
       try {
         outputStream.write(prefix);
-        feed.writeTo(outputStream);
+        data.writeTo(outputStream);
         outputStream.write(suffix);
         outputStream.flush();
       } catch (IOException e) {
@@ -255,212 +181,5 @@ public class GsaFeedConnection implements FeedConnection {
       }
     }
     return buf.toString();
-  }
-
-  //@Override
-  public synchronized String getContentEncodings() {
-    if (contentEncodings == null) {
-      String dtd = getDtd();
-      if (dtd == null) {
-        // Failed to get a DTD. Assume the GSA only supports base64 encoded.
-        contentEncodings = "base64binary";
-      } else {
-        // TODO: Extract the supported content encodings from the DTD.
-        // As of GSA 6.2, returning a DTD at all also means compression
-        // is supported.
-        contentEncodings = "base64binary,base64compressed";
-      }
-      if (LOGGER.isLoggable(Level.FINE)) {
-        LOGGER.fine("GSA supports Content Encodings: " + contentEncodings);
-      }
-    }
-    return contentEncodings;
-  }
-
-  //@Override
-  public synchronized boolean isBacklogged() {
-    if (lastBacklogCheck != Long.MAX_VALUE) {
-      long now = System.currentTimeMillis();
-      if ((now - lastBacklogCheck) > backlogCheckInterval) {
-        lastBacklogCheck = now;
-        // If we got a feed error and the feed is still down, delay.
-        if (gotFeedError) {
-          if (isFeedAvailable()) {
-            gotFeedError = false;
-          } else {
-            // Feed is still unavailable.
-            return true;
-          }
-        }
-        try {
-          int backlogCount = getBacklogCount();
-          if (backlogCount >= 0) {
-            if (isBacklogged) {
-              // If we were backlogged, but have dropped below the
-              // floor value, then we are no longer backlogged.
-              if (backlogCount < backlogFloor) {
-                isBacklogged = false;
-                LOGGER.fine("Resuming traversal after feed backlog clears.");
-              }
-            } else if (backlogCount > backlogCeiling) {
-              // If the backlogcount exceeds the ceiling value,
-              // then we are definitely backlogged.
-              isBacklogged = true;
-              LOGGER.fine("Pausing traversal due to excessive feed backlog.");
-            }
-          }
-        } catch (UnsupportedOperationException e) {
-          // This older GSA does not support getbacklogcount.
-          // Assume never backlogged and don't check again.
-          isBacklogged = false;
-          lastBacklogCheck = Long.MAX_VALUE;
-          LOGGER.fine("Older GSA lacks backlogcount support.");
-        }
-      }
-    }
-    return isBacklogged;
-  }
-
-  /**
-   * @return the current feed backlog count of the GSA,
-   *         or -1 if the count is unavailable.
-   * @throws UnsupportedOperationException if the GSA does
-   *         not support getbacklogcount.
-   */
-  private int getBacklogCount() {
-    try {
-      HttpResponse response = doGet(backlogUrl, "backlogcount");
-      if (response != null && response.content != null) {
-        return Integer.parseInt(response.content);
-      }
-    } catch (NumberFormatException ignored) {
-      // Got a non-integer backlog count - probably an error message,
-      // which we have already logged (at Finest).  Simply return -1,
-      // indicating that the backlogcount is not currently available.
-    }
-    // If we get here something bad happened.  It is not the case that the
-    // GSA doesn't support getbacklogcount, but we still failed to retrieve it.
-    return -1;
-  }
-
-  /**
-   * Tests for feed error conditions such as insufficient disk space,
-   * unauthorized clients, etc.  If the /xmlfeed command is sent with no
-   * arguments, the server will return an error message and a 200 response
-   * code if it can't accept feeds.  If it can continue to accept feeds, then
-   * it will return a 400 bad request since it's missing required parameters.
-   *
-   * @return True if feed host is likely to accept a feed request.
-   */
-  private boolean isFeedAvailable() {
-    try {
-      HttpResponse response = doGet(feedUrl, "XmlFeed");
-      if (response != null) {
-        if (response.responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
-          // The expected responseCode if no error conditions are present.
-          LOGGER.finest("XmlFeed connection seems to be accepting new feeds.");
-          return true;
-        }
-        if (response.content != null) {
-          response.content.contains(SUCCESS_RESPONSE);
-        }
-      }
-    } catch (UnsupportedOperationException ignored) {
-      // This GSA does not support feeds?  Return false.
-    }
-    // If we get here something bad happened.
-    return false;
-  }
-
-  /**
-   * @return the current feed XML DTD for the GSA,
-   *         or null if the DTD is unavailable.
-   */
-  private String getDtd() {
-    try {
-      HttpResponse response = doGet(dtdUrl, "DTD");
-      if (response != null && response.content != null) {
-        return response.content;
-      }
-    } catch (UnsupportedOperationException ignored) {
-      // This older GSA does not support getdtd, so return null.
-      LOGGER.fine("Older GSA lacks get DTD support.");
-    }
-    return null;
-  }
-
-  /**
-   * Get the response to a URL request.  The response is returned
-   * as an HttpResponse containing the HTTP ResponseCode and the
-   * returned content as a String. The content String is only returned
-   * if the response code was OK.
-   *
-   * @param url the URL to request
-   * @param name the name of the feature requested (for logging)
-   * @return HttpResponse representing response to an HTTP GET.
-   *         or null if the GSA is unavailable.
-   * @throws UnsupportedOperationException if the GSA does
-   *         not support the requested feature.
-   */
-  private HttpResponse doGet(URL url, String name) {
-    HttpURLConnection conn = null;
-    BufferedReader br = null;
-    String str = null;
-    StringBuilder buf = new StringBuilder();
-    try {
-      if (LOGGER.isLoggable(Level.FINEST)) {
-        LOGGER.finest("Opening " + name + " connection.");
-      }
-      conn = (HttpURLConnection)url.openConnection();
-      conn.connect();
-      int responseCode = conn.getResponseCode();
-      if (responseCode == HttpURLConnection.HTTP_OK) {
-        br = new BufferedReader(new InputStreamReader(conn.getInputStream(),
-                                                      "UTF8"));
-        while ((str = br.readLine()) != null) {
-          buf.append(str);
-        }
-        str = buf.toString().trim();
-        if (LOGGER.isLoggable(Level.FINEST)) {
-          LOGGER.finest("Received " + name + ": " + str);
-        }
-        return new HttpResponse(responseCode, str);
-      } else if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-        throw new UnsupportedOperationException(
-            "GSA lacks " + name + " support.");
-      } else {
-        return new HttpResponse(responseCode);
-      }
-    } catch (IOException ioe) {
-      LOGGER.finest("Error while reading " + name + ": " + ioe.getMessage());
-    } finally {
-      try {
-        if (br != null) {
-          br.close();
-        }
-        if (conn != null) {
-          conn.disconnect();
-        }
-      } catch (IOException e) {
-        LOGGER.finest("Error after reading " + name + ": " + e.getMessage());
-      }
-    }
-    // If we get here something bad happened. It is not the case that the GSA
-    // doesn't support the requested feature, but we failed to retrieve it.
-    return null;
-  }
-
-  private static class HttpResponse {
-    public int responseCode;  // The HTTP response code.
-    public String content;    // The returned content as a String.
-
-    public HttpResponse(int responseCode) {
-      this(responseCode, null);
-    }
-
-    public HttpResponse(int responseCode, String content) {
-      this.responseCode = responseCode;
-      this.content = content;
-    }
   }
 }

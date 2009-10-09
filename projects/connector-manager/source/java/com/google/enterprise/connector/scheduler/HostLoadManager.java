@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.scheduler;
 
 import com.google.enterprise.connector.instantiator.Instantiator;
-import com.google.enterprise.connector.pusher.FeedConnection;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 
 import java.util.Collections;
@@ -34,8 +33,8 @@ public class HostLoadManager {
 
   private static final long MINUTE_IN_MILLIS = 60 * 1000;
   private long startTimeInMillis;
-  private final Map<String, Integer> connectorNameToNumDocsTraversed;
-  private final Map<String, Long> connectorNameToFinishTime;
+  private Map<String, Integer> connectorNameToNumDocsTraversed;
+  private Map<String, Long> connectorNameToFinishTime;
   // Default batch size to something reasonable.
   private int batchSize = 500;
 
@@ -44,47 +43,21 @@ public class HostLoadManager {
    * particular, we limit our feed rate during the duration
    * [startTimeInMillis, startTimeInMillis + periodInMillis].
    */
-  private final long periodInMillis;
+  private long periodInMillis;
 
   /**
    * Used for determining the loads of the schedules.
    */
-  private final Instantiator instantiator;
-
-  /**
-   * Used for determining feed backlog status.
-   */
-  private final FeedConnection feedConnection;
+  private Instantiator instantiator;
 
   /**
    * By default, the HostLoadManager will use a one minute period for
    * calculating the batchHint.
    *
-   * @param instantiator used to get Schedule for Connector instances
-   * @param feedConnection used to get FeedConnection backlog status
-   */
-  public HostLoadManager(Instantiator instantiator,
-                         FeedConnection feedConnection) {
-    this(instantiator, feedConnection, MINUTE_IN_MILLIS);
-  }
-
-  /**
-   * Constructor used by unit tests.
-   *
    * @param instantiator used to get schedule for connector instances
-   * @param feedConnection used to get FeedConnection backlog status
-   * @param periodInMillis time period in which we enforce the maxFeedRate
    */
-  public HostLoadManager(Instantiator instantiator,
-                         FeedConnection feedConnection, long periodInMillis) {
-    this.instantiator = instantiator;
-    this.feedConnection = feedConnection;
-    this.periodInMillis = periodInMillis;
-    startTimeInMillis = System.currentTimeMillis();
-    connectorNameToNumDocsTraversed =
-        Collections.synchronizedMap(new HashMap<String, Integer>());
-    connectorNameToFinishTime =
-        Collections.synchronizedMap(new HashMap<String, Long>());
+  public HostLoadManager(Instantiator instantiator) {
+    this(instantiator, MINUTE_IN_MILLIS);
   }
 
   /*
@@ -99,6 +72,20 @@ public class HostLoadManager {
    */
   public void setBatchSize(int batchSize) {
     this.batchSize = batchSize;
+  }
+
+  /**
+   * @param instantiator used to get schedule for connector instances
+   * @param periodInMillis time period in which we enforce the maxFeedRate
+   */
+  public HostLoadManager(Instantiator instantiator, long periodInMillis) {
+    this.instantiator = instantiator;
+    this.periodInMillis = periodInMillis;
+    startTimeInMillis = System.currentTimeMillis();
+    connectorNameToNumDocsTraversed =
+        Collections.synchronizedMap(new HashMap<String, Integer>());
+    connectorNameToFinishTime =
+        Collections.synchronizedMap(new HashMap<String, Long>());
   }
 
   private int getMaxLoad(String connectorName) {
@@ -147,7 +134,7 @@ public class HostLoadManager {
     synchronized (connectorNameToNumDocsTraversed) {
       int numDocs = getNumDocsTraversedThisPeriod(connectorName);
       connectorNameToNumDocsTraversed.put(connectorName,
-          Integer.valueOf(numDocs + numDocsTraversed));
+          new Integer(numDocs + numDocsTraversed));
     }
   }
 
@@ -161,7 +148,7 @@ public class HostLoadManager {
    */
   public void connectorFinishedTraversal(String connectorName,
                                          int retryDelayMillis) {
-    Long finishTime = Long.valueOf(((retryDelayMillis < 0) ? Long.MAX_VALUE :
+    Long finishTime = new Long(((retryDelayMillis < 0) ? Long.MAX_VALUE :
         (System.currentTimeMillis() + retryDelayMillis)));
     connectorNameToFinishTime.put(connectorName, finishTime);
   }
@@ -202,16 +189,7 @@ public class HostLoadManager {
     return (remainingDocsToTraverse > 0) ? remainingDocsToTraverse : 0;
   }
 
-  /**
-   * Return true if this connector instance should not be scheduled
-   * for traversal at this time.
-   *
-   * @param connectorName name of the connector instance
-   * @return true if the connector should not run at this time
-   */
   public boolean shouldDelay(String connectorName) {
-    // Is the connector waiting after a finished traversal pass
-    // or waiting for an error condition to clear?
     Object value = connectorNameToFinishTime.get(connectorName);
     if (value != null) {
       long finishTime = ((Long)value).longValue();
@@ -224,16 +202,5 @@ public class HostLoadManager {
     int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
     int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
     return (remainingDocsToTraverse <= 0);
-  }
-
-  /**
-   * Return true if systemic conditions indicate that traversals should
-   * not happen at this time.  Perhaps the GSA is backlogged  or the
-   * feedergate has died or the Connector Manager is being reconfigured.
-   *
-   * @return true if traversals should not run at this time.
-   */
-  public boolean shouldDelay() {
-    return (feedConnection != null) ? feedConnection.isBacklogged() : false;
   }
 }

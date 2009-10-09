@@ -21,7 +21,6 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -388,18 +387,18 @@ public class ServletUtilTest extends TestCase {
 
   private String makeConfigForm(Map<String, String> configMap) {
     StringBuilder buf = new StringBuilder(2048);
-    for (Map.Entry<String, String> entry : configMap.entrySet()) {
-      appendStartRow(buf, entry.getKey());
+    for (String key : configMap.keySet()) {
+      appendStartRow(buf, key);
       buf.append(OPEN_ELEMENT);
       buf.append(INPUT);
-      if (SecurityUtils.isKeySensitive(entry.getKey())) {
+      if (SecurityUtils.isKeySensitive(key)) {
         appendAttribute(buf, TYPE, PASSWORD);
       } else {
         appendAttribute(buf, TYPE, TEXT);
       }
-      appendAttribute(buf, NAME, entry.getKey());
+      appendAttribute(buf, NAME, key);
       if (configMap != null) {
-        String value = entry.getValue();
+        String value = configMap.get(key);
         if (value != null) {
           appendAttribute(buf, VALUE, value);
         }
@@ -425,20 +424,21 @@ public class ServletUtilTest extends TestCase {
 
   private void appendAttribute(StringBuilder buf, String attrName,
       String attrValue) {
-    try {
-      XmlUtils.xmlAppendAttr(attrName, attrValue, buf);
-    } catch (IOException e) {
-      // Can't happen with StringBuilder.
-      fail("Unexpected exception: " + e.getMessage());
-    }
+    buf.append(" ");
+
+    // FIXME: When XmlUtils moves to Appendable.
+    StringBuffer tmp = new StringBuffer();
+    XmlUtils.xmlAppendAttrValuePair(attrName, attrValue, tmp);
+    buf.append(tmp.toString());
   }
 
   private void obfuscateValues(Map<String, String> clearConfig,
        Map<String, String> obfuscatedConfig) {
-    for (Map.Entry<String, String> entry : clearConfig.entrySet()) {
-      obfuscatedConfig.put(entry.getKey(),
-          (SecurityUtils.isKeySensitive(entry.getKey())) ?
-              ServletUtil.obfuscateValue(entry.getValue()) : entry.getValue());
+    for (String key : clearConfig.keySet()) {
+      String clearValue = clearConfig.get(key);
+      obfuscatedConfig.put(key,
+          (SecurityUtils.isKeySensitive(key)) ?
+              ServletUtil.obfuscateValue(clearValue) : clearValue);
     }
   }
 

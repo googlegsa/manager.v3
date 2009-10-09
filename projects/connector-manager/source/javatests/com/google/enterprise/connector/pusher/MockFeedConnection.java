@@ -21,7 +21,7 @@ import java.io.IOException;
 
 /**
  * Mock <code>GsaFeedConnection</code> that expects to be given a
- * <code>XmlFeed</code> data object.  Stores the associated data stream into
+ * <code>GsaFeedData</code> data object.  Stores the associated data stream into
  * an internal buffer for later comparison.
  */
 public class MockFeedConnection implements FeedConnection {
@@ -37,11 +37,10 @@ public class MockFeedConnection implements FeedConnection {
   public MockFeedConnection() {
   }
 
-  //@Override
-  public String sendData(FeedData feedData)
+  public String sendData(String dataSource, FeedData feedData)
       throws RepositoryException {
     try {
-      ByteArrayOutputStream data = (XmlFeed) feedData;
+      ByteArrayOutputStream data = ((GsaFeedData)feedData).getData();
       String dataStr = data.toString("UTF-8");
       buf.append(dataStr);
       System.out.println(dataStr);
@@ -49,15 +48,5 @@ public class MockFeedConnection implements FeedConnection {
       throw new RepositoryException("Error sending data", e);
     }
     return GsaFeedConnection.SUCCESS_RESPONSE;
-  }
-
-  //@Override
-  public boolean isBacklogged() {
-    return false;
-  }
-
-  //@Override
-  public String getContentEncodings() {
-    return "base64binary";
   }
 }

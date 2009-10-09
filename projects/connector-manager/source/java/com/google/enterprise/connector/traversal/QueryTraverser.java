@@ -14,14 +14,14 @@
 
 package com.google.enterprise.connector.traversal;
 
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.pusher.FeedException;
 import com.google.enterprise.connector.pusher.PushException;
 import com.google.enterprise.connector.pusher.Pusher;
-import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
-import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.spi.TraversalContextAware;
@@ -38,29 +38,26 @@ public class QueryTraverser implements Traverser {
   private static final Logger LOGGER =
       Logger.getLogger(QueryTraverser.class.getName());
 
-  private final PusherFactory pusherFactory;
-  private final TraversalManager queryTraversalManager;
-  private final TraversalStateStore stateStore;
-  private final String connectorName;
-  private final TraversalContext traversalContext;
+  private Pusher pusher;
+  private TraversalManager queryTraversalManager;
+  private TraversalStateStore stateStore;
+  private String connectorName;
 
   // Synchronize access to cancelWork.
-  private final Object cancelLock = new Object();
+  private Object cancelLock = new Object();
   private boolean cancelWork = false;
 
-  public QueryTraverser(PusherFactory pusherFactory,
-      TraversalManager traversalManager, TraversalStateStore stateStore,
-      String connectorName, TraversalContext traversalContext) {
-    this.pusherFactory = pusherFactory;
+  public QueryTraverser(Pusher pusher, TraversalManager traversalManager,
+                        TraversalStateStore stateStore, String connectorName) {
+    this.pusher = pusher;
     this.queryTraversalManager = traversalManager;
     this.stateStore = stateStore;
     this.connectorName = connectorName;
-    this.traversalContext = traversalContext;
-    if (queryTraversalManager instanceof TraversalContextAware) {
-      TraversalContextAware contextAware =
-          (TraversalContextAware)queryTraversalManager;
+    if (this.queryTraversalManager instanceof TraversalContextAware) {
       try {
-        contextAware.setTraversalContext(traversalContext);
+        TraversalContext tc = Context.getInstance().getTraversalContext();
+        ((TraversalContextAware)this.queryTraversalManager)
+            .setTraversalContext(tc);
       } catch (Exception e) {
         LOGGER.log(Level.WARNING, "Unable to set TraversalContext", e);
       }
@@ -70,6 +67,7 @@ public class QueryTraverser implements Traverser {
   public void cancelBatch() {
     synchronized(cancelLock) {
       cancelWork = true;
+      stateStore = null;
     }
     LOGGER.fine("Cancelling traversal for connector " + connectorName);
   }
@@ -80,10 +78,7 @@ public class QueryTraverser implements Traverser {
     }
   }
 
-  public int runBatch(int batchHint) {
-    final long timeoutTime = System.currentTimeMillis()
-      + traversalContext.traversalTimeLimitSeconds() * 1000;
-
+  public synchronized int runBatch(int batchHint) {
     if (isCancelled()) {
         LOGGER.warning("Attempting to run a cancelled QueryTraverser");
         return Traverser.ERROR_WAIT;
@@ -139,20 +134,11 @@ public class QueryTraverser implements Traverser {
       return Traverser.POLLING_WAIT;
     }
 
-    Pusher pusher = null;
     try {
-      // Get a Pusher for feeding the returned Documents.
-      pusher = pusherFactory.newPusher(connectorName);
-
-      while (counter < batchHint) {
+      while (true) {
         if (Thread.currentThread().isInterrupted() || isCancelled()) {
           LOGGER.fine("Traversal for connector " + connectorName
                       + " has been interrupted...breaking out of batch run.");
-          break;
-        }
-        if (System.currentTimeMillis() >= timeoutTime) {
-          LOGGER.fine("Traversal for connector " + connectorName
-              + " is completing due to time limit.");
           break;
         }
 
@@ -162,15 +148,13 @@ public class QueryTraverser implements Traverser {
           LOGGER.finer("Pulling next document from connector " + connectorName);
           nextDocument = resultSet.nextDocument();
           if (nextDocument == null) {
+            // No more documents.  Wrap up any accumulated feed data
+            // and send it off.
+            if (!isCancelled()) {
+              pusher.flush();
+            }
             break;
           } else {
-            // Since there are a couple of places below that could throw
-            // exceptions but not exit the while loop, the counter should be
-            // incremented here to insure it represents documents returned from
-            // the list.  Note the call to nextDocument() could also throw a
-            // RepositoryDocumentException signaling a skipped document in which
-            // case the call will not be counted against the batchHint.
-            counter++;
             // Fetch DocId to use in messages.
             try {
               docid = Value.getSingleValueString(nextDocument,
@@ -185,7 +169,15 @@ public class QueryTraverser implements Traverser {
           }
           LOGGER.finer("Sending document (" + docid + ") from connector "
               + connectorName + " to Pusher");
-          pusher.take(nextDocument);
+          pusher.take(nextDocument, connectorName);
+          counter++;
+          if (counter == batchHint) {
+            // Wrap up any accumulated feed data and send it off.
+            if (!isCancelled()) {
+              pusher.flush();
+            }
+            break;
+          }
         } catch (RepositoryDocumentException e) {
           // Skip individual documents that fail.  Proceed on to the next one.
           LOGGER.log(Level.WARNING, "Skipping document (" + docid
@@ -195,10 +187,6 @@ public class QueryTraverser implements Traverser {
           LOGGER.log(Level.WARNING, "Skipping document (" + docid
               + ") from connector " + connectorName, e);
         }
-      }
-      // No more documents. Wrap up any accumulated feed data and send it off.
-      if (!isCancelled()) {
-        pusher.flush();
       }
     } catch (OutOfMemoryError e) {
       resultSet = null;
@@ -228,9 +216,7 @@ public class QueryTraverser implements Traverser {
       // it has fed, and what actually has been pushed).
       resultSet = null;
       counter = Traverser.ERROR_WAIT;
-      if (pusher != null) {
-        pusher.cancel();
-      }
+      pusher.cancel();
     } catch (FeedException e) {
       LOGGER.log(Level.SEVERE, "Feed Exception during traversal.", e);
       // Drop the entire batch on the floor.  Do not call checkpoint

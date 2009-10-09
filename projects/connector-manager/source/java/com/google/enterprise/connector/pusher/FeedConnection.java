@@ -27,34 +27,16 @@ public interface FeedConnection {
   /**
    * Sends data contained in the given data object identified as the given data
    * source name.
-   *
+   * @param dataSource the name of the data source.  The data source name should
+   *    match the regex [a-zA-Z_][a-zA-Z0-9_-]*, the first character must be a
+   *    letter or underscore, the rest of the characters can be alphanumeric,
+   *    dash, or underscore.
    * @param feedData an object that encapsulates the feed data that needs to be
-   *        sent by the <code>FeedConnection</code>.
+   *    sent by the <code>FeedConnection</code>.
    * @return response from the feed server.
    * @throws FeedException if problem extracting the data or sending it.
    * @throws RepositoryException if problem retrieving data from the Connector.
    */
-  public String sendData(FeedData feedData)
+  public String sendData(String dataSource, FeedData feedData)
       throws FeedException, RepositoryException;
-
-  /**
-   * Returns true if the Feed host has large number of unprocessed Feed items.
-   * The Feed host may temporarily stop processing Feed items during periodic
-   * maintenance, when resetting the index, during system configuration, or
-   * due to certain error conditions. If backlogged, the Feed client may choose
-   * to throttle back its feeds until the backlog clears.
-   *
-   * @return true if the Feed host is known to be backlogged processing feeds,
-   *         false otherwise.
-   */
-  public boolean isBacklogged();
-
-  /**
-   * Return a String consisting of a comma-separated list supported content
-   * encodings.  For instance: "base64binary, base64compressed".
-   *
-   * @return supported content encodings.
-   */
-  public String getContentEncodings();
-
 }

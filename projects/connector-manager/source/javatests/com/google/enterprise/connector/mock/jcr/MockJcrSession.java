@@ -54,11 +54,13 @@ import javax.jcr.Workspace;
  */
 public class MockJcrSession implements Session {
 
-  private final MockJcrRepository repo;
-  private SimpleCredentials creds;
+  MockJcrRepository repo = null;
+  SimpleCredentials creds = null;
+  MockJcrWorkspace workspace = null;
 
   public MockJcrSession(MockJcrRepository repo) {
     this.repo = repo;
+    workspace = new MockJcrWorkspace(repo, this);
   }
 
   /**

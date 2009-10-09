@@ -17,221 +17,332 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
-import com.google.enterprise.connector.pusher.PusherFactory;
+import com.google.enterprise.connector.pusher.Pusher;
+import com.google.enterprise.connector.scheduler.Scheduler;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * {@link Instantiator} that supports Spring based connector instantiation and
- * persistent storage of connector configuration, schedule and traversal state.
+ *
  */
 public class SpringInstantiator implements Instantiator {
 
   private static final Logger LOGGER =
       Logger.getLogger(SpringInstantiator.class.getName());
 
-  final ConcurrentMap<String, ConnectorCoordinator> coordinatorMap;
-  final PusherFactory pusherFactory;
-  final ThreadPool threadPool;
-
-  // State that is filled in by init.
-  TypeMap typeMap;
+  TypeMap typeMap = null;
+  InstanceMap instanceMap = null;
+  Pusher pusher;
+  Scheduler scheduler;
+  Map<String, ConnectorInterfaces> connectorCache;
 
   /**
    * Normal constructor.
    *
-   * @param pusherFactory
-   * @param threadPool
+   * @param pusher
    */
-  public SpringInstantiator(PusherFactory pusherFactory,
-                            ThreadPool threadPool) {
-    this.pusherFactory = pusherFactory;
-    this.threadPool = threadPool;
-    this.coordinatorMap = new ConcurrentHashMap<String, ConnectorCoordinator>();
-    // NOTE: we can't call init() here because then there would be a
+  public SpringInstantiator(Pusher pusher) {
+    this.pusher = pusher;
+    connectorCache = new HashMap<String, ConnectorInterfaces>();
+    // NOTE: we can't call initialize() here because then there would be a
     // circular dependency on the Context, which hasn't been constructed yet
   }
 
   /**
    * Constructor used by unit tests.  Provides a specific test Context.
    *
-   * @param pusherFactory
-   * @param threadPool
+   * @param pusher
    * @param typeMap
    */
-  public SpringInstantiator(PusherFactory pusherFactory,
-      ThreadPool threadPool, TypeMap typeMap) {
-    this(pusherFactory, threadPool);
+  public SpringInstantiator(Pusher pusher, TypeMap typeMap) {
+    this(pusher);
     this.typeMap = typeMap;
-    init(typeMap);
+    this.instanceMap = new InstanceMap(typeMap);
+  }
+
+  /**
+   * Set the Scheduler.
+   *
+   * @param scheduler a Scheduler.
+   */
+  /* Setter Injector */
+  public synchronized void setScheduler(Scheduler scheduler) {
+    this.scheduler = scheduler;
   }
 
   /**
    * Initializes the Context, post bean construction.
    */
   public synchronized void init() {
-    if (typeMap == null) {
-      LOGGER.info("Initializing instantiator");
-      init(new TypeMap());
-      typeMap = new TypeMap();
+    if (typeMap != null) {
+      return;
     }
-  }
+    LOGGER.info("Initializing instantiator");
 
-  private void init(TypeMap typeMap) {
-    ConnectorCoordinatorMapHelper.fillFromTypes(typeMap, coordinatorMap,
-        pusherFactory, threadPool);
+    typeMap = new TypeMap();
+    instanceMap = new InstanceMap(typeMap);
   }
 
   /**
    * Shutdown all connector instances.
    */
-  public void shutdown(boolean interrupt, long timeoutMillis) {
-    for (ConnectorCoordinator cc : coordinatorMap.values()) {
-      cc.shutdown();
+  public synchronized void shutdown() {
+    if (connectorCache != null) {
+      connectorCache.clear();
     }
-    try {
-      threadPool.shutdown(interrupt, timeoutMillis);
-    } catch (InterruptedException ie) {
-      LOGGER.log(Level.SEVERE, "TraversalScheduler shutdown interrupted: ", ie);
+    if (instanceMap != null) {
+      instanceMap.shutdown();
     }
   }
 
-  public void removeConnector(String connectorName) {
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator
+   *      #removeConnector(java.lang.String)
+   */
+  public synchronized void removeConnector(String connectorName) {
     LOGGER.info("Dropping connector: " + connectorName);
-    ConnectorCoordinator existing = coordinatorMap.get(connectorName);
-    if (existing != null) {
-      existing.removeConnector();
+    connectorCache.remove(connectorName);
+    instanceMap.removeConnector(connectorName);
+    if (scheduler != null) {
+      scheduler.removeConnector(connectorName);
     }
   }
 
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator
+   *      #getAuthenticationManager(java.lang.String)
+   */
   public AuthenticationManager getAuthenticationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
-    return getConnectorCoordinator(connectorName).getAuthenticationManager();
+    return getConnectorInterfaces(connectorName).getAuthenticationManager();
   }
 
-  public ConnectorCoordinator getConnectorCoordinator(
+  private synchronized ConnectorInterfaces getConnectorInterfaces(
       String connectorName) throws ConnectorNotFoundException {
-    ConnectorCoordinator connectorCoordinator =
-      coordinatorMap.get(connectorName);
-    if (connectorCoordinator == null) {
-      throw new ConnectorNotFoundException();
+    ConnectorInterfaces connectorInterfaces = connectorCache.get(connectorName);
+    if (connectorInterfaces == null) {
+      InstanceInfo info = getInstanceInfo(connectorName);
+      connectorInterfaces = new ConnectorInterfaces(connectorName,
+          info.getConnector(), pusher, info.getTraversalStateStore());
+      connectorCache.put(connectorName, connectorInterfaces);
     }
-    return connectorCoordinator;
+    return connectorInterfaces;
   }
 
-  private ConnectorCoordinator getOrAddConnectorCoordinator(
-      String connectorName) {
-    if (typeMap == null) {
-      throw new IllegalStateException(
-          "Init must be called before accessing connectors.");
+  private synchronized InstanceInfo getInstanceInfo(String connectorName)
+      throws ConnectorNotFoundException {
+    InstanceInfo instanceInfo = instanceMap.get(connectorName);
+    if (instanceInfo == null) {
+      throw new ConnectorNotFoundException("Connector not found: "
+          + connectorName);
     }
-    ConnectorCoordinator connectorCoordinator =
-        coordinatorMap.get(connectorName);
-    if (connectorCoordinator == null) {
-      ConnectorCoordinator ci = new
-          ConnectorCoordinatorImpl(connectorName, pusherFactory, threadPool);
-      ConnectorCoordinator existing =
-          coordinatorMap.putIfAbsent(connectorName, ci);
-      connectorCoordinator = (existing == null) ? ci : existing;
-    }
-    return connectorCoordinator;
+    return instanceInfo;
   }
 
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator
+   *      #getAuthorizationManager(java.lang.String)
+   */
   public AuthorizationManager getAuthorizationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
-    return getConnectorCoordinator(connectorName).getAuthorizationManager();
+    return getConnectorInterfaces(connectorName).getAuthorizationManager();
   }
 
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator
+   *      #getConfigFormForConnector(java.lang.String, java.lang.String,
+   *      java.lang.String)
+   */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String connectorTypeName, Locale locale)
       throws ConnectorNotFoundException, InstantiatorException {
-    return getConnectorCoordinator(connectorName).getConfigForm(locale);
+    InstanceInfo instanceInfo = getInstanceInfo(connectorName);
+    TypeInfo typeInfo = instanceInfo.getTypeInfo();
+    ConnectorType connectorType = typeInfo.getConnectorType();
+    Map<String, String> configMap = instanceInfo.getConnectorConfig();
+    try {
+      return connectorType.getPopulatedConfigForm(configMap, locale);
+    } catch (Exception e) {
+      throw new InstantiatorException("Failed to get configuration form", e);
+    }
   }
 
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator
+   *      #getConnectorInstancePrototype(java.lang.String)
+   */
   public String getConnectorInstancePrototype(String connectorTypeName) {
     throw new UnsupportedOperationException();
   }
 
-  public synchronized ConnectorType getConnectorType(String typeName)
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator
+   *      #getConnectorType(java.lang.String)
+   */
+  public synchronized ConnectorType getConnectorType(String connectorTypeName)
       throws ConnectorTypeNotFoundException {
-    return getTypeInfo(typeName).getConnectorType();
-  }
-
-  private TypeInfo getTypeInfo(String typeName)
-      throws ConnectorTypeNotFoundException {
-    TypeInfo typeInfo = typeMap.getTypeInfo(typeName);
+    TypeInfo typeInfo = typeMap.getTypeInfo(connectorTypeName);
     if (typeInfo == null) {
       throw new ConnectorTypeNotFoundException("Connector Type not found: "
-          + typeName);
+          + connectorTypeName);
     }
-    return typeInfo;
+    return typeInfo.getConnectorType();
   }
 
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator
+   *      #getConnectorTypeNames()
+   */
   public synchronized Set<String> getConnectorTypeNames() {
     return Collections.unmodifiableSet(new TreeSet<String>(typeMap.keySet()));
   }
 
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator
+   *      #getTraverser(java.lang.String)
+   */
+  public Traverser getTraverser(String connectorName)
+      throws ConnectorNotFoundException, InstantiatorException {
+    return getConnectorInterfaces(connectorName).getTraverser();
+  }
+
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator
+   *      #restartConnectorTraversal(java.lang.String)
+   */
   public void restartConnectorTraversal(String connectorName)
       throws ConnectorNotFoundException {
     LOGGER.info("Restarting traversal for Connector: " + connectorName);
-    getConnectorCoordinator(connectorName).restartConnectorTraversal();
-  }
-
-  public Set<String> getConnectorNames() {
-    Set<String> result = new TreeSet<String>();
-    for (Map.Entry<String, ConnectorCoordinator> e :
-        coordinatorMap.entrySet()) {
-      if (e.getValue().exists()) {
-        result.add(e.getKey());
-      }
+    setConnectorState(connectorName, null);
+    if (scheduler != null) {
+      scheduler.removeConnector(connectorName);
     }
-    return Collections.unmodifiableSet(result);
+    connectorCache.remove(connectorName);
   }
 
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.persist.ConnectorConfigStore
+   *      #getConnectorNames()
+   */
+  public synchronized Set<String> getConnectorNames() {
+    return Collections.unmodifiableSet(new TreeSet<String>(instanceMap.keySet()));
+  }
+
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.persist.ConnectorConfigStore
+   *      #getConnectorTypeName(java.lang.String)
+   */
   public String getConnectorTypeName(String connectorName)
       throws ConnectorNotFoundException {
-    return getConnectorCoordinator(connectorName).getConnectorTypeName();
+    return getInstanceInfo(connectorName).getTypeInfo().getConnectorTypeName();
   }
 
-  public ConfigureResponse setConnectorConfig(String connectorName,
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator
+   *      #setConnectorConfig(java.lang.String, java.lang.String, java.util.Map)
+   */
+  public synchronized ConfigureResponse setConnectorConfig(String connectorName,
       String connectorTypeName, Map<String, String> configMap, Locale locale,
       boolean update) throws ConnectorNotFoundException,
       ConnectorExistsException, InstantiatorException {
     LOGGER.info("Configuring connector: " + connectorName);
-    try {
-      TypeInfo typeInfo = getTypeInfo(connectorTypeName);
-      ConnectorCoordinator ci = getOrAddConnectorCoordinator(connectorName);
-      return ci.setConnectorConfig(typeInfo, configMap, locale, update);
-    } catch (ConnectorTypeNotFoundException ctnf) {
-      throw new ConnectorNotFoundException("Incorrect type", ctnf);
+    if (update) {
+      if (scheduler != null) {
+        scheduler.removeConnector(connectorName);
+      }
+      connectorCache.remove(connectorName);
     }
+    return instanceMap.updateConnector(
+        connectorName, connectorTypeName, configMap, locale, update);
   }
 
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator
+   *      #getConnectorConfig(java.lang.String)
+   */
   public Map<String, String> getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException {
-    return getConnectorCoordinator(connectorName).getConnectorConfig();
+    return getInstanceInfo(connectorName).getConnectorConfig();
   }
 
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator
+   *      #setConnectorSchedule(java.lang.String, java.lang.String)
+   */
   public void setConnectorSchedule(String connectorName,
       String connectorSchedule) throws ConnectorNotFoundException {
-    getConnectorCoordinator(connectorName).
-        setConnectorSchedule(connectorSchedule);
+    getInstanceInfo(connectorName).setConnectorSchedule(connectorSchedule);
   }
 
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator
+   *      #getConnectorSchedule(java.lang.String)
+   */
   public String getConnectorSchedule(String connectorName)
       throws ConnectorNotFoundException {
-    return  getConnectorCoordinator(connectorName).getConnectorSchedule();
+    return getInstanceInfo(connectorName).getConnectorSchedule();
+  }
+
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator
+   *      #setConnectorState(java.lang.String, java.lang.String)
+   */
+  public void setConnectorState(String connectorName, String connectorState)
+      throws ConnectorNotFoundException {
+    getInstanceInfo(connectorName).setConnectorState(connectorState);
+  }
+
+  /*
+   * (non-Javadoc)
+   *
+   * @see com.google.enterprise.connector.instantiator.Instantiator
+   *      #getConnectorState(java.lang.String)
+   */
+  public String getConnectorState(String connectorName)
+      throws ConnectorNotFoundException {
+    return getInstanceInfo(connectorName).getConnectorState();
   }
 }

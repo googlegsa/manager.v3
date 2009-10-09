@@ -41,7 +41,8 @@ import javax.jcr.SimpleCredentials;
  */
 public class MockJcrRepository implements Repository {
 
-  private final MockRepository repo;
+  MockRepository repo;
+  MockJcrWorkspace workspace;
 
   /**
    * Creates a MockJcrRepository from a MockRepository.
@@ -50,6 +51,7 @@ public class MockJcrRepository implements Repository {
    */
   public MockJcrRepository(MockRepository repo) {
     this.repo = repo;
+    workspace = new MockJcrWorkspace(this, null);
   }
 
   /**

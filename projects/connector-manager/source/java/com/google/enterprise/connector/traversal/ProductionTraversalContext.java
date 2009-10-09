@@ -20,53 +20,32 @@ import java.util.Set;
 
 /**
  * Wrapper for the context provided by the Connector Manager to the traversal
- * process (if the developer requests it by the TraversalContextAware
- * interface).
- * <p>
- * This class is quasi-immutable - in practice it is initialized by
- * the setters during connector manager start up and never changes afterwards.
+ * process (if the developer requests it by the TraversalContextAware interface).
+ * This class is quasi-immutable - in practice it is initialized by the setters
+ * but never changes afterwards.
  */
 public class ProductionTraversalContext implements TraversalContext {
-  /**
-   * Default number of seconds for a traversal to run before exiting
-   * (30 minutes).
-   */
-  public final static long DEFAULT_TRAVERSAL_TIME_LIMIT_SECONDS = 30 * 60;
 
   private FileSizeLimitInfo fileSizeLimitInfo = new FileSizeLimitInfo();
   private MimeTypeMap mimeTypeMap = new MimeTypeMap();
-  private long traversalTimeLimitSeconds = DEFAULT_TRAVERSAL_TIME_LIMIT_SECONDS;
 
-  public synchronized void setFileSizeLimitInfo(
-      FileSizeLimitInfo fileSizeLimitInfo) {
+  public void setFileSizeLimitInfo(FileSizeLimitInfo fileSizeLimitInfo) {
     this.fileSizeLimitInfo = fileSizeLimitInfo;
   }
 
-  public synchronized void setMimeTypeMap(MimeTypeMap mimeTypeMap) {
+  public void setMimeTypeMap(MimeTypeMap mimeTypeMap) {
     this.mimeTypeMap = mimeTypeMap;
   }
 
-  public synchronized long maxDocumentSize() {
+  public long maxDocumentSize() {
     return fileSizeLimitInfo.maxDocumentSize();
   }
 
-  public synchronized int mimeTypeSupportLevel(String mimeType) {
+  public int mimeTypeSupportLevel(String mimeType) {
     return mimeTypeMap.mimeTypeSupportLevel(mimeType);
   }
 
-  public synchronized String preferredMimeType(Set<String> mimeTypes) {
+  public String preferredMimeType(Set<String> mimeTypes) {
     return mimeTypeMap.preferredMimeType(mimeTypes);
-  }
-
-  public synchronized long traversalTimeLimitSeconds() {
-    return traversalTimeLimitSeconds;
-  }
-
-  public synchronized void setTraversalTimeLimitSeconds(long limit) {
-    if (limit < 0) {
-      throw new IllegalArgumentException(
-          "Illegal value for traversalTimeLimitSeconds " + limit);
-    }
-    this.traversalTimeLimitSeconds = limit;
   }
 }

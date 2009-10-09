@@ -34,20 +34,9 @@ public class NullFeedConnection implements FeedConnection {
     LOGGER.info("Using Null FeedConnection.  Fed Content will be discarded.");
   }
 
-  //@Override
-  public String sendData(FeedData feedData) {
-    ByteArrayOutputStream data = (XmlFeed) feedData;
+  public String sendData(String dataSource, FeedData feedData) {
+    ByteArrayOutputStream data = ((GsaFeedData) feedData).getData();
     LOGGER.fine("Null FeedConnection discarded " + data.size() + " bytes.");
     return GsaFeedConnection.SUCCESS_RESPONSE;
-  }
-
-  //@Override
-  public boolean isBacklogged() {
-    return false;
-  }
-
-  //@Override
-  public String getContentEncodings() {
-    return "base64binary, base64compressed";
   }
 }

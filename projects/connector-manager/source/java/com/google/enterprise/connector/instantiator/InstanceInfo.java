@@ -14,15 +14,16 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.PropertiesUtils;
+import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.persist.ConnectorConfigStore;
 import com.google.enterprise.connector.persist.ConnectorScheduleStore;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
+import com.google.enterprise.connector.persist.GenerationalStateStore;
 import com.google.enterprise.connector.persist.StoreContext;
 import com.google.enterprise.connector.scheduler.Schedule;
-import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 
 import org.springframework.beans.BeansException;
@@ -59,7 +60,6 @@ public final class InstanceInfo {
   private final File connectorDir;
   private final String connectorName;
   private final StoreContext storeContext;
-  private final TraversalStateStore traversalStateStore;
 
   private Properties properties;
   private Connector connector;
@@ -82,17 +82,16 @@ public final class InstanceInfo {
     this.connectorDir = connectorDir;
     this.typeInfo = typeInfo;
     this.storeContext = new StoreContext(connectorName, connectorDir);
-    this.traversalStateStore = new ConnectorTraversalStateStore();
   }
 
 
   /* **** Getters and Setters **** */
 
-  public static void setConnectorStores(ConnectorConfigStore configStore,
-      ConnectorScheduleStore schedStore, ConnectorStateStore stateStore) {
-    InstanceInfo.configStore = configStore;
-    InstanceInfo.schedStore = schedStore;
-    InstanceInfo.stateStore = stateStore;
+  public static void setConnectorStores(ConnectorConfigStore configStor,
+      ConnectorScheduleStore schedStor, ConnectorStateStore stateStor) {
+    configStore = configStor;
+    schedStore = schedStor;
+    stateStore = new GenerationalStateStore(stateStor);
   }
 
   public static void setLegacyStores(
@@ -331,7 +330,9 @@ public final class InstanceInfo {
    * Remove this Connector Instance's persistent store state.
    */
   public void removeConnector() {
-    traversalStateStore.storeTraversalState(null);
+    // Side effect of GenerationalStateStore.removeConnectorState()
+    // is a new generation.
+    stateStore.removeConnectorState(storeContext);
     schedStore.removeConnectorSchedule(storeContext);
     configStore.removeConnectorConfiguration(storeContext);
   }
@@ -399,7 +400,11 @@ public final class InstanceInfo {
    * @throws IllegalStateException if state store is disabled for this connector
    */
   public void setConnectorState(String connectorState) {
-    traversalStateStore.storeTraversalState(connectorState);
+    if (connectorState == null) {
+      stateStore.removeConnectorState(storeContext);
+    } else {
+      stateStore.storeConnectorState(storeContext, connectorState);
+    }
   }
 
   /**
@@ -409,7 +414,7 @@ public final class InstanceInfo {
    * @throws IllegalStateException if state store is disabled for this connector
    */
   public String getConnectorState() {
-    return traversalStateStore.getTraversalState();
+    return stateStore.getConnectorState(storeContext);
   }
 
   /**
@@ -418,28 +423,32 @@ public final class InstanceInfo {
    * @return a new TraversalStateStore
    */
   TraversalStateStore getTraversalStateStore() {
-    return traversalStateStore;
+    return new ConnectorTraversalStateStore();
   }
 
   /**
-   * Wrapper class to provide a {@link TraversalStateStore} interface to
-   * the stateStore. This interface is handy for clients because it avoids
-   * the need for them to manage the storeContext. Operations
-   * against this {@link Object} are applied to stateStore after
-   * minor interface conversions.
+   * TraversalStateStore implementation used by the Traverser to
+   * maintain state between batches.
    */
   private class ConnectorTraversalStateStore implements TraversalStateStore {
+    private final GenerationalStateStore store;
+
+    public ConnectorTraversalStateStore() {
+      this.store = new GenerationalStateStore(stateStore, storeContext);
+    }
+
     /**
      * Store traversal state.
      *
      * @param state a String representation of the state to store.
      *        If null, any previous stored state is discarded.
+     * @throws IllegalStateException if the store is no longer valid.
      */
     public void storeTraversalState(String state) {
       if (state == null) {
-        stateStore.removeConnectorState(storeContext);
+        store.removeConnectorState(storeContext);
       } else {
-        stateStore.storeConnectorState(storeContext, state);
+        store.storeConnectorState(storeContext, state);
       }
     }
 
@@ -448,9 +457,10 @@ public final class InstanceInfo {
      *
      * @returns String representation of the stored state, or
      *          null if no state is stored.
+     * @throws IllegalStateException if the store is no longer valid.
      */
     public String getTraversalState() {
-      return stateStore.getConnectorState(storeContext);
+      return store.getConnectorState(storeContext);
     }
   }
 
@@ -558,25 +568,21 @@ public final class InstanceInfo {
       super(message);
     }
   }
-
   static class NullConnectorNameException extends InstanceInfoException {
     NullConnectorNameException() {
       super("Attempt to instantiate a connector with a null or empty name");
     }
   }
-
   static class NullDirectoryException extends InstanceInfoException {
     NullDirectoryException() {
       super("Attempt to instantiate a connector with a null directory");
     }
   }
-
   static class NullTypeInfoException extends InstanceInfoException {
     NullTypeInfoException() {
       super("Attempt to instantiate a connector with a null TypeInfo");
     }
   }
-
   static class FactoryCreationFailureException extends InstanceInfoException {
     FactoryCreationFailureException(Throwable cause,
         Resource prototype, String connectorName) {
@@ -585,7 +591,6 @@ public final class InstanceInfo {
           cause);
     }
   }
-
   static class NoBeansFoundException extends InstanceInfoException {
     NoBeansFoundException(Resource prototype,
         String connectorName, Class<?> clazz) {
@@ -594,7 +599,6 @@ public final class InstanceInfo {
           + prototype.getDescription());
     }
   }
-
   static class BeanInstantiationFailureException extends InstanceInfoException {
     BeanInstantiationFailureException(Throwable cause,
         Resource prototype, String connectorName, String beanName) {
@@ -603,7 +607,6 @@ public final class InstanceInfo {
           + prototype.getDescription(), cause);
     }
   }
-
   static class PropertyProcessingInternalFailureException extends
       InstanceInfoException {
     PropertyProcessingInternalFailureException(Throwable cause,
@@ -612,7 +615,6 @@ public final class InstanceInfo {
             + " for connector " + connectorName, cause);
     }
   }
-
   static class PropertyProcessingFailureException extends InstanceInfoException {
     PropertyProcessingFailureException(Throwable cause, Resource prototype,
         String connectorName) {

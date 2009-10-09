@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.Connector;
@@ -21,6 +22,9 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryLoginException;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.traversal.QueryTraverser;
+import com.google.enterprise.connector.traversal.Traverser;
+import com.google.enterprise.connector.traversal.TraversalStateStore;
 
 /**
  * Access to the AuthenticationManager, AuthorizationManager, and
@@ -28,29 +32,49 @@ import com.google.enterprise.connector.spi.TraversalManager;
  */
 public class ConnectorInterfaces {
 
-  private final String connectorName;
-  private final Connector connector;
+  final String connectorName;
+  final Connector connector;
+  final Pusher pusher;
+  final TraversalStateStore stateStore;
 
   // these are lazily constructed
-  private TraversalManager traversalManager;
-  private AuthenticationManager authenticationManager;
-  private AuthorizationManager authorizationManager;
+  Traverser traverser = null;
+  AuthenticationManager authenticationManager = null;
+  AuthorizationManager authorizationManager = null;
 
-  ConnectorInterfaces(String connectorName, Connector connector) {
+  String username = null;
+  String password = null;
+
+  /**
+   * This constructor is the normal constructor
+   * @param connectorName
+   * @param connector
+   * @param pusher
+   * @param stateStore
+   */
+  ConnectorInterfaces(String connectorName, Connector connector, Pusher pusher,
+                      TraversalStateStore stateStore) {
     this.connectorName = connectorName;
     this.connector = connector;
+    this.pusher = pusher;
+    this.stateStore = stateStore;
   }
 
   /**
-   * Constructs a ConnectorIntefaces with Managers supplied by the caller
-   * rather than the connector. This is for testing only.
+   * This constructor will only be used by unit tests
+   * @param connectorName
+   * @param traverser
+   * @param authenticationManager
+   * @param authorizationManager
    */
-  ConnectorInterfaces(String connectorName, TraversalManager traversalManager,
+  ConnectorInterfaces(String connectorName, Traverser traverser,
                       AuthenticationManager authenticationManager,
                       AuthorizationManager authorizationManager) {
     this.connectorName = connectorName;
     this.connector = null;
-    this.traversalManager = traversalManager;
+    this.pusher = null;
+    this.stateStore = null;
+    this.traverser = traverser;
     this.authenticationManager = authenticationManager;
     this.authorizationManager = authorizationManager;
   }
@@ -68,7 +92,7 @@ public class ConnectorInterfaces {
         // TODO(ziff): think about how this could be re-tried
         throw new InstantiatorException(e);
       } catch (Exception e) {
-        throw new InstantiatorException(e);
+        throw new InstantiatorException(e);          
       }
     }
     return authenticationManager;
@@ -87,7 +111,7 @@ public class ConnectorInterfaces {
         // TODO(ziff): think about how this could be re-tried
         throw new InstantiatorException(e);
       } catch (Exception e) {
-        throw new InstantiatorException(e);
+        throw new InstantiatorException(e);          
       }
     }
     return authorizationManager;
@@ -96,8 +120,6 @@ public class ConnectorInterfaces {
   /**
    * @return the connector
    */
-  // TODO(strellis) Remove this method or make it private so all connector
-  // access is through InstanceInfo.
   Connector getConnector() {
     return connector;
   }
@@ -113,18 +135,29 @@ public class ConnectorInterfaces {
    * @return the traverser
    * @throws InstantiatorException
    */
-  TraversalManager getTraversalManager() throws InstantiatorException {
-    if (traversalManager == null) {
+  Traverser getTraverser() throws InstantiatorException {
+    // If our cached QueryTraverser has been canceled, get a new one.
+    // If the old one is a zombie, we need to preserved its canceled status.
+    if ((traverser == null) || ((traverser instanceof QueryTraverser) &&
+        ((QueryTraverser)traverser).isCancelled())) {
       Session s = getSession();
+      TraversalManager qtm = null;
       try {
-        traversalManager = s.getTraversalManager();
-      } catch (RepositoryException ie) {
-        throw new InstantiatorException(ie);
+        qtm = s.getTraversalManager();
+        traverser =
+           new QueryTraverser(pusher, qtm, stateStore, connectorName);
+      } catch (RepositoryException ignore) {
+        // By only creating the Traverser after successfully getting
+        // a TraversalManager, we avoid caching a Traverser with a
+        // null TraversalManager (which lead to a subsequent null-pointer
+        // exception).  With a null Traverser, WorkQueueItems do nothing.
+        // And without a cached (but invalid) Traverser, we will try
+        // again on the next call to getTraverser() to get a valid one.
       } catch (Exception e) {
-        throw new InstantiatorException(e);
+        throw new InstantiatorException(e);          
       }
     }
-    return traversalManager;
+    return traverser;
   }
 
   private Session getSession() throws InstantiatorException {
@@ -139,7 +172,7 @@ public class ConnectorInterfaces {
       // TODO(ziff): think about how this could be re-tried
       throw new InstantiatorException(e);
     } catch (Exception e) {
-      throw new InstantiatorException(e);
+      throw new InstantiatorException(e);          
     }
     return s;
   }

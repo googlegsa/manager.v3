@@ -31,7 +31,7 @@ public class MimeTypeMap {
   private static final Logger LOGGER =
       Logger.getLogger(MimeTypeMap.class.getName());
 
-  private final Map<String, Integer> typeMap;
+  private Map<String, Integer> typeMap;
   private int unknownMimeTypeSupportLevel;
 
   public MimeTypeMap() {
@@ -119,10 +119,10 @@ public class MimeTypeMap {
       supportLevel = 3;
     }
 
-    Integer level0 = Integer.valueOf(supportLevel - 2);
-    Integer level1 = Integer.valueOf(supportLevel - 1);
-    Integer level2 = Integer.valueOf(supportLevel);
-    Integer level3 = Integer.valueOf(supportLevel + 1);
+    Integer level0 = new Integer(supportLevel - 2);
+    Integer level1 = new Integer(supportLevel - 1);
+    Integer level2 = new Integer(supportLevel);
+    Integer level3 = new Integer(supportLevel + 1);
 
     // Add the mimetypes to the map.  We adjust the support levels
     // slightly to prefer "vnd." subtypes over others, and prefer
@@ -176,7 +176,7 @@ public class MimeTypeMap {
    * Return the most preferred mime type from a Set of candidates.
    * Mime types with higher support levels are preferred over those
    * with lower support levels.  For those with equal support levels,
-   * non-'x-*' subtypes are preferred over 'x-*' subtypes, and mimetypes
+   * non-'x-*' subtypes are preferred over 'x-*' subtypes, and mimetyps
    * with subtypes are preferred over those without.
    *
    * @param mimeTypes a Set of mime type Strings.

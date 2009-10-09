@@ -4,7 +4,6 @@
 
   <!-- ========================= PROPERTIES ============================= -->
   <property name="version" value="2.0" />
-  <property name="jvm.version" value="1.5" />
 
   <!-- Define Directories. -->
   <property name="projects.dir" value=".." />
@@ -60,7 +59,7 @@
     <javadoc access="public" author="false" destdir="doc/javadoc/${version}"
              doctitle="Google Search Appliance Connector SPI"
              nodeprecated="false" nodeprecatedlist="true" noindex="false"
-             nonavbar="false" notree="false" source="${jvm.version}" sourcepath="${src}"
+             nonavbar="false" notree="false" source="1.5" sourcepath="${src}"
              splitindex="true" use="true" version="true">
       <fileset dir="${src}/com/google/enterprise/connector/spi">
         <include name="*.java" />
@@ -84,7 +83,7 @@
     <!-- compile java source files -->
     <javac srcdir="${src}" destdir="${classes}"
            debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
-           target="${jvm.version}" source="${jvm.version}">
+           target="1.5" source="1.5">
       <classpath>
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
       </classpath>
@@ -97,7 +96,7 @@
     <!-- compile java source files for tests -->
     <javac srcdir="${tests.src}" destdir="${tests.classes}"
            debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
-           target="${jvm.version}" source="${jvm.version}">
+           target="1.5" source="1.5">
       <classpath>
         <pathelement location="${classes}" />
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />

@@ -15,19 +15,15 @@
 package com.google.enterprise.connector.saml.server;
 
 import com.google.common.base.Preconditions;
-import com.google.enterprise.connector.common.FileUtil;
 import com.google.enterprise.connector.common.GettableHttpServlet;
 import com.google.enterprise.connector.common.PostableHttpServlet;
+import com.google.enterprise.connector.common.ServletBase;
 import com.google.enterprise.connector.security.identity.CredentialsGroup;
 import com.google.enterprise.connector.security.identity.DomainCredentials;
-import com.google.enterprise.connector.servlet.SecurityManagerServlet;
 
-import org.apache.velocity.app.VelocityEngine;
 import org.opensaml.common.binding.SAMLMessageContext;
-import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.saml2.binding.decoding.HTTPRedirectDeflateDecoder;
 import org.opensaml.saml2.binding.encoding.HTTPArtifactEncoder;
-import org.opensaml.saml2.binding.encoding.HTTPPostEncoder;
 import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.Attribute;
 import org.opensaml.saml2.core.AttributeStatement;
@@ -51,6 +47,7 @@ import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.existingSamlMessageContext;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.initializeLocalEntity;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.initializePeerEntity;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeAssertion;
@@ -63,9 +60,9 @@ import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeAuthn
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeConditions;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeIssuer;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeResponse;
-import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeSamlMessageContext;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeStatus;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.makeSubject;
+import static com.google.enterprise.connector.saml.common.OpenSamlUtil.newSamlMessageContext;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runDecoder;
 import static com.google.enterprise.connector.saml.common.OpenSamlUtil.runEncoder;
 
@@ -76,12 +73,9 @@ import static org.opensaml.common.xml.SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
  * Handler for SAML authentication requests.  These requests are sent by a service provider, in our
  * case the Google Search Appliance.  This is one part of the security manager's identity provider.
  */
-public class SamlAuthn extends SecurityManagerServlet
+public class SamlAuthn extends ServletBase
     implements GettableHttpServlet, PostableHttpServlet {
   private static final Logger LOGGER = Logger.getLogger(SamlAuthn.class.getName());
-
-  /** Name of the session attribute that holds a SAML message context. */
-  private static final String SAML_CONTEXT_NAME = "samlMessageContext";
 
   public SamlAuthn() {
   }
@@ -97,9 +91,8 @@ public class SamlAuthn extends SecurityManagerServlet
       throws IOException {
 
     // Establish the SAML message context.
-    SAMLMessageContext<AuthnRequest, Response, NameID> context = makeSamlMessageContext();
-    request.getSession().setAttribute(SAML_CONTEXT_NAME, context);
-
+    SAMLMessageContext<AuthnRequest, Response, NameID> context =
+        newSamlMessageContext(request.getSession());
     {
       EntityDescriptor localEntity = getSmEntity();
       initializeLocalEntity(context, localEntity, localEntity.getIDPSSODescriptor(SAML20P_NS),
@@ -128,29 +121,18 @@ public class SamlAuthn extends SecurityManagerServlet
     getBackEnd().authenticate(request, response);
   }
 
-  static SAMLMessageContext<AuthnRequest, Response, NameID> getSamlSsoContext(
-      HttpServletRequest request) {
-    // Restore context and signal error if none.
-    @SuppressWarnings("unchecked")
-    SAMLMessageContext<AuthnRequest, Response, NameID> context =
-        (SAMLMessageContext<AuthnRequest, Response, NameID>)
-        request.getSession().getAttribute(SAML_CONTEXT_NAME);
-    if (context == null) {
-      throw new IllegalStateException("Unable to get SAML message context.");
-    }
-    return context;
-  }
-
   // We have at least one verified identity.  The first identity is considered the primary.
   public static void makeSuccessfulSamlSsoResponse(
-      HttpServletResponse response,
-      SAMLMessageContext<AuthnRequest, Response, NameID> context,
-      SAMLArtifactMap artifactMap, String verifiedId, List<CredentialsGroup> cgs)
+      HttpServletRequest request, HttpServletResponse response, List<String> ids)
       throws IOException {
+    LOGGER.info("Verified IDs: " + idsToString(ids));
+
+    SAMLMessageContext<AuthnRequest, Response, NameID> context =
+        existingSamlMessageContext(request.getSession());
 
     // Generate <Assertion> with <AuthnStatement>.
     Assertion assertion =
-        makeAssertion(makeIssuer(getSmEntity().getEntityID()), makeSubject(verifiedId));
+        makeAssertion(makeIssuer(getSmEntity().getEntityID()), makeSubject(ids.get(0)));
     assertion.getAuthnStatements().add(makeAuthnStatement(AuthnContext.IP_PASSWORD_AUTHN_CTX));
 
     // Generate <Conditions> with <AudienceRestriction>.
@@ -160,17 +142,15 @@ public class SamlAuthn extends SecurityManagerServlet
     conditions.getAudienceRestrictions().add(restriction);
     assertion.setConditions(conditions);
 
-    // Add <Attribute> with detailed identity information.
-    if (cgs != null) {
-      addIdentityMetadataAttribute(assertion, cgs);
-    }
-
     // Generate <Response>.
     Response samlResponse =
         makeResponse(context.getInboundSAMLMessage(), makeStatus(StatusCode.SUCCESS_URI));
+
+    addIdentityMetadataAttribute(assertion, getBackEnd().getCredentialsGroups(request));
+
     samlResponse.getAssertions().add(assertion);
     context.setOutboundSAMLMessage(samlResponse);
-    encodeResponse(response, context, artifactMap);
+    doRedirect(request, response);
   }
 
   private static void addIdentityMetadataAttribute(Assertion assertion,
@@ -188,40 +168,38 @@ public class SamlAuthn extends SecurityManagerServlet
     assertion.getAttributeStatements().add(attrStatement);
   }
 
-  public static void makeUnsuccessfulSamlSsoResponse(
-      HttpServletResponse response,
-      SAMLMessageContext<AuthnRequest, Response, NameID> context,
-      SAMLArtifactMap artifactMap, String message)
-      throws IOException {
-    LOGGER.warning(message);
-    context.setOutboundSAMLMessage(makeResponse(context.getInboundSAMLMessage(),
-                                                makeStatus(StatusCode.AUTHN_FAILED_URI, message)));
-    encodeResponse(response, context, artifactMap);
+  private static String idsToString(List<String> ids) {
+    StringBuffer buffer = new StringBuffer();
+    for (String id: ids) {
+      if (buffer.length() > 0) {
+        buffer.append(", ");
+      }
+      buffer.append(id);
+    }
+    return buffer.toString();
   }
 
-  private static void encodeResponse(
-      HttpServletResponse response,
-      SAMLMessageContext<AuthnRequest, Response, NameID> context,
-      SAMLArtifactMap artifactMap)
+  public static void makeUnsuccessfulSamlSsoResponse(
+      HttpServletRequest request, HttpServletResponse response, String message)
       throws IOException {
+    LOGGER.warning(message);
+    SAMLMessageContext<AuthnRequest, Response, NameID> context =
+        existingSamlMessageContext(request.getSession());
+    context.setOutboundSAMLMessage(makeResponse(context.getInboundSAMLMessage(),
+                                                makeStatus(StatusCode.AUTHN_FAILED_URI, message)));
+    doRedirect(request, response);
+  }
+
+  private static void doRedirect(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
+    SAMLMessageContext<AuthnRequest, Response, NameID> context =
+        existingSamlMessageContext(request.getSession());
     // Encode the response message.
     initResponse(response);
     context.setOutboundMessageTransport(new HttpServletResponseAdapter(response, true));
-
-    if (artifactMap != null) {
-      HTTPArtifactEncoder encoder = new HTTPArtifactEncoder(null, null, artifactMap);
-      encoder.setPostEncoding(false);
-      runEncoder(encoder, context);
-    } else {
-      VelocityEngine ve = new VelocityEngine();
-      try {
-        ve.init();
-      } catch (Exception e) {
-        throw new IOException(e);
-      }
-      runEncoder(
-          new HTTPPostEncoder(ve, FileUtil.getContextFile("saml-post-template.xhtml").toString()),
-          context);
-    }
+    HTTPArtifactEncoder encoder =
+        new HTTPArtifactEncoder(null, null, getBackEnd().getArtifactMap());
+    encoder.setPostEncoding(false);
+    runEncoder(encoder, context);
   }
 }

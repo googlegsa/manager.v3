@@ -24,13 +24,17 @@ import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.Session;
 import com.google.enterprise.connector.spi.SimpleDocument;
 import com.google.enterprise.connector.spi.SimpleDocumentList;
+import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
-import com.google.enterprise.connector.test.ConnectorTestUtils;
+import com.google.enterprise.connector.spi.Value;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Simple test connector that can be used with <code>SimpleConnectorType</code>
@@ -78,7 +82,7 @@ public class SimpleTestConnector implements Connector {
     return new SimpleTestSession();
   }
 
-  public static class SimpleTestSession implements Session {
+  public class SimpleTestSession implements Session {
     public AuthenticationManager getAuthenticationManager() {
       return new SimpleAuthenticationManager();
     }
@@ -92,13 +96,13 @@ public class SimpleTestConnector implements Connector {
     }
   }
 
-  public static class SimpleAuthenticationManager implements AuthenticationManager {
+  public class SimpleAuthenticationManager implements AuthenticationManager {
     public AuthenticationResponse authenticate(AuthenticationIdentity id) {
       return new AuthenticationResponse(true, "admin");
     }
   }
 
-  public static class SimpleAuthorizationManager implements AuthorizationManager {
+  public class SimpleAuthorizationManager implements AuthorizationManager {
     public Collection<AuthorizationResponse> authorizeDocids(
         Collection<String> col, AuthenticationIdentity id) {
       List<AuthorizationResponse> l = new ArrayList<AuthorizationResponse>();
@@ -109,7 +113,7 @@ public class SimpleTestConnector implements Connector {
     }
   }
 
-  public static class SimpleTraversalManager implements TraversalManager {
+  public class SimpleTraversalManager implements TraversalManager {
     private boolean documentServed = false;
 
     public void setBatchHint(int hint) {
@@ -138,11 +142,44 @@ public class SimpleTestConnector implements Connector {
      * <code>Connector</code>.
      */
     private DocumentList traverse() {
-      SimpleDocument document = ConnectorTestUtils.createSimpleDocument("1");
+      Calendar cal = Calendar.getInstance();
+      cal.setTimeInMillis(10 * 1000);
+
+      Map<String, Object> props = new HashMap<String, Object>();
+      props.put(SpiConstants.PROPNAME_DOCID, "1");
+      props.put(SpiConstants.PROPNAME_LASTMODIFIED, cal);
+      props.put(SpiConstants.PROPNAME_DISPLAYURL, "http://myserver/docid=1");
+      props.put(SpiConstants.PROPNAME_CONTENT, "Hello World!");
+      SimpleDocument document = createSimpleDocument(props);
+
       List<SimpleDocument> docList = new LinkedList<SimpleDocument>();
       docList.add(document);
+
       documentServed = true;
       return new SimpleDocumentList(docList);
+    }
+
+    /**
+     * Utility method to convert a <code>Map</code> of Java Objects into a
+     * <code>SimpleDocument</code>.
+     */
+    private SimpleDocument createSimpleDocument(Map<String, Object> props) {
+      Map<String, List<Value>> spiValues = new HashMap<String, List<Value>>();
+      for (String key : props.keySet()) {
+        Object obj = props.get(key);
+        Value val = null;
+        if (obj instanceof String) {
+          val = Value.getStringValue((String) obj);
+        } else if (obj instanceof Calendar) {
+          val = Value.getDateValue((Calendar) obj);
+        } else {
+          throw new AssertionError(obj);
+        }
+        List<Value> values = new ArrayList<Value>();
+        values.add(val);
+        spiValues.put(key, values);
+      }
+      return new SimpleDocument(spiValues);
     }
   }
 }
