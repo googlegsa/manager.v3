@@ -19,9 +19,21 @@ package com.google.enterprise.connector.traversal;
  */
 public class FileSizeLimitInfo {
 
-  private long maxDocumentSize = Long.MAX_VALUE;
+  // Default maximum document size is 30MB - maximum supported by GSA.
+  private long maxDocumentSize = 30L * 1024 * 1024;
+
+  // Hard maximum feed file for GSA is 1GB, but we can exceed our
+  // maxFeedSize by the size of a single document, so cap our max
+  // a little lower than the GSA hard maximum.
+  private static final long MAXIMUM_FEED_FILE_SIZE = 900L * 1024 * 1024;
+
+  // Default value is smallish 1MB, for the convenience of unit testing.
+  private long maxFeedSize = 1024 * 1024;
 
   public void setMaxDocumentSize(long maxDocumentSize) {
+    if (maxDocumentSize <= 0) {
+      throw new IllegalArgumentException("maxDocumentSize must be positive.");
+    }
     this.maxDocumentSize = maxDocumentSize;
   }
 
@@ -29,4 +41,18 @@ public class FileSizeLimitInfo {
     return maxDocumentSize;
   }
 
+  public void setMaxFeedSize(long maxFeedSize) {
+    if (maxFeedSize <= 0) {
+      throw new IllegalArgumentException("maxFeedSize must be positive.");
+    }
+    if (maxFeedSize > MAXIMUM_FEED_FILE_SIZE) {
+      this.maxFeedSize = MAXIMUM_FEED_FILE_SIZE;
+    } else {
+      this.maxFeedSize = maxFeedSize;
+    }
+  }
+
+  public long maxFeedSize() {
+    return maxFeedSize;
+  }
 }

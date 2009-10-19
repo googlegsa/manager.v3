@@ -58,11 +58,6 @@
     </property>
   </bean>
 
-  <bean id="Pusher"
-        class="com.google.enterprise.connector.pusher.DocPusher">
-    <constructor-arg index="0" ref="FeedConnection"/>
-  </bean>
-
   <!-- Create a Handler for the Feed Logger and add it to the logger. -->
   <bean id="FeedFormatter" class="java.util.logging.SimpleFormatter"/>
 
@@ -108,6 +103,16 @@
     <property name="arguments">
       <list>
         <value>${feedLoggingLevel}</value>
+      </list>
+    </property>
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.pusher.DocPusher.setFileSizeLimitInfo"/>
+    <property name="arguments">
+      <list>
+        <ref bean="FileSizeLimitInfo"/>
       </list>
     </property>
   </bean>
@@ -193,9 +198,14 @@
     </property>
   </bean>
 
+  <bean id="PusherFactory"
+        class="com.google.enterprise.connector.pusher.DocPusherFactory">
+    <constructor-arg index="0" ref="FeedConnection" />
+  </bean>
+
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.SpringInstantiator">
-    <constructor-arg index="0" ref="Pusher" />
+    <constructor-arg index="0" ref="PusherFactory" />
     <constructor-arg index="1" ref="ThreadPool" />
   </bean>
 
@@ -256,8 +266,22 @@
 
   <bean id="FileSizeLimitInfo"
         class="com.google.enterprise.connector.traversal.FileSizeLimitInfo">
-    <!-- Maximum file size accepted by the GSA is 30MB -->
+    <!-- The maximum allowed size in bytes of a Document's content.
+         Documents whose content exceeds maxDocumentSize will still have
+         metadata indexed, however the content itself will not be fed.
+         Maximum file size accepted by the GSA is 30MB
+    -->
     <property name="maxDocumentSize" value="31457280"/>
+
+    <!-- The target size in bytes of an accumulated feed file.  DocPusher tries
+         to collect many feed Documents into a single feed file to improve the
+         efficiency of sending feed data to the GSA.  Too many small feeds
+         may overrun the GSA's feed processor.  However, specifying too large
+         a feed size reduces concurrency and will likely result in OutOfMemory
+         errors in the Java VM, especially if using multiple Connector Instances.
+         The default feed size is 10MB.
+    -->
+    <property name="maxFeedSize" value="10485760"/>
   </bean>
 
   <bean id="MimeTypeMap"

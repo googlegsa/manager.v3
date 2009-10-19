@@ -102,14 +102,19 @@ public class HostLoadManager {
     this.batchSize = batchSize;
   }
 
-  private int getMaxLoad(String connectorName) {
+  private int getMaxDocsPerPeriod(String connectorName) {
     String scheduleStr = null;
     try {
       scheduleStr = instantiator.getConnectorSchedule(connectorName);
     } catch (ConnectorNotFoundException e) {
       // Connector seems to have been deleted.
     }
-    return (scheduleStr == null) ? 0 : new Schedule(scheduleStr).getLoad();
+    if (scheduleStr == null) {
+      return 0;
+    } else {
+      int load = new Schedule(scheduleStr).getLoad();
+      return (int) ((periodInMillis / 1000f) * (load / 60f) + 0.5);
+    }
   }
 
   /**
@@ -188,8 +193,7 @@ public class HostLoadManager {
    *         should traverse
    */
   public BatchSize determineBatchSize(String connectorName) {
-    int maxDocsPerPeriod =
-        (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
+    int maxDocsPerPeriod = getMaxDocsPerPeriod(connectorName);
     int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
     int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
     if (LOGGER.isLoggable(Level.FINEST)) {
@@ -229,12 +233,11 @@ public class HostLoadManager {
     }
 
     // Has the connector exceeded its maximum number of documents per minute?
-    int maxDocsPerPeriod =
-        (int) ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f));
+    int maxDocsPerPeriod = getMaxDocsPerPeriod(connectorName);
     int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
     int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
     // Avoid asking for tiny batches if we are near the load limit.
-    int min = Math.min((maxDocsPerPeriod / 10), 50);
+    int min = Math.min((maxDocsPerPeriod / 10), 20);
     return (remainingDocsToTraverse <= min);
   }
 

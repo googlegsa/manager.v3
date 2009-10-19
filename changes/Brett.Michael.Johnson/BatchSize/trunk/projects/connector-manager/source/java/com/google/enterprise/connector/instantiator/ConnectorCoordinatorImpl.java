@@ -19,7 +19,7 @@ import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.pusher.Pusher;
+import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -60,7 +60,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
    * Invariant context.
    */
   private final String name;
-  private final Pusher pusher;
+  private final PusherFactory pusherFactory;
   private final ThreadPool threadPool;
 
   /**
@@ -84,15 +84,16 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
   private TaskHandle taskHandle;
   private Object currentBatchKey;
 
-  ConnectorCoordinatorImpl(String name, Pusher pusher, ThreadPool threadPool) {
+  ConnectorCoordinatorImpl(String name,
+      PusherFactory pusherFactory, ThreadPool threadPool) {
     this.name = name;
-    this.pusher = pusher;
+    this.pusherFactory = pusherFactory;
     this.threadPool = threadPool;
   }
 
-  ConnectorCoordinatorImpl(InstanceInfo instanceInfo, Pusher pusher,
-      ThreadPool threadPool) {
-    this(instanceInfo.getName(), pusher, threadPool);
+  ConnectorCoordinatorImpl(InstanceInfo instanceInfo,
+      PusherFactory pusherFactory, ThreadPool threadPool) {
+    this(instanceInfo.getName(), pusherFactory, threadPool);
     this.instanceInfo = instanceInfo;
     this.typeInfo = instanceInfo.getTypeInfo();
   }
@@ -236,8 +237,8 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     try {
       TraversalManager traversalManager =
           getConnectorInterfaces().getTraversalManager();
-      Traverser traverser = new QueryTraverser(pusher, traversalManager,
-          batchResultProcessor, name,
+      Traverser traverser = new QueryTraverser(pusherFactory,
+          traversalManager, batchResultProcessor, name,
           Context.getInstance().getTraversalContext());
       TimedCancelable batch =  new CancelableBatch(traverser, name,
           batchResultProcessor, batchResultProcessor, batchSize);
