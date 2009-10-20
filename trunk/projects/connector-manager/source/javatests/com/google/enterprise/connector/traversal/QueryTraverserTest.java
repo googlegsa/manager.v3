@@ -261,7 +261,7 @@ public class QueryTraverserTest extends TestCase {
 
   /**
    * A {@link Pusher} that performs validations
-   * @see ValidatingPusher#take(Document, String) for details.
+   * @see ValidatingPusher#take(Document) for details.
    */
   private static class ValidatingPusher implements Pusher, PusherFactory {
     private final String connectorName;
