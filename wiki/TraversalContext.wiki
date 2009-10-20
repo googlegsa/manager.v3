@@ -1,7 +1,7 @@
-#summary The New TraversalContext Interface in v1.3.
+#summary The New TraversalContext Interface in v1.3 (Updated for v2.4)
 #labels Phase-Design,Phase-Implementation,Phase-Deploy
 
-= The New TraversalContext Interface in v1.3 =
+= The New TraversalContext Interface in v1.3 (Updated for v2.4) =
 
 The Connector Manager provides a TraversalContext implementation
 to Connectors so that they may better determine what types of
@@ -123,12 +123,19 @@ public interface TraversalContext {
   long maxDocumentSize();
   
   /**
-   * Gets information about whether a mime type is supported.  Non-positive
-   * numbers mean that there is no support for this mime type.  Positive
-   * values indicate possible support for this mime type, with larger
-   * values indicating better support or preference.
-   *
-   * @return The support level - non-positive means no support
+   * Gets information about whether a mime type is supported.  Positive     
+   * values indicate possible support for this mime type, with larger       
+   * values indicating better support or preference.                        
+   *                                                                     
+   * Non-positive numbers mean that there is no support for this mime type.
+   * A zero value indicates the content encoding is not supported.          
+   * The connector may choose to supply meta-data for the document, but the
+   * content should not be provided.                                        
+   *                                                                     
+   * A negative value indicates the document should be skipped entirely.    
+   * Neither the content, nor the meta-data should be provided.             
+   *                                                                        
+   * @return The support level - non-positive means no support              
    */  
   int mimeTypeSupportLevel(String mimeType);
 
@@ -201,10 +208,10 @@ support levels are used to rank items supplied to
 
 The `MimeTypeMap` bean definition in `applicationContext.xml`
 groups mime types into 4 broad categories: _preferred_, 
-_supported_, _unsupported_, and _unknown_.  The `MimeTypeMap` bean
-definition contains sets itemizing mime types for the _preferred_,
-_supported_, and _unsupported_ categories.  Any mime type not
-contained on one of those sets is considered _unknown_.
+_supported_, _unsupported_, _ignored_, and _unknown_.  The `MimeTypeMap` 
+bean definition contains sets itemizing mime types for the _preferred_,
+_supported_, _unsupported_, and _ignored_ categories.  Any mime type 
+not contained in one of those sets is considered _unknown_.
 
 Setting `unknownMimeTypeSupportLevel` to a positive value will allow
 the GSA to attempt to index the document contents of documents with
@@ -216,9 +223,9 @@ _preferred_ mime types, but above _unsupported_ mimetypes.
 
 _Preferred_ mime types have higher support levels than merely
 _supported_ mime types, which in turn, have higher support
-levels than _unsupported_ mime types.  
+levels than _unsupported_ or _ignored_ mime types.  
 
-The entries or each of the _preferred, supported and unsupported_
+The entries or each of the _preferred, supported, unsupported, and ignored_
 sets are a list of content types that may or may not include
 subtypes.  Exact (case-insensitive) matches are attempted first.
 If an exact match is not found, a match is attempted using just 
@@ -236,16 +243,21 @@ match, and its content type (sans subtype), "xyzzy", is also not
 present, so it would be assigned the `unknownMimeTypeSupportLevel`.
 
 Nearly all of the IANA recognized content type classes are well 
-represented in the _preferred/supported/unsupported_ mime types sets,
+represented in the _preferred/supported/unsupported/ignored_ mime types sets,
 so very few mime types should end up as _unknown_.  Removing content
-type (sans subtype) entries from the _preferred/supported/unsupported_ 
+type (sans subtype) entries from the _preferred/supported/unsupported/ignored_ 
 mime types sets would force more mime types to become _unknown_.
 
-Moving mime types between _preferred_, _supported_, and _unsupported_
-adjusts the support level for that mime type.  Move mime types
-you explicitly don't want to index to the _unsupported_ set.
+Moving mime types between _preferred_, _supported_, _unsupported_, and _ignored_
+adjusts the support level for that mime type.  
 Moving the mime type (sans subtype) entries, like "application",
 can have sweeping effects.  
+
+The mime types in each set are classified as follows:
+  * *preferred* - The set of preferred mime types to index.  These mime types require little or no preprocessing or file format conversion to extract text and metadata. 
+  * *supported* - The set of supported mime types to index.  These mime types may require some preprocessing or file format conversion to extract text and metadata.  Some information may be lost or discarded.
+  * *unsupported* - The set of mime types whose content should not be indexed. These mime types provide little or no textual content, or are data formats that are either unknown or do not have a format converter.  The connector may still provide meta-data describing the content, but the content itself should not be pushed.
+  * *ignored* - The set of mime types whose document should not be indexed at all.  The connector should skip the document, providing neither meta-data, nor the content.
 
 You could add mime types for new, experimental, or custom content.
 Deleting entries with explicit subtypes will force an attempt
