@@ -65,7 +65,7 @@ public class DocPusher implements Pusher {
   /**
    * Configured maximum document size and maximum feed file size supported.
    */
-  private static FileSizeLimitInfo fileSizeLimit = new FileSizeLimitInfo();
+  private final FileSizeLimitInfo fileSizeLimit;
 
   /**
    * FeedConnection that is the sink for our generated XmlFeeds.
@@ -115,16 +115,26 @@ public class DocPusher implements Pusher {
   // For use by unit tests.
   private String gsaResponse;
 
+  public DocPusher(FeedConnection feedConnection, String connectorName) {
+    this(feedConnection, connectorName, new FileSizeLimitInfo());
+  }
+
   /**
    * Creates a {@code DocPusher} object from the specified
-   * {@code feedConnection} and {@code connectorName}.
+   * {@code feedConnection} and {@code connectorName}.  The supplied
+   * {@link FileSizeLimitInfo} specifies constraints as to the size of a
+   * Document's content and the size of generated Feed files.
    *
    * @param feedConnection a FeedConnection
    * @param connectorName The connector name that is the source of the feed
+   * @param fileSizeLimitInfo FileSizeLimitInfo constraints on document content
+   *        and feed size.
    */
-  public DocPusher(FeedConnection feedConnection, String connectorName) {
+  public DocPusher(FeedConnection feedConnection, String connectorName,
+                   FileSizeLimitInfo fileSizeLimitInfo) {
     this.feedConnection = feedConnection;
     this.connectorName = connectorName;
+    this.fileSizeLimit = fileSizeLimitInfo;
 
     // Check to see if the GSA supports compressed content feeds.
     String supportedEncodings =
@@ -136,13 +146,6 @@ public class DocPusher implements Pusher {
     // Initialize background feed submission.
     this.submissions = new LinkedList<FutureTask<String>>();
     this.feedSender = Executors.newSingleThreadExecutor();
-  }
-
-  /**
-   * Set the maximum size of the document content and feed files.
-   */
-  public static void setFileSizeLimitInfo(FileSizeLimitInfo fileSizeLimitInfo) {
-    fileSizeLimit = fileSizeLimitInfo;
   }
 
   /**
@@ -355,8 +358,6 @@ public class DocPusher implements Pusher {
   /**
    * Takes the accumulated XmlFeed and sends the feed to the GSA.
    *
-   * @param feed an XmlFeed
-   * @param logMessage a Feed Log message
    * @throws PushException if Pusher problem
    * @throws FeedException if transient Feed problem
    * @throws RepositoryException
@@ -608,10 +609,12 @@ public class DocPusher implements Pusher {
           return super.read(b, off, len);
         } catch (EmptyDocumentException e) {
           switchToAlternate();
+          return 0; // Return alternate content on subsequent call to read().
         } catch (BigDocumentException e) {
           LOGGER.finer("Document content exceeds the maximum configured "
                        + "document size, discarding content.");
           switchToAlternate();
+          return 0; // Return alternate content on subsequent call to read().
         }
       }
       return alternate.read(b, off, len);

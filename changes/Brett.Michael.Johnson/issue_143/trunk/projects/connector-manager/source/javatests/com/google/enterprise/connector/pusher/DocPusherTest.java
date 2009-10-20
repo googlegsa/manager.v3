@@ -30,6 +30,7 @@ import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
+import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -45,6 +46,7 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -1630,14 +1632,119 @@ public class DocPusherTest extends TestCase {
   /**
    * Test that failure to specify document Content is not fatal.
    * The Content is handled specially in DocPusher.take().
+   * The GSA requires some content.  If the Document provides no content,
+   * an alternate default content is used - either the document's title,
+   * or a single space.
    */
   public void testNoContent() throws Exception {
     BadDocument doc = new BadDocument(getTestDocument());
     doc.failProperty(SpiConstants.PROPNAME_CONTENT, null);
 
-    // Content is optional, and may be missing.
-    feedDocument(doc);
+    // Content is optional, and may be missing.  Missing content is replaced
+    // with the default content, a single space.
+    String resultXML = feedDocument(doc);
+    assertStringContains("<content encoding=\"base64binary\">", resultXML);
+    assertStringContains("IA==", resultXML);  // Base64 encoded space char.
   }
+
+  /**
+   * Test that suppling empty content will force alternate content.
+   * The Content is handled specially in DocPusher.take().
+   * The GSA requires some content.  If the Document provides no content,
+   * an alternate default content is used - either the document's title,
+   * or a single space.
+   */
+  public void testEmptyContent() throws Exception {
+    Map<String, Object> config = getTestDocumentConfig();
+    config.put(SpiConstants.PROPNAME_CONTENT, "");
+    Document doc = ConnectorTestUtils.createSimpleDocument(config);
+
+    // Content is optional, and may be missing.  Missing content is replaced
+    // with the default content, a single space.
+    String resultXML = feedDocument(doc);
+    assertStringContains("<content encoding=\"base64binary\">", resultXML);
+    assertStringContains("IA==", resultXML);  // Base64 encoded space char.
+  }
+
+  /**
+   * Test that suppling empty content will force alternate content.
+   * The Content is handled specially in DocPusher.take().
+   * The GSA requires some content.  If the Document provides no content,
+   * an alternate default content is used - either the document's title,
+   * or a single space.
+   */
+  public void testTitleContent() throws Exception {
+    Map<String, Object> config = getTestDocumentConfig();
+    config.put(SpiConstants.PROPNAME_CONTENT, "");
+    config.put(SpiConstants.PROPNAME_TITLE, "title");
+    Document doc = ConnectorTestUtils.createSimpleDocument(config);
+
+    // Content is optional, and may be missing.  Missing content is replaced
+    // with the default content, the title.
+    String resultXML = feedDocument(doc);
+    assertStringContains("<content encoding=\"base64binary\">", resultXML);
+    assertStringContains("PGh0bWw+PHRpdGxlPnRpdGxlPC90aXRsZT48L2h0bWw+",
+                         resultXML);
+  }
+
+  /**
+   * Test that suppling huge content will force alternate content.
+   * The Content is handled specially in DocPusher.take().
+   * The GSA can't handle content > 30MB.  If the Document provides larger
+   * content, an alternate default content is used - either the document's
+   * title, or a single space.
+   */
+  public void testHugeContent() throws Exception {
+    Map<String, Object> config = getTestDocumentConfig();
+    config.put(SpiConstants.PROPNAME_CONTENT,
+               new HugeInputStream(100 * 1024 * 1024)); // 100MB
+    Document doc = ConnectorTestUtils.createSimpleDocument(config);
+
+    // Content is optional, and may be missing.  Missing content is replaced
+    // with the default content, a single space.
+    String resultXML = feedHugeDocument(doc);
+    assertStringContains("<content encoding=\"base64binary\">", resultXML);
+    assertStringContains("IA==", resultXML);  // Base64 encoded space char.
+  }
+
+  /**
+   * Test that suppling huge content will force alternate content.
+   * The Content is handled specially in DocPusher.take().
+   * The GSA can't handle content > 30MB.  If the Document provides larger
+   * content, an alternate default content is used - either the document's
+   * title, or a single space.
+   */
+  public void testHugeContent2() throws Exception {
+    Map<String, Object> config = getTestDocumentConfig();
+    config.put(SpiConstants.PROPNAME_CONTENT,
+               new HugeInputStream(100 * 1024 * 1024)); // 100MB
+    config.put(SpiConstants.PROPNAME_TITLE, "title");
+    Document doc = ConnectorTestUtils.createSimpleDocument(config);
+
+    // Content is optional, and may be missing.  Missing content is replaced
+    // with the default content, the title.
+    String resultXML = feedHugeDocument(doc);
+    assertStringContains("<content encoding=\"base64binary\">", resultXML);
+    assertStringContains("PGh0bWw+PHRpdGxlPnRpdGxlPC90aXRsZT48L2h0bWw+",
+                         resultXML);
+  }
+
+  /**
+   * Utility method to take the given Document with huge content and feed
+   * it through a DocPusher and return the resulting XML feed string.
+   * In the test context, "huge" is relative.  We set the maxDocSize
+   * artificially low to avoid an OutOfMemoryError in the test JVM.
+   */
+  private String feedHugeDocument(Document document) throws Exception {
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    FileSizeLimitInfo limit = new FileSizeLimitInfo();
+    limit.setMaxDocumentSize(1024 * 1024); // 1 MB
+    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", limit);
+    dpusher.take(document);
+    dpusher.flush();
+    return mockFeedConnection.getFeed();
+  }
+
 
   /**
    * Test that failure to retrieve the document content property,
@@ -1822,6 +1929,52 @@ public class DocPusherTest extends TestCase {
     @Override
     public int read(byte[] b, int o, int l) throws IOException {
       throw new IOException("This stream is unreadable");
+    }
+  }
+
+  /**
+   * An InputStream that returns huge amounts of data.
+   */
+  private static class HugeInputStream extends InputStream {
+    private final long hugeLength;
+    private long currentLength;
+
+    public HugeInputStream(long length) {
+      this.hugeLength = length;
+    }
+
+    // Make it look like there is something to read.
+    @Override
+    public int available() {
+      return 69;
+    }
+
+    // Don't support mark & reset.
+    @Override
+    public boolean markSupported() {
+      return false;
+    }
+
+    // Override read methods, returning at least hugeLength bytes of crap.
+    @Override
+    public int read() {
+      if (currentLength < hugeLength) {
+        currentLength++;
+        return 'x';
+      } else {
+        return -1;
+      }
+    }
+
+    @Override
+    public int read(byte[] b, int o, int l) {
+      if (currentLength < hugeLength) {
+        Arrays.fill(b, o, o + l, (byte)'z');
+        currentLength += l;
+        return l;
+      } else {
+        return -1;
+      }
     }
   }
 

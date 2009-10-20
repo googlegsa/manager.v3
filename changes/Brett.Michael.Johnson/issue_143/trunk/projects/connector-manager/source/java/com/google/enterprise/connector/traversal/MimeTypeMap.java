@@ -100,7 +100,7 @@ public class MimeTypeMap {
 
   /**
    * Set the ignored mime types whose content should not be indexed.
-   * The connector should not feed these documents at all, suppying
+   * The connector should not feed these documents at all, supplying
    * neither meta-data nor content.
    *
    * @param mimeTypes Set of mime types that should not be fed.
