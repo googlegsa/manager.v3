@@ -1942,28 +1942,32 @@ public class DocPusherTest extends TestCase {
     public HugeInputStream(long length) {
       this.hugeLength = length;
     }
+
     // Make it look like there is something to read.
     @Override
     public int available() {
       return 69;
     }
+
     // Don't support mark & reset.
     @Override
     public boolean markSupported() {
       return false;
     }
+
     // Override read methods, returning at least hugeLength bytes of crap.
     @Override
-    public int read() throws IOException {
+    public int read() {
       if (currentLength < hugeLength) {
         currentLength++;
-        return (int)'x';
+        return 'x';
       } else {
         return -1;
       }
     }
+
     @Override
-    public int read(byte[] b, int o, int l) throws IOException {
+    public int read(byte[] b, int o, int l) {
       if (currentLength < hugeLength) {
         Arrays.fill(b, o, o + l, (byte)'z');
         currentLength += l;

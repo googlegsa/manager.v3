@@ -49,9 +49,9 @@ public class DocPusherFactory implements PusherFactory {
    * constraints as to the size of a Document's content and the size of
    * generated Feed files.
    *
-   * @param feedConnection a FeedConnection
-   * @param fileSizeLimitInfo FileSizeLimitInfo constraints on document content
-   *        and feed size.
+   * @param feedConnection a {@link FeedConnection} sink for documents.
+   * @param fileSizeLimit {@link FileSizeLimitInfo} constraints on document
+   *        content and feed size.
    */
   public DocPusherFactory(FeedConnection feedConnection,
                           FileSizeLimitInfo fileSizeLimit) {
@@ -60,7 +60,7 @@ public class DocPusherFactory implements PusherFactory {
   }
 
   //@Override
-  public Pusher newPusher(String dataSource) throws PushException {
+  public Pusher newPusher(String dataSource) {
     return new DocPusher(feedConnection, dataSource, fileSizeLimit);
   }
 }

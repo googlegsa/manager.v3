@@ -358,8 +358,6 @@ public class DocPusher implements Pusher {
   /**
    * Takes the accumulated XmlFeed and sends the feed to the GSA.
    *
-   * @param feed an XmlFeed
-   * @param logMessage a Feed Log message
    * @throws PushException if Pusher problem
    * @throws FeedException if transient Feed problem
    * @throws RepositoryException
@@ -611,12 +609,12 @@ public class DocPusher implements Pusher {
           return super.read(b, off, len);
         } catch (EmptyDocumentException e) {
           switchToAlternate();
-          return 0;
+          return 0; // Return alternate content on subsequent call to read().
         } catch (BigDocumentException e) {
           LOGGER.finer("Document content exceeds the maximum configured "
                        + "document size, discarding content.");
           switchToAlternate();
-          return 0;
+          return 0; // Return alternate content on subsequent call to read().
         }
       }
       return alternate.read(b, off, len);
