@@ -477,8 +477,8 @@
     </property>
 
     <!-- Sets the mime types whose document should not be indexed.
-         The connector not push the document, providing neither meta-data,
-         nor the content.  In other words, the document should be skipped.
+         The connector should skip the document, providing neither meta-data,
+         nor the content.
     -->
     <property name="ignoredMimeTypes">
       <set>
