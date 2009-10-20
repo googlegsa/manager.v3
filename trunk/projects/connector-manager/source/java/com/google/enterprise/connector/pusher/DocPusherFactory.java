@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
+
 /**
  * Factory that creates {@link DocPusher} instances that feed
  * {@link FeedConnection}.
@@ -21,14 +23,44 @@ package com.google.enterprise.connector.pusher;
 // TODO: Support multiple sinks where different connector instances
 // might feed different sinks.
 public class DocPusherFactory implements PusherFactory {
+  /**
+   * FeedConnection that is the sink for our generated XmlFeeds.
+   */
   private final FeedConnection feedConnection;
 
+  /**
+   * Configured maximum document size and maximum feed file size supported.
+   */
+  private final FileSizeLimitInfo fileSizeLimit;
+
+  /**
+   * Creates a {@code DocPusherFactory} object from the specified
+   * {@code feedConnection}.
+   *
+   * @param feedConnection a FeedConnection
+   */
   public DocPusherFactory(FeedConnection feedConnection) {
+    this(feedConnection, new FileSizeLimitInfo());
+  }
+
+  /**
+   * Creates a {@code DocPusherFactory} object from the specified
+   * {@code feedConnection}.  The supplied {@link FileSizeLimitInfo} specifies
+   * constraints as to the size of a Document's content and the size of
+   * generated Feed files.
+   *
+   * @param feedConnection a {@link FeedConnection} sink for documents.
+   * @param fileSizeLimit {@link FileSizeLimitInfo} constraints on document
+   *        content and feed size.
+   */
+  public DocPusherFactory(FeedConnection feedConnection,
+                          FileSizeLimitInfo fileSizeLimit) {
     this.feedConnection = feedConnection;
+    this.fileSizeLimit = fileSizeLimit;
   }
 
   //@Override
-  public Pusher newPusher(String dataSource) throws PushException {
-    return new DocPusher(feedConnection, dataSource);
+  public Pusher newPusher(String dataSource) {
+    return new DocPusher(feedConnection, dataSource, fileSizeLimit);
   }
 }
