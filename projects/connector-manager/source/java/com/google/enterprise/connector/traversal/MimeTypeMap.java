@@ -98,6 +98,18 @@ public class MimeTypeMap {
     initMimeTypes(mimeTypes, -1);
   }
 
+  /**
+   * Set the ignored mime types whose content should not be indexed.
+   * The connector should not feed these documents at all, supplying
+   * neither meta-data nor content.
+   *
+   * @param mimeTypes Set of mime types that should not be fed.
+   */
+  public void setIgnoredMimeTypes(Set<String> mimeTypes) {
+    LOGGER.config("Setting ignored mime types to " + mimeTypes.toString());
+    // -5 is for historical reasons, as Ignored was added after Unsupported.
+    initMimeTypes(mimeTypes, -5);
+  }
 
   /*
    * Add the set of mimetypes to the typeMap at the desired support level.
@@ -147,7 +159,8 @@ public class MimeTypeMap {
    * performed.
    *
    * @param mimeType
-   * @return zero (or negative) means that this mimetype is not supported.
+   * @return zero (or negative) means that this mimetype is not supported, with
+   *         negative values indicating the document should be skipped entirely.
    *         Positive integers may be compared to choose which mime types are
    *         preferred.
    */
@@ -164,7 +177,14 @@ public class MimeTypeMap {
         }
       }
     }
-    int sl = (result == null) ? unknownMimeTypeSupportLevel : result;
+    int sl;
+    if (result == null) {
+      sl = unknownMimeTypeSupportLevel;
+    } else {
+      // Map all Unsupported to 0, and all Ignored to -1.
+      sl = (result > 0) ? result : ((result < -3) ? -1 : 0);
+    }
+
     if (LOGGER.isLoggable(Level.FINEST)) {
       LOGGER.finest("Mime type support level for " + mimeType + " is " + sl);
     }
