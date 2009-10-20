@@ -423,6 +423,8 @@
          formats that are either unknown or do not have a format converter.
          The connector may still provide meta-data describing the content,
          but the content itself should not be pushed.
+         If even the indexing of meta-data for documents of certain types is
+         not desired, then move those types to the ignoredMimeTypes set, below.
     -->
     <property name="unsupportedMimeTypes">
       <set>
@@ -459,6 +461,27 @@
         <value>application/x-zip-compressed</value>
         <value>application/zip</value>
         <value>multipart/x-zip</value>
+        <!-- Catch-all for media types that are not explicitly mentioned above. -->
+        <value>chemical</value>
+        <value>message</value>
+        <value>model</value>
+        <value>mulitpart</value>
+        <value>world</value>
+        <value>i-world</value>
+        <value>x-world</value>
+        <!-- Comment out the following if you want to classify other application
+             subtypes as 'unknown mime type' rather than 'unsupported mime type'.
+        -->
+        <value>application</value>
+      </set>
+    </property>
+
+    <!-- Sets the mime types whose document should not be indexed.
+         The connector not push the document, providing neither meta-data,
+         nor the content.  In other words, the document should be skipped.
+    -->
+    <property name="ignoredMimeTypes">
+      <set>
         <!-- Types explicitly excluded in the default GSA Crawl and Index form. -->
         <value>application/annodex</value>
         <value>application/internet-property-stream</value>
@@ -479,18 +502,7 @@
         <value>text/x-audiosoft-intra</value>
         <value>text/x-asm</value>
         <!-- Catch-all for media types that are not explicitly mentioned above. -->
-        <value>chemical</value>
         <value>example</value>
-        <value>message</value>
-        <value>model</value>
-        <value>mulitpart</value>
-        <value>world</value>
-        <value>i-world</value>
-        <value>x-world</value>
-        <!-- Comment out the following if you want to classify other application
-             subtypes as 'unknown mime type' rather than 'unsupported mime type'.
-        -->
-        <value>application</value>
       </set>
     </property>
   </bean>

@@ -37,7 +37,16 @@ public class MimeTypeMapTest extends TestCase {
     MimeTypeMap testMap = new MimeTypeMap();
     String[] mimeTypes = {"foo", "bar"};
     testMap.setUnsupportedMimeTypes(ArrayAsSet(mimeTypes));
-    Assert.assertTrue(testMap.mimeTypeSupportLevel("foo") <= 0);
+    Assert.assertTrue(testMap.mimeTypeSupportLevel("foo") == 0);
+    Assert.assertEquals(1, testMap.mimeTypeSupportLevel("ibblefrix"));
+    Assert.assertEquals(1, testMap.mimeTypeSupportLevel(null));
+  }
+
+  public void testIgnoredMimeTypes() {
+    MimeTypeMap testMap = new MimeTypeMap();
+    String[] mimeTypes = {"foo", "bar"};
+    testMap.setIgnoredMimeTypes(ArrayAsSet(mimeTypes));
+    Assert.assertTrue(testMap.mimeTypeSupportLevel("foo") < 0);
     Assert.assertEquals(1, testMap.mimeTypeSupportLevel("ibblefrix"));
     Assert.assertEquals(1, testMap.mimeTypeSupportLevel(null));
   }
@@ -61,13 +70,17 @@ public class MimeTypeMapTest extends TestCase {
     MimeTypeMap testMap = new MimeTypeMap();
     String[] supportedMimeTypes = {"foo/baz", "bar/baz"};
     String[] unsupportedMimeTypes = {"foo", "bar/cat"};
+    String[] ignoredMimeTypes = {"ignore", "bar/bar"};
     testMap.setSupportedMimeTypes(ArrayAsSet(supportedMimeTypes));
     testMap.setUnsupportedMimeTypes(ArrayAsSet(unsupportedMimeTypes));
+    testMap.setIgnoredMimeTypes(ArrayAsSet(ignoredMimeTypes));
     Assert.assertEquals(4, testMap.mimeTypeSupportLevel("foo/baz"));
-    Assert.assertTrue(testMap.mimeTypeSupportLevel("foo/rat") <= 0);
+    Assert.assertEquals(0, testMap.mimeTypeSupportLevel("foo/rat"));
     Assert.assertEquals(4, testMap.mimeTypeSupportLevel("bar/baz"));
     Assert.assertEquals(1, testMap.mimeTypeSupportLevel("bar/zoo"));
-    Assert.assertTrue(testMap.mimeTypeSupportLevel("bar/cat") <= 0);
+    Assert.assertEquals(0, testMap.mimeTypeSupportLevel("bar/cat"));
+    Assert.assertTrue((testMap.mimeTypeSupportLevel("bar/bar") < 0));
+    Assert.assertTrue((testMap.mimeTypeSupportLevel("ignore/bar") < 0));
   }
 
   private static Set<String> ArrayAsSet(String[] a) {
