@@ -20,6 +20,8 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.PusherFactory;
+import com.google.enterprise.connector.scheduler.Schedule;
+import com.google.enterprise.connector.scheduler.ScheduleTimeInterval;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -40,6 +42,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -97,7 +100,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     this.typeInfo = instanceInfo.getTypeInfo();
   }
 
-  public String getName() {
+  public String getConnectorName() {
     return name;
   }
 
@@ -222,10 +225,33 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     return getInstanceInfo().getConnectorConfig();
   }
 
+  private boolean shouldRun() throws ConnectorNotFoundException {
+    Schedule schedule = new Schedule(getConnectorSchedule());
+    if (schedule.isDisabled()) {
+      return false;
+    }
+    Calendar now = Calendar.getInstance();
+    int hour = now.get(Calendar.HOUR_OF_DAY);
+    for (ScheduleTimeInterval interval : schedule.getTimeIntervals()) {
+      int startHour = interval.getStartTime().getHour();
+      int endHour = interval.getEndTime().getHour();
+      if (0 == endHour) {
+        endHour = 24;
+      }
+      if ((hour >= startHour) && (hour < endHour)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public synchronized boolean startBatch(BatchResultRecorder resultRecorder,
       int batchHint) throws ConnectorNotFoundException {
     verifyConnectorInstanceAvailable();
     if (taskHandle != null && !taskHandle.isDone()) {
+      return false;
+    }
+    if (!shouldRun()) {
       return false;
     }
     taskHandle = null;
@@ -237,7 +263,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       TraversalManager traversalManager =
           getConnectorInterfaces().getTraversalManager();
       Traverser traverser = new QueryTraverser(pusherFactory,
-          traversalManager, batchResultProcessor, getName(),
+          traversalManager, batchResultProcessor, name,
           Context.getInstance().getTraversalContext());
       TimedCancelable batch =  new CancelableBatch(traverser,
           name, batchResultProcessor, batchResultProcessor, batchHint);

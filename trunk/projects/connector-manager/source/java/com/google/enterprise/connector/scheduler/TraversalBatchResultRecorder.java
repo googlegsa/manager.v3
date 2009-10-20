@@ -30,33 +30,44 @@ public class TraversalBatchResultRecorder implements BatchResultRecorder {
   private static final Logger LOGGER =
       Logger.getLogger(TraversalBatchResultRecorder.class.getName());
 
-  private final Schedule schedule;
   private final HostLoadManager hostLoadManager;
   private final ConnectorCoordinator connectorCoordinator;
 
-  TraversalBatchResultRecorder(Schedule schedule,
-      HostLoadManager hostLoadManager, ConnectorCoordinator connectorInstance) {
-    this.schedule = schedule;
+  TraversalBatchResultRecorder(HostLoadManager hostLoadManager,
+      ConnectorCoordinator connectorCoordinator) {
     this.hostLoadManager = hostLoadManager;
-    this.connectorCoordinator = connectorInstance;
+    this.connectorCoordinator = connectorCoordinator;
   }
 
   /**
    * Record the result of running a batch with the {@link HostLoadManager}
    */
   public void recordResult(BatchResult result) {
-    String connectorName = schedule.getConnectorName();
-    int retryDelayMillis = schedule.getRetryDelayMillis();
+    String connectorName = connectorCoordinator.getConnectorName();
     int count = result.getCountProcessed();
     if (count > 0) {
       hostLoadManager.updateNumDocsTraversed(connectorName, count);
     }
     switch (result.getDelayPolicy()) {
       case POLL:
-        hostLoadManager.connectorFinishedTraversal(connectorName,
-            retryDelayMillis);
-        if (retryDelayMillis == Schedule.POLLING_DISABLED) {
-          disableConnectorInstance(schedule);
+        try {
+          Schedule schedule =
+              new Schedule(connectorCoordinator.getConnectorSchedule());
+          int retryDelayMillis = schedule.getRetryDelayMillis();
+          hostLoadManager.connectorFinishedTraversal(connectorName,
+              retryDelayMillis);
+          if (retryDelayMillis == Schedule.POLLING_DISABLED) {
+            // We reached then end of the repository, but aren't allowed
+            // to poll looking for new content to arrive.  Disable the
+            // traversal schedule.
+            schedule.setDisabled(true);
+            // TODO(strellis): pass in a batch key here
+            connectorCoordinator.setConnectorSchedule(schedule.toString());
+            LOGGER.info("Traversal complete. Automatically pausing "
+                        + "traversal for connector " + connectorName);
+          }
+        } catch (ConnectorNotFoundException cnfe) {
+          // Connector was deleted while processing the batch.
         }
         break;
 
@@ -72,20 +83,6 @@ public class TraversalBatchResultRecorder implements BatchResultRecorder {
 
       default:
         throw new IllegalArgumentException("result = " + result);
-    }
-  }
-
-  private void disableConnectorInstance(Schedule schedule) {
-    String connectorInstanceName = schedule.getConnectorName();
-    schedule.setDisabled(true);
-    try {
-      // TODO(strellis): pass in a batch key here
-      connectorCoordinator.setConnectorSchedule(schedule.toString());
-      LOGGER.info("Traversal complete. Automatically pausing "
-          + "traversal for connector " + connectorInstanceName);
-    } catch (ConnectorNotFoundException cnfe) {
-      LOGGER.info("Connector removed during schedule save: "
-          + connectorInstanceName);
     }
   }
 }

@@ -65,6 +65,11 @@ public interface ConnectorCoordinator extends TraversalStateStore {
   public boolean exists();
 
   /**
+   * Returns the name for this {@link ConnectorCoordinator}.
+   */
+  public String getConnectorName();
+
+  /**
    * Removes this {@link ConnectorCoordinator} from the system. After this
    * returns {@link ConnectorCoordinator#exists()} will return false until
    * someone re-creates the connector configuration by calling

@@ -20,7 +20,6 @@ import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 
-import java.util.Calendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -85,22 +84,6 @@ public class TraversalScheduler implements Runnable {
     isShutdown = true;
   }
 
-  private boolean shouldRun(Schedule schedule) {
-    Calendar now = Calendar.getInstance();
-    int hour = now.get(Calendar.HOUR_OF_DAY);
-    for (ScheduleTimeInterval interval : schedule.getTimeIntervals()) {
-      int startHour = interval.getStartTime().getHour();
-      int endHour = interval.getEndTime().getHour();
-      if (0 == endHour) {
-        endHour = 24;
-      }
-      if ((hour >= startHour) && (hour < endHour)) {
-        return !hostLoadManager.shouldDelay(schedule.getConnectorName());
-      }
-    }
-    return false;
-  }
-
   /**
    * Determines whether scheduler should run.
    *
@@ -115,40 +98,22 @@ public class TraversalScheduler implements Runnable {
     for (String connectorName : instantiator.getConnectorNames()) {
       NDC.pushAppend(connectorName);
       try {
-        scheduleABatch(connectorName);
+        if (!hostLoadManager.shouldDelay(connectorName)) {
+          // TODO: move this into coordinator somehow.
+          int batchHint = hostLoadManager.determineBatchHint(connectorName);
+          if (batchHint <= 0) {
+            continue;
+          }
+          ConnectorCoordinator coordinator =
+              instantiator.getConnectorCoordinator(connectorName);
+          BatchResultRecorder resultRecorder =
+              new TraversalBatchResultRecorder(hostLoadManager, coordinator);
+          coordinator.startBatch(resultRecorder, batchHint);
+        }
+      } catch (ConnectorNotFoundException e) {
+        // Looks like the connector just got deleted.  Don't schedule it.
       } finally {
         NDC.pop();
-      }
-    }
-  }
-
-  private void scheduleABatch(String connectorName) {
-    String scheduleStr = null;
-    try {
-      scheduleStr = instantiator.getConnectorSchedule(connectorName);
-    } catch (ConnectorNotFoundException e) {
-      // Looks like the connector just got deleted.  Don't schedule it.
-      return;
-    }
-    Schedule schedule = new Schedule(scheduleStr);
-    if (schedule.isDisabled()) {
-      return;
-    }
-    if (shouldRun(schedule)) {
-      int batchHint = hostLoadManager.determineBatchHint(connectorName);
-      if (batchHint <= 0) {
-        return;
-      }
-      try {
-        ConnectorCoordinator coordinator =
-          instantiator.getConnectorCoordinator(connectorName);
-        BatchResultRecorder resultRecorder =
-          new TraversalBatchResultRecorder(schedule, hostLoadManager,
-              coordinator);
-        coordinator.startBatch(resultRecorder, batchHint);
-      } catch (ConnectorNotFoundException cnfe) {
-        LOGGER.log(Level.WARNING, "Connector not found - this is normal if you "
-            + " recently reconfigured your connector instance.", cnfe);
       }
     }
   }
