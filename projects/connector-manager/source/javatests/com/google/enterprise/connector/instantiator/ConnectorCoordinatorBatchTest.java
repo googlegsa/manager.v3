@@ -118,6 +118,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
         new ConnectorCoordinatorImpl("c1", recordingPusher, threadPool);
     Map<String, String> config = new HashMap<String, String>();
     cc.setConnectorConfig(typeInfo, config, locale, false);
+    cc.setConnectorSchedule("c1:1000:0:0-0");
     coordinator = cc;
   }
 
@@ -204,6 +205,24 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
       }
     }
     fail("Failed to start batch - probably a batch is not ending properly.");
+  }
+
+  public void testDisabledTraversal() throws Exception {
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_MILLIS);
+    // Disable traversal schedule.  No batch should run.
+    coordinator.setConnectorSchedule("#c1:1000:0:0-0");
+    MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
+    assertFalse(coordinator.startBatch(resultRecorder, 3));
+    assertNull(resultRecorder.getBatchResult());
+  }
+
+  public void testScheduledTraversal() throws Exception {
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_MILLIS);
+    // With no traversal intervals, no batch should run.
+    coordinator.setConnectorSchedule("c1:1000:0:");
+    MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
+    assertFalse(coordinator.startBatch(resultRecorder, 3));
+    assertNull(resultRecorder.getBatchResult());
   }
 
   public void testCancelBatch() throws Exception {
