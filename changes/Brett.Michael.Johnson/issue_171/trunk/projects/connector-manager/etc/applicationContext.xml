@@ -107,16 +107,6 @@
     </property>
   </bean>
 
-  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-    <property name="staticMethod"
-              value="com.google.enterprise.connector.pusher.DocPusher.setFileSizeLimitInfo"/>
-    <property name="arguments">
-      <list>
-        <ref bean="FileSizeLimitInfo"/>
-      </list>
-    </property>
-  </bean>
-
   <!-- Persistent Store mechanism used to store the Connector Configuration,
        Connector Schedule, and Connector Traversal State.  By default, this
        information is stored in files in the Connector instance directory.
@@ -201,6 +191,7 @@
   <bean id="PusherFactory"
         class="com.google.enterprise.connector.pusher.DocPusherFactory">
     <constructor-arg index="0" ref="FeedConnection" />
+    <constructor-arg index="1" ref="FileSizeLimitInfo"/>
   </bean>
 
   <bean id="Instantiator"

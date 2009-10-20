@@ -105,9 +105,9 @@ public class TraversalScheduler implements Runnable {
             continue;
           }
           ConnectorCoordinator coordinator =
-            instantiator.getConnectorCoordinator(connectorName);
+              instantiator.getConnectorCoordinator(connectorName);
           BatchResultRecorder resultRecorder =
-            new TraversalBatchResultRecorder(hostLoadManager, coordinator);
+              new TraversalBatchResultRecorder(hostLoadManager, coordinator);
           coordinator.startBatch(resultRecorder, batchHint);
         }
       } catch (ConnectorNotFoundException e) {

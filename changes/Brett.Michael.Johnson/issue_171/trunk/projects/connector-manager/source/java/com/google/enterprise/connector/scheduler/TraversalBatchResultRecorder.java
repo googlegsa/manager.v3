@@ -61,6 +61,7 @@ public class TraversalBatchResultRecorder implements BatchResultRecorder {
             // to poll looking for new content to arrive.  Disable the
             // traversal schedule.
             schedule.setDisabled(true);
+            // TODO(strellis): pass in a batch key here
             connectorCoordinator.setConnectorSchedule(schedule.toString());
             LOGGER.info("Traversal complete. Automatically pausing "
                         + "traversal for connector " + connectorName);
