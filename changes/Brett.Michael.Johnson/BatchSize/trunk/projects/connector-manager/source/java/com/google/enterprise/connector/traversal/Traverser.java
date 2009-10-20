@@ -36,7 +36,6 @@ public interface Traverser {
    *         process approximately {@code batchSize.getHint()}, but no more
    *         than {@code batchSize.getMaximum()} number of documents in this
    *         batch.
-   *
    * @return A {@link BatchResult} containing the actual number of documents
    *         from this batch given to the feed and a possible policy to delay
    *         before requesting another batch.

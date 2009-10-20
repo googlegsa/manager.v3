@@ -15,7 +15,7 @@
 package com.google.enterprise.connector.traversal;
 
 /**
- * A mock query traverser that can be cancelled.
+ * A mock query traverser that can be canceled.
  */
 public class CancellableQueryTraverser implements Traverser {
   boolean cancelled = false;

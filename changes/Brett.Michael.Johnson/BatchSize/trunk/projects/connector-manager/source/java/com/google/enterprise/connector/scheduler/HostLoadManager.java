@@ -205,8 +205,12 @@ public class HostLoadManager {
 
     if (remainingDocsToTraverse > 0) {
       int hint = Math.min(batchSize, remainingDocsToTraverse);
-      // Allow the connector to return upto twice as much as we
+      // Allow the connector to return up to twice as much as we
       // ask for, even if it exceeds the load target.
+      // TODO: Good connectors may occasionally exceed the hint for
+      // reasons of efficiency.  However badly behaved connectors that
+      // constantly return double the batchHint should be reined back
+      // within the host load.
       int max =  Math.max(hint * 2, remainingDocsToTraverse);
       return new BatchSize(hint, max);
     } else {

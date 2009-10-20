@@ -174,10 +174,10 @@ public class QueryTraverserTest extends TestCase {
   }
 
   public void testTimeout() {
-    final String CONNECTOR_NAME = "fred flinstone";
+    final String CONNECTOR_NAME = "fred_flinstone";
     ValidatingPusher pusher = new ValidatingPusher(CONNECTOR_NAME);
     NeverEndingDocumentlistTraversalManager traversalManager =
-      new NeverEndingDocumentlistTraversalManager(100);
+        new NeverEndingDocumentlistTraversalManager(100);
     TraversalStateStore stateStore = new RecordingTraversalStateStore();
     ProductionTraversalContext context = new ProductionTraversalContext();
     context.setTraversalTimeLimitSeconds(1);
@@ -193,10 +193,10 @@ public class QueryTraverserTest extends TestCase {
   }
 
   public void testBatchSize() {
-    final String CONNECTOR_NAME = "barney rubble";
+    final String CONNECTOR_NAME = "barney_rubble";
     ValidatingPusher pusher = new ValidatingPusher(CONNECTOR_NAME);
     NeverEndingDocumentlistTraversalManager traversalManager =
-      new NeverEndingDocumentlistTraversalManager(10);
+        new NeverEndingDocumentlistTraversalManager(10);
     TraversalStateStore stateStore = new RecordingTraversalStateStore();
     ProductionTraversalContext context = new ProductionTraversalContext();
     context.setTraversalTimeLimitSeconds(1);

@@ -50,6 +50,8 @@ public class CancelableBatchTest extends TestCase {
     assertEquals(expectResult, batchResult);
     // TODO(strellis): Validate retryDelayMillis or remove it from
     // BatchRecorder.
+    // TODO(bjohnson): Create tests where batchHint != batchMaximum, esp.
+    // where returned batch has batchMaximum and greater than batchMaximum.
   }
 
   private static class MockBatchResultRecorder implements BatchResultRecorder {

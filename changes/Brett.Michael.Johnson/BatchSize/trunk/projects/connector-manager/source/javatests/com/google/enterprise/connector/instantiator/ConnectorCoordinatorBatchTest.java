@@ -188,8 +188,9 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
    * the {@link SyncingConnector} registering an interrupt. There is a
    * little interval between the time such activity occurs and the time the
    * batch fully completes. Since
-   * {@link ConnectorCoordinatorImpl#startBatch(BatchResultRecorder, int)} will
-   * not start a batch while one is running this function includes a retry loop.
+   * {@link ConnectorCoordinatorImpl#startBatch(BatchResultRecorder, BatchSize)}
+   * will not start a batch while one is running this function includes a retry
+   * loop.
    *
    * @param resultRecorder
    * @throws ConnectorNotFoundException

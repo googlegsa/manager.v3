@@ -127,6 +127,10 @@ public class HostLoadManagerTest extends TestCase {
     assertFalse(hostLoadManager.shouldDelay(connectorName));
   }
 
+  /**
+   * Test that if we meet or exceed the host load limit, further
+   * traversal should be delayed until the next traversal period.
+   */
   public void testLoadDelay() {
     final String connectorName = "cn1";
 
@@ -153,12 +157,14 @@ public class HostLoadManagerTest extends TestCase {
     assertFalse(hostLoadManager.shouldDelay(connectorName));
   }
 
-  // Test that if we have nearly reached the load level, we
-  // won't OK a traversal requesting a tiny number of documents.
+  /**
+   * Test that if we have nearly reached the load level, we
+   * won't OK a traversal requesting a tiny number of documents.
+   */
   public void testLoadDelay2() {
     final String connectorName = "cn1";
 
-    // NOTE: HostLoadManager.determineBatchSize() and shouldDelay make the
+    // NOTE: HostLoadManager.determineBatchSize() and shouldDelay() make the
     // assumption that periodInMillis is a minute.  We skew these values here
     // in such a way that their calculations come out the same, but we don't
     // have multi-minute waits in the unit tests.
@@ -185,6 +191,9 @@ public class HostLoadManagerTest extends TestCase {
     assertFalse(hostLoadManager.shouldDelay(connectorName));
   }
 
+  /**
+   * Test that the optimal batch size may be configured in the Spring Context.
+   */
   public void testBatchSize() {
     // Need to test through Spring to make sure the property works.
     Context.refresh();
@@ -206,15 +215,17 @@ public class HostLoadManagerTest extends TestCase {
     assertEquals(200, hostLoadManager.getBatchSize());
   }
 
-  // The new determineBatchSize logic treats both the hint and the load
-  // as "suggestions", or "desired targets".  The traversal might
-  // return more than the batchHint, and the number of docs processed in
-  // a period might exceed the load.  This flexibility allows the connectors
-  // to work more efficiently without expending a great deal of effort
-  // trying to hit the batch size exactly.  However, poorly behaved
-  // connectors could attempt to vastly exceed the recommended batch size,
-  // so the BatchSize.maximum constraint puts a ceiling on the number of
-  // documents that will be processed from the DocumentList.
+  /**
+   * The new determineBatchSize logic treats both the hint and the load
+   * as "suggestions", or "desired targets".  The traversal might
+   * return more than the batchHint, and the number of docs processed in
+   * a period might exceed the load.  This flexibility allows the connectors
+   * to work more efficiently without expending a great deal of effort
+   * trying to hit the batch size exactly.  However, poorly behaved
+   * connectors could attempt to vastly exceed the recommended batch size,
+   * so the BatchSize.maximum constraint puts a ceiling on the number of
+   * documents that will be processed from the DocumentList.
+   */
   public void testDetermineBatchSize() {
     final String connectorName = "cn1";
     addLoad(connectorName, 60);
