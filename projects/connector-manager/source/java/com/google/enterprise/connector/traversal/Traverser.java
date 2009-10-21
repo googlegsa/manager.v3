@@ -25,64 +25,22 @@ public interface Traverser {
   public static final int ERROR_WAIT_MILLIS = 15 * 60 * 1000;
 
   /**
-   * Signal to the TraversalManager that it should wait before calling
-   * {@link #runBatch(int)} again for the Connector, because that
-   * Connector has encountered an error condition that might correct
-   * itself after a short period of time.  (Perhaps a loss of network
-   * connectivity, or unresponsive server.)  The connector manager
-   * may choose to wait increasingly longer periods of time if the
-   * condition persists.
-   */
-  public static final int ERROR_WAIT = -2;
-
-  /**
-   * Signal to the TraversalManager that it should wait before calling
-   * {@link #runBatch(int)} again for the Connector, because that
-   * Connector Repository has no new content available at this time.
-   */
-  public static final int POLLING_WAIT = -1;
-
-  /**
-   * Signal to the TraversalManager that it need not wait before calling
-   * {@link #runBatch(int)} again for the Connector, even if the Connector
-   * returned no Documents in the previous batch.
-   */
-  public static final int NO_WAIT = 0;
-
-  /**
    * Runs a batch of documents. The Traversal method may be hard (impossible?)
-   * to interrupt while it is executing runBatch(). It is expected that a thread
-   * loop running a traversal method would call runBatch(), then check for
-   * InterruptedException, then decide whether it wants to stop of itself, for
-   * scheduling reasons, or for a clean shutdown. It could then re-adjust the
-   * batch hint if desired, then repeat.
+   * to interrupt while it is executing runBatch(). It is expected that a
+   * thread loop running a traversal method would call runBatch(), then check
+   * for InterruptedException, then decide whether it wants to stop of itself,
+   * for scheduling reasons, or for a clean shutdown. It could then re-adjust
+   * the batch hint if desired, then repeat.
    *
-   * @param  batchHint A positive integer. This requests that the traversal
-   *         method process no more than that number of documents in this batch.
-   *
-   * @return The actual number of documents given to the feed (may not be the
-   *         same as the batch hint), with 0, -1, and -2 having special meaning:
-   *         A return value of -2 indicates that the connector encountered a
-   *         transient error condition - wait a while and try again.
-   *         A return value of -1 indicates that no new documents are available
-   *         to index at this time - wait a while and try again.
-   *         A return value of 0 indicates that while no documents were indexed
-   *         in this batch, there are still potential candidates to consider.
-   *         (Perhaps no documents passed in this batch because there were
-   *         document errors or qualified documents are sparsely distributed in
-   *         the repository).  Try another batch as soon as possible.
-   *         A return value greater than 0 represents the actual number of
-   *         documents traversed and pushed into the feed.  There are likely
-   *         more documents available for traversal, so try another batch as
-   *         soon as possible.
-   *
-   * @throws IllegalArgumentException if a non-positive batchHint is supplied.
+   * @param  batchSize A {@link BatchSize} instructs the traversal method to
+   *         process approximately {@code batchSize.getHint()}, but no more
+   *         than {@code batchSize.getMaximum()} number of documents in this
+   *         batch.
+   * @return A {@link BatchResult} containing the actual number of documents
+   *         from this batch given to the feed and a possible policy to delay
+   *         before requesting another batch.
    */
-  /* TODO: Perhaps we should return a more complicated structure that allows
-   *       for more interesting monitoring: number of successful docs,
-   *       number failed, average size, etc.
-   */
-  public int runBatch(int batchHint);
+  public BatchResult runBatch(BatchSize batchSize);
 
   /**
    * Cancel the Batch in progress.  Discard the batch.  This might be called

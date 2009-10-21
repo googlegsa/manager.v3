@@ -19,6 +19,7 @@ import com.google.enterprise.connector.instantiator.ConnectorCoordinator;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.traversal.BatchSize;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -100,15 +101,15 @@ public class TraversalScheduler implements Runnable {
       try {
         if (!hostLoadManager.shouldDelay(connectorName)) {
           // TODO: move this into coordinator somehow.
-          int batchHint = hostLoadManager.determineBatchHint(connectorName);
-          if (batchHint <= 0) {
+          BatchSize batchSize = hostLoadManager.determineBatchSize(connectorName);
+          if (batchSize.getMaximum() == 0) {
             continue;
           }
           ConnectorCoordinator coordinator =
               instantiator.getConnectorCoordinator(connectorName);
           BatchResultRecorder resultRecorder =
               new TraversalBatchResultRecorder(hostLoadManager, coordinator);
-          coordinator.startBatch(resultRecorder, batchHint);
+          coordinator.startBatch(resultRecorder, batchSize);
         }
       } catch (ConnectorNotFoundException e) {
         // Looks like the connector just got deleted.  Don't schedule it.

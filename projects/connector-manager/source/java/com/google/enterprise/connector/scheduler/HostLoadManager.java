@@ -17,6 +17,7 @@ package com.google.enterprise.connector.scheduler;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.pusher.FeedConnection;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.traversal.BatchSize;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -101,14 +102,19 @@ public class HostLoadManager {
     this.batchSize = batchSize;
   }
 
-  private int getMaxLoad(String connectorName) {
+  private int getMaxDocsPerPeriod(String connectorName) {
     String scheduleStr = null;
     try {
       scheduleStr = instantiator.getConnectorSchedule(connectorName);
     } catch (ConnectorNotFoundException e) {
       // Connector seems to have been deleted.
     }
-    return (scheduleStr == null) ? 0 : new Schedule(scheduleStr).getLoad();
+    if (scheduleStr == null) {
+      return 0;
+    } else {
+      int load = new Schedule(scheduleStr).getLoad();
+      return (int) ((periodInMillis / 1000f) * (load / 60f) + 0.5);
+    }
   }
 
   /**
@@ -183,11 +189,11 @@ public class HostLoadManager {
    * as the load determined based on calls to updateNumDocsTraversed().
    *
    * @param connectorName name of the connector instance
-   * @return hint to the number of documents traverser should traverse
+   * @return BatchSize hint and constraint to the number of documents traverser
+   *         should traverse
    */
-  public int determineBatchHint(String connectorName) {
-    int maxDocsPerPeriod = (int)
-        ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f) + 0.5);
+  public BatchSize determineBatchSize(String connectorName) {
+    int maxDocsPerPeriod = getMaxDocsPerPeriod(connectorName);
     int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
     int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
     if (LOGGER.isLoggable(Level.FINEST)) {
@@ -196,10 +202,20 @@ public class HostLoadManager {
           + "  docsTraversed = " + docsTraversed
           + "  remainingDocsToTraverse = " + remainingDocsToTraverse);
     }
-    if (remainingDocsToTraverse > batchSize) {
-      remainingDocsToTraverse = batchSize;
+
+    if (remainingDocsToTraverse > 0) {
+      int hint = Math.min(batchSize, remainingDocsToTraverse);
+      // Allow the connector to return up to twice as much as we
+      // ask for, even if it exceeds the load target.
+      // TODO: Good connectors may occasionally exceed the hint for
+      // reasons of efficiency.  However badly behaved connectors that
+      // constantly return double the batchHint should be reined back
+      // within the host load.
+      int max =  Math.max(hint * 2, remainingDocsToTraverse);
+      return new BatchSize(hint, max);
+    } else {
+      return new BatchSize();
     }
-    return (remainingDocsToTraverse > 0) ? remainingDocsToTraverse : 0;
   }
 
   /**
@@ -219,11 +235,14 @@ public class HostLoadManager {
         return true;
       }
     }
-    int maxDocsPerPeriod = (int)
-        ((periodInMillis / 1000f) * (getMaxLoad(connectorName) / 60f) + 0.5);
+
+    // Has the connector exceeded its maximum number of documents per minute?
+    int maxDocsPerPeriod = getMaxDocsPerPeriod(connectorName);
     int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
     int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
-    return (remainingDocsToTraverse <= 0);
+    // Avoid asking for tiny batches if we are near the load limit.
+    int min = Math.min((maxDocsPerPeriod / 10), 20);
+    return (remainingDocsToTraverse <= min);
   }
 
   /**

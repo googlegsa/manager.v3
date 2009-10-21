@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.traversal.BatchResult;
+import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 import com.google.enterprise.connector.traversal.Traverser;
 
@@ -23,31 +24,34 @@ import junit.framework.TestCase;
 public class CancelableBatchTest extends TestCase {
 
   public void testRunBatchPositiveCount() throws Exception {
-    runBatch(3, 3, 4, TraversalDelayPolicy.IMMEDIATE);
+    runBatch(3, 4, TraversalDelayPolicy.IMMEDIATE);
   }
 
   public void testRunBatchErrorWait() throws Exception {
-    runBatch(Traverser.ERROR_WAIT, 0, 4, TraversalDelayPolicy.ERROR);
+    runBatch(0, 4, TraversalDelayPolicy.ERROR);
   }
 
   public void testRunBatchNoWait() throws Exception {
-    runBatch(Traverser.POLLING_WAIT, 0, 4, TraversalDelayPolicy.POLL);
+    runBatch(0, 4, TraversalDelayPolicy.POLL);
   }
 
-  private void runBatch(final int legacyResult, final int expectCount,
-      final int batchHint, final TraversalDelayPolicy expectDelayPolicy)
-      throws Exception {
-    MockTraverser traverser = new MockTraverser(batchHint, legacyResult);
+  private void runBatch(final int expectCount, final int batchHint,
+      final TraversalDelayPolicy expectDelayPolicy) throws Exception {
+    BatchSize batchSize = new BatchSize(batchHint, batchHint);
+    BatchResult expectResult = new BatchResult(expectDelayPolicy, expectCount);
+    MockTraverser traverser = new MockTraverser(batchSize, expectResult);
     MockBatchResultRecorder recorder = new MockBatchResultRecorder();
     MockBatchTimeout batchTimeout = new MockBatchTimeout();
     CancelableBatch batch =
         new CancelableBatch(traverser, "connector1", recorder, batchTimeout,
-            batchHint);
+            batchSize);
     batch.run();
     BatchResult batchResult = recorder.getBatchResult();
-    assertEquals(new BatchResult(expectDelayPolicy, expectCount), batchResult);
+    assertEquals(expectResult, batchResult);
     // TODO(strellis): Validate retryDelayMillis or remove it from
-    // BtchRecorder.
+    // BatchRecorder.
+    // TODO(bjohnson): Create tests where batchHint != batchMaximum, esp.
+    // where returned batch has batchMaximum and greater than batchMaximum.
   }
 
   private static class MockBatchResultRecorder implements BatchResultRecorder {
@@ -66,21 +70,21 @@ public class CancelableBatchTest extends TestCase {
   }
 
   private static class MockTraverser implements Traverser {
-    private final int expectBatchHint;
-    private final int legacyResult;
+    private final BatchSize expectBatchSize;
+    private final BatchResult batchResult;
 
-    MockTraverser(int expectBatchHint, int legacyResult) {
-      this.expectBatchHint = expectBatchHint;
-      this.legacyResult = legacyResult;
+    MockTraverser(BatchSize batchSize, BatchResult batchResult) {
+      this.expectBatchSize = batchSize;
+      this.batchResult = batchResult;
     }
 
     public void cancelBatch() {
       throw new UnsupportedOperationException();
     }
 
-    public int runBatch(int batchHint) {
-      assertEquals(expectBatchHint, batchHint);
-      return legacyResult;
+    public BatchResult runBatch(BatchSize batchSize) {
+      assertEquals(expectBatchSize, batchSize);
+      return batchResult;
     }
   }
 

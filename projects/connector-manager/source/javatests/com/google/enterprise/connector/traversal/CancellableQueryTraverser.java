@@ -15,12 +15,12 @@
 package com.google.enterprise.connector.traversal;
 
 /**
- * A mock query traverser that can be cancelled.
+ * A mock query traverser that can be canceled.
  */
 public class CancellableQueryTraverser implements Traverser {
   boolean cancelled = false;
 
-  public int runBatch(int batchHint) {
+  public BatchResult runBatch(BatchSize ignored) {
     // infinite loop
     while (!isCancelled()) {
       try {
@@ -29,7 +29,7 @@ public class CancellableQueryTraverser implements Traverser {
         // do nothing
       }
     }
-    return -1;
+    return new BatchResult(TraversalDelayPolicy.POLL, 0);
   }
 
   public synchronized void cancelBatch() {

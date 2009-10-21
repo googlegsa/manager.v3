@@ -21,7 +21,7 @@ import java.util.Date;
  */
 public class InterruptibleQueryTraverser implements Traverser {
 
-  public int runBatch(int batchHint) {
+  public BatchResult runBatch(BatchSize ignored) {
     int counter = 0;
     boolean breakLoop = true;
     boolean interrupted = false;
@@ -48,7 +48,7 @@ public class InterruptibleQueryTraverser implements Traverser {
         break;
       }
     }
-    return counter;
+    return new BatchResult(TraversalDelayPolicy.IMMEDIATE, counter);
   }
 
   public void cancelBatch() {

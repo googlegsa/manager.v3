@@ -25,6 +25,7 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.traversal.BatchResult;
+import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 
 import junit.framework.Assert;
@@ -188,8 +189,9 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
    * the {@link SyncingConnector} registering an interrupt. There is a
    * little interval between the time such activity occurs and the time the
    * batch fully completes. Since
-   * {@link ConnectorCoordinatorImpl#startBatch(BatchResultRecorder, int)} will
-   * not start a batch while one is running this function includes a retry loop.
+   * {@link ConnectorCoordinatorImpl#startBatch(BatchResultRecorder, BatchSize)}
+   * will not start a batch while one is running this function includes a retry
+   * loop.
    *
    * @param resultRecorder
    * @throws ConnectorNotFoundException
@@ -198,7 +200,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   private void startBatch(MockBatchResultRecorder resultRecorder)
       throws ConnectorNotFoundException, InterruptedException {
     for (int iy = 0; iy < 100; iy++) {
-      if (coordinator.startBatch(resultRecorder, 3)) {
+      if (coordinator.startBatch(resultRecorder, new BatchSize(3, 3))) {
         return;
       } else {
         Thread.sleep(20);
@@ -212,7 +214,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     // Disable traversal schedule.  No batch should run.
     coordinator.setConnectorSchedule("#c1:1000:0:0-0");
     MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
-    assertFalse(coordinator.startBatch(resultRecorder, 3));
+    assertFalse(coordinator.startBatch(resultRecorder, new BatchSize(3, 3)));
     assertNull(resultRecorder.getBatchResult());
   }
 
@@ -221,14 +223,14 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     // With no traversal intervals, no batch should run.
     coordinator.setConnectorSchedule("c1:1000:0:");
     MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
-    assertFalse(coordinator.startBatch(resultRecorder, 3));
+    assertFalse(coordinator.startBatch(resultRecorder, new BatchSize(3, 3)));
     assertNull(resultRecorder.getBatchResult());
   }
 
   public void testCancelBatch() throws Exception {
     createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_MILLIS);
     MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
-    coordinator.startBatch(resultRecorder, 3);
+    coordinator.startBatch(resultRecorder, new BatchSize(3, 3));
     SyncingConnector.Tracker tracker =
         SyncingConnector.getTracker();
     tracker.blockUntilTraversing();
@@ -247,7 +249,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   public void testSeConnectorConfig() throws Exception {
     createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_MILLIS);
     MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
-    coordinator.startBatch(resultRecorder, 3);
+    coordinator.startBatch(resultRecorder, new BatchSize(3, 3));
     SyncingConnector.Tracker tracker =
         SyncingConnector.getTracker();
     tracker.blockUntilTraversing();
@@ -270,7 +272,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   public void testTimeoutBatch() throws Exception {
     createPusherAndCoordinator(SHORT_TRAVERSAL_TIME_LIMIT_MILLIS);
     MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
-    coordinator.startBatch(resultRecorder, 3);
+    coordinator.startBatch(resultRecorder, new BatchSize(3, 3));
     SyncingConnector.Tracker tracker =
         SyncingConnector.getTracker();
     tracker.blockUntilTraversingInterrupted();

@@ -20,6 +20,7 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
 
@@ -214,12 +215,13 @@ public interface ConnectorCoordinator extends TraversalStateStore {
    * Starts running a batch for this {@link ConnectorCoordinator} if a batch is
    * not already running.
    *
+   * @param batchSize batch size contstraints
    * @return true if this call started a batch
    * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
    *         does not exist.
    */
-  public boolean startBatch(BatchResultRecorder resultRecorder, int batchHint)
-      throws ConnectorNotFoundException;
+  public boolean startBatch(BatchResultRecorder resultRecorder,
+      BatchSize batchSize) throws ConnectorNotFoundException;
 
   /**
    * Shuts down this {@link ConnectorCoordinator} if {@link #exists()}.

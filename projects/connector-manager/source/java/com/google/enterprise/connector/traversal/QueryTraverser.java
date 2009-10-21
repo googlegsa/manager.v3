@@ -67,6 +67,7 @@ public class QueryTraverser implements Traverser {
     }
   }
 
+  //@Override
   public void cancelBatch() {
     synchronized(cancelLock) {
       cancelWork = true;
@@ -80,25 +81,21 @@ public class QueryTraverser implements Traverser {
     }
   }
 
-  public int runBatch(int batchHint) {
+  //@Override
+  public BatchResult runBatch(BatchSize batchSize) {
     final long timeoutTime = System.currentTimeMillis()
       + traversalContext.traversalTimeLimitSeconds() * 1000;
 
     if (isCancelled()) {
         LOGGER.warning("Attempting to run a cancelled QueryTraverser");
-        return Traverser.ERROR_WAIT;
-    }
-    if (batchHint <= 0) {
-      throw new IllegalArgumentException("batchHint must be a positive int");
+      return new BatchResult(TraversalDelayPolicy.ERROR, 0);
     }
     try {
-      queryTraversalManager.setBatchHint(batchHint);
+      queryTraversalManager.setBatchHint(batchSize.getHint());
     } catch (RepositoryException e) {
       LOGGER.log(Level.WARNING, "Unable to set batch hint", e);
     }
 
-    int counter = 0;
-    DocumentList resultSet = null;
     String connectorState;
     try {
       if (stateStore != null) {
@@ -111,16 +108,17 @@ public class QueryTraverser implements Traverser {
       // That happens if the connector was deleted while we were asleep.
       // Our connector seems to have been deleted.  Don't process a batch.
       LOGGER.finer("Halting traversal..." + ise.getMessage());
-      return Traverser.ERROR_WAIT;
+      return new BatchResult(TraversalDelayPolicy.ERROR, 0);
     }
 
+    DocumentList resultSet = null;
     if (connectorState == null) {
       try {
         LOGGER.finer("Starting traversal...");
         resultSet = queryTraversalManager.startTraversal();
       } catch (Exception e) {
         LOGGER.log(Level.WARNING, "startTraversal threw exception: ", e);
-        return Traverser.ERROR_WAIT;
+        return new BatchResult(TraversalDelayPolicy.ERROR, 0);
       }
     } else {
       try {
@@ -128,7 +126,7 @@ public class QueryTraverser implements Traverser {
         resultSet = queryTraversalManager.resumeTraversal(connectorState);
       } catch (Exception e) {
         LOGGER.log(Level.WARNING, "resumeTraversal threw exception: ", e);
-        return Traverser.ERROR_WAIT;
+        return new BatchResult(TraversalDelayPolicy.ERROR, 0);
       }
     }
 
@@ -136,15 +134,17 @@ public class QueryTraverser implements Traverser {
     // no new content to traverse.
     if (resultSet == null) {
       LOGGER.finer("Result set is NULL, no documents returned for traversal.");
-      return Traverser.POLLING_WAIT;
+      return new BatchResult(TraversalDelayPolicy.POLL, 0);
     }
 
     Pusher pusher = null;
+    BatchResult result = null;
+    int counter = 0;
     try {
       // Get a Pusher for feeding the returned Documents.
       pusher = pusherFactory.newPusher(connectorName);
 
-      while (counter < batchHint) {
+      while (counter < batchSize.getMaximum()) {
         if (Thread.currentThread().isInterrupted() || isCancelled()) {
           LOGGER.fine("Traversal for connector " + connectorName
                       + " has been interrupted...breaking out of batch run.");
@@ -169,7 +169,7 @@ public class QueryTraverser implements Traverser {
             // incremented here to insure it represents documents returned from
             // the list.  Note the call to nextDocument() could also throw a
             // RepositoryDocumentException signaling a skipped document in which
-            // case the call will not be counted against the batchHint.
+            // case the call will not be counted against the batch maximum.
             counter++;
             // Fetch DocId to use in messages.
             try {
@@ -201,11 +201,10 @@ public class QueryTraverser implements Traverser {
         pusher.flush();
       }
     } catch (OutOfMemoryError e) {
-      resultSet = null;
-      counter = Traverser.ERROR_WAIT;
       pusher.cancel();
       System.runFinalization();
       System.gc();
+      result = new BatchResult(TraversalDelayPolicy.ERROR, 0);
       try {
         LOGGER.severe("Out of JVM Heap Space.  Will retry later.");
         LOGGER.log(Level.FINEST, e.getMessage(), e);
@@ -218,51 +217,46 @@ public class QueryTraverser implements Traverser {
       // (as there is a discrepancy between what the Connector thinks
       // it has fed, and what actually has been pushed).
       LOGGER.log(Level.SEVERE, "Repository Exception during traversal.", e);
-      resultSet = null;
-      counter = Traverser.ERROR_WAIT;
-      pusher.cancel();
+      result = new BatchResult(TraversalDelayPolicy.ERROR, 0);
     } catch (PushException e) {
       LOGGER.log(Level.SEVERE, "Push Exception during traversal.", e);
       // Drop the entire batch on the floor.  Do not call checkpoint
       // (as there is a discrepancy between what the Connector thinks
       // it has fed, and what actually has been pushed).
-      resultSet = null;
-      counter = Traverser.ERROR_WAIT;
-      if (pusher != null) {
-        pusher.cancel();
-      }
+      result = new BatchResult(TraversalDelayPolicy.ERROR, 0);
     } catch (FeedException e) {
       LOGGER.log(Level.SEVERE, "Feed Exception during traversal.", e);
       // Drop the entire batch on the floor.  Do not call checkpoint
       // (as there is a discrepancy between what the Connector thinks
       // it has fed, and what actually has been pushed).
-      resultSet = null;
-      counter = Traverser.ERROR_WAIT;
-      pusher.cancel();
+      result = new BatchResult(TraversalDelayPolicy.ERROR, 0);
     } catch (Throwable t) {
       LOGGER.log(Level.SEVERE, "Uncaught Exception during traversal.", t);
       // Drop the entire batch on the floor.  Do not call checkpoint
       // (as there is a discrepancy between what the Connector thinks
       // it has fed, and what actually has been pushed).
-      resultSet = null;
-      counter = Traverser.ERROR_WAIT;
-      pusher.cancel();
-    } finally {
+      result = new BatchResult(TraversalDelayPolicy.ERROR, 0);
+   } finally {
       // If we have cancelled the work, abandon the batch.
       if (isCancelled()) {
-        resultSet = null;
-        counter = Traverser.ERROR_WAIT;
-        pusher.cancel();
+        result = new BatchResult(TraversalDelayPolicy.ERROR, 0);
       }
 
       // Checkpoint completed work as well as skip past troublesome documents
       // (e.g. documents that are too large and will always fail).
-      if ((resultSet != null) && (checkpointAndSave(resultSet) == null)) {
+      if ((result == null) && (checkpointAndSave(resultSet) == null)) {
         // Unable to get a checkpoint, so wait a while, then retry batch.
-        counter = Traverser.ERROR_WAIT;
+        result = new BatchResult(TraversalDelayPolicy.ERROR, 0);
       }
     }
-    return counter;
+    if (result == null) {
+      result = new BatchResult(TraversalDelayPolicy.IMMEDIATE, counter);
+    } else if (pusher != null) {
+      // We are returning an error from this batch. Cancel any feed that
+      // might be in progress.
+      pusher.cancel();
+    }
+    return result;
   }
 
   private String checkpointAndSave(DocumentList pm) {

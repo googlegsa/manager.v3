@@ -32,6 +32,7 @@ import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.BatchResult;
+import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
@@ -246,7 +247,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
   }
 
   public synchronized boolean startBatch(BatchResultRecorder resultRecorder,
-      int batchHint) throws ConnectorNotFoundException {
+      BatchSize batchSize) throws ConnectorNotFoundException {
     verifyConnectorInstanceAvailable();
     if (taskHandle != null && !taskHandle.isDone()) {
       return false;
@@ -265,8 +266,8 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       Traverser traverser = new QueryTraverser(pusherFactory,
           traversalManager, batchResultProcessor, name,
           Context.getInstance().getTraversalContext());
-      TimedCancelable batch =  new CancelableBatch(traverser,
-          name, batchResultProcessor, batchResultProcessor, batchHint);
+      TimedCancelable batch =  new CancelableBatch(traverser, name,
+          batchResultProcessor, batchResultProcessor, batchSize);
       taskHandle = threadPool.submit(batch);
       return true;
     } catch (ConnectorNotFoundException cnfe) {

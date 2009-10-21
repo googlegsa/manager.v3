@@ -15,7 +15,7 @@
 package com.google.enterprise.connector.traversal;
 
 /**
- * Holder for the result of running {@link Traverser#runBatch(int)}
+ * Holder for the result of running {@link Traverser#runBatch(BatchSize)}
  */
 public class BatchResult {
   private final TraversalDelayPolicy delayPolicy;
@@ -35,16 +35,6 @@ public class BatchResult {
 
   public int getCountProcessed() {
     return countProcessed;
-  }
-
-  // TODO(strellis): Remove this when Traverser returns one of these.
-  public static BatchResult newBatchResultFromLegacyBatchResult(
-      int legacyBatchResult) {
-    int countProcessed = (legacyBatchResult < 0) ? 0 : legacyBatchResult;
-    TraversalDelayPolicy delayPolicy =
-        TraversalDelayPolicy
-            .getTraversalDealyPolicyFromLegacyBatchResult(legacyBatchResult);
-    return new BatchResult(delayPolicy, countProcessed);
   }
 
   @Override
