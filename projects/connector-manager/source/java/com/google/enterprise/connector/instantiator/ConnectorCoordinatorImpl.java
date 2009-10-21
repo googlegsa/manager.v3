@@ -255,6 +255,9 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     if (!shouldRun()) {
       return false;
     }
+    if (batchSize.getMaximum() == 0) {
+      return false;
+    }
     taskHandle = null;
     currentBatchKey = new Object();
     BatchCoordinator batchResultProcessor =

@@ -100,22 +100,52 @@ public class TraversalScheduler implements Runnable {
       NDC.pushAppend(connectorName);
       try {
         if (!hostLoadManager.shouldDelay(connectorName)) {
-          // TODO: move this into coordinator somehow.
-          BatchSize batchSize = hostLoadManager.determineBatchSize(connectorName);
-          if (batchSize.getMaximum() == 0) {
-            continue;
-          }
           ConnectorCoordinator coordinator =
               instantiator.getConnectorCoordinator(connectorName);
           BatchResultRecorder resultRecorder =
               new TraversalBatchResultRecorder(hostLoadManager, coordinator);
-          coordinator.startBatch(resultRecorder, batchSize);
+          coordinator.startBatch(resultRecorder,
+              new LazyBatchSize(hostLoadManager, connectorName));
         }
       } catch (ConnectorNotFoundException e) {
         // Looks like the connector just got deleted.  Don't schedule it.
       } finally {
         NDC.pop();
       }
+    }
+  }
+
+  /* TODO: Move HostLoad tracking into ConnectorCoordinator.
+   * This hack class lazily evaluates the BatchSize to avoid spamming
+   * the logs with determineBatchSize() entries once per second.
+   */
+  private class LazyBatchSize extends BatchSize {
+    private HostLoadManager hostLoadMgr;
+    private String connectorName;
+    private BatchSize batchSize;
+
+    public LazyBatchSize(HostLoadManager hostLoadMgr, String connectorName) {
+      this.hostLoadMgr = hostLoadMgr;
+      this.connectorName = connectorName;
+      this.batchSize = null;
+    }
+
+    private void init() {
+      if (batchSize == null) {
+        batchSize = hostLoadMgr.determineBatchSize(connectorName);
+      }
+    }
+
+    @Override
+    public int getHint() {
+      init();
+      return batchSize.getHint();
+    }
+
+    @Override
+    public int getMaximum() {
+      init();
+      return batchSize.getMaximum();
     }
   }
 
