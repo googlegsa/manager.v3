@@ -19,14 +19,14 @@ package com.google.enterprise.connector.traversal;
  */
 public class LongRunningQueryTraverser implements Traverser {
 
-  public int runBatch(int batchHint) {
+  public BatchResult runBatch(BatchSize batchSize) {
     long sleepTime = 60 * 1000;
     try {
       Thread.sleep(sleepTime);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    return batchHint;
+    return new BatchResult(TraversalDelayPolicy.IMMEDIATE, batchSize.getHint());
   }
 
   public void cancelBatch() {

@@ -27,6 +27,7 @@ import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.BatchResult;
+import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
 
@@ -159,7 +160,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
   }
 
   public synchronized boolean startBatch(BatchResultRecorder resultRecorder,
-      int batchHint) {
+      BatchSize batchSize) {
     if (taskHandle != null && !taskHandle.isDone()) {
       return false;
     }
@@ -168,7 +169,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
         new BatchCoordinator(stateStore, resultRecorder);
     TimedCancelable batch =
         new CancelableBatch(traverser, name, batchResultProcessor,
-            batchResultProcessor, batchHint);
+            batchResultProcessor, batchSize);
     taskHandle = threadPool.submit(batch);
     return true;
   }

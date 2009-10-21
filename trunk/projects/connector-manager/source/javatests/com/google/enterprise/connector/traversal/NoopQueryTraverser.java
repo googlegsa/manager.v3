@@ -19,11 +19,8 @@ package com.google.enterprise.connector.traversal;
  */
 public class NoopQueryTraverser implements Traverser {
 
-  /* (non-Javadoc)
-   * @see com.google.enterprise.connector.traversal.Traverser#runBatch(int)
-   */
-  public int runBatch(int batchHint) {
-    return batchHint;
+  public BatchResult runBatch(BatchSize batchSize) {
+    return new BatchResult(TraversalDelayPolicy.IMMEDIATE, batchSize.getHint());
   }
 
   public void cancelBatch() {

@@ -17,6 +17,7 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.traversal.BatchResult;
+import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.logging.Logger;
@@ -33,25 +34,25 @@ public class CancelableBatch implements TimedCancelable {
   final String traverserName;
   final BatchResultRecorder batchResultRecorder;
   final BatchTimeout batchTimeout;
-  final int batchHint;
+  final BatchSize batchSize;
 
   /**
    * Construct a {@link CancelableBatch}.
    *
    * @param traverser {@link Traverser} for running the batch.
    * @param traverserName traverser name for logging purposes.
-   * @param batchResultRecorder {@link BatchResultRecorder} for recording the
-   *        result of running the batch.
-   * @param batchHint hint as to the number of documents to process in the
-   *        batch.
+   * @param batchResultRecorder {@link BatchResultRecorder} for recording
+   *        the result of running the batch.
+   * @param batchSize hint and constraints as to the number of documents
+   *        to process in the batch.
    */
   public CancelableBatch(Traverser traverser, String traverserName,
       BatchResultRecorder batchResultRecorder, BatchTimeout batchTimeout,
-      int batchHint) {
+      BatchSize batchSize) {
     this.traverser = traverser;
     this.traverserName = traverserName;
     this.batchResultRecorder = batchResultRecorder;
-    this.batchHint = batchHint;
+    this.batchSize = batchSize;
     this.batchTimeout = batchTimeout;
   }
 
@@ -67,10 +68,8 @@ public class CancelableBatch implements TimedCancelable {
     NDC.push("Traverse " + traverserName);
     try {
       LOGGER.fine("Begin runBatch; traverserName = " + traverserName
-          + "batchHint = " + batchHint);
-      int legacyBatchResult = traverser.runBatch(batchHint);
-      BatchResult batchResult =
-          BatchResult.newBatchResultFromLegacyBatchResult(legacyBatchResult);
+          + "  " + batchSize);
+      BatchResult batchResult = traverser.runBatch(batchSize);
       LOGGER.fine("Traverser " + traverserName + " batchDone with result = "
           + batchResult);
       batchResultRecorder.recordResult(batchResult);
@@ -81,9 +80,6 @@ public class CancelableBatch implements TimedCancelable {
 
   @Override
   public String toString() {
-    return "CancelableBatch traverser: "
-        + traverser
-        + " batchHint: "
-        + batchHint;
+    return "CancelableBatch traverser: " + traverser + "  " + batchSize;
   }
 }

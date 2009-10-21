@@ -49,10 +49,9 @@ public class QueryTraverserTest extends TestCase {
   /**
    * Test method for
    * {@link com.google.enterprise.connector.traversal.QueryTraverser
-   * #runBatch(int)}.
+   * #runBatch(BatchSize)}.
    */
   public final void testRunBatch() {
-    runTestBatches(0);
     runTestBatches(1);
     runTestBatches(2);
     runTestBatches(3);
@@ -61,6 +60,10 @@ public class QueryTraverserTest extends TestCase {
   }
 
   private void runTestBatches(int batchSize) {
+    runTestBatches(batchSize, batchSize);
+  }
+
+  private void runTestBatches(int batchHint, int batchMax) {
     ThreadPool threadPool =
       ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(5000);
     MockInstantiator instantiator = new MockInstantiator(threadPool);
@@ -71,26 +74,16 @@ public class QueryTraverserTest extends TestCase {
       Traverser traverser = createTraverser(mrel, connectorName, instantiator);
 
       System.out.println();
+      BatchSize batchSize = new BatchSize(batchHint, batchMax);
       System.out.println("Running batch test batchsize " + batchSize);
 
       int totalDocsProcessed = 0;
       int batchNumber = 0;
       while (true) {
         int docsProcessed = 0;
-        boolean exceptionThrown = false;
-        try {
-          docsProcessed = traverser.runBatch(batchSize);
-          if (docsProcessed <= 0) {
-            break;
-          }
-        } catch (IllegalArgumentException e) {
-          exceptionThrown = true;
-          assertTrue("Batch size = " + batchSize + "; " + e, batchSize <= 0);
-          return;
-        } finally {
-          if (!exceptionThrown) {
-            assertTrue(batchSize > 0);
-          }
+        docsProcessed = traverser.runBatch(batchSize).getCountProcessed();
+        if (docsProcessed <= 0) {
+          break;
         }
         totalDocsProcessed += docsProcessed;
         String state = "";
@@ -171,8 +164,9 @@ public class QueryTraverserTest extends TestCase {
       String connectorName = "foo";
       Traverser traverser = createTraverser(mrel, connectorName, instantiator);
       int docsProcessed = 0;
+      BatchSize batchSize = new BatchSize(1, 1);
       do {
-        docsProcessed = traverser.runBatch(1);
+        docsProcessed = traverser.runBatch(batchSize).getCountProcessed();
       } while (docsProcessed > 0);
     } finally {
       instantiator.shutdown(true, 5000);
@@ -180,18 +174,40 @@ public class QueryTraverserTest extends TestCase {
   }
 
   public void testTimeout() {
-    final String CONNECTOR_NAME = "fred flinstone";
+    final String CONNECTOR_NAME = "fred_flinstone";
     ValidatingPusher pusher = new ValidatingPusher(CONNECTOR_NAME);
     NeverEndingDocumentlistTraversalManager traversalManager =
-      new NeverEndingDocumentlistTraversalManager();
+        new NeverEndingDocumentlistTraversalManager(100);
     TraversalStateStore stateStore = new RecordingTraversalStateStore();
     ProductionTraversalContext context = new ProductionTraversalContext();
     context.setTraversalTimeLimitSeconds(1);
     QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
         stateStore, CONNECTOR_NAME, context);
-    int result = queryTraverser.runBatch(100);
-    assertTrue(result > 0);
-    assertEquals(traversalManager.getDocumentCount(), result);
+    BatchResult result = queryTraverser.runBatch(new BatchSize(100, 100));
+    assertTrue(result.getCountProcessed() > 0);
+    assertEquals(traversalManager.getDocumentCount(),
+        result.getCountProcessed());
+    assertEquals(Long.toString(traversalManager.getDocumentCount()),
+        stateStore.getTraversalState());
+    assertEquals(traversalManager.getDocumentCount(), pusher.getPushCount());
+  }
+
+  public void testBatchSize() {
+    final String CONNECTOR_NAME = "barney_rubble";
+    ValidatingPusher pusher = new ValidatingPusher(CONNECTOR_NAME);
+    NeverEndingDocumentlistTraversalManager traversalManager =
+        new NeverEndingDocumentlistTraversalManager(10);
+    TraversalStateStore stateStore = new RecordingTraversalStateStore();
+    ProductionTraversalContext context = new ProductionTraversalContext();
+    context.setTraversalTimeLimitSeconds(1);
+    QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
+        stateStore, CONNECTOR_NAME, context);
+    BatchResult result = queryTraverser.runBatch(new BatchSize(10, 20));
+    assertTrue(result.getCountProcessed() > 10);
+    assertTrue(result.getCountProcessed() <= 20);
+
+    assertEquals(traversalManager.getDocumentCount(),
+        result.getCountProcessed());
     assertEquals(Long.toString(traversalManager.getDocumentCount()),
         stateStore.getTraversalState());
     assertEquals(traversalManager.getDocumentCount(), pusher.getPushCount());
@@ -203,6 +219,11 @@ public class QueryTraverserTest extends TestCase {
   private static class NeverEndingDocumentlistTraversalManager implements
       TraversalManager {
     private long documentCount;
+    private final DocumentList documentList;
+
+    public NeverEndingDocumentlistTraversalManager(int docMillis) {
+      this.documentList = new NeverEndingDocumentList(docMillis, this);
+    }
 
     public DocumentList resumeTraversal(String checkPoint) {
       throw new UnsupportedOperationException();
@@ -213,7 +234,7 @@ public class QueryTraverserTest extends TestCase {
     }
 
     public DocumentList startTraversal() {
-      return new NeverEndingDocumentList(this);
+      return documentList;
     }
 
     synchronized Document newDocument() {
@@ -227,14 +248,16 @@ public class QueryTraverserTest extends TestCase {
   }
 
   /**
-   * {@link DocumentList} that returns a new document every 100
+   * {@link DocumentList} that returns a new document every {@code docMillis}
    * milliseconds until interrupted.
    */
   private static class NeverEndingDocumentList implements DocumentList {
     private final NeverEndingDocumentlistTraversalManager traversalManager;
+    private final int docMillis;
 
-    public NeverEndingDocumentList(
+    public NeverEndingDocumentList(int docMillis,
         NeverEndingDocumentlistTraversalManager traversalManager) {
+      this.docMillis = docMillis;
       this.traversalManager = traversalManager;
     }
 
@@ -251,7 +274,7 @@ public class QueryTraverserTest extends TestCase {
      */
     public Document nextDocument() throws RepositoryException {
       try {
-        Thread.sleep(100);
+        Thread.sleep(docMillis);
       } catch (InterruptedException ie) {
         throw new RepositoryException("Unexpected interrupt", ie);
       }

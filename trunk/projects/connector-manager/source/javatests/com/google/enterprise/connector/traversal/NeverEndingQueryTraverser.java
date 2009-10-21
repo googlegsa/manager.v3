@@ -22,7 +22,7 @@ public class NeverEndingQueryTraverser implements Traverser {
   // This is an instance variable to avoid findbugs noticing the infinite loop.
   public boolean breakLoop = true;
 
-  public int runBatch(int batchHint) {
+  public BatchResult runBatch(BatchSize batchSize) {
     // infinite loop
     while (breakLoop) {
       try {
@@ -31,7 +31,7 @@ public class NeverEndingQueryTraverser implements Traverser {
         // do nothing
       }
     }
-    return batchHint;
+    return new BatchResult(TraversalDelayPolicy.IMMEDIATE, batchSize.getHint());
   }
 
   public void cancelBatch() {

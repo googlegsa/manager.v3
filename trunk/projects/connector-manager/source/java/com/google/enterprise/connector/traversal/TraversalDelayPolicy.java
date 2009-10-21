@@ -34,28 +34,4 @@ public enum TraversalDelayPolicy {
    * corrected.
    */
   ERROR;
-
-  // TODO (strellis): remove this when Traverser.runBatch is converted to
-  // return a structured result.
-  /**
-   * Converts a legacy traversal delay policy as returned by
-   * {@link QueryTraverser#runBatch(int)} to a {@link TraversalDelayPolicy}. The
-   * legacy policy follows these conventions:
-   * <OL>
-   * <LI>If legacyPolicy is less than or equal to 0 then 0 or more documents
-   * were returned by the batch and the next batch may proceed without delay.
-   * <LI>If legacyPolicy equals {@link Traverser#ERROR_WAIT} (-2) an error
-   * occurred and the next batch should delay for the error retry interval.
-   * <LI>If legacyPolicy equals {@link Traverser#POLLING_WAIT}(-1) the traversal
-   * completed and the batch should wait for the connectors retry delay
-   * interval.
-   * </OL>
-   */
-  static TraversalDelayPolicy getTraversalDealyPolicyFromLegacyBatchResult(
-      int legacyPolicy) {
-    if (legacyPolicy > 0) {
-      legacyPolicy = 0;
-    }
-    return values()[-legacyPolicy];
-  }
 }
