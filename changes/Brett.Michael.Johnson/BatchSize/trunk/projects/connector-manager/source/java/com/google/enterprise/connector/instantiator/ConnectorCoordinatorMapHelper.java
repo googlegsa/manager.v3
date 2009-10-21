@@ -39,8 +39,9 @@ public class ConnectorCoordinatorMapHelper {
    * Initializes <b>instanceMap</b> to contain a {@link ConnectorCoordinator}
    * for each connector defined in the provided {@link TypeMap}.
    *
-   * @param pusherFactory creates {@link Pusher}s for pushing documents
-   *        to the GSA.
+   * @param pusherFactory creates instances of
+   *        {@link com.google.enterprise.connector.pusher.Pusher Pusher}
+   *        for pushing documents to the GSA.
    * @param threadPool the {@link ThreadPool} for running traversals.
    */
   static void fillFromTypes(TypeMap typeMap,
@@ -60,8 +61,9 @@ public class ConnectorCoordinatorMapHelper {
    * Initializes <b>instanceMap</b> to contain a {@link ConnectorCoordinator}
    * for each connector defined in the provided {@link TypeInfo}.
    *
-   * @param pusherFactory creates {@link Pusher}s for pushing documents
-   *        to the GSA.
+   * @param pusherFactory creates instances of
+   *        {@link com.google.enterprise.connector.pusher.Pusher Pusher}
+   *        for pushing documents to the GSA.
    * @param threadPool the {@link ThreadPool} for running traversals.
    */
   private static void processTypeDirectory(

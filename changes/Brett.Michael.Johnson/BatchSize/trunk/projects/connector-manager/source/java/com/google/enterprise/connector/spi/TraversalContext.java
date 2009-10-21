@@ -37,10 +37,17 @@ public interface TraversalContext {
   long maxDocumentSize();
 
   /**
-   * Gets information about whether a mime type is supported.  Non-positive
-   * numbers mean that there is no support for this mime type.  Positive
+   * Gets information about whether a mime type is supported.  Positive
    * values indicate possible support for this mime type, with larger
    * values indicating better support or preference.
+   * <p>
+   * Non-positive numbers mean that there is no support for this mime type.
+   * A zero value indicates the content encoding is not supported.
+   * The connector may choose to supply meta-data for the document, but the
+   * content should not be provided.
+   * <p>
+   * A negative value indicates the document should be skipped entirely.
+   * Neither the content, nor the meta-data should be provided.
    *
    * @return The support level - non-positive means no support
    */

@@ -84,6 +84,10 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     return true;
   }
 
+  public String getConnectorName() {
+    return name;
+  }
+
   public synchronized AuthenticationManager getAuthenticationManager()
       throws InstantiatorException {
     return interfaces.getAuthenticationManager();

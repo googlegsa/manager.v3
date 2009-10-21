@@ -38,7 +38,7 @@ public interface Pusher {
 
   /**
    * Finishes processing a document feed.  If the caller anticipates no
-   * further calls to {@link #take(Document, String)} will be made,
+   * further calls to {@link #take(Document)} will be made,
    * this method should be called, so that the Pusher may send a cached,
    * accumulated Feed to the feed processor.
    *

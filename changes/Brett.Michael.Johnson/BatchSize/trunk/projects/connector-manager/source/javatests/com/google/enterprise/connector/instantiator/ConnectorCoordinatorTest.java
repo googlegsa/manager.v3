@@ -205,7 +205,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     InstanceInfo instanceInfo = instance.getInstanceInfo();
     File connectorDir = instanceInfo.getConnectorDir();
     assertTrue(connectorDir.exists());
-    assertEquals(instance.getName(), instanceInfo.getName());
+    assertEquals(instance.getConnectorName(), instanceInfo.getName());
 
     // The password will be decrypted in the InstanceInfo.
     Map<String, String> instanceProps = instanceInfo.getConnectorConfig();
@@ -216,7 +216,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     // Verify that the googleConnectorName property is intact.
     assertTrue(
         instanceProps.containsKey(PropertiesUtils.GOOGLE_CONNECTOR_NAME));
-    assertEquals(instance.getName(), instanceProps
+    assertEquals(instance.getConnectorName(), instanceProps
         .get(PropertiesUtils.GOOGLE_CONNECTOR_NAME));
 
     // Verify that the google*WorkDir properties are intact.
