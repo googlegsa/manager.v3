@@ -26,8 +26,8 @@ public interface PusherFactory {
    * @param dataSource a data source for a {@code Feed}, typically the name
    *        of a connector instance.
    * @return a {@link Pusher}
-   * @throws PushException {@link PushException} if no {@link Pusher} is 
-   *         assigned to the {@code dataSource}.
+   * @throws PushException if no {@link Pusher} is assigned to the 
+   *         {@code dataSource}.
    */
   public Pusher newPusher(String dataSource) throws PushException;
 }
