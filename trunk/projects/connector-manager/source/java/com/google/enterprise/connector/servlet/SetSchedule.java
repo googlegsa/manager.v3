@@ -32,7 +32,7 @@ import java.util.logging.Logger;
  */
 public class SetSchedule extends ConnectorManagerServlet {
   private static final Logger LOGGER =
-    Logger.getLogger(SetSchedule.class.getName());
+      Logger.getLogger(SetSchedule.class.getName());
 
   /**
    * Writes the XML response for setting the schedule.
@@ -64,7 +64,20 @@ public class SetSchedule extends ConnectorManagerServlet {
 
     String connectorName = ServletUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_CONNECTOR_NAME);
+
     NDC.pushAppend(connectorName);
+
+    // TODO: Remove this when the GSA enforces lowercase connector names.
+    // Until then, this hack tries to determine if we are setting the
+    // schedule for a newly created connector or an existing connector.
+    if (!connectorName.equals(connectorName.toLowerCase())) {
+      try {
+        manager.getConnectorConfig(connectorName);
+      } catch (ConnectorNotFoundException e) {
+        connectorName = connectorName.toLowerCase();
+      }
+    }
+
     int load = Integer.parseInt(ServletUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_LOAD));
     boolean disabled = (ServletUtil.getFirstElementByTagName(root,
@@ -77,20 +90,8 @@ public class SetSchedule extends ConnectorManagerServlet {
     }
     String timeIntervals = ServletUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_TIME_INTERVALS);
-
     Schedule schedule = new Schedule(connectorName, disabled, load,
         retryDelayMillis, timeIntervals);
-
-    // TODO: Remove this when the GSA enforces lowercase connector names.
-    // Until then, this hack tries to determine if we are setting the
-    // schedule for a newly created connector or an existing connector.
-    if (!connectorName.equals(connectorName.toLowerCase())) {
-      try {
-        manager.getConnectorConfig(connectorName);
-      } catch (ConnectorNotFoundException e) {
-        connectorName = connectorName.toLowerCase();
-      }
-    }
 
     try {
       manager.setSchedule(connectorName, schedule.toString());
