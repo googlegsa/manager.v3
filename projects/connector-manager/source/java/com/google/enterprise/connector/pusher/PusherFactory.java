@@ -16,7 +16,7 @@ package com.google.enterprise.connector.pusher;
 
 /**
  * Interface for a factory that creates {@link Pusher} instances for use by a
- * {@link com.google.enterprise.connector.traverser.Traverser Traverser}.
+ * {@link com.google.enterprise.connector.traversal.Traverser Traverser}.
  */
 public interface PusherFactory {
   /**
@@ -26,7 +26,7 @@ public interface PusherFactory {
    * @param dataSource a data source for a {@code Feed}, typically the name
    *        of a connector instance.
    * @return a {@link Pusher}
-   * @throws {@link PushException} if no {@link Pusher} is assigned to the
+   * @throws PushException if no {@link Pusher} is assigned to the 
    *         {@code dataSource}.
    */
   public Pusher newPusher(String dataSource) throws PushException;
