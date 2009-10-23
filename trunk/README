@@ -29,13 +29,15 @@ traversal of content at the repository.
 
 Some important disclaimers:
 
-    * This system depends on a Google Search Appliance 5.0 release.
-    * Connectors developed for this framework will NOT work with
-      previously released Google Search Appliances!
+  * This system depends on a Google Search Appliance 5.0 release.
+  * Connectors developed for this framework will NOT work with previously
+    released Google Search Appliances! 
 
 Documentation Links
 
-    * Google Connector Developer's Guide - Introduction
-      http://code.google.com/apis/searchappliance/documentation/50/connector_dev/cdg_intro.html
-    * Documentation for Google Search Appliance
-      http://code.google.com/apis/searchappliance/documentation/index.html
+  * Documentation for the Google Enterprise Connectors
+    http://code.google.com/apis/searchappliance/documentation/connectors/index.html
+  * Google Connector Developer's Guide
+    http://code.google.com/apis/searchappliance/documentation/connectors/200/connector_dev/cdg_about.html
+  * Documentation for Google Search Appliance
+    http://code.google.com/apis/searchappliance/documentation/index.html
