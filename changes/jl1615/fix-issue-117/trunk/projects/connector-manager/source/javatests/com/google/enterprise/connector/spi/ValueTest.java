@@ -23,13 +23,12 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * Unit tests for SimpleValue class
+ * Unit tests for the {@link SimpleValue} class.
  */
 public class ValueTest extends TestCase {
 
   @Override
-  public void setUp()
-  {
+  public void setUp() {
     // RFC 822 is English-only, and ISO 8601 isn't locale-sensitive,
     // so change the locale but expect the same results.
     Locale.setDefault(Locale.FRENCH);
