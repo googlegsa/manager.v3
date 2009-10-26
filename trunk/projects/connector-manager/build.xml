@@ -111,7 +111,7 @@
 
   <target name="run_tests" depends="compile_tests">
     <property name="test.suite" value="*"/>
-    <junit haltonfailure="yes" dir=".">
+    <junit failureproperty="${ant.project.name}.failure" dir=".">
       <classpath>
         <pathelement location="${classes}" />
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
@@ -135,6 +135,7 @@
       </fileset>
       <report format="frames" todir="${tests.todir}"/>
     </junitreport>
+    <fail if="${ant.project.name}.failure" message="Test failure"/>
   </target>
 
   <target name="jar" depends="jar-prod,jar-tests"
