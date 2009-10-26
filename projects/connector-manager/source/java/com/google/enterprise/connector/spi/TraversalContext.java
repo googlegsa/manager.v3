@@ -73,6 +73,8 @@ public interface TraversalContext {
    * {@link TraversalManager#startTraversal()} and
    * {@link TraversalManager#resumeTraversal(String)} can avoid interrupts due
    * to timeouts by returning within this amount of time.
+   *
+   * @since 2.4
    */
   long traversalTimeLimitSeconds();
 }
