@@ -20,11 +20,19 @@ import junit.framework.TestCase;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 /**
- * Unit tests for SimpleValue class
+ * Unit tests for the {@link SimpleValue} class.
  */
 public class ValueTest extends TestCase {
+
+  @Override
+  public void setUp() {
+    // RFC 822 is English-only, and ISO 8601 isn't locale-sensitive,
+    // so change the locale but expect the same results.
+    Locale.setDefault(Locale.FRENCH);
+  }
 
   public void testCalendarToIso8601() {
     Calendar c = Calendar.getInstance();

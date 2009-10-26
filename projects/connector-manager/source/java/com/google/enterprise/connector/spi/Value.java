@@ -21,6 +21,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 
 /**
@@ -188,7 +189,8 @@ public abstract class Value {
   private static final SimpleDateFormat ISO8601_DATE_FORMAT_DATE =
       new SimpleDateFormat("yyyy-MM-dd");
   private static final SimpleDateFormat RFC822_DATE_FORMAT =
-      new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss z");
+      new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss z",
+          Locale.ENGLISH);
 
   static {
     ISO8601_DATE_FORMAT_MILLIS.setCalendar(GMT_CALENDAR);
