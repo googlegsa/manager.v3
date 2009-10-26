@@ -17,6 +17,8 @@ package com.google.enterprise.connector.spi;
 import junit.framework.TestCase;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Tests for the {@link SimpleTraversalContext} class.
@@ -86,8 +88,20 @@ public class SimpleTraversalContextTest extends TestCase {
 
   public void testPreferredMimeTypes() {
     String testType = "text/plain";
-    context.setMimeTypeSet(Collections.singleton(testType));
-    assertEquals(testType,
-        context.preferredMimeType(Collections.singleton(testType)));
+    String[] supportedTypes = { testType, "test/html" };
+    String[] availableTypes = { "application/pdf", testType };
+    context.setMimeTypeSet(asSet(supportedTypes));
+    assertEquals(testType, context.preferredMimeType(asSet(availableTypes)));
+  }
+
+  /**
+   * Constructs an immutable set from the elements of the given array.
+   */
+  private Set<String> asSet(String[] values) {
+    Set<String> valueSet = new HashSet<String>();
+    for (String value : values) {
+      valueSet.add(value);
+    }
+    return Collections.unmodifiableSet(valueSet);
   }
 }

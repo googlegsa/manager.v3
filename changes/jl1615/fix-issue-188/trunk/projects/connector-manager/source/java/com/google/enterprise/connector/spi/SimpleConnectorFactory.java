@@ -31,7 +31,7 @@ public class SimpleConnectorFactory implements ConnectorFactory {
    * #makeConnector} method.
    */
   protected SimpleConnectorFactory() {
-    this.instance = null;
+    this(null);
   }
 
   public SimpleConnectorFactory(Connector instance) {

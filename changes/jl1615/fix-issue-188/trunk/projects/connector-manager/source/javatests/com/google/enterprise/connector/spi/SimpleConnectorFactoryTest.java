@@ -16,7 +16,6 @@ package com.google.enterprise.connector.spi;
 
 import junit.framework.TestCase;
 
-import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -40,6 +39,7 @@ public class SimpleConnectorFactoryTest extends TestCase {
     GoodConnectorFactory() {
     }
 
+    @Override
     public Connector makeConnector(Map<String, String> config) {
       return new MockConnector();
     }

@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.spi;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -22,6 +21,9 @@ import java.util.Set;
 /**
  * Simple implementation of the {@link TraversalContext} interface.
  * Connector developers may want to use this to implement unit tests.
+ * <p>
+ * By default, instances of this class accept all document sizes and
+ * content types.
  *
  * @since 2.4
  */
@@ -36,7 +38,7 @@ public class SimpleTraversalContext implements TraversalContext {
   }
 
   public synchronized void setMimeTypeSet(Set<String> mimeTypeSet) {
-    this.mimeTypeSet = mimeTypeSet;
+    this.mimeTypeSet = new HashSet<String>(mimeTypeSet);
   }
 
   public synchronized void setTraversalTimeLimitSeconds(long limit) {
