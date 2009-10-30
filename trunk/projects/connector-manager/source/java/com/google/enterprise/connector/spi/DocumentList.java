@@ -43,6 +43,9 @@ package com.google.enterprise.connector.spi;
  * {@link #nextDocument()} that returns a valid document, then
  * traversal should resume with the Document that would have been returned by
  * the next call to {@link #nextDocument()}.
+ * <li>If {@link #checkpoint()} is not called, then traversal should
+ * resume from the previous checkpoint, as if none of the documents in
+ * this {@code DocumentList} had been processed.
  * </ul>
  * The typical pattern for consuming an object that implements this interface
  * is this (disregarding exception handling):

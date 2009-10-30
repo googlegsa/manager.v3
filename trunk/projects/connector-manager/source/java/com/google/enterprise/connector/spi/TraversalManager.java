@@ -81,7 +81,8 @@ package com.google.enterprise.connector.spi;
  * results. For example, the traversal may be completely up to date, so perhaps
  * there are no results to return. Or, for internal reasons, the implementation
  * may not want to return the full batchHint number of results.  When returning
- * more results than the hint, those in excess of the hint will be ignored.
+ * more results than the hint, some or all of the extra documents may be
+ * ignored.
  * <p>
  * The Connector Manager makes a distinction between the return of a null
  * DocumentList and an empty DocumentList (a DocumentList with zero entries).
@@ -136,9 +137,11 @@ package com.google.enterprise.connector.spi;
  * </ul>
  * The implementation must be careful about when and how it commits its internal
  * state to external storage. Remember again that the Connector Manager makes no
- * guarantee to consume the entire result set return by a traversal call. So the
- * implementation should wait until the checkpoint call, and only commit the
- * state up to the last document returned.
+ * guarantee to consume the entire result set return by a traversal call. If the
+ * Connector Manager does not call checkpoint, the implementation should not
+ * assume that the documents returned by {@link DocumentList#nextDocument} have
+ * been processed. The implementation should wait until the checkpoint call, and
+ * only commit the state up to the last document returned.
  * <p>
  * <b> Note on "Metadata and URL" feeds vs. Content feeds </b>
  * <p>
@@ -216,9 +219,9 @@ public interface TraversalManager {
 
   /**
    * Sets the preferred batch size. The caller advises the implementation that
-   * the result sets returned by startTraversal or resumeTraversal need not be
-   * larger than this number. The implementation may ignore this call or do its
-   * best to return approximately this number.
+   * the result sets returned by startTraversal or resumeTraversal should be
+   * as close to this number as is reasonable. The implementation may ignore
+   * this call or do its best to return approximately this number.
    *
    * @param batchHint
    * @throws RepositoryException
