@@ -23,7 +23,7 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * Unit tests for the {@link SimpleValue} class.
+ * Unit tests for the {@code SimpleValue} class.
  */
 public class ValueTest extends TestCase {
 

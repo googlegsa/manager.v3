@@ -38,6 +38,7 @@ public class SimpleConnectorFactory implements ConnectorFactory {
     this.instance = instance;
   }
 
+  @SuppressWarnings("unused")
   public Connector makeConnector(Map<String, String> config)
       throws RepositoryException {
     return instance;
