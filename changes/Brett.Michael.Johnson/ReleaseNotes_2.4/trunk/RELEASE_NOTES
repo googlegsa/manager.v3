@@ -30,7 +30,7 @@ Within the Connector Manager, these gains were achieved by:
    content feeds (GSA v6.2).
  - Traversing the repository in larger swaths.
  - Reducing traversal work redundancy.
-Performace analysis also identified some bottlenecks in several of the
+Performance analysis also identified some bottlenecks in several of the
 individual Connectors that were addressed. (See each Connector's Release
 Notes for details).
 
@@ -56,7 +56,7 @@ Summary of Changes
   * Issue 117: Fixes a problem where some Date meta-data fields are being
     incorrectly formatted for non-English locales. The RFC 822 specification
     explicitly states that month and day names are specified in English.
-    Previous releases whould translate them to the current locale.
+    Previous releases would translate them to the current locale.
 
   * Issue 124: Throttle feeds to GSAs that seem to be falling behind
     in feed processing.  GSA revisions 5.2.0.G28 and later allow the
@@ -115,17 +115,17 @@ Summary of Changes
 
   * Issue 182: Submit feeds to the GSA in a separate thread.  In the
     case where a traversal batch generates multiple feed files, a
-    full feed file is submitted to the GSA in separte thread, while
+    full feed file is submitted to the GSA in separate thread, while
     the traversal thread builds the next feed file.  This overlaps
     I/O, adding better concurrency.  One thread is focused on I/O
     between the Connector Manager and the GSA, the other thread
     is focused on I/O between the Connector Manager and the document
     Repository.
 
-  * Issue 187: Fix a problem that would add a redundant and uneccessary
+  * Issue 187: Fix a problem that would add a redundant and unnecessary
     log message once per second during connector traversals.
 
-  * Issue 188: Adds simple implementatations of the SPI callback
+  * Issue 188: Adds simple implementations of the SPI callback
     interfaces, SimpleConnectorFactory and SimpleTraversalContext.
     These make it easier for Connector Developers to create tests
     that use these features.
@@ -142,7 +142,7 @@ Connector authors should note the changes for Issue 143 ('ignored' mime
 type) subtly changes the meaning of values returned by the method,
 TraversalContext.mimeTypeSupportLevel(String).  Previously, values
 less than or equal to zero were considered 'unsupported'.  With this
-release, values equal to zero are consided 'unsupported', while
+release, values equal to zero are considered 'unsupported', while
 values less than zero are considered 'ignored'.
 
 Connector authors and administrators should note the changes related to
