@@ -16,11 +16,20 @@ package com.google.enterprise.connector.spi;
 
 import junit.framework.TestCase;
 
+import java.io.IOException;
+
 public class XmlUtilsTest extends TestCase {
 
-  public void testXmlEncode() {
-    String plain = "one&two<three>four'five\"";
-    String encoded = XmlUtils.xmlEncode(plain);
-    assertEquals("one&amp;two&lt;three>four&apos;five&quot;", encoded);
+  public void testXmlAppendAttrValue() throws IOException {
+    StringBuilder builder = new StringBuilder();
+    String xmlString = "one&two<three>four'five\"";
+    XmlUtils.xmlAppendAttrValue(xmlString, builder);
+    assertEquals("one&amp;two&lt;three>four&apos;five&quot;",
+        builder.toString());
+    // Clear the builder.
+    builder.setLength(0);
+    String invalidString = "begin\u0009\u0010\u0020\r\n";
+    XmlUtils.xmlAppendAttrValue(invalidString, builder);
+    assertEquals("begin\u0009\u0020\r\n", builder.toString());
   }
 }

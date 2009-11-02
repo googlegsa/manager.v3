@@ -31,7 +31,7 @@ public class XmlUtils {
     // prevents instantiation
   }
 
-  /* ******* 1.x Legacy Complaint Interface ******** */
+  /* ******* 1.x Legacy Compliant Interface ******** */
 
   /**
    * Wraps an xm tag with '&lt;' and '&gt;'.
@@ -211,55 +211,5 @@ public class XmlUtils {
           break;
       }
     }
-  }
-
-  /**
-   * XML encodes a given value, escaping some characters as character entities,
-   * and dropping invalid control characters.
-   * <p>
-   * Only four characters need to be encoded, according to
-   * http://www.w3.org/TR/REC-xml/#NT-AttValue: &lt; &amp; " '.
-   * Actually, we could only encode one of the quote characters if
-   * we knew that that was the one used to wrap the value, but we'll
-   * play it safe and encode both.
-   * <p>
-   * We drop invalid XML characters, following
-   * http://www.w3.org/TR/2000/REC-xml-20001006#NT-Char :
-   * <pre>
-   * Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
-   * </pre>
-   * Java uses UTF-16 internally, so Unicode characters U+10000 to
-   * U+10FFFF are encoded using the surrogate characters excluded
-   * above, 0xD800 to 0xDFFF. So we allow just 0x09, 0x0A, 0x0D,
-   * and the range 0x20 to 0xFFFD.
-   *
-   * @param value the value to be encoded.
-   * @return the encoded value.
-   */
-  public static String xmlEncode(String value) {
-    StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < value.length(); i++) {
-      char c = value.charAt(i);
-      switch (c) {
-        case '<':
-          builder.append(XML_LESS_THAN);
-          break;
-        case '&':
-          builder.append(XML_AMPERSAND);
-          break;
-        case '"':
-          builder.append(XML_QUOTE);
-          break;
-        case '\'':
-          builder.append(XML_APOSTROPHE);
-          break;
-        default:
-          if (c >= 0x20 && c <= 0xFFFD) {
-            builder.append(c);
-          }
-          break;
-      }
-    }
-    return builder.toString();
   }
 }
