@@ -10,6 +10,169 @@ list of known issues and workarounds.
 
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
+Release 2.4.0, 20 November 2009
+===============================
+
+Introduction
+------------
+This is an upgrade release with some enhancements.  Users of previous
+releases are encouraged to upgrade.  It also contains some new features.
+Users of previous releases should check the "Version Compatibility" section
+below for instructions on how to use existing data with this new release.
+
+This release focuses primarily on improving the performance and robustness
+of the document traversal and feed process.  Informal measurements show
+feeding documents to the GSA 3 to 10 times faster than version 2.0.0.
+Within the Connector Manager, these gains were achieved by:
+ - Reducing the number of feeds sent to the GSA by generating larger feeds
+   with more documents per feed.
+ - Sending compressed document content to newer GSAs that support compressed
+   content feeds (GSA v6.2).
+ - Traversing the repository in larger swaths.
+ - Reducing traversal work redundancy.
+Performance analysis also identified some bottlenecks in several of the
+individual Connectors that were addressed. (See each Connector's Release
+Notes for details).
+
+Summary of Changes
+------------------
+  * Issue 106: Added support for feeding multiple documents to the GSA
+    in a single feed file.  Previously, the Connector Manager would create
+    a new feed file for each Document.  This was inefficient and could
+    result in slow feed performance.  The Connector Manager will now
+    accumulate feed data into a single feed per connector traversal.
+    Once that feed exceeds a set size or when the traversal batch
+    completes, the feed is wrapped up and sent to the GSA.  The default
+    maxFeedSize is 10MB, and is configurable in applicationContext.xml.
+    An early version of this feature was made available in the v2.0.2
+    release.  This release provides the full implementation of the feature.
+
+  * Issue 111: A catch-all for small performance-related issues, including
+    a faster Base64 encoder, larger I/O buffer sizes, reduced data copying,
+    processing additional records from a returned traversal DocumentList,
+    even if it would exceed the supplied hint size and host load constraints.
+    Several other items were spun off into separate Issues.
+
+  * Issue 117: Fixes a problem where some Date meta-data fields are being
+    incorrectly formatted for non-English locales. The RFC 822 specification
+    explicitly states that month and day names are specified in English.
+    Previous releases would translate them to the current locale.
+
+  * Issue 124: Throttle feeds to GSAs that seem to be falling behind
+    in feed processing.  GSA revisions 5.2.0.G28 and later allow the
+    Connector Manager to query the backlog of unprocessed feed files.
+    This feature is used to throttle back the document feed if the GSA has
+    fallen behind processing outstanding feed items.  The Connector Manager
+    will periodically poll the GSA, asking for the count of unprocessed
+    feed items (the backlog count).  If the backlog count exceeds the
+    a configured ceiling we pause the feed.  We resume the feed once the
+    backlog count drops down below a floor value.  The floor, ceiling, and
+    poll interval are configurable by editing the FeedBacklogFloor,
+    FeedBacklogCeiling, and FeedBacklogCheckIntervalSeconds bean definitions
+    in applicationContext.xml.
+
+  * Issue 141: Replaces many of the home-rolled multi-threading constructs
+    with newer java.util.concurrent technologies available in Java 1.5
+
+  * Issue 143: Adds an 'ignored' set to the mime type map.  This allows
+    administrators to specify a set of document types that should be
+    ignored during traversals.  Neither their content, nor their meta-data
+    should be fed to the GSA.  Note that not all Connectors yet support
+    this feature.
+
+  * Issue 153: Adds support for compressing the document content data
+    in Content Feeds.  This reduces the size of the feed file sent to
+    the GSA.  Compressed Content Feeds are supported in GSA versions
+    6.2 and above.  The Connector Manager automatically detects whether
+    the GSA feed host supports compressed feeds and provides either
+    compressed or uncompressed data accordingly.
+
+  * Issue 164: Enhanced the SimpleProperty class, adding a single-value
+    constructor.  This should make it much easier for Connectors to
+    use this class.
+
+  * Issue 171: Moves the traversal schedule check into a synchronized
+    block, eliminating the risk of using a stale schedule.
+
+  * Issue 172: Corrects a problem when shutting down the Connector Manager
+    after a feed error is encountered.
+
+  * Issue 173: Properly format the HTTP feed requests packets sent to
+    the GSA.  The HTTP protocol explicitly specifies the use of MS-DOS
+    style CR-LF line endings.
+
+  * Issue 174: Fixes a unit test failure for non-English locales.
+
+  * Issue 175: Fixes a NullPointerException that would occur if the
+    Connector Manager was not an authorized feed client of the GSA
+    it was attempting to feed.
+
+  * Issue 177: Fixes an IOException thrown on startup if a GSA
+    feed host is not defined.
+
+  * Issue 178: Cleans up handling of legacy Connector traversal
+    schedule strings exchanged between the GSA and the Connector Manager.
+
+  * Issue 182: Submit feeds to the GSA in a separate thread.  In the
+    case where a traversal batch generates multiple feed files, a
+    full feed file is submitted to the GSA in separate thread, while
+    the traversal thread builds the next feed file.  This overlaps
+    I/O, adding better concurrency.  One thread is focused on I/O
+    between the Connector Manager and the GSA, the other thread
+    is focused on I/O between the Connector Manager and the document
+    Repository.
+
+  * Issue 187: Fix a problem that would add a redundant and unnecessary
+    log message once per second during connector traversals.
+
+  * Issue 188: Adds simple implementations of the SPI callback
+    interfaces, SimpleConnectorFactory and SimpleTraversalContext.
+    These make it easier for Connector Developers to create tests
+    that use these features.
+
+  * Issue 190: Fixes a regression in handling non-lowercase connector
+    names.  Although fixed in release v1.3.0, this got broken again
+    in release v2.0.0.  For details, see:
+    http://code.google.com/p/google-enterprise-connector-manager/wiki/LowerCaseConnectorNames
+
+
+Version Compatibility
+---------------------
+Connector authors should note the changes for Issue 143 ('ignored' mime
+type) subtly changes the meaning of values returned by the method,
+TraversalContext.mimeTypeSupportLevel(String).  Previously, values
+less than or equal to zero were considered 'unsupported'.  With this
+release, values equal to zero are considered 'unsupported', while
+values less than zero are considered 'ignored'.
+
+Connector authors and administrators should note the changes related to
+Issue 111 change the behavior of the Connector Manager regarding DocumentList
+objects that contain more Documents than was specified by the batchHint
+(as provided to TraversalManager.setBatchHint(int)).  Previously, the
+Connector Manager would process no more than batchHint number of
+Documents from the returned DocumentList.  The current release will
+continue to process the DocumentList until it is exhausted, or the
+number of documents exceeds twice the batchHint, or the traversal
+time limit is reached.  This could result in the Connector Manager
+processing up to twice as many documents from each batch.  The current
+host load management does not take this into consideration, so in
+certain instances, traversal rates may exceed the configured host
+load for brief periods. This load management issue will be corrected
+in a subsequent release.
+
+
+Known Issues
+------------
+Connector administrators should note the changes related to Issue 111
+can result in traversal rates that may exceed the configured host load.
+For most of the current Google-supplied Connectors this has little
+impact.  For instance the additional documents returned by the Livelink
+and Documentum connectors are deleted documents, which pull no content
+from the repository.  However, the Sharepoint Connector might regularly
+exceed the configured load.  In this case, the administrator may wish
+to reduce the configured load to compensate.
+
+
 Release 2.0.4, 09 October 2009
 ===============================
 
