@@ -1,4 +1,5 @@
 #summary Changing the GSA Feed Host for Connector Manager v2.0
+#labels Phase-Deploy,Phase-Support
 
 = Changing the GSA Feed Host for Connector Manager v2.0 =
 
@@ -29,3 +30,9 @@ Feed Host, he must do the following:
   # On the new GSA Admin UI, go to *Connector Administration > Connector Managers* and add the Connector Manager.
 
 *Note:* `$TOMCAT_HOME` represents the Apache Tomcat installation directory. For Connectors installed using GCI, this would be the Tomcat directory in the Connector Installation.
+
+== See Also ==
+
+[RemoteAddrValve Browser Access to Connector Manager v2.x Displays HTTP 403 Error or Blank Page] describes how the Tomcat !RemoteAddrValve hampers troubleshooting Connector deployments and how to configure administrator access to the Connector Manager.
+
+The [http://tomcat.apache.org/tomcat-6.0-doc/config/valve.html Apache Tomcat Valve] documentation.
