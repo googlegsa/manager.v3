@@ -186,29 +186,29 @@ public class XmlUtils {
     for (int i = 0; i < attrValue.length(); i++) {
       char c = attrValue.charAt(i);
       switch (c) {
-      case '<':
-        buf.append(XML_LESS_THAN);
-        break;
-      case '&':
-        buf.append(XML_AMPERSAND);
-        break;
-      case '"':
-        buf.append(XML_QUOTE);
-        break;
-      case '\'':
-        buf.append(XML_APOSTROPHE);
-        break;
-      case '\t':
-      case '\n':
-      case '\r':
-        // TODO: what happens to white-space?
-        buf.append(c);
-        break;
-      default:
-        if (c >= 0x20 && c <= 0xFFFD) {
+        case '<':
+          buf.append(XML_LESS_THAN);
+          break;
+        case '&':
+          buf.append(XML_AMPERSAND);
+          break;
+        case '"':
+          buf.append(XML_QUOTE);
+          break;
+        case '\'':
+          buf.append(XML_APOSTROPHE);
+          break;
+        case '\t':
+        case '\n':
+        case '\r':
+          // TODO: what happens to white-space?
           buf.append(c);
-        }
-        break;
+          break;
+        default:
+          if (c >= 0x20 && c <= 0xFFFD) {
+            buf.append(c);
+          }
+          break;
       }
     }
   }

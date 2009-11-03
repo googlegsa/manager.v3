@@ -36,7 +36,12 @@ public interface ConnectorType {
   public ConfigureResponse getConfigForm(Locale locale);
 
   /**
-   * Get populated configuration form snippet.
+   * Get populated configuration form snippet. Note, the values contained in the
+   * given {@code configMap} will be raw - that is, they will not be encoded and
+   * may contain special XML characters. It is the responsibility of the
+   * implementation to properly replace any special characters in the
+   * {@code configMap} values with predefined entities when they are added to
+   * the created form snippet within the returned {@link ConfigureResponse}.
    *
    * @param configMap A map of name, value pairs (String, String) of
    *        configuration data.  Note that configuration Map key names
@@ -46,6 +51,7 @@ public interface ConnectorType {
    *        produce appropriate descriptions and messages
    * @return a ConfigureResponse object. The form must be prepopulated with the
    *         supplied data in the map.
+   * @see XmlUtils#xmlAppendAttrValue(String, Appendable)
    */
   public ConfigureResponse getPopulatedConfigForm(Map<String, String> configMap,
                                                   Locale locale);
