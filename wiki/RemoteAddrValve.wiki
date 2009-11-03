@@ -21,7 +21,7 @@ For instance, if manually restarting a Connector's traversal of a repository, th
 
   `http://www.example.com:8080/connector-manager/restartConnectorTraversal?ConnectorName=our_connector`
 
-With the default Connector Manager v2.x configuration, `connector_manager_host_address` must be `localhost` (or more specifically, 127.0.0.1), and the request must originate from the machine on which the Connector Manager is running^*^.
+With the default Connector Manager v2.x configuration, `connector_manager_host_address` must be `localhost` (or more specifically, 127.0.0.1), and the request must originate from the machine on which the Connector Manager is running^*^.  If direct access to the Connector Manager machine is inconvenient, Connector Administrators may wish to add administration machines to the list of IP addresses allowed by the !RemoteAddrValve.
 
   ^*^ This is not completely true.  Google support personnel may access the Connector Manager from the GSA that the Connector Manager is configured to feed.
 
