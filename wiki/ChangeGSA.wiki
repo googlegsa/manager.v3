@@ -1,7 +1,7 @@
-#summary Changing the GSA Feed Host for Connector Manager v2.0
+#summary Changing the GSA Feed Host for Connector Manager v2.x
 #labels Phase-Deploy,Phase-Support
 
-= Changing the GSA Feed Host for Connector Manager v2.0 =
+= Changing the GSA Feed Host for Connector Manager v2.x =
 
 Connector Manager version 1.3 implemented a latch property
 that attempts to prevent malicious re-assignments of the GSA
