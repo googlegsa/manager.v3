@@ -174,6 +174,9 @@ public class GsaFeedConnection implements FeedConnection {
           LOGGER.log(Level.SEVERE,
                      "IOException while closing after post: continuing", e);
         }
+        if (uc != null) {
+          uc.disconnect();
+        }
         if (LOGGER.isLoggable(Level.FINEST)) {
           LOGGER.finest("Received response from feed connection: "
                         + buf.toString());
