@@ -188,9 +188,14 @@ public class QueryTraverser implements Traverser {
               + connectorName + " to Pusher");
           pusher.take(nextDocument);
         } catch (SkippedDocumentException e) {
+          /* TODO (bmj): This is a temporary solution and should be replaced.
+           * It uses Exceptions for non-exceptional cases.
+           */
           // Skip this document.  Proceed on to the next one.
-          LOGGER.log(Level.FINER, "Skipping document (" + docid
-              + ") from connector " + connectorName, e);
+          if (LOGGER.isLoggable(Level.FINER)) {
+            LOGGER.log(Level.FINER, "Skipping document (" + docid
+                + ") from connector " + connectorName + ": " + e.getMessage());
+          }
         } catch (RepositoryDocumentException e) {
           // Skip individual documents that fail.  Proceed on to the next one.
           LOGGER.log(Level.WARNING, "Skipping document (" + docid

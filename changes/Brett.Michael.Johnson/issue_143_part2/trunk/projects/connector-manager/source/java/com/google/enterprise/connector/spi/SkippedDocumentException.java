@@ -26,16 +26,13 @@ package com.google.enterprise.connector.spi;
  * that skips over the offending Document if DocumentList.checkpoint()
  * is called after SkippedDocumentException is thrown.
  */
+/* TODO (bmj): This is a temporary solution and should be replaced.
+ * It uses Exceptions for non-exceptional cases.
+ */
 public class SkippedDocumentException extends RepositoryDocumentException {
   /**
-   * Constructs a new SkippedDocumentException with no message.
-   */
-  public SkippedDocumentException() {
-    super();
-  }
-
-  /**
    * Constructs a SkippedDocumentException with a supplied message.
+   * The message should indicate the reason this document was skipped.
    *
    * @param message the message.
    */
