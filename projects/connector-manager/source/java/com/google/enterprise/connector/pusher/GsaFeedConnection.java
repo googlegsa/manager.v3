@@ -248,6 +248,9 @@ public class GsaFeedConnection implements FeedConnection {
           LOGGER.log(Level.SEVERE,
                      "IOException while closing after post: continuing", e);
         }
+        if (uc != null) {
+          uc.disconnect();
+        }
         if (LOGGER.isLoggable(Level.FINEST)) {
           LOGGER.finest("Received response from feed connection: "
                         + buf.toString());
@@ -438,11 +441,11 @@ public class GsaFeedConnection implements FeedConnection {
         if (br != null) {
           br.close();
         }
-        if (conn != null) {
-          conn.disconnect();
-        }
       } catch (IOException e) {
         LOGGER.finest("Error after reading " + name + ": " + e.getMessage());
+      }
+      if (conn != null) {
+        conn.disconnect();
       }
     }
     // If we get here something bad happened. It is not the case that the GSA
