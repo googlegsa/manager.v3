@@ -135,6 +135,15 @@ Summary of Changes
     in release v2.0.0.  For details, see:
     http://code.google.com/p/google-enterprise-connector-manager/wiki/LowerCaseConnectorNames
 
+  * Issue 193: Adds code to check for the presence of a "password" attribute in
+    the <Identity> element sent within the Authorization query.  If the
+    attribute is present it is now read and stored in the parsed
+    AuthenticationIdentity object.
+
+  * Issue 196: Connections between the Connector Manager and the feed reader
+    used when the Connector Manager pushes feeds are now explicitly being
+    closed.
+
 
 Version Compatibility
 ---------------------
