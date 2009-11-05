@@ -99,15 +99,15 @@ public class MimeTypeMap {
   }
 
   /**
-   * Set the ignored mime types whose content should not be indexed.
+   * Set the excluded mime types whose content should not be indexed.
    * The connector should not feed these documents at all, supplying
    * neither meta-data nor content.
    *
    * @param mimeTypes Set of mime types that should not be fed.
    */
-  public void setIgnoredMimeTypes(Set<String> mimeTypes) {
-    LOGGER.config("Setting ignored mime types to " + mimeTypes.toString());
-    // -5 is for historical reasons, as Ignored was added after Unsupported.
+  public void setExcludedMimeTypes(Set<String> mimeTypes) {
+    LOGGER.config("Setting excluded mime types to " + mimeTypes.toString());
+    // -5 is for historical reasons, as Excluded was added after Unsupported.
     initMimeTypes(mimeTypes, -5);
   }
 
@@ -181,7 +181,7 @@ public class MimeTypeMap {
     if (result == null) {
       sl = unknownMimeTypeSupportLevel;
     } else {
-      // Map all Unsupported to 0, and all Ignored to -1.
+      // Map all Unsupported to 0, and all Excluded to -1.
       sl = (result > 0) ? result : ((result < -3) ? -1 : 0);
     }
 

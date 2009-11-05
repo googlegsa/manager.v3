@@ -424,7 +424,7 @@
          The connector may still provide meta-data describing the content,
          but the content itself should not be pushed.
          If even the indexing of meta-data for documents of certain types is
-         not desired, then move those types to the ignoredMimeTypes set, below.
+         not desired, then move those types to the excludedMimeTypes set, below.
     -->
     <property name="unsupportedMimeTypes">
       <set>
@@ -480,7 +480,7 @@
          The connector should skip the document, providing neither meta-data,
          nor the content.
     -->
-    <property name="ignoredMimeTypes">
+    <property name="excludedMimeTypes">
       <set>
         <!-- Types explicitly excluded in the default GSA Crawl and Index form. -->
         <value>application/annodex</value>
