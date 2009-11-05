@@ -74,7 +74,7 @@ Index: projects/connector-manager/source/java/com/google/enterprise/connector/se
 
 # or
 
-$ svn merge --dry-run -c 655 https://google-enterprise-connector-manager.googlecode.com/svn/trunk
+$ svn merge --dry-run -r 641:655 https://google-enterprise-connector-manager.googlecode.com/svn/trunk
 U   projects/connector-manager/source/java/com/google/enterprise/connector/servlet/GetConnectorInstanceList.java
 U   projects/connector-manager/source/java/com/google/enterprise/connector/servlet/ConnectorManagerServlet.java
 }}}
@@ -82,7 +82,7 @@ U   projects/connector-manager/source/java/com/google/enterprise/connector/servl
 Once you are satisfied that the merge will affect the proper files and won't cause any unexpected conflicts you can execute the {{{svn merge}}} command with the same arguments as above:
 
 {{{
-$ svn merge -c 655 https://google-enterprise-connector-manager.googlecode.com/svn/trunk
+$ svn merge -r 641:655 https://google-enterprise-connector-manager.googlecode.com/svn/trunk
 U    projects/connector-manager/source/java/com/google/enterprise/connector/servlet/GetConnectorInstanceList.java
 U    projects/connector-manager/source/java/com/google/enterprise/connector/servlet/ConnectorManagerServlet.java
 
