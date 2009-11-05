@@ -107,10 +107,12 @@ public class AuthorizationParserTest extends TestCase {
     ConnectorQueries result = null;
     for (AuthenticationIdentity i : p.getIdentities()) {
       String username = identity.getUsername();
+      String password = identity.getPassword();
       String domain = identity.getDomain();
-      if (AuthorizationParser.matchesIdentity(i, username, domain)) {
+      if (AuthorizationParser.matchesIdentity(i, username, password, domain)) {
         assertNull("Should be only one identity with username \""
-            + username + "\" and domain \"" + domain + "\"", result);
+            + username + "\" and password \"" + password + "\" and domain \""
+            + domain + "\"", result);
         result = p.getConnectorQueriesForIdentity(i);
       }
     }
@@ -259,5 +261,81 @@ public class AuthorizationParserTest extends TestCase {
     assertEquals(1, countConnectorsForIdentity(ap, i2));
     assertEquals(0, countUrlsForIdentityConnectorPair(ap, i2, "connector1"));
     assertEquals(2, countUrlsForIdentityConnectorPair(ap, i2, "connector2"));
+  }
+
+  private static final String PASSWORD_IDENTITY = "<AuthorizationQuery>\n"
+      + "  <ConnectorQuery>\n"
+      + "    <Identity password=\"password\" source=\"connector\">username</Identity>\n"
+      + "    <Resource>googleconnector://ex-tca-01.localhost/doc?docid=doc1</Resource>\n"
+      + "    <Resource>googleconnector://ex-tca-01.localhost/doc?docid=doc2</Resource>\n"
+      + "    <Resource>googleconnector://ex-tca-02.localhost/doc?docid=doc3</Resource>\n"
+      + "    <Resource>googleconnector://ex-tca-02.localhost/doc?docid=doc4</Resource>\n"
+      + "  </ConnectorQuery>\n"
+      + "</AuthorizationQuery>\n";
+
+  public void testPasswordQuery() {
+    AuthorizationParser ap = new AuthorizationParser(PASSWORD_IDENTITY);
+    assertEquals(1, ap.countParsedIdentities());
+    SimpleAuthenticationIdentity id =
+        new SimpleAuthenticationIdentity("username", "password");
+    assertEquals(2, countConnectorsForIdentity(ap, id));
+    assertEquals(2, countUrlsForIdentityConnectorPair(ap, id, "ex-tca-01"));
+    assertEquals(2, countUrlsForIdentityConnectorPair(ap, id, "ex-tca-02"));
+  }
+
+  public void testMatchesIdentity() {
+    AuthenticationIdentity nameId =
+        new SimpleAuthenticationIdentity("user1");
+    assertTrue(AuthorizationParser.matchesIdentity(nameId,
+        "user1", null, null));
+    assertTrue(AuthorizationParser.matchesIdentity(nameId,
+        "user1", "", null));
+    assertTrue(AuthorizationParser.matchesIdentity(nameId,
+        "user1", null, ""));
+    assertTrue(AuthorizationParser.matchesIdentity(nameId,
+        "user1", "", ""));
+    assertFalse(AuthorizationParser.matchesIdentity(nameId,
+        "user2", null, null));
+    assertFalse(AuthorizationParser.matchesIdentity(nameId,
+        "user1", "pass1", null));
+    assertFalse(AuthorizationParser.matchesIdentity(nameId,
+        "user1", null, "domain1"));
+
+    AuthenticationIdentity namePassId =
+        new SimpleAuthenticationIdentity("user1", "pass1");
+    assertTrue(AuthorizationParser.matchesIdentity(namePassId,
+        "user1", "pass1", null));
+    assertTrue(AuthorizationParser.matchesIdentity(namePassId,
+        "user1", "pass1", ""));
+    assertFalse(AuthorizationParser.matchesIdentity(namePassId,
+        "user2", "pass1", null));
+    assertFalse(AuthorizationParser.matchesIdentity(namePassId,
+        "user1", "pass2", null));
+    assertFalse(AuthorizationParser.matchesIdentity(namePassId,
+        "user1", "", null));
+
+    AuthenticationIdentity namePassDomainId =
+        new SimpleAuthenticationIdentity("user1", "pass1", "domain1");
+    assertTrue(AuthorizationParser.matchesIdentity(namePassDomainId,
+        "user1", "pass1", "domain1"));
+    assertFalse(AuthorizationParser.matchesIdentity(namePassDomainId,
+        "user1", "pass1", "domain2"));
+    assertFalse(AuthorizationParser.matchesIdentity(namePassDomainId,
+        "user1", "pass2", "domain1"));
+    assertFalse(AuthorizationParser.matchesIdentity(namePassDomainId,
+        "user2", "pass1", "domain1"));
+
+    AuthenticationIdentity nameDomainId =
+        new SimpleAuthenticationIdentity("user1", null, "domain1");
+    assertTrue(AuthorizationParser.matchesIdentity(nameDomainId,
+        "user1", "", "domain1"));
+    assertTrue(AuthorizationParser.matchesIdentity(nameDomainId,
+        "user1", null, "domain1"));
+    assertFalse(AuthorizationParser.matchesIdentity(nameDomainId,
+        "user1", "pass1", "domain1"));
+    assertFalse(AuthorizationParser.matchesIdentity(nameDomainId,
+        "user1", null, "domain2"));
+    assertFalse(AuthorizationParser.matchesIdentity(nameDomainId,
+        "user2", null, "domain2"));
   }
 }
