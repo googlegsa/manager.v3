@@ -74,9 +74,9 @@ Summary of Changes
   * Issue 141: Replaces many of the home-rolled multi-threading constructs
     with newer java.util.concurrent technologies available in Java 1.5
 
-  * Issue 143: Adds an 'ignored' set to the mime type map.  This allows
+  * Issue 143: Adds an 'excluded' set to the mime type map.  This allows
     administrators to specify a set of document types that should be
-    ignored during traversals.  Neither their content, nor their meta-data
+    excluded during traversals.  Neither their content, nor their meta-data
     should be fed to the GSA.  Note that not all Connectors yet support
     this feature.
 
@@ -147,12 +147,12 @@ Summary of Changes
 
 Version Compatibility
 ---------------------
-Connector authors should note the changes for Issue 143 ('ignored' mime
+Connector authors should note the changes for Issue 143 ('excluded' mime
 type) subtly changes the meaning of values returned by the method,
 TraversalContext.mimeTypeSupportLevel(String).  Previously, values
 less than or equal to zero were considered 'unsupported'.  With this
 release, values equal to zero are considered 'unsupported', while
-values less than zero are considered 'ignored'.
+values less than zero are considered 'excluded'.
 
 Connector authors and administrators should note the changes related to
 Issue 111 change the behavior of the Connector Manager regarding DocumentList
