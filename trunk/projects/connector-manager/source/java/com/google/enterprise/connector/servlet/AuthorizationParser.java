@@ -36,15 +36,15 @@ import java.util.logging.Logger;
  * <pre>
  * &lt;AuthorizationQuery>
  *   &lt;ConnectorQuery>
- *     &lt;Identity domain="domain" source="connector">user1</Identity>
+ *     &lt;Identity domain="domain" password="user1" source="connector">user1</Identity>
  *     &lt;Resource>googleconnector://connector1.localhost/doc?docid=doc1a</Resource>
  *     &lt;Resource>googleconnector://connector2.localhost/doc?docid=doc2a</Resource>
  *     ...
  *   &lt;/ConnectorQuery>
  *   ...
  * </pre>
- * Note that the {@code domain} attribute of the {@code Identity} element is
- * optional.
+ * Note that both the {@code domain} and {@code password} attributes of the
+ * {@code Identity} element are optional.
  */
 public class AuthorizationParser {
 
@@ -124,6 +124,9 @@ public class AuthorizationParser {
     String domain =
         ServletUtil.getFirstAttribute(queryItem, ServletUtil.XMLTAG_IDENTITY,
             ServletUtil.XMLTAG_DOMAIN_ATTRIBUTE);
+    String password =
+        ServletUtil.getFirstAttribute(queryItem, ServletUtil.XMLTAG_IDENTITY,
+            ServletUtil.XMLTAG_PASSWORD_ATTRIBUTE);
     List<String> resources = ServletUtil.getAllElementsByTagName(queryItem,
         ServletUtil.XMLTAG_RESOURCE);
     if (resources.isEmpty()) {
@@ -131,7 +134,7 @@ public class AuthorizationParser {
       return;
     }
 
-    AuthenticationIdentity identity = findIdentity(username, domain);
+    AuthenticationIdentity identity = findIdentity(username, password, domain);
     ConnectorQueries urlsByConnector = getConnectorQueriesForIdentity(identity);
     if (urlsByConnector == null) {
       urlsByConnector = new ConnectorQueries();
@@ -145,26 +148,44 @@ public class AuthorizationParser {
 
   // Package-level visibility for testing.
   static boolean matchesIdentity(AuthenticationIdentity id, String username,
-      String domain) {
+      String password, String domain) {
     if (username == null && id.getUsername() != null) {
       return false;
     }
     if (!id.getUsername().equals(username)) {
       return false;
     }
-    // A null domain is considered a match for an empty string domain.
-    String domain1 = (domain == null) ? "" : domain;
-    String domain2 = (id.getDomain() == null) ? "" : id.getDomain();
-    return (domain1.equals(domain2));
+    if (!matchNullString(password, id.getPassword())) {
+      return false;
+    }
+    if (!matchNullString(domain, id.getDomain())) {
+      return false;
+    }
+    return true;
   }
 
-  private AuthenticationIdentity findIdentity(String username, String domain) {
+  /**
+   * Utility method to compare two strings with the special logic of treating
+   * null the same as the empty string.
+   *
+   * @param string1
+   * @param string2
+   * @return true if the given strings are considered the same. 
+   */
+  private static boolean matchNullString(String string1, String string2) {
+    String value1 = (string1 == null) ? "" : string1;
+    String value2 = (string2 == null) ? "" : string2;
+    return value1.equals(value2); 
+  }
+
+  private AuthenticationIdentity findIdentity(String username, String password,
+      String domain) {
     for (AuthenticationIdentity identity : parseMap.keySet()) {
-      if (matchesIdentity(identity, username, domain)) {
+      if (matchesIdentity(identity, username, password, domain)) {
         return identity;
       }
     }
-    return new SimpleAuthenticationIdentity(username, "", domain);
+    return new SimpleAuthenticationIdentity(username, password, domain);
   }
 
   private void parseResource(ConnectorQueries urlsByConnector, String url) {

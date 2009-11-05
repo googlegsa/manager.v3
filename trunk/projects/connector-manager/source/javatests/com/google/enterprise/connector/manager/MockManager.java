@@ -63,8 +63,18 @@ public class MockManager implements Manager {
     if (!shouldVerifyIdentity) {
       return true;
     }
+    StringBuilder sb = new StringBuilder();
+    if (!verifyIdentity(identity, sb)) {
+      throw new IllegalStateException(new String(sb));
+    }
+    return true;
+  }
+
+  // Note this is trying to duplicate the AuthorizationParser.matchesIdentity()
+  // behavior with the difference that this does not fail fast.
+  private boolean verifyIdentity(AuthenticationIdentity identity,
+      StringBuilder sb) {
     boolean result = true;
-    StringBuffer sb = new StringBuffer();
     if (!verifyComponent("domain", domain, identity.getDomain(), sb)) {
       result = false;
     }
@@ -74,14 +84,11 @@ public class MockManager implements Manager {
     if (!verifyComponent("password", password, identity.getPassword(), sb)) {
       result = false;
     }
-    if (!result) {
-      throw new IllegalStateException(new String(sb));
-    }
-    return true;
+    return result;
   }
 
   private boolean verifyComponent(String componentName, String expected,
-      String actual, StringBuffer sb) {
+      String actual, StringBuilder sb) {
     if (expected == null) {
       if (actual != null) {
         sb.append("Expected null " + componentName + " got " + actual + "\n");
@@ -99,7 +106,13 @@ public class MockManager implements Manager {
   /* @Override */
   public Set<String> authorizeDocids(String connectorName,
       List<String> docidList, AuthenticationIdentity identity) {
-    return new HashSet<String>(docidList);
+    StringBuilder sb = new StringBuilder();
+    if (shouldVerifyIdentity && !verifyIdentity(identity, sb)) {
+      LOGGER.info(sb.toString());
+      return new HashSet<String>();
+    } else {
+      return new HashSet<String>(docidList);
+    }
   }
 
   /* @Override */
