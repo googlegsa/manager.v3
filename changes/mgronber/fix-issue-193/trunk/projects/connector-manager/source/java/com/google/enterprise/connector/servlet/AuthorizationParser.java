@@ -155,16 +155,27 @@ public class AuthorizationParser {
     if (!id.getUsername().equals(username)) {
       return false;
     }
-    // A null password is considered a match for an empty string password.
-    String password1 = (password == null) ? "" : password;
-    String password2 = (id.getPassword() == null) ? "" : id.getPassword();
-    if (!password1.equals(password2)) {
+    if (!matchNullString(password, id.getPassword())) {
       return false;
     }
-    // A null domain is considered a match for an empty string domain.
-    String domain1 = (domain == null) ? "" : domain;
-    String domain2 = (id.getDomain() == null) ? "" : id.getDomain();
-    return (domain1.equals(domain2));
+    if (!matchNullString(domain, id.getDomain())) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Utility method to compare two strings with the special logic of treating
+   * null the same as the empty string.
+   *
+   * @param string1
+   * @param string2
+   * @return true if the given strings are considered the same. 
+   */
+  private static boolean matchNullString(String string1, String string2) {
+    String value1 = (string1 == null) ? "" : string1;
+    String value2 = (string2 == null) ? "" : string2;
+    return value1.equals(value2); 
   }
 
   private AuthenticationIdentity findIdentity(String username, String password,

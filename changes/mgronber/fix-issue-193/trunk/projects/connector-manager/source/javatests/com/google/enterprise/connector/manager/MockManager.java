@@ -70,8 +70,8 @@ public class MockManager implements Manager {
     return true;
   }
 
-  // TODO: Replace this with a call to AuthorizationParser.matchesIdentity()
-  // that can report the reason for a failed match.
+  // Note this is trying to duplicate the AuthorizationParser.matchesIdentity()
+  // behavior with the difference that this does not fail fast.
   private boolean verifyIdentity(AuthenticationIdentity identity,
       StringBuilder sb) {
     boolean result = true;
