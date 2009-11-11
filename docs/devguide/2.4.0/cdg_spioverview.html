@@ -1,0 +1,195 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "DTD/xhtml1-transitional.dtd">
+<html>
+<head>    
+<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+<title>Connector Developer&apos;s Guide: SPI Overview</title>
+<link href="cdg.css" type="text/css" rel="stylesheet"></link>
+<!--[if IE]><link rel="stylesheet" type="text/css" href="http://code.google.com/css/iehacks.css" /><![endif]-->
+</head>
+<body>
+
+<h1 class="page_title">Connector Developer&apos;s Guide: SPI Overview</h1>
+    
+<p>Google Search Appliance software versions 6.2 <br />
+Connector manager version 2.4.0<br />
+Posted December 2009</p>
+<p>This section provides an overview of the connector manager Service Provider Interface (SPI). The SPI consists of interfaces, classes, and methods that the connector manager calls in a connector to implement a connector instance, traverse documents, and to authenticate and authorize users.  <a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0.0/index.html">Javadoc</a> for the SPI is provided on the <a href="http://google-enterprise-connector-manager.googlecode.com/">connector manager</a> open source site. For connector terminology definitions, see the <a href="http://code.google.com/apis/searchappliance/documentation/62/reference/glossary.html">Google Enterprise Glossary</a>. </p>
+
+<p><strong>Chapters</strong>: <a href="cdg_about.html">About This Guide</a>, <a href="cdg_intro.html">Introduction</a>, <a href="cdg_getstart.html">Getting Started</a>, <em>SPI Overview</em>, <a href="cdg_traversing.html">Traversing Documents</a>, <br />
+<a href="cdg_authentication.html">Authentication</a>, <a href="cdg_authorization.html">Authorization</a>, <a href="cdg_config.html">Configuration</a>, <a href="cdg_buildcm.html">Appendix A: Building a Debug Connector Manager</a></p>
+
+<h2>Contents</h2>
+<ol class="toc">
+  <li><a href="#spioverviewintro">Introduction</a></li>
+  <li><a href="#ConnectorInt">Connector and Session Interfaces</a>
+      <ol>
+        <li><a href="#cni">Connector Interface</a></li>
+        <li><a href="#sni">Session Interface</a>
+          <ol>
+            <li><a href="#ganm">getAuthenticationManager Method</a></li>
+          <li><a href="#gazm">getAuthorizationManager Method</a></li>
+          <li><a href="#gtm">getTraversalManager Method</a></li>
+        </ol></li>
+      </ol>
+  </li>
+  <li><a href="#DocumentList">DocumentList Interface and SimpleDocumentList Class</a>
+      <ol>
+        <li><a href="#dli">DocumentList Interface</a></li>
+  </ol>
+  </li>
+  <li><a href="#Document">Document Interface and SimpleDocument Class</a>
+  <ol>
+<li><a href="#di">Document Interface</a></li>
+</ol>
+</li>
+<li><a href="#Property">Property Interface and SimpleProperty Class</a>
+  <ol>
+<li><a href="#pti">Property Interface</a></li>
+</ol>
+</li>
+<li><a href="#Value">Value Interface</a></li>
+  <li><a href="#conTypint">ConnectorType Interface and SimpleConnectorType Class</a>
+    <ol>
+<li><a href="#cti">ConnectorType Interface</a></li>
+<li><a href="#ConnectorFactory">ConnectorFactory Interface</a></li>
+</ol>
+</li>
+</ol>
+
+<h2><a name="spioverviewintro"></a>Introduction</h2>
+<p>The connector manager <acronym title="Service Provider Interface">SPI</acronym> consists of interfaces and methods that specify authentication, authorization, traversal of content management system documents, and enable you to supply forms that appear in the Admin Console so that administrators can add or change connector parameters. The connector manager communicates with a connector using the SPI methods. The connector does not communicate directly with the search appliance. </p>
+<p>The connector manager SPI provides the following interfaces:</p>
+<ul>
+  <li>The <code>com.google.enterprise.connector.spi</code> package defines the connector framework. You need to provide classes that implement these interfaces. </li>
+  <li>The <code>Simple<i>XXX</i></code> functions provide simple implementations of the SPI interfaces. In accordance with the Java programming convention, use of these objects is  optional. You can implement the required interfaces by using the simple classes directly, by subclassing them, or you may write your own implementations.</li>
+</ul>
+<h2><a name="ConnectorInt"></a>Connector and Session Interfaces</h2>
+<p>The <code>Connector</code> interface provides connector-specific functionality that supports a  content management system. </p>
+<p>Connector sessions  run in a stateless condition. Ensure that the connection with a content management system is available each time the connector starts a task. The connector manager keeps calling the connector to get new documents. </p>
+<p>The return value of the <code>DocumentList</code> object enables a connector to specify how the connector manager handles traversal. If after reading documents, no more updated documents remain to be traversed, the connector manager waits 5 minutes before resuming a traversal. Alternatively, connectors can specify zero documents in a list to inform the connector manager to set a checkpoint and then resume traversing. Otherwise, the connector manager traverses and processes documents continuously. </p>
+<p>Only if the servlet container restarts or an unrecoverable  error occurs does the connector manager start a new session. This means that the <code>login</code> method is called once and not again unless the connector manager terminates unexpectedly, thus the connector implementation must maintain its own access with the content management system. </p>
+<h3><a name="cni"></a>Connector Interface</h3>
+<p>The <code>Connector</code> interface instantiation sequence is as follows:<br />
+    <img src="images/cdg_connector_interface.png" alt="Connector interface methods and results" width="395" height="156" /></p>
+<p>When the connector manager discovers  a connector, the connector manager calls the <code>login</code> method of the connector to  create a new instance of a connector by instantiating the <code>Connector</code> interface. The <code>login</code> method starts access to managers for authentication, authorization, and traversal. The base use of the <code>login</code> method returns a <code>Session</code> object that passes data and objects between the connector manager and a connector. </p>
+<p>The <code>login</code> method gets a session with sufficient privileges to perform all actions related to the SPI. A connector supplies credentials for the content management system in the <code>TraversalManager</code> interface. </p>
+<h3><a name="sni"></a>Session Interface</h3>
+<p>The <code>Session</code> interface provides the following methods:</p>
+<ul>
+<li><a href="#ganm">getAuthenticationManager</a></li>
+<li><a href="#gazm">getAuthorizationManager</a></li>
+<li><a href="#gtm">getTraversalManager</a></li>
+</ul>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+    <h4><a name="ganm"></a>getAuthenticationManager Method</h4>
+<p>The <code>Session.getAuthenticationManager</code> method returns the <code>AuthenticationManager</code> class object. </p>
+<p>The <code>AuthenticationManager</code> interface functions are shown in the following illustration:</p>
+<p><img src="images/cdg_authentication_flow.png" alt="AuthenticationManager interface" width="438" height="177" /></p>
+<p>The <code>AuthenticationManager</code> interface provides the <code>authenticate</code> method that returns the <code>AuthenticationResponse</code> class object and which provides an <code>isValid</code> method to determine whether a username and password is valid for controlled-access documents. The <code>AuthenticationManager</code> also provides the <code>AuthenticationIdentity</code> interface, which has methods for <code>getDomain</code>, <code>getPassword</code>, and <code>getUsername</code>. The <code>AuthenticationIdentity</code> provides the parameter to the <code>authenticate</code> method. </p>
+<p>The <code>AuthenticationManager</code> interface routes authentication requests from the search appliance to your connector.  If your connector supplies documents by URL or your connector is only intended for search appliances that are configured with SSO, then you need not implement this interface.</p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+    <h4><a name="gazm"></a>getAuthorizationManager Method</h4>
+<p>The <code>Session.getAuthorizationManager</code> method returns the <code>AuthorizationManager</code> class object. </p>
+<p>The <code>AuthorizationManager</code> interface functions are shown in the following illustration:</p>
+<p><img src="images/cdg_authorization_flow.png" alt="AuthorizationManager interface" width="275" height="184" /></p>
+<p>The <code>AuthorizationManager</code> interface provides the <code>authorizeDocids</code> method to authorize multiple documents from a content management system. The <code>authorizeDocids</code> method returns a collection of <code>AuthorizationResponse</code> class objects that indicate which documents a user is authorized to view.  The methods of this interface route authorization requests from the search appliance to your connector.  If your connector  only supplies public (world-readable) documents, then you need not implement this interface.</p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+    <h4><a name="gtm"></a>getTraversalManager Method</h4>
+<p>The <code>Session.getTraversalManager</code> method returns the <code>TraversalManager</code> class object. The traversal manager acquires documents from the content management system. (Traversing means to acquire documents from the content management system.) </p>
+<p>The <code>TraversalManager</code> interface functions are shown in the following illustration:</p>
+<p><img src="images/cdg_traversal_flow.png" alt="TraversalManager interface" width="524" height="233" /></p>
+<p>The <code>TraversalManager</code> interface provides the <code>startTraversal</code> and <code>resumeTraversal</code> methods for acquiring documents from a content management system, and the <code>setBatchHint</code> method for specifying the size of the <code>DocumentList</code> class object. The traversal manager issues queries to retrieve documents for a connector that provides a content feed, or to retrieve a URL for a connector that provides a metadata-and-URL feed. The connector manager can use the traversal manager to start a traversal from the beginning of a content management system or resume a previous traversal. A traversal resolves into a document list of traversed documents or URLs and metadata.</p>
+<p>The connector manager traversal sequence is as follows:</p>
+<ol>
+  <li>Sets a suggested number of documents to traverse.
+    <p>The connector manager calls the <code>setBatchHint</code> method to inform the connector that the number of documents to traverse need not be higher than the number specified in the <code>setBatchHint</code> method. By checking the <code>setBatchHint</code> method first, the connector knows how many documents to return when the <code>startTraversal</code> or <code>resumeTraversal</code> methods complete.</p>
+  </li>
+  <li>Starts  traversal.
+    <p>The connector manager  calls the <code>startTraversal</code> method to start acquiring documents from the content management system. The connector manager receives a list of documents from the <code>startTraversal</code> method. </p>
+  </li>
+  <li>Traverse over the documents in the <code>DocumentList</code>.  
+    <p>The connector manager calls the <code>nextDocument</code> method to get another document.. Each <code>Document</code> returned is fed to the search appliance.  The connector sets the return value of the <code>DocumentList</code> object to instruct the connector manager what to do next. A <code>null</code> return value indicates that traversal is done, An empty return value indicates to set the checkpoint and keep traversing, and documents in the <code>DocumentList</code> indicate to send the documents to the search appliance. </p>
+  </li>
+  <li>Pauses traversing to perform other tasks.
+    <p>The connector sets the checkpoint after every batch of documents. The checkpoint helps the connector remember where within the content management system the traversal was paused, so that the connector may resume at that point in the future.</p>
+  </li>
+  <li>Resets the number of documents to traverse.
+    <p>The connector manager calls the <code>setBatchHint</code> method to inform the connector that the number of documents to traverse need not be higher than the number specified in the <code>setBatchHint</code> method.</p>
+</li>
+  <li>Resumes traversing. 
+    <p>The connector manager calls the <code>resumeTraversal</code> method, supplying it the previously remembered checkpoint to indicate where to resume acquiring documents from the content management system. The <code>resumeTraversal</code> method returns a <code>DocumentList</code> identifying documents to traverse in this batch. The connector manager moves to Step 3 to process the <code>DocumentList</code> and repeats Steps 3 to 6 indefinitely.</p>
+  </li>
+</ol>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+
+<h2><a name="DocumentList"></a>DocumentList Interface and SimpleDocumentList Class </h2>
+<p>After traversing the most recent documents in a content management system, the <code>startTraversal</code> and <code>resumeTraversal</code> methods return the documents in a <code>DocumentList</code> from which the connector manager can extract documents, properties, and property values. The <code>SimpleDocumentList</code> class is a basic implementation of the <code>DocumentList</code> interface. </p>
+<h3><a name="dli"></a>DocumentList Interface</h3>
+<p>The <code>DocumentList</code> interface instantiation sequence is as follows:</p>
+<p><img src="images/cdg_documentlist_interface.png" alt="DocumentList interface methods and results" width="336" height="78" /> </p>
+<p>The <code>DocumentList</code> interface provides the <code>checkpoint</code> method that indicates the current position within the document list, that is where to start a <code>resumeTraversal</code> method. The <code>nextDocument</code> method  gets the next document from the document list that the connector acquires from the  content management system. </p>
+<p>For more information, see <a href="IteratingOverADocumentList">Iterating Over a Document List</a>.</p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<h2><a name="Document"></a>Document Interface and SimpleDocument Class </h2>
+<p>The <code>Document</code> interface gets the properties from a document. This interface enables the connector manager to extract property values and names from a document. Properties provide information about the document, such a document ID, MIME type, and last-modified date that the connector manager  uses to process documents. </p>
+
+  <h3><a name="di"></a>Document Interface</h3>
+<p>The <code>Document</code> interface instantiation sequence is as follows:</p>
+<p><img src="images/cdg_document_interface.png" alt="Document interface methods and results" width="328" height="77" /> </p>
+<p>The <code>Document</code> interface gets the properties from the document list. For more information, see <a href="cdg_traversing.html#mp">Metadata Properties</a>. The <code>findProperty</code> method returns <code>Property</code> class objects. The <code>findProperty</code> method returns the property that it is asked to get from the connector. The <code>getPropertyNames</code> method returns a list of all properties that the connector makes available. </p>
+<p>The <code>findProperty</code> method may be called in situations where the property  would not be returned from the <code>getPropertyNames</code> method. The connector manager may ask a connector for a property that the connector does not supply. When this occurs, the connector must not throw an exception. The connector can return null for the <code>findProperty</code> method. </p>
+<p>The <code>SimpleDocument</code> class is a basic implementation of the <code>Document</code> interface. </p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+
+<h2><a name="Property"></a>Property Interface and SimpleProperty Class </h2>
+<p>A property  provides information about a document, such as its document ID, <acronym title="Multipurpose Internet Mail Extensions">MIME</acronym> type, and last-modified date. For more information, see <a href="cdg_traversing.html#mp">Metadata Properties</a>.</p>
+
+  <h3><a name="pti"></a>Property Interface </h3>
+<p>The <code>Property</code> interface instantiation sequence is as follows:</p>
+<p><img src="images/cdg_property_interface.png" alt="Property interface methods and results" width="163" height="67" /></p>
+<p>The <code>Property</code> interface gets each property value.</p>
+<p>The <code>SimpleProperty</code> class is a basic implementation of the <code>Property</code> interface. </p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+
+<h2><a name="Value"></a>Value Interface </h2>
+<p>The <code>Value</code> objects are used to provide property values from the connector to the connector manager as returned from calls to the <code>Property.nextValue</code> method. </p>
+<p>The <code>Value</code> interface provides factory methods for constructing <code>Value</code> objects for various data types. </p>
+<p>A connector cannot implement its own <code>Value</code> class or even subclass the one provided  (unlike most of the other interfaces, for which a connector must provide an implementation).</p>
+<p>The methods in the <code>Value</code> class   are as follows:</p>
+<p><img src="images/cdg_value_interface.png" alt="Value interface" width="326" height="219" /></p>
+<p>The <code>Value</code> interface provides conversion methods for numeric and string values. For more information on the <code>Calendar</code> object formats, see <a href="ftp://ftp.rfc-editor.org/in-notes/rfc822.txt">RFC 822</a> and <a href="http://www.w3.org/TR/NOTE-datetime">Date and Time Formats</a>, which describes <acronym title="International Organization for Standardization">ISO</acronym> 8601.</p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<h2><a name="conTypint"></a>ConnectorType Interface and SimpleConnectorType Class </h2>
+<p>The <code>ConnectorType</code> interface provides methods that configure a connector instance. The <code>SimpleConnectorType</code> class is a basic implementation of the <code>ConnectorType</code> interface. </p>
+
+  <h3><a name="cti"></a>ConnectorType Interface </h3>
+<p>The <code>ConnectorType</code> interface  instantiation sequence is as follows:</p>
+<p><img src="images/cdg_connectortype_interface.png" alt="ConnectorType interface methods and results" width="376" height="130" /> </p>
+<ol>
+  <li>Spring Framework creates the <code>ConnectorType</code> object using the parameters in the <code>connectorType.xml</code> file. </li>
+  <li>The connector manager calls the <code>getConfigForm</code> method to provide an XHTML configuration form  in which an administrator can specify connector parameter values in the Admin Console. </li>
+  <li>After an administrator fills in the configuration form and clicks <strong>Submit</strong>, the connector manager calls the <code>validateConfig</code> method to verify the form information. The <code>validateConfig</code> method can also call the <code>ConnectorFactory</code> class to instantiate a connector and verify that the connector instance can communicate with the content management system. If validation fails, the <code>validateConfig</code> method adds a message to the configuration form for the administrator to correct the form information. </li>
+  <li>To change configuration form information, the administrator clicks <strong>Edit</strong> for a connector in the Admin Console and the connector manager calls the <code>getPopulatedConfigForm</code> method to retrieve stored information and create an XHTML form with the information. </li>
+  <li>Each method returns a <code>ConfigureResponse</code> object that can contain a configuration form and an optional message to display on the Admin Console if corrections are needed.</li>
+</ol>
+<p>The <code>ConnectorType</code> interface provides methods that the connector manager calls to  supply rows in an XHTML table as a form to the Admin Console so that an administrator can specify or change parameter values for a connector. For more information and an example of configuration form XHTML table rows, see <a href="cdg_config.html#CreateConfigForm">Creating a Configuration Form</a>. </p>
+<p>For information on how a search appliance, connector manager, and a connector handle the tasks associated with each <code>ConnectorType</code> method, see <a href="cdg_intro.html#ConnectorTypeTasks">Following Connector Type and Implementation Processes</a>. </p>
+
+<h3><a name="ConnectorFactory"></a>ConnectorFactory Interface</h3>
+<p>The <code>ConnectorFactory</code> interface enables the <code>ConnectorType.validateConfig</code> method to instantiate a temporary connector instance to ensure that the content management system responds to the host and port provided in the configuration form. If this test fails, the <code>validateConfig</code> method can send the configuration form back to the Admin Console to get the correct access information for the content management system.</p>
+<p>The <code>ConnectorFactory</code> interface also gives a connector access to the values in the <code>connectorInstance.xml</code> after the connector is instantiated. Access to this XML file enables a connector to view the properties in the file and potentially modify information to pass in the <code>ConfigureResponse</code> object that the <code>validateConfig</code> method returns. </p>
+<p>The <code>ConnectorFactory</code> interface instantiation sequence is as follows:</p>
+<p><img src="images/cdg_connectorfactory.png" alt="ConnectorFactory interface instantiation sequence" width="257" height="66" /></p>
+<p>The <code>makeConnector</code> method returns a <code>Connector</code> object, which exists only while the <code>ConnectorType.validateConfig</code> method runs. </p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+ </body>
+</html>
+

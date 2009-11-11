@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "DTD/xhtml1-transitional.dtd">
+<html>
+<head>    
+<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+<title>Connector Developer&apos;s Guide: Authentication</title>
+<link href="cdg.css" type="text/css" rel="stylesheet"></link>
+<!--[if IE]><link rel="stylesheet" type="text/css" href="http://code.google.com/css/iehacks.css" /><![endif]-->
+</head>
+<body>
+
+<h1 class="page_title">Connector Developer&apos;s Guide: Authentication</h1>
+
+<p>Google Search Appliance software versions 6.2 <br />
+Connector manager version 2.4.0<br />
+Posted December 2009</p>
+<p>The connector manager uses authentication when a user searches for secured access documents. The content management system prompts users for their user name and password before granting access to view the documents. </p>
+<p>This section describes how to authenticate  users to view secure documents. For connector terminology definitions, see the <a href="http://code.google.com/apis/searchappliance/documentation/62/reference/glossary.html">Google Enterprise Glossary</a>. The <a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0.0/index.html">Javadoc</a> for the SPI is available in open source. For additional  information, see <a href="cdg_intro.html#TraversalSecurity">Understanding Authentication and Authorization</a>.</p>
+
+<p><strong>Chapters</strong>: <a href="cdg_about.html">About This Guide</a>, <a href="cdg_intro.html">Introduction</a>, <a href="cdg_getstart.html">Getting Started</a>, <a href="cdg_spioverview.html">SPI Overview</a>, <a href="cdg_traversing.html">Traversing Documents</a>, <br />
+<em>Authentication</em>, <a href="cdg_authorization.html">Authorization</a>, <a href="cdg_config.html">Configuration</a>, <a href="cdg_buildcm.html">Appendix A: Building a Debug Connector Manager</a></p>
+
+<h2>Contents</h2>
+<ol class="toc">
+<li><a href="cdg_authentication.html#authntop">Overview</a></li>
+<li><a href="cdg_authentication.html#UserCredentials">User Credentials for Authentication</a></li>
+<li><a href="cdg_authentication.html#AuthCodeExample">Authentication Code Examples</a>
+  <ol>
+    <li><a href="cdg_authentication.html#SimplifiedLivelinkxample">Simplified Livelink Example</a></li>
+    <li><a href="cdg_authentication.html#SimplifiedDocumentumExample">Simplified Documentum Example</a></li>
+    <li><a href="cdg_authentication.html#LDAPExample">LDAP Example</a></li>
+  </ol>
+</li>
+</ol>
+
+<h2><a name="authntop"></a>Overview</h2>
+
+<p>You can authenticate users by implementing the <code>AuthenticationManager</code> interface. </p>
+<p>The following illustration shows the call sequence: </p>
+<p><img src="images/cdg_authentication_flow.png" alt="Authentication functions" width="438" height="177" /></p>
+<p>The process is as follows: </p>
+<ol>
+  <li>The <code>Connector</code> interface returns a <code>Session</code> object from the <code>login</code> method. </li>
+  <li>The connector manager uses the <code>Session</code> interface in your connector to call the <code>getAuthenticationManager</code> method, which returns an <code>AuthenticationManager</code> object. </li>
+  <li>The <code>AuthenticationManager</code> interface provides the <code>AuthenticationIdentity</code> interface, which provides methods for getting the domain, username, and password strings. The <code>AuthenticationIdentity</code> interface provides the identity parameter for the call to the <code>authenticate</code> method of the <code>AuthenticationManager</code> interface. </li>
+<li>The <code>AuthenticationManager</code> interface provides the <code>authenticate</code> method, which the connector manager calls when a user requires authentication to the content management system. The authentication response from the content management system can be either a true or a false response to the <code>isValid</code> function. </li>
+</ol>
+<h2><a name="UserCredentials"></a>User Credentials for Authentication</h2>
+<p>A user must have the same user name and password at all content management systems served by the connectors that are associated with a single search appliance. That is, if you have two document sources that map to a user who has different credentials at each source, the search appliance can't serve from both sources. </p>
+<p>The connector manager uses the search appliance's HTTP Basic mechanism to collect user name and password credentials from the user for searches. </p>
+<p> Similarly, the search appliance authenticates a user for all content management systems on which the user has a user account.</p>
+<p>A user never sees the results from a content management system if the user fails authentication. The search appliance requests credentials only once during a user session. </p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<h2><a name="AuthCodeExample"></a>Authentication  Examples</h2>
+<p>The following examples illustrate different examples of the <code>TraversalManager.authenticate</code> method. 
+<a name="SimplifiedLivelinkxample"></a>
+<h3>Simplified Livelink Example </h3>
+<p>The connector manager calls the <code>authenticate</code> method passing in a username and password as an <code>AuthenticationIndentity</code> object. The code creates a client at the content management system and gets server information back from the content management system, which either acknowledges that the credentials are correct or an exception throws to indicate a failed login attempt. 
+<pre>
+// Simplified Livelink authenticate() method.
+public AuthenticationResponse authenticate(AuthenticationIdentity identity)
+    throws RepositoryLoginException, RepositoryException {
+  try {
+    Client client = clientFactory.createClient(identity.getUsername(),
+                                               identity.getPassword());
+    ClientValue serverInfo = client.GetServerInfo();
+    return new AuthenticationResponse(serverInfo.hasValue(), null);
+  } catch (RepositoryException e) {
+    throw new RepositoryLoginException("Authentication failed for " +
+                                        identity.getUsername(), e);
+  }
+}
+</pre>
+<p>&nbsp;</p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+<a name="SimplifiedDocumentumExample"></a>
+<h3>Simplified Documentum Example</h3>
+<p>Login information is passed to the content management system and the <code>authenticate</code> method either verifies that the user is authenticated or an exception occurs to indicate a login failure. </p>
+<pre>
+// Simplified Documentum authenticate() method.
+public AuthenticationResponse authenticate(AuthenticationIdentity identity)
+    throws RepositoryLoginException, RepositoryException {
+
+  ILoginInfo loginInfo = clientX.getLoginInfo();
+  loginInfo.setUser(identity.getUsername());
+  loginInfo.setPassword(identity.getPassword());
+
+  String docbaseName = sessionManager.getDocbaseName();
+  sessionManager.clearIdentity(docbaseName);
+  try {
+    sessionManager.setIdentity(docbaseName, loginInfo);
+  } catch (RepositoryLoginException e) {
+    return new AuthenticationResponse(false, null);
+  }
+
+  boolean authenticate = sessionManager.authenticate(docbaseName);
+  return new AuthenticationResponse(authenticate, null);
+}
+</pre>
+<p>&nbsp;</p>
+<a name="LDAPExample"></a>
+<h3>LDAP Example</h3>
+<p>Example JAAS LDAP <code>authenticate</code> method, implements a
+  <code>javax.security.auth.callback.CallbackHandler</code> that supplies
+the <code>AuthenticationIdentity</code> members to the JAAS <code>LoginContext</code> object.</p>
+<pre>
+import com.google.enterprise.connector.spi.AuthenticationIdentity;
+import com.google.enterprise.connector.spi.AuthenticationManager;
+import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.connector.spi.RepositoryLoginException;
+import com.google.enterprise.connector.spi.RepositoryException;
+
+import java.io.IOException;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.login.LoginContext;
+import javax.security.auth.login.LoginException;
+
+public class JAASAuthenticationManager
+    implements AuthenticationManager, CallbackHandler {
+
+  private AuthenticationIdentity identity;
+
+  public AuthenticationResponse authenticate(AuthenticationIdentity identity)
+      throws RepositoryLoginException, RepositoryException {
+    try {
+      // Create a new LoginContext using this object as the authentication
+      // CallbackHandler, so it can supply the identity parameters; then
+      // login against our Example LDAP server using that identity.
+      this.identity = identity;
+      new LoginContext("ExampleLDAPConfiguration", this).login();
+      return new AuthenticationResponse(true, null);
+    } catch (LoginException le) {
+      throw new RepositoryLoginException("Authentication failed for " +
+                                         identity.getUsername(), le);
+    } catch (SecurityException se) {
+      throw new RepositoryLoginException("Authentication failed for " +
+                                         identity.getUsername(), se);
+    } finally {
+      this.identity = null;
+    }
+  }
+
+  // Authentication callbacks for the LDAP login module.
+  // Supply the username and password from the AuthenticationIdentity.
+  public void handle(Callback[] callbacks)
+      throws IOException, UnsupportedCallbackException {
+    for (int i = 0; i < callbacks.length; i++) {
+      if (callbacks[i] instanceof NameCallback) {
+        // Return the identity username.
+        NameCallback nc = (NameCallback)callbacks[i];
+        nc.setName(identity.getUsername());
+      } else if (callbacks[i] instanceof PasswordCallback) {
+        // Return the identity password.
+        PasswordCallback pc = (PasswordCallback)callbacks[i];
+        pc.setPassword(identity.getPassword().toCharArray());
+      } else {
+        throw new UnsupportedCallbackException
+          (callbacks[i], "Unsupported Callback");
+      }
+    }
+  }
+}
+
+</pre>
+<p>&nbsp;</p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+  </body>
+</html>

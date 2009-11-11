@@ -1,0 +1,790 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "DTD/xhtml1-transitional.dtd">
+<html>
+<head>    
+<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+<title>Connector Developer&apos;s Guide: Getting Started</title>
+<link href="cdg.css" type="text/css" rel="stylesheet"></link>
+<!--[if IE]><link rel="stylesheet" type="text/css" href="http://code.google.com/css/iehacks.css" /><![endif]-->
+</head>
+<body>
+
+<h1 class="page_title">Connector Developer&apos;s Guide: Getting Started</h1>
+    
+<p>Google Search Appliance software versions 6.2 <br />
+Connector manager version 2.4.0<br />
+Posted December 2009</p>
+<p>This section provides a tutorial that enables you to create a simple Java connector to connect to a simulated content management system, and to see how connector development works. This connector uses Java and Eclipse freeware and enables you to follow along step-by-step. Eclipse is a commonly used tool for Java programming. If you have another integrated development environment (IDE), we recommend that you use Eclipse for this tutorial so that you can follow each step. The use of an IDE in this tutorial simplifies the development procedures and enables you to develop a connector in a production programming environment. </p>
+<p>For connector terminology definitions, see the <a href="http://code.google.com/apis/searchappliance/documentation/62/reference/glossary.html">Google Enterprise Glossary</a>. </p>
+
+<p><strong>Chapters</strong>: <a href="cdg_about.html">About This Guide</a>, <a href="cdg_intro.html">Introduction</a>, <em>Getting Started</em>, <a href="cdg_spioverview.html">SPI Overview</a>, <a href="cdg_traversing.html">Traversing Documents</a>, <br />
+<a href="cdg_authentication.html">Authentication</a>, <a href="cdg_authorization.html">Authorization</a>, <a href="cdg_config.html">Configuration</a>, <a href="cdg_buildcm.html">Appendix A: Building a Debug Connector Manager</a></p>
+
+<h2>Contents</h2>
+<ol class="toc">
+  <li><a href="#WriteHWConn">Writing a Hello World Connector</a>
+  <ol>
+    <li><a href="#tutpreqs">Tutorial Prerequisites</a></li>
+    <li><a href="#tutovervw">Tutorial Overview</a></li>
+    <li><a href="#SetUpConnDevEnv">Setting Up the Connector Development Environment</a>
+    <ol>
+      <li><a href="#inswco">Installing Software Components</a></li>
+      <li><a href="#dlcmsw">Downloading the Connector Manager Software</a></li>
+      <li><a href="#excospijrfl">Extracting the Connector SPI JAR File</a></li>
+    </ol></li>
+    <li><a href="#CreateJavaProject">Creating a Java Project in Eclipse</a></li>
+    <li><a href="#AddJarFile">Adding  the Connector Manager JAR file to the Eclipse Project</a></li>
+    <li><a href="#CopyHWConnToEclipse">Copying the Hello World Connector to Eclipse</a></li>
+    <li><a href="#BuildConn">Compiling the Connector in Eclipse</a></li>
+  </ol></li>
+
+  <li><a href="#DeployConn">Completing and Testing Your Connector</a>
+  <ol>
+    <li><a href="#CreatingXMLFiles">Creating the XML Files</a></li>
+    <li><a href="#CreatingJarFile">Creating the Hello World Connector JAR File</a></li>
+    <li><a href="#depcmat">Deploying the Connector Manager and  Connector on Apache Tomcat</a>
+    <ol>
+      <li><a href="#DplygConnMgr">Deploying the Connector Manager</a></li>
+      <li><a href="#DplygConnctr">Deploying Your Connector</a></li>
+    </ol>
+    </li>
+    <li><a href="#ConfigACforConn">Configuring the Admin Console</a></li>
+    <li><a href="#TestSearchQuery">Testing a Search Query</a></li>
+  </ol></li>
+  <li><a href="#Summary">Summary</a></li>
+  <li><a href="#UndgExmplCnSrc">Example Connector  Code</a>
+  <ol>
+    <li><a href="#PkgAndImpStats">Package and Import Statements</a></li>
+    <li><a href="#CnnAndSsnCls">Declaring the Connector and Session</a></li>
+    <li><a href="#TraversingExmplECM">Traversing the Example Content Management System</a>
+      <ol>
+        <li><a href="#ExmplStartTrvl">Example startTraversal Method</a></li>
+        <li><a href="#ExmplResumeTrvl">Example resumeTraversal Method</a></li>
+        <li><a href="#TraversalUtilMd">Traversal Utility Method</a></li>
+        <li><a href="#HelloWorldDocumentListMethod">HelloWorldDocumentList Method</a></li>
+        <li><a href="#HloAuthNMgrClass">HelloAuthenticationManager Class</a></li>
+        <li><a href="#HloAuthZMgrClass">HelloAuthorizationManager Class</a></li>
+        </ol>
+    </li>
+    </ol>
+  </li>
+  <li><a href="#ExampleConnectorType">Example Connector Type Code</a></li>
+  <li><a href="#ExampleconnectorTypexmlCode">Example connectorType.xml Code</a></li>
+  <li><a href="#ExampleconnectorInstancexmlCode">Example connectorInstance.xml Code</a></li>
+</ol>
+
+<!-- _____ Build a Connector from a Production Connector Manager ___ -->
+
+<a id="WriteHWConn"
+ name="WriteHWConn"></a>
+<h2>Writing a Hello World Connector</h2>
+<p>This section  shows you how to write a simple &quot;Hello World&quot; connector. To simplify the code, the connector does not use a real content management system. Instead, the connector repeatedly provides the same document to the search appliance and uses a simulated URL for the document. The contents of the  document is “Hello World.&quot;</p>
+
+<a id="tutpreqs"
+ name="tutpreqs"></a>
+<h3>Tutorial Prerequisites</h3>
+<p>To complete this tutorial, you need:</p>
+<ul>
+  <li>Internet access</li>
+  <li>Access to a Google Search Appliance Admin Console </li>
+  <li>A computer workstation for development and testing 
+    <p>This workstation needs network access to the search appliance. The workstation can run any operating system that supports a Java Development Kit (JDK)--this tutorial describes use with Windows. </p>
+  </li>
+</ul>
+<p>The sample files that you use in this tutorial are available in the current documentation folder:</p>
+<ul>
+  <li>Connector - Provides a simplified connector with classes and methods - <a href="examples/HelloWorldConnector.java.txt">HelloWorldConnector.java.txt</a></li>
+  <li>ConnectorType - Provides the configuration form for the Admin Console - <a href="examples/HelloWorldConnectorType.java.txt">HelloWorldConnectorType.java.txt</a></li>
+  <li>connectorType.xml - Parameter file for the ConnectorType - <a href="examples/connectorType.xml.txt">connectorType.xml.txt</a></li>
+  <li>connectorInstance.xml - Parameter file creating a connector instance - <a href="examples/connectorInstance.xml.txt">connectorInstance.xml.txt</a></li>
+</ul>
+
+<a id="tutovervw"
+ name="tutovervw"></a>
+<h3>Tutorial Overview </h3>
+<p>In this tutorial, you will complete the following activities: </p>
+<ol>
+  <li><a href="#SetUpConnDevEnv">Setting Up the Connector Development Environment</a></li>
+  <li><a href="#CreateJavaProject">Creating a Java Project in Eclipse</a></li>
+  <li><a href="#AddJarFile">Adding the Connector Manager JAR file to the Eclipse Project</a></li>
+  <li><a href="#CopyHWConnToEclipse">Coping the Hello World Connector to Eclipse</a></li>
+  <li><a href="#BuildConn">Compiling the Connector in Eclipse </a></li>
+  <li><a href="#DeployConn">Completing and Testing Your Connector</a></li>
+  <li><a href="#ConfigACforConn">Configuring the Admin Console for the Connector</a></li>
+  <li><a href="#TestSearchQuery">Testing a Search Query</a></li>
+</ol>
+
+<!-- _____________ Deploy the Connector Manager _________________ -->
+<a id="SetUpConnDevEnv"
+ name="SetUpConnDevEnv"></a>
+<h3>Setting Up the Connector Development Environment</h3>
+<p>In this section, you set  up the connector development environment by performing the following activities:</p>
+<ul>
+  <li><a href="#inswco">Installing software components</a> </li>
+  <li><a href="#dlcmsw">Downloading the connector manager software</a></li>
+  <li><a href="#excospijrfl">Extracting the connector SPI JAR file</a></li>
+  <li><a href="#depcmat">Deploying the connector manager on Apache Tomcat</a></li>
+</ul>
+
+<a id="inswco"
+ name="inswco"></a>
+<h4>Installing Software Components</h4>
+<p>In this section, you  install the Java Development Kit (JDK), Eclipse, and Apache Tomcat (the servlet container).</p>
+<p>To set up the connector development environment:</p>
+<ol>
+<li>Install the JDK version 1.5 or later.
+<p>
+The JDK is available from <a href="http://java.sun.com">http://java.sun.com</a>.
+         The connector framework supports any version of the JDK.</p>
+</li>
+<li>Install Eclipse. 
+  <p>Eclipse is available from <a href="http://www.eclipse.org">http://www.eclipse.org</a>. 
+    You can develop connectors using any integrated development environment (IDE) such as Eclipse. For this tutorial, you need Eclipse to complete the tasks. (The procedures  use Eclipse version 3.3.2.) </p>
+</li>
+<li>Install Apache Tomcat:
+<ol>
+<li>Download an Apache Tomcat   ZIP or TAR file from <a href="http://archive.apache.org/dist/tomcat/tomcat-5/v5.5.23/bin/" target="_blank">Apache.org</a> and install on  a folder on your computer. (The executable version for Windows does not provide the startup and shutdown commands described in this document.) </li>
+    <li>Create an environmental variable for CATALINA_HOME. <br />
+Windows XP:
+<ol style="list-style-type: lower-alpha">
+<li>Right click <strong>My Computer</strong> and click <strong>Properties</strong>.</li>
+<li> Click the <strong>Advanced</strong> tab and click <strong>Environment Variables</strong>. The Environment Variables menu appears. </li>
+<li>In <strong>System variables</strong>, click <strong>New</strong>. The New System Variable menu appears.</li>
+<li>Type <code>CATALINA_HOME</code> for the <strong>Variable name</strong> and the enter the path to the Tomcat download folder, for example, <code>c:\apache-tomcat-6.0.20\</code> as the <strong>Variable value</strong>. </li>
+<li>Click <strong>OK</strong> to complete the variable, <strong>OK</strong> to exit  Environment Variables, and <strong>OK</strong> to exit System Properties.</li>
+</ol>
+<br>Linux and Macintosh:
+<ol style="list-style-type: lower-alpha">
+<li>See if you need to set the variable, by typing:<code> <br />
+echo $CATALINA_HOME</code> <br />
+If this command doesn't display a value, continue to Step b.</li>
+<li>Set the variable (substitute your Tomcat version number in the commands that follow). <br />
+For example, from the command line: <br />
+<code>env CATALINA_HOME=/usr/local/apps/apache-tomcat-6.0.20</code><br />
+Or from your <code>~/.bashrc</code> file: <br />
+<code>export CATALINA_HOME=/usr/local/apps/apache-tomcat-6.0.20</code><br /><br />
+</li>
+</ol>
+</li>
+<li>Examine the installed Tomcat file structure and locate the <code>bin</code> and <code>webapps</code> folders to be used in 
+<a href="#depcmat">Deploying the Connector Manager on Apache Tomcat</a>. </li>
+    <li>Start Tomcat:
+<ul>
+<li>Windows: Open a command prompt and type: <code><br />
+%CATALINA_HOME%<em></em>\bin</code>\<code>startup</code></li>
+<li>Linux or Macintosh: Start a Terminal and type:<br /> 
+<code>$CATALINA_HOME/bin</code>/<code>startup.sh</code></li>
+</ul>
+</li>
+</ol>  
+</li>
+</ol>
+
+
+<a id="dlcmsw"
+ name="dlcmsw"></a>
+<h4>Downloading the Connector Manager Software</h4>
+<p>In this section, you  download the open source connector manager software:</p>
+<ol>
+  <li>Choose a connector manager download file from <a href="http://code.google.com/p/google-enterprise-connector-manager/">http://code.google.com/p/google-enterprise-connector-manager/</a>.
+    <p>In the <strong>Featured Downloads</strong> section, choose which compressed file to download: </p>
+    <table width="50%" border="1">
+      <tr>
+        <th width="30%" scope="col">Platform</th>
+        <th width="70%" scope="col">Binary File</th>
+      </tr>
+      <tr>
+        <td>Linux or Macintosh</td>
+        <td><a href="http://google-enterprise-connector-manager.googlecode.com/files/connector-manager-2.0.0.tar.gz">connector-manager-2.0.0.tar.gz</a></td>
+      </tr>
+      <tr>
+        <td>Windows</td>
+        <td><a href="http://google-enterprise-connector-manager.googlecode.com/files/connector-manager-2.0.0.zip">connector-manager-2.0.0.zip</a></td>
+      </tr>
+    </table>
+  </li>
+  <li>Download the file for your platform and open the compressed file. </li>
+</ol>
+
+<a id="excospijrfl"
+ name="excospijrfl"></a>
+<h4>Extracting the Connector SPI JAR File </h4>
+<p>In this section, after opening the connector manager compressed file from the previous section, you need to extract the connector manager <code>.war</code> file, copy it, and extract the <code>.jar</code> file for the SPI. The service provider interface <code>.jar</code> file provides classes for each interface that is coded in the example Hello World connector file that you can create in this tutorial. </p>
+<p>The instructions that follow are  for a Windows system, if you are using a Linux or Macintosh, refer to your operating system documentation for how to open a <code>.tar</code> file, and how to extract, copy, and rename files. </p>
+<p>To extract the <code>connector-spi.jar</code> file: </p>
+<ol>
+  <li>Open the folder labeled <code>connector-manager-2.0.0</code>. </li>
+  <li>Copy or extract the <code>connector-manager.war</code> file and store it in a folder on your computer. </li>
+  <li>Copy the <code>connector-manager.war</code> file so that you have two copies of the same file.  </li>
+  <li>Rename one of the copies of the <code>connector-manager.war</code> file to be <code>connector-manager.zip</code>. </li>
+  <li>Double-click the <code>connector-manager.zip</code> file, open the <code>WEB-INF</code> folder, and open the <code>lib</code> folder. </li>
+  <li>Copy or extract the <code>connector-spi.jar</code> file to the current folder on your computer. 
+    <p>You will need to use the <code>connector-spi.jar</code> file next the later section, <a href="#AddJarFile">Adding the Connector Manager JAR file to the Eclipse Project</a>.
+  </p>
+  </li>
+</ol>
+
+<a id="CreateJavaProject"
+ name="CreateJavaProject"></a>
+<h3>Creating a Java Project in Eclipse </h3>
+<p>In this section,  create  a new project in Eclipse for  use in this tutorial. </p>
+<p>To create a Java project in Eclipse:</p>
+<ol>
+<li>Start Eclipse. <p>Locate the folder where you installed the Eclipse software:</p><ul>
+  <li>In Windows, locate the folder and double click the <code>eclipse.exe</code> executable.</li> 
+  <li>In Linux or on a Macintosh, you can use the <code>eclipse</code> command at a Terminal. If this does not work, you can locate Eclipse using the <code>whereis eclipse</code> command, and  then enter the full directory path. </li>
+</ul>
+</li>
+<li>Create a new project. <p>Click <strong>File</strong> &gt;  <strong>New</strong> &gt;  <strong>Project</strong> &gt;  <strong>Java Project</strong> and click <strong>Next</strong>.  The <strong>New Java Project</strong> window appears.</p>
+  <p>If you have Java perspective set, you can create the project with <strong>File</strong> &gt; <strong>New</strong> &gt; <strong>Java Project</strong>. </p>
+</li>
+<li>Name the project. <p>Enter the <strong>HelloWorldConnector</strong> project name. You can leave the default settings as they appear.</p> </li>
+<li>Click <strong>Finish</strong>. <p>The new project is created and saved in the default workspace.</p></li>
+<li>View Package Explorer (if the Package Explorer is not already open).
+  <p>Click <strong>Window</strong> &gt; <strong>Show View</strong> &gt; <strong>Package Explorer</strong>.</p> </li>
+<li>Create a <code>lib</code> folder. 
+<ol style="list-style-type: lower-alpha">
+<li>Right click the <code>HelloWorldConnector</code> project name in Package Explorer and 
+click <strong>New</strong> &gt; <strong>Folder</strong>.</li>
+<li>Type in the <strong>Folder Name</strong> as <code>lib</code> and click <strong>Finish</strong>.</li>
+</ol>
+</li>
+</ol>
+
+<a id="AddJarFile"
+ name="AddJarFile"></a>
+<h3>Adding  the Connector Manager JAR file to the Eclipse Project</h3>
+<p>In this section,  add  the connector manager's <acronym title="Service Provider Interface">SPI</acronym> <code>.jar</code> file to Eclipse's working folders. </p>
+<p>To add the <code>.jar</code> file to the <code>lib</code> folder that you created in Step 6 of 
+<a href="#CreateJavaProject">Creating a Java Project in Eclipse</a>:</p>
+<ol>
+<li>Copy the <code>connector-spi.jar</code> file.
+  <p>Return to the folder where the <code>connector-spi.jar</code> file resides (as described in Step 6 of 
+  <a href="#excospijrfl">Extracting the Connector SPI JAR File</a>) and copy the file to the clipboard.</p>
+</li>
+<li>Click  the <code>lib</code> folder.</li>
+<li>Paste the <code>connector-spi.jar</code> file.
+  <p>In Eclipse, right click the <code>lib</code> folder and click <strong>Paste</strong> to put the <code>connector-spi.jar</code> file in the <code>lib</code> folder.  </p>
+</li>
+</ol>
+<p>To register the <code>connector-spi.jar</code> file with Eclipse: </p>
+<ol>
+<li>Refresh the folder. 
+  <p>Right click the <code>lib</code> folder and click <strong>Refresh</strong> from the menu. The <code>connector-spi.jar</code> entry appears.</p></li>
+<li>Add to the build path.
+  <p> (A build path indicates to Eclipse how to find the code for compiling.) Right click  the <code>connector-spi.jar</code> file and click  <strong>Build Path</strong> &gt;  <strong>Add to  Build Path</strong>. </p>
+  <p><strong>Note:</strong> The  <code>connector-spi.jar</code> file  moves from the <code>lib</code> folder to the <strong>Referenced Libraries</strong> folder. </p>
+</li>
+</ol>
+
+
+<!-- _____________ Copy the Hello World Connector to Eclipse _________________ -->
+<a id="CopyHWConnToEclipse"
+ name="CopyHWConnToEclipse"></a>
+<h3>Copying the Hello World Connector to Eclipse</h3>
+<p>Copying the example Hello World connector requires that you create two classes, one for the connector and another for the connector type. A class is a construct for creating objects. </p>
+<p>The connector type class identifies the connector to the Admin Console of a Google Search Appliance and provides properties that the connector manager uses to generate a connector instance. These classes will eventually become part of the <code>.jar</code> file that the connector manager uses to create an instance of the connector and to identify the connector to the Admin Console. </p>
+<p>To create  the class for the connector:</p>
+<ol>
+<li>In the <strong>Package Explorer</strong>, expand the <strong>HelloWorldConnector</strong> element and right click the <code>src</code> element.</li>
+<li>Click <strong>New</strong> &gt; <strong>Class</strong>. The <strong>New Java Class</strong> window opens. </li>
+<li>Type in the following information in this window.
+  <table border="0" width="50%">
+<th>Field Name</th><th>Enter This Value</th>
+<tr><td>Package</td><td><code>com.example.connector</code></td></tr>
+<tr><td>Name</td><td><code>HelloWorldConnector</code></td></tr>
+</table>
+<p>You can leave all other settings as they appear. </p></li>
+  <li>Open the <a href="examples/HelloWorldConnector.java.txt">HelloWorldConnector.java.txt</a> source code file, select all text, copy the text, delete the existing text from the Eclipse source window, and paste the text in to the source window. <br />
+    If you want to learn more about the  purpose of the source code, see <a href="#UndgExmplCnSrc">Examining the HelloWorldConnector Source Code</a>. </li>
+  <li>Click <strong>File</strong> &gt; <strong>Save</strong>. </li>
+</ol>
+<p>To create the class for the connector type:</p>
+<ol>
+<li>In the <strong>Package Explorer</strong>, expand the <strong>HelloWorldConnector</strong> element and right click the <strong>com.example.connector</strong> element. </li>
+<li>Click <strong>New</strong> &gt; <strong>Class</strong>.  The <strong>New Java Class</strong> window opens. </li>
+<li>Type in  the <strong>Name</strong> as <code>HelloWorldConnectorType</code> and click <strong>Finish</strong> to close the window.</li>
+<li>Open the <a href="examples/HelloWorldConnectorType.java.txt">HelloWorldConnectorType.java.txt</a> source code file, select all text, copy the text, delete the existing text from the Eclipse source window, and paste the text in to the source window. </li>
+<li>Click <strong>File</strong> &gt; <strong>Save</strong>. 
+  
+</li>
+</ol>
+
+<!-- _____________ Build the Connector _________________ -->
+<a id="BuildConn"
+ name="BuildConn"></a>
+<h3>Compiling the Connector in Eclipse</h3>
+<p>By default, Eclipse compiles (builds) projects automatically. If  a build does not occur after you insert the Hello World example, click <strong>Project</strong> &gt; <strong>Build Automatically</strong>.</p>
+<h2><a name="DeployConn"></a>Completing and Testing Your Connector</h2>
+<p>In this section, you add parameter files to your project, create a JAR file, copy the file to the web server, and test the connector.</p>
+<p>Deploying the connector consists of:</p>
+<ol>
+  <li><a href="#CreatingXMLFiles">Creating the XML Files </a></li>
+  <li><a href="#CreatingJarFile">Creating the Hello World Connector JAR File</a></li>
+  <li><a href="#depcmat">Deploying the Connector Manager and Connector on Apache Tomcat</a></li>
+  <li><a href="#ConfigACforConn">Configuring the Admin Console</a></li>
+  <li><a href="#TestSearchQuery">Testing a Search Query</a></li>
+</ol>
+<h3><a name="CreatingXMLFiles"></a>Creating the XML Files </h3>
+<p>In this section, you create the connector instance and type XML files, that when installed, enable the connector manager to create a connector instance and identify the connector to Admin Console. </p>
+<p>To create the XML files: </p>
+<ol>
+  <li>In Eclipse, right click the <code>src</code> folder in the <code>HelloWorldConnector</code> project, click <strong>New</strong> &gt; <strong>Folder,</strong> specify the <strong>Folder name</strong> as <code>config</code>, and click <strong>Finish</strong>. </li>
+  <li>Right click the <code>config</code> folder, click <strong>New</strong> &gt; <strong>File</strong>, enter the file name as<code> connectorInstance.xml</code>, and click <strong>Finish</strong>. </li>
+  <li>Click the <strong>Source</strong> tab at the bottom of the <strong>connectorInstance.xml</strong> panel. </li>
+  <li>Open  <a href="examples/connectorInstance.xml.txt">connectorInstance.xml.txt</a>, copy the contents, and paste the text into the <strong>connectorInstance.xml</strong> panel.</li>
+  <li>Click <strong>File</strong> &gt; <strong>Save</strong>. </li>
+  <li>Repeat Steps 2 to 5 to create the <code>connectorType.xml</code> file in the <code>config</code> folder using the contents of <a href="examples/connectorType.xml.txt">connectorType.xml.txt</a>  file.</li>
+</ol>
+  
+  <h3><a name="CreatingJarFile"></a>Creating the Hello World Connector JAR File </h3>
+  <p>In this section, you create that JAR file that when installed on the Apache Tomcat server enables the connector manager and the Admin Console to access. </p>
+  <p>To create the <code>.jar</code> file:</p>
+  <ol>
+    <li>Right click on the <code>src</code> folder and click <strong>Export</strong>. The Export window opens. Expand <strong>Java</strong>, click <strong>JAR file</strong>, and click <strong>Next</strong>. The JAR Export window opens. </li>
+    <li>For<strong> Select the resources to export</strong>, expand the HelloWorldConnector item and click the checkboxes for the <code>src</code> and <code>lib</code> folders. </li>
+    <li>For  <strong>Select the export destination</strong>, type in the <strong>JAR file</strong> name as <code>HelloWorldConnector.jar</code> and click <strong>Finish</strong>.</li>
+</ol>
+    
+    
+ <a id="depcmat"
+  name="depcmat"></a>   
+  <h3>Deploying the Connector Manager and  Connector on Apache Tomcat</h3>
+  <p>In this section, you need to do essentially the same steps twice--starting and stopping Tomcat to copy the connector manager's<code> .war</code> file to the Tomcat server, and then repeating the process for the connector's <code>.jar</code> file. The reason is that the first procedure causes Tomcat to create new folders, and in the second procedure, you add the connector to the folders. </p>
+  <p>Before starting, return  to the folder where you installed Tomcat as described in the previous section, 
+  <a href="#inswco">Installing Software Components</a>. You will also need the <code>connector-manager.war</code> file described in the previous section, <a href="#excospijrfl">Extracting the Connector SPI JAR File</a>.</p>
+
+
+<a id="DplygConnMgr"
+ name="DplygConnMgr"></a>
+  <h4>Deploying the Connector Manager </h4>
+  <p>To deploy the connector manager on Tomcat:</p>
+  <ol>
+  <li>Shutdown Tomcat. 
+    <ul>
+      <li>Windows: Open a command prompt and type:  <code>%CATALINA_HOME%<em></em>\bin</code>\<code>shutdown</code>
+<li>Linux or Macintosh: Start a Terminal and type:  <code>$CATALINA_HOME/bin</code>/<code>shutdown.sh</code> <br />
+Wait approximately 30 seconds to ensure that Tomcat stops. You can check that the service stops by entering this URL: <a href="http://127.0.0.1:8080">http://127.0.0.1:8080</a>. If the page displays that the connection was reset, then the service has stopped. </li>
+    </ul>
+  </li>
+  <li>Copy the connector manager <code>.war</code> file to Tomcat.
+      <ul>
+        <li>Windows: Copy the <code>connector-manager.war</code> file to the <code>%CATALINA_HOME%<em></em>\wepapps</code> folder.</li>
+        <li>Linux or Macintosh: Copy the <code>connector-manager.war</code> file to the <code>$CATALINA_HOME/wepapps</code> folder.</li></ul>
+  </li>
+  <li>Start Tomcat. 
+    <ul>
+      <li>Windows: Open a command prompt and type: <code>%CATALINA_HOME%<em></em>\bin</code>\<code>startup</code></li>
+      <li>Linux or Macintosh: Start a Terminal and type:  <code>$CATALINA_HOME/bin</code>/<code>startup.sh</code></li>
+    </ul>
+  </li>
+  <li>Test Tomcat. 
+    <p>After Tomcat starts, verify that the server is running by clicking this link: <a href="http://127.0.0.1:8080/connector-manager/testConnectivity">http://127.0.0.1:8080/connector-manager/testConnectivity</a> or by typing this address into a browser. This link verifies that the connector manager is running and displays the connector manager version, Java version, and the operating system version.</p>
+  </li>
+  </ol>
+
+<a id="DplygConnctr"
+ name="DplygConnctr"></a>
+  <h4>Deploying Your Connector </h4>
+  <p>To deploy your connector on Tomcat:</p>
+  <ol>
+  <li>Shutdown Tomcat. 
+    <ul>
+      <li>Windows: Open a command prompt and type: <code>%CATALINA_HOME%<em></em>\bin</code>\<code>shutdown</code>
+
+<li>Linux or Macintosh: Start a Terminal and type: <code>$CATALINA_HOME/bin/shutdown.sh</code><br />
+Wait approximately 30 seconds to ensure that Tomcat stops. You can check that the service stops by entering this URL: <a href="http://127.0.0.1:8080">http://127.0.0.1:8080</a>. If the page displays that the connection was reset, then the service has stopped. </li>
+    </ul>
+  </li>
+  <li>Copy the connector <code>.jar</code> file to Tomcat.
+    <ul><li>Windows: Copy the <code>HelloWorldConnector.jar</code> file to the 
+        <code>%CATALINA_HOME%<em></em>\webapps\connector-manager\WEB-INF\lib</code> folder.</li>
+    <li>Linux or Macintosh: Copy the <code>HelloWorldConnector.jar</code> file to the 
+        <code>$CATALINA_HOME/webapps/connector-manager/WEB-INF/lib</code> folder.</li>
+    </ul>
+  </li>
+  </ol>
+  
+  <p>Do not restart Tomcat yet. You restart it in the next section, 
+  <a href="#ConfigACforConn">Configuring the Admin Console</a>. </p>
+  
+  <a id="ConfigACforConn"
+   name="ConfigACforConn"></a>
+  <h3>Configuring the Admin Console</h3>
+  <p>The information that follows explains how to use the Admin Console of the Google Search Appliance to configure access to the connector manager and your connector. </p>
+  <p>You need the machine name where you installed Apache Tomcat (the servlet container), the domain name for your site, and the administrative user name and password for the Admin Console.</p>
+  <p>To configure the Admin Console for a connector:</p>
+  <ol>
+    <li>Start Tomcat:
+<ul>
+        <li>Windows: Open a command prompt and type: <code>%CATALINA_HOME%<em></em>\bin</code>\<code>startup</code></li>
+<li>Linux or Macintosh: Start a Terminal and type: <code>$CATALINA_HOME/bin</code>/<code>startup.sh</code></li>
+</ul>
+  </li>
+  <li>Test Tomcat.
+    <p>After Tomcat starts, verify that the server is running by browsing to <a href="http://127.0.0.1:8080/connector-manager/testConnectivity">http://127.0.0.1:8080/connector-manager/testConnectivity</a>. This link verifies that the connector manager is running and displays the connector manager version, Java version, and the operating system version. </p>
+  </li>
+  <li>Log into an Admin Console as an administrator. </li>
+    <li>In the <strong>Crawl and Index</strong> &gt; <strong>Crawl URLs</strong> page of the Admin Console, add the following crawl pattern to the <strong>Follow and Crawl Only URLs with the Following Patterns</strong> edit box:
+    <pre>^googleconnector://</pre>
+      <p class="note"><strong>Note:</strong> If this crawl pattern is not present, the search appliance rejects  documents from a content feed connector, which this connector mimics. Metadata-and-URL connectors do not require the use of the <code>googleconnector</code> crawl pattern. </p>
+  </li>
+  <li>Click <strong>Save URLs to Crawl</strong>.</li>
+  <li>On the <strong>Crawl and Index</strong> &gt; <strong>Feeds</strong> &gt; <strong>List of Trusted IP Addresses</strong> page, either list the IP address of the servlet container in the <strong>Only trust feeds from these IP addresses</strong> field or click <strong>Trust feeds from all IP addresses</strong>. 
+    <p>Alternatively, you can list the IP address of the server where Apache Tomcat is installed in the <strong>Only trust feeds from these IP addresses</strong> field. 
+      Click <strong>Save Settings</strong>. </p>
+  </li>
+
+  <li>Click <strong>Connector Administration</strong> &gt; <strong>Connector Managers</strong>  and enter the following values in  <strong>Register a New Connector Manager</strong>: 
+    <table border="1" width="50%">
+  <th width="40%">Field</th>
+  <th width="60%">Value</th>
+  <tr><td>Manager name</td><td><code>test-cm</code></td></tr>
+  <tr><td>Description</td><td><code>Test connector manager</code></td></tr>
+  <tr><td>Location</td>
+  <td><p><em>Connector_Manager_URL</em></p>    </td>
+  </tr>
+  </table><br>
+  <p>For <em>Connector_Manager_URL</em>, The name of the computer on which you installed Apache Tomcat becomes the start of a URL that uses your local site's domain name, for example if the computer name is <code>mycomputer</code> in the <code>example.com</code> domain, the URL would be as follows: <code>http://mycomputer.example.com:8080/connector-manager</code></p>
+  </li>
+  <li>Click <strong>Save</strong>. 
+    The Admin Console tests the connectivity between the search appliance and the connector manager.
+<p>When the Admin Console is able to access the connector manager on the network, a green dot appears next to the connector manager name in the <strong>Connector Manager Administration</strong> page and   &quot;New Connector Manager successfully added&quot; displays. </p>
+<p>You can test that the connector type is deployed by browsing to <a href="http://127.0.0.1:8080/connector-manager/getConnectorList">http://127.0.0.1:8080/connector-manager/getConnectorList</a>,
+which  displays the installed connector types.</p>
+  </li>
+  <li>Click the name of the <strong>test-cm</strong> connector manager. 
+    <p>The <strong>Connector Administration</strong> &gt; <strong>Connectors</strong> page of the Admin Console appears.</p>
+  </li>
+  <li>From the <strong>Connector manager</strong> pull-down menu, choose the <strong>test-cm</strong> name of the connector manager and click <strong>Add New Connector</strong>. 
+    <p>The <strong>Connector Configuration</strong> page appears. </p>
+  </li>
+  <li>Enter the <strong>helloworld-connector</strong> name 
+    and 
+      click <strong>Get Configuration Form</strong>. 
+      <p>The configuration form page appears. </p>
+  </li>
+  <li>
+    Enter test values (none of the values mean anything) and click <strong>Save Configuration</strong>. 
+    <p>Your connector is now added to the Admin Console. </p>
+  </li>
+
+  </ol>
+  
+  <p class="note"><strong>Note</strong>: If you change information in the configuration form after you start Tomcat, you will need to shutdown  and restart Tomcat for the changes to be picked up by the connector. </p>
+  
+
+<!-- _________________ Test a Search Query _______________ -->
+<a id="TestSearchQuery"
+ name="TestSearchQuery"></a>
+  <h3>Testing a Search Query</h3>
+<p>To test a search query:</p>
+<ol>
+  <li>Wait a few minutes while the search appliance indexes the connector document. </li>
+  <li>From the Admin Console, click <strong>Test Center</strong> to start a search.</li>
+  <li>In the Test Center, set the <strong>For Use Frontend</strong> pull-down to <strong>default_frontend</strong> and set the <strong>Search over Collection</strong> pull-down to <strong>default_collection</strong>. Click <strong>View Output</strong>.  </li>
+  <li>Ensure that <strong>Search:</strong> <strong>public content</strong> is set and enter <code>hello</code> in the search  field. 
+    <p><code>Hello world</code> appears as a document entry, but with a link that does not produce a result. This entry validates that the connector is working.</p>
+  </li>
+</ol>
+
+<a id="Summary"
+ name="Summary"></a>
+<h2>Summary</h2>
+<p>Congratulations! You just created a simple connector. You can examine the two sample Java files. They contain implementation classes for the connector SPI. You also learned how   XML files are packaged as part of the <code>.jar</code> file. </p>
+<p> If you need a further example, you can build and deploy the test connector that comes with the connector manager, and which contains a mock  repository. See <a href="cdg_buildcm.html">Appendix A: Building a Debug Connector Manager</a> for more information.</p>
+<p>For further information about the code examples, see:</p>
+<ul>
+  <li><a href="#UndgExmplCnSrc">Example Connector  Code</a>
+    <ul>
+      <li><a href="#PkgAndImpStats">Package and Import Statements</a></li>
+      <li><a href="#CnnAndSsnCls">Declaring the Connector and Session</a></li>
+      <li><a href="#TraversingExmplECM">Traversing the Example Content Management System</a>
+        <ul>
+          <li><a href="#ExmplStartTrvl">Example startTraversal Method</a></li>
+          <li><a href="#ExmplResumeTrvl">Example resumeTraversal Method</a></li>
+          <li><a href="#TraversalUtilMd">Traversal Utility Method</a></li>
+          <li><a href="#HelloWorldDocumentListMethod">HelloWorldDocumentList Method</a></li>
+          <li><a href="#HloAuthNMgrClass">HelloAuthenticationManager Class</a></li>
+          <li><a href="#HloAuthZMgrClass">HelloAuthorizationManager Class</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li><a href="#ExampleConnectorType">Example Connector Type Code</a></li>
+  <li><a href="#ExampleconnectorTypexmlCode">Example connectorType.xml Code</a></li>
+  <li><a href="#ExampleconnectorInstancexmlCode">Example connectorInstance.xml Code</a></li>
+</ul>
+<p>&nbsp;</p>
+
+<a id="UndgExmplCnSrc"
+ name="UndgExmplCnSrc"></a>
+<h2>Example Connector  Code</h2>
+<p>In this section, you can understand the source code for the example Hello World connector. </p>
+
+<a id="PkgAndImpStats"
+ name="PkgAndImpStats"></a>
+<h3>Package and Import Statements</h3>
+<p>The following statements declare the Java package for the fictional Example connector, and declare the Google SPI interfaces and classes. </p>
+<pre>package com.example.connector;
+import com.google.enterprise.connector.spi.AuthenticationIdentity;
+import com.google.enterprise.connector.spi.AuthenticationManager;
+import com.google.enterprise.connector.spi.AuthenticationResponse;
+import com.google.enterprise.connector.spi.AuthorizationManager;
+import com.google.enterprise.connector.spi.AuthorizationResponse;
+import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.spi.Document;
+import com.google.enterprise.connector.spi.DocumentList;
+import com.google.enterprise.connector.spi.Property;
+import com.google.enterprise.connector.spi.RepositoryException;
+import com.google.enterprise.connector.spi.Session;
+import com.google.enterprise.connector.spi.SimpleDocument;
+import com.google.enterprise.connector.spi.SpiConstants;
+import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.Value;
+</pre>
+<p>The next statements import Java functionality into the connector. You can view the 
+<a href="http://java.sun.com/j2se/1.4.2/docs/api/java/util/package-summary.html">java.util classes</a> at the Sun Java site.</p>
+<pre>
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+</pre>
+
+<a name="CnnAndSsnCls"
+   id="CnnAndSsnCls"></a>
+<h3>Declaring the Connector and Session</h3>
+<p>The next statement declares the connector's <code>HelloWorldConnector</code> class as implementing the <code>Connector</code> interface. This is the start of the connector application code. </p>
+<pre>
+public class HelloWorldConnector implements Connector {
+</pre>
+<p>The next statements declare the <code>Session</code> interface and the <code>HelloSession</code> class that implements the <code>Session</code> interface. The <code>HelloSession</code> class instantiates managers for traversing the content management system, and authenticating and authorizing users.</p>
+<pre>
+public Session login() {
+  return new HelloSession();
+}
+public class HelloSession implements Session {
+  public AuthenticationManager getAuthenticationManager() {
+    return new HelloAuthenticationManager();
+  }
+  public AuthorizationManager getAuthorizationManager() {
+    return new HelloAuthorizationManager();
+  }
+  public TraversalManager getTraversalManager() {
+    return new HelloTraversalManager();
+  }
+}
+</pre>
+
+<a id="TraversingExmplECM"
+ name="TraversingExmplECM"></a>
+<h3>Traversing the Example Content Management System</h3>
+<p>The <code>HelloTraversalManager</code> implements the <code>TraversalManager</code> interface and checks the <code>setBatchHint</code> method, which is set by the connector manager. The <code>setBatchHint</code> method is called by the connector manager to set the desired number of documents to return in each traversal batch. </p>
+<pre>
+public class HelloTraversalManager implements TraversalManager {
+  private static final int MAX_DOCID = 1000;
+  private int batchHint = 10;
+  public void setBatchHint(int hint) {
+    batchHint = hint;
+  }
+</pre>
+
+<a id="ExmplStartTrvl"
+ name="ExmplStartTrvl"></a>
+<h4>Example startTraversal Method</h4>
+<p>The connector manager calls the <code>startTraversal</code> method to start traversing a content management system for the first time. This method calls the <a href="#TraversalUtilMd">traverse</a> utility method  to build the list of documents.</p>
+<pre>
+public DocumentList startTraversal() {
+  return traverse(&quot;0&quot;);
+}
+</pre>
+
+<a id="ExmplResumeTrvl"
+ name="ExmplResumeTrvl"></a>
+<h4>Example resumeTraversal Method</h4>
+<p>The connector manager calls the <code>resumeTraversal</code> method to resume traversing a content management system as needed to acquire the documents for the list of documents to index. This method calls the <a href="#TraversalUtilMd">traverse</a> utility method to build the list of documents.</p>
+<pre>
+public DocumentList resumeTraversal(String checkpoint) {
+  return traverse(checkpoint);
+}
+</pre>
+
+<a id="TraversalUtilMd"
+ name="TraversalUtilMd"></a>
+<h4>Traversal Utility Method</h4>
+<p>The <code>traverse</code> utility method produces a <code>DocumentList</code> containing one
+<code>Document</code>.  This method also sets the <code>documentServed</code> state so that this 
+is the only <code>Document</code> traversed for this connector. The <code>traverse</code> method  returns <code>batchHint</code> number of documents in each batch, until it returns a total of 1000 documents. </p>
+<pre>
+/**
+ * Utility method to produce a {@code DocumentList} containing
+ * the next batch of {@code Document} from the checkpoint.
+ *
+ * @param checkpoint a String representing the last document
+ *        number processed.
+ */
+private DocumentList traverse(String checkpoint) {
+  int startDocId = Integer.parseInt(checkpoint) + 1;
+  if (startDocId &gt; MAX_DOCID) {
+    return null;  // No more documents.
+  }
+  Calendar cal = Calendar.getInstance();
+  cal.setTimeInMillis(10 * 1000);
+  List&lt;Document&gt; docList = new ArrayList&lt;Document&gt;(batchHint);
+  int endDocId = Math.min(startDocId + batchHint - 1, MAX_DOCID);
+  for (int i = startDocId; i &lt;= endDocId; i++) {
+    Map&lt;String, List&lt;Value&gt;&gt;properties;
+    properties = new HashMap&lt;String, List&lt;Value&gt;&gt;();
+    properties.put(SpiConstants.PROPNAME_DOCID,
+      asList(Value.getStringValue(Integer.toString(i))));
+    properties.put(SpiConstants.PROPNAME_LASTMODIFIED,
+      asList(Value.getDateValue(cal)));
+    properties.put(SpiConstants.PROPNAME_DISPLAYURL,
+      asList(Value.getStringValue(&quot;http://www.example.com/?docid=&quot; + i)));
+    properties.put(SpiConstants.PROPNAME_CONTENT,
+      asList(Value.getBinaryValue(&quot;Hello World!&quot;.getBytes())));
+    docList.add(new SimpleDocument(properties));
+  }
+    return new HelloWorldDocumentList(docList);
+  }
+  private List&lt;Value&gt; asList(Value value) {
+    List&lt;Value&gt; list = new LinkedList&lt;Value&gt;();
+    list.add(value);
+    return list;
+  }
+}</pre>
+
+<a id="HelloWorldDocumentListMethod"
+ name="HelloWorldDocumentListMethod"></a>
+<h4>HelloWorldDocumentList Method </h4>
+<p>The <code>HelloWorldDocumentList</code> method iterates through the list of documents from the content management system. </p>
+<pre>
+class HelloWorldDocumentList implements DocumentList {
+  private Iterator&lt;Document&gt; iterator;
+  private Document document;
+  public HelloWorldDocumentList(List&lt;Document&gt; documents) {
+    this.iterator = documents.iterator();
+    this.document = null;
+  }
+  public Document nextDocument() {
+    if (iterator.hasNext()) {
+      document = iterator.next();
+      return document;
+    }
+    return null;
+  }
+  public String checkpoint() throws RepositoryException {
+    if (document != null) {
+      Property docId =
+        document.findProperty(SpiConstants.PROPNAME_DOCID);
+      return docId.nextValue().toString();
+    }
+    return null;
+  }
+}</pre>
+
+<a id="HloAuthNMgrClass"
+ name="HloAuthNMgrClass"></a>
+<h4>HelloAuthenticationManager Class</h4>
+<p>The <code>HelloAuthenticationManager</code> class implements the <code>AuthenticationManager</code> interface and indicates that a potential user is successfully authenticated. </p>
+<pre>class HelloAuthenticationManager implements AuthenticationManager {
+  public AuthenticationResponse authenticate(AuthenticationIdentity id) {
+    return new AuthenticationResponse(true, null);
+  }
+}
+</pre>
+
+<a id="HloAuthZMgrClass"
+ name="HloAuthZMgrClass"></a>
+<h4>HelloAuthorizationManager Class</h4>
+<p>The <code>HelloAuthorizationManager</code> class implements the <code>AuthorizationManager</code> interface and indicates that the authenticated user is authorized to view all of the documents in the supplied <code>Collection</code>. This set of statements also concludes the <code>HelloWorldConnector</code> class.</p>
+<pre>class HelloAuthorizationManager implements AuthorizationManager {
+  public Collection&lt;AuthorizationResponse&gt; authorizeDocids(
+    Collection&lt;String&gt; docIds, AuthenticationIdentity id) {
+      ArrayList&lt;AuthorizationResponse&gt; authorized =
+        new ArrayList&lt;AuthorizationResponse&gt;(docIds.size());
+      for (String docId : docIds) {
+        authorized.add(new AuthorizationResponse(true, docId));
+      }
+      return authorized;
+  }
+ } 
+}    // end HelloWorldConnector class
+</pre>
+
+
+<a id="ExampleConnetorType"
+ name="ExampleConnectorType"></a>
+<h2>Example Connector Type Code</h2>
+<p>The code for the example connector type creates a simple configuration form as a row in an XHTML table and demonstrates the use of the following methods:</p>
+<ul>
+  <li><code>getConfigForm</code> - Requests the configuration form for the connector. The form displays on the Admin Console so that an administrator can provide connector settings.</li>
+  <li><code>validateConfig</code> - Validates the information that the administrator entered in the configuration form.</li>
+  <li><code>getPopulatedConfigForm</code> - Provides a configuration form when an administrator edits the settings for a connector.</li>
+  </ul>
+<p>The example connector type code is as follows:</p>
+<pre>
+package com.example.connector;
+
+import com.google.enterprise.connector.spi.ConfigureResponse;
+import com.google.enterprise.connector.spi.ConnectorFactory;
+import com.google.enterprise.connector.spi.ConnectorType;
+
+import java.util.Locale;
+import java.util.Map;
+
+public class HelloWorldConnectorType implements ConnectorType {
+  String form = &quot;&lt;tr&gt;&lt;td&gt;fake form&lt;/td&gt;&lt;td&gt;&lt;input type=\&quot;text\&quot; name=\&quot;aa\&quot;/&gt;&lt;/td&gt;&lt;/tr&gt;&quot;;
+
+  public ConfigureResponse getConfigForm(Locale locale) {
+    return new ConfigureResponse(null, form);
+  }
+
+  public ConfigureResponse validateConfig(Map&lt;String, String&gt; config, Locale locale,
+      ConnectorFactory factory) {
+    return null;
+  }
+
+  public ConfigureResponse getPopulatedConfigForm(Map&lt;String, String&gt; config, Locale locale) {
+    return new ConfigureResponse(&quot;filled&quot;, form);
+  }
+}
+</pre>
+
+
+<a id="ExampleconnectorTypexmlCode"
+ name="ExampleconnectorTypexmlCode"></a>
+<h2>Example connectorType.xml Code</h2>
+<p>The <code>connectorType.xml</code> file provides parameters for the <code>ConnectorType</code> object. 
+You may choose to expose the configuration form fields here or not as required by your design.</p>
+<pre>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;!DOCTYPE beans PUBLIC &quot;-//SPRING//DTD BEAN//EN&quot; &quot;http://www.springframework.org/dtd/spring- beans.dtd&quot;&gt;
+&lt;beans&gt;
+  &lt;bean id=&quot;helloworld-connector&quot;
+    class=&quot;com.example.connector.HelloWorldConnectorType&quot;&gt;
+  &lt;/bean&gt;
+&lt;/beans&gt;
+</pre>
+
+
+<a id="ExampleconnectorInstancexmlCode"
+ name="ExampleconnectorInstancexmlCode"></a>
+<h2>Example connectorInstance.xml Code</h2>
+<p>The connectorInstance.xml file enables administrators to set parameters for use in 
+deploying a connector.</p>
+<pre>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;!DOCTYPE beans PUBLIC &quot;-//SPRING//DTD BEAN//EN&quot; &quot;http://www.springframework.org/dtd/spring-beans.dtd&quot;&gt;
+&lt;beans&gt;
+  &lt;bean id=&quot;helloworld-connector&quot;
+    class=&quot;com.example.connector.HelloWorldConnector&quot;&gt;
+  &lt;/bean&gt;
+&lt;/beans&gt;
+</pre>
+ </body>
+</html>

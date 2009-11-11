@@ -1,0 +1,1303 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "DTD/xhtml1-transitional.dtd">
+<html>
+<head>    
+<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+<title>Connector Developer&apos;s Guide: Traversing Documents</title>
+<link href="cdg.css" type="text/css" rel="stylesheet"></link>
+<!--[if IE]><link rel="stylesheet" type="text/css" href="http://code.google.com/css/iehacks.css" /><![endif]-->
+</head>
+<body>
+
+<h1 class="page_title">Connector Developer&apos;s Guide: Traversing Documents</h1>
+
+<p>Google Search Appliance software versions 6.2 <br />
+Connector manager
+        version 2.4.0<br />
+Posted December 2009</p>
+<p>Traversing means acquiring documents from a content management system that the connector manager feeds to a Google Search Appliance. 
+Traversing is analogous to the search appliance concept of crawling.</p>
+<p><strong>Chapters</strong>: <a href="cdg_about.html">About This Guide</a>, <a href="cdg_intro.html">Introduction</a>, <a href="cdg_getstart.html">Getting Started</a>, <a href="cdg_spioverview.html">SPI Overview</a>, <em>Traversing Documents</em>, <br />
+<a href="cdg_authentication.html">Authentication</a>, <a href="cdg_authorization.html">Authorization</a>, <a href="cdg_config.html">Configuration</a>, <a href="cdg_buildcm.html">Appendix A: Building a Debug Connector Manager</a></p>
+<h2>Contents</h2>
+<ol class="toc">
+<li><a href="#overview">Overview</a></li>
+<li><a href="#BuildingADocumentList">Acquiring Documents</a></li>
+<li><a href="#IteratingOverADocumentList">Iterating Over a Document List</a></li>
+<li><a href="#SetBatchHint">Batch Hint</a>
+  <ol>
+    <li><a href="#BatchHintExample">Batch Hint Example</a></li>
+  </ol>
+</li>
+<li><a href="#checkpointing">Checkpointing</a>
+  <ol>
+      <li><a href="#CheckpointingExample">Checkpointing Example</a></li>
+</ol>
+</li>
+<li><a href="#TraversalContext">Traversal Context</a>
+  <ol>
+    <li><a href="#MakingaConnectorTraversalContextAware">Making a Connector Aware of Traversal Context</a></li>
+    <li><a href="#UsingTraversalContextforFeedingDocuments">Using TraversalContext for Feeding Documents</a></li>
+    <li><a href="#ConvenienceMethods">Traversal Context  Methods</a></li>
+    <li><a href="#TailoringtheTraversalContextSettingstoyourEnterprise">Tailoring the TraversalContext Settings to your Enterprise</a></li>
+    <li><a href="#SettingtheMaximumDocumentSize">Setting the Maximum Document Size</a></li>
+    <li><a href="#MIMETypeSupportLevels">MIME Type Support Levels</a></li>
+  </ol>
+</li>
+<li><a href="#mp">Metadata Properties</a>
+  <ol>
+    <li><a href="#PropertyLookup">Property Lookup</a></li>
+        <li><a href="#SpiConstants">SpiConstants Properties</a></li>
+</ol>
+</li>
+<li><a href="#DeleteContent">Deleting a Document From the Search Appliance Index</a></li>
+<li><a href="#logging">Logging</a>
+  <ol>
+    <li><a href="#LogFeedData">Logging Feed Data</a></li>
+    <li><a href="#RetrievingLogFiles">Retrieving Log Files</a></li>
+  </ol>
+</li>
+<li><a href="#CountofFeedFilesAwaitingIndexing">Count of Feed Files Awaiting Indexing</a></li>
+<li><a href="#fileaccess">File Access</a>
+  <ol>
+    <li><a href="#SchedulingAndCheckpointDataFiles">Scheduling and Checkpoint Data Files</a></li>
+    <li><a href="#AccessingKeys">Accessing Properties using Spring Framework Inversion of Control</a></li>
+  </ol>
+</li>
+<li><a href="#WorkQueue">Managing Work Queue Timeouts</a></li>
+</ol>
+
+<h2><a name="overview"></a>Overview</h2>
+
+<p>Traversing is acquiring documents from a content management system for the purpose of indexing the documents at a Google Search Appliance. For connector terminology definitions, see the <a href="http://code.google.com/apis/searchappliance/documentation/60/reference/glossary.html">Google Enterprise Glossary</a>. </p>
+<p>A connector that uses content feed acquires documents, metadata about each document, and URLs that point to the location of each acquired document in the content management system. A connector that uses metadata-and-URL feed acquires metadata for each document and a URL to the location of the document.  </p>
+<p>Traversing a content management system consists of the following tasks:</p>
+<ol>
+  <li>Receiving a <a href="#SetBatchHint">batch hint </a></li>
+  <li>Acquiring documents, metadata properties, and URLs </li>
+  <li><a href="#checkpointing">Checkpointing</a> the last read document</li>
+</ol>
+<p>The following illustration shows the traversal interface:</p>
+<p><img src="images/cdg_traversing_flow.png" alt="Call sequence of the Session.getTraversalManager, Session.login method, and the startTraversal and resumeTraversal methods" width="370" height="192" /></p>
+<p>The steps in the illustration are:</p>
+<ol>
+  <li>Traversal starts with a call to the <code>getTraversalManager</code> method from the <code>Session</code> interface.</li>
+  <li>The <code>Session</code> interface is called from <code>Connector</code> interface's <code>login</code> method.</li>
+  <li>The connector manager determines when to start a traversal, resume traversal, and to provide a batch hint, which is the recommended number of documents to acquire from the content management system. The <code>startTraversal</code> and <code>resumeTraversal</code> methods return a <code>DocumentList</code> object. For more information, see <a href="cdg_spioverview.html#gtm">getTraversalManager Method</a><a href="cdg_spioverview.html#dli"></a>. </li>
+</ol>
+<p>A connector controls traversal by setting the return value of the <code>DocumentList</code> interface:</p>
+<ul>
+  <li><code>null</code> - Stop traversing, all documents are traversed. Wait 5 minutes before asking the content management system for updated documents.</li>
+  <li><code>DocumentList</code> containing zero documents  - Temporarily stop traversing, set a progress checkpoint, and  resume traversing.  </li>
+  <li><code>DocumentList</code> (non-empty) - Send documents in the <code>DocumentList</code> to the search appliance. </li>
+</ul>
+<p>For more information on <code>DocumentList</code> return values and document traversing exceptions, see <a href="IteratingOverADocumentList">Iterating Over a Document List</a>.</p>
+<p>This section explains how to code the following interfaces: </p>
+<ul>
+  <li><code>TraversalManager</code>. Starts and resumes acquiring documents from a content management system. Also sets the number of documents in a batch that a connector requests from a content management system. </li>
+  <li><code>DocumentList</code>. Extracts a document from the list of documents. Also enables checkpointing the last traversed document. </li>
+  <li><code>Document</code>. Extracts property names from a document. </li>
+  <li><code>Property</code>. Extracts values from a property. </li>
+  <li><code>Value</code>. Provides a wrapper class for all data items from a content management system.  </li>
+</ul>
+<p>The traversing section also provides  related topics on metadata properties, logging, file access, persistent storage,  and deleting documents from an index. </p>
+<h3>Initial Traversal Calls </h3>
+<p> The first time the connector manager calls a connector instance, the connector manager calls the following methods:</p>
+<ol>
+  <li>The <code>Connector.login</code> method of the connector instance to start a session. </li>
+  <li>The <code>Session.getTraversalManager</code> method to start the traversal manager. </li>
+  <li>The <code>TraversalManager.setBatchHint</code> method to inform the connector that the number of documents to traverse need not be higher than the number specified in the <code>setBatchHint</code> method. Implementations must provide the <code>setBatchHint</code> method to receive a preferred size for the number of documents in a batch to request from a content management system. Connectors can ignore this call or  acquire approximately a recommended quantity of documents. </li>
+  <li>The <code>TraversalManager.startTraversal</code> method to iterate over documents from the logical beginning of the content management system. Traversal continues until the connector manager interrupts the connector instance to perform other tasks. </li>
+</ol>
+<h3>Subsequent Traversal Calls </h3>
+<p>After the connector manager is ready to resume acquiring documents, the connector manager calls the following methods: </p>
+<ol>
+  <li>The <code>DocumentList.checkpoint</code> method  to  bookmark the location in the content management system repository where traversal should resume. </li>
+  <li>The <code>resumeTraversal</code> method of the connector instance to resume traversing at the  document indicated by the <code>checkpoint</code> method.</li>
+</ol>
+<h2><a name="BuildingADocumentList"></a>Acquiring Documents</h2>
+<p>The following code example provides a sample <code>TraversalManager</code> implementation. The  code  declares the class, specifies 500 documents for the fake content management system, and  sets the batch hint so that the connector can traverse up to 100 documents a minute from the content management system.</p>
+<pre>
+public class MockTraversalManager implements TraversalManager {
+  // The maximum number of documents in our fake repository.
+  private static final int MAX_DOCID = 500;
+
+  // The recommended number of documents to return in each batch.
+  private int batchHint = 100;
+
+  // Set the recommended number of documents to return in next batch.
+  public void setBatchHint(int hint) throws RepositoryException {
+    if (hint > 0) {
+      this.batchHint = hint;
+    } else {
+      throw new RepositoryException("BatchHint must be a positive integer");
+    }
+  }
+</pre>
+<p>The next section lists the <code>startTraversal</code> method, which the connector
+manager calls to start acquiring documents from the content management system.</p>
+<pre>
+  // Start the traversal from the logical beginning of the repository.
+  public DocumentList startTraversal() throws RepositoryException {
+  // Start indexing at beginning of our fake repository.
+  return collectDocumentsFromId(0);
+  }
+</pre>
+<p>The next section lists the <code>resumeTraversal</code> method, which the connector manager 
+calls when it's ready to acquire more documents.</p>
+<pre>
+  // Resume traversal from the saved checkpoint position in the repository.
+  public DocumentList resumeTraversal(String checkpoint) throws RepositoryException {
+    int checkpointId;
+    try {
+      // Extract the last docId returned from the checkpoint.
+      checkpointId = Integer.parseInt(checkpoint);
+    } catch (NumberFormatException e) {
+      throw new RepositoryException("Invalid checkpoint");
+    }
+    // Resume traversing at the next document after the last one returned.
+    return collectDocumentsFromId(checkpointId + 1);
+  }
+</pre>
+<p>&nbsp;</p>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<h2>Iterating Over a Document List<a name="IteratingOverADocumentList" id="IteratingOverADocumentList"></a></h2>
+<p>After acquiring documents from the content management system, a connector iterates through the documents to process the documents. Thereafter, the connector manager passes the documents to the Google Search Appliance.</p>
+<p>The <code>DocumentList</code> interface provides the <code>checkpoint</code> method that indicates the current position within the document list, that is where to start a <code>resumeTraversal</code> method. The <code>nextDocument</code> method  gets the next document from the document list that the connector acquires from the  content management system. </p>
+<p>The return values for <code>DocumentList</code> are as follows.</p>
+<table width="80%" border="1">
+  <tr>
+    <th width="17%" scope="col">Return Value </th>
+    <th width="83%" scope="col">Description</th>
+  </tr>
+  <tr>
+    <td><code>null</code></td>
+    <td>Informs the connector manager that there are no new documents in the content management system to traverse. The connector manager then waits 5 minutes before calling the <code>resumeTraversal</code> method to check the content management system for new documents to traverse.</td>
+  </tr>
+  <tr>
+    <td>Zero documents (empty) </td>
+    <td>Traversing is not done,   set a checkpoint to indicate the current progress in the content management system, and immediately resume traversing. 
+      This status enables a connector to handle very large processing tasks, such as finding just a few documents to which a user has access in a large database, or traversing a very large repository.
+      <p>If a connector tries to execute long processing tasks, the connector manager timeout mechanism assumes that the  connector is hung and attempts to restart the process. This can cause an infinite loop of failing to reach  documents, timing out, restarting, and again failing. </p></td>
+  </tr>
+  <tr>
+    <td>Documents</td>
+    <td>Documents are ready for the connector manager to send to the search appliance. </td>
+  </tr>
+</table>
+<p>The <code>checkpoint</code> method should return information that allows the <code>resumeTraversal</code> method to resume on the  document that was returned by  <code>nextDocument</code>. </p>
+<p>The connector manager may not acquire all documents from the content management system. The connector manager may interrupt the traversal of documents, call the <code>checkpoint</code> method, and start another task. When the connector manager is again ready to start traversing the content management system, the connector manager calls the <code>resumeTraversal</code> method and passes  the <code>checkpoint</code> method to provide the current position. </p>
+<p>Connectors have these exceptions for documents:</p>
+<ul>
+  <li><code>RepositoryException</code>. A transient error occurred while traversing a document, such as a lost connection to the content management system. The connector needs to reread the document. The connector manager waits 5 minutes before resuming traversal. </li>
+  <li><code>RepositoryDocumentException</code>. A document has an error and cannot be retrieved. Skip the document.</li>
+  <li><code>OutofMemoryError</code>. A document is too large to be traversed. Skip the document. </li>
+</ul>
+<p>The code that follows is a helper method that both <code>startTraversal</code> and <code>resumeTraversal</code> call to build a list of documents. The batch hint provides a useful end point in the <code>for</code> loop for adding documents to the list. The value for <code>baseDocId</code> is passed from the caller. </p>
+<pre>
+  // Build a DocumentList of no more than batchHint documents starting from baseDocId.
+  private DocumentList collectDocumentsFromId(int baseDocId) throws RepositoryException {
+    if (baseDocId > MAX_DOCID)
+      return null;  // No more documents available.
+
+    MockDocumentList documentList = new MockDocumentList(batchHint);
+    for (int i = 0; i < batchHint; i++) {
+      int newDocId = baseDocId + i;
+      if (newDocId > MAX_DOCID)
+        break;  // End of our fake repository.
+      documentList.add(new MockDocument(newDocId));
+    }
+
+    return documentList;
+  }
+</pre>
+<p>This section provides a <code>DocumentList</code> object. </p>
+<pre>
+  // DocumentList returned from startTraversal() or resumeTraversal().
+  private class MockDocumentList extends ArrayList 
+    implements DocumentList {
+    // The ID of the last document that was returned by nextDocument().
+    private int lastDocId = -1;
+
+    // The Iterator over the DocumentList.
+    private Iterator iterator = null;
+
+    public MockDocumentList(int size) {
+      super(size);
+    }
+</pre>
+<p>The next section gets the next document and stores the document ID to use as a checkpoint that the <code>resumeTraversal</code> method uses to get the next document to acquire from the 
+content management system.</p>
+<pre>
+    // Return the next document in the DocumentList.
+    public Document nextDocument() throws RepositoryException {
+      if (iterator == null)
+        iterator = super.iterator();
+
+      if (iterator.hasNext()) {
+        MockDocument document = (MockDocument) iterator.next();
+        // Remember the id of the last document returned.
+        lastDocId = document.docId;
+        return document;
+      } else {
+        return null;  // No more documents in list.
+      }
+    }
+</pre>
+<p>The next section provides the <code>checkpoint</code> value when called, or <code>null</code> to indicate to use the previous stored checkpoint.</p>
+<pre>
+    // Return a checkpoint recording the last document returned 
+    // from nextDocument().
+    public String checkpoint() throws RepositoryException {
+      if (lastDocId < 0)
+        return null;  // No new checkpoint.
+      else
+        return String.valueOf(lastDocId);
+    }
+  }
+</pre>
+<p>The next section provides a <code>Document</code> object.</p>
+<pre>
+  // Trivial Document with no content and only a DOCID Property.
+  private class MockDocument implements Document {
+    public int docId;
+
+    public MockDocument(int id) {
+      this.docId = id;
+    }
+</pre>
+<p>The connector manager uses the next section to find a property 
+or to get all the properties for a document. Note the use of the 
+<code>String</code> <code>equalsIgnoreCase</code> operator appended 
+to the property to ensure the case is ignored in the property.</p>
+<pre>
+    public Property findProperty(String name) 
+      throws RepositoryException {
+      if (SpiConstants.PROPNAME_DOCID.equalsIgnoreCase(name))
+        return new MockProperty(String.valueOf(docId));
+      else
+        return null;
+    }
+
+    public Set getPropertyNames() throws RepositoryException {
+      // We only provide the mandatory DOCID Property.
+      HashSet names = new HashSet();
+      names.add(SpiConstants.PROPNAME_DOCID);
+      return names;
+    }
+  }
+</pre>
+<p>The next section provides a <code>Property</code> object to return a string value.</p>
+<pre>
+  // Trivial Property that returns a single string value.
+  private class MockProperty implements Property {
+    String value = null;
+
+    public MockProperty(String value) {
+      this.value = value;
+    }
+</pre>
+<p>The last section provides the <code>nextValue</code> method that packages a property value by type.</p>
+<pre>
+    public Value nextValue() throws RepositoryException {
+      // Use the Value class to package up the String.
+      Value returnValue = Value.getStringValue(value);
+      value = null;
+      return returnValue;
+    }
+  }
+}
+</pre>
+<p>&nbsp;</p>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<h2><a name="SetBatchHint"></a>Batch Hint</h2>
+<p>The connector manager provides the <code>TraversalManager</code>.<code>setBatchHint</code> method so that the connector manager can indicate to the connector to acquire only as many documents in the <code>DocumentList</code> as are specified in the hint value. This is a hint and the connector need not observe the number of results. For example, the traversal may be completely up to date, so perhaps there are no results to return. </p>
+<p> The connector manager always calls <code>setBatchHint</code> before calling <code>startTraversal</code> or <code>resumeTraversal</code>. The <code>setBatchHint</code> is determined by the traversal rate. The first call to a traversal method in a particular minute has a batch hint matching the traversal rate. Subsequent calls in the same minute will have a batch hint of the traversal rate minus the number of documents traversed so far during that minute. If the batch hint becomes zero, the traversal method will not be called until the minute has elapsed. </p>
+<p>Traversal methods should always pay attention to the batch hint, because this value specifies how many documents the connector manager processes in a <code>DocumentList</code>. </p>
+<a name="BatchHintExample" id="BatchHintExample"></a>
+<h3>Batch Hint Example </h3>
+<p>In the following example, the connector manager passes the batch hint value and the <code>setBatchHint</code> method assigns the value.</p>
+<pre>
+private int batchHint = -1;
+...
+public void setBatchHint(int batchHint) throws RepositoryException {
+    this.batchHint = batchHint;
+}
+</pre>
+
+<p>The following example limits the batch hint to 100,000 documents. This example connector later references the <code>batchSize</code> parameter in a call to a database for storing values.</p>  
+<pre>
+public void setBatchHint(int hint) {
+  if (hint < 0)
+    throw new RepositoryException();
+  else if (hint == 0)
+    batchSize = 100; 
+  else if (hint > 100000)
+    batchSize = 100000;
+  else
+    batchSize = hint;
+}
+</pre>
+<p>&nbsp;</p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<h2><a name="checkpointing"></a>Checkpointing</h2>
+<p>The <code>DocumentList</code>.<code>checkpoint</code> method  enables a connector to indicate the next document to traverse when the connector manager calls the <code>resumeTraversal</code> method. </p>
+<p>The <code>checkpoint</code> method may return <code>null</code> to indicate that there is no new checkpoint, in which case the previous checkpoint is used, or a checkpoint can throw a <code>RepositoryException</code> to indicate the same as <code>null</code>, that there is no new checkpoint.. </p>
+<p>Checkpointing consists of recording how far a traversal has progressed through the documents in the content management system. The connector manager calls the <code>resumeTraversal</code> method to pass the saved checkpoint to the connector.</p>
+<p>For more information on the <code>checkpoint</code> method, see <a href="cdg_spioverview.html#gtm">getTraversalManager Method</a>.</p>
+<p class="note"><strong>Note:</strong> The connector manager saves the string returned by the <code>checkpoint</code> method and passes the saved checkpoint to the <code>resumeTraversal</code> method. This string must convey enough information for the <code>resumeTraversal</code> method to know where to continue.</p>
+<p>Returning a checkpoint string may be impractical for performance, such as when taking too much work to get the state of a traversal into a string and then parsing out the string. If these conditions occur, a connector can record the state of the traversal on its own, with the understanding that <code>resumeTraversal</code> knows where to look for this state information. </p>
+<p>For information on writing information, see <a href="#fileaccess">File Access</a>. </p>
+<a name="CheckpointingExample" id="CheckpointingExample"></a>
+<h3>Checkpointing Example </h3>
+<p>The following code example  iterates over a list of documents and stores a checkpoint.</p>
+<pre>
+    // Return the next document in the DocumentList.
+    public Document nextDocument() throws RepositoryException {
+      if (iterator == null)
+        iterator = super.iterator();
+
+      if (iterator.hasNext()) {
+        MockDocument document = (MockDocument) iterator.next();
+        // Remember the id of the last document returned.
+        lastDocId = document.docId;
+        return document;
+      } else {
+        return null;  // No more documents in list.
+      }
+    }
+
+    // Return a checkpoint recording the last document returned from nextDocument().
+    public String checkpoint() throws RepositoryException {
+      if (lastDocId < 0)
+        return null;  // No new checkpoint.
+      else
+        return String.valueOf(lastDocId);
+    }
+  }
+</pre>
+<p>&nbsp;</p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<h2>Traversal Context<a name="TraversalContext" id="TraversalContext"></a></h2>
+
+<p>The connector manager provides the <code>TraversalContext</code> class implementation
+so that a connector can determine document types 
+to provide during a traversal.  Connectors may use
+the information provided by the <code>TraversalContext</code> class to limit content
+provided for indexing, based upon document size or MIME type.</p>
+<p>The Spring Framework constructs the <code>TraversalContext</code> using a bean definition in the <code>applicationContext.xml</code> file.  The bean definition also allows an administer to modify the <code>TraversalContext</code> constraints to suit their needs.  The maximum document size, unknown MIME type support level, and the sets of MIME types to prefer, support, or not support can all be configured.</p>
+<p class="note"><strong>Note:</strong> A MIME type consists of two parts, a major class and a minor class, for example, <code>application/text</code>. If a major and minor MIME type is not explicitly defined in the <code>applicationContext.xml</code> file and a MIME type cannot be resolved, then the rule applies to the all uses of the major MIME type class. For example, if you have a corporate MIME type such as <code>application/treefrog</code> and this MIME type is not defined in the XML file, the connector manager applies the rules in the <code>applicationContext.xml</code> file to all MIME types with the <code>application</code> major class. </p>
+<p class="note"><strong>Note:</strong> The default settings for the supported MIME types are comprehensive so that a connector can continue to feed useful data and exclude only content that would be excluded normally by the default configuration of the Google Search Appliance--after enabling traversal context awareness, administrators need not change <code>the applicationContext.xml</code> unless a change is made applications to not crawl in the Admin Console. </p>
+<p>This section provides the following topics</p>
+<ul>
+  <li><a href="#MakingaConnectorTraversalContextAware">Making a Connector Aware of Traversal Context</a></li>
+  <li><a href="#UsingTraversalContextforFeedingDocuments">Using TraversalContext for Feeding Documents</a></li>
+  <li><a href="#ConvenienceMethods">Traversal Context  Methods</a></li>
+  <li><a href="#TailoringtheTraversalContextSettingstoyourEnterprise">Tailoring the TraversalContext Settings to your Enterprise</a></li>
+  <li><a href="#SettingtheMaximumDocumentSize">Setting the Maximum Document Size</a></li>
+  <li><a href="#MIMETypeSupportLevels">MIME Type Support Levels</a></li>
+</ul>
+
+<a name="MakingaConnectorTraversalContextAware" id="MakingaConnectorTraversalContextAware"></a>
+<h3>Making a Connector Aware of Traversal Context</h3>
+
+<p>If a connector's <code>TraversalManager</code> implementation adds the
+<code>com.google.enterprise.connector.spi.TraversalContextAware</code> interface,
+the connector manager can call the <code>setTraversalContext</code>
+method, and supply context values for the connector to use 
+before the connector manager calls the methods in the <code>TraversalManager</code> interface. 
+<p>A connector needs to import access to the <code>TraversalContext</code> and <code>TraversalContextAware</code> packages. 
+<p>The following example demonstrates this calling sequence:</p>
+<pre>
+#import com.google.enterprise.connector.spi.TraversalContext;
+#import com.google.enterprise.connector.spi.TraversalContextAware;
+
+class MyTraversalManager
+    implements TraversalManager, TraversalContextAware {
+
+  /** The TraversalContext from TraversalContextAware Interface */
+  private TraversalContext traversalContext = null;
+
+  public void setTraversalContext(TraversalContext traversalContext) {
+    this.traversalContext = traversalContext;
+  }
+
+  ...
+}
+</pre>
+<p>&nbsp;</p>
+
+<a name="UsingTraversalContextforFeedingDocuments" id="UsingTraversalContextforFeedingDocuments"></a>
+<h3>Using TraversalContext for Feeding Documents</h3>
+
+<p>If a connector contains an instance of the <code>TraversalContext</code> class, 
+the connector's <code>TraversalManager</code>
+class can then use the context to tailor its document feed.  </p>
+<p>The <code>mimeTypeSupportLevel</code> method   determines whether to send a document's content to the search appliance. The <code>preferredMimeType</code> method returns the most preferred (highest support level) MIME type from the supplied set.  </p>
+<p>For example, in
+the following code snippet, the <code>TraversalContext</code> class determines
+whether or not to supply a <code>google:content</code> property for a document. </p>
+<pre>
+private void addContentProperty() throws RepositoryException {
+  File contentFile;
+  String mimeType;
+  ...
+
+  long fileSize = contentFile.length();
+
+  // Empty/NonExistent file has no content.
+  if (fileSize <= 0L)
+    return;
+
+  // The TraversalContext interface provides additional
+  // screening  depending on content size and MIME type.
+  if (traversalContext != null) {
+    // Is the content too large?
+    if (fileSize > traversalContext.maxDocumentSize())
+      return;
+
+    // Is this MIME type supported?
+    if (traversalContext.mimeTypeSupportLevel(mimeType) <= 0)
+      return;
+  }
+
+  // If okay, create a content stream property
+  // and add it to the property map.
+  InputStream contentStream = new FileInputStream(contentFile);
+  Value contentValue = Value.getBinaryValue(contentStream);
+  props.addProperty(SpiConstants.PROPNAME_CONTENT, contentValue);
+  return;
+ }
+</pre>
+<p>&nbsp;</p>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<a name="ConvenienceMethods" id="ConvenienceMethods"></a>
+<h3>Traversal Context  Methods</h3>
+
+<p>The <code>TraversalContext</code> interface provides the following  methods:</p>
+<ul>
+  <li><code>maxDocumentSize</code>. Sets the maximum file size in bytes that that the connector can traverse. This value must be less than or equal to 30 MB (31457280 bytes), which is the maximum file size for indexing on the Google Search Appliance. </li>
+  <li><code>mimeTypeSupportLevel</code>. Determines if a MIME type is supported in the <code>applicationContext.xml</code> file. </li>
+  <li><code>preferredMimeType</code>. Returns the preferred MIME type for a file pattern. </li>
+</ul>
+<p>The  methods are as follows. </p>
+<pre>
+public interface TraversalContext {
+ /**
+  * Gets a size limit for contents passed through the connector
+  * framework. If a developer has a way of asking the repository
+  * for the size of a content file before fetching it, then a
+  * comparison with this size would save the developer the cost
+  * of fetching a content that is too big to be used.
+  *
+  * @return The size limit in bytes
+  */
+ long maxDocumentSize();
+
+ /**
+  * Gets information about whether a MIME type is supported.
+  * Non-positive numbers mean that there is no support for this
+  * MIME type. Positive values indicate possible support for this
+  * MIME type, with larger values indicating better support or
+  * preference.
+  *
+  * @return The support level - non-positive means no support
+  */
+ int mimeTypeSupportLevel(String mimeType);
+
+ /**
+  * Returns the most preferred MIME type from the supplied set.
+  * This returns the MIME type from the set with the highest support
+  * level. MIME types with "/vnd.*" subtypes are preferred over
+  * others, and MIME types registered with IANA are preferred over
+  * those with "/x-*" experimental subtypes.
+  *
+  * If a repository contains multiple renditions of a particular
+  * item, it may use this to select the best rendition to supply
+  * for indexing.
+  *
+  * The support level values for MIME types are defined in the
+  *  MimeTypeMap bean definition in applicationContext.xml.
+  *
+  * @param mimeTypes a set of MIME types.
+  * @returns the most preferred MIME type from the Set.
+  */
+ String preferredMimeType(Set mimeTypes);
+}
+
+</pre>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<a name="TailoringtheTraversalContextSettingstoyourEnterprise" id="TailoringtheTraversalContextSettingstoyourEnterprise"></a>
+<h3>Tailoring the TraversalContext Settings to your Enterprise</h3>
+
+<p>The default values for the <code>TraversalContext</code> settings reflect
+either common usage or Google Search Appliance limitations.
+However, a knowledgeable user or administrator can tailor some
+of the search appliance and <code>TraversalContext</code> configuration to better suit
+their enterprise content.</p>
+
+<p>For example, the Google Search Appliance doesn't index a
+document whose content exceeds 30 megabytes in size and the
+default <code>TraversalContext.maxDocumentSize</code> value reflects
+that limit.  However, perhaps you wish to impose a lower
+limit, only indexing documents that are 5 megabytes or less.
+Or perhaps you prefer to index Postscript or PDF pre-press
+versions of documents, rather than the original Office suite
+formats.</p>
+
+<p>You may tune <code>TraversalContext</code> settings by editing one or
+more of the connector Manager web application configuration
+files.  In some cases it may also be necessary to modify
+the Search Appliance configuration (using the search appliance Administration
+pages).</p>
+
+<a name="SettingtheMaximumDocumentSize" id="SettingtheMaximumDocumentSize"></a>
+<h3>Setting the Maximum Document Size</h3>
+
+<p>The maximum document size limit may be configured by adjusting
+the <code>maxDocumentSize</code> property of the <code>FileSizeLimitInfo</code> bean
+definition in <code>applicationContext.xml</code>.  Do not set <code>maxDocumentSize</code>
+larger than the 30 MB search appliance document limit.</p>
+<p>If the document size exceeds the <code>maxDocumentSize</code> value or if the content is an unsupported MIME type, the connector should not feed the document content.    The search appliance  indexes all  metadata about a document, but not the document's content.</p>
+<p>The use of the <code>maxDocumentSize</code> parameter avoids the occurrence of throwing the <code>OutOfMemoryErrors</code> exception--if the <code>maxDocumentSize</code> parameter is set, then MIME types with large content size can be excluded from being fed to the Google Search Appliance. For more information on exceptions, see <a href="#IteratingOverADocumentList">Iterating Over a Document List</a>.</p>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<a name="MIMETypeSupportLevels" id="MIMETypeSupportLevels"></a>
+<h3>MIME Type Support Levels</h3>
+
+<p>The support level values for MIME types that are used by the
+  <code>mimeTypeSupportLevel</code> and <code>preferredMimeType</code> methods are defined
+in the <code>MimeTypeMap</code> bean definition in the <code>applicationContext.xml</code> file.
+Support levels are integer values, with higher positive
+integers have a higher preference than lower values.  Support
+levels less than or equal to zero indicate that MIME type
+is not supported. The default value is <code>1</code>, which indicates that a document type is unknown. The value 1 sends unidentifiable content to the Google Search Appliance, <code>0</code> does not send unidentifiable content to the search appliance.</p>
+<p class="note">The <code>TraversalContext.maxDocumentSize(String mimeType)</code> method
+returns the support level of the specified MIME type.  MIME type
+support levels are used to rank items supplied to
+<code>TraversalContext.preferredMimeType(Set mimeTypes)</code>.</p>
+<p>The <code>MimeTypeMap</code> bean definition in <code>applicationContext.xml</code> groups MIME types into four  categories: </p>
+<ul>
+  <li>Unsupported. Document types that must not be sent to the Google Search Appliance because the URL pattern has been designated in the Admin Console for not crawling or a document type that has file sizes greater than 30 MB (the maximum file size that the search appliance can handle for indexing a document). </li>
+  <li>Unknown.  A document type that is not unsupported, preferred, or supported. </li>
+  <li>Supported. Document types that the search appliance can index. </li>
+  <li>Preferred. MIME types with higher support
+    levels than the unsupported MIME types. </li>
+</ul>
+<p>The entries or each of the preferred, supported and unsupported
+sets are a list of content types that may or may not include
+subtypes.  Exact (case-insensitive) matches are attempted first.
+If an exact match is not found, a match is attempted using 
+the base type without the subtype.</p>
+
+<p>For example: </p>
+<pre>
+preferredMimeTypes={} (empty), supportedMimeTypes={"foo/bar"},
+unsupportedMimeTypes={"foo", "cat"}
+</pre>
+<p><code>Foo/Bar</code> matches (case-insensitively) <code>foo/bar</code>, so it would be considered supported.
+  <code>Foo/baz</code> does not have an exact match, but its content type, without a subtype, <code>foo</code>, does have a match in the unsupported table,
+so it should be considered unsupported.  Similarly, <code>cat/persian</code> would be considered unsupported.  <code>Xyzzy/bar</code> lacks an exact
+match, and its content type  without a subtype, <code>xyzzy</code>, is also not
+present, so it would be assigned the <code>unknownMimeTypeSupportLevel.</code></p>
+
+<p>Nearly all of the IANA recognized content type classes are well
+represented in the preferred, supported, unsupported MIME types sets,
+so very few MIME types should end up as unknown.  Removing a content
+type without a subtype entries from the preferred, supported, unsupported
+MIME types sets  forces more MIME types to become unknown. For more information,
+see <a href="http://www.iana.org/assignments/media-types/">MIME Media Types</a> at <a href="http://www.iana.org">IANA.org</a>.</p>
+
+<p>Moving MIME types between preferred, supported, and unsupported
+adjusts the support level for that MIME type.  Move MIME types
+you explicitly don't want to index to the unsupported set.
+Moving the MIME type (without a subtype) entries, like application,
+can have sweeping effects. </p>
+
+<p>You could add MIME types for new, experimental, or custom content.
+Deleting entries with explicit subtypes  forces an attempt
+to match an entry sans subtype.  For example, deleting the
+  <code>application/postscript</code> entry from the supported set would
+cause the support level for such content to drop to the
+application support level, currently unsupported.</p>
+
+<p>Deleting an entry without a subtype  forces all subtypes
+not explicitly listed to be considered unknown.  For example,
+the application content type class is currently listed in
+the unsupported set.  As such, the MIME type
+  <code>application/vnd.informix-visionary</code>, not explicitly mentioned
+elsewhere, would have the support level of unsupported.
+Deleting the application entry from the unsupported set
+ forces <code>application/vnd.informix-visionary</code>, lacking both
+an explicit entry and an application entry without a subtype,
+to be assigned the <code>unknownMimeType</code> support level.</p>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
+<h2 class="backtotop">Resetting a Connector</h2>
+<p class="backtotop">The Admin Console provides the capability to reset a connector. The connector manager uses its <code>restartConnectorTraversal</code> servlet. At the connector level, the connector manager performs the following actions:</p>
+<ul>
+<li>Deletes the connector's saved traversal state</li>
+<li>Cancels any traversal work that is in progress for the connector</li>
+<li>Calls <code>startTraversal</code> to force a new traversal of the content management system from the beginning</li>
+</ul>
+<h2><a name="mp"></a>Metadata Properties</h2>
+<p>A connector requests documents, metadata for a document and a URL for a document's location from the  API for the content management system.  A connector provides the search appliance with a URL for each document and  metadata that describes  document attributes, such as a document ID value, a <acronym title="Multipurpose Internet Mail Extensions">MIME</acronym> type, whether documents are publicly available or  controlled-access, and an optional last modified date. The connector may also provide metadata specific to a content management system. </p>
+<p>The  last-modified date ordering is useful for a search appliance to acquire the latest documents for indexing. You need to create  connector software that maps the  metadata from the content management system into the properties of the service provider interface (SPI) of the connector manager. For information on the SPI, see the <a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0/com/google/enterprise/connector/spi/SpiConstants.html">SpiConstants</a> section in the <a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0/index.html" target="_blank">Javadoc</a>.</p>
+<p>The connector manager uses the <code>Document.findProperty</code> method to find a property by name in a document or the <code>Document.getPropertyNames</code> method to get all the properties for a document.</p>
+<p class="note"><strong>Important: </strong>If the connector manager requests a property from the connector that a document does not contain, the connector must return null and not throw an exception. </p>
+<p>Content management systems  use their own names for each metadata property.
+A connector needs to map those  names to the property names in the <code>SpiConstants</code> class. The connector manager requires the use of the <code>PROPNAME_DOCID</code> property and recommends the use of the <code>PROPNAME_LASTMODIFIED</code> property. Google Enterprise strongly suggests that you specify a MIME type. </p><br>
+
+<p><strong>Properties With Multiple Values </strong></p>
+<p>Even though some content management systems allow properties with multiple values, they typically represent a small set of the metadata associated with documents.  Because properties with multiple values can exist, the <code>Property</code> interface was designed to allow them.  However, some properties are expected to have only one value  and <code>PROPNAME_DOCID</code> is one of them.  A document must have a single, unique document ID value.</p>
+<p>The following example shows how to return a property with multiple values:</p>
+<pre>
+  public Value nextValue() throws RepositoryException {
+    if (iterator != null) {
+      // Return the values of a Property with multiple values.
+      if (iterator.hasNext()) {
+        return fromObject(iterator.next());
+      }
+      return null;
+    } else {
+      // Return the value of a Property with a single value, but only once;
+      Value returnValue = singleValue;
+      singleValue = null;
+      return returnValue;
+    }
+  }
+</pre>
+<p>&nbsp;</p>
+<p><strong>Property Names Outside SpiConstants </strong></p>
+<p>You can create  property names outside of the <code>SpiConstants</code> class as your connector requires to indicate the metadata from an underlying content management system. These entries can be searchable and users can select the entries  in advanced queries with search keywords such as using the inmeta filter. For more information, see "Using inmeta to Filter by Meta Tags" in the <a href="http://code.google.com/apis/searchappliance/documentation/60/xml_reference.html">Search Protocol Reference</a>.  Property names like <code>author</code>, <code>title</code>, <code>license</code>, and  <code>tags</code> are  examples of  metadata that the connector manager does not explicitly look for, but which you can pass  to the search appliance for indexing.</p>
+<p class="note"><strong>Note</strong>: If a connector uses content feed, do not set the  
+<code>PROPNAME_SEARCHURL</code> property. If a connector uses metadata-and-URL feed, set the <code>PROPNAME_SEARCHURL</code> property. For more information, see <a href="cdg_intro.html#urlbyte">Understanding Content Feed and Metadata-and-URL Feed</a>. </p>
+
+<p>&nbsp;</p>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<a name="PropertyLookup"></a>
+<h3>Property Lookup</h3>
+<p>The connector manager uses the <code>Property.findProperty</code> method to find a property in a document by name or the <code>Property.getPropertyNames</code> method to provide a list of all properties that a document contains. If the connector manager requests a property that a document does not contain, the connector returns null and must not throw an exception.</p>
+<p>Two behaviors  are required:</p>
+<ul>
+  <li>The <code>findProperty</code> method returns null and does not throw an exception when an unknown property is requested.</li>
+  <li>The same property may be looked up multiple times, and the same <code>SimpleProperty</code> instance cannot be returned each time. This is because the <code>nextValue</code> method on the <code>SimpleProperty</code> instance will return null the second time the property is retrieved.</li>
+</ul>
+<p>The following code example code provides an implementation of the <code>Property</code> Interface that is notable for its large number of overloaded constructors, its various primitive types, and its common <code>Object</code> types.  These constructors make an  informed choice of which <code>Value</code> class method to call based on the type of the parameter supplied to the constructor. </p>
+<pre>
+public class SmartProperty implements Property {
+  // Used by single-value properties.
+  Value singleValue = null;
+
+  // Used by multi-value properties.
+  Iterator iterator = null;
+
+  // Constructors for single-value Properties of primitive types.
+  public SmartProperty(int anInt) {
+    // Use the Value class to construct a long integer value.
+    singleValue = Value.getLongValue((long) anInt);
+  }
+  public SmartProperty(long aLong) {
+    // Use the Value class to construct a long integer value.
+    singleValue = Value.getLongValue(aLong);
+  }
+  public SmartProperty(boolean aBool) {
+    // Use the Value class to construct a boolean value.
+    singleValue = Value.getBooleanValue(aBool);
+  }
+  public SmartProperty(float aFloat) {
+    // Use the Value class to construct a floating point value.
+    singleValue = Value.getDoubleValue((double) aFloat);
+  }
+  public SmartProperty(double aDouble) {
+    // Use the Value class to construct a floating point value.
+    singleValue = Value.getDoubleValue(aDouble);
+  }
+  public SmartProperty(byte[] byteArray) {
+    // Use the Value class to construct a byteArray binary value.
+    singleValue = Value.getBinaryValue(byteArray);
+  }
+
+  // Constructors for single-value Properties of Java primitive wrapper Objects.
+  public SmartProperty(Integer anInt) {
+    // Use the Value class to construct a long integer value.
+    singleValue = Value.getLongValue(anInt.longValue());
+  }
+  public SmartProperty(Long aLong) {
+    // Use the Value class to construct a long integer value.
+    singleValue = Value.getLongValue(aLong.longValue());
+  }
+  public SmartProperty(Short aShort) {
+    // Use the Value class to construct a long integer value.
+    singleValue = Value.getLongValue(aShort.longValue());
+  }
+  public SmartProperty(Boolean aBool) {
+    // Use the Value class to construct a boolean value.
+    singleValue = Value.getBooleanValue(aBool.booleanValue());
+  }
+  public SmartProperty(Float aFloat) {
+    // Use the Value class to construct a floating point value.
+    singleValue = Value.getDoubleValue(aFloat.doubleValue());
+  }
+  public SmartProperty(Double aDouble) {
+    // Use the Value class to construct a floating point value.
+    singleValue = Value.getDoubleValue(aDouble.doubleValue());
+  }
+  public SmartProperty(String aString) {
+    // Use the Value class to construct a String value.
+    singleValue = Value.getStringValue(aString);
+  }
+  public SmartProperty(InputStream aStream) {
+    // Use the Value class to construct a binary InputStream value.
+    singleValue = Value.getBinaryValue(aStream);
+  }
+  public SmartProperty(Calendar aDate) {
+    // Use the Value class to construct a Date value.
+    singleValue = Value.getDateValue(aDate);
+  }
+  public SmartProperty(Date aDate) {
+    // Use the Value class to construct a Date value.
+    Calendar calendar = new GregorianCalendar();
+    calendar.setTime(aDate);
+    singleValue = Value.getDateValue(calendar);
+  }
+
+  // Constructors for multi-valued Properties.
+  public SmartProperty(Collection values) {
+    this.iterator = values.iterator();
+  }
+  public SmartProperty(Object[] objectArray) {
+    this.iterator = Arrays.asList(objectArray).iterator();
+  }
+
+  // Constructor for generic Objects.
+  // Try to upcast to the appropriate type.
+  public SmartProperty(Object anObject) {
+    singleValue = fromObject(anObject);
+  }
+</pre>
+<p>Helper method to get a value from an object.</p>
+<pre>
+  private static Value fromObject(Object obj) {
+    if (obj == null)
+      return null;
+    if ((obj instanceof Integer) || (obj instanceof Long) || (obj instanceof Short))
+      return Value.getLongValue(((Number) obj).longValue());
+    else if ((obj instanceof Float) || (obj instanceof Double))
+      return Value.getDoubleValue(((Number) obj).doubleValue());
+    else if (obj instanceof Boolean)
+      return Value.getBooleanValue(((Boolean) obj).booleanValue());
+    else if (obj instanceof String)
+      return Value.getStringValue((String) obj);
+    else if (obj instanceof InputStream)
+      return Value.getBinaryValue((InputStream) obj);
+    else if (obj instanceof Calendar)
+      return Value.getDateValue((Calendar) obj);
+    else if (obj instanceof Date) {
+      Calendar calendar = new GregorianCalendar();
+      calendar.setTime((Date) obj);
+      return Value.getDateValue(calendar);
+    } else {
+      // Fall through to providing a String representation of non-primitive objects.
+      return Value.getStringValue(obj.toString());
+    }
+  }
+</pre>
+<p>Check to see if the property has multiple values or a single value and return the value. </p>
+<pre>
+  public Value nextValue() throws RepositoryException {
+    if (iterator != null) {
+      // Return the values of a Property with multiple values.
+      if (iterator.hasNext()) {
+        return fromObject(iterator.next());
+      }
+      return null;
+    } else {
+      // Return the value of a Property with a single value, but only once;
+      Value returnValue = singleValue;
+      singleValue = null;
+      return returnValue;
+    }
+  }
+}
+</pre><br />
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<a name="SpiConstants"></a>
+  <h3>SpiConstants Properties</h3>
+  
+<p>The <code>SpiConstants</code> class is a non-instantiable class that holds constants used by the SPI and documents their meanings. </p>
+<p>The <code>SpiConstants</code> class  provides the <code>ActionType</code> class, which is a type safe <code>enum</code> for the action types defined by the <code>PROPNAME_ACTION</code> property. All <code>PROPNAME</code> properties are of type <code>String</code>. </p>
+<p>The following sections list the  properties in the <code>SpiConstants</code> class:</p>
+<table border="1" width="88%">
+<th width="30%">Property</th>
+<th width="70%">Description</th>
+
+<tr>
+<td><a href="#PROPNAME_ACLGROUPS">PROPNAME_ACLGROUPS</a></td>
+<td>Identifies a multiple-valued String property that gives the list of group ACL Scope IDs that are permitted <code>RoleType.READER</code> access to this document.</td>
+</tr>
+<tr>
+<td><a href="#PROPNAME_ACLUSERS">PROPNAME_ACLUSERS</a></td>
+<td>Identifies a multiple-valued String property that provides the list of users who are permitted to access  this document.</td>
+</tr>
+<tr><td><a href="#PROPNAME_ACTION">PROPNAME_ACTION</a></td>
+<td>Enables a connector to delete a document from the index of the search appliance. </td>
+</tr>
+<tr><td><a href="#PROPNAME_CONTENT">PROPNAME_CONTENT</a></td>
+<td>Indicates the content for a document. </td>
+</tr>
+<tr><td><a href="#PROPNAME_CONTENTURL">PROPNAME_CONTENTURL</a></td>
+<td>Indicates the URL for the content of a document. This property is reserved for future use.</td>
+</tr>
+<tr><td><a href="#PROPNAME_DISPLAYURL">PROPNAME_DISPLAYURL</a></td>
+<td>Indicates the URL that appears in the search results.</td>
+</tr>
+<tr><td><a href="#PROPNAME_DOCID">PROPNAME_DOCID</a></td>
+<td>Identifies a document in the content management system. </td>
+</tr>
+<tr><td><a href="#PROPNAME_ISPUBLIC">PROPNAME_ISPUBLIC</a></td>
+<td>Indicates whether a document is publicly readable or is a controlled-access document. </td>
+</tr>
+<tr><td><a href="#PROPNAME_LASTMODIFIED">PROPNAME_LASTMODIFIED</a></td>
+<td>Identifies when a document in the content management system was last modified. </td>
+</tr>
+<tr><td><a href="#PROPNAME_MIMETYPE">PROPNAME_MIMETYPE</a></td><td>Specifies the  type of file that a connector acquires from a content management system. </td>
+</tr>
+<tr><td><a href="#PROPNAME_SEARCHURL">PROPNAME_SEARCHURL</a></td>
+<td>Identifies the URL location of a document in the content management system for metadata-and-URL feed. This property is not used by content feed.</td>
+</tr>
+<tr><td><a href="#PROPNAME_SECURITYTOKEN">PROPNAME_SECURITYTOKEN</a></td>
+<td>Provides a token  with the identity of the user who submits a search query, and the connector indicates whether the current user has permission to view a document in a class. This property is reserved for future use. </td>
+</tr>
+<tr>
+<td><a href="#PROPNAME_TITLE">PROPNAME_TITLE</a></td>
+<td> Specifies the title of the search results. </td>
+</tr>
+<tr>
+<td><a href="#DEFAULT_MIMETYPE">DEFAULT_MIMETYPE</a></td>
+<td>Specifies the default type of file that a connector acquires from a content management system. </td>
+</tr>
+<tr>
+<td><a href="#GROUP_ROLES_PROPNAME_PREFIX">GROUP_ROLES_PROPNAME_PREFIX</a></td>
+<td>Identifies the prefix added to the front of the group ACL Scope ID when creating a group roles property name.</td>
+</tr>
+<tr>
+<td><a href="#USER_ROLES_PROPNAME_PREFIX">USER_ROLES_PROPNAME_PREFIX</a></td>
+<td>Identifies the prefix added to the front of the user ACL Scope ID when creating a user roles property name.</td>
+</tr>
+</table>
+
+<a id="PROPNAME_ACLGROUPS" name="PROPNAME_ACLGROUPS"></a>
+<h4>PROPNAME_ACLGROUPS</h4>
+<p>Identifies a multiple-valued String property that gives the list of group ACL Scope IDs that are permitted <code>RoleType.READER</code> access to this document. If either of the <code>PROPNAME_ACLGROUPS</code> or <code>PROPNAME_ACLUSERS</code> properties are non-null, then the search appliance grants or denies access to this document for a given user on the basis of whether the user's name appears as one of the Scope IDs in the <code>PROPNAME_ACLUSERS</code> list or one of the user's groups appears as one of the Scope IDs in the <code>PROPNAME_ACLGROUPS</code> list.
+ACL Scope ID is a group or user name within the scope of the connector.</p>
+
+<p>To specify more than just <code>RoleType.READER</code> access to the document, the connector must add additional multi-value role properties to the document. These entries are of the form:</p>
+
+<pre>
+Name = &lt;GROUP_ROLES_PROPNAME_PREFIX&gt; + &lt;scopeId&gt;
+Value = [RoleType[, ...]]</pre>
+ 
+Where: <code>&lt;GROUP_ROLES_PROPNAME_PREFIX&gt;</code> is the <code>GROUP_ROLES_PROPNAME_PREFIX</code>, <code>&lt;scopeId&gt;</code> is the group ACL Scope ID, and <code>RoleType</code> is one of the possible <code>RoleType</code> values. User ACL roles are of the form:
+
+<pre>
+Name = &lt;USER_ROLES_PROPNAME_PREFIX> + &lt;scopeId>
+Value = [RoleType[, ...]]</pre>
+ 
+<p>Where the 
+<code>&lt;scopeId&gt;</code> 
+is the user ACL scope ID.
+If the <code>PROPNAME_ISPUBLIC</code> is missing or is true, then this property is ignored, because the document is public.</p>
+
+<p>If both the <code>PROPNAME_ACLGROUPS</code> and <code>PROPNAME_ACLUSERS</code> properties are null or empty, then the search appliance uses the authorization SPI to grant or deny access to this document.</p>
+
+<p>The search appliance may be configured to bypass on-board authorization, in which case these properties are  ignored, and the search appliance  uses the authorization SPI to grant or deny access to this document.</p>
+
+<p>Value: <code>google:aclgroups</code></p>
+
+<a id="PROPNAME_ACLUSERS" name="PROPNAME_ACLUSERS"></a>
+<h4>PROPNAME_ACLUSERS</h4>
+<p>Identifies a multiple-valued String property that gives the list of users who are permitted access to this document. For details, see  <a href="#PROPNAME_ACLGROUPS">PROPNAME_ACLGROUPS</a>. </p>
+<p>Value: <code>google:aclusers</code></p>
+
+
+<a id="PROPNAME_ACTION" name="PROPNAME_ACTION"></a>
+<h4>PROPNAME_ACTION</h4>
+<p>Enables a connector to communicate with the connector manager to add a document (the default) or to 
+delete a document from the index on the search appliance. Possible values are <code>ADD</code> or <code>DELETE</code>.</p>
+<p>The default is <code>ADD</code>, which adds documents to the 
+search appliance index. To delete documents, set the property to <code>DELETE</code>. 
+For more information and 
+an example for using this property, see 
+<a href="#DeleteContent">Deleting Documents From an Index</a>.</p>
+<p>If the action is determined to not be  <code>ADD</code> or <code>DELETE</code>, then a <code>WARNING</code> is logged, and the property is ignored. The document is then sent without an action (which is effectively the same as an <code>ADD</code>).</p>
+<p>Value: <code>google:action</code></p>
+
+
+<a id="PROPNAME_CONTENT" name="PROPNAME_CONTENT"></a>
+<h4>PROPNAME_CONTENT</h4>
+<p>Static variable in the <code>SpiConstants</code> class that identifies a  property with a single value. This variable  can be either a string or binary. This variable provides direct access to a  document's content that a search appliance indexes.</p>
+<p class="note"><strong>Important:</strong> Because the connector manager does not read an entire document into memory at the same time, the connector manager can treat the document as a stream and ensure that  the memory that the connector manager uses stays constant. If possible, you should stream the documents through your connector as well, rather than realizing it in memory as a String or byte array.</p>
+<p>Value: <code>google:content</code></p>
+
+
+<a id="PROPNAME_CONTENTURL" name="PROPNAME_CONTENTURL"></a>
+<h4>PROPNAME_CONTENTURL</h4>
+<p>Specifies the document's URL. This property is reserved for future use. </p>
+<p>Value: <code>google:contenturl</code></p>
+
+
+<a id="PROPNAME_CONTENTURL" name="PROPNAME_DISPLAYURL"></a>
+<h4>PROPNAME_DISPLAYURL</h4>
+<p>Identifies a  property with a single value. The search appliance uses the display URL  in a search results page as the primary user reference for a document. This URL may be different from the document's URL, if present, a document's URL should give direct access to the document file, whereas a display URL may point into the  web client on the content management system. The search appliance only supports use of the display URL for content feed and not for metadata-and-URL feed. </p>
+<p>Value: <code>google:displayurl</code></p>
+
+
+<a id="PROPNAME_DOCID" name="PROPNAME_DOCID"></a>
+<h4>PROPNAME_DOCID</h4>
+<p>Identifies a  required string  property with a single value that uniquely identifies a document to this connector. The internal structure of this string is opaque to the search appliance. The connector manager permits only printable, non-whitespace, ASCII characters in a document ID. You should implement this property using the natural ID in the  content management system.</p> 
+<p class="note"><strong>Important:</strong> PROPNAME_DOCID is required. For previous connector manager versions, this property was recommended. </p>
+<p>Value: <code>google:docid</code></p>
+
+
+<a id="PROPNAME_ISPUBLIC" name="PROPNAME_ISPUBLIC"></a>
+<h4>PROPNAME_ISPUBLIC</h4>
+<p>Indicates whether a document is publicly readable or is a controlled-access document. A single-valued property.</p>
+<p>Value: <code>google:ispublic</code></p>
+
+
+<a id="PROPNAME_LASTMODIFIED" name="PROPNAME_LASTMODIFIED"></a>
+<h4>PROPNAME_LASTMODIFIED</h4>
+<p>Identifies a single value property of <code>Value.getDateValue(Calendar)</code> or <code>Value.getStringValue(String)</code> using a <a href="ftp://ftp.rfc-editor.org/in-notes/rfc822.txt">RFC 822</a> formatted <code>datetime</code> string.
+<p class="note"><strong>Note:</strong> Using <code>PROPNAME_LASTMODIFIED</code> is strongly recommended. For previous connector manager versions, this property was required.</p>
+<p>Value: <code>google:lastmodified</code></p>
+
+
+<a id="PROPNAME_MIMETYPE" name="PROPNAME_MIMETYPE"></a>
+<h4>PROPNAME_MIMETYPE</h4>
+<p>Identifies a string property with a single value that gives the MIME type for the contents of this document. Use of PROPNAME_MIMETYPE is strongly recommended. If you do not supply this property, the connector manager uses the value of <code>DEFAULT_MIMETYPE</code>. The MIME type is used by the search appliance to convert files for indexing. The MIME type must agree with the types of files that are listed in the <a href="http://code.google.com/apis/searchappliance/documentation/60/reference/formats.html">Indexable File Formats</a> guide. For a list of MIME types by file type, see the Webmaster Toolkit site, <a href="http://www.webmaster-toolkit.com/mime-types.shtml">Mime Types</a>. </p>
+<p>Value: <code>google:mimetype</code></p>
+
+
+<a id="PROPNAME_SEARCHURL" name="PROPNAME_SEARCHURL"></a>
+<h4>PROPNAME_SEARCHURL</h4>
+<p>Identifies an optional string property with a single value that, if present, the search appliance uses  as the primary URL for this document - instead of the normal <code>^googleconnector://</code> URL that the connector manager designates.  
+<p><strong>Note:</strong> If you set this property, documents are  sent to the search appliance as metadata and URL feed. If you do not set this property, documents are sent as a content feed. For more information, see <a href="cdg_intro.html#urlbyte">Understanding Content Feed and Metadata-and-URL Feeds</a>. </p>  
+<p>You can provide this property if you want the search appliance to do web-style authentication and authorization for this document. If you specify this property, the search appliance does not call back to the connector manager at serve time.</p>
+<p>Value: <code>google:searchurl</code></p>
+
+
+<a id="PROPNAME_SECURITYTOKEN" name="PROPNAME_SECURITYTOKEN"></a>
+<h4>PROPNAME_SECURITYTOKEN</h4>
+<p>Identifies a string property with a single value that serves as a security token. This property is reserved for future use.<br />
+  <br />
+At serve time, the search appliance presents this token  with the identity of the user who submits a search query, and the connector indicates whether the current user has permission to view a document in a class. You can implement this property as a textual representation of an <acronym title="access control list">ACL</acronym>.</p>
+<p>Value: <code>google:securitytoken</code></p>
+
+<a id="PROPNAME_TITLE"
+ name="PROPNAME_TITLE"></a>
+<h4>PROPNAME_TITLE</h4>
+<p>Identifies an optional string property that is the title of the document. This value is useful for providing a title for documents that supply no content, or for which a title cannot be automatically extracted from the supplied content. </p>
+<p>Value: <code>google:title</code></p>
+
+<a id="DEFAULT_MIMETYPE" name="DEFAULT_MIMETYPE"></a>
+<h4>DEFAULT_MIMETYPE</h4>
+<p>A static single-valued property that  is simply defined as <code>text/html</code>. It is the MIME type that is assumed if PROPNAME_MIMETYPE property is not supplied.</p>
+<p>Value: <code>text/html</code></p>
+
+<a id="GROUP_ROLES_PROPNAME_PREFIX"
+ name="GROUP_ROLES_PROPNAME_PREFIX"></a>
+<h4>GROUP_ROLES_PROPNAME_PREFIX</h4>
+<p>Prefix added to the front of the group ACL Scope ID when creating a group roles property name. If a connector defines specific roles associated with a group ACL Scope ID related to a document, store the roles in a multi-valued property named:    </p>
+<pre>GROUP_ROLES_PROPNAME_PREFIX + &lt;scopeId&gt;</pre>
+<p>For example, given a group ACL entry of <code>eng=reader,writer</code> the roles for Eng would be stored in a property as follows:</p>  
+<pre>
+Name = &quot;google:group:roles:eng&quot;  
+Value = [reader, writer]
+</pre><br />
+
+<a id="USER_ROLES_PROPNAME_PREFIX"
+ name="USER_ROLES_PROPNAME_PREFIX"></a>
+<h4>USER_ROLES_PROPNAME_PREFIX</h4>
+<p>Prefix added to the front of the user ACL Scope ID when creating a user roles property name. If a connector defines specific roles associated with a user ACL Scope ID related to a document, store the roles in a multi-valued property named:    </p>
+<pre>USER_ROLES_PROPNAME_PREFIX + &lt;scopeId&gt;</pre>
+<p>For example, given a user ACL entry of <code>yvette=reader,writer</code> the roles for Yvette would be stored in a property as follows:</p>  
+<pre>
+Name = &quot;google:user:roles:yvette&quot;  
+Value = [reader, writer]
+</pre><br />
+
+
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+
+<h2><a name="DeleteContent"></a>Deleting a Document From the Search Appliance Index</h2>
+<p>The <a href="#PROPNAME_ACTION">PROPNAME_ACTION</a> property and the  <code>SpiConstants.ActionType.DELETE</code> field  delete a document from an index on a Google Search appliance.   For information on the properties, see <a href="#mp">SpiConstants Properties</a>.</p>
+<p class="note"><strong>Note:</strong> Delete feeds are not allowed to send metadata or documents. <br />
+  <br />
+If a connector attempts to delete a document that is not in the search appliance index, the search appliance ignores the request and does not generate an error.</p>
+<p>The following  example sets the <code>DELETE</code> action property on <code>Document</code> objects that are returned from the <code>DocumentList.nextDocument</code> method:</p>
+<pre>
+// Create a Document object that requests that the
+// specified document be removed from the search index.
+public Document simpleDeleteDoc(String docId) {
+  Map props = new HashMap();
+  props.put(SpiConstants.PROPNAME_DOCID, docId);
+  props.put(SpiConstants.PROPNAME_ACTION, SpiConstants.ActionType.DELETE.toString());
+  return new SimpleDocument(props);
+}
+</pre>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+
+<a id="logging" name="logging"></a>
+<h2>Logging</h2>
+  
+<p>You should use logging to help in debugging and support. If you use the <code>java.util.Logging</code> package, log messages appear in  <code>$CATALINA_BASE/logs/google-connectors.*.log</code>. </p>
+<p>The following example gets the name of the logging facility and establishes a logger:</p>
+<pre>
+import java.util.logging.Level;
+import java.util.logging.Logger;
+  
+private static Logger logger = null;
+  
+static {
+  logger = Logger.getLogger(MyClass.class.getName());
+  logger.setLevel(Level.ALL);
+}
+</pre>
+<p>Subsequent example method calls can be as follows:</p>
+<pre>
+if (logger.isLoggable(Level.INFO)) {
+    logger.info(&quot;...&quot;);
+}
+</pre>
+<p>You can maintain your own set of debug levels to use as a metric for message severity.</p>
+<p>If you use the <code>java.util.Logging</code> package, log messages appear in the <code>$CATALINA_HOME/logs/catalina.out</code> file and  exceptions appear in <code>$CATALINA_HOME/logs/localhost.<em>current_date</em>.log</code> file.</p>
+<p>Connectors use the following logging levels:</p>
+<ul>
+  <li>ALL - Enables all levels. </li>
+<li>FINE - Logs batch information. For example, FINE  logs information such as pushing a document list or about a traversal. </li>
+  <li>FINER - Logs information per document. Log information for a document do not appear until this setting is enabled. </li>
+  <li>FINEST - Logs  everything -- the debug setting. </li>
+  <li>INFO - Information. </li>
+<li>SEVERE - A severe error condition that prevents the proper function of the product, such as, a missing configuration file or an unreachable host.</li>
+<li>WARNING - Something unexpected happened but it may not be a problem, such as the <code>google:lastmodified</code> property is missing.</li>
+</ul>
+<h3><a name="LogFeedData"></a>Logging Feed Data</h3>
+<p>You can  log the feed data sent to a search appliance. The procedure for enabling this is  described in "Using Feed Data for Diagnostic Purposes" in <a href="../connector_admin/admin_connector.html">Administering Connectors</a>. This facility uses the <code>teedfeedfile</code> mechanism that you can enable in the <code>applicationContext.properties</code> file. The <code>teedfeedfile</code> logs the contents of all documents that go to a search appliance. The  content in the log file  is Base64-encoded and can grow into a large file.</p>
+<p>If the <code>teedfeedfile</code> doesn't exist and the <code>teedfeedfile</code> property is enabled in the <code>applicationContext.properties</code> file, the connector manager creates the log file. </p>
+<p>The  <code>FEED_LOGGER</code> logging mechanism enables you to log all metadata properties of the documents into a rolling log file. You can use the <code>FEED_LOGGER</code>    functionality to observe the feed record and metadata information that the    connector manager sends to the search appliance.  The information is logged using a rolling <code>FileHandler</code> so the log file size can be controlled. <code>FEED_LOGGER</code>  lists the properties, truncated documents, and an extra space as a separator between connector feed listings. </p>
+<p>To enable the feed log file:</p>
+<ol>
+  <li>Stop Apache Tomcat. 
+    <p>On a Windows system, use the <em>Tomcat</em><strong>\bin\shutdown</strong> batch file command from a command prompt. On a Linux or Macintosh use the <em>Tomcat</em><strong>/bin/shutdown.sh</strong> shell command from a Terminal command line interface.</p>
+  </li>
+  <li>Configure logging from <span style="list-style-type: disc">the <code>feedLoggingLevel</code> property</span> or <span style="list-style-type: disc">the <code>logging.properties</code> configuration file -- you can configure logging with either the property or configuration file, but do not use both configuration procedures</span>: 
+    <ul>
+  <li style="list-style-type: disc">From the <code>feedLoggingLevel</code> property:
+    <ol style="list-style-type: lower-alpha">
+      <li>Edit the <code>applicationContext.properties</code> file deployed in the <code>webapps/connector-manager/WEB-INF</code>/ directory</li>
+          <li>Set the <code>feedLoggingLevel</code> property to ALL: <code>feedLoggingLevel=ALL</code>. By default <code>feedLoggingLevel</code> is set to OFF so that this facility is disabled.</li>
+  </ol>
+  </li>
+  <li style="list-style-type: disc">From the <code>logging.properties</code> configuration file -- <strong>Note:</strong> If you configured logging using the <code>feedLoggingLevel</code> property, skip this step--do not use both configuration procedures:
+    <ol style="list-style-type: lower-alpha">
+      <li>Edit the <code>logging.properties</code> file currently being used by the connector manager.</li>
+          <li>Add the following: <code>com.google.enterprise.connector.pusher.DocPusher.FEED_WRAPPER.FEED.level=FINER</code>. For information on DocPusher, see <a href="cdg_intro.html#DocPusher">Pushing Documents to a Search Appliance</a>.</p> </li>
+    </ol>
+  </li>
+  </ul>
+  <li>Change logging parameters. <p>You can change logging parameters from the <strong>FeedHandler</strong> bean in the 
+  <code>applicationContext.xml</code> file. The <code>index=&quot;0&quot;</code> parameter specifies the path of the log files. The <code>index=&quot;1&quot;</code> parameter specifies the maximum size in bytes that a log file can grow to before a new log file creates. 
+    The <code>index=&quot;2&quot;</code> parameter specifies the number of log
+    files that can be created.
+    The default values of 50 MB for file size and 10 increments of log files are as follows:</p>
+        <pre>
+&lt;bean id=&quot;FeedHandler&quot; class=&quot;java.util.logging.FileHandler&quot;&gt;
+  &lt;constructor-arg index=&quot;0&quot; value=&quot;${catalina.base}/logs/google-connectors.feed%g.log&quot; /&gt;
+  &lt;constructor-arg index=&quot;1&quot; value=&quot;52428800&quot; /&gt;
+  &lt;constructor-arg index=&quot;2&quot; value=&quot;10&quot; /&gt;
+  &lt;property name=&quot;level&quot; value=&quot;FINER&quot; /&gt;
+  &lt;property name=&quot;encoding&quot; value=&quot;UTF-8&quot; /&gt;
+  &lt;property name=&quot;formatter&quot; ref=&quot;FeedFormatter&quot; /&gt;
+&lt;/bean&gt; 
+</pre>  
+</li>
+  <li>Restart Tomcat.
+    <p>On a Windows system, use the <em>Tomcat</em><strong>\bin\startup</strong> batch file command from a command prompt. On a Linux or Macintosh use the <em>Tomcat</em><strong>/bin/startup.sh</strong> shell command from a Terminal command line interface. </p>
+  </li>
+</ol>
+<p>Feed log records appear in the following file when the records are set to the search appliance:</p>
+<pre>$CATALINA_BASE/logs/google-connectors.feed*.log</pre>
+
+<a id="RetrievingLogFiles"
+ name="RetrievingLogFiles"></a>
+<h3>Retrieving Log Files</h3>
+<p>The connector manager enables you  to list available log files, fetch individual log files, and fetch a ZIP archive of all the log files.   This feature enables you to retrieve connector log files,  feed log files, and teed feed files.  Access to the servlet is limited to the local host. </p>
+<p>To list the available connector log files: </p>
+<pre>http://<em>CMHostAddress</em>/connector-manager/getConnectorLogs </pre>
+<p>To view an individual connector log file: </p>
+<pre>http://<em>CMHostAddress</em>/connector-manager/getConnectorLogs/<em>LogFileName</em> </pre>
+<p>Where <em>LogFileName</em> is the name of a log file returned by the list, for example, <code>google-connectors.otex0.log</code>. As a convenience, the log  name can   be the log file generation number, <code>0</code> in the  example, which automatically increments. </p>
+<p>To retrieve a ZIP archive of all the connector log files:</p>
+<pre>http://<em>CMHostAddress</em>/connector-manager/getConnectorLogs/* </pre>
+<p>Or:  </p>
+<pre>http://<em>CMHostAddress</em>/connector-manager/getConnectorLogs/ALL </pre>
+<p>To list the available feed log files:  </p>
+<pre>http://<em>CMHostAddress</em>/connector-manager/getFeedLogs </pre>
+<p>To view an individual feed log file:  </p>
+<pre>http://<em>CMHostAddress</em>/connector-manager/getFeedLogs/LogFileName </pre>
+<p>Where <em>LogFileName</em> is the name of a log file returned by the list, for example, <code>google-connectors.feed0.log</code>. As a convenience, the log  name can be  the log file generation number, <code>0</code> in the  example, which automatically increments. </p>
+<p>To retrieve a ZIP archive of all the feed log files:  </p>
+<pre>http://<em>CMHostAddress</em>/connector-manager/getFeedLogs/* </pre>
+<p>Or:</p>
+<pre>http://<em>CMHostAddress</em>/connector-manager/getFeedLogs/ALL </pre>
+<p>To list the name and size of the teed feed file:  </p>
+<pre>http://<em>CMHostAddress</em>/connector-manager/getTeedFeedFile </pre>
+<p>To view the teed feed file:  </p>
+<pre>http://<em>CMHostAddress</em>/connector-manager/getTeedFeedFile/<em>TeedFeedName</em> </pre>
+<p>Where <em>TeedFeedName</em> is the base filename of the teed feed file. </p>
+<p class="note"><strong>Note</strong>: The teed feed file can be huge. Either request a manageable byte range (see <a href="#ByteRangeSupport">Byte Range Support</a>) or fetch the ZIP archive file (which may still be huge). </p>
+<p>To retrieve a ZIP archive of the teed feed file:  </p>
+<pre>http://<em>CMHostAddress</em>/connector-manager/getTeedFeedFile/* </pre>
+<p>Or:</p>
+<pre>http://<em>CMHostAddress</em>/connector-manager/getTeedFeedFile/ALL</pre>
+<p>Or:</p>
+<pre>http://<em>CMHostAddress</em>/connector-manager/getTeedFeed/<em>TeedFeedName</em>.zip </pre>
+<p>Where <em>TeedFeedName</em> is the filename of the teed feed file. </p>
+<h4>Byte Range Support<a name="ByteRangeSupport" id="ByteRangeSupport"></a></h4>
+<p>This servlet supports a subset of the RFC 2616 byte range specification to retrieve portions of the log files. Since the connector logs are 50 MB each and the teed feed file can be gigabytes, requesting a portion of the log may be prudent. This servlet supports specifying a byte range  in either the HTTP range header or in the query fragment of the request. </p>
+<p>To return the first 1001 bytes of the current feed log:</p>
+<p>http://<em>ConMgrHostAddress</em>/connector-manager/getFeedLogs/0?bytes=0-1000 </p>
+<p>To return 1000 bytes (the tail) of the current feed log:</p>
+<p>http://<em>ConMgrHostAddress</em>/connector-manager/getFeedLogs/0?bytes=-1000 </p>
+<p>To return  everything after the first 1000 bytes of the current feed log:</p>
+<p>http://<em>ConMgrHostAddress</em>/connector-manager/getFeedLogs/0?bytes=1000-</p>
+<p><strong>Note</strong>: Multi-part byte ranges are <em>not</em> supported (such as, bytes=0-100,1000-2000). Byte range requests for log listing pages and ZIP archive files are ignored.</p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+
+<a id="CountofFeedFilesAwaitingIndexing"
+ name="CountofFeedFilesAwaitingIndexing"></a>
+<h2>Count of Feed Files Awaiting Indexing</h2>
+<p>To  view a count of how many feed files (including connector feed files) remain for the search appliance to process into its index, add <code>/getbacklogcount</code> to a search appliance URL at port 19900. </p>
+<p>The syntax for <code>/getbacklogcount</code> is as follows:</p>
+<pre>http://<em>SearchApplianceHostname</em>:19900/getbacklogcount </pre>
+
+
+<h2><a name="fileaccess"></a>File Access</h2>
+
+<p>The connector manager creates a separate directory for each connector instance.  The name of this directory is made available to the connector through Spring Framework. </p> 
+
+<p>After you create a connector instance, the connector manager creates a <code>.properties</code> file for a connector, for example, <code>myconnector.properties</code>.   The properties file contains  data for the configuration form. The properties file also contains the following additional keys: </p>
+<ul>
+<li><code>googleConnectorWorkDir</code>. 
+  <p>A work directory that is private to the connector instance.  Because this directory is individual to a connector instance, a connector can store anything in this directory without concern for name clashes with another connector instance or type. </p>
+</li>
+<li><code>googleWorkDir</code>. 
+  <p>A directory that all connectors and all instances share.  A connector can store global configuration information if it is careful about its namespace; for example, if a connector uses its type name as a prefix.  But for data private to a connector instance, such as state data, Google recommends that you use the <code>googleConnectorWorkDir</code>. </p>
+</li>
+<li><code>googlePropertiesVersion</code>. 
+  <p>Describes the version number of the <code><em>connector</em>.properties</code> file. For the current release, the value is <code>1</code>. </p>
+</li>
+</ul>
+<h3>Scheduling and Checkpoint Data Files<a name="SchedulingAndCheckpointDataFiles" id="SchedulingAndCheckpointDataFiles"></a></h3>
+<p>The connector manager creates two files for storing scheduling and the <code>checkpoint</code> traversal state:</p>
+<ul>
+  <li><em>connector</em><code>_schedule.txt</code>.</li>
+  <li><em>connector</em><code>_state.txt</code></li>
+</ul>
+<p>These files do not contain configurable information, but are described so that you can identify them when they appear. </p>
+<h3>Accessing Properties using Spring Framework Inversion of Control<a name="AccessingKeys" id="AccessingKeys"></a> </h3>
+<p>To access a property, a connector supplies a setter to pass the value to the connector instance. </p>
+<p>For example, if a connector uses two pieces of configuration, a user name and password, and the connector also wants to know the <code>googleConnectorWorkDir</code>, the connector would specify the following setters in its class:</p>
+<pre>
+public class MyConnectorImpl implements Connector {
+   public void setUsername(String username) {
+      // ...
+   }
+   public void setPassword(String password) {
+      // ...
+   }
+   public void setGoogleConnectorWorkDir(String googleConnectorWorkDir {
+      // ...
+   }//...
+}
+</pre>
+<p>The <code>connectorInstance.xml</code> entry is as follows:</p>
+<pre>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;<acronym title="Unicode Transformation Format">UTF</acronym>-8&quot;?&gt;
+ &lt;!DOCTYPE beans PUBLIC &quot;-//SPRING//<acronym title="Document Type Definition">DTD</acronym> BEAN//EN&quot; 
+  &quot;http://www.springframework.org/dtd/spring-beans.dtd&quot;&gt;
+&lt;beans&gt;
+  &lt;bean id=&quot;MyConnectorInstance&quot;
+     class=&quot;com.mycompany.myconnector.MyConnectorImpl&quot;&gt;
+     &lt;property name=&quot;username&quot; value=&quot;${username}&quot;/&gt;
+     &lt;property name=&quot;password&quot; value=&quot;${password}&quot;/&gt;
+     &lt;property name=&quot;googleConnectorWorkDir&quot; value=&quot;${googleConnectorWorkDir}&quot;/&gt;
+  &lt;/bean&gt;
+&lt;/beans&gt;
+</pre>
+
+<p>You can specify the <code>googleWorkDir</code> in the same way using a <code>property name=</code> attribute. </p>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+
+ <h2><a name="WorkQueue"></a>Managing  Work Queue Timeouts </h2>
+ <p>The <code>WorkQueue</code> class provides a constructor that creates a <code>WorkQueue</code> with a given specification and  sets the timeout of the <code>WorkQueueItem</code>. This feature enables a connector to extend that duration before <code>killThreadTimeout</code> triggers from the default value of 10 minutes and to change the <kbd>workItemTimeout</kbd> from its default of 20 minutes. </p>
+<p class="note"><strong>Note</strong>: Allowing  long-running threads up to 30 minutes to complete, dramatically reduces the cases where slow traversals get killed by the connector manager. </p>
+<p>To create a work queue,  provide: </p>
+ <ul>
+   <li>The number of threads on which to execute work.</li>
+   <li>The number of milliseconds until the work queue is killed.</li>
+   <li>The number of milliseconds that each work queue item can process before being interrupted. </li>
+ </ul>
+ <p>To change the default work queue values:</p>
+ <ol>
+   <li>Stop Apache Tomcat.
+     <p>On a Windows system, use the <em>Tomcat</em><strong>\bin\shutdown</strong> batch file command from a command prompt. On a Linux or Macintosh use the <em>Tomcat</em><strong>/bin/shutdown.sh</strong> shell command from a Terminal command line interface. </p>
+   </li>
+   <li>Edit the <code>applicationContext.xml</code> file and find the bean that creates the <code>WorkQueue</code>. 
+     If needed, change a thread time out duration to a new value  in milliseconds.
+<p>For example: </p>
+     <pre>&lt;bean id=&quot;WorkQueue&quot;
+  class=&quot;com.google.enterprise.connector.common.WorkQueue&quot;&gt;
+  &lt;!-- Number of worker threads processing in the queue.   --&gt;
+  &lt;constructor-arg index=&quot;0&quot; type=&quot;int&quot; value=&quot;10&quot;/&gt;
+
+  &lt;!-- Number of milliseconds before a worker thread is    --&gt;
+  &lt;!-- considered timed out. A value of 0 means it never   --&gt;
+  &lt;!-- times out. Default: 20 minutes                      --&gt;    
+  &lt;constructor-arg index=&quot;2&quot; type=&quot;long&quot; value=&quot;1200000&quot;/&gt;
+    
+  &lt;!-- Number of milliseconds after a timed-out worker     --&gt;
+  &lt;!-- thread is interrupted before it is killed outright. --&gt;
+  &lt;!-- Default: 10 minutes                                 --&gt;    
+  &lt;constructor-arg index=&quot;1&quot; type=&quot;long&quot; value=&quot;600000&quot;/&gt;
+&lt;/bean&gt; 
+</pre>
+   </li>
+   <li>Restart Tomcat.   
+     <p>On a Windows system, use the <em>Tomcat</em><strong>\bin\startup</strong> batch file command from a command prompt. On a Linux or Macintosh use the <em>Tomcat</em><strong>/bin/startup.sh</strong> shell command from a Terminal command line interface. </p>
+</li>
+ </ol>
+ <p class="backtotop"><a href="#top">Back to top</a></p> 
+  </body>
+</html>
+

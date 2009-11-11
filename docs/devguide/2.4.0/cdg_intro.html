@@ -1,0 +1,434 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "DTD/xhtml1-transitional.dtd">
+<html>
+<head>    
+<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+<title>Connector Developer&apos;s Guide: Introduction</title>
+<link href="cdg.css" type="text/css" rel="stylesheet"></link>
+<!--[if IE]><link rel="stylesheet" type="text/css" href="http://code.google.com/css/iehacks.css" /><![endif]-->
+</head>
+<body>
+
+<h1 class="page_title">Connector Developer&apos;s Guide: Introduction</h1>
+
+<p>Google Search Appliance software versions 6.2 <br />
+Connector manager version 2.4.0<br />
+Posted December 2009</p>
+<p>This section: </p>
+<ul>
+  <li>Describes a connector and the connector manager </li>
+  <li>Provides an overview of how you can create a connector</li>
+  <li>Describes Spring Framework and how connectors are instantiated </li>
+  <li>Provides an understanding of connector feed types, authentication and authorization, localizing, scheduling, and search results</li>
+  <li>Explains how the connector manager pushes documents to the Google Search Appliance </li>
+</ul>
+<p>For connector terminology definitions, see the <a href="http://code.google.com/apis/searchappliance/documentation/60/reference/glossary.html">Google Enterprise Glossary</a>. This document complements the Javadoc provided at the Google <a href="http://code.google.com/p/google-enterprise-connector-manager/" target="_blank">connector manager</a> open source code site.</p> 
+
+<p><strong>Chapters</strong>: <a href="cdg_about.html">About This Guide</a>, <em>Introduction</em>, <a href="cdg_getstart.html">Getting Started</a>, <a href="cdg_spioverview.html">SPI Overview</a>, <a href="cdg_traversing.html">Traversing Documents</a>, <br />
+<a href="cdg_authentication.html">Authentication</a>, <a href="cdg_authorization.html">Authorization</a>, <a href="cdg_config.html">Configuration</a>, <a href="cdg_buildcm.html">Appendix A: Building a Debug Connector Manager</a></p>
+
+<h2>Contents</h2>
+<ol class="toc">
+<li><a href="cdg_intro.html#overview">What is a Connector?</a></li>
+<li><a href="cdg_intro.html#WhatIsTheCM">What is the Connector Manager?</a>
+<ol>
+<li><a href="cdg_intro.html#DocPusher">How the Connector Manager Pushes Documents to the Google Search Appliance</a></li>
+<li><a href="#DocPusherLogging">DocPusher Logging</a></li>
+</ol>
+</li>
+<li><a href="cdg_intro.html#creating">Understanding Connector Development</a></li>
+<li><a href="cdg_intro.html#SpringFramConn">Spring Framework's Relation to a Connector</a>
+  <ol>
+    <li><a href="#XMLConfigurationFiles">XML Configuration Files</a></li>
+    <li><a href="#SpringFrameworkInstantiatesaConnector">Spring Framework Instantiates a Connector</a></li>
+  </ol>
+</li>
+<li><a href="cdg_intro.html#ConnectorTypeTasks">Connector Type and Implementation Processes </a>
+  <ol>
+    <li><a href="cdg_intro.html#AddConnector">Adding a Connector</a></li>
+    <li><a href="cdg_intro.html#editform">Editing a Connector Form and Storing the Parameters</a></li>
+    <li><a href="cdg_intro.html#getparms">Getting Stored Parameters and Displaying the Form</a></li>
+  </ol>
+</li>
+<li><a href="cdg_intro.html#urlbyte">Content Feed and Metadata-and-URL Feed</a></li>
+<li><a href="cdg_intro.html#TraversalSecurity">Understanding Authentication and Authorization </a></li>
+<li><a href="cdg_intro.html#LocalizingaConnector">Localizing a Connector</a></li>
+<li><a href="cdg_intro.html#ConnectorScheduling">Scheduling Connector Access </a></li>
+<li><a href="cdg_intro.html#TargetingSearchResults">Displaying Search Results to End Users</a></li>
+</ol>
+
+<a id="overview"
+ name="overview"></a>
+<h2>What is a Connector?</h2>
+<p>A connector is a Java application that you create that contains methods and classes that the connector manager calls to perform the tasks of acquiring documents from a content management system, and authenticating and authorizing users to view search results. </p>
+<p>The following illustration shows the relationship between a Google Search Appliance and a connector:</p>
+<p><img src="images/cdg_connector_architecture.png" alt="Connector architecture" width="530" height="109" /> </p>
+<p>Components: </p>
+<ol>
+  <li>The Google Search Appliance provides the Admin Console. You can use the Admin Console  to identify a connector manager and configure a connector using a configuration form that the connector provides. The search appliance  contains the feed interface, to which the connector manager sends documents for the search appliance  to index.  </li>
+  <li>The connector manager resides on a separate server that runs a  servlet container (similar to a web server) that processes requests and responses over HTTP to the search appliance. The connector manager:
+<ol style="list-style-type: lower-alpha">
+<li>Communicates through its SPI (service provider interface) to the  connector by calling interfaces or methods to perform tasks. </li>
+<li>Creates feed sources from the documents, metadata, and URLs that a connector acquires from a content management system (CMS). </li>
+</ol>
+</li>
+<li>The  SPI defines the Java interfaces and methods that a connector must contain. The connector manager makes SPI calls to request the connector to acquire documents,  authenticate and authorize users to access search results, and to post the configuration form and validate its content. </li>
+<li>A connector:
+<ul>
+<li>Is a Java application that contains SPI functions that the connector manager calls: </li>
+<li>Resides on the same server as the connector manager. </li>
+<li>Communicates through the CMS API to perform the tasks requested by the connector manager's SPI. </li>
+<li>Provides a configuration form that displays in  the Admin Console so that administrators can enter credentials for the access account of the content management system, specify the listening port, and indicate how often the connector should acquire documents from the content management system.</li>
+</ul>
+</li>
+<li>The CMS API consists of functions native to the content management system, which the connector calls to   acquire documents, metadata on each document, and a URL that points to a document's location in the CMS.</li>
+<li>A content management system  consists of a content server that manages documents in a storage system. The storage system is known as a repository. </li>
+</ol>
+<h2>What is the Connector Manager?<a name="WhatIsTheCM" id="WhatIsTheCM"></a> </h2>
+<p>The connector manager is an open source Java application that manages communications between the Google Search Appliance and a connector. </p>
+<p>The connector manager is provided in open source at <a href="http://google-enterprise-connector-manager.googlecode.com">http://google-enterprise-connector-manager.googlecode.com</a>.</p>
+<p>The connector manager is part of the  Google Enterprise Connector Framework, which consists  of the connector manager,  SPI, <a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0/index.html" target="_blank">Javadoc</a> for the SPI, and Google support for the connector manager. Google provides open source code for the connector manager on a project code site with access to downloads, issue information, additional documentation, and discussion groups. You can return to the project code site regularly for software and documentation updates.</p>
+
+<h3><a name="DocPusher"></a>How the Connector Manager Pushes Documents to the Google Search Appliance</h3>
+<p>The connector manager provides the DocPusher implementation, which implements the Pusher interface in the connector manager. DocPusher processes  documents from a connector and  creates a feed source that is conveyed to the search appliance. The DocPusher enables connectors to add documents to or delete documents from the search appliance. </p>
+<p>You can view the source code for <a href="http://code.google.com/p/google-enterprise-connector-manager/source/browse/trunk/projects/connector-manager/source/java/com/google/enterprise/connector/pusher/DocPusher.java">DocPusher.java</a> in the <a href="http://code.google.com/p/google-enterprise-connector-manager/">connector manager open source site</a>. </p>
+<p>The following picture shows how a document moves between a connector and a search appliance. </p>
+<p><img src="images/cdg_docpusher.png" alt="Connector pushes Doument to the connector manager's DocPusher function that uses the Document information to create a feed that is sent to the search appliance" width="474" height="91" /></p>
+<p>The components in this illustration are:</p>
+<ol>
+  <li>The connector provides documents from the content management system</li>
+  <li>The connector manager pulls  a document from the connector by calling the connector's <code>DocumentList.nextDocument</code> method.   DocPusher wraps the document in an XML structure and pushes the document as a feed source to the search appliance. For more information, see <a href="cdg_spioverview.html#dli">DocumentList Interface</a> in the <a href="cdg_spioverview.html">SPI Overview</a>. </li>
+  <li>The DocPusher implementation:
+<ul>
+<li> Acquires documents from a connector and creates an XML structure that represents the documents. </li>
+<li>Opens a connection with the search appliance and provides the XML structure and the connector name as a feed source to the search appliance.</li>
+<li>If the connecter has set the <code>PROPNAME_SEARCHURL</code> property, DocPusher expects the connector to provide a metadata-and-URL feed. If the property is not set, then DocPusher expects the connector to provide  a content feed.</li>
+<li>Creates the <code>googleconnector://</code> URL for the documents in the feed source. </li>
+<li>Sets the feed data source depending on the connector instance name. </li>
+</ul>
+</li>
+<li>The Google Search Appliance acknowledges that the feed was successfully received. <br />
+  The search appliance sends back to DocPusher values for:
+
+<ul>
+  <li>Success</li>
+  <li>Unauthorized response</li>
+  <li>Internal error </li>
+</ul></li>
+</ol>
+<h4>DocPusher Logging <a name="DocPusherLogging" id="DocPusherLogging"></a></h4>
+<p>DocPusher logs messages to the <code><em>${catalina.base}</em>/logs/google-connectors.<em>%g</em>.log</code> file where <code><em>${catalina.base}</em></code> is the Apache Tomcat installation folder. The connector manager substitutes <em><code>%g</code></em>  with a log generation in the format of <code>google-connectors.*.log</code>, with the logs written to the Tomcat log directory. </p>
+<p>Another useful DocPusher log file is the Feed log, written to the <code><em>${catalina.base}</em>/logs/google-connectors.feed<em>%g</em>.lo</code>g file, which contains the XML Feed records pushed to the search appliance (without the content). The connector manager substitutes <em><code>%g</code></em> with a numerical value. </p>
+<p>For more information, see <a href="cdg_traversing.html#logging">Logging</a>. </p>
+<p>You can use the log file warnings and errors that DocPusher generates to diagnose problems in a connector, for example, DocPusher generates the following messages on the state of a connector:</p>
+<ul>
+  <li>Property names set is empty</li>
+  <li>Encoding error </li>
+  <li>Document missing required property</li>
+  <li>Supplied search URL <code>&lt;url&gt;</code> is malformed</li>
+  <li>IO error. failed to create a default document stream</li>
+  <li>Skipped this document for feeding, continuing</li>
+  <li>Cannot write file</li>
+  <li>Client is not authorized to send feeds, make sure the Google Search Appliance is configured to trust feeds from your host.</li>
+  <li>Cannot close file</li>
+</ul>
+<p><strong>Note: </strong>If you see messages about not being able to send feeds, verify that the following in the Admin Console is correct:</p>
+<ul>
+  <li>On the Admin Console, ensure that the <strong>Crawl and Index</strong> &gt; <strong>Crawl URLs</strong> &gt; <strong>Follow and Crawl Only URLs with the Following Patterns</strong> field contains the <code>^googleconnector</code>:// statement.</li>
+  <li>Ensure that the <strong>Crawl and Index</strong> &gt; <strong>Feeds</strong> &gt; <strong>List of Trusted IP Addresses</strong> field is set to &quot;Only trust feeds from these IP addresses&quot; and contains the IP address of the server on which the connector manager is running. You can also set the <strong>List of Trusted IP Addresses</strong> field to &quot;Trust feeds from all IP addresses&quot; if that setting agrees with your security policy. </li>
+</ul>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<a id="creating"
+ name="creating"></a>
+  <h2>Understanding Connector Development </h2>
+<p>A connector  consists of classes and helper methods that you code to implement the SPI. You also need to create Spring Framework XML files to 
+describe connector components. </p>
+<p>The connector manager uses Spring Framework to create an instance of a connector from the information you supply in the XML files. </p>
+<p>To develop a connector, you need access to  the following components:</p>
+<ul>
+  <li><b>Content management system.</b> The system that manages the documents to search. </li>
+  <li><b>Connector host system.</b> A computer on which the connector manager and its connectors run. </li>
+</ul>
+<p> When developing a connector, you can use a single computer for the connector host system and the development systems. When you install a connector in a production environment, the connector host is a distinct machine, such as a dedicated servlet container on your production network. </p>
+<p>Before creating a connector, you need to understand the following topics:</p>
+<ul>
+<li>The API for the content management system and how to use API functions to perform the following tasks:
+  <ul>
+    <li>Traversing documents from the ECM system:
+      <ul>
+        <li>Passing login credentials from the SPI functions to the API functions to start a session with a content management system. </li>
+        <li>Querying for documents.</li>
+        <li>Receiving documents, metadata for each document, and a URL for each document, and converting content results into a document list with associated properties.</li>
+        <li>Resuming a document query and acquiring more content.</li>
+    </ul>
+    </li>
+    <li>Handling search queries from end users:
+      <ul>
+        <li>Authenticating users by requesting their user name and password credentials from the API.</li>
+        <li>Authorizing users so  that they can view secured access  documents.</li>
+      </ul>
+    </li>
+  </ul>
+</li>
+<li>You can match the metadata that the content management system provides  to the <a href="cdg_traversing.html#mp">metadata properties</a> that the connector manager requires. A connector works well when a content management system meets the following criteria:
+  <ul>
+    <li>Manages documents and its associated metadata.</li>
+    <li>Provides a unique document ID, a MIME type, and optionally, a last modified date.</li>
+  </ul>
+</li>
+</ul>
+
+<p>Creating and deploying a connector consists of the following tasks:</p>
+<ol>
+<li>Installing the content management system and ensuring that the system is serving documents.</li>
+<li>Installing software and testing a connector with all components to ensure the connector framework setup works. For more information on running a test connector, see <a href="cdg_getstart.html">Getting Started</a>. </li>
+
+
+<li>Creating the <code>connectorType.xml</code> file to configure a connector type. For more information, see <a href="cdg_config.html">Configuration</a>.</li>
+<li>Creating a configuration form for the Admin Console specifying how to access the content management system.  For more information, see <a href="cdg_config.html">Configuration</a>.</li>
+<li>Creating the <code>connectorInstance.xml</code> file to indicate to the connector manager how to instantiate your connector. For more information, see <a href="cdg_config.html">Configuration</a>. </li>
+<li>Creating the traversal classes and methods. For more information, see <a href="cdg_traversing.html">Traversing Documents</a>. </li>
+<li> Creating authentication and authorization classes and methods if the content management system contains controlled-access content. For more information, see <a href="cdg_authentication.html">Authentication</a> and <a href="cdg_authorization.html">Authorization</a>. </li>
+<li>Deploy your  connector and the connector manager in a servlet container such as <a href="http://tomcat.apache.org/" target="_blank">Apache Tomcat</a>. Connectors require  JDK version 1.5 and later. </li>
+</ol>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+
+
+<h2><a name="SpringFramConn"></a>Spring Framework's Relation to a Connector</h2>
+<p>The Spring Framework is an open source software application framework that the connector manager uses to create connector instances. </p>
+<p>The following illustration shows how Spring Framework communicates with each connector component:</p>
+<p><img src="images/cdg_config_architecture.png" alt="Config interface components" width="419" height="186" /> </p>
+<p>Communication process: </p>
+<ol>
+  <li>The Spring Framework uses the parameters in the <code>connectorType.xml</code> file to instantiate the <code>ConnectorType</code> at the same time that Spring instantiates the context of the connector manager. When you develop your connector, you create the connector type that specifies the XHTML for a configuration form. </li>
+  <li>When the administrator adds a connector of that type, the <code>ConnectorType</code> object is consulted for the configuration form. </li>
+  <li>The connector manager sends the configuration form to the search appliance, the administrator fills in the form values, and the connector manager extracts the values from the form and stores the values in a configuration data map. The connector validates the configuration form data. The search appliance conveys the configuration form values to Spring Framework.</li>
+  <li>Spring Framework writes the configuration form information to the <code>.properties</code> file. </li>
+  <li>Spring Framework uses the data in the configuration form information to substitute the placeholders in the <code>connectorDefaults.xml</code> and <code>connectorInstance.xml</code> files. Spring Framework uses the bean definitions in the <code>connectorDefaults.xml</code> and <code>connectorInstance.xml</code> files to create a connector instance. The connector instance communicates with the content management system through its API.</li>
+</ol>
+<p>For information on the Spring Framework DTD, see <a href="http://www.springframework.org/dtd/spring-beans.dtd">spring-beans.dtd</a> at <a href="http://www.springframework.org">SpringFramework.org</a>. </p>
+<p>The Spring Framework requires  files that contain special XML tags and attributes that Spring uses to locate a connector and its components. </p>
+<p>The following is an  example of a Spring configuration file that identifies a connector: </p>
+<pre>&lt;beans&gt;
+  &lt;bean id=&quot;helloworld-connector&quot; 
+        class=&quot;com.acme.connector.HelloWorldConnectorType&quot;&gt;
+  &lt;/bean&gt;
+&lt;/beans&gt; </pre>
+<p>Where:</p>
+<ul>
+  <li><code>id</code> - Identifies the name of the bean--this name is unimportant. Spring uses this name internally. </li>
+  <li><code>class</code>  - Indicates the location of the <code>HelloWorldConnectorType.class</code> object. </li>
+</ul>
+<p>Spring Framework provides <a href="http://en.wikipedia.org/wiki/Inversion_of_Control">Inversion of Control</a> (IoC)  to instantiate the connector manager and the connector. </p>
+<p>Spring is available from <a href="http://www.springframework.org" target="blank_" >http://www.springframework.org</a> and the Spring version 2.5.6 <code>.jar</code> file that Google supports is available in the software distribution for the connector manager  in the <code>projects/connector-manager/third-party/prod</code> directory. </p>
+<p><a href="http://www.springframework.org/">SpringFramework.org</a> provides resources for the enterprise Java community. See also the <a href="http://www.theserverside.com/tt/articles/article.tss?l=SpringFramework" target="blank_" title="info about the Spring Framework, Dependency Injection, and more">Introduction to the Spring Framework</a> article, by Rod Johnson.</p>
+<p> To work with Spring, you need <a href="http://java.sun.com/javase/downloads/index.jsp" target="_blank">Java J2SE</a> version 1.5 or later. </p>
+
+<a name="XMLConfigurationFiles" id="XMLConfigurationFiles"></a>
+<h3>XML Configuration Files</h3>
+<p> You can provide connector type information in the <code>connectorType.xml</code> file and provide connector instance information in the <code>connectorInstance.xml</code> file:</p>
+<ul>
+  <li><code>connectorType.xml</code>,  <code>connectorInstance.xml</code>, and <code>connectorDefaults.xml</code> are Java Bean definition files.</li>
+<li><code>connectorType.xml</code> and <code>connectorDefaults.xml</code> are invariant across   all connector instances of that type, such that all connector   instances derive information from a common <code>connectorType.xml</code> and   <code>connectorDefaults.xml</code>.</li>
+<li><code>connectorInstance.xml</code> and <code><em>ConnectorName</em>.properties</code> file may contain   configuration information that is unique to each connector instance.   This information  distinguishes one connector instance   from another.</li>
+</ul>
+
+<a name="SpringFrameworkInstantiatesaConnector" id="SpringFrameworkInstantiatesaConnector"></a>
+<h3>Spring Framework Instantiates a Connector</h3>
+<p>The Spring Framework instantiates a connector as follows:</p>
+<ol>
+  <li>Server software starts. 
+    <p>The server application starts followed by the connector manager's web application.</p>
+  </li>
+  <li>Spring Framework starts.
+    <p>The startup servlet  sets the servlet context and creates an XML web application context that engages the Spring Framework.</p> 
+  </li>
+  <li>Spring Framework instantiates the connector manager. 
+    <p>Spring Framework looks for the <code>applicationContext.xml</code> file in the <code>WEB-INF/</code> directory and uses that XML file to instantiate all the beans defined in that file. The Spring beans in the <code>applicationContext.xml</code> file indicate the location of the connector manager and its classes. </p>
+  </li>
+  <li>Spring Framework generates a connector type. 
+    <p>Connector manager uses Spring to instantiate a connector type for each installed type of connector (for each <code>connectorType.xml</code> file found on the classpath).</p>
+</li>
+<li>For each installed connector type, the connector manager uses Spring Framework to instantiate each connector instance, using <code>connectorInstance.xml</code>, <code>connectorDefaults.xml</code>, and the connector's <code>.properties</code> file.</li>
+</ol>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
+  
+  <h2><a name="ConnectorTypeTasks"></a>Connector Type and Implementation Processes</h2>
+  <p>Connectors consist of  the following  separate component groups that provide the interaction between the Google Search Appliance and the content management system:</p>
+  <ul>
+    <li><strong>Connector Type</strong> - The <code>ConnectorType</code> object provides an XHTML configuration form that administrators use in the Admin Console of a search appliance to specify information about how to contact a content management system and how often to acquire documents. </li>
+    <li>   
+<strong>Connector Instance </strong> -  Spring Framework uses the information from the connector configuration form 
+to provide properties to the connector manager.
+
+<p>You can optionally create the <code>connectorDefaults.xml</code> file to contain the default settings for properties in the configuration form. The <code>connectorInstance.xml</code> file only holds properties that are overriding properties whose default value is in <code>connectorDefaults.xml</code>.</p>
+
+<p>The Admin Console creates the properties file, which is just a set of name and value pairs.  
+For example, a properties file contains a user name and password, the name of a repository,  
+the basis of the display URL, and other values. The properties file contains the values  
+that correspond to each field in the configuration form.</p>
+<p>Spring Framework injects the properties file, the defaults information (if present), and the information in the <code>connectorInstance.xml</code> file into the bean, which Spring Framework uses to create a connector instance. </p>
+
+<p>Spring Framework:</p> 
+<ol>
+<li>Gets a value that the administrator enters in the configuration form.</li>
+<li>Puts the value in the placeholder in the <code>connectorInstance.xml</code> file.</li>
+<li>Verifies that there's a corresponding field in the <code>connectorDefaults.xml</code> file.</li> 
+<li>Injects the value into the <code>bean</code>.</li>
+<li>Uses the value with the rest of the configuration form values to create the connector instance.</li>
+</ol></ul>
+<p><strong>Note: </strong>When you implement a connector, define setters for all  properties.</p>
+<p>For example if <em>connector_name</em>.<code>properties</code> contains &quot;London Bridge is falling down&quot;:
+<p>In <code>connectorInstance.xml</code>:</p>
+
+<pre>  &lt;bean id=&quot;helloworld-connector&quot;
+      class=&quot;com.example.connector.HelloWorldConnector&quot;
+      parent=&quot;helloworld-connector-defaults&quot;&gt;
+    &lt;property name=&quot;repetitions&quot; value=&quot;5&quot;/&gt;
+  &lt;/bean&gt;</pre>
+
+<p>In <code>connectorDefaults.xml</code>:</p>
+
+<pre>  &lt;bean id=&quot;helloworld-connector-defaults&quot;&gt;
+    &lt;property name=&quot;text&quot; value=&quot;${content}&quot;/&gt;
+    &lt;property name=&quot;repetitions&quot; value=&quot;1&quot;/&gt;
+  &lt;/bean&gt;</pre>
+
+
+<h3><a name="AddConnector" id="AddConnector"></a>Adding a Connector</h3>
+  <p>The following illustration shows the steps that occur when an administrator adds a connector at the Admin Console: </p>
+  <p><img src="images/cdg_connectortype_flow_1.png" alt="Call sequence for getConfigForm method" width="445" height="238" /></p>
+  <p>The steps are as follows:</p>
+  <ol>
+    <li>An administrator creates a new connector at the Admin Console by clicking <strong>Connector Administration</strong> &gt; <strong>Connectors</strong> &gt; <strong>Add New Connector</strong>.</li>
+    <li>The connector manager determines which <code>connectorType</code> is to receive the request.</li>
+    <li>The connector manager calls the <code>ConnectorType.getConfigForm</code> method to have the connector return an XHTML form in the <code>ConfigureResponse</code> class. </li>
+    <li>The connector manager packages the form in an XML wrapper and sends the XML to the search appliance.</li>
+    <li>The search appliance displays the form in the Admin Console. </li>
+  </ol>
+  <p class="backtotop"><a href="#top">Back to top</a></p>
+  <h3><a name="editform" id="editform"></a>Editing a Connector Form and Storing the Parameters</h3>
+  <p>The following illustration shows how a completed form is validated and either returned for corrections or completed:</p>
+ <p><img src="images/cdg_connectortype_flow_2.png" alt="Call sequence for validateConfig method" width="614" height="257" /></p>
+  <p>The steps are as follows:</p>
+  <ol>
+    <li>The administrator fills in the connector configuration form in the Admin Console with information about how the connector manager can connect to the content management system, including a host name and port, and clicks <strong>Submit</strong>. </li>
+    <li>The connector manager  routes the request to the proper connector type. </li>
+    <li>The connector manager  calls the <code>ConnectorType.validateConfig</code> method to ensure that all required information is present. The <code>validateConfig</code> method can also test a connection to the content management system using the <code>ConnectorFactory</code> class to call Spring Framework to create a connector instance to verify that the connector can communicate with the content management system. A connector can also change properties as needed in the <code>validateConfig</code> method. </li>
+    <li>If the <code>validateConfig</code> method fails, the connector returns a <code>ConfigureResponse</code> object that contains the XHTML form and a message to inform the administrator what corrections to make in the form. After the administrator fills in the information, this sequence repeats until the administrator specifies correct information.</li>
+    <li>If the <code>validateConfig</code> method succeeds, the connector manager stores property information in the <code><em>connector_name</em>.properties</code> file. The connector manager also creates a connector instance and sends acknowledgment to the search appliance. </li>
+    <li>The search appliance displays the connector entry in the Admin Console at  <strong>Connector Administration</strong> &gt; <strong>Connectors</strong> &gt; <strong>List of Connectors</strong>.</li>
+  </ol>
+  <p class="backtotop"><a href="#top">Back to top</a></p>
+  <h3><a name="getparms" id="getparms"></a>Getting Stored Parameters and Displaying the Form</h3>
+  <p>The following illustration shows what occurs when an administrator edits the information for an existing connector: </p>
+  <p><img src="images/cdg_connectortype_flow_3.png" alt="Call sequence for the getPopulatedConfigForm() method" width="495" height="233" /></p>
+  <p>The steps are as follows:</p>
+  <ol>
+    <li>An administrator clicks <strong>Edit</strong> to change  the information for an existing connector in the <strong>Connector Administration</strong> &gt; <strong>Connectors</strong> &gt; <strong>List of Connectors</strong>. </li>
+    <li>The connector manager routes the request to the appropriate connector instance. The connector manager locates the existing connector instance that is being modified, gets its configuration map, and hands that off to the appropriate <code>connectorType</code> as a parameter to the <code>getPopulatedConfigForm</code> method.</li>
+    <li>The connector manager calls the connector's <code>ConnectorType.getPopulatedConfigForm</code> method to construct the  XHTML configuration form for the Admin Console. The <code>getPopulatedConfigForm</code> method should use the values in the supplied configuration <code>Map</code> to populate the XHTML form.  </li>
+    <li>The connector manager puts the XHTML code in an XML wrapper and sends the XML to the search appliance. </li>
+    <li>The search appliance displays the form in XHTML on the Admin Console. After the administrator completes the changes, the connector manager handles the form submit as described in <a href="#editform">Editing a Connector Form and Storing the Parameters</a>.</li>
+  </ol>
+  <p class="backtotop"><a href="#top">Back to top</a></p>
+<h2 class="backtotop"><a name="urlbyte"></a> Content Feed and Metadata-and-URL Feed</h2>
+<p>A connector can acquire three components for each document that the connector gets from the content management system, the document itself, metadata that describes the document, and a URL that provides the document's location in the content management system. The connector manager packages this information into an XML wrapper and passes these components to the Google Search Appliance as a feed source. A connector either acquires all three components, which is known as a content feed. Alternatively, the connector can acquire just the metadata for a document and its URL, which is known as a metadata-and-URL feed.</p>
+    <p>The sections that follow provide more information about each feed type.</p>
+    <h3>Content Feed Connector </h3>
+    <p>A connector using content feed works with the content management system's API to acquire a document for the search appliance to index, metadata for the document, and a URL that points to the document's location. The connector then requests documents from the content management system and the connector manager conveys the documents to the search appliance for indexing. </p>
+    <p>A connector with content feed performs the following tasks: </p>
+    <ul>
+      <li>Traverses the content management system to index  documents.</li>
+      <li>Provides  documents to the connector manager as a stream of bytes. The connector manager sends  the content feed to the search appliance.</li>
+      <li>Provides authentication and authorization services except:
+        <ul>
+        <li>If the documents that the connector supplies to the search appliance are public (world readable).</li>
+              <li> If the search appliance delegates authentication to a single sign-on (SSO) provider;  the connector may provide authorization. </li>
+        </ul>
+    </li>
+    </ul>
+
+    <p>More information: <a href="#TraversalSecurity">Understanding  Authentication and Authorization</a>. </p>
+    <h3>Metadata-and-URL Feed Connector</h3>
+<p>A connector using metadata-and-URL feed works with the content management system's API to  provide a URL for the location of the document in the content management system and metadata associated with the document. The search appliance then crawls the  content management system using the URL to locate the document.</p>
+<p>A connector with metadata-and-URL feed performs the following tasks: </p>
+<ul>
+          <li>The search appliance   crawls the content management system using the URL supplied by the connector. Note the distinction that  a metadata-and-URL feed connector does not traverse the content management system. The metadata-and-url feed connector does not fetch the content from the content management system.  Instead, it provides a URL and the search appliance fetches the content. With a metadata-and-url feed, the URLs discovered on the fetched page may then be fetched according to the search appliance's  normal behavior as if that same content had been discovered by crawl (rather than by feed).</li>
+<li>The search appliance handles authentication and authorization with the content management system. The expectation of a metadata-and-URL feed connector is that  the search appliance performs authentication and authorization using the HTTP authentication methods that the search appliance supports, which are the same that the search appliance uses for content crawling. A metadata-and-URL feed connector is never used for authentication and authorization, it is only used for traversal. </li>
+          <li>In the Admin Console, the feed type appears as metadata-and-URL.</li>
+</ul>
+    <p class="backtotop"><a href="#top">Back to top</a></p>
+
+<h2><a name="TraversalSecurity"></a>Understanding Authentication and Authorization</h2>
+    <p>A content feed connector provides authentication and authorization services to enable users to view controlled-access documents. This section explains how a content feed connector handles authentication and authorization. For a metadata-and-URL feed connector, the search appliance handles authentication and authorization. </p>
+    <p>For a connector to authenticate correctly, a user must have the same user name and password at all content management systems served by the connectors that are associated with a single search appliance. That is, if you have two document sources that map to a user who has different credentials at each source, the search appliance can't serve from both sources. </p>
+    <p>The search appliance sends the URL for each document to the web client on the content management system along with the credentials of the user making a search request for controlled-access documents. The web client passes the request to the content server, which returns the document or an error message. </p>
+    <p>The following illustration shows the request and response sequence between the search appliance when a user requests to view controlled-access documents: </p>
+    <p><img src="images/cdg_connector_flow.png" alt="Authorization Flow Diagram" width="383" height="212" /></p>
+    <p>For a detailed explanation of each component, see <a href="cdg_authorization.html#BatchAuthorization">Batch Authorization</a>. </p>
+    <p>When a user requests a search of controlled-access content, an authentication request from the search appliance is sent to the connector manager, which sends back an authentication response from the connector communicating with the content management system. If the user is correctly authenticated, the search appliance requests authorization and the connector manager sends back a response from the content management system to either allow or deny a user's access to the requested content. </p>
+    <p>Authentication and authorization in a connector operate as follows:</p>
+    <ul>
+      <li><strong>Authentication</strong> - Called no matter what type of connector you have (content feed or metadata-and-URL feed).  Authentication depends on the  configuration in the Admin Console.  Authentication is a priority based algorithm.  The search appliance gives all the other mechanisms a chance (SSL, SSO, LDAP) before it tries the connector mechanism.  If the user's identity has been verified by the time the connector mechanism is attempted, the search appliance simply translates that identity for potential later use with connector authorization.  If the user's identity is not verified, then the search appliance consults the connector  to authenticate the user. If you set up LDAP, for example, and the user is authenticated using LDAP, then the connector is not consulted. </li>
+      <li><strong>Authorization</strong> - If a URL of a document starts with <code>googleconnector://</code> then the connector is called.  If the URL does not start with <code>googleconnector://</code>, then authorization in the connector is not called.  This is also a priority based algorithm. The  <code>googleconnector://</code> URL condition exists only in connectors using content feed. </li>
+    </ul>
+    <p>Authentication and authorization depend on the connector feed type:</p>
+    <ul>
+      <li>Content feed - Must provide authentication and authorization except when:
+        <ul>
+          <li>The documents that the connector supplies to the search appliance are public (world readable).</li>
+          <li> The search appliance delegates authentication to a single sign-on (SSO) provider. Authorization is still required in this situation. </li>
+        </ul>
+      </li>
+      <li>Metadata-and-URL feed - Authentication can be called if the search appliance requires authentication and a user's identity has not been confirmed from any other security mechanism. However, the connector manager  never requests authorization from a connector using metadata-and-URL feed.</li>
+    </ul>
+    <p>For normal (non-connector-based) authorization, the  search appliance combines authentication and authorization as follows:</p>
+    <ol>
+<li>Collects the authentication information at the start of a search query.</li>
+<li>Runs a query.</li>
+<li>Checks authorization with  a HEAD request for each result.</li>
+<li>Presents the authentication information and the name of the document to the content management system's web client.</li>
+<li>The search appliance then receives either an HTTP 401 error message (authorization denied - do not display results) or  a response authorizing the display of the document. </li>
+    </ol>
+
+    <p>More information: <a href="cdg_authentication.html">Authentication</a> and <a href="cdg_authorization.html">Authorization</a></p>
+    <h2><a name="LocalizingaConnector"></a>Localizing a Connector</h2>
+    <p>The methods in the <code>ConnectorType</code> interface support the <code>Locale</code> parameter. If you decided to localize your connector, you should add support for internationalization. The connector follows Java internationalization conventions. You need to add resource bundles as <code>.properties</code> files and build them into your connector.</p>
+    <p>The service provider interface supports the use of UTF-8 character sets. </p>
+    <h2><a name="ConnectorScheduling"></a>Scheduling Connector Access</h2>
+<p>The Admin Console provides scheduling for when a connector can traverse documents in a content management system with starting and ending times for traversal and the number of documents to traverse per minute. </p>
+<p>If the connector manager does not receive content from a connector, the connector manager waits 5 minutes before asking a connector for updated content. </p>
+<p>Because the connector manager can start and stop traversals for a connector while the connector manager manages multiple connectors, a connector must be interruptible. The connector manager monitors the state of a connector. The connector  periodically saves  a checkpoint string. The connector manager  provides this string when restarting a connector.  A connector may also store information in files on the file system. </p>
+<p>The important consideration for a connector is that you do not handle scheduling in your connector. The search appliance and connector manager handle this for you. </p>
+<p>More information: <a href="cdg_traversing.html">Traversing Documents</a>, <a href="cdg_traversing.html#checkpointing">Checkpointing</a>, <a href="cdg_traversing.html#fileaccess">File Access</a>.</p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+    
+    <h2><a name="TargetingSearchResults"></a>Displaying Search Results to End Users </h2>
+   
+    <p>A search appliance displays search results as a web page that contains hyperlinks to content that matches a search query. By default, each search result provides a snippet of document content, metadata, or other  data  to help a search user decide whether the result is relevant. </p>
+<p>The goal of the search results page is  to give a  user enough information to decide  to navigate to the document.</p>
+<p>For documents that come from connectors, when a user clicks  a URL in the search results page, a connector can cause users to view: </p>
+<ul>
+<li>A web page. The connector displays the appropriate page in the web interface of the content management system, perhaps a page displaying metadata or content of the document. If a content management system provides its own search interface, then you may want to send  users to the same place that they would have gone if they had used that search.</li>
+<li>Document content. The connector displays the document content itself, taking advantage of the browser's ability to display a document in a proprietary format using the appropriate application, such as a PDF. As in the previous item, if a content management system provides its own search interface, then you may want to send  users to the same place that they would have gone if they had used that search.</li>
+<li>A customized  servlet.
+
+  The connector executes  a customized servlet that you write. You can implement such a servlet separately from the connector implementation. For security reasons or if the content management system does not have a web client, this choice may be preferred.</li>
+<li>No content. 
+  The connector does not display  content and omits the URL. The user  relies on the search engine's normal ability to serve a cached copy of the document.</li>
+<li>Another location. 
+  The connector displays other content or executes 
+  an application as you determine.</li>
+</ul>
+
+  <p>You can control each target by how your connector sets the PROPNAME_DISPLAYURL property in your <code>TraversalManager</code> class. </p>
+  <p>More information: <a href="cdg_traversing.html#mp">Metadata Properties</a> and <a href="cdg_traversing.html">Traversing Documents</a>. </p>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
+ </body>
+</html>
+

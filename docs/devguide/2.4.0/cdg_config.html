@@ -1,0 +1,719 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "DTD/xhtml1-transitional.dtd">
+<html>
+<head>    
+<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+<title>Connector Developer&apos;s Guide: Configuration</title>
+<link href="cdg.css" type="text/css" rel="stylesheet"></link>
+<!--[if IE]><link rel="stylesheet" type="text/css" href="http://code.google.com/css/iehacks.css" /><![endif]-->
+</head>
+<body>
+
+<h1 class="page_title">Connector Developer&apos;s Guide: Configuration</h1>
+
+<p>Google Search Appliance software versions 6.2 <br />
+Connector manager version 2.4.0<br />
+Posted December 2009</p>
+<p>This section describes how a connector provides a configuration form to the Admin Console, how connectors are instantiated, and about the properties file that contains information from the configuration form. The connector manager uses the properties file information when instantiating a connector. </p>
+<p>This section helps you  create  a configuration form for the Admin Console, verify that required information is filled in, and if necessary return the form to the Admin Console.   The <a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0.0/index.html">Javadoc</a> for the <acronym title="Service Provider Interface">SPI</acronym> is available in open source. For connector terminology definitions, see the <a href="http://code.google.com/apis/searchappliance/documentation/62/reference/glossary.html">Google Enterprise Glossary</a>. </p>
+
+<p><strong>Chapters</strong>: <a href="cdg_about.html">About This Guide</a>, <a href="cdg_intro.html">Introduction</a>, <a href="cdg_getstart.html">Getting Started</a>, <a href="cdg_spioverview.html">SPI Overview</a>, <a href="cdg_traversing.html">Traversing Documents</a>, <br />
+<a href="cdg_authentication.html">Authentication</a>, <a href="cdg_authorization.html">Authorization</a>, <em>Configuration</em>, <a href="cdg_buildcm.html">Appendix A: Building a Debug Connector Manager</a></p>
+
+<h2>Contents</h2>
+<ol class="toc">
+<li><a href="cdg_config.html#ConfigOverview">Configuration Overview</a></li>
+<li><a href="cdg_config.html#CreateConfigForm">Creating a Configuration Form</a>
+  <ol>
+    <li><a href="#ConfigurationFormExample">Configuration Form Example</a></li>
+    <li><a href="#ConfigurationFormInterface">Configuration Form ConnectorType Interface</a></li>
+    <li><a href="cdg_config.html#getcfgform">Getting a Configuration Form</a></li>
+    <li><a href="cdg_config.html#valcfgform">Validating a Configuration Form</a>
+      <ol>
+        <li><a href="#ValidatingContentManagementSystemParameters">Validating Content Management System Parameters</a></li>
+      </ol>
+    </li>
+    <li><a href="cdg_config.html#getpopcfgform">Editing a  Configuration Form</a></li>
+    <li><a href="cdg_config.html#IntLoc">Internationalization and Localization Support</a></li>
+  </ol>
+</li>
+<li><a href="cdg_config.html#createconntype">Creating a Connector Type XML File</a>
+  <ol>
+    <li><a href="#ExampleConnTypeFile">Example connectorType.xml File</a></li>
+  </ol>
+</li>
+<li><a href="cdg_config.html#connInst">Creating a Connector Instance XML File</a></li>
+<li><a href="cdg_config.html#PopProp">Properties File</a>
+  <ol>
+    <li><a href="cdg_config.html#HowPopProp">How the Connector Manager Populates a Properties File</a></li>
+  </ol>
+</li>
+</ol>
+
+
+<h2><a name="ConfigOverview"></a>Configuration Overview</h2>
+<p>Programmatically, connectors have two parts, a type and an instance. The connector type identifies a connector to the connector manager and generates  the configuration form that appears in the Admin Console of a search appliance. The connector instance requests documents, metadata, and URLs from the API on the content management system to acquire documents. </p>
+<p>The following illustration shows how Spring Framework communicates with each connector component:</p>
+<p><img src="images/cdg_config_architecture.png" alt="Config interface components" width="419" height="186" /> </p>
+<p>Communication process: </p>
+<ol>
+  <li>The Spring Framework uses the parameters in the <code>connectorType.xml</code> file to instantiate the <code>ConnectorType</code> at the same time that Spring instantiates the context of the connector manager. When you develop your connector, you create the connector type that specifies the XHTML for a configuration form. </li>
+  <li>When the administrator adds a connector of that type, the <code>ConnectorType</code> object is consulted for the configuration form. </li>
+  <li>The connector manager sends the configuration form to the search appliance, the administrator fills in the form values, and the connector manager extracts the values from the form and stores the values in a configuration data map. The connector validates the configuration form data. The search appliance conveys the configuration form values to Spring Framework.</li>
+  <li>Spring Framework writes the configuration form information to the <code>.properties</code> file. </li>
+  <li>Spring Framework uses the data in the configuration form information to substitute the placeholders in the <code>connectorDefaults.xml</code> and <code>connectorInstance.xml</code> files. Spring Framework uses the bean definitions in the <code>connectorDefaults.xml</code> and <code>connectorInstance.xml</code> files to create a connector instance. The connector instance communicates with the content management system through its API.</li>
+</ol>
+<p>This section describes each of these components in greater detail.</p>
+<p>For more information on Spring Framework, see <a href="cdg_intro.html#SpringFramConn">Understanding Spring Framework's Relation to a Connector</a>. To understand more about the properties file, see <a href="#HowPopProp">How the Connector Manager Populates a Properties File</a>. </p>
+<p>Additional conceptual information is available in <a href="cdg_spioverview.html#conTypint">ConnectorType Interface and SimpleConnectorType Class</a> and <a href="cdg_intro.html#ConnectorTypeTasks">Understanding the Connector Type and Implementation Processes</a></p>
+
+<a name="CreateConfigForm"></a>
+<h2>Creating a Configuration Form</h2>
+  <p>The interface between the connector and the search appliance is the configuration form that you provide so that administrators can configure parameters about a content management system. </p>
+<p>The connector type XHTML configuration form enables an administrator to specify parameters that are unique to a content management system. This form  should contain the location and access credentials so that the connector manager can log into the content management system to start a session for handling traversal, authentication, and authorization request. </p>
+<p>The connector name in the Admin Console must be all lowercase. </p>
+<p>The section of the configuration form that a connector supplies  consists of well-formed XHTML <code>&lt;tr&gt;</code> rows in a table that the connector manager inserts into a larger  table. The connector manager handles all other XHTML tags for the page including adding a button to the page for submitting  form values. The table rows that you specify consist of  two (and only two) columns. The first column describes  the configuration element and the second is an XHTML <code>input</code> field. The connector manager also supplies <code>input</code> fields for scheduling when the connector runs and how many documents per minute that the connector traverses. </p>
+<p>You can use the CSS <code>style=</code> attribute in the <code>&lt;tr&gt;</code> or <code>&lt;td&gt;</code> as well as text formatting tags such as for bolding (<code>&lt;b&gt;</code>) or italics (<code>&lt;i&gt;</code>). For more information on possible CSS <code>style=</code> attribute parameters, see the <a href="http://www.w3.org/TR/REC-CSS2/propidx.html">W3.org CSS site</a>. You can use UTF-8 character encoding to localize prompts. </p>
+<p>The traversal schedule rate and schedule prompts are localized by Google for each supported Admin Console translation. Your connector needs to supply translated prompt versions for regions in which your connector should appear. You can use the  <code>java.util.ResourceBundle</code> class to manage localizations. For more information, see the <a href="http://java.sun.com/j2se/1.4.2/docs/api/java/util/ResourceBundle.html">ResourceBundle</a> class at the Sun Java site. </p>
+
+<a id="AddingScriptCode"
+ name="AddingScriptCode"></a>
+<h3>Working with  Script Code</h3>
+<p>If the configuration form snippet contains script code, the code must be contained within a CDATA block in this example:   </p>
+<pre>&lt;script language=&quot;JavaScript&quot; type=&quot;text/javascript&quot;&gt;
+//&lt;![CDATA[
+function checkSelect() {
+  var opt = document.getElementById('Version');
+  if (opt == 'version1') {
+    alert('Version1 Selected');
+  } else {
+    alert('Version1 Not Selected');
+  }   
+}
+//]]&gt;
+&lt;/script&gt;
+ &lt;tr&gt;
+ &lt;td colspan=&quot;1&quot; rowspan=&quot;1&quot;&gt;
+  &lt;div style=&quot;float: left;&quot;&gt;Select Version&lt;/div&gt;&lt;/td&gt;
+ &lt;td colspan=&quot;1&quot; rowspan=&quot;1&quot;&gt;
+   &lt;select id=&quot;SPType&quot; name=&quot;Version&quot; onchange=&quot;checkSelect();&quot; size=&quot;1&quot;&gt;
+     &lt;option selected=&quot;&quot; value=&quot;version1&quot;&gt;Version 1&lt;/option&gt;
+     &lt;option value=&quot;version2&quot;&gt;Version 2&lt;/option&gt;
+   &lt;/select&gt;
+ &lt;/td&gt;
+ &lt;/tr&gt;</pre>
+<a id="ConfigurationFormExample"
+ name="ConfigurationFormExample"></a>
+<h3>Configuration Form Example</h3>
+<p>An example of a configuration form from TestConnectorA follows. (TestConnectorA is available if you build a debug connector manager. For more information, see <a href="cdg_buildcm.html#BuildTestCM">Building a Debug Connector Manager</a>.)</p>
+<p>This code provides one column of labels (Username, Password, Color, and RepositoryFile) and another column of <code>input</code> fields: </p>
+<pre>&lt;tr&gt;
+   &lt;td&gt;Username&lt;/td&gt;
+   &lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;Username&quot;/&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+  &lt;td&gt;Password&lt;/td&gt;
+  &lt;td&gt;&lt;input type=&quot;password&quot; name=&quot;Password&quot;/&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+  &lt;td&gt;Color&lt;/td&gt;
+  &lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;Color&quot;/&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+  &lt;td&gt;RepositoryFile&lt;/td&gt;
+  &lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;RepositoryFile&quot;/&gt;&lt;/td&gt;
+&lt;/tr&gt; </pre>
+<p>The table rows appear in the connector configuration form  on the Admin Console as follows:</p>
+<p><img src="images/cdg_config_form_rows.png" alt="Connector config form rows example" width="373" height="98" /> </p><a name="ConfigurationFormInterface"></a>
+<h3>Configuration Form ConnectorType Interface</h3>
+<p>In the Admin Console, when you add a connector, the configuration type appears. After you choose the connector type and click <strong>Get Configuration Form</strong>, the configuration form displays. The connector manager calls the methods in the <code>ConnectorType</code> interface to get, validate, and update the configuration form. </p>
+<p>The <code>ConnectorType</code> interface  instantiation sequence is as follows:</p>
+<p><img src="images/cdg_connectortype_interface.png" alt="ConnectorType class call sequence" width="376" height="128" /> 
+<p>The call sequence is as follows:</p>
+<ol>
+  <li>Spring Framework creates the <code>ConnectorType</code> object using the parameters in the <code>connectorType.xml</code> file. </li>
+  <li>The connector manager calls the <code>getConfigForm</code> method to provide an XHTML configuration form  in which an administrator can specify connector parameter values in the Admin Console. </li>
+  <li>After an administrator fills in the configuration form and clicks <strong>Submit</strong>, the connector manager calls the <code>validateConfig</code> method to verify the form information. The <code>validateConfig</code> method can also call the <code>ConnectorFactory</code> class to instantiate a connector and verify that the connector instance can communicate with the content management system. If validation fails, the <code>validateConfig</code> method adds a message to the configuration form for the administrator to correct the form information. </li>
+  <li>To change configuration form information, the administrator clicks <strong>Edit</strong> for a connector in the Admin Console and the connector manager calls the <code>getPopulatedConfigForm</code> method to retrieve stored information and create an XHTML form with the information. </li>
+  <li>Each method returns a <code>ConfigureResponse</code> object that can contain a configuration form and an optional message to display on the Admin Console if corrections are needed. </li>
+</ol>
+<p>For more information on when the connector manager calls the SPI method, see <a href="cdg_intro.html#ConnectorTypeTasks">Understanding the Connector Type and Implementation Processes </a>. </p>
+<p class="note"><strong>Note:</strong> Comments, import statements, and logging code in the examples that follows have been removed for brevity. Refer to the original code for copyright and open source license information before using this code for any programming purpose. The  code is from the open source FileNet connector available at <a href="http://google-enterprise-connector-file.googlecode.com">http://google-enterprise-connector-file.googlecode.com</a>. </p>
+<p>The following  example lists the HTML tag variables that the <code>getConfigForm</code> and <code>validateConfig</code> methods can use to create tags and to create the table rows in the configuration form: </p>
+<pre>
+<a name="CLOSE_ELEMENT" id="CLOSE_ELEMENT"></a>private static final String CLOSE_ELEMENT = &quot;/&gt;&quot;;<a name="OPEN_ELEMENT" id="OPEN_ELEMENT"></a>
+private static final String OPEN_ELEMENT = &quot;&lt;&quot;;
+private static final String TR_END = &quot;&lt;/tr&gt;\r\n&quot;;<a name="TR_END" id="TR_END"></a>
+private static final String TD_END = &quot;&lt;/td&gt;\r\n&quot;;<a name="TD_END" id="TD_END"></a>
+private static final String TD_START = &quot;&lt;td&gt;&quot;;<a name="TD_START" id="TD_START"></a>
+private static final String TR_START = &quot;&lt;tr&gt;\r\n&quot;;<a name="TR_START" id="TR_START"></a>
+</pre>
+<p>&nbsp;</p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+
+<a name="getcfgform" id="getcfgform"></a>
+  <h3>Getting a Configuration Form</h3>
+  <p>The connector manager calls the <code>getConfigForm</code> method after an administrator adds a connector. The <code>getConfigForm</code> method creates the configuration form and returns a <code>ConfigureResponse</code> class object containing the form. The first null argument in the <code>ConfigureResponse(null, initialConfigForm)</code> constructor statement is  a message to the administrator, which the connector uses in the <code>validateConfig</code> method to request that fields be filled in, but in the  <code>getConfigForm</code> method, you set this argument to an empty string (the parameter is ignored). The connector can use the message to the administrator to indicate which required fields need information or to indicate other error conditions. The message is plain text without script directives and may be text, null, or an empty string. </p>
+  <pre>
+public ConfigureResponse getConfigForm(Locale language) {
+  resource = 
+    ResourceBundle.getBundle(&quot;FileConnectorResources&quot;, language);
+  if (initialConfigForm != null) {
+    return new ConfigureResponse(null, initialConfigForm);
+  }
+  if (keys == null) {
+    throw new IllegalStateException();
+  }
+  this.initialConfigForm = makeConfigForm(null);
+  return new ConfigureResponse(null, initialConfigForm);
+}
+</pre>
+  <p>The following code lists the <code>makeConfigForm</code> helper method that builds a config form with different elements depending on whether or not the content management system is public or contains controlled-access documents. If the documents in the content management system are all publicly readable, then the search appliance does not need username and password credentials to access the documents for traversal. </p>
+<pre>
+private String makeConfigForm(Map configMap) {
+  StringBuffer buf = new StringBuffer(2048);
+  String value = &quot;&quot;;
+  for (Iterator i = keys.iterator(); i.hasNext();) {
+    String key = (String) i.next();
+    if (configMap != null) {
+      value = (String) configMap.get(key);
+    }
+    if (key.equals(ISPUBLIC)) {
+      appendCheckBox(buf, key, resource.getString(key), value);
+      appendStartHiddenRow(buf);
+      buf.append(OPEN_ELEMENT);
+      buf.append(INPUT);
+      appendAttribute(buf, TYPE, HIDDEN);
+      appendAttribute(buf, VALUE, &quot;false&quot;);
+      appendAttribute(buf, NAME, key);
+      appendEndRow(buf);
+      value = &quot;&quot;;
+    } else {
+      if (!key.equals(FNCLASS) &amp;&amp; !key.equals(AUTHENTICATIONTYPE)
+        &amp;&amp; !key.equals(WHERECLAUSE) &amp;&amp; !key.equals(FILEPATH)) {
+        appendStartRow(buf, resource.getString(key));
+      } else {
+        appendStartHiddenRow(buf);
+      }
+      buf.append(OPEN_ELEMENT);
+      buf.append(INPUT);
+      if (key.equalsIgnoreCase(PASSWORD)) {
+        appendAttribute(buf, TYPE, PASSWORD);
+      } else if (key.equals(FNCLASS)
+        || key.equals(AUTHENTICATIONTYPE)
+        || key.equals(WHERECLAUSE) 
+        || key.equals(FILEPATH)) {
+           appendAttribute(buf, TYPE, HIDDEN);
+        } else {
+          appendAttribute(buf, TYPE, TEXT);
+        }
+        appendAttribute(buf, NAME, key);
+        appendAttribute(buf, VALUE, value);
+        appendEndRow(buf);
+        value = &quot;&quot;;
+      }
+    }
+
+    if (configMap != null) {
+      Iterator i = 
+        new TreeSet(configMap.keySet()).iterator();
+      while (i.hasNext()) {
+        String key = (String) i.next();
+        if (!keySet.contains(key)) {
+          String val = (String) configMap.get(key);
+          buf.append(&quot;&lt;input type=\&quot;hidden\&quot; value=\&quot;&quot;);
+          buf.append(val);
+          buf.append(&quot;\&quot; name=\&quot;&quot;);
+          buf.append(key);
+          buf.append(&quot;\&quot;/&gt;\r\n&quot;);
+        }
+     }
+  } //end for
+  return buf.toString();
+}
+</pre>
+<p>The next section appends table row start (<a href="cdg_config.html#TR_START"><code>TR_START</code></a>) and table column start (<a href="cdg_config.html#TD_START"><code>TD_START</code></a>) tags to the configuration form for the hidden form elements. </p>
+<pre>
+private void appendStartHiddenRow(StringBuffer buf) {
+  buf.append(TR_START);
+  buf.append(TD_START);
+}
+</pre>
+<p>The next section creates a new table row in the configuration form. </p>
+<pre>
+private void appendStartRow(StringBuffer buf, 
+  String key) {
+  buf.append(TR_START);
+  buf.append(TD_START);
+  buf.append(key);
+  buf.append(TD_END);
+  buf.append(TD_START);
+}
+</pre>
+<p>The next section appends close element (<code><a href="cdg_config.html#CLOSE_ELEMENT">CLOSE_ELEMENT</a></code>), table column end (<code><a href="cdg_config.html#TD_END">TD_END</a></code>), and table row end (<code><a href="cdg_config.html#TR_END">TR_END</a></code>) tags to the current table row.</p>
+<pre>
+private void appendEndRow(StringBuffer buf) {
+  buf.append(CLOSE_ELEMENT);
+  buf.append(TD_END);
+  buf.append(TR_END);
+}
+</pre>
+<p>The next section appends an attribute to the form. </p>
+<pre>
+private void appendAttribute(StringBuffer buf, 
+  String attrName, String attrValue) {
+  buf.append(&quot; &quot;);
+  buf.append(attrName);
+  buf.append(&quot;=\&quot;&quot;);
+  buf.append(attrValue);
+  buf.append(&quot;\&quot;&quot;);
+  if (attrName == TYPE &amp;&amp; attrValue == TEXT) {
+    buf.append(&quot; size=\&quot;50\&quot;&quot;);
+  }
+}
+</pre>
+<p>The last section adds a check box to the form. </p>
+<pre>
+ private void appendCheckBox(StringBuffer buf, 
+   String key, String label, String value) {
+  buf.append(TR_START);
+  buf.append(TD_START);
+  buf.append(OPEN_ELEMENT);
+  buf.append(INPUT);
+  buf.append(&quot; &quot; + TYPE + &quot;=&quot; + CHECKBOX);
+  buf.append(&quot; &quot; + NAME + &quot;=\&quot;&quot; + key + &quot;\&quot; &quot;);
+  if (value != null &amp;&amp; value.equals(&quot;on&quot;)) {
+    buf.append(CHECKED);
+  }
+  buf.append(CLOSE_ELEMENT);
+  buf.append(label + TD_END);
+  buf.append(TR_END);
+ }
+</pre>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+  <a name="valcfgform" id="valcfgform"></a>
+  <h3>Validating a Configuration Form</h3>
+  <p>The <code>validateConfig</code> method ensures that the administrator fills in all required information. If you use the <code>ConnectorFactory</code> interface in your connector, the <code>validateConfig</code> method can instantiate the connector to ensure that the content management system is available for access. This method can modify the properties map and instantiate a connector with slightly different properties then those that are received from the content management system.</p>
+  <p> In the code that follows, this method uses the <code>ConnectorFactory</code> interface to create a connector, passes the connector a modified properties map, and makes sure that the connector can access the content management system. If the connector catches an error from the content management system, it adds a message to the configuration form and sends the form back to the Admin Console so that corrected information can be added. The  message is inserted in bright red (#FF0000) font to ensure that the message is readily visible in the configuration form. </p>
+  <pre>
+public ConfigureResponse validateConfig(Map configData, 
+   Locale language, ConnectorFactory connectorFactory) {
+  resource = 
+    ResourceBundle.getBundle(&quot;FileConnectorResources&quot;, language);
+  String form = null;
+  String validation = validateConfigMap(configData);
+  FileSession session;
+  if (validation.equals(null)) {
+    try {
+      Properties p = new Properties();
+      p.putAll(configData);
+      String isPublic = (String) configData.get(ISPUBLIC);
+      if (isPublic == null) {
+        p.put(ISPUBLIC, &quot;false&quot;);
+      }
+      FileConnector conn = (FileConnector) ConnectorFactory.makeConnector(p);
+      session = (FileSession) conn.login();
+      session.getTraversalManager();
+      testWorkplaceUrl((String) configData
+        .get(&quot;workplace_display_url&quot;));
+    } catch (RepositoryException e) {
+      String extractErrorMessage = e.getCause().getClass().getName();
+      String bundleMessage;
+      try {
+        bundleMessage = resource.getString(extractErrorMessage);
+      } catch (MissingResourceException mre) {
+        bundleMessage = resource.getString(&quot;DEFAULT_ERROR_MESSAGE&quot;)
+          + &quot; &quot; + e.getMessage();
+      }
+      form = makeConfigForm(configData);
+      return new ConfigureResponse(&quot;&lt;p&gt;&lt;font color=\&quot;#FF0000\&quot;&gt;&quot;
+        + bundleMessage + &quot;&lt;/font&gt;&lt;/p&gt;&quot;,
+          &quot;&lt;p&gt;&lt;font color=\&quot;#FF0000\&quot;&gt;&quot; + bundleMessage
+        + &quot;&lt;/font&gt;&lt;/p&gt;&quot; + &quot;&lt;br&gt;&quot; + form);
+    }
+    return null;
+  }
+  form = makeConfigForm(configData);
+  return new ConfigureResponse(resource.getString(validation + &quot;_error&quot;),
+  &quot;&lt;p&gt;&lt;font color=\&quot;#FF0000\&quot;&gt;&quot;
+  + resource.getString(validation + &quot;_error&quot;) 
+  + &quot;&lt;/font&gt;&lt;/p&gt;&quot; + &quot;&lt;br&gt;&quot; + form); 
+}
+</pre>
+  <p>In the previous code block, the function returns <code>null</code> to indicate that the configuration is valid.</p>
+<p>The next section validates the content management system authentication information: </p>
+<pre>
+private String validateConfigMap(Map configData) {
+  for (Iterator i = keys.iterator(); i.hasNext();) {
+    String key = (String) i.next();
+    String val = (String) configData.get(key);
+    if (!key.equals(FNCLASS) 
+      &amp;&amp; !key.equals(AUTHENTICATIONTYPE)
+      &amp;&amp; !key.equals(WHERECLAUSE) 
+      &amp;&amp; !key.equals(FILEPATH)
+      &amp;&amp; !key.equals(ISPUBLIC)
+      &amp;&amp; (val == null || val.length() == 0)) {
+         return key;
+    }
+  }
+  return &quot;&quot;;
+}
+</pre>
+<p>The following <code>testWorkplaceUrl</code> method is a helper method that 
+establishes a new HTTP client to the content management system. </p>
+<pre>
+private void testWorkplaceUrl(String workplaceServerUrl)
+  throws RepositoryException {
+
+  HttpClient client = new HttpClient();
+  GetMethod getMethod = new GetMethod(workplaceServerUrl);
+  try {
+    int status = client.executeMethod(getMethod);
+    if (status != 200) {
+      throw new 
+        RepositoryException(&quot;status Http request returned a &quot;
+          + status + &quot; status&quot;, new HttpException(&quot;status is &quot;
+          + status));
+    }
+  } catch (HttpException e) {
+    RepositoryException re = 
+      new RepositoryException(&quot;HttpException&quot;, e);
+    throw new RepositoryException(re);
+    } catch (IOException e) {
+      RepositoryException re = 
+        new RepositoryException(&quot;IOException&quot;, e);
+      throw new RepositoryException(re);
+  }
+}
+</pre>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<a name="ValidatingContentManagementSystemParameters" id="ValidatingContentManagementSystemParameters"></a>
+<h4>Validating Content Management System Parameters</h4>
+<p>If a connector uses the <code>ConnectorFactory</code> interface, a connector can verify the accuracy of  the information that an administrator specifies in the configuration form. </p>
+<p>The <code>ConnectorFactory.makeConnector</code> method  creates a connector instance with the  configuration form information that the administrator supplies.   Although a connector instantiation can vary with each connector  implementations,  <code>ConnectorFactory</code> makes no assumptions. </p>
+<p>In the Livelink connector,  the <code>validateConfig</code> method  verifies that the content management system host, port, user name, and password are correct, and that the Livelink server version is one that the connector supports.  This checking occurs when the <code>validateConfig</code> method calls the <code>Connector.login</code> method on the connector that the <code>ConnectorFactory</code> interface instantiates.</p>
+<p>The following example provides these checks:</p>
+<pre>
+// Instantiate a connector to check connectivity.
+LivelinkConnector connector = null;
+try {
+  connector = (LivelinkConnector)
+  connectorFactory.makeConnector(config);
+  } catch (Throwable t) {
+    LOGGER.log(Level.WARNING, &quot;Failed to create connector&quot;, t);
+    ...
+  }
+  ... 
+  // Login to the content management system server.
+  try {
+    connector.login();
+  } catch (LivelinkException e) {
+    return getResponse(e.getLocalizedMessage(bundle), bundle,
+    config, formContext);
+  } catch (ConfigurationException c) {
+    LOGGER.log(Level.WARNING, &quot;Error in configuration&quot;, c);
+    return getResponse(
+    errorInConfiguration(bundle, c.getLocalizedMessage(bundle)),
+    bundle, config, formContext);
+  } catch (Throwable t) {
+    LOGGER.log(Level.WARNING, &quot;Error in configuration&quot;, t);
+    return getResponse(
+    errorInConfiguration(bundle, t.getLocalizedMessage()),
+    bundle, config, formContext);
+}
+</pre>
+<a name="getpopcfgform" id="getpopcfgform"></a>
+  <h3>Editing a  Configuration Form</h3>
+  <p>The <code>getPopulatedConfigForm</code> method is called when an administrator clicks <strong>Edit</strong> for a connector in the <strong>Connector Administration</strong> &gt; <strong>Connectors</strong> page in the Admin Console. </p>
+  <pre>
+public ConfigureResponse getPopulatedConfigForm(Map configMap, 
+  Locale language) {
+  resource = 
+   ResourceBundle.getBundle(&quot;FileConnectorResources&quot;, language);
+  ConfigureResponse response = new ConfigureResponse(null,
+  makeConfigForm(configMap));
+  return response;
+}
+</pre>
+  <p>The next section shows how to create a message on the configuration form to inform the administrator what fields in the form to fix. </p>
+<pre>
+new ConfigureResponse(resource.getString(validation 
+  + &quot;_error&quot;),
+  &quot;&lt;p&gt;&lt;font color=\&quot;#FF0000\&quot;&gt;&quot;
+  + resource.getString(validation + &quot;_error&quot;)
+  + &quot;&lt;/font&gt;&lt;/p&gt;&quot; + &quot;&lt;br&gt;&quot; + form);
+</pre>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<h3><a name="IntLoc"></a>Internationalization and Localization Support</h3>
+<p>To localize a connector, add support for internationalization. The connector follows <a href="http://java.sun.com/javase/technologies/core/basic/intl/">Java internationalization conventions</a>. You can add internationalization with resource bundles as <code>.properties</code> files and then build them into your connector. A connector can also specify a <code>Locale</code> parameter to the  methods in the <code>ConnectorType</code> interface. </p>
+
+<p>The SPI  supports UTF-8 characters.</p>
+
+<h2><a name="createconntype"></a>Creating a Connector Type XML File</h2>
+  
+<p>To create a <code>ConnectorType</code> object and a connector instance, Spring Framework works with the following components:</p>
+<ul>
+  <li><code>ConnectorType</code> interface
+    <p>Code that creates and verifies the configuration form that appears in the Admin Console. Your connector needs to implement this interface to create a configuration form. </p>
+  </li>
+  <li><code>connectorType.xml</code> file
+    <p>A configuration file for the <code>ConnectorType</code> object. The contents of this file are arbitrary depending on what you need to store for the <code>ConnectorType</code> object in your connector. Because the Spring Framework uses this XML file to help generate a connector instance, provide <code>&lt;bean&gt;</code> attributes to identify the connector and its location. </p>
+  </li>
+</ul>
+
+  <h3><a name="ExampleConnTypeFile" id="ExampleConnTypeFile"></a>Example connectorType.xml File </h3>
+  <p>The example <code>connectorType.xml</code> file that follows is  from the open source <a href="http://google-enterprise-connector-file.googlecode.com">Filenet connector</a>. The use of the <code>connectorType.xml</code> file for specifying the labels for the configuration form is your decision and does not imply that you are required or even recommended to have this detail in this XML file. This XML file should be seen as the parameter file for the <code>ConnectorType</code> object. You may choose to expose the configuration form fields here or not as required by your design. </p>
+  <p>The following example <code>connectorType.xml</code> file provides the configuration form fields: </p>
+  <pre>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;!DOCTYPE beans PUBLIC &quot;-//SPRING//<acronym title="Document Type Definition">DTD</acronym> BEAN//EN&quot; 
+   &quot;http://www.springframework.org/dtd/spring-beans.dtd&quot;&gt;
+&lt;beans&gt;
+  &lt;bean id=&quot;Filenet_P8_3.5.2&quot;
+    class=&quot;com.google.enterprise.connector.file.FileConnectorType&quot;&gt;
+    &lt;property name=&quot;configKeys&quot;&gt;
+     &lt;list&gt;
+      &lt;value&gt;login&lt;/value&gt;
+      &lt;value&gt;password&lt;/value&gt;
+      &lt;value&gt;object_store&lt;/value&gt;
+      &lt;value&gt;path_to_WcmApiConfig&lt;/value&gt;
+      &lt;value&gt;workplace_display_url&lt;/value&gt;
+      &lt;value&gt;object_factory&lt;/value&gt;
+      &lt;value&gt;authentication_type&lt;/value&gt;
+      &lt;value&gt;additional_where_clause&lt;/value&gt;
+      &lt;value&gt;is_public&lt;/value&gt;
+     &lt;/list&gt;
+    &lt;/property&gt;
+  &lt;/bean&gt;
+&lt;/beans&gt;
+</pre>
+<p>The code is as follows.</p>
+<table width="80%" border="1">
+  <tr>
+    <th width="22%" scope="col">Element</th>
+    <th width="78%" scope="col">Description</th>
+  </tr>
+  <tr>
+    <td><code>id</code> attribute </td>
+    <td>The name of the connector that appears in the Admin Console. There can be no spaces in the <code>id=</code> attribute value. </td>
+  </tr>
+  <tr>
+    <td><code>class</code> attribute</td>
+    <td>The location of the source files for the configuration form. In this case, the source code is in the <code>FileConnectorType.java</code> file in the <code>/com/google/enterprise/connector/file</code> folder, which is relative to the base folder of the connector source folder.</td>
+  </tr>
+  <tr>
+    <td><code>property</code> tag</td>
+    <td> The setter that Spring creates to set the values in the configuration form. In this case, Spring creates the <code>setConfigKeys</code> property in the <code>FileConnectorType</code> class as a setter.</td>
+  </tr>
+  <tr>
+    <td><code>list</code> tag</td>
+    <td>A collection list of values. </td>
+  </tr>
+</table>
+<p>A simpler example of the <code>connectorType.xml</code> file is in the <a href="http://code.google.com/p/google-enterprise-connector-otex/source/browse/branches/1.1.x/projects/otex-core/config/connectorType.xml">Google Open Text Livelink Connector</a>:</p>
+<pre>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;!DOCTYPE beans PUBLIC &quot;-//SPRING//DTD BEAN//EN&quot; 
+ &quot;http://www.springframework.org/dtd/spring-beans.dtd&quot;&gt;
+&lt;beans&gt;
+  &lt;bean name=&quot;Livelink_Enterprise_Server&quot;
+   class=&quot;com.google.enterprise.connector.otex.LivelinkConnectorType&quot;/&gt;
+&lt;/beans&gt;  </pre>
+<p>This example provides only a connector type name and the location of the  <code>LivelinkConnectorType.java</code> object. </p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+
+<h2><a name="connInst"></a>Creating a Connector Instance XML File</h2>
+
+<p>The <code>connectorInstance.xml</code> file provides placeholders for the connector manager to populate an instance of your connector. The connector manager substitutes the values in the <code>connectorInstance.xml</code> file from the information that the connector manager acquires from the configuration form. </p>
+<p>The example that follows is  from the open source FileNet connector available at the <a href="http://google-enterprise-connector-file.googlecode.com">http://google-enterprise-connector-file.googlecode.com</a> site. </p>
+<p>In the example that follows, the <code>bean id</code> in the <code>connectorInstance.xml</code> file is an arbitrary string that is not used by the connector manager. There can be no spaces in the <code>bean id</code> string. The class attribute lists the location of the connector source, in this case at in the <code>FileConnector.java</code> file in the 
+<code>/com/google/enterprise/connector/file</code> folder. The <code>property</code> tags shown in the snippet that follows associate the configuration form fields with the variables defined the <code>FileConnector.java</code> file.  </p>
+<pre>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;!DOCTYPE beans PUBLIC &quot;-//SPRING//DTD BEAN//EN&quot; 
+  &quot;http://www.springframework.org/dtd/spring-beans.dtd&quot;&gt;
+&lt;beans&gt;
+  &lt;bean id=&quot;FileConnectorInstance&quot;
+    class=&quot;com.google.enterprise.connector.file.FileConnector&quot;&gt;
+    &lt;property name=&quot;login&quot; value=&quot;${login}&quot; /&gt;
+    &lt;property name=&quot;password&quot; value=&quot;${password}&quot; /&gt;
+    &lt;property name=&quot;object_store&quot; value=&quot;${object_store}&quot; /&gt;
+</pre>
+<p>The corresponding entries in the <code>FileConnector.java</code> file are as follows--properties that get and set each value:</p>
+<pre>
+public class FileConnector implements Connector {
+...
+  private String login;
+  private String password;
+  private String object_store;
+...
+  public String getLogin() {
+    return login;
+  }
+  public void setLogin(String login) {
+    this.login = login;
+  }
+  public String getPassword() {
+    return password;
+  }
+  public void setPassword(String password) {
+    this.password = password;
+  }
+  public String getObject_store() {
+    return object_store;
+  }
+  public void setObject_store(String objectStoreName) {
+    this.object_store = objectStoreName;
+  }
+</pre>
+<p>The <code>connectorInstance.xml</code> file example <code>property</code> statements continue as follows.</p>
+<pre>
+&lt;property name=&quot;path_to_WcmApiConfig&quot; 
+  value=&quot;webapps/connector-manager/WEB-INF/WcmApiConfig.properties&quot; /&gt;
+&lt;property name=&quot;workplace_display_url&quot; 
+  value=&quot;${workplace_display_url}&quot; /&gt;
+&lt;property name=&quot;object_factory&quot; 
+  value=&quot;com.google.enterprise.connector.file.filejavawrap.FnObjectFactory&quot; /&gt;
+&lt;property name=&quot;authentication_type&quot; value=&quot;api&quot; /&gt;
+&lt;property name=&quot;additional_where_clause&quot; 
+  value=&quot;${additional_where_clause}&quot; /&gt;
+&lt;property name=&quot;is_public&quot; value=&quot;${is_public}&quot; /&gt;
+</pre>
+<p>The <code>included_meta</code> property corresponds to the metadata that the FileNet content management system provides in its API:</p>
+<pre>
+&lt;property name=&quot;included_meta&quot;&gt;
+  &lt;set&gt;
+    &lt;value&gt;ClassificationStatus&lt;/value&gt;
+    &lt;value&gt;ContentSize&lt;/value&gt;
+    &lt;value&gt;CurrentState&lt;/value&gt;
+    &lt;value&gt;DateCreated&lt;/value&gt;
+    &lt;value&gt;DateLastModified&lt;/value&gt;
+    &lt;value&gt;DocumentTitle&lt;/value&gt;
+    &lt;value&gt;Id&lt;/value&gt;
+    &lt;value&gt;IsCurrentVersion&lt;/value&gt;
+    &lt;value&gt;IsFrozenVersion&lt;/value&gt;
+    &lt;value&gt;IsReserved&lt;/value&gt;
+    &lt;value&gt;LastModifier&lt;/value&gt;
+    &lt;value&gt;LockTimeout&lt;/value&gt;
+    &lt;value&gt;LockToken&lt;/value&gt;
+    &lt;value&gt;MajorVersionNumber&lt;/value&gt;
+    &lt;value&gt;MimeType&lt;/value&gt;
+    &lt;value&gt;MinorVersionNumber&lt;/value&gt;
+    &lt;value&gt;Name&lt;/value&gt;
+    &lt;value&gt;Owner&lt;/value&gt;
+    &lt;value&gt;StorageLocation&lt;/value&gt;
+    &lt;value&gt;VersionStatus&lt;/value&gt;
+  &lt;/set&gt;
+&lt;/property&gt;
+</pre>
+<p>The <code>excluded_meta</code> property indicates the metadata in the 
+content management system that the connector does not need to address: </p>
+<pre>
+&lt;property name=&quot;excluded_meta&quot;&gt;
+  &lt;set&gt;
+    &lt;value&gt;AccessMask&lt;/value&gt;
+    &lt;value&gt;ActiveMarkings&lt;/value&gt;
+    &lt;value&gt;Annotations&lt;/value&gt;
+    &lt;value&gt;AuditedEvents&lt;/value&gt;
+    &lt;value&gt;ClassDescription&lt;/value&gt;
+    &lt;value&gt;ContentElements&lt;/value&gt;
+    &lt;value&gt;ContentElementsPresent&lt;/value&gt;
+    &lt;value&gt;ContentRetentionDate&lt;/value&gt;
+    &lt;value&gt;CreatePending&lt;/value&gt;
+    &lt;value&gt;CurrentVersion&lt;/value&gt;
+    &lt;value&gt;DateContentLastAccessed&lt;/value&gt;
+    &lt;value&gt;DeletePending&lt;/value&gt;
+    &lt;value&gt;DestinationDocuments&lt;/value&gt;
+    &lt;value&gt;DocumentLifecyclePolicy&lt;/value&gt;
+    &lt;value&gt;EntryTemplateId&lt;/value&gt;
+    &lt;value&gt;EntryTemplateLaunchedWorkflowNumber&lt;/value&gt;
+    &lt;value&gt;EntryTemplateObjectStoreName&lt;/value&gt;
+    &lt;value&gt;FoldersFiledIn&lt;/value&gt;
+    &lt;value&gt;IsInExceptionState&lt;/value&gt;
+    &lt;value&gt;IsVersioningEnabled&lt;/value&gt;
+    &lt;value&gt;LockOwner&lt;/value&gt;
+    &lt;value&gt;ObjectStore&lt;/value&gt;
+    &lt;value&gt;ObjectType&lt;/value&gt;
+    &lt;value&gt;OIID&lt;/value&gt;
+    &lt;value&gt;OwnerDocument&lt;/value&gt;
+    &lt;value&gt;PendingOperation&lt;/value&gt;
+    &lt;value&gt;Properties&lt;/value&gt;
+    &lt;value&gt;PublicationInfo&lt;/value&gt;
+    &lt;value&gt;ReleasedVersion&lt;/value&gt;
+    &lt;value&gt;Reservation&lt;/value&gt;
+    &lt;value&gt;ReservationType&lt;/value&gt;
+    &lt;value&gt;SecurityParent&lt;/value&gt;
+    &lt;value&gt;SecurityPolicy&lt;/value&gt;
+    &lt;value&gt;SourceDocument&lt;/value&gt;
+    &lt;value&gt;StoragePolicy&lt;/value&gt;
+    &lt;value&gt;UpdatePending&lt;/value&gt;
+    &lt;value&gt;VersionSeries&lt;/value&gt;
+    &lt;value&gt;WorkflowSubscriptions&lt;/value&gt;
+  &lt;/set&gt;
+&lt;/property&gt;
+</pre>
+<p>The file ends with these closing tags.</p>
+<pre>
+  &lt;/bean&gt;
+&lt;/beans&gt;
+</pre>
+<p>&nbsp;</p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+
+<h2><a name="PopProp"></a>Properties File</h2>
+<p>A <code><em>connector</em>.properties</code> file provides information and file access to a connector from the values that an administrator specifies in the configuration form. Spring Framework uses the data in the properties file to create a connector instance.  </p>
+<p class="note"><strong>Note: </strong>Any property name that contains the string <code>password</code> is encrypted in the properties file. For example, <code>notAPasswordAtAll</code> is encrypted. </p>
+<p> The connector manager creates the properties file and puts the form in a folder on the servlet container. For more information, see <a href="cdg_config.html#connInst">Creating a Connector Instance XML File</a>. See also, <a href="cdg_config.html#HowPopProp">How the Connector Manager Populates a Properties File</a>. </p>
+<p>If you are using Apache Tomcat as your servlet container, and the connector manager <code>.war</code> file has the default name <code>connector-manager.war</code>, then the <code><em>connector</em>.properties</code> file is placed in the following location:</p>
+<pre><em>Tomcat</em>/webapps/connector-manager/WEB-INF/connectors/<em>ctype</em>/<em>cname</em>/<em>cname</em>.properties</pre>
+<p>Where:</p>
+<ul>
+<li><em>ctype</em> is the connector type, for example, TestConnectorA. This is the value specified in the <code>bean id</code> value in the <code>connectorType.xml</code> file. This value also appears in the Admin Console in the connector <strong>Type</strong> drop-down list. </li>
+<li><em>cname</em> is the  name of the connector instance, for example, MyConn. </li>
+</ul>
+<p>In the case of these examples, the <code><em>connector</em>.properties</code> file's path would be:</p>
+<pre><em>Tomcat</em>/webapps/connector-manager/WEB-INF/connectors/TestConnectorA/MyConn/MyConn.properties</pre>
+<p>The example <code>MyConn.properties</code> file contains the following information (lines wrapped for readability):</p>
+<pre>#Tue Oct 16 14:18:02 PDT 2007 
+Username= 
+googleConnectorWorkDir=/usr/local/google/apps/apache-tomcat-5.5.23/
+  webapps/connector-manager/WEB-INF/connectors/TestConnectorA/MyConn 
+RepositoryFile= 
+Password=<em>password</em>\=\= 
+Color= 
+googleWorkDir=/usr/local/google/apps/apache-tomcat-5.5.23/webapps/
+mycomputer:/usr/local/google/apps/apache-tomcat-5.5.23/webapps/connector-manager/WEB-INF/connectors/MyConn/test</pre>
+<p>The connector manager inserts the values for <code>RepositoryFile</code>, <code>Password</code>, and <code>Color</code> from the data that an administrator supplies in the configuration form in the Admin Console. </p>
+<p>See <a href="cdg_buildcm.html#testconn">Testing a Connector</a> for information about the <code>Username</code>, <code>RepositoryFile</code>, <code>Password</code>, and <code>Color</code> fields in TestConnectorA. See <a href="cdg_traversing.html#fileaccess">File Access</a> for information on the <code>googleConnectorWorkDir</code> and <code>googleWorkDir</code> fields.</p>
+
+  <h3><a name="HowPopProp"></a>How the Connector Manager Populates a Properties File</h3>
+  <p>The connector manager creates the <code><em>connector</em>.properties</code> file as follows:</p>
+  <ol>
+<li>In the Admin Console, use the <strong>Connector Administration</strong> &gt; <strong>Connector Managers</strong> page to register a connector manager. </li>
+<li>From the <strong>Connector Administration</strong> &gt; <strong>Connectors</strong> page, add a connector to the connector manager by clicking <strong>Add New Connector</strong>. 
+  <p>This option displays the <strong>Connector Administration</strong> &gt; <strong>Connectors</strong> &gt; <strong>Add Connector </strong>page. </p>
+</li>
+<li>On the <strong>Add Connector</strong> page, click <strong>Get Configuration Form</strong>. The search appliance requests a configuration form for the connector type</li>
+<li>The connector manager  calls the <code>ConnectorType.getConfigForm</code> method, which returns an XHTML configuration form that the connector manager passes back to the search appliance and displays on the Admin Console. </li>
+  <li>The connector manager creates a folder on the servlet container for the connector. </li>
+  <li>The administrator fills in the configuration form and the search appliance sends the form information back to the connector manager. The connector manager calls the <code>ConnectorType.validateConfig</code> method to verify that the required form information is present. If needed, <code>validateConfig</code> returns the form back to the Admin Console to request the administrator to add missing information. The <code>validateConfig</code> method can also be used to expand choices on a form, for example, if the form has  options that an administrator can expand to indicate more information for a parameter. </li>
+  <li>When done, the connector manager stores the completed form values in the properties file. </li>
+  </ol>
+<h4>Editing an Existing Form</h4>
+<p>The connector manager performs the following for editing an existing configuration form: </p>
+  <ol>
+    <li>When an administrator clicks <strong>Edit</strong> for a connector, the connector manager calls the <code>ConnectorType.getPopulatedConfigForm</code> method to create the configuration form from the properties. </li>
+    <li>The administrator fills in the configuration form and the search appliance sends the form information back to the connector manager. The connector manager calls the <code>ConnectorType.validateConfig</code> method to verify that the required form information is present. If needed, <code>validateConfig</code> returns the form back to  the Admin Console to request missing information. </li>
+    <li>When done, the connector manager stores the updated form values in the properties file.</li>
+  </ol>
+</li>
+</ol>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
+</body>
+</html>
+

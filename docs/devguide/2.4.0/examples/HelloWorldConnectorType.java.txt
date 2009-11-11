@@ -1,0 +1,25 @@
+package com.example.connector;
+
+import com.google.enterprise.connector.spi.ConfigureResponse;
+import com.google.enterprise.connector.spi.ConnectorFactory;
+import com.google.enterprise.connector.spi.ConnectorType;
+
+import java.util.Locale;
+import java.util.Map;
+
+public class HelloWorldConnectorType implements ConnectorType {
+  String form = "<tr><td>fake form</td><td><input type=\"text\" name=\"aa\"/></td></tr>";
+
+  public ConfigureResponse getConfigForm(Locale locale) {
+    return new ConfigureResponse(null, form);
+  }
+
+  public ConfigureResponse validateConfig(Map<String, String> config, Locale locale,
+      ConnectorFactory factory) {
+    return null;
+  }
+
+  public ConfigureResponse getPopulatedConfigForm(Map<String, String> config, Locale locale) {
+    return new ConfigureResponse("filled", form);
+  }
+}

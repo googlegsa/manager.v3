@@ -1,0 +1,303 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "DTD/xhtml1-transitional.dtd">
+<html>
+<head>    
+<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+<title>Connector Developer&apos;s Guide: Appendix A: Building a Debug Connector Manager</title>
+<link href="cdg.css" type="text/css" rel="stylesheet"></link>
+<!--[if IE]><link rel="stylesheet" type="text/css" href="http://code.google.com/css/iehacks.css" /><![endif]-->
+</head>
+<body>
+
+<h1 class="page_title">Connector Developer&apos;s Guide: Appendix A: Building a Debug Connector Manager</h1>
+
+<p>Google Search Appliance software versions 6.2 <br />
+Connector manager version 2.4.0<br />
+Posted December 2009</p>
+<p>This section describes how to build a debug connector manager and to build Javadoc. This section is useful if you need to extend the functionality of the connector manager, or want to use the test connectors supplied with the connector manager. You may find that the information in the <a href="cdg_getstart.html">Getting Started</a> section provides enough background information to get you started and to test connectors. </p><p>For connector terminology definitions, see the <a href="http://code.google.com/apis/searchappliance/documentation/62/reference/glossary.html">Google Enterprise Glossary</a>. </p>
+
+<p><strong>Chapters</strong>: <a href="cdg_about.html">About This Guide</a>, <a href="cdg_intro.html">Introduction</a>, <a href="cdg_getstart.html">Getting Started</a>, <a href="cdg_spioverview.html">SPI Overview</a>, <a href="cdg_traversing.html">Traversing Documents</a>, <br />
+<a href="cdg_authentication.html">Authentication</a>, <a href="cdg_authorization.html">Authorization</a>, <a href="cdg_config.html">Configuration</a>, <em>Appendix A: Building a Debug Connector Manager</em></p>
+
+<h2>Contents</h2>
+<ol class="toc">
+  <li><a href="#createdevenv">Creating a Debug Development Environment</a>
+    <ol>
+  <li><a href="#looksrcanch">Downloading the Connector Manager Software</a></li>
+  <li><a href="#locatingcmc">Reviewing the Software Layout </a></li>
+  <li><a href="#DebugConnMgrReqs">Downloading JSR 170 to Obtain a Jar File</a></li>
+  <li><a href="#SetEnvVars">Setting Environment Variables</a></li>
+  <li><a href="#buildingjavadoc">Building Javadoc</a></li>
+  </ol>
+  </li>
+<li><a href="#BuildTestCM">Building a Debug Connector Manager</a>
+  <ol>
+    <li><a href="#DeployTestConn">Deploying the Debug Connector Manager </a></li>
+    <li><a href="#ConfigureAtAdminConsole">Configuring the Admin Console </a></li>
+    <li><a href="#testconn">Testing a Connector</a></li>
+  </ol>
+</li>
+</ol>
+
+
+<h2><a name="createdevenv"></a>Creating a Debugging Development Environment</h2>
+<p>The sections that follow describe how to set up a development environment for creating a debug connector manager and for building the test connectors. </p>
+<h3><a name="looksrcanch"></a>Downloading the Connector Manager Software </h3>
+<p>The <a href="http://code.google.com/p/google-enterprise-connector-manager/">connector manager developer site</a>  provides  the latest download packages for  the binary releases  as both<code> .zip</code> and <code>.tar.gz</code> files, and the source code archives.</p>
+<p>The  <a href="http://code.google.com/p/google-enterprise-connector-manager/source">Source</a> tab lets you browse the source. Use <a href="http://subversion.tigris.org/">Subversion</a> to download the source. </p>
+<p>Download a copy of the source code for the connector manager and S<acronym title="Service Provider Interface"></acronym>PI: </p>
+<pre>svn checkout http://google-enterprise-connector-manager.googlecode.com/svn/trunk \
+    google-enterprise-connector-manager </pre>
+
+<p>This  command anonymously checks out  code from the Subversion trunk and copies the code to the <code>google-enterprise-connector-manager</code> folder on your computer. You can specify a different  output folder name. </p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<h3><a name="locatingcmc"></a>Reviewing the Software Layout </h3>
+
+<p>The top-level folder contains the following components: </p>
+<ul>
+  <li>The <code>COPYING</code> file in the <code>google-enterprise-connector-manager</code> folder  provides the Apache License for the software distribution.</li>
+  <li>The <code>projects</code> folder contains the following folders:
+    <ul>
+      <li><code>connector-manager</code>
+        <p>Source code for the connector manager  and the SPI. The following folders under the <code>connector-manager</code> folder provide third party production and test libraries:</p>
+        <ul>
+          <li><code>connector-manager/third-party/prod</code>
+              <p>Third-party libraries for production use with support for <a href="http://www.theserverside.com/tt/articles/article.tss?l=SpringFramework" title="info about the Spring Framework, Dependency Injection, and more">Spring</a> and other technologies for the connector framework.</p>
+          </li>
+          <li><code>connector-manager/third-party/tests</code>
+              <p> Third-party libraries for the debug connector manager. </p>
+          </li>
+        </ul>
+      </li>
+      <li><code>test-connectorA</code>
+            <p> Test connector A configuration files.</p>
+      </li>
+      <li><code>test-connectorB</code>
+        <p>Test connector B configuration files. The test connectors are identical except that in their respective configuration forms (in the <code>connectorType.xml</code> files),  test connector A displays the <strong>Color</strong> parameter and test connector B displays the <strong>Flavor</strong> parameter. Neither parameter has any significance--they are just example values. Both test connectors call a  mock repository in the following folder:</p>
+        <pre>/projects/connector-manager/source/javatests/com/google/enterprise/connector/mock</pre>
+      </li>
+    </ul>
+</li></ul>
+<p>&nbsp;</p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<h3><a name="DebugConnMgrReqs"></a>Downloading JSR 170 to Obtain a Jar File </h3>
+  
+<p>You need to obtain the <code>jcr-10.jar</code> file, which is part of <a href="http://jcp.org/en/jsr/detail?id=170" target="_blank">JSR 170</a>. </p>
+<p>Google provides a suite of internal JUnit unit tests on the <a href="http://code.google.com/p/google-enterprise-connector-manager/" target="_blank">connector manager site</a> to test the 
+functionality of the connector manager.
+Some of those tests depend on JSR 170.</p>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<h3><a name="SetEnvVars"></a>Setting Environment Variables</h3>
+
+<p>Ensure that the following required environment variables are set in your build environment. </p>
+<p>In Linux, you can use the <code>env </code> command to see if the variables are set. </p>
+<table width="60%" border="1" summary="Required environment variables">
+<caption>
+Required Environment Variables
+</caption>
+<tr>
+<th width="20%" scope="col">Variable</th>
+<th width="22%" scope="col">Description</th>
+<th width="58%" scope="col">Sample Linux Path </th>
+</tr>
+<tr>
+<td>ANT_HOME</td>
+<td>The Ant command's installation folder.</td>
+<td><code>/usr/bin/ant</code></td>
+</tr>
+<tr>
+<td>CATALINA_HOME</td>
+<td>Apache Tomcat installation folder.</td>
+<td><code>/usr/local/mycompany/apps/apache-tomcat-5.5.23</code></td>
+</tr>
+<tr>
+<td>JAVA_HOME</td>
+<td>Java Development Kit installation folder. </td>
+<td><code>/usr/local/buildtools/java/jdk1.5.0_06</code></td>
+</tr>
+</table>
+<p>You can also set the following variables, which the Apache Tomcat startup shell file (<code>startup.sh</code>) uses. </p>
+<table width="61%" border="1" summary="Optional environment variables">
+<caption>
+Optional Environment Variables
+</caption>
+<tr>
+<th width="20%" scope="col">Variable</th>
+<th width="22%" scope="col">Description</th>
+<th width="58%" scope="col">Sample Linux Path </th>
+</tr>
+<tr>
+<td>CATALINA_TMPDIR</td>
+<td>Apache Tomcat temporary folder. (May point to $CATALINA_HOME.)</td>
+<td><code>/usr/local/mycompany/apps/apache-tomcat-5.5.23</code></td>
+</tr>
+<tr>
+<td>JRE_HOME</td>
+<td>Java runtime folder. If you define, set to your Java development kit installation folder. If  you do not set, the default is $JAVA_HOME. </td>
+<td><code>/usr/local/buildtools/java/jdk1.5.0_06</code></td>
+</tr>
+</table>
+
+<p>In Linux, you can use the following statements to assign values to each required variable in the <code>.bashrc</code> file (or a similar shell initialization file):</p>
+<pre>
+export ANT_HOME=/usr/bin/ant
+export CATALINA_HOME=/usr/local/mycompany/apps/apache-tomcat-5.5.23
+export JAVA_HOME=/usr/local/buildtools/java/jdk1.5.0_06
+</pre>
+<p>After setting variables, reinitialize your <code>.bashrc</code> file with the <code>source ~/.bashrc</code> command. </p>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+
+
+<h3><a name="buildingjavadoc"></a>Building Javadoc</h3>
+<p>The <a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0.0/index.html">Javadoc</a> for the SPI is available in open source. You can optionally build your own copy of the Javadoc using the procedure that follows. </p>
+<p>To build a copy of the SPI Javadoc:</p>
+<ol>
+<li>Check out a copy of  the connector manager source code from the Subversion site using the following command: 
+  <pre>svn checkout http://google-enterprise-connector-manager.googlecode.com/svn/trunk \
+    google-enterprise-connector-manager 
+</pre>
+</li>
+<li>Change directory to the <code>projects/connector-manager</code> folder using the following command:
+<pre>
+cd google-enterprise-connector-manager/projects/connector-manager
+</pre>
+</li>
+<li>Use the following Ant command to build the Javadoc:
+<pre>
+ant spi-javadoc
+</pre>
+<p>If the build is successful, the generated Javadoc files appear in the <code>connector-manager/doc/javadoc/2.0/spi</code> folder. </p>
+</li>
+<li>Change directory to the <code>spi</code> folder using the following command: 
+<pre>
+cd doc/javadoc/2.0/spi
+</pre>
+</li>
+<li>Double-click the <code>index.html</code> file to view the Javadocs. </li>
+</ol>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<!-- ___________ Building a Test Connector Manager ________ -->
+<h2><a name="BuildTestCM"></a>Building a Debug Connector Manager</h2>
+<p>The connector framework helps you create a testing (debug) connector manager <code>.war</code> file using Ant and a <code>build.xml</code> file. The debug <code>.war</code> file (<code>connector-manager_debug.war)</code> lets you build the test connectors, enable test connector access to the mock repository, and verify the feature set of the connector manager using unit tests. </p>
+
+<p class="note"><strong>Note:</strong> The  <code>.jar</code> files for the connector manager must be built with Ant.</p>
+
+<p>You can create a debug version that provides support for the test connectors, access to a mock repository, and access to unit tests for verifying the connector manager feature set.  </p>
+<p class="note"><strong>Note</strong>: The information that follows enables you to build a debug version of the connector manager. Subsequent sections describe how to use the test connectors and access the mock repository. However, running the JUnit unit tests to verify the functionality of the debug connector manager is outside the scope of this document.</p>
+<p>To build a debug version of the connector manager: </p>
+<ol>
+<li>Open a shell or command-line window and set the current folder to the <code><i>distribution</i>/google-enterprise-connector-manager/projects</code> folder.</li>
+<li>Download <a href="http://jcp.org/aboutJava/communityprocess/final/jsr170/index.html">JSR-170</a> and copy the <code>jcr-1.0.jar</code> file to the <code>/projects/connector-manager/third-party/tests</code> folder. </li>
+<li>Put the <code>junit.jar</code> and <code>ant-junit.jar</code> files in the  Ant command's <code>lib</code> folder if they are not already there. </li>
+<li>Run <code>ant</code> (without arguments) from the <code>/projects</code> folder. 
+  <p>A successful build ends with the following statements: </p>
+  <pre>
+$ ant
+<em>[...many messages...]</em>
+BUILD SUCCESSFUL
+Total time: <em>n</em> minute <em>n</em> seconds
+</pre>
+<p>If a build is unsuccessful, correct the problems before continuing. If you see messages that <code>package javax.jcr does not exist</code>,  ensure that the <code>jcr-1.0.jar</code> file is in the  <code>/projects/connector-manager/third-party/tests</code> folder.</p>
+</li>
+</ol>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+<!-- __________ Deploy the Test Connector _________________ -->
+<h3><a name="DeployTestConn"></a>Deploying the Debug Connector Manager </h3>
+<p>Deploy the connector manager's <code>.war</code> file. This action makes the connector manager visible to the Admin Console and provides access to the test connectors in the <code>.war</code> file. If you have not done so already, install <a href="http://archive.apache.org/dist/tomcat/tomcat-5/v5.5.23/">Apache Tomcat version 5.5.23</a>, but do not start it. If you have just installed Apache Tomcat, skip to Step 2 of the following procedure. </p>
+<p>To run and test the connector manager:</p>
+<ol>
+  <li>If Apache Tomcat is running, shut it down.
+    <ol type="a">
+      <li>
+        If  Tomcat is running, shut down Tomcat. If you are using Linux, 
+        use the 
+        <code>$CATALINA_HOME/shutdown.sh</code>
+        command and wait 30 seconds to ensure that the Tomcat service ends.
+        You can check that the service stops by entering this URL: <a href="http://127.0.0.1:8080">http://127.0.0.1:8080</a>. If the page display server not found, the service has stopped.</li>
+          <li>Navigate to the <code>$CATALINA_HOME/webapps</code> folder and delete any previous <code>connector-manager.war</code> files or <code>connector-manager/</code> folders.</li>
+  </ol>
+  </li>
+            <li>Copy the connector manager <code>.war</code> file to the Tomcat <code>webapps</code> folder. 
+              <p>Copy and rename the <code>connector-manager_debug.war</code> file from the connector manager's <code>projects/connector-manager/dist/connector-manager/</code> folder to the <code>$CATALINA_HOME/webapps</code> folder: </p>
+            <pre>
+cp /projects/connector-manager/dist/connector-manager/connector-manager_debug.war \
+   $CATALINA_HOME/webapps/connector-manager.war
+         </pre></li>
+  <li>Restart the Tomcat server using the <code>$CATALINA_HOME/bin/startup.sh</code> command:
+<pre>
+$ $CATALINA_HOME/bin/startup.sh
+Using CATALINA_BASE:   /usr/local/mycompany/apps/apache-tomcat-5.5.23
+Using CATALINA_HOME:   /usr/local/mycompany/apps/apache-tomcat-5.5.23
+Using CATALINA_TMPDIR: /usr/local/mycompany/apps/apache-tomcat-5.5.23/temp
+Using JRE_HOME:       /usr/local/buildtools/java/jdk1.5.0_06
+</pre>
+</li>
+<li>To ensure that the connector manager is online, enter the following URL in a browser: 
+<a href="http://127.0.0.1:8080">http://127.0.0.1:8080</a>
+<p>If Tomcat is online, the Apache Tomcat page appears. If Tomcat is offline, the page displays that the connection was reset.</p>
+</li>
+</ol>
+<!-- ____ Configure a Connector Manager and Test Connector _____ -->
+<h3><a name="ConfigureAtAdminConsole"></a>Configuring the Admin Console </h3>
+<p>After creating the connector manager, you can  configure the test connector at the Admin Console.</p>
+<ol>
+<li>Log in to the Admin Console of a search appliance and register  the connector manager from the <strong>Connector Administration</strong> &gt;<strong> Connector Managers</strong> screen. For the connector manager you wish to register, enter a connector manager name, description, and location. <p>The location has the following format:
+<em>http:</em>//<em>machine_name</em>:8080/<em>folderpath</em></code>/</p>
+<p>The <em>folderpath</em> is the fully qualified root of the web application. The <em>folderpath</em> can be a folder, such as the default, <code>connector-manager</code>, for example, <code>http://me:8080/connector-manager</code>.  On the local computer, the <em>folderpath</em> could be <code>http://localhost:8080/connector-manager</code>/.</p> 
+<p>The <em>folderpath</em>  depends on the name you provide for the <code>.war</code> file. For example, if you name a <code>.war</code> file <code>example.war</code> on the <code>me</code> server, the location <em>folderpath</em> would be <code>http://me:8080/example/</code>.</p>
+<p>The <em>folderpath</em> can also reference a proxy server depending on how you configure your servlet container, for example, <code>http://me:8080/proxy/connector-manager/</code>. In addition, the <em>http:</em> part of the location can be <code>https</code>: and use <acronym title="Secure Sockets Layer">SSL</acronym>.</p>  
+<p>The following figure shows the prompts for registering the new <code>Test_CM</code> connector manager on the <code>me</code> server. The <strong>Manager name</strong> field cannot contain the <code>&lt;&gt;&amp;'&quot;</code> characters. </p>
+<p><img src="images/cdg_connector_manager_new.png" alt="Registering a new connector manager" width="333" height="71" /></p>
+</li>
+<li>If a connector uses content feed, in the <strong>Crawl and Index</strong> &gt; <strong>Crawl URLs</strong> menu of the Admin Console, add the following crawl pattern to the <strong>Follow and Crawl Only URLs with the Following Patterns</strong> edit box: 
+<pre>^googleconnector://</pre>
+<p class="note"><strong>Note:</strong> If this crawl pattern is not present, the search appliance rejects  documents from a content feed connector. Metadata-and-URL  connectors do not require the use of the <code>googleconnector</code> crawl pattern. </p>
+</li>
+<li>Click <strong>Save URLs to Crawl</strong>.</li>
+<li>On the <strong>Crawl and Index</strong> &gt; <strong>Feeds</strong> &gt; <strong>List of Trusted IP Addresses</strong> menu of the Admin Console, either list the IP address of the servlet container in the <strong>Only trust feeds from these IP addresses</strong> field or click <strong>Trust feeds from all IP addresses</strong>. 
+  <p>Alternatively, you can list the IP address of the server where Apache Tomcat is installed in the <strong>Only trust feeds from these IP addresses</strong> field. Click <strong>Save Settings</strong>. </p>
+</li>
+</ol>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+<!-- _____________ Testing a Connector _________________ -->
+<h3><a name="testconn"></a>Testing a Connector</h3>
+<p> TestConnectorA and TestConnectorB provide a way to verify that you have installed the connector framework distribution correctly. The instructions that follow  are for TestConnectorA--you can use the same instructions for TestConnectorB. </p>
+<p>To test TestConnectorA:</p>
+<ol>
+<li>If you have not done so already, copy the <code>connector-manager_debug.war</code> file to the Apache Tomcat <code>webapps</code> folder and rename the file to be <code>connector-manager.war</code>:
+<pre>cp projects/connector-manager/dist/connector-manager/connector-manager_debug.war \
+     $CATALINA_HOME/webapps/connector-manager.war
+</pre>
+</li>
+<li>Reload the connector manager in Tomcat: 
+  <pre>
+http://localhost:8080/manager/html/list --du/p:tomcat/tomcat
+</pre>
+</li>
+<li>Configure the Admin Console to accept the connector from <strong>Connector Administration</strong> &gt; <strong>Connectors</strong> &gt; <strong>Add Connector</strong>. 
+  <p>The following figure shows the TestConnectorA configuration form for the &quot;Test&quot; connector manager: </p>
+  <p><img src="images/cdg_testconnectorform.png" alt="Test connector A configuration form" /></p></li>
+<li>Enter any value for the <b>Username</b>, <b>Password</b>, and <b>Color</b> fields (they are  ignored).</li>
+
+<li>
+ In the <code>RepositoryFile</code> field, enter the name of a text file to crawl, for example, <code>MockRepositoryEventLog1.txt</code>. (The mock repository event log files are in the Tomcat <code>webapps/connector-manager/WEB-INF</code> folder.)</li>
+<li>
+  After completing the configuration form parameters, click <b>Save Configuration</b>.</li>
+<li>After the traversal and indexing completes,  use the Test Center to search  documents in the mock repository text file. 
+  <p>You can use <code>timestamp</code> as a keyword to search the <code>MockRepositoryEventLog1.txt</code> file. </p>
+</li>
+<li>You can verify that a search appliance is reading feeds from a connector (or see messages about why the search appliance is rejecting documents) at <strong>Crawl and Index</strong> &gt; <strong>Feeds</strong>. 
+  <p>Wait a  few minutes and the search appliance starts indexing feeds from the connector.  When a feed on the status page appears with the <strong>Completed</strong> status, the documents in the feed appear in the search results. </p>
+  <p class="note"><strong>Note</strong>: You can ignore the <code>Documents Included</code> column  on the <strong>Feeds</strong> page. A &quot;1&quot; in this column means only that the search appliance added documents for normal operation.</p> 
+</li>
+</ol>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+</body>
+</html>
