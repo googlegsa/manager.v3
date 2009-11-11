@@ -469,9 +469,7 @@ which  displays the installed connector types.</p>
   </li>
 
   </ol>
-  
-  <p class="note"><strong>Note</strong>: If you change information in the configuration form after you start Tomcat, you will need to shutdown  and restart Tomcat for the changes to be picked up by the connector. </p>
-  
+   
 
 <!-- _________________ Test a Search Query _______________ -->
 <a id="TestSearchQuery"
@@ -616,9 +614,7 @@ public DocumentList resumeTraversal(String checkpoint) {
 <a id="TraversalUtilMd"
  name="TraversalUtilMd"></a>
 <h4>Traversal Utility Method</h4>
-<p>The <code>traverse</code> utility method produces a <code>DocumentList</code> containing one
-<code>Document</code>.  This method also sets the <code>documentServed</code> state so that this 
-is the only <code>Document</code> traversed for this connector. The <code>traverse</code> method  returns <code>batchHint</code> number of documents in each batch, until it returns a total of 1000 documents. </p>
+<p>The <code>traverse</code> method  returns <code>batchHint</code> number of documents in each batch, until it returns a total of 1000 documents. </p>
 <pre>
 /**
  * Utility method to produce a {@code DocumentList} containing

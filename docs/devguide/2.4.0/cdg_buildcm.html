@@ -45,7 +45,7 @@ Posted December 2009</p>
 <p>The <a href="http://code.google.com/p/google-enterprise-connector-manager/">connector manager developer site</a>  provides  the latest download packages for  the binary releases  as both<code> .zip</code> and <code>.tar.gz</code> files, and the source code archives.</p>
 <p>The  <a href="http://code.google.com/p/google-enterprise-connector-manager/source">Source</a> tab lets you browse the source. Use <a href="http://subversion.tigris.org/">Subversion</a> to download the source. </p>
 <p>Download a copy of the source code for the connector manager and S<acronym title="Service Provider Interface"></acronym>PI: </p>
-<pre>svn checkout http://google-enterprise-connector-manager.googlecode.com/svn/trunk \
+<pre>svn checkout http://google-enterprise-connector-manager.googlecode.com/svn/trunk
     google-enterprise-connector-manager </pre>
 
 <p>This  command anonymously checks out  code from the Subversion trunk and copies the code to the <code>google-enterprise-connector-manager</code> folder on your computer. You can specify a different  output folder name. </p>
@@ -110,12 +110,12 @@ Required Environment Variables
 <tr>
 <td>CATALINA_HOME</td>
 <td>Apache Tomcat installation folder.</td>
-<td><code>/usr/local/mycompany/apps/apache-tomcat-5.5.23</code></td>
+<td><code>/usr/local/mycompany/apps/apache-tomcat-<em>nnn</em></code></td>
 </tr>
 <tr>
 <td>JAVA_HOME</td>
 <td>Java Development Kit installation folder. </td>
-<td><code>/usr/local/buildtools/java/jdk1.5.0_06</code></td>
+<td><code>/usr/local/buildtools/java/jdk1.<em>nnn</em></code></td>
 </tr>
 </table>
 <p>You can also set the following variables, which the Apache Tomcat startup shell file (<code>startup.sh</code>) uses. </p>
@@ -131,20 +131,20 @@ Optional Environment Variables
 <tr>
 <td>CATALINA_TMPDIR</td>
 <td>Apache Tomcat temporary folder. (May point to $CATALINA_HOME.)</td>
-<td><code>/usr/local/mycompany/apps/apache-tomcat-5.5.23</code></td>
+<td><code>/usr/local/mycompany/apps/apache-tomcat-<em>nnn</em></code></td>
 </tr>
 <tr>
 <td>JRE_HOME</td>
 <td>Java runtime folder. If you define, set to your Java development kit installation folder. If  you do not set, the default is $JAVA_HOME. </td>
-<td><code>/usr/local/buildtools/java/jdk1.5.0_06</code></td>
+<td><code>/usr/local/buildtools/java/jdk1.<em>nnn</em></code></td>
 </tr>
 </table>
 
 <p>In Linux, you can use the following statements to assign values to each required variable in the <code>.bashrc</code> file (or a similar shell initialization file):</p>
 <pre>
 export ANT_HOME=/usr/bin/ant
-export CATALINA_HOME=/usr/local/mycompany/apps/apache-tomcat-5.5.23
-export JAVA_HOME=/usr/local/buildtools/java/jdk1.5.0_06
+export CATALINA_HOME=/usr/local/mycompany/apps/apache-tomcat-<em>nnn</em>
+export JAVA_HOME=/usr/local/buildtools/java/jdk1.<em>nnn</em>
 </pre>
 <p>After setting variables, reinitialize your <code>.bashrc</code> file with the <code>source ~/.bashrc</code> command. </p>
 
@@ -157,7 +157,7 @@ export JAVA_HOME=/usr/local/buildtools/java/jdk1.5.0_06
 <p>To build a copy of the SPI Javadoc:</p>
 <ol>
 <li>Check out a copy of  the connector manager source code from the Subversion site using the following command: 
-  <pre>svn checkout http://google-enterprise-connector-manager.googlecode.com/svn/trunk \
+  <pre>svn checkout http://google-enterprise-connector-manager.googlecode.com/svn/trunk 
     google-enterprise-connector-manager 
 </pre>
 </li>
@@ -170,7 +170,7 @@ cd google-enterprise-connector-manager/projects/connector-manager
 <pre>
 ant spi-javadoc
 </pre>
-<p>If the build is successful, the generated Javadoc files appear in the <code>connector-manager/doc/javadoc/2.0/spi</code> folder. </p>
+<p>If the build is successful, the generated Javadoc files appear in the <code>connector-manager/doc/javadoc/2.0.0/spi</code> folder. </p>
 </li>
 <li>Change directory to the <code>spi</code> folder using the following command: 
 <pre>
@@ -209,7 +209,7 @@ Total time: <em>n</em> minute <em>n</em> seconds
 <p class="backtotop"><a href="#top">Back to top</a></p>
 <!-- __________ Deploy the Test Connector _________________ -->
 <h3><a name="DeployTestConn"></a>Deploying the Debug Connector Manager </h3>
-<p>Deploy the connector manager's <code>.war</code> file. This action makes the connector manager visible to the Admin Console and provides access to the test connectors in the <code>.war</code> file. If you have not done so already, install <a href="http://archive.apache.org/dist/tomcat/tomcat-5/v5.5.23/">Apache Tomcat version 5.5.23</a>, but do not start it. If you have just installed Apache Tomcat, skip to Step 2 of the following procedure. </p>
+<p>Deploy the connector manager's <code>.war</code> file. This action makes the connector manager visible to the Admin Console and provides access to the test connectors in the <code>.war</code> file. If you have not done so already, install Apache Tomcat but do not start it. If you have just installed Apache Tomcat, skip to Step 2 of the following procedure. </p>
 <p>To run and test the connector manager:</p>
 <ol>
   <li>If Apache Tomcat is running, shut it down.
@@ -226,16 +226,16 @@ Total time: <em>n</em> minute <em>n</em> seconds
             <li>Copy the connector manager <code>.war</code> file to the Tomcat <code>webapps</code> folder. 
               <p>Copy and rename the <code>connector-manager_debug.war</code> file from the connector manager's <code>projects/connector-manager/dist/connector-manager/</code> folder to the <code>$CATALINA_HOME/webapps</code> folder: </p>
             <pre>
-cp /projects/connector-manager/dist/connector-manager/connector-manager_debug.war \
+cp /projects/connector-manager/dist/connector-manager/connector-manager_debug.war 
    $CATALINA_HOME/webapps/connector-manager.war
          </pre></li>
   <li>Restart the Tomcat server using the <code>$CATALINA_HOME/bin/startup.sh</code> command:
 <pre>
 $ $CATALINA_HOME/bin/startup.sh
-Using CATALINA_BASE:   /usr/local/mycompany/apps/apache-tomcat-5.5.23
-Using CATALINA_HOME:   /usr/local/mycompany/apps/apache-tomcat-5.5.23
-Using CATALINA_TMPDIR: /usr/local/mycompany/apps/apache-tomcat-5.5.23/temp
-Using JRE_HOME:       /usr/local/buildtools/java/jdk1.5.0_06
+Using CATALINA_BASE:   /usr/local/mycompany/apps/apache-tomcat-<em>nnn</em>
+Using CATALINA_HOME:   /usr/local/mycompany/apps/apache-tomcat-<em>nnn</em>
+Using CATALINA_TMPDIR: /usr/local/mycompany/apps/apache-tomcat-<em>nnn</em>/temp
+Using JRE_HOME:       /usr/local/buildtools/java/jdk1.<em>nnn</em>
 </pre>
 </li>
 <li>To ensure that the connector manager is online, enter the following URL in a browser: 
@@ -272,7 +272,7 @@ Using JRE_HOME:       /usr/local/buildtools/java/jdk1.5.0_06
 <p>To test TestConnectorA:</p>
 <ol>
 <li>If you have not done so already, copy the <code>connector-manager_debug.war</code> file to the Apache Tomcat <code>webapps</code> folder and rename the file to be <code>connector-manager.war</code>:
-<pre>cp projects/connector-manager/dist/connector-manager/connector-manager_debug.war \
+<pre>cp projects/connector-manager/dist/connector-manager/connector-manager_debug.war
      $CATALINA_HOME/webapps/connector-manager.war
 </pre>
 </li>

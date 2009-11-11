@@ -354,7 +354,7 @@ public void setBatchHint(int hint) {
 <p>For information on writing information, see <a href="#fileaccess">File Access</a>. </p>
 <a name="CheckpointingExample" id="CheckpointingExample"></a>
 <h3>Checkpointing Example </h3>
-<p>The following code example  iterates over a list of documents and stores a checkpoint.</p>
+<p>The following code example  iterates over a list of documents and returns a checkpoint.</p>
 <pre>
     // Return the next document in the DocumentList.
     public Document nextDocument() throws RepositoryException {
@@ -380,7 +380,55 @@ public void setBatchHint(int hint) {
     }
   }
 </pre>
-<p>&nbsp;</p>
+
+<p>If a connector needs to record the traversal state, it must only do so in the <code>checkpoint</code> method, and not in the <code>nextDocument</code> method. The recorded state must be retrieved in <code>resumeTraversal</code>, for example:</p>
+<pre>
+// Resume traversal from the saved checkpoint position in the repository. 
+public DocumentList resumeTraversal(String dummy) throws RepositoryException { 
+  int checkpointId; 
+  try {
+    // Read the checkpoint from disk. 
+    BufferedReader in = new BufferedReader(new FileReader(&quot;checkpoint.txt&quot;));
+    try {
+      String checkpoint = in.readLine(); 
+      // Extract the last docId returned from the checkpoint.
+      checkpointId = Integer.parseInt(checkpoint);
+    } finally {
+      in.close();
+    }
+  } catch (IOException e) {
+    throw new RepositoryException(e); 
+  } catch (NumberFormatException e) { 
+    throw new RepositoryException(&quot;Invalid checkpoint&quot;); 
+  } 
+  // Resume traversing at the next document after the last one returned. 
+  return collectDocumentsFromId(checkpointId + 1); 
+} 
+...
+  // Return a checkpoint recording the last document returned  
+  // from nextDocument(). 
+  public String checkpoint() throws RepositoryException { 
+    if (lastDocId &lt; 0) 
+      return null;  // No new checkpoint. 
+    else {
+      try {
+        // Save the checkpoint to disk.
+        FileWriter out = new FileWriter(&quot;checkpoint.txt&quot;);
+        try {
+          out.write(String.valueOf(lastDocId));
+        } finally {
+          out.close();
+        }
+      } catch (IOException e) {
+        throw new RepositoryException(e);
+      }
+      return &quot;&quot;; // Any non-null string is OK.
+    }
+  } 
+} 
+</pre>
+<p>For information on writing information to disk, see <a href="#fileaccess">File Access</a>.</p>
+
 <p class="backtotop"><a href="#top">Back to top</a></p>
 
 <h2>Traversal Context<a name="TraversalContext" id="TraversalContext"></a></h2>
