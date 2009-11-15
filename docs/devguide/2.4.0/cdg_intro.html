@@ -10,7 +10,7 @@
 
 <h1 class="page_title">Google Search Appliance - Connector Developer&apos;s Guide: Introduction</h1>
 
-<p>Google Search Appliance software versions 6.2 <br />
+<p>Google Search Appliance software version 6.2 <br />
 Connector manager version 2.4.0<br />
 Posted December 2009</p>
 <p>This section: </p>
@@ -264,19 +264,17 @@ describe connector components. </p>
 <strong>Connector Instance </strong> -  Spring Framework uses the information from the connector configuration form 
 to provide properties to the connector manager.
 
-<p>You can optionally create the <code>connectorDefaults.xml</code> file to contain the default settings for properties in the configuration form. The <code>connectorInstance.xml</code> file only holds properties that are overriding properties whose default value is in <code>connectorDefaults.xml</code>.</p>
-
-<p>The Admin Console creates the properties file, which is just a set of name and value pairs.  
-For example, a properties file contains a user name and password, the name of a repository,  
-the basis of the display URL, and other values. The properties file contains the values  
-that correspond to each field in the configuration form.</p>
+<p>You can optionally create the <code>connectorDefaults.xml</code> file to contain the default settings for properties in the configuration form. The <code>connectorInstance.xml</code> file is required. The <code>connectorDefaults.xml</code> file is optional. If you do not have a <code>connectorDefaults.xml</code> file, then the placeholders for each property on the configuration form have to go in <code>connectorInstance.xml</code>. For the Google connectors, <code>connectorInstance.xml</code> is  empty, and is only used  to override non-placeholder values in <code>connectorDefaults.xml</code>.  </p>
+<p>The Admin Console creates the properties file, which is  a set of name and value pairs.  
+  For example, a properties file contains a user name and password, the name of a repository,  
+  the basis of the display URL, and other values. The properties file contains the values  
+  that correspond to each field in the configuration form, plus  additional values used by the connector manager.</p>
 <p>Spring Framework injects the properties file, the defaults information (if present), and the information in the <code>connectorInstance.xml</code> file into the bean, which Spring Framework uses to create a connector instance. </p>
 
 <p>Spring Framework:</p> 
 <ol>
 <li>Gets a value that the administrator enters in the configuration form.</li>
-<li>Puts the value in the placeholder in the <code>connectorInstance.xml</code> file.</li>
-<li>Verifies that there's a corresponding field in the <code>connectorDefaults.xml</code> file.</li> 
+<li>Puts the value in the placeholder wherever the placeholder is, <code>connectorDefaults.xml</code> if it exists, or if not, the <code>connectorInstance.xml</code> file.</li>
 <li>Injects the value into the <code>bean</code>.</li>
 <li>Uses the value with the rest of the configuration form values to create the connector instance.</li>
 </ol></ul>
@@ -335,10 +333,16 @@ that correspond to each field in the configuration form.</p>
     <li>The search appliance displays the form in XHTML on the Admin Console. After the administrator completes the changes, the connector manager handles the form submit as described in <a href="#editform">Editing a Connector Form and Storing the Parameters</a>.</li>
   </ol>
   <p class="backtotop"><a href="#top">Back to top</a></p>
-<h2 class="backtotop"><a name="urlbyte"></a> Content Feed and Metadata-and-URL Feed</h2>
+
+<a id="urlbyte" name="urlbyte"></a> 
+<h2>Content Feed and Metadata-and-URL Feed</h2>
 <p>A connector can acquire three components for each document that the connector gets from the content management system, the document itself, metadata that describes the document, and a URL that provides the document's location in the content management system. The connector manager packages this information into an XML wrapper and passes these components to the Google Search Appliance as a feed source. A connector either acquires all three components, which is known as a content feed. Alternatively, the connector can acquire just the metadata for a document and its URL, which is known as a metadata-and-URL feed.</p>
     <p>The sections that follow provide more information about each feed type.</p>
-    <h3>Content Feed Connector </h3>
+
+
+<a id="ContentFeedConnector"
+ name="ContentFeedConnector"></a>
+<h3>Content Feed Connector</h3>
     <p>A connector using content feed works with the content management system's API to acquire a document for the search appliance to index, metadata for the document, and a URL that points to the document's location. The connector then requests documents from the content management system and the connector manager conveys the documents to the search appliance for indexing. </p>
     <p>A connector with content feed performs the following tasks: </p>
     <ul>
@@ -353,7 +357,11 @@ that correspond to each field in the configuration form.</p>
     </ul>
 
     <p>More information: <a href="#TraversalSecurity">Understanding  Authentication and Authorization</a>. </p>
-    <h3>Metadata-and-URL Feed Connector</h3>
+
+
+<a id="MetadataAndURLFeedConnector"
+ name="MetadataAndURLFeedConnector"></a>
+<h3>Metadata-and-URL Feed Connector</h3>
 <p>A connector using metadata-and-URL feed works with the content management system's API to  provide a URL for the location of the document in the content management system and metadata associated with the document. The search appliance then crawls the  content management system using the URL to locate the document.</p>
 <p>A connector with metadata-and-URL feed performs the following tasks: </p>
 <ul>
@@ -363,7 +371,8 @@ that correspond to each field in the configuration form.</p>
 </ul>
     <p class="backtotop"><a href="#top">Back to top</a></p>
 
-<h2><a name="TraversalSecurity"></a>Understanding Authentication and Authorization</h2>
+<a id="TraversalSecurity" name="TraversalSecurity"></a>
+<h2>Understanding Authentication and Authorization</h2>
     <p>A content feed connector provides authentication and authorization services to enable users to view controlled-access documents. This section explains how a content feed connector handles authentication and authorization. For a metadata-and-URL feed connector, the search appliance handles authentication and authorization. </p>
     <p>For a connector to authenticate correctly, a user must have the same user name and password at all content management systems served by the connectors that are associated with a single search appliance. That is, if you have two document sources that map to a user who has different credentials at each source, the search appliance can't serve from both sources. </p>
     <p>The search appliance sends the URL for each document to the web client on the content management system along with the credentials of the user making a search request for controlled-access documents. The web client passes the request to the content server, which returns the document or an error message. </p>
@@ -395,11 +404,16 @@ that correspond to each field in the configuration form.</p>
 <li>The search appliance then receives either an HTTP 401 error message (authorization denied - do not display results) or  a response authorizing the display of the document. </li>
     </ol>
 
-    <p>More information: <a href="cdg_authentication.html">Authentication</a> and <a href="cdg_authorization.html">Authorization</a></p>
-    <h2><a name="LocalizingaConnector"></a>Localizing a Connector</h2>
+<p>More information: <a href="cdg_authentication.html">Authentication</a> and <a href="cdg_authorization.html">Authorization</a></p>
+
+<a id="LocalizingaConnector" name="LocalizingaConnector"></a>
+<h2>Localizing a Connector</h2>
     <p>The methods in the <code>ConnectorType</code> interface support the <code>Locale</code> parameter. If you decided to localize your connector, you should add support for internationalization. The connector follows Java internationalization conventions. You need to add resource bundles as <code>.properties</code> files and build them into your connector.</p>
     <p>The service provider interface supports the use of UTF-8 character sets. </p>
-    <h2><a name="ConnectorScheduling"></a>Scheduling Connector Access</h2>
+    
+    
+<a id="ConnectorScheduling" name="ConnectorScheduling"></a>
+<h2>Scheduling Connector Access</h2>
 <p>The Admin Console provides scheduling for when a connector can traverse documents in a content management system with starting and ending times for traversal and the number of documents to traverse per minute. </p>
 <p>If the connector manager does not receive content from a connector, the connector manager waits 5 minutes before asking a connector for updated content. </p>
 <p>Because the connector manager can start and stop traversals for a connector while the connector manager manages multiple connectors, a connector must be interruptible. The connector manager monitors the state of a connector. The connector  periodically saves  a checkpoint string. The connector manager  provides this string when restarting a connector.  A connector may also store information in files on the file system. </p>
@@ -407,7 +421,9 @@ that correspond to each field in the configuration form.</p>
 <p>More information: <a href="cdg_traversing.html">Traversing Documents</a>, <a href="cdg_traversing.html#checkpointing">Checkpointing</a>, <a href="cdg_traversing.html#fileaccess">File Access</a>.</p>
 <p class="backtotop"><a href="#top">Back to top</a></p>
     
-    <h2><a name="TargetingSearchResults"></a>Displaying Search Results to End Users </h2>
+
+<a id="TargetingSearchResults" name="TargetingSearchResults"></a>
+<h2>Displaying Search Results to End Users </h2>
    
     <p>A search appliance displays search results as a web page that contains hyperlinks to content that matches a search query. By default, each search result provides a snippet of document content, metadata, or other  data  to help a search user decide whether the result is relevant. </p>
 <p>The goal of the search results page is  to give a  user enough information to decide  to navigate to the document.</p>
@@ -416,7 +432,6 @@ that correspond to each field in the configuration form.</p>
 <li>A web page. The connector displays the appropriate page in the web interface of the content management system, perhaps a page displaying metadata or content of the document. If a content management system provides its own search interface, then you may want to send  users to the same place that they would have gone if they had used that search.</li>
 <li>Document content. The connector displays the document content itself, taking advantage of the browser's ability to display a document in a proprietary format using the appropriate application, such as a PDF. As in the previous item, if a content management system provides its own search interface, then you may want to send  users to the same place that they would have gone if they had used that search.</li>
 <li>A customized  servlet.
-
   The connector executes  a customized servlet that you write. You can implement such a servlet separately from the connector implementation. For security reasons or if the content management system does not have a web client, this choice may be preferred.</li>
 <li>No content. 
   The connector does not display  content and omits the URL. The user  relies on the search engine's normal ability to serve a cached copy of the document.</li>
@@ -429,6 +444,7 @@ that correspond to each field in the configuration form.</p>
   <p>More information: <a href="cdg_traversing.html#mp">Metadata Properties</a> and <a href="cdg_traversing.html">Traversing Documents</a>. </p>
 
 <p class="backtotop"><a href="#top">Back to top</a></p>
- </body>
+
+</body>
 </html>
 
