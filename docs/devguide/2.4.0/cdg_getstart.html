@@ -149,7 +149,7 @@ Windows XP:
 <li>Right click <strong>My Computer</strong> and click <strong>Properties</strong>.</li>
 <li> Click the <strong>Advanced</strong> tab and click <strong>Environment Variables</strong>. The Environment Variables menu appears. </li>
 <li>In <strong>System variables</strong>, click <strong>New</strong>. The New System Variable menu appears.</li>
-<li>Type <code>CATALINA_HOME</code> for the <strong>Variable name</strong> and the enter the path to the Tomcat download folder, for example, <code>c:\apache-tomcat-6.0.20\</code> as the <strong>Variable value</strong>. </li>
+<li>Type <code>CATALINA_HOME</code> for the <strong>Variable name</strong> and the enter the path to the Tomcat download folder, for example, <code>c:\apache-tomcat-6.0.18\</code> as the <strong>Variable value</strong>. </li>
 <li>Click <strong>OK</strong> to complete the variable, <strong>OK</strong> to exit  Environment Variables, and <strong>OK</strong> to exit System Properties.</li>
 </ol>
 <br>Linux and Macintosh:
@@ -194,11 +194,11 @@ Or from your <code>~/.bashrc</code> file: <br />
       </tr>
       <tr>
         <td>Linux or Macintosh</td>
-        <td><a href="http://google-enterprise-connector-manager.googlecode.com/files/connector-manager-2.0.0.tar.gz">connector-manager-2.0.0.tar.gz</a></td>
+        <td><a href="http://google-enterprise-connector-manager.googlecode.com/files/connector-manager-2.4.0.tar.gz">connector-manager-2.4.0.tar.gz</a></td>
       </tr>
       <tr>
         <td>Windows</td>
-        <td><a href="http://google-enterprise-connector-manager.googlecode.com/files/connector-manager-2.0.0.zip">connector-manager-2.0.0.zip</a></td>
+        <td><a href="http://google-enterprise-connector-manager.googlecode.com/files/connector-manager-2.4.0.zip">connector-manager-2.4.0.zip</a></td>
       </tr>
     </table>
   </li>
@@ -212,7 +212,7 @@ Or from your <code>~/.bashrc</code> file: <br />
 <p>The instructions that follow are  for a Windows system, if you are using a Linux or Macintosh, refer to your operating system documentation for how to open a <code>.tar</code> file, and how to extract, copy, and rename files. </p>
 <p>To extract the <code>connector-spi.jar</code> file: </p>
 <ol>
-  <li>Open the folder labeled <code>connector-manager-2.0.0</code>. </li>
+  <li>Open the folder labeled <code>connector-manager-2.4.0</code>. </li>
   <li>Copy or extract the <code>connector-manager.war</code> file and store it in a folder on your computer. </li>
   <li>Copy the <code>connector-manager.war</code> file so that you have two copies of the same file.  </li>
   <li>Rename one of the copies of the <code>connector-manager.war</code> file to be <code>connector-manager.zip</code>. </li>
@@ -378,7 +378,7 @@ Wait approximately 30 seconds to ensure that Tomcat stops. You can check that th
     </ul>
   </li>
   <li>Test Tomcat. 
-    <p>After Tomcat starts, verify that the server is running by clicking this link: <a href="http://127.0.0.1:8080/connector-manager/testConnectivity">http://127.0.0.1:8080/connector-manager/testConnectivity</a> or by typing this address into a browser. This link verifies that the connector manager is running and displays the connector manager version, Java version, and the operating system version.</p>
+    <p>After Tomcat starts, verify that the server is running by clicking this link: <a href="http://127.0.0.1:8080/connector-manager/testConnectivity">http://127.0.0.1:8080/connector-manager/testConnectivity</a> or by typing this address into a browser. This link verifies that the connector manager is running and displays the connector manager version, Java version,  the operating system version, and the IP address of the search appliance.</p>
   </li>
   </ol>
 
@@ -629,10 +629,10 @@ private DocumentList traverse(String checkpoint) {
     return null;  // No more documents.
   }
   Calendar cal = Calendar.getInstance();
-  cal.setTimeInMillis(10 * 1000);
   List&lt;Document&gt; docList = new ArrayList&lt;Document&gt;(batchHint);
   int endDocId = Math.min(startDocId + batchHint - 1, MAX_DOCID);
   for (int i = startDocId; i &lt;= endDocId; i++) {
+    cal.setTimeInMillis(10 * 1000); // Each doc has the current timestamp
     Map&lt;String, List&lt;Value&gt;&gt;properties;
     properties = new HashMap&lt;String, List&lt;Value&gt;&gt;();
     properties.put(SpiConstants.PROPNAME_DOCID,
@@ -691,8 +691,7 @@ class HelloWorldDocumentList implements DocumentList {
   public AuthenticationResponse authenticate(AuthenticationIdentity id) {
     return new AuthenticationResponse(true, null);
   }
-}
-</pre>
+}</pre>
 
 <a id="HloAuthZMgrClass"
  name="HloAuthZMgrClass"></a>

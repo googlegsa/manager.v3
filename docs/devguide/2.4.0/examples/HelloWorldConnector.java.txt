@@ -75,13 +75,13 @@ public class HelloWorldConnector implements Connector {
       }
 
       Calendar cal = Calendar.getInstance();
-      cal.setTimeInMillis(10 * 1000);
 
       List<Document> docList = new ArrayList<Document>(batchHint);
 
       int endDocId = Math.min(startDocId + batchHint - 1, MAX_DOCID);
 
       for (int i = startDocId; i <= endDocId; i++) {
+        cal.setTimeInMillis(10 * 1000); // Each doc has the curretn timestamp
         Map<String, List<Value>>properties;
         properties = new HashMap<String, List<Value>>();
 

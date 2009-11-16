@@ -232,7 +232,7 @@ describe connector components. </p>
 <ul>
   <li><code>connectorType.xml</code>,  <code>connectorInstance.xml</code>, and <code>connectorDefaults.xml</code> are Java Bean definition files.</li>
 <li><code>connectorType.xml</code> and <code>connectorDefaults.xml</code> are invariant across   all connector instances of that type, such that all connector   instances derive information from a common <code>connectorType.xml</code> and   <code>connectorDefaults.xml</code>.</li>
-<li><code>connectorInstance.xml</code> and <code><em>ConnectorName</em>.properties</code> file may contain   configuration information that is unique to each connector instance.   This information  distinguishes one connector instance   from another.</li>
+<li><code>connectorInstance.xml</code> and <em>ConnectorName</em><code>.properties</code> file may contain   configuration information that is unique to each connector instance.   This information  distinguishes one connector instance   from another.</li>
 </ul>
 
 <a name="SpringFrameworkInstantiatesaConnector" id="SpringFrameworkInstantiatesaConnector"></a>
@@ -269,7 +269,7 @@ to provide properties to the connector manager.
   For example, a properties file contains a user name and password, the name of a repository,  
   the basis of the display URL, and other values. The properties file contains the values  
   that correspond to each field in the configuration form, plus  additional values used by the connector manager.</p>
-<p>Spring Framework injects the properties file, the defaults information (if present), and the information in the <code>connectorInstance.xml</code> file into the bean, which Spring Framework uses to create a connector instance. </p>
+<p>Spring Framework injects the properties, the defaults  (if present), and the information in the <code>connectorInstance.xml</code> file into the bean, which Spring Framework uses to create a connector instance. </p>
 
 <p>Spring Framework:</p> 
 <ol>
@@ -317,7 +317,7 @@ to provide properties to the connector manager.
     <li>The connector manager  routes the request to the proper connector type. </li>
     <li>The connector manager  calls the <code>ConnectorType.validateConfig</code> method to ensure that all required information is present. The <code>validateConfig</code> method can also test a connection to the content management system using the <code>ConnectorFactory</code> class to call Spring Framework to create a connector instance to verify that the connector can communicate with the content management system. A connector can also change properties as needed in the <code>validateConfig</code> method. </li>
     <li>If the <code>validateConfig</code> method fails, the connector returns a <code>ConfigureResponse</code> object that contains the XHTML form and a message to inform the administrator what corrections to make in the form. After the administrator fills in the information, this sequence repeats until the administrator specifies correct information.</li>
-    <li>If the <code>validateConfig</code> method succeeds, the connector manager stores property information in the <code><em>connector_name</em>.properties</code> file. The connector manager also creates a connector instance and sends acknowledgment to the search appliance. </li>
+    <li>If the <code>validateConfig</code> method succeeds, the connector manager stores property information in the <em>ConnectorName</em><code>.properties</code> file. The connector manager also creates a connector instance and sends acknowledgment to the search appliance. </li>
     <li>The search appliance displays the connector entry in the Admin Console at  <strong>Connector Administration</strong> &gt; <strong>Connectors</strong> &gt; <strong>List of Connectors</strong>.</li>
   </ol>
   <p class="backtotop"><a href="#top">Back to top</a></p>

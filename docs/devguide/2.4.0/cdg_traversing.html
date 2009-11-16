@@ -16,7 +16,7 @@ Connector manager
 Posted December 2009</p>
 <p>Traversing means acquiring documents from a content management system that the connector manager feeds to a Google Search Appliance. 
 Traversing is analogous to the search appliance concept of crawling.</p>
-<p><strong>Chapters</strong>: <a href="cdg_about.html">About This Guide</a>, <a href="cdg_intro.html">Introduction</a>, <a href="cdg_getstart.html">Getting Started</a>, <a href="cdg_spioverview.html">SPI Overview</a>, <em>Traversing Documents</em>, <br />
+<p><strong>Chapters</strong>: <a href="index.html">Home</a>, <a href="cdg_about.html">About This Guide</a>, <a href="cdg_intro.html">Introduction</a>, <a href="cdg_getstart.html">Getting Started</a>, <a href="cdg_spioverview.html">SPI Overview</a>, <em>Traversing Documents</em>, <br />
 <a href="cdg_authentication.html">Authentication</a>, <a href="cdg_authorization.html">Authorization</a>, <a href="cdg_config.html">Configuration</a>, <a href="cdg_buildcm.html">Appendix A: Building a Debug Connector Manager</a></p>
 <h2>Contents</h2>
 <ol class="toc">
@@ -86,8 +86,8 @@ Traversing is analogous to the search appliance concept of crawling.</p>
 </ol>
 <p>A connector controls traversal by setting the return value of the <code>DocumentList</code> interface:</p>
 <ul>
-  <li><code>null</code> - Stop traversing, all documents are traversed. Wait 5 minutes before asking the content management system for updated documents.</li>
-  <li><code>DocumentList</code> containing zero documents  - Temporarily stop traversing, set a progress checkpoint, and  resume traversing.  </li>
+  <li><code>null</code> - Stop traversing, all documents are traversed. Wait 15 minutes before asking the content management system for updated documents.</li>
+  <li><code>DocumentList</code> containing zero documents  - Set a progress checkpoint and  resume traversing.  </li>
   <li><code>DocumentList</code> (non-empty) - Send documents in the <code>DocumentList</code> to the search appliance. </li>
 </ul>
 <p>For more information on <code>DocumentList</code> return values and document traversing exceptions, see <a href="IteratingOverADocumentList">Iterating Over a Document List</a>.</p>
@@ -115,7 +115,7 @@ Traversing is analogous to the search appliance concept of crawling.</p>
   <li>The <code>resumeTraversal</code> method of the connector instance to resume traversing at the  document indicated by the <code>checkpoint</code> method.</li>
 </ol>
 <h2><a name="BuildingADocumentList"></a>Acquiring Documents</h2>
-<p>The following code example provides a sample <code>TraversalManager</code> implementation. The  code  declares the class, specifies 500 documents for the fake content management system, and  sets the batch hint so that the connector can traverse up to 100 documents a minute from the content management system.</p>
+<p>The following code example provides a sample <code>TraversalManager</code> implementation. The  code  declares the class, specifies 500 documents for the fake content management system.</p>
 <pre>
 public class MockTraversalManager implements TraversalManager {
   // The maximum number of documents in our fake repository.
@@ -173,7 +173,7 @@ calls when it's ready to acquire more documents.</p>
   </tr>
   <tr>
     <td><code>null</code></td>
-    <td>Informs the connector manager that there are no new documents in the content management system to traverse. The connector manager then waits 5 minutes before calling the <code>resumeTraversal</code> method to check the content management system for new documents to traverse.</td>
+    <td>Informs the connector manager that there are no new documents in the content management system to traverse. The connector manager then waits 15 minutes before calling the <code>resumeTraversal</code> method to check the content management system for new documents to traverse.</td>
   </tr>
   <tr>
     <td>Zero documents (empty) </td>
@@ -190,7 +190,7 @@ calls when it's ready to acquire more documents.</p>
 <p>The connector manager may not acquire all documents from the content management system. The connector manager may interrupt the traversal of documents, call the <code>checkpoint</code> method, and start another task. When the connector manager is again ready to start traversing the content management system, the connector manager calls the <code>resumeTraversal</code> method and passes  the <code>checkpoint</code> method to provide the current position. </p>
 <p>Connectors have these exceptions for documents:</p>
 <ul>
-  <li><code>RepositoryException</code>. A transient error occurred while traversing a document, such as a lost connection to the content management system. The connector needs to reread the document. The connector manager waits 5 minutes before resuming traversal. </li>
+  <li><code>RepositoryException</code>. A transient error occurred while traversing a document, such as a lost connection to the content management system. The connector needs to reread the document. The connector manager waits 15 minutes and retries the same batch before resuming traversal. </li>
   <li><code>RepositoryDocumentException</code>. A document has an error and cannot be retrieved. Skip the document.</li>
   <li><code>OutofMemoryError</code>. A document is too large to be traversed. Skip the document. </li>
 </ul>

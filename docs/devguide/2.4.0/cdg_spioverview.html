@@ -47,7 +47,7 @@ Posted December 2009</p>
 <li><a href="#pti">Property Interface</a></li>
 </ol>
 </li>
-<li><a href="#Value">Value Interface</a></li>
+<li><a href="#Value">Value Class</a></li>
   <li><a href="#conTypint">ConnectorType Interface and SimpleConnectorType Class</a>
     <ol>
 <li><a href="#cti">ConnectorType Interface</a></li>
@@ -111,7 +111,7 @@ Posted December 2009</p>
     <p>The connector manager  calls the <code>startTraversal</code> method to start acquiring documents from the content management system. The connector manager receives a list of documents from the <code>startTraversal</code> method. </p>
   </li>
   <li>Traverse over the documents in the <code>DocumentList</code>.  
-    <p>The connector manager calls the <code>nextDocument</code> method to get another document.. Each <code>Document</code> returned is fed to the search appliance.  The connector sets the return value of the <code>DocumentList</code> object to instruct the connector manager what to do next. A <code>null</code> return value indicates that traversal is done, An empty return value indicates to set the checkpoint and keep traversing, and documents in the <code>DocumentList</code> indicate to send the documents to the search appliance. </p>
+    <p>The connector manager calls the <code>nextDocument</code> method to get another document.. Each <code>Document</code> returned is fed to the search appliance.  The connector sets the return value of the <code>DocumentList</code> object to instruct the connector manager what to do next. A <code>null</code> return value indicates that traversal is done, An empty return value indicates to set the checkpoint and keep traversing, and documents in the <code>DocumentList</code> indicates to send the documents to the search appliance. </p>
   </li>
   <li>Pauses traversing to perform other tasks.
     <p>The connector sets the checkpoint after every batch of documents. The checkpoint helps the connector remember where within the content management system the traversal was paused, so that the connector may resume at that point in the future.</p>
@@ -158,13 +158,13 @@ Posted December 2009</p>
 <p class="backtotop"><a href="#top">Back to top</a></p>
 
 
-<h2><a name="Value"></a>Value Interface </h2>
+<h2><a name="Value"></a>Value Class </h2>
 <p>The <code>Value</code> objects are used to provide property values from the connector to the connector manager as returned from calls to the <code>Property.nextValue</code> method. </p>
-<p>The <code>Value</code> interface provides factory methods for constructing <code>Value</code> objects for various data types. </p>
+<p>The <code>Value</code> class provides factory methods for constructing <code>Value</code> objects for various data types. </p>
 <p>A connector cannot implement its own <code>Value</code> class or even subclass the one provided  (unlike most of the other interfaces, for which a connector must provide an implementation).</p>
 <p>The methods in the <code>Value</code> class   are as follows:</p>
 <p><img src="images/cdg_value_interface.png" alt="Value interface" width="326" height="219" /></p>
-<p>The <code>Value</code> interface provides conversion methods for numeric and string values. For more information on the <code>Calendar</code> object formats, see <a href="ftp://ftp.rfc-editor.org/in-notes/rfc822.txt">RFC 822</a> and <a href="http://www.w3.org/TR/NOTE-datetime">Date and Time Formats</a>, which describes <acronym title="International Organization for Standardization">ISO</acronym> 8601.</p>
+<p>The <code>Value</code> class provides conversion methods for numeric and string values. For more information on the <code>Calendar</code> object formats, see <a href="ftp://ftp.rfc-editor.org/in-notes/rfc822.txt">RFC 822</a> and <a href="http://www.w3.org/TR/NOTE-datetime">Date and Time Formats</a>, which describes <acronym title="International Organization for Standardization">ISO</acronym> 8601.</p>
 <p class="backtotop"><a href="#top">Back to top</a></p>
 
 <h2><a name="conTypint"></a>ConnectorType Interface and SimpleConnectorType Class </h2>
@@ -176,7 +176,7 @@ Posted December 2009</p>
 <ol>
   <li>Spring Framework creates the <code>ConnectorType</code> object using the parameters in the <code>connectorType.xml</code> file. </li>
   <li>The connector manager calls the <code>getConfigForm</code> method to provide an XHTML configuration form  in which an administrator can specify connector parameter values in the Admin Console. </li>
-  <li>After an administrator fills in the configuration form and clicks <strong>Submit</strong>, the connector manager calls the <code>validateConfig</code> method to verify the form information. The <code>validateConfig</code> method can also call the <code>ConnectorFactory</code> class to instantiate a connector and verify that the connector instance can communicate with the content management system. If validation fails, the <code>validateConfig</code> method adds a message to the configuration form for the administrator to correct the form information. </li>
+  <li>After an administrator fills in the configuration form and clicks <strong>Submit</strong>, the connector manager calls the <code>validateConfig</code> method to verify the form information. The <code>validateConfig</code> method can also call the <code>ConnectorFactory</code> class to instantiate a connector and verify that the connector instance can communicate with the content management system. If validation fails, the <code>validateConfig</code> method adds a message to the configuration form for the administrator to correct the form information. The <code>getConfigData</code>, <code>getFormSnippet</code>, and <code>getMessage</code> methods only work with <code>validateConfig</code> as indicated by the red line in the illustration.</li>
   <li>To change configuration form information, the administrator clicks <strong>Edit</strong> for a connector in the Admin Console and the connector manager calls the <code>getPopulatedConfigForm</code> method to retrieve stored information and create an XHTML form with the information. </li>
   <li>Each method returns a <code>ConfigureResponse</code> object that can contain a configuration form and an optional message to display on the Admin Console if corrections are needed.</li>
 </ol>
