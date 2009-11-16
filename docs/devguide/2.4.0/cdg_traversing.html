@@ -10,7 +10,7 @@
 
 <h1 class="page_title">Google Search Appliance - Connector Developer&apos;s Guide: Traversing Documents</h1>
 
-<p>Google Search Appliance software versions 6.2 <br />
+<p>Google Search Appliance software version 6.2 <br />
 Connector manager
         version 2.4.0<br />
 Posted December 2009</p>
@@ -86,7 +86,7 @@ Traversing is analogous to the search appliance concept of crawling.</p>
 </ol>
 <p>A connector controls traversal by setting the return value of the <code>DocumentList</code> interface:</p>
 <ul>
-  <li><code>null</code> - Stop traversing, all documents are traversed. Wait 15 minutes before asking the content management system for updated documents.</li>
+  <li><code>null</code> - Stop traversing, all documents are traversed. Wait 5 minutes before asking the content management system for updated documents.</li>
   <li><code>DocumentList</code> containing zero documents  - Set a progress checkpoint and  resume traversing.  </li>
   <li><code>DocumentList</code> (non-empty) - Send documents in the <code>DocumentList</code> to the search appliance. </li>
 </ul>
@@ -122,7 +122,7 @@ public class MockTraversalManager implements TraversalManager {
   private static final int MAX_DOCID = 500;
 
   // The recommended number of documents to return in each batch.
-  private int batchHint = 100;
+  private int batchHint;
 
   // Set the recommended number of documents to return in next batch.
   public void setBatchHint(int hint) throws RepositoryException {
@@ -173,7 +173,7 @@ calls when it's ready to acquire more documents.</p>
   </tr>
   <tr>
     <td><code>null</code></td>
-    <td>Informs the connector manager that there are no new documents in the content management system to traverse. The connector manager then waits 15 minutes before calling the <code>resumeTraversal</code> method to check the content management system for new documents to traverse.</td>
+    <td>Informs the connector manager that there are no new documents in the content management system to traverse. The connector manager then waits 5 minutes before calling the <code>resumeTraversal</code> method to check the content management system for new documents to traverse.</td>
   </tr>
   <tr>
     <td>Zero documents (empty) </td>
@@ -188,11 +188,13 @@ calls when it's ready to acquire more documents.</p>
 </table>
 <p>The <code>checkpoint</code> method should return information that allows the <code>resumeTraversal</code> method to resume on the  document that was returned by  <code>nextDocument</code>. </p>
 <p>The connector manager may not acquire all documents from the content management system. The connector manager may interrupt the traversal of documents, call the <code>checkpoint</code> method, and start another task. When the connector manager is again ready to start traversing the content management system, the connector manager calls the <code>resumeTraversal</code> method and passes  the <code>checkpoint</code> method to provide the current position. </p>
-<p>Connectors have these exceptions for documents:</p>
+<p>Connectors can have these exceptions for documents:</p>
 <ul>
   <li><code>RepositoryException</code>. A transient error occurred while traversing a document, such as a lost connection to the content management system. The connector needs to reread the document. The connector manager waits 15 minutes and retries the same batch before resuming traversal. </li>
   <li><code>RepositoryDocumentException</code>. A document has an error and cannot be retrieved. Skip the document.</li>
-  <li><code>OutofMemoryError</code>. A document is too large to be traversed. Skip the document. </li>
+  <li><code>OutofMemoryError</code>. The connector is out of memory. The connector manager waits 15 minutes and retries the same batch before resuming traversal. This exception occurs for documents with a 
+  length that exceeds the <code>maxDocumentSize</code> parameter specified in <code>connectorInstance.xml</code>. By default, this parameter  is set to 30 MB, however you can set <code>maxDocumentSize</code> to any value up to 1 GB. If this exception occurs frequently, raising the <code>maxDocumentSize</code> may require adjusting the Java virtual machine (JVM) memory  configuration options <code>-Xms</code> and <code>-Xmx</code>, which are set during Apache Tomcat startup.   Tomcat deployments created by the Google Connector Installer  (GCI) configure the JVM <code>-Xms</code> and <code>-Xmx</code> settings in  <code>$CATALINA_BASE/bin/catalina.sh</code> (or <code>.bat</code>), 
+  rather than in the conventional location, <code>$CATALINA_BASE/bin/setenv.sh</code> (or <code>.bat</code>).</li>
 </ul>
 <p>The code that follows is a helper method that both <code>startTraversal</code> and <code>resumeTraversal</code> call to build a list of documents. The batch hint provides a useful end point in the <code>for</code> loop for adding documents to the list. The value for <code>baseDocId</code> is passed from the caller. </p>
 <pre>
@@ -301,14 +303,17 @@ to the property to ensure the case is ignored in the property.</p>
 <p>The last section provides the <code>nextValue</code> method that packages a property value by type.</p>
 <pre>
     public Value nextValue() throws RepositoryException {
-      // Use the Value class to package up the String.
-      Value returnValue = Value.getStringValue(value);
-      value = null;
-      return returnValue;
+      if (Value == null) {
+        return null;
+      } else {
+        // Use the Value class to package up the String.
+        Value returnValue = Value.getStringValue(value);
+        value = null;
+        return returnValue;
+      }
     }
   }
-}
-</pre>
+}</pre>
 <p>&nbsp;</p>
 
 <p class="backtotop"><a href="#top">Back to top</a></p>
@@ -346,7 +351,7 @@ public void setBatchHint(int hint) {
 
 <h2><a name="checkpointing"></a>Checkpointing</h2>
 <p>The <code>DocumentList</code>.<code>checkpoint</code> method  enables a connector to indicate the next document to traverse when the connector manager calls the <code>resumeTraversal</code> method. </p>
-<p>The <code>checkpoint</code> method may return <code>null</code> to indicate that there is no new checkpoint, in which case the previous checkpoint is used, or a checkpoint can throw a <code>RepositoryException</code> to indicate the same as <code>null</code>, that there is no new checkpoint.. </p>
+<p>The <code>checkpoint</code> method may return <code>null</code> to indicate that there is no new checkpoint, in which case the previous checkpoint is used, or a checkpoint can throw a <code>RepositoryException</code> to indicate the same as <code>null</code>, that there is no new checkpoint.</p>
 <p>Checkpointing consists of recording how far a traversal has progressed through the documents in the content management system. The connector manager calls the <code>resumeTraversal</code> method to pass the saved checkpoint to the connector.</p>
 <p>For more information on the <code>checkpoint</code> method, see <a href="cdg_spioverview.html#gtm">getTraversalManager Method</a>.</p>
 <p class="note"><strong>Note:</strong> The connector manager saves the string returned by the <code>checkpoint</code> method and passes the saved checkpoint to the <code>resumeTraversal</code> method. This string must convey enough information for the <code>resumeTraversal</code> method to know where to continue.</p>
