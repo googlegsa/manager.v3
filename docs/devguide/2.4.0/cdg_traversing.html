@@ -43,6 +43,7 @@ Traversing is analogous to the search appliance concept of crawling.</p>
     <li><a href="#MIMETypeSupportLevels">MIME Type Support Levels</a></li>
   </ol>
 </li>
+<li><a href="#ResettingAConnector">Resetting a Connector</a></li>
 <li><a href="#mp">Metadata Properties</a>
   <ol>
     <li><a href="#PropertyLookup">Property Lookup</a></li>
@@ -349,17 +350,44 @@ public void setBatchHint(int hint) {
 <p>&nbsp;</p>
 <p class="backtotop"><a href="#top">Back to top</a></p>
 
-<h2><a name="checkpointing"></a>Checkpointing</h2>
-<p>The <code>DocumentList</code>.<code>checkpoint</code> method  enables a connector to indicate the next document to traverse when the connector manager calls the <code>resumeTraversal</code> method. </p>
-<p>The <code>checkpoint</code> method may return <code>null</code> to indicate that there is no new checkpoint, in which case the previous checkpoint is used, or a checkpoint can throw a <code>RepositoryException</code> to indicate the same as <code>null</code>, that there is no new checkpoint.</p>
-<p>Checkpointing consists of recording how far a traversal has progressed through the documents in the content management system. The connector manager calls the <code>resumeTraversal</code> method to pass the saved checkpoint to the connector.</p>
+
+<a id="checkpointing"
+ name="checkpointing"></a>
+<h2>Checkpointing</h2>
+<p>Checkpointing consists of recording how far a traversal has progressed through the documents in the content management system. The connector manager calls the <code>resumeTraversal</code> method to pass the saved checkpoint to the connector. The <code>DocumentList</code>.<code>checkpoint</code> method  lets a connector  indicate the next document to traverse. </p>
+<p>A connector can also store the state of the traversal on its own and assume that the <code>resumeTraversal</code> method knows where to look for this state information. If a connector maintains its own state, the connector must wait until the connector manager calls the <code>checkpoint</code> method before committing changes to the state. The connector can't assume that a document returned from <code>nextDocument</code> has been successfully processed. </p>
+<p>Return values for the <code>checkpoint</code> method:</p>
+<table width="80%" border="1">
+  <tr>
+    <th width="14%">Return Value</th>
+    <th width="86%">Description</th>
+  </tr>
+  <tr>
+    <td><code>null</code></td>
+    <td>Indicates that there is no new checkpoint</td>
+  </tr>
+  <tr>
+    <td>Next document ID</td>
+    <td>Indicates the next document to traverse.
+    <p>The connector manager saves the string returned by the <code>checkpoint</code> method and passes the saved checkpoint to the <code>resumeTraversal</code> method. This string must convey enough information for the <code>resumeTraversal</code> method to know where to continue.</p></td>
+  </tr>
+  <tr>
+    <td>Non-<code>null</code></td>
+    <td>Indicates that the connector cannot return a checkpoint string.
+    <p> If a connector decides that it cannot return a checkpoint string, the connector must return a non-<code>null</code> string, which can be an empty string or a constant string. </p></td>
+  </tr>
+</table>
+
 <p>For more information on the <code>checkpoint</code> method, see <a href="cdg_spioverview.html#gtm">getTraversalManager Method</a>.</p>
-<p class="note"><strong>Note:</strong> The connector manager saves the string returned by the <code>checkpoint</code> method and passes the saved checkpoint to the <code>resumeTraversal</code> method. This string must convey enough information for the <code>resumeTraversal</code> method to know where to continue.</p>
-<p>Returning a checkpoint string may be impractical for performance, such as when taking too much work to get the state of a traversal into a string and then parsing out the string. If these conditions occur, a connector can record the state of the traversal on its own, with the understanding that <code>resumeTraversal</code> knows where to look for this state information. </p>
+
+<p>Returning a checkpoint string may be impractical for performance, such as when taking too much work to get the state of a traversal into a string and then parsing out the string. </p>
+
 <p>For information on writing information, see <a href="#fileaccess">File Access</a>. </p>
+
+
 <a name="CheckpointingExample" id="CheckpointingExample"></a>
 <h3>Checkpointing Example </h3>
-<p>The following code example  iterates over a list of documents and returns a checkpoint.</p>
+<p>The following code example  iterates over a list of documents and returns a checkpoint. In the last section of this code block, the code maintains the last document ID (<code>lastDocId</code>) in <code>NextDocument</code> and incrementing as it goes. When the <code>checkpoint</code> method is called, it knows how far it has gotten through the document list.</p>
 <pre>
     // Return the next document in the DocumentList.
     public Document nextDocument() throws RepositoryException {
@@ -467,8 +495,8 @@ before the connector manager calls the methods in the <code>TraversalManager</co
 <p>A connector needs to import access to the <code>TraversalContext</code> and <code>TraversalContextAware</code> packages. 
 <p>The following example demonstrates this calling sequence:</p>
 <pre>
-#import com.google.enterprise.connector.spi.TraversalContext;
-#import com.google.enterprise.connector.spi.TraversalContextAware;
+import com.google.enterprise.connector.spi.TraversalContext;
+import com.google.enterprise.connector.spi.TraversalContextAware;
 
 class MyTraversalManager
     implements TraversalManager, TraversalContextAware {
@@ -538,7 +566,7 @@ private void addContentProperty() throws RepositoryException {
 <ul>
   <li><code>maxDocumentSize</code>. Sets the maximum file size in bytes that that the connector can traverse. This value must be less than or equal to 30 MB (31457280 bytes), which is the maximum file size for indexing on the Google Search Appliance. </li>
   <li><code>mimeTypeSupportLevel</code>. Determines if a MIME type is supported in the <code>applicationContext.xml</code> file. </li>
-  <li><code>preferredMimeType</code>. Returns the preferred MIME type for a file pattern. </li>
+  <li><code>preferredMimeType</code>. Returns the preferred MIME type for a set of MIME types. </li>
 </ul>
 <p>The  methods are as follows. </p>
 <pre>
@@ -639,17 +667,17 @@ returns the support level of the specified MIME type.  MIME type
 support levels are used to rank items supplied to
 <code>TraversalContext.preferredMimeType(Set mimeTypes)</code>.</p>
 <p>The <code>MimeTypeMap</code> bean definition in <code>applicationContext.xml</code> groups MIME types into four  categories: </p>
-<ul>
+<ol>
   <li>Unsupported. Document types that must not be sent to the Google Search Appliance because the URL pattern has been designated in the Admin Console for not crawling or a document type that has file sizes greater than 30 MB (the maximum file size that the search appliance can handle for indexing a document). </li>
   <li>Unknown.  A document type that is not unsupported, preferred, or supported. </li>
   <li>Supported. Document types that the search appliance can index. </li>
   <li>Preferred. MIME types with higher support
     levels than the unsupported MIME types. </li>
-</ul>
+</ol>
 <p>The entries or each of the preferred, supported and unsupported
-sets are a list of content types that may or may not include
-subtypes.  Exact (case-insensitive) matches are attempted first.
-If an exact match is not found, a match is attempted using 
+  sets are a list of content types that may or may not include
+  subtypes.  Exact (case-insensitive) matches are attempted first.
+  If an exact match is not found, a match is attempted using 
 the base type without the subtype.</p>
 
 <p>For example: </p>
@@ -695,18 +723,26 @@ an explicit entry and an application entry without a subtype,
 to be assigned the <code>unknownMimeType</code> support level.</p>
 
 <p class="backtotop"><a href="#top">Back to top</a></p>
-<h2 class="backtotop">Resetting a Connector</h2>
-<p class="backtotop">The Admin Console provides the capability to reset a connector. The connector manager uses its <code>restartConnectorTraversal</code> servlet. At the connector level, the connector manager performs the following actions:</p>
+
+
+
+<a id="ResettingAConnector"
+ name="ResettingAConnector"></a>
+<h2>Resetting a Connector</h2>
+<p>The Admin Console provides the capability to reset a connector. The connector manager uses its <code>restartConnectorTraversal</code> servlet. At the connector level, the connector manager performs the following actions:</p>
 <ul>
 <li>Deletes the connector's saved traversal state</li>
 <li>Cancels any traversal work that is in progress for the connector</li>
 <li>Calls <code>startTraversal</code> to force a new traversal of the content management system from the beginning</li>
 </ul>
-<h2><a name="mp"></a>Metadata Properties</h2>
+
+
+<a id="mp" name="mp"></a>
+<h2>Metadata Properties</h2>
 <p>A connector requests documents, metadata for a document and a URL for a document's location from the  API for the content management system.  A connector provides the search appliance with a URL for each document and  metadata that describes  document attributes, such as a document ID value, a <acronym title="Multipurpose Internet Mail Extensions">MIME</acronym> type, whether documents are publicly available or  controlled-access, and an optional last modified date. The connector may also provide metadata specific to a content management system. </p>
 <p>The  last-modified date ordering is useful for a search appliance to acquire the latest documents for indexing. You need to create  connector software that maps the  metadata from the content management system into the properties of the service provider interface (SPI) of the connector manager. For information on the SPI, see the <a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0/com/google/enterprise/connector/spi/SpiConstants.html">SpiConstants</a> section in the <a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0/index.html" target="_blank">Javadoc</a>.</p>
 <p>The connector manager uses the <code>Document.findProperty</code> method to find a property by name in a document or the <code>Document.getPropertyNames</code> method to get all the properties for a document.</p>
-<p class="note"><strong>Important: </strong>If the connector manager requests a property from the connector that a document does not contain, the connector must return null and not throw an exception. </p>
+<p class="note"><strong>Important: </strong>If the connector manager requests a property from the connector that a document does not contain, the connector must return <code>null</code> and not throw an exception. </p>
 <p>Content management systems  use their own names for each metadata property.
 A connector needs to map those  names to the property names in the <code>SpiConstants</code> class. The connector manager requires the use of the <code>PROPNAME_DOCID</code> property and recommends the use of the <code>PROPNAME_LASTMODIFIED</code> property. Google Enterprise strongly suggests that you specify a MIME type. </p><br>
 
@@ -1120,18 +1156,13 @@ public Document simpleDeleteDoc(String docId) {
 <a id="logging" name="logging"></a>
 <h2>Logging</h2>
   
-<p>You should use logging to help in debugging and support. If you use the <code>java.util.Logging</code> package, log messages appear in  <code>$CATALINA_BASE/logs/google-connectors.*.log</code>. </p>
+<p>You should use logging to help in debugging and support. If you use the <code>java.util.Logging</code> package, log messages appear in  <code>$CATALINA_BASE/logs/google-connectors.*.log</code>.</p>
 <p>The following example gets the name of the logging facility and establishes a logger:</p>
 <pre>
 import java.util.logging.Level;
 import java.util.logging.Logger;
   
-private static Logger logger = null;
-  
-static {
-  logger = Logger.getLogger(MyClass.class.getName());
-  logger.setLevel(Level.ALL);
-}
+private static final Logger logger = Logger.getLogger(MyClass.class.getName());
 </pre>
 <p>Subsequent example method calls can be as follows:</p>
 <pre>
@@ -1141,24 +1172,97 @@ if (logger.isLoggable(Level.INFO)) {
 </pre>
 <p>You can maintain your own set of debug levels to use as a metric for message severity.</p>
 <p>If you use the <code>java.util.Logging</code> package, log messages appear in the <code>$CATALINA_HOME/logs/catalina.out</code> file and  exceptions appear in <code>$CATALINA_HOME/logs/localhost.<em>current_date</em>.log</code> file.</p>
-<p>Connectors use the following logging levels:</p>
-<ul>
-  <li>ALL - Enables all levels. </li>
-<li>FINE - Logs batch information. For example, FINE  logs information such as pushing a document list or about a traversal. </li>
-  <li>FINER - Logs information per document. Log information for a document do not appear until this setting is enabled. </li>
-  <li>FINEST - Logs  everything -- the debug setting. </li>
-  <li>INFO - Information. </li>
-<li>SEVERE - A severe error condition that prevents the proper function of the product, such as, a missing configuration file or an unreachable host.</li>
-<li>WARNING - Something unexpected happened but it may not be a problem, such as the <code>google:lastmodified</code> property is missing.</li>
-</ul>
+<p>Connectors use the following logging levels in the order of severity.</p>
+<table width="80%" border="1">
+  <tr>
+    <th width="17%">Level</th>
+    <th width="83%">Description</th>
+  </tr>
+  <tr>
+    <td><code>SEVERE</code></td>
+    <td>A severe error condition that prevents the proper function of the product, such as, a missing configuration file or an unreachable host.</td>
+  </tr>
+  <tr>
+    <td><code>WARNING</code></td>
+    <td> Something unexpected happened but it may not be a problem, such as the <code>google:lastmodified</code> property is missing.</td>
+  </tr>
+  <tr>
+    <td><code>INFO</code></td>
+    <td>Information.</td>
+  </tr>
+  <tr>
+    <td><code>CONFIG</code></td>
+    <td>Traversal messages in batches.</td>
+  </tr>
+  <tr>
+    <td><code>FINE</code></td>
+    <td>Logs batch information. For example, FINE logs information such as pushing a document list or about a traversal.</td>
+  </tr>
+  <tr>
+    <td><code>FINER</code></td>
+    <td>Logs information per document. Log information for a document do not appear until this setting is enabled. </td>
+  </tr>
+  <tr>
+    <td><code>FINEST</code></td>
+    <td>Logs  everything -- the debug setting.</td>
+  </tr>
+  <tr>
+    <td><code>ALL</code></td>
+    <td>Enables all levels. </td>
+  </tr>
+  <tr>
+    <td><code>OFF</code></td>
+    <td>Logging disabled.</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+
 <h3><a name="LogFeedData"></a>Logging Feed Data</h3>
-<p>You can  log the feed data sent to a search appliance. The procedure for enabling this is  described in "Using Feed Data for Diagnostic Purposes" in <a href="../connector_admin/admin_connector.html">Administering Connectors</a>. This facility uses the <code>teedfeedfile</code> mechanism that you can enable in the <code>applicationContext.properties</code> file. The <code>teedfeedfile</code> logs the contents of all documents that go to a search appliance. The  content in the log file  is Base64-encoded and can grow into a large file.</p>
-<p>If the <code>teedfeedfile</code> doesn't exist and the <code>teedfeedfile</code> property is enabled in the <code>applicationContext.properties</code> file, the connector manager creates the log file. </p>
-<p>The  <code>FEED_LOGGER</code> logging mechanism enables you to log all metadata properties of the documents into a rolling log file. You can use the <code>FEED_LOGGER</code>    functionality to observe the feed record and metadata information that the    connector manager sends to the search appliance.  The information is logged using a rolling <code>FileHandler</code> so the log file size can be controlled. <code>FEED_LOGGER</code>  lists the properties, truncated documents, and an extra space as a separator between connector feed listings. </p>
+<p>You can  log the feed data sent to a search appliance. 
+The logging facility uses the <code>teedFeedFile</code> mechanism that you can 
+enable in the <code>applicationContext.properties</code> file. 
+The logging configuration is not per connector type, it is global to the connector manager. The <code>teedFeedFile</code> logs the contents of all documents that go to a search appliance. 
+The content in the log file is Base64-encoded and can grow into a large file. 
+If the <code>teedFeedFile</code> doesn't exist and the <code>teedFeedFile</code> property is enabled in 
+the <code>applicationContext.properties</code> file, the connector manager creates the log file. </p>
+<p>The  <code>FEED_LOGGER</code> logging mechanism enables you to log all metadata properties of the 
+documents into a rolling log file. You can use the <code>FEED_LOGGER</code> functionality to observe 
+the feed record and metadata information that the connector manager sends to the search appliance.  
+The information is logged using a rolling <code>FileHandler</code> so the log file size can be 
+controlled. <code>FEED_LOGGER</code>  lists the properties, truncated documents, and an extra 
+space as a separator between connector feed listings. </p>
+<p>The data recorded in the <code>teedFeedFile</code> file is in the same format as web and 
+content feeds. For more information on feeds, 
+read the <a href="http://code.google.com/apis/searchappliance/documentation/feedsguide.html">Feeds Protocol Developer's Guide</a>.</p>
+<p>If you enable the <code>teedFeedFile</code> feature, the size of the local file increases rapidly, 
+depending on how much data is fed by the connector manager. Monitor the size of the file and truncate or edit the file as required.</p>
+<p>To enable data feed to a local file:</p>
+<ol>
+  <li>Log on to the Apache Tomcat host with the user account under which Tomcat runs.</li>
+  <li>If you are running a connector manager earlier than r783, create a logging file.
+    <ol>
+      <li>Navigate to the folder or directory where you want to create the local file.</li>
+      <li>Create an empty file and ensure that it is writable by the user account under which Tomcat runs. 
+      For example, you might call the file <code>ConnectorFeedFile.txt</code>.</li>
+      <li>Note the path to the empty file.</li>
+    </ol>
+  </li>
+  <li>Shutdown the Tomcat instance that hosts the connector manager.</li>
+  <li>Navigate to the <code>tomcat_home/connector-manager/WEB-INF/</code> directory.</li>
+  <li>Open the <code>applicationContext.properties</code> file in a text editor.</li>
+  <li>Add a property called <code>teedFeedFile</code> and set the value of the property to the desired file name or, if you are running a connector manager version earlier than r783, to the name of the file you created in step 2.
+    <p>For example, if the file name is <code>ConnectorFeedFile.txt</code>, set the value of the property on either Windows or Linux as follows:</p>
+    <p><code>teedFeedFile=path_to_file/ConnectorFeedFile.txt</code></p>
+    <p>On Windows, the following format, which uses escaped backslashes, also works:</p>
+    <p><code>C:\\Program Files\\GoogleConnectors\\path_to_file\\ConnectorFeedFile.txt</code></p>
+  </li>
+  <li>Save the <code>applicationContext.properties</code> file.</li>
+  <li>Restart Tomcat.</li>
+</ol>
 <p>To enable the feed log file:</p>
 <ol>
   <li>Stop Apache Tomcat. 
-    <p>On a Windows system, use the <em>Tomcat</em><strong>\bin\shutdown</strong> batch file command from a command prompt. On a Linux or Macintosh use the <em>Tomcat</em><strong>/bin/shutdown.sh</strong> shell command from a Terminal command line interface.</p>
+    <p>On a Windows system, use the <em>Tomcat</em><strong>\</strong><code>bin\shutdown</code> batch file command from a command prompt. On a Linux or Macintosh use the <em>Tomcat</em><code>/bin/shutdown.sh</code> shell command from a Terminal command line interface.</p>
   </li>
   <li>Configure logging from <span style="list-style-type: disc">the <code>feedLoggingLevel</code> property</span> or <span style="list-style-type: disc">the <code>logging.properties</code> configuration file -- you can configure logging with either the property or configuration file, but do not use both configuration procedures</span>: 
     <ul>
