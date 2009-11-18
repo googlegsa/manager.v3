@@ -1,9 +1,9 @@
-Welcome to the Google Enterprise Connector Manager project!
+Welcome to the Google Search Appliance Connector Manager project!
 
-The Google Enterprise connector framework enables Google Search
-Appliances to search and serve documents stored in non-Web
-repositories, such as enterprise content management systems.  An
-enterprise content management (ECM) system provides a central
+The Google Search Appliance Connector Framework enables Google
+Search Appliances to search and serve documents stored in non-Web
+repositories, such as enterprise content management systems.
+An enterprise content management (ECM) system provides a central
 repository for large numbers of documents.
 
 The Connector Manager is the central part of the connector framework
@@ -31,11 +31,11 @@ Some important disclaimers:
 
   * This system depends on a Google Search Appliance 5.0 release.
   * Connectors developed for this framework will NOT work with previously
-    released Google Search Appliances! 
+    released Google Search Appliances!
 
 Documentation Links
 
-  * Documentation for the Google Enterprise Connectors
+  * Documentation for the Google Search Appliance Connectors
     http://code.google.com/apis/searchappliance/documentation/connectors/index.html
   * Google Connector Developer's Guide
     http://code.google.com/apis/searchappliance/documentation/connectors/200/connector_dev/cdg_about.html

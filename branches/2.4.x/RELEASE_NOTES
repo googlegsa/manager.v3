@@ -1,12 +1,12 @@
 
-		 Google Enterprise Connector Manager
-			    Release Notes
+     Google Search Appliance Connector Manager
+                   Release Notes
 
-This document contains the release notes for Google Enterprise
+This document contains the release notes for Google Search Appliance
 Connector Manager.  The following sections describe the release in
-detail and provide information that supplements the main
-documentation.  See the Issues Tab on the Code Site for the current
-list of known issues and workarounds.
+detail and provide information that supplements the main documentation.
+See the Issues Tab on the Code Site for the current list of known
+issues and work-arounds.
 
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
@@ -736,11 +736,11 @@ Summary of Changes
   * Fix Issue 74: Log an error if GSA is rejecting feeds from connector(s)
   * Fix Issue 75: HTTP 400 error thrown for correct feeds
   * Fix Issue 76: Last Modified date that is sent to the GSA should be in
-		  YYYY-MM-DD (ISO 8601) format
+      YYYY-MM-DD (ISO 8601) format
   * Fix Issue 89: Try to avoid calling Connector classes from an interrupted thread
   * Fix Issue 90: Enable the WorkQueueItem.timeout to be configurable
   * Fix Issue 91: When Registering a running Connector Manager to the GSA, it
-		  shuts down the TraversalScheduler and it is not restarted
+      shuts down the TraversalScheduler and it is not restarted
 
   * Added support for deleting documents.  See r757 for details.
   * Added new feed logger as an alternative to the teedFeedFile.  See r783 for details.
