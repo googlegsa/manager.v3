@@ -70,7 +70,7 @@ public class ServletUtil {
   }
 
   public static final String MANAGER_NAME =
-      "Google Enterprise Connector Manager";
+      "Google Search Appliance Connector Manager";
 
   public static final String MIMETYPE_XML = "text/xml";
   public static final String MIMETYPE_HTML = "text/html";
