@@ -411,8 +411,7 @@ public void setBatchHint(int hint) {
       else
         return String.valueOf(lastDocId);
     }
-  }
-</pre>
+  }</pre>
 
 <p>If a connector needs to record the traversal state, it must only do so in the <code>checkpoint</code> method, and not in the <code>nextDocument</code> method. The recorded state must be retrieved in <code>resumeTraversal</code>, for example:</p>
 <pre>
@@ -972,7 +971,7 @@ public class SmartProperty implements Property {
 </tr>
 <tr>
 <td><a href="#PROPNAME_TITLE">PROPNAME_TITLE</a></td>
-<td> Specifies the title of the search results. </td>
+<td> Specifies the title of the search results if there is no content.</td>
 </tr>
 <tr>
 <td><a href="#DEFAULT_MIMETYPE">DEFAULT_MIMETYPE</a></td>
@@ -991,7 +990,7 @@ public class SmartProperty implements Property {
 <a id="PROPNAME_ACLGROUPS" name="PROPNAME_ACLGROUPS"></a>
 <h4>PROPNAME_ACLGROUPS</h4>
 <p>Identifies a multiple-valued String property that gives the list of group ACL Scope IDs that are permitted <code>RoleType.READER</code> access to this document. If either of the <code>PROPNAME_ACLGROUPS</code> or <code>PROPNAME_ACLUSERS</code> properties are non-null, then the search appliance grants or denies access to this document for a given user on the basis of whether the user's name appears as one of the Scope IDs in the <code>PROPNAME_ACLUSERS</code> list or one of the user's groups appears as one of the Scope IDs in the <code>PROPNAME_ACLGROUPS</code> list.
-ACL Scope ID is a group or user name within the scope of the connector.</p>
+ACL Scope ID is a group or user name within the scope of the connector.	</p>
 
 <p>To specify more than just <code>RoleType.READER</code> access to the document, the connector must add additional multi-value role properties to the document. These entries are of the form:</p>
 
@@ -999,7 +998,7 @@ ACL Scope ID is a group or user name within the scope of the connector.</p>
 Name = &lt;GROUP_ROLES_PROPNAME_PREFIX&gt; + &lt;scopeId&gt;
 Value = [RoleType[, ...]]</pre>
  
-Where: <code>&lt;GROUP_ROLES_PROPNAME_PREFIX&gt;</code> is the <code>GROUP_ROLES_PROPNAME_PREFIX</code>, <code>&lt;scopeId&gt;</code> is the group ACL Scope ID, and <code>RoleType</code> is one of the possible <code>RoleType</code> values. User ACL roles are of the form:
+<p>Where: <code>&lt;GROUP_ROLES_PROPNAME_PREFIX&gt;</code> is the <code>GROUP_ROLES_PROPNAME_PREFIX</code>, <code>&lt;scopeId&gt;</code> is the group ACL Scope ID, and <code>RoleType</code> is one of the possible <code>RoleType</code> values. User ACL roles are of the form:</p>
 
 <pre>
 Name = &lt;USER_ROLES_PROPNAME_PREFIX> + &lt;scopeId>
@@ -1057,7 +1056,7 @@ an example for using this property, see
 <a id="PROPNAME_DOCID" name="PROPNAME_DOCID"></a>
 <h4>PROPNAME_DOCID</h4>
 <p>Identifies a  required string  property with a single value that uniquely identifies a document to this connector. The internal structure of this string is opaque to the search appliance. The connector manager permits only printable, non-whitespace, ASCII characters in a document ID. You should implement this property using the natural ID in the  content management system.</p> 
-<p class="note"><strong>Important:</strong> PROPNAME_DOCID is required. For previous connector manager versions, this property was recommended. </p>
+<p class="note"><strong>Important:</strong> <code>PROPNAME_DOCID</code> is required. For previous connector manager versions, this property was recommended. </p>
 <p>Value: <code>google:docid</code></p>
 
 
@@ -1076,7 +1075,7 @@ an example for using this property, see
 
 <a id="PROPNAME_MIMETYPE" name="PROPNAME_MIMETYPE"></a>
 <h4>PROPNAME_MIMETYPE</h4>
-<p>Identifies a string property with a single value that gives the MIME type for the contents of this document. Use of PROPNAME_MIMETYPE is strongly recommended. If you do not supply this property, the connector manager uses the value of <code>DEFAULT_MIMETYPE</code>. The MIME type is used by the search appliance to convert files for indexing. The MIME type must agree with the types of files that are listed in the <a href="http://code.google.com/apis/searchappliance/documentation/60/reference/formats.html">Indexable File Formats</a> guide. For a list of MIME types by file type, see the Webmaster Toolkit site, <a href="http://www.webmaster-toolkit.com/mime-types.shtml">Mime Types</a>. </p>
+<p>Identifies a string property with a single value that gives the MIME type for the contents of this document. Use of <code>PROPNAME_MIMETYPE</code> is strongly recommended. If you do not supply this property, the connector manager uses the value of <code>DEFAULT_MIMETYPE</code>. The MIME type is used by the search appliance to convert files for indexing. The MIME type must agree with the types of files that are listed in the <a href="http://code.google.com/apis/searchappliance/documentation/60/reference/formats.html">Indexable File Formats</a> guide. For a list of MIME types by file type, see the Webmaster Toolkit site, <a href="http://www.webmaster-toolkit.com/mime-types.shtml">Mime Types</a>. </p>
 <p>Value: <code>google:mimetype</code></p>
 
 
@@ -1098,7 +1097,7 @@ At serve time, the search appliance presents this token  with the identity of th
 <a id="PROPNAME_TITLE"
  name="PROPNAME_TITLE"></a>
 <h4>PROPNAME_TITLE</h4>
-<p>Identifies an optional string property that is the title of the document. This value is useful for providing a title for documents that supply no content, or for which a title cannot be automatically extracted from the supplied content. </p>
+<p>Identifies an optional string property that is the title of the document. This value is useful for providing a title for documents that supply no content, or for which a title cannot be automatically extracted from the supplied content. This property specifies the title of the search results when there is no content in a document. If there is content, the search appliance gets the title from the content and ignores this property. This property describes the name of the document object as it would appear in the content management system.</p>
 <p>Value: <code>google:title</code></p>
 
 <a id="DEFAULT_MIMETYPE" name="DEFAULT_MIMETYPE"></a>
@@ -1173,38 +1172,45 @@ if (logger.isLoggable(Level.INFO)) {
 <p>You can maintain your own set of debug levels to use as a metric for message severity.</p>
 <p>If you use the <code>java.util.Logging</code> package, log messages appear in the <code>$CATALINA_HOME/logs/catalina.out</code> file and  exceptions appear in <code>$CATALINA_HOME/logs/localhost.<em>current_date</em>.log</code> file.</p>
 <p>Connectors use the following logging levels in the order of severity.</p>
-<table width="80%" border="1">
+<table width="65%" border="1">
   <tr>
-    <th width="17%">Level</th>
-    <th width="83%">Description</th>
+    <th width="20%">Level</th>
+    <th width="80%">Description</th>
   </tr>
   <tr>
     <td><code>SEVERE</code></td>
-    <td>A severe error condition that prevents the proper function of the product, such as, a missing configuration file or an unreachable host.</td>
+    <td>A severe error condition that prevents the proper function of the product, such as, a missing configuration file or an unreachable host. Prevents an operation from completing.</td>
   </tr>
   <tr>
     <td><code>WARNING</code></td>
-    <td> Something unexpected happened but it may not be a problem, such as the <code>google:lastmodified</code> property is missing.</td>
+    <td> Something unexpected happened but it may not be a problem, such as the <code>google:lastmodified</code> property is missing. Errors or misconfigurations that may require user intervention, but which don't prevent the operation from completing</td>
   </tr>
   <tr>
     <td><code>INFO</code></td>
-    <td>Information.</td>
+    <td>Information. Indicates traversal started or disabled, <code>ConnectorType</code> and <code>Connector</code> configuration</td>
   </tr>
   <tr>
     <td><code>CONFIG</code></td>
-    <td>Traversal messages in batches.</td>
+    <td>Logs traversal messages in batches. Lists checkpoint events</td>
   </tr>
   <tr>
     <td><code>FINE</code></td>
-    <td>Logs batch information. For example, FINE logs information such as pushing a document list or about a traversal.</td>
+    <td>Logs batch information. For example, FINE logs information such as pushing a document list or about a traversal. Indicates authentication and authorization requests.</td>
   </tr>
   <tr>
     <td><code>FINER</code></td>
-    <td>Logs information per document. Log information for a document do not appear until this setting is enabled. </td>
+    <td>Logs information per document. Log information for a document do not appear until this setting is enabled. Lists traversal messages per document.</td>
   </tr>
   <tr>
     <td><code>FINEST</code></td>
-    <td>Logs  everything -- the debug setting.</td>
+    <td>Logs  everything -- the debug setting. Also lists traversal messages per property.</td>
+  </tr>
+</table>
+<p>Configuration parameters:</p>
+<table width="65%" border="1">
+  <tr>
+    <th width="20%">Level</th>
+    <th width="80%">Description</th>
   </tr>
   <tr>
     <td><code>ALL</code></td>
