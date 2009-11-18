@@ -57,7 +57,7 @@
   <property name="coverage.dir" value="${build}/coverage" />
 
   <!-- =========================== TASKS =============================== -->
-  <target name="security_manager" description="Google Enterprise Security Manager" depends="war-prod" />
+  <target name="security_manager" description="Google Search Appliance Security Manager" depends="war-prod" />
 
   <target name="all" depends="war,run_tests,regressions" />
 

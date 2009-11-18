@@ -86,7 +86,7 @@ public class Context {
 
   // This is the comment written to the ApplicationContextProperties file.
   private static final String CONNECTOR_MANGER_CONFIG_HEADER =
-      " Google Enterprise Connector Manager Configuration\n"
+      " Google Search Appliance Connector Manager Configuration\n"
       + "\n"
       + " The 'gsa.feed.host' property specifies the host name or IP address\n"
       + " for the feed host on the GSA.\n"

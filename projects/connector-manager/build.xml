@@ -48,7 +48,7 @@
   </target>
 
   <target name="connector_manager" depends="war-prod"
-          description="Google Enterprise Connector Manager" />
+          description="Google Search Appliance Connector Manager" />
 
   <target name="all" depends="war" />
 
