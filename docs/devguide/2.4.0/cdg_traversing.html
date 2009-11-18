@@ -1156,19 +1156,18 @@ public Document simpleDeleteDoc(String docId) {
 <h2>Logging</h2>
   
 <p>You should use logging to help in debugging and support. If you use the <code>java.util.Logging</code> package, log messages appear in  <code>$CATALINA_BASE/logs/google-connectors.*.log</code>.</p>
+<p class="note"><strong>Note</strong>: Connectors can include a copy of the <code>logging.properties</code> file at the root level of the connector JAR file to provide logging levels specific to the connector and any third-party libraries that accompany the connector. Release  2.4.0 and later also provides a <code>logging.properties</code> file at the connector manager that you can override with the settings in the connector's <code>logging.properties</code> file. For more information, see <a href="http://code.google.com/apis/searchappliance/documentation/connectors/200/connector_admin/sharepoint_meta_connector.html#LoggingPropertiesFile">Using a logging.properties Configuration File</a> in the connector administration documentation. The <code>logging.properties</code> file contains one line per package for third party libraries that the connector includes.</p>
 <p>The following example gets the name of the logging facility and establishes a logger:</p>
 <pre>
 import java.util.logging.Level;
 import java.util.logging.Logger;
   
-private static final Logger logger = Logger.getLogger(MyClass.class.getName());
-</pre>
+private static final Logger logger = Logger.getLogger(MyClass.class.getName());</pre>
 <p>Subsequent example method calls can be as follows:</p>
 <pre>
 if (logger.isLoggable(Level.INFO)) {
     logger.info(&quot;...&quot;);
-}
-</pre>
+}</pre>
 <p>You can maintain your own set of debug levels to use as a metric for message severity.</p>
 <p>If you use the <code>java.util.Logging</code> package, log messages appear in the <code>$CATALINA_HOME/logs/catalina.out</code> file and  exceptions appear in <code>$CATALINA_HOME/logs/localhost.<em>current_date</em>.log</code> file.</p>
 <p>Connectors use the following logging levels in the order of severity.</p>
