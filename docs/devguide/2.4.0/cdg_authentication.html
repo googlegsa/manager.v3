@@ -13,26 +13,35 @@
 <p>Google Search Appliance software version 6.2 <br />
 Connector manager version 2.4.0<br />
 Posted December 2009</p>
-<p>The connector manager uses authentication when a user searches for secured access documents. The content management system prompts users for their user name and password before granting access to view the documents. </p>
-<p>This section describes how to authenticate  users to view secure documents. For connector terminology definitions, see the <a href="http://code.google.com/apis/searchappliance/documentation/62/reference/glossary.html">Google Enterprise Glossary</a>. The <a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0.0/index.html">Javadoc</a> for the SPI is available in open source. For additional information, see <a href="cdg_intro.html#TraversalSecurity">Understanding Authentication and Authorization</a>.</p>
+<p>The connector manager uses authentication when a user searches for secured access documents. 
+The content management system prompts users for their user name and password before granting access to view the documents. </p>
+<p>This section describes how to authenticate  users to view secure documents. For connector terminology definitions, see the 
+<a href="http://code.google.com/apis/searchappliance/documentation/62/reference/glossary.html">Google Enterprise Glossary</a>. 
+The <a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0.0/index.html">Javadoc</a> for the 
+SPI is available in open source. For additional information, see 
+<a href="cdg_intro.html#TraversalSecurity">Understanding Authentication and Authorization</a>.</p>
 
-<p><strong>Chapters</strong>: <a href="index.html">Home</a>, <a href="cdg_about.html">About This Guide</a>, <a href="cdg_intro.html">Introduction</a>, <a href="cdg_getstart.html">Getting Started</a>, <a href="cdg_spioverview.html">SPI Overview</a>, <a href="cdg_traversing.html">Traversing Documents</a>, <br />
-<em>Authentication</em>, <a href="cdg_authorization.html">Authorization</a>, <a href="cdg_config.html">Configuration</a>, <a href="cdg_buildcm.html">Appendix A: Building a Debug Connector Manager</a></p>
+<p><strong>Chapters</strong>: <a href="index.html">Home</a>, <a href="cdg_about.html">About This Guide</a>, 
+<a href="cdg_intro.html">Introduction</a>, <a href="cdg_getstart.html">Getting Started</a>, 
+<a href="cdg_spioverview.html">SPI Overview</a>, <a href="cdg_traversing.html">Traversing Documents</a>, <br />
+<em>Authentication</em>, <a href="cdg_authorization.html">Authorization</a>, 
+<a href="cdg_config.html">Configuration</a>, <a href="cdg_buildcm.html">Appendix A: Building a Debug Connector Manager</a></p>
 
-<h2>Contents</h2>
+<h2>Chapter Contents: Authentication</h2>
 <ol class="toc">
-<li><a href="cdg_authentication.html#authntop">Overview</a></li>
-<li><a href="cdg_authentication.html#UserCredentials">User Credentials for Authentication</a></li>
-<li><a href="cdg_authentication.html#AuthCodeExample">Authentication Code Examples</a>
+<li><a href="#authntop">Overview</a></li>
+<li><a href="#UserCredentials">User Credentials for Authentication</a></li>
+<li><a href="#AuthCodeExample">Authentication Code Examples</a>
   <ol>
-    <li><a href="cdg_authentication.html#SimplifiedLivelinkxample">Simplified Livelink Example</a></li>
-    <li><a href="cdg_authentication.html#SimplifiedDocumentumExample">Simplified Documentum Example</a></li>
-    <li><a href="cdg_authentication.html#LDAPExample">LDAP Example</a></li>
+    <li><a href="#SimplifiedLivelinkxample">Simplified Livelink Example</a></li>
+    <li><a href="#SimplifiedDocumentumExample">Simplified Documentum Example</a></li>
+    <li><a href="#LDAPExample">LDAP Example</a></li>
   </ol>
 </li>
 </ol>
 
-<h2><a name="authntop"></a>Overview</h2>
+<a id=="authntop" name="authntop"></a>
+<h2>Overview</h2>
 
 <p>You can authenticate users by implementing the <code>AuthenticationManager</code> interface. </p>
 <p>The following illustration shows the call sequence: </p>
@@ -40,42 +49,66 @@ Posted December 2009</p>
 <p>The process is as follows: </p>
 <ol>
   <li>The <code>Connector</code> interface returns a <code>Session</code> object from the <code>login</code> method. </li>
-  <li>The connector manager uses the <code>Session</code> interface in your connector to call the <code>getAuthenticationManager</code> method, which returns an <code>AuthenticationManager</code> object. </li>
-  <li>The <code>AuthenticationManager</code> interface provides the <code>AuthenticationIdentity</code> interface, which provides methods for getting the domain, username, and password strings. The <code>AuthenticationIdentity</code> interface provides the identity parameter for the call to the <code>authenticate</code> method of the <code>AuthenticationManager</code> interface. </li>
-<li>The <code>AuthenticationManager</code> interface provides the <code>authenticate</code> method, which the connector manager calls when a user requires authentication to the content management system. The authentication response from the content management system can be either a true or a false response to the <code>isValid</code> function. </li>
+  <li>The connector manager uses the <code>Session</code> interface in your connector to call the 
+  <code>getAuthenticationManager</code> method, which returns an <code>AuthenticationManager</code> object. </li>
+  <li>The <code>AuthenticationManager</code> interface provides the <code>AuthenticationIdentity</code> 
+  interface, which provides methods for getting the domain, username, and password strings. 
+  The <code>AuthenticationIdentity</code> interface provides the identity parameter for the 
+  call to the <code>authenticate</code> method of the <code>AuthenticationManager</code> interface. </li>
+<li>The <code>AuthenticationManager</code> interface provides the <code>authenticate</code> method, 
+which the connector manager calls when a user requires authentication to the content management system. 
+The authentication response from the content management system can be either a true or a false response 
+to the <code>isValid</code> function. </li>
 </ol>
-<h2><a name="UserCredentials"></a>User Credentials for Authentication</h2>
-<p>A user must have the same user name and password at all content management systems served by the connectors that are associated with a single search appliance. That is, if you have two document sources that map to a user who has different credentials at each source, the search appliance can't serve from both sources. </p>
-<p>The connector manager uses the search appliance's HTTP Basic mechanism to collect user name and password credentials from the user for searches. </p>
+
+<a id="UserCredentials" name="UserCredentials"></a>
+<h2>User Credentials for Authentication</h2>
+<p>A user must have the same user name and password at all content management systems served by the 
+connectors that are associated with a single search appliance. That is, if you have two document 
+sources that map to a user who has different credentials at each source, the search appliance can't serve from both sources. </p>
+<p>The connector manager uses the search appliance's HTTP Basic or <a href="http://code.google.com/apis/searchappliance/documentation/62/NewFeatures62.html#univelogin">universal
+login</a> capability to collect user name and password credentials from the user
+for searches. </p>
 <p> Similarly, the search appliance authenticates a user for all content management systems on which the user has a user account.</p>
-<p>A user never sees the results from a content management system if the user fails authentication. The search appliance requests credentials only once during a user session. </p>
+<p>A user never sees the results from a content management system if the user fails authentication. 
+The search appliance requests credentials only once during a user session. </p>
 <p class="backtotop"><a href="#top">Back to top</a></p>
 
-<h2><a name="AuthCodeExample"></a>Authentication  Examples</h2>
-<p>The following examples illustrate different examples of the <code>TraversalManager.authenticate</code> method. 
-<a name="SimplifiedLivelinkxample"></a>
+
+<a id="AuthCodeExample" name="AuthCodeExample"></a>
+<h2>Authentication Examples</h2>
+<p>The following examples illustrate different examples of the <code>TraversalManager.authenticate</code> method. </p>
+
+
+<a id="SimplifiedLivelinkxample" name="SimplifiedLivelinkxample"></a>
 <h3>Simplified Livelink Example </h3>
-<p>The connector manager calls the <code>authenticate</code> method passing in a username and password as an <code>AuthenticationIndentity</code> object. The code creates a client at the content management system and gets server information back from the content management system, which either acknowledges that the credentials are correct or an exception throws to indicate a failed login attempt. 
+<p>The connector manager calls the <code>authenticate</code> method passing in a username and 
+password as an <code>AuthenticationIndentity</code> object. The code creates a client at the 
+content management system and gets server information back from the content management system, 
+which either acknowledges that the credentials are correct or an exception throws to indicate a failed login attempt. 
 <pre>
 // Simplified Livelink authenticate() method.
 public AuthenticationResponse authenticate(AuthenticationIdentity identity)
     throws RepositoryLoginException, RepositoryException {
   try {
     Client client = clientFactory.createClient(identity.getUsername(),
-                                               identity.getPassword());
+      identity.getPassword());
     ClientValue serverInfo = client.GetServerInfo();
     return new AuthenticationResponse(serverInfo.hasValue(), null);
   } catch (RepositoryException e) {
     throw new RepositoryLoginException("Authentication failed for " +
-                                        identity.getUsername(), e);
+      identity.getUsername(), e);
   }
 }
 </pre>
 <p>&nbsp;</p>
 <p class="backtotop"><a href="#top">Back to top</a></p>
-<a name="SimplifiedDocumentumExample"></a>
+
+
+<a id="SimplifiedDocumentumExample"name="SimplifiedDocumentumExample"></a>
 <h3>Simplified Documentum Example</h3>
-<p>Login information is passed to the content management system and the <code>authenticate</code> method either verifies that the user is authenticated or an exception occurs to indicate a login failure. </p>
+<p>Login information is passed to the content management system and the <code>authenticate</code> 
+method either verifies that the user is authenticated or an exception occurs to indicate a login failure. </p>
 <pre>
 // Simplified Documentum authenticate() method.
 public AuthenticationResponse authenticate(AuthenticationIdentity identity)
@@ -98,7 +131,9 @@ public AuthenticationResponse authenticate(AuthenticationIdentity identity)
 }
 </pre>
 <p>&nbsp;</p>
-<a name="LDAPExample"></a>
+
+
+<a id="LDAPExample" name="LDAPExample"></a>
 <h3>LDAP Example</h3>
 <p>Example JAAS LDAP <code>authenticate</code> method, implements a
   <code>javax.security.auth.callback.CallbackHandler</code> that supplies
@@ -135,10 +170,10 @@ public class JAASAuthenticationManager
       return new AuthenticationResponse(true, null);
     } catch (LoginException le) {
       throw new RepositoryLoginException("Authentication failed for " +
-                                         identity.getUsername(), le);
+        identity.getUsername(), le);
     } catch (SecurityException se) {
       throw new RepositoryLoginException("Authentication failed for " +
-                                         identity.getUsername(), se);
+        identity.getUsername(), se);
     } finally {
       this.identity = null;
     }
@@ -168,5 +203,7 @@ public class JAASAuthenticationManager
 </pre>
 <p>&nbsp;</p>
 <p class="backtotop"><a href="#top">Back to top</a></p>
-  </body>
+<p><strong>Previous Chapter:</strong> <a href="cdg_traversing.html">Traversing Documents</a><br>
+<strong>Next Chapter:</strong> <a href="cdg_authorization.html">Authorization</a></p>
+</body>
 </html>

@@ -13,13 +13,25 @@
 <p>Google Search Appliance software version 6.2 <br />
 Connector manager version 2.4.0<br />
 Posted December 2009</p>
-<p>Authorization  determines if a user can view controlled-access documents in a content management system. After a user is successfully authenticated, the connector determines what documents  the content management system authorizes the user to view. For connector terminology definitions, see the <a href="http://code.google.com/apis/searchappliance/documentation/62/reference/glossary.html">Google Enterprise Glossary</a>.  For information on controlled-access content, see <a href="http://code.google.com/apis/searchappliance/documentation/access.html">Managing Search for Controlled-Access Content</a>. </p>
-<p>This section describes how to authorize users for viewing secure documents in a connector. The <a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0.0/index.html">Javadoc</a> for the SPI is available in open source. For additional information, see <a href="cdg_intro.html#TraversalSecurity">Understanding Authentication and Authorization</a>.</p>
+<p>Authorization  determines if a user can view controlled-access documents in a content management system. 
+After a user is successfully authenticated, the connector determines what documents  
+the content management system authorizes the user to view. For connector terminology 
+definitions, see the 
+<a href="http://code.google.com/apis/searchappliance/documentation/62/reference/glossary.html">Google Enterprise Glossary</a>.  
+For information on controlled-access content, see 
+<a href="http://code.google.com/apis/searchappliance/documentation/access.html">Managing Search for Controlled-Access Content</a>. </p>
+<p>This section describes how to authorize users for viewing secure documents in a connector. 
+The <a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0.0/index.html">Javadoc</a> for 
+the SPI is available in open source. For additional information, see 
+<a href="cdg_intro.html#TraversalSecurity">Understanding Authentication and Authorization</a>.</p>
 
-<p><strong>Chapters</strong>: <a href="index.html">Home</a>, <a href="cdg_about.html">About This Guide</a>, <a href="cdg_intro.html">Introduction</a>, <a href="cdg_getstart.html">Getting Started</a>, <a href="cdg_spioverview.html">SPI Overview</a>, <a href="cdg_traversing.html">Traversing Documents</a>, <br />
-<a href="cdg_authentication.html">Authentication</a>, <em>Authorization</em>, <a href="cdg_config.html">Configuration</a>, <a href="cdg_buildcm.html">Appendix A: Building a Debug Connector Manager</a></p>
+<p><strong>Chapters</strong>: <a href="index.html">Home</a>, <a href="cdg_about.html">About This Guide</a>, 
+<a href="cdg_intro.html">Introduction</a>, <a href="cdg_getstart.html">Getting Started</a>, 
+<a href="cdg_spioverview.html">SPI Overview</a>, <a href="cdg_traversing.html">Traversing Documents</a>, <br />
+<a href="cdg_authentication.html">Authentication</a>, <em>Authorization</em>, 
+<a href="cdg_config.html">Configuration</a>, <a href="cdg_buildcm.html">Appendix A: Building a Debug Connector Manager</a></p>
 
-<h2>Contents</h2>
+<h2>Chapter Contents: Authorization</h2>
 <ol class="toc">
 <li><a href="cdg_authorization.html#authzconn">Overview</a></li>
 <li><a href="#KerberosAuthorization">Kerberos Authorization</a></li>
@@ -32,45 +44,92 @@ Posted December 2009</p>
 <li><a href="cdg_authorization.html#adime">authorizeDocids Method Example</a></li>
 </ol>
 
-<h2><a name="authzconn"></a>Overview</h2>
-<p>A connector  works with a content management system to authorize users to view controlled-access documents. Authorization in  a connector uses the <code>AuthorizationManager</code> interface. </p>
+<a id=="authzconn" name="authzconn"></a>
+<h2>Overview</h2>
+<p>A connector  works with a content management system to authorize users to view 
+controlled-access documents. Authorization in  a connector uses the <code>AuthorizationManager</code> interface. </p>
 <p>The following illustration shows the authorization functions: </p>
 <p><img src="images/cdg_authorization_flow.png" alt="Authorization interfaces" width="275" height="184" /></p>
 <p>The process is as follows: </p>
 <ol>
   <li>The <code>login</code> method in the <code>Connector</code> interface returns the <code>Session</code> object.</li>
   <li>The <code>Session</code> object  contains a call to the <code>getAuthorizationManager</code> method. </li>
-  <li>The <code>getAuthorizationManager</code> method provides the <code>authorizeDocids</code> method, which returns a collection of <code>AuthorizationResponse</code> objects. This collection contains the documents that the user has permission to view. The <code>AuthorizationManager</code> interface is called after successful authentication of the search user. </li>
+  <li>The <code>getAuthorizationManager</code> method provides the <code>authorizeDocids</code> method, 
+  which returns a collection of <code>AuthorizationResponse</code> objects. This collection contains the documents that the user 
+  has permission to view. The <code>AuthorizationManager</code> interface is called after successful authentication of the search user. </li>
 </ol>
-<p>When the connector manager calls the <code>AuthorizationManager</code> interface,  the search appliance has already obtained a user’s identity in the format  appropriate to the security system on the content management system. The connector manager passes the user’s identity to the <code>AuthorizationManager</code>. </p>
-<h2>Kerberos Authorization<a name="KerberosAuthorization" id="KerberosAuthorization"></a></h2>
-<p>In version 5.2, Kerberos enables client and server applications to perform mutual authentication for the duration of a user's login session. The Google Search Appliance can use Kerberos authentication to confirm a user's right to view controlled-access documents. </p>
-<p>When a user starts a search and Kerberos is enabled on a search appliance, if the search results contain content that was acquired from a connector, the search appliance passes a verified user identity to the connector manager for subsequent authorization. The connector manager then passes the user identity to all connector instances as username@domain. </p>
-<p>The content management system's web client with which a user interacts does not have to support Kerberos; however, the user's identity obtained by the search appliance has to match the user login on the content management system. </p>
-<p>Use of Kerberos depends on whether or not a connector implements this feature. The connector manager supports Kerberos, but a connector has to support the authorization of documents using the supplied username@domain.</p>
-<h2><a name="BatchAuthorization"></a>Batch Authorization</h2>
-<p>Content management systems  can authorize user access to documents in batches (multiple documents at a time), or individually for each document. </p>
-<p>If a content management system can authorize batches of documents,  the connector manager can provide access to batch authorization in the <code>AuthorizationManager.authorizeDocids</code> method. </p>
+<p>When the connector manager calls the <code>AuthorizationManager</code> interface,  
+the search appliance has already obtained a user’s identity in the format  appropriate to 
+the security system on the content management system. The connector manager passes the user’s identity to the <code>AuthorizationManager</code>. </p>
+
+
+<a name="KerberosAuthorization" id="KerberosAuthorization"></a>
+<h2>Kerberos Authorization</h2>
+<p>Kerberos enables client and server applications to perform mutual authentication 
+for the duration of a user's login session. The Google Search Appliance can use 
+Kerberos authentication to confirm a user's right to view controlled-access documents. </p>
+<p>When a user starts a search and Kerberos is enabled on a search appliance, if the 
+search results contain content that was acquired from a connector, the search appliance 
+passes a verified user identity to the connector manager for subsequent authorization. 
+The connector manager then passes the user identity to all connector instances as 
+<em>username</em>@<em>domain</em>. </p>
+<p>The content management system's web client with which a user interacts does not 
+have to support Kerberos; however, the user's identity obtained by the search appliance 
+has to match the user login on the content management system. </p>
+<p>Use of Kerberos depends on whether or not a connector implements this feature. The 
+connector manager supports Kerberos, but a connector has to support the authorization of documents using the supplied <em>username</em>@<em>domain</em>.</p>
+
+
+<a id="BatchAuthorization" name="BatchAuthorization"></a>
+<h2>Batch Authorization</h2>
+<p>Content management systems  can authorize user access to documents in batches
+(multiple documents at a time), or individually for each document. </p>
+<p>The type
+  of feed determines the type of authorization that can occur in a connector.
+  If your connector works with a content feed, the only choice for authorization
+  is for your connector to
+  handle authorization through the use of the <code>AuthenticationManager</code> interface.
+  If you have a metadata-and-URL feed, the search appliance handles authorization
+  through head requests and the connector does not provide its own authorization.
+  </p>
+<p>This section describes how to code your connector to handle a content feed.</p>
+<p>Even if a content management system provides a content feed, you may still choose to
+provide a connector for traversal if the search appliance cannot easily determine the content on a
+page. This occurs when a page contains so much Javascript, Flash code, or other code that a
+search appliance cannot effectively read the documents that it needs to index.</p>
+<p>If a content management system can authorize batches of documents,  the connector 
+manager can provide access to batch authorization in the <code>AuthorizationManager.authorizeDocids</code> method. </p>
 <p>The authorization models are as follows:</p>
 <ul>
 <li>Normal authorization. Authorizing documents one at a time.</li>
 <li>Web authorization. Authorizing using a web protocol.</li>
-<li>Connector authorization. Authorizing through the connector SPI.   The connector SPI is batch oriented, but you can implement authorization one document at a time if a content management system's API does not support  batch authorization.</li>
+<li>Connector authorization. Authorizing through the connector SPI. The connector SPI 
+is batch oriented, but you can implement authorization one document at a time if a 
+content management system's API does not support batch authorization.</li>
 </ul>
-
-<p class="note"><strong>Note</strong>: Even if a content management system provides a content feed, you may still choose to provide  a connector for traversal if the search appliance cannot easily determine the content on a page. This occurs when a page contains so much  Javascript, Flash code, or other  code that a search appliance cannot effectively read the documents that it needs to index.</p>
-
     <p>The following illustration shows how batch (connector manager) authorization occurs for search requests. </p>
     <p><img src="images/cdg_connector_flow.png" alt="Authorization Flow Diagram" width="383" height="212" /></p>
 <p>When a search occurs:</p>
 <ol>
-<li><strong>Authentication Request</strong>. A search query is submitted to a search appliance. The search appliance provides a first-query authentication prompt for a user's credentials. After the first query, the search appliance caches a user's authentication data so that a user's credentials apply to subsequent searches without reprompting. 
-After collecting the user's credentials, the search appliance performs a search query internally and if any of the resulting documents came from a connector, the search appliance sends  the credentials  to the connector manager  associated with the connector to verify with the content management system that the credentials are correct. </li>
-<li><strong>Authentication Response</strong>. The content management system verifies that the user is authenticated and the connector manager sends back an authentication response of pass or fail to the search appliance. </li>
-<li><strong>Authorization Request</strong>. For an authentication that succeeds, the search appliance sends an authorization request with the batch of document IDs and a uid (user name) to the connector manager so that the connector can query the content management system to see which  the documents the user may view.</li>
-<li><strong>Authorization Response</strong>. The authorization response from the content management system for each given document ID indicates  ALLOW or DENY. If the authorization response value is ALLOW, then the search appliance enables the user to view the documents. </li>
+<li><strong>Authentication Request</strong>. A search query is submitted to a search appliance. 
+The search appliance provides a first-query authentication prompt for a user's credentials. 
+After the first query, the search appliance caches a user's authentication data so that a 
+user's credentials apply to subsequent searches without reprompting. 
+After collecting the user's credentials, the search appliance performs a search query 
+internally and if any of the resulting documents came from a connector, the search 
+appliance sends  the credentials  to the connector manager  associated with the connector 
+to verify with the content management system that the credentials are correct. </li>
+<li><strong>Authentication Response</strong>. The content management system verifies that 
+the user is authenticated and the connector manager sends back an authentication response of pass or fail to the search appliance. </li>
+<li><strong>Authorization Request</strong>. For an authentication that succeeds, the search 
+appliance sends an authorization request with the batch of document IDs and a uid (user name) 
+to the connector manager so that the connector can query the content management system to see which  the documents the user may view.</li>
+<li><strong>Authorization Response</strong>. The authorization response from the content 
+management system for each given document ID indicates  ALLOW or DENY. If the authorization 
+response value is ALLOW, then the search appliance enables the user to view the documents. </li>
 </ol>
 <p class="backtotop"><a href="#top">Back to top</a></p>
+
 
 <a id="TimeAllowedtoCompleteBatchAuthorizationRequests"
  name="TimeAllowedtoCompleteBatchAuthorizationRequests"></a>
@@ -81,7 +140,9 @@ After collecting the user's credentials, the search appliance performs a search 
 <li>Connectivity between the connector manager server and the content management system</li>
 <li>Bandwidth on the content management system to process the request</li>
 </ul>
-<p>The minimum time is at least six seconds when the search appliance first connects to the connector manager servlet container. Thereafter, the connector manager does not impose timeouts on authorization requests; however requests taking longer than five minutes can be terminated by the search appliance. </p>
+<p>The minimum time is at least six seconds when the search appliance first connects 
+to the connector manager servlet container. Thereafter, the connector manager does not 
+impose timeouts on authorization requests; however requests taking longer than five minutes can be terminated by the search appliance. </p>
 <p>The following shows a list of connector instances:</p>
 <pre>
 POST /connector-manager/getConnectorInstanceList HTTP/1.1
@@ -173,24 +234,38 @@ Date: Tue, 17 Mar 2009 20:21:46 GMT
  &lt;/AuthorizationResponse&gt;
  &lt;StatusId&gt;0&lt;/StatusId&gt;
 &lt;/CmResponse&gt;
-0
-</pre>
+0</pre>
 <p class="note"><strong>Note</strong>: Neither the connector manager SPI nor the search appliance requires <code>Deny</code> responses for authorization. An indeterminate answer is assumed, which amounts to a denial.</p>
 
-<h2><a name="cmauth"></a>Connector Manager Authorization Versus Web Authorization</h2>
-    <p>Connector manager authorization and web authorization differ by whether you are using the connector manager for authorization. If a content management system can authorize more than one document at a time, then the search appliance uses the connector manager to communicate with the content management system and determine what search results a user can see. Otherwise, for web authorization, the search appliance does not use the connector manager and goes straight to the content management system's web client and requests authorization from the content management system for each  document.</p>
-    <p class="note"><strong>Note:</strong> Because the connector manager can authorize multiple documents, connector manager authorization (batch authorization) has the best performance. </p>
+<a id="cmauth" name="cmauth"></a>
+<h2>Connector Manager Authorization Versus Web Authorization</h2>
+    <p>Connector manager authorization and web authorization differ by whether you 
+    are using the connector manager for authorization. If a content management system 
+    can authorize more than one document at a time, then the search appliance uses the 
+    connector manager to communicate with the content management system and determine 
+    what search results a user can see. Otherwise, for web authorization, the search 
+    appliance does not use the connector manager and goes straight to the content 
+    management system's web client and requests authorization from the content management 
+</p>
+    <p class="note"><strong>Note:</strong> Because the connector manager can authorize 
+multiple documents, connector manager authorization (batch authorization) has the best performance. </p>
 
 <p class="backtotop"><a href="#top">Back to top</a></p>
 
-<h2><a name="adime"></a>authorizeDocids Method Example</h2>
+
+<a id="adime" name="adime"></a>
+<h2>authorizeDocids Method Example</h2>
 <p>The following example shows the <code>authorizeDocids</code> method that the connector manager calls to authorize documents from a content management system. In this example, the method returns authorization information for a list of document identifiers. </p>
 <p>The <code>createClient</code> call gets a Livelink client that impersonates the search user. 
 The Iterator processes the incoming document IDs in batches of 1000,
 due to a SQL query size limitation.
 </p>
 <p>
-The <code>client.executeSqlQuery</code> call runs a SQL query that filters a list of DataIDs against the WebNodes documents table and returns only those rows whose permissions (in <code>PermID</code>) grant access to the impersonated user. The results table contains only the data IDs that the impersonated user is allowed to view. The results are added to the authorized set that will be returned in the last for loop.</p>
+The <code>client.executeSqlQuery</code> call runs a SQL query that filters a list of 
+DataIDs against the WebNodes documents table and returns only those rows whose permissions 
+(in <code>PermID</code>) grant access to the impersonated user. The results table contains 
+only the data IDs that the impersonated user is allowed to view. The results are added to 
+the authorized set that will be returned in the last for loop.</p>
 <pre>
 public List authorizeDocids(Collection docids, 
     AuthenticationIdentity identity)
@@ -214,8 +289,7 @@ public List authorizeDocids(Collection docids,
    }
  }
  return authorized;
-}
-</pre>
+}</pre>
 <p>The next section builds a SQL query that filters a list of document IDs
 against the <code>WebNodes</code> documents table.  The supplied
 <code>Iterator</code> iterates over the list of <code>docIds</code> that was
@@ -243,10 +317,11 @@ private String buildDocidQuery(Iterator iterator) {
  query.setCharAt(query.length() - 1, ')');
  return query.toString();
  }
-}
-
-</pre>
+}</pre>
 
 <p class="backtotop"><a href="#top">Back to top</a></p>
+
+<p><strong>Previous Chapter:</strong> <a href="cdg_authentication.html">Authentication</a><br>
+<strong>Next Chapter:</strong> <a href="cdg_config.html">Configuration</a></p>
 </body>
 </html>
