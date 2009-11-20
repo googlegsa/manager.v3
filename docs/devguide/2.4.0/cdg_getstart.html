@@ -13,11 +13,22 @@
 <p>Google Search Appliance software version 6.2 <br />
 Connector manager version 2.4.0<br />
 Posted December 2009</p>
-<p>This section provides a tutorial that enables you to create a simple Java connector to connect to a simulated content management system, and to see how connector development works. This connector uses Java and Eclipse freeware and enables you to follow along step-by-step. Eclipse is a commonly used tool for Java programming. If you have another integrated development environment (IDE), we recommend that you use Eclipse for this tutorial so that you can follow each step. The use of an IDE in this tutorial simplifies the development procedures and enables you to develop a connector in a production programming environment. </p>
-<p>For connector terminology definitions, see the <a href="http://code.google.com/apis/searchappliance/documentation/62/reference/glossary.html">Google Enterprise Glossary</a>. </p>
+<p>This section provides a tutorial that enables you to create a simple Java connector 
+to connect to a simulated content management system, and to see how connector development 
+works. This connector uses Java and Eclipse freeware and enables you to follow along 
+step-by-step. Eclipse is a commonly used tool for Java programming. If you have another 
+integrated development environment (IDE), we recommend that you use Eclipse for this tutorial 
+so that you can follow each step. The use of an IDE in this tutorial simplifies the development 
+procedures and enables you to develop a connector in a production programming environment. </p>
+<p>For connector terminology definitions, see the 
+<a href="http://code.google.com/apis/searchappliance/documentation/62/reference/glossary.html">Google Enterprise Glossary</a>. </p>
 
-<p><strong>Chapters</strong>: <a href="cdg_about.html">About This Guide</a>, <a href="cdg_intro.html">Introduction</a>, <em>Getting Started</em>, <a href="cdg_spioverview.html">SPI Overview</a>, <a href="cdg_traversing.html">Traversing Documents</a>, <br />
-<a href="cdg_authentication.html">Authentication</a>, <a href="cdg_authorization.html">Authorization</a>, <a href="cdg_config.html">Configuration</a>, <a href="cdg_buildcm.html">Appendix A: Building a Debug Connector Manager</a></p>
+<p><strong>Chapters</strong>: <a href="cdg_about.html">About This Guide</a>, 
+<a href="cdg_intro.html">Introduction</a>, <em>Getting Started</em>, 
+<a href="cdg_spioverview.html">SPI Overview</a>, <a href="cdg_traversing.html">Traversing Documents</a>, <br />
+<a href="cdg_authentication.html">Authentication</a>, <a href="cdg_authorization.html">Authorization</a>, 
+<a href="cdg_config.html">Configuration</a>, 
+<a href="cdg_buildcm.html">Appendix A: Building a Debug Connector Manager</a></p>
 
 <h2>Chapter Contents: Getting Started</h2>
 <ol class="toc">
@@ -77,7 +88,10 @@ Posted December 2009</p>
 <a id="WriteHWConn"
  name="WriteHWConn"></a>
 <h2>Writing a Hello World Connector</h2>
-<p>This section  shows you how to write a simple &quot;Hello World&quot; connector. To simplify the code, the connector does not use a real content management system. Instead, the connector repeatedly provides the same document to the search appliance and uses a simulated URL for the document. The contents of the  document is “Hello World.&quot;</p>
+<p>This section  shows you how to write a simple &quot;Hello World&quot; connector. 
+To simplify the code, the connector does not use a real content management system. 
+Instead, the connector repeatedly provides the same document to the search appliance 
+and uses a simulated URL for the document. The contents of the  document is “Hello World.&quot;</p>
 
 <a id="tutpreqs"
  name="tutpreqs"></a>
@@ -87,16 +101,24 @@ Posted December 2009</p>
   <li>Internet access</li>
   <li>Access to a Google Search Appliance Admin Console </li>
   <li>A computer workstation for development and testing 
-    <p>This workstation needs network access to the search appliance. The workstation can run any operating system that supports a Java Development Kit (JDK)--this tutorial describes use with Windows. </p>
+    <p>This workstation needs network access to the search appliance. The workstation 
+    can run any operating system that supports a Java Development Kit (JDK)--this tutorial 
+    describes use with Windows. </p>
   </li>
 </ul>
 <p>The sample files that you use in this tutorial are available in the current documentation folder:</p>
 <ul>
-  <li>Connector - Provides a simplified connector with classes and methods - <a href="examples/HelloWorldConnector.java.txt">HelloWorldConnector.java.txt</a></li>
-  <li>ConnectorType - Provides the configuration form for the Admin Console - <a href="examples/HelloWorldConnectorType.java.txt">HelloWorldConnectorType.java.txt</a></li>
-  <li>connectorType.xml - Parameter file for the ConnectorType - <a href="examples/connectorType.xml.txt">connectorType.xml.txt</a></li>
-  <li>connectorInstance.xml - Parameter file creating a connector instance - <a href="examples/connectorInstance.xml.txt">connectorInstance.xml.txt</a></li>
+  <li>Connector - Provides a simplified connector with classes and methods - 
+  <a href="examples/HelloWorldConnector.java.txt">HelloWorldConnector.java.txt</a></li>
+  <li>ConnectorType - Provides the configuration form for the Admin Console - 
+  <a href="examples/HelloWorldConnectorType.java.txt">HelloWorldConnectorType.java.txt</a></li>
+  <li>connectorType.xml - Parameter file for the ConnectorType - 
+  <a href="examples/connectorType.xml.txt">connectorType.xml.txt</a></li>
+  <li>connectorInstance.xml - Parameter file creating a connector instance - 
+  <a href="examples/connectorInstance.xml.txt">connectorInstance.xml.txt</a></li>
 </ul>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
 
 <a id="tutovervw"
  name="tutovervw"></a>
@@ -179,6 +201,7 @@ Or from your <code>~/.bashrc</code> file: <br />
 </li>
 </ol>
 
+<p class="backtotop"><a href="#top">Back to top</a></p>
 
 <a id="dlcmsw"
  name="dlcmsw"></a>
@@ -223,6 +246,8 @@ Or from your <code>~/.bashrc</code> file: <br />
   </li>
 </ol>
 
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
 <a id="CreateJavaProject"
  name="CreateJavaProject"></a>
 <h3>Creating a Java Project in Eclipse </h3>
@@ -250,6 +275,8 @@ click <strong>New</strong> &gt; <strong>Folder</strong>.</li>
 </li>
 </ol>
 
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
 <a id="AddJarFile"
  name="AddJarFile"></a>
 <h3>Adding  the Connector Manager JAR file to the Eclipse Project</h3>
@@ -276,6 +303,7 @@ click <strong>New</strong> &gt; <strong>Folder</strong>.</li>
 </li>
 </ol>
 
+<p class="backtotop"><a href="#top">Back to top</a></p>
 
 <!-- _____________ Copy the Hello World Connector to Eclipse _________________ -->
 <a id="CopyHWConnToEclipse"
@@ -305,9 +333,10 @@ click <strong>New</strong> &gt; <strong>Folder</strong>.</li>
 <li>Type in  the <strong>Name</strong> as <code>HelloWorldConnectorType</code> and click <strong>Finish</strong> to close the window.</li>
 <li>Open the <a href="examples/HelloWorldConnectorType.java.txt">HelloWorldConnectorType.java.txt</a> source code file, select all text, copy the text, delete the existing text from the Eclipse source window, and paste the text in to the source window. </li>
 <li>Click <strong>File</strong> &gt; <strong>Save</strong>. 
-  
 </li>
 </ol>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
 
 <!-- _____________ Build the Connector _________________ -->
 <a id="BuildConn"
@@ -324,7 +353,10 @@ click <strong>New</strong> &gt; <strong>Folder</strong>.</li>
   <li><a href="#ConfigACforConn">Configuring the Admin Console</a></li>
   <li><a href="#TestSearchQuery">Testing a Search Query</a></li>
 </ol>
-<h3><a name="CreatingXMLFiles"></a>Creating the XML Files </h3>
+
+
+<a id="CreatingXMLFiles" name="CreatingXMLFiles"></a>
+<h3>Creating the XML Files </h3>
 <p>In this section, you create the connector instance and type XML files, that when installed, enable the connector manager to create a connector instance and identify the connector to Admin Console. </p>
 <p>To create the XML files: </p>
 <ol>
@@ -345,6 +377,7 @@ click <strong>New</strong> &gt; <strong>Folder</strong>.</li>
     <li>For  <strong>Select the export destination</strong>, type in the <strong>JAR file</strong> name as <code>HelloWorldConnector.jar</code> and click <strong>Finish</strong>.</li>
 </ol>
     
+<p class="backtotop"><a href="#top">Back to top</a></p>
     
  <a id="depcmat"
   name="depcmat"></a>   
@@ -381,6 +414,8 @@ Wait approximately 30 seconds to ensure that Tomcat stops. You can check that th
     <p>After Tomcat starts, verify that the server is running by clicking this link: <a href="http://127.0.0.1:8080/connector-manager/testConnectivity">http://127.0.0.1:8080/connector-manager/testConnectivity</a> or by typing this address into a browser. This link verifies that the connector manager is running and displays the connector manager version, Java version,  the operating system version, and the IP address of the search appliance.</p>
   </li>
   </ol>
+  
+<p class="backtotop"><a href="#top">Back to top</a></p>
 
 <a id="DplygConnctr"
  name="DplygConnctr"></a>
@@ -406,6 +441,8 @@ Wait approximately 30 seconds to ensure that Tomcat stops. You can check that th
   
   <p>Do not restart Tomcat yet. You restart it in the next section, 
   <a href="#ConfigACforConn">Configuring the Admin Console</a>. </p>
+  
+<p class="backtotop"><a href="#top">Back to top</a></p>
   
   <a id="ConfigACforConn"
    name="ConfigACforConn"></a>
@@ -467,9 +504,10 @@ which  displays the installed connector types.</p>
     Enter test values (none of the values mean anything) and click <strong>Save Configuration</strong>. 
     <p>Your connector is now added to the Admin Console. </p>
   </li>
-
   </ol>
    
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
 
 <!-- _________________ Test a Search Query _______________ -->
 <a id="TestSearchQuery"
@@ -514,9 +552,11 @@ which  displays the installed connector types.</p>
 </ul>
 <p>&nbsp;</p>
 
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
 <a id="UndgExmplCnSrc"
  name="UndgExmplCnSrc"></a>
-<h2>Example Connector  Code</h2>
+<h2>Example Connector Code</h2>
 <p>In this section, you can understand the source code for the example Hello World connector. </p>
 
 <a id="PkgAndImpStats"
@@ -550,6 +590,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;</pre>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
 
 <a name="CnnAndSsnCls"
    id="CnnAndSsnCls"></a>
@@ -586,6 +628,8 @@ public class HelloTraversalManager implements TraversalManager {
   public void setBatchHint(int hint) {
     batchHint = hint;
   }</pre>
+  
+<p class="backtotop"><a href="#top">Back to top</a></p>
 
 <a id="ExmplStartTrvl"
  name="ExmplStartTrvl"></a>
@@ -604,6 +648,8 @@ public DocumentList startTraversal() {
 public DocumentList resumeTraversal(String checkpoint) {
   return traverse(checkpoint);
 }</pre>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
 
 <a id="TraversalUtilMd"
  name="TraversalUtilMd"></a>
@@ -648,6 +694,8 @@ private DocumentList traverse(String checkpoint) {
   }
 }</pre>
 
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
 <a id="HelloWorldDocumentListMethod"
  name="HelloWorldDocumentListMethod"></a>
 <h4>HelloWorldDocumentList Method </h4>
@@ -687,6 +735,8 @@ class HelloWorldDocumentList implements DocumentList {
   }
 }</pre>
 
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
 <a id="HloAuthZMgrClass"
  name="HloAuthZMgrClass"></a>
 <h4>HelloAuthorizationManager Class</h4>
@@ -704,6 +754,7 @@ class HelloWorldDocumentList implements DocumentList {
  } 
 }    // end HelloWorldConnector class</pre>
 
+<p class="backtotop"><a href="#top">Back to top</a></p>
 
 <a id="ExampleConnetorType"
  name="ExampleConnectorType"></a>
@@ -743,6 +794,9 @@ public class HelloWorldConnectorType implements ConnectorType {
 }</pre>
 
 
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+
 <a id="ExampleconnectorTypexmlCode"
  name="ExampleconnectorTypexmlCode"></a>
 <h2>Example connectorType.xml Code</h2>
@@ -773,9 +827,12 @@ deploying a connector.</p>
   &lt;/bean&gt;
 &lt;/beans&gt;
 </pre>
+
+
 <p class="backtotop"><a href="#top">Back to top</a></p>
 
 <p><strong>Previous Chapter:</strong> <a href="cdg_intro.html">Introduction</a><br>
 <strong>Next Chapter:</strong> <a href="cdg_spioverview.html">SPI Overview</a></p>
+
  </body>
 </html>

@@ -82,33 +82,25 @@ connector manager supports Kerberos, but a connector has to support the authoriz
 
 <a id="BatchAuthorization" name="BatchAuthorization"></a>
 <h2>Batch Authorization</h2>
-<p>Content management systems  can authorize user access to documents in batches
-(multiple documents at a time), or individually for each document. </p>
-<p>The type
-  of feed determines the type of authorization that can occur in a connector.
-  If your connector works with a content feed, the only choice for authorization
-  is for your connector to
-  handle authorization through the use of the <code>AuthenticationManager</code> interface.
-  If you have a metadata-and-URL feed, the search appliance handles authorization
-  through head requests and the connector does not provide its own authorization.
-  </p>
 <p>This section describes how to code your connector to handle a content feed.</p>
-<p>Even if a content management system provides a content feed, you may still choose to
-provide a connector for traversal if the search appliance cannot easily determine the content on a
-page. This occurs when a page contains so much Javascript, Flash code, or other code that a
-search appliance cannot effectively read the documents that it needs to index.</p>
-<p>If a content management system can authorize batches of documents,  the connector 
-manager can provide access to batch authorization in the <code>AuthorizationManager.authorizeDocids</code> method. </p>
-<p>The authorization models are as follows:</p>
+<p>If content management systems   authorize user access to documents in batches
+  (multiple documents at a time) and documents are processed as a content feed,
+  then the connector provides authorization interfaces and methods that the connector
+  manager calls. Connectors that use metadata-and-URL feeds do not provide
+  authorization interfaces. Instead, the search appliance handles the authorization
+  itself by making head
+  requests for authorization.</p>
+<p>The authorization models are:</p>
 <ul>
-<li>Normal authorization. Authorizing documents one at a time.</li>
-<li>Web authorization. Authorizing using a web protocol.</li>
-<li>Connector authorization. Authorizing through the connector SPI. The connector SPI 
-is batch oriented, but you can implement authorization one document at a time if a 
-content management system's API does not support batch authorization.</li>
+  <li>Web authorization. Authorizing using a web protocol.</li>
+  <li>Connector authorization. Authorizing through the connector SPI. The connector
+    SPI is<br />
+    batch oriented, but you can implement authorization one document at a time
+    if a content<br />
+    management system's API does not support batch authorization.</li>
 </ul>
-    <p>The following illustration shows how batch (connector manager) authorization occurs for search requests. </p>
-    <p><img src="images/cdg_connector_flow.png" alt="Authorization Flow Diagram" width="383" height="212" /></p>
+<p>The following illustration shows how batch (connector manager) authorization occurs for search requests. </p>
+<p><img src="images/cdg_connector_flow.png" alt="Authorization Flow Diagram" width="383" height="212" /></p>
 <p>When a search occurs:</p>
 <ol>
 <li><strong>Authentication Request</strong>. A search query is submitted to a search appliance. 

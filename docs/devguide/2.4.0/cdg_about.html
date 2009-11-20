@@ -13,11 +13,21 @@
 <p>Google Search Appliance software version 6.2 <br />
 Connector manager version 2.4.0<br />
 Posted December 2009</p>
-<p>This guide helps you  write a Java application that enables a Google Search Appliance to index the documents in a content management system. Use this guide with the <a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0.0/index.html">Javadoc</a> reference, which describes the Java interfaces for coding a connector. </p>
-<p>This guide provides the <a href="cdg_getstart.html">Getting Started</a> tutorial  after the concepts in the <a href="cdg_intro.html">Introduction</a>. This approach lets you  create a connector using an integrated development environment (IDE) and then test the connector with a Google Search Appliance. The rest of the guide  helps you to build on your knowledge. </p>
+<p>This guide helps you  write a Java application that enables a Google Search Appliance 
+to index the documents in a content management system. Use this guide with the 
+<a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0.0/index.html">Javadoc</a> 
+reference, which describes the Java interfaces for coding a connector. </p>
+<p>This guide provides the <a href="cdg_getstart.html">Getting Started</a> tutorial  after the concepts 
+in the <a href="cdg_intro.html">Introduction</a>. This approach lets you  create a connector using an 
+integrated development environment (IDE) and then test the connector with a Google Search Appliance.
+The rest of the guide  helps you to build on your knowledge. </p>
 
-<p><strong>Chapters</strong>: <a href="index.html">Home</a>, <em>About This Guide</em>, <a href="cdg_intro.html">Introduction</a>, <a href="cdg_getstart.html">Getting Started</a>, <a href="cdg_spioverview.html">SPI Overview</a>, <a href="cdg_traversing.html">Traversing Documents</a>, <br />
-<a href="cdg_authentication.html">Authentication</a>, <a href="cdg_authorization.html">Authorization</a>, <a href="cdg_config.html">Configuration</a>, <a href="cdg_buildcm.html">Appendix A: Building a Debug Connector Manager</a></p>
+<p><strong>Chapters</strong>: <a href="index.html">Home</a>, <em>About This Guide</em>, 
+<a href="cdg_intro.html">Introduction</a>, <a href="cdg_getstart.html">Getting Started</a>, 
+<a href="cdg_spioverview.html">SPI Overview</a>, <a href="cdg_traversing.html">Traversing Documents</a>, <br />
+<a href="cdg_authentication.html">Authentication</a>, <a href="cdg_authorization.html">Authorization</a>, 
+<a href="cdg_config.html">Configuration</a>, 
+<a href="cdg_buildcm.html">Appendix A: Building a Debug Connector Manager</a></p>
 
 <h2>Chapter Contents: About This Guide</h2>
 <ol class="toc">
@@ -37,7 +47,8 @@ Posted December 2009</p>
 </ol>
 
 
-<h2><a name="audience"></a>Audience</h2>
+<a id="audience" name="audience"></a>
+<h2>Audience</h2>
 
 <p>This guide is for Java programmers who are developing connectors for a content management system. </p>
 <p>This guide assumes knowledge of:</p>
@@ -49,14 +60,16 @@ Posted December 2009</p>
 </ul>
 
 <p class="backtotop"><a href="#top">Back to top</a></p>
-<h2><a name="chapteroverview"></a>Guide Overview</h2>
+
+<a id="chapteroverview" name="chapteroverview"></a>
+<h2>Guide Overview</h2>
 <p>This guide contains the following sections: </p>
 <ul>
 <li><a href="cdg_intro.html">Introduction</a>
 <p>Conveying how a connector works with development concepts. </p>
 </li>
 <li><a href="cdg_getstart.html">Getting Started</a>
-<p>Creating a simple connector using Java and the Eclipse  integrated development environment (IDE). </p>
+<p>Creating a simple connector using Java and the Eclipse integrated development environment (IDE). </p>
 </li>
 <li><a href="cdg_spioverview.html">SPI Overview </a>
   <p>Describing the calling sequence of the service provider interface (SPI). </p>
@@ -84,7 +97,8 @@ parameter files, and understanding the <code><em>connector</em>.properties</code
 <p class="backtotop"><a href="#top">Back to top</a></p>
 
 
-<h2><a name="userconventions"></a>User Conventions</h2>
+<a id="userconventions" name="userconventions"></a>
+<h2>User Conventions</h2>
 <p>The audience user conventions in this document are as follows.</p>
 <ul>
   <li>Administrator
@@ -97,9 +111,12 @@ parameter files, and understanding the <code><em>connector</em>.properties</code
     <p>Programs or maintains the code for a connector and its associated software.</p> 
   </li>
 </ul>
+
 <p class="backtotop"><a href="#top">Back to top</a></p>
 
-  <h2><a name="moreinfoanch"></a>More Information</h2>
+
+<a id="moreinfoanch" name="moreinfoanch"></a>
+  <h2>More Information</h2>
 <p>The following topics are in this section:</p>
 <ul>
   <li><a href="#cminfo">Connector Manager Information</a></li>
@@ -108,25 +125,39 @@ parameter files, and understanding the <code><em>connector</em>.properties</code
   <li><a href="#connectorhelp">Connector Help</a></li>
   <li><a href="#ToolInfo">Tool Information</a></li>
 </ul>
-<h3><a name="cminfo" id="cminfo"></a>Connector Manager Information </h3>
+
+<a name="cminfo" id="cminfo"></a>
+<h3>Connector Manager Information </h3>
 <p>Connector manager resources: </p>
 <ul>
-<!-- jwptodo fix link once this is posted-->
-<li><a href="http://code.google.com/p/googlesearchapplianceconnectors/">googlesearchapplianceconnectors</a> connector software site. </li>
+<li><a href="http://code.google.com/p/googlesearchapplianceconnectors/">googlesearchapplianceconnectors</a> 
+connector software site. </li>
 <li><a href="http://code.google.com/p/google-enterprise-connector-manager/">google-enterprise-connector-manager</a> support site.</li>
 <li>
-<a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0.0/index.html" target="_blank">Javadoc</a> for the SPI (service provider interface) and its methods.</li>
+<a href="http://google-enterprise-connector-manager.googlecode.com/svn/docs/javadoc/2.0.0/index.html">Javadoc</a>
+ for the SPI (service provider interface) and its methods.</li>
 </ul>
 
-<h3><a name="sampleconncode" id="sampleconncode"></a>Sample Connector Code </h3>
+
+<a name="sampleconncode" id="sampleconncode"></a>
+<h3>Sample Connector Code </h3>
 <p>Code samples  referenced in this document: </p>
 <ul>
-  <li>Connector - A simplified connector with classes and methods - <a href="examples/HelloWorldConnector.java.txt">HelloWorldConnector.java.txt</a></li>
-  <li>ConnectorType - The configuration form for the Admin Console - <a href="examples/HelloWorldConnectorType.java.txt">HelloWorldConnectorType.java.txt</a></li>
-  <li>connectorType.xml - Parameter file for the ConnectorType - <a href="examples/connectorType.xml.txt">connectorType.xml.txt</a></li>
-  <li>connectorInstance.xml - Parameter file creating a connector instance - <a href="examples/connectorInstance.xml.txt">connectorInstance.xml.txt</a></li>
+  <li>Connector - A simplified connector with classes and methods - 
+  <a href="examples/HelloWorldConnector.java.txt">HelloWorldConnector.java.txt</a></li>
+  <li>ConnectorType - The configuration form for the Admin Console - 
+  <a href="examples/HelloWorldConnectorType.java.txt">HelloWorldConnectorType.java.txt</a></li>
+  <li>connectorType.xml - Parameter file for the ConnectorType - 
+  <a href="examples/connectorType.xml.txt">connectorType.xml.txt</a></li>
+  <li>connectorInstance.xml - Parameter file creating a connector instance - 
+  <a href="examples/connectorInstance.xml.txt">connectorInstance.xml.txt</a></li>
 </ul>
-<h3><a name="connectoross" id="connectoross"></a>Connector Open Source Sites</h3>
+
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+
+<a name="connectoross" id="connectoross"></a>
+<h3>Connector Open Source Sites</h3>
 <p>Connector documentation is available at <a href="http://code.google.com/apis/searchappliance/documentation/connectors/index.html">http://code.google.com/apis/searchappliance/documentation/connectors/index.html</a></p>
 <p>Connector open source sites:</p>
 <ul>
@@ -143,7 +174,9 @@ parameter files, and understanding the <code><em>connector</em>.properties</code
   <li>SharePoint: <a href="http://code.google.com/p/google-enterprise-connector-sharepoint/">http://code.google.com/p/google-enterprise-connector-sharepoint/</a></li>
 </ul>
 
-<h3><a name="connectorhelp" id="connectorhelp"></a>Connector Help</h3>
+
+<a name="connectorhelp" id="connectorhelp"></a>
+<h3>Connector Help</h3>
 <p>To ask questions interactively:</p>
 <ul>
   <li> <a href="http://groups.google.com/group/Google-Search-Appliance?hl=en&amp;lnk=srg">Google Search Appliance/Google Mini Group </a>
@@ -151,28 +184,42 @@ parameter files, and understanding the <code><em>connector</em>.properties</code
   </li>
 </ul>
 
-<h3>Tool Information<a name="ToolInfo" id="ToolInfo"></a> </h3>
+<p class="backtotop"><a href="#top">Back to top</a></p>
+
+
+<a name="ToolInfo" id="ToolInfo"></a> 
+<h3>Tool Information</h3>
 <p>Additional information on tools: </p>
 <ul>
-<li><strong>Subversion.</strong> <a href="http://subversion.tigris.org" 
-target="blank_">http://subversion.tigris.org</a>
-<p>An open source version control system. For help with Subversion, see <a href="http://svnbook.red-bean.com/en/1.1/index.html" style="FONT-STYLE:italic" title="Version Control With Subversion">Version Control with Subversion</a>, a free book by Ben Collins-Sussman, Brian W. Fitzpatrick, and C. Michael Pilato.</p>
+<li><strong>Subversion.</strong> <a href="http://subversion.tigris.org">http://subversion.tigris.org</a>
+<p>An open source version control system. For help with Subversion, see 
+<a href="http://svnbook.red-bean.com/en/1.1/index.html">Version Control with Subversion</a>, a 
+free book by Ben Collins-Sussman, Brian W. Fitzpatrick, and C. Michael Pilato.</p>
 </li>
 <li><strong>Eclipse.</strong> <a href="http://eclipse.org">http://eclipse.org</a>
-<p>An open source integrated development environment (IDE). Eclipse.org provides downloads, a discussion site, and resources.</p>
+<p>An open source integrated development environment (IDE). Eclipse.org provides downloads, 
+a discussion site, and resources.</p>
 </li>
-<li><strong>Spring.</strong> See <a href="cdg_intro.html#SpringFramConn">Understanding Spring Framework's Relation to a Connector</a>. Google supports the use of Spring Framework 2.5.6. Spring downloads are available at <a href="http://www.springsource.org/download">http://www.springsource.org/download</a>.<br />
+<li><strong>Spring.</strong> See 
+<a href="cdg_intro.html#SpringFramConn">Understanding Spring Framework's Relation to a Connector</a>. 
+Google supports the use of Spring Framework 2.5.6. Spring downloads are available at 
+<a href="http://www.springsource.org/download">http://www.springsource.org/download</a>.<br />
 <br />
 </li>
 <li><strong>Apache Tomcat.</strong>
-     Apache Tomcat is available from <a href="http://tomcat.apache.org/">http://tomcat.apache.org/</a>. Google supports the use of Apache Tomcat 6.0.18. Apache archives are available at <a href="http://archive.apache.org/dist/tomcat/tomcat-6/">http://archive.apache.org/dist/tomcat/tomcat-6/</a>.
+ Apache Tomcat is available from <a href="http://tomcat.apache.org/">http://tomcat.apache.org/</a>. Google supports the use of Apache Tomcat 6.0.18. Apache archives are available at 
+<a href="http://archive.apache.org/dist/tomcat/tomcat-6/">http://archive.apache.org/dist/tomcat/tomcat-6/</a>.
 <p>Apache Tomcat provides a servlet container that provides network access to the connector manager and a connector. In this document, &quot;Tomcat&quot; describes any servlet container software. Google Enterprise supports the use of Apache Tomcat  for connector manager implementation. However, you can use any servlet container software as required by your project requirements.</p>
 </li>
 </ul>
 
-<h2><a name="OpenSourceContributions" id="OpenSourceContributions"></a>Open Source Contributions</h2>
+
+<a name="OpenSourceContributions" id="OpenSourceContributions"></a>
+<h2>Open Source Contributions</h2>
 <p>Google facilitates your development effort by providing an open source connector manager. We encourage you to make your connector open source and help build a community of developers who create connectors. </p>
+
 <p class="backtotop"><a href="#top">Back to top</a></p>
+
 <p><strong>Next Chapter: </strong><a href="cdg_intro.html">Introduction</a></p>
 </body>
 </html>

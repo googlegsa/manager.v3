@@ -855,9 +855,10 @@ by name in a document or the <code>Document.getPropertyNames</code> method to ge
 <p class="note"><strong>Important: </strong>If the connector manager requests a property from the 
 connector that a document does not contain, the connector must return <code>null</code> and not throw an exception. </p>
 <p>Content management systems  use their own names for each metadata property.
-A connector needs to map those  names to the property names in the <code>SpiConstants</code> class. 
-The connector manager requires the use of the <code>PROPNAME_DOCID</code> property and recommends 
-the use of the <code>PROPNAME_LASTMODIFIED</code> property. Google Enterprise strongly suggests that you specify a MIME type. </p><br>
+A connector needs to map those  names to the property names in the <code>SpiConstants</code> class.
+ The connector manager requires the use of the <code>PROPNAME_DOCID</code> property
+ and recommends  the use of the <code>PROPNAME_LASTMODIFIED</code> property.
+ Google Enterprise strongly suggests that you specify a MIME type in the <code>PROPNAME_MIMETYPE</code> property. </p><br>
 
 <p><strong>Properties With Multiple Values </strong></p>
 <p>Even though some content management systems allow properties with multiple values, 
@@ -907,7 +908,10 @@ search appliance for indexing.</p>
 <p>Two behaviors  are required:</p>
 <ul>
   <li>The <code>findProperty</code> method returns null and does not throw an exception when an unknown property is requested.</li>
-  <li>The same property may be looked up multiple times, and the same <code>SimpleProperty</code> instance cannot be returned each time. This is because the <code>nextValue</code> method on the <code>SimpleProperty</code> instance will return null the second time the property is retrieved.</li>
+  <li>The same property may be looked up multiple times, and the same 
+  <code>SimpleProperty</code> instance cannot be returned each time. 
+  This is because the <code>nextValue</code> method on the <code>SimpleProperty</code> 
+  instance will return null the second time the property is retrieved.</li>
 </ul>
 <p>The following code example code provides an implementation of the <code>Property</code> interface that 
 is notable for its large number of overloaded constructors, its various primitive types, and its 
@@ -1004,6 +1008,8 @@ public class SmartProperty implements Property {
   public SmartProperty(Object anObject) {
     singleValue = fromObject(anObject);
   }</pre>
+ <p>&nbsp; </p>
+ <p class="backtotop"><a href="#top">Back to top</a></p>
 <p>Helper method to get a value from an object.</p>
 <pre>
   private static Value fromObject(Object obj) {
@@ -1030,6 +1036,7 @@ public class SmartProperty implements Property {
       return Value.getStringValue(obj.toString());
     }
   }</pre>
+  
 <p>Check to see if the property has multiple values or a single value and return the value. </p>
 <pre>
   public Value nextValue() throws RepositoryException {
