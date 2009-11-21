@@ -57,7 +57,7 @@ form to the Admin Console. The
     <li><a href="#ExampleConnTypeFile">Example connectorType.xml File</a></li>
   </ol>
 </li>
-<li><a href="cdg_config.html#connInst">Creating a Connector Instance XML File</a></li>
+<li><a href="cdg_config.html#connInst">Creating a Connector Defaults XML File</a></li>
 <li><a href="cdg_config.html#PopProp">Properties File</a>
   <ol>
     <li><a href="cdg_config.html#HowPopProp">How the Connector Manager Populates a Properties File</a></li>
@@ -675,75 +675,40 @@ methods in the <code>ConnectorType</code> interface. </p>
 <p class="backtotop"><a href="#top">Back to top</a></p>
 
 <a id="connInst" name="connInst"></a>
-<h2>Creating a Connector Instance XML File</h2>
+<h2>Creating a Connector Defaults XML File</h2>
 
-<p>The <code>connectorInstance.xml</code> file provides placeholders for the connector 
-manager to populate an instance of your connector. The connector manager substitutes the 
-values in the <code>connectorInstance.xml</code> file from the information that the 
-connector manager acquires from the configuration form. </p>
-<p>The example that follows is  from the open source FileNet connector available at the 
-<a href="http://google-enterprise-connector-file.googlecode.com">http://google-enterprise-connector-file.googlecode.com</a> site. </p>
+<p>The <code>connectorDefaults.xml</code> file provides placeholders for the
+  connector manager to populate an instance of your connector. The connector
+  manager substitutes the values in the <code>connectorDefaults.xml</code> file
+  from the information that the connector manager acquires from the configuration
+  form. </p>
 <p>In the example that follows, the <code>bean id</code> in the 
-<code>connectorInstance.xml</code> file is an arbitrary string that 
+  <code>connectorDefaults.xml</code> file is an arbitrary string that 
 is not used by the connector manager. There can be no spaces in the 
-<code>bean id</code> string. The class attribute lists the location 
-of the connector source, in this case at in the <code>FileConnector.java</code> file in the 
+  <code>bean id</code> string. The class attribute lists the location 
+of the connector source, in this case at in the <code>FileConnector.java</code> file
+in the 
 <code>/com/google/enterprise/connector/file</code> folder. The 
 <code>property</code> tags shown in the snippet that follows 
 associate the configuration form fields with the variables defined the 
 <code>FileConnector.java</code> file.  </p>
 <pre>
 &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
-&lt;!DOCTYPE beans PUBLIC &quot;-//SPRING//DTD BEAN//EN&quot; 
-  &quot;http://www.springframework.org/dtd/spring-beans.dtd&quot;&gt;
+&lt;!DOCTYPE beans PUBLIC &quot;-//SPRING//DTD BEAN//EN&quot; &quot;http://www.springframework.org/dtd/spring-beans.dtd&quot;&gt;
 &lt;beans&gt;
-  &lt;bean id=&quot;FileConnectorInstance&quot;
-    class=&quot;com.google.enterprise.connector.file.FileConnector&quot;&gt;
-    &lt;property name=&quot;login&quot; value=&quot;${login}&quot; /&gt;
-    &lt;property name=&quot;password&quot; value=&quot;${password}&quot; /&gt;
-    &lt;property name=&quot;object_store&quot; value=&quot;${object_store}&quot; /&gt;
+&lt;bean id=&quot;filenet-connector-defaults&quot;&gt;
+  &lt;property name=&quot;username&quot; value=&quot;${username}&quot; /&gt;
+  &lt;property name=&quot;password&quot; value=&quot;${password}&quot; /&gt;
+  &lt;property name=&quot;object_store&quot; value=&quot;${object_store}&quot; /&gt;
+  &lt;property name=&quot;path_to_WcmApiConfig&quot; value=&quot;WcmApiConfig.properties&quot; /&gt;
+  &lt;property name=&quot;workplace_display_url&quot; value=&quot;${workplace_display_url}&quot; /&gt;
+  &lt;property name=&quot;object_factory&quot; value=&quot;com.google.enterprise.connector.filenet3.filejavawrap.FnObjectFactory&quot; /&gt;
+  &lt;property name=&quot;authentication_type&quot; value=&quot;api&quot; /&gt;
+  &lt;property name=&quot;additional_where_clause&quot; value=&quot;${additional_where_clause}&quot; /&gt;
+  &lt;property name=&quot;is_public&quot; value=&quot;${is_public}&quot; /&gt;
+  &lt;property name=&quot;included_meta&quot;&gt;
 </pre>
-<p>The corresponding entries in the <code>FileConnector.java</code> file are as follows--properties that get and set each value:</p>
-<pre>
-public class FileConnector implements Connector {
-...
-  private String login;
-  private String password;
-  private String object_store;
-...
-  public String getLogin() {
-    return login;
-  }
-  public void setLogin(String login) {
-    this.login = login;
-  }
-  public String getPassword() {
-    return password;
-  }
-  public void setPassword(String password) {
-    this.password = password;
-  }
-  public String getObject_store() {
-    return object_store;
-  }
-  public void setObject_store(String objectStoreName) {
-    this.object_store = objectStoreName;
-  }
-</pre>
-<p>The <code>connectorInstance.xml</code> file example <code>property</code> statements continue as follows.</p>
-<pre>
-&lt;property name=&quot;path_to_WcmApiConfig&quot; 
-  value=&quot;webapps/connector-manager/WEB-INF/WcmApiConfig.properties&quot; /&gt;
-&lt;property name=&quot;workplace_display_url&quot; 
-  value=&quot;${workplace_display_url}&quot; /&gt;
-&lt;property name=&quot;object_factory&quot; 
-  value=&quot;com.google.enterprise.connector.file.filejavawrap.FnObjectFactory&quot; /&gt;
-&lt;property name=&quot;authentication_type&quot; value=&quot;api&quot; /&gt;
-&lt;property name=&quot;additional_where_clause&quot; 
-  value=&quot;${additional_where_clause}&quot; /&gt;
-&lt;property name=&quot;is_public&quot; value=&quot;${is_public}&quot; /&gt;
-</pre>
-<p>The <code>included_meta</code> property corresponds to the metadata that the FileNet content management system provides in its API:</p>
+...The <code>included_meta</code> property corresponds to the metadata that the FileNet content management system provides in its API:
 <pre>
 &lt;property name=&quot;included_meta&quot;&gt;
   &lt;set&gt;
@@ -816,12 +781,104 @@ content management system that the connector does not need to address: </p>
   &lt;/set&gt;
 &lt;/property&gt;
 </pre>
-<p>The file ends with these closing tags.</p>
+<p>The last of the file describes a configurer for encrypted property placeholders.
+  The last <code>&lt;/beans&gt;</code> element completes the <code>connectorDefaults.xml</code> file.</p>
 <pre>
-  &lt;/bean&gt;
+&lt;bean id=&quot;propertyPlaceholderConfigurer&quot; 
+  class=&quot;com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer&quot;&gt; 
+  &lt;property name=&quot;properties&quot;&gt;
+    &lt;props&gt;
+      &lt;prop key=&quot;username&quot;&gt;&lt;/prop&gt;
+      &lt;prop key=&quot;password&quot;&gt;&lt;/prop&gt;
+      &lt;prop key=&quot;object_store&quot;&gt;&lt;/prop&gt;
+      &lt;prop key=&quot;workplace_display_url&quot;&gt;&lt;/prop&gt;
+      &lt;prop key=&quot;additional_where_clause&quot;&gt;&lt;/prop&gt;
+      &lt;prop key=&quot;is_public&quot;&gt;&lt;/prop&gt;
+    &lt;/props&gt;
+  &lt;/property&gt;
+&lt;/bean&gt;
 &lt;/beans&gt;
 </pre>
-<p>&nbsp;</p>
+<h2>Creating a Connector Instance File</h2>
+<p>The connector instance file </p>
+<pre>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;!DOCTYPE beans PUBLIC &quot;-//SPRING//DTD BEAN//EN&quot; &quot;http://www.springframework.org/dtd/spring-beans.dtd&quot;&gt;
+&lt;beans&gt;
+  &lt;bean id=&quot;FileConnectorInstance&quot; 
+  class=&quot;com.google.enterprise.connector.filenet3.FileConnector&quot; 
+  parent=&quot;filenet-connector-defaults&quot; 
+  singleton=&quot;false&quot;&gt;
+  &lt;!--   
+    &lt;property name=&quot;included_meta&quot;&gt;
+      &lt;set&gt;
+        &lt;value&gt;ClassificationStatus&lt;/value&gt;
+        &lt;value&gt;ContentSize&lt;/value&gt;
+        &lt;value&gt;CurrentState&lt;/value&gt;
+        &lt;value&gt;DateCreated&lt;/value&gt;
+        &lt;value&gt;DateLastModified&lt;/value&gt;
+        &lt;value&gt;DocumentTitle&lt;/value&gt;
+        &lt;value&gt;Id&lt;/value&gt;
+        &lt;value&gt;IsCurrentVersion&lt;/value&gt;
+        &lt;value&gt;IsFrozenVersion&lt;/value&gt;
+        &lt;value&gt;IsReserved&lt;/value&gt;
+        &lt;value&gt;LastModifier&lt;/value&gt;
+        &lt;value&gt;LockTimeout&lt;/value&gt;
+        &lt;value&gt;LockToken&lt;/value&gt;
+        &lt;value&gt;MajorVersionNumber&lt;/value&gt;
+        &lt;value&gt;MimeType&lt;/value&gt;
+        &lt;value&gt;MinorVersionNumber&lt;/value&gt;
+        &lt;value&gt;Name&lt;/value&gt;
+        &lt;value&gt;Owner&lt;/value&gt;
+        &lt;value&gt;StorageLocation&lt;/value&gt;
+        &lt;value&gt;VersionStatus&lt;/value&gt;
+      &lt;/set&gt;
+   &lt;/property&gt;
+   &lt;property name=&quot;excluded_meta&quot;&gt;
+      &lt;set&gt;
+        &lt;value&gt;AccessMask&lt;/value&gt;
+        &lt;value&gt;ActiveMarkings&lt;/value&gt;
+        &lt;value&gt;Annotations&lt;/value&gt;
+        &lt;value&gt;AuditedEvents&lt;/value&gt;
+        &lt;value&gt;ClassDescription&lt;/value&gt;
+        &lt;value&gt;ContentElements&lt;/value&gt;
+        &lt;value&gt;ContentElementsPresent&lt;/value&gt;
+        &lt;value&gt;ContentRetentionDate&lt;/value&gt;
+        &lt;value&gt;CreatePending&lt;/value&gt;
+        &lt;value&gt;CurrentVersion&lt;/value&gt;
+        &lt;value&gt;DateContentLastAccessed&lt;/value&gt;
+        &lt;value&gt;DeletePending&lt;/value&gt;
+        &lt;value&gt;DestinationDocuments&lt;/value&gt;
+        &lt;value&gt;DocumentLifecyclePolicy&lt;/value&gt;
+        &lt;value&gt;EntryTemplateId&lt;/value&gt;
+        &lt;value&gt;EntryTemplateLaunchedWorkflowNumber&lt;/value&gt;
+        &lt;value&gt;EntryTemplateObjectStoreName&lt;/value&gt;
+        &lt;value&gt;FoldersFiledIn&lt;/value&gt;
+        &lt;value&gt;IsInExceptionState&lt;/value&gt;
+        &lt;value&gt;IsVersioningEnabled&lt;/value&gt;
+        &lt;value&gt;LockOwner&lt;/value&gt;
+        &lt;value&gt;ObjectStore&lt;/value&gt;
+        &lt;value&gt;ObjectType&lt;/value&gt;
+        &lt;value&gt;OIID&lt;/value&gt;
+        &lt;value&gt;OwnerDocument&lt;/value&gt;
+        &lt;value&gt;PendingOperation&lt;/value&gt;
+        &lt;value&gt;Properties&lt;/value&gt;
+        &lt;value&gt;PublicationInfo&lt;/value&gt;
+        &lt;value&gt;ReleasedVersion&lt;/value&gt;
+        &lt;value&gt;Reservation&lt;/value&gt;
+        &lt;value&gt;ReservationType&lt;/value&gt;
+        &lt;value&gt;SecurityParent&lt;/value&gt;
+        &lt;value&gt;SecurityPolicy&lt;/value&gt;
+        &lt;value&gt;SourceDocument&lt;/value&gt;
+        &lt;value&gt;StoragePolicy&lt;/value&gt;
+        &lt;value&gt;UpdatePending&lt;/value&gt;
+        &lt;value&gt;VersionSeries&lt;/value&gt;
+        &lt;value&gt;WorkflowSubscriptions&lt;/value&gt;
+      &lt;/set&gt;
+   &lt;/property&gt;
+   --&gt;
+  &lt;/bean&gt;
+&lt;/beans&gt;</pre>
 
 <p class="backtotop"><a href="#top">Back to top</a></p>
 
@@ -840,17 +897,36 @@ content management system that the connector does not need to address: </p>
 <p>In the case of these examples, the <code><em>connector</em>.properties</code> file's path would be:</p>
 <pre><em>Tomcat</em>/webapps/connector-manager/WEB-INF/connectors/TestConnectorA/MyConn/MyConn.properties</pre>
 <p>The example <code>MyConn.properties</code> file contains the following information (lines wrapped for readability):</p>
-<pre>#Fri Oct 16 14:18:02 PDT 2009 
-Username= 
-googleConnectorWorkDir=/usr/local/google/apps/apache-tomcat-nnn/
-  webapps/connector-manager/WEB-INF/connectors/TestConnectorA/MyConn 
-RepositoryFile= 
-Password=<em>password</em>\=\= 
-Color= 
-googleWorkDir=/usr/local/google/apps/apache-tomcat-nnn/webapps/
-mycomputer:/usr/local/google/apps/apache-tomcat-nnn/webapps/connector-manager/WEB-INF/connectors/MyConn/test</pre>
-<p>The connector manager inserts the values for <code>RepositoryFile</code>, <code>Password</code>, and <code>Color</code> from the data that an administrator supplies in the configuration form in the Admin Console. </p>
-<p>See <a href="cdg_buildcm.html#testconn">Testing a Connector</a> for information about the <code>Username</code>, <code>RepositoryFile</code>, <code>Password</code>, and <code>Color</code> fields in TestConnectorA. See <a href="cdg_traversing.html#fileaccess">File Access</a> for information on the <code>googleConnectorWorkDir</code> and <code>googleWorkDir</code> fields.</p>
+<pre>
+#---------------------------------------LABELS-----------------------------
+username=Username
+Password=Password
+object_store=Object Store
+workplace_display_url=Workplace URL
+is_public=Make Public
+additional_where_clause=Additional Where Clause
+
+#--------------------------------ERROR MESSAGES----------------------------
+invalid_credentials_error=Invalid credentials. Please enter correct credentials.
+config_file_not_found_error=Either the Wcmapiconfig file is missing or corrupted. 
+  Please provide a valid Wcmapiconfig file.
+remote_server_connection_error=Unable to connect remote server.
+workplace_url_error=Unable to validate Workplace URL. Could not connect to the 
+  Workplace. Either remote server is down or URL is not in proper format.
+required_field_error=Required field not specified.
+unsupported_protocol=Unsupported protocol. Please use http protocol.
+
+username_error=Username cannot be blank. Please enter valid username.
+Password_error=Password cannot be blank. Please enter valid password.
+object_store_error=Object Store cannot be blank. Please enter a valid Object Store name.
+workplace_display_url_error=Workplace URL cannot be blank. Please enter a valid Workplace URL.
+
+object_store_invalid=Object Store is invalid. Please enter a valid Object Store name.
+additional_where_clause_invalid=Where Clause is syntactically incorrect.</pre>
+<p>The connector manager inserts the values <code></code> from
+  the data that an administrator supplies in the configuration form in the Admin
+  Console.</p>
+<p>See <a href="cdg_traversing.html#fileaccess">File Access</a> for information on the <code>googleConnectorWorkDir</code> and <code>googleWorkDir</code> fields.</p>
 
 <p class="backtotop"><a href="#top">Back to top</a></p>
 
