@@ -759,23 +759,51 @@ unidentifiable content to the search appliance.</p>
 returns the support level of the specified MIME type.  MIME type
 support levels are used to rank items supplied to
 <code>TraversalContext.preferredMimeType(Set mimeTypes)</code>.</p>
-<p>The <code>MimeTypeMap</code> bean definition in <code>applicationContext.xml</code> groups MIME types into four  categories: </p>
-<ol>
-  <li>Unsupported. Document types that must not be sent to the Google Search Appliance 
-  because the URL pattern has been designated in the Admin Console for not crawling or a 
-  document type that has file sizes greater than 30 MB (the maximum file size that the 
-  search appliance can handle for indexing a document). </li>
-  <li>Unknown.  A document type that is not unsupported, preferred, or supported. </li>
-  <li>Supported. Document types that the search appliance can index. </li>
-  <li>Preferred. MIME types with higher support
-    levels than the unsupported MIME types. </li>
-</ol>
-<p>The entries or each of the preferred, supported and unsupported
-  sets are a list of content types that may or may not include
-  subtypes.  Exact (case-insensitive) matches are attempted first.
+<p>The <code>MimeTypeMap</code> bean definition in <code>applicationContext.xml</code> groups
+  MIME types into the following categories: </p>
+<table width="80%" border="1">
+  <tr>
+    <th width="18%" scope="col">Category</th>
+    <th width="82%" scope="col">Description</th>
+  </tr>
+  <tr>
+    <td><code>unsupported</code></td>
+    <td>Document types that must not be sent to the Google Search Appliance because
+      the URL pattern has been designated in the Admin Console for not crawling
+      or a document type that has file sizes greater than 30 MB (the maximum
+    file size that the search appliance can handle for indexing a document).
+      <p>If a document's MIME type is not supported, then its content is not sent
+  in the feed to the search appliance, however the metadata for the document
+  MIME type is sent in the feed to the search appliance for indexing.</p></td>
+  </tr>
+  <tr>
+    <td><code>supported</code></td>
+    <td>Document types that the search appliance can index. </td>
+  </tr>
+  <tr>
+    <td><code>preferred</code></td>
+    <td>MIME types with higher support levels than the unsupported MIME types</td>
+  </tr>
+  <tr>
+    <td><code>ignored</code></td>
+    <td>Skip a document and neither send the content or metadata in
+      the feed to the search appliance. For example, if a company had a large
+      number of JPG pictures from a company party in the content management system,
+      you could use <code>ignored</code> to say that you don't want the company pictures to
+      be indexed.</td>
+  </tr>
+  <tr>
+    <td><code>unknown</code></td>
+    <td>A document type that is not <code>unsupported</code>, <code>supported</code>,
+    or <code>preferred</code>.</td>
+  </tr>
+</table>
+<br />
+<p>The entries or each of the <code>unsupported</code>, <code>supported</code>,
+  or <code>preferred</code> sets are a list of content types that may or may
+  not include subtypes. Exact (case-insensitive) matches are attempted first.
   If an exact match is not found, a match is attempted using 
 the base type without the subtype.</p>
-
 <p>For example: </p>
 <pre>
 preferredMimeTypes={} (empty), supportedMimeTypes={"foo/bar"},

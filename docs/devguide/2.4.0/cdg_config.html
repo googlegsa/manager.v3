@@ -37,30 +37,31 @@ form to the Admin Console. The
 
 <h2>Chapter Contents: Configuration</h2>
 <ol class="toc">
-<li><a href="cdg_config.html#ConfigOverview">Configuration Overview</a></li>
-<li><a href="cdg_config.html#CreateConfigForm">Creating a Configuration Form</a>
+<li><a href="#ConfigOverview">Configuration Overview</a></li>
+<li><a href="#CreateConfigForm">Creating a Configuration Form</a>
   <ol>
     <li><a href="#ConfigurationFormExample">Configuration Form Example</a></li>
     <li><a href="#ConfigurationFormInterface">Configuration Form ConnectorType Interface</a></li>
-    <li><a href="cdg_config.html#getcfgform">Getting a Configuration Form</a></li>
-    <li><a href="cdg_config.html#valcfgform">Validating a Configuration Form</a>
+    <li><a href="#getcfgform">Getting a Configuration Form</a></li>
+    <li><a href="#valcfgform">Validating a Configuration Form</a>
       <ol>
         <li><a href="#ValidatingContentManagementSystemParameters">Validating Content Management System Parameters</a></li>
       </ol>
     </li>
-    <li><a href="cdg_config.html#getpopcfgform">Editing a  Configuration Form</a></li>
-    <li><a href="cdg_config.html#IntLoc">Internationalization and Localization Support</a></li>
+    <li><a href="#getpopcfgform">Editing a Configuration Form</a></li>
+    <li><a href="#IntLoc">Internationalization and Localization Support</a></li>
   </ol>
 </li>
-<li><a href="cdg_config.html#createconntype">Creating a Connector Type XML File</a>
+<li><a href="#createconntype">Creating a Connector Type XML File</a>
   <ol>
     <li><a href="#ExampleConnTypeFile">Example connectorType.xml File</a></li>
   </ol>
 </li>
-<li><a href="cdg_config.html#connInst">Creating a Connector Defaults XML File</a></li>
-<li><a href="cdg_config.html#PopProp">Properties File</a>
+<li><a href="#CreatingaConnectorDefaultsFile">Creating a Connector Defaults File</a></li>
+<li><a href="#CreatingaConnectorInstanceFile">Creating a Connector Instance File</a></li>
+<li><a href="#PopProp">Properties File</a>
   <ol>
-    <li><a href="cdg_config.html#HowPopProp">How the Connector Manager Populates a Properties File</a></li>
+    <li><a href="#HowPopProp">How the Connector Manager Populates a Properties File</a></li>
     <li><a href="#ConfigOverview">Editing an Existing Form</a></li>
   </ol>
 </li>
@@ -333,8 +334,8 @@ private String makeConfigForm(Map configMap) {
   return buf.toString();
 }
 </pre>
-<p>The next section appends table row start (<a href="cdg_config.html#TR_START"><code>TR_START</code></a>) 
-and table column start (<a href="cdg_config.html#TD_START"><code>TD_START</code></a>) tags to the 
+<p>The next section appends table row start (<a href="#TR_START"><code>TR_START</code></a>) 
+and table column start (<a href="#TD_START"><code>TD_START</code></a>) tags to the 
 configuration form for the hidden form elements. </p>
 <pre>
 private void appendStartHiddenRow(StringBuffer buf) {
@@ -354,9 +355,9 @@ private void appendStartRow(StringBuffer buf,
 }
 </pre>
 <p>The next section appends close element 
-(<code><a href="cdg_config.html#CLOSE_ELEMENT">CLOSE_ELEMENT</a></code>), table column end 
-(<code><a href="cdg_config.html#TD_END">TD_END</a></code>), and table row end 
-(<code><a href="cdg_config.html#TR_END">TR_END</a></code>) tags to the current table row.</p>
+(<code><a href="#CLOSE_ELEMENT">CLOSE_ELEMENT</a></code>), table column end 
+(<code><a href="#TD_END">TD_END</a></code>), and table row end 
+(<code><a href="#TR_END">TR_END</a></code>) tags to the current table row.</p>
 <pre>
 private void appendEndRow(StringBuffer buf) {
   buf.append(CLOSE_ELEMENT);
@@ -674,7 +675,7 @@ methods in the <code>ConnectorType</code> interface. </p>
 
 <p class="backtotop"><a href="#top">Back to top</a></p>
 
-<a id="connInst" name="connInst"></a>
+<a id="CreatingaConnectorDefaultsFile" name="CreatingaConnectorDefaultsFile"></a>
 <h2>Creating a Connector Defaults XML File</h2>
 
 <p>The <code>connectorDefaults.xml</code> file provides placeholders for the
@@ -688,7 +689,7 @@ is not used by the connector manager. There can be no spaces in the
   <code>bean id</code> string. The class attribute lists the location 
 of the connector source, in this case at in the <code>FileConnector.java</code> file
 in the 
-<code>/com/google/enterprise/connector/file</code> folder. The 
+<code>/com/google/enterprise/connector/<em>file</em></code> folder. The 
 <code>property</code> tags shown in the snippet that follows 
 associate the configuration form fields with the variables defined the 
 <code>FileConnector.java</code> file.  </p>
@@ -799,8 +800,47 @@ content management system that the connector does not need to address: </p>
 &lt;/bean&gt;
 &lt;/beans&gt;
 </pre>
+
+
+<a id="CreatingaConnectorInstanceFile"
+ name="CreatingaConnectorInstanceFile"></a>
 <h2>Creating a Connector Instance File</h2>
-<p>The connector instance file </p>
+<p>The connector instance file (<code>connectorInstance.xml</code>) contains
+  the values requred to create a connector
+  instance. The instance file provides a place for administrators to modify the
+  values that are in the defaults file that aren't placeholders (that are configured
+  by the Admin Console configuration form). The <code>connectorDefaults.xml</code> file
+  contains the default values for each of the values in the instance file. 
+  See <a href="#CreatingaConnectorDefaultsFile">Creating a Connector Defaults
+  File</a> 
+  for a comparison of the values in the instance file.  </p>
+<p>The values are:</p>
+<table width="80%" border="1">
+  <tr>
+    <th scope="col">Value</th>
+    <th scope="col">Description</th>
+  </tr>
+  <tr>
+    <td><code>bean id</code></td>
+    <td>Connector instance name (required).</td>
+  </tr>
+  <tr>
+    <td><code>class</code></td>
+    <td>Path to the connector instance (required). The class value translates
+    into:<br /><code>/com/google/enterprise/connector/filenet3/FileConnector</code></td>
+  </tr>
+  <tr>
+    <td><code>parent</code></td>
+    <td>The name of the defaults value.</td>
+  </tr>
+  <tr>
+    <td><code>singleton</code></td>
+    <td>Indicates a class that can be instantiated only once. The connector instance
+      file always sets this value to <code>false</code>.</td>
+  </tr>
+</table>
+<br /><br />
+<p>The instance file example is as follows:</p>
 <pre>
 &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
 &lt;!DOCTYPE beans PUBLIC &quot;-//SPRING//DTD BEAN//EN&quot; &quot;http://www.springframework.org/dtd/spring-beans.dtd&quot;&gt;
@@ -809,7 +849,10 @@ content management system that the connector does not need to address: </p>
   class=&quot;com.google.enterprise.connector.filenet3.FileConnector&quot; 
   parent=&quot;filenet-connector-defaults&quot; 
   singleton=&quot;false&quot;&gt;
-  &lt;!--   
+  &lt;!--</pre>
+ <p>The sections that follow are commented out. The included section is for values
+   that would be included in the connector.</p> 
+<pre>
     &lt;property name=&quot;included_meta&quot;&gt;
       &lt;set&gt;
         &lt;value&gt;ClassificationStatus&lt;/value&gt;
@@ -833,7 +876,10 @@ content management system that the connector does not need to address: </p>
         &lt;value&gt;StorageLocation&lt;/value&gt;
         &lt;value&gt;VersionStatus&lt;/value&gt;
       &lt;/set&gt;
-   &lt;/property&gt;
+   &lt;/property&gt;</pre>
+ <p>The next section lists the values that are available at the content management
+   system, but are not included in the connector.</p> 
+<pre>
    &lt;property name=&quot;excluded_meta&quot;&gt;
       &lt;set&gt;
         &lt;value&gt;AccessMask&lt;/value&gt;
@@ -884,9 +930,12 @@ content management system that the connector does not need to address: </p>
 
 <a id="PopProp" name="PopProp"></a>
 <h2>Properties File</h2>
-<p>A <code><em>connector</em>.properties</code> file provides information and file access to a connector from the values that an administrator specifies in the configuration form. Spring Framework uses the data in the properties file to create a connector instance.  </p>
-<p class="note"><strong>Note: </strong>Any property name that contains the string <code>password</code> is encrypted in the properties file. For example, <code>notAPasswordAtAll</code> is encrypted. </p>
-<p> The connector manager creates the properties file and puts the form in a folder on the servlet container. For more information, see <a href="cdg_config.html#connInst">Creating a Connector Instance XML File</a>. See also, <a href="cdg_config.html#HowPopProp">How the Connector Manager Populates a Properties File</a>. </p>
+<p>A <em>ConnectorName</em><code>.properties</code> file provides information and file access to a connector from the values that an administrator specifies in the configuration form. Spring Framework uses the data in the properties file to create a connector instance.  </p>
+<p class="note"><strong>Note: </strong>The connector manager encrypts any property
+  in the properties file that contains the string 
+password. For example, <code>notAPasswordAtAll</code> is
+  encrypted. </p>
+<p> The connector manager creates the properties file and puts the form in a folder on the servlet container. For more information, see <a href="#CreatingaConnectorInstanceFile">Creating a Connector Instance XML File</a>. See also, <a href="#HowPopProp">How the Connector Manager Populates a Properties File</a>. </p>
 <p>If you are using Apache Tomcat as your servlet container, and the connector manager <code>.war</code> file has the default name <code>connector-manager.war</code>, then the <code><em>connector</em>.properties</code> file is placed in the following location:</p>
 <pre><em>Tomcat</em>/webapps/connector-manager/WEB-INF/connectors/<em>ctype</em>/<em>cname</em>/<em>cname</em>.properties</pre>
 <p>Where:</p>
@@ -942,7 +991,9 @@ additional_where_clause_invalid=Where Clause is syntactically incorrect.</pre>
 <li>The connector manager  calls the <code>ConnectorType.getConfigForm</code> method, which returns an XHTML configuration form that the connector manager passes back to the search appliance and displays on the Admin Console. </li>
   <li>The connector manager creates a folder on the servlet container for the connector. </li>
   <li>The administrator fills in the configuration form and the search appliance sends the form information back to the connector manager. The connector manager calls the <code>ConnectorType.validateConfig</code> method to verify that the required form information is present. If needed, <code>validateConfig</code> returns the form back to the Admin Console to request the administrator to add missing information. The <code>validateConfig</code> method can also be used to expand choices on a form, for example, if the form has  options that an administrator can expand to indicate more information for a parameter. </li>
-  <li>When done, the connector manager stores the completed form values in the properties file. </li>
+  <li>When done, the connector manager uses the input names from the
+    configuration form and the values that the administrator supplies to populate
+    the properties map. </li>
   </ol>
   
 
