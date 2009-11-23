@@ -1597,14 +1597,17 @@ Byte range requests for log listing pages and ZIP archive files are ignored.</p>
 <a id="UsingAloggingpropertiesConfigurationFile"
  name="UsingAloggingpropertiesConfigurationFile"></a>
 <h3>Using a logging.properties Configuration File</h3>
-<p>Connectors can include a copy of the <code>logging.properties</code> file at the 
-root level of the connector JAR file to provide logging levels specific to the connector 
-and any third-party libraries that accompany the connector.  The <code>logging.properties</code> 
-file contains one line per package for third party libraries that the connector includes. For an 
-example, see the 
-<a href="http://google-enterprise-connector-dctm.googlecode.com/svn/trunk/projects/google-enterprise-connector-dctm/config/logging.properties">Documentum connector logging.properties file</a>. The copy of the <code>logging.properties</code> 
-file in the <code>WEB-INF/classes</code> directory (which comes from the connector, either 
-via the installer or manual installation) overrides the copy in the JAR file in the <code>WEB-INF/lib</code> directory.</p>
+<p>Connectors can include a copy of the <code>logging.properties</code> file
+  at the  root level of the connector JAR file to provide logging levels specific
+  to the connector  and any third-party libraries that accompany the connector.
+  The <code>logging.properties</code> 
+file contains one line per package for third party libraries that the connector
+includes. For an  example, see the 
+<a href="http://google-enterprise-connector-dctm.googlecode.com/svn/trunk/projects/google-enterprise-connector-dctm/config/logging.properties">Documentum
+connector logging.properties file</a>. The copy of the <code>logging.properties</code> 
+file in the <code>WEB-INF/classes</code> directory (which comes from the connector,
+either  using the installer or manual installation) overrides the copy in the
+JAR file in the <code>WEB-INF/lib</code> directory.</p>
 
 <p>To use a logging.properties configuration file to log URLs and metadata:</p>
 <ol>
@@ -1622,11 +1625,11 @@ via the installer or manual installation) overrides the copy in the JAR file in 
       <code>/classes</code> directory manually.</li>
     </ul>
   </li>
-  <li>Open the logging.properties file in a text editor.</li>
+  <li>Open the <code>logging.properties</code> file in a text editor.</li>
   <li>Add the following line to the file:
     <pre>com.google.enterprise.connector.pusher.DocPusher.FEED_WRAPPER.FEED.level=FINER</pre>
   </li>
-  <li>Save the logging.properties file.</li>
+  <li>Save the <code>logging.properties</code> file.</li>
   <li>Retart Tomcat.
     <p>The logging information is recorded in 
     <em>ConnectorName</em><code>/Tomcat/logs/google-connectors.feed</code><em>%g</em><code>.log</code>, where <em>%g</em> 
