@@ -147,6 +147,27 @@ public class TraversalScheduler implements Runnable {
       init();
       return batchSize.getMaximum();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      init();
+      return batchSize.equals(obj);
+    }
+
+    @Override
+    public int hashCode() {
+      init();
+      return batchSize.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      init();
+      return batchSize.toString();
+    }
   }
 
   public void run() {
