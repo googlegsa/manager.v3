@@ -89,6 +89,7 @@ public class MockJcrRepositoryTest extends TestCase {
     creds = new SimpleCredentials("joe", "joey".toCharArray());
     try {
       session = repo.login(creds);
+      fail("Expected exception not thrown.");
     } catch (LoginException expected) {
       assertEquals("Given credentials not valid.", expected.getMessage());
     }
@@ -99,6 +100,7 @@ public class MockJcrRepositoryTest extends TestCase {
     creds = new SimpleCredentials("rat", "rat".toCharArray());
     try {
       session = repo.login(creds);
+      fail("Expected exception not thrown.");
     } catch (LoginException expected) {
       assertEquals("Given credentials not valid.", expected.getMessage());
     }
