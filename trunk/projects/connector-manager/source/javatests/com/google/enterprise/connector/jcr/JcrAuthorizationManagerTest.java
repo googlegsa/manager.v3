@@ -33,12 +33,14 @@ import java.util.List;
 import java.util.Map;
 
 import javax.jcr.Credentials;
+import javax.jcr.LoginException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 
 public class JcrAuthorizationManagerTest extends TestCase {
 
-  public final void testAuthorizeDocids() throws RepositoryException {
+  public final void testAuthorizeDocids()
+      throws RepositoryException, LoginException {
 
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog2.txt");
@@ -102,7 +104,8 @@ public class JcrAuthorizationManagerTest extends TestCase {
     }
   }
 
-  public final void testAuthorizeNewFormat() throws RepositoryException {
+  public final void testAuthorizeNewFormat()
+      throws RepositoryException, LoginException {
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLogAcl.txt");
     MockRepository r = new MockRepository(mrel);

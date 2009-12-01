@@ -19,6 +19,7 @@ import com.google.enterprise.connector.mock.MockRepositoryDocument;
 import com.google.enterprise.connector.mock.MockRepositoryProperty;
 
 import javax.jcr.Credentials;
+import javax.jcr.LoginException;
 import javax.jcr.Repository;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
@@ -61,7 +62,7 @@ public class MockJcrRepository implements Repository {
     return repo;
   }
 
-  public Session login(Credentials creds) {
+  public Session login(Credentials creds) throws LoginException {
     return makeSession(creds);
   }
 
@@ -89,13 +90,13 @@ public class MockJcrRepository implements Repository {
     throw new UnsupportedOperationException();
   }
 
-  private Session makeSession(Credentials creds) {
+  private Session makeSession(Credentials creds) throws LoginException {
     if (!(creds instanceof SimpleCredentials)) {
       throw new IllegalArgumentException();
     }
     SimpleCredentials simpleCreds = (SimpleCredentials) creds;
     if (!authenticate(simpleCreds)) {
-      return null;
+      throw new LoginException("Given credentials not valid.");
     }
     MockJcrSession session = new MockJcrSession(this);
     session.setCreds(simpleCreds);
