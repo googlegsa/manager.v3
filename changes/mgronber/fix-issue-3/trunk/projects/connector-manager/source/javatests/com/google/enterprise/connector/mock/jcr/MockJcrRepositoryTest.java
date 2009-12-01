@@ -79,8 +79,7 @@ public class MockJcrRepositoryTest extends TestCase {
     try {
       session = repo.login(creds);
     } catch (LoginException e) {
-      fail("Caught unexpected exception");
-      e.printStackTrace();
+      fail("Caught unexpected exception: " + e.getMessage());
     }
     assertNotNull(session);
 

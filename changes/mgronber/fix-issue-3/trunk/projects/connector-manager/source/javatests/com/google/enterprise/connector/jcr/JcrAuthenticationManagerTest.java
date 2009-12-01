@@ -33,19 +33,13 @@ import javax.jcr.SimpleCredentials;
 public class JcrAuthenticationManagerTest extends TestCase {
 
   public final void testAuthenticate() throws RepositoryLoginException,
-      RepositoryException {
+      RepositoryException, LoginException {
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog2.txt");
     MockRepository r = new MockRepository(mrel);
     MockJcrRepository repo = new MockJcrRepository(r);
     Credentials creds = new SimpleCredentials("admin", "admin".toCharArray());
-    Session session = null;
-    try {
-      session = repo.login(creds);
-    } catch (LoginException e) {
-      fail("Caught unexpected exception");
-      e.printStackTrace();
-    }
+    Session session = repo.login(creds);
     AuthenticationManager authenticationManager =
         new JcrAuthenticationManager(session);
 
