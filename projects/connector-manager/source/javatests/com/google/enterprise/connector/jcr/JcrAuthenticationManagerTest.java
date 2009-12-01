@@ -26,13 +26,14 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import javax.jcr.Credentials;
+import javax.jcr.LoginException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 
 public class JcrAuthenticationManagerTest extends TestCase {
 
   public final void testAuthenticate() throws RepositoryLoginException,
-      RepositoryException {
+      RepositoryException, LoginException {
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog2.txt");
     MockRepository r = new MockRepository(mrel);

@@ -21,6 +21,7 @@ import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import junit.framework.TestCase;
 
 import javax.jcr.Credentials;
+import javax.jcr.LoginException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 
@@ -32,7 +33,7 @@ public class MockJcrRepositoryTest extends TestCase {
   /**
    * Basic sanity test
    */
-  public void testSimpleRepository() {
+  public void testSimpleRepository() throws LoginException {
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
@@ -49,7 +50,7 @@ public class MockJcrRepositoryTest extends TestCase {
   /**
    * Test session with "users" document and "acl" properties.
    */
-  public void testAuthnRepository() {
+  public void testAuthnRepository() throws LoginException {
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog2.txt");
     MockRepository r = new MockRepository(mrel);
@@ -61,13 +62,47 @@ public class MockJcrRepositoryTest extends TestCase {
     creds = new SimpleCredentials("fred", "fred".toCharArray());
     session = repo.login(creds);
     assertTrue(session != null);
-    // Test bad login
-    creds = new SimpleCredentials("fred", "freddy".toCharArray());
-    session = repo.login(creds);
-    assertTrue(session == null);
-    // Test bad user
+  }
+
+  /**
+   * Test for Issue 3.  Bad login should result in a LoginException.
+   */
+  public final void testIssue3() {
+    MockRepositoryEventList mrel =
+        new MockRepositoryEventList("MockRepositoryEventLog7.txt");
+    MockRepository r = new MockRepository(mrel);
+    MockJcrRepository repo = new MockJcrRepository(r);
+
+    // Test good credentials.
+    Credentials creds = new SimpleCredentials("joe", "joe".toCharArray());
+    Session session = null;
+    try {
+      session = repo.login(creds);
+    } catch (LoginException e) {
+      fail("Caught unexpected exception: " + e.getMessage());
+    }
+    assertNotNull(session);
+
+    // Test bad login.
+    session = null;
+    creds = new SimpleCredentials("joe", "joey".toCharArray());
+    try {
+      session = repo.login(creds);
+      fail("Expected exception not thrown.");
+    } catch (LoginException expected) {
+      assertEquals("Given credentials not valid.", expected.getMessage());
+    }
+    assertNull(session);
+
+    // Test bad user.
+    session = null;
     creds = new SimpleCredentials("rat", "rat".toCharArray());
-    session = repo.login(creds);
-    assertTrue(session == null);
+    try {
+      session = repo.login(creds);
+      fail("Expected exception not thrown.");
+    } catch (LoginException expected) {
+      assertEquals("Given credentials not valid.", expected.getMessage());
+    }
+    assertNull(session);
   }
 }

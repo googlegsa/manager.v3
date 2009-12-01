@@ -63,9 +63,7 @@ public class JcrAuthenticationManager implements AuthenticationManager {
         valid = true;
       }
     } catch (javax.jcr.LoginException e) {
-      // TODO: ziff Does this mean that login failed? In that case, we should
-      // just set result to false and continue...
-      throw new RepositoryLoginException(e);
+      // Login failed.  Just leave result false and continue.
     } catch (javax.jcr.RepositoryException e) {
       throw new RepositoryException(e);
     } finally {
