@@ -352,7 +352,7 @@
     -->
     <property name="supportedMimeTypes">
       <set>
-        <!-- Support various well-known document formats -->
+        <!-- Support various document formats -->
         <value>text/richtext</value>
         <value>text/rtf</value>
         <value>application/rtf</value>
@@ -371,6 +371,29 @@
         <value>application/x-freelance</value>
         <value>application/vnd.lotus-notes</value>
         <value>application/vnd.lotus-wordpro</value>
+        <value>application/excel</value>
+        <value>application/vnd.ms-excel</value>
+        <value>application/x-excel</value>
+        <value>application/x-msexcel</value>
+        <value>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</value>
+        <value>application/vnd.ms-excel.sheet.macroEnabled.12</value>
+        <value>application/vnd.ms-htmlhelp</value>
+        <value>application/mspowerpoint</value>
+        <value>application/powerpoint</value>
+        <value>application/vnd.ms-powerpoint</value>
+        <value>application/vnd.openxmlformats-officedocument.presentationml.presentation</value>
+        <value>application/vnd.ms-powerpoint.presentation.macroEnabled.12</value>
+        <value>application/vnd.ms-project</value>
+        <value>application/x-project</value>
+        <value>application/x-mspublisher</value>
+        <value>application/x-msschedule</value>
+        <value>application/msword</value>
+        <value>application/vnd.openxmlformats-officedocument.wordprocessingml.document</value>
+        <value>application/vnd.ms-word.document.macroEnabled.12</value>
+        <value>application/vnd.ms-works</value>
+        <value>application/mswrite</value>
+        <value>application/x-mswrite</value>
+        <value>application/vnd.ms-xpsdocument</value>
         <value>application/vnd.oasis.opendocument.presentation</value>
         <value>application/vnd.oasis.opendocument.presentation-template</value>
         <value>application/vnd.oasis.opendocument.spreadsheet</value>
@@ -392,24 +415,6 @@
         <value>application/x-tex</value>
         <value>application/x-texinfo</value>
         <value>application/x-pagemaker</value>
-        <!-- Support various less-well-known document formats -->
-        <value>application/excel</value>
-        <value>application/vnd.ms-excel</value>
-        <value>application/x-excel</value>
-        <value>application/x-msexcel</value>
-        <value>application/vnd.ms-htmlhelp</value>
-        <value>application/mspowerpoint</value>
-        <value>application/powerpoint</value>
-        <value>application/vnd.ms-powerpoint</value>
-        <value>application/vnd.ms-project</value>
-        <value>application/x-project</value>
-        <value>application/x-mspublisher</value>
-        <value>application/x-msschedule</value>
-        <value>application/msword</value>
-        <value>application/vnd.ms-works</value>
-        <value>application/mswrite</value>
-        <value>application/x-mswrite</value>
-        <value>application/vnd.ms-xpsdocument</value>
         <!-- Support multipart files with possibly supported subparts -->
         <value>mulitpart/appledouble</value>
         <value>mulitpart/mixed</value>
