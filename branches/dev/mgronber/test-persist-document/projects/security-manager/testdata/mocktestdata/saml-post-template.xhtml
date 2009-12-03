@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/MarkUp/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head><title>Please continue</title></head>
+<body onload="document.forms[0].submit()">
+
+<noscript>
+<p>
+<strong>Note:</strong> Since your browser does not support
+Javascript, you must press the Continue button once to proceed.
+</p>
+</noscript>
+
+<form action="${action}" method="post">
+<div>
+<input type="hidden" name="SAMLResponse" value="${SAMLResponse}"/>
+#if (${RelayState})
+<input type="hidden" name="RelayState" value="${RelayState}"/>
+#end
+</div>
+
+<noscript>
+<div>
+<input type="submit" value="Continue"/>
+</div>
+</noscript>
+</form>
+
+</body>
+</html>
