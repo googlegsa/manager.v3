@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  DTD for messages exchanged between the Search Appliance Administration Console
+  and the Connector Manager Servlets.
+
+  @title Connector Manager Admin DTD
+  @hidden This document is not complete and currenlty rooted at the
+          AuthorizationQuery.  As elements are added might want to update the
+          root element.
+  @hidden Documented using DTDDoc (http://dtddoc.sourceforge.net/).
+  @root AuthorizationQuery
+  -->
+
+<!--
+  AuthorizationQuery is used to make an authorization request for a batch of
+  resources or URI's.  It contains a sequence of ConnectorQuery elements each
+  containing an Identity and sequence of Resources to be authorized against the
+  Identity.
+  -->
+<!ELEMENT AuthorizationQuery (ConnectorQuery+)>
+
+<!--
+  ConnectorQuery contains an Identity and a batch of Resource elements to be
+  checked for authorization.  The Resource elements may belong to different
+  Connectors and the Connector Manager is responsible for sending the
+  authorization request to the proper Connector and formulating a response.
+  -->
+<!ELEMENT ConnectorQuery (Identity, Resource+)>
+
+<!--
+  Identity is used to represent the user's verified identity.  Depending on
+  how the user was authenticated it may contain attributes related to the user's
+  domain and password.  It will contain the username for the identity.
+  -->
+<!ELEMENT Identity (#PCDATA)>
+
+<!--
+  @attr domain The domain name associated with the username if specified during
+               authentication.
+  @attr password The password for the username.  <b><i>Note this is only sent
+                 from GSA 6.2 or newer.</i></b>
+  @attr source The source of the username.  <b><i>Note, it is not clear if this
+               is ever set to anything other than "connector" and it is
+               currently not used by the Connector Manager.</i></b>
+  -->
+<!ATTLIST Identity
+  domain CDATA #IMPLIED
+  password CDATA #IMPLIED
+  source (connector|gsa) "connector">
+
+<!--
+  Resource is a URI associated with a document created by a Connector.  In
+  addition to containing the URI, it must contain the Connector Name that
+  created the Document associated with the URI.
+
+  If the Connector did not attach a 'google:documenturl' property to the
+  Document when it was initially created then the URI will be fabricated by the
+  Connector Manager and will contain the both the 'google:docid' and the
+  Connector Name.  If the Document did contain a 'google:documenturl' property
+  then the Resource will contain an attribute holding the Connector Name.
+  -->
+<!ELEMENT Resource (#PCDATA)>
+
+<!--
+  @attr connectorname The name of the connector associated with the Resource.
+                      In the case where the Resource values does not contain a
+                      fabricated "googleconnector://" URL, the connector name
+                      cannot be parsed from the URL and needs to be supplied in
+                      this attribute.  It is an error to have a non-fabricated
+                      Resource value without this attribute.
+-->
+<!ATTLIST Resource
+  connectorname CDATA #IMPLIED>
