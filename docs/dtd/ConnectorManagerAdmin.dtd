@@ -12,6 +12,12 @@
   -->
 
 <!--
+  Container for the Resource and the authorization decision associated with the
+  Resource.
+  -->
+<!ELEMENT Answer (Resource,Decision)>
+
+<!--
   AuthorizationQuery is used to make an authorization request for a batch of
   resources or URI's.  It contains a sequence of ConnectorQuery elements each
   containing an Identity and sequence of Resources to be authorized against the
@@ -20,28 +26,11 @@
 <!ELEMENT AuthorizationQuery (ConnectorQuery+)>
 
 <!--
-  Connector Manager Response is the primary wrapper for responses from the
-  Connector Manager to all forms of request.  Minimally the response will
-  contain a status code.  Beyond that it will depend on the request.  Some of
-  the common elements are described here.
+  The specific response to an authorization request.  Will contain a list of
+  Answers associated with the batch of Resources that were sent with the
+  request.
   -->
-<!ELEMENT CmResponse (StatusId,(StatusMsg?|CMParams*|AuthorizationResponse?))>
-
-<!--
-  Status code associated with the response.  A status of '0' usually indicates
-  success.  Anything else usually indicates a problem.
-  -->
-<!ELEMENT StatusId (#PCDATA)>
-
-<!--
-  Translated message associated with the StatusId.  May contain parameter place
-  holders which are replaced with parameters contained in CMParams elements.
-
-  Note, for the GSA the StatusMsg is rarely used.  The StatusId is used to look
-  up a translated message on the GSA.
-  -->
-<!ELEMENT StatusMsg (#PCDATA)>
-
+<!ELEMENT AuthorizationResponse (Answer*)>
 
 <!--
   Contains a parameter for a StatusMsg.  If the message string has parameters
@@ -58,23 +47,12 @@
   CMParam CDATA #REQUIRED>
 
 <!--
-  The specific response to an authorization request.  Will contain a list of
-  Answers associated with the batch of Resources that were sent with the
-  request.
+  Connector Manager Response is the primary wrapper for responses from the
+  Connector Manager to all forms of request.  Minimally the response will
+  contain a status code.  Beyond that it will depend on the request.  Some of
+  the common elements are described here.
   -->
-<!ELEMENT AuthorizationResponse (Answer*)>
-
-<!--
-  Container for the Resource and the authorization decision associated with the
-  Resource.
-  -->
-<!ELEMENT Answer (Resource,Decision)>
-
-<!--
-  The decision from the Connector associated with the request.  Can be one of
-  "Deny" or "Permit".
-  -->
-<!ELEMENT Decision (#PCDATA)>
+<!ELEMENT CmResponse (StatusId,(StatusMsg?|CMParams*|AuthorizationResponse?))>
 
 <!--
   ConnectorQuery contains an Identity and a batch of Resource elements to be
@@ -83,6 +61,12 @@
   authorization request to the proper Connector and formulating a response.
   -->
 <!ELEMENT ConnectorQuery (Identity, Resource+)>
+
+<!--
+  The decision from the Connector associated with the request.  Can be one of
+  "Deny" or "Permit".
+  -->
+<!ELEMENT Decision (#PCDATA)>
 
 <!--
   Identity is used to represent the user's verified identity.  Depending on
@@ -128,3 +112,18 @@
 -->
 <!ATTLIST Resource
   connectorname CDATA #IMPLIED>
+
+<!--
+  Status code associated with the response.  A status of '0' usually indicates
+  success.  Anything else usually indicates a problem.
+  -->
+<!ELEMENT StatusId (#PCDATA)>
+
+<!--
+  Translated message associated with the StatusId.  May contain parameter place
+  holders which are replaced with parameters contained in CMParams elements.
+
+  Note, for the GSA the StatusMsg is rarely used.  The StatusId is used to look
+  up a translated message on the GSA.
+  -->
+<!ELEMENT StatusMsg (#PCDATA)>
