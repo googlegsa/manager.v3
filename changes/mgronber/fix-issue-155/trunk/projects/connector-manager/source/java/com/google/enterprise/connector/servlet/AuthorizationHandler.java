@@ -107,10 +107,10 @@ public class AuthorizationHandler {
       // Have to add the connector name attribute to the element.
       String attribute = ServletUtil.XMLTAG_CONNECTOR_NAME_ATTRIBUTE + "=\""
           + resource.getConnectorName() + "\"";
-      out.print(ServletUtil.indentStr(3)
-          + "<" + ServletUtil.XMLTAG_RESOURCE + " " + attribute + ">");
-      out.print(resource.getUrl());
-      ServletUtil.writeXMLTag(out, 0, ServletUtil.XMLTAG_RESOURCE, true);
+      ServletUtil.writeXMLTagWithAttrs(out, 3, ServletUtil.XMLTAG_RESOURCE,
+          attribute, false);
+      out.println(ServletUtil.indentStr(4) + resource.getUrl());
+      ServletUtil.writeXMLTag(out, 3, ServletUtil.XMLTAG_RESOURCE, true);
     }
     ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_DECISION,
                                 (permit) ? "Permit" : "Deny");
