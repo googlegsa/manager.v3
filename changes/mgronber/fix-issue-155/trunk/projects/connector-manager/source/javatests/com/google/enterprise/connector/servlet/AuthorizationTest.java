@@ -372,9 +372,9 @@ public class AuthorizationTest extends TestCase {
       + "</CmResponse>\n";
 
   /**
-   * Test the documentUrl is passed in as the document authorization key.
+   * Test the searchurl is passed in as the document authorization key.
    */
-  public void testDocumentUrlAuthz() {
+  public void testSearchUrlAuthz() {
     // The parser will be able to parse the first resource and it will be added
     // to the mapping and processed.  Once it hits the bad URL, however, it
     // will bail and set the overall status of the response to indicate the

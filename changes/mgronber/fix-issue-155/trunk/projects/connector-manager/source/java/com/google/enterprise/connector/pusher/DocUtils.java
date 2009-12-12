@@ -21,6 +21,7 @@ import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.spi.SpiConstants.FeedType;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
 import com.google.enterprise.connector.spiimpl.DateValue;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
@@ -216,22 +217,50 @@ public class DocUtils {
 
   /**
    * Return the appropriate feed type for the supplied Document.
+   * <p>
+   * To support legacy settings without change, the logic goes like this:
+   * <ol>
+   * <li> If there is no searchurl and no feedtype setting then default to
+   *      content feed using a fabricated URL from the docid.</li>
+   * <li> If there is a searchurl and no feedtype setting then default to web
+   *      feed and use the searchurl as the document URL.</li>
+   * <li> Otherwise, the feedtype setting will determine the feed type.  Note,
+   *      this means that you can set the feedtype to web feed and use the
+   *      fabricated URL's by not setting a searchurl.  This is probably a
+   *      recipe for disaster since the fabricated URL will use the
+   *     googleconnector:// protocol, however, this might be an easy key to
+   *     use on the front-end for transformation.</li>
+   * </ol>
+   * <p>
+   * Illegal values for feed type will be ignored and the default behavior will
+   * be used.
    */
   public static String getFeedType(Document document)
       throws RepositoryException {
-    String documentUrl = getOptionalString(document,
-        SpiConstants.PROPNAME_DOCUMENTURL);
+    FeedType feedType = null;
     String searchUrl = getOptionalString(document,
         SpiConstants.PROPNAME_SEARCHURL);
-    if (documentUrl != null && searchUrl != null) {
-      // Illegal state.  Can't have both properties set.
-      throw new RepositoryDocumentException("Illegal Document Property State: "
-          + "Document contains both a documentUrl (" + documentUrl
-          + ") and a searchUrl (" + searchUrl + ")");
-    } else if (searchUrl != null) {
-      return XmlFeed.XML_FEED_METADATA_AND_URL;
-    } else {
+    String feedTypeValue = getOptionalString(document,
+        SpiConstants.PROPNAME_FEEDTYPE);
+    if (feedTypeValue != null) {
+      try {
+        feedType = FeedType.valueOf(feedTypeValue);
+      } catch (IllegalArgumentException iae) {
+        LOGGER.warning("Illegal value for feedtype property: " + feedTypeValue);
+      }
+    }
+    if (feedType == null) {
+      // Have to go with default behavior.
+      if (searchUrl == null) {
+        return XmlFeed.XML_FEED_INCREMENTAL;
+      } else {
+        return XmlFeed.XML_FEED_METADATA_AND_URL;
+      }
+    } else if (FeedType.CONTENT.equals(feedType)) {
       return XmlFeed.XML_FEED_INCREMENTAL;
+    } else {
+      // Has to be WEB.
+      return XmlFeed.XML_FEED_METADATA_AND_URL;
     }
   }
 }

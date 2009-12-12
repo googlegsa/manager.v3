@@ -70,41 +70,30 @@ public class SpiConstants {
   public static final String PROPNAME_CONTENTURL = "google:contenturl";
 
   /**
-   * Identifies an optional single-valued string property that, if present,
-   * will be used by the Search Appliance as the primary URI for this document
-   * - instead of the normal googleconnector:// URI which the connector manager
-   * fabricates based on the {@link #PROPNAME_DOCID} and connector name.
-   * Connector developers should provide this if they want to control the
-   * format of the document URL and still feed content to the GSA.  This
-   * property should not be used with the {@link #PROPNAME_SEARCHURL} which is
-   * a similar property but creates a non-content feed.
+   * Identifies a single-valued FeedType property that, if present, will be
+   * used to determine the feed type for this document.  It is strongly
+   * recommended that this property be set to explicitly determine the feed
+   * type ('content' or 'web') for the document.
    * <p>
-   * Note, in addition to being used as the primary URI, this URL will also be
-   * used as the URL for creating collections, resolving directory crowding,
-   * and affecting relevance related to links contained in content.
+   * If this property is not set, the feed type will be determined as follows:
+   * <ol>
+   * <li> If there is no {@link #PROPNAME_SEARCHURL} then the feed type will
+   *      default to 'content' feed using a fabricated URL derived from the
+   *      {@link #PROPNAME_DOCID}.
+   * <li> If there is a {@link #PROPNAME_SEARCHURL} then the feed type will
+   *      default to 'web' feed and use the {@link #PROPNAME_SEARCHURL} as the
+   *      document URL.
+   * </ol> 
    * <p>
-   * If the connector is configured to perform authorization operations, and
-   * this property is provided as part of the Document, then this property will
-   * be used as the primary key of the document rather than the
-   * {@link #PROPNAME_DOCID} property.
-   * <p>
-   * If a document was added using this property and is to be deleted
-   * later, then the same value for this property must be provided in
-   * the delete Document.
-   * <p>
-   * Value: google:documenturl
+   * Value: google:feedtype
    */
-  public static final String PROPNAME_DOCUMENTURL = "google:documenturl";
+  public static final String PROPNAME_FEEDTYPE = "google:feedtype";
 
   /**
    * Identifies an optional single-valued string property that, if present,
    * will be used by the Search Appliance as the primary URI for this document
    * - instead of the normal googleconnector:// URI which the connector manager
    * fabricates based on the {@link #PROPNAME_DOCID} and the connector name.
-   * Connector developers should provide this if they want the Search Appliance
-   * to do crawl the content rather than feed the content with the Document.
-   * This property should not be used with the {@link #PROPNAME_DOCUMENTURL}
-   * which is a similar property but creates a content feed.
    * <p>
    * Value: google:searchurl
    */
@@ -260,6 +249,13 @@ public class SpiConstants {
    * Value: google:action
    */
   public static final String PROPNAME_ACTION = "google:action";
+
+  /**
+   * Enum for the list of possible feed types.
+   */
+  public enum FeedType {
+    CONTENT, WEB
+  }
 
   /**
    * Ordinal-base typesafe enum for action types.

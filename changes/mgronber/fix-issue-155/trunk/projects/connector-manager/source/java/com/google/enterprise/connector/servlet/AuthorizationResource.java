@@ -35,7 +35,7 @@ import org.w3c.dom.Element;
 public class AuthorizationResource
     implements Comparable<AuthorizationResource> {
   private String connectorName;
-  private String documentUrl;
+  private String searchUrl;
   private ParsedUrl fabricatedUrl;
   private int status = ConnectorMessageCode.SUCCESS;
   private boolean useFabricated = true;
@@ -58,7 +58,7 @@ public class AuthorizationResource
         status = ConnectorMessageCode.RESPONSE_NULL_CONNECTOR;
       } else {
         this.connectorName = connectorName;
-        this.documentUrl = resourceUrl;
+        this.searchUrl = resourceUrl;
       }
     }
   }
@@ -75,7 +75,7 @@ public class AuthorizationResource
     if (useFabricated) {
       return fabricatedUrl.getDocid();
     } else {
-      return documentUrl;
+      return searchUrl;
     }
   }
 
@@ -83,7 +83,7 @@ public class AuthorizationResource
     if (useFabricated) {
       return fabricatedUrl.getUrl();
     } else {
-      return documentUrl;
+      return searchUrl;
     }
   }
 
