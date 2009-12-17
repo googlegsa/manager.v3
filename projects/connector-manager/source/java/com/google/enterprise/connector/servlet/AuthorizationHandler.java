@@ -17,7 +17,7 @@ package com.google.enterprise.connector.servlet;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.servlet.AuthorizationParser.ConnectorQueries;
-import com.google.enterprise.connector.servlet.AuthorizationParser.QueryUrls;
+import com.google.enterprise.connector.servlet.AuthorizationParser.QueryResources;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 
 import java.io.PrintWriter;
@@ -37,13 +37,13 @@ public class AuthorizationHandler {
   Manager manager;
   PrintWriter out;
   int status;
-  Map<String, Boolean> results;
+  Map<AuthorizationResource, Boolean> results;
 
   AuthorizationHandler(String xmlBody, Manager manager, PrintWriter out) {
     this.xmlBody = xmlBody;
     this.manager = manager;
     this.out = out;
-    results = new HashMap<String, Boolean>();
+    results = new HashMap<AuthorizationResource, Boolean>();
   }
 
   /**
@@ -54,7 +54,8 @@ public class AuthorizationHandler {
       Manager manager, PrintWriter out) {
     AuthorizationHandler authorizationHandler = new AuthorizationHandler(
         xmlBody, manager, out);
-    authorizationHandler.results = new TreeMap<String, Boolean>();
+    authorizationHandler.results =
+        new TreeMap<AuthorizationResource, Boolean>();
     return authorizationHandler;
   }
 
@@ -90,14 +91,27 @@ public class AuthorizationHandler {
   }
 
   private void generateEachResultXml() {
-    for (Entry<String, Boolean> e : results.entrySet()) {
+    for (Entry<AuthorizationResource, Boolean> e : results.entrySet()) {
       writeResultElement(e.getKey(), e.getValue());
     }
   }
 
-  private void writeResultElement(String url, boolean permit) {
+  private void writeResultElement(AuthorizationResource resource,
+      boolean permit) {
     ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_ANSWER, false);
-    ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_RESOURCE, url);
+    if (resource.isFabricated()) {
+      // Just write out the element.
+      ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_RESOURCE,
+          resource.getUrl());
+    } else {
+      // Have to add the connector name attribute to the element.
+      String attribute = ServletUtil.XMLTAG_CONNECTOR_NAME_ATTRIBUTE + "=\""
+          + resource.getConnectorName() + "\"";
+      ServletUtil.writeXMLTagWithAttrs(out, 3, ServletUtil.XMLTAG_RESOURCE,
+          attribute, false);
+      out.println(ServletUtil.indentStr(4) + resource.getUrl());
+      ServletUtil.writeXMLTag(out, 3, ServletUtil.XMLTAG_RESOURCE, true);
+    }
     ServletUtil.writeXMLElement(out, 3, ServletUtil.XMLTAG_DECISION,
                                 (permit) ? "Permit" : "Deny");
     ServletUtil.writeXMLTag(out, 2, ServletUtil.XMLTAG_ANSWER, true);
@@ -121,7 +135,7 @@ public class AuthorizationHandler {
     for (String connectorName : urlsByConnector.getConnectors()) {
       NDC.pushAppend(connectorName);
       try {
-        QueryUrls urlsByDocid = urlsByConnector.getQueryUrls(connectorName);
+        QueryResources urlsByDocid = urlsByConnector.getQueryResources(connectorName);
         List<String> docidList = new ArrayList<String>(urlsByDocid.getDocids());
         Set<String> answerSet =
             manager.authorizeDocids(connectorName, docidList, identity);
@@ -133,11 +147,11 @@ public class AuthorizationHandler {
   }
 
   private void accumulateQueryResults(Set<String> answerSet,
-      QueryUrls urlsByDocid) {
+      QueryResources urlsByDocid) {
     for (String docid : urlsByDocid.getDocids()) {
-      ParsedUrl parsedUrl = urlsByDocid.getUrl(docid);
+      AuthorizationResource resource = urlsByDocid.getResource(docid);
       Boolean permit = answerSet.contains(docid) ? Boolean.TRUE : Boolean.FALSE;
-      Object isDup = results.put(parsedUrl.getUrl(), permit);
+      Object isDup = results.put(resource, permit);
       if (isDup != null) {
         //TODO (ziff): warning
       }

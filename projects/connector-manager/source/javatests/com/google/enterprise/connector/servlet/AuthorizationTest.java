@@ -100,15 +100,46 @@ public class AuthorizationTest extends TestCase {
     doTest(TEST_XML1, expectedResult, false, null, null, null);
   }
 
+  private static final String NULL_CONNECTOR_NAME_RESPONSE = "<CmResponse>\n"
+      + "  <StatusId>"
+      + ConnectorMessageCode.RESPONSE_NULL_CONNECTOR + "</StatusId>\n"
+      + "</CmResponse>\n";
+
+  private static final String TEST_BAD_URL_XML = "<AuthorizationQuery>\n"
+    + "<ConnectorQuery>\n"
+    + "  <Identity password=\"pass1\" source=\"gsa\">user1</Identity>\n"
+    + "  <Resource>" + ServletUtil.PROTOCOL + "connector1.localhost"
+    + ServletUtil.DOCID + "foo1</Resource>\n"
+    + "  <Resource>" + ServletUtil.PROTOCOL + ".localhost"
+    + ServletUtil.DOCID + "foo2</Resource>\n"
+    + "</ConnectorQuery>\n"
+    + "<ConnectorQuery>\n"
+    + "  <Identity password=\"pass2\" source=\"connector\">user2</Identity>\n"
+    + "  <Resource>" + ServletUtil.PROTOCOL + "connector3.localhost"
+    + ServletUtil.DOCID + "foo3</Resource>\n"
+    + "</ConnectorQuery>\n"
+    + "</AuthorizationQuery>";
+
   /**
    * The connector name is null.
    */
   public void testHandleDoPost2() {
-    String expectedResult =
-        "<CmResponse>\n" + "  <StatusId>"
-            + ConnectorMessageCode.RESPONSE_NULL_CONNECTOR + "</StatusId>\n"
-            + "</CmResponse>\n";
-    doTest(TEST_XML2, expectedResult, false, null, null, null);
+    String expectedBadDocumentResponse = "<CmResponse>\n"
+      + "  <AuthorizationResponse>\n"
+      + "    <Answer>\n"
+      + "      <Resource>"
+      + ServletUtil.PROTOCOL + "connector1.localhost"
+      + ServletUtil.DOCID + "foo1"
+      + "</Resource>\n"
+      + "      <Decision>Permit</Decision>\n"
+      + "    </Answer>\n"
+      + "  </AuthorizationResponse>\n"
+      + "  <StatusId>" + ConnectorMessageCode.RESPONSE_NULL_CONNECTOR
+      + "</StatusId>\n"
+      + "</CmResponse>\n";
+    doTest(TEST_XML2, NULL_CONNECTOR_NAME_RESPONSE, false, null, null, null);
+    doTest(TEST_BAD_URL_XML, expectedBadDocumentResponse,
+        false, null, null, null);
   }
 
   /**
@@ -260,6 +291,110 @@ public class AuthorizationTest extends TestCase {
         true, "user1", "pass1", "");
     doTest(TEST_PASSWORD_IDENTITY, USER2_EXPECTED_RESULT,
         true, "user2", "pass2", "");
+  }
+
+  private static final String TEST_DOCUMENT_URL = "<AuthorizationQuery>\n"
+      + "  <ConnectorQuery>\n"
+      + "    <Identity source=\"connector\">johndoe</Identity>\n"
+      + "    <Resource connectorname=\"connector-one\">"
+      + "https://www.sphost/sites/mylist/test1.doc</Resource>\n"
+      + "    <Resource connectorname=\"connector-two\">"
+      + "https://www.sphost/sites/mylist/test2.doc</Resource>\n"
+      + "  </ConnectorQuery>\n"
+      + "  <ConnectorQuery>\n"
+      + "    <Identity source=\"connector\">janedoe</Identity>\n"
+      + "    <Resource connectorname=\"connector-three\">"
+      + "https://www.sphost/sites/mylist/test3.doc</Resource>\n"
+      + "  </ConnectorQuery>\n"
+      + "</AuthorizationQuery>";
+
+  private static final String TEST_BAD_DOCUMENT_URL = "<AuthorizationQuery>\n"
+      + "  <ConnectorQuery>\n"
+      + "    <Identity source=\"connector\">johndoe</Identity>\n"
+      + "    <Resource connectorname=\"connector-one\">"
+      + "https://www.sphost/sites/mylist/test1.doc</Resource>\n"
+      + "    <Resource>"
+      + "https://www.sphost.missing/sites/mylist/test2.doc</Resource>\n"
+      + "  </ConnectorQuery>\n"
+      + "  <ConnectorQuery>\n"
+      + "    <Identity source=\"connector\">janedoe</Identity>\n"
+      + "    <Resource connectorname=\"connector-three\">"
+      + "https://www.sphost/sites/mylist/test3.doc</Resource>\n"
+      + "  </ConnectorQuery>\n"
+      + "</AuthorizationQuery>";
+
+  private static final String JOHNDOE_EXPECTED_RESULT = "<CmResponse>\n"
+      + "  <AuthorizationResponse>\n"
+      + "    <Answer>\n"
+      + "      <Resource connectorname=\"connector-one\">\n"
+      + "        https://www.sphost/sites/mylist/test1.doc\n"
+      + "      </Resource>\n"
+      + "      <Decision>Permit</Decision>\n"
+      + "    </Answer>\n"
+      + "    <Answer>\n"
+      + "      <Resource connectorname=\"connector-two\">\n"
+      + "        https://www.sphost/sites/mylist/test2.doc\n"
+      + "      </Resource>\n"
+      + "      <Decision>Permit</Decision>\n"
+      + "    </Answer>\n"
+      + "    <Answer>\n"
+      + "      <Resource connectorname=\"connector-three\">\n"
+      + "        https://www.sphost/sites/mylist/test3.doc\n"
+      + "      </Resource>\n"
+      + "      <Decision>Deny</Decision>\n"
+      + "    </Answer>\n"
+      + "  </AuthorizationResponse>\n"
+      + "  <StatusId>0</StatusId>\n"
+      + "</CmResponse>\n";
+
+  private static final String JANEDOE_EXPECTED_RESULT = "<CmResponse>\n"
+      + "  <AuthorizationResponse>\n"
+      + "    <Answer>\n"
+      + "      <Resource connectorname=\"connector-one\">\n"
+      + "        https://www.sphost/sites/mylist/test1.doc\n"
+      + "      </Resource>\n"
+      + "      <Decision>Deny</Decision>\n"
+      + "    </Answer>\n"
+      + "    <Answer>\n"
+      + "      <Resource connectorname=\"connector-two\">\n"
+      + "        https://www.sphost/sites/mylist/test2.doc\n"
+      + "      </Resource>\n"
+      + "      <Decision>Deny</Decision>\n"
+      + "    </Answer>\n"
+      + "    <Answer>\n"
+      + "      <Resource connectorname=\"connector-three\">\n"
+      + "        https://www.sphost/sites/mylist/test3.doc\n"
+      + "      </Resource>\n"
+      + "      <Decision>Permit</Decision>\n"
+      + "    </Answer>\n"
+      + "  </AuthorizationResponse>\n"
+      + "  <StatusId>0</StatusId>\n"
+      + "</CmResponse>\n";
+
+  /**
+   * Test the searchurl is passed in as the document authorization key.
+   */
+  public void testSearchUrlAuthz() {
+    // The parser will be able to parse the first resource and it will be added
+    // to the mapping and processed.  Once it hits the bad URL, however, it
+    // will bail and set the overall status of the response to indicate the
+    // Connector Name was missing.
+    String expectedBadDocumentResponse = "<CmResponse>\n"
+        + "  <AuthorizationResponse>\n"
+        + "    <Answer>\n"
+        + "      <Resource connectorname=\"connector-one\">\n"
+        + "        https://www.sphost/sites/mylist/test1.doc\n"
+        + "      </Resource>\n"
+        + "      <Decision>Permit</Decision>\n"
+        + "    </Answer>\n"
+        + "  </AuthorizationResponse>\n"
+        + "  <StatusId>" + ConnectorMessageCode.RESPONSE_NULL_CONNECTOR
+        + "</StatusId>\n"
+        + "</CmResponse>\n";
+    doTest(TEST_DOCUMENT_URL, JOHNDOE_EXPECTED_RESULT, true, "johndoe", "", "");
+    doTest(TEST_DOCUMENT_URL, JANEDOE_EXPECTED_RESULT, true, "janedoe", "", "");
+    doTest(TEST_BAD_DOCUMENT_URL, expectedBadDocumentResponse,
+        false, null, null, null);
   }
 
   private void doTest(String xmlBody, String expectedResult,

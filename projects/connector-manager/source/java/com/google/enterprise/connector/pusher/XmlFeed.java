@@ -265,15 +265,14 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     StringBuilder prefix = new StringBuilder();
     prefix.append("<").append(XML_RECORD);
 
-    String searchUrl = null;
-    if (feedType.equals(XML_FEED_METADATA_AND_URL)) {
-      searchUrl = DocUtils.getOptionalString(document,
-          SpiConstants.PROPNAME_SEARCHURL);
+    String searchUrl = DocUtils.getOptionalString(document,
+        SpiConstants.PROPNAME_SEARCHURL);
+    if (searchUrl != null) { 
       validateSearchUrl(searchUrl);
     } else {
-      String docid = DocUtils.getRequiredString(document,
-          SpiConstants.PROPNAME_DOCID);
-      searchUrl = constructGoogleConnectorUrl(docid);
+      // Fabricate a URL from the docid.
+      searchUrl = constructGoogleConnectorUrl(
+          DocUtils.getRequiredString(document, SpiConstants.PROPNAME_DOCID));
     }
     XmlUtils.xmlAppendAttr(XML_URL, searchUrl, prefix);
 
@@ -490,7 +489,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   }
 
   /**
-   * Verify that a supplied searh URL is at least syntactically valid.
+   * Verify that a supplied search URL is at least syntactically valid.
    *
    * @param searchUrl
    * @throws RepositoryDocumentException if searchUrl is invalid.
