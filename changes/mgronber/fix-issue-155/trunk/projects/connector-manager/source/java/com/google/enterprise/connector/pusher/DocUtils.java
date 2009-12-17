@@ -228,8 +228,8 @@ public class DocUtils {
    *      this means that you can set the feedtype to web feed and use the
    *      fabricated URL's by not setting a searchurl.  This is probably a
    *      recipe for disaster since the fabricated URL will use the
-   *     googleconnector:// protocol, however, this might be an easy key to
-   *     use on the front-end for transformation.</li>
+   *      googleconnector:// protocol, however, this might be an easy key to
+   *      use on the front-end for transformation.</li>
    * </ol>
    * <p>
    * Illegal values for feed type will be ignored and the default behavior will
@@ -238,8 +238,6 @@ public class DocUtils {
   public static String getFeedType(Document document)
       throws RepositoryException {
     FeedType feedType = null;
-    String searchUrl = getOptionalString(document,
-        SpiConstants.PROPNAME_SEARCHURL);
     String feedTypeValue = getOptionalString(document,
         SpiConstants.PROPNAME_FEEDTYPE);
     if (feedTypeValue != null) {
@@ -251,6 +249,8 @@ public class DocUtils {
     }
     if (feedType == null) {
       // Have to go with default behavior.
+      String searchUrl = getOptionalString(document,
+          SpiConstants.PROPNAME_SEARCHURL);
       if (searchUrl == null) {
         return XmlFeed.XML_FEED_INCREMENTAL;
       } else {
