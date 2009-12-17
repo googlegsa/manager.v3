@@ -15,7 +15,7 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.servlet.AuthorizationParser.ConnectorQueries;
-import com.google.enterprise.connector.servlet.AuthorizationParser.QueryUrls;
+import com.google.enterprise.connector.servlet.AuthorizationParser.QueryResources;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.SimpleAuthenticationIdentity;
 
@@ -141,7 +141,7 @@ public class AuthorizationParserTest extends TestCase {
       AuthenticationIdentity i, String connectorName) {
     ConnectorQueries cq = getConnectorQueriesByIdentity(p, i);
     assertNotNull(cq);
-    QueryUrls queryUrls = cq.getQueryUrls(connectorName);
+    QueryResources queryUrls = cq.getQueryResources(connectorName);
     if (queryUrls == null) {
       return 0;
     }

@@ -70,13 +70,30 @@ public class SpiConstants {
   public static final String PROPNAME_CONTENTURL = "google:contenturl";
 
   /**
+   * Identifies a single-valued FeedType property that, if present, will be
+   * used to determine the feed type for this document.  It is strongly
+   * recommended that this property be set to explicitly determine the feed
+   * type ('content' or 'web') for the document.
+   * <p>
+   * If this property is not set, the feed type will be determined as follows:
+   * <ol>
+   * <li> If there is no {@link #PROPNAME_SEARCHURL} then the feed type will
+   *      default to 'content' feed using a fabricated URL derived from the
+   *      {@link #PROPNAME_DOCID}.
+   * <li> If there is a {@link #PROPNAME_SEARCHURL} then the feed type will
+   *      default to 'web' feed and use the {@link #PROPNAME_SEARCHURL} as the
+   *      document URL.
+   * </ol> 
+   * <p>
+   * Value: google:feedtype
+   */
+  public static final String PROPNAME_FEEDTYPE = "google:feedtype";
+
+  /**
    * Identifies an optional single-valued string property that, if present,
-   * will be used by the Search Appliance as the primary URI for this
-   * document - instead of the normal googleconnector:// URI which the
-   * connector manager fabricates. Connector developers should provide this
-   * if they want the Search Appliance to do web-style authentication and
-   * authorization for this document. If this is specified, the Search
-   * Appliance will not call back to the connector manager as serve-time
+   * will be used by the Search Appliance as the primary URI for this document
+   * - instead of the normal googleconnector:// URI which the connector manager
+   * fabricates based on the {@link #PROPNAME_DOCID} and the connector name.
    * <p>
    * Value: google:searchurl
    */
@@ -232,6 +249,13 @@ public class SpiConstants {
    * Value: google:action
    */
   public static final String PROPNAME_ACTION = "google:action";
+
+  /**
+   * Enum for the list of possible feed types.
+   */
+  public enum FeedType {
+    CONTENT, WEB
+  }
 
   /**
    * Ordinal-base typesafe enum for action types.

@@ -488,6 +488,143 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
+   * Test default searchurl.
+   */
+  public void testDefaultSearchUrl() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:searchurl\":\"http://www.sometesturl.com/docid\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + "}\r\n" + "";
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
+
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit");
+    dpusher.take(document);
+    dpusher.flush();
+    String resultXML = mockFeedConnection.getFeed();
+
+    assertStringNotContains("googleconnector://", resultXML);
+    assertStringContains("url=\"http://www.sometesturl.com/docid\"", resultXML);
+    assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
+        resultXML);
+    assertStringContains("<feedtype>metadata-and-url</feedtype>", resultXML);
+    assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
+  }
+
+  /**
+   * Test searchurl with feed type set.
+   */
+  public void testSearchUrl() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:searchurl\":\"http://www.sometesturl.com/docid\""
+        + ",\"google:feedtype\":\"WEB\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + "}\r\n" + "";
+    String json2 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+      + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+      + ",\"google:searchurl\":\"http://www.sometesturl.com/docid\""
+      + ",\"google:feedtype\":\"CONTENT\""
+      + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+      + "}\r\n" + "";
+
+    // Web feed with searchurl.
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit");
+    dpusher.take(document);
+    dpusher.flush();
+    String resultXML = mockFeedConnection.getFeed();
+
+    assertStringNotContains("googleconnector://", resultXML);
+    assertStringContains("url=\"http://www.sometesturl.com/docid\"", resultXML);
+    assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
+        resultXML);
+    assertStringContains("<feedtype>metadata-and-url</feedtype>", resultXML);
+    assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
+
+    // Content feed with searchurl.
+    document = JcrDocumentTest.makeDocumentFromJson(json2);
+    dpusher = new DocPusher(mockFeedConnection, "junit");
+    dpusher.take(document);
+    dpusher.flush();
+    resultXML = mockFeedConnection.getFeed();
+
+    assertStringNotContains("googleconnector://", resultXML);
+    assertStringContains("url=\"http://www.sometesturl.com/docid\"", resultXML);
+    assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
+        resultXML);
+    assertStringContains("<feedtype>incremental</feedtype>", resultXML);
+    assertStringContains("<content encoding=\"base64binary\">", resultXML);
+  }
+
+  /**
+   * Test without searchurl with feed type set.
+   */
+  public void testNoSearchUrl() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:feedtype\":\"CONTENT\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + "}\r\n" + "";
+    String json2 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+      + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+      + ",\"google:feedtype\":\"WEB\""
+      + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+      + "}\r\n" + "";
+    String json3 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+      + ",\"author\":\"ziff\""
+      + ",\"google:feedtype\":\"CONTENT\""
+      + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+      + "}\r\n" + "";
+
+    // Content feed without searchurl.
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit");
+    dpusher.take(document);
+    dpusher.flush();
+    String resultXML = mockFeedConnection.getFeed();
+
+    assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
+        + ServletUtil.DOCID + "doc1\"", resultXML);
+    assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
+        resultXML);
+    assertStringContains("<feedtype>incremental</feedtype>", resultXML);
+    assertStringContains("<content encoding=\"base64binary\">", resultXML);
+
+    // Web feed without searchurl.
+    document = JcrDocumentTest.makeDocumentFromJson(json2);
+    dpusher = new DocPusher(mockFeedConnection, "junit");
+    dpusher.take(document);
+    dpusher.flush();
+    resultXML = mockFeedConnection.getFeed();
+
+    assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
+        + ServletUtil.DOCID + "doc1\"", resultXML);
+    assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
+        resultXML);
+    assertStringContains("<feedtype>metadata-and-url</feedtype>", resultXML);
+    assertStringNotContains("<content encoding=\"base64binary\">", resultXML);
+
+    // Content feed without searchurl and without content.
+    document = JcrDocumentTest.makeDocumentFromJson(json3);
+    dpusher = new DocPusher(mockFeedConnection, "junit");
+    dpusher.take(document);
+    dpusher.flush();
+    resultXML = mockFeedConnection.getFeed();
+
+    assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
+        + ServletUtil.DOCID + "doc1\"", resultXML);
+    assertStringContains("displayurl=\"http://www.sometesturl.com/test\"",
+        resultXML);
+    assertStringContains("<feedtype>incremental</feedtype>", resultXML);
+    assertStringContains("<content encoding=\"base64binary\">", resultXML);
+    assertStringContains("IA==", resultXML);
+  }
+
+  /**
    * Test displayurl.
    */
   public void testDisplayUrl() throws Exception {

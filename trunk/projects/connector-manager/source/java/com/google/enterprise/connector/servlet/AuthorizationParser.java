@@ -22,14 +22,13 @@ import org.w3c.dom.NodeList;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * This class parses the xml body of an Authorization request.
- * </p>
+ * <p>
  * An authorization is a sequence of {@code ConnectorQuery} elements.  Each
  * {@code ConnectorQuery} has a single {@code Identity} element and a sequence
  * of {@code Resource} elements.  For example:
@@ -66,17 +65,17 @@ public class AuthorizationParser {
 
   /**
    * Parse the Authorization Request XML into a hierarchy: AuthorizationParser,
-   * ConnectorQueries, QueryUrls.
+   * ConnectorQueries, QueryResources.
    * <p>
    * The top-level, this object (AuthorizationParser) is a map from
    * AuthorizationIdentity objects to ConnectorQueries objects. This partitions
    * the request by Identity.
    * <p>
    * The second-level object, ConnectorQueries, is a map from connector name to
-   * QueryUrls objects. For each connector, it gives all the object for which
+   * QueryResources objects. For each connector, it gives all the object for which
    * the request wants a decision.
    * <p>
-   * The third-level object, QueryUrls, is a map from docid strings to the
+   * The third-level object, QueryResources, is a map from docid strings to the
    * corresponding parsed representation as a ParsedUrl.
    * <p>
    * In practice, for now, it is unlikely that the same connector will show up
@@ -106,7 +105,11 @@ public class AuthorizationParser {
 
     for (int i = 0; i < queryList.getLength(); ++i) {
       Element queryItem = (Element) queryList.item(i);
-      parseIdentityGroup(queryItem);
+      AuthenticationIdentity identity = parseIdentityGroup(queryItem);
+      if (status != ConnectorMessageCode.SUCCESS) {
+        return;
+      }
+      parseResourceGroup(identity, queryItem);
       if (status != ConnectorMessageCode.SUCCESS) {
         return;
       }
@@ -118,7 +121,11 @@ public class AuthorizationParser {
     }
   }
 
-  private void parseIdentityGroup(Element queryItem) {
+  /**
+   * Utility function to establish the first level mapping from the Identity
+   * to the ConnectorQueries.
+   */
+  private AuthenticationIdentity parseIdentityGroup(Element queryItem) {
     String username = ServletUtil.getFirstElementByTagName(queryItem,
         ServletUtil.XMLTAG_IDENTITY);
     String domain =
@@ -127,12 +134,6 @@ public class AuthorizationParser {
     String password =
         ServletUtil.getFirstAttribute(queryItem, ServletUtil.XMLTAG_IDENTITY,
             ServletUtil.XMLTAG_PASSWORD_ATTRIBUTE);
-    List<String> resources = ServletUtil.getAllElementsByTagName(queryItem,
-        ServletUtil.XMLTAG_RESOURCE);
-    if (resources.isEmpty()) {
-      status = ConnectorMessageCode.RESPONSE_NULL_RESOURCE;
-      return;
-    }
 
     AuthenticationIdentity identity = findIdentity(username, password, domain);
     ConnectorQueries urlsByConnector = getConnectorQueriesForIdentity(identity);
@@ -140,9 +141,50 @@ public class AuthorizationParser {
       urlsByConnector = new ConnectorQueries();
       putConnectorQueriesForIdentity(identity, urlsByConnector);
     }
+    return identity;
+  }
 
-    for (String url : resources) {
-      parseResource(urlsByConnector, url);
+  /**
+   * Utility function to establish the second level mapping from the connector
+   * name to the QueryResources and the third level mapping from the docid to the
+   * AuthorizationResource.
+   * <p>
+   * Unfortunately the response to this complex query only has one status so
+   * it's all or nothing.  If there is one improperly formatted element in the
+   * query that is enough to bail on the request and set an appropriate status.
+   * Therefore, the resources are validated at this point to determine if they
+   * can be routed to a connector for authorization.
+   */
+  private void parseResourceGroup(AuthenticationIdentity identity,
+      Element queryItem) {
+    NodeList resourceList =
+        queryItem.getElementsByTagName(ServletUtil.XMLTAG_RESOURCE);
+    if (resourceList.getLength() == 0) {
+      status = ConnectorMessageCode.RESPONSE_NULL_RESOURCE;
+      return;
+    }
+
+    // Get the ConnectorQueries for the given Identity.
+    ConnectorQueries urlsByConnector =
+        getConnectorQueriesForIdentity(identity);
+    for (int i = 0; i < resourceList.getLength(); ++i) {
+      Element resourceItem = (Element) resourceList.item(i);
+      AuthorizationResource resource = new AuthorizationResource(resourceItem);
+      if (resource.getStatus() != ConnectorMessageCode.SUCCESS) {
+        status = resource.getStatus();
+        return;
+      } else {
+        // Create a mapping for this resource.
+        QueryResources urlsByDocid =
+            urlsByConnector.getQueryResources(resource.getConnectorName());
+        if (urlsByDocid == null) {
+          urlsByDocid = new QueryResources();
+          urlsByConnector.putQueryResources(resource.getConnectorName(),
+              urlsByDocid);
+        }
+        urlsByDocid.putResource(resource.getDocId(), resource);
+        numDocs++;
+      }
     }
   }
 
@@ -170,12 +212,12 @@ public class AuthorizationParser {
    *
    * @param string1
    * @param string2
-   * @return true if the given strings are considered the same. 
+   * @return true if the given strings are considered the same.
    */
   private static boolean matchNullString(String string1, String string2) {
     String value1 = (string1 == null) ? "" : string1;
     String value2 = (string2 == null) ? "" : string2;
-    return value1.equals(value2); 
+    return value1.equals(value2);
   }
 
   private AuthenticationIdentity findIdentity(String username, String password,
@@ -186,21 +228,6 @@ public class AuthorizationParser {
       }
     }
     return new SimpleAuthenticationIdentity(username, password, domain);
-  }
-
-  private void parseResource(ConnectorQueries urlsByConnector, String url) {
-    ParsedUrl p = new ParsedUrl(url);
-    if (p.getStatus() == ConnectorMessageCode.SUCCESS) {
-      QueryUrls urlsByDocid = urlsByConnector.getQueryUrls(p.getConnectorName());
-      if (urlsByDocid == null) {
-        urlsByDocid = new QueryUrls();
-        urlsByConnector.putQueryUrls(p.getConnectorName(), urlsByDocid);
-      }
-      urlsByDocid.putUrl(p.getDocid(), p);
-      numDocs++;
-    } else {
-      status = p.getStatus();
-    }
   }
 
   public int getNumDocs() {
@@ -231,19 +258,19 @@ public class AuthorizationParser {
   }
 
   /**
-   * {@code ConnectorQueries} is a map from connector name to QueryUrls objects.
+   * {@code ConnectorQueries} is a map from connector name to QueryResources objects.
    * For each connector, it gives all the object for which the request wants a
    * decision.
    */
   public static class ConnectorQueries {
-    private final Map<String, QueryUrls> queryMap;
+    private final Map<String, QueryResources> queryMap;
 
     /*
      * Private constructor so this class can only be constructed by
      * AuthorizationParser.
      */
     private ConnectorQueries() {
-      queryMap = new HashMap<String, QueryUrls>();
+      queryMap = new HashMap<String, QueryResources>();
     }
 
     public int size() {
@@ -254,44 +281,45 @@ public class AuthorizationParser {
       return queryMap.keySet();
     }
 
-    public QueryUrls getQueryUrls(String connector) {
+    public QueryResources getQueryResources(String connector) {
       return queryMap.get(connector);
     }
 
-    private QueryUrls putQueryUrls(String connector, QueryUrls queryUrls) {
-      return queryMap.put(connector, queryUrls);
+    private QueryResources putQueryResources(String connector,
+        QueryResources queryResources) {
+      return queryMap.put(connector, queryResources);
     }
   }
 
   /**
-   * {@code QueryUrls} is a map from docid strings to the corresponding parsed
-   * representation as a ParsedUrl.
+   * {@code QueryResources} is a map from docid strings to the corresponding
+   * {@link AuthorizationResource}.
    */
-  public static class QueryUrls {
-    Map<String, ParsedUrl> urlMap;
+  public static class QueryResources {
+    Map<String, AuthorizationResource> resourceMap;
 
     /*
      * Private constructor so this class can only be constructed by
      * AuthorizationParser.
      */
-    private QueryUrls() {
-      urlMap = new HashMap<String, ParsedUrl>();
+    private QueryResources() {
+      resourceMap = new HashMap<String, AuthorizationResource>();
     }
 
-    private void putUrl(String docid, ParsedUrl p) {
-      urlMap.put(docid, p);
+    private void putResource(String docid, AuthorizationResource p) {
+      resourceMap.put(docid, p);
     }
 
     public Collection<String> getDocids() {
-      return urlMap.keySet();
+      return resourceMap.keySet();
     }
 
     public int size() {
-      return urlMap.size();
+      return resourceMap.size();
     }
 
-    public ParsedUrl getUrl(String docid) {
-      return urlMap.get(docid);
+    public AuthorizationResource getResource(String docid) {
+      return resourceMap.get(docid);
     }
   }
 }

@@ -135,6 +135,7 @@ public class ServletUtil {
   public static final String XMLTAG_DOMAIN_ATTRIBUTE = "domain";
   public static final String XMLTAG_PASSWORD_ATTRIBUTE = "password";
   public static final String XMLTAG_RESOURCE = "Resource";
+  public static final String XMLTAG_CONNECTOR_NAME_ATTRIBUTE = "connectorname";
   public static final String XMLTAG_AUTHZ_RESPONSE = "AuthorizationResponse";
   public static final String XMLTAG_ANSWER = "Answer";
   public static final String XMLTAG_DECISION = "Decision";
@@ -575,7 +576,7 @@ public class ServletUtil {
   }
 
   // A helper method to ident output string.
-  private static String indentStr(int level) {
+  static String indentStr(int level) {
     if (level < XMLIndent.length) {
       return XMLIndent[level];
     } else {
