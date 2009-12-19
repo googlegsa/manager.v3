@@ -625,8 +625,8 @@ public class ServletUtil {
       Pattern.compile("/*\\Q]]>\\E");
 
   /**
-   * Removes any markers form the given snippet that are not allowed to be
-   * nested.
+   * Removes any pairs of markers from the given snippet that are not allowed
+   * to be nested.
    *
    * @param formSnippet snippet of a form that may have markers in it that are
    *        not allowed to be nested.
@@ -634,11 +634,58 @@ public class ServletUtil {
    *         nested removed.
    */
   public static String removeNestedMarkers(String formSnippet) {
-    Matcher matcher = CDATA_BEGIN_PATTERN.matcher(formSnippet);
-    String result = matcher.replaceAll("");
-    matcher = CDATA_END_PATTERN.matcher(result);
-    result = matcher.replaceAll("");
-    return result;
+    StringBuffer result = new StringBuffer();
+    Matcher beginMatcher = CDATA_BEGIN_PATTERN.matcher(formSnippet);
+    while (beginMatcher.find()) {
+      // Look for a matching end marker.
+      Matcher endMatcher =
+          CDATA_END_PATTERN.matcher(formSnippet.substring(beginMatcher.end()));
+      if (endMatcher.find()) {
+        // We have a balanced hit.  Dump the matched begin marker and replace
+        // the matcher input with the remainder of the form without the
+        // matching end marker.
+        beginMatcher.appendReplacement(result, "");
+        formSnippet = endMatcher.replaceFirst("");
+        beginMatcher.reset(formSnippet);
+      }
+    }
+    beginMatcher.appendTail(result);
+    return result.toString();
+  }
+
+  /**
+   * Escapes any end markers from the given snippet.
+   *
+   * @param formSnippet snippet of a form that may have end markers in it.
+   * @return the given formSnippet with all end markers escaped.
+   */
+  public static String escapeEndMarkers(String formSnippet) {
+    StringBuffer result = new StringBuffer();
+    Matcher endMatcher = CDATA_END_PATTERN.matcher(formSnippet);
+    while (endMatcher.find()) {
+      String escapedMarker = escapeEndMarker(endMatcher.group());
+      endMatcher.appendReplacement(result, escapedMarker);
+    }
+    endMatcher.appendTail(result);
+    return result.toString();
+  }
+
+  private static final String XML_GREATER_THAN = "&gt;";
+
+  private static String escapeEndMarker(String endMarker) {
+    StringBuilder buf = new StringBuilder();
+    for (int i = 0; i < endMarker.length(); i++) {
+      char c = endMarker.charAt(i);
+      switch (c) {
+        case '>':
+          buf.append(XML_GREATER_THAN);
+          break;
+        default:
+          buf.append(c);
+          break;
+      }
+    }
+    return buf.toString();
   }
 
   /**
