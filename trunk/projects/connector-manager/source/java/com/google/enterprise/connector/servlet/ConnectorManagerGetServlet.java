@@ -141,6 +141,7 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
         configRes = null;
       } else {
         formSnippet = ServletUtil.removeNestedMarkers(formSnippet);
+        formSnippet = ServletUtil.escapeEndMarkers(formSnippet);
       }
     }
     // Now write out the response.

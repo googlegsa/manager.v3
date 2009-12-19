@@ -121,6 +121,122 @@ public class ServletUtilTest extends TestCase {
         formWithoutMarkers, result);
   }
 
+  public void testIssue204() {
+    String justEndMarker =
+        "decode( FNGETXMLPARAMS(xml_file, 'CONTENT'), ']]>' , "
+        + "FNGETXMLPARAMS(xml_file, 'SUMMARY'), "
+        + "FNGETXMLPARAMS(xml_file, 'CONTENT') ) as CONTENT;";
+    String result = ServletUtil.removeNestedMarkers(justEndMarker);
+    assertEquals("Form with just end markers left alone",
+        justEndMarker, result);
+
+    String endBeginMarkers =
+        "<script language=\"JavaScript\" type=\"text/javascript\">"
+        + "]]>"
+        + "  function foo() {"
+        + "    alert('foo');"
+        + "  }"
+        + "<![CDATA["
+        + "</script>";
+  result = ServletUtil.removeNestedMarkers(endBeginMarkers);
+  assertEquals("Form with end marker before begin marker",
+      endBeginMarkers, result);
+
+  String beginBeginEndEndMarkers =
+      "<script language=\"JavaScript\" type=\"text/javascript\">"
+      + "<![CDATA["
+      + "<![CDATA["
+      + "  function foo() {"
+      + "    alert('foo');"
+      + "  }"
+      + "]]>"
+      + "]]>"
+      + "</script>";
+  String expectedBeginBeginEndEndMarkers =
+    "<script language=\"JavaScript\" type=\"text/javascript\">"
+    + "  function foo() {"
+    + "    alert('foo');"
+    + "  }"
+    + "</script>";
+  result = ServletUtil.removeNestedMarkers(beginBeginEndEndMarkers);
+  assertEquals("Form with nested markers",
+      expectedBeginBeginEndEndMarkers, result);
+
+  String beginEndBeginEndMarkers =
+      "<script language=\"JavaScript\" type=\"text/javascript\">"
+      + "<![CDATA["
+      + "  function foo() {"
+      + "    alert('foo');"
+      + "  }"
+      + "]]>"
+      + "<![CDATA["
+      + "  function foo() {"
+      + "    alert('foo');"
+      + "  }"
+      + "]]>"
+      + "</script>";
+  String expectedBeginEndBeginEndMarkers =
+      "<script language=\"JavaScript\" type=\"text/javascript\">"
+      + "  function foo() {"
+      + "    alert('foo');"
+      + "  }"
+      + "  function foo() {"
+      + "    alert('foo');"
+      + "  }"
+      + "</script>";
+  result = ServletUtil.removeNestedMarkers(beginEndBeginEndMarkers);
+  assertEquals("Form with repeating markers",
+      expectedBeginEndBeginEndMarkers, result);
+
+  String unbalancedEndMarkers =
+      "<script language=\"JavaScript\" type=\"text/javascript\">"
+      + "<![CDATA["
+      + "  function foo() {"
+      + "    alert('foo');"
+      + "  }"
+      + "]]>"
+      + "<![CDATA["
+      + "  function foo() {"
+      + "    alert('foo');"
+      + "  }"
+      + "</script>";
+  String expectedUnbalancedEndMarkers =
+      "<script language=\"JavaScript\" type=\"text/javascript\">"
+      + "  function foo() {"
+      + "    alert('foo');"
+      + "  }"
+      + "<![CDATA["
+      + "  function foo() {"
+      + "    alert('foo');"
+      + "  }"
+      + "</script>";
+  result = ServletUtil.removeNestedMarkers(unbalancedEndMarkers);
+  assertEquals("Form with unbalanced markers",
+      expectedUnbalancedEndMarkers, result);
+  }
+
+  public void testEscapeEndMarkers() {
+    String containsEndMarkers =
+        "<script language=\"JavaScript\" type=\"text/javascript\">"
+      + "<![CDATA["
+        + "  function foo() {"
+        + "    alert('foo');"
+        + "  }"
+        + "]]>"
+        + "</script>";
+    String expectedContainsEndMarkers =
+        "<script language=\"JavaScript\" type=\"text/javascript\">"
+        + "<![CDATA["
+        + "  function foo() {"
+        + "    alert('foo');"
+        + "  }"
+        + "]]&gt;"
+        + "</script>";
+    String result = ServletUtil.escapeEndMarkers(containsEndMarkers);
+    assertEquals("Contains end markers",
+        expectedContainsEndMarkers, result);
+  }
+
   public void testObfuscateForm() throws Exception {
     // Create simple form.
     String protectedValue = "protected";
