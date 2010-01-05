@@ -169,7 +169,7 @@ public class HostLoadManager {
                                          int retryDelayMillis) {
     // For run-once schedules, wait 1 minute for modified schedule to be saved.
     Long finishTime = Long.valueOf(System.currentTimeMillis() +
-        ((retryDelayMillis < 0) ? (60 * 1000L) : retryDelayMillis)));
+        ((retryDelayMillis < 0) ? (60 * 1000L) : retryDelayMillis));
     connectorNameToFinishTime.put(connectorName, finishTime);
   }
 
