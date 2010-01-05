@@ -168,8 +168,8 @@ public class HostLoadManager {
   public void connectorFinishedTraversal(String connectorName,
                                          int retryDelayMillis) {
     // For run-once schedules, wait 1 minute for modified schedule to be saved.
-    Long finishTime = Long.valueOf(((retryDelayMillis < 0) ? (60 * 1000) :
-        (System.currentTimeMillis() + retryDelayMillis)));
+    Long finishTime = Long.valueOf(System.currentTimeMillis() +
+        ((retryDelayMillis < 0) ? (60 * 1000L) : retryDelayMillis)));
     connectorNameToFinishTime.put(connectorName, finishTime);
   }
 
