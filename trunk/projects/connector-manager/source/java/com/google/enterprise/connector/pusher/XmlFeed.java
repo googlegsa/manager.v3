@@ -45,6 +45,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
 
   private final String dataSource;
   private final String feedType;
+  private final int maxFeedSize;
   private final Appendable feedLogBuilder;
 
   private boolean isClosed;
@@ -90,9 +91,10 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
 
   private static final String CONNECTOR_AUTHMETHOD = "httpbasic";
 
-  public XmlFeed(String dataSource, String feedType, int feedSize,
+  public XmlFeed(String dataSource, String feedType, int maxFeedSize,
                  Appendable feedLogBuilder) throws IOException {
-    super(feedSize);
+    super(maxFeedSize);
+    this.maxFeedSize = maxFeedSize;
     this.dataSource = dataSource;
     this.feedType = feedType;
     this.feedLogBuilder = feedLogBuilder;
@@ -105,6 +107,24 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   /*
    * XmlFeed Public Interface.
    */
+
+  /**
+   * Returns {@code true} if the feed is sufficiently full to submit
+   * to the GSA.
+   */
+  public boolean isFull() {
+    int bytesLeft = maxFeedSize - size();
+    int avgRecordSize = size()/recordCount;
+    // If less then 3 average size docs would fit, then consider it full.
+    if (bytesLeft < (3 * avgRecordSize)) {
+      return true;
+    } else if (bytesLeft > (10 * avgRecordSize)) {
+      return false;
+    } else {
+      // If its more 90% full, then its consider it full.
+      return (bytesLeft < (maxFeedSize / 10));
+    }
+  }
 
   /**
    * Bumps the count of records stored in this feed.
@@ -267,7 +287,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
 
     String searchUrl = DocUtils.getOptionalString(document,
         SpiConstants.PROPNAME_SEARCHURL);
-    if (searchUrl != null) { 
+    if (searchUrl != null) {
       validateSearchUrl(searchUrl);
     } else {
       // Fabricate a URL from the docid.

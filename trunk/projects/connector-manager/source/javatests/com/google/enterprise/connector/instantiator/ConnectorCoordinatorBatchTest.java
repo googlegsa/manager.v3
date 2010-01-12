@@ -64,7 +64,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
       "testdata/connectorCoordinatorBatchTest/config/connectorType.xml";
 
   private static final String TEST_DIR_NAME =
-      "testdata/temp/ConnectorCoordinatorBatchTests";
+      "testdata/tmp/ConnectorCoordinatorBatchTests";
 
   @Override
   protected void setUp() throws Exception {
@@ -327,8 +327,9 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
       return this;
     }
 
-    public void take(Document document) {
+    public boolean take(Document document) {
       pushedDocuments.add(new PushedDocument(document, connectorName));
+      return true;
     }
 
     public void flush() {

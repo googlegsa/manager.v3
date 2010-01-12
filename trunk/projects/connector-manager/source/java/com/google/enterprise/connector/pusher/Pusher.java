@@ -28,12 +28,13 @@ public interface Pusher {
    * Takes an spi Document and pushes it along, presumably to the GSA Feed.
    *
    * @param document A Document
+   * @return true if Pusher may accept more documents, false otherwise.
    * @throws RepositoryException if transient error accessing the Repository
    * @throws RepositoryDocumentException if fatal error accessing the Document
    * @throws FeedException if a transient Feed error occurs in the Pusher
    * @throws PushException if a transient error occurs in the Pusher
    */
-  public void take(Document document)
+  public boolean take(Document document)
       throws PushException, FeedException, RepositoryException;
 
   /**

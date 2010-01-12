@@ -18,6 +18,8 @@ import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.traversal.BatchSize;
+import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
+import com.google.enterprise.connector.pusher.MockFeedConnection;
 
 import junit.framework.TestCase;
 
@@ -47,7 +49,8 @@ public class HostLoadManagerTest extends TestCase {
   public void testMaxFeedRateLimit() {
     final String connectorName = "cn1";
     addLoad(connectorName, 60);
-    HostLoadManager hostLoadManager = new HostLoadManager(instantiator, null);
+    HostLoadManager hostLoadManager =
+        new HostLoadManager(instantiator, null, null);
     assertEquals(60, hostLoadManager.determineBatchSize(connectorName).getHint());
     hostLoadManager.updateNumDocsTraversed(connectorName, 60);
     assertEquals(0, hostLoadManager.determineBatchSize(connectorName).getHint());
@@ -56,7 +59,8 @@ public class HostLoadManagerTest extends TestCase {
   public void testMultipleUpdates() {
     final String connectorName = "cn1";
     addLoad(connectorName, 60);
-    HostLoadManager hostLoadManager = new HostLoadManager(instantiator, null);
+    HostLoadManager hostLoadManager =
+        new HostLoadManager(instantiator, null, null);
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
     hostLoadManager.updateNumDocsTraversed(connectorName, 10);
@@ -68,7 +72,8 @@ public class HostLoadManagerTest extends TestCase {
     final String connectorName2 = "cn2";
     addLoad(connectorName1, 60);
     addLoad(connectorName2, 60);
-    HostLoadManager hostLoadManager = new HostLoadManager(instantiator, null);
+    HostLoadManager hostLoadManager =
+        new HostLoadManager(instantiator, null, null);
     hostLoadManager.updateNumDocsTraversed(connectorName1, 60);
     assertEquals(0, hostLoadManager.determineBatchSize(connectorName1).getHint());
 
@@ -87,7 +92,7 @@ public class HostLoadManagerTest extends TestCase {
     addLoad(connectorName, 3600);
 
     HostLoadManager hostLoadManager =
-      new HostLoadManager(instantiator, null, periodInMillis);
+        new HostLoadManager(instantiator, null, null, periodInMillis);
     hostLoadManager.updateNumDocsTraversed(connectorName, 55);
     assertEquals(5, hostLoadManager.determineBatchSize(connectorName).getHint());
     // sleep a period (and then some) so that batchHint is reset
@@ -113,7 +118,7 @@ public class HostLoadManagerTest extends TestCase {
     addLoad(connectorName, 3600);
 
     HostLoadManager hostLoadManager =
-      new HostLoadManager(instantiator, null, periodInMillis);
+        new HostLoadManager(instantiator, null, null, periodInMillis);
     assertFalse(hostLoadManager.shouldDelay(connectorName));
     hostLoadManager.connectorFinishedTraversal(connectorName, 100);
     assertTrue(hostLoadManager.shouldDelay(connectorName));
@@ -142,7 +147,7 @@ public class HostLoadManagerTest extends TestCase {
     addLoad(connectorName, 3600);
 
     HostLoadManager hostLoadManager =
-        new HostLoadManager(instantiator, null, periodInMillis);
+        new HostLoadManager(instantiator, null, null, periodInMillis);
     assertFalse(hostLoadManager.shouldDelay(connectorName));
     hostLoadManager.updateNumDocsTraversed(connectorName, 60);
     assertTrue(hostLoadManager.shouldDelay(connectorName));
@@ -172,7 +177,7 @@ public class HostLoadManagerTest extends TestCase {
     addLoad(connectorName, 3600);
 
     HostLoadManager hostLoadManager =
-        new HostLoadManager(instantiator, null, periodInMillis);
+        new HostLoadManager(instantiator, null, null, periodInMillis);
     assertFalse(hostLoadManager.shouldDelay(connectorName));
     hostLoadManager.updateNumDocsTraversed(connectorName, 59);
 
@@ -229,7 +234,8 @@ public class HostLoadManagerTest extends TestCase {
   public void testDetermineBatchSize() {
     final String connectorName = "cn1";
     addLoad(connectorName, 60);
-    HostLoadManager hostLoadManager = new HostLoadManager(instantiator, null);
+    HostLoadManager hostLoadManager =
+        new HostLoadManager(instantiator, null, null);
     BatchSize batchSize = hostLoadManager.determineBatchSize(connectorName);
     assertEquals(60, batchSize.getHint());
     assertEquals(120, batchSize.getMaximum());
@@ -241,5 +247,58 @@ public class HostLoadManagerTest extends TestCase {
     batchSize = hostLoadManager.determineBatchSize(connectorName);
     assertEquals(10, batchSize.getHint());
     assertEquals(60, batchSize.getMaximum());
+  }
+
+  /**
+   * Test shouldDelay(void) with a low memory condition.
+   */
+  public void testShouldDelayLowMemory() {
+    Runtime rt = Runtime.getRuntime();
+    FileSizeLimitInfo fsli = new FileSizeLimitInfo();
+    HostLoadManager hostLoadManager =
+        new HostLoadManager(instantiator, null, fsli);
+
+    // OK to start a traversal if there is plenty of memory for a new feed.
+    rt.gc();
+    fsli.setMaxFeedSize(rt.freeMemory()/100);
+    assertFalse(hostLoadManager.shouldDelay());
+
+    // Not OK to start a traversal if there is not enough memory for feeds.
+    rt.gc();
+    fsli.setMaxFeedSize(rt.maxMemory() - (rt.totalMemory() - rt.freeMemory()));
+    assertTrue(hostLoadManager.shouldDelay());
+  }
+
+  /**
+   * Test shouldDelay(void) with backlogged FeedConnection.
+   */
+  public void testShouldDelayFeedBacklogged() {
+    BacklogFeedConnection feedConnection = new BacklogFeedConnection();
+    HostLoadManager hostLoadManager =
+        new HostLoadManager(instantiator, feedConnection, null);
+
+    // OK to start a traversal if feedConnection is not backlogged.
+    feedConnection.setBacklogged(false);
+    assertFalse(hostLoadManager.shouldDelay());
+
+    // Not OK to start a traversal if feedConnection is backlogged.
+    feedConnection.setBacklogged(true);
+    assertTrue(hostLoadManager.shouldDelay());
+  }
+
+  /**
+   * A FeedConnection that can be backlogged.
+   */
+  private class BacklogFeedConnection extends MockFeedConnection {
+    private boolean backlogged = false;
+
+    public void setBacklogged(boolean backlogged) {
+      this.backlogged = backlogged;
+    }
+
+    @Override
+    public boolean isBacklogged() {
+      return backlogged;
+    }
   }
 }

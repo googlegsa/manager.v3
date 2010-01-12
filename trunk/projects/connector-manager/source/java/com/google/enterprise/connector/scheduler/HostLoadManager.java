@@ -18,6 +18,7 @@ import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.pusher.FeedConnection;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.traversal.BatchSize;
+import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -58,15 +59,22 @@ public class HostLoadManager {
   private final FeedConnection feedConnection;
 
   /**
+   * Used when calculating low-memory conditions.
+   */
+  private final FileSizeLimitInfo fileSizeLimit;
+
+  /**
    * By default, the HostLoadManager will use a one minute period for
    * calculating the batchHint.
    *
    * @param instantiator used to get Schedule for Connector instances
    * @param feedConnection used to get FeedConnection backlog status
+   * @param fileSizeLimitInfo used to check sufficient memory for traversals
    */
   public HostLoadManager(Instantiator instantiator,
-                         FeedConnection feedConnection) {
-    this(instantiator, feedConnection, MINUTE_IN_MILLIS);
+                         FeedConnection feedConnection,
+                         FileSizeLimitInfo fileSizeLimitInfo) {
+    this(instantiator, feedConnection, fileSizeLimitInfo, MINUTE_IN_MILLIS);
   }
 
   /**
@@ -77,9 +85,12 @@ public class HostLoadManager {
    * @param periodInMillis time period in which we enforce the maxFeedRate
    */
   public HostLoadManager(Instantiator instantiator,
-                         FeedConnection feedConnection, long periodInMillis) {
+                         FeedConnection feedConnection,
+                         FileSizeLimitInfo fileSizeLimitInfo,
+                         long periodInMillis) {
     this.instantiator = instantiator;
     this.feedConnection = feedConnection;
+    this.fileSizeLimit = fileSizeLimitInfo;
     this.periodInMillis = periodInMillis;
     startTimeInMillis = System.currentTimeMillis();
     connectorNameToNumDocsTraversed =
@@ -254,6 +265,21 @@ public class HostLoadManager {
    * @return true if traversals should not run at this time.
    */
   public boolean shouldDelay() {
-    return (feedConnection != null) ? feedConnection.isBacklogged() : false;
+    // If the process is running low on memory, don't traverse.
+    if (fileSizeLimit != null) {
+      Runtime rt = Runtime.getRuntime();
+      int count = Math.max(2, connectorNameToNumDocsTraversed.size());
+      if ((rt.maxMemory() - (rt.totalMemory() - rt.freeMemory())) <
+          (count * fileSizeLimit.maxFeedSize())) {
+        return true;
+      }
+    }
+
+    // If the GSA is backlogged handling feeds, don't traverse.
+    if ((feedConnection != null) && feedConnection.isBacklogged()) {
+      return true;
+    }
+
+    return false;
   }
 }

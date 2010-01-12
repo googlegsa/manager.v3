@@ -186,7 +186,13 @@ public class QueryTraverser implements Traverser {
           }
           LOGGER.finer("Sending document (" + docid + ") from connector "
               + connectorName + " to Pusher");
-          pusher.take(nextDocument);
+
+          if (!pusher.take(nextDocument)) {
+            LOGGER.fine("Traversal for connector " + connectorName
+                + " is completing at the request of the Pusher.");
+            break;
+          }
+
         } catch (SkippedDocumentException e) {
           /* TODO (bmj): This is a temporary solution and should be replaced.
            * It uses Exceptions for non-exceptional cases.
