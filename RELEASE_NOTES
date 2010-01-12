@@ -10,6 +10,43 @@ issues and work-arounds.
 
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
+Release 2.4.2, 11 January 2010
+==============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+previous release.  Users of the previous release are encouraged to upgrade
+immediately.
+
+Summary of Changes
+------------------
+  * Issue 3: Changed MockJcrRepository.login() to throw LoginException as
+    described by the Repository Interface rather than just return null Session.
+    The scope of this change is limited to the quality control unit tests.
+
+  * Issue 197: Added Microsoft Office 2007 OpenXML media types to the set of
+    supportedMimeTypes in applicationContext.xml.
+
+  * Issue 204: Handle XML CDATA end markers "]]>" embedded in the form
+    snippet returned by ConnectorType.getConfigForm() and
+    ConnectorType.getPopulatedConfigForm().
+
+  * Issue 206: Auto-Disabled connectors could not be re-enabled.  This
+    problem would have been encountered if the connector administrator
+    entered a negative value for the Retry Delay in a connector's
+    configuration, and then tried to re-enable traversal after it had been
+    automatically disabled at the end of the traversal.  This is the
+    preferred mechanism to "catch up", indexing documents that have been
+    added or changed since a "run-once" traversal finished.
+
+  * Issue 207: Fixes OutOfMemoryError when submitting feeds over a slow
+    feed connection or to busy Search Appliance.  If the GSA is slow to
+    accept feeds, then too many feeds could be queued up waiting to be sent,
+    each with an attached 10MB buffer of data.  Memory allocation would
+    grow with each new feed created until the heap was exhausted.
+
+
 Release 2.4.0, 20 November 2009
 ===============================
 
