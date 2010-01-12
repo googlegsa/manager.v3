@@ -115,10 +115,6 @@ public class DocPusher implements Pusher {
   // For use by unit tests.
   private String gsaResponse;
 
-  public DocPusher(FeedConnection feedConnection, String connectorName) {
-    this(feedConnection, connectorName, new FileSizeLimitInfo());
-  }
-
   /**
    * Creates a {@code DocPusher} object from the specified
    * {@code feedConnection} and {@code connectorName}.  The supplied
@@ -168,17 +164,18 @@ public class DocPusher implements Pusher {
    * Takes a Document and sends a the feed to the GSA.
    *
    * @param document Document corresponding to the document.
+   * @return true if Pusher should accept more documents, false otherwise.
    * @throws PushException if Pusher problem
    * @throws FeedException if transient Feed problem
    * @throws RepositoryDocumentException if fatal Document problem
    * @throws RepositoryException if transient Repository problem
    */
-  public void take(Document document)
+  public boolean take(Document document)
       throws PushException, FeedException, RepositoryException {
     if (feedSender.isShutdown()) {
       throw new IllegalStateException("Pusher is shut down");
     }
-    checkSubmissions();
+    int numFeedsWaiting = checkSubmissions();
 
     String feedType;
     try {
@@ -190,24 +187,14 @@ public class DocPusher implements Pusher {
     }
 
     // All feeds in a feed file must be of the same type.
-    // If the feed would change type, or if the feed file is full,
-    // send the feed off to the GSA.
-    int maxFeedSize = (int) fileSizeLimit.maxFeedSize();
-    if (xmlFeed != null) {
-      if (feedType != xmlFeed.getFeedType()) {
-        if (LOGGER.isLoggable(Level.FINE)) {
-          LOGGER.fine("A new feedType, " + feedType
-              + ", requires a new feed for " + connectorName
-              + ". Closing feed and sending to GSA.");
-        }
-        submitFeed();
-      } else if (xmlFeed.size() > ((maxFeedSize / 10) * 8)) {
-        if (LOGGER.isLoggable(Level.FINE)) {
-          LOGGER.fine("Feed for " + connectorName + " has grown to "
-              + xmlFeed.size() + " bytes. Closing feed and sending to GSA.");
-        }
-        submitFeed();
+    // If the feed would change type, send the feed off to the GSA
+    // and start a new one.
+    if ((xmlFeed != null) && (feedType != xmlFeed.getFeedType())) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("A new feedType, " + feedType + ", requires a new feed for "
+            + connectorName + ". Closing feed and sending to GSA.");
       }
+      submitFeed();
     }
 
     if (xmlFeed == null) {
@@ -215,17 +202,11 @@ public class DocPusher implements Pusher {
         LOGGER.fine("Creating new " + feedType + " feed for " + connectorName);
       }
       try {
-        if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL)) {
-          feedLog = new StringBuilder(256 * 1024);
-          feedLog.append("Records generated for ").append(feedType);
-          feedLog.append(" feed of ").append(connectorName).append(":\n");
-        }
-        xmlFeed = new XmlFeed(connectorName, feedType, maxFeedSize, feedLog);
+        startNewFeed(feedType);
       } catch (OutOfMemoryError me) {
         throw new PushException("Unable to allocate feed buffer.  Try reducing"
-                                + " the maxFeedSize setting.", me);
-      } catch (IOException ioe) {
-        throw new PushException("Error creating feed", ioe);
+            + " the maxFeedSize setting, reducing the number of connector"
+            + " intances, or adjusting the JVM heap size parameters.", me);
       }
     }
 
@@ -233,6 +214,7 @@ public class DocPusher implements Pusher {
     int resetPoint = xmlFeed.size();
     InputStream contentStream = null;
     try {
+      // Add this document to the feed.
       contentStream = getContentStream(document, feedType);
       xmlFeed.addRecord(document, contentStream, contentEncoding);
       if (LOGGER.isLoggable(Level.FINER)) {
@@ -240,6 +222,31 @@ public class DocPusher implements Pusher {
             + DocUtils.getRequiredString(document, SpiConstants.PROPNAME_DOCID)
             + " from connector " + connectorName + " added to feed.");
       }
+
+      // If the feed is full, send it off to the GSA.
+      if (xmlFeed.isFull() || lowMemory()) {
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("Feed for " + connectorName + " has grown to "
+              + xmlFeed.size() + " bytes. Closing feed and sending to GSA.");
+        }
+        submitFeed();
+
+        // If we are running low on memory, don't start another feed -
+        // tell the Traverser to finish this batch.
+        if (lowMemory()) {
+          return false;
+        }
+
+        // If the number of feeds waiting to be sent has backed up,
+        // tell the Traverser to finish this batch.
+        if ((checkSubmissions() > 10) || feedConnection.isBacklogged()) {
+          return false;
+        }
+     }
+
+      // Indicate that this Pusher may accept more documents.
+      return true;
+
     } catch (OutOfMemoryError me) {
       xmlFeed.reset(resetPoint);
       throw new PushException("Out of memory building feed, retrying.", me);
@@ -296,8 +303,7 @@ public class DocPusher implements Pusher {
       try {
         feedSender.awaitTermination(10, TimeUnit.SECONDS);
       } catch (InterruptedException ie) {
-        checkSubmissions();
-        if (!submissions.isEmpty()) {
+        if (checkSubmissions() > 0) {
           throw new FeedException("Interrupted while waiting for feeds.");
         }
       }
@@ -324,35 +330,106 @@ public class DocPusher implements Pusher {
   /**
    * Checks on asynchronously submitted feeds to see if they completed
    * or failed.  If any of the submissions failed, throw an Exception.
+   *
+   * @return number if items remaining in the submissions list
    */
-  public void checkSubmissions()
+  private int checkSubmissions()
       throws PushException, FeedException, RepositoryException {
-    ListIterator<FutureTask<String>> iter = submissions.listIterator();
-    while (iter.hasNext()) {
-      FutureTask<String> future = iter.next();
-      if (future.isDone()) {
-        iter.remove();
-        try {
-          gsaResponse = future.get();
-        } catch (InterruptedException ie) {
-          // Shouldn't happen if isDone.
-        } catch (ExecutionException ee) {
-          Throwable cause = ee.getCause();
-          if (cause == null) {
-            cause = ee;
+    int count = 0;  // Count of outstanding items in the list.
+    synchronized(submissions) {
+      ListIterator<FutureTask<String>> iter = submissions.listIterator();
+      while (iter.hasNext()) {
+        FutureTask<String> future = iter.next();
+        if (future.isDone()) {
+          iter.remove();
+          try {
+            gsaResponse = future.get();
+          } catch (InterruptedException ie) {
+            // Shouldn't happen if isDone.
+          } catch (ExecutionException ee) {
+            Throwable cause = ee.getCause();
+            if (cause == null) {
+              cause = ee;
+            }
+            if (cause instanceof PushException) {
+              throw (PushException) cause;
+            } else if (cause instanceof FeedException) {
+              throw (FeedException) cause;
+            } else if (cause instanceof RepositoryException) {
+              throw (RepositoryException) cause;
+            } else {
+              throw new FeedException("Error submitting feed", cause);
+            }
           }
-          if (cause instanceof PushException) {
-            throw (PushException) cause;
-          } else if (cause instanceof FeedException) {
-            throw (FeedException) cause;
-          } else if (cause instanceof RepositoryException) {
-            throw (RepositoryException) cause;
-          } else {
-            throw new FeedException("Error submitting feed", cause);
-          }
+        } else {
+          count++;
         }
       }
     }
+    return count;
+  }
+
+  /**
+   * Checks for low available memory condition.
+   *
+   * @return true if free memory is running low.
+   */
+  private boolean lowMemory() {
+    long threshold = ((fileSizeLimit.maxFeedSize() + fileSizeLimit.maxDocumentSize()) * 4) / 3;
+    Runtime rt = Runtime.getRuntime();
+    if ((rt.maxMemory() - (rt.totalMemory() - rt.freeMemory())) < threshold) {
+      rt.gc();
+      if ((rt.maxMemory() - (rt.totalMemory() - rt.freeMemory())) < threshold) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Allocates initial memory for a new XmlFeed and feed logger.
+   *
+   * @param feedType
+   */
+  private void startNewFeed(String feedType) throws PushException {
+    // Allocate a buffer to construct the feed log.
+    try {
+      if (FEED_LOGGER.isLoggable(FEED_LOG_LEVEL) && feedLog == null) {
+        feedLog = new StringBuilder(256 * 1024);
+        feedLog.append("Records generated for ").append(feedType);
+        feedLog.append(" feed of ").append(connectorName).append(":\n");
+      }
+    } catch (OutOfMemoryError me) {
+      throw new OutOfMemoryError(
+           "Unable to allocate feed log buffer for connector " + connectorName);
+    }
+
+    // Allocate XmlFeed of the target size.
+    int feedSize = (int) fileSizeLimit.maxFeedSize();
+    try {
+      try {
+        xmlFeed = new XmlFeed(connectorName, feedType, feedSize, feedLog);
+      } catch (OutOfMemoryError me) {
+        // We shouldn't even have gotten this far under a low memory condition.
+        // However, try to allocate a tiny feed buffer.  It should fill up on
+        // the first document, forcing it to be submitted.  DocPusher.take()
+        // should then return a signal to the caller to terminate the batch.
+        LOGGER.warning("Insufficient memory available to allocate an optimally"
+            + " sized feed - retrying with a much smaller feed allocation.");
+        feedSize = 1024;
+        try {
+          xmlFeed = new XmlFeed(connectorName, feedType, feedSize, feedLog);
+        } catch (OutOfMemoryError oome) {
+          throw new OutOfMemoryError(
+               "Unable to allocate feed buffer for connector " + connectorName);
+        }
+      }
+    } catch (IOException ioe) {
+      throw new PushException("Error creating feed", ioe);
+    }
+
+    LOGGER.fine("Allocated a new feed of size " + feedSize);
+    return;
   }
 
   /**
@@ -401,7 +478,9 @@ public class DocPusher implements Pusher {
         );
       feedSender.execute(future);
       // Add the future to list of outstanding submissions.
-      submissions.add(future);
+      synchronized(submissions) {
+        submissions.add(future);
+      }
     } catch (RejectedExecutionException ree) {
       throw new FeedException("Asynchronous feed was rejected. ", ree);
     }

@@ -314,12 +314,13 @@ public class QueryTraverserTest extends TestCase {
      * matches the number of documents pushed (formatted as a {@link String}).
      * </OL>
      */
-    public void take(Document document) throws RepositoryException{
+    public boolean take(Document document) throws RepositoryException{
       String expectId = Long.toString(pushCount);
       String gotId =
         Value.getSingleValueString(document, SpiConstants.PROPNAME_DOCID);
       assertEquals(expectId, gotId);
       pushCount++;
+      return true;
     }
 
     public void flush() {

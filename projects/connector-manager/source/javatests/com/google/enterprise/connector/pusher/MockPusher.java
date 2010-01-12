@@ -46,7 +46,7 @@ public class MockPusher implements Pusher, PusherFactory {
     return this;
   }
 
-  public void take(Document document) throws RepositoryException {
+  public boolean take(Document document) throws RepositoryException {
     printStream.println("<document>");
 
     // first take care of some special attributes
@@ -71,6 +71,7 @@ public class MockPusher implements Pusher, PusherFactory {
 
     printStream.println("</document>");
     totalDocs++;
+    return true;
   }
 
   public void flush() {
