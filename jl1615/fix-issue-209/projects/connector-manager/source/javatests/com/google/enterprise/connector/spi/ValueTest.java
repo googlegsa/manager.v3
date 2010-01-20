@@ -66,6 +66,77 @@ public class ValueTest extends TestCase {
     Assert.assertEquals("Thu, 01 Jan 1970 00:00:00 GMT", s);
   }
 
+
+  /**
+   * Represents the prefix and suffix of formatted timestamp strings
+   * for a specific date in both the RFC 822 and ISO 8601 formats.
+   */
+  private static class DateFragments {
+    public final String rfc822Date;
+    public final String rfc822TimeZone;
+    public final String iso8601Date;
+    public final String iso8601TimeZone;
+    public DateFragments(String rfc822Date, String rfc822TimeZone,
+        String iso8601Date, String iso8601TimeZone) {
+      this.rfc822Date = rfc822Date;
+      this.rfc822TimeZone = rfc822TimeZone;
+      this.iso8601Date = iso8601Date;
+      this.iso8601TimeZone = iso8601TimeZone;
+    }
+  }
+
+  /** Tests the local time zone. */
+  public void testDefaultTimeZone() {
+    Value.setDefaultTimeZone();
+    try {
+      Calendar timestamp = Calendar.getInstance();
+      int offset = timestamp.get(Calendar.ZONE_OFFSET)
+          + timestamp.get(Calendar.DST_OFFSET);
+      int minutes = offset / 60 / 1000;
+      String timezone = String.format("%+03d%02d", minutes / 60,
+          Math.abs(minutes % 60));
+      testTimeZoneOffset(timestamp, offset, timezone);
+    } finally {
+      // We could do this in a tearDown method, but I prefer only
+      // doing this when we've actually changed the time zone setting.
+      Value.setDefaultTimeZone();
+    }
+  }
+
+  /**
+   * Tests the given time zone.
+   *
+   * @param offset the offset does not have to match the
+   * <code>timezone</code> value, it just needs to have the right sign
+   */
+  private void testFixedTimeZone(int offset, String timezone) {
+    Value.setTimeZone("GMT" + timezone);
+    try {
+      Calendar timestamp = Calendar.getInstance();
+      timestamp.setTimeZone(TimeZone.getTimeZone("GMT" + timezone));
+      testTimeZoneOffset(timestamp, offset, timezone);
+    } finally {
+      // We could do this in a tearDown method, but I prefer only
+      // doing this when we've actually changed the time zone setting.
+      Value.setDefaultTimeZone();
+    }      
+  }
+
+  /** Tests a time zone west of UTC. The details do not matter. */
+  public void testWestTimeZone() {
+    testFixedTimeZone(-1, "-0500");
+  }
+
+  /** Tests a time zone east of UTC. The details do not matter. */
+  public void testEastTimeZone() {
+    testFixedTimeZone(+1, "+1100");
+  }
+
+  /** Tests the UTC time zone. */
+  public void testUtcTimeZone() {
+    testFixedTimeZone(0, "+0000");
+  }
+
   /**
    * Tests converting a timestamp with the default local time zone,
    * setting the time zone, and converting the same timestamp again.
@@ -76,84 +147,53 @@ public class ValueTest extends TestCase {
    * Value.setTimeZone correctly affects all of the SimpleDateFormat
    * instances in the Value class.
    */
-  public void testTimeZone() {
-    Calendar timestamp = Calendar.getInstance();
-    //Value.setTimeZone("GMT");
-    //timestamp.setTimeZone(TimeZone.getTimeZone("GMT"));
-
+  private void testTimeZoneOffset(Calendar timestamp, int offset,
+      String timezone) {
     timestamp.clear();
-    int offset = timestamp.get(Calendar.ZONE_OFFSET)
-        + timestamp.get(Calendar.DST_OFFSET);
-    int minutes = offset / 60 / 1000;
-    String timezone = String.format("%+03d%02d", minutes / 60, minutes % 60);
-    System.out.println("timezone = " + timezone);
-    String localRfc822;
-    String localIso8601;
-    String localRfc822TimeZone;
-    String localIso8601TimeZone;
-    String utcRfc822;
-    String utcIso8601;
-    String utcRfc822TimeZone;
-    String utcIso8601TimeZone;
-    String utcId = "GMT";
+    DateFragments local;
+    DateFragments other;
+    String otherId = "GMT";
     if (offset < 0) {
-      System.out.println("West");
+      // West of prime meridian.
       timestamp.set(2000, 11 /* sic */, 31, 23, 59, 01);
-      localRfc822 = "Sun, 31 Dec 2000";
-      localIso8601 = "2000-12-31";
-      localRfc822TimeZone = timezone;
-      localIso8601TimeZone = timezone;
-      utcRfc822 = "Mon, 01 Jan 2001";
-      utcIso8601 = "2001-01-01";
-      utcRfc822TimeZone = "GMT";
-      utcIso8601TimeZone = "Z";
+      local = new DateFragments("Sun, 31 Dec 2000", timezone,
+          "2000-12-31", timezone);
+      other = new DateFragments("Mon, 01 Jan 2001", "GMT", "2001-01-01", "Z");
     } else if (offset > 0) {
-      System.out.println("East");
+      // East of prime meridian.
       timestamp.set(2001, 0 /* sic */, 1, 00, 00, 59);
-      localRfc822 = "Mon, 01 Jan 2001";
-      localIso8601 = "2001-01-01";
-      localRfc822TimeZone = timezone;
-      localIso8601TimeZone = timezone;
-      utcRfc822 = "Sun, 31 Dec 2000";
-      utcIso8601 = "2000-12-31";
-      utcRfc822TimeZone = "GMT";
-      utcIso8601TimeZone = "Z";
+      local = new DateFragments("Mon, 01 Jan 2001", timezone,
+          "2001-01-01", timezone);
+      other = new DateFragments("Sun, 31 Dec 2000", "GMT", "2000-12-31", "Z");
     } else {
-      System.out.println("Middle");
+      // UTC
       timestamp.set(2001, 0 /* sic */, 1, 00, 00, 59);
-      localRfc822 = "Mon, 01 Jan 2001";
-      localIso8601 = "2001-01-01";
-      localRfc822TimeZone = "GMT";
-      localIso8601TimeZone = "Z";
-      utcRfc822 = "Sun, 31 Dec 2000";
-      utcIso8601 = "2000-12-31";
-      utcRfc822TimeZone = "-0800"; // not timezone, which is "+0000".
-      utcIso8601TimeZone = "-0800"; // ditto
-      utcId = "GMT-0800";
+      local = new DateFragments("Mon, 01 Jan 2001", "GMT", "2001-01-01", "Z");
+      // Do not use timezone in this case, which is "+0000".
+      other = new DateFragments("Sun, 31 Dec 2000", "-0800",
+          "2000-12-31", "-0800");
+      otherId = "GMT-0800";
     }
 
-    //timestamp.setTimeZone(TimeZone.getTimeZone("GMT-0400"));
+    testTimeZoneFragments(timestamp, local);
+    Value.setTimeZone(otherId);
+    testTimeZoneFragments(timestamp, other);
+  }
+
+  /**
+   * Calls all three formatting methods in <code>Value</code> and
+   * compares the results to the given fragments.
+   */
+  private void testTimeZoneFragments(Calendar timestamp,
+      DateFragments expected) {
     String s;
-    System.out.println(timestamp);
-    
     s = Value.calendarToRfc822(timestamp);
-    assertTrue(s, s.startsWith(localRfc822));
-    assertTrue(s, s.endsWith(localRfc822TimeZone));
+    assertTrue(s, s.startsWith(expected.rfc822Date));
+    assertTrue(s, s.endsWith(expected.rfc822TimeZone));
     s = Value.calendarToIso8601(timestamp);
-    assertTrue(s, s.startsWith(localIso8601));
-    assertTrue(s, s.endsWith(localIso8601TimeZone));
+    assertTrue(s, s.startsWith(expected.iso8601Date));
+    assertTrue(s, s.endsWith(expected.iso8601TimeZone));
     s = Value.calendarToFeedXml(timestamp);
-    assertEquals(localIso8601, s);
-
-    Value.setTimeZone(utcId);
-
-    s = Value.calendarToRfc822(timestamp);
-    assertTrue(s, s.startsWith(utcRfc822));
-    assertTrue(s, s.endsWith(utcRfc822TimeZone));
-    s = Value.calendarToIso8601(timestamp);
-    assertTrue(s, s.startsWith(utcIso8601));
-    assertTrue(s, s.endsWith(utcIso8601TimeZone));
-    s = Value.calendarToFeedXml(timestamp);
-    assertEquals(utcIso8601, s);
+    assertEquals(expected.iso8601Date, s);
   }
 }

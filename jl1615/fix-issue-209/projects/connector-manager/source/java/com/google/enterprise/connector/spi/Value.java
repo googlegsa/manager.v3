@@ -22,6 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.logging.Logger;
 
 /**
  * Wrapper class for all data items from a repository. Connector implementors
@@ -43,6 +44,7 @@ import java.util.TimeZone;
  * parameter type to the base type indicated in the factory method's name.
  */
 public abstract class Value {
+  private static final Logger LOGGER = Logger.getLogger(Value.class.getName());
 
   /**
    * Creates a value carrying a String.
@@ -189,7 +191,6 @@ public abstract class Value {
       new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss Z");
 
   static {
-    System.out.println(CALENDAR);
     ISO8601_DATE_FORMAT_MILLIS.setCalendar(CALENDAR);
     ISO8601_DATE_FORMAT_MILLIS.setLenient(true);
     ISO8601_DATE_FORMAT_SECS.setCalendar(CALENDAR);
@@ -203,19 +204,29 @@ public abstract class Value {
   }
 
   /**
-   * Sets the time zone used to format date values.
+   * Sets the time zone used to format date values to the given time zone.
    *
    * @param id the time zone ID
-   * @see TimeZone.getTimeZone
-   * @see Calendar.setTimeZone
+   * @see #setDefaultTimeZone
+   * @see TimeZone#getTimeZone
+   * @see Calendar#setTimeZone
    */
   public static synchronized void setTimeZone(String id) {
-    TimeZone tz;
-    if (id == null || id.length() == 0) {
-      tz = TimeZone.getDefault();
-    } else {
-      tz = TimeZone.getTimeZone(id);
-    }
+    TimeZone tz = TimeZone.getTimeZone(id);
+    LOGGER.config("Setting metadata time zone to " + id + " = " + tz.getID());
+    CALENDAR.setTimeZone(tz);
+  }
+
+  /**
+   * Sets the time zone used to format date values to the default time zone.
+   *
+   * @see #setTimeZone
+   * @see TimeZone#getDefault
+   * @see Calendar#setTimeZone
+   */
+  public static synchronized void setDefaultTimeZone() {
+    TimeZone tz = TimeZone.getDefault();
+    LOGGER.config("Setting metadata time zone to default = " + tz.getID());
     CALENDAR.setTimeZone(tz);
   }
 
