@@ -29,6 +29,7 @@ import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 
@@ -75,6 +76,15 @@ public class DocPusherTest extends TestCase {
     fsli = new FileSizeLimitInfo();
     fsli.setMaxFeedSize(1024 * 1024);
     fsli.setMaxDocumentSize(1024 * 1024);
+
+    // We're comparing date strings here, so we need a fixed time zone.
+    Value.setFeedTimeZone("GMT");
+  }
+
+  @Override
+  public void tearDown() {
+    // Reset the default time zone.
+    Value.setFeedTimeZone("");
   }
 
   /**
