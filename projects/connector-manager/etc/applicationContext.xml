@@ -58,6 +58,16 @@
     </property>
   </bean>
 
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.spi.Value.setFeedTimeZone"/>
+    <property name="arguments">
+      <list>
+        <value></value>
+      </list>
+    </property>
+  </bean>
+
   <!-- Create a Handler for the Feed Logger and add it to the logger. -->
   <bean id="FeedFormatter" class="java.util.logging.SimpleFormatter"/>
 
@@ -512,4 +522,5 @@
       </set>
     </property>
   </bean>
+
 </beans>
