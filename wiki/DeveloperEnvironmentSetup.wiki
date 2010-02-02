@@ -58,3 +58,53 @@ For clarity, the following directions assume that you will create a new eclipse 
     * Choose {{{Create project from existing source}}} and browse to the sub-directory under {{{projects}}} in your svn checkout directory whose name corresponds to the project-name.  For example, the directory for the {{{connector-manager}}} project is {{{connector-manager/projects/connector-manager}}}.
   # There should be no errors shown although there may be warnings.  It may be necessary to clean the connector-manager project.  To do so, select that project, then choose {{{Project->Clean}}}
   # Verify that all is well by running the unit tests through eclipse.  Right-click on the connector-manager project and choose {{{Run As->Junit Test}}}.  All tests should be green.
+
+== Source Code Conventions ==
+
+The coding style guidelines used in the project are based upon the general [http://java.sun.com/docs/codeconv/html/CodeConvTOC.doc.html Code Conventions for Java], with additional guidelines as detailed below.
+
+However, since development is done on both Microsoft Windows and Unix platforms, two conventions *must* be adhered to in order to avoid massive differences when merging code:
+  # Use spaces, not embedded tabs, for indenting code.
+  # All text files (including source code) added to the repository must include the `svn:eol-style=native` property (see below) to ensure that line-endings are converted properly on checkin and checkout.
+
+Additional Coding Style Guidelines:
+  # Exceptions: Never catch and ignore them without explanation.
+  # Exceptions: do not catch generic Exception.
+  # Finalizers: generally don't use them
+  # Imports: Fully qualify imports
+  # !FileHeader: use standard style
+  # Javadoc: write it
+  # Short methods: don't write giant methods
+  # Fields: should either be at the top of the file, or immediately before the methods that use them
+  # Local variables: limit the scope
+  # Imports: third party alphabetical ; java(x)
+  # Indentation: 2 spaces, 4 spaces on a continuation, no tabs.
+  # Line length: 80 columns
+  # Annotations: Use the standard annotations.
+  # Acronyms are words: Treat acronyms as words in names, yielding XmlHttpRequest, getUrl(), etc.
+  # TODO style: "TODO(userid): Write this description."
+  # Consistency: Look at what's around you!
+
+== Configuring Subversion Automatic Properties ==
+
+To minimize cross platform development pain, all plain text files added to the repository should have a subversion `svn:eol-style=native` property set.  This is easily done with by configuring automatic properties in your subversion configuration file.  To do so:
+
+  # Edit your Subversion configuration file,  typically `~/.subversion/config`
+  # Enable automatic properties if it is not already enabled:
+{{{
+### Set enable-auto-props to 'yes' to enable automatic properties
+### for 'svn add' and 'svn import', it defaults to 'no'.
+### Automatic properties are defined in the section 'auto-props'.
+enable-auto-props = yes
+}}}
+  # Under the `[auto-props]` section of the file, add `svn:eol-style` and `svn:mime-type` properties for the various types of text files in the project:
+{{{
+## These are for Google Development
+*.java = svn:eol-style=native;svn:mime-type=text/x-java
+*.properties = svn:eol-style=native;svn:mime-type=text/plain
+*.txt = svn:eol-style=native;svn:mime-type=text/plain
+*.xml = svn:eol-style=native;svn:mime-type=text/xml
+*.html = svn:eol-style=native
+*.css = svn:eol-style=native
+}}}
+  # Save the configuration file.
