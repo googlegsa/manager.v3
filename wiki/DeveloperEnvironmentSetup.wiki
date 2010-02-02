@@ -68,22 +68,22 @@ However, since development is done on both Microsoft Windows and Unix platforms,
   # All text files (including source code) added to the repository must include the `svn:eol-style=native` property (see below) to ensure that line-endings are converted properly on checkin and checkout.
 
 Additional Coding Style Guidelines:
-  # Exceptions: Never catch and ignore them without explanation.
-  # Exceptions: do not catch generic Exception.
-  # Finalizers: generally don't use them
-  # Imports: Fully qualify imports
-  # !FileHeader: use standard style
-  # Javadoc: write it
-  # Short methods: don't write giant methods
-  # Fields: should either be at the top of the file, or immediately before the methods that use them
-  # Local variables: limit the scope
-  # Imports: third party alphabetical ; java(x)
-  # Indentation: 2 spaces, 4 spaces on a continuation, no tabs.
-  # Line length: 80 columns
-  # Annotations: Use the standard annotations.
-  # Acronyms are words: Treat acronyms as words in names, yielding XmlHttpRequest, getUrl(), etc.
-  # TODO style: "TODO(userid): Write this description."
-  # Consistency: Look at what's around you!
+  * Exceptions: Never catch and ignore them without explanation.
+  * Exceptions: do not catch generic Exception.
+  * Finalizers: generally don't use them
+  * Imports: Fully qualify imports
+  * !FileHeader: use standard style
+  * Javadoc: write it
+  * Short methods: don't write giant methods
+  * Fields: should either be at the top of the file, or immediately before the methods that use them
+  * Local variables: limit the scope
+  * Imports: third party alphabetical ; java(x)
+  * Indentation: 2 spaces, 4 spaces on a continuation, no tabs.
+  * Line length: 80 columns
+  * Annotations: Use the standard annotations.
+  * Acronyms are words: Treat acronyms as words in names, yielding XmlHttpRequest, getUrl(), etc.
+  * TODO style: "TODO(userid): Write this description."
+  * Consistency: Look at what's around you!
 
 == Configuring Subversion Automatic Properties ==
 
