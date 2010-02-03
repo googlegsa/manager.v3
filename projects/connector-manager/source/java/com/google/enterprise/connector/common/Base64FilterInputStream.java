@@ -33,7 +33,6 @@ public class Base64FilterInputStream extends FilterInputStream {
   static final int BASE64_LINE_LENGTH = 76;
   private boolean breakLines = false;
 
-
   /**
    * Given some InputStream, create an InputStream that base64 encodes the
    * input stream.  No line breaks are included in the output stream.
@@ -131,6 +130,7 @@ public class Base64FilterInputStream extends FilterInputStream {
    * @param b buffer to fill
    * @param off offset into b to start filling
    * @param len number of bytes to read
+   * @return number of bytes written to buffer b, or -1 if at EOF
    */
   private int fillbuff(byte b[], int off, int len) throws IOException {
     int bytesRead = 0;
