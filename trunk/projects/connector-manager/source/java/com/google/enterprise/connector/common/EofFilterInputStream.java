@@ -65,7 +65,7 @@ public class EofFilterInputStream extends FilterInputStream {
   @Override
   public void reset() throws IOException {
     super.reset();
-    // Doesn't protect against some fool setting the mark while at EOF,
+    // Doesn't protect against someone setting the mark while at EOF,
     // but good enough for our purposes.
     atEOF = false;
   }
