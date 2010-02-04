@@ -51,8 +51,8 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   private static final Logger LOGGER =
       Logger.getLogger(ConnectorCoordinatorBatchTest.class.getName());
   private static final String EN = "en";
-  private static final int TRAVERSAL_TIME_LIMIT_MILLIS = 20000;
-  private final static long SHORT_TRAVERSAL_TIME_LIMIT_MILLIS = 500;
+  private static final int TRAVERSAL_TIME_LIMIT_SECS = 20;
+  private static final int SHORT_TRAVERSAL_TIME_LIMIT_SECS = 1;
 
   ConnectorCoordinator coordinator;
   TypeInfo typeInfo;
@@ -111,9 +111,8 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     }
   }
 
-  private void createPusherAndCoordinator(long batchTimeout) throws Exception {
-    ThreadPool threadPool =
-        ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(batchTimeout);
+  private void createPusherAndCoordinator(int batchTimeout) throws Exception {
+    ThreadPool threadPool = new ThreadPool(batchTimeout);
     recordingPusher = new RecordingPusher("c1");
     ConnectorCoordinator cc =
         new ConnectorCoordinatorImpl("c1", recordingPusher, threadPool);
@@ -126,7 +125,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   public void testCreateRunRemoveLoop() throws Exception {
     MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
     for (int ix = 0; ix < 100; ix++) {
-      createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_MILLIS);
+      createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
       runBatch(resultRecorder, 1 + ix, 1 + ix, 0);
       coordinator.removeConnector();
       coordinator = null;
@@ -135,7 +134,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testStartThenResumeTraversal() throws Exception {
-    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_MILLIS);
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
     MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
     runBatch(resultRecorder, 1, 1, 0);
 
@@ -174,7 +173,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testManyBatches() throws Exception {
-    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_MILLIS);
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
     MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
     int ix = 0;
     for (ix = 0; ix < 10; ix++) {
@@ -210,7 +209,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testDisabledTraversal() throws Exception {
-    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_MILLIS);
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
     // Disable traversal schedule.  No batch should run.
     coordinator.setConnectorSchedule("#c1:1000:0:0-0");
     MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
@@ -219,7 +218,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testScheduledTraversal() throws Exception {
-    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_MILLIS);
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
     // With no traversal intervals, no batch should run.
     coordinator.setConnectorSchedule("c1:1000:0:");
     MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
@@ -228,7 +227,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testCancelBatch() throws Exception {
-    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_MILLIS);
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
     MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
     coordinator.startBatch(resultRecorder, new BatchSize(3, 3));
     SyncingConnector.Tracker tracker =
@@ -247,7 +246,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testSeConnectorConfig() throws Exception {
-    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_MILLIS);
+    createPusherAndCoordinator(TRAVERSAL_TIME_LIMIT_SECS);
     MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
     coordinator.startBatch(resultRecorder, new BatchSize(3, 3));
     SyncingConnector.Tracker tracker =
@@ -270,7 +269,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   }
 
   public void testTimeoutBatch() throws Exception {
-    createPusherAndCoordinator(SHORT_TRAVERSAL_TIME_LIMIT_MILLIS);
+    createPusherAndCoordinator(SHORT_TRAVERSAL_TIME_LIMIT_SECS);
     MockBatchResultRecorder resultRecorder = new MockBatchResultRecorder();
     coordinator.startBatch(resultRecorder, new BatchSize(3, 3));
     SyncingConnector.Tracker tracker =

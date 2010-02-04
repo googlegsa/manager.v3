@@ -30,13 +30,12 @@ public class ThreadPoolTest extends TestCase {
    * A suggested default amount of time to let tasks run before automatic
    * cancellation.
    */
-  public static final long DEFAULT_MAXIMUM_TASK_LIFE_SECONDS = 60 * 60;
+  public static final int DEFAULT_TASK_LIFE_SECS = 60;
 
   // TODO(strellis): Add test of cancel timer popping during submit - after the
   // timer is running and before the task is running.
   public void testRunOne() throws Exception {
-    ThreadPool threadPool = ThreadPool.newThreadPool(
-        DEFAULT_MAXIMUM_TASK_LIFE_SECONDS);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS);
     BlockingQueue<Object> runningQ = new ArrayBlockingQueue<Object>(10);
     BlockingQueue<Object> stoppingQ = new ArrayBlockingQueue<Object>(10);
     CancelableTask task = new BlockingQueueCancelable(runningQ, stoppingQ);
@@ -52,8 +51,7 @@ public class ThreadPoolTest extends TestCase {
 
   public void testRunMany() throws Exception {
     final int count = 103;
-    ThreadPool threadPool = ThreadPool.newThreadPool(
-        DEFAULT_MAXIMUM_TASK_LIFE_SECONDS);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS);
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(count);
     BlockingQueue<Object> taskStoppingQ = new ArrayBlockingQueue<Object>(count);
     List<CancelableTask> tasks = new ArrayList<CancelableTask>();
@@ -76,8 +74,7 @@ public class ThreadPoolTest extends TestCase {
     final int count = 103;
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(count);
     BlockingQueue<Object> taskCanceledQ = new ArrayBlockingQueue<Object>(count);
-    ThreadPool threadPool = ThreadPool.newThreadPool(
-        DEFAULT_MAXIMUM_TASK_LIFE_SECONDS);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS);
     List<CancelableTask> tasks = new ArrayList<CancelableTask>();
     List<TaskHandle> handles = new ArrayList<TaskHandle>();
     for (int ix = 0; ix < count; ix++) {
@@ -102,8 +99,7 @@ public class ThreadPoolTest extends TestCase {
 
   public void testTimeoutHung() throws Exception {
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(10);
-    ThreadPool threadPool = ThreadPool.newThreadPool(
-        DEFAULT_MAXIMUM_TASK_LIFE_SECONDS);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS);
     HangingCancelable task = new HangingCancelable(taskRunningQ);
     TaskHandle handle = threadPool.submit(task);
     take(1, taskRunningQ);
@@ -119,8 +115,7 @@ public class ThreadPoolTest extends TestCase {
     final int count = 9;
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(count);
     BlockingQueue<Object> taskCanceledQ = new ArrayBlockingQueue<Object>(count);
-    ThreadPool threadPool = ThreadPool.newThreadPool(
-        DEFAULT_MAXIMUM_TASK_LIFE_SECONDS);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS);
 
     List<CancelableTask> tasks = new ArrayList<CancelableTask>();
     List<TaskHandle> handles = new ArrayList<TaskHandle>();
@@ -141,8 +136,7 @@ public class ThreadPoolTest extends TestCase {
 
   public void testShutdownWithHung() throws Exception {
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(10);
-    ThreadPool threadPool = ThreadPool.newThreadPool(
-        DEFAULT_MAXIMUM_TASK_LIFE_SECONDS);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS);
     HangingCancelable task = new HangingCancelable(taskRunningQ);
     TaskHandle handle = threadPool.submit(task);
     take(1, taskRunningQ);
@@ -157,8 +151,7 @@ public class ThreadPoolTest extends TestCase {
   }
 
   public void testSubmitAfterShutdown() throws Exception {
-    ThreadPool threadPool = ThreadPool.newThreadPool(
-        DEFAULT_MAXIMUM_TASK_LIFE_SECONDS);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS);
     threadPool.shutdown(true, 10);
     BlockingQueue<Object> runningQ = new ArrayBlockingQueue<Object>(10);
     BlockingQueue<Object> stoppingQ = new ArrayBlockingQueue<Object>(10);
@@ -167,13 +160,11 @@ public class ThreadPoolTest extends TestCase {
     assertNull(handle);
   }
 
-  private final static long SHORT_TASK_LIFE_MILLIS = 500;
+  private final static int SHORT_TASK_LIFE_SECS = 1;
 
   public void testTimeToLiveWithHungBatch() throws Exception {
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(10);
-    ThreadPool threadPool =
-      ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(
-        SHORT_TASK_LIFE_MILLIS);
+    ThreadPool threadPool = new ThreadPool(SHORT_TASK_LIFE_SECS);
     HangingCancelable task = new HangingCancelable(taskRunningQ);
     TaskHandle taskHandel = threadPool.submit(task);
     take(1, taskRunningQ);
@@ -187,8 +178,7 @@ public class ThreadPoolTest extends TestCase {
     final int count = 2;
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(count);
     BlockingQueue<Object> taskCanceledQ = new ArrayBlockingQueue<Object>(count);
-    ThreadPool threadPool = ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(
-        SHORT_TASK_LIFE_MILLIS);
+    ThreadPool threadPool = new ThreadPool(SHORT_TASK_LIFE_SECS);
 
     List<VerifyInterruptedCancelable> tasks =
         new ArrayList<VerifyInterruptedCancelable>();

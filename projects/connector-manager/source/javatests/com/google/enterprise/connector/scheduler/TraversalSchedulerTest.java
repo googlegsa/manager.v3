@@ -107,16 +107,14 @@ public class TraversalSchedulerTest extends TestCase {
   }
 
   private Instantiator createMockInstantiator() {
-    ThreadPool threadPool =
-      ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(5000);
+    ThreadPool threadPool = new ThreadPool(5);
     MockInstantiator instantiator = new MockInstantiator(threadPool);
     instantiator.setupTestTraversers();
     return instantiator;
   }
 
   private Instantiator createRealInstantiator() {
-    ThreadPool threadPool =
-      ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(5000);
+    ThreadPool threadPool = new ThreadPool(5);
     Instantiator instantiator = new SpringInstantiator(
         new MockPusher(), threadPool, new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
 
