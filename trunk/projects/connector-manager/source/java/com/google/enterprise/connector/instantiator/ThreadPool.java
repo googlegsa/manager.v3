@@ -112,34 +112,19 @@ public class ThreadPool {
           new ThreadNamingThreadFactory("ThreadPoolTimeout"));
 
   /**
-   * Create a new {@ThreadPool}.
-   *
-   * @param maximumTaskLifeSeconds the number of seconds to allow a task to run
-   *        before automatic cancellation.
-   */
-  public static ThreadPool newThreadPool(long maximumTaskLifeSeconds) {
-    return new ThreadPool(maximumTaskLifeSeconds * 1000);
-  }
-
-  /**
-   * Create a new {@ThreadPool}.
-   *
-   * @param maximumTaskLifeMillis the number of milliseconds to allow a task to
-   *        run before automatic cancellation.
-   */
-  public static ThreadPool newThreadPoolWithMaximumTaskLifeMillis(
-      long maximumTaskLifeMillis) {
-    return new ThreadPool(maximumTaskLifeMillis);
-  }
-
-  /**
    * Create a {@link ThreadPool}.
    *
-   * @param maximumTaskLifeMillis Time in milliseconds to allow a task to run
+   * @param taskLifeSeconds minimum number of seconds to allow a task to run
    *        before automatic cancellation.
    */
-  private ThreadPool(long maximumTaskLifeMillis) {
-    this.maximumTaskLifeMillis = maximumTaskLifeMillis;
+  // TODO: This method, called from Spring, multiplies the supplied [soft]
+  // timeout value by 2.  The actual value wants to be 2x or 1.5x of a user
+  // configured soft value. However, Spring v2 does not provide a convenient
+  // mechanism to do arithmetic on configuration properties. Once we move to
+  // Spring v3, the calculation should be done in the Spring XML definition
+  // file rather than here.
+  public ThreadPool(int taskLifeSeconds) {
+    this.maximumTaskLifeMillis = taskLifeSeconds * 2 * 1000L;
     completionExecutor.execute(new CompletionTask());
   }
 

@@ -43,7 +43,10 @@ public class PropertiesUtils {
   public static final String GOOGLE_WORK_DIR = "googleWorkDir";
   public static final String GOOGLE_PROPERTIES_VERSION =
       "googlePropertiesVersion";
-  public static final int GOOGLE_PROPERTIES_VERSION_NUMBER = 2;
+  public static final int GOOGLE_PROPERTIES_VERSION_NUMBER = 3;
+
+  // Non-XML format Properties files are by definition 8859-1 encoding.
+  public static final String PROPERTIES_ENCODING = "ISO-8859-1";
 
   private PropertiesUtils() {
     // prevents instantiation
@@ -115,7 +118,7 @@ public class PropertiesUtils {
       try {
         os = new ByteArrayOutputStream();
         storeProperties(properties, os, comment);
-        return os.toString();
+        return os.toString(PROPERTIES_ENCODING);
       } finally {
         os.close();
       }
@@ -140,7 +143,8 @@ public class PropertiesUtils {
       try {
         ByteArrayInputStream is = null;
         try {
-          is = new ByteArrayInputStream(propertiesString.getBytes());
+          is = new ByteArrayInputStream(
+             propertiesString.getBytes(PROPERTIES_ENCODING));
           return loadProperties(is);
         } finally {
           is.close();

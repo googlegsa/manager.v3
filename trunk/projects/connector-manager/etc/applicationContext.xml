@@ -13,7 +13,47 @@
     <property name="properties">
       <props>
         <prop key="feedLoggingLevel">OFF</prop>
+
+        <!-- Default Feeder gate port on a GSA -->
         <prop key="gsa.feed.port">19900</prop>
+
+        <!-- These are used to throttle back the document feed if the
+             GSA has fallen behind processing outstanding feed items.
+        -->
+        <!-- Stop feeding if the backlog exceeds this value. -->
+        <prop key="feed.backlog.ceiling">10000</prop>
+        <!-- Resume feeding if the backlog falls below this value. -->
+        <prop key="feed.backlog.floor">1000</prop>
+        <!-- How often to check for feed backlog (in seconds). -->
+        <prop key="feed.backlog.interval">900</prop>
+
+        <!-- The target size in bytes of an accumulated feed file. -->
+        <prop key="feed.file.size">10485760</prop>
+
+        <!-- The maximum allowed size in bytes of a Document's content. -->
+        <prop key="feed.document.size.limit">31457280</prop>
+
+        <!-- The default time zone for Date values of fed Documents. -->
+        <prop key="feed.timezone"></prop>
+
+        <!-- Feed logging configuration.
+             TODO: [Issue 163] These should be moved to logging.properties.
+        -->
+        <prop key="feed.logging.FileHandler.pattern">${catalina.base}/logs/google-connectors.feed%g.log</prop>
+        <prop key="feed.logging.FileHandler.limit">52428800</prop>
+        <prop key="feed.logging.FileHandler.count">10</prop>
+
+        <!-- The target number of items to be returned per traversal batch. -->
+        <prop key="traversal.batch.size">500</prop>
+
+        <!-- The number of seconds a Traversal may run before risking cancelation. -->
+        <prop key="traversal.time.limit">1800</prop>
+
+        <!-- This defines the number of seconds to wait after a Traversal
+             of the repository finds no new content before looking again.
+        -->
+        <prop key="traversal.poll.interval">300</prop>
+
       </props>
     </property>
   </bean>
@@ -31,29 +71,14 @@
        backlog count exceeds the ceiling we pause the feed.  We resume the
        feed once the backlog count drops down below the floor value.
   -->
-  <!-- Stop feeding if the backlog exceeds this value. -->
-  <bean id="FeedBacklogCeiling" class="java.lang.Integer">
-    <constructor-arg index="0" type="int" value="50000"/>
-  </bean>
-
-  <!-- Resume feeding if the backlog falls below this value. -->
-  <bean id="FeedBacklogFloor" class="java.lang.Integer">
-    <constructor-arg index="0" type="int" value="15000"/>
-  </bean>
-
-  <!-- How often to check for feed backlog (in seconds). -->
-  <bean id="FeedBacklogCheckIntervalSeconds" class="java.lang.Integer">
-    <constructor-arg index="0" type="int" value="900"/>
-  </bean>
-
   <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
     <property name="targetObject" ref="FeedConnection"/>
     <property name="targetMethod" value="setBacklogCheck"/>
     <property name="arguments">
       <list>
-        <ref bean="FeedBacklogFloor"/>
-        <ref bean="FeedBacklogCeiling"/>
-        <ref bean="FeedBacklogCheckIntervalSeconds"/>
+        <value>${feed.backlog.floor}</value>
+        <value>${feed.backlog.ceiling}</value>
+        <value>${feed.backlog.interval}</value>
       </list>
     </property>
   </bean>
@@ -63,7 +88,7 @@
               value="com.google.enterprise.connector.spi.Value.setFeedTimeZone"/>
     <property name="arguments">
       <list>
-        <value></value>
+        <value>${feed.timezone}</value>
       </list>
     </property>
   </bean>
@@ -73,9 +98,9 @@
 
   <bean id="FeedHandler"
         class="com.google.enterprise.connector.pusher.FeedFileHandler">
-    <constructor-arg index="0" value="${catalina.base}/logs/google-connectors.feed%g.log"/>
-    <constructor-arg index="1" value="52428800"/>
-    <constructor-arg index="2" value="10"/>
+    <constructor-arg index="0" value="${feed.logging.FileHandler.pattern}"/>
+    <constructor-arg index="1" value="${feed.logging.FileHandler.limit}"/>
+    <constructor-arg index="2" value="${feed.logging.FileHandler.count}"/>
     <property name="level" value="FINER"/>
     <property name="encoding" value="UTF-8"/>
     <property name="formatter" ref="FeedFormatter"/>
@@ -178,24 +203,9 @@
     </property>
   </bean>
 
-  <!-- This defines the number of seconds a task such as a Traversal
-       may run before it it is cancelled. The default is 60 minutes
-       (3600 seconds). This value should exceed
-       TraversalTimeLimitSecondsDefault which is a more gentle limit.
-  -->
-  <bean id="ThreadPoolCancelTimeSecondsDefault" class="java.lang.Long">
-    <constructor-arg index="0" type="long" value="3600"/>
-  </bean>
-
   <bean id="ThreadPool"
-        class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-    <property name="staticMethod"
-              value="com.google.enterprise.connector.instantiator.ThreadPool.newThreadPool"/>
-    <property name="arguments">
-      <list>
-        <ref bean="ThreadPoolCancelTimeSecondsDefault"/>
-      </list>
-    </property>
+        class="com.google.enterprise.connector.instantiator.ThreadPool">
+    <constructor-arg index="0" type="int" value="${traversal.time.limit}"/>
   </bean>
 
   <bean id="PusherFactory"
@@ -220,7 +230,7 @@
     <constructor-arg index="0" ref="Instantiator"/>
     <constructor-arg index="1" ref="FeedConnection"/>
     <constructor-arg index="2" ref="FileSizeLimitInfo"/>
-    <property name="batchSize" value="500"/>
+    <property name="batchSize" value="${traversal.batch.size}"/>
   </bean>
 
   <bean id="TraversalScheduler"
@@ -234,25 +244,14 @@
        the Scheduler waits 5 minutes (300 seconds) before retraversing the
        repository if no new content was found on the last attempt.
   -->
-  <bean id="TraversalDelaySecondsDefault" class="java.lang.Integer">
-    <constructor-arg index="0" type="int" value="300"/>
-  </bean>
-
   <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
     <property name="staticMethod"
               value="com.google.enterprise.connector.scheduler.Schedule.setDefaultRetryDelaySecs"/>
     <property name="arguments">
       <list>
-        <ref bean="TraversalDelaySecondsDefault"/>
+        <value>${traversal.poll.interval}</value>
       </list>
     </property>
-  </bean>
-
-  <!-- This defines the number of seconds a Traversal will run before
-       gracefully exiting. The default is 30 minutes (1800 seconds).
-  -->
-  <bean id="TraversalTimeLimitSecondsDefault" class="java.lang.Long">
-    <constructor-arg index="0" type="long" value="1800"/>
   </bean>
 
   <!-- The TraversalContext is supplied to the Connector's TraversalManager,
@@ -263,7 +262,7 @@
         class="com.google.enterprise.connector.traversal.ProductionTraversalContext">
     <property name="fileSizeLimitInfo" ref="FileSizeLimitInfo"/>
     <property name="mimeTypeMap" ref="MimeTypeMap"/>
-    <property name="traversalTimeLimitSeconds" ref="TraversalTimeLimitSecondsDefault"/>
+    <property name="traversalTimeLimitSeconds" value="${traversal.time.limit}"/>
   </bean>
 
   <bean id="FileSizeLimitInfo"
@@ -273,7 +272,7 @@
          metadata indexed, however the content itself will not be fed.
          Maximum file size accepted by the GSA is 30MB
     -->
-    <property name="maxDocumentSize" value="31457280"/>
+    <property name="maxDocumentSize" value="${feed.document.size.limit}"/>
 
     <!-- The target size in bytes of an accumulated feed file.  DocPusher tries
          to collect many feed Documents into a single feed file to improve the
@@ -283,7 +282,7 @@
          errors in the Java VM, especially if using multiple Connector Instances.
          The default feed size is 10MB.
     -->
-    <property name="maxFeedSize" value="10485760"/>
+    <property name="maxFeedSize" value="${feed.file.size}"/>
   </bean>
 
   <bean id="MimeTypeMap"
