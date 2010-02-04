@@ -1,4 +1,4 @@
-#summary The New TraversalContext Interface in v1.3 (Updated for v2.4)
+#summary The New TraversalContext Interface in v1.3 (Updated for v2.4.4)
 #labels Phase-Design,Phase-Implementation,Phase-Deploy
 
 = The New TraversalContext Interface in v1.3 (Updated for v2.4) =
@@ -155,6 +155,15 @@ public interface TraversalContext {
    * @returns the most preferred mime type from the Set.
    */
   String preferredMimeType(Set mimeTypes);
+
+  /**                                                                           
+   * Returns the time in seconds alloted for traversals to complete.
+   * TraversalManager.startTraversal() and TraversalManager.resumeTraversal(String)
+   * can avoid interrupts due to timeouts by returning within this amount of time.
+   *                                                                            
+   * @since 2.4                                                                 
+   */
+  long traversalTimeLimitSeconds();
 }
 }}}
 
@@ -182,15 +191,55 @@ files.  In some cases it may also be necessary to modify
 the Search Appliance configuration (using the GSA Administration
 pages).
 
-===Setting the maxDocumentSize===
+==Setting the maxDocumentSize==
 
+===For Connector Manager v 2.4.2 and earlier===
 The maximum document size limit may be configured by adjusting 
 the `maxDocumentSize` property of the `FileSizeLimitInfo` bean 
-definition in `applicationContext.xml`.  Setting a `maxDocumentSize`
-larger than 30 MB on content size is generally not recommended,
-as the GSA typically discards content larger than that.
+definition in `applicationContext.xml`.  
 
-===Mime Type Support Levels===
+===For Connector Manager v 2.4.4 and later===
+The maximum document size limit may be configured by setting the
+`feed.document.size.limit` property in `applicationContext.properties`.
+For example:
+{{{
+feed.document.size.limit=10485760
+}}}
+Sets the maximum document size to 10 megabytes.
+
+===Note===
+Configuring the maximum content size to be larger than 30 MB 
+is not recommended,  as the GSA typically discards content
+larger than that.
+
+==Setting the traversalTimeLimit==
+
+As of Connector Manager v 2.0, the default traversalTimeLimit
+changed from 5 minutes to 30 minutes.  This dramatically reduced
+the occasions where traversal batches that ran a bit slowly were
+timed-out and discarded on the mistaken assumption that the
+the traversal was hung.
+
+At this time, calls to `TraversalManager.startTraversal()` or 
+`TraversalManager.resumeTraversal()` that take more than 30 
+minutes are indicative of poor Repository Database tuning (such
+as lack of proper indexes for deleted document queries) or
+problems with Repository connectivity (such as pulling document
+content over a slow WAN).   It is recommended that the administrator
+first try to address the fundamental problem behind the slow
+traversal before simply lengthening the time out.
+
+===For Connector Manager v 2.4.4 and later===
+Setting the `traversal.time.limit` property in `applicationContext.properties`
+defines the number of seconds a traversal batch should run before
+gracefully exiting.  Traversals that exceed this time period risk cancelation.
+For example:
+{{{
+traversal.time.limit=3600
+}}}
+Raises the traversal time limit to 1 hour (3600 seconds).
+
+==Mime Type Support Levels==
 
 The support level values for mime types (used by the
 `mimeTypeSupportLevel` and `preferredMimeType` methods) are defined 
