@@ -2096,7 +2096,6 @@ public class DocPusherTest extends TestCase {
    * to stop feeding docs.
    */
   public void testLowMemory() throws Exception {
-    Document document = getTestDocument();
     FeedConnection feedConnection = new MockFeedConnection();
 
     Runtime rt = Runtime.getRuntime();
