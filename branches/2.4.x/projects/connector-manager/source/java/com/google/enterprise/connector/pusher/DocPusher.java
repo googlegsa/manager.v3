@@ -175,7 +175,7 @@ public class DocPusher implements Pusher {
     if (feedSender.isShutdown()) {
       throw new IllegalStateException("Pusher is shut down");
     }
-    int numFeedsWaiting = checkSubmissions();
+    checkSubmissions();
 
     String feedType;
     try {
