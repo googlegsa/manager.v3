@@ -64,8 +64,7 @@ public class QueryTraverserTest extends TestCase {
   }
 
   private void runTestBatches(int batchHint, int batchMax) {
-    ThreadPool threadPool =
-      ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(5000);
+    ThreadPool threadPool = new ThreadPool(5);
     MockInstantiator instantiator = new MockInstantiator(threadPool);
     try {
       MockRepositoryEventList mrel =
@@ -155,8 +154,7 @@ public class QueryTraverserTest extends TestCase {
       fail("Unable to initialize largefile.txt: " + e.toString());
     }
 
-    ThreadPool threadPool =
-        ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(5000);
+    ThreadPool threadPool = new ThreadPool(5);
     MockInstantiator instantiator = new MockInstantiator(threadPool);
     try {
       MockRepositoryEventList mrel =

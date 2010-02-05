@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.spiimpl;
 
+import com.google.enterprise.connector.common.EofFilterInputStream;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
@@ -22,7 +24,7 @@ public class BinaryValue extends ValueImpl {
   InputStream binaryValue;
 
   public BinaryValue(InputStream inputStream) {
-    this.binaryValue = inputStream;
+    this.binaryValue = new EofFilterInputStream(inputStream);
   }
 
   public BinaryValue(byte[] byteArray) {

@@ -57,8 +57,7 @@ public class InstantiatorTest extends TestCase {
   }
 
   private void createInstantiator() {
-    ThreadPool threadPool =
-      ThreadPool.newThreadPoolWithMaximumTaskLifeMillis(5000);
+    ThreadPool threadPool = new ThreadPool(5);
     instantiator = new SpringInstantiator(new MockPusher(), threadPool,
         new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
   }
