@@ -29,6 +29,7 @@ import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 
@@ -49,13 +50,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 import javax.jcr.query.QueryManager;
@@ -64,9 +63,6 @@ import javax.jcr.query.QueryManager;
  * Tests DocPusher.
  */
 public class DocPusherTest extends TestCase {
-  private static final Logger LOGGER =
-      Logger.getLogger(DocPusher.class.getName());
-
   private FileSizeLimitInfo fsli;
 
   @Override
@@ -75,6 +71,15 @@ public class DocPusherTest extends TestCase {
     fsli = new FileSizeLimitInfo();
     fsli.setMaxFeedSize(1024 * 1024);
     fsli.setMaxDocumentSize(1024 * 1024);
+
+    // We're comparing date strings here, so we need a fixed time zone.
+    Value.setFeedTimeZone("GMT");
+  }
+
+  @Override
+  public void tearDown() {
+    // Reset the default time zone.
+    Value.setFeedTimeZone("");
   }
 
   /**
@@ -2039,7 +2044,7 @@ public class DocPusherTest extends TestCase {
     SlowFeedConnection slowFeedConnection = new SlowFeedConnection();
     DocPusher dpusher = new DocPusher(slowFeedConnection, "junit", limit);
     int count;
-    for (count = 0; dpusher.take(document) && count < 30; count++) ;
+    for (count = 0; dpusher.take(document) && count < 30; count++) continue;
     assertTrue(count >= 10); // Min. 10 feeds must be waiting to be a backlog.
     assertTrue(count < 30);  // But we should have detected the backlog by now.
     // dpusher.flush();      // Let the sleeping threads lie.

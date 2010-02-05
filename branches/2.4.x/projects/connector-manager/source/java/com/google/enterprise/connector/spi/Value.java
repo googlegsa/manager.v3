@@ -23,6 +23,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.logging.Logger;
 
 /**
  * Wrapper class for all data items from a repository. Connector implementors
@@ -44,6 +45,7 @@ import java.util.TimeZone;
  * parameter type to the base type indicated in the factory method's name.
  */
 public abstract class Value {
+  private static final Logger LOGGER = Logger.getLogger(Value.class.getName());
 
   /**
    * Creates a value carrying a String.
@@ -177,39 +179,62 @@ public abstract class Value {
   @Override
   public abstract String toString();
 
-  private static final TimeZone TIME_ZONE_GMT = TimeZone.getTimeZone("GMT+0");
-  private static final Calendar GMT_CALENDAR =
-      Calendar.getInstance(TIME_ZONE_GMT);
+  private static final Calendar CALENDAR = Calendar.getInstance();
   private static final SimpleDateFormat ISO8601_DATE_FORMAT_MILLIS =
-      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
   private static final SimpleDateFormat ISO8601_DATE_FORMAT_SECS =
-      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
   private static final SimpleDateFormat ISO8601_DATE_FORMAT_MINS =
-      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+      new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
   private static final SimpleDateFormat ISO8601_DATE_FORMAT_DATE =
       new SimpleDateFormat("yyyy-MM-dd");
   private static final SimpleDateFormat RFC822_DATE_FORMAT =
-      new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss z",
+      new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss Z",
           Locale.ENGLISH);
 
   static {
-    ISO8601_DATE_FORMAT_MILLIS.setCalendar(GMT_CALENDAR);
+    ISO8601_DATE_FORMAT_MILLIS.setCalendar(CALENDAR);
     ISO8601_DATE_FORMAT_MILLIS.setLenient(true);
-    ISO8601_DATE_FORMAT_SECS.setCalendar(GMT_CALENDAR);
+    ISO8601_DATE_FORMAT_SECS.setCalendar(CALENDAR);
     ISO8601_DATE_FORMAT_SECS.setLenient(true);
-    ISO8601_DATE_FORMAT_MINS.setCalendar(GMT_CALENDAR);
+    ISO8601_DATE_FORMAT_MINS.setCalendar(CALENDAR);
     ISO8601_DATE_FORMAT_MINS.setLenient(true);
-    ISO8601_DATE_FORMAT_DATE.setCalendar(GMT_CALENDAR);
+    ISO8601_DATE_FORMAT_DATE.setCalendar(CALENDAR);
     ISO8601_DATE_FORMAT_DATE.setLenient(true);
-    RFC822_DATE_FORMAT.setCalendar(GMT_CALENDAR);
+    RFC822_DATE_FORMAT.setCalendar(CALENDAR);
     RFC822_DATE_FORMAT.setLenient(true);
-    RFC822_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+  }
+
+  /**
+   * Sets the time zone used to format date values for the feed to the
+   * given time zone.
+   *
+   * @param id the time zone ID, or <code>null</code> or
+   * <code>""</code> (empty string) to specify the default time zone
+   * @see TimeZone#getTimeZone
+   * @see TimeZone#getDefault
+   */
+  public static synchronized void setFeedTimeZone(String id) {
+    TimeZone tz;
+    if (id == null || id.length() == 0) {
+      id = "default"; // For the log message.
+      tz = TimeZone.getDefault();
+    } else {
+      tz = TimeZone.getTimeZone(id);
+    }
+    LOGGER.config("Setting feed time zone to " + id + " = " + tz.getID());
+    CALENDAR.setTimeZone(tz);
+  }
+
+  /** Gets the time zone ID for the unit tests. */
+  static synchronized String getFeedTimeZone() {
+    return CALENDAR.getTimeZone().getID();
   }
 
   /**
    * Formats a calendar object for the Feeds Protocol, using the
    * ISO-8601 format for just the date portion.  See
-   * <a href="http://code.google.com/apis/searchappliance/documentation/50/feedsguide.html">
+   * <a href="http://code.google.com/apis/searchappliance/documentation/feedsguide.html">
    * Feeds Protocol Developer's Guide</a>
    *
    * @param c
@@ -225,19 +250,22 @@ public abstract class Value {
    * Formats a calendar object as RFC 822.
    *
    * @param c
-   * @return a String in RFC 822 format - always in GMT zone
+   * @return a String in RFC 822 format
    */
   public static synchronized String calendarToRfc822(Calendar c) {
     Date d = c.getTime();
-    String isoString = RFC822_DATE_FORMAT.format(d);
-    return isoString;
+    String s = RFC822_DATE_FORMAT.format(d);
+    // Fix UTC time zone marker. The SimpleDateFormat Z pattern letter
+    // always produces an offset string, e.g., "-0800" or "+000". For
+    // UTC, the use of "GMT" (RFC 822) or "Z" (ISO 8601) is preferred.
+    return s.replaceFirst("\\+0000$", "GMT");
   }
 
   /**
    * Formats a calendar object as ISO-8601.
    *
    * @param c
-   * @return a String in ISO-8601 format - always in GMT zone
+   * @return a String in ISO-8601 format
    */
   public static synchronized String calendarToIso8601(Calendar c) {
     Date d = c.getTime();
@@ -251,7 +279,8 @@ public abstract class Value {
     } else {
       isoString = ISO8601_DATE_FORMAT_DATE.format(d);
     }
-    return isoString;
+    // Fix UTC time zone marker.
+    return isoString.replaceFirst("\\+0000$", "Z");
   }
 
   private static synchronized Date iso8601ToDate(String s)
@@ -283,7 +312,9 @@ public abstract class Value {
    */
   public static synchronized Calendar iso8601ToCalendar(String s)
       throws ParseException {
-    Date d = iso8601ToDate(s);
+    // Fix UTC time zone marker. For parsing, the Z pattern letter
+    // does not accept "Z" for UTC.
+    Date d = iso8601ToDate(s.replaceFirst("Z$", "+0000"));
     Calendar c = Calendar.getInstance();
     c.setTime(d);
     return c;

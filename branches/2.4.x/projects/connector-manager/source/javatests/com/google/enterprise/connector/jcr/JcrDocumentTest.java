@@ -34,8 +34,16 @@ import org.json.JSONObject;
 import javax.jcr.Node;
 
 public class JcrDocumentTest extends TestCase {
+  @Override
+  public void tearDown() {
+    // Reset the default time zone.
+    Value.setFeedTimeZone("");
+  }
 
   public final void testJcrDocument() throws RepositoryException {
+    // We're comparing date strings here, so we need a fixed time zone.
+    Value.setFeedTimeZone("GMT");
+
     {
       String json1 =
           "{\"timestamp\":\"10\",\"docid\":\"doc1\","

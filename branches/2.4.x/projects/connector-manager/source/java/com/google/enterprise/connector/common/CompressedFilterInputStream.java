@@ -60,25 +60,24 @@ public class CompressedFilterInputStream extends FilterInputStream {
 
   @Override
   public int read(byte b[], int off, int len) throws IOException {
+    if (deflater.finished()) {
+      return -1;
+    }
     int rtn = 0;
     do {
       // If the compressor needs more input, get some.
       if (deflater.needsInput()) {
         int bytesRead = fillbuff(inputBuff);
         if (bytesRead < 0) {
-          if (deflater.finished()) {
-            return bytesRead;
-          } else {
-            deflater.finish();
-          }
+          deflater.finish();
         } else {
           deflater.setInput(inputBuff, 0, bytesRead);
         }
       }
       // Write compressed data to the output.
       rtn = deflater.deflate(b, off, len);
-    } while (rtn == 0);
-    return rtn;
+    } while ((rtn == 0) && !deflater.finished());
+    return (rtn > 0) ? rtn : -1;
   }
 
   /**
@@ -86,14 +85,13 @@ public class CompressedFilterInputStream extends FilterInputStream {
    * This is tolerant of short reads - returning less than the requested
    * amount of data, even if there is more available.
    *
-   * @param b buffer to fill
+   * @param b byte buffer to fill
+   * @return number of bytes written to buffer b, or -1 if at EOF
    */
   private int fillbuff(byte b[]) throws IOException {
     int bytesRead = 0;
-    int off = 0;
-    int len = b.length;
-    while (bytesRead < len) {
-      int val = in.read(b, off + bytesRead, len - bytesRead);
+    while (bytesRead < b.length) {
+      int val = in.read(b, bytesRead, b.length - bytesRead);
       if (val == -1) {
         return (bytesRead > 0) ? bytesRead : val;
       }
@@ -104,8 +102,8 @@ public class CompressedFilterInputStream extends FilterInputStream {
 
   @Override
   public void close() throws IOException {
-    super.close();
     deflater.end();
+    super.close();
   }
 
   // No support for mark() or reset().

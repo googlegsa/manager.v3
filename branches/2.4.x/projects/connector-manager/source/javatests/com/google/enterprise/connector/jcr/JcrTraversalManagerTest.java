@@ -41,6 +41,12 @@ public class JcrTraversalManagerTest extends TestCase {
   private static final Logger logger =
       Logger.getLogger(JcrTraversalManagerTest.class.getName());
 
+  @Override
+  public void tearDown() {
+    // Reset the default time zone.
+    Value.setFeedTimeZone("");
+  }
+
   /**
    * Test generating checkpoints.
    *
@@ -48,6 +54,9 @@ public class JcrTraversalManagerTest extends TestCase {
    * @throws JSONException
    */
   public void testCheckpoint() throws RepositoryException, JSONException {
+    // We're comparing date strings here, so we need a fixed time zone.
+    Value.setFeedTimeZone("GMT");
+
     MockRepositoryEventList mrel =
         new MockRepositoryEventList("MockRepositoryEventLog1.txt");
     MockRepository r = new MockRepository(mrel);
