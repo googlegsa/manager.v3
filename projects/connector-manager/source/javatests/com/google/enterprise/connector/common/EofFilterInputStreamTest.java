@@ -19,7 +19,6 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import junit.framework.Assert;
 import junit.framework.TestCase;
 
 /**
