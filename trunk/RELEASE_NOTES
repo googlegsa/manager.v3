@@ -10,6 +10,157 @@ issues and work-arounds.
 
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
+Release 2.4.4, 05 February 2010
+===============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+previous release.  Users of the previous release are encouraged to upgrade
+immediately.
+
+Summary of Changes
+------------------
+  * Issue 209: Changed the default feed time zone from UTC to the
+    local time zone.  Added a new configuration property, feed.timezone,
+    that may be set in applicationContext.properties if the local time
+    zone should not be used.
+
+    The 'feed.timezone' property defines the default time zone used
+    for Date metadata values for Documents.  A null or empty string
+    indicates that the local time zone of the machine running the
+    Connector Manager should be used.  Standard TimeZone identifiers
+    may be specified.  For example:
+      feed.timezone=America/Los_Angeles
+    If a standard TimeZone identifier is unavailable, then a custom
+    TimeZone identifier can be constructed as +/-hours[minutes] offset
+    from GMT.  For example:
+      feed.timezone=GMT+10    # GMT + 10 hours
+      feed.timezone=GMT+0630  # GMT + 6 hours, 30 minutes
+      feed.timezone=GMT-0800  # GMT - 8 hours, 0 minutes
+
+    This modification has compatibility implications when upgrading;
+    refer to the Version Compatibility section, below.
+
+  * Issue 211: Moved common Connector Manager configuration properties
+    from applicationContext.xml to applicationContext.properties.
+    This makes it much easier to upgrade to a newer version of the
+    Connector Manager, while preserving properties that had been
+    customized by the administrator.
+
+    This modification has compatibility implications when upgrading;
+    refer to the Version Compatibility section, below.
+
+  * Issue 212: Fixes "IOException: Attempted read on closed stream."
+    exceptions that might be generated if a Connector uses the
+    Apache Commons AutoCloseInputStream to provide document content
+    to the Connector Manager.  Currently, only the SharePoint Connector
+    seems to have been affected by this problem.
+
+Version Compatibility
+---------------------
+The time zone change has the most dramatic impact when upgrading.
+Previous versions of Connector Manager would convert all date/time
+values provided by the Connector to UTC dates when supplying the date
+to the GSA.  This had undesired consequences for users performing
+date-range searches, where expected search results may have been
+discarded as their adjusted date-stamps may have pushed the document
+into the previous or next day.  Consider this: a document modified
+at 8:00PM PST today in California will have a calendar date of
+tomorrow when adjusted to UTC time, so if you search for documents
+modified today, it won't be found.
+
+The Issue 209 change assumes date values supplied to the GSA are
+local time, unless otherwise specified.  This allows date-range
+queries to function as expected when the Document Repository,
+the Connector Manager, and the Search Appliance are in the same
+time zone (or near enough time zones that 'normal working hours'
+significantly overlap).
+
+Upgrading an existing deployment to this new Connector Manager will
+result in all newly indexed content feeding date values in the
+local time zone, whereas all previously indexed content will have
+UTC date values.  The connector administrator may choose to handle
+this inconsistency in one of several ways:
+ 1) Do nothing.  This may be desirable if date-range searches
+    for older materials need not be accurate to the day; or if
+    re-indexing all content is untenable; or if the Repository,
+    Connector Manager, Search Appliance, and search users are
+    widely dispersed across time zones.
+ 2) Set the feed.timezone property in applicationContext.properties
+    to GMT.  If your local time zone differs significantly from GMT,
+    then date-range searches will continue to be unreliable.
+    However, all dates in the index will be consistently inaccurate.
+ 3) Re-index all content fed by Connectors.  This is the preferred
+    solution if date-range searches are required to be accurate to
+    the day, or if re-indexing the content is not an onerous task.
+    The mechanics of re-indexing depends upon the GSA and Connector
+    Manager versions.  Please consult the appropriate documentation
+    for details.
+ 4) Set the feed.timezone property in applicationContext.properties
+    to a value other than the local time zone or GMT.  This would
+    be appropriate if the Connector Manager and/or GSA were in
+    significantly different timezones than the Repository and/or
+    search users.  The options to re-index or not still apply.
+--
+
+As a result of the modifications for Issue 211, the Connector Manager
+applicationContext.xml and applicationContext.properties files have
+changed significantly.  Consequently, simply dropping the v2.4.4
+JAR files into an existing installation will not function properly.
+An in-place upgrade must include the applicationContext.xml file
+as well.
+
+If the connector administrator has made no modifications to
+applicationContext.xml, then a drop-in update of just the
+Connector Manager v2.4.4 JAR files and the applicationContext.xml
+file over an existing v2.4.x installation should proceed uneventfully.
+If using the GCI Connector Installer v2.4.4 to upgrade or following the
+procedures as described in the UpdatePatchReleasewiki page (see below),
+then installation of the applicationContext.xml file will be automatic.
+
+However, if the connector administrator has made modifications to
+the applicationContext.properties, those modifications must be
+re-applied after installation.  But because of the restructuring of
+applicationContext.xml, it may be difficult to merge the differences.
+Before upgrading, the administrator should make back-up copies of the
+existing applicationContext.xml and applicationContext.properties files.
+These may be used as reference when modifying the newer versions of
+these files.
+
+Once the backup files have been made, follow the instructions for applying
+an update as described in the UpdatePatchRelease wiki page (see below).
+EXCEPT - do not copy the old applicationContext.properties file over
+the new one (step 5 in the instructions), and don't restart Tomcat yet
+(step 6), or if using the GCI Connector Installer v2.4.4 to upgrade,
+shut down Tomcat after the upgrade completes, before re-applying the
+modifications.
+
+Copy the few set properties from the old applicationContext.properties
+to the new one.  The old properties file contains only a half-dozen or so
+properties and they are clearly documented in the new properties file.
+
+Next it is time to reapply your old applicationContext.xml modifications.
+Most of the properties an administrator would wish to change will now
+be set in applicationContext.properties rather than the XML file.
+For instance, rather than modifying the constructor-arg for the
+TraversalTimeLimitSecondsDefault bean in the applicationContext.xml file,
+the administrator should set the traversal.time.limit property in the
+applicationContext.properties file.  This process may be tedious, but
+the v2.4.4 applicationContext.properties file is well commented, so
+the appropriate modifications should be clear.
+
+Finally, once the appropriate modifications have been made to the
+new applicationContext.properties file, the Tomcat server may be
+restarted as described in the UpdatePatchRelease wiki page.  Once
+the server is restarted, the administrator is encouraged to examine
+the Connector Manager logs to check for any configuration errors.
+
+For additional details, please refer to the Connector Manager wiki
+page describing how to manually install an update or patch release:
+http://code.google.com/p/google-enterprise-connector-manager/wiki/UpdatePatchRelease
+
+
 Release 2.4.2, 11 January 2010
 ==============================
 
