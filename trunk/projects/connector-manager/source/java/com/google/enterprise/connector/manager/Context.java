@@ -64,6 +64,8 @@ public class Context {
 
   public static final String GSA_FEED_HOST_PROPERTY_KEY = "gsa.feed.host";
   public static final String GSA_FEED_PORT_PROPERTY_KEY = "gsa.feed.port";
+  public static final String GSA_FEED_PORT_DEFAULT = "19900";
+
   public static final String GSA_ADMIN_REQUIRES_PREFIX_KEY =
       "gsa.admin.requiresPrefix";
   public static final String TEED_FEED_FILE_PROPERTY_KEY = "teedFeedFile";
@@ -686,7 +688,7 @@ public class Context {
       result.setProperty(GSA_FEED_HOST_PROPERTY_KEY,
           props.getProperty(GSA_FEED_HOST_PROPERTY_KEY));
       result.setProperty(GSA_FEED_PORT_PROPERTY_KEY,
-          props.getProperty(GSA_FEED_PORT_PROPERTY_KEY));
+          props.getProperty(GSA_FEED_PORT_PROPERTY_KEY, GSA_FEED_PORT_DEFAULT));
     } catch (PropertiesException e) {
       LOGGER.log(Level.WARNING, "Unable to read application context properties"
           + " file " + propFileName,

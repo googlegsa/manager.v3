@@ -66,7 +66,8 @@ public class SetManagerConfigHandler {
       String currentFeedHost =
           currentSettings.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
       String currentFeedPort =
-          currentSettings.getProperty(Context.GSA_FEED_PORT_PROPERTY_KEY);
+          currentSettings.getProperty(Context.GSA_FEED_PORT_PROPERTY_KEY,
+                                      Context.GSA_FEED_PORT_DEFAULT);
       if (currentFeedHost != null && currentFeedPort != null &&
           currentFeedHost.equals(feederGateHost) &&
           Integer.parseInt(currentFeedPort) == feederGatePort) {
