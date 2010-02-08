@@ -69,13 +69,13 @@ public class SetManagerConfigTest extends TestCase {
     Properties props = loadProperties(propFileName);
     String host = props.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
     int port = Integer.parseInt(props.getProperty(
-        Context.GSA_FEED_PORT_PROPERTY_KEY));
+        Context.GSA_FEED_PORT_PROPERTY_KEY, Context.GSA_FEED_PORT_DEFAULT));
     // Now get them from the Context.
     Properties managerProps = context.getConnectorManagerConfig();
     String ctxHost =
         managerProps.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
-    int ctxPort = Integer.parseInt(
-        managerProps.getProperty(Context.GSA_FEED_PORT_PROPERTY_KEY));
+    int ctxPort = Integer.parseInt(managerProps.getProperty(
+        Context.GSA_FEED_PORT_PROPERTY_KEY, Context.GSA_FEED_PORT_DEFAULT));
     assertEquals("Correct host from context", host, ctxHost);
     assertEquals("Correct port from context", port, ctxPort);
 
@@ -84,8 +84,8 @@ public class SetManagerConfigTest extends TestCase {
     managerProps = context.getConnectorManagerConfig();
     ctxHost =
         managerProps.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
-    ctxPort = Integer.parseInt(
-        managerProps.getProperty(Context.GSA_FEED_PORT_PROPERTY_KEY));
+    ctxPort = Integer.parseInt(managerProps.getProperty(
+        Context.GSA_FEED_PORT_PROPERTY_KEY, Context.GSA_FEED_PORT_DEFAULT));
     assertEquals("Correct host from context", "shme", ctxHost);
     assertEquals("Correct port from context", 14, ctxPort);
   }
@@ -94,9 +94,8 @@ public class SetManagerConfigTest extends TestCase {
       IOException {
     Properties props = loadProperties(propFileName);
     String host = props.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
-    int port = Integer.parseInt(
-        props.getProperty(Context.GSA_FEED_PORT_PROPERTY_KEY));
-
+    int port = Integer.parseInt(props.getProperty(
+        Context.GSA_FEED_PORT_PROPERTY_KEY, Context.GSA_FEED_PORT_DEFAULT));
     assertEquals("fubar", host);
     assertEquals(25, port);
 
@@ -129,8 +128,8 @@ public class SetManagerConfigTest extends TestCase {
       String propFileName) throws IOException {
     Properties props = loadProperties(propFileName);
     String actualHost = props.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
-    int actualPort =
-        Integer.valueOf(props.getProperty(Context.GSA_FEED_PORT_PROPERTY_KEY));
+    int actualPort = Integer.valueOf(props.getProperty(
+        Context.GSA_FEED_PORT_PROPERTY_KEY, Context.GSA_FEED_PORT_DEFAULT));
     assertEquals(expectedHost, actualHost);
     assertEquals(expectedPort, actualPort);
     String isManagerLocked =
