@@ -205,7 +205,8 @@ For example:
 {{{
 feed.document.size.limit=10485760
 }}}
-Sets the maximum document size to 10 megabytes.
+Sets the maximum document size to 10 megabytes.  
+See also [AdvancedConfiguration Connector Manager Advanced Configuration].
 
 ===Note===
 Configuring the maximum content size to be larger than 30 MB 
@@ -238,6 +239,7 @@ For example:
 traversal.time.limit=3600
 }}}
 Raises the traversal time limit to 1 hour (3600 seconds).
+See also [AdvancedConfiguration Connector Manager Advanced Configuration].
 
 ==Mime Type Support Levels==
 
