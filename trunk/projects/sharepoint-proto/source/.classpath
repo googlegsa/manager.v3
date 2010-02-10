@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="java"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/activation.jar"/>
+	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/gdata-client-1.0.jar"/>
+	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/gdata-client-meta-1.0.jar"/>
+	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/gdata-core-1.0.jar"/>
+	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/gdata-docs-3.0.jar"/>
+	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/gdata-docs-meta-3.0.jar"/>
+	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/gdata-media-1.0.jar"/>
+	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/google-collect-1.0-rc2.jar"/>
+	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/google-guava-for-1-5.jar"/>
+	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/jcr-1.0.jar"/>
+	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/jsr305.jar"/>
+	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/mailapi.jar"/>
+	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/tests/junit.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
