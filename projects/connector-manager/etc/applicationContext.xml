@@ -209,9 +209,9 @@
   </bean>
 
   <bean id="PusherFactory"
-        class="com.google.enterprise.connector.pusher.DocPusherFactory">
-    <constructor-arg index="0" ref="FeedConnection" />
-    <constructor-arg index="1" ref="FileSizeLimitInfo"/>
+        class="com.google.enterprise.connector.pusher.CloudPusherFactory">
+    <constructor-arg index="0" value="ericstrellis@gmail.com" />
+    <constructor-arg index="1" value="chinaCat"/>
   </bean>
 
   <bean id="Instantiator"
