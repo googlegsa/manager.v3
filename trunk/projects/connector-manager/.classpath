@@ -4,34 +4,14 @@
 	<classpathentry excluding="**/.svn/**" kind="src" path="source/javatests"/>
 	<classpathentry excluding="**/.svn/**" kind="src" path="source/dtds"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3.8.1"/>
-	<classpathentry exported="true" kind="lib" path="third-party/tests/json.jar"/>
-	<classpathentry exported="true" kind="lib" path="third-party/tests/junit.jar"/>
-	<classpathentry exported="true" kind="lib" path="third-party/prod/spring.jar"/>
-	<classpathentry exported="true" kind="lib" path="third-party/prod/commons-logging.jar"/>
-	<classpathentry exported="true" kind="lib" path="third-party/tests/jcr-1.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="/test-connectorA/dist/jar/testconnectorA.jar"/>
-	<classpathentry exported="true" kind="lib" path="/test-connectorB/dist/jar/testconnectorB.jar"/>
-	<classpathentry exported="true" kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/connector-manager/third-party/prod/activation.jar"/>
-	<classpathentry exported="true" kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/connector-manager/third-party/prod/gdata-client-1.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/connector-manager/third-party/prod/gdata-client-meta-1.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/connector-manager/third-party/prod/gdata-core-1.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/connector-manager/third-party/prod/gdata-docs-3.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/connector-manager/third-party/prod/gdata-docs-meta-3.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/connector-manager/third-party/prod/gdata-media-1.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/connector-manager/third-party/prod/jsr305.jar"/>
-	<classpathentry exported="true" kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/connector-manager/third-party/prod/mailapi.jar"/>
-	<classpathentry exported="true" kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/connector-manager/third-party/prod/servlet-api.jar"/>
-	<classpathentry exported="true" kind="lib" path="third-party/prod/google-collect-1.0-rc2.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
-	<classpathentry kind="con" path="org.eclipse.jst.server.core.container/org.eclipse.jst.server.tomcat.runtimeTarget/Apache Tomcat v6.0">
-		<attributes>
-			<attribute name="owner.project.facets" value="jst.utility"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/java-6-openjdk">
-		<attributes>
-			<attribute name="owner.project.facets" value="jst.java"/>
-		</attributes>
-	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
+	<classpathentry kind="lib" path="third-party/tests/json.jar"/>
+	<classpathentry kind="lib" path="third-party/tests/junit.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/spring.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/servlet-api.jar"/>
+	<classpathentry kind="lib" path="third-party/prod/commons-logging.jar"/>
+	<classpathentry kind="lib" path="third-party/tests/jcr-1.0.jar"/>
+	<classpathentry kind="lib" path="/test-connectorA/dist/jar/testconnectorA.jar"/>
+	<classpathentry kind="lib" path="/test-connectorB/dist/jar/testconnectorB.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
