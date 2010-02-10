@@ -35,4 +35,6 @@ Feed Host, he must do the following:
 
 [RemoteAddrValve Browser Access to Connector Manager v2.x Displays HTTP 403 Error or Blank Page] describes how the Tomcat !RemoteAddrValve hampers troubleshooting Connector deployments and how to configure administrator access to the Connector Manager.
 
+[AdvancedConfiguration Connector Manager Advanced Configuration].
+
 The [http://tomcat.apache.org/tomcat-6.0-doc/config/valve.html Apache Tomcat Valve] documentation.
