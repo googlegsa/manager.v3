@@ -27,7 +27,7 @@ to the benefit of all who had not explicitly overridden them.
 
 To set or modify Connector Manager Advanced Configuration
 Properties, you must edit its `applicationContext.properties` file.  
-This [http://java.sun.com/j2se/1.5.0/docs/api/java/util/Properties.html Java Properties file]
+This [http://java.sun.com/j2se/1.5.0/docs/api/java/util/Properties.html Java Properties] file
 is a plain-text file in `ISO-8859-1` character encoding, 
 and must remain so when modified.  The syntax for setting
 property values must conform the Java Properties specification.
