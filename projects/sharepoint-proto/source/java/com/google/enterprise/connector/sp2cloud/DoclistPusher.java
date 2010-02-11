@@ -27,6 +27,7 @@ import com.google.gdata.util.ServiceException;
 public class DoclistPusher implements CloudPusher {
 	private final DocsService client;
 	private final Map<Folder, String> folderToContentUrlMap = new HashMap<Folder, String>();
+	private final Map<String, Folder> idToFolderMap = new HashMap<String, Folder>();
 
 	//URL of top level doclist container.
   private static final String DOCLIST_ROOT_CONTENT_URL =
@@ -51,7 +52,7 @@ public class DoclistPusher implements CloudPusher {
 			// Prevent collaborators from sharing the document with others?
 			// newDocument.setWritersCanInvite(false);
 			DocumentListEntry dle = client.insert(new URL(parentContentUrl), newDocument);
-			pushAcl(document, dle);
+			pushAcl(document, dle, parent);
 	}
 
 	public void pushFolder(Folder parent, Folder folder) throws Exception {
@@ -62,7 +63,8 @@ public class DoclistPusher implements CloudPusher {
 		DocumentListEntry dle = createFolder(parentContentUrl, folder.getName());
 		String contentUrl = ((MediaContent) dle.getContent()).getUri();
 		folderToContentUrlMap.put(folder, contentUrl);
-		pushAcl(folder, dle);
+		pushAcl(folder, dle, parent);
+		idToFolderMap.put(folder.getId(), folder);
 	}
 
 	public static DocsService mkClient(String user, String userToken) throws AuthenticationException {
@@ -93,9 +95,9 @@ public class DoclistPusher implements CloudPusher {
   	return client.insert(feedUrl, newEntry);
   }
 
-  private void pushAcl( DirEntry dirEntry, DocumentListEntry dle) throws MalformedURLException, IOException, ServiceException {
+  private void pushAcl( DirEntry dirEntry, DocumentListEntry dle, Folder parent) throws MalformedURLException, IOException, ServiceException {
   	for(Ace ace : dirEntry.getAcl()) {
-  		addAce(ace, dle);
+  		addAce(ace, dle, parent);
   	}
   }
 
@@ -111,17 +113,39 @@ public class DoclistPusher implements CloudPusher {
   	}
   }
 
-	private AclEntry addAce(Ace ace, DocumentListEntry entry) throws IOException,
-	    MalformedURLException, ServiceException {
-    System.out.println("Adding ace for " + ace.getName());
-		AclScope scope = new AclScope(
-		    ace.getType().equals(Ace.Type.USER) ? AclScope.Type.USER
-		        : AclScope.Type.GROUP, ace.getName());
-
-		AclEntry aclEntry = new AclEntry();
-		aclEntry.setRole(getAclRoleForGPermission(ace.getGPermission()));
-		aclEntry.setScope(scope);
-
-		return client.insert(new URL(entry.getAclFeedLink().getHref()), aclEntry);
+    private void addAce(Ace ace, DocumentListEntry entry, Folder parent) throws IOException,
+        MalformedURLException, ServiceException {
+      if (aceExistsInParentFolder(ace, parent)) {
+        System.out.println("Skipping ace for " + ace.getName());
+      } else {
+        System.out.println("Adding ace for " + ace.getName());
+        AclScope scope =
+            new AclScope(ace.getType().equals(Ace.Type.USER) ? AclScope.Type.USER
+                : AclScope.Type.GROUP, ace.getName());
+  
+        AclEntry aclEntry = new AclEntry();
+        aclEntry.setRole(getAclRoleForGPermission(ace.getGPermission()));
+        aclEntry.setScope(scope);
+  
+        client.insert(new URL(entry.getAclFeedLink().getHref()), aclEntry);
+      }
+    }
+	
+	private boolean aceExistsInParentFolder(Ace ace, Folder parent) {
+	  if (parent == null) {
+	    return false;
+	  }
+	  for (Ace folderAce : parent.getAcl()) {
+	    if (ace.getName().equals(folderAce.getName())) {
+	      if (ace.getGPermission().compareTo(folderAce.getGPermission()) >= 0) {
+	        return true;
+	      }
+	    }
+	  }
+	  if (idToFolderMap.containsKey(parent.getParentId())) {
+	    return aceExistsInParentFolder(ace, idToFolderMap.get(parent.getParentId()));
+	  } else {
+	    return false;
+	  }
 	}
 }

@@ -2,7 +2,9 @@ package com.google.enterprise.connector.sp2cloud;
 
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import junit.framework.TestCase;
@@ -14,17 +16,18 @@ import com.google.enterprise.connector.sp2c_migration.Ace.Type;
 import com.google.gdata.client.docs.DocsService;
 
 public class DoclistPusherTest extends TestCase {
-  private final String ADMIN_ID = "admin@sharepoint-connector.com";
-  private final String TUSER1_ID = "tuser1@sharepoint-connector.com";
-  private final String TUSER2_ID = "tuser2@sharepoint-connector.com";
-  private final String TUSER3_ID = "tuser3@sharepoint-connector.com";
-  private final String TGROUP1_ID = "tgroup1@sharepoint-connector.com";
+  private static final String ADMIN_ID = "admin@sharepoint-connector.com";
+  private static final String TUSER1_ID = "tuser1@sharepoint-connector.com";
+  private static final String TUSER2_ID = "tuser2@sharepoint-connector.com";
+  private static final String TUSER3_ID = "tuser3@sharepoint-connector.com";
+  private static final String TGROUP1_ID = "tgroup1@sharepoint-connector.com";
 
-	private final String ADMIN_TOKEN =
+  private static final String ADMIN_TOKEN =
 	  "DQAAAIoAAACjIYL-YfwW3Emlgj-fG2vl5tiRtOK9OijniQG-RmK1HpiR-Uiwxd_pCWYVFHneQKsQvXRMnlGtwGeU9AXQeqkdXFLjFF56LCpDI4LngAg720G06dBG0jnekusWJn1jZdd7zz6vgFPxRRsowURKapW9_LQ0oTE2SULQmnVGDTm3WUiyHtHNFUpoXxZJhnj1w0Q";
 	private Random generator;
 	private DoclistPusher pusher;
 	private String rootFolderId;
+	private Map<String, Folder> idToFolderMap;
 
 	@Override
 	public void setUp() throws Exception {
@@ -32,6 +35,7 @@ public class DoclistPusherTest extends TestCase {
 		generator = new Random();
 		pusher = new DoclistPusher(client);
 		rootFolderId = "root_" + generator.nextInt(Integer.MAX_VALUE);
+		idToFolderMap = new HashMap<String, Folder>();
 	}
 
 	private Ace newAce(String name, Ace.GPermission gPermission, Type type) {
@@ -67,6 +71,7 @@ public class DoclistPusherTest extends TestCase {
   private Folder mkFolder(Folder parent, String folderId, List<Ace> acl, String owner) {
   	String parentId = parent == null ? null : parent.getId();
   	Folder result = new Folder("f_" + folderId, folderId, parentId, acl, owner, false);
+  	idToFolderMap.put(result.getId(), result);
   	return result;
   }
 }
