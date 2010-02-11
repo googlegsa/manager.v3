@@ -17,10 +17,10 @@ import com.google.gdata.client.docs.DocsService;
 
 public class DoclistPusherTest extends TestCase {
   private static final String ADMIN_ID = "admin@sharepoint-connector.com";
-  private static final String TUSER1_ID = "tuser1@sharepoint-connector.com";
-  private static final String TUSER2_ID = "tuser2@sharepoint-connector.com";
-  private static final String TUSER3_ID = "tuser3@sharepoint-connector.com";
-  private static final String TGROUP1_ID = "tgroup1@sharepoint-connector.com";
+  private static final String TUSER1_ID = "strellis@sharepoint-connector.com";
+  private static final String TUSER2_ID = "johnfelton@sharepoint-connector.com";
+  private static final String TUSER3_ID = "ziff@sharepoint-connector.com";
+  private static final String TGROUP1_ID = "engineering@sharepoint-connector.com";
 
   private static final String ADMIN_TOKEN =
 	  "DQAAAIoAAACjIYL-YfwW3Emlgj-fG2vl5tiRtOK9OijniQG-RmK1HpiR-Uiwxd_pCWYVFHneQKsQvXRMnlGtwGeU9AXQeqkdXFLjFF56LCpDI4LngAg720G06dBG0jnekusWJn1jZdd7zz6vgFPxRRsowURKapW9_LQ0oTE2SULQmnVGDTm3WUiyHtHNFUpoXxZJhnj1w0Q";
