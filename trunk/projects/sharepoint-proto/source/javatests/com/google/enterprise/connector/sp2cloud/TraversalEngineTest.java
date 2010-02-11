@@ -17,7 +17,7 @@ public class TraversalEngineTest {
       SharepointSite site = new MockSharepointServer("/home/johnfelton/Desktop/Upload Test Files", "user", "password");
 //      CloudPusher cloudPusher = new MockCloudPusher();
       DocsService client = DoclistPusher.mkClient(ADMIN_ID, ADMIN_TOKEN);
-      CloudPusher cloudPusher = new DoclistPusher(client);
+      CloudPusher cloudPusher = new DoclistPusher(client, true);
       TraversalEngine traverser = new TraversalEngine(site, cloudPusher);
       Folder sourceFolder = traverser.findSharePointFolderFromPath("");
       traverser.pushFolderHierarchy(sourceFolder);
