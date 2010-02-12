@@ -14,6 +14,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.activation.MimetypesFileTypeMap;
+
 public class FolderTraverser {
 
   private List<Folder> folderList = new ArrayList<Folder>();
@@ -21,8 +23,10 @@ public class FolderTraverser {
   private int idCounter = 1;
   private HashMap<String, File> files = new HashMap<String, File>();
   private Folder rootFolder;
+  private MimetypesFileTypeMap mediaTypes;
 
   public FolderTraverser(String folderPath) {
+    registerMediaTypes();
     File rootFolder = new File(folderPath);
     String folderId = addFolder(rootFolder, "NONE", true);
     traverseChildren(rootFolder, folderId);
@@ -75,12 +79,15 @@ public class FolderTraverser {
   private void addDocument(File file, String parentId) {
     String name = file.getName();
     String id = getId();
-    String mimeType = "text/plain";
-    String owner = "eric@sharepoint-connector.com";
+    String mimeType = getMimeType(file);
+    String owner = "strellis@sharepoint-connector.com";
     Document document = new Document(name, id, parentId, getTestAcl(), owner, mimeType);
     documentList.add(document);
     files.put(id, file);
   }
+  private String getMimeType(File file) {
+    return mediaTypes.getContentType(file);
+    }
   
   private List<Ace> getTestAcl() {
     List<Ace> acl = new ArrayList<Ace>();
@@ -94,13 +101,13 @@ public class FolderTraverser {
     Ace.SharepointPermissions writePermissions = new Ace.SharepointPermissions(write, none);
     Ace.SharepointPermissions noPermissions = new Ace.SharepointPermissions(none, none);
     
-    Ace ace1 = new Ace("eric@sharepoint-connector.com", writePermissions, Ace.Type.USER);
+    Ace ace1 = new Ace("strellis@sharepoint-connector.com", writePermissions, Ace.Type.USER);
     ace1.setGPermission(Ace.GPermission.WRITE);
     
-    Ace ace2 = new Ace("john@sharepoint-connector.com", readPermissions, Ace.Type.USER);
+    Ace ace2 = new Ace("johnfelton@sharepoint-connector.com", readPermissions, Ace.Type.USER);
     ace2.setGPermission(Ace.GPermission.READ);
     
-    Ace ace3 = new Ace("migration-team@sharepoint-connector.com", writePermissions, Ace.Type.DOMAINGROUP);
+    Ace ace3 = new Ace("engineering@sharepoint-connector.com", writePermissions, Ace.Type.DOMAINGROUP);
     ace3.setGPermission(Ace.GPermission.FULLCONTROL);
 
     acl.add(ace1);
@@ -113,6 +120,30 @@ public class FolderTraverser {
     String newId = String.valueOf(idCounter);
     idCounter++;
     return newId;
+  }
+  private void registerMediaTypes() {
+    // Common MIME types used for uploading attachments.
+    mediaTypes = new MimetypesFileTypeMap();
+    mediaTypes.addMimeTypes("application/msword doc");
+    mediaTypes.addMimeTypes("application/vnd.ms-excel xls");
+    mediaTypes.addMimeTypes("application/pdf pdf");
+    mediaTypes.addMimeTypes("text/richtext rtx");
+    mediaTypes.addMimeTypes("text/csv csv");
+    mediaTypes.addMimeTypes("text/tab-separated-values tsv tab");
+    mediaTypes.addMimeTypes("application/x-vnd.oasis.opendocument.spreadsheet ods");
+    mediaTypes.addMimeTypes("application/vnd.oasis.opendocument.text odt");
+    mediaTypes.addMimeTypes("application/vnd.ms-powerpoint ppt pps pot");
+    mediaTypes.addMimeTypes("application/vnd.openxmlformats-officedocument."
+        + "wordprocessingml.document docx");
+    mediaTypes.addMimeTypes("application/vnd.openxmlformats-officedocument."
+        + "spreadsheetml.sheet xlsx");
+    mediaTypes.addMimeTypes("audio/mpeg mp3 mpeg3");
+    mediaTypes.addMimeTypes("image/png png");
+    mediaTypes.addMimeTypes("application/zip zip");
+    mediaTypes.addMimeTypes("application/x-tar tar");
+    mediaTypes.addMimeTypes("video/quicktime qt mov moov");
+    mediaTypes.addMimeTypes("video/mpeg mpeg mpg mpe mpv vbs mpegv");
+    mediaTypes.addMimeTypes("video/msvideo avi");
   }
 
 }
