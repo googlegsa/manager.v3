@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import javax.activation.MimetypesFileTypeMap;
 
 public class TraversalEngine {
   

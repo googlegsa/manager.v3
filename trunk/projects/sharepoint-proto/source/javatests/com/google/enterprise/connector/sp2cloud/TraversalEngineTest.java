@@ -14,10 +14,10 @@ public class TraversalEngineTest {
    * @param args
    */
   public static void main(String[] args) throws Exception {
-      SharepointSite site = new MockSharepointServer("/home/johnfelton/Desktop/Upload Test Files", "user", "password");
+      SharepointSite site = new MockSharepointServer("/home/johnfelton/Desktop/Migrate to the Cloud Test Files", "user", "password");
 //      CloudPusher cloudPusher = new MockCloudPusher();
       DocsService client = DoclistPusher.mkClient(ADMIN_ID, ADMIN_TOKEN);
-      CloudPusher cloudPusher = new DoclistPusher(client, true);
+      CloudPusher cloudPusher = new DoclistPusher(client, false);
       TraversalEngine traverser = new TraversalEngine(site, cloudPusher);
       Folder sourceFolder = traverser.findSharePointFolderFromPath("");
       traverser.pushFolderHierarchy(sourceFolder);
