@@ -6,11 +6,11 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MockSharepointServer implements SharepointSite {
+public class MockSharepointServerUsingFileSystem implements SharepointSite {
   
   private FolderTraverser traverser;
   
-  public MockSharepointServer(String sharePointUrl, String loginName, String password) {
+  public MockSharepointServerUsingFileSystem(String sharePointUrl, String loginName, String password) {
     traverser = new FolderTraverser(sharePointUrl);
   }
 
