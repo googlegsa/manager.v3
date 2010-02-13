@@ -57,8 +57,17 @@ public class TraversalEngine {
     folderHierarchy = new Hashtable<String, List<Folder>>();
     documentHierarchy = new Hashtable<String, List<Document>>();
 
-    // Get a list of all folders for a document library.
-    List<Folder> folderList = site.getFolders(getDocumentLibraryRootFolder());
+    // Get lists of all folders and documents for all document libraries.
+    List<Folder> rootFolderList = site.getRootFolders();
+    List<Folder> folderList = new ArrayList<Folder>();
+    List<Document> documentList = new ArrayList<Document>();
+    
+    // Loop through each document library (root folder)
+    for (Folder rootFolder : rootFolderList) {
+      folderList.add(rootFolder);
+      folderList.addAll(site.getFolders(rootFolder));
+      documentList.addAll(site.getDocuments(rootFolder));
+    }
 
     // Create a map so folders can be looked up by id.
     for (Folder folder : folderList) {
@@ -78,7 +87,6 @@ public class TraversalEngine {
     }
 
     // Create a map of folder ids to child documents.
-    List<Document> documentList = site.getDocuments(getDocumentLibraryRootFolder());
     for (Document document : documentList) {
 
       // If this is the first time that we've seen a folder with
@@ -91,15 +99,10 @@ public class TraversalEngine {
     }
   }
 
-  private Folder getDocumentLibraryRootFolder() throws Exception {
-    // for now always return the first document library in the list.
-    return  site.getRootFolders().get(0);
-  }
-
-  public Folder findSharePointFolderFromPath(String path) throws Exception {
-    
-    return getDocumentLibraryRootFolder();
-    
+//  public Folder findSharePointFolderFromPath(String path) throws Exception {
+//    
+//    return getDocumentLibraryRootFolder();
+//    
     // for now we will always return the root
 //    String[] folderNames = path.split("/");
 //    Folder currentFolder = getDocumentLibraryRootFolder();
@@ -114,7 +117,7 @@ public class TraversalEngine {
 //      }
 //    }
 //    return currentFolder;
-    
-  }
+//    
+//  }
 
 }

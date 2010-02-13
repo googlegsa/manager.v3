@@ -81,7 +81,8 @@ public class FolderTraverser {
     String id = getId();
     String mimeType = getMimeType(file);
     String owner = "strellis@sharepoint-connector.com";
-    Document document = new Document(name, id, parentId, getTestAcl(), owner, mimeType);
+    Document document = new Document(name, id, parentId, getTestAcl(), owner, mimeType,
+        "dummy_document_url");
     documentList.add(document);
     files.put(id, file);
   }

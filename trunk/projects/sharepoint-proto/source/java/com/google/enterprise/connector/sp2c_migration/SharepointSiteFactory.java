@@ -33,9 +33,11 @@ public class SharepointSiteFactory {
      * @return
      */
 	public static SharepointSite getSharepointSite(String startUrl,
-			String username, String password, String domain) {
-        SharepointSite site = null;
-        // TODO
+			String username, String password, String domain) throws Exception {
+		WebServiceClient wsClient = new WebServiceClient(startUrl, username,
+				password, domain);
+		SharepointSite site = new SharepointSiteImpl(wsClient.getWebUrl(),
+				wsClient.getWebUrl(), wsClient);
         return site;
     }
 }

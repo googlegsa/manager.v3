@@ -1,19 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="java"/>
+	<classpathentry kind="src" path="javatests"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/activation.jar"/>
-	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/gdata-client-1.0.jar"/>
-	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/gdata-client-meta-1.0.jar"/>
-	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/gdata-core-1.0.jar"/>
-	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/gdata-docs-3.0.jar"/>
-	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/gdata-docs-meta-3.0.jar"/>
-	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/gdata-media-1.0.jar"/>
-	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/google-collect-1.0-rc2.jar"/>
-	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/google-guava-for-1-5.jar"/>
-	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/jcr-1.0.jar"/>
-	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/jsr305.jar"/>
-	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/prod/mailapi.jar"/>
-	<classpathentry kind="lib" path="/usr/local/strellis/cm/cm-svn/cm-cloud/projects/sharepoint-proto/third-party/tests/junit.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/activation.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/gdata-client-1.0.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/gdata-client-meta-1.0.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/gdata-core-1.0.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/gdata-docs-3.0.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/gdata-docs-meta-3.0.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/gdata-media-1.0.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/google-collect-1.0-rc2.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/google-guava-for-1-5.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/jcr-1.0.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/jsr305.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/mailapi.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/tests/junit.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/HttpClient-Modified.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/activation-1.1.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/axis.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/jaxrpc.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/jcifs-1.2.15.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/saaj.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/more/axis-ant.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/more/catalina.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/more/commons-codec-1.3.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/more/commons-discovery-0.2.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/more/commons-logging.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/more/gnu-regexp-1.1.4.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/more/joda-time-1.1.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/more/junit.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/more/log4j-1.2.8.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/more/mail-1.4.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/more/wsdl4j-1.5.1.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/more/xercesImpl-2.8.1.jar"/>
+	<classpathentry kind="lib" path="/home/johnfelton/clients/sp2c/projects/sharepoint-proto/third-party/prod/more/xml-apis-1.3.03.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

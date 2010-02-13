@@ -1,7 +1,7 @@
 package com.google.enterprise.connector.sp2cloud;
 
-import com.google.enterprise.connector.sp2c_migration.MockSharepointServerFromMemory;
 import com.google.enterprise.connector.sp2c_migration.SharepointSite;
+import com.google.enterprise.connector.sp2c_migration.SharepointSiteFactory;
 import com.google.gdata.client.docs.DocsService;
 
 public class MigrateToCloudTest {
@@ -12,14 +12,12 @@ public class MigrateToCloudTest {
 
   /**
    * @param args
-   */
-  public static void main(String[] args) throws Exception {
-    SharepointSite site =
-        new MockSharepointServerFromMemory("/home/johnfelton/Desktop/Migrate to the Cloud Test Files",
-            "user", "password");
-    DocsService client = DoclistPusher.mkClient(ADMIN_ID, ADMIN_TOKEN);
-    CloudPusher cloudPusher = new DoclistPusher(client, false);
-    SharePointToCloudMigrator.migrate(cloudPusher, site);
+   */    
+   public static void main(String[] args) throws Exception {
+      SharepointSite spSite = SharepointSiteFactory.getSharepointSite("http://ent-test-w2k3-sp2007/migration", "administrator", "test", "");
+      DocsService client = DoclistPusher.mkClient(ADMIN_ID, ADMIN_TOKEN);
+      CloudPusher cloudPusher = new DoclistPusher(client, false);
+      SharePointToCloudMigrator.migrate(cloudPusher, spSite);
   }
 
 }

@@ -16,14 +16,36 @@ public class MockSharepointServerFromMemory implements SharepointSite {
   
   public MockSharepointServerFromMemory(String sharePointUrl, String loginName, String password) {
     super();
+    
+    Set<String> read = new HashSet<String>();
+    read.add("read");
+    Set<String> write = new HashSet<String>();
+    read.add("write");
+    Set<String> none = new HashSet<String>();
+    read.add("none");
+    Ace.SharepointPermissions readPermissions = new Ace.SharepointPermissions(read, none);
+    Ace.SharepointPermissions writePermissions = new Ace.SharepointPermissions(write, none);
+
+    Ace engineeringAce = new Ace("engineering@sharepoint-connector.com", writePermissions, Ace.Type.USER);
+    engineeringAce.setGPermission(Ace.GPermission.WRITE);
+    
+    Ace productManagementAce = new Ace("product-management@sharepoint-connector.com", writePermissions, Ace.Type.USER);
+    productManagementAce.setGPermission(Ace.GPermission.WRITE);
+    
+    Ace contractorsAce = new Ace("contractors@sharepoint-connector.com", writePermissions, Ace.Type.DOMAINGROUP);
+    contractorsAce.setGPermission(Ace.GPermission.FULLCONTROL);
+
+    List<Ace> engineeringAcl = new ArrayList<Ace>();
+    engineeringAcl.add(engineeringAce);
+
         
     String documentLibraryFolderId = addFolder("Document Library", "NONE", true);
     String engineeringFolderId = addFolder("Engineering", documentLibraryFolderId, false);
-    String programManagersFolderId = addFolder("Program Managers", documentLibraryFolderId, false);
+    String programManagersFolderId = addFolder("Product Management", documentLibraryFolderId, false);
     String contractorsFolderId = addFolder("Contractors", documentLibraryFolderId, false);
     
     addDocument("Engineering File.txt", "file/text", engineeringFolderId);
-    addDocument("Program Managers File.txt", "file/text", programManagersFolderId);
+    addDocument("Product Management File.txt", "file/text", programManagersFolderId);
     addDocument("Contractors File.txt", "file/text", contractorsFolderId);
   }
 
@@ -73,34 +95,26 @@ public class MockSharepointServerFromMemory implements SharepointSite {
   private void addDocument(String name, String mimeType, String parentId) {
     String id = getNewId();
     String owner = "strellis@sharepoint-connector.com";
-    Document document = new Document(name, id, parentId, getTestAcl(), owner, mimeType);
+    Document document = new Document(name, id, parentId, getTestAcl(), owner, mimeType,
+        "dummy_document_url");
     documents.add(document);
   }
   
   private List<Ace> getTestAcl() {
     List<Ace> acl = new ArrayList<Ace>();
-    Set<String> read = new HashSet<String>();
-    read.add("read");
-    Set<String> write = new HashSet<String>();
-    read.add("write");
-    Set<String> none = new HashSet<String>();
-    read.add("none");
-    Ace.SharepointPermissions readPermissions = new Ace.SharepointPermissions(read, none);
-    Ace.SharepointPermissions writePermissions = new Ace.SharepointPermissions(write, none);
-    Ace.SharepointPermissions noPermissions = new Ace.SharepointPermissions(none, none);
     
-    Ace ace1 = new Ace("strellis@sharepoint-connector.com", writePermissions, Ace.Type.USER);
-    ace1.setGPermission(Ace.GPermission.WRITE);
-    
-    Ace ace2 = new Ace("johnfelton@sharepoint-connector.com", readPermissions, Ace.Type.USER);
-    ace2.setGPermission(Ace.GPermission.READ);
-    
-    Ace ace3 = new Ace("engineering@sharepoint-connector.com", writePermissions, Ace.Type.DOMAINGROUP);
-    ace3.setGPermission(Ace.GPermission.FULLCONTROL);
-
-    acl.add(ace1);
-    acl.add(ace2);
-    acl.add(ace3);
+//    Ace ace1 = new Ace("strellis@sharepoint-connector.com", writePermissions, Ace.Type.USER);
+//    ace1.setGPermission(Ace.GPermission.WRITE);
+//    
+//    Ace ace2 = new Ace("johnfelton@sharepoint-connector.com", readPermissions, Ace.Type.USER);
+//    ace2.setGPermission(Ace.GPermission.READ);
+//    
+//    Ace ace3 = new Ace("engineering@sharepoint-connector.com", writePermissions, Ace.Type.DOMAINGROUP);
+//    ace3.setGPermission(Ace.GPermission.FULLCONTROL);
+//
+//    acl.add(ace1);
+//    acl.add(ace2);
+//    acl.add(ace3);
     return acl;
   }
 

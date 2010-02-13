@@ -8,7 +8,7 @@ import java.util.List;
 public abstract class DirEntry {
 	private final String name;
   private final String id;
-  private final String parentId;
+  private final  String parentId;
   private final List<Ace> acl;
   private final String owner;
 
@@ -38,4 +38,9 @@ public abstract class DirEntry {
   public String getOwner() {
 		return owner;
   }
+
+    @Override
+	public String toString() {
+		return name;
+	}
 }

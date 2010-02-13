@@ -59,12 +59,15 @@ public class DoclistPusherTest extends TestCase {
   	List<Ace> rootAcl = Arrays.asList(newAce(TUSER1_ID, Ace.GPermission.READ, Ace.Type.USER));
   	Folder root = mkFolder(null, rootFolderId, rootAcl, ADMIN_ID);
   	pusher.pushFolder(null, root);
-  	Document document = new Document("d1_" + generator.nextInt(Integer.MAX_VALUE), "d1", null, rootAcl, ADMIN_ID, "text/plain");
+  	Document document = new Document("d1_" + generator.nextInt(Integer.MAX_VALUE), "d1", null,
+  	    rootAcl, ADMIN_ID, "text/plain", "dummy_url");
   	pusher.pushDocument(null, document, new ByteArrayInputStream("Hi Eric\n".getBytes("US-ASCII")));
 
   	List<Ace> docAcl = Arrays.asList(newAce(TUSER1_ID, Ace.GPermission.FULLCONTROL, Ace.Type.USER));
-  	document = new Document("d2", "d2_id", root.getId(), docAcl, ADMIN_ID, "text/plain");
-  	pusher.pushDocument(root, document, new ByteArrayInputStream("Hi Eric2\n".getBytes("US-ASCII")));
+  	document = new Document("d2", "d2_id", root.getId(), docAcl, ADMIN_ID, "text/plain",
+  	    "dummy_url");
+  	pusher.pushDocument(root, document, new ByteArrayInputStream(
+  	    "Hi Eric2\n".getBytes("US-ASCII")));
 
   }
 

@@ -106,8 +106,10 @@ public class DoclistPusher implements CloudPusher {
 
   private void pushAcl(DirEntry dirEntry, DocumentListEntry dle, Folder parent)
       throws MalformedURLException, IOException, ServiceException {
-    for (Ace ace : dirEntry.getAcl()) {
-      addAce(ace, dle, parent);
+    if (dirEntry.getAcl() != null) {
+      for (Ace ace : dirEntry.getAcl()) {
+        addAce(ace, dle, parent);
+      }
     }
   }
 
