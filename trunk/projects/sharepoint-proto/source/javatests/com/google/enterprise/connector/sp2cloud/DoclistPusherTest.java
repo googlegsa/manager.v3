@@ -56,33 +56,40 @@ public class DoclistPusherTest extends TestCase {
 		idToFolderMap = new HashMap<String, Folder>();
 	}
 
-	private Ace newAce(String name, Ace.GPermission gPermission, Type type) {
-		Ace result = new Ace(name, null, type);
-		result.setGPermission(gPermission);
-		return result;
-	}
+    private Ace newAce(String name, Ace.GPermission gPermission, Type type) {
+      Ace result = new Ace(name, null, type);
+      result.setGPermission(gPermission);
+      return result;
+  }
 
   public void testFolders() throws Exception {
+    List<CloudAce> cloudAcl = Arrays.asList(new CloudAce(TUSER1_ID, AclScope.Type.USER, AclRole.READER));
   	List<Ace> rootAcl = Arrays.asList(newAce(TUSER1_ID, Ace.GPermission.READ, Ace.Type.USER));
   	Folder root = mkFolder(null, rootFolderId, rootAcl, ADMIN_ID);
-  	pusher.pushFolder(null, root);
-  	List<Ace> childAcl = Arrays.asList(newAce(TUSER2_ID, Ace.GPermission.READ, Ace.Type.USER),
+  	pusher.pushFolder(null, root, cloudAcl);
+  	
+    List<CloudAce> childCloudAcl = Arrays.asList(new CloudAce(TUSER2_ID, AclScope.Type.USER, AclRole.READER),
+        new CloudAce(TUSER3_ID, AclScope.Type.USER, AclRole.WRITER),
+        new CloudAce(TGROUP1_ID, AclScope.Type.USER, AclRole.READER) );
+ 	List<Ace> childAcl = Arrays.asList(newAce(TUSER2_ID, Ace.GPermission.READ, Ace.Type.USER),
   		newAce(TUSER3_ID, Ace.GPermission.FULLCONTROL, Ace.Type.USER),
   		newAce(TGROUP1_ID, Ace.GPermission.READ, Ace.Type.USER));
     Folder child = mkFolder(root, "child1", childAcl, ADMIN_ID);
-  	pusher.pushFolder(root, child);
+  	pusher.pushFolder(root, child, childCloudAcl);
   }
 
   public void testDocuments() throws Exception {
-  	List<Ace> rootAcl = Arrays.asList(newAce(TUSER1_ID, Ace.GPermission.READ, Ace.Type.USER));
+    List<CloudAce> cloudAcl = Arrays.asList(new CloudAce(TUSER1_ID, AclScope.Type.USER, AclRole.READER));
+    List<Ace> rootAcl = Arrays.asList(newAce(TUSER1_ID, Ace.GPermission.READ, Ace.Type.USER));
   	Folder root = mkFolder(null, rootFolderId, rootAcl, ADMIN_ID);
-  	pusher.pushFolder(null, root);
+  	pusher.pushFolder(null, root, cloudAcl);
   	Document document = new Document("d1_" + generator.nextInt(Integer.MAX_VALUE), "d1", null, rootAcl, TUSER3_ID, "text/plain", "not-used");
-  	pusher.pushDocument(null, document, new ByteArrayInputStream("Hi Eric\n".getBytes("US-ASCII")));
+  	pusher.pushDocument(null, document, cloudAcl, new ByteArrayInputStream("Hi Eric\n".getBytes("US-ASCII")));
 
+    List<CloudAce> docCloudAcl = Arrays.asList(new CloudAce(TUSER1_ID, AclScope.Type.USER, AclRole.WRITER));
   	List<Ace> docAcl = Arrays.asList(newAce(TUSER1_ID, Ace.GPermission.FULLCONTROL, Ace.Type.USER));
   	document = new Document("d2", "d2_id", root.getId(), docAcl, TUSER1_ID, "text/plain", "not-used");
-  	pusher.pushDocument(root, document, new ByteArrayInputStream("Hi Eric2\n".getBytes("US-ASCII")));
+  	pusher.pushDocument(root, document, docCloudAcl, new ByteArrayInputStream("Hi Eric2\n".getBytes("US-ASCII")));
   }
   
 
@@ -225,7 +232,7 @@ public class DoclistPusherTest extends TestCase {
 
   private Folder mkFolder(Folder parent, String folderId, List<Ace> acl, String owner) {
   	String parentId = parent == null ? null : parent.getId();
-  	Folder result = new Folder("f_" + folderId, folderId, parentId, acl, owner, false);
+  	Folder result = new Folder("f_" + folderId, folderId, "URL", parentId, acl, owner, false);
   	idToFolderMap.put(result.getId(), result);
   	return result;
   }

@@ -1,6 +1,5 @@
 package com.google.enterprise.connector.sp2c_migration;
 
-import java.util.Set;
 
 /**
  * Specification of the access permission on a {@link DirEntry} for a single
@@ -25,20 +24,20 @@ public class Ace {
 	 * @author nitendra_thakur
 	 */
 	public static class SharepointPermissions {
-		Set<String> allowedPermissions;
-		Set<String> deniedPermissions;
+        String[] allowedPermissions;
+        String[] deniedPermissions;
 
-		public SharepointPermissions(Set<String> grantRightsMask,
-		    Set<String> denyRightsMask) {
+		public SharepointPermissions(String[] grantRightsMask,
+				String[] denyRightsMask) {
 			allowedPermissions = grantRightsMask;
 			deniedPermissions = denyRightsMask;
 		}
 
-		public Set<String> getAllowedPermissions() {
+		public String[] getAllowedPermissions() {
 			return allowedPermissions;
 		}
 
-		public Set<String> getDeniedPermissions() {
+		public String[] getDeniedPermissions() {
 			return deniedPermissions;
 		}
 	}

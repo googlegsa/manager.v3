@@ -17,12 +17,12 @@ public class MockSharepointServerFromMemory implements SharepointSite {
   public MockSharepointServerFromMemory(String sharePointUrl, String loginName, String password) {
     super();
     
-    Set<String> read = new HashSet<String>();
-    read.add("read");
-    Set<String> write = new HashSet<String>();
-    read.add("write");
-    Set<String> none = new HashSet<String>();
-    read.add("none");
+    String[] read = new String[1];
+    read[0] = "read";
+    String[] write = new String[1];
+    write[0] = "write";
+    String[] none = new String[1];
+    none[0] = "none";
     Ace.SharepointPermissions readPermissions = new Ace.SharepointPermissions(read, none);
     Ace.SharepointPermissions writePermissions = new Ace.SharepointPermissions(write, none);
 
@@ -84,7 +84,7 @@ public class MockSharepointServerFromMemory implements SharepointSite {
   private String addFolder(String name, String parentId, boolean isRoot) {
     String id = getNewId();
     String owner = "eric@sharepoint-connector.com";
-    Folder folder = new Folder(name, id, parentId, getTestAcl(), owner, isRoot);
+    Folder folder = new Folder(name, id, "URL", parentId, getTestAcl(), owner, isRoot);
     folders.add(folder);
     if (isRoot) {
       rootFolders.add(folder);

@@ -9,7 +9,7 @@ public abstract class DirEntry {
 	private final String name;
   private final String id;
   private final  String parentId;
-  private final List<Ace> acl;
+	private List<Ace> acl;
   private final String owner;
 
   public DirEntry(String name, String id, String parentId, List<Ace> acl, String owner) {
@@ -38,6 +38,10 @@ public abstract class DirEntry {
   public String getOwner() {
 		return owner;
   }
+
+    public void setAcl(List<Ace> acl) {
+		this.acl = acl;
+	}
 
     @Override
 	public String toString() {

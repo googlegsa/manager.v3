@@ -19,9 +19,9 @@ import java.net.URI;
 import java.net.URL;
 import java.text.Collator;
 import java.text.ParseException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
@@ -39,6 +39,10 @@ import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 
+import com.google.enterprise.connector.sharepoint.generated.gssAcl.ACL;
+import com.google.enterprise.connector.sharepoint.generated.gssAcl.GSSAclMonitor;
+import com.google.enterprise.connector.sharepoint.generated.gssAcl.GSSAclMonitorLocator;
+import com.google.enterprise.connector.sharepoint.generated.gssAcl.GSSAclMonitorSoap_BindingStub;
 import com.google.enterprise.connector.sharepoint.generated.lists.GetListItemChangesSinceTokenContains;
 import com.google.enterprise.connector.sharepoint.generated.lists.GetListItemChangesSinceTokenQuery;
 import com.google.enterprise.connector.sharepoint.generated.lists.GetListItemChangesSinceTokenQueryOptions;
@@ -70,17 +74,17 @@ public class WebServiceClient {
     private String username;
 	private String password;
     private String domain;
-	String complexUsername;
 
     enum AuthScheme {
 		NTLM, BASIC
 	}
 
-    AuthScheme authScheme = AuthScheme.NTLM;
+    AuthScheme auth = AuthScheme.NTLM;
 
-    private ListsSoap_BindingStub listStub = null;
-    private SiteDataSoap_BindingStub siteDataStub = null;
-    private WebsSoap_BindingStub webStub = null;
+    private ListsSoap_BindingStub listStub;
+	private SiteDataSoap_BindingStub siteDataStub;
+	private WebsSoap_BindingStub webStub;
+	private GSSAclMonitorSoap_BindingStub gssAclStub;
 
     public final String ROWLIMIT = "500";
     public final String UNAUTHORIZED = "(401)Unauthorized";
@@ -102,10 +106,6 @@ public class WebServiceClient {
         this.username = username;
         this.domain = domain;
 		this.password = password;
-		complexUsername = username;
-        if (null != domain) {
-            complexUsername = domain + "\\" + username;
-        }
 
         URI uri = null;
         URL url = new URL(siteUrl);
@@ -119,7 +119,7 @@ public class WebServiceClient {
         websLocator.setWebsSoapEndpointAddress(endpoint + "/_vti_bin/Webs.asmx");
         final Webs service = websLocator;
         webStub = (WebsSoap_BindingStub) service.getWebsSoap();
-        webStub.setUsername(complexUsername);
+		webStub.setUsername(domain + "\\" + username);
         webStub.setPassword(password);
 
         // Get the Url which can be used for making further web service call
@@ -140,7 +140,6 @@ public class WebServiceClient {
                 + "/_vti_bin/Lists.asmx");
         final Lists listsService = listLocator;
         listStub = (ListsSoap_BindingStub) listsService.getListsSoap();
-        listStub.setUsername(complexUsername);
         listStub.setPassword(password);
 
         // Initializing SiteData stub
@@ -149,8 +148,39 @@ public class WebServiceClient {
                 + "/_vti_bin/SiteData.asmx");
         final SiteData servInterface = siteDataLocator;
         siteDataStub = (SiteDataSoap_BindingStub) servInterface.getSiteDataSoap();
-        siteDataStub.setUsername(complexUsername);
         siteDataStub.setPassword(password);
+
+		// Initializing GssAcl stub
+		final GSSAclMonitorLocator gssAclLocator = new GSSAclMonitorLocator();
+		gssAclLocator.setGSSAclMonitorSoapEndpointAddress(endpoint
+				+ "/_vti_bin/GssAcl.asmx");
+		GSSAclMonitor gssAclService = gssAclLocator;
+		gssAclStub = (GSSAclMonitorSoap_BindingStub) gssAclService.getGSSAclMonitorSoap();
+		gssAclStub.setPassword(password);
+
+        setUsername();
+	}
+
+    private void changeAuthScheme() {
+		if (auth == AuthScheme.NTLM) {
+			auth = AuthScheme.BASIC;
+		} else if (auth == AuthScheme.BASIC) {
+			auth = AuthScheme.NTLM;
+		}
+	}
+
+    private void setUsername() {
+		if (auth == AuthScheme.NTLM) {
+			webStub.setUsername(domain + "\\" + username);
+			siteDataStub.setUsername(domain + "\\" + username);
+			listStub.setUsername(domain + "\\" + username);
+			gssAclStub.setUsername(domain + "\\" + username);
+		} else if (auth == AuthScheme.BASIC) {
+			webStub.setUsername(username + "@" + domain);
+			siteDataStub.setUsername(username + "@" + domain);
+			listStub.setUsername(username + "@" + domain);
+			gssAclStub.setUsername(username + "@" + domain);
+		}
     }
 
 	/**
@@ -234,9 +264,9 @@ public class WebServiceClient {
 	 * @return
 	 * @throws Exception
 	 */
-    public List<Folder> getFolders(Folder rootfolder, String nextPage)
+	public Map<String, Folder> getFolders(Folder rootfolder, String nextPage)
             throws Exception {
-        List<Folder> folders = new ArrayList<Folder>();
+		Map<String, Folder> folders = new HashMap<String, Folder>();
         if (!rootfolder.isRootFolder()) {
             throw new Exception("Folder is not a root folder");
         }
@@ -251,7 +281,29 @@ public class WebServiceClient {
 		query.set_any(createQuery(true));
 		viewFields.set_any(createViewFields());
 		queryOptions.set_any(createQueryOptions(nextPage));
+
+        try {
 		res = listStub.getListItemChangesSinceToken(rootfolder.getName(), viewName, query, viewFields, ROWLIMIT, queryOptions, token, contains);
+		} catch (final AxisFault af) {
+			if ((UNAUTHORIZED.indexOf(af.getFaultString()) != -1)
+					&& (null != domain)) {
+				changeAuthScheme();
+				setUsername();
+				try {
+					res = listStub.getListItemChangesSinceToken(rootfolder.getName(), viewName, query, viewFields, ROWLIMIT, queryOptions, token, contains);
+				} catch (final Throwable e) {
+					throw new Exception(
+							"Problem while getting Folders under [ "
+									+ rootfolder.getId() + " ].", e);
+				}
+			} else {
+				throw new Exception("Problem while getting Folders under [ "
+						+ rootfolder.getId() + " ].", af);
+			}
+		} catch (final Exception e) {
+			throw new Exception("Problem while getting Folders under [ "
+					+ rootfolder.getId() + " ].", e);
+		}
 
         if (res != null) {
             final MessageElement[] me = res.get_any();
@@ -265,7 +317,7 @@ public class WebServiceClient {
                                 final MessageElement row = (MessageElement) itrchild.next();
                                 Folder folder = createFolder(row);
                                 if (null != folder) {
-                                    folders.add(folder);
+									folders.put(folder.getRelativeUrl(), folder);
                                 }
                             } catch (Exception e) {
                                 // Problem while processing some folders.
@@ -273,7 +325,7 @@ public class WebServiceClient {
                             }
                         }
                         if (tmpNextPage != null) {
-                            folders.addAll(getFolders(rootfolder, nextPage));
+							folders.putAll(getFolders(rootfolder, nextPage));
                         }
                     }
                 }
@@ -302,8 +354,8 @@ public class WebServiceClient {
         }
         author = author.substring(author.indexOf("#") + 1);
 
-        Folder folder = new Folder(name, relativeURL, parentDir, null, author,
-                false);
+		Folder folder = new Folder(name, relativeURL, relativeURL, parentDir,
+				null, author, false);
         return folder;
     }
 
@@ -316,9 +368,9 @@ public class WebServiceClient {
 	 * @return
 	 * @throws Exception
 	 */
-    public List<Document> getDocuments(Folder rootfolder, String nextPage)
+	public Map<String, Document> getDocuments(Folder rootfolder, String nextPage)
             throws Exception {
-        List<Document> documents = new ArrayList<Document>();
+        Map<String, Document> documents = new HashMap<String, Document>();
         if (!rootfolder.isRootFolder()) {
             throw new Exception("Folder is not a root folder");
         }
@@ -336,7 +388,8 @@ public class WebServiceClient {
         } catch (final AxisFault af) {
             if ((UNAUTHORIZED.indexOf(af.getFaultString()) != -1)
                     && (null != domain)) {
-                listStub.setUsername(username + "@" + domain);
+                changeAuthScheme();
+                setUsername();
                 try {
                     res = listStub.getListItems(rootfolder.getName(), viewName, query, viewFields, ROWLIMIT, queryOptions, null);
                 } catch (final Throwable e) {
@@ -365,7 +418,7 @@ public class WebServiceClient {
                                 final MessageElement row = (MessageElement) itrchild.next();
                                 Document document = createDocument(row);
                                 if (null != document) {
-                                    documents.add(document);
+									documents.put(document.getDocUrl(), document);
                                 }
                             } catch (Exception e) {
                                 // Problem while processing some documents.
@@ -373,7 +426,7 @@ public class WebServiceClient {
                             }
                         }
                         if (tmpNextPage != null) {
-                            documents.addAll(getDocuments(rootfolder, nextPage));
+							documents.putAll(getDocuments(rootfolder, nextPage));
                         }
                     }
                 }
@@ -422,19 +475,45 @@ public class WebServiceClient {
 
 	/**
 	 * Makes getListCollection WS call to retrieve all the root folders
-	 * corresponding to all the document libraries in the site
+	 * corresponding to all the document libraries in the site Returns a map of
+	 * FolderURLs<->Folder
 	 * 
 	 * @param parentSiteId primary identifier of the site from which root
 	 *            folders are to be retrieved.
 	 * @return
 	 * @throws Exception
 	 */
-    public List<Folder> getListsAsFolders(String parentSiteId) throws Exception {
-        final ArrayList<Folder> rootFolders = new ArrayList<Folder>();
+	public Map<String, Folder> getListsAsFolders(String parentSiteId)
+			throws Exception {
+		final Map<String, Folder> rootFolders = new HashMap<String, Folder>();
+
         final ArrayOf_sListHolder vLists = new ArrayOf_sListHolder();
         final UnsignedIntHolder getListCollectionResult = new UnsignedIntHolder();
 
+        try {
 		siteDataStub.getListCollection(getListCollectionResult, vLists);
+        } catch (final AxisFault af) {
+            if ((UNAUTHORIZED.indexOf(af.getFaultString()) != -1)
+                    && (null != domain)) {
+                changeAuthScheme();
+                setUsername();
+                try {
+                    siteDataStub.getListCollection(getListCollectionResult, vLists);
+                } catch (final Throwable e) {
+                    throw new Exception(
+                            "Problem while getting top level root folders [ "
+                                    + parentSiteId + " ].", e);
+                }
+            } else {
+                throw new Exception(
+                        "Problem while getting top level root folders [ "
+                                + parentSiteId + " ].", af);
+            }
+        } catch (final Exception e) {
+            throw new Exception(
+                    "Problem while getting top level root folders [ "
+                            + parentSiteId + " ].", e);
+        }
 
         if (vLists == null) {
             return rootFolders;
@@ -466,9 +545,9 @@ public class WebServiceClient {
                 // for resolving the userID to the loginName
                 Folder folder = new Folder(element.getTitle(),
                     // TODO(johnfelton) verify that this is correct
-                        element.getTitle(), /* element.getInternalName(),*/  parentSiteId, null, null,
-                        true);
-                rootFolders.add(folder);
+                        element.getTitle(), /* element.getInternalName(),*/  element.getDefaultViewUrl(),
+						parentSiteId, null, null, true);
+				rootFolders.put(element.getDefaultViewUrl(), folder);
             } catch (Exception e) {
                 // Problem while processing some lists.
                 continue;
@@ -494,12 +573,16 @@ public class WebServiceClient {
         } catch (final AxisFault af) {
             if ((UNAUTHORIZED.indexOf(af.getFaultString()) != -1)
                     && (null != domain)) {
-				complexUsername = username + "@" + domain;
-				authScheme = AuthScheme.BASIC;
-				webStub.setUsername(complexUsername);
+                changeAuthScheme();
+				if (auth == AuthScheme.BASIC) {
+                    webStub.setUsername(username + "@" + domain);
+                } else {
+					webStub.setUsername(domain + "\\" + username);
+                }
                 try {
                     strWebURL = webStub.webUrlFromPageUrl(pageURL);
                 } catch (final Exception e) {
+                    changeAuthScheme();
                     strWebURL = getWebURLForWSCall(pageURL);
                     return strWebURL;
                 }
@@ -561,7 +644,7 @@ public class WebServiceClient {
 
         HttpMethodBase method = new GetMethod(uri.toASCIIString());
 		Credentials credentials = null;
-		if (authScheme == authScheme.NTLM) {
+		if (auth == AuthScheme.NTLM) {
 			credentials = new NTCredentials(username, password, url.getHost(),
 					domain);
 		} else {
@@ -571,9 +654,29 @@ public class WebServiceClient {
 		final HttpClient httpClient = new HttpClient();
 		httpClient.getState().setCredentials(AuthScope.ANY, credentials);
 
-        if (httpClient.executeMethod(method) != 200) {
+        int responseCode = httpClient.executeMethod(method);
+
+		/*
+		 * if (responseCode == 401) { credentials = new
+		 * UsernamePasswordCredentials(domain + "\\" + username, password);
+		 * httpClient.getState().setCredentials(AuthScope.ANY, credentials);
+		 * responseCode = httpClient.executeMethod(method); }
+		 */
+
+        if (responseCode == 200) {
+			return method;
+		} else {
 			throw new Exception("Can not access document's content");
 		}
-		return method;
 	}
+
+    public ACL[] getAclForUrls(String[] urls, String webUrl) {
+        try {
+			ACL[] acls = gssAclStub.getAclForUrls(urls, webUrl);
+			return acls;
+        } catch (Exception e) {
+            System.out.println(e);
+		}
+		return null;
+    }
 }
