@@ -1,14 +1,5 @@
 package com.google.enterprise.connector.sp2cloud;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.google.enterprise.connector.sp2c_migration.Ace;
-import com.google.enterprise.connector.sp2c_migration.DirEntry;
 import com.google.enterprise.connector.sp2c_migration.Document;
 import com.google.enterprise.connector.sp2c_migration.Folder;
 import com.google.gdata.client.docs.DocsService;
@@ -25,9 +16,16 @@ import com.google.gdata.data.docs.PdfEntry;
 import com.google.gdata.data.docs.PresentationEntry;
 import com.google.gdata.data.docs.SpreadsheetEntry;
 import com.google.gdata.data.media.MediaStreamSource;
-import com.google.gdata.util.AuthenticationException;
 import com.google.gdata.util.ContentType;
 import com.google.gdata.util.ServiceException;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DoclistPusher implements CloudPusher {
   private final DocsService client;
@@ -46,7 +44,7 @@ public class DoclistPusher implements CloudPusher {
     this.convert = convert;
   }
 
-  public void pushDocument(Folder parent, Document document,
+  public void pushDocument(Folder parent, Document document, List<CloudAce> cloudAcl,
       InputStream inputStream) throws Exception {
 
     DocumentListEntry newDocument = new DocumentListEntry();
@@ -67,7 +65,7 @@ public class DoclistPusher implements CloudPusher {
     }
     DocumentListEntry dle = client.insert(new URL(rootContentUrl), newDocument);
     
-    pushAcl(document, dle, parent);
+    pushAcl(cloudAcl, dle);
     
     //setOwner(dle, document.getOwner());
 
@@ -79,7 +77,7 @@ public class DoclistPusher implements CloudPusher {
     }
   }
 
-  public void pushFolder(Folder parent, Folder folder) throws Exception {
+  public void pushFolder(Folder parent, Folder folder, List<CloudAce> cloudAcl) throws Exception {
     if (folderToContentUrlMap.get(folder.getId()) != null) {
       throw new IllegalArgumentException(
           "Attempt to push a folder more than once " + folder);
@@ -88,7 +86,7 @@ public class DoclistPusher implements CloudPusher {
     DocumentListEntry dle = createFolder(rootContentUrl, folder.getName());
     String contentUrl = ((MediaContent) dle.getContent()).getUri();
     folderToContentUrlMap.put(folder, contentUrl);
-    pushAcl(folder, dle, parent);
+    pushAcl(cloudAcl, dle);
     setOwner(dle, folder.getOwner());
 
     String parentContentUrl = getParentContentUrl(parent);
@@ -98,11 +96,11 @@ public class DoclistPusher implements CloudPusher {
     }
     idToFolderMap.put(folder.getId(), folder);
   }
-  
+
   private void setOwner(DocumentListEntry dle, String owner) throws MalformedURLException, IOException, ServiceException, InterruptedException{
-    if (!owner.equals(clientUserId)) {
-      addAce(owner, Type.USER, AclRole.OWNER, dle);
-    }
+//    if (!owner.equals(clientUserId)) {
+//      addAce(owner, Type.USER, AclRole.OWNER, dle);
+//    }
   }
 
   private String getParentContentUrl(Folder parent) throws MalformedURLException {
@@ -152,70 +150,36 @@ public class DoclistPusher implements CloudPusher {
     return client.insert(new URL(destFolderContentUrl), newEntry);
   }
 
-  private void pushAcl(DirEntry dirEntry, DocumentListEntry dle, Folder parent)
-      throws MalformedURLException, IOException, ServiceException {
-    for (Ace ace : dirEntry.getAcl()) {
-      if (aceExistsInParentFolder(ace, parent)) {
-        System.out.println("Skipping ace for " + ace.getName());
-      } else {
-        AclScope.Type type = ace.getType().equals(Ace.Type.USER) ? AclScope.Type.USER
-            : AclScope.Type.GROUP;
-        AclRole role = getAclRoleForGPermission(ace.getGPermission());
-        addAce(ace.getName(), type,  role, dle);
-      }
-    }
-    
-  }
-
-  private AclRole getAclRoleForGPermission(Ace.GPermission gPermission) {
-    switch (gPermission) {
-    case FULLCONTROL:
-    case WRITE:
-      return AclRole.WRITER;
-    case READ:
-      return AclRole.READER;
-    default:
-      throw new IllegalArgumentException("Unsupported gPermission: "
-          + gPermission);
+  private void pushAcl(List<CloudAce> cloudAcl, DocumentListEntry dle)
+      throws IOException, ServiceException {
+    for (CloudAce cloudAce : cloudAcl) {
+      addAce(cloudAce, dle);
     }
   }
 
-  private void addAce(String name, AclScope.Type type, AclRole role, DocumentListEntry dle)  throws IOException,
-      ServiceException, MalformedURLException {
+  private void addAce(CloudAce cloudAce, DocumentListEntry entry)
+    throws IOException, MalformedURLException, ServiceException {
+    addAce(cloudAce.getName(), cloudAce.getType(), cloudAce.getRole(), entry);
+  }
+
+  private void addAce(String name, Type type, AclRole role, DocumentListEntry entry)
+  throws IOException, ServiceException {
     System.out.println("Adding ace for " + name);
-    AclScope scope = new AclScope(type, name);
 
-    AclEntry aclEntry = new AclEntry();
-    aclEntry.setRole(role);
-    aclEntry.setScope(scope);
+  AclScope scope = new AclScope(type, name);
+  AclEntry aclEntry = new AclEntry();
+  aclEntry.setRole(role);
+  aclEntry.setScope(scope);
+  
+  client.insert(new URL(entry.getAclFeedLink().getHref()), aclEntry);
+}
 
-    client.insert(new URL(dle.getAclFeedLink().getHref()), aclEntry);
-  }
-
-  private boolean aceExistsInParentFolder(Ace ace, Folder parent) {
-    if (parent == null) {
-      return false;
-    }
-    for (Ace folderAce : parent.getAcl()) {
-      if (ace.getName().equals(folderAce.getName())) {
-        if (ace.getGPermission().compareTo(folderAce.getGPermission()) >= 0) {
-          return true;
-        }
-      }
-    }
-    if (idToFolderMap.containsKey(parent.getParentId())) {
-      return aceExistsInParentFolder(ace, idToFolderMap.get(parent
-          .getParentId()));
-    } else {
-      return false;
-    }
-  }
-
-  public static DocsService mkClient(String user, String userToken)
-      throws AuthenticationException {
+  public static DocsService mkClient(String user, String userToken) {
     DocsService client = new DocsService("cloud push");
     client.setUserToken(userToken);
     System.out.println(client);
     return client;
   }
+
+
 }

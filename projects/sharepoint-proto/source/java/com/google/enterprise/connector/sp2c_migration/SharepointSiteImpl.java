@@ -15,10 +15,18 @@
 package com.google.enterprise.connector.sp2c_migration;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethodBase;
+
+import com.google.enterprise.connector.sharepoint.generated.gssAcl.ACE;
+import com.google.enterprise.connector.sharepoint.generated.gssAcl.ACL;
+import com.google.enterprise.connector.sharepoint.generated.gssAcl.PrincipalType;
+import com.google.enterprise.connector.sp2c_migration.Ace.Type;
 
 public class SharepointSiteImpl implements SharepointSite {
 	String id;
@@ -43,17 +51,86 @@ public class SharepointSiteImpl implements SharepointSite {
 
 	@Override
 	public List<Folder> getRootFolders() throws Exception {
-		return wsClient.getListsAsFolders(id);
+        Map<String, Folder> rootFoldersMap = wsClient.getListsAsFolders(id);
+		Set<String> folderUrls = rootFoldersMap.keySet();
+		String[] urls = new String[folderUrls.size()];
+		int i = 0;
+		for (String url : folderUrls) {
+			urls[i++] = url;
+		}
+
+        ACL[] acls = wsClient.getAclForUrls(urls, getUrl());
+		List<Folder> folders = new ArrayList<Folder>();
+		for (ACL acl : acls) {
+			List<Ace> allAces = new ArrayList<Ace>();
+			for (ACE ace : acl.getAllAce()) {
+				Ace spAce = new Ace(ace.getPrincipal(),
+						new Ace.SharepointPermissions(ace.getGrantRightMask(),
+								ace.getDenyRightMask()),
+						getTypeFromPrincipalType(ace.getType()));
+				allAces.add(spAce);
+			}
+			Folder folder = rootFoldersMap.get(acl.getEntityUrl());
+			folder.setAcl(allAces);
+			folders.add(folder);
+		}
+		return folders;
     }
 
     @Override
 	public List<Folder> getFolders(Folder rootfolder) throws Exception {
-		return wsClient.getFolders(rootfolder, null);
+        Map<String, Folder> foldersMap = wsClient.getFolders(rootfolder, null);
+		Set<String> folderUrls = foldersMap.keySet();
+		String[] urls = new String[folderUrls.size()];
+		int i = 0;
+		for (String url : folderUrls) {
+			urls[i++] = url;
+		}
+
+        ACL[] acls = wsClient.getAclForUrls(urls, getUrl());
+		List<Folder> folders = new ArrayList<Folder>();
+		for (ACL acl : acls) {
+			List<Ace> allAces = new ArrayList<Ace>();
+			for (ACE ace : acl.getAllAce()) {
+				Ace spAce = new Ace(ace.getPrincipal(),
+						new Ace.SharepointPermissions(ace.getGrantRightMask(),
+								ace.getDenyRightMask()),
+						getTypeFromPrincipalType(ace.getType()));
+				allAces.add(spAce);
+			}
+			Folder folder = foldersMap.get(acl.getEntityUrl());
+			folder.setAcl(allAces);
+			folders.add(folder);
+		}
+		return folders;
 	}
 
     @Override
 	public List<Document> getDocuments(Folder rootfolder) throws Exception {
-		return wsClient.getDocuments(rootfolder, null);
+        Map<String, Document> documentsMap = wsClient.getDocuments(rootfolder, null);
+        Set<String> docUrls = documentsMap.keySet();
+        String[] urls = new String[docUrls.size()];
+        int i = 0;
+        for (String url : docUrls) {
+            urls[i++] = url;
+        }
+
+        ACL[] acls = wsClient.getAclForUrls(urls, getUrl());
+		List<Document> documents = new ArrayList<Document>();
+		for (ACL acl : acls) {
+			List<Ace> allAces = new ArrayList<Ace>();
+			for (ACE ace : acl.getAllAce()) {
+				Ace spAce = new Ace(ace.getPrincipal(),
+						new Ace.SharepointPermissions(ace.getGrantRightMask(),
+								ace.getDenyRightMask()),
+						getTypeFromPrincipalType(ace.getType()));
+				allAces.add(spAce);
+			}
+			Document document = documentsMap.get(acl.getEntityUrl());
+			document.setAcl(allAces);
+			documents.add(document);
+		}
+		return documents;
     }
 
 	/**
@@ -72,4 +149,12 @@ public class SharepointSiteImpl implements SharepointSite {
         return method.getResponseBodyAsStream();
     }
 
+    private Type getTypeFromPrincipalType(PrincipalType principalType) {
+        if (PrincipalType._DOMAINGROUP.equals(principalType.getValue())) {
+            return Type.DOMAINGROUP;
+        } else if (PrincipalType._SPGROUP.equals(principalType.getValue())) {
+            return Type.SPGROUP;
+        }
+        return Type.USER;
+    }
 }

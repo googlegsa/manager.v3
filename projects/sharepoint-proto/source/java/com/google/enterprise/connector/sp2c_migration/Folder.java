@@ -15,10 +15,15 @@ public class Folder extends DirEntry {
 	 */
 	private boolean isRootFolder;
 
-  public Folder(String name, String id, String parentId, List<Ace> acl,
-			String owner, boolean isRootFolder) {
+    // site relative Url of the folder. This is required for fetching ACLs and
+	// maintaining the hierarchy.
+	private String relativeUrl;
+
+    public Folder(String name, String id, String relativeUrl, String parentId,
+			List<Ace> acl, String owner, boolean isRootFolder) {
 		super(name, id, parentId, acl, owner);
 		this.isRootFolder = isRootFolder;
+		this.relativeUrl = relativeUrl;
 	}
 
     /**
@@ -28,6 +33,10 @@ public class Folder extends DirEntry {
 	 */
     public boolean isRootFolder() {
 		return isRootFolder;
+	}
+
+    public String getRelativeUrl() {
+		return relativeUrl;
 	}
 
     @Override
