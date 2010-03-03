@@ -57,9 +57,14 @@ import org.springframework.beans.BeansException;
  * <p>To view an individual connector log file:
  * <br><pre>  http://[cm_host_addr]/connector-manager/getConnectorLogs/[log_file_name]</pre>
  * <br>where [log_file_name] is the name of one log files returned by
- * the list.  For instance, 'google-connectors.otex0.log'.  As a convenience,
+ * the list.  For instance, 'google-connectors.0.log'.  As a convenience,
  * the log name may be simply the log file generation number, '0' in the above
  * example, and it gets automatically expanded.</p>
+ * <p>If connector logging is configured to use the
+ * {@code org.apache.juli.FileHandler}, the date, or trailing fragment of the
+ * date, may be supplied as a convenience.  For instance, given the log file
+ * 'google-connectors.2010-02-14.log', the user may request simply '2010-02-14'
+ * or '14'.</p>
  *
  * <p>To retrieve a ZIP archive of all the connector log files:
  * <br><pre>  http://[cm_host_addr]/connector-manager/getConnectorLogs/*</pre>
@@ -194,7 +199,7 @@ public class GetConnectorLogs extends HttpServlet {
           handler = new FeedLogHandler(context);
           logsTag = ServletUtil.XMLTAG_FEED_LOGS;
         } else {
-          handler = new ConnectorLogHandler();
+          handler = newConnectorLogHandler();
           logsTag = ServletUtil.XMLTAG_CONNECTOR_LOGS;
         }
       } catch (ConnectorManagerException cme) {
@@ -277,7 +282,7 @@ public class GetConnectorLogs extends HttpServlet {
         }
 
         // Specify either text/plain or xml content type, based on log format.
-        if (handler.isXMLFormat) {
+        if (handler.isXmlFormat()) {
           res.setContentType(ServletUtil.MIMETYPE_XML);
         } else {
           res.setContentType(ServletUtil.MIMETYPE_TEXT_PLAIN);
@@ -340,7 +345,7 @@ public class GetConnectorLogs extends HttpServlet {
    * @param out OutputStream to which to write the log file.
    * @throws FileNotFoundException, IOException
    */
-  public static void fetchLog(File logFile, ByteRange range, OutputStream out)
+  private static void fetchLog(File logFile, ByteRange range, OutputStream out)
       throws FileNotFoundException, IOException {
     long startPos = 0;
     long length = logFile.length();
@@ -349,7 +354,7 @@ public class GetConnectorLogs extends HttpServlet {
       length = range.actualLength(length);
     }
 
-    byte[] buf = new byte[16384];
+    byte[] buf = new byte[1024 * 1024];
     RandomAccessFile in = new RandomAccessFile(logFile, "r");
     if (startPos > 0) {
       in.seek(startPos);
@@ -373,7 +378,7 @@ public class GetConnectorLogs extends HttpServlet {
    * @param out OutputStream to which to write the archived log files.
    * @throws FileNotFoundException, IOException, ZipException
    */
-  public static void fetchAllLogs(LogHandler handler, OutputStream out)
+  private static void fetchAllLogs(LogHandler handler, OutputStream out)
      throws FileNotFoundException, IOException, ZipException {
     File[] logs = handler.listLogs();
     if (logs != null) {
@@ -397,7 +402,7 @@ public class GetConnectorLogs extends HttpServlet {
    * @param tag xml tag to put around list of logs.
    * @param out PrintWriter where the response is written
    */
-  public static void showLogNames(LogHandler handler, String tag,
+  private static void showLogNames(LogHandler handler, String tag,
       PrintWriter out) {
     ServletUtil.writeRootTag(out, false);
     ServletUtil.writeMessageCode(out, new ConnectorMessageCode());
@@ -460,7 +465,6 @@ public class GetConnectorLogs extends HttpServlet {
     }
     return null;
   }
-
 
   /**
    * This describes a byte range specification, as per RFC2616.
@@ -574,70 +578,70 @@ public class GetConnectorLogs extends HttpServlet {
     }
   }
 
-
-  /**
-   * This is a FilenameFilter for the FileHandler log files.
-   */
-  private static class LogFilenameFilter implements FilenameFilter {
-    private Pattern regexPattern = null;
-
-    /**
-     * Convert a java.util.logging.FileHandler.pattern into a
-     * java.util.regex.Pattern that could be used in a FilenameFilter.
-     * The regex pattern only represents the filename part at the end
-     * of the FileHandler pattern path (the stuff after the last '/').
-     *
-     * @param fhPattern a java.util.logging.FileHandler.pattern
-     */
-    public LogFilenameFilter(String fhPattern) {
-      // Only take the filename part of the path.
-      fhPattern = baseName(fhPattern);
-      int len = fhPattern.length();
-      StringBuilder buf = new StringBuilder(2 * len);
-      for (int i = 0; i < len; i++) {
-        char c = fhPattern.charAt(i);
-        // % is the lead-in quote character for FileHandler patterns.
-        if (c == '%') {
-          try {
-            c = fhPattern.charAt(++i);
-          } catch (IndexOutOfBoundsException ignored) {
-            // % at end? Just preserve it.
-          }
-          if (c == '%') {
-            buf.append(c);
-          } else if ((c == 'g') || (c == 'u')) {
-            buf.append("[0-9]+");
-          } else {
-            buf.append('%').append(c);
-          }
-        } else if ("[](){}-^$*+?.,\\".indexOf(c) >= 0) {
-          // Quote any regex special chars that might appear in the filename.
-          buf.append('\\').append(c);
-        } else {
-          buf.append(c);
-        }
+  // Get Connector Log FileHandler configuration from logging.properies.
+  private static LogHandler newConnectorLogHandler()
+      throws ConnectorManagerException {
+    LogManager logMgr = LogManager.getLogManager();
+    String[] handlers = logMgr.getProperty("handlers").split("[, ]+");
+    String handler = null;
+    for (int i = 0; i < handlers.length; i++) {
+      if (handlers[i].indexOf("FileHandler") >= 0) {
+        handler = handlers[i];
+        break;
       }
-      // FileHandler patterns can optionally implicitly add %g and %u,
-      // each preceded by dots.  Be generous and look for those too.
-      // Technically not stringent, but good enough for our use.
-      buf.append("[0-9\\.]*");
-
-      // Compile the pattern for use by the matcher.
-      regexPattern = Pattern.compile(buf.toString());
     }
-
-    /**
-     * Tests if the specified file matches the regexPattern.
-     *
-     * @param dir the directory containing the file.
-     * @param fileName a file in the directory.
-     * @returns true if the fileName matches the pattern, false otherwise.
-     */
-    public boolean accept(File dir, String fileName) {
-      return regexPattern.matcher(fileName).matches();
+    if (handler == null) {
+      throw new ConnectorManagerException(
+          "Unable to retrieve Connector Logging configuration.  There"
+          + " is no FileHandler configuration in logging.properties.");
+    }
+    if (handler.indexOf("org.apache.juli.FileHandler") >= 0) {
+      return new JuliLogHandler(logMgr, handler);
+    } else {
+      return new JavaUtilLogHandler(logMgr, handler);
     }
   }
 
+  /**
+   * Abstract access to either the Connector Logs or the Feed Logs.
+   */
+  private static interface LogHandler {
+    /**
+     * Return an array of all the existing log Files for this LogHandler.
+     */
+    public File[] listLogs();
+
+    /**
+     * Return a File object representing the directory containing the logs.
+     *
+     * @returns File object representing the log directory.
+     */
+    public File getLogDirectory();
+
+    /**
+     * Return a File object representing the named Log File.
+     *
+     * This is designed to only construct file paths into the
+     * logging directory used by the Logging FileHandler.
+     * This prevents arbitrary files from being fetched from
+     * elsewhere in the file system.
+     *
+     * @param logName
+     * @returns File object representing the named  Log File.
+     */
+    public File getLogFile(String logName);
+
+    /**
+     * Return the filename to give ZIP archives of this handler's log files.
+     */
+    public String getArchiveName();
+
+    /**
+     * Return {@code true} if this handler's log files are in XML format,
+     * {@code false} otherwise.
+     */
+    public boolean isXmlFormat();
+  }
 
   /**
    * Abstract access to either the Connector Logs or the Feed Logs.
@@ -645,31 +649,39 @@ public class GetConnectorLogs extends HttpServlet {
    * in logging.properties; whereas the Feed logs have their FileHandler
    * configuration specified in the Spring applicationContext.xml file.
    */
-  private static class LogHandler {
-    public boolean isXMLFormat = true;
-    public String pattern = "%h/java%u.log";
+  private static class JavaUtilLogHandler implements LogHandler {
+    boolean isXMLFormat = true;
+    String pattern = "%h/java%u.log";
     private File logDirectory;
 
-    /**
-     * Return an array of all the existing log Files for this LogHandler.
-     */
-    public File[] listLogs() {
-      return getLogDirectory().listFiles(new LogFilenameFilter(pattern));
+    public JavaUtilLogHandler() {}
+
+    public JavaUtilLogHandler(LogManager logManager, String handler)
+        throws ConnectorManagerException {
+      pattern = logManager.getProperty(handler + ".pattern");
+      if ((pattern == null) || (pattern.length() == 0)) {
+        throw new ConnectorManagerException(
+            "Unable to retrieve Connector Logging configuration.  Please"
+            + "check the FileHandler configuration in logging.properties.");
+      }
+      String formatter = logManager.getProperty(handler + ".formatter");
+      isXMLFormat =
+          (formatter == null || (formatter.toUpperCase().indexOf("XML") >= 0));
     }
 
-    /**
-     * Return a File object representing the directory containing the logs.
-     * The directory is determined by the path part of the FileHandler pattern.
-     *
-     * Known Limitations: Doesn't handle %u or %g in the directoryName part
-     * of the FileHandler pattern.
-     *
-     * @returns File object representing the log directory.
-     */
-    public File getLogDirectory() {
-      if (logDirectory != null)
-        return logDirectory;
+    //@Override
+    public File[] listLogs() {
+      return getLogDirectory().listFiles(new JavaUtilLogFilenameFilter(pattern));
+    }
 
+    //@Override
+    public File getLogDirectory() {
+      if (logDirectory != null) {
+        return logDirectory;
+      }
+
+      // Known Limitations: Doesn't handle %u or %g in the directoryName part
+      // of the FileHandler pattern.
       String dirName = directoryName(pattern);
       if (dirName == null || dirName.length() == 0) {
         // No path part to pattern? Look for log files in current directory.
@@ -707,17 +719,7 @@ public class GetConnectorLogs extends HttpServlet {
       return logDirectory;
     }
 
-    /**
-     * Return a File object representing the named  Log File.
-     *
-     * This is designed to only construct file paths into the
-     * logging directory used by the Logging FileHandler.
-     * This prevents arbitrary files from being fetched from
-     * elsewhere in the file system.
-     *
-     * @param logName
-     * @returns File object representing the named  Log File.
-     */
+    //@Override
     public File getLogFile(String logName) {
       // The caller may specify simply the log generation number
       // (the value of %g for the specific file).  If so, build
@@ -741,12 +743,11 @@ public class GetConnectorLogs extends HttpServlet {
         // Don't allow full or relative pathnames.
         logName = new File(logName).getName();
       }
+
       return new File(getLogDirectory(), logName);
     }
 
-    /**
-     * Return the filename to give ZIP archives of this handler's log files.
-     */
+    //@Override
     public String getArchiveName() {
       // Only take the filename part of the path.
       String fhPattern = baseName(pattern);
@@ -772,6 +773,11 @@ public class GetConnectorLogs extends HttpServlet {
           buf.append(c);
         }
       }
+
+      // Stripping out parts may have left us with a name like ..log.
+      while ((i = buf.indexOf("..")) >= 0) {
+        buf.deleteCharAt(i);
+      }
       // Pluralize .log -> -logs as a convenience.
       if ((i = buf.lastIndexOf(".log")) >= 0) {
         buf.replace(i, i + 4, "-logs");
@@ -780,27 +786,217 @@ public class GetConnectorLogs extends HttpServlet {
       buf.append(".zip");
       return buf.toString();
     }
-  }
 
-  // Get Connector Log FileHandler configuration from logging.properies.
-  private static class ConnectorLogHandler extends LogHandler {
-    public ConnectorLogHandler() throws ConnectorManagerException {
-      LogManager logMgr = LogManager.getLogManager();
-      String prop = logMgr.getProperty("java.util.logging.FileHandler.pattern");
-      if (prop != null && prop.length() > 0) {
-        super.pattern = prop;
-      } else {
-        throw new ConnectorManagerException(
-            "Unable to retrieve Connector Logging configuration.  Please check"
-            + " the FileHandler configuration in logging.properties.");
+    //@Override
+    public boolean isXmlFormat() {
+      return this.isXMLFormat;
+    }
+
+    /**
+     * A FilenameFilter for java.util.logging.FileHandler log files.
+     */
+    private static class JavaUtilLogFilenameFilter implements FilenameFilter {
+      private Pattern regexPattern = null;
+
+      /**
+       * Convert a java.util.logging.FileHandler.pattern into a
+       * java.util.regex.Pattern that could be used in a FilenameFilter.
+       * The regex pattern only represents the filename part at the end
+       * of the FileHandler pattern path (the stuff after the last '/').
+       *
+       * @param fhPattern a java.util.logging.FileHandler.pattern
+       */
+      public JavaUtilLogFilenameFilter(String fhPattern) {
+        // Only take the filename part of the path.
+        fhPattern = baseName(fhPattern);
+        int len = fhPattern.length();
+        StringBuilder buf = new StringBuilder(2 * len);
+        for (int i = 0; i < len; i++) {
+          char c = fhPattern.charAt(i);
+          // % is the lead-in quote character for FileHandler patterns.
+          if (c == '%') {
+            try {
+              c = fhPattern.charAt(++i);
+            } catch (IndexOutOfBoundsException ignored) {
+              // % at end? Just preserve it.
+            }
+            if (c == '%') {
+              buf.append(c);
+            } else if ((c == 'g') || (c == 'u')) {
+              buf.append("[0-9]+");
+            } else {
+              buf.append('%').append(c);
+            }
+          } else if ("[](){}-^$*+?.,\\".indexOf(c) >= 0) {
+            // Quote any regex special chars that might appear in the filename.
+            buf.append('\\').append(c);
+          } else {
+            buf.append(c);
+          }
+        }
+        // FileHandler patterns can optionally implicitly add %g and %u,
+        // each preceded by dots.  Be generous and look for those too.
+        // Technically not stringent, but good enough for our use.
+        buf.append("[0-9\\.]*");
+
+        // Compile the pattern for use by the matcher.
+        regexPattern = Pattern.compile(buf.toString());
       }
-      prop = logMgr.getProperty("java.util.logging.FileHandler.formatter");
-      super.isXMLFormat = (prop == null || (prop.indexOf("XML") >= 0));
+
+      /**
+       * Tests if the specified file matches the regexPattern.
+       *
+       * @param dir the directory containing the file.
+       * @param fileName a file in the directory.
+       * @returns true if the fileName matches the pattern, false otherwise.
+       */
+      public boolean accept(File dir, String fileName) {
+        return regexPattern.matcher(fileName).matches();
+      }
     }
   }
 
-  // Get Feed Log FileHandler configuration from applicationContext.xml.
-  private static class FeedLogHandler extends LogHandler {
+  /**
+   * A LogHandler for logs created by the org.apache.juli.LogManager.
+   */
+  private static class JuliLogHandler implements LogHandler {
+    File logDirectory;
+    String logPrefix;
+    String logSuffix;
+    boolean isXMLFormat;
+
+    public JuliLogHandler(LogManager logManager, String handler) {
+      // Looks like we are using the JULI FileHandler.
+      String dir = logManager.getProperty(handler + ".directory");
+      if (dir == null) {
+        dir = "logs";
+      }
+      logDirectory = new File(dir);
+
+      logPrefix = logManager.getProperty(handler + ".prefix");
+      if (logPrefix == null) {
+        logPrefix = "juli.";
+      }
+
+      logSuffix = logManager.getProperty(handler + ".suffix");
+      if (logSuffix == null) {
+          logSuffix = ".log";
+      }
+
+      String formatter = logManager.getProperty(handler + ".formatter");
+      isXMLFormat =
+          (formatter == null || (formatter.toUpperCase().indexOf("XML") >= 0));
+    }
+
+    //@Override
+    public File[] listLogs() {
+      return getLogDirectory().listFiles(new JuliLogFilenameFilter());
+    }
+
+    //@Override
+    public File getLogDirectory() {
+      return logDirectory;
+    }
+
+    //@Override
+    public File getLogFile(String logName) {
+      // The caller may specify simply the log date id.
+      // If so, build a logName from that.
+      if (Pattern.matches("[0-9-]+", logName)) {
+        if (logName.length() < 10) {
+          // This looks like a fragment of a date.
+          File[] files =
+              getLogDirectory().listFiles(new JuliLogFilenameFilter(logName));
+          if (files.length > 0) {
+            logName = baseName(files[0].getName());
+          }
+        } else {
+          logName = logPrefix + logName + logSuffix;
+        }
+      } else {
+        // The logName was not a date.  Assume it is the actual
+        // log file name.  Don't allow full or relative pathnames.
+        logName = new File(logName).getName();
+      }
+      return new File(getLogDirectory(), logName);
+    }
+
+    //@Override
+    public String getArchiveName() {
+      StringBuilder buf = new StringBuilder(logPrefix);
+
+      // Strip trailing '.' from prefix, if present.
+      if (logPrefix.endsWith(".")) {
+        buf.setLength(buf.length() - 1);
+      }
+
+      // Pluralize .log -> -logs as a convenience.
+      if (logSuffix.equalsIgnoreCase(".log")) {
+        buf.append("-logs");
+      } else {
+        buf.append(logSuffix);
+      }
+
+      // Add ZIP filename extension.
+      buf.append(".zip");
+      return buf.toString();
+    }
+
+    //@Override
+    public boolean isXmlFormat() {
+      return this.isXMLFormat;
+    }
+
+    /**
+     * A FilenameFilter for org.apache.juli.FileHandler log files.
+     */
+    private class JuliLogFilenameFilter implements FilenameFilter {
+      private Pattern regexPattern = null;
+
+      public JuliLogFilenameFilter() {
+        this("");
+      }
+
+      // Constructor that allows a fragment of the date.
+      public JuliLogFilenameFilter(String fragment) {
+        StringBuilder buf = new StringBuilder();
+        appendEscaped(buf, logPrefix);
+        buf.append("[0-9-]+");
+        buf.append(fragment);
+        appendEscaped(buf, logSuffix);
+        regexPattern = Pattern.compile(buf.toString());
+      }
+
+      /**
+       * Append {@code src} to {@code buf}, escaping special characters.
+       */
+      private void appendEscaped(StringBuilder buf, String src) {
+        for (char c : src.toCharArray()) {
+          // Quote any regex special chars that might appear in the source.
+          if ("[](){}-^$*+?.,\\".indexOf(c) >= 0) {
+            buf.append('\\');
+          }
+          buf.append(c);
+        }
+      }
+
+      /**
+       * Tests if the specified file matches the regexPattern.
+       *
+       * @param dir the directory containing the file.
+       * @param fileName a file in the directory.
+       * @returns true if the fileName matches the pattern, false otherwise.
+       */
+      public boolean accept(File dir, String fileName) {
+        return regexPattern.matcher(fileName).matches();
+      }
+    }
+  }
+
+  /**
+   * A LogHandler for feedlogs, as configured in applicationContext.properties.
+   */
+  private static class FeedLogHandler extends JavaUtilLogHandler {
     public FeedLogHandler(Context context) throws ConnectorManagerException {
       try {
         FeedFileHandler ffh = (FeedFileHandler) context.getApplicationContext()
@@ -811,7 +1007,7 @@ public class GetConnectorLogs extends HttpServlet {
         }
         Formatter formatter = ffh.getFormatter();
         isXMLFormat = (formatter == null ||
-                       (formatter.getClass().getName().indexOf("XML") >= 0));
+            (formatter.getClass().getName().toUpperCase().indexOf("XML") >= 0));
       } catch (BeansException be) {
         throw new ConnectorManagerException(
             "Unable to retrieve Feed Logging configuration: " + be.toString());
@@ -819,33 +1015,32 @@ public class GetConnectorLogs extends HttpServlet {
     }
   }
 
-  // Get Teed Feed File configuration from applicationContext.properties.
-  // At this time, there is only one teedFeedFile is specified (it is not
-  // a logging FileHandler style pattern), so override most of my superclass'
-  // methods with more trivial (single file) implementations.
-  private static class TeedFeedHandler extends LogHandler {
+  /**
+   * A LogHandler for Teed Feed File, as configured in
+   * applicationContext.properties.
+   * At this time, there is only one teedFeedFile is specified, so this is
+   * a pretty trivial LogHandler implementation.
+   */
+  private static class TeedFeedHandler implements LogHandler {
+    String teedFeedFile;
+
     public TeedFeedHandler(Context context) throws ConnectorManagerException {
-      String fileName = context.getTeedFeedFile();
-      if ((fileName != null) && (fileName.length() > 0)) {
-        super.pattern = fileName;
-        // Even though the teedFeedFile is XML format, it is malformed -
-        // especially when when byte-served.
-        super.isXMLFormat = false;
-      } else {
+      teedFeedFile = context.getTeedFeedFile();
+      if ((teedFeedFile == null) || (teedFeedFile.length() == 0)) {
         throw new ConnectorManagerException(
             "Unable to retrieve Teed Feed File configuration. The teedFeedFile"
             + " property is not defined in applicationContext.properties.");
       }
     }
 
-    @Override
-    public File getLogFile(String logName) {
-      return new File(pattern);
+    //@Override
+    public File[] listLogs() {
+      return new File[] { new File(teedFeedFile) };
     }
 
-    @Override
+    //@Override
     public File getLogDirectory() {
-      File parent = (new File(pattern)).getParentFile();
+      File parent = (new File(teedFeedFile)).getParentFile();
       if (parent != null) {
         return parent;
       } else {
@@ -854,14 +1049,21 @@ public class GetConnectorLogs extends HttpServlet {
       }
     }
 
-    @Override
-    public String getArchiveName() {
-      return new File(pattern).getName() + ".zip";
+    //@Override
+    public File getLogFile(String logName) {
+      return new File(teedFeedFile);
     }
 
-    @Override
-    public File[] listLogs() {
-      return new File[] { new File(pattern) };
+    //@Override
+    public String getArchiveName() {
+      return new File(teedFeedFile).getName() + ".zip";
+    }
+
+    //@Override
+    public boolean isXmlFormat() {
+      // Even though the teedFeedFile is XML format, it is malformed -
+      // especially when byte-served.
+      return false;
     }
   }
 }
