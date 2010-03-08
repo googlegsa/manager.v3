@@ -56,7 +56,7 @@ public class TraversalEngine {
     if (documentHierarchy.containsKey(folder.getId())) {
       for (Document document : documentHierarchy.get(folder.getId())) {
         InputStream documentContentStream = site.getDocumentContent(document);
-        List<CloudAce> documentCloudAcl = permissionsMapper.mapAcl(document.getAcl(),
+        List<CloudAce> documentCloudAcl =  permissionsMapper.mapAcl(document.getAcl(),
             document.getParentId(), folders);
         System.out.println("Mapped permission for " + document.getName() + " : " + documentCloudAcl + printAcl(document.getAcl()));
         cloudPusher.pushDocument(folder, document, documentCloudAcl, documentContentStream);

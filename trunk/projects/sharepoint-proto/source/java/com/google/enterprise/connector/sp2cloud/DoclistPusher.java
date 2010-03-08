@@ -33,7 +33,6 @@ public class DoclistPusher implements CloudPusher {
   private final boolean convert;
   
   private final Map<Folder, String> folderToContentUrlMap = new HashMap<Folder, String>();
-  private final Map<String, Folder> idToFolderMap = new HashMap<String, Folder>();
 
   // URL of top level doclist container.
   private static final String DOCLIST_ROOT_CONTENT_URL = "https://docs.google.com/feeds/default/private/full/";
@@ -59,22 +58,16 @@ public class DoclistPusher implements CloudPusher {
     // Prevent collaborators from sharing the document with others?
     // newDocument.setWritersCanInvite(false);
 
-    String rootContentUrl = "https://docs.google.com/feeds/default/private/full/";
+    String parentContentUrl = getParentContentUrl(parent); // "https://docs.google.com/feeds/default/private/full/";
     if (!convert) {
-      rootContentUrl += "?convert=false";
+      parentContentUrl += "?convert=false";
     }
-    DocumentListEntry dle = client.insert(new URL(rootContentUrl), newDocument);
+    DocumentListEntry dle = client.insert(new URL(parentContentUrl), newDocument);
     
     pushAcl(cloudAcl, dle);
     
     //setOwner(dle, document.getOwner());
 
-    String parentContentUrl = getParentContentUrl(parent);
-    System.out.println("parentContentUrl=" + parentContentUrl);
-    if (!DOCLIST_ROOT_CONTENT_URL.equals(parentContentUrl)) {
-      System.out.println("Moving document " + dle.getDocId() + " to folder " + parentContentUrl);
-      moveToFolder(client, dle, parentContentUrl);
-    }
   }
 
   public void pushFolder(Folder parent, Folder folder, List<CloudAce> cloudAcl) throws Exception {
@@ -82,19 +75,19 @@ public class DoclistPusher implements CloudPusher {
       throw new IllegalArgumentException(
           "Attempt to push a folder more than once " + folder);
     }
-    String rootContentUrl = "https://docs.google.com/feeds/default/private/full/";
-    DocumentListEntry dle = createFolder(rootContentUrl, folder.getName());
+//    String rootContentUrl = "https://docs.google.com/feeds/default/private/full/";
+//    DocumentListEntry dle = createFolder(rootContentUrl, folder.getName());
+    DocumentListEntry dle = createFolder(getParentContentUrl(parent), folder.getName());
     String contentUrl = ((MediaContent) dle.getContent()).getUri();
     folderToContentUrlMap.put(folder, contentUrl);
     pushAcl(cloudAcl, dle);
     setOwner(dle, folder.getOwner());
 
-    String parentContentUrl = getParentContentUrl(parent);
-    if (!DOCLIST_ROOT_CONTENT_URL.equals(parentContentUrl)) {
-      System.out.println("Moving document " + dle.getDocId() + " to folder " + parentContentUrl);
-      moveToFolder(client, dle, parentContentUrl);
-    }
-    idToFolderMap.put(folder.getId(), folder);
+//    String parentContentUrl = getParentContentUrl(parent);
+//    if (!DOCLIST_ROOT_CONTENT_URL.equals(parentContentUrl)) {
+//      System.out.println("Moving document " + dle.getDocId() + " to folder " + parentContentUrl);
+//      moveToFolder(client, dle, parentContentUrl);
+//    }
   }
 
   private void setOwner(DocumentListEntry dle, String owner) throws MalformedURLException, IOException, ServiceException, InterruptedException{
