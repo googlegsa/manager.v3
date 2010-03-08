@@ -122,6 +122,7 @@ public class PermissionsMapper {
     result.put("ES-TEST-DOM1\\contractors", "contractors@sharepoint-connector.com");
     result.put("ES-TEST-DOM1\\engineering", "engineering@sharepoint-connector.com");
     result.put("ES-TEST-DOM1\\product management", "product-management@sharepoint-connector.com");
+    result.put("Guests", "guests@sharepoint-connector.com");
     return result;
   }
   
