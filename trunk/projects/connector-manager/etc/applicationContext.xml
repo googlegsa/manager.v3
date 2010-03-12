@@ -54,7 +54,24 @@
         -->
         <prop key="traversal.poll.interval">300</prop>
 
+        <!-- This enables content Traversal and Feeding. -->
+        <prop key="traversal.enabled">true</prop>
+
       </props>
+    </property>
+  </bean>
+
+  <!-- Enables/Disables Traversal and Feeding for all Connector Instances. -->
+  <bean id="Context" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod" value="com.google.enterprise.connector.manager.Context.getInstance"/>
+  </bean>
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="targetObject" ref="Context"/>
+    <property name="targetMethod" value="setFeeding"/>
+    <property name="arguments">
+      <list>
+        <value>${traversal.enabled}</value>
+      </list>
     </property>
   </bean>
 
