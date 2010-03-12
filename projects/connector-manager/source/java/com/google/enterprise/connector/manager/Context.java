@@ -208,6 +208,13 @@ public class Context {
       + " The default time limit is 30 minutes (1800 seconds).\n"
       + " For example:\n"
       + "   traversal.time.limit=1800\n"
+      + "\n"
+      + " The 'traversal.enabled' property is used to enable or disable\n"
+      + " Traversals and Feeds for all connector instances in this\n"
+      + " Connector Manager.  Disabling Traversal would be desirable if\n"
+      + " configuring a Connector Manager deployment that only authorizes\n"
+      + " search results.  Traversals are enabled by default.\n"
+      + " traversal.enabled=false\n"
       + "\n";
 
   private static final Logger LOGGER =
@@ -224,14 +231,15 @@ public class Context {
 
   private boolean isServletContext = false;
 
+  private boolean isFeeding = true;
+
   // singletons
   private Manager manager = null;
   private TraversalScheduler traversalScheduler = null;
   private TraversalContext traversalContext = null;
 
-  // control variables for turning off normal functionality - testing only
-  private boolean isFeeding = true;
 
+  // control variables for turning off normal functionality - testing only
   private String standaloneContextLocation;
   private String standaloneCommonDirPath;
 
@@ -249,6 +257,8 @@ public class Context {
    * @param feeding to feed or not to feed
    */
   public void setFeeding(boolean feeding) {
+    LOGGER.config("Traversal and Feeds are "
+        + ((feeding) ? "enabled." : "disabled."));
     this.isFeeding = feeding;
   }
 
