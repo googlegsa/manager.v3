@@ -26,6 +26,7 @@
   <property name="tests.classes" value="${tests.build}/classes" />
   <property name="tests.todir" value="tests_outdir" />
   <property name="tests.data" value="testdata" />
+  <property name="tests.config" value="${tests.data}/config" />
   <property name="jar.dir" value="${dist}/jarfile" />
 
   <property name="logging.jarfile" value="${jar.dir}/connector-logging.jar" />
@@ -36,7 +37,9 @@
 
   <property name="thirdparty.prod.jars" value="third-party/prod" />
   <property name="thirdparty.tests.jars" value="third-party/tests" />
+
   <property name="junit.jarfile" value="${thirdparty.prod.jars}/junit.jar" />
+  <property name="junit.logging.properties" value="${tests.config}/logging.properties" />
 
   <!-- The directory where all war-files are collected -->
   <property name="war.dir" value="${dist}/${ant.project.name}" />
@@ -124,6 +127,7 @@
         <!-- Needed for those tests that must find resources on the classpath. -->
         <pathelement location="${tests.src}" />
       </classpath>
+      <jvmarg value="-Djava.util.logging.config.file=${junit.logging.properties}"/>
       <formatter type="xml" />
       <batchtest fork="yes" todir="${tests.todir}">
         <fileset dir="${tests.src}" includes="**/${test.suite}Test.java" />
