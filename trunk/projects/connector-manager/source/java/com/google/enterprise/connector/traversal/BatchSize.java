@@ -101,6 +101,6 @@ public class BatchSize {
 
   @Override
   public String toString() {
-    return "BatchSize: hint  = " + hint + " maximum = " + maximum;
+    return "BatchSize: hint = " + hint + " maximum = " + maximum;
   }
 }
