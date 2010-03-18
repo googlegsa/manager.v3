@@ -101,10 +101,24 @@ public interface Instantiator {
    * @param connectorTypeName The connector type for which to get the prototype
    * @return prototype String
    * @throws ConnectorTypeNotFoundException if the connector type is not found
+   * @see ConnectorType#getConfigForm(Locale)
    */
   public String getConnectorInstancePrototype(String connectorTypeName)
       throws ConnectorTypeNotFoundException;
 
+  /**
+   * Get configuration form snippet populated with values representing the
+   * configuration of the supplied connector.
+   *
+   * @param connectorName the connector whose configuration should be used to
+   *        populate the form snippet.
+   * @param connectorTypeName The connector type for which to get the prototype
+   * @param locale A java.util.Locale which the implementation may use to
+   *        produce appropriate descriptions and messages.
+   * @return a ConfigureResponse object. The form must be prepopulated with the
+   *         data from the supplied connector instance's configuration.
+   * @see ConnectorType#getPopulatedConfigForm(Map, Locale)
+   */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String connectorTypeName, Locale locale)
       throws ConnectorNotFoundException, InstantiatorException;
@@ -174,7 +188,7 @@ public interface Instantiator {
    * Gets the schedule of a named connector.
    *
    * @param connectorName
-   * @return the schedule String, or null to erase any previously set schedule
+   * @return the schedule String, or null if there is no stored  schedule
    *         for this connector.
    * @throws ConnectorNotFoundException if the named connector is not found
    */

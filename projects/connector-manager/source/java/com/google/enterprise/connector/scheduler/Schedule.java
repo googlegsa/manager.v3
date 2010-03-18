@@ -82,7 +82,7 @@ public class Schedule {
    * @param disabled true if this schedule is currently disabled
    * @param load The hostload (in docs per minute) as an integer
    * @param retryDelayMillis Time to wait before next traversal (milliseconds)
-   * @param timeIntervals Time intervals in the format of {1-2,3-8
+   * @param timeIntervals Time intervals in the format of {1-2,3-8}
    */
   public Schedule(String connectorName, boolean disabled, int load,
       int retryDelayMillis, List<ScheduleTimeInterval> timeIntervals) {
