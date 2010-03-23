@@ -45,6 +45,6 @@ public abstract class DirEntry {
 
     @Override
 	public String toString() {
-		return name;
+		return "name=" + name + " owner=" + owner;
 	}
 }

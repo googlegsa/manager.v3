@@ -87,10 +87,35 @@ public class TraversalEngine {
       documentList.addAll(site.getDocuments(rootFolder));
     }
 
+    // Map owners
+    // TODO(johnfelton) - Also map ACE principles at this point rather than later.
+    {
+      List<Folder> tempFolderList = new ArrayList<Folder>();
+      for (Folder folder : folderList) {
+        System.out.println("Mapping Owner for Folder " + folder.getName());
+        tempFolderList.add(folder.fixFolderOwner(permissionsMapper.mapPrincipleName(folder.getOwner(), "admin@sharepoint-connector.com")));
+      }
+      folderList = tempFolderList;
+      System.out.println("FOLDERS = " + folderList);
+    }
+  
+    {
+      List<Document> tempDocumentList = new ArrayList<Document>();
+      for (Document document : documentList) {
+        System.out.println("Mapping Owner for document " + document.getName());
+        tempDocumentList.add(document.fixDocumentOwner(permissionsMapper.mapPrincipleName(document.getOwner(), "admin@sharepoint-connector.com")));
+      }
+      documentList = tempDocumentList;
+      System.out.println("DOCS = " + documentList);
+
+    }
+
+    
     // Create a map so folders can be looked up by id.
     for (Folder folder : folderList) {
       folders.put(folder.getId(), folder);
     }
+
 
     // Create a map of folder ids to child folders.
     for (Folder folder : folderList) {

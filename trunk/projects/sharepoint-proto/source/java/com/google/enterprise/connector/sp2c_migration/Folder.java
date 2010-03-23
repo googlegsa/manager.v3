@@ -25,6 +25,10 @@ public class Folder extends DirEntry {
 		this.isRootFolder = isRootFolder;
 		this.relativeUrl = relativeUrl;
 	}
+    
+    public Folder fixFolderOwner(String owner) {
+        return new Folder(getName(), getId(), getRelativeUrl(), getParentId(), getAcl(), owner, isRootFolder);
+    }
 
     /**
 	 * Identifies if the folder is a root folder in the SharePoint site
