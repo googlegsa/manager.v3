@@ -30,6 +30,10 @@ public class Document extends DirEntry {
     public String getDocUrl() {
 		return docUrl;
 	}
+    
+    public Document fixDocumentOwner(String owner) {
+        return new Document(getName(), getId(), getParentId(), getAcl(), owner, mimeType, docUrl);
+    }
 
     @Override
 	public int hashCode() {

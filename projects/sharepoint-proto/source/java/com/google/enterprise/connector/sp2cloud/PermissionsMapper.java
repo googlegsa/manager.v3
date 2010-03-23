@@ -64,6 +64,16 @@ public class PermissionsMapper {
     }
     return result;    
   }
+  
+  public String mapPrincipleName(String name, String defaultResult) {
+    String result = userAndGroupNameMap.get(name);
+    if (result == null) {
+      result = defaultResult;
+    }
+    System.out.println("Principle Name In: " + name + "  Out: " + result);
+    return result;
+  }
+  
   private boolean hasPermission(String[] permissionArray, String[] requiredPermissions) {
     for (String requiredPermission : requiredPermissions) {
       if (!containsPermission(permissionArray, requiredPermission)) {
@@ -109,6 +119,7 @@ public class PermissionsMapper {
   static public Map<String, String> makeNameMap() {
     Map<String, String> result = new HashMap<String, String>();
     
+    result.put("John Felton", "johnfelton@sharepoint-connector.com");
     result.put("ES-TEST-DOM1\\johnfelton", "johnfelton@sharepoint-connector.com");
     result.put("ES-TEST-DOM1\\peeyush", "peeyush@sharepoint-connector.com");
     result.put("ES-TEST-DOM1\\richardliu", "richardliu@sharepoint-connector.com");
@@ -118,7 +129,7 @@ public class PermissionsMapper {
     result.put("ES-TEST-DOM1\\rakeshs", "rakeshs@sharepoint-connector.com");
     result.put("ES-TEST-DOM1\\anil", "anil@sharepoint-connector.com");
     result.put("ES-TEST-DOM1\\chris", "chris@sharepoint-connector.com");
-//    result.put("ES-TEST-DOM1\\admistrator", "admin@sharepoint-connector.com");
+    result.put("W2K3-SP2007\\admistrator", "admin@sharepoint-connector.com");
     result.put("ES-TEST-DOM1\\contractors", "contractors@sharepoint-connector.com");
     result.put("ES-TEST-DOM1\\engineering", "engineering@sharepoint-connector.com");
     result.put("ES-TEST-DOM1\\product management", "product-management@sharepoint-connector.com");
