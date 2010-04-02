@@ -69,9 +69,10 @@ public class FolderManager {
     return Collections.unmodifiableList(rootFolders);
   }
 
-  FolderInfo newFolderInfo(String id, String parentId, CloudAcl cloudAcl) {
+  FolderInfo newFolderInfo(String id, String parentId, String name,
+      CloudAcl cloudAcl) {
 
-    return new FolderInfo(id, parentId, cloudAcl);
+    return new FolderInfo(id, parentId, name, cloudAcl);
   }
 
   /**
@@ -80,13 +81,16 @@ public class FolderManager {
   class FolderInfo {
     private final String id;
     private final String parentId;
+    private final String name;
     private final CloudAcl cloudAcl;
     private final List<FolderInfo> childFolders;
     private String baseUrl;
 
-    private FolderInfo(String id, String parentId, CloudAcl cloudAcl) {
+    private FolderInfo(String id, String parentId, String name,
+        CloudAcl cloudAcl) {
       this.id = id;
       this.parentId = parentId;
+      this.name = name;
       this.cloudAcl = cloudAcl;
 
       this.childFolders = new ArrayList<FolderInfo>();
@@ -100,12 +104,12 @@ public class FolderManager {
       return parentId == null;
     }
 
-    void setBaseUrl(String baseUrl) {
-      this.baseUrl = baseUrl;
+    FolderInfo getParent() {
+      return folderIdToFolderInfoMap.get(parentId);
     }
-
-    String getBaseUrl() {
-      return baseUrl;
+    
+    String getName() {
+      return name;
     }
 
     CloudAcl getCloudAcl() {
@@ -120,8 +124,12 @@ public class FolderManager {
       return Collections.unmodifiableList(childFolders);
     }
 
-    FolderInfo getParent() {
-      return folderIdToFolderInfoMap.get(parentId);
+    void setBaseUrl(String baseUrl) {
+      this.baseUrl = baseUrl;
+    }
+
+    String getBaseUrl() {
+      return baseUrl;
     }
 
     @Override
