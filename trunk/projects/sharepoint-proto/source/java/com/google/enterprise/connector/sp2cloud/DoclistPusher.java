@@ -28,22 +28,20 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class DoclistPusher implements CloudPusher {
   private final DocsService client;
   private final FolderManager folderManager;
   private final String adminUserId;
   private final boolean convert;
-  
+
   // URL of top level doclist container.
-  private static final String DOCLIST_ROOT_CONTENT_URL = 
+  private static final String DOCLIST_ROOT_CONTENT_URL =
       "https://docs.google.com/feeds/default/private/full/";
 
   DoclistPusher(DocsService client, FolderManager folderManager,
-      String adminUserId, boolean convert) 
+      String adminUserId, boolean convert)
       throws Exception {
     this.client = client;
     this.folderManager = folderManager;
@@ -51,22 +49,22 @@ public class DoclistPusher implements CloudPusher {
     this.convert = convert;
   }
 
-  public void pushDocument(Document document, 
+  public void pushDocument(Document document,
       CloudAcl cloudAcl, InputStream inputStream) throws Exception {
 
     DocumentListEntry dle = createDocument(
-        getOauthUrl(DOCLIST_ROOT_CONTENT_URL, cloudAcl.getOwner()), 
+        getOauthUrl(DOCLIST_ROOT_CONTENT_URL, cloudAcl.getOwner()),
         document, inputStream);
-    dle = linkAndSecure(folderManager.getFolderInfo(document.getParentId()), 
+    dle = linkAndSecure(folderManager.getFolderInfo(document.getParentId()),
         cloudAcl, dle);
     //pushAcl(document.getOwner(), cloudAcl, dle);
   }
 
-  private DocumentListEntry createDocument(String parentFolderContentUrl, 
-      Document document, InputStream inputStream) 
+  private DocumentListEntry createDocument(String parentFolderContentUrl,
+      Document document, InputStream inputStream)
       throws IOException, ServiceException, MalformedURLException {
     DocumentListEntry newDocument = new DocumentListEntry();
-    MediaStreamSource mediaSource = new MediaStreamSource(inputStream, 
+    MediaStreamSource mediaSource = new MediaStreamSource(inputStream,
         document.getMimeType());
     MediaContent content = new MediaContent();
     content.setMediaSource(mediaSource);
@@ -78,7 +76,7 @@ public class DoclistPusher implements CloudPusher {
     // newDocument.setWritersCanInvite(false);
     if (!convert) {
       parentFolderContentUrl += "&convert=false";
-    }    
+    }
     URL feedUrl = new URL(parentFolderContentUrl);
     System.out.println("**Create folder feedUrl="+feedUrl);
     return client.insert(feedUrl, newDocument);
@@ -86,8 +84,8 @@ public class DoclistPusher implements CloudPusher {
 
   public void pushFolder(FolderInfo folderInfo) throws Exception {
     DocumentListEntry dle = createFolder(
-        getOauthUrl(DOCLIST_ROOT_CONTENT_URL, 
-            folderInfo.getCloudAcl().getOwner()), 
+        getOauthUrl(DOCLIST_ROOT_CONTENT_URL,
+            folderInfo.getCloudAcl().getOwner()),
             folderInfo.getName());
     dle = linkAndSecure(folderInfo.getParent(), folderInfo.getCloudAcl(), dle);
     folderInfo.setBaseUrl(getBaseContentUrl(dle));
@@ -105,8 +103,8 @@ public class DoclistPusher implements CloudPusher {
     }
     return dle;
   }
-  
-  private void deleteRootLink(DocumentListEntry dle, String ownerId) 
+
+  private void deleteRootLink(DocumentListEntry dle, String ownerId)
       throws MalformedURLException, IOException, ServiceException {
     final String url = DOCLIST_ROOT_CONTENT_URL
         + "folder%3Aroot/contents/"
@@ -114,12 +112,12 @@ public class DoclistPusher implements CloudPusher {
         + "?xoauth_requestor_id="
         + ownerId;
     //TODO(strellis): is refresh to get newest etag needed/appropriate here?
-    dle = client.getEntry(new URL(dle.getSelfLink().getHref()), 
+    dle = client.getEntry(new URL(dle.getSelfLink().getHref()),
         DocumentListEntry.class);
     client.delete(new URL(url), dle.getEtag());
     System.out.println("Made it! deleted " + url);
   }
-  
+
   private String getBaseContentUrl(DocumentListEntry dle) {
     String contentUrl = ((MediaContent) dle.getContent()).getUri();
     int questionmarkIx = contentUrl.indexOf('?');
@@ -137,7 +135,7 @@ public class DoclistPusher implements CloudPusher {
     if (parent == null) {
       return getOauthUrl(DOCLIST_ROOT_CONTENT_URL, requesterId);
     } else {
-// TODO(strellis): Is this check needed?      
+// TODO(strellis): Is this check needed?
 //      if (folderInfo == null) {
 //        throw new IllegalArgumentException(
 //            "Attempt to access a parent folder that has not been created. "
@@ -156,7 +154,7 @@ public class DoclistPusher implements CloudPusher {
     System.out.println("**Create folder feedUrl="+feedUrl);
     return client.insert(feedUrl, newEntry);
   }
-  
+
   private DocumentListEntry moveToFolder(DocsService client,
       DocumentListEntry sourceEntry, String destFolderContentUrl)
       throws IOException, ServiceException {
@@ -182,7 +180,7 @@ public class DoclistPusher implements CloudPusher {
     DocumentListEntry result = client.insert(new URL(destFolderContentUrl), newEntry);
     return result;
   }
-   
+
   Comparator<CloudAce> CLOUD_ACE_COMPARITOR  = new Comparator<CloudAce>() {
     @Override
     public int compare(CloudAce o1, CloudAce o2) {
@@ -191,7 +189,7 @@ public class DoclistPusher implements CloudPusher {
         result = o1.getName().compareTo(o1.getName());
       }
       return result;
-    }    
+    }
   };
   /**
    * Push the ACL for a document or folder to the cloud. The pushed ACL
@@ -205,40 +203,37 @@ public class DoclistPusher implements CloudPusher {
    */
   private void pushAcl(FolderInfo parent, CloudAcl cloudAcl, DocumentListEntry dle)
       throws IOException, ServiceException {
-    List<CloudAce> parentAceList = null;
+    Map<CloudAce.TypeAndNameKey, CloudAce> parentTypeAndNameKeyToCloudAceMap = null;
     if (parent == null) {
-      parentAceList = Collections.emptyList();
+      parentTypeAndNameKeyToCloudAceMap = Collections.emptyMap();
     } else {
-      parentAceList = parent.getCloudAcl().getAceList();
+      parentTypeAndNameKeyToCloudAceMap =
+          parent.getCloudAcl().newTypeAndNameKeyToCloudAceMap();
     }
-    
+
     //TODO(strellis): For now filter entries that appear in the parent
     //+ owner entries. Later add code to update/delete after linking.
-    Map<CloudAce, CloudAce> parentAceMap = new TreeMap<CloudAce, CloudAce>(CLOUD_ACE_COMPARITOR);
-    for (CloudAce cloudAce : cloudAcl.getAceList()) {
-      parentAceMap.put(cloudAce, cloudAce);
-    }
-    
     for (CloudAce cloudAce : cloudAcl.getAceList()) {
       if (cloudAce.getName().equals(adminUserId)
           && cloudAce.getType().equals(Type.USER)) {
-        continue; 
+        continue;
       }
-      
+
       if (cloudAce.getName().equals(cloudAcl.getOwner())
           && cloudAce.getType().equals(Type.USER)) {
         continue;
       }
-      
-      if (parentAceMap.containsKey(cloudAce)) {
+
+      if (parentTypeAndNameKeyToCloudAceMap.containsKey(
+          cloudAce.newTypeAndNameKey())) {
         //TODO(strellis): deal with role mismatch + entries deleted
         //  in child.
         continue;
       }
-           
+
       addAce(cloudAce, dle);
     }
-    
+
     //TODO(strellis): remove link to avoid extra share links?
     if (!adminUserId.equals(cloudAcl.getOwner())) {
       addAce(adminUserId, Type.USER, AclRole.WRITER, dle);
