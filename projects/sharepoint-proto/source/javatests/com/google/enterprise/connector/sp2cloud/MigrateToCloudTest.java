@@ -17,11 +17,11 @@ public class MigrateToCloudTest {
    */    
    public static void main(String[] args) throws Exception {
      SharepointSite spSite = SharepointSiteFactory.getSharepointSite("http://ent-test-w2k3-sp2007", "administrator", "test", "");
-     // DocsService client = DoclistPusher.mkClient(ADMIN_ID, ADMIN_TOKEN);
      DocsService client = DoclistPusher.mkOauthClient(CONSUMER_KEY, CONSUMER_SECRET);
-
-     CloudPusher cloudPusher = new DoclistPusher(client, ADMIN_ID, false);
-     SharePointToCloudMigrator.migrate(cloudPusher, spSite);
+     FolderManager folderManager = new FolderManager();
+     CloudPusher cloudPusher = new DoclistPusher(client, folderManager, ADMIN_ID, false);
+     
+     SharePointToCloudMigrator.migrate(cloudPusher, spSite, folderManager);
   }
 
 }

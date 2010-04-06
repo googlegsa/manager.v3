@@ -1,3 +1,5 @@
+// Copyright 2010 Google Inc. All Rights Reserved.
+
 package com.google.enterprise.connector.sp2cloud;
 
 import java.util.ArrayList;
