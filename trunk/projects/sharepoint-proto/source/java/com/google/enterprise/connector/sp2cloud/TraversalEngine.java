@@ -1,44 +1,45 @@
+// Copyright 2010 Google Inc. All Rights Reserved.
+
 package com.google.enterprise.connector.sp2cloud;
 
 import com.google.enterprise.connector.sp2c_migration.Ace;
 import com.google.enterprise.connector.sp2c_migration.Document;
 import com.google.enterprise.connector.sp2c_migration.Folder;
 import com.google.enterprise.connector.sp2c_migration.SharepointSite;
+import com.google.enterprise.connector.sp2cloud.FolderManager.FolderInfo;
 
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Hashtable;
 import java.util.List;
 
 public class TraversalEngine {
   
-  private Hashtable<String, Folder> folders = new Hashtable<String, Folder>();
-  private Hashtable<String, List<Folder>> folderHierarchy = new Hashtable<String, List<Folder>>();
-  private Hashtable<String, List<Document>> documentHierarchy = new Hashtable<String, List<Document>>();
+  private FolderManager folderManager;
   private CloudPusher cloudPusher;
   private SharepointSite site;
   private PermissionsMapper permissionsMapper;
   
-  TraversalEngine(SharepointSite site, CloudPusher cloudPusher, PermissionsMapper permissionsMapper)
+  TraversalEngine(SharepointSite site, CloudPusher cloudPusher, PermissionsMapper permissionsMapper, FolderManager folderManager)
       throws Exception {
     this.site = site;
     this.cloudPusher = cloudPusher;
     this.permissionsMapper = permissionsMapper;
-    buildFolderAndFileHierarchy();
+    this.folderManager = folderManager;
+    AddFoldersToFolderManager();
+  }
+  
+  public void pushRootFolderHierarchy(Folder folder) throws Exception {
+    pushFolderHierarchy(folderManager.getFolderInfo(folder.getId()));
   }
 
-  public void pushFolderHierarchy(Folder folder) throws Exception {
+  public void pushFolderHierarchy(FolderInfo folderInfo) throws Exception {
     // Push the folder to the cloud.
-    List<CloudAce> folderCloudAcl = permissionsMapper.mapAcl(folder.getAcl(), folder.getParentId(), folders);
-    System.out.println("Mapped permission for " + folder.getName() + " : " + folderCloudAcl + printAcl(folder.getAcl()));
-    cloudPusher.pushFolder(folders.get(folder.getParentId()), folder, folderCloudAcl);
-    
+    cloudPusher.pushFolder(folderInfo);
+
     // If the folder contains subfolders then recursively push each one.
-    if (folderHierarchy.containsKey(folder.getId())) {
-      for (Folder childFolder : folderHierarchy.get(folder.getId())) {
-        pushFolderHierarchy(childFolder);
-      }
+    for (FolderInfo childFolderInfo : folderInfo.getChildFolders()) {
+      pushFolderHierarchy(childFolderInfo);
     }
   }
   
@@ -51,97 +52,43 @@ public class TraversalEngine {
     return sb.toString();
   }
   
-  public void pushDocumentHierarchy(Folder folder) throws Exception {
-    // If the folder contains documents then push them to the cloud.
-    if (documentHierarchy.containsKey(folder.getId())) {
-      for (Document document : documentHierarchy.get(folder.getId())) {
-        InputStream documentContentStream = site.getDocumentContent(document);
-        List<CloudAce> documentCloudAcl =  permissionsMapper.mapAcl(document.getAcl(),
-            document.getParentId(), folders);
-        System.out.println("Mapped permission for " + document.getName() + " : " + documentCloudAcl + printAcl(document.getAcl()));
-        cloudPusher.pushDocument(folder, document, documentCloudAcl, documentContentStream);
-      }
-    }
-    
-    // If the folder contains subfolders then recursively push each one.
-    if (folderHierarchy.containsKey(folder.getId())) {
-      for (Folder childFolder : folderHierarchy.get(folder.getId())) {
-        pushDocumentHierarchy(childFolder);
-      }
-    }
-  }
-  
-  private void buildFolderAndFileHierarchy() throws Exception {
-    folderHierarchy = new Hashtable<String, List<Folder>>();
-    documentHierarchy = new Hashtable<String, List<Document>>();
-
-    // Get lists of all folders and documents for all document libraries.
+  public void pushDocuments()  throws Exception {
+    // Get lists of all documents for all document libraries.
     List<Folder> rootFolderList = site.getRootFolders();
-    List<Folder> folderList = new ArrayList<Folder>();
     List<Document> documentList = new ArrayList<Document>();
     
     // Loop through each document library (root folder)
     for (Folder rootFolder : rootFolderList) {
-      folderList.add(rootFolder);
-      folderList.addAll(site.getFolders(rootFolder));
       documentList.addAll(site.getDocuments(rootFolder));
     }
-
-    // Map owners
-    // TODO(johnfelton) - Also map ACE principles at this point rather than later.
-    {
-      List<Folder> tempFolderList = new ArrayList<Folder>();
-      for (Folder folder : folderList) {
-        System.out.println("Mapping Owner for Folder " + folder.getName());
-        tempFolderList.add(folder.fixFolderOwner(permissionsMapper.mapPrincipleName(folder.getOwner(), "admin@sharepoint-connector.com")));
-      }
-      folderList = tempFolderList;
-      System.out.println("FOLDERS = " + folderList);
-    }
-  
-    {
-      List<Document> tempDocumentList = new ArrayList<Document>();
-      for (Document document : documentList) {
-        System.out.println("Mapping Owner for document " + document.getName());
-        tempDocumentList.add(document.fixDocumentOwner(permissionsMapper.mapPrincipleName(document.getOwner(), "admin@sharepoint-connector.com")));
-      }
-      documentList = tempDocumentList;
-      System.out.println("DOCS = " + documentList);
-
-    }
-
     
-    // Create a map so folders can be looked up by id.
-    for (Folder folder : folderList) {
-      folders.put(folder.getId(), folder);
-    }
-
-
-    // Create a map of folder ids to child folders.
-    for (Folder folder : folderList) {
-
-      // If this is the first time that we've seen a folder with
-      // parent id then create a list for it.
-      if (!folderHierarchy.containsKey(folder.getParentId())) {
-        folderHierarchy.put(folder.getParentId(), new ArrayList<Folder>());
-      }
-      // Add the folder to its parent folder's list of child folders.
-      folderHierarchy.get(folder.getParentId()).add(folder);
-    }
-
-    // Create a map of folder ids to child documents.
     for (Document document : documentList) {
-
-      // If this is the first time that we've seen a folder with
-      // parent id then create a list for it.
-      if (!documentHierarchy.containsKey(document.getParentId())) {
-        documentHierarchy.put(document.getParentId(), new ArrayList<Document>());
-      }
-      // Add the document to its parent folder's list of child documents.
-      documentHierarchy.get(document.getParentId()).add(document);
+      CloudAcl documentCloudAcl =  permissionsMapper.mapAcl(document.getAcl(), document.getOwner());
+      System.out.println("Mapped permission for " + document.getName() + " : " + documentCloudAcl + printAcl(document.getAcl()));
+      InputStream documentContentStream = site.getDocumentContent(document);
+      cloudPusher.pushDocument(document, documentCloudAcl, documentContentStream);
     }
   }
 
+  private void AddFoldersToFolderManager() throws Exception {
+    // Get lists of all folders for all document libraries.
+    List<Folder> rootFolderList = site.getRootFolders();
+    List<Folder> folderList = new ArrayList<Folder>();
+    
+    // Loop through each document library (root folder) and add it and all
+    // folders in the document library to the folder list.
+    for (Folder rootFolder : rootFolderList) {
+      folderList.add(rootFolder);
+      folderList.addAll(site.getFolders(rootFolder));
+    }
+    
+    // Add all folders in the folder list to the folder manager.
+    for (Folder folder : folderList) {
+      folderManager.add(folderManager.newFolderInfo(folder.getId(), folder.getParentId(), folder.getName(),
+          permissionsMapper.mapAcl(folder.getAcl(), folder.getOwner())));
+    }
+  }
+  
 //  public Folder findSharePointFolderFromPath(String path) throws Exception {
 //    
 //    return getDocumentLibraryRootFolder();
