@@ -107,7 +107,16 @@ public class FolderManager {
     }
 
     FolderInfo getParent() {
-      return folderIdToFolderInfoMap.get(parentId);
+      FolderInfo parent =  null;
+      if (!isRoot()) {
+        parent = folderIdToFolderInfoMap.get(parentId);
+        if (parent == null) {
+          throw new IllegalStateException(
+              "Attemtp to access parent folder that has not been added to "
+              + "the FolderManager id = " + parentId);
+        }
+      }
+      return parent;
     }
     
     String getName() {
