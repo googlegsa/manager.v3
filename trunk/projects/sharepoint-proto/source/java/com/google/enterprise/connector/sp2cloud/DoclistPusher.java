@@ -137,13 +137,6 @@ public class DoclistPusher implements CloudPusher {
     if (parent == null) {
       return getOauthUrl(DOCLIST_ROOT_CONTENT_URL, requesterId);
     } else {
-// TODO(strellis): Is this check needed?
-//      if (folderInfo == null) {
-//        throw new IllegalArgumentException(
-//            "Attempt to access a parent folder that has not been created. "
-//                + parent);
-//      }
-      // TODO(strellis): set owner id for document owner not parent folder owner.
       return getOauthUrl(parent.getBaseUrl(), requesterId);
     }
   }
@@ -236,7 +229,6 @@ public class DoclistPusher implements CloudPusher {
       addAce(cloudAce, dle);
     }
 
-    //TODO(strellis): remove link to avoid extra share links?
     if (!adminUserId.equals(cloudAcl.getOwner())) {
       addAce(adminUserId, Type.USER, AclRole.WRITER, dle);
     }
