@@ -20,21 +20,22 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.PusherFactory;
+import com.google.enterprise.connector.scheduler.LoadManager;
+import com.google.enterprise.connector.scheduler.LoadManagerFactory;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.scheduler.ScheduleTimeInterval;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
-import com.google.enterprise.connector.spi.ConnectorFactory;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.BatchResult;
+import com.google.enterprise.connector.traversal.BatchResultRecorder;
 import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.QueryTraverser;
-import com.google.enterprise.connector.traversal.TraversalStateStore;
+import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import java.io.File;
@@ -42,10 +43,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
@@ -55,7 +54,9 @@ import java.util.logging.Logger;
  * ConnectorCoordinator that supports Spring based connector instantiation and
  * persistent storage of connector configuration, schedule and traversal state.
  */
-public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
+class ConnectorCoordinatorImpl implements
+    ConnectorCoordinator, BatchResultRecorder {
+
   private static final Logger LOGGER =
       Logger.getLogger(ConnectorCoordinatorImpl.class.getName());
 
@@ -72,7 +73,6 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
    * or neither is.
    */
   private TypeInfo typeInfo;
-
   private InstanceInfo instanceInfo;
 
   /**
@@ -81,66 +81,161 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
   private ConnectorInterfaces interfaces;
 
   /**
+   * LoadManager controls throughput to avoid overtaxing the Repository
+   * or the GSA.
+   */
+  private LoadManager loadManager;
+
+  /**
+   * The current traversal Schedule.
+   */
+  private Schedule traversalSchedule;
+
+  /**
+   * The finish time for delay of next traversal.  Used to postpone
+   * starting another traversal for a short period of time, as dictated
+   * by a {@link TraversalDelayPolicy}.
+   */
+  private long traversalDelayEnd;
+
+  /**
    * Context set when a batch is run. This must be cleared and any
    * running batch must be canceled when interfaces is reset.
    */
   private TaskHandle taskHandle;
-  private Object currentBatchKey;
+  Object currentBatchKey;
 
-  ConnectorCoordinatorImpl(String name,
-      PusherFactory pusherFactory, ThreadPool threadPool) {
+   /**
+   * Constructs a ConnectorCoordinator for the named {@link Connector}.
+   * The {@code Connector} may not yet have a concrete instance.
+   *
+   * @param name The name of the Connector.
+   * @param pusherFactory creates instances of
+   *        {@link com.google.enterprise.connector.pusher.Pusher Pusher}
+   *        for pushing documents to the GSA.
+   * @param loadManagerFactory the used to create instances of
+   *        {@link LoadManager} for controlling feed rate.
+   * @param threadPool the {@link ThreadPool} for running traversals.
+   */
+  ConnectorCoordinatorImpl(String name, PusherFactory pusherFactory,
+        LoadManagerFactory loadManagerFactory, ThreadPool threadPool) {
     this.name = name;
-    this.pusherFactory = pusherFactory;
     this.threadPool = threadPool;
+    this.pusherFactory = pusherFactory;
+    this.loadManager = loadManagerFactory.newLoadManager(name);
   }
 
+  /**
+   * Constructs a ConnectorCoordinator for the named {@link Connector}
+   * that wraps an existing Connector instance.
+   *
+   * @param instanceInfo A Connector instance.
+   * @param pusherFactory creates instances of
+   *        {@link com.google.enterprise.connector.pusher.Pusher Pusher}
+   *        for pushing documents to the GSA.
+   * @param loadManagerFactory the used to create instances of
+   *        {@link LoadManager} for controlling feed rate.
+   * @param threadPool the {@link ThreadPool} for running traversals.
+   */
   ConnectorCoordinatorImpl(InstanceInfo instanceInfo,
-      PusherFactory pusherFactory, ThreadPool threadPool) {
-    this(instanceInfo.getName(), pusherFactory, threadPool);
+        PusherFactory pusherFactory, LoadManagerFactory loadManagerFactory,
+        ThreadPool threadPool) {
+    this(instanceInfo.getName(), pusherFactory, loadManagerFactory, threadPool);
     this.instanceInfo = instanceInfo;
     this.typeInfo = instanceInfo.getTypeInfo();
+    this.loadManager.setLoad(getSchedule().getLoad());
   }
 
+  /**
+   * Returns the name of this {@link Connector}.
+   *
+   * @return The name of this Connector.
+   */
+  //@Override
   public String getConnectorName() {
     return name;
   }
 
+  /**
+   * Returns {@code true} if an instance of this {@link Connector} exists.
+   */
+  //@Override
+  public synchronized boolean exists() {
+    return (instanceInfo != null);
+  }
+
+  /**
+   * Removes this {@link Connector} instance.  Halts traversals,
+   * removes the Connector instance from the known connectors,
+   * and removes the Connector's on-disk representation.
+   */
+  //@Override
   public synchronized void removeConnector() {
     LOGGER.info("Dropping connector: " + name);
     try {
-      if (!hasInstanceInfo()) {
-        return;
+      resetBatch();
+      if (instanceInfo != null) {
+        File connectorDir = instanceInfo.getConnectorDir();
+        shutdownConnector(true);
+        instanceInfo.removeConnector();
+        removeConnectorDirectory(name, connectorDir, typeInfo);
       }
-      shutdownConnector(true);
-      instanceInfo.removeConnector();
-      removeConnectorDirectory(name,
-          makeConnectorDirectoryFile(name, typeInfo), typeInfo);
     } finally {
-      resetInterfaces();
-      resetInstanceInfo();
-      resetTypeInfo();
+      instanceInfo = null;
+      typeInfo = null;
     }
   }
 
-  public synchronized boolean exists() {
-    return hasInstanceInfo();
-  }
-
+  /**
+   * Returns the {@link AuthenticationManager} for the {@link Connector}
+   * instance.
+   *
+   * @return an AuthenticationManager
+   * @throws InstantiatorException
+   */
+  //@Override
   public synchronized AuthenticationManager getAuthenticationManager()
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorInterfaces().getAuthenticationManager();
   }
 
+  /**
+   * Returns the {@link AuthorizationManager} for the {@link Connector}
+   * instance.
+   *
+   * @return an AuthorizationManager
+   * @throws InstantiatorException
+   */
+  //@Override
   public synchronized AuthorizationManager getAuthorizationManager()
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorInterfaces().getAuthorizationManager();
   }
 
+  /**
+   * Returns the {@link TraversalManager} for the {@link Connector}
+   * instance.
+   *
+   * @return a TraversalManager
+   * @throws InstantiatorException
+   */
+  //@Override
   public synchronized TraversalManager getTraversalManager()
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorInterfaces().getTraversalManager();
   }
 
+  /**
+   * Get populated configuration form snippet for the {@link Connector}
+   * instance.
+   *
+   * @param locale A java.util.Locale which the implementation may use to
+   *        produce appropriate descriptions and messages
+   * @return a ConfigureResponse object. The form must be prepopulated with the
+   *         supplied data in the map.
+   * @see ConnectorType#getPopulatedConfigForm(Map, Locale)
+   */
+  //@Override
   public synchronized ConfigureResponse getConfigForm(Locale locale)
       throws ConnectorNotFoundException, InstantiatorException {
     Map<String, String> configMap = getInstanceInfo().getConnectorConfig();
@@ -152,48 +247,135 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     }
   }
 
-  public synchronized void restartConnectorTraversal() {
-    storeTraversalState(null);
-    resetInterfaces();
+  /**
+   * Retraverses the {@link Connector}'s content from scratch.
+   * Halts any traversal in progress and removes any saved traversal state,
+   * forcing the Connector to retraverse the Repository from its start.
+   */
+  //@Override
+  public synchronized void restartConnectorTraversal()
+      throws ConnectorNotFoundException {
+    // Halt any traversal in progress.
+    resetBatch();
+
+    // Remove any remembered traversal state.
+    getInstanceInfo().setConnectorState(null);
+
+    // If Schedule was 'run-once', re-enable it to run again.  But watch out -
+    // empty disabled Schedules could look a bit like a run-once Schedule.
+    Schedule schedule = getSchedule();
+    if (schedule.isDisabled() && schedule.getRetryDelayMillis() == -1
+        && !schedule.getTimeIntervals().isEmpty()) {
+      schedule.setDisabled(false);
+      getInstanceInfo().setConnectorSchedule(schedule.toString());
+    }
   }
 
+  /**
+   * Returns a traversal {@link Schedule} for the {@link Connector} instance.
+   */
+  private synchronized Schedule getSchedule() {
+    if (traversalSchedule == null) {
+      try {
+        traversalSchedule = new Schedule(getConnectorSchedule());
+      } catch (ConnectorNotFoundException e) {
+        return new Schedule();
+      }
+    }
+    return traversalSchedule;
+  }
+
+  /**
+   * Sets the stringified version of traversal {@link Schedule} for the
+   * {@link Connector}.
+   *
+   * @param connectorSchedule String to store or null unset any existing
+   *        schedule.
+   * @throws ConnectorNotFoundException if the connector is not found
+   */
+  //@Override
   public synchronized void setConnectorSchedule(String connectorSchedule)
       throws ConnectorNotFoundException {
+    // Discard the cached Schedule.
+    traversalSchedule = null;
+
+    // Persistently store the new schedule.
     getInstanceInfo().setConnectorSchedule(connectorSchedule);
+
+    // Update the LoadManager with the new load.
+    loadManager.setLoad(getSchedule().getLoad());
+
+    // New Schedule may alter DelayPolicy.
+    delayTraversal(TraversalDelayPolicy.IMMEDIATE);
   }
 
+  /**
+   * Fetches the stringified version of traversal {@link Schedule} for the
+   * {@link Connector}.
+   *
+   * @return the schedule String, or null if there is no stored schedule
+   *         for this connector.
+   * @throws ConnectorNotFoundException if the connector is not found
+   */
+  //@Override
   public synchronized String getConnectorSchedule()
       throws ConnectorNotFoundException {
     return getInstanceInfo().getConnectorSchedule();
   }
 
-  public synchronized void storeTraversalState(String traversalState) {
-    if (instanceInfo != null) {
-      instanceInfo.setConnectorState(traversalState);
-    }
+  /**
+   * Set the Connector's traversal state.
+   *
+   * @param state a String representation of the state to store.
+   *        If null, any previous stored state is discarded.
+   * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
+   *         does not exist.
+   */
+  //@Override
+  public synchronized void setConnectorState(String state)
+      throws ConnectorNotFoundException {
+    getInstanceInfo().setConnectorState(state);
   }
 
-  public synchronized String getTraversalState() {
-    if (instanceInfo == null) {
-      return null;
-    } else {
-      return instanceInfo.getConnectorState();
-    }
+  /**
+   * Returns the Connector's traversal state.
+   *
+   * @return String representation of the stored state, or
+   *         null if no state is stored.
+   * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
+   *         does not exist.
+   */
+  //@Override
+  public synchronized String getConnectorState()
+      throws ConnectorNotFoundException {
+    return getInstanceInfo().getConnectorState();
   }
 
+  /**
+   * Returns the name of the {@link ConnectorType} for this {@link Connector}
+   * instance.
+   */
+  //@Override
   public synchronized String getConnectorTypeName()
       throws ConnectorNotFoundException {
     return getInstanceInfo().getTypeInfo().getConnectorTypeName();
   }
 
+  /**
+   * Sets the configuration for this {@link ConnectorCoordinator}. If this
+   * {@link ConnectorCoordinator} supports persistence this will persist the new
+   * configuration.
+   */
+  //@Override
   public synchronized ConfigureResponse setConnectorConfig(
       TypeInfo newTypeInfo, Map<String, String> configMap, Locale locale,
       boolean update) throws ConnectorNotFoundException,
       ConnectorExistsException, InstantiatorException {
-    LOGGER.info("Configuring connector: " + name);
-    resetInterfaces();
+    LOGGER.info("Configuring connector " + name);
+    resetBatch();
+
     ConfigureResponse response = null;
-    if (hasInstanceInfo()) {
+    if (instanceInfo != null) {
       if (!update) {
         throw new ConnectorExistsException();
       }
@@ -208,8 +390,8 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
         if (response != null) {
           // TODO: We need to restore original Connector config. This is
           // necessary once we allow update a Connector with new ConnectorType.
-          LOGGER.severe("Failed to update Connector config."
-              + " Need to restore original Connector config.");
+          LOGGER.severe("Failed to update Connector configuration."
+              + " Restoring original Connector configuration.");
         }
       }
     } else {
@@ -221,16 +403,84 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     return response;
   }
 
+  //@Override
   public synchronized Map<String, String> getConnectorConfig()
       throws ConnectorNotFoundException {
     return getInstanceInfo().getConnectorConfig();
   }
 
-  private boolean shouldRun() throws ConnectorNotFoundException {
-    Schedule schedule = new Schedule(getConnectorSchedule());
+  /**
+   * Delay future traversals for a short period of time, as dictated by the
+   * {@link TraversalDelayPolicy}.
+   *
+   * @param delayPolicy a TraversalDelayPolicy
+   */
+  public synchronized void delayTraversal(TraversalDelayPolicy delayPolicy) {
+    switch (delayPolicy) {
+      case IMMEDIATE:
+        traversalDelayEnd = 0;  // No delay.
+        break;
+
+      case POLL:
+        try {
+          Schedule schedule = getSchedule();
+          int retryDelayMillis = schedule.getRetryDelayMillis();
+          if (retryDelayMillis == Schedule.POLLING_DISABLED) {
+            if (!schedule.isDisabled()) {
+              // We reached then end of the repository, but aren't allowed
+              // to poll looking for new content to arrive.  Disable the
+              // traversal schedule.
+              traversalDelayEnd = 0;
+              schedule.setDisabled(true);
+              getInstanceInfo().setConnectorSchedule(schedule.toString());
+              LOGGER.info("Traversal complete. Automatically pausing "
+                  + "traversal for connector " + name);
+            }
+          } else if (retryDelayMillis > 0) {
+            traversalDelayEnd = System.currentTimeMillis() + retryDelayMillis;
+          }
+        } catch (ConnectorNotFoundException cnfe) {
+          // Connector was deleted while processing the batch.  Don't take any
+          // action at the moment, as we may be in the middle of a reconfig.
+        }
+        break;
+
+      case ERROR:
+        traversalDelayEnd =
+            System.currentTimeMillis() + Traverser.ERROR_WAIT_MILLIS;
+        break;
+    }
+  }
+
+  /**
+   * Returns {@code true} if it is OK to start a traversal,
+   * {@code false} otherwise.
+   */
+  // Package access because this is called by tests.
+  synchronized boolean shouldRun() {
+    // Are we already running? If so, we shouldn't run again.
+    if (taskHandle != null && !taskHandle.isDone()) {
+      return false;
+    }
+
+    // Don't run if we have postponed traversals.
+    if (System.currentTimeMillis() < traversalDelayEnd) {
+      return false;
+    }
+
+    Schedule schedule = getSchedule();
+
+    // Don't run if traversals are disabled.
     if (schedule.isDisabled()) {
       return false;
     }
+
+    // Don't run if we have exceeded our configured host load.
+    if (loadManager.shouldDelay()) {
+      return false;
+    }
+
+    // OK to run if we are within one of the Schedule's traversal intervals.
     Calendar now = Calendar.getInstance();
     int hour = now.get(Calendar.HOUR_OF_DAY);
     for (ScheduleTimeInterval interval : schedule.getTimeIntervals()) {
@@ -243,34 +493,41 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
         return true;
       }
     }
+
     return false;
   }
 
-  public synchronized boolean startBatch(BatchResultRecorder resultRecorder,
-      BatchSize batchSize) throws ConnectorNotFoundException {
+  /**
+   * Starts running a batch for this {@link ConnectorCoordinator} if a batch is
+   * not already running.
+   *
+   * @return true if this call started a batch
+   * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
+   *         does not exist.
+   */
+  //@Override
+  public synchronized boolean startBatch() throws ConnectorNotFoundException {
     verifyConnectorInstanceAvailable();
-    if (taskHandle != null && !taskHandle.isDone()) {
-      return false;
-    }
     if (!shouldRun()) {
       return false;
     }
+
+    BatchSize batchSize = loadManager.determineBatchSize();
     if (batchSize.getMaximum() == 0) {
       return false;
     }
     taskHandle = null;
     currentBatchKey = new Object();
-    BatchCoordinator batchResultProcessor =
-        new BatchCoordinator(instanceInfo.getTraversalStateStore(),
-            resultRecorder);
+
     try {
+      BatchCoordinator batchCoordinator = new BatchCoordinator(this);
       TraversalManager traversalManager =
           getConnectorInterfaces().getTraversalManager();
       Traverser traverser = new QueryTraverser(pusherFactory,
-          traversalManager, batchResultProcessor, name,
+          traversalManager, batchCoordinator, name,
           Context.getInstance().getTraversalContext());
       TimedCancelable batch =  new CancelableBatch(traverser, name,
-          batchResultProcessor, batchResultProcessor, batchSize);
+          batchCoordinator, batchCoordinator, batchSize);
       taskHandle = threadPool.submit(batch);
       return true;
     } catch (ConnectorNotFoundException cnfe) {
@@ -283,26 +540,58 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     return false;
   }
 
-  public synchronized void shutdown() {
-    resetInterfaces();
-    shutdownConnector(false);
-    resetInstanceInfo();
+  /**
+   * Records the supplied traversal batch results.  Updates the
+   * {@link LoadManager} with number of documents traversed,
+   * and implements the requested {@link TraversalDelayPolicy}.
+   *
+   * @param result a BatchResult
+   */
+  //@Override
+  public synchronized void recordResult(BatchResult result) {
+    loadManager.recordResult(result);
+    delayTraversal(result.getDelayPolicy());
   }
 
-  private void resetBatch() {
+  /**
+   * Shuts down this {@link Connector} instance.  Halts any in-progress
+   * traversals, instructs the Connector that it is being shut down,
+   * and discards the Connector instance.  Any on-disk representation of
+   * the connector remains.
+   */
+  public synchronized void shutdown() {
+    resetBatch();
+    shutdownConnector(false);
+    instanceInfo = null;
+  }
+
+  /**
+   * Halts any in-progess traversals for this {@link Connector} instance.
+   * Some or all of the information collected during the current traversal
+   * may be discarded.
+   */
+  synchronized void resetBatch() {
     if (taskHandle != null) {
       taskHandle.cancel();
     }
     taskHandle = null;
     currentBatchKey = null;
+    interfaces = null;
   }
 
+  /**
+   * Informs the Connector instance that it will be shut down
+   * and possibly deleted.
+   *
+   * @param delete {@code true} if the {@code Connector} will be deleted.
+   */
   private void shutdownConnector(boolean delete) {
     if (instanceInfo != null
         && instanceInfo.getConnector() instanceof ConnectorShutdownAware) {
       ConnectorShutdownAware csa =
-          (ConnectorShutdownAware) instanceInfo.getConnector();
+          (ConnectorShutdownAware)(instanceInfo.getConnector());
       try {
+        LOGGER.fine("Shutting down connector " + name);
         csa.shutdown();
       } catch (Exception e) {
         LOGGER.log(Level.WARNING, "Problem shutting down connector " + name
@@ -311,7 +600,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
 
       if (delete) {
         try {
-          LOGGER.fine("Removing Connector " + name);
+          LOGGER.fine("Removing connector " + name);
           csa.delete();
         } catch (Exception e) {
           LOGGER.log(Level.WARNING, "Failed to remove connector " + name, e);
@@ -320,30 +609,26 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     }
   }
 
-  private void resetInterfaces() {
-    resetBatch();
-    interfaces = null;
- }
-
-  private boolean hasInstanceInfo() {
-    return instanceInfo != null;
-  }
-
-  private void resetInstanceInfo() {
-    instanceInfo = null;
-  }
-
-  private void resetTypeInfo() {
-    typeInfo = null;
-  }
-
+  /**
+   * Returns the {@link InstanceInfo} representing the associated
+   * {@link Connector} instance.
+   *
+   * @throws ConnectorNotFoundException if there is no associated Connector
+   *         instance.
+   */
   // Visible for testing.
   InstanceInfo getInstanceInfo() throws ConnectorNotFoundException {
     verifyConnectorInstanceAvailable();
     return instanceInfo;
-
   }
 
+  /**
+   * Checks if this {@code ConnectorCoordinator} is associated
+   * with an active {@link Connector} instance.
+   *
+   * @throws ConnectorNotFoundException if there is no associated Connector
+   *         instance.
+   */
   private void verifyConnectorInstanceAvailable()
       throws ConnectorNotFoundException {
     if (instanceInfo == null) {
@@ -352,6 +637,13 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     }
   }
 
+  /**
+   * Returns a {@link ConnectorInterfaces} object that exposes the public
+   * interfaces of the associated {@link Connector} instance.
+   *
+   * @throws ConnectorNotFoundException if there is no associated Connector
+   *         instance.
+   */
   private ConnectorInterfaces getConnectorInterfaces()
       throws ConnectorNotFoundException {
     if (interfaces == null) {
@@ -366,7 +658,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     if (typeInfo != null) {
       throw new IllegalStateException("Create new connector with type set");
     }
-    if (hasInstanceInfo()) {
+    if (instanceInfo != null) {
       throw new IllegalStateException("Create new connector with existing set");
     }
     File connectorDir = makeConnectorDirectory(name, newTypeInfo);
@@ -422,113 +714,14 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     newInstanceInfo.setConnectorConfig(newConfig);
     instanceInfo = newInstanceInfo;
     typeInfo = newTypeInfo;
+
+    // The load value in a Schedule is docs/minute.
+    loadManager.setLoad(getSchedule().getLoad());
+
+    // Allow newly modified connector to resume traversals immediately.
+    delayTraversal(TraversalDelayPolicy.IMMEDIATE);
+
     return null;
-  }
-
-  /**
-   * Coordinate operations that apply to a running batch with other changes that
-   * affect this [@link {@link ConnectorCoordinatorImpl}.
-   * <p>
-   * The {@link ConnectorCoordinatorImpl} monitor is used to guard batch
-   * operations.
-   * <p>
-   * To avoid long held locks the {@link ConnectorCoordinatorImpl} monitor is
-   * not held while a batch runs or even between the time a batch is canceled
-   * and the time its background processing completes. Therefore, a lingering
-   * batch may attempt to record completion information, modify the checkpoint
-   * or timeout after the lingering batch has been canceled. These operations
-   * may even occur after a new batch has started. To avoid corrupting the
-   * {@link ConnectorCoordinatorImpl} state this class employs the batchKey
-   * protocol to disable completion operations that are performed on behalf of
-   * lingering batches. Here is how the protocol works.
-   * <OL>
-   * <LI>To start a batch starts while holding the
-   * {@link ConnectorCoordinatorImpl} monitor assign the batch a unique key.
-   * Store the key in ConnectorCoordinator.this.currentBatchKey. Also create a
-   * {@link BatchCoordinator} with BatchCoordinator.requiredBatchKey set to the
-   * key for the batch.
-   * <LI>To cancel a batch while holding the ConnectorCoordinatorImpl monitor,
-   * null out ConnectorCoordinator.this.currentBatchKey.
-   * <LI>The {@link BatchCoordinator} performs all completion operations for a
-   * batch and prevents operations on behalf of non current batches. To check
-   * while holding the {@link ConnectorCoordinatorImpl} monitor it
-   * verifies that
-   * BatchCoordinator.requiredBatchKey equals
-   * ConnectorCoordinator.this.currentBatchKey.
-   * </OL>
-   */
-  private class BatchCoordinator implements TraversalStateStore,
-      BatchResultRecorder, BatchTimeout {
-    private final Object requiredBatchKey;
-    private final TraversalStateStore traversalStateStore;
-    private final BatchResultRecorder batchResultRecorder;
-
-    /**
-     * Creates a BatchCoordinator
-     * @param traversalStateStore store for connector checkpoints for use
-     *     when the batch is still active.
-     * @param batchResultRecorder store for recording batch results
-     *    for use when the batch is still active.
-     */
-    BatchCoordinator(TraversalStateStore traversalStateStore,
-        BatchResultRecorder batchResultRecorder) {
-      this.requiredBatchKey = currentBatchKey;
-      this.traversalStateStore = traversalStateStore;
-      this.batchResultRecorder = batchResultRecorder;
-    }
-
-    public String getTraversalState() {
-      synchronized (ConnectorCoordinatorImpl.this) {
-        if (ConnectorCoordinatorImpl.this.currentBatchKey == requiredBatchKey) {
-          return traversalStateStore.getTraversalState();
-        } else {
-          throw new BatchCompletedException();
-        }
-      }
-    }
-
-    public void storeTraversalState(String state) {
-      synchronized (ConnectorCoordinatorImpl.this) {
-        if (ConnectorCoordinatorImpl.this.currentBatchKey == requiredBatchKey) {
-          traversalStateStore.storeTraversalState(state);
-        } else {
-          throw new BatchCompletedException();
-        }
-      }
-    }
-
-    public void recordResult(BatchResult result) {
-      synchronized (ConnectorCoordinatorImpl.this) {
-        // TODO(strellis): This does not record changes made by a canceled
-        // batch with the HostLoadManager. Investigate recording them.
-        if (ConnectorCoordinatorImpl.this.currentBatchKey == requiredBatchKey) {
-          batchResultRecorder.recordResult(result);
-        } else {
-          LOGGER.warning(
-              "Batch result for prevously completed batch ignored connector = "
-              + name + " result = " + result + " batchKey = "
-              + requiredBatchKey);
-        }
-      }
-    }
-
-    public void timeout() {
-      synchronized (ConnectorCoordinatorImpl.this) {
-        if (ConnectorCoordinatorImpl.this.currentBatchKey == requiredBatchKey) {
-          ConnectorCoordinatorImpl.this.resetInterfaces();
-        } else {
-          LOGGER.warning(
-              "Timeout for previously completed batch ignored connector = "
-              + name + " batchKey = " + requiredBatchKey);
-        }
-      }
-    }
-  }
-
-  // TODO(strellis): Add this Exception to throws for BatchRecorder,
-  //     TraversalStateStore, BatchTimeout interfaces and catch this
-  //     specific exception rather than IllegalStateException.
-  private static class BatchCompletedException extends IllegalStateException {
   }
 
   private static ConfigureResponse validateConfig(String name,
@@ -554,8 +747,8 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       // may be redisplayed.
       if ((response.getMessage() != null)
           || (response.getFormSnippet() != null)) {
-        LOGGER.warning("A rejected configuration for connector \"" + name
-            + "\" was returned.");
+        LOGGER.warning("A rejected configuration for connector " + name
+            + " was returned.");
         return response;
       }
 
@@ -563,8 +756,8 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       // but does include a configuration Map; then consider it a valid,
       // but possibly altered configuration and use it.
       if (response.getConfigData() != null) {
-        LOGGER.config("A modified configuration for connector \"" + name
-            + "\" was returned.");
+        LOGGER.config("A modified configuration for connector " + name
+            + " was returned.");
         config.clear();
         config.putAll(response.getConfigData());
       }
@@ -572,15 +765,9 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     return null;
   }
 
-  private static File makeConnectorDirectoryFile(String name,
-      TypeInfo typeInfo) {
-    File connectorTypeDir = typeInfo.getConnectorTypeDir();
-    return new File(connectorTypeDir, name);
-  }
-
   private static File makeConnectorDirectory(String name, TypeInfo typeInfo)
       throws InstantiatorException {
-    File connectorDir = makeConnectorDirectoryFile(name, typeInfo);
+    File connectorDir = new File(typeInfo.getConnectorTypeDir(), name);
     if (connectorDir.exists()) {
       if (connectorDir.isDirectory()) {
         // we don't know why this directory already exists, but we're ok with it
@@ -593,7 +780,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
       }
     } else {
       if (!connectorDir.mkdirs()) {
-        throw new InstantiatorException("Can't create "
+        throw new InstantiatorException("Can not create "
             + "connector directory at " + connectorDir.getAbsolutePath()
             + " for connector " + name);
       }
@@ -611,7 +798,7 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
         out.write(config.getBytes("UTF-8"));
         out.close();
       } catch (IOException ioe) {
-        LOGGER.log(Level.WARNING, "Can't extract connectorInstance.xml "
+        LOGGER.log(Level.WARNING, "Failed to extract connectorInstance.xml "
             + " to connector directory at " + connectorDir.getAbsolutePath()
             + " for connector " + name, ioe);
       }
@@ -619,6 +806,15 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
     return connectorDir;
   }
 
+  /**
+   * Remove the on-disk {@link Connector} representation.  This removes
+   * many or all files in the {@code Connector}'s directory.  As a convenience,
+   * modified {@code connnectorInstance.xml} files are preserved at this time.
+   *
+   */
+  // TODO: Issue 87: Should we force the removal of files created by the
+  // Connector implementation? ConnectorShutdownAware.delete() gives the
+  // Connector an opportunity to delete these files in a cleaner fashion.
   private static void removeConnectorDirectory(String name, File connectorDir,
       TypeInfo typeInfo) {
     // Remove the extracted connectorInstance.xml file, but only
@@ -633,12 +829,12 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
         String conf1 = StringUtils.streamToStringAndThrow(in1);
         String conf2 = StringUtils.streamToStringAndThrow(in2);
         if (conf1.equals(conf2) && !configXml.delete()) {
-          LOGGER.log(Level.WARNING, "Can't delete connectorInstance.xml "
+          LOGGER.log(Level.WARNING, "Failed to delete connectorInstance.xml"
               + " from connector directory at "
               + connectorDir.getAbsolutePath() + " for connector " + name);
         }
       } catch (IOException ioe) {
-        LOGGER.log(Level.WARNING, "Can't delete connectorInstance.xml "
+        LOGGER.log(Level.WARNING, "Failed to delete connectorInstance.xml"
             + " from connector directory at " + connectorDir.getAbsolutePath()
             + " for connector " + name, ioe);
       }
@@ -646,82 +842,9 @@ public class ConnectorCoordinatorImpl implements ConnectorCoordinator {
 
     if (connectorDir.exists()) {
       if (!connectorDir.delete()) {
-        LOGGER.warning("Can't delete connector directory "
+        LOGGER.warning("Failed to delete connector directory "
             + connectorDir.getPath()
             + "; this connector may be difficult to delete.");
-      }
-    }
-  }
-
-  private static class ConnectorInstanceFactory implements ConnectorFactory {
-    final String connectorName;
-    final File connectorDir;
-    final TypeInfo typeInfo;
-    final Map<String, String> origConfig;
-    final List<InstanceInfo> connectors;
-
-    /**
-     * Constructor takes the items needed by <code>InstanceInfo</code>, but not
-     * provided via <code>makeConnector</code>.
-     *
-     * @param connectorName the name of this connector instance.
-     * @param connectorDir the directory containing the connector prototype.
-     * @param typeInfo the connector type.
-     * @param config the configuration provided to <code>validateConfig</code>.
-     */
-    public ConnectorInstanceFactory(String connectorName, File connectorDir,
-        TypeInfo typeInfo, Map<String, String> config) {
-      this.connectorName = connectorName;
-      this.connectorDir = connectorDir;
-      this.typeInfo = typeInfo;
-      this.origConfig = config;
-      this.connectors = new ArrayList<InstanceInfo>();
-    }
-
-    /**
-     * Create an instance of this connector based upon the supplied
-     * configuration data. If the supplied config <code>Map</code> is
-     * <code>null</code>, use the original configuration.
-     *
-     * @see com.google.enterprise.connector.spi.ConnectorFactory#makeConnector(Map)
-     */
-    public Connector makeConnector(Map<String, String> config)
-        throws RepositoryException {
-      try {
-        InstanceInfo info =
-            InstanceInfo.fromNewConfig(connectorName, connectorDir, typeInfo,
-                ((config == null) ? origConfig : config));
-        if (info == null) {
-          return null;
-        }
-        connectors.add(info);
-        return info.getConnector();
-      } catch (InstantiatorException e) {
-        throw new RepositoryException(
-            "ConnectorFactory failed to make connector.", e);
-      }
-    }
-
-    /**
-     * Shutdown any connector instances created by the factory.
-     */
-    private void shutdown() {
-      List<InstanceInfo> connectorList;
-      synchronized (this) {
-        connectorList = connectors;
-      }
-      if (connectorList != null) {
-        for (InstanceInfo info : connectorList) {
-          Connector connector = info.getConnector();
-          if (connector instanceof ConnectorShutdownAware) {
-            try {
-              ((ConnectorShutdownAware) connector).shutdown();
-            } catch (Exception e) {
-              LOGGER.log(Level.WARNING, "Failed to shutdown connector "
-                  + info.getName() + " created by validateConfig", e);
-            }
-          }
-        }
       }
     }
   }

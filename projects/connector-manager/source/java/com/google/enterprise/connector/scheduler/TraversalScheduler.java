@@ -14,12 +14,9 @@
 
 package com.google.enterprise.connector.scheduler;
 
-import com.google.enterprise.connector.instantiator.BatchResultRecorder;
-import com.google.enterprise.connector.instantiator.ConnectorCoordinator;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.traversal.BatchSize;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -47,7 +44,6 @@ public class TraversalScheduler implements Runnable {
     Logger.getLogger(TraversalScheduler.class.getName());
 
   private final Instantiator instantiator;
-  private final HostLoadManager hostLoadManager;
 
   private boolean isInitialized; // Protected by instance lock.
   private boolean isShutdown; // Protected by instance lock.
@@ -56,12 +52,9 @@ public class TraversalScheduler implements Runnable {
    * Create a scheduler object.
    *
    * @param instantiator used to get schedule for connector instances
-   * @param hostLoadManager used for controlling feed rate
    */
-  public TraversalScheduler(Instantiator instantiator,
-                            HostLoadManager hostLoadManager) {
+  public TraversalScheduler(Instantiator instantiator) {
     this.instantiator = instantiator;
-    this.hostLoadManager = hostLoadManager;
     this.isInitialized = false;
     this.isShutdown = false;
   }
@@ -99,74 +92,12 @@ public class TraversalScheduler implements Runnable {
     for (String connectorName : instantiator.getConnectorNames()) {
       NDC.pushAppend(connectorName);
       try {
-        if (!hostLoadManager.shouldDelay(connectorName)) {
-          ConnectorCoordinator coordinator =
-              instantiator.getConnectorCoordinator(connectorName);
-          BatchResultRecorder resultRecorder =
-              new TraversalBatchResultRecorder(hostLoadManager, coordinator);
-          coordinator.startBatch(resultRecorder,
-              new LazyBatchSize(hostLoadManager, connectorName));
-        }
+        instantiator.getConnectorCoordinator(connectorName).startBatch();
       } catch (ConnectorNotFoundException e) {
         // Looks like the connector just got deleted.  Don't schedule it.
       } finally {
         NDC.pop();
       }
-    }
-  }
-
-  /* TODO: Move HostLoad tracking into ConnectorCoordinator.
-   * This hack class lazily evaluates the BatchSize to avoid spamming
-   * the logs with determineBatchSize() entries once per second.
-   */
-  private class LazyBatchSize extends BatchSize {
-    private HostLoadManager hostLoadMgr;
-    private String connectorName;
-    private BatchSize batchSize;
-
-    public LazyBatchSize(HostLoadManager hostLoadMgr, String connectorName) {
-      this.hostLoadMgr = hostLoadMgr;
-      this.connectorName = connectorName;
-      this.batchSize = null;
-    }
-
-    private void init() {
-      if (batchSize == null) {
-        batchSize = hostLoadMgr.determineBatchSize(connectorName);
-      }
-    }
-
-    @Override
-    public int getHint() {
-      init();
-      return batchSize.getHint();
-    }
-
-    @Override
-    public int getMaximum() {
-      init();
-      return batchSize.getMaximum();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      init();
-      return batchSize.equals(obj);
-    }
-
-    @Override
-    public int hashCode() {
-      init();
-      return batchSize.hashCode();
-    }
-
-    @Override
-    public String toString() {
-      init();
-      return batchSize.toString();
     }
   }
 
@@ -180,9 +111,7 @@ public class TraversalScheduler implements Runnable {
                 + "shutdown or not being initialized.");
             return;
           }
-          if (!hostLoadManager.shouldDelay()) {
-            scheduleBatches();
-          }
+          scheduleBatches();
           // Give someone else a chance to run.
           try {
             synchronized (this) {

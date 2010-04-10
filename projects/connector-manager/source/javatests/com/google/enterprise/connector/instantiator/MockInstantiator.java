@@ -282,13 +282,12 @@ public class MockInstantiator implements Instantiator {
 
   public void setConnectorState(String connectorName, String state)
       throws ConnectorNotFoundException {
-
-    getConnectorCoordinator(connectorName).storeTraversalState(state);
+    getConnectorCoordinator(connectorName).setConnectorState(state);
   }
 
   public String getConnectorState(String connectorName)
       throws ConnectorNotFoundException {
-    return getConnectorCoordinator(connectorName).getTraversalState();
+    return getConnectorCoordinator(connectorName).getConnectorState();
   }
 
   public ConnectorCoordinator getConnectorCoordinator(String connectorName)

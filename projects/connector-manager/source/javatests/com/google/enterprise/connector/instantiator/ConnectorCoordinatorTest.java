@@ -19,6 +19,10 @@ import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.pusher.PusherFactory;
+import com.google.enterprise.connector.scheduler.LoadManager;
+import com.google.enterprise.connector.scheduler.LoadManagerFactory;
+import com.google.enterprise.connector.scheduler.HostLoadManager;
+import com.google.enterprise.connector.scheduler.MockLoadManagerFactory;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
@@ -40,6 +44,7 @@ public class ConnectorCoordinatorTest extends TestCase {
   private static final String TEST_DIR_NAME = "testdata/tempInstantiatorTests";
   private final File baseDirectory = new File(TEST_DIR_NAME);
   private TypeMap typeMap;
+  private LoadManagerFactory loadManagerFactory;
   private final PusherFactory pusherFactory = null;
   private final ThreadPool threadPool = null;
 
@@ -48,6 +53,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
     assertTrue(baseDirectory.mkdirs());
     typeMap = new TypeMap("classpath*:config/connectorType.xml", TEST_DIR_NAME);
+    loadManagerFactory = new MockLoadManagerFactory();
   }
 
   @Override
@@ -57,8 +63,8 @@ public class ConnectorCoordinatorTest extends TestCase {
 
   public void testCreateDestroy() throws Exception {
     final String name = "connector1";
-    final ConnectorCoordinatorImpl instance =
-        new ConnectorCoordinatorImpl(name, pusherFactory, threadPool);
+    final ConnectorCoordinatorImpl instance = new ConnectorCoordinatorImpl(
+        name, pusherFactory, loadManagerFactory, threadPool);
     assertFalse(instance.exists());
     /*
      * Test creation of a connector of type TestConnectorA. The type should
@@ -77,8 +83,8 @@ public class ConnectorCoordinatorTest extends TestCase {
     final String typeName = "TestConnectorB";
     final String language = "en";
     final String name = "connector2";
-    final ConnectorCoordinatorImpl instance =
-        new ConnectorCoordinatorImpl(name, pusherFactory, threadPool);
+    final ConnectorCoordinatorImpl instance = new ConnectorCoordinatorImpl(
+        name, pusherFactory, loadManagerFactory, threadPool);
     assertFalse(instance.exists());
     {
       /*
@@ -108,8 +114,8 @@ public class ConnectorCoordinatorTest extends TestCase {
   public void testUpdateType() throws Exception {
     final String language = "en";
     final String name = "connector2";
-    final ConnectorCoordinatorImpl instance =
-        new ConnectorCoordinatorImpl(name, pusherFactory, threadPool);
+    final ConnectorCoordinatorImpl instance = new ConnectorCoordinatorImpl(
+        name, pusherFactory, loadManagerFactory, threadPool);
     assertFalse(instance.exists());
     {
       /*
@@ -146,8 +152,8 @@ public class ConnectorCoordinatorTest extends TestCase {
 
   public void testCreateExising() throws Exception {
     final String name = "connector1";
-    final ConnectorCoordinatorImpl instance =
-        new ConnectorCoordinatorImpl(name, pusherFactory, threadPool);
+    final ConnectorCoordinatorImpl instance = new ConnectorCoordinatorImpl(
+        name, pusherFactory, loadManagerFactory, threadPool);
     assertFalse(instance.exists());
     /*
      * Test creation of a connector of type TestConnectorA. The type should
@@ -171,8 +177,8 @@ public class ConnectorCoordinatorTest extends TestCase {
 
   public void testUpdateMissing() throws Exception {
     final String name = "connector1";
-    final ConnectorCoordinatorImpl instance =
-        new ConnectorCoordinatorImpl(name, pusherFactory, threadPool);
+    final ConnectorCoordinatorImpl instance = new ConnectorCoordinatorImpl(
+        name, pusherFactory, loadManagerFactory, threadPool);
     assertFalse(instance.exists());
     /*
      * Test creation of a connector of type TestConnectorA. The type should

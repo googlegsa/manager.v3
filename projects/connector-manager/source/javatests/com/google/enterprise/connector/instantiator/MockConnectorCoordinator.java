@@ -19,6 +19,8 @@ import com.google.enterprise.connector.persist.ConnectorConfigStore;
 import com.google.enterprise.connector.persist.ConnectorScheduleStore;
 import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.StoreContext;
+import com.google.enterprise.connector.scheduler.HostLoadManager;
+import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -27,7 +29,9 @@ import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.traversal.BatchResult;
+import com.google.enterprise.connector.traversal.BatchResultRecorder;
 import com.google.enterprise.connector.traversal.BatchSize;
+import com.google.enterprise.connector.traversal.BatchTimeout;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
 
@@ -49,6 +53,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
   private final String name;
   private final ConnectorInterfaces interfaces;
   private final Traverser traverser;
+  private final HostLoadManager hostLoadManager;
 
   private final TraversalStateStore stateStore;
   private final ConnectorConfigStore configStore;
@@ -69,6 +74,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     this.name = name;
     this.interfaces = connectorInterfaces;
     this.traverser = traverser;
+    this.hostLoadManager = new HostLoadManager(null, null);
     this.stateStore = new MockTraversalStateStore(stateStore, storeContext);
     this.configStore = configStore;
     this.scheduleStore = scheduleStore;
@@ -145,6 +151,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
   public synchronized void setConnectorSchedule(String connectorSchedule) {
     scheduleStore.storeConnectorSchedule(
         storeContext, connectorSchedule);
+    hostLoadManager.setLoad((new Schedule(connectorSchedule)).getLoad());
   }
 
   public synchronized void shutdown() {
@@ -159,14 +166,20 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     }
   }
 
-  public synchronized boolean startBatch(BatchResultRecorder resultRecorder,
-      BatchSize batchSize) {
+  public synchronized boolean startBatch() {
+
     if (taskHandle != null && !taskHandle.isDone()) {
       return false;
     }
     taskHandle = null;
-    BatchCoordinator batchResultProcessor =
-        new BatchCoordinator(stateStore, resultRecorder);
+
+    BatchSize batchSize = hostLoadManager.determineBatchSize();
+    if (batchSize.getMaximum() == 0) {
+      return false;
+    }
+
+    MockBatchCoordinator batchResultProcessor =
+        new MockBatchCoordinator(stateStore, hostLoadManager);
     TimedCancelable batch =
         new CancelableBatch(traverser, name, batchResultProcessor,
             batchResultProcessor, batchSize);
@@ -174,20 +187,20 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     return true;
   }
 
-  public String getTraversalState() {
+  public String getConnectorState() {
     return stateStore.getTraversalState();
   }
 
-  public synchronized void storeTraversalState(String state) {
+  public synchronized void setConnectorState(String state) {
     stateStore.storeTraversalState(state);
   }
 
-  private class BatchCoordinator implements TraversalStateStore,
+  private class MockBatchCoordinator implements TraversalStateStore,
       BatchResultRecorder, BatchTimeout {
     private final TraversalStateStore traversalStateStore;
     private final BatchResultRecorder batchResultRecorder;
 
-    BatchCoordinator(TraversalStateStore traversalStateStore,
+    MockBatchCoordinator(TraversalStateStore traversalStateStore,
         BatchResultRecorder batchResultRecorder) {
       this.traversalStateStore = traversalStateStore;
       this.batchResultRecorder = batchResultRecorder;

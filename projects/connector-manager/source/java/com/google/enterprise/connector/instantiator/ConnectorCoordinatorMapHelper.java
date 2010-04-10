@@ -16,6 +16,7 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.pusher.PusherFactory;
+import com.google.enterprise.connector.scheduler.LoadManagerFactory;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -28,7 +29,7 @@ import java.util.logging.Logger;
  * {@link String} connector coordinator name to {@link ConnectorCoordinator}
  * Objects.
  */
-public class ConnectorCoordinatorMapHelper {
+class ConnectorCoordinatorMapHelper {
   private static final Logger LOGGER =
       Logger.getLogger(ConnectorCoordinatorMapHelper.class.getName());
 
@@ -42,18 +43,23 @@ public class ConnectorCoordinatorMapHelper {
    * @param pusherFactory creates instances of
    *        {@link com.google.enterprise.connector.pusher.Pusher Pusher}
    *        for pushing documents to the GSA.
+   * @param loadManagerFactory creates instances of
+   *  {@link com.google.enterprise.connector.scheduler.LoadManager LoadManager}
+   *        used for controlling feed rate.
    * @param threadPool the {@link ThreadPool} for running traversals.
    */
   static void fillFromTypes(TypeMap typeMap,
       ConcurrentMap<String, ConnectorCoordinator> instanceMap,
-      PusherFactory pusherFactory, ThreadPool threadPool) {
+      PusherFactory pusherFactory, LoadManagerFactory loadManagerFactory,
+      ThreadPool threadPool) {
     for (String typeName : typeMap.keySet()) {
       TypeInfo typeInfo = typeMap.getTypeInfo(typeName);
       if (typeInfo == null) {
         LOGGER.log(Level.WARNING, "Skipping " + typeName);
         continue;
       }
-      processTypeDirectory(instanceMap, typeInfo, pusherFactory, threadPool);
+      processTypeDirectory(instanceMap, typeInfo, pusherFactory,
+                           loadManagerFactory, threadPool);
     }
   }
 
@@ -64,11 +70,15 @@ public class ConnectorCoordinatorMapHelper {
    * @param pusherFactory creates instances of
    *        {@link com.google.enterprise.connector.pusher.Pusher Pusher}
    *        for pushing documents to the GSA.
+   * @param loadManagerFactory creates instances of
+   *  {@link com.google.enterprise.connector.scheduler.LoadManager LoadManager}
+   *        used for controlling feed rate.
    * @param threadPool the {@link ThreadPool} for running traversals.
    */
   private static void processTypeDirectory(
       ConcurrentMap<String, ConnectorCoordinator> instanceMap,
-      TypeInfo typeInfo, PusherFactory pusherFactory, ThreadPool threadPool) {
+      TypeInfo typeInfo, PusherFactory pusherFactory,
+      LoadManagerFactory loadManagerFactory, ThreadPool threadPool) {
     File typeDirectory = typeInfo.getConnectorTypeDir();
 
     // Find the subdirectories.
@@ -93,9 +103,8 @@ public class ConnectorCoordinatorMapHelper {
         InstanceInfo instanceInfo =
             InstanceInfo.fromDirectory(name, directory, typeInfo);
         if (instanceInfo != null) {
-          ConnectorCoordinator fromType =
-              new ConnectorCoordinatorImpl(instanceInfo, pusherFactory,
-                                           threadPool);
+          ConnectorCoordinator fromType = new ConnectorCoordinatorImpl(
+              instanceInfo, pusherFactory, loadManagerFactory, threadPool);
           ConnectorCoordinator current =
               instanceMap.putIfAbsent(name, fromType);
           if (current != null) {

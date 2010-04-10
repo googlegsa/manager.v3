@@ -42,7 +42,7 @@ import java.util.List;
  */
 public class TraversalSchedulerTest extends TestCase {
 
-  private static final String TEST_DIR_NAME = "testdata/tempSchedulerTests";
+  private static final String TEST_DIR_NAME = "testdata/tmp/SchedulerTests";
   private static final String TEST_CONFIG_FILE =
     "classpath*:config/connectorType.xml";
   private File baseDirectory;
@@ -61,12 +61,10 @@ public class TraversalSchedulerTest extends TestCase {
     assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
   }
 
-
   private TraversalScheduler runWithSchedules(List<Schedule> schedules,
       Instantiator instantiator, boolean shutdown) {
     storeSchedules(schedules, instantiator);
-    TraversalScheduler scheduler = new TraversalScheduler(instantiator,
-        new HostLoadManager(instantiator, null, null));
+    TraversalScheduler scheduler = new TraversalScheduler(instantiator);
     scheduler.init();
     Thread thread = new Thread(scheduler, "TraversalScheduler");
     thread.start();
@@ -114,18 +112,22 @@ public class TraversalSchedulerTest extends TestCase {
   }
 
   private Instantiator createRealInstantiator() {
-    ThreadPool threadPool = new ThreadPool(5);
-    Instantiator instantiator = new SpringInstantiator(
-        new MockPusher(), threadPool, new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
+    SpringInstantiator si = new SpringInstantiator();
+    si.setPusherFactory(new MockPusher());
+    si.setLoadManagerFactory(new MockLoadManagerFactory());
+    si.setTypeMap(new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
+    si.setThreadPool(new ThreadPool(5));
+    si.init();
 
     // Instantiate a couple of connectors.
-    addConnector(instantiator, "connectorA", "TestConnectorA",
+    addConnector(si, "connectorA", "TestConnectorA",
                  "{Username:foo, Password:bar, Color:red, "
                  + "RepositoryFile:MockRepositoryEventLog3.txt}");
-    addConnector(instantiator, "connectorB", "TestConnectorB",
+    addConnector(si, "connectorB", "TestConnectorB",
                  "{Username:foo, Password:bar, Flavor:minty-fresh, "
                  + "RepositoryFile:MockRepositoryEventLog3.txt}");
-    return instantiator;
+
+    return si;
   }
 
   private void addConnector(Instantiator instantiator,

@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.instantiator;
-
-import com.google.enterprise.connector.traversal.BatchResult;
+package com.google.enterprise.connector.traversal;
 
 /**
- * Recorder for batch completions.
+ * Recorder for a {@link BatchResult} returned by
+ * {@link Traverser#runBatch(BatchSize)}.
  */
 public interface BatchResultRecorder {
   /**

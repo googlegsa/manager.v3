@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc.  All Rights Reserved.
+// Copyright 2010 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,14 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.instantiator;
+package com.google.enterprise.connector.scheduler;
 
-/**
- * Interface for timing out a batch.
- */
-public interface BatchTimeout {
-  /**
-   * Times out the batch.
-   */
-  void timeout();
+public class MockLoadManagerFactory implements LoadManagerFactory {
+  public LoadManager newLoadManager(String ignored) {
+    return new HostLoadManager(null, null);
+  }
 }

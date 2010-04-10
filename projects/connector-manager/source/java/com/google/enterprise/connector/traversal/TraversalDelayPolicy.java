@@ -20,14 +20,16 @@ package com.google.enterprise.connector.traversal;
  */
 public enum TraversalDelayPolicy {
   /**
-   * No Delay
+   * No Delay.
    */
   IMMEDIATE,
+
   /**
    * Delay appropriate for the end of a traversal or other situations the
    * connector should provide extra delay before running the next batch.
    */
   POLL,
+
   /**
    * Delay appropriate for after a possibly transient error. This will provide
    * extra delay to avoid quickly hitting the problem again before it has been

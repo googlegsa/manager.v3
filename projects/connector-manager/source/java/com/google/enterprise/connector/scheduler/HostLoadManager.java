@@ -14,15 +14,13 @@
 
 package com.google.enterprise.connector.scheduler;
 
-import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.pusher.FeedConnection;
-import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.traversal.BatchSize;
+import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ListIterator;
+import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,28 +28,45 @@ import java.util.logging.Logger;
  *  Keeps track of the load for each connector instance as well as supplies
  *  batchHint to indicate how many docs to allow to be traversed by traverser.
  */
-public class HostLoadManager {
+//@NotThreadSafe
+//@GuardedBy("ConnectorCoordinatorImpl")
+public class HostLoadManager implements LoadManager {
   private static final Logger LOGGER =
       Logger.getLogger(HostLoadManager.class.getName());
 
-  private static final long MINUTE_IN_MILLIS = 60 * 1000;
-  private long startTimeInMillis;
-  private final Map<String, Integer> connectorNameToNumDocsTraversed;
-  private final Map<String, Long> connectorNameToFinishTime;
-  // Default batch size to something reasonable.
+  private static final long MINUTE_IN_MILLIS = 60 * 1000L;
+
+  /**
+   * Cache containing the last few {@link BatchResult} traversal results for
+   * the connector.  The results returned by recent traversals are used to
+   * calculate the optimum size for the next traversal batch to maintain the
+   * configured host load.
+   */
+  private LinkedList<BatchResult> batchResults = new LinkedList<BatchResult>();
+
+  /**
+   * The optimal number of documents for each Traversal to return.
+   * Small batches (<100) incur significant per batch overhead.
+   * Large batches may consume excessive local and Repository resources.
+   */
   private int batchSize = 500;
 
   /**
-   * Number of milliseconds before we ignore previously fed documents.  In
-   * particular, we limit our feed rate during the duration
-   * [startTimeInMillis, startTimeInMillis + periodInMillis].
+   * Number of milliseconds used to measure the feed rate.
+   * In particular, we try to constrain our feed rate to
+   * loadFromSchedule docs per periodInMillis.  Several
+   * periods worth of results may be used to keep the load
+   * on target.
+   *
+   * By default, the HostLoadManager will use a one minute period
+   * for calculating the batchSize.
    */
-  private final long periodInMillis;
+  private long periodInMillis = MINUTE_IN_MILLIS;
 
   /**
-   * Used for determining the loads of the schedules.
+   * The load is the target number of documents per period to process.
    */
-  private final Instantiator instantiator;
+  private int load = 1000;
 
   /**
    * Used for determining feed backlog status.
@@ -64,165 +79,154 @@ public class HostLoadManager {
   private final FileSizeLimitInfo fileSizeLimit;
 
   /**
-   * By default, the HostLoadManager will use a one minute period for
-   * calculating the batchHint.
+   * Constructor used by {@link HostLoadManagerFactory} to create a
+   * {@link LoadManager} for a a connector instance.
    *
-   * @param instantiator used to get Schedule for Connector instances
-   * @param feedConnection used to get FeedConnection backlog status
-   * @param fileSizeLimitInfo used to check sufficient memory for traversals
+   * @param feedConnection a {@link FeedConnection}.
+   * @param fileSizeLimit a {@link FileSizeLimitInfo}.
    */
-  public HostLoadManager(Instantiator instantiator,
-                         FeedConnection feedConnection,
-                         FileSizeLimitInfo fileSizeLimitInfo) {
-    this(instantiator, feedConnection, fileSizeLimitInfo, MINUTE_IN_MILLIS);
-  }
-
-  /**
-   * Constructor used by unit tests.
-   *
-   * @param instantiator used to get schedule for connector instances
-   * @param feedConnection used to get FeedConnection backlog status
-   * @param periodInMillis time period in which we enforce the maxFeedRate
-   */
-  public HostLoadManager(Instantiator instantiator,
-                         FeedConnection feedConnection,
-                         FileSizeLimitInfo fileSizeLimitInfo,
-                         long periodInMillis) {
-    this.instantiator = instantiator;
+  public HostLoadManager(FeedConnection feedConnection,
+                         FileSizeLimitInfo fileSizeLimit) {
     this.feedConnection = feedConnection;
-    this.fileSizeLimit = fileSizeLimitInfo;
-    this.periodInMillis = periodInMillis;
-    startTimeInMillis = System.currentTimeMillis();
-    connectorNameToNumDocsTraversed =
-        Collections.synchronizedMap(new HashMap<String, Integer>());
-    connectorNameToFinishTime =
-        Collections.synchronizedMap(new HashMap<String, Long>());
-  }
-
-  /*
-   * Only used for testing.
-   */
-  int getBatchSize() {
-    return batchSize;
+    this.fileSizeLimit = fileSizeLimit;
   }
 
   /**
-   * @param batchSize the batchSize to set
+   * Sets the target load in documents per period.
+   *
+   * @param load target load in documents per period.
    */
+  //@Override
+  public void setLoad(int load) {
+    this.load = load;
+  }
+
+  /**
+   * Sets the measurement period in seconds.
+   *
+   * @param periodInSeconds measurement period in seconds.
+   */
+  //@Override
+  public void setPeriod(int periodInSeconds) {
+    periodInMillis = periodInSeconds * 1000L;
+  }
+
+  /**
+   * @param batchSize the target batchSize to set.
+   */
+  //@Override
   public void setBatchSize(int batchSize) {
     this.batchSize = batchSize;
   }
 
-  private int getMaxDocsPerPeriod(String connectorName) {
-    String scheduleStr = null;
-    try {
-      scheduleStr = instantiator.getConnectorSchedule(connectorName);
-    } catch (ConnectorNotFoundException e) {
-      // Connector seems to have been deleted.
-    }
-    if (scheduleStr == null) {
-      return 0;
-    } else {
-      int load = new Schedule(scheduleStr).getLoad();
-      return (int) ((periodInMillis / 1000f) * (load / 60f) + 0.5);
-    }
-  }
-
   /**
-   * Update startTimeInMillis and connectorNameToNumDocsFed based on current
-   * time.
-   */
-  private void updateNumDocsTraversedData() {
-    long now = System.currentTimeMillis();
-    if (now > startTimeInMillis + periodInMillis) {
-      startTimeInMillis = now;
-      connectorNameToNumDocsTraversed.clear();
-    }
-  }
-
-  /**
-   * Determine the number of documents traversed since a given time.
-   *
-   * @param connectorName name of the connector instance
-   * @return number of documents traversed
-   */
-  private int getNumDocsTraversedThisPeriod(String connectorName) {
-    updateNumDocsTraversedData();
-    Integer numDocs = connectorNameToNumDocsTraversed.get(connectorName);
-    return (numDocs == null) ? 0 : numDocs.intValue();
-  }
-
-  /**
-   * Let HostLoadManager know how many documents have been traversed so that
+   * Lets HostLoadManager know how many documents have been traversed so that
    * it can properly enforce the host load.
    *
-   * @param connectorName name of the connector instance
-   * @param numDocsTraversed number of documents traversed
+   * @param batchResult a traversal BatchResult
    */
-  public void updateNumDocsTraversed(String connectorName,
-      int numDocsTraversed) {
-    synchronized (connectorNameToNumDocsTraversed) {
-      int numDocs = getNumDocsTraversedThisPeriod(connectorName);
-      connectorNameToNumDocsTraversed.put(connectorName,
-          Integer.valueOf(numDocs + numDocsTraversed));
+  //@Override
+  public void recordResult(BatchResult batchResult) {
+    if (batchResult.getCountProcessed() > 0) {
+      batchResults.add(0, batchResult);
     }
   }
 
   /**
-   * Let HostLoadManager know that a connector has just completed a traversal,
-   * (whether it was a failure or natural completion is irrelevant).
+   * Determine the approximate number of documents processed in the supplied
+   * batch during the specified period.
    *
-   * @param connectorName name of the connector instance
-   * @param retryDelayMillis number of milliseconds to wait until retrying
-   *        traversal
+   * @param r a BatchResult
+   * @param period the start of the time period in question.
+   * @return number of documents traversed in the minute.
    */
-  public void connectorFinishedTraversal(String connectorName,
-                                         int retryDelayMillis) {
-    // For run-once schedules, wait 1 minute for modified schedule to be saved.
-    Long finishTime = Long.valueOf(System.currentTimeMillis() +
-        ((retryDelayMillis < 0) ? (60 * 1000L) : retryDelayMillis));
-    connectorNameToFinishTime.put(connectorName, finishTime);
+  private int getNumDocsTraversedInPeriod(BatchResult r, long periodStart) {
+    long periodEnd = periodStart + periodInMillis;
+    if (r.getEndTime() <= periodStart || r.getStartTime() >= periodEnd) {
+      return 0;
+    }
+    long start = (r.getStartTime() < periodStart) ? periodStart : r.getStartTime();
+    long end = (r.getEndTime() > periodEnd) ? periodEnd : r.getEndTime();
+    return (int)(r.getCountProcessed() * (end - start)) / r.getElapsedTime();
   }
 
   /**
-   * Remove the connector's statistics from the caches.
-   * This is called when a connector is deleted.
-   *
-   * @param connectorName name of the connector instance
+   * Small struct holding the number of docs processed in each
+   * of the previous two periods.
    */
-  public void removeConnector(String connectorName) {
-    connectorNameToFinishTime.remove(connectorName);
-    connectorNameToNumDocsTraversed.remove(connectorName);
+  private class RecentDocs {
+    // Number of documents processed during the current minute.
+    public final int docsThisPeriod;
+
+    // Number of documents processed during the previous minute.
+    public final int docsPrevPeriod;
+
+    public RecentDocs(int docsThisPeriod, int docsPrevPeriod) {
+      this.docsThisPeriod = docsThisPeriod;
+      this.docsPrevPeriod = docsPrevPeriod;
+    }
+  }
+
+  /**
+   * Determine the number of documents traversed since the start
+   * of the current traversal period (minute) and during the previous
+   * traversal period.
+   *
+   * @return number of documents traversed in this minute and the previous minute
+   */
+  private RecentDocs getNumDocsTraversedRecently() {
+    int numDocs = 0;
+    int prevNumDocs = 0;
+    long thisPeriod = (System.currentTimeMillis() / periodInMillis) * periodInMillis;
+    long prevPeriod = thisPeriod - periodInMillis;
+    if (batchResults.size() > 0) {
+      ListIterator<BatchResult> iter = batchResults.listIterator();
+      while (iter.hasNext()) {
+        BatchResult r = iter.next();
+        numDocs += getNumDocsTraversedInPeriod(r, thisPeriod);
+        prevNumDocs += getNumDocsTraversedInPeriod(r, prevPeriod);
+        if (r.getEndTime() < prevPeriod) {
+          // This is an old result.  We don't need it any more.
+          iter.remove();
+        }
+      }
+    }
+    return new RecentDocs(numDocs, prevNumDocs);
   }
 
   /**
    * Determine how many documents to be recommended to be traversed.  This
    * number is based on the max feed rate for the connector instance as well
-   * as the load determined based on calls to updateNumDocsTraversed().
+   * as the load determined based on recently recorded results.
    *
-   * @param connectorName name of the connector instance
    * @return BatchSize hint and constraint to the number of documents traverser
    *         should traverse
    */
-  public BatchSize determineBatchSize(String connectorName) {
-    int maxDocsPerPeriod = getMaxDocsPerPeriod(connectorName);
-    int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
-    int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
+  //@Override
+  public BatchSize determineBatchSize() {
+    int maxDocsPerPeriod = load;
+    RecentDocs traversed  = getNumDocsTraversedRecently();
+    int remainingDocsToTraverse = maxDocsPerPeriod - traversed.docsThisPeriod;
+
+    // If the connector grossly exceeded the target load during the last period,
+    // try to balance it out with a reduced batch size this period.
+    if (traversed.docsPrevPeriod > (maxDocsPerPeriod + maxDocsPerPeriod/10)) {
+      remainingDocsToTraverse -= traversed.docsPrevPeriod - maxDocsPerPeriod;
+    }
+
     if (LOGGER.isLoggable(Level.FINEST)) {
-      LOGGER.finest("connectorName = " + connectorName
-          + "  maxDocsPerPeriod = " + maxDocsPerPeriod
-          + "  docsTraversed = " + docsTraversed
+      LOGGER.finest("maxDocsPerPeriod = " + maxDocsPerPeriod
+          + "  docsTraversedThisPeriod = " + traversed.docsThisPeriod
+          + "  docsTraversedPreviousPeriod = " + traversed.docsPrevPeriod
           + "  remainingDocsToTraverse = " + remainingDocsToTraverse);
     }
 
     if (remainingDocsToTraverse > 0) {
       int hint = Math.min(batchSize, remainingDocsToTraverse);
       // Allow the connector to return up to twice as much as we
-      // ask for, even if it exceeds the load target.
-      // TODO: Good connectors may occasionally exceed the hint for
-      // reasons of efficiency.  However badly behaved connectors that
-      // constantly return double the batchHint should be reined back
-      // within the host load.
+      // ask for, even if it exceeds the load target.  However,
+      // connectors that grossly exceed the batchSize, may be
+      // penalized next time around to maintain an average load.
       int max =  Math.max(hint * 2, remainingDocsToTraverse);
       return new BatchSize(hint, max);
     } else {
@@ -234,48 +238,38 @@ public class HostLoadManager {
    * Return true if this connector instance should not be scheduled
    * for traversal at this time.
    *
-   * @param connectorName name of the connector instance
    * @return true if the connector should not run at this time
    */
-  public boolean shouldDelay(String connectorName) {
-    // Is the connector waiting after a finished traversal pass
-    // or waiting for an error condition to clear?
-    Object value = connectorNameToFinishTime.get(connectorName);
-    if (value != null) {
-      long finishTime = ((Long)value).longValue();
-      if (System.currentTimeMillis() < finishTime) {
-        return true;
-      }
+  //@Override
+  public boolean shouldDelay() {
+    // Has the connector exceeded its maximum number of documents per minute?
+    int maxDocsPerPeriod = load;
+    RecentDocs traversed  = getNumDocsTraversedRecently();
+    int remainingDocsToTraverse = maxDocsPerPeriod - traversed.docsThisPeriod;
+
+    // If the connector grossly exceeded the target load during the last period,
+    // try to balance it out with a reduced batch size this period.
+    if (traversed.docsPrevPeriod > (maxDocsPerPeriod + maxDocsPerPeriod/10)) {
+      remainingDocsToTraverse -= traversed.docsPrevPeriod - maxDocsPerPeriod;
     }
 
-    // Has the connector exceeded its maximum number of documents per minute?
-    int maxDocsPerPeriod = getMaxDocsPerPeriod(connectorName);
-    int docsTraversed = getNumDocsTraversedThisPeriod(connectorName);
-    int remainingDocsToTraverse = maxDocsPerPeriod - docsTraversed;
     // Avoid asking for tiny batches if we are near the load limit.
     int min = Math.min((maxDocsPerPeriod / 10), 20);
-    return (remainingDocsToTraverse <= min);
-  }
+    if (remainingDocsToTraverse <= min) {
+      return true;
+    }
 
-  /**
-   * Return true if systemic conditions indicate that traversals should
-   * not happen at this time.  Perhaps the GSA is backlogged  or the
-   * feedergate has died or the Connector Manager is being reconfigured.
-   *
-   * @return true if traversals should not run at this time.
-   */
-  public boolean shouldDelay() {
     // If the process is running low on memory, don't traverse.
     if (fileSizeLimit != null) {
       Runtime rt = Runtime.getRuntime();
-      int count = Math.max(2, connectorNameToNumDocsTraversed.size());
       if ((rt.maxMemory() - (rt.totalMemory() - rt.freeMemory())) <
-          (count * fileSizeLimit.maxFeedSize())) {
+          fileSizeLimit.maxFeedSize()) {
         return true;
       }
     }
 
-    // If the GSA is backlogged handling feeds, don't traverse.
+    // If the GSA this connector is feeding is backlogged handling feeds,
+    // don't traverse.
     if ((feedConnection != null) && feedConnection.isBacklogged()) {
       return true;
     }

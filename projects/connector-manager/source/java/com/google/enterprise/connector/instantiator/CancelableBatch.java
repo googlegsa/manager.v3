@@ -17,7 +17,9 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.spi.Connector;
 import com.google.enterprise.connector.traversal.BatchResult;
+import com.google.enterprise.connector.traversal.BatchResultRecorder;
 import com.google.enterprise.connector.traversal.BatchSize;
+import com.google.enterprise.connector.traversal.BatchTimeout;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.logging.Logger;
@@ -26,7 +28,7 @@ import java.util.logging.Logger;
  * A {@link TimedCancelable} for running a {@link Connector} batch using
  * a {@link Traverser}
  */
-public class CancelableBatch implements TimedCancelable {
+class CancelableBatch implements TimedCancelable {
   private static final Logger LOGGER =
     Logger.getLogger(CancelableBatch.class.getName());
 

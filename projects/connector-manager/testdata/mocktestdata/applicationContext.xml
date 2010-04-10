@@ -10,6 +10,11 @@
     <constructor-arg index="0" ref="FeedConnection" />
   </bean>
 
+  <bean id="LoadManagerFactory"
+        class="com.google.enterprise.connector.scheduler.HostLoadManagerFactory">
+    <property name="feedConnection" ref="FeedConnection"/>
+  </bean>
+
   <bean id="ConnectorScheduleStore"
         class="com.google.enterprise.connector.persist.MockConnectorScheduleStore">
   </bean>
@@ -36,8 +41,9 @@
 
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.SpringInstantiator">
-    <constructor-arg index="0" ref="PusherFactory" />
-    <constructor-arg index="1" ref="ThreadPool" />
+    <property name="pusherFactory" ref="PusherFactory" />
+    <property name="loadManagerFactory" ref="LoadManagerFactory"/>
+    <property name="threadPool" ref="ThreadPool" />
   </bean>
 
   <bean id="ThreadPool"
@@ -50,17 +56,8 @@
     <property name="instantiator" ref="Instantiator" />
   </bean>
 
-  <bean id="HostLoadManager"
-        class="com.google.enterprise.connector.scheduler.HostLoadManager">
-    <constructor-arg index="0" ref="Instantiator"/>
-    <constructor-arg index="1" ref="FeedConnection"/>
-    <constructor-arg index="2"><null/></constructor-arg>
-    <property name="batchSize" value="500"/>
-  </bean>
-
   <bean id="TraversalScheduler"
         class="com.google.enterprise.connector.scheduler.TraversalScheduler">
     <constructor-arg index="0" ref="Instantiator" />
-    <constructor-arg index="1" ref="HostLoadManager"/>
   </bean>
 </beans>
