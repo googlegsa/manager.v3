@@ -20,6 +20,10 @@ import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.pusher.MockPusher;
+import com.google.enterprise.connector.scheduler.HostLoadManager;
+import com.google.enterprise.connector.scheduler.LoadManager;
+import com.google.enterprise.connector.scheduler.LoadManagerFactory;
+import com.google.enterprise.connector.scheduler.MockLoadManagerFactory;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.TraversalManager;
@@ -40,7 +44,7 @@ import java.util.Map;
  */
 public class InstantiatorTest extends TestCase {
 
-  private static final String TEST_DIR_NAME = "testdata/tempInstantiatorTests";
+  private static final String TEST_DIR_NAME = "testdata/tmp/InstantiatorTests";
   private static final String TEST_CONFIG_FILE =
       "classpath*:config/connectorType.xml";
   private final File baseDirectory  = new File(TEST_DIR_NAME);
@@ -57,9 +61,13 @@ public class InstantiatorTest extends TestCase {
   }
 
   private void createInstantiator() {
-    ThreadPool threadPool = new ThreadPool(5);
-    instantiator = new SpringInstantiator(new MockPusher(), threadPool,
-        new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
+    SpringInstantiator si = new SpringInstantiator();
+    si.setPusherFactory(new MockPusher());
+    si.setLoadManagerFactory(new MockLoadManagerFactory());
+    si.setTypeMap(new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
+    si.setThreadPool(new ThreadPool(5));
+    si.init();
+    instantiator = si;
   }
 
   @Override
@@ -387,9 +395,10 @@ public class InstantiatorTest extends TestCase {
       ConnectorTypeNotFoundException, ConnectorNotFoundException,
       ConnectorExistsException {
     TraversalManager oldTraversersalManager = null;
-    if (update)
+    if (update) {
       oldTraversersalManager =
           instantiator.getConnectorCoordinator(name).getTraversalManager();
+    }
 
     Map<String, String> config =
         new JsonObjectAsMap(new JSONObject(jsonConfigString));
@@ -408,7 +417,8 @@ public class InstantiatorTest extends TestCase {
     AuthenticationManager authn = instantiator.getAuthenticationManager(name);
     assertNotNull(authn);
 
-    TraversalManager traversalManager = instantiator.getConnectorCoordinator(name).getTraversalManager();
+    TraversalManager traversalManager =
+        instantiator.getConnectorCoordinator(name).getTraversalManager();
     assertNotNull(traversalManager);
 
     // If this is an update, make sure that we get a different traverser.

@@ -5,7 +5,6 @@
         class="com.google.enterprise.connector.scheduler.HostLoadManager">
     <constructor-arg index="0"><null/></constructor-arg>
     <constructor-arg index="1"><null/></constructor-arg>
-    <constructor-arg index="2"><null/></constructor-arg>
     <property name="batchSize" value="200"/>
   </bean>
 </beans>

@@ -20,21 +20,88 @@ package com.google.enterprise.connector.traversal;
 public class BatchResult {
   private final TraversalDelayPolicy delayPolicy;
   private final int countProcessed;
+  private final long startTime;
+  private final long endTime;
+
+  /**
+   * Construct a new {@link BatchResult}, with no documents processed and
+   * no time spent processing.
+   *
+   * @param delayPolicy TraversalDelayPolicy to follow after this result.
+   */
+  public BatchResult(TraversalDelayPolicy delayPolicy) {
+    this(delayPolicy, 0, 0L, 0L);
+  }
+
+  /**
+   * Construct a new {@link BatchResult}, with number of documents processed
+   * and no time spent processing.
+   *
+   * @param delayPolicy TraversalDelayPolicy to follow after this result.
+   * @param countProcessed number of items processed in this batch.
+   */
+  // Legacy constructor used by Unit Tests.
+  public BatchResult(TraversalDelayPolicy delayPolicy, int countProcessed) {
+    this(delayPolicy, countProcessed, 0L, 0L);
+  }
 
   /**
    * Construct a new {@link BatchResult}.
+   *
+   * @param delayPolicy TraversalDelayPolicy to follow after this result.
+   * @param countProcessed number of items processed in this batch.
+   * @param startTime the time (in milliseconds) when this batch started.
+   * @param endTime the time (in milliseconds) when this batch finished.
    */
-  public BatchResult(TraversalDelayPolicy delayPolicy, int countProcessed) {
+  public BatchResult(TraversalDelayPolicy delayPolicy, int countProcessed,
+      long startTime, long endTime) {
+    if (delayPolicy == null) {
+      throw new IllegalArgumentException("Missing TraversalDelayPolicy");
+    }
     this.delayPolicy = delayPolicy;
     this.countProcessed = countProcessed;
+    this.startTime = startTime;
+    // Avoid divide by 0 later.
+    this.endTime = (startTime >= endTime) ? startTime + 1 : endTime;
   }
 
+  /**
+   * Returns the TraversalDelayPolicy that should be applied following
+   * this Batch.
+   */
   public TraversalDelayPolicy getDelayPolicy() {
     return delayPolicy;
   }
 
+  /**
+   * Returns the number of items processed in this Batch.
+   */
   public int getCountProcessed() {
     return countProcessed;
+  }
+
+  /**
+   * Returns the time (in milliseconds since 1970) when this Batch
+   * started processing.
+   */
+  public long getStartTime() {
+    return startTime;
+  }
+
+  /**
+   * Returns the time (in milliseconds since 1970) when this Batch
+   * finished processing.
+   */
+  public long getEndTime() {
+    return endTime;
+  }
+
+  /**
+   * Returns the elapsed time (in milliseconds) that this Batch
+   * required for processing.
+   */
+  public int getElapsedTime() {
+    return (int)(endTime - startTime);
   }
 
   @Override
@@ -42,8 +109,9 @@ public class BatchResult {
     final int prime = 31;
     int result = 1;
     result = prime * result + countProcessed;
-    result =
-        prime * result + ((delayPolicy == null) ? 0 : delayPolicy.hashCode());
+    result = prime * result + delayPolicy.hashCode();
+    result = prime * result + (int)(startTime);
+    result = prime * result + (int)(endTime);
     return result;
   }
 
@@ -62,11 +130,13 @@ public class BatchResult {
     if (countProcessed != other.countProcessed) {
       return false;
     }
-    if (delayPolicy == null) {
-      if (other.delayPolicy != null) {
-        return false;
-      }
-    } else if (!delayPolicy.equals(other.delayPolicy)) {
+    if (!delayPolicy.equals(other.delayPolicy)) {
+      return false;
+    }
+    if (startTime != other.startTime) {
+      return false;
+    }
+    if (endTime != other.endTime) {
       return false;
     }
     return true;
@@ -75,6 +145,7 @@ public class BatchResult {
   @Override
   public String toString() {
     return "BatchResult: delayPolicy = " + delayPolicy + " countProcessed = "
-        + countProcessed;
+        + countProcessed + " elapsed time = " + (endTime - startTime)/1000
+        + " seconds";
   }
 }

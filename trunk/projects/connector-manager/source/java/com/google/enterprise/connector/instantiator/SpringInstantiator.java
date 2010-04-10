@@ -18,6 +18,7 @@ import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.pusher.PusherFactory;
+import com.google.enterprise.connector.scheduler.LoadManagerFactory;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
@@ -42,56 +43,76 @@ public class SpringInstantiator implements Instantiator {
   private static final Logger LOGGER =
       Logger.getLogger(SpringInstantiator.class.getName());
 
-  final ConcurrentMap<String, ConnectorCoordinator> coordinatorMap;
-  final PusherFactory pusherFactory;
-  final ThreadPool threadPool;
+  private final ConcurrentMap<String, ConnectorCoordinator> coordinatorMap;
+
+  // State that is filled in by setters from Spring.
+  private PusherFactory pusherFactory;
+  private LoadManagerFactory loadManagerFactory;
+  private ThreadPool threadPool;
 
   // State that is filled in by init.
-  TypeMap typeMap;
+  private TypeMap typeMap;
 
   /**
    * Normal constructor.
-   *
-   * @param pusherFactory
-   * @param threadPool
    */
-  public SpringInstantiator(PusherFactory pusherFactory,
-                            ThreadPool threadPool) {
-    this.pusherFactory = pusherFactory;
-    this.threadPool = threadPool;
+  public SpringInstantiator() {
     this.coordinatorMap = new ConcurrentHashMap<String, ConnectorCoordinator>();
+
     // NOTE: we can't call init() here because then there would be a
     // circular dependency on the Context, which hasn't been constructed yet
   }
 
   /**
-   * Constructor used by unit tests.  Provides a specific test Context.
+   * Sets the {@link PusherFactory} used to create instances of
+   * {@link com.google.enterprise.connector.pusher.Pusher Pusher}
+   * for pushing documents to the GSA.
    *
-   * @param pusherFactory
-   * @param threadPool
-   * @param typeMap
+   * @param pusherFactory a {@link PusherFactory} implementation.
    */
-  public SpringInstantiator(PusherFactory pusherFactory,
-      ThreadPool threadPool, TypeMap typeMap) {
-    this(pusherFactory, threadPool);
+  public void setPusherFactory(PusherFactory pusherFactory) {
+    this.pusherFactory = pusherFactory;
+  }
+
+  /**
+   * Sets the {@link LoadManagerFactory} used to create instances of
+   * {@link com.google.enterprise.connector.scheduler.LoadManager LoadManager}
+   * for controlling feed rate.
+   *
+   * @param loadManagerFactory a {@link LoadManagerFactory}.
+   */
+  public void setLoadManagerFactory(LoadManagerFactory loadManagerFactory) {
+    this.loadManagerFactory = loadManagerFactory;
+  }
+
+  /**
+   * Sets the {@link ThreadPool} used for running traversals.
+   *
+   * @param threadPool a {@link ThreadPool} implementation.
+   */
+  public void setThreadPool(ThreadPool threadPool) {
+    this.threadPool = threadPool;
+  }
+
+  /**
+   * Sets the {@link TypeMap} of installed {@link ConnectorType}s.
+   *
+   * @param typeMap a {@link TypeMap}.
+   */
+  public void setTypeMap(TypeMap typeMap) {
     this.typeMap = typeMap;
-    init(typeMap);
   }
 
   /**
    * Initializes the Context, post bean construction.
    */
   public synchronized void init() {
+    LOGGER.info("Initializing instantiator");
     if (typeMap == null) {
-      LOGGER.info("Initializing instantiator");
-      init(new TypeMap());
-      typeMap = new TypeMap();
+      setTypeMap(new TypeMap());
     }
-  }
-
-  private void init(TypeMap typeMap) {
     ConnectorCoordinatorMapHelper.fillFromTypes(typeMap, coordinatorMap,
-        pusherFactory, threadPool);
+        pusherFactory, loadManagerFactory, threadPool);
   }
 
   /**
@@ -102,7 +123,9 @@ public class SpringInstantiator implements Instantiator {
       cc.shutdown();
     }
     try {
-      threadPool.shutdown(interrupt, timeoutMillis);
+      if (threadPool != null) {
+        threadPool.shutdown(interrupt, timeoutMillis);
+      }
     } catch (InterruptedException ie) {
       LOGGER.log(Level.SEVERE, "TraversalScheduler shutdown interrupted: ", ie);
     }
@@ -140,8 +163,8 @@ public class SpringInstantiator implements Instantiator {
     ConnectorCoordinator connectorCoordinator =
         coordinatorMap.get(connectorName);
     if (connectorCoordinator == null) {
-      ConnectorCoordinator ci = new
-          ConnectorCoordinatorImpl(connectorName, pusherFactory, threadPool);
+      ConnectorCoordinator ci = new ConnectorCoordinatorImpl(
+          connectorName, pusherFactory, loadManagerFactory, threadPool);
       ConnectorCoordinator existing =
           coordinatorMap.putIfAbsent(connectorName, ci);
       connectorCoordinator = (existing == null) ? ci : existing;

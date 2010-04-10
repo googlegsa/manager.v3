@@ -20,8 +20,6 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.TraversalManager;
-import com.google.enterprise.connector.traversal.BatchSize;
-import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
 
 import java.util.Locale;
@@ -49,7 +47,7 @@ import java.util.Map;
  * It is expected the caller will guarantee that each
  * {@link ConnectorCoordinator} in the system has a unique name.
  */
-public interface ConnectorCoordinator extends TraversalStateStore {
+public interface ConnectorCoordinator {
   /**
    * Returns true if this {@link ConnectorCoordinator} holds a
    * configured usable connector instance. This function is for reporting
@@ -160,6 +158,27 @@ public interface ConnectorCoordinator extends TraversalStateStore {
   public String getConnectorSchedule() throws ConnectorNotFoundException;
 
   /**
+   * Set the Connector's traversal state.
+   *
+   * @param state a String representation of the state to store.
+   *        If null, any previous stored state is discarded.
+   * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
+   *         does not exist.
+   */
+  public void setConnectorState(String state)
+     throws ConnectorNotFoundException;
+
+  /**
+   * Returns the Connector's traversal state.
+   *
+   * @return String representation of the stored state, or
+   *         null if no state is stored.
+   * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
+   *         does not exist.
+   */
+  public String getConnectorState() throws ConnectorNotFoundException;
+
+  /**
    * Returns the type name for this {@link ConnectorCoordinator}.
    *
    * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
@@ -215,13 +234,11 @@ public interface ConnectorCoordinator extends TraversalStateStore {
    * Starts running a batch for this {@link ConnectorCoordinator} if a batch is
    * not already running.
    *
-   * @param batchSize batch size contstraints
    * @return true if this call started a batch
    * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
    *         does not exist.
    */
-  public boolean startBatch(BatchResultRecorder resultRecorder,
-      BatchSize batchSize) throws ConnectorNotFoundException;
+  public boolean startBatch() throws ConnectorNotFoundException;
 
   /**
    * Shuts down this {@link ConnectorCoordinator} if {@link #exists()}.

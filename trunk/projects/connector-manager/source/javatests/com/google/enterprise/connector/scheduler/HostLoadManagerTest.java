@@ -14,12 +14,11 @@
 
 package com.google.enterprise.connector.scheduler;
 
-import com.google.enterprise.connector.instantiator.MockInstantiator;
-import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.pusher.MockFeedConnection;
+import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
-import com.google.enterprise.connector.pusher.MockFeedConnection;
+import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 
 import junit.framework.TestCase;
 
@@ -27,197 +26,163 @@ import junit.framework.TestCase;
  * Test HostLoadManager class.
  */
 public class HostLoadManagerTest extends TestCase {
-  private final MockInstantiator instantiator = new MockInstantiator(null);
 
-  private void addLoad(String connectorName, int load) {
-    Schedule schedule = new Schedule(connectorName + ":" + load + ":100:0-0");
-    String connectorSchedule = schedule.toString();
-    try {
-      instantiator.setConnectorSchedule(connectorName, connectorSchedule);
-    } catch (ConnectorNotFoundException cnfe) {
-      // This test attempts to add schedules to connectors that do not exist.
-      // If there is not yet a connector with this name, create a dummy one.
+  // Wait until the current time is between the minimum and maximum
+  // milliseconds of a second.  This can help us avoid running accross
+  // 1-second boundaries and splitting results between two periods.
+  private void alignTime(int min, int max) {
+    while (true) {
+      int now = (int)(System.currentTimeMillis() % 1000);
+      if (now > min && now < max) {
+        return;
+      }
       try {
-        instantiator.setupTraverser(connectorName, null);
-        instantiator.setConnectorSchedule(connectorName, connectorSchedule);
-      } catch (ConnectorNotFoundException e) {
-        fail("Unexpected ConnectorNotFoundException : " + e.toString());
+        Thread.sleep(20);
+      } catch (InterruptedException e) {
+        // Ignore.
       }
     }
   }
 
+  private HostLoadManager newHostLoadManager(int load) {
+    HostLoadManager hlm = new HostLoadManager(null, null);
+    hlm.setLoad(load);
+    alignTime(50, 750);
+    return hlm;
+  }
+
+  private BatchResult newBatchResult(int numDocs) {
+    return newBatchResult(numDocs, 50);
+  }
+
+  private BatchResult newBatchResult(int numDocs, int duration) {
+    long now = System.currentTimeMillis();
+    return new BatchResult(TraversalDelayPolicy.IMMEDIATE, numDocs,
+        now - duration, now);
+  }
+
   public void testMaxFeedRateLimit() {
-    final String connectorName = "cn1";
-    addLoad(connectorName, 60);
-    HostLoadManager hostLoadManager =
-        new HostLoadManager(instantiator, null, null);
-    assertEquals(60, hostLoadManager.determineBatchSize(connectorName).getHint());
-    hostLoadManager.updateNumDocsTraversed(connectorName, 60);
-    assertEquals(0, hostLoadManager.determineBatchSize(connectorName).getHint());
+    HostLoadManager hostLoadManager = newHostLoadManager(60);
+    assertEquals(60, hostLoadManager.determineBatchSize().getHint());
+    hostLoadManager.recordResult(newBatchResult(60));
+    assertEquals(0, hostLoadManager.determineBatchSize().getHint());
   }
 
   public void testMultipleUpdates() {
-    final String connectorName = "cn1";
-    addLoad(connectorName, 60);
-    HostLoadManager hostLoadManager =
-        new HostLoadManager(instantiator, null, null);
-    hostLoadManager.updateNumDocsTraversed(connectorName, 10);
-    hostLoadManager.updateNumDocsTraversed(connectorName, 10);
-    hostLoadManager.updateNumDocsTraversed(connectorName, 10);
-    assertEquals(30, hostLoadManager.determineBatchSize(connectorName).getHint());
-  }
-
-  public void testMultipleConnectors() {
-    final String connectorName1 = "cn1";
-    final String connectorName2 = "cn2";
-    addLoad(connectorName1, 60);
-    addLoad(connectorName2, 60);
-    HostLoadManager hostLoadManager =
-        new HostLoadManager(instantiator, null, null);
-    hostLoadManager.updateNumDocsTraversed(connectorName1, 60);
-    assertEquals(0, hostLoadManager.determineBatchSize(connectorName1).getHint());
-
-    hostLoadManager.updateNumDocsTraversed(connectorName2, 50);
-    assertEquals(10, hostLoadManager.determineBatchSize(connectorName2).getHint());
+    HostLoadManager hostLoadManager = newHostLoadManager(60);
+    BatchResult result = newBatchResult(10);
+    hostLoadManager.recordResult(result);
+    hostLoadManager.recordResult(result);
+    hostLoadManager.recordResult(result);
+    assertEquals(30, hostLoadManager.determineBatchSize().getHint());
   }
 
   public void testPeriod() {
-    final String connectorName = "cn1";
+    HostLoadManager hostLoadManager = newHostLoadManager(60);
+    hostLoadManager.setPeriod(1);
 
-    // NOTE: HostLoadManager.determineBatchSize() and shouldDelay() make the
-    // assumption that periodInMillis is a minute.  We skew these values here
-    // in such a way that their calculations come out the same, but we don't
-    // have multi-minute waits in the unit tests.
-    final long periodInMillis = 1000;
-    addLoad(connectorName, 3600);
+    hostLoadManager.recordResult(newBatchResult(55));
+    assertEquals(5, hostLoadManager.determineBatchSize().getHint());
 
-    HostLoadManager hostLoadManager =
-        new HostLoadManager(instantiator, null, null, periodInMillis);
-    hostLoadManager.updateNumDocsTraversed(connectorName, 55);
-    assertEquals(5, hostLoadManager.determineBatchSize(connectorName).getHint());
     // sleep a period (and then some) so that batchHint is reset
     try {
       // extra time in ms in case sleeping the period is not long enough
-      Thread.sleep(periodInMillis + 200);
+      Thread.sleep(1200);
     } catch (InterruptedException e) {
       // Ignore.
     }
-    assertEquals(60, hostLoadManager.determineBatchSize(connectorName).getHint());
-    hostLoadManager.updateNumDocsTraversed(connectorName, 15);
-    assertEquals(45, hostLoadManager.determineBatchSize(connectorName).getHint());
-  }
 
-  public void testRetryDelay() {
-    final String connectorName = "cn1";
-
-    // NOTE: HostLoadManager.determineBatchSize() and shouldDelay() make the
-    // assumption that periodInMillis is a minute.  We skew these values here
-    // in such a way that their calculations come out the same, but we don't
-    // have multi-minute waits in the unit tests.
-    final long periodInMillis = 1000;
-    addLoad(connectorName, 3600);
-
-    HostLoadManager hostLoadManager =
-        new HostLoadManager(instantiator, null, null, periodInMillis);
-    assertFalse(hostLoadManager.shouldDelay(connectorName));
-    hostLoadManager.connectorFinishedTraversal(connectorName, 100);
-    assertTrue(hostLoadManager.shouldDelay(connectorName));
-    // sleep more than 100ms the time set in MockConnectorSchedule
-    // so that this connector can be allowed to run again without delay
-    try {
-      Thread.sleep(250);
-    } catch (InterruptedException e) {
-      // Ignore.
-    }
-    assertFalse(hostLoadManager.shouldDelay(connectorName));
+    assertEquals(60, hostLoadManager.determineBatchSize().getHint());
+    hostLoadManager.recordResult(newBatchResult(15));
+    assertEquals(45, hostLoadManager.determineBatchSize().getHint());
   }
 
   /**
    * Test that if we meet or exceed the host load limit, further
    * traversal should be delayed until the next traversal period.
    */
-  public void testLoadDelay() {
-    final String connectorName = "cn1";
+  public void testShouldDelay() {
+    HostLoadManager hostLoadManager = newHostLoadManager(60);
+    hostLoadManager.setPeriod(1);
 
-    // NOTE: HostLoadManager.determineBatchSize() and shouldDelay() make the
-    // assumption that periodInMillis is a minute.  We skew these values here
-    // in such a way that their calculations come out the same, but we don't
-    // have multi-minute waits in the unit tests.
-    final long periodInMillis = 1000;
-    addLoad(connectorName, 3600);
+    assertFalse(hostLoadManager.shouldDelay());
+    hostLoadManager.recordResult(newBatchResult(60));
+    assertTrue(hostLoadManager.shouldDelay());
 
-    HostLoadManager hostLoadManager =
-        new HostLoadManager(instantiator, null, null, periodInMillis);
-    assertFalse(hostLoadManager.shouldDelay(connectorName));
-    hostLoadManager.updateNumDocsTraversed(connectorName, 60);
-    assertTrue(hostLoadManager.shouldDelay(connectorName));
-
-    // Sleep more than 1000ms the time set in MockConnectorSchedule
-    // so that this connector can be allowed to run again without delay.
+    // Sleep more than 1 second, the LoadManager period, so that this
+    // connector should be allowed to run again without delay.
     try {
       Thread.sleep(1250);
     } catch (InterruptedException e) {
       // Ignore.
     }
-    assertFalse(hostLoadManager.shouldDelay(connectorName));
+    assertFalse(hostLoadManager.shouldDelay());
   }
 
   /**
    * Test that if we have nearly reached the load level, we
    * won't OK a traversal requesting a tiny number of documents.
    */
-  public void testLoadDelay2() {
-    final String connectorName = "cn1";
+  public void testShouldDelayTinyBatch() {
+    HostLoadManager hostLoadManager = newHostLoadManager(60);
+    hostLoadManager.setPeriod(1);
 
-    // NOTE: HostLoadManager.determineBatchSize() and shouldDelay() make the
-    // assumption that periodInMillis is a minute.  We skew these values here
-    // in such a way that their calculations come out the same, but we don't
-    // have multi-minute waits in the unit tests.
-    final long periodInMillis = 1000;
-    addLoad(connectorName, 3600);
-
-    HostLoadManager hostLoadManager =
-        new HostLoadManager(instantiator, null, null, periodInMillis);
-    assertFalse(hostLoadManager.shouldDelay(connectorName));
-    hostLoadManager.updateNumDocsTraversed(connectorName, 59);
+    assertFalse(hostLoadManager.shouldDelay());
+    hostLoadManager.recordResult(newBatchResult(59));
 
     // We should delay rather than ask for a batch of 1.
-    BatchSize batchSize = hostLoadManager.determineBatchSize(connectorName);
+    BatchSize batchSize = hostLoadManager.determineBatchSize();
     assertEquals(1, batchSize.getHint());
-    assertTrue(hostLoadManager.shouldDelay(connectorName));
+    assertTrue(hostLoadManager.shouldDelay());
 
-    // Sleep more than 1000ms the time set in MockConnectorSchedule
-    // so that this connector can be allowed to run again without delay.
+    // Sleep more than 1 second, the LoadManager period, so that this
+    // connector should be allowed to run again without delay.
     try {
       Thread.sleep(1250);
     } catch (InterruptedException e) {
       // Ignore.
     }
-    assertFalse(hostLoadManager.shouldDelay(connectorName));
+    assertFalse(hostLoadManager.shouldDelay());
   }
 
   /**
-   * Test that the optimal batch size may be configured in the Spring Context.
+   * Test that if we returned a huge result that exceeds the load,
+   * we will delay further traversals accordingly.
+   * Regression for Issue 194.
    */
-  public void testBatchSize() {
-    // Need to test through Spring to make sure the property works.
-    Context.refresh();
-    Context context = Context.getInstance();
-    context.setStandaloneContext("testdata/mocktestdata/applicationContext.xml",
-        null);
-    // Get the HostLoadManager bean.
-    HostLoadManager hostLoadManager = (HostLoadManager) context.getRequiredBean(
-        "HostLoadManager", HostLoadManager.class);
-    assertEquals(500, hostLoadManager.getBatchSize());
+  public void testShouldDelayAfterHugeBatch() {
+    HostLoadManager hostLoadManager = newHostLoadManager(50);
+    hostLoadManager.setPeriod(1);
 
-    // Now get one from a different context.
-    Context.refresh();
-    context = Context.getInstance();
-    context.setStandaloneContext(
-        "testdata/schedulerTests/applicationContext.xml", null);
-    hostLoadManager = (HostLoadManager) context.getRequiredBean(
-        "HostLoadManager", HostLoadManager.class);
-    assertEquals(200, hostLoadManager.getBatchSize());
+    assertFalse(hostLoadManager.shouldDelay());
+    hostLoadManager.recordResult(newBatchResult(150));
+
+    // We should delay, after grossly exceeding the load.
+    assertTrue(hostLoadManager.shouldDelay());
+
+    // Sleep more than 1 second, the LoadManager period, so that this
+    // connector might be allowed to run again without delay.
+    try {
+      Thread.sleep(1250);
+    } catch (InterruptedException e) {
+      // Ignore.
+    }
+
+    // We should still delay, paying the penalty for grossly exceeding
+    // the load previously.
+    assertTrue(hostLoadManager.shouldDelay());
+
+    // Sleep another couple of seconds, allowing the penalty to expire.
+    // This will bring the average load over the elapsed traversal time
+    // plus the penalty periods in line with the configured load.
+    try {
+      Thread.sleep(2500);
+    } catch (InterruptedException e) {
+      // Ignore.
+    }
+
+    // We should then be allowed to traverse again.
+    assertFalse(hostLoadManager.shouldDelay());
   }
 
   /**
@@ -232,21 +197,47 @@ public class HostLoadManagerTest extends TestCase {
    * documents that will be processed from the DocumentList.
    */
   public void testDetermineBatchSize() {
-    final String connectorName = "cn1";
-    addLoad(connectorName, 60);
-    HostLoadManager hostLoadManager =
-        new HostLoadManager(instantiator, null, null);
-    BatchSize batchSize = hostLoadManager.determineBatchSize(connectorName);
+    HostLoadManager hostLoadManager = newHostLoadManager(60);
+    BatchSize batchSize = hostLoadManager.determineBatchSize();
     assertEquals(60, batchSize.getHint());
     assertEquals(120, batchSize.getMaximum());
     hostLoadManager.setBatchSize(40);
-    batchSize = hostLoadManager.determineBatchSize(connectorName);
+    batchSize = hostLoadManager.determineBatchSize();
     assertEquals(40, batchSize.getHint());
     assertEquals(80, batchSize.getMaximum());
     hostLoadManager.setBatchSize(10);
-    batchSize = hostLoadManager.determineBatchSize(connectorName);
+    batchSize = hostLoadManager.determineBatchSize();
     assertEquals(10, batchSize.getHint());
     assertEquals(60, batchSize.getMaximum());
+  }
+
+  /**
+   * Test that the throughput is spread out for long running batches.
+   * For instance, if the period is 1 minute, and the load is 200;
+   * then a traversal that took 4 minutes, but returned 200 documents
+   * only averaged 50 docs per period.  That implies that only 50 docs
+   * were returned in the current period, so the batch hint should be
+   * 200 - 50 = 150.  Regression for Issue 189.
+   */
+  public void testAmortizeLongRunningBatch() {
+    HostLoadManager hostLoadManager = newHostLoadManager(200);
+    hostLoadManager.setPeriod(1);
+
+    // We don't want to register the result for this test too close
+    // to the beginning or end of a second.
+    alignTime(450, 750);
+
+    assertFalse(hostLoadManager.shouldDelay());
+    hostLoadManager.recordResult(newBatchResult(200, 4000));
+
+    // We should not delay, since we could still submit at least
+    // another 150 docs in this period.
+    assertFalse(hostLoadManager.shouldDelay());
+
+    // The returned batch hint should be between 150 and 200,
+    // depending upon the relation between aligned period and now.
+    BatchSize batchSize = hostLoadManager.determineBatchSize();
+    assertTrue((150 <= batchSize.getHint()) && (200 >= batchSize.getHint()));
   }
 
   /**
@@ -255,8 +246,7 @@ public class HostLoadManagerTest extends TestCase {
   public void testShouldDelayLowMemory() {
     Runtime rt = Runtime.getRuntime();
     FileSizeLimitInfo fsli = new FileSizeLimitInfo();
-    HostLoadManager hostLoadManager =
-        new HostLoadManager(instantiator, null, fsli);
+    HostLoadManager hostLoadManager = new HostLoadManager(null, fsli);
 
     // OK to start a traversal if there is plenty of memory for a new feed.
     rt.gc();
@@ -274,8 +264,7 @@ public class HostLoadManagerTest extends TestCase {
    */
   public void testShouldDelayFeedBacklogged() {
     BacklogFeedConnection feedConnection = new BacklogFeedConnection();
-    HostLoadManager hostLoadManager =
-        new HostLoadManager(instantiator, feedConnection, null);
+    HostLoadManager hostLoadManager = new HostLoadManager(feedConnection, null);
 
     // OK to start a traversal if feedConnection is not backlogged.
     feedConnection.setBacklogged(false);
