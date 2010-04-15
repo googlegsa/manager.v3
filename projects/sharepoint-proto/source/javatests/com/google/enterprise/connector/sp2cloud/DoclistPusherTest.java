@@ -43,29 +43,34 @@ public class DoclistPusherTest extends TestCase {
   public void testFolders() throws Exception {
     List<CloudAce> rootCloudAceList = Arrays.asList(
         new CloudAce(ADMIN_ID, AclScope.Type.USER, AclRole.OWNER),
-        new CloudAce(TUSER1_ID, AclScope.Type.USER, AclRole.READER), 
+        new CloudAce(TUSER1_ID, AclScope.Type.USER, AclRole.READER),
         new CloudAce(TUSER3_ID, AclScope.Type.USER, AclRole.READER));
-    FolderInfo root = 
+    FolderInfo root =
         mkAndRegisterFolderInfo(rootFolderId, null, rootCloudAceList);
     pusher.pushFolder(root);
 
     //Add child1 to root as TUSER3_ID
     List<CloudAce> child1CloudAceList = Arrays.asList(
-        new CloudAce(TGROUP1_ID,AclScope.Type.USER, AclRole.READER),
-        new CloudAce(TUSER2_ID, AclScope.Type.USER, AclRole.READER), 
+        new CloudAce(TGROUP1_ID,AclScope.Type.USER, AclRole.WRITER),
+        new CloudAce(TUSER2_ID, AclScope.Type.USER, AclRole.READER),
         new CloudAce(TUSER3_ID, AclScope.Type.USER, AclRole.OWNER));
-    FolderInfo child1 = mkAndRegisterFolderInfo("child1", root.getId(), 
+    FolderInfo child1 = mkAndRegisterFolderInfo("child1", root.getId(),
         child1CloudAceList);
     pusher.pushFolder(child1);
-    
+
     //Add child2 to root as ADMIN_ID with same acl as root
-    FolderInfo child2 = mkAndRegisterFolderInfo("child2", root.getId(), 
+    FolderInfo child2 = mkAndRegisterFolderInfo("child2", root.getId(),
         rootCloudAceList);
     pusher.pushFolder(child2);
-    
+
     //Add a grandchild to child1 as TUSER3_ID
-    FolderInfo grandchild1 = mkAndRegisterFolderInfo("grandchild1", 
-        child1.getId(), child1CloudAceList);
+    // Updates ace from reader->writer and writer->reader
+    List<CloudAce> grandchild1CloudAceList = Arrays.asList(
+        new CloudAce(TGROUP1_ID,AclScope.Type.USER, AclRole.READER),
+        new CloudAce(TUSER2_ID, AclScope.Type.USER, AclRole.WRITER),
+        new CloudAce(TUSER3_ID, AclScope.Type.USER, AclRole.OWNER));
+    FolderInfo grandchild1 = mkAndRegisterFolderInfo("grandchild1",
+        child1.getId(), grandchild1CloudAceList);
     pusher.pushFolder(grandchild1);
   }
 
@@ -73,7 +78,7 @@ public class DoclistPusherTest extends TestCase {
     List<CloudAce> rootCloudAceList = Arrays.asList(
         new CloudAce(ADMIN_ID, AclScope.Type.USER, AclRole.OWNER),
         new CloudAce(TUSER1_ID, AclScope.Type.USER, AclRole.READER));
-    FolderInfo root = 
+    FolderInfo root =
       mkAndRegisterFolderInfo(rootFolderId, null, rootCloudAceList);
     pusher.pushFolder(root);
 
@@ -83,8 +88,8 @@ public class DoclistPusherTest extends TestCase {
     CloudAcl doc1CloudAcl = CloudAcl.newCloudAcl(doc1CloudAceList);
     Document document = new Document("d1_"
         + generator.nextInt(Integer.MAX_VALUE), "d1", null, null, null,
-        "text/plain", "not-used");    
-    pusher.pushDocument(document, doc1CloudAcl, 
+        "text/plain", "not-used");
+    pusher.pushDocument(document, doc1CloudAcl,
         new ByteArrayInputStream("Hi Eric\n".getBytes("US-ASCII")));
 
     List<CloudAce> doc2CloudAceList = Arrays.asList(
@@ -93,7 +98,7 @@ public class DoclistPusherTest extends TestCase {
     CloudAcl doc2CloudAcl = CloudAcl.newCloudAcl(doc2CloudAceList);
     document = new Document("d2", "d2_id", root.getId(), null, null,
         "text/plain", "not-used");
-    pusher.pushDocument(document, doc2CloudAcl, 
+    pusher.pushDocument(document, doc2CloudAcl,
         new ByteArrayInputStream("Hi Eric2\n".getBytes("US-ASCII")));
   }
 
@@ -104,7 +109,7 @@ public class DoclistPusherTest extends TestCase {
 
   private FolderInfo mkAndRegisterFolderInfo(
       String folderId, String parentId, List<CloudAce> aceList) {
-    FolderInfo folderInfo = folderManager.newFolderInfo(folderId, parentId, 
+    FolderInfo folderInfo = folderManager.newFolderInfo(folderId, parentId,
         "n_" + folderId, CloudAcl.newCloudAcl(aceList));
     folderManager.add(folderInfo);
     return folderInfo;
