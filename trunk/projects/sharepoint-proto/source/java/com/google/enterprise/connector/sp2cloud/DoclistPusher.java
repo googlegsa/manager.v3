@@ -26,11 +26,10 @@ import com.google.gdata.util.ServiceException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
+import java.net.URLEncoder;
 
 public class DoclistPusher implements CloudPusher {
   private final DocsService client;
@@ -96,13 +95,17 @@ public class DoclistPusher implements CloudPusher {
   private DocumentListEntry linkAndSecure(FolderInfo parent,
       CloudAcl cloudAcl, DocumentListEntry dle) throws IOException,
       ServiceException, MalformedURLException {
-    pushAcl(parent, cloudAcl, dle);
+    if (!adminUserId.equals(cloudAcl.getOwner())) {
+      addAce(adminUserId, Type.USER, AclRole.WRITER, dle);
+    }
     if (parent != null) {
       dle = moveToFolder(client, dle, getParentContentUrl(parent, adminUserId));
-      if (parent != null && parent.getCloudAcl().getOwner().equals(cloudAcl.getOwner())) {
+      if (parent != null
+          && parent.getCloudAcl().getOwner().equals(cloudAcl.getOwner())) {
         deleteRootLink(dle, cloudAcl.getOwner());
       }
     }
+    adjustAcl(parent, cloudAcl, dle);
     return dle;
   }
 
@@ -172,23 +175,15 @@ public class DoclistPusher implements CloudPusher {
     }
     newEntry.setId(sourceEntry.getId());
 
-    DocumentListEntry result = client.insert(new URL(destFolderContentUrl), newEntry);
+    DocumentListEntry result =
+        client.insert(new URL(destFolderContentUrl), newEntry);
     return result;
   }
 
-  Comparator<CloudAce> CLOUD_ACE_COMPARITOR  = new Comparator<CloudAce>() {
-    @Override
-    public int compare(CloudAce o1, CloudAce o2) {
-      int result = o1.getType().compareTo(o2.getType());
-      if (result == 0) {
-        result = o1.getName().compareTo(o1.getName());
-      }
-      return result;
-    }
-  };
   /**
    * Push the ACL for a document or folder to the cloud. The pushed ACL
-   * will contain the provided {@link CloudAce} entries with a few modifications.
+   * will contain the provided {@link CloudAce} adjustments specified by
+   * {@link CloudAcl#getAclAdjustments(CloudAcl, String)}.
    * <ol>
    * <li> Any entry for {@link #adminUserId} is dropped.
    * <li> If {@link #adminUserId} does not own the document she is given
@@ -196,41 +191,26 @@ public class DoclistPusher implements CloudPusher {
    * @throws ServiceException
    * @throws IOException
    */
-  private void pushAcl(FolderInfo parent, CloudAcl cloudAcl, DocumentListEntry dle)
+  private void adjustAcl(FolderInfo parent,
+      CloudAcl cloudAcl, DocumentListEntry dle)
       throws IOException, ServiceException {
-    Map<CloudAce.TypeAndNameKey, CloudAce> parentTypeAndNameKeyToCloudAceMap = null;
-    if (parent == null) {
-      parentTypeAndNameKeyToCloudAceMap = Collections.emptyMap();
-    } else {
-      parentTypeAndNameKeyToCloudAceMap =
-          parent.getCloudAcl().newTypeAndNameKeyToCloudAceMap();
+    AclAdjustments adjustments =
+      cloudAcl.getAclAdjustments(parent == null ? null : parent.getCloudAcl(),
+      adminUserId);
+    for (CloudAce cloudAce : adjustments.getInserts()) {
+      if (!cloudAce.isTypeAndNameMatch(Type.USER, adminUserId)) {
+        addAce(cloudAce, dle);
+      }
     }
 
-    //TODO(strellis): For now filter entries that appear in the parent
-    //+ owner entries. Later add code to update/delete after linking.
-    for (CloudAce cloudAce : cloudAcl.getAceList()) {
-      if (cloudAce.getName().equals(adminUserId)
-          && cloudAce.getType().equals(Type.USER)) {
-        continue;
-      }
-
-      if (cloudAce.getName().equals(cloudAcl.getOwner())
-          && cloudAce.getType().equals(Type.USER)) {
-        continue;
-      }
-
-      if (parentTypeAndNameKeyToCloudAceMap.containsKey(
-          cloudAce.newTypeAndNameKey())) {
-        //TODO(strellis): deal with role mismatch + entries deleted
-        //  in child.
-        continue;
-      }
-
-      addAce(cloudAce, dle);
+    for (CloudAce cloudAce : adjustments.getUpdates()) {
+      updateAce(dle.getAclFeedLink().getHref(),
+          cloudAce.getRole(), cloudAce.getType(), cloudAce.getName());
     }
 
-    if (!adminUserId.equals(cloudAcl.getOwner())) {
-      addAce(adminUserId, Type.USER, AclRole.WRITER, dle);
+    for (CloudAce cloudAce : adjustments.getDeletes()) {
+      deleteAce(dle.getAclFeedLink().getHref(),
+          cloudAce.getType(), cloudAce.getName());
     }
   }
 
@@ -249,6 +229,43 @@ public class DoclistPusher implements CloudPusher {
     aclEntry.setScope(scope);
 
     client.insert(new URL(entry.getAclFeedLink().getHref()), aclEntry);
+  }
+
+  private void updateAce(String aclFeedUrl, AclRole newRole, AclScope.Type type,
+      String name) throws IOException, ServiceException {
+    String aceUrl = getAclUrl(aclFeedUrl, type, name);
+    System.out.println("Updating ace " + aceUrl);
+
+    AclEntry aclEntry = new AclEntry();
+    aclEntry.setRole(newRole);
+    aclEntry.setScope(new AclScope(type, name));
+    client.update(new URL(aceUrl), aclEntry);
+  }
+
+  private void deleteAce(String aclFeedUrl, AclScope.Type type, String name)
+      throws IOException, ServiceException {
+    String aceUrl = getAclUrl(aclFeedUrl, type, name);
+    System.out.println("Deleting ace " + aceUrl);
+    client.delete(new URL(aceUrl));
+  }
+
+  private String getAclUrl(String aclFeedUrl, AclScope.Type type, String name)
+      throws UnsupportedEncodingException {
+    int ix = aclFeedUrl.indexOf("?");
+    if (ix < 0) {
+      throw new IllegalArgumentException("Feed Url must have argument "
+          + aclFeedUrl);
+    }
+    String urlBase = aclFeedUrl.substring(0, ix);
+    String urlArguments = aclFeedUrl.substring(ix);
+    if (!type.equals(AclScope.Type.USER) && !type.equals(AclScope.Type.GROUP)) {
+      throw new IllegalArgumentException("Type must be user or group but is "
+          + type.name());
+    }
+    String typeString = type.equals(AclScope.Type.USER) ? "user" : "group";
+    String aclPath = urlBase + "/" + URLEncoder.encode(typeString + ":"
+        + name, "UTF-8") + urlArguments;
+    return aclPath;
   }
 
   public static DocsService mkClient(String user, String userToken) {

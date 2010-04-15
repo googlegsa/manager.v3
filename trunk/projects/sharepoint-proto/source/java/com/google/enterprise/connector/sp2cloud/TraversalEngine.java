@@ -14,12 +14,12 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TraversalEngine {
-  
-  private FolderManager folderManager;
-  private CloudPusher cloudPusher;
-  private SharepointSite site;
-  private PermissionsMapper permissionsMapper;
-  
+
+  private final FolderManager folderManager;
+  private final CloudPusher cloudPusher;
+  private final SharepointSite site;
+  private final PermissionsMapper permissionsMapper;
+
   TraversalEngine(SharepointSite site, CloudPusher cloudPusher, PermissionsMapper permissionsMapper, FolderManager folderManager)
       throws Exception {
     this.site = site;
@@ -28,13 +28,14 @@ public class TraversalEngine {
     this.folderManager = folderManager;
     AddFoldersToFolderManager();
   }
-  
+
   public void pushRootFolderHierarchy(Folder folder) throws Exception {
     pushFolderHierarchy(folderManager.getFolderInfo(folder.getId()));
   }
 
   public void pushFolderHierarchy(FolderInfo folderInfo) throws Exception {
     // Push the folder to the cloud.
+    System.out.println("FolderInfo: " + folderInfo);
     cloudPusher.pushFolder(folderInfo);
 
     // If the folder contains subfolders then recursively push each one.
@@ -42,7 +43,7 @@ public class TraversalEngine {
       pushFolderHierarchy(childFolderInfo);
     }
   }
-  
+
   private String printAcl(List<Ace> acl) {
     StringBuilder sb = new StringBuilder();
     for (Ace ace : acl) {
@@ -51,17 +52,17 @@ public class TraversalEngine {
     }
     return sb.toString();
   }
-  
+
   public void pushDocuments()  throws Exception {
     // Get lists of all documents for all document libraries.
     List<Folder> rootFolderList = site.getRootFolders();
     List<Document> documentList = new ArrayList<Document>();
-    
+
     // Loop through each document library (root folder)
     for (Folder rootFolder : rootFolderList) {
       documentList.addAll(site.getDocuments(rootFolder));
     }
-    
+
     for (Document document : documentList) {
       CloudAcl documentCloudAcl =  permissionsMapper.mapAcl(document.getAcl(), document.getOwner());
       System.out.println("Mapped permission for " + document.getName() + " : " + documentCloudAcl + printAcl(document.getAcl()));
@@ -74,29 +75,30 @@ public class TraversalEngine {
     // Get lists of all folders for all document libraries.
     List<Folder> rootFolderList = site.getRootFolders();
     List<Folder> folderList = new ArrayList<Folder>();
-    
+
     // Loop through each document library (root folder) and add it and all
     // folders in the document library to the folder list.
     for (Folder rootFolder : rootFolderList) {
       folderList.add(rootFolder);
       folderList.addAll(site.getFolders(rootFolder));
     }
-    
+
     // Add all folders in the folder list to the folder manager.
     for (Folder folder : folderList) {
-      folderManager.add(folderManager.newFolderInfo(folder.getId(), folder.getParentId(), folder.getName(),
+      folderManager.add(folderManager.newFolderInfo(folder.getId(),
+          folder.isRootFolder() ? null : folder.getParentId(), folder.getName(),
           permissionsMapper.mapAcl(folder.getAcl(), folder.getOwner())));
     }
   }
-  
+
 //  public Folder findSharePointFolderFromPath(String path) throws Exception {
-//    
+//
 //    return getDocumentLibraryRootFolder();
-//    
+//
     // for now we will always return the root
 //    String[] folderNames = path.split("/");
 //    Folder currentFolder = getDocumentLibraryRootFolder();
-//    
+//
 //    for (String folderName : folderNames) {
 //      for(Folder folder : folderHierarchy.get(currentFolder.getId())) {
 //        if (folderName.compareToIgnoreCase(folder.getName()) == 0) {
@@ -107,7 +109,7 @@ public class TraversalEngine {
 //      }
 //    }
 //    return currentFolder;
-//    
+//
 //  }
 
 }

@@ -28,6 +28,10 @@ public class CloudAce {
     return role;
   }
 
+  public boolean isTypeAndNameMatch(AclScope.Type type, String name) {
+    return type.equals(this.type) && name.equals(this.name);
+  }
+
   public TypeAndNameKey newTypeAndNameKey() {
     return new TypeAndNameKey();
   }
