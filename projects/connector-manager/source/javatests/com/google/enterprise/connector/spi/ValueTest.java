@@ -104,6 +104,14 @@ public class ValueTest extends TestCase {
   public void testDefaultTimeZone() {
     Value.setFeedTimeZone("");
     Calendar timestamp = Calendar.getInstance();
+    // We have to compute the offset in this case, because we do not
+    // know the time zone. Due to Daylight Savings Time, which may
+    // alter the UTC offset of any given time zone, we need to use the
+    // date under test, rather than the current date, to get the right
+    // offset. The date used here should match the dates in
+    // testTimeZoneOFfset.
+    // TODO(jlacey): Find a way to isolate this from test data changes.
+    timestamp.set(2000, 11 /* zero-based */, 31);
     int offset = timestamp.get(Calendar.ZONE_OFFSET)
         + timestamp.get(Calendar.DST_OFFSET);
     int minutes = offset / 60 / 1000;
@@ -117,6 +125,7 @@ public class ValueTest extends TestCase {
    *
    * @param offset the offset does not have to match the
    * <code>timezone</code> value, it just needs to have the right sign
+   * @param timezone the UTC offset as a timezone string, e.g., "-0800"
    */
   private void testFixedTimeZone(int offset, String timezone) {
     Value.setFeedTimeZone("GMT" + timezone);
@@ -149,6 +158,11 @@ public class ValueTest extends TestCase {
    * cloning behind the scenes, and we need to make sure that
    * Value.setFeedTimeZone correctly affects all of the SimpleDateFormat
    * instances in the Value class.
+   *
+   * @param timestamp a calendar with the time zone set as desired
+   * @param offset the offset does not have to match the
+   * <code>timezone</code> value, it just needs to have the right sign
+   * @param timezone the UTC offset as a timezone string, e.g., "-0800"
    */
   private void testTimeZoneOffset(Calendar timestamp, int offset,
       String timezone) {
@@ -156,23 +170,27 @@ public class ValueTest extends TestCase {
     DateFragments local;
     DateFragments other;
     String otherId;
+    // The test and local dates here should be less than an hour from
+    // midnight, so that the date in the other time zone is different.
+    // If the dates used here change, especially across a DST bounday,
+    // you need to change the date used in testDefaultTimeZone.
     if (offset < 0) {
       // West of prime meridian.
-      timestamp.set(2000, 11 /* sic */, 31, 23, 59, 01);
+      timestamp.set(2000, 11 /* zero-based */, 31, 23, 59, 01);
       local = new DateFragments("Sun, 31 Dec 2000", timezone,
           "2000-12-31", timezone);
       other = new DateFragments("Mon, 01 Jan 2001", "GMT", "2001-01-01", "Z");
       otherId = "GMT";
     } else if (offset > 0) {
       // East of prime meridian.
-      timestamp.set(2001, 0 /* sic */, 1, 00, 00, 59);
+      timestamp.set(2001, 0 /* zero-based */, 1, 00, 00, 59);
       local = new DateFragments("Mon, 01 Jan 2001", timezone,
           "2001-01-01", timezone);
       other = new DateFragments("Sun, 31 Dec 2000", "GMT", "2000-12-31", "Z");
       otherId = "GMT";
     } else {
       // UTC
-      timestamp.set(2001, 0 /* sic */, 1, 00, 00, 59);
+      timestamp.set(2001, 0 /* zero-based */, 1, 00, 00, 59);
       local = new DateFragments("Mon, 01 Jan 2001", "GMT", "2001-01-01", "Z");
       // Do not use timezone in this case, which is "+0000".
       other = new DateFragments("Sun, 31 Dec 2000", "-0800",
@@ -188,6 +206,9 @@ public class ValueTest extends TestCase {
   /**
    * Calls all three formatting methods in <code>Value</code> and
    * compares the results to the given fragments.
+   *
+   * @param timestamp a calendar with the time and time zone set as desired
+   * @param expected the expected date string fragments
    */
   private void testTimeZoneFragments(Calendar timestamp,
       DateFragments expected) {
