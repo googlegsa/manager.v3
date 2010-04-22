@@ -15,10 +15,10 @@ public class MockSharepointServerFromMemory implements SharepointSite {
   private List<Folder> folders = new ArrayList<Folder>();
   private List<Folder> rootFolders = new ArrayList<Folder>();
   private int idCounter = 1;
-  
+
   public MockSharepointServerFromMemory(String sharePointUrl, String loginName, String password) {
     super();
-    
+
     String[] read = new String[1];
     read[0] = "read";
     String[] write = new String[1];
@@ -30,59 +30,58 @@ public class MockSharepointServerFromMemory implements SharepointSite {
 
     Ace engineeringAce = new Ace("engineering@sharepoint-connector.com", writePermissions, Ace.Type.USER);
     engineeringAce.setGPermission(Ace.GPermission.WRITE);
-    
+
     Ace productManagementAce = new Ace("product-management@sharepoint-connector.com", writePermissions, Ace.Type.USER);
     productManagementAce.setGPermission(Ace.GPermission.WRITE);
-    
+
     Ace contractorsAce = new Ace("contractors@sharepoint-connector.com", writePermissions, Ace.Type.DOMAINGROUP);
     contractorsAce.setGPermission(Ace.GPermission.FULLCONTROL);
 
     List<Ace> engineeringAcl = new ArrayList<Ace>();
     engineeringAcl.add(engineeringAce);
 
-        
     String documentLibraryFolderId = addFolder("Document Library", "NONE", true);
     String engineeringFolderId = addFolder("Engineering", documentLibraryFolderId, false);
     String programManagersFolderId = addFolder("Product Management", documentLibraryFolderId, false);
     String contractorsFolderId = addFolder("Contractors", documentLibraryFolderId, false);
-    
+
     addDocument("Engineering File.txt", "file/text", engineeringFolderId);
     addDocument("Product Management File.txt", "file/text", programManagersFolderId);
     addDocument("Contractors File.txt", "file/text", contractorsFolderId);
   }
 
-  @Override
+  /* Override */
   public InputStream getDocumentContent(Document document) throws Exception {
     final String documentContent = "This is the file contents.";
     InputStream inputStream = new ByteArrayInputStream(documentContent.getBytes());
     return inputStream;
   }
 
-  @Override
+  /* Override */
   public List<Document> getDocuments(Folder rootfolder) throws Exception {
     return documents;
   }
 
-  @Override
+  /* Override */
   public List<Folder> getFolders(Folder rootfolder) throws Exception {
     return folders;
   }
 
-  @Override
+  /* Override */
   public String getId() {
     return "Site ID";
   }
 
-  @Override
+  /* Override */
   public List<Folder> getRootFolders() throws Exception {
     return rootFolders;
   }
 
-  @Override
+  /* Override */
   public String getUrl() {
     return null;
   }
-  
+
   private String addFolder(String name, String parentId, boolean isRoot) {
     String id = getNewId();
     String owner = "eric@sharepoint-connector.com";
@@ -101,16 +100,16 @@ public class MockSharepointServerFromMemory implements SharepointSite {
         "dummy_document_url");
     documents.add(document);
   }
-  
+
   private List<Ace> getTestAcl() {
     List<Ace> acl = new ArrayList<Ace>();
-    
+
 //    Ace ace1 = new Ace("strellis@sharepoint-connector.com", writePermissions, Ace.Type.USER);
 //    ace1.setGPermission(Ace.GPermission.WRITE);
-//    
+//
 //    Ace ace2 = new Ace("johnfelton@sharepoint-connector.com", readPermissions, Ace.Type.USER);
 //    ace2.setGPermission(Ace.GPermission.READ);
-//    
+//
 //    Ace ace3 = new Ace("engineering@sharepoint-connector.com", writePermissions, Ace.Type.DOMAINGROUP);
 //    ace3.setGPermission(Ace.GPermission.FULLCONTROL);
 //
@@ -125,6 +124,4 @@ public class MockSharepointServerFromMemory implements SharepointSite {
     idCounter++;
     return newId;
   }
-  
-
 }
