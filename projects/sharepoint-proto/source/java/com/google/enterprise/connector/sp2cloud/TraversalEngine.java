@@ -19,13 +19,16 @@ public class TraversalEngine {
   private final CloudPusher cloudPusher;
   private final SharepointSite site;
   private final PermissionsMapper permissionsMapper;
+  private final String adminId;
 
-  TraversalEngine(SharepointSite site, CloudPusher cloudPusher, PermissionsMapper permissionsMapper, FolderManager folderManager)
+  TraversalEngine(SharepointSite site, CloudPusher cloudPusher, PermissionsMapper permissionsMapper,
+      FolderManager folderManager, String adminId)
       throws Exception {
     this.site = site;
     this.cloudPusher = cloudPusher;
     this.permissionsMapper = permissionsMapper;
     this.folderManager = folderManager;
+    this.adminId = adminId;
     AddFoldersToFolderManager();
   }
 
@@ -35,8 +38,15 @@ public class TraversalEngine {
 
   public void pushFolderHierarchy(FolderInfo folderInfo) throws Exception {
     // Push the folder to the cloud.
-    System.out.println("FolderInfo: " + folderInfo);
-    cloudPusher.pushFolder(folderInfo);
+
+    AclAdjustments aclAdjustments = folderInfo.getCloudAcl().getAclAdjustments(folderInfo.getParentCloudAcl(),
+      adminId);
+    String cloudBaseUrl = cloudPusher.pushFolder(folderInfo.getName(), folderInfo.getParent(),
+        folderInfo.getCloudAcl().getOwner(), aclAdjustments);
+    
+    folderInfo.setBaseUrl(cloudBaseUrl);
+
+    MigrationReporter.FolderMigrated(folderInfo, aclAdjustments);
 
     // If the folder contains subfolders then recursively push each one.
     for (FolderInfo childFolderInfo : folderInfo.getChildFolders()) {
@@ -64,10 +74,14 @@ public class TraversalEngine {
     }
 
     for (Document document : documentList) {
+      FolderInfo parent = folderManager.getFolderInfo(document.getParentId());
       CloudAcl documentCloudAcl =  permissionsMapper.mapAcl(document.getAcl(), document.getOwner());
-      System.out.println("Mapped permission for " + document.getName() + " : " + documentCloudAcl + printAcl(document.getAcl()));
+      AclAdjustments aclAdjustments = documentCloudAcl.getAclAdjustments(parent.getCloudAcl(),
+          adminId);
       InputStream documentContentStream = site.getDocumentContent(document);
-      cloudPusher.pushDocument(document, documentCloudAcl, documentContentStream);
+      cloudPusher.pushDocument(document, parent, documentCloudAcl.getOwner(), aclAdjustments,
+          documentContentStream);
+      MigrationReporter.DocumentMigrated(document, documentCloudAcl, aclAdjustments);
     }
   }
 
@@ -87,7 +101,7 @@ public class TraversalEngine {
     for (Folder folder : folderList) {
       folderManager.add(folderManager.newFolderInfo(folder.getId(),
           folder.isRootFolder() ? null : folder.getParentId(), folder.getName(),
-          permissionsMapper.mapAcl(folder.getAcl(), folder.getOwner())));
+          permissionsMapper.mapAcl(folder.getAcl(), folder.getOwner()), folder.getAcl()));
     }
   }
 

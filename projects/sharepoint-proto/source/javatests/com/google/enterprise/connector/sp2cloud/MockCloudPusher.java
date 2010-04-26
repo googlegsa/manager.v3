@@ -9,21 +9,20 @@ import java.io.InputStream;
 
 public class MockCloudPusher implements CloudPusher {
   @Override
-  public void pushDocument(Document document, CloudAcl cloudAcl, InputStream inputStream)
-      throws Exception {
+  public void pushDocument(Document document, FolderInfo parent, String owner,
+      AclAdjustments aclAdjustments, InputStream inputStream) throws Exception {
     System.out.println("Document - name: '" + document.getName()
         + "'  id: " + document.getId()
         + "  parent id: " + document.getParentId()
-        + "  owner: " + cloudAcl.getOwner());
+        + "  owner: " + owner);   
   }
 
   @Override
-  public void pushFolder(FolderInfo folderInfo) throws Exception {
-    String parentId = folderInfo.getParent() == null ?
-        null : folderInfo.getParent().getId();
-    System.out.println("Folder - name: '" + folderInfo.getName()
-        + "'  id: " + folderInfo.getId()
-        + "  parent id: " + parentId
-        + "  owner: " + folderInfo.getCloudAcl().getOwner());
+  public String pushFolder(String folderName, FolderInfo parent, String owner,
+      AclAdjustments aclAdjustments) throws Exception {
+    System.out.println("Folder - name: '" + folderName
+        + "  parent id: " + parent.getId()
+        + "  owner: " + owner);
+    return "DUMMY_URL";
   }
 }

@@ -33,9 +33,9 @@ public class AclAdjustments {
 
   @Override
   public String toString() {
-    return "AclAdjustments:"
-        + " inserts: " + inserts
-        + " updates: " + updates
-        + " deletes: " + deletes;
+    return "Cloud ACL Adjustments"
+        + System.getProperty("line.separator") + "   inserts: " + inserts
+        + System.getProperty("line.separator") + "   updates: " + updates
+        + System.getProperty("line.separator") + "   deletes: " + deletes + "\n";
   }
 }

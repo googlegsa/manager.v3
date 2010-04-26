@@ -38,9 +38,7 @@ public class CloudAce {
 
   @Override
   public String toString() {
-    return "CloudAce Name="
-        + name + " role=" + role.getValue()
-        + " type=" + type;
+    return "CloudAce: {name = " + name + "; type = " + type + "; role = " + role.getValue() + "}";
   }
 
   @Override

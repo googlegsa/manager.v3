@@ -2,6 +2,8 @@
 
 package com.google.enterprise.connector.sp2cloud;
 
+import com.google.enterprise.connector.sp2c_migration.Ace;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -72,9 +74,9 @@ public class FolderManager {
   }
 
   FolderInfo newFolderInfo(String id, String parentId, String name,
-      CloudAcl cloudAcl) {
+      CloudAcl cloudAcl, List<Ace> sharePointAcl) {
 
-    return new FolderInfo(id, parentId, name, cloudAcl);
+    return new FolderInfo(id, parentId, name, cloudAcl, sharePointAcl);
   }
 
   /**
@@ -84,16 +86,18 @@ public class FolderManager {
     private final String id;
     private final String parentId;
     private final String name;
+    private final List<Ace> sharePointAcl;
     private final CloudAcl cloudAcl;
     private final List<FolderInfo> childFolders;
     private String baseUrl;
 
-    private FolderInfo(String id, String parentId, String name,
-        CloudAcl cloudAcl) {
+    private FolderInfo(String id, String parentId, String name, CloudAcl cloudAcl,
+        List<Ace> sharePointAcl) {
       this.id = id;
       this.parentId = parentId;
       this.name = name;
       this.cloudAcl = cloudAcl;
+      this.sharePointAcl = sharePointAcl;
 
       this.childFolders = new ArrayList<FolderInfo>();
     }
@@ -119,12 +123,25 @@ public class FolderManager {
       return parent;
     }
     
+    CloudAcl getParentCloudAcl() {
+      FolderInfo parent = getParent();
+      if (parent == null) {
+        return null;
+      } else {
+        return parent.getCloudAcl();
+      }
+    }
+
     String getName() {
       return name;
     }
 
     CloudAcl getCloudAcl() {
       return cloudAcl;
+    }
+    
+    List<Ace> getSharePointAcl() {
+      return sharePointAcl;
     }
 
     private void addChild(FolderInfo childFolderInfo) {
@@ -211,10 +228,10 @@ public class FolderManager {
 
     @Override
     public String toString() {
-      return "FolderInfo: id = " + id + " parentId = " + parentId
-          + " baseUrl = " + baseUrl + " cloudAcl = " + cloudAcl
-          + " childFolders = " + childFolders;
-    }
+      return "FolderInfo: {id = " + id + "; parentId = " + parentId
+          + "; baseUrl = " + baseUrl + "; cloudAcl = " + cloudAcl
+          + "; childFolders = " + childFolders + "}";
+   }
 
     private FolderManager getOuterType() {
       return FolderManager.this;
