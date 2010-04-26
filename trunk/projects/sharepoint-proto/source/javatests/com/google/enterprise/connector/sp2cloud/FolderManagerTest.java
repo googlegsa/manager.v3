@@ -2,12 +2,14 @@
 
 package com.google.enterprise.connector.sp2cloud;
 
+import com.google.enterprise.connector.sp2c_migration.Ace;
 import com.google.enterprise.connector.sp2cloud.FolderManager.FolderInfo;
 import com.google.gdata.data.acl.AclRole;
 import com.google.gdata.data.acl.AclScope.Type;
 
 import junit.framework.TestCase;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class FolderManagerTest extends TestCase {
     List<CloudAce> root1Aces = Arrays.asList(new CloudAce(SAM, Type.USER,
         AclRole.OWNER));
     FolderInfo root1 = folderManager.newFolderInfo("id1", null, "n_id1",
-        CloudAcl.newCloudAcl(root1Aces));
+        CloudAcl.newCloudAcl(root1Aces), new ArrayList<Ace>());
     assertTrue(root1.isRoot());
     assertNull(root1.getParent());
     folderManager.add(root1);
@@ -40,7 +42,7 @@ public class FolderManagerTest extends TestCase {
     List<CloudAce> root2Aces = Arrays.asList(new CloudAce(BOB, Type.USER,
         AclRole.OWNER));
     FolderInfo root2 = folderManager.newFolderInfo("id2",
-        null, "n_id2", CloudAcl.newCloudAcl(root2Aces));
+        null, "n_id2", CloudAcl.newCloudAcl(root2Aces), new ArrayList<Ace>());
     folderManager.add(root2);
     rootList = folderManager.getRootFolders();
     assertEquals(2, rootList.size());
@@ -53,17 +55,17 @@ public class FolderManagerTest extends TestCase {
     List<CloudAce> root1Aces = Arrays.asList(new CloudAce(SAM, Type.USER,
         AclRole.OWNER));
     FolderInfo root1 = folderManager.newFolderInfo("root1", null,
-        "n_root1", CloudAcl.newCloudAcl(root1Aces));
+        "n_root1", CloudAcl.newCloudAcl(root1Aces), new ArrayList<Ace>());
     assertTrue(root1.isRoot());
     assertNull(root1.getParent());
 
     List<CloudAce> childAces = Arrays.asList(new CloudAce(BOB, Type.USER,
         AclRole.OWNER));
     FolderInfo child1 = folderManager.newFolderInfo("child1",
-        root1.getId(), "n_child1", CloudAcl.newCloudAcl(childAces));
+        root1.getId(), "n_child1", CloudAcl.newCloudAcl(childAces), new ArrayList<Ace>());
 
     FolderInfo child2 = folderManager.newFolderInfo("child2",
-        root1.getId(), "n_child2", CloudAcl.newCloudAcl(childAces));
+        root1.getId(), "n_child2", CloudAcl.newCloudAcl(childAces), new ArrayList<Ace>());
 
     List<FolderInfo> rootList = folderManager.getRootFolders();
     assertEquals(0, rootList.size());
@@ -97,17 +99,17 @@ public class FolderManagerTest extends TestCase {
     List<CloudAce> root1Aces = Arrays.asList(new CloudAce(SAM, Type.USER,
         AclRole.OWNER));
     FolderInfo root1 = folderManager.newFolderInfo("root1", null,
-        "n_root1", CloudAcl.newCloudAcl(root1Aces));
+        "n_root1", CloudAcl.newCloudAcl(root1Aces), new ArrayList<Ace>());
     assertTrue(root1.isRoot());
     assertNull(root1.getParent());
 
     List<CloudAce> childAces = Arrays.asList(new CloudAce(BOB, Type.USER,
         AclRole.OWNER));
     FolderInfo child1 = folderManager.newFolderInfo("child1",
-        root1.getId(), "n_child1", CloudAcl.newCloudAcl(childAces));
+        root1.getId(), "n_child1", CloudAcl.newCloudAcl(childAces), new ArrayList<Ace>());
 
     FolderInfo child2 = folderManager.newFolderInfo("child2",
-        root1.getId(), "n_child2", CloudAcl.newCloudAcl(childAces));
+        root1.getId(), "n_child2", CloudAcl.newCloudAcl(childAces), new ArrayList<Ace>());
 
     assertNull(folderManager.getFolderInfo(root1.getId()));
     assertEquals(0, root1.getChildFolders().size());
@@ -142,17 +144,17 @@ public class FolderManagerTest extends TestCase {
     List<CloudAce> root1Aces = Arrays.asList(new CloudAce(SAM, Type.USER,
         AclRole.OWNER));
     FolderInfo root1 = folderManager.newFolderInfo("root1", null,
-        "n_root1", CloudAcl.newCloudAcl(root1Aces));
+        "n_root1", CloudAcl.newCloudAcl(root1Aces), new ArrayList<Ace>());
     assertTrue(root1.isRoot());
     assertNull(root1.getParent());
 
     List<CloudAce> childAces = Arrays.asList(new CloudAce(BOB, Type.USER,
         AclRole.OWNER));
     FolderInfo child1 = folderManager.newFolderInfo("child1",
-        root1.getId(), "n_child1", CloudAcl.newCloudAcl(childAces));
+        root1.getId(), "n_child1", CloudAcl.newCloudAcl(childAces), new ArrayList<Ace>());
 
     FolderInfo grandchild1 = folderManager.newFolderInfo("grandchild1",
-        child1.getId(), "n_grandchild1", CloudAcl.newCloudAcl(childAces));
+        child1.getId(), "n_grandchild1", CloudAcl.newCloudAcl(childAces), new ArrayList<Ace>());
 
     folderManager.add(root1);
     assertEquals(1, folderManager.getRootFolders().size());
@@ -203,9 +205,9 @@ public class FolderManagerTest extends TestCase {
     List<CloudAce> root1Aces = Arrays.asList(new CloudAce(SAM, Type.USER,
         AclRole.OWNER));
     FolderInfo root1 = folderManager.newFolderInfo("root1", null,
-        "n_root1", CloudAcl.newCloudAcl(root1Aces));
+        "n_root1", CloudAcl.newCloudAcl(root1Aces), new ArrayList<Ace>());
     FolderInfo folderInfoWithRoot1Id = folderManager.newFolderInfo("root1",
-        null, root1.getName(), CloudAcl.newCloudAcl(root1Aces));
+        null, root1.getName(), CloudAcl.newCloudAcl(root1Aces), new ArrayList<Ace>());
     folderManager.add(root1);
     try {
       folderManager.add(folderInfoWithRoot1Id);

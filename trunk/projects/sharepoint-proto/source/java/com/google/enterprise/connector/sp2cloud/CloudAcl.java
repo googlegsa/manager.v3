@@ -274,6 +274,6 @@ class CloudAcl {
 
   @Override
   public String toString() {
-    return "CloudAcl owner = " + owner + " aceList = " + aceList;
+    return "CloudAcl: owner = " + owner + "; aceList = " + aceList;
   }
 }

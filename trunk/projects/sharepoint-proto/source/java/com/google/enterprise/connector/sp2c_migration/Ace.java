@@ -82,4 +82,17 @@ public class Ace {
 	public Type getType() {
 		return type;
 	}
+	
+	@Override
+  public String toString() {
+	  String result = "SharePoint Ace: {name = " + name + "; type = " + type.toString() + "; permissions = ";
+	  for (int i = 0; i < spPermissions.allowedPermissions.length; i++) {
+	    if (i != 0) {
+	      result += ", ";
+	    }
+	  result += spPermissions.allowedPermissions[i];
+	  }
+	  result += "}";
+	  return result;
+	}
 }

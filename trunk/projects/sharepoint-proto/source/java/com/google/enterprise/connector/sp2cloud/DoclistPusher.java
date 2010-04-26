@@ -33,7 +33,6 @@ import java.net.URLEncoder;
 
 public class DoclistPusher implements CloudPusher {
   private final DocsService client;
-  private final FolderManager folderManager;
   private final String adminUserId;
   private final boolean convert;
 
@@ -45,20 +44,17 @@ public class DoclistPusher implements CloudPusher {
       String adminUserId, boolean convert)
       throws Exception {
     this.client = client;
-    this.folderManager = folderManager;
     this.adminUserId = adminUserId;
     this.convert = convert;
   }
 
-  public void pushDocument(Document document,
-      CloudAcl cloudAcl, InputStream inputStream) throws Exception {
+  public void pushDocument(Document document, FolderInfo parent, String owner, 
+      AclAdjustments aclAdjustments, InputStream inputStream) throws Exception {
 
     DocumentListEntry dle = createDocument(
-        getOauthUrl(DOCLIST_ROOT_CONTENT_URL, cloudAcl.getOwner()),
+        getOauthUrl(DOCLIST_ROOT_CONTENT_URL, owner),
         document, inputStream);
-    dle = linkAndSecure(folderManager.getFolderInfo(document.getParentId()),
-        cloudAcl, dle);
-    //pushAcl(document.getOwner(), cloudAcl, dle);
+    dle = linkAndSecure(parent, aclAdjustments, owner, dle);
   }
 
   private DocumentListEntry createDocument(String parentFolderContentUrl,
@@ -83,29 +79,30 @@ public class DoclistPusher implements CloudPusher {
     return client.insert(feedUrl, newDocument);
   }
 
-  public void pushFolder(FolderInfo folderInfo) throws Exception {
+  public String pushFolder(String folderName, FolderInfo parent, String owner, 
+      AclAdjustments aclAdjustments) throws Exception {
     DocumentListEntry dle = createFolder(
         getOauthUrl(DOCLIST_ROOT_CONTENT_URL,
-            folderInfo.getCloudAcl().getOwner()),
-            folderInfo.getName());
-    dle = linkAndSecure(folderInfo.getParent(), folderInfo.getCloudAcl(), dle);
-    folderInfo.setBaseUrl(getBaseContentUrl(dle));
+            owner),
+            folderName);
+    dle = linkAndSecure(parent, aclAdjustments, owner, dle);
+    return getBaseContentUrl(dle);
   }
 
   private DocumentListEntry linkAndSecure(FolderInfo parent,
-      CloudAcl cloudAcl, DocumentListEntry dle) throws IOException,
+      AclAdjustments aclAdjustments, String owner, DocumentListEntry dle) throws IOException,
       ServiceException, MalformedURLException {
-    if (!adminUserId.equals(cloudAcl.getOwner())) {
+    if (!adminUserId.equals(owner)) {
       addAce(adminUserId, Type.USER, AclRole.WRITER, dle);
     }
     if (parent != null) {
       dle = moveToFolder(client, dle, getParentContentUrl(parent, adminUserId));
       if (parent != null
-          && parent.getCloudAcl().getOwner().equals(cloudAcl.getOwner())) {
-        deleteRootLink(dle, cloudAcl.getOwner());
+          && parent.getCloudAcl().getOwner().equals(owner)) {
+        deleteRootLink(dle, owner);
       }
     }
-    adjustAcl(parent, cloudAcl, dle);
+    adjustAcl(parent, aclAdjustments, dle);
     return dle;
   }
 
@@ -192,11 +189,8 @@ public class DoclistPusher implements CloudPusher {
    * @throws IOException
    */
   private void adjustAcl(FolderInfo parent,
-      CloudAcl cloudAcl, DocumentListEntry dle)
+      AclAdjustments adjustments, DocumentListEntry dle)
       throws IOException, ServiceException {
-    AclAdjustments adjustments =
-      cloudAcl.getAclAdjustments(parent == null ? null : parent.getCloudAcl(),
-      adminUserId);
     for (CloudAce cloudAce : adjustments.getInserts()) {
       if (!cloudAce.isTypeAndNameMatch(Type.USER, adminUserId)) {
         addAce(cloudAce, dle);

@@ -8,7 +8,8 @@ import com.google.enterprise.connector.sp2cloud.FolderManager.FolderInfo;
 import java.io.InputStream;
 
 public interface CloudPusher {
-	void pushDocument(Document document, CloudAcl cloudAcl, 
-	    InputStream inputStream) throws Exception;
-    void pushFolder(FolderInfo folderInfo) throws Exception;
+	void pushDocument(Document document, FolderInfo parent, String owner, 
+	    AclAdjustments aclAdjustments, InputStream inputStream) throws Exception;
+    String pushFolder(String folderName, FolderInfo parent, String owner, 
+        AclAdjustments aclAdjustments) throws Exception;
 }
