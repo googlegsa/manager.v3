@@ -2,72 +2,81 @@
 
 <project name="sp_2_cloud" default="sp_2_cloud" basedir=".">
   <!-- ========================= PROPERTIES ============================= -->
-  <property name="version" value="1.0" />
-  <property name="jvm.version" value="1.6" />
+  <property name="version" value="1.0"/>
+  <property name="jvm.version" value="1.6"/>
 
-  <property name="COMPILE_DEBUG_FLAG" value="true" />
-  <property name="COMPILE_DEBUG_LEVEL" value="source,lines,vars" />
+  <property name="COMPILE_DEBUG_FLAG" value="true"/>
+  <property name="COMPILE_DEBUG_LEVEL" value="source,lines,vars"/>
 
-  <property name="source-dir.prod" value="source/java" />
-  <property name="source-dir.tests" value="source/javatests" />
+  <property name="source-dir.prod" value="source/java"/>
+  <property name="source-dir.tests" value="source/javatests"/>
 
-  <property name="build-dir" value="build" />
-  <property name="build-dir.prod" value="${build-dir}/prod" />
-  <property name="build-dir.tests" value="${build-dir}/tests" />
+  <property name="build-dir" value="build"/>
+  <property name="build-dir.prod" value="${build-dir}/prod"/>
+  <property name="build-dir.tests" value="${build-dir}/tests"/>
 
-  <property name="classes-dir.prod" value="${build-dir.prod}/classes" />
-  <property name="classes-dir.tests" value="${build-dir.tests}/classes" />
-  
-  <property name="jar-dir.prod" value="${build-dir}/jar" />
- 
-  <property name="dist-dir" value="dist" />
-  <property name="dist-dir.prod" value="${build-dir.prod}/classes" />
-  <property name="dist-dir.tests" value="${build-dir.tests}/classes" />
+  <property name="classes-dir.prod" value="${build-dir.prod}/classes"/>
+  <property name="classes-dir.tests" value="${build-dir.tests}/classes"/>
 
-  <property name="thirdparty-dir" value="third-party" />
-  <property name="thirdparty-dir.prod" value="${thirdparty-dir}/prod" />
-  <property name="thirdparty-dir.tests" value="${thirdparty-dir}/tests" />
+  <property name="jar-dir.prod" value="${build-dir.prod}/jar"/>
+  <property name="jar-third-party-dir.prod" value="${jar-dir.prod}/third-party"/>
+  <property name="zip-dir.prod" value="${build-dir.prod}/zip"/>
 
-  <property name="out-dir" value="out" />
-  <property name="out-dir.tests" value="${out-dir}/tests" />
+  <property name="dist-dir" value="dist"/>
+  <property name="dist-dir.prod" value="${dist-dir}/prod"/>
+  <property name="dist-dir.tests" value="${dist-dir}/tests"/>
+
+  <property name="thirdparty-dir" value="third-party"/>
+  <property name="thirdparty-dir.prod" value="${thirdparty-dir}/prod"/>
+  <property name="thirdparty-dir.tests" value="${thirdparty-dir}/tests"/>
+
+  <property name="out-dir" value="out"/>
+  <property name="out-dir.tests" value="${out-dir}/tests"/>
 
   <target name="init">
-    <mkdir dir="${build-dir}" />
-    <mkdir dir="${build-dir.prod}" />
-    <mkdir dir="${build-dir.tests}" />
-    
-    <mkdir dir="${classes-dir.prod}" />
-    <mkdir dir="${classes-dir.tests}" />
-    
-    <mkdir dir="${jar-dir.prod}" />
+    <tstamp/>
 
-    <mkdir dir="${out-dir}" />
-    <mkdir dir="${out-dir.tests}" />
+    <mkdir dir="${build-dir}"/>
+    <mkdir dir="${build-dir.prod}"/>
+    <mkdir dir="${build-dir.tests}"/>
+
+    <mkdir dir="${dist-dir}"/>
+    <mkdir dir="${dist-dir.prod}"/>
+    <mkdir dir="${dist-dir.tests}"/>
+
+    <mkdir dir="${classes-dir.prod}"/>
+    <mkdir dir="${classes-dir.tests}"/>
+
+    <mkdir dir="${jar-dir.prod}"/>
+    <mkdir dir="${jar-third-party-dir.prod}"/>
+
+    <mkdir dir="${out-dir}"/>
+    <mkdir dir="${out-dir.tests}"/>
   </target>
 
   <path id="classpath-id.prod">
-    <dirset dir="${classes-dir.prod}" />
-    <fileset dir="${thirdparty-dir.prod}" >
-      <include name="**/*.jar" />
+    <fileset dir="${thirdparty-dir.prod}">
+      <include name="**/*.jar"/>
       <exclude name="**/more/junit.jar"/>
+      <exclude name="**/more/axis-ant.jar"/>
     </fileset>
   </path>
 
-  <path id="classpath-id.tests" >
-    <path refid="classpath-id.prod" />
-    <dirset dir="${classes-dir.prod}" />
-    <dirset dir="${classes-dir.tests}" />
-    <fileset dir="${thirdparty-dir.tests}" />
+  <path id="classpath-id.tests">
+    <path refid="classpath-id.prod"/>
+    <dirset dir="${classes-dir.prod}"/>
+    <dirset dir="${classes-dir.tests}"/>
+    <fileset dir="${thirdparty-dir.tests}"/>
   </path>
-  
+
   <target name="compile.prod" depends="init"
-          description="Compile product the code for the sp_2_cloud_project." >
+          description="Compile product the code for the sp_2_cloud_project.">
     <!-- compile java source files -->
     <javac srcdir="${source-dir.prod}" destdir="${classes-dir.prod}"
            classpathref="classpath-id.prod"
            debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
            target="${jvm.version}" source="${jvm.version}">
-      
+
       <compilerarg value="-Xlint"/>
       <compilerarg value="-Xlint:-serial"/>
     </javac>
@@ -75,7 +84,7 @@
 
 
   <target name="compile.tests" depends="compile.prod"
-          description="Compile product the code for the sp_2_cloud_project." >
+          description="Compile product the code for the sp_2_cloud_project.">
     <!-- compile java source files -->
     <javac srcdir="${source-dir.tests}" destdir="${classes-dir.tests}"
            classpathref="classpath-id.tests"
@@ -87,47 +96,111 @@
   </target>
 
   <target name="run.tests" depends="compile.tests"
-          description="Run the junit tests" >
-    <junit printsummary="yes" fork="yes" haltonfailure="yes" >
-      <classpath refid="classpath-id.tests" />
+          description="Run the junit tests">
+    <junit printsummary="yes" fork="yes" haltonfailure="yes">
+      <classpath refid="classpath-id.tests"/>
       <formatter type="plain"/>
       <test todir="${out-dir.tests}"
             name="com.google.enterprise.connector.sp2cloud.DoclistPusherTest"/>
     </junit>
   </target>
 
-  <target name="jar.prod" depends="compile.prod">
-    <pathconvert property="mf.classpath" pathsep=" lib/"> 
-      <path refid="classpath-id.prod" /> 
-      <flattenmapper /> 
-    </pathconvert> 
+  <target name="jar.prod" description="create product jars." depends="compile.prod">
+    <pathconvert property="mf.classpath" pathsep=" lib/">
+      <path refid="classpath-id.prod"/>
+      <flattenmapper/>
+    </pathconvert>
 
-    <manifest file="${jar-dir.prod}/MANIFEST.MF">
-      <attribute name="Built-By" value="${user.name}"/>
-      <section name="common">
-      <attribute name="Specification-Title" value="Sharepoint Migration utility."/>
-      <attribute name="Specification-Version" value="${version}"/>
-      <attribute name="Specification-Vendor" value="Google Inc."/>
-      <attribute name="Implementation-Title" value="common"/>
-      <attribute name="Implementation-Version" value="${version} ${TODAY}"/> 
-      <attribute name="Implementation-Vendor" value="Google Inc."/>
-      <attribute name="Main-Class" 
-		 value="com.google.enterprise.connector.sp2cloud.MigrateToCloudTest" />
---remove classes from classpath (possibly in definition not sure yet)
-      <attribute name="Class-Path" 
-		 value="lib/sp2cloud.jar ${mf.classpath}" />
-    </section>
-  </manifest>
+    <jar destfile="${jar-dir.prod}/google-sp2c-main.jar">
+      <manifest>
+        <attribute name="Built-By" value="${user.name}"/>
+        <attribute name="Main-Class"
+                   value="com.google.enterprise.connector.sp2cloud.Sp2cMain"/>
+        <attribute name="Class-Path"
+                   value="lib/google-sp2c.jar lib/google-sp-access.jar lib/${mf.classpath}"/>
+
+        <section name="common">
+          <attribute name="Specification-Title" value="Sharepoint Migration Main."/>
+          <attribute name="Specification-Version" value="${version}"/>
+          <attribute name="Specification-Vendor" value="Google Inc."/>
+          <attribute name="Implementation-Title" value="common"/>
+          <attribute name="Implementation-Version" value="${version} ${TODAY}"/>
+          <attribute name="Implementation-Vendor" value="Google Inc."/>
+        </section>
+      </manifest>
+
+      <fileset dir="${classes-dir.prod}">
+        <include name="com/google/enterprise/connector/sp2cloud/Sp2cMain.class"/>
+      </fileset>
+    </jar>
+
+    <jar destfile="${jar-dir.prod}/google-sp2c.jar">
+      <manifest>
+        <attribute name="Built-By" value="${user.name}"/>
+        <section name="common">
+          <attribute name="Specification-Title" value="Sharepoint Migration utility."/>
+          <attribute name="Specification-Version" value="${version}"/>
+          <attribute name="Specification-Vendor" value="Google Inc."/>
+          <attribute name="Implementation-Title" value="common"/>
+          <attribute name="Implementation-Version" value="${version} ${TODAY}"/>
+          <attribute name="Implementation-Vendor" value="Google Inc."/>
+        </section>
+      </manifest>
+
+      <fileset dir="${classes-dir.prod}">
+        <include name="com/google/enterprise/connector/sp2cloud/**.class"/>
+        <exclude name="com/google/enterprise/connector/sp2cloud/Sp2cMain.class"/>
+      </fileset>
+    </jar>
+
+    <jar destfile="${jar-dir.prod}/google-sp-access.jar">
+      <manifest>
+        <attribute name="Built-By" value="${user.name}"/>
+        <section name="common">
+          <attribute name="Specification-Title" value="Sharepoint access library."/>
+          <attribute name="Specification-Version" value="${version}"/>
+          <attribute name="Specification-Vendor" value="Google Inc."/>
+          <attribute name="Implementation-Title" value="common"/>
+          <attribute name="Implementation-Version" value="${version} ${TODAY}"/>
+          <attribute name="Implementation-Vendor" value="Google Inc."/>
+        </section>
+      </manifest>
+
+      <fileset dir="${classes-dir.prod}">
+        <include name="com/google/enterprise/connector/sharepoint/**/*.class"/>
+        <include name="com/google/enterprise/connector/sp2c_migration/**/*.class"/>
+      </fileset>
+    </jar>
 
   </target>
 
-  <target name="sp_2_cloud" depends="compile.prod,compile.tests"
-          description="Create the distribuation for the sp_2_cloud project."/>
+  <target name="dist.prod" depends="jar.prod"
+          description="Create the distribuation for the sp_2_cloud project.">
+    <zip destfile="${dist-dir.prod}/sp2c.zip">
+      <fileset dir="${jar-dir.prod}" includes="google-sp2c-main.jar"/>
+      <mappedresources>
+        <fileset dir="${thirdparty-dir.prod}" includes="*.jar"/>
+        <globmapper from="*" to="lib/*"/>
+      </mappedresources>
+      <mappedresources>
+        <fileset dir="${thirdparty-dir.prod}/more" includes="*.jar"/>
+        <globmapper from="*" to="lib/*"/>
+      </mappedresources>
+      <mappedresources>
+        <fileset dir="${jar-dir.prod}" includes="google-sp-access.jar"/>
+        <globmapper from="*" to="lib/*"/>
+      </mappedresources>
+      <mappedresources>
+        <fileset dir="${jar-dir.prod}" includes="google-sp2c.jar"/>
+        <globmapper from="*" to="lib/*"/>
+      </mappedresources>
+    </zip>
+  </target>
 
   <target name="clean" description="Deletes all build files.">
-    <delete dir="${build-dir}" />
-    <delete dir="${dist-dir}" />
-    <delete dir="${out-dir}" />
+    <delete dir="${build-dir}"/>
+    <delete dir="${dist-dir}"/>
+    <delete dir="${out-dir}"/>
   </target>
 
 </project>
