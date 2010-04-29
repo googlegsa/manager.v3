@@ -30,6 +30,8 @@
   <property name="thirdparty-dir.prod" value="${thirdparty-dir}/prod"/>
   <property name="thirdparty-dir.tests" value="${thirdparty-dir}/tests"/>
 
+  <property name="license-dir" value="License"/>
+
   <property name="out-dir" value="out"/>
   <property name="out-dir.tests" value="${out-dir}/tests"/>
 
@@ -73,7 +75,7 @@
           description="Compile product the code for the sp_2_cloud_project.">
     <!-- compile java source files -->
     <javac srcdir="${source-dir.prod}" destdir="${classes-dir.prod}"
-           classpathref="classpath-id.prod"
+           classpathref="classpath-id.prod" includeAntRuntime="false"
            debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
            target="${jvm.version}" source="${jvm.version}">
 
@@ -87,7 +89,7 @@
           description="Compile product the code for the sp_2_cloud_project.">
     <!-- compile java source files -->
     <javac srcdir="${source-dir.tests}" destdir="${classes-dir.tests}"
-           classpathref="classpath-id.tests"
+           classpathref="classpath-id.tests" includeAntRuntime="false"
            debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
            target="${jvm.version}" source="${jvm.version}">
       <compilerarg value="-Xlint"/>
@@ -171,7 +173,6 @@
         <include name="com/google/enterprise/connector/sp2c_migration/**/*.class"/>
       </fileset>
     </jar>
-
   </target>
 
   <target name="dist.prod" depends="jar.prod"
@@ -183,7 +184,11 @@
         <globmapper from="*" to="lib/*"/>
       </mappedresources>
       <mappedresources>
-        <fileset dir="${thirdparty-dir.prod}/more" includes="*.jar"/>
+        <fileset dir="${thirdparty-dir.prod}/more">
+          <include name="*.jar"/>
+          <exclude name="axis-ant.jar"/>
+          <exclude name="junit.jar"/>
+        </fileset>
         <globmapper from="*" to="lib/*"/>
       </mappedresources>
       <mappedresources>
@@ -193,6 +198,15 @@
       <mappedresources>
         <fileset dir="${jar-dir.prod}" includes="google-sp2c.jar"/>
         <globmapper from="*" to="lib/*"/>
+      </mappedresources>
+      <mappedresources>
+        <fileset dir="${license-dir}">
+          <include name="*.txt"/>
+          <include name="*.html"/>
+          <exclude name="axis-ant_LICENSE.html"/>
+          <exclude name="junit_LICENSE.txt"/>
+        </fileset>
+        <globmapper from="*" to="License/*"/>
       </mappedresources>
     </zip>
   </target>
