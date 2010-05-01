@@ -5,14 +5,14 @@ import java.util.List;
 /**
  * Holder for attributes of both folders and documents.
  */
-public abstract class DirEntry {
+abstract class DirEntry {
 	private final String name;
   private final String id;
-  private final  String parentId;
+  private final String parentId;
 	private List<Ace> acl;
   private final String owner;
 
-  public DirEntry(String name, String id, String parentId, List<Ace> acl, String owner) {
+  DirEntry(String name, String id, String parentId, List<Ace> acl, String owner) {
 		this.name = name;
 		this.id = id;
 		this.parentId = parentId;
@@ -37,7 +37,7 @@ public abstract class DirEntry {
 
   public String getOwner() {
 		return owner;
-  }
+	}
 
     public void setAcl(List<Ace> acl) {
 		this.acl = acl;
@@ -45,6 +45,6 @@ public abstract class DirEntry {
 
     @Override
 	public String toString() {
-		return "Document: {name = " + name + "; owner = " + owner + "; parentId = " + parentId + "}";
+      return "Document: {name = " + name + "; owner = " + owner + "; parentId = " + parentId + "}";
 	}
 }

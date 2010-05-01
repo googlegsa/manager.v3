@@ -124,4 +124,10 @@ public class MockSharepointServerFromMemory implements SharepointSite {
     idCounter++;
     return newId;
   }
+
+  @Override
+  public Set<String> getDirectChildSites() throws Exception {
+    // TODO Auto-generated method stub
+    return null;
+  }
 }

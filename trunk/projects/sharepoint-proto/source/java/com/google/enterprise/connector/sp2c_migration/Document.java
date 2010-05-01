@@ -32,9 +32,9 @@ public class Document extends DirEntry {
 	}
     
     public Document fixDocumentOwner(String owner) {
-        return new Document(getName(), getId(), getParentId(), getAcl(), owner, mimeType, docUrl);
+      return new Document(getName(), getId(), getParentId(), getAcl(), owner, mimeType, docUrl);
     }
-
+  
     @Override
 	public int hashCode() {
 		if (null == getName()) {

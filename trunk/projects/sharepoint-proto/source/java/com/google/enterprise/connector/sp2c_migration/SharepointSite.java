@@ -2,6 +2,7 @@ package com.google.enterprise.connector.sp2c_migration;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Represents a SharePoint site and can be used for traversing the same
@@ -13,7 +14,7 @@ public interface SharepointSite {
 	/**
 	 * Returns a primary key to identify the SharePoint site. It will be same as
 	 * the site's Url.
-	 *
+	 * 
 	 * @return
 	 */
     String getId();
@@ -29,7 +30,7 @@ public interface SharepointSite {
 	 * Returns all the top level {@link Folder} objects from this SharePoint
 	 * site. For example, every document library will map to a top level folder.
 	 * There can be multiple document libraries in SharePoint site
-	 *
+	 * 
 	 * @throws Exception
 	 */
     List<Folder> getRootFolders() throws Exception;
@@ -40,7 +41,7 @@ public interface SharepointSite {
 	 * {@link Folder} objects. Typically, this should be called once for every
 	 * {@link Folder} object returned as per the call to
 	 * {@link SharepointSite#getRootFolders()}
-	 *
+	 * 
 	 * @throws Exception if the passed in folder is not a root folder or the
 	 *             folder can not be traversed for any other reason
 	 */
@@ -53,7 +54,7 @@ public interface SharepointSite {
 	 * root {@link Folder} object returned as per the call to
 	 * {@link SharepointSite#getRootFolders()} Documents will have a reference
 	 * to their parent folder.
-	 *
+	 * 
 	 * @throws Exception if the passed in folder is not a root folder or the
 	 *             folder can not be traversed for any other reason
 	 */
@@ -68,4 +69,13 @@ public interface SharepointSite {
      * @throws Exception
      */
     InputStream getDocumentContent(Document document) throws Exception;
+
+	/**
+	 * Returns the direct chil sites which are sub-sites of the current
+	 * SharePoint site
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
+	Set<String> getDirectChildSites() throws Exception;
 }

@@ -16,7 +16,7 @@ package com.google.enterprise.connector.sp2c_migration;
 
 /**
  * Factory implementation for creating {@link SharepointSite} objects
- *
+ * 
  * @author nitendra_thakur
  */
 public class SharepointSiteFactory {
@@ -38,6 +38,6 @@ public class SharepointSiteFactory {
 				password, domain);
 		SharepointSite site = new SharepointSiteImpl(wsClient.getWebUrl(),
 				wsClient.getWebUrl(), wsClient);
-        return site;
+		return site;
     }
 }
