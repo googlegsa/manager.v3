@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="sp_2_cloud" default="sp_2_cloud" basedir=".">
+<project name="sp_2_cloud" default="dist.prod" basedir=".">
   <!-- ========================= PROPERTIES ============================= -->
   <property name="version" value="1.0"/>
   <property name="jvm.version" value="1.6"/>
@@ -117,9 +117,9 @@
       <manifest>
         <attribute name="Built-By" value="${user.name}"/>
         <attribute name="Main-Class"
-                   value="com.google.enterprise.connector.sp2cloud.Sp2cMain"/>
+               value="com.google.enterprise.connector.sp2cloud.Sp2cMain"/>
         <attribute name="Class-Path"
-                   value="lib/google-sp2c.jar lib/google-sp-access.jar lib/${mf.classpath}"/>
+               value="resources lib/google-sp2c.jar lib/google-sp-access.jar lib/${mf.classpath}"/>
 
         <section name="common">
           <attribute name="Specification-Title" value="Sharepoint Migration Main."/>
@@ -198,6 +198,10 @@
       <mappedresources>
         <fileset dir="${jar-dir.prod}" includes="google-sp2c.jar"/>
         <globmapper from="*" to="lib/*"/>
+      </mappedresources>
+      <mappedresources>
+        <fileset dir="${source-dir.prod}" includes="org/apache/axis/client/client-config.wsdd"/>
+        <globmapper from="*" to="resources/*"/>
       </mappedresources>
       <mappedresources>
         <fileset dir="${license-dir}">

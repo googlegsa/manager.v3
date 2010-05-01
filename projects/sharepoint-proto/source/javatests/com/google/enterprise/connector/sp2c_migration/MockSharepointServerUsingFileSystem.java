@@ -7,6 +7,7 @@ package com.google.enterprise.connector.sp2c_migration;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class MockSharepointServerUsingFileSystem implements SharepointSite {
   
@@ -46,6 +47,12 @@ public class MockSharepointServerUsingFileSystem implements SharepointSite {
   @Override
   public String getUrl() {
     return "Site URL";
+  }
+
+  @Override
+  public Set<String> getDirectChildSites() throws Exception {
+    // TODO Auto-generated method stub
+    return null;
   }
 
 }

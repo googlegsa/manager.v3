@@ -17,11 +17,14 @@ package com.google.enterprise.connector.sp2c_migration;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.rmi.RemoteException;
 import java.text.Collator;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPElement;
@@ -60,6 +63,7 @@ import com.google.enterprise.connector.sharepoint.generated.sitedata.SiteDataLoc
 import com.google.enterprise.connector.sharepoint.generated.sitedata.SiteDataSoap_BindingStub;
 import com.google.enterprise.connector.sharepoint.generated.sitedata._sList;
 import com.google.enterprise.connector.sharepoint.generated.sitedata.holders.ArrayOf_sListHolder;
+import com.google.enterprise.connector.sharepoint.generated.webs.GetWebCollectionResponseGetWebCollectionResult;
 import com.google.enterprise.connector.sharepoint.generated.webs.Webs;
 import com.google.enterprise.connector.sharepoint.generated.webs.WebsLocator;
 import com.google.enterprise.connector.sharepoint.generated.webs.WebsSoap_BindingStub;
@@ -75,7 +79,7 @@ public class WebServiceClient {
 	private String password;
     private String domain;
 
-    enum AuthScheme {
+	enum AuthScheme {
 		NTLM, BASIC
 	}
 
@@ -97,8 +101,9 @@ public class WebServiceClient {
     public final String EDITOR = "ows_Editor";
     public final String AUTHOR = "ows_Author";
     public final String DOC_LIB = "DocumentLibrary";
+	public final String LIST_URL_SUFFIX = "/Forms/AllItems.aspx";
 
-	final Collator collator = Collator.getInstance();
+    final Collator collator = Collator.getInstance();
 
     public WebServiceClient(String siteUrl, String username, String password,
             String domain) throws Exception {
@@ -283,7 +288,7 @@ public class WebServiceClient {
 		queryOptions.set_any(createQueryOptions(nextPage));
 
         try {
-		res = listStub.getListItemChangesSinceToken(rootfolder.getName(), viewName, query, viewFields, ROWLIMIT, queryOptions, token, contains);
+			res = listStub.getListItemChangesSinceToken(rootfolder.getName(), viewName, query, viewFields, ROWLIMIT, queryOptions, token, contains);
 		} catch (final AxisFault af) {
 			if ((UNAUTHORIZED.indexOf(af.getFaultString()) != -1)
 					&& (null != domain)) {
@@ -484,14 +489,14 @@ public class WebServiceClient {
 	 * @throws Exception
 	 */
 	public Map<String, Folder> getListsAsFolders(String parentSiteId)
-			throws Exception {
-		final Map<String, Folder> rootFolders = new HashMap<String, Folder>();
+            throws Exception {
+        final Map<String, Folder> rootFolders = new HashMap<String, Folder>();
 
         final ArrayOf_sListHolder vLists = new ArrayOf_sListHolder();
         final UnsignedIntHolder getListCollectionResult = new UnsignedIntHolder();
 
         try {
-		siteDataStub.getListCollection(getListCollectionResult, vLists);
+            siteDataStub.getListCollection(getListCollectionResult, vLists);
         } catch (final AxisFault af) {
             if ((UNAUTHORIZED.indexOf(af.getFaultString()) != -1)
                     && (null != domain)) {
@@ -535,19 +540,22 @@ public class WebServiceClient {
                 }
 
                 // TODO: Author is not supported currently for the root
-                // folder. From the rawl XML response, i observed that
+				// folder. From the raw XML response, i observed that
                 // Author is returned. But, probably it's not in the schema
                 // defined for the WSDL response and hence Axis is not
-                // returnin the same. Also, Author value as returned in the
+				// returning the same. Also, Author value as returned in the
                 // XML response is not the actual login name of the user.
-                // Instead, it returns teh ID of the user which is in
+				// Instead, it returns the ID of the user which is in
                 // numerical form. Extra web service call will be required
                 // for resolving the userID to the loginName
-                Folder folder = new Folder(element.getTitle(),
-                    // TODO(johnfelton) verify that this is correct
-                        element.getTitle(), /* element.getInternalName(),*/  element.getDefaultViewUrl(),
-						parentSiteId, null, null, true);
-				rootFolders.put(element.getDefaultViewUrl(), folder);
+                String relativeUrl = element.getDefaultViewUrl();
+				int pos = relativeUrl.lastIndexOf(LIST_URL_SUFFIX);
+				if (pos != -1) {
+					relativeUrl = relativeUrl.substring(0, pos);
+				}
+				Folder folder = new Folder(element.getTitle(), element.getTitle(),
+						relativeUrl, parentSiteId, null, null, true);
+				rootFolders.put(relativeUrl, folder);
             } catch (Exception e) {
                 // Problem while processing some lists.
                 continue;
@@ -656,13 +664,6 @@ public class WebServiceClient {
 
         int responseCode = httpClient.executeMethod(method);
 
-		/*
-		 * if (responseCode == 401) { credentials = new
-		 * UsernamePasswordCredentials(domain + "\\" + username, password);
-		 * httpClient.getState().setCredentials(AuthScope.ANY, credentials);
-		 * responseCode = httpClient.executeMethod(method); }
-		 */
-
         if (responseCode == 200) {
 			return method;
 		} else {
@@ -676,7 +677,52 @@ public class WebServiceClient {
 			return acls;
         } catch (Exception e) {
             System.out.println(e);
+        }
+		return  new ACL[0];
+	}
+
+    public Set<String> getDirectChildsites() throws Exception {
+		final Set<String> allSites = new TreeSet<String>();
+		// to store all the sub-webs state
+		GetWebCollectionResponseGetWebCollectionResult webcollnResult = null;
+
+        try {
+			webcollnResult = webStub.getWebCollection();
+		} catch (final AxisFault af) {
+			if ((UNAUTHORIZED.indexOf(af.getFaultString()) != -1)
+					&& (null != domain)) {
+				changeAuthScheme();
+				setUsername();
+				try {
+					webcollnResult = webStub.getWebCollection();
+				} catch (final Throwable e) {
+					throw new Exception("Problem while getting child sites.", e);
+				}
+			} else {
+				throw new Exception("Problem while getting child sites.", af);
+			}
+		} catch (final RemoteException e) {
+			throw new Exception("Problem while getting child sites.", e);
 		}
-		return null;
+
+        if (webcollnResult != null) {
+			final MessageElement[] meWebs = webcollnResult.get_any();
+			if ((meWebs != null) && (meWebs[0] != null)) {
+
+                final Iterator itWebs = meWebs[0].getChildElements();
+				if (itWebs != null) {
+					while (itWebs.hasNext()) {
+						final MessageElement meWeb = (MessageElement) itWebs.next();
+						if (null == meWeb) {
+							continue;
+						}
+						final String url = meWeb.getAttribute("Url");
+						allSites.add(url);
+					}
+				}
+			}
+		}
+
+        return allSites;
     }
 }

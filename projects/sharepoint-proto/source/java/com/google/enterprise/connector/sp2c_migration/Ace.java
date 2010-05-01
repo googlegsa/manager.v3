@@ -8,91 +8,92 @@ package com.google.enterprise.connector.sp2c_migration;
  */
 public class Ace {
 
-	/** Enumerations for scope of an {@link Ace} */
-	public static enum Type {
-		USER, DOMAINGROUP, SPGROUP
-	}
+    /** Enumerations for scope of an {@link Ace} */
+    public static enum Type {
+        USER, DOMAINGROUP, SPGROUP
+    }
 
-	/** Enumerations for the kind of permission to be used in cloud */
-	public static enum GPermission {
-		NA, PEEKER, READ, WRITE, FULLCONTROL
-	}
+    /** Enumerations for the kind of permission to be used in cloud */
+    public static enum GPermission {
+        NA, PEEKER, READ, WRITE, FULLCONTROL
+    }
 
-	/**
-	 * This represents the actual SharePoint permissions
-	 *
-	 * @author nitendra_thakur
-	 */
-	public static class SharepointPermissions {
+    /**
+     * This represents the actual SharePoint permissions
+     *
+     * @author nitendra_thakur
+     */
+    public static class SharepointPermissions {
         String[] allowedPermissions;
         String[] deniedPermissions;
 
 		public SharepointPermissions(String[] grantRightsMask,
 				String[] denyRightsMask) {
-			allowedPermissions = grantRightsMask;
-			deniedPermissions = denyRightsMask;
-		}
+            allowedPermissions = grantRightsMask;
+            deniedPermissions = denyRightsMask;
+        }
 
 		public String[] getAllowedPermissions() {
-			return allowedPermissions;
-		}
+            return allowedPermissions;
+        }
 
 		public String[] getDeniedPermissions() {
-			return deniedPermissions;
-		}
-	}
+            return deniedPermissions;
+        }
+    }
 
-	private final String name; // user or group name;
-	private final SharepointPermissions spPermissions;
-	private GPermission gPermission = GPermission.NA;
-	private final Type type;
+    private final String name; // user or group name;
+    private final SharepointPermissions spPermissions;
+    private GPermission gPermission = GPermission.NA;
+    private final Type type;
 
-	public Ace(String name, SharepointPermissions permission, Type type) {
-		this.name = name;
-		this.spPermissions = permission;
-		this.type = type;
-	}
+    Ace(String name, SharepointPermissions permission, Type type) {
+        this.name = name;
+        this.spPermissions = permission;
+        this.type = type;
+    }
 
-	public void setGPermission(GPermission gPermission) {
-		this.gPermission = gPermission;
-	}
+    public void setGPermission(GPermission gPermission) {
+        this.gPermission = gPermission;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	/**
-	 * Returns the actual SharePoint permissions
-	 *
-	 * @return
-	 */
-	public SharepointPermissions getPermission() {
-		return spPermissions;
-	}
+    /**
+     * Returns the actual SharePoint permissions
+     *
+     * @return
+     */
+    public SharepointPermissions getPermission() {
+        return spPermissions;
+    }
 
-	/**
-	 * Returns the permissions to be used in the cloud
-	 *
-	 * @return
-	 */
-	public GPermission getGPermission() {
-		return gPermission;
-	}
+    /**
+     * Returns the permissions to be used in the cloud
+     *
+     * @return
+     */
+    public GPermission getGPermission() {
+        return gPermission;
+    }
 
-	public Type getType() {
-		return type;
-	}
-	
-	@Override
-  public String toString() {
-	  String result = "SharePoint Ace: {name = " + name + "; type = " + type.toString() + "; permissions = ";
-	  for (int i = 0; i < spPermissions.allowedPermissions.length; i++) {
-	    if (i != 0) {
-	      result += ", ";
-	    }
-	  result += spPermissions.allowedPermissions[i];
-	  }
-	  result += "}";
-	  return result;
-	}
+    public Type getType() {
+        return type;
+    }
+
+    @Override
+    public String toString() {
+      String result = "SharePoint Ace: {name = " + name + "; type = " + type.toString() + "; permissions = ";
+      for (int i = 0; i < spPermissions.allowedPermissions.length; i++) {
+        if (i != 0) {
+          result += ", ";
+        }
+        result += spPermissions.allowedPermissions[i];
+      }
+      result += "}";
+      return result;
+    }
+
 }
