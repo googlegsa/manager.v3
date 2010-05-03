@@ -12,11 +12,15 @@ public class SharePointToCloudMigrator {
     final boolean strictPermissionConversionRules = false;
     PermissionsMapper permissionMapper = new PermissionsMapper(PermissionsMapper.makeNameMap(), defaultOwner, strictPermissionConversionRules);
     TraversalEngine traverser = new TraversalEngine(sharePointSite, cloudPusher, permissionMapper, folderManager, adminId);
-    for (Folder documentLibraryRoot : sharePointSite.getRootFolders()) {
-      System.out.println("Mapping Owner for Document Library Root " + documentLibraryRoot.getName());
-      documentLibraryRoot = documentLibraryRoot.fixFolderOwner(permissionMapper.mapPrincipleName(documentLibraryRoot.getOwner(), "admin@sharepoint-connector.com"));
-      traverser.pushRootFolderHierarchy(documentLibraryRoot);
-      traverser.pushDocuments();
-    }
+    
+    traverser.pushFolderHierarchyFromPath("Migration Document Library/Engineering");
+    traverser.pushDocuments();
+    
+//    for (Folder documentLibraryRoot : sharePointSite.getRootFolders()) {
+//      System.out.println("Mapping Owner for Document Library Root " + documentLibraryRoot.getName());
+//      documentLibraryRoot = documentLibraryRoot.fixFolderOwner(permissionMapper.mapPrincipleName(documentLibraryRoot.getOwner(), "admin@sharepoint-connector.com"));
+//      traverser.pushRootFolderHierarchy(documentLibraryRoot);
+//      traverser.pushDocuments();
+//    }
   }
 }

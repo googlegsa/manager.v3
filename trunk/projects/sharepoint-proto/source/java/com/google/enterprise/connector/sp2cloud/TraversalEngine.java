@@ -32,16 +32,24 @@ public class TraversalEngine {
     AddFoldersToFolderManager();
   }
 
+  public void pushFolderHierarchyFromPath(String path) throws Exception {
+    pushFolderHierarchyToCloudLocation(findSharePointFolderFromPath(path), null);
+  }
+  
   public void pushRootFolderHierarchy(Folder folder) throws Exception {
     pushFolderHierarchy(folderManager.getFolderInfo(folder.getId()));
   }
-
+  
   public void pushFolderHierarchy(FolderInfo folderInfo) throws Exception {
-    // Push the folder to the cloud.
+    pushFolderHierarchyToCloudLocation(folderInfo, folderInfo.getParent());
+  }
 
+  public void pushFolderHierarchyToCloudLocation(FolderInfo folderInfo, FolderInfo parent)
+  throws Exception {
+    // Push the folder to the cloud.
     AclAdjustments aclAdjustments = folderInfo.getCloudAcl().getAclAdjustments(folderInfo.getParentCloudAcl(),
       adminId);
-    String cloudBaseUrl = cloudPusher.pushFolder(folderInfo.getName(), folderInfo.getParent(),
+    String cloudBaseUrl = cloudPusher.pushFolder(folderInfo.getName(), parent,
         folderInfo.getCloudAcl().getOwner(), aclAdjustments);
     
     folderInfo.setBaseUrl(cloudBaseUrl);
@@ -68,6 +76,7 @@ public class TraversalEngine {
     List<Folder> rootFolderList = site.getRootFolders();
     List<Document> documentList = new ArrayList<Document>();
 
+    // TODO(johnfelton) - Only get documents for root folders on our path
     // Loop through each document library (root folder)
     for (Folder rootFolder : rootFolderList) {
       documentList.addAll(site.getDocuments(rootFolder));
@@ -75,13 +84,16 @@ public class TraversalEngine {
 
     for (Document document : documentList) {
       FolderInfo parent = folderManager.getFolderInfo(document.getParentId());
-      CloudAcl documentCloudAcl =  permissionsMapper.mapAcl(document.getAcl(), document.getOwner());
-      AclAdjustments aclAdjustments = documentCloudAcl.getAclAdjustments(parent.getCloudAcl(),
-          adminId);
-      InputStream documentContentStream = site.getDocumentContent(document);
-      cloudPusher.pushDocument(document, parent, documentCloudAcl.getOwner(), aclAdjustments,
-          documentContentStream);
-      MigrationReporter.DocumentMigrated(document, documentCloudAcl, aclAdjustments);
+      // Only push documents if their parent folder has been pushed.
+      if ((parent.getBaseUrl() != null) && (!parent.getBaseUrl().isEmpty())) {
+        CloudAcl documentCloudAcl =  permissionsMapper.mapAcl(document.getAcl(), document.getOwner());
+        AclAdjustments aclAdjustments = documentCloudAcl.getAclAdjustments(parent.getCloudAcl(),
+            adminId);
+        InputStream documentContentStream = site.getDocumentContent(document);
+        cloudPusher.pushDocument(document, parent, documentCloudAcl.getOwner(), aclAdjustments,
+            documentContentStream);
+        MigrationReporter.DocumentMigrated(document, documentCloudAcl, aclAdjustments);
+      }
     }
   }
 
@@ -105,25 +117,30 @@ public class TraversalEngine {
     }
   }
 
-//  public Folder findSharePointFolderFromPath(String path) throws Exception {
-//
-//    return getDocumentLibraryRootFolder();
-//
-    // for now we will always return the root
-//    String[] folderNames = path.split("/");
-//    Folder currentFolder = getDocumentLibraryRootFolder();
-//
-//    for (String folderName : folderNames) {
-//      for(Folder folder : folderHierarchy.get(currentFolder.getId())) {
-//        if (folderName.compareToIgnoreCase(folder.getName()) == 0) {
-//          currentFolder = folder;
-//          break;
-//        }
-//        throw new Exception();
-//      }
-//    }
-//    return currentFolder;
-//
-//  }
+  private FolderInfo chooseFolderByName(String name, List<FolderInfo> folders) {
+    for (FolderInfo folderInfo : folders) {
+      if (name.compareToIgnoreCase(folderInfo.getName()) == 0) {
+        return folderInfo;
+      }
+    }
+    return null;
+  }
+  
+  public FolderInfo findSharePointFolderFromPath(String path) throws Exception {
+
+    String[] folderNames = path.split("/");
+    List<FolderInfo> childFolders = folderManager.getRootFolders();
+    FolderInfo currentFolderInfo = null;
+
+    for (String folderName : folderNames) {
+      currentFolderInfo = chooseFolderByName(folderName, childFolders);
+      if (currentFolderInfo == null) {
+        // TODO(johnfelton) - create an custom exception class.
+        throw new Exception("SharePoint source folder not found '" + path + "'.");
+      }
+      childFolders = currentFolderInfo.getChildFolders();
+    }
+    return currentFolderInfo;
+  }
 
 }
