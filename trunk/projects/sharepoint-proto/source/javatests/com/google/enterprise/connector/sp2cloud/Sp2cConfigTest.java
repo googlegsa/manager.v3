@@ -56,6 +56,7 @@ public class Sp2cConfigTest extends TestCase {
     assertEquals(configMap.get(ConfigurationPropertyKey.sp_admin_password), config.getSpAdminPassword());
     assertEquals(configMap.get(ConfigurationPropertyKey.sp_domain), config.getSpDomain());
     assertEquals(configMap.get(ConfigurationPropertyKey.sp_url), config.getSpUrl());
+    assertEquals(configMap.get(ConfigurationPropertyKey.sp_source_path), config.getSpSourcePath());
   }
 
   public void testNewConfig_missingPropertiesFile() throws UsageException, IOException {
@@ -95,15 +96,6 @@ public class Sp2cConfigTest extends TestCase {
       fail("Expected failure.");
     } catch (UsageException ue) {
       assertTrue(ue.getMessage().contains("Command line argument missing '--' ("));
-    }
-  }
-  public void testNewConfig_missingValue() throws IOException {
-    try {
-      String[] cmdLine = new String[]{"--sp_admin_id="};
-      Sp2cConfig config = Sp2cConfig.newConfig(cmdLine);
-      fail("Expected failure.");
-    } catch (UsageException ue) {
-       assertTrue(ue.getMessage().contains("Invalid command line argument value (--"));
     }
   }
   public void testNewConfig_usupportedProperty() throws IOException {
@@ -166,6 +158,7 @@ public class Sp2cConfigTest extends TestCase {
     assertEquals(configMap.get(ConfigurationPropertyKey.sp_admin_password), config.getSpAdminPassword());
     assertEquals(configMap.get(ConfigurationPropertyKey.sp_domain), config.getSpDomain());
     assertEquals(configMap.get(ConfigurationPropertyKey.sp_url), config.getSpUrl());
+    assertEquals(configMap.get(ConfigurationPropertyKey.sp_source_path), config.getSpSourcePath());
   }
 
   public void testNewConfig_commandLineropertiesFile() throws UsageException, IOException {
@@ -196,5 +189,6 @@ public class Sp2cConfigTest extends TestCase {
     assertEquals(configMap.get(ConfigurationPropertyKey.sp_admin_password), config.getSpAdminPassword());
     assertEquals(configMap.get(ConfigurationPropertyKey.sp_domain), config.getSpDomain());
     assertEquals(configMap.get(ConfigurationPropertyKey.sp_url), config.getSpUrl());
+    assertEquals(configMap.get(ConfigurationPropertyKey.sp_source_path), config.getSpSourcePath());
   }
 }

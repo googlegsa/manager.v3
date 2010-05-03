@@ -112,9 +112,6 @@ public class Sp2cConfig {
         throw UsageException.newUnsupportedProperty(propertyName);
       }
       String propertyValue = (String)e.getValue();
-      if (propertyValue.length() == 0) {
-        throw UsageException.newInvalidPropertyValue(propertyName, propertyValue);
-      }
       resultMap.put(k, propertyValue);
     }
     return new NewConfigPropertiesResult(propertyFileName, resultMap);
@@ -143,9 +140,6 @@ public class Sp2cConfig {
 
   private static String getValueFromCommandLineArgument(String arg) throws UsageException {
     String result = arg.substring(getEqualsIx(arg) + 1);
-    if (result.length() == 0) {
-      throw UsageException.newInvalidCommandLineArgumentValue(arg);
-    }
     return result;
   }
 
@@ -187,6 +181,10 @@ public class Sp2cConfig {
 
   public String getSpAdminPassword() {
     return getProperty(ConfigurationPropertyKey.sp_admin_password);
+  }
+
+  public String getSpSourcePath() {
+    return getProperty(ConfigurationPropertyKey.sp_source_path);
   }
 
   private String getProperty(ConfigurationPropertyKey key) {
