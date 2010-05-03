@@ -16,6 +16,7 @@ public class Sp2cMain {
   private static final String TEST_SHAREPOINT_ADMIN = "administrator";
   private static final String TEST_SHAREPOINT_ADMIN_PASSWORD = "test";
   private static final String TEST_SHAREPOINT_DOMAIN = "";
+
   private static final String CONNECTOR_TEAM_SHAREPOINT_URL = "http://ent-test-w2k3-c";
   private static final String CONNECTOR_TEAM_SHAREPOINT_ADMIN = "administrator";
   private static final String CONNECTOR_TEAM_SHAREPOINT_ADMIN_PASSWORD = "test";
@@ -25,7 +26,7 @@ public class Sp2cMain {
    * @param args
    */
    public static void main(String[] args) throws Exception {
-     
+
      String url = TEST_SHAREPOINT_URL;
      String admin = TEST_SHAREPOINT_ADMIN;
      String password = TEST_SHAREPOINT_ADMIN_PASSWORD;
