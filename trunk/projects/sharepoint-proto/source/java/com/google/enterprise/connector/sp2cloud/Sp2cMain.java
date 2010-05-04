@@ -22,6 +22,6 @@ public class Sp2cMain {
          false);
 
      SharePointToCloudMigrator.migrate(cloudPusher, spSite, folderManager,
-         config.getCloudAdminId());
+         config.getCloudAdminId(), config.getSpSourcePath());
   }
 }
