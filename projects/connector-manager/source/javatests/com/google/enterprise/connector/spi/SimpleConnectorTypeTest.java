@@ -156,6 +156,25 @@ public class SimpleConnectorTypeTest extends TestCase {
     }
   }
 
+ public final void testGetPopulatedConfigWithSpecialXmlCharForm() 
+     throws JSONException {
+      SimpleConnectorType simpleConnectorType = new SimpleConnectorType();
+      simpleConnectorType.setConfigKeys(new String[] {"user", "password"});
+      Map<String, String> map =
+          new JsonObjectAsMap(new JSONObject("{user:m&x, password:f&<oo}"));
+      ConfigureResponse configureResponse = simpleConnectorType
+          .getPopulatedConfigForm(map, null);
+      String configForm = configureResponse.getFormSnippet();
+      String expectedResult = "<tr>\r\n" + "<td>user</td>\r\n"
+          + "<td><input type=\"text\" name=\"user\" value=\"m&amp;x\"/></td>\r\n"
+          + "</tr>\r\n" + "<tr>\r\n" + "<td>password</td>\r\n"
+          + "<td><input type=\"password\" name=\"password\" value=\"f&amp;&lt;oo\"/>"
+          + "</td>\r\n" + "</tr>\r\n";
+      Assert.assertEquals(expectedResult, configForm);
+      String message = configureResponse.getMessage();
+      Assert.assertTrue(message.length() == 0);
+  }
+
   private static class TestConnectorType extends SimpleConnectorType {
     public TestConnectorType() {
       super();

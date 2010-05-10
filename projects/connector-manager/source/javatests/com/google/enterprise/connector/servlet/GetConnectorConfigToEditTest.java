@@ -104,17 +104,17 @@ public class GetConnectorConfigToEditTest extends TestCase {
         + "    <FormSnippet><![CDATA[<tr>\n"
         + "<td colspan=\"1\" rowspan=\"1\">Username</td>\n"
         + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Username\""
-        + " type=\"text\" value=\"&quot;>bob>&amp;<alice;'\"></td>\n"
+        + " type=\"text\" value=\" &quot;>bob>&amp;<alice;'\"></td>\n"
         + "</tr>\n"
         + "<tr>\n"
         + "<td colspan=\"1\" rowspan=\"1\">Password</td>\n"
         + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Password\""
-        + " type=\"password\" value=\"***************\"></td>\n"
+        + " type=\"password\" value=\"****************\"></td>\n"
         + "</tr>\n"
         + "<tr>\n"
         + "<td colspan=\"1\" rowspan=\"1\">Color</td>\n"
         + "<td colspan=\"1\" rowspan=\"1\"><input name=\"Color\""
-        + " type=\"text\" value=\"&quot;>bob>&amp;<alice;'\"></td>\n"
+        + " type=\"text\" value=\" &quot;>bob>&amp;<alice;'\"></td>\n"
         + "</tr>\n"
         + "<tr>\n"
         + "<td colspan=\"1\" rowspan=\"1\">RepositoryFile</td>\n"
@@ -144,7 +144,7 @@ public class GetConnectorConfigToEditTest extends TestCase {
     // Use the manager directly to create a connector with properties that have
     // reserved XML characters in them.
     Map<String, String> configData = new HashMap<String, String>();
-    String evilValue = "\">bob>&<alice;'";
+    String evilValue = " \">bob>&<alice;'";
     configData.put("Username", evilValue);
     configData.put("Password", evilValue);
     configData.put("Color", evilValue);
