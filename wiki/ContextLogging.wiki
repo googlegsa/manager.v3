@@ -123,10 +123,12 @@ to the Tomcat configuration to enable this feature.
 You must add the new `connector-logging.jar` file to the system classpath that 
 Tomcat uses at startup.  Tomcat ignores the `CLASSPATH` environment variable and 
 builds a custom classpath using the `$CATALINA_HOME/bin/setclasspath.sh` or
-`$CATALINA_HOME/bin/setclasspath.bat` scripts.  Modify these scripts, adding
-`connector-logging.jar` to the `CLASSPATH` constructed. 
+`%CATALINA_HOME%/bin/setclasspath.bat` scripts.  Modify these scripts, adding
+`connector-logging.jar` to the `CLASSPATH` constructed.
+
 For instance:<br>
 `CLASSPATH="$CLASSPATH":"$BASEDIR"/webapps/connector-manager/WEB-INF/lib/connector-logging.jar`<br>
+
 If configuring the Connector as a Microsoft Windows service, you must also
 add `connector-logging.jar` to the `PR_CLASSPATH` constructed in `service.bat`
 before installing the service.
