@@ -120,24 +120,29 @@ public class WebServiceClient {
                 + port;
 
         // Initializing Webs stub
-        final WebsLocator websLocator = new WebsLocator();
+        WebsLocator websLocator = new WebsLocator();
         websLocator.setWebsSoapEndpointAddress(endpoint + "/_vti_bin/Webs.asmx");
-        final Webs service = websLocator;
+        Webs service = websLocator;
         webStub = (WebsSoap_BindingStub) service.getWebsSoap();
 		webStub.setUsername(domain + "\\" + username);
         webStub.setPassword(password);
 
         // Get the Url which can be used for making further web service call
         webUrl = getWebURLFromPageURL(siteUrl);
-        if (!webUrl.equals(siteUrl)) {
-            url = new URL(webUrl);
-            uri = new URI(url.getProtocol(), null, url.getHost(),
-                    url.getPort(), url.getPath(), url.getQuery(), url.getRef());
-            endpoint = uri.toASCIIString();
-            if (endpoint.endsWith("/")) {
-                endpoint = endpoint.substring(0, endpoint.length() - 1);
-            }
+        url = new URL(webUrl);
+        uri = new URI(url.getProtocol(), null, url.getHost(),
+                url.getPort(), url.getPath(), url.getQuery(), url.getRef());
+        endpoint = uri.toASCIIString();
+        if (endpoint.endsWith("/")) {
+            endpoint = endpoint.substring(0, endpoint.length() - 1);
         }
+        
+        // Initializing Webs stub with the new updated endpoint
+        websLocator = new WebsLocator();
+        websLocator.setWebsSoapEndpointAddress(endpoint + "/_vti_bin/Webs.asmx");
+        service = websLocator;
+        webStub = (WebsSoap_BindingStub) service.getWebsSoap();
+        webStub.setPassword(password);
 
         // Initializing Lists stub
         final ListsLocator listLocator = new ListsLocator();
@@ -553,7 +558,14 @@ public class WebServiceClient {
 				if (pos != -1) {
 					relativeUrl = relativeUrl.substring(0, pos);
 				}
-				Folder folder = new Folder(element.getTitle(), element.getTitle(),
+				
+				String id = relativeUrl;
+				// Remove the leading slash if one exists
+				if (id.startsWith("/")) {
+				  id = id.substring(1);
+				}
+				
+				Folder folder = new Folder(element.getTitle(), id,
 						relativeUrl, parentSiteId, null, null, true);
 				rootFolders.put(relativeUrl, folder);
             } catch (Exception e) {

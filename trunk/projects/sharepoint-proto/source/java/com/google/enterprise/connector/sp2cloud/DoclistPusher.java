@@ -40,8 +40,7 @@ public class DoclistPusher implements CloudPusher {
   private static final String DOCLIST_ROOT_CONTENT_URL =
       "https://docs.google.com/feeds/default/private/full/";
 
-  DoclistPusher(DocsService client, FolderManager folderManager,
-      String adminUserId, boolean convert)
+  DoclistPusher(DocsService client, String adminUserId, boolean convert)
       throws Exception {
     this.client = client;
     this.adminUserId = adminUserId;
