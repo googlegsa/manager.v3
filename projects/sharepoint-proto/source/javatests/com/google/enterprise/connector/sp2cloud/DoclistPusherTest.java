@@ -39,7 +39,7 @@ public class DoclistPusherTest extends TestCase {
     generator = new Random();
     rootFolderId = "root_" + generator.nextInt(Integer.MAX_VALUE);
     folderManager = new FolderManager();
-    pusher = new DoclistPusher(client, folderManager, ADMIN_ID, false);
+    pusher = new DoclistPusher(client, ADMIN_ID, false);
   }
   
   public void pushFolder(FolderInfo folder, String owner) throws Exception {

@@ -6,6 +6,8 @@ import com.google.enterprise.connector.sp2c_migration.SharepointSite;
 import com.google.enterprise.connector.sp2c_migration.SharepointSiteFactory;
 import com.google.gdata.client.docs.DocsService;
 
+import java.util.Set;
+
 public class Sp2cMain {
   /**
    * @param args
@@ -15,10 +17,12 @@ public class Sp2cMain {
 
      SharepointSite spSite = SharepointSiteFactory.getSharepointSite(config.getSpUrl(),
          config.getSpAdminId(), config.getSpAdminPassword(), config.getSpDomain());
+     
+     Set<String> sites = spSite.getDirectChildSites();
      DocsService client = DoclistPusher.mkOauthClient(config.getCloudConsumerKey(),
          config.getCloudConsumerSecret());
      FolderManager folderManager = new FolderManager();
-     CloudPusher cloudPusher = new DoclistPusher(client, folderManager, config.getCloudAdminId(),
+     CloudPusher cloudPusher = new DoclistPusher(client, config.getCloudAdminId(),
          false);
 
      SharePointToCloudMigrator.migrate(cloudPusher, spSite, folderManager,
