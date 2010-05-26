@@ -42,10 +42,11 @@ import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 
-import com.google.enterprise.connector.sharepoint.generated.gssAcl.ACL;
-import com.google.enterprise.connector.sharepoint.generated.gssAcl.GSSAclMonitor;
-import com.google.enterprise.connector.sharepoint.generated.gssAcl.GSSAclMonitorLocator;
-import com.google.enterprise.connector.sharepoint.generated.gssAcl.GSSAclMonitorSoap_BindingStub;
+import com.google.enterprise.connector.sharepoint.generated.gssacl.GssAcl;
+import com.google.enterprise.connector.sharepoint.generated.gssacl.GssAclMonitor;
+import com.google.enterprise.connector.sharepoint.generated.gssacl.GssAclMonitorLocator;
+import com.google.enterprise.connector.sharepoint.generated.gssacl.GssAclMonitorSoap_BindingStub;
+import com.google.enterprise.connector.sharepoint.generated.gssacl.GssGetAclForUrlsResult;
 import com.google.enterprise.connector.sharepoint.generated.lists.GetListItemChangesSinceTokenContains;
 import com.google.enterprise.connector.sharepoint.generated.lists.GetListItemChangesSinceTokenQuery;
 import com.google.enterprise.connector.sharepoint.generated.lists.GetListItemChangesSinceTokenQueryOptions;
@@ -88,7 +89,7 @@ public class WebServiceClient {
     private ListsSoap_BindingStub listStub;
 	private SiteDataSoap_BindingStub siteDataStub;
 	private WebsSoap_BindingStub webStub;
-	private GSSAclMonitorSoap_BindingStub gssAclStub;
+	private GssAclMonitorSoap_BindingStub gssAclStub;
 
     public final String ROWLIMIT = "500";
     public final String UNAUTHORIZED = "(401)Unauthorized";
@@ -136,7 +137,7 @@ public class WebServiceClient {
         if (endpoint.endsWith("/")) {
             endpoint = endpoint.substring(0, endpoint.length() - 1);
         }
-        
+
         // Initializing Webs stub with the new updated endpoint
         websLocator = new WebsLocator();
         websLocator.setWebsSoapEndpointAddress(endpoint + "/_vti_bin/Webs.asmx");
@@ -161,11 +162,11 @@ public class WebServiceClient {
         siteDataStub.setPassword(password);
 
 		// Initializing GssAcl stub
-		final GSSAclMonitorLocator gssAclLocator = new GSSAclMonitorLocator();
-		gssAclLocator.setGSSAclMonitorSoapEndpointAddress(endpoint
+		final GssAclMonitorLocator gssAclLocator = new GssAclMonitorLocator();
+		gssAclLocator.setGssAclMonitorSoapEndpointAddress(endpoint
 				+ "/_vti_bin/GssAcl.asmx");
-		GSSAclMonitor gssAclService = gssAclLocator;
-		gssAclStub = (GSSAclMonitorSoap_BindingStub) gssAclService.getGSSAclMonitorSoap();
+		GssAclMonitor gssAclService = gssAclLocator;
+		gssAclStub = (GssAclMonitorSoap_BindingStub) gssAclService.getGssAclMonitorSoap();
 		gssAclStub.setPassword(password);
 
         setUsername();
@@ -558,15 +559,15 @@ public class WebServiceClient {
 				if (pos != -1) {
 					relativeUrl = relativeUrl.substring(0, pos);
 				}
-				
-				String id = relativeUrl;
+
+                String id = relativeUrl;
 				// Remove the leading slash if one exists
 				if (id.startsWith("/")) {
-				  id = id.substring(1);
+					id = id.substring(1);
 				}
-				
-				Folder folder = new Folder(element.getTitle(), id,
-						relativeUrl, parentSiteId, null, null, true);
+
+                Folder folder = new Folder(element.getTitle(), id, relativeUrl,
+						parentSiteId, null, null, true);
 				rootFolders.put(relativeUrl, folder);
             } catch (Exception e) {
                 // Problem while processing some lists.
@@ -683,15 +684,14 @@ public class WebServiceClient {
 		}
 	}
 
-    public ACL[] getAclForUrls(String[] urls, String webUrl) {
+    public GssAcl[] getAclForUrls(String[] urls) throws Exception {
         try {
-			ACL[] acls = gssAclStub.getAclForUrls(urls, webUrl);
-			return acls;
+            GssGetAclForUrlsResult wsResult = gssAclStub.getAclForUrls(urls);
+			return wsResult.getAllAcls();
         } catch (Exception e) {
-            System.out.println(e);
+            throw new Exception("Failed to get ACLs ", e);
         }
-		return  new ACL[0];
-	}
+    }
 
     public Set<String> getDirectChildsites() throws Exception {
 		final Set<String> allSites = new TreeSet<String>();
