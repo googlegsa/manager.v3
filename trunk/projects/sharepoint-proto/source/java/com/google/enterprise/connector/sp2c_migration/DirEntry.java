@@ -10,7 +10,7 @@ abstract class DirEntry {
   private final String id;
   private final String parentId;
 	private List<Ace> acl;
-  private final String owner;
+	private String owner;
 
   DirEntry(String name, String id, String parentId, List<Ace> acl, String owner) {
 		this.name = name;
@@ -37,6 +37,10 @@ abstract class DirEntry {
 
   public String getOwner() {
 		return owner;
+	}
+
+	public void setOwner(String owner) {
+		this.owner = owner;
 	}
 
     public void setAcl(List<Ace> acl) {

@@ -23,9 +23,11 @@ import java.util.Set;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethodBase;
 
-import com.google.enterprise.connector.sharepoint.generated.gssAcl.ACE;
-import com.google.enterprise.connector.sharepoint.generated.gssAcl.ACL;
-import com.google.enterprise.connector.sharepoint.generated.gssAcl.PrincipalType;
+import com.google.enterprise.connector.sharepoint.generated.gssacl.GssAce;
+import com.google.enterprise.connector.sharepoint.generated.gssacl.GssAcl;
+import com.google.enterprise.connector.sharepoint.generated.gssacl.GssPrincipal;
+import com.google.enterprise.connector.sharepoint.generated.gssacl.GssSharepointPermission;
+import com.google.enterprise.connector.sharepoint.generated.gssacl.PrincipalType;
 import com.google.enterprise.connector.sp2c_migration.Ace.Type;
 
 public class SharepointSiteImpl implements SharepointSite {
@@ -59,14 +61,15 @@ public class SharepointSiteImpl implements SharepointSite {
             urls[i++] = url;
         }
 
-        ACL[] acls = wsClient.getAclForUrls(urls, getUrl());
+        GssAcl[] acls = wsClient.getAclForUrls(urls);
         List<Folder> folders = new ArrayList<Folder>();
-        for (ACL acl : acls) {
+        for (GssAcl acl : acls) {
             List<Ace> allAces = new ArrayList<Ace>();
-            for (ACE ace : acl.getAllAce()) {
-				allAces.add(getAceFromSPAce(ace));
+            for (GssAce ace : acl.getAllAce()) {
+                allAces.add(getAceFromSPAce(ace));
             }
             Folder folder = rootFoldersMap.get(acl.getEntityUrl());
+            folder.setOwner(acl.getOwner());
             folder.setAcl(allAces);
             folders.add(folder);
         }
@@ -76,25 +79,26 @@ public class SharepointSiteImpl implements SharepointSite {
     @Override
     public List<Folder> getFolders(Folder rootfolder) throws Exception {
         Map<String, Folder> foldersMap = wsClient.getFolders(rootfolder, null);
-		Set<String> folderUrls = foldersMap.keySet();
-		String[] urls = new String[folderUrls.size()];
-		int i = 0;
-		for (String url : folderUrls) {
-			urls[i++] = url;
-		}
+        Set<String> folderUrls = foldersMap.keySet();
+        String[] urls = new String[folderUrls.size()];
+        int i = 0;
+        for (String url : folderUrls) {
+            urls[i++] = url;
+        }
 
-        ACL[] acls = wsClient.getAclForUrls(urls, getUrl());
-		List<Folder> folders = new ArrayList<Folder>();
-		for (ACL acl : acls) {
-			List<Ace> allAces = new ArrayList<Ace>();
-			for (ACE ace : acl.getAllAce()) {
-				allAces.add(getAceFromSPAce(ace));
-			}
-			Folder folder = foldersMap.get(acl.getEntityUrl());
-			folder.setAcl(allAces);
-			folders.add(folder);
-		}
-		return folders;
+        GssAcl[] acls = wsClient.getAclForUrls(urls);
+        List<Folder> folders = new ArrayList<Folder>();
+        for (GssAcl acl : acls) {
+            List<Ace> allAces = new ArrayList<Ace>();
+            for (GssAce ace : acl.getAllAce()) {
+                allAces.add(getAceFromSPAce(ace));
+            }
+            Folder folder = foldersMap.get(acl.getEntityUrl());
+            folder.setOwner(acl.getOwner());
+            folder.setAcl(allAces);
+            folders.add(folder);
+        }
+        return folders;
     }
 
     @Override
@@ -107,18 +111,19 @@ public class SharepointSiteImpl implements SharepointSite {
             urls[i++] = url;
         }
 
-        ACL[] acls = wsClient.getAclForUrls(urls, getUrl());
-		List<Document> documents = new ArrayList<Document>();
-		for (ACL acl : acls) {
-			List<Ace> allAces = new ArrayList<Ace>();
-			for (ACE ace : acl.getAllAce()) {
-				allAces.add(getAceFromSPAce(ace));
-			}
-			Document document = documentsMap.get(acl.getEntityUrl());
-			document.setAcl(allAces);
-			documents.add(document);
-		}
-		return documents;
+        GssAcl[] acls = wsClient.getAclForUrls(urls);
+        List<Document> documents = new ArrayList<Document>();
+        for (GssAcl acl : acls) {
+            List<Ace> allAces = new ArrayList<Ace>();
+            for (GssAce ace : acl.getAllAce()) {
+                allAces.add(getAceFromSPAce(ace));
+            }
+            Document document = documentsMap.get(acl.getEntityUrl());
+            document.setOwner(acl.getOwner());
+            document.setAcl(allAces);
+            documents.add(document);
+        }
+        return documents;
     }
 
     /**
@@ -137,23 +142,27 @@ public class SharepointSiteImpl implements SharepointSite {
         return method.getResponseBodyAsStream();
     }
 
-	private Ace getAceFromSPAce(ACE spAce) {
-		String principalName = spAce.getPrincipal();
-		Type principalType = Type.USER;
-		if (PrincipalType._DOMAINGROUP.equals(spAce.getType().getValue())) {
-			principalType = Type.DOMAINGROUP;
-		} else if (PrincipalType._SPGROUP.equals(spAce.getType().getValue())) {
-			principalType = Type.SPGROUP;
-			principalName = "[" + getUrl() + "][" + principalName + "]";
+    private Ace getAceFromSPAce(GssAce ace) {
+        GssPrincipal principal = ace.getPrincipal();
+        String principalName = principal.getName();
+        Type principalType = Type.USER;
+        if (PrincipalType._DOMAINGROUP.equals(principal.getType().getValue())) {
+            principalType = Type.DOMAINGROUP;
+        } else if (PrincipalType._SPGROUP.equals(principal.getType().getValue())) {
+            principalType = Type.SPGROUP;
+            principalName = "[" + getUrl() + "][" + principalName + "]";
         }
 
-		Ace.SharepointPermissions perms = new Ace.SharepointPermissions(
-				spAce.getGrantRightMask(), spAce.getDenyRightMask());
-		return new Ace(principalName, perms, principalType);
-	}
+        GssSharepointPermission gssPermission = ace.getPermission();
+        Ace.SharepointPermissions permissions = new Ace.SharepointPermissions(
+                gssPermission.getAllowedPermissions(),
+                gssPermission.getDeniedPermission());
 
-	@Override
-	public Set<String> getDirectChildSites() throws Exception {
-		return wsClient.getDirectChildsites();
+        return new Ace(principalName, permissions, principalType);
+    }
+
+    @Override
+    public Set<String> getDirectChildSites() throws Exception {
+        return wsClient.getDirectChildsites();
     }
 }
