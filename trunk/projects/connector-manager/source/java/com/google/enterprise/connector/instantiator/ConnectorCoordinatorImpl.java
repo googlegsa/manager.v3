@@ -258,8 +258,9 @@ class ConnectorCoordinatorImpl implements
     // Halt any traversal in progress.
     resetBatch();
 
-    // Remove any remembered traversal state.
-    getInstanceInfo().setConnectorState(null);
+    // Remove any remembered traversal state.  This forces traversal to start
+    // at the beginning of the repository.
+    setConnectorState(null);
 
     // If Schedule was 'run-once', re-enable it to run again.  But watch out -
     // empty disabled Schedules could look a bit like a run-once Schedule.
@@ -267,7 +268,10 @@ class ConnectorCoordinatorImpl implements
     if (schedule.isDisabled() && schedule.getRetryDelayMillis() == -1
         && !schedule.getTimeIntervals().isEmpty()) {
       schedule.setDisabled(false);
-      getInstanceInfo().setConnectorSchedule(schedule.toString());
+      setConnectorSchedule(schedule.toString());
+    } else {
+      // Kick off a restart immediately.
+      delayTraversal(TraversalDelayPolicy.IMMEDIATE);
     }
   }
 
