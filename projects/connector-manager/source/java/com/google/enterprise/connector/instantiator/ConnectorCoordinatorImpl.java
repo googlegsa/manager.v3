@@ -436,7 +436,7 @@ class ConnectorCoordinatorImpl implements
               // traversal schedule.
               traversalDelayEnd = 0;
               schedule.setDisabled(true);
-              getInstanceInfo().setConnectorSchedule(schedule.toString());
+              setConnectorSchedule(schedule.toString());
               LOGGER.info("Traversal complete. Automatically pausing "
                   + "traversal for connector " + name);
             }
