@@ -83,11 +83,22 @@ public class SpiConstants {
    * <li> If there is a {@link #PROPNAME_SEARCHURL} then the feed type will
    *      default to 'web' feed and use the {@link #PROPNAME_SEARCHURL} as the
    *      document URL.
-   * </ol> 
+   * </ol>
    * <p>
    * Value: google:feedtype
    */
   public static final String PROPNAME_FEEDTYPE = "google:feedtype";
+
+  /**
+   * Identifies a single-valued Feed ID property that, if present, will be
+   * used to identify the feed file that contains a fed document.  All feed
+   * records in a single feed file will share a common google:feedid value.
+   * <p>
+   * Reserved for internal use.
+   * <p>
+   * Value: google:feedid
+   */
+  public static final String PROPNAME_FEEDID = "google:feedid";
 
   /**
    * Identifies an optional single-valued string property that, if present,

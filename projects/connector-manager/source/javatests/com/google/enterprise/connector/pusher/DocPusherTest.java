@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.enterprise.connector.common.UniqueIdGenerator;
 import com.google.enterprise.connector.jcr.JcrDocumentTest;
 import com.google.enterprise.connector.jcr.JcrTraversalManager;
 import com.google.enterprise.connector.manager.Context;
@@ -74,6 +75,9 @@ public class DocPusherTest extends TestCase {
 
     // We're comparing date strings here, so we need a fixed time zone.
     Value.setFeedTimeZone("GMT");
+
+    // To ease comarisons against expected output, generate non-unique FeedId.
+    XmlFeed.setUniqueIdGenerator(new MockIdGenerator());
   }
 
   @Override
@@ -92,6 +96,7 @@ public class DocPusherTest extends TestCase {
         + " mimetype=\"text/html\""
         + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
+        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:searchurl\" content=\"http://www.sometesturl.com/test\"/>\n"
         + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
@@ -114,6 +119,7 @@ public class DocPusherTest extends TestCase {
         + " mimetype=\"text/html\""
         + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
+        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:searchurl\" content=\"http://www.sometesturl.com/test\"/>\n"
         + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
@@ -135,6 +141,7 @@ public class DocPusherTest extends TestCase {
         + " mimetype=\"text/html\""
         + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
+        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:searchurl\" content=\"smb://localhost/share/test\"/>\n"
         + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
@@ -159,6 +166,7 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
+        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"jcr:lastModified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -183,6 +191,7 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
+        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"contentfile\" content=\"testdata/mocktestdata/i18n.html\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:mimetype\" content=\"text/html\"/>\n"
@@ -213,6 +222,7 @@ public class DocPusherTest extends TestCase {
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:00 GMT\""
         + " authmethod=\"httpbasic\">\n"
         + "<metadata>\n"
+        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe, mary, fred, mark, bill, admin\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"false\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
@@ -231,6 +241,7 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
+        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe, mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
@@ -251,6 +262,7 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
+        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe, mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"public\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
@@ -278,6 +290,7 @@ public class DocPusherTest extends TestCase {
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:00 GMT\""
         + " authmethod=\"httpbasic\">\n"
         + "<metadata>\n"
+        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe, mary, fred, mark, bill, admin\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"false\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
@@ -295,6 +308,7 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
+        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe, mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
@@ -312,6 +326,7 @@ public class DocPusherTest extends TestCase {
         + SpiConstants.DEFAULT_MIMETYPE
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
+        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"google:aclusers\" content=\"joe, mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
@@ -365,6 +380,7 @@ public class DocPusherTest extends TestCase {
         + "\""
         + " last-modified=\"Tue, 15 Nov 1994 12:45:26 GMT\">\n"
         + "<metadata>\n"
+        + "<meta name=\"google:feedid\" content=\"test\"/>\n"
         + "<meta name=\"contentfile\" content=\"testdata/mocktestdata/i18n.html\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"Tue, 15 Nov 1994 12:45:26 GMT\"/>\n"
         + "<meta name=\"google:mimetype\" content=\"text/html\"/>\n"
@@ -2115,6 +2131,13 @@ public class DocPusherTest extends TestCase {
     assertFalse(result);
     dpusher.flush();
     assertFalse(feedConnection.isBacklogged());
+  }
+
+  private static class MockIdGenerator implements UniqueIdGenerator {
+    // Return a predictable non-unique ID to ease expected output comparisons.
+    public String uniqueId() {
+      return "test";
+    }
   }
 
   /**
