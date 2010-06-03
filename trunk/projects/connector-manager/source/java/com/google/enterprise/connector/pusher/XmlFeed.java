@@ -14,11 +14,14 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.enterprise.connector.common.UniqueIdGenerator;
+import com.google.enterprise.connector.common.UuidGenerator;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
+import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.XmlUtils;
@@ -47,6 +50,9 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private final String feedType;
   private final int maxFeedSize;
   private final Appendable feedLogBuilder;
+  private final String feedId;
+
+  private static UniqueIdGenerator uniqueIdGenerator = new UuidGenerator();
 
   private boolean isClosed;
   private int recordCount;
@@ -84,7 +90,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final String XML_ENCODING = "encoding";
 
   // public static final String XML_FEED_FULL = "full";
-  public  static final String XML_FEED_METADATA_AND_URL = "metadata-and-url";
+  public static final String XML_FEED_METADATA_AND_URL = "metadata-and-url";
   public static final String XML_FEED_INCREMENTAL = "incremental";
   public static final String XML_BASE64BINARY = "base64binary";
   public static final String XML_BASE64COMPRESSED = "base64compressed";
@@ -100,13 +106,27 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     this.feedLogBuilder = feedLogBuilder;
     this.recordCount = 0;
     this.isClosed = false;
+    this.feedId = uniqueIdGenerator.uniqueId();
     String prefix = xmlFeedPrefix(dataSource, feedType);
     write(prefix.getBytes(XML_DEFAULT_ENCODING));
+  }
+
+  // Package private for use by testing.
+  static void setUniqueIdGenerator(UniqueIdGenerator idGenerator) {
+    uniqueIdGenerator = idGenerator;
   }
 
   /*
    * XmlFeed Public Interface.
    */
+
+  /**
+   * Returns the unique ID assigned to this Feed file and all
+   * records within the Feed.
+   */
+  public String getFeedId() {
+    return feedId;
+  }
 
   /**
    * Returns {@code true} if the feed is sufficiently full to submit
@@ -402,35 +422,36 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    * @throws IOException only from Appendable, and that can't really
    *         happen when using StringBuilder.
    */
-  private static void xmlWrapMetadata(StringBuilder buf, Document document)
+  private void xmlWrapMetadata(StringBuilder buf, Document document)
       throws RepositoryException, IOException {
-    Set<String> propertyNames = document.getPropertyNames();
-    if (propertyNames == null) {
-      LOGGER.log(Level.WARNING, "Property names set is empty");
-      return;
-    }
-    if (propertyNames.isEmpty()) {
-      return;
-    }
-
     XmlUtils.xmlAppendStartTag(XML_METADATA, buf);
     buf.append("\n");
 
-    for (String name : propertyNames) {
-      Property property = null;
-      if (propertySkipSet.contains(name) ||
-          name.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX) ||
-          name.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX)) {
-        continue;
-      }
-      if (SpiConstants.PROPNAME_ACLGROUPS.equals(name) ||
-          SpiConstants.PROPNAME_ACLUSERS.equals(name)) {
-        property = DocUtils.processAclProperty(document, name);
-      } else {
-        property = document.findProperty(name);
-      }
-      if (property != null) {
-        wrapOneProperty(buf, name, property);
+    // Tag each document with the ID of its feed file.
+    wrapOneProperty(buf, SpiConstants.PROPNAME_FEEDID,
+        new SimpleProperty(Value.getStringValue(feedId)));
+
+    // Now add all the metadata supplied by the Connector.
+    Set<String> propertyNames = document.getPropertyNames();
+    if ((propertyNames == null) || propertyNames.isEmpty()) {
+      LOGGER.log(Level.WARNING, "Property names set is empty");
+    } else {
+      for (String name : propertyNames) {
+        Property property = null;
+        if (propertySkipSet.contains(name) ||
+            name.startsWith(SpiConstants.USER_ROLES_PROPNAME_PREFIX) ||
+            name.startsWith(SpiConstants.GROUP_ROLES_PROPNAME_PREFIX)) {
+          continue;
+        }
+        if (SpiConstants.PROPNAME_ACLGROUPS.equals(name) ||
+            SpiConstants.PROPNAME_ACLUSERS.equals(name)) {
+          property = DocUtils.processAclProperty(document, name);
+        } else {
+          property = document.findProperty(name);
+        }
+        if (property != null) {
+          wrapOneProperty(buf, name, property);
+        }
       }
     }
     XmlUtils.xmlAppendEndTag(XML_METADATA, buf);
