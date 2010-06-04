@@ -21,8 +21,7 @@ import java.io.File;
  * of the connectorName, and the FileStore needs access to the
  * connector work directory.
  */
-public class StoreContext {
-
+public class StoreContext implements Comparable<StoreContext> {
   private String connectorName;
   private File connectorDir;
 
@@ -33,6 +32,47 @@ public class StoreContext {
   public StoreContext(String connectorName, File connectorDir) {
     this.connectorName = connectorName;
     this.connectorDir = connectorDir;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (other == null || !(other instanceof StoreContext))
+      return false;
+    StoreContext context = (StoreContext) other;
+    if (!connectorName.equals(context.connectorName)) {
+      return false;
+    } else {
+      return (connectorDir == null)
+          ? context.connectorDir == null
+          : connectorDir.equals(context.connectorDir);
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    // See Effective Java by Joshua Bloch, Item 8.
+    int result = 131;
+    result = 17 * result + connectorName.hashCode();
+    result = 17 * result
+        + (connectorDir == null ? 0 : connectorDir.hashCode());
+    return result;
+  }
+
+  //@Override
+  public int compareTo(StoreContext other) {
+    int diff = connectorName.compareTo(other.connectorName);
+    if (diff != 0) {
+      return diff;
+    } else {
+      if (connectorDir == null && other.connectorDir == null) {
+        return 0;
+      } else if (connectorDir == null) {
+        return -1;
+      } else if (other.connectorDir == null) {
+        return 1;
+      } else 
+        return connectorDir.compareTo(other.connectorDir);
+    }
   }
 
   public void setConnectorName(String connectorName) {
