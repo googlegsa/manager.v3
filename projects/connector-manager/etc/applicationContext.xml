@@ -60,7 +60,7 @@
         <!-- JDBC DataSource configuration. -->
         <prop key="jdbc.datasource.url">jdbc:h2:${catalina.base}/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager</prop>
         <prop key="jdbc.datasource.user">sa</prop>
-        <prop key="jdbc.datasource.password">srohg0oLN6jAfmRxW98EfA==</prop>
+        <prop key="jdbc.datasource.password"></prop>
 
         <!-- JDBC Persistent Store for maintaining Connector Configuration,
              Schedules, and Traversal State.  This DDL statement is used to
@@ -186,12 +186,14 @@
   </bean>
 
   <!-- H2 embedded database configuration. -->
+  <!-- TODO: restore when H2 jar is added to third-party/prod
   <bean id="JdbcDataSource"
         class="org.h2.jdbcx.JdbcDataSource">
     <property name="URL" value="${jdbc.datasource.url}"/>
     <property name="user" value="${jdbc.datasource.user}"/>
     <property name="password" value="${jdbc.datasource.password}"/>
   </bean>
+  -->
 
   <!-- Persistent Store mechanism used to store the Connector Configuration,
        Connector Schedule, and Connector Traversal State.  By default, this
@@ -199,7 +201,7 @@
        Only one PersistentStore bean should be defined at this time.
   -->
   <bean id="PersistentStore"
-        name="ConnectorConfigStore" name="ConnectorScheduleStore" name="ConnectorStateStore"
+        name="ConnectorConfigStore,ConnectorScheduleStore,ConnectorStateStore"
         class="com.google.enterprise.connector.persist.FileStore"/>
 
   <!-- Persistent Store mechanism used to store the Connector Configuration,
@@ -209,7 +211,7 @@
   -->
   <!--
   <bean id="PersistentStore"
-        name="ConnectorConfigStore" name="ConnectorScheduleStore" name="ConnectorStateStore"
+        name="ConnectorConfigStore,ConnectorScheduleStore,ConnectorStateStore"
         class="com.google.enterprise.connector.persist.JdbcStore">
     <property name="dataSource" ref="JdbcDataSource"/>
     <property name="createTableDdl" value="${jdbcstore.createtable.ddl}"/>
