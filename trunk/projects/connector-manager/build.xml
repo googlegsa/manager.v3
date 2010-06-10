@@ -183,6 +183,15 @@
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </jar>
+    <pathconvert property="connector.jar.manifest.classpath" pathsep=" ">
+      <flattenmapper/>
+      <path id="manifest.classpath">
+        <pathelement location="${spi.jarfile}" />
+        <pathelement location="${logging.jarfile}" />
+        <pathelement location="${util.jarfile}" />
+        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+      </path>
+    </pathconvert>
     <jar jarfile="${connector.jarfile}">
       <fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**, **/logging/**"/>
       <manifest>
@@ -192,6 +201,8 @@
         <attribute name="Implementation-Vendor" value="Google Inc."/>
         <attribute name="Main-Class"
                    value="com.google.enterprise.connector.manager.ManagerMain" />
+        <attribute name="Class-Path"
+                   value="${connector.jar.manifest.classpath}" />
       </manifest>
     </jar>
   </target>

@@ -16,6 +16,7 @@ package com.google.enterprise.connector.manager;
 
 import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.servlet.ServletUtil;
+import com.google.enterprise.connector.encryptpassword.EncryptPassword;
 
 /**
  * Dump the Version info from the Manifest for the Connector Manager's JAR file.
@@ -25,7 +26,28 @@ import com.google.enterprise.connector.servlet.ServletUtil;
  */
 public class ManagerMain {
   public static void main(String[] args) throws Exception {
+    if (args.length > 0) {
+      // TODO: There should be a more general mechanism for invoking
+      // command line apps.
+      if ("EncryptPassword".equalsIgnoreCase(args[0])) {
+        EncryptPassword.main(shift(args));
+      }
+    }
+    // The default behavior is to display the product version.
     System.out.println(ServletUtil.MANAGER_NAME + " v"
                        + JarUtils.getJarVersion(ManagerMain.class));
+  }
+
+  /**
+   * Returns a subarray of the supplied array.  This performs the equivelent of
+   * the 'shift' shell command.
+   *
+   * @param args An array of String arguments
+   * @return args[1..n] subarray
+   */
+  private static String[] shift(String[] args) {
+    String[] shifted = new String[args.length - 1];
+    System.arraycopy(args, 1, shifted, 0, shifted.length);
+    return shifted;
   }
 }
