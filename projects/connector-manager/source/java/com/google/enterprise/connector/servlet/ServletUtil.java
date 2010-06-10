@@ -796,17 +796,24 @@ public class ServletUtil {
   private static final String XHTML_DTD_URL =
       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
   private static final String XHTML_DTD_FILE = "/xhtml1-transitional.dtd";
+
   private static final String HTML_LAT1_URL =
       "http://www.w3.org/TR/xhtml1/DTD/xhtml-lat1.ent";
   private static final String HTML_LAT1_FILE = "/xhtml-lat1.ent";
+
   private static final String HTML_SYMBOL_URL =
       "http://www.w3.org/TR/xhtml1/DTD/xhtml-symbol.ent";
   private static final String HTML_SYMBOL_FILE = "/xhtml-symbol.ent";
+
   private static final String HTML_SPECIAL_URL =
       "http://www.w3.org/TR/xhtml1/DTD/xhtml-special.ent";
   private static final String HTML_SPECIAL_FILE = "/xhtml-special.ent";
 
-  private static class LocalEntityResolver implements EntityResolver {
+  private static final String WEBAPP_DTD_URL =
+      "http://java.sun.com/dtd/web-app_2_3.dtd";
+  private static final String WEBAPP_DTD_FILE = "/web-app_2_3.dtd";
+
+  public static class LocalEntityResolver implements EntityResolver {
     public InputSource resolveEntity(String publicId, String systemId) {
       URL url;
       if (XHTML_DTD_URL.equals(systemId)) {
@@ -840,6 +847,15 @@ public class ServletUtil {
         if (url != null) {
           return new InputSource(url.toString());
         } else {
+          return null;
+        }
+      } else if (WEBAPP_DTD_URL.equals(systemId)) {
+        url = getClass().getResource(WEBAPP_DTD_FILE);
+        if (url != null) {
+          System.out.println("Resolving " + WEBAPP_DTD_URL + " to local entity");
+          return new InputSource(url.toString());
+        } else {
+          System.out.println("Unable to resolve " + WEBAPP_DTD_URL + " to local entity");
           return null;
         }
       } else {
