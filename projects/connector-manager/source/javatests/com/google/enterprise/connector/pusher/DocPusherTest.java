@@ -223,7 +223,12 @@ public class DocPusherTest extends TestCase {
         + " authmethod=\"httpbasic\">\n"
         + "<metadata>\n"
         + "<meta name=\"google:feedid\" content=\"test\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"joe, mary, fred, mark, bill, admin\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"fred\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"mark\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"bill\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"admin\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"false\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -242,7 +247,8 @@ public class DocPusherTest extends TestCase {
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
         + "<meta name=\"google:feedid\" content=\"test\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"joe, mary\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -263,7 +269,8 @@ public class DocPusherTest extends TestCase {
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
         + "<meta name=\"google:feedid\" content=\"test\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"joe, mary\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"public\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -291,7 +298,12 @@ public class DocPusherTest extends TestCase {
         + " authmethod=\"httpbasic\">\n"
         + "<metadata>\n"
         + "<meta name=\"google:feedid\" content=\"test\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"joe, mary, fred, mark, bill, admin\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"fred\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"mark\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"bill\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"admin\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"false\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -309,7 +321,8 @@ public class DocPusherTest extends TestCase {
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
         + "<meta name=\"google:feedid\" content=\"test\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"joe, mary\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -327,7 +340,8 @@ public class DocPusherTest extends TestCase {
         + "\" last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\">\n"
         + "<metadata>\n"
         + "<meta name=\"google:feedid\" content=\"test\"/>\n"
-        + "<meta name=\"google:aclusers\" content=\"joe, mary\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"joe\"/>\n"
+        + "<meta name=\"google:aclusers\" content=\"mary\"/>\n"
         + "<meta name=\"google:ispublic\" content=\"true\"/>\n"
         + "<meta name=\"google:lastmodified\" content=\"1970-01-01\"/>\n"
         + "</metadata>\n" + "<content encoding=\"base64binary\">\n"
@@ -519,6 +533,63 @@ public class DocPusherTest extends TestCase {
     } catch (Exception e) {
       fail("No content document take");
     }
+  }
+
+  /**
+   * Test multi-valued metadata representation.  The multiple values
+   * should be fed as individual &lt;meta&gt; elements.
+   * Regression test for Issue 220.
+   */
+  public void testMultiValueMetaDoc() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\""
+        + ",\"author\":{type:string, value:[ziff,bjohnson,jlacey]}"
+        + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
+        + "}\r\n" + "";
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
+
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
+    dpusher.take(document);
+    dpusher.flush();
+    String resultXML = mockFeedConnection.getFeed();
+
+    assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
+        resultXML);
+    assertStringContains("<meta name=\"author\" content=\"ziff\"/>",
+        resultXML);
+    assertStringContains("<meta name=\"author\" content=\"bjohnson\"/>",
+        resultXML);
+    assertStringContains("<meta name=\"author\" content=\"jlacey\"/>",
+        resultXML);
+    assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
+        + ServletUtil.DOCID + "doc1\"", resultXML);
+  }
+
+  /**
+   * Test embedded commas in metadata get fed unmolested.
+   * Regression test for Issue 220.
+   */
+  public void testEmbeddedCommaMetaDoc() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\""
+        + ",\"author\":\"Google, Inc.\""
+        + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
+        + "}\r\n" + "";
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
+
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
+    dpusher.take(document);
+    dpusher.flush();
+    String resultXML = mockFeedConnection.getFeed();
+
+    assertStringContains("last-modified=\"Thu, 01 Jan 1970 00:00:10 GMT\"",
+        resultXML);
+    assertStringContains("<meta name=\"author\" content=\"Google, Inc.\"/>",
+        resultXML);
+    assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
+        + ServletUtil.DOCID + "doc1\"", resultXML);
   }
 
   /**
@@ -896,8 +967,12 @@ public class DocPusherTest extends TestCase {
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(userAcl);
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
-    assertStringContains("<meta name=\"google:aclusers\""
-        + " content=\"joe, mary, admin\"/>", resultXML);
+    assertStringContains("<meta name=\"google:aclusers\" content=\"joe\"/>",
+                         resultXML);
+    assertStringContains("<meta name=\"google:aclusers\" content=\"mary\"/>",
+                         resultXML);
+    assertStringContains("<meta name=\"google:aclusers\" content=\"admin\"/>",
+                         resultXML);
     assertStringNotContains("<meta name=\"acl\"", resultXML);
   }
 
@@ -910,9 +985,14 @@ public class DocPusherTest extends TestCase {
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(userRoleAcl);
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
-    assertStringContains("<meta name=\"google:aclusers\""
-        + " content=\"joe=reader, mary=reader, mary=writer, admin=owner\"/>",
-        resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"joe=reader\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"mary=reader\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"mary=writer\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"admin=owner\"/>", resultXML);
     assertStringNotContains(
         "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "joe\"",
         resultXML);
@@ -933,9 +1013,14 @@ public class DocPusherTest extends TestCase {
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(userScopedRoleAcl);
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
-    assertStringContains("<meta name=\"google:aclusers\""
-        + " content=\"joe=reader, mary=reader, mary=writer, admin=owner\"/>",
-        resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"joe=reader\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"mary=reader\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"mary=writer\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"admin=owner\"/>", resultXML);
     assertStringNotContains(
         "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "joe\"",
         resultXML);
@@ -956,10 +1041,12 @@ public class DocPusherTest extends TestCase {
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(userGroupAcl);
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
-    assertStringContains("<meta name=\"google:aclusers\""
-        + " content=\"joe, mary\"/>", resultXML);
-    assertStringContains("<meta name=\"google:aclgroups\""
-        + " content=\"eng\"/>", resultXML);
+    assertStringContains("<meta name=\"google:aclusers\" content=\"joe\"/>",
+                         resultXML);
+    assertStringContains("<meta name=\"google:aclusers\" content=\"mary\"/>",
+                         resultXML);
+    assertStringContains("<meta name=\"google:aclgroups\" content=\"eng\"/>",
+                         resultXML);
   }
 
   public void testUserGroupRoleAcl() throws Exception {
@@ -971,16 +1058,20 @@ public class DocPusherTest extends TestCase {
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(userGroupRoleAcl);
     assertStringContains("authmethod=\"httpbasic\"", resultXML);
-    assertStringContains("<meta name=\"google:aclusers\""
-        + " content=\"joe=reader, mary=reader, mary=writer\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"joe=reader\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"mary=reader\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"mary=writer\"/>", resultXML);
     assertStringNotContains(
         "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "joe\"",
         resultXML);
     assertStringNotContains(
         "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "mary\"",
         resultXML);
-    assertStringContains("<meta name=\"google:aclgroups\""
-        + " content=\"eng=reader\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclgroups\" content=\"eng=reader\"/>", resultXML);
     assertStringNotContains(
         "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "eng\"",
         resultXML);
@@ -1034,13 +1125,15 @@ public class DocPusherTest extends TestCase {
         + ",\"acl\":{type:string, value:[\"user:root=owner\",\"group:root=reader,writer\"]}"
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(sameUserGroupAcl);
-    assertStringContains("<meta name=\"google:aclusers\""
-        + " content=\"root=owner\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"root=owner\"/>", resultXML);
     assertStringNotContains(
         "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "root\"",
         resultXML);
-    assertStringContains("<meta name=\"google:aclgroups\""
-        + " content=\"root=reader, root=writer\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclgroups\" content=\"root=reader\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclgroups\" content=\"root=writer\"/>", resultXML);
     assertStringNotContains(
         "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "root\"",
         resultXML);
@@ -1053,13 +1146,19 @@ public class DocPusherTest extends TestCase {
         + ",\"acl\":{type:string, value:[\"user:joe\",\"user:mary=reader,writer\",\"group:eng\",\"group:root\"]}"
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(someUserRoleAcl);
-    assertStringContains("<meta name=\"google:aclusers\""
-        + " content=\"joe, mary=reader, mary=writer\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"joe\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"mary=reader\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"mary=writer\"/>", resultXML);
     assertStringNotContains(
         "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "mary\"",
         resultXML);
-    assertStringContains("<meta name=\"google:aclgroups\""
-        + " content=\"eng, root\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclgroups\" content=\"eng\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclgroups\" content=\"root\"/>", resultXML);
   }
 
   public void testSomeGroupRoleAcl() throws Exception {
@@ -1069,10 +1168,16 @@ public class DocPusherTest extends TestCase {
         + ",\"acl\":{type:string, value:[\"user:joe\",\"user:mary\",\"group:eng=reader,writer\",\"group:root\"]}"
         + ",\"google:ispublic\":\"false\"}";
     String resultXML = feedJsonEvent(someGroupRoleAcl);
-    assertStringContains("<meta name=\"google:aclusers\""
-        + " content=\"joe, mary\"/>", resultXML);
-    assertStringContains("<meta name=\"google:aclgroups\""
-        + " content=\"eng=reader, eng=writer, root\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"joe\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclusers\" content=\"mary\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclgroups\" content=\"eng=reader\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclgroups\" content=\"eng=writer\"/>", resultXML);
+    assertStringContains(
+        "<meta name=\"google:aclgroups\" content=\"root\"/>", resultXML);
     assertStringNotContains(
         "<meta name=\"" + SpiConstants.USER_ROLES_PROPNAME_PREFIX + "eng\"",
         resultXML);

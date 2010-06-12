@@ -29,7 +29,7 @@ import com.google.enterprise.connector.spiimpl.ValueImpl;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -68,12 +68,13 @@ public class DocUtils {
    */
   public static Property processAclProperty(Document document,
       String aclPropName) throws RepositoryException {
+    LinkedList<Value> acl = new LinkedList<Value>();
     Property scopeProp = document.findProperty(aclPropName);
-    List<Value> aclEntryList = new ArrayList<Value>();
-    boolean aclPropWasModified = false;
     Value scopeVal = null;
     while ((scopeVal = scopeProp.nextValue()) != null) {
-      String aclScope = scopeVal.toString();
+      String aclScope = scopeVal.toString().trim();
+      if (aclScope.length() == 0)
+        continue;
       Property scopeRoleProp = null;
       if (SpiConstants.PROPNAME_ACLGROUPS.equals(aclPropName)) {
         scopeRoleProp = document.findProperty(
@@ -86,24 +87,20 @@ public class DocUtils {
         // Add ACL Entry (scope=role pair) to the list.
         Value roleVal = null;
         while ((roleVal = scopeRoleProp.nextValue()) != null) {
-          StringBuilder aclEntry = new StringBuilder(aclScope).append("=")
-              .append(roleVal.toString());
-          aclEntryList.add(Value.getStringValue(aclEntry.toString()));
-          aclPropWasModified = true;
+          String role = roleVal.toString().trim();
+          if (role.length() > 0) {
+            acl.add(Value.getStringValue(aclScope + '=' + role));
+          } else {
+            // XXX: Empty role implies reader?
+            acl.add(scopeVal);
+          }
         }
       } else {
-        // Just add scope to the list.
-        aclEntryList.add(Value.getStringValue(aclScope));
+        // No roles for this scope; just add scope to the list.
+        acl.add(scopeVal);
       }
     }
-
-    if (aclPropWasModified) {
-      // Need to create a new Property.
-      return new SimpleProperty(aclEntryList);
-    } else {
-      // Have to return a fresh property so next values can be retrieved.
-      return document.findProperty(aclPropName);
-    }
+    return new SimpleProperty(acl);
   }
 
   /**

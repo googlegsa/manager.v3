@@ -470,48 +470,15 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
    */
   private static void wrapOneProperty(StringBuilder buf, String name,
       Property property) throws RepositoryException, IOException {
-    // In case there are only null values, we want to "roll back" the
-    // XML_META tag. So save our current length:
-    int indexMetaStart = buf.length();
-
-    buf.append("<");
-    buf.append(XML_META);
-    XmlUtils.xmlAppendAttr(XML_NAME, name, buf);
-    buf.append(" content=\"");
-
-    // Mark the beginning of the values:
-    int indexValuesStart = buf.length();
-    String delimiter = "";
     ValueImpl value = null;
     while ((value = (ValueImpl) property.nextValue()) != null) {
-      wrapOneValue(buf, value, delimiter);
-      delimiter = ", ";
-    }
-
-    // If there were no additions to buf (because of empty values),
-    // roll back to before the XML_META tag.
-    if (buf.length() > indexValuesStart) {
-      buf.append("\"/>\n");
-    } else {
-      buf.delete(indexMetaStart, buf.length());
-    }
-  }
-
-  /**
-   * Wrap a single Property Value and append to string buffer.
-   * Does nothing if the Property's value is null or zero-length.
-   *
-   * @param buf string builder
-   * @param value a Property Value
-   * @throws IOException only from Appendable, and that can't really
-   *         happen when using StringBuilder.
-   */
-  private static void wrapOneValue(StringBuilder buf, ValueImpl value,
-      String delimiter) throws IOException {
-    String valString = value.toFeedXml();
-    if (valString != null && valString.length() > 0) {
-      buf.append(delimiter);
-      XmlUtils.xmlAppendAttrValue(valString, buf);
+      String valString = value.toFeedXml();
+      if (valString != null && valString.length() > 0) {
+        buf.append("<").append(XML_META);
+        XmlUtils.xmlAppendAttr(XML_NAME, name, buf);
+        XmlUtils.xmlAppendAttr(XML_CONTENT, valString, buf);
+        buf.append("/>\n");
+      }
     }
   }
 
