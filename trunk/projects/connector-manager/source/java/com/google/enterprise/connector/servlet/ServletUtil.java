@@ -852,10 +852,8 @@ public class ServletUtil {
       } else if (WEBAPP_DTD_URL.equals(systemId)) {
         url = getClass().getResource(WEBAPP_DTD_FILE);
         if (url != null) {
-          System.out.println("Resolving " + WEBAPP_DTD_URL + " to local entity");
           return new InputSource(url.toString());
         } else {
-          System.out.println("Unable to resolve " + WEBAPP_DTD_URL + " to local entity");
           return null;
         }
       } else {
