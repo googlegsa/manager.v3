@@ -49,16 +49,16 @@ public class ChangeDetectorTest extends TestCase {
   }
 
   /** Adds an instance to the store and records the action. */
-  private void addInstance(String instanceName) {
-    store.setConfiguration(new StoreContext(instanceName),
+  private void addConnector(String connectorName) {
+    store.storeConnectorConfiguration(new StoreContext(connectorName),
         new Configuration(null, null, null));
-    expectedChanges.add(MockChangeListener.INSTANCE_ADDED + instanceName);
+    expectedChanges.add(MockChangeListener.CONNECTOR_ADDED + connectorName);
   }
 
   /** Deletes an instance from the store and records the action. */
-  private void removeInstance(String instanceName) {
-    store.removeConfiguration(new StoreContext(instanceName));
-    expectedChanges.add(MockChangeListener.INSTANCE_REMOVED + instanceName);
+  private void removeConnector(String connectorName) {
+    store.removeConnectorConfiguration(new StoreContext(connectorName));
+    expectedChanges.add(MockChangeListener.CONNECTOR_REMOVED + connectorName);
   }
 
   /**
@@ -80,19 +80,19 @@ public class ChangeDetectorTest extends TestCase {
 
   /** Basic test of adding and deleting connector instances. */
   public void testAddAndRemove() {
-    addInstance("c1");
+    addConnector("c1");
     detector.detect();
     assertEqualsMultiSet(expectedChanges, listener.getChanges());
 
-    addInstance("b2");
-    addInstance("b1");
-    addInstance("b3");
+    addConnector("b2");
+    addConnector("b1");
+    addConnector("b3");
     detector.detect();
     assertEqualsMultiSet(expectedChanges, listener.getChanges());
 
-    addInstance("c2");
-    addInstance("a1");
-    removeInstance("b2");
+    addConnector("c2");
+    addConnector("a1");
+    removeConnector("b2");
     detector.detect();
     assertEqualsMultiSet(expectedChanges, listener.getChanges());
   }

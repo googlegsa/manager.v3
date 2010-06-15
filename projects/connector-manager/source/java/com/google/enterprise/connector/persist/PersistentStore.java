@@ -31,15 +31,16 @@ public interface PersistentStore {
    */
   ImmutableMap<StoreContext, ConnectorStamps> getInventory();
 
-  String getCheckpoint(StoreContext context);
-  void setCheckpoint(StoreContext context, String checkpoint);
-  void removeCheckpoint(StoreContext context);
+  String getConnectorState(StoreContext context);
+  void storeConnectorState(StoreContext context, String checkpoint);
+  void removeConnectorState(StoreContext context);
 
-  Configuration getConfiguration(StoreContext context);
-  void setConfiguration(StoreContext context, Configuration configuration);
-  void removeConfiguration(StoreContext context);
+  Configuration getConnectorConfiguration(StoreContext context);
+  void storeConnectorConfiguration(StoreContext context,
+      Configuration configuration);
+  void removeConnectorConfiguration(StoreContext context);
 
-  Schedule getSchedule(StoreContext context);
-  void setSchedule(StoreContext context, Schedule schedule);
-  void removeSchedule(StoreContext context);
+  Schedule getConnectorSchedule(StoreContext context);
+  void storeConnectorSchedule(StoreContext context, Schedule schedule);
+  void removeConnectorSchedule(StoreContext context);
 }
