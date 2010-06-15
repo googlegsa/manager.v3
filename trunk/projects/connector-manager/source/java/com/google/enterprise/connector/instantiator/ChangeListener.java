@@ -20,10 +20,11 @@ import com.google.enterprise.connector.scheduler.Schedule;
  * Accepts change notifications from a {@link ChangeDetector}.
  */
 interface ChangeListener {
-  void instanceAdded(String instanceName, Configuration configuration);
-  void instanceRemoved(String instanceName);
+  void connectorAdded(String instanceName, Configuration configuration);
+  void connectorRemoved(String instanceName);
 
-  void checkpointChanged(String instanceName, String checkpoint);
-  void configurationChanged(String instanceName, Configuration configuration);
-  void scheduleChanged(String instanceName, Schedule schedule);
+  void connectorCheckpointChanged(String instanceName, String checkpoint);
+  void connectorConfigurationChanged(String instanceName,
+      Configuration configuration);
+  void connectorScheduleChanged(String instanceName, Schedule schedule);
 }

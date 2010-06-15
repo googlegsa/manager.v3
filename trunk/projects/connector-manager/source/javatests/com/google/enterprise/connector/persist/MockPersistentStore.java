@@ -54,48 +54,49 @@ public class MockPersistentStore implements PersistentStore {
   }
 
   /* @Override */
-  public String getCheckpoint(StoreContext context) {
+  public String getConnectorState(StoreContext context) {
     return checkpointMap.get(context);
   }
 
   /* @Override */
-  public void setCheckpoint(StoreContext context, String connectorCheckpoint) {
-    checkpointMap.put(context, connectorCheckpoint);
+  public void storeConnectorState(StoreContext context,
+      String connectorState) {
+    checkpointMap.put(context, connectorState);
   }
 
   /* @Override */
-  public void removeCheckpoint(StoreContext context) {
+  public void removeConnectorState(StoreContext context) {
     checkpointMap.remove(context);
   }
 
   /* @Override */
-  public Configuration getConfiguration(StoreContext context) {
+  public Configuration getConnectorConfiguration(StoreContext context) {
     return configurationMap.get(context);
   }
 
   /* @Override */
-  public void setConfiguration(StoreContext context,
+  public void storeConnectorConfiguration(StoreContext context,
       Configuration config) {
     configurationMap.put(context, config);
   }
 
   /* @Override */
-  public void removeConfiguration(StoreContext context) {
+  public void removeConnectorConfiguration(StoreContext context) {
     configurationMap.remove(context);
   }
 
   /* @Override */
-  public Schedule getSchedule(StoreContext context) {
+  public Schedule getConnectorSchedule(StoreContext context) {
     return scheduleMap.get(context);
   }
 
   /* @Override */
-  public void setSchedule(StoreContext context, Schedule schedule) {
+  public void storeConnectorSchedule(StoreContext context, Schedule schedule) {
     scheduleMap.put(context, schedule);
   }
 
   /* @Override */
-  public void removeSchedule(StoreContext context) {
+  public void removeConnectorSchedule(StoreContext context) {
     scheduleMap.remove(context);
   }
 }

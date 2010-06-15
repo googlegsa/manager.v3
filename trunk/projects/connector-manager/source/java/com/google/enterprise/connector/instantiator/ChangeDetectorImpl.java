@@ -103,20 +103,21 @@ class ChangeDetectorImpl implements ChangeDetector {
         m = getNext(mi);
         p = getNext(pi);
       } else if (diff < 0) {
-        listener.instanceRemoved(m.getConnectorName());
+        listener.connectorRemoved(m.getConnectorName());
         m = getNext(mi);
       } else { // diff > 0
-        listener.instanceAdded(p.getConnectorName(),
-            store.getConfiguration(p));
+        listener.connectorAdded(p.getConnectorName(),
+            store.getConnectorConfiguration(p));
         p = getNext(pi);
       }
     }
     while (m != null) {
-      listener.instanceRemoved(m.getConnectorName());
+      listener.connectorRemoved(m.getConnectorName());
       m = getNext(mi);
     }
     while (p != null) {
-      listener.instanceAdded(p.getConnectorName(), store.getConfiguration(p));
+      listener.connectorAdded(p.getConnectorName(),
+          store.getConnectorConfiguration(p));
       p = getNext(pi);
     }
   }
@@ -136,17 +137,19 @@ class ChangeDetectorImpl implements ChangeDetector {
       ConnectorStamps ms, ConnectorStamps ps) {
     if (compareStamps(ms.getCheckpointStamp(),
         ps.getCheckpointStamp()) != 0) {
-      listener.checkpointChanged(p.getConnectorName(), store.getCheckpoint(p));
+      listener.connectorCheckpointChanged(p.getConnectorName(),
+          store.getConnectorState(p));
     }
 
     if (compareStamps(ms.getConfigurationStamp(),
         ps.getConfigurationStamp()) != 0) {
-      listener.configurationChanged(p.getConnectorName(),
-          store.getConfiguration(p));
+      listener.connectorConfigurationChanged(p.getConnectorName(),
+          store.getConnectorConfiguration(p));
     }
 
     if (compareStamps(ms.getScheduleStamp(), ps.getScheduleStamp()) != 0) {
-      listener.scheduleChanged(p.getConnectorName(), store.getSchedule(p));
+      listener.connectorScheduleChanged(p.getConnectorName(),
+          store.getConnectorSchedule(p));
     }
   }
 

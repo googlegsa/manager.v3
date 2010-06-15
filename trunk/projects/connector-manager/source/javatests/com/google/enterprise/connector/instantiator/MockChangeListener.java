@@ -23,8 +23,8 @@ import java.util.List;
  * Accepts change notifications from a {@link ChangeDetector}.
  */
 class MockChangeListener implements ChangeListener{
-  public static final String INSTANCE_ADDED = "instanceAdded: ";
-  public static final String INSTANCE_REMOVED = "instanceRemoved: ";
+  public static final String CONNECTOR_ADDED = "connectorAdded: ";
+  public static final String CONNECTOR_REMOVED = "connectorRemoved: ";
   public static final String CHECKPOINT_CHANGED = "checkpointChanged: ";
   public static final String CONFIGURATION_CHANGED = "configurationChanged: ";
   public static final String SCHEDULE_CHANGED = "scheduleChanged: ";
@@ -41,28 +41,31 @@ class MockChangeListener implements ChangeListener{
   }
 
   /* @Override */
-  public void instanceAdded(String instanceName, Configuration configuration) {
-    changes.add(INSTANCE_ADDED + instanceName);
-  }
-
-  /* @Override */
-  public void instanceRemoved(String instanceName) {
-    changes.add(INSTANCE_REMOVED + instanceName);
-  }
-
-  /* @Override */
-  public void checkpointChanged(String instanceName, String checkpoint) {
-    changes.add(CHECKPOINT_CHANGED + instanceName);
-  }
-
-  /* @Override */
-  public void configurationChanged(String instanceName,
+  public void connectorAdded(String connectorName,
       Configuration configuration) {
-    changes.add(CONFIGURATION_CHANGED + instanceName);
+    changes.add(CONNECTOR_ADDED + connectorName);
   }
 
   /* @Override */
-  public void scheduleChanged(String instanceName, Schedule schedule) {
-    changes.add(SCHEDULE_CHANGED + instanceName);
+  public void connectorRemoved(String connectorName) {
+    changes.add(CONNECTOR_REMOVED + connectorName);
+  }
+
+  /* @Override */
+  public void connectorCheckpointChanged(String connectorName,
+      String checkpoint) {
+    changes.add(CHECKPOINT_CHANGED + connectorName);
+  }
+
+  /* @Override */
+  public void connectorConfigurationChanged(String connectorName,
+      Configuration configuration) {
+    changes.add(CONFIGURATION_CHANGED + connectorName);
+  }
+
+  /* @Override */
+  public void connectorScheduleChanged(String connectorName,
+      Schedule schedule) {
+    changes.add(SCHEDULE_CHANGED + connectorName);
   }
 }
