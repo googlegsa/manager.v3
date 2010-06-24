@@ -60,26 +60,24 @@ class BatchCoordinator implements TraversalStateStore,
   private static final Logger LOGGER =
       Logger.getLogger(BatchCoordinator.class.getName());
 
+  private String cachedState;
   private final Object requiredBatchKey;
   private final ConnectorCoordinatorImpl connectorCoordinator;
 
   /**
    * Creates a BatchCoordinator
    */
-  BatchCoordinator(ConnectorCoordinatorImpl connectorCoordinator) {
+  BatchCoordinator(ConnectorCoordinatorImpl connectorCoordinator)
+      throws ConnectorNotFoundException {
     this.requiredBatchKey = connectorCoordinator.currentBatchKey;
+    this.cachedState = connectorCoordinator.getConnectorState();
     this.connectorCoordinator = connectorCoordinator;
   }
 
   public String getTraversalState() {
     synchronized (connectorCoordinator) {
       if (connectorCoordinator.currentBatchKey == requiredBatchKey) {
-        try {
-          return connectorCoordinator.getConnectorState();
-        } catch (ConnectorNotFoundException cnfe) {
-          // Connector disappeared while we were away.
-          throw new BatchCompletedException();
-        }
+        return cachedState;
       } else {
         throw new BatchCompletedException();
       }
@@ -88,15 +86,19 @@ class BatchCoordinator implements TraversalStateStore,
 
   public void storeTraversalState(String state) {
     synchronized (connectorCoordinator) {
-      if (connectorCoordinator.currentBatchKey == requiredBatchKey) {
-        try {
-          connectorCoordinator.setConnectorState(state);
-        } catch (ConnectorNotFoundException cnfe) {
-          // Connector disappeared while we were away.
-          // Don't try to store results.
+      // Make sure our batch is still valid and that nobody has modified
+      // the checkpoint while we were away.
+      try {
+        if ((connectorCoordinator.currentBatchKey == requiredBatchKey) &&
+            isCheckpointUnmodified()) {
+          connectorCoordinator.setConnectorState(state);  // TODO: PStore eventual Setter
+          cachedState = state;
+        } else {
           throw new BatchCompletedException();
         }
-      } else {
+      } catch (ConnectorNotFoundException cnfe) {
+        // Connector disappeared while we were away.
+        // Don't try to store results.
         throw new BatchCompletedException();
       }
     }
@@ -125,6 +127,17 @@ class BatchCoordinator implements TraversalStateStore,
             + connectorCoordinator.getConnectorName()
             + "  batchKey = "+ requiredBatchKey);
       }
+    }
+  }
+
+  // Returns true if the stored traversal state has not been modified since
+  // we started, false if the persisted state does not match our cache.
+  private boolean isCheckpointUnmodified() throws ConnectorNotFoundException {
+    String currentState = connectorCoordinator.getConnectorState();
+    if (currentState == cachedState) {
+      return true;
+    } else {
+      return (cachedState != null) && cachedState.equals(currentState);
     }
   }
 

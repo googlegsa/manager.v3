@@ -52,6 +52,7 @@ public class SpringInstantiator implements Instantiator {
 
   // State that is filled in by init.
   private TypeMap typeMap;
+  private ChangeListener changeListener;
 
   /**
    * Normal constructor.
@@ -111,6 +112,8 @@ public class SpringInstantiator implements Instantiator {
     if (typeMap == null) {
       setTypeMap(new TypeMap());
     }
+    changeListener = new ChangeListenerImpl(this);
+    // TODO: create a ChangeDetector hooked up to this ChangeListener.
     ConnectorCoordinatorMapHelper.fillFromTypes(typeMap, coordinatorMap,
         pusherFactory, loadManagerFactory, threadPool);
   }
@@ -135,7 +138,7 @@ public class SpringInstantiator implements Instantiator {
     LOGGER.info("Dropping connector: " + connectorName);
     ConnectorCoordinator existing = coordinatorMap.get(connectorName);
     if (existing != null) {
-      existing.removeConnector();
+      existing.removeConnector(); // TODO: PStore eventual setter
     }
   }
 
@@ -152,6 +155,10 @@ public class SpringInstantiator implements Instantiator {
       throw new ConnectorNotFoundException();
     }
     return connectorCoordinator;
+  }
+
+  public ChangeHandler getChangeHandler(String connectorName) {
+      return (ChangeHandler) getOrAddConnectorCoordinator(connectorName);
   }
 
   private ConnectorCoordinator getOrAddConnectorCoordinator(
@@ -192,7 +199,7 @@ public class SpringInstantiator implements Instantiator {
     return getTypeInfo(typeName).getConnectorType();
   }
 
-  private TypeInfo getTypeInfo(String typeName)
+  TypeInfo getTypeInfo(String typeName)
       throws ConnectorTypeNotFoundException {
     TypeInfo typeInfo = typeMap.getTypeInfo(typeName);
     if (typeInfo == null) {
@@ -209,7 +216,7 @@ public class SpringInstantiator implements Instantiator {
   public void restartConnectorTraversal(String connectorName)
       throws ConnectorNotFoundException {
     LOGGER.info("Restarting traversal for Connector: " + connectorName);
-    getConnectorCoordinator(connectorName).restartConnectorTraversal();
+    getConnectorCoordinator(connectorName).restartConnectorTraversal(); // TODO: PStore eventual Setter
   }
 
   public Set<String> getConnectorNames() {
@@ -236,7 +243,7 @@ public class SpringInstantiator implements Instantiator {
     try {
       TypeInfo typeInfo = getTypeInfo(connectorTypeName);
       ConnectorCoordinator ci = getOrAddConnectorCoordinator(connectorName);
-      return ci.setConnectorConfig(typeInfo, configMap, locale, update);
+      return ci.setConnectorConfig(typeInfo, configMap, locale, update);  // TODO: PStore eventual setter
     } catch (ConnectorTypeNotFoundException ctnf) {
       throw new ConnectorNotFoundException("Incorrect type", ctnf);
     }
@@ -250,7 +257,7 @@ public class SpringInstantiator implements Instantiator {
   public void setConnectorSchedule(String connectorName,
       String connectorSchedule) throws ConnectorNotFoundException {
     getConnectorCoordinator(connectorName).
-        setConnectorSchedule(connectorSchedule);
+        setConnectorSchedule(connectorSchedule);  // TODO: PStore eventual Setter
   }
 
   public String getConnectorSchedule(String connectorName)
