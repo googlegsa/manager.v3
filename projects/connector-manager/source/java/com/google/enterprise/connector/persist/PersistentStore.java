@@ -20,6 +20,12 @@ import com.google.enterprise.connector.scheduler.Schedule;
 
 /**
  * Stores and retrieves the persistent objects of a connector instance.
+ * <p>
+ * Each call to one of the set or remove methods on this interface
+ * should update the version stamp of the corresponding object to a
+ * new and unique value. Specifically, removing an object and then
+ * re-adding it should not produce a version stamp for the new object
+ * that might have been returned by the original object.
  */
 // TODO: Change StoreContext to String (instance name).
 public interface PersistentStore {
