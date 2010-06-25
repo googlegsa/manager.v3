@@ -13,20 +13,22 @@
 // limitations under the License.
 package com.google.enterprise.connector.persist;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.PropertiesException;
-
-import java.text.MessageFormat;
-import java.util.LinkedList;
-import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import com.google.enterprise.connector.instantiator.Configuration;
+import com.google.enterprise.connector.scheduler.Schedule;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.MessageFormat;
+import java.util.LinkedList;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.sql.DataSource;
 
 /**
@@ -34,8 +36,7 @@ import javax.sql.DataSource;
  * for a named connector. The persistent store for these data items
  * are columns in a database table, accessed via JDBC.
  */
-public class JdbcStore implements ConnectorScheduleStore,
-    ConnectorStateStore, ConnectorConfigStore {
+public class JdbcStore implements PersistentStore {
 
   private static final Logger LOGGER =
       Logger.getLogger(JdbcStore.class.getName());
@@ -115,14 +116,21 @@ public class JdbcStore implements ConnectorScheduleStore,
     this.createTableDdl = createTableDdl;
   }
 
+  /* @Override */
+  public ImmutableMap<StoreContext, ConnectorStamps> getInventory() {
+    throw new RuntimeException("TODO");
+  }
+
   /**
    * Retrieves connector schedule.
    *
    * @param context a StoreContext
    * @return connectorSchedule schedule of the corresponding connector.
    */
-  public String getConnectorSchedule(StoreContext context) {
-    return getField(context, SCHEDULE);
+  /* @Override */
+  public Schedule getConnectorSchedule(StoreContext context) {
+    String schedule = getField(context, SCHEDULE);
+    return (schedule == null) ? null : new Schedule(schedule);
   }
 
   /**
@@ -131,9 +139,12 @@ public class JdbcStore implements ConnectorScheduleStore,
    * @param context a StoreContext
    * @param connectorSchedule schedule of the corresponding connector.
    */
+  /* @Override */
   public void storeConnectorSchedule(StoreContext context,
-      String connectorSchedule) {
-    setField(context, SCHEDULE, connectorSchedule);
+      Schedule connectorSchedule) {
+    String schedule = (connectorSchedule == null)
+        ? null : connectorSchedule.toString();
+    setField(context, SCHEDULE, schedule);
   }
 
   /**
@@ -141,6 +152,7 @@ public class JdbcStore implements ConnectorScheduleStore,
    *
    * @param context a StoreContext
    */
+  /* @Override */
   public void removeConnectorSchedule(StoreContext context) {
     storeConnectorSchedule(context, null);
   }
@@ -151,6 +163,7 @@ public class JdbcStore implements ConnectorScheduleStore,
    * @param context a StoreContext
    * @return the state, or null if no state has been stored for this connector.
    */
+  /* @Override */
   public String getConnectorState(StoreContext context) {
     return getField(context, STATE);
   }
@@ -161,6 +174,7 @@ public class JdbcStore implements ConnectorScheduleStore,
    * @param context a StoreContext
    * @param connectorState state of the corresponding connector
    */
+  /* @Override */
   public void storeConnectorState(StoreContext context, String connectorState) {
     setField(context, STATE, connectorState);
   }
@@ -170,6 +184,7 @@ public class JdbcStore implements ConnectorScheduleStore,
    *
    * @param context a StoreContext
    */
+  /* @Override */
   public void removeConnectorState(StoreContext context) {
     storeConnectorState(context, null);
   }
@@ -178,37 +193,40 @@ public class JdbcStore implements ConnectorScheduleStore,
    * Gets the stored configuration of a named connector.
    *
    * @param context a StoreContext
-   * @return the configuration Properties, or null if no configuration
+   * @return the configuration map, or null if no configuration
    *         has been stored for this connector.
    */
-  public Properties getConnectorConfiguration(StoreContext context) {
-    Properties props = null;
+  /* @Override */
+  public Configuration getConnectorConfiguration(StoreContext context) {
     String config = getField(context, CONFIGURATION);
     if (config != null) {
       try {
-        props = PropertiesUtils.loadFromString(config);
+        Properties props = PropertiesUtils.loadFromString(config);
+        return new Configuration(null, PropertiesUtils.toMap(props), null);
       } catch (PropertiesException e) {
         LOGGER.log(Level.WARNING, "Failed to read connector configuration for "
                    + context.getConnectorName(), e);
       }
     }
-    return props;
+    return null;
   }
 
   /**
    * Stores the configuration of a named connector.
    *
    * @param context a StoreContext
-   * @param configuration Properties to store
+   * @param configuration map to store
    */
+  /* @Override */
   public void storeConnectorConfiguration(StoreContext context,
-      Properties configuration) {
+      Configuration configuration) {
     String config;
     if (configuration == null) {
       config = null;
     } else {
+      Properties properties = PropertiesUtils.fromMap(configuration.getMap());
       try {
-        config = PropertiesUtils.storeToString(configuration, null);
+        config = PropertiesUtils.storeToString(properties, null);
       } catch (PropertiesException e) {
         LOGGER.log(Level.WARNING, "Failed to store connector configuration for "
                    + context.getConnectorName(), e);
@@ -223,6 +241,7 @@ public class JdbcStore implements ConnectorScheduleStore,
    *
    * @param context a StoreContext
    */
+  /* @Override */
   public void removeConnectorConfiguration(StoreContext context) {
     storeConnectorConfiguration(context, null);
   }

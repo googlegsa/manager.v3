@@ -61,14 +61,14 @@ public class ConnectorTestUtils {
    * @param map1 a Map that should be a subset of map2
    * @param map2 a Map that should be a superset of map1
    */
-  public static void compareMaps(Map<Object, Object> map1,
-      Map<Object, Object> map2) {
-    Set<Object> set1 = map1.keySet();
-    Set<Object> set2 = map2.keySet();
+  public static <T, U> void compareMaps(Map<T, U> map1,
+      Map<T, U> map2) {
+    Set<T> set1 = map1.keySet();
+    Set<T> set2 = map2.keySet();
     Assert.assertTrue("there is a key in map1 that's not in map2",
         set2.containsAll(set1));
 
-    for (Object key : set1) {
+    for (T key : set1) {
       Assert.assertEquals(map1.get(key), map2.get(key));
     }
   }

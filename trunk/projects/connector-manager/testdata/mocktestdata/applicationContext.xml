@@ -16,11 +16,11 @@
   </bean>
 
   <bean id="ConnectorScheduleStore"
-        class="com.google.enterprise.connector.persist.MockConnectorScheduleStore">
+        class="com.google.enterprise.connector.persist.MockPersistentStore">
   </bean>
 
   <bean id="ConnectorStateStore"
-        class="com.google.enterprise.connector.persist.MockConnectorStateStore">
+        class="com.google.enterprise.connector.persist.MockPersistentStore">
   </bean>
 
   <bean id="ConnectorConfigStore"

@@ -13,12 +13,15 @@
 // limitations under the License.
 package com.google.enterprise.connector.persist;
 
+import com.google.enterprise.connector.instantiator.Configuration;
+import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.TestCase;
 
 import java.io.File;
-import java.util.Properties;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Class to test File System persistent store for
@@ -26,7 +29,6 @@ import java.util.Properties;
  * ConnectorConfigStore interfaces.
  */
 public class FileStoreTest extends TestCase {
-
   protected FileStore store;
   protected File storeDir;
 
@@ -44,18 +46,18 @@ public class FileStoreTest extends TestCase {
 
   // Tests getting and setting for a valid connector name and schedule.
   public void testGetandSetConnectorSchedule() {
-    String expectedSchedule = "schedule of connectorA";
     String connectorName = "connectorA";
+    String expectedSchedule = connectorName + ":200:300000:0-0";
     StoreContext storeContext = new StoreContext(connectorName, storeDir);
-    store.storeConnectorSchedule(storeContext, expectedSchedule);
-    String resultSchedule = store.getConnectorSchedule(storeContext);
-    assertEquals(expectedSchedule, resultSchedule);
+    store.storeConnectorSchedule(storeContext, new Schedule(expectedSchedule));
+    Schedule resultSchedule = store.getConnectorSchedule(storeContext);
+    assertEquals(expectedSchedule, resultSchedule.toString());
   }
 
   // Tests getting schedule for an unknown connector
   public void testGetConnectorSchedule1() {
-    String schedule = store.getConnectorSchedule(
-        new StoreContext("some wierd connector name", storeDir));
+    Schedule schedule = store.getConnectorSchedule(
+        new StoreContext("some weird connector name", storeDir));
     assertNull(schedule);
   }
 
@@ -73,13 +75,14 @@ public class FileStoreTest extends TestCase {
   // Tests schedule cannot be retrieved after removal.
   public void testRemoveConnectorSchedule() {
     String connectorName = "foo";
-    String connectorSchedule = "foo's schedule";
+    String connectorSchedule = connectorName + ":500:300000:18-0:0-6";
     StoreContext storeContext = new StoreContext(connectorName, storeDir);
-    String schedule = store.getConnectorSchedule(storeContext);
+    Schedule schedule = store.getConnectorSchedule(storeContext);
     assertNull(schedule);
-    store.storeConnectorSchedule(storeContext, connectorSchedule);
+    store.storeConnectorSchedule(storeContext,
+        new Schedule(connectorSchedule));
     schedule = store.getConnectorSchedule(storeContext);
-    assertEquals(connectorSchedule, schedule);
+    assertEquals(connectorSchedule, schedule.toString());
     store.removeConnectorSchedule(storeContext);
     schedule = store.getConnectorSchedule(storeContext);
     assertNull(schedule);
@@ -95,10 +98,10 @@ public class FileStoreTest extends TestCase {
     assertEquals(expectedState, resultState);
   }
 
-  //Tests getting state for an unknown connector.
+  // Tests getting state for an unknown connector.
   public void testGetConnectorState1() {
     String state = store.getConnectorState(
-        new StoreContext("some wierd connector name", storeDir));
+        new StoreContext("some weird connector name", storeDir));
     assertNull(state);
   }
 
@@ -130,40 +133,42 @@ public class FileStoreTest extends TestCase {
 
   // Tests getting and setting for a valid connector name and config.
   public void testGetandSetConnectorConfiguration() {
-    Properties expectedConfig = new Properties();
-    expectedConfig.setProperty("property1", "value1");
-    expectedConfig.setProperty("property2", "2");
-    expectedConfig.setProperty("property3", "true");
+    Map<String, String> expectedConfig = new HashMap<String, String>();
+    expectedConfig.put("property1", "value1");
+    expectedConfig.put("property2", "2");
+    expectedConfig.put("property3", "true");
     String connectorName = "connectorA";
     StoreContext storeContext = new StoreContext(connectorName, storeDir);
-    store.storeConnectorConfiguration(storeContext, expectedConfig);
-    Properties resultConfig = store.getConnectorConfiguration(storeContext);
-    ConnectorTestUtils.compareMaps(expectedConfig, resultConfig);
+    store.storeConnectorConfiguration(storeContext,
+        new Configuration(null, expectedConfig, null));
+    Configuration resultConfig = store.getConnectorConfiguration(storeContext);
+    ConnectorTestUtils.compareMaps(expectedConfig, resultConfig.getMap());
   }
 
   // Tests getting and setting a configuration that should encrypt
   // some properties.
   public void testEncryptedConnectorConfiguration() {
-    Properties expectedConfig = new Properties();
-    expectedConfig.setProperty("property1", "value1");
-    expectedConfig.setProperty("property2", "2");
-    expectedConfig.setProperty("property3", "true");
-    expectedConfig.setProperty("password", "fred");
-    expectedConfig.setProperty("PASSWORDS", "fred");
-    expectedConfig.setProperty("xyzpasswordzy", "fred");
+    Map<String, String> expectedConfig = new HashMap<String, String>();
+    expectedConfig.put("property1", "value1");
+    expectedConfig.put("property2", "2");
+    expectedConfig.put("property3", "true");
+    expectedConfig.put("password", "fred");
+    expectedConfig.put("PASSWORDS", "fred");
+    expectedConfig.put("xyzpasswordzy", "fred");
     String connectorName = "connectorB";
     StoreContext storeContext = new StoreContext(connectorName, storeDir);
-    store.storeConnectorConfiguration(storeContext, expectedConfig);
-    Properties resultConfig = store.getConnectorConfiguration(storeContext);
-    ConnectorTestUtils.compareMaps(expectedConfig, resultConfig);
+    store.storeConnectorConfiguration(storeContext,
+        new Configuration(null, expectedConfig, null));
+    Configuration resultConfig = store.getConnectorConfiguration(storeContext);
+    ConnectorTestUtils.compareMaps(expectedConfig, resultConfig.getMap());
   }
 
 
   // Tests getting configuration for an unknown connector.
   public void testGetConnectorConfiguration1() {
-    Properties config = store.getConnectorConfiguration(
-        new StoreContext("some wierd connector name", storeDir));
-    // Should return null, not an empty Properties object.
+    Configuration config = store.getConnectorConfiguration(
+        new StoreContext("some weird connector name", storeDir));
+    // Should return null, not an empty map.
     assertNull(config);
   }
 
@@ -182,16 +187,17 @@ public class FileStoreTest extends TestCase {
   // Tests configuration cannot be retrieved after removal.
   public void testRemoveConnectorConfiguration() {
     String connectorName = "foo";
-    Properties expectedConfig = new Properties();
-    expectedConfig.setProperty("property1", "value1");
-    expectedConfig.setProperty("property2", "2");
-    expectedConfig.setProperty("property3", "true");
+    Map<String, String> expectedConfig = new HashMap<String, String>();
+    expectedConfig.put("property1", "value1");
+    expectedConfig.put("property2", "2");
+    expectedConfig.put("property3", "true");
     StoreContext storeContext = new StoreContext(connectorName, storeDir);
-    Properties config = store.getConnectorConfiguration(storeContext);
+    Configuration config = store.getConnectorConfiguration(storeContext);
     assertNull(config);
-    store.storeConnectorConfiguration(storeContext, expectedConfig);
+    store.storeConnectorConfiguration(storeContext,
+        new Configuration(null, expectedConfig, null));
     config = store.getConnectorConfiguration(storeContext);
-    ConnectorTestUtils.compareMaps(expectedConfig, config);
+    ConnectorTestUtils.compareMaps(expectedConfig, config.getMap());
     store.removeConnectorConfiguration(storeContext);
     config = store.getConnectorConfiguration(storeContext);
     assertNull(config);

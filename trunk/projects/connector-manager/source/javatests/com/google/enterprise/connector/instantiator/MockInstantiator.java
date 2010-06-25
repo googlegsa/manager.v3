@@ -19,14 +19,10 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
-import com.google.enterprise.connector.persist.ConnectorConfigStore;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.ConnectorScheduleStore;
-import com.google.enterprise.connector.persist.ConnectorStateStore;
-import com.google.enterprise.connector.persist.MockConnectorConfigStore;
-import com.google.enterprise.connector.persist.MockConnectorScheduleStore;
-import com.google.enterprise.connector.persist.MockConnectorStateStore;
+import com.google.enterprise.connector.persist.MockPersistentStore;
+import com.google.enterprise.connector.persist.PersistentStore;
 import com.google.enterprise.connector.persist.StoreContext;
 import com.google.enterprise.connector.pusher.MockPusher;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
@@ -88,25 +84,25 @@ public class MockInstantiator implements Instantiator {
       };
 
   private final Map<String, ConnectorCoordinator> connectorMap;
-  private final ConnectorConfigStore configStore;
-  private final ConnectorScheduleStore scheduleStore;
-  private final ConnectorStateStore stateStore;
+  private final PersistentStore configStore;
+  private final PersistentStore scheduleStore;
+  private final PersistentStore stateStore;
   private final ThreadPool threadPool;
 
   public MockInstantiator(ThreadPool threadPool) {
-    this(new MockConnectorConfigStore(), new MockConnectorScheduleStore(),
-         new MockConnectorStateStore(), threadPool);
+    this(new MockPersistentStore(), new MockPersistentStore(),
+         new MockPersistentStore(), threadPool);
   }
 
   // TODO(strellis): Figure out how to get spring to call the below
   //   constructor with a null ThreadPool and remove this constructor.
-  public MockInstantiator(ConnectorConfigStore configStore,
-      ConnectorScheduleStore schedStore, ConnectorStateStore stateStore) {
+  public MockInstantiator(PersistentStore configStore,
+      PersistentStore schedStore, PersistentStore stateStore) {
     this(configStore, schedStore, stateStore, null);
   }
 
-  private MockInstantiator(ConnectorConfigStore configStore,
-      ConnectorScheduleStore schedStore, ConnectorStateStore stateStore,
+  private MockInstantiator(PersistentStore configStore,
+      PersistentStore schedStore, PersistentStore stateStore,
       ThreadPool threadPool) {
     this.configStore = configStore;
     this.scheduleStore = schedStore;

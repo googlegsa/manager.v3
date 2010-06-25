@@ -14,10 +14,12 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.common.base.Preconditions;
+
 import java.util.Map;
 
 /**
- * Represents the peristent objects needs to instantiator a
+ * Represents the peristent objects needed to instantiate a
  * {@link com.google.enterprise.connector.spi.Connector} instance.
  */
 public class Configuration {
@@ -27,6 +29,9 @@ public class Configuration {
 
   public Configuration(String typeName, Map<String, String> configMap,
       String configXml) {
+    // TODO: Disallow null typeName and configXml.
+    Preconditions.checkNotNull(configMap);
+
     this.typeName = typeName;
     this.configMap = configMap;
     this.configXml = configXml;

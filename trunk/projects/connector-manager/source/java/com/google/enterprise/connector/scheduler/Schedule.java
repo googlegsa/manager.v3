@@ -20,6 +20,10 @@ import java.util.List;
 /**
  * A traversal schedule.
  */
+/*
+ * TODO: Implement equals and hashCode, rather than forcing string
+ * comparisons in the tests?
+ */
 public class Schedule {
 
   private static int defaultRetryDelayMillis = (5 * 60 * 1000);
