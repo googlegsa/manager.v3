@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Accepts change notifications from a {@link ChangeDetector}.
  */
-class MockChangeListener implements ChangeListener{
+class MockChangeListener implements ChangeListener {
   public static final String CONNECTOR_ADDED = "connectorAdded: ";
   public static final String CONNECTOR_REMOVED = "connectorRemoved: ";
   public static final String CHECKPOINT_CHANGED = "checkpointChanged: ";
