@@ -84,29 +84,16 @@ public class MockInstantiator implements Instantiator {
       };
 
   private final Map<String, ConnectorCoordinator> connectorMap;
-  private final PersistentStore configStore;
-  private final PersistentStore scheduleStore;
-  private final PersistentStore stateStore;
+  private final PersistentStore persistentStore;
   private final ThreadPool threadPool;
 
   public MockInstantiator(ThreadPool threadPool) {
-    this(new MockPersistentStore(), new MockPersistentStore(),
-         new MockPersistentStore(), threadPool);
+    this(new MockPersistentStore(), threadPool);
   }
 
-  // TODO(strellis): Figure out how to get spring to call the below
-  //   constructor with a null ThreadPool and remove this constructor.
-  public MockInstantiator(PersistentStore configStore,
-      PersistentStore schedStore, PersistentStore stateStore) {
-    this(configStore, schedStore, stateStore, null);
-  }
-
-  private MockInstantiator(PersistentStore configStore,
-      PersistentStore schedStore, PersistentStore stateStore,
+  public MockInstantiator(PersistentStore persistentStore,
       ThreadPool threadPool) {
-    this.configStore = configStore;
-    this.scheduleStore = schedStore;
-    this.stateStore = stateStore;
+    this.persistentStore = persistentStore;
     this.connectorMap = new HashMap<String, ConnectorCoordinator>();
     this.threadPool = threadPool;
   }
@@ -147,7 +134,7 @@ public class MockInstantiator implements Instantiator {
             nullAuthorizationManager);
     ConnectorCoordinator cc =
         new MockConnectorCoordinator(traverserName, interfaces, traverser,
-            stateStore, configStore, scheduleStore, storeContext, threadPool);
+            persistentStore, storeContext, threadPool);
     connectorMap.put(traverserName, cc);
   }
 
@@ -172,7 +159,7 @@ public class MockInstantiator implements Instantiator {
     }
     QueryTraverser queryTraverser =
         new QueryTraverser(new MockPusher(), traversalManager,
-            new MockTraversalStateStore(stateStore, connectorName),
+            new MockTraversalStateStore(persistentStore, connectorName),
             connectorName, Context.getInstance().getTraversalContext());
 
     setupTraverser(connectorName, queryTraverser);
@@ -188,7 +175,7 @@ public class MockInstantiator implements Instantiator {
    * @return a new TraversalStateStore
    */
   public TraversalStateStore getTraversalStateStore(String connectorName) {
-    return new MockTraversalStateStore(stateStore, connectorName);
+    return new MockTraversalStateStore(persistentStore, connectorName);
   }
 
   public void restartConnectorTraversal(String connectorName)

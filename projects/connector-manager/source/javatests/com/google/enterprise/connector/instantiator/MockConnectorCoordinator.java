@@ -52,8 +52,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
   private final HostLoadManager hostLoadManager;
 
   private final TraversalStateStore stateStore;
-  private final PersistentStore configStore;
-  private final PersistentStore scheduleStore;
+  private final PersistentStore persistentStore;
 
   private final StoreContext storeContext;
   private final ThreadPool threadPool;
@@ -64,16 +63,15 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
 
   MockConnectorCoordinator(String name,
       ConnectorInterfaces connectorInterfaces, Traverser traverser,
-      PersistentStore stateStore, PersistentStore configStore,
-      PersistentStore scheduleStore, StoreContext storeContext,
+      PersistentStore persistentStore, StoreContext storeContext,
       ThreadPool threadPool) {
     this.name = name;
     this.interfaces = connectorInterfaces;
     this.traverser = traverser;
     this.hostLoadManager = new HostLoadManager(null, null);
-    this.stateStore = new MockTraversalStateStore(stateStore, storeContext);
-    this.configStore = configStore;
-    this.scheduleStore = scheduleStore;
+    this.stateStore =
+        new MockTraversalStateStore(persistentStore, storeContext);
+    this.persistentStore = persistentStore;
     this.storeContext = storeContext;
     this.threadPool = threadPool;
   }
@@ -106,7 +104,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
 
    public synchronized Map<String, String> getConnectorConfig() {
     Configuration config =
-        configStore.getConnectorConfiguration(storeContext);
+        persistentStore.getConnectorConfiguration(storeContext);
     if (config == null) {
       return new HashMap<String, String>();
     } else {
@@ -115,7 +113,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
   }
 
   public synchronized String getConnectorSchedule() {
-    return scheduleStore.getConnectorSchedule(storeContext).toString();
+    return persistentStore.getConnectorSchedule(storeContext).toString();
   }
 
   public synchronized String getConnectorTypeName() {
@@ -129,8 +127,8 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
   public synchronized void removeConnector() {
     cancelBatch();
     stateStore.storeTraversalState(null);
-    scheduleStore.removeConnectorSchedule(storeContext);
-    configStore.removeConnectorConfiguration(storeContext);
+    persistentStore.removeConnectorSchedule(storeContext);
+    persistentStore.removeConnectorConfiguration(storeContext);
   }
 
   public synchronized void restartConnectorTraversal() {
@@ -140,14 +138,14 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
 
   public ConfigureResponse setConnectorConfig(TypeInfo newTypeInfo,
       Map<String, String> configMap, Locale locale, boolean update) {
-    configStore.storeConnectorConfiguration(storeContext,
+    persistentStore.storeConnectorConfiguration(storeContext,
         new Configuration(null, configMap, null));
     return null;
   }
 
   public synchronized void setConnectorSchedule(String connectorSchedule) {
     Schedule schedule = new Schedule(connectorSchedule);
-    scheduleStore.storeConnectorSchedule(storeContext, schedule);
+    persistentStore.storeConnectorSchedule(storeContext, schedule);
     hostLoadManager.setLoad(schedule.getLoad());
   }
 
