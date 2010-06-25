@@ -201,7 +201,6 @@
        Only one PersistentStore bean should be defined at this time.
   -->
   <bean id="PersistentStore"
-        name="ConnectorConfigStore,ConnectorScheduleStore,ConnectorStateStore"
         class="com.google.enterprise.connector.persist.FileStore"/>
 
   <!-- Persistent Store mechanism used to store the Connector Configuration,
@@ -211,7 +210,6 @@
   -->
   <!--
   <bean id="PersistentStore"
-        name="ConnectorConfigStore,ConnectorScheduleStore,ConnectorStateStore"
         class="com.google.enterprise.connector.persist.JdbcStore">
     <property name="dataSource" ref="JdbcDataSource"/>
     <property name="createTableDdl" value="${jdbcstore.createtable.ddl}"/>
@@ -220,12 +218,10 @@
 
   <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
     <property name="staticMethod"
-              value="com.google.enterprise.connector.instantiator.InstanceInfo.setConnectorStores"/>
+              value="com.google.enterprise.connector.instantiator.InstanceInfo.setPersistentStore"/>
     <property name="arguments">
       <list>
-        <ref bean="ConnectorConfigStore"/>
-        <ref bean="ConnectorScheduleStore"/>
-        <ref bean="ConnectorStateStore"/>
+        <ref bean="PersistentStore"/>
       </list>
     </property>
   </bean>
@@ -234,23 +230,7 @@
        upgrading existing connectors created by previous versions of
        the Connector Manager.
   -->
-  <bean id="LegacyConnectorScheduleStores" class="java.util.ArrayList">
-    <constructor-arg>
-      <list>
-        <!-- No legacy store. -->
-      </list>
-    </constructor-arg>
-  </bean>
-
-  <bean id="LegacyConnectorStateStores" class="java.util.ArrayList">
-    <constructor-arg>
-      <list>
-        <!-- No legacy store. -->
-      </list>
-    </constructor-arg>
-  </bean>
-
-  <bean id="LegacyConnectorConfigStores" class="java.util.ArrayList">
+  <bean id="LegacyStores" class="java.util.ArrayList">
     <constructor-arg>
       <list>
         <!-- No legacy store. -->
@@ -263,9 +243,7 @@
               value="com.google.enterprise.connector.instantiator.InstanceInfo.setLegacyStores"/>
     <property name="arguments">
       <list>
-        <ref bean="LegacyConnectorConfigStores"/>
-        <ref bean="LegacyConnectorScheduleStores"/>
-        <ref bean="LegacyConnectorStateStores"/>
+        <ref bean="LegacyStores"/>
       </list>
     </property>
   </bean>

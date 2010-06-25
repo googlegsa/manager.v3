@@ -43,13 +43,9 @@ final class InstanceInfo {
   private static final Logger LOGGER =
       Logger.getLogger(InstanceInfo.class.getName());
 
-  private static PersistentStore configStore;
-  private static PersistentStore schedStore;
-  private static PersistentStore stateStore;
+  private static PersistentStore store;
 
-  private static Collection<PersistentStore> legacyConfigStores;
-  private static Collection<PersistentStore> legacyScheduleStores;
-  private static Collection<PersistentStore> legacyStateStores;
+  private static Collection<PersistentStore> legacyStores;
 
   private final TypeInfo typeInfo;
   private final File connectorDir;
@@ -82,20 +78,12 @@ final class InstanceInfo {
 
   /* **** Getters and Setters **** */
 
-  public static void setConnectorStores(PersistentStore configStore,
-      PersistentStore schedStore, PersistentStore stateStore) {
-    InstanceInfo.configStore = configStore;
-    InstanceInfo.schedStore = schedStore;
-    InstanceInfo.stateStore = stateStore;
+  public static void setPersistentStore(PersistentStore store) {
+    InstanceInfo.store = store;
   }
 
-  public static void setLegacyStores(
-      Collection<PersistentStore> configStores,
-      Collection<PersistentStore> schedStores,
-      Collection<PersistentStore> stateStores) {
-    legacyConfigStores = configStores;
-    legacyScheduleStores = schedStores;
-    legacyStateStores = stateStores;
+  public static void setLegacyStores(Collection<PersistentStore> stores) {
+    legacyStores = stores;
   }
 
   /**
@@ -143,7 +131,7 @@ final class InstanceInfo {
       File connectorDir, TypeInfo typeInfo) throws InstanceInfoException {
     InstanceInfo info = new InstanceInfo(connectorName, connectorDir, typeInfo);
     Configuration config =
-        configStore.getConnectorConfiguration(info.storeContext);
+        store.getConnectorConfiguration(info.storeContext);
     info.configMap = (config == null) ? null : config.getMap();
 
     // Upgrade from Legacy Configuration Data Stores. This method is
@@ -162,7 +150,7 @@ final class InstanceInfo {
                                         + connectorName);
       }
     }
-    if (schedStore.getConnectorSchedule(info.storeContext) == null) {
+    if (store.getConnectorSchedule(info.storeContext) == null) {
       upgradeScheduleStore(info);
       if (info.getConnectorSchedule() == null) {
         // If there is no schedule, create a disabled schedule rather than
@@ -174,7 +162,7 @@ final class InstanceInfo {
         info.setConnectorSchedule(schedule.toString());
       }
     }
-    if (stateStore.getConnectorState(info.storeContext) == null) {
+    if (store.getConnectorState(info.storeContext) == null) {
       upgradeStateStore(info);
     }
 
@@ -327,9 +315,9 @@ final class InstanceInfo {
    * Remove this Connector Instance's persistent store state.
    */
   public void removeConnector() {
-    stateStore.removeConnectorState(storeContext);
-    schedStore.removeConnectorSchedule(storeContext);
-    configStore.removeConnectorConfiguration(storeContext);
+    store.removeConnectorState(storeContext);
+    store.removeConnectorSchedule(storeContext);
+    store.removeConnectorConfiguration(storeContext);
   }
 
   /**
@@ -340,8 +328,7 @@ final class InstanceInfo {
    */
   public Map<String, String> getConnectorConfig() {
     if (configMap == null) {
-      Configuration config =
-          configStore.getConnectorConfiguration(storeContext);
+      Configuration config = store.getConnectorConfiguration(storeContext);
       configMap = (config == null) ? null : config.getMap();
     }
     return configMap;
@@ -357,9 +344,9 @@ final class InstanceInfo {
   public void setConnectorConfig(Map<String, String> configMap) {
     this.configMap = configMap;
     if (configMap == null) {
-      configStore.removeConnectorConfiguration(storeContext);
+      store.removeConnectorConfiguration(storeContext);
     } else {
-      configStore.storeConnectorConfiguration(storeContext,
+      store.storeConnectorConfiguration(storeContext,
           new Configuration(null, configMap, null));
     }
   }
@@ -373,9 +360,9 @@ final class InstanceInfo {
    */
   public void setConnectorSchedule(String connectorSchedule) {
     if (connectorSchedule == null) {
-      schedStore.removeConnectorSchedule(storeContext);
+      store.removeConnectorSchedule(storeContext);
     } else {
-      schedStore.storeConnectorSchedule(storeContext,
+      store.storeConnectorSchedule(storeContext,
           new Schedule(connectorSchedule));
     }
   }
@@ -387,7 +374,7 @@ final class InstanceInfo {
    * for this connector
    */
   public String getConnectorSchedule() {
-    Schedule schedule = schedStore.getConnectorSchedule(storeContext);
+    Schedule schedule = store.getConnectorSchedule(storeContext);
     return (schedule == null) ? null : schedule.toString();
   }
 
@@ -401,9 +388,9 @@ final class InstanceInfo {
    */
   public void setConnectorState(String connectorState) {
     if (connectorState == null) {
-      stateStore.removeConnectorState(storeContext);
+      store.removeConnectorState(storeContext);
     } else {
-      stateStore.storeConnectorState(storeContext, connectorState);
+      store.storeConnectorState(storeContext, connectorState);
     }
   }
 
@@ -414,7 +401,7 @@ final class InstanceInfo {
    * @throws IllegalStateException if state store is disabled for this connector
    */
   public String getConnectorState() {
-    return stateStore.getConnectorState(storeContext);
+    return store.getConnectorState(storeContext);
   }
 
   /**
@@ -428,17 +415,17 @@ final class InstanceInfo {
    * connector.
    */
   private static void upgradeConfigStore(InstanceInfo info) {
-    if (legacyConfigStores != null) {
-      for (PersistentStore legacyStore : legacyConfigStores) {
+    if (legacyStores != null) {
+      for (PersistentStore legacyStore : legacyStores) {
         Configuration config = 
             legacyStore.getConnectorConfiguration(info.storeContext);
         if (config != null) {
           LOGGER.config("Migrating configuration information for connector "
                         + info.connectorName + " from legacy storage "
                         + legacyStore.getClass().getName() + " to "
-                        + configStore.getClass().getName());
+                        + store.getClass().getName());
           info.configMap = config.getMap();
-          configStore.storeConnectorConfiguration(info.storeContext, config);
+          store.storeConnectorConfiguration(info.storeContext, config);
           legacyStore.removeConnectorConfiguration(info.storeContext);
           return;
         }
@@ -460,16 +447,16 @@ final class InstanceInfo {
    * connector.
    */
   private static void upgradeScheduleStore(InstanceInfo info) {
-    if (legacyScheduleStores != null) {
-      for (PersistentStore legacyStore : legacyScheduleStores) {
+    if (legacyStores != null) {
+      for (PersistentStore legacyStore : legacyStores) {
         Schedule schedule =
             legacyStore.getConnectorSchedule(info.storeContext);
         if (schedule != null) {
           LOGGER.config("Migrating traversal schedule information for connector "
                         + info.connectorName + " from legacy storage "
                         + legacyStore.getClass().getName() + " to "
-                        + schedStore.getClass().getName());
-          schedStore.storeConnectorSchedule(info.storeContext, schedule);
+                        + store.getClass().getName());
+          store.storeConnectorSchedule(info.storeContext, schedule);
           legacyStore.removeConnectorSchedule(info.storeContext);
           return;
         }
@@ -491,15 +478,15 @@ final class InstanceInfo {
    * connector.
    */
   private static void upgradeStateStore(InstanceInfo info) {
-    if (legacyStateStores != null) {
-      for (PersistentStore legacyStore : legacyStateStores) {
+    if (legacyStores != null) {
+      for (PersistentStore legacyStore : legacyStores) {
         String state = legacyStore.getConnectorState(info.storeContext);
         if (state != null) {
           LOGGER.config("Migrating traversal state information for connector "
                         + info.connectorName + " from legacy storage "
                         + legacyStore.getClass().getName() + " to "
-                        + stateStore.getClass().getName());
-          stateStore.storeConnectorState(info.storeContext, state);
+                        + store.getClass().getName());
+          store.storeConnectorState(info.storeContext, state);
           legacyStore.removeConnectorState(info.storeContext);
           return;
         }

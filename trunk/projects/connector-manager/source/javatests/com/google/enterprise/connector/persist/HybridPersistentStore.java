@@ -18,29 +18,25 @@ import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
 
-import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Mock persistent store. This implementation doesn't actually persist
- * any objects, it just uses memory.
- */
-public class MockPersistentStore implements PersistentStore {
-  private Map<StoreContext, String> checkpointMap =
-      new HashMap<StoreContext, String>();
-  private Map<StoreContext, Configuration> configurationMap =
-      new HashMap<StoreContext, Configuration>();
-  private Map<StoreContext, Schedule> scheduleMap =
-      new HashMap<StoreContext, Schedule>();
+public class HybridPersistentStore implements PersistentStore {
+ private final PersistentStore configurationStore;
+ private final PersistentStore scheduleStore;
+ private final PersistentStore stateStore;
 
-  private final ConnectorStamps stamps = new ConnectorStamps(new MockStamp(2),
-      new MockStamp(3), new MockStamp(5));
+ public HybridPersistentStore(PersistentStore configurationStore,
+      PersistentStore scheduleStore, PersistentStore stateStore) {
+   this.configurationStore = configurationStore;
+   this.scheduleStore = scheduleStore;
+   this.stateStore = stateStore;
+ }
 
-  private <T> void addAll(
+  private void addAll(
       ImmutableMap.Builder<StoreContext, ConnectorStamps> builder,
-      Map<StoreContext, T> map) {
-    for (StoreContext context : map.keySet()) {
-      builder.put(context, stamps);
+      Map<StoreContext, ConnectorStamps> inventory) {
+    for (StoreContext context : inventory.keySet()) {
+      builder.put(context, inventory.get(context));
     }
   }
 
@@ -48,56 +44,56 @@ public class MockPersistentStore implements PersistentStore {
   public ImmutableMap<StoreContext, ConnectorStamps> getInventory() {
     ImmutableMap.Builder<StoreContext, ConnectorStamps> builder =
         ImmutableMap.builder();
-    addAll(builder, checkpointMap);
-    addAll(builder, configurationMap);
-    addAll(builder, scheduleMap);
+    addAll(builder, configurationStore.getInventory());
+    addAll(builder, scheduleStore.getInventory());
+    addAll(builder, stateStore.getInventory());
     return builder.build();
   }
 
   /* @Override */
   public String getConnectorState(StoreContext context) {
-    return checkpointMap.get(context);
+    return stateStore.getConnectorState(context);
   }
 
   /* @Override */
   public void storeConnectorState(StoreContext context,
       String connectorState) {
-    checkpointMap.put(context, connectorState);
+    stateStore.storeConnectorState(context, connectorState);
   }
 
   /* @Override */
   public void removeConnectorState(StoreContext context) {
-    checkpointMap.remove(context);
+    stateStore.removeConnectorState(context);
   }
 
   /* @Override */
   public Configuration getConnectorConfiguration(StoreContext context) {
-    return configurationMap.get(context);
+    return configurationStore.getConnectorConfiguration(context);
   }
 
   /* @Override */
   public void storeConnectorConfiguration(StoreContext context,
       Configuration config) {
-    configurationMap.put(context, config);
+    configurationStore.storeConnectorConfiguration(context, config);
   }
 
   /* @Override */
   public void removeConnectorConfiguration(StoreContext context) {
-    configurationMap.remove(context);
+    configurationStore.removeConnectorConfiguration(context);
   }
 
   /* @Override */
   public Schedule getConnectorSchedule(StoreContext context) {
-    return scheduleMap.get(context);
+    return scheduleStore.getConnectorSchedule(context);
   }
 
   /* @Override */
   public void storeConnectorSchedule(StoreContext context, Schedule schedule) {
-    scheduleMap.put(context, schedule);
+    scheduleStore.storeConnectorSchedule(context, schedule);
   }
 
   /* @Override */
   public void removeConnectorSchedule(StoreContext context) {
-    scheduleMap.remove(context);
+    scheduleStore.removeConnectorSchedule(context);
   }
 }

@@ -27,14 +27,19 @@
         class="com.google.enterprise.connector.persist.FileStore">
   </bean>
 
+  <bean id="PersistentStore"
+        class="com.google.enterprise.connector.persist.HybridPersistentStore">
+    <constructor-arg index="0" ref="ConnectorConfigStore"/>
+    <constructor-arg index="1" ref="ConnectorScheduleStore"/>
+    <constructor-arg index="2" ref="ConnectorStateStore"/>
+  </bean>
+
   <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
     <property name="staticMethod"
-              value="com.google.enterprise.connector.instantiator.InstanceInfo.setConnectorStores"/>
+              value="com.google.enterprise.connector.instantiator.InstanceInfo.setPersistentStore"/>
     <property name="arguments">
       <list>
-        <ref bean="ConnectorConfigStore"/>
-        <ref bean="ConnectorScheduleStore"/>
-        <ref bean="ConnectorStateStore"/>
+        <ref bean="PersistentStore"/>
       </list>
     </property>
   </bean>
