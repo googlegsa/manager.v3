@@ -237,7 +237,7 @@
   <bean id="LegacyConnectorScheduleStores" class="java.util.ArrayList">
     <constructor-arg>
       <list>
-        <bean class="com.google.enterprise.connector.persist.PrefsStore"/>
+        <!-- No legacy store. -->
       </list>
     </constructor-arg>
   </bean>
@@ -245,7 +245,7 @@
   <bean id="LegacyConnectorStateStores" class="java.util.ArrayList">
     <constructor-arg>
       <list>
-        <bean class="com.google.enterprise.connector.persist.PrefsStore"/>
+        <!-- No legacy store. -->
       </list>
     </constructor-arg>
   </bean>
@@ -253,7 +253,7 @@
   <bean id="LegacyConnectorConfigStores" class="java.util.ArrayList">
     <constructor-arg>
       <list>
-        <!-- No Legacy ConnectorConfigStores at this time -->
+        <!-- No legacy store. -->
       </list>
     </constructor-arg>
   </bean>

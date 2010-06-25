@@ -51,7 +51,7 @@ public class ChangeDetectorTest extends TestCase {
   /** Adds an instance to the store and records the action. */
   private void addConnector(String connectorName) {
     store.storeConnectorConfiguration(new StoreContext(connectorName),
-        new Configuration(null, null, null));
+        new Configuration(null, Collections.<String, String>emptyMap(), null));
     expectedChanges.add(MockChangeListener.CONNECTOR_ADDED + connectorName);
   }
 

@@ -11,10 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package com.google.enterprise.connector.persist;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.PropertiesException;
+import com.google.enterprise.connector.instantiator.Configuration;
+import com.google.enterprise.connector.scheduler.Schedule;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,8 +34,7 @@ import java.util.logging.Logger;
  * for a named connector. The persistent store for these data items
  * are files in the connector's work directory.
  */
-public class FileStore implements ConnectorScheduleStore,
-    ConnectorStateStore, ConnectorConfigStore {
+public class FileStore implements PersistentStore {
 
   private static final Logger LOGGER =
       Logger.getLogger(FileStore.class.getName());
@@ -41,23 +44,30 @@ public class FileStore implements ConnectorScheduleStore,
   private static final String stateName = "_state.txt";
   private static final String configName = ".properties";
 
+  public ImmutableMap<StoreContext, ConnectorStamps> getInventory() {
+    throw new RuntimeException("TODO");
+  }
+
   /**
    * Retrieves connector schedule.
    *
    * @param context a StoreContext
    * @return connectorSchedule schedule of the corresponding connector.
    */
-  public String getConnectorSchedule(StoreContext context) {
+  /* @Override */
+  public Schedule getConnectorSchedule(StoreContext context) {
     testStoreContext(context);
     String key = context.getConnectorName() + schedName;
     if (cacheMap.containsKey(key)) {
-      return cacheMap.get(key);
+      return new Schedule(cacheMap.get(key));
     }
     String schedule = readStoreFile(context, schedName);
     if (schedule != null) {
       cacheMap.put(key, schedule);
+      return new Schedule(schedule);
+    } else {
+      return null;
     }
-    return schedule;
   }
 
   /**
@@ -66,16 +76,18 @@ public class FileStore implements ConnectorScheduleStore,
    * @param context a StoreContext
    * @param connectorSchedule schedule of the corresponding connector.
    */
+  /* @Override */
   public void storeConnectorSchedule(StoreContext context,
-                                     String connectorSchedule) {
+                                     Schedule connectorSchedule) {
     if (connectorSchedule == null) {
       // We can't write null state to file, so just remove it.
       removeConnectorSchedule(context);
       return;
     }
     testStoreContext(context);
-    cacheMap.put(context.getConnectorName() + schedName, connectorSchedule);
-    writeStoreFile(context, schedName, connectorSchedule);
+    String schedule = connectorSchedule.toString();
+    cacheMap.put(context.getConnectorName() + schedName, schedule);
+    writeStoreFile(context, schedName, schedule);
   }
 
   /**
@@ -83,6 +95,7 @@ public class FileStore implements ConnectorScheduleStore,
    *
    * @param context a StoreContext
    */
+  /* @Override */
   public void removeConnectorSchedule(StoreContext context) {
     testStoreContext(context);
     deleteStoreFile(context, schedName);
@@ -95,6 +108,7 @@ public class FileStore implements ConnectorScheduleStore,
    * @param context a StoreContext
    * @return the state, or null if no state has been stored for this connector.
    */
+  /* @Override */
   public String getConnectorState(StoreContext context) {
     testStoreContext(context);
     String key = context.getConnectorName() + stateName;
@@ -114,6 +128,7 @@ public class FileStore implements ConnectorScheduleStore,
    * @param context a StoreContext
    * @param connectorState state of the corresponding connector
    */
+  /* @Override */
   public void storeConnectorState(StoreContext context, String connectorState) {
     if (connectorState == null) {
       // We can't write null state to file, so just remove it.
@@ -130,6 +145,7 @@ public class FileStore implements ConnectorScheduleStore,
    *
    * @param context a StoreContext
    */
+  /* @Override */
   public void removeConnectorState(StoreContext context) {
     testStoreContext(context);
     deleteStoreFile(context, stateName);
@@ -144,19 +160,20 @@ public class FileStore implements ConnectorScheduleStore,
    * @return the configuration Properties, or null if no configuration
    *         has been stored for this connector.
    */
-  public Properties getConnectorConfiguration(StoreContext context) {
+  /* @Override */
+  public Configuration getConnectorConfiguration(StoreContext context) {
     testStoreContext(context);
-    Properties props = null;
     File propFile = getStoreFile(context, configName);
     if (propFile.exists()) {
       try {
-        props = PropertiesUtils.loadFromFile(propFile);
+        Properties props = PropertiesUtils.loadFromFile(propFile);
+        return new Configuration(null, PropertiesUtils.toMap(props), null);
       } catch (PropertiesException e) {
         LOGGER.log(Level.WARNING, "Failed to read connector configuration for "
                    + context.getConnectorName(), e);
       }
     }
-    return props;
+    return null;
   }
 
   /**
@@ -165,17 +182,19 @@ public class FileStore implements ConnectorScheduleStore,
    * @param context a StoreContext
    * @param configuration Properties to store
    */
+  /* @Override */
   public void storeConnectorConfiguration(StoreContext context,
-      Properties configuration) {
+      Configuration configuration) {
     if (configuration == null) {
       removeConnectorConfiguration(context);
       return;
     }
     testStoreContext(context);
+    Properties properties = PropertiesUtils.fromMap(configuration.getMap());
     File propFile = getStoreFile(context, configName);
     String header = "Configuration for Connector " + context.getConnectorName();
     try {
-      PropertiesUtils.storeToFile(configuration, propFile, header);
+      PropertiesUtils.storeToFile(properties, propFile, header);
     } catch (PropertiesException e) {
       LOGGER.log(Level.WARNING, "Failed to store connector configuration for "
                  + context.getConnectorName(), e);
@@ -188,6 +207,7 @@ public class FileStore implements ConnectorScheduleStore,
    *
    * @param context a StoreContext
    */
+  /* @Override */
   public void removeConnectorConfiguration(StoreContext context) {
     testStoreContext(context);
     deleteStoreFile(context, configName);
