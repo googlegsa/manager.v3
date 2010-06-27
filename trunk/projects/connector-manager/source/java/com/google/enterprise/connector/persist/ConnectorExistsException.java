@@ -19,7 +19,6 @@ package com.google.enterprise.connector.persist;
  * already exists.
  */
 public class ConnectorExistsException extends PersistentStoreException {
-
   /**
    * Constructs a new ConnectorExistsException with no message and no root
    * cause.
@@ -48,7 +47,6 @@ public class ConnectorExistsException extends PersistentStoreException {
    */
   public ConnectorExistsException(String message, Throwable rootCause) {
     super(message, rootCause);
-    this.rootCause = rootCause;
   }
 
   /**
@@ -59,7 +57,5 @@ public class ConnectorExistsException extends PersistentStoreException {
 
   public ConnectorExistsException(Throwable rootCause) {
     super(rootCause);
-    this.rootCause = rootCause;
   }
-
 }
