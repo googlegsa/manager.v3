@@ -1,4 +1,4 @@
-// Copyright 2006-2009 Google Inc.  All Rights Reserved.
+// Copyright 2010 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,85 +19,147 @@ import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Mock persistent store. This implementation doesn't actually persist
  * any objects, it just uses memory.
  */
 public class MockPersistentStore implements PersistentStore {
-  private Map<StoreContext, String> checkpointMap =
-      new HashMap<StoreContext, String>();
-  private Map<StoreContext, Configuration> configurationMap =
-      new HashMap<StoreContext, Configuration>();
-  private Map<StoreContext, Schedule> scheduleMap =
-      new HashMap<StoreContext, Schedule>();
+  /* Property Names */
+  static final String CONFIGURATION = "configuration";
+  static final String SCHEDULE = "schedule";
+  static final String CHECKPOINT = "checkpoint";
 
-  private final ConnectorStamps stamps = new ConnectorStamps(new MockStamp(2),
-      new MockStamp(3), new MockStamp(5));
+  private static class StoreKey {
+    public final StoreContext context;
+    public final String property;
 
-  private <T> void addAll(
-      ImmutableMap.Builder<StoreContext, ConnectorStamps> builder,
-      Map<StoreContext, T> map) {
-    for (StoreContext context : map.keySet()) {
-      builder.put(context, stamps);
+    public StoreKey(StoreContext context, String property) {
+      this.context = context;
+      this.property = property;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      if (other == null || !(other instanceof StoreKey))
+        return false;
+      StoreKey otherKey = (StoreKey) other;
+      return context.equals(otherKey.context) &&
+          property.equals(otherKey.property);
+    }
+
+    @Override
+    public int hashCode() {
+      // See Effective Java by Joshua Bloch, Item 8.
+      int result = 131;
+      result = 17 * result + context.hashCode();
+      result = 17 * result + property.hashCode();
+      return result;
     }
   }
+
+  private static class StoreEntry {
+    public final Object object;
+    public final Stamp stamp;
+
+    public StoreEntry(Object object, Stamp stamp) {
+      this.object = object;
+      this.stamp = stamp;
+    }
+  }
+
+  /** Incremented stamp value for constructing updated stamps. */
+  private static int stampValue = 0;
+
+  private final Map<StoreKey, StoreEntry> storeMap =
+      new HashMap<StoreKey, StoreEntry>();
+
+  public MockPersistentStore() {
+  }
+
+  private Stamp getStamp(StoreContext context, String property) {
+    StoreEntry entry = storeMap.get(new StoreKey(context, property));
+    return (entry == null) ? null : entry.stamp;
+  }
+
+  private Object getObject(StoreContext context, String property) {
+    StoreEntry entry = storeMap.get(new StoreKey(context, property));
+    return (entry == null) ? null : entry.object;
+  }
+
+  private Object storeObject(StoreContext context, String property,
+      Object object) {
+    return storeMap.put(new StoreKey(context, property),
+        new StoreEntry(object, new MockStamp(stampValue++)));
+  }
+
+  private void removeObject(StoreContext context, String property) {
+    storeMap.remove(new StoreKey(context, property));
+  }
+
 
   /* @Override */
   public ImmutableMap<StoreContext, ConnectorStamps> getInventory() {
     ImmutableMap.Builder<StoreContext, ConnectorStamps> builder =
         ImmutableMap.builder();
-    addAll(builder, checkpointMap);
-    addAll(builder, configurationMap);
-    addAll(builder, scheduleMap);
+    Set<StoreContext> instances = new HashSet<StoreContext>();
+    for (StoreKey key : storeMap.keySet()) {
+      instances.add(key.context);
+    }
+    for (StoreContext context : instances) {
+      builder.put(context, new ConnectorStamps(getStamp(context, CHECKPOINT),
+              getStamp(context, CONFIGURATION), getStamp(context, SCHEDULE)));
+    }
     return builder.build();
   }
 
   /* @Override */
   public String getConnectorState(StoreContext context) {
-    return checkpointMap.get(context);
+    return (String) getObject(context, CHECKPOINT);
   }
 
   /* @Override */
   public void storeConnectorState(StoreContext context,
       String connectorState) {
-    checkpointMap.put(context, connectorState);
+    storeObject(context, CHECKPOINT, connectorState);
   }
 
   /* @Override */
   public void removeConnectorState(StoreContext context) {
-    checkpointMap.remove(context);
+    removeObject(context, CHECKPOINT);
   }
 
   /* @Override */
   public Configuration getConnectorConfiguration(StoreContext context) {
-    return configurationMap.get(context);
+    return (Configuration) getObject(context, CONFIGURATION);
   }
 
   /* @Override */
   public void storeConnectorConfiguration(StoreContext context,
       Configuration config) {
-    configurationMap.put(context, config);
+    storeObject(context, CONFIGURATION, config);
   }
 
   /* @Override */
   public void removeConnectorConfiguration(StoreContext context) {
-    configurationMap.remove(context);
+    removeObject(context, CONFIGURATION);
   }
 
   /* @Override */
   public Schedule getConnectorSchedule(StoreContext context) {
-    return scheduleMap.get(context);
+    return (Schedule) getObject(context, SCHEDULE);
   }
 
   /* @Override */
   public void storeConnectorSchedule(StoreContext context, Schedule schedule) {
-    scheduleMap.put(context, schedule);
+    storeObject(context, SCHEDULE, schedule);
   }
 
   /* @Override */
   public void removeConnectorSchedule(StoreContext context) {
-    scheduleMap.remove(context);
+    removeObject(context, SCHEDULE);
   }
 }
