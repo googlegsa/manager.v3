@@ -197,6 +197,8 @@ class ConnectorCoordinatorImpl implements
     } finally {
       instanceInfo = null;
       typeInfo = null;
+      traversalSchedule = null;
+      traversalDelayEnd = 0;
     }
   }
 
@@ -350,7 +352,6 @@ class ConnectorCoordinatorImpl implements
   //@Override
   public synchronized void setConnectorState(String state)
       throws ConnectorNotFoundException {
-    // TODO: cache checkpoint locally.
     getInstanceInfo().setConnectorState(state);     // TODO: PStore Setter
     connectorCheckpointChanged(state);  // TODO: replace with ChangeDetector kick.
   }
@@ -364,7 +365,6 @@ class ConnectorCoordinatorImpl implements
    */
   /* @Override */
   public synchronized void connectorCheckpointChanged(String checkpoint) {
-    // TODO: cache checkpoint locally.
     // TODO: actually detect transition from non-null to null?
 
     // If checkpoint has been nulled, then traverse the repository from scratch.
@@ -377,7 +377,7 @@ class ConnectorCoordinatorImpl implements
       try {
         // If Schedule was 'run-once', re-enable it to run again.  But watch out -
         // empty disabled Schedules could look a bit like a run-once Schedule.
-        Schedule schedule = getSchedule();
+        Schedule schedule = new Schedule(getConnectorSchedule());
         if (schedule.isDisabled() && schedule.getRetryDelayMillis() == -1
             && !schedule.getTimeIntervals().isEmpty()) {
           schedule.setDisabled(false);
