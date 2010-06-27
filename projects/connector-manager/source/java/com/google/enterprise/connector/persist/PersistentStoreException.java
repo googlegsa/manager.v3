@@ -48,8 +48,7 @@ public class PersistentStoreException extends ConnectorManagerException {
    * @param rootCause root failure cause
    */
   public PersistentStoreException(String message, Throwable rootCause) {
-    super(message);
-    this.rootCause = rootCause;
+    super(message, rootCause);
   }
 
   /**
@@ -58,8 +57,6 @@ public class PersistentStoreException extends ConnectorManagerException {
    * @param rootCause root failure cause
    */
   public PersistentStoreException(Throwable rootCause) {
-    super();
-    this.rootCause = rootCause;
+    super(rootCause);
   }
-
 }
