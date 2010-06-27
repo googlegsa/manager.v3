@@ -49,7 +49,7 @@ class ConnectorInstanceFactory implements ConnectorFactory {
   final File connectorDir;
   final TypeInfo typeInfo;
   final Map<String, String> origConfig;
-  final List<InstanceInfo> connectors;
+  final List<Connector> connectors;
 
   /**
    * Constructor takes the items needed by {@code InstanceInfo}, but not
@@ -66,7 +66,7 @@ class ConnectorInstanceFactory implements ConnectorFactory {
     this.connectorDir = connectorDir;
     this.typeInfo = typeInfo;
     this.origConfig = config;
-    this.connectors = new LinkedList<InstanceInfo>();
+    this.connectors = new LinkedList<Connector>();
   }
 
   /**
@@ -79,16 +79,16 @@ class ConnectorInstanceFactory implements ConnectorFactory {
   public Connector makeConnector(Map<String, String> config)
     throws RepositoryException {
     try {
+      // WARNING: This is a transient, in-memory Connector InstanceInfo.
+      // Do not attempt to persist anything.
       InstanceInfo info =
         InstanceInfo.fromNewConfig(connectorName, connectorDir, typeInfo,
                                    ((config == null) ? origConfig : config));
-      if (info == null) {
-        return null;
-      }
+      Connector connector = info.getConnector();
       synchronized (this) {
-        connectors.add(info);
+        connectors.add(connector);
       }
-      return info.getConnector();
+      return connector;
     } catch (InstantiatorException e) {
       throw new
           RepositoryException("ConnectorFactory failed to make connector.", e);
@@ -99,14 +99,13 @@ class ConnectorInstanceFactory implements ConnectorFactory {
    * Shutdown any connector instances created by the factory.
    */
   synchronized void shutdown() {
-    for (InstanceInfo info : connectors) {
-      Connector connector = info.getConnector();
+    for (Connector connector : connectors) {
       if (connector instanceof ConnectorShutdownAware) {
         try {
           ((ConnectorShutdownAware) connector).shutdown();
         } catch (Exception e) {
           LOGGER.log(Level.WARNING, "Failed to shutdown connector "
-              + info.getName() + " created by validateConfig", e);
+              + connectorName + " created by validateConfig", e);
         }
       }
     }

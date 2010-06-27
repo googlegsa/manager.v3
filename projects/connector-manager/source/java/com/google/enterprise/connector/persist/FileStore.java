@@ -1,4 +1,4 @@
-// Copyright 2008-2009 Google Inc.  All Rights Reserved.
+// Copyright (C) 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Hashtable;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,7 +38,6 @@ public class FileStore implements PersistentStore {
   private static final Logger LOGGER =
       Logger.getLogger(FileStore.class.getName());
 
-  private Hashtable<String, String> cacheMap = new Hashtable<String, String>();
   private static final String schedName = "_schedule.txt";
   private static final String stateName = "_state.txt";
   private static final String configName = ".properties";
@@ -57,13 +55,8 @@ public class FileStore implements PersistentStore {
   /* @Override */
   public Schedule getConnectorSchedule(StoreContext context) {
     testStoreContext(context);
-    String key = context.getConnectorName() + schedName;
-    if (cacheMap.containsKey(key)) {
-      return new Schedule(cacheMap.get(key));
-    }
     String schedule = readStoreFile(context, schedName);
     if (schedule != null) {
-      cacheMap.put(key, schedule);
       return new Schedule(schedule);
     } else {
       return null;
@@ -85,9 +78,7 @@ public class FileStore implements PersistentStore {
       return;
     }
     testStoreContext(context);
-    String schedule = connectorSchedule.toString();
-    cacheMap.put(context.getConnectorName() + schedName, schedule);
-    writeStoreFile(context, schedName, schedule);
+    writeStoreFile(context, schedName, connectorSchedule.toString());
   }
 
   /**
@@ -99,7 +90,6 @@ public class FileStore implements PersistentStore {
   public void removeConnectorSchedule(StoreContext context) {
     testStoreContext(context);
     deleteStoreFile(context, schedName);
-    cacheMap.remove(context.getConnectorName() + schedName);
   }
 
   /**
@@ -111,15 +101,7 @@ public class FileStore implements PersistentStore {
   /* @Override */
   public String getConnectorState(StoreContext context) {
     testStoreContext(context);
-    String key = context.getConnectorName() + stateName;
-    if (cacheMap.containsKey(key)) {
-      return cacheMap.get(key);
-    }
-    String state = readStoreFile(context, stateName);
-    if (state != null) {
-      cacheMap.put(key, state);
-    }
-    return state;
+    return readStoreFile(context, stateName);
   }
 
   /**
@@ -136,7 +118,6 @@ public class FileStore implements PersistentStore {
       return;
     }
     testStoreContext(context);
-    cacheMap.put(context.getConnectorName() + stateName, connectorState);
     writeStoreFile(context, stateName, connectorState);
   }
 
@@ -149,7 +130,6 @@ public class FileStore implements PersistentStore {
   public void removeConnectorState(StoreContext context) {
     testStoreContext(context);
     deleteStoreFile(context, stateName);
-    cacheMap.remove(context.getConnectorName() + stateName);
   }
 
 
@@ -317,8 +297,8 @@ public class FileStore implements PersistentStore {
         try {
           fis.close();
         } catch (IOException e1) {
-          LOGGER.log(Level.WARNING, "Error closing store file "
-              + storeFile + " for connector " + context.getConnectorName(), e1);
+          LOGGER.log(Level.WARNING, "Error closing store file " + storeFile
+                     + " for connector " + context.getConnectorName(), e1);
         }
       }
     }

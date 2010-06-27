@@ -1,4 +1,4 @@
-// Copyright 2007-2009 Google Inc.
+// Copyright (C) 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@ final class InstanceInfo {
   private final String connectorName;
   private final StoreContext storeContext;
 
-  private Map<String, String> configMap;
   private Connector connector;
 
 
@@ -132,7 +131,7 @@ final class InstanceInfo {
     InstanceInfo info = new InstanceInfo(connectorName, connectorDir, typeInfo);
     Configuration config =
         store.getConnectorConfiguration(info.storeContext);
-    info.configMap = (config == null) ? null : config.getMap();
+    Map<String, String> configMap = (config == null) ? null : config.getMap();
 
     // Upgrade from Legacy Configuration Data Stores. This method is
     // called to instantiate Connectors that were created by some
@@ -143,9 +142,9 @@ final class InstanceInfo {
     // have its instance data stored in the older legacy locations.
     // Move the data from the legacy stores to the expected locations
     // before launching the connector instance.
-    if (info.configMap == null) {
+    if (configMap == null) {
       upgradeConfigStore(info);
-      if (info.configMap == null) {
+      if ((configMap = info.getConnectorConfig()) == null) {
         throw new InstanceInfoException("Configuration not found for connector "
                                         + connectorName);
       }
@@ -166,7 +165,7 @@ final class InstanceInfo {
       upgradeStateStore(info);
     }
 
-    info.connector = makeConnectorWithSpring(info);
+    info.connector = makeConnectorWithSpring(info, configMap);
     return info;
   }
 
@@ -187,9 +186,8 @@ final class InstanceInfo {
       File connectorDir, TypeInfo typeInfo, Map<String, String> configMap)
       throws InstanceInfoException {
     InstanceInfo info = new InstanceInfo(connectorName, connectorDir, typeInfo);
-    info.configMap = configMap;
     // Don't write properties file to disk yet.
-    info.connector = makeConnectorWithSpring(info);
+    info.connector = makeConnectorWithSpring(info, configMap);
     return info;
   }
 
@@ -198,9 +196,10 @@ final class InstanceInfo {
    * and connectorDefaults bean definitions.
    *
    * @param info the InstanceInfo object under construction.
+   * @param configMap configuration properties.
    */
-  private static Connector makeConnectorWithSpring(InstanceInfo info)
-      throws InstanceInfoException {
+  private static Connector makeConnectorWithSpring(InstanceInfo info,
+      Map<String, String> configMap) throws InstanceInfoException {
     Context context = Context.getInstance();
     String name = info.connectorName;
     Resource prototype = null;
@@ -252,7 +251,7 @@ final class InstanceInfo {
     }
 
     try {
-      cfg.setLocation(getPropertiesResource(info));
+      cfg.setLocation(getPropertiesResource(info, configMap));
       cfg.postProcessBeanFactory(factory);
     } catch (BeansException e) {
       throw new PropertyProcessingFailureException(e, prototype, name);
@@ -275,10 +274,10 @@ final class InstanceInfo {
    * Return a Spring Resource containing the InstanceInfo
    * configuration Properties.
    */
-  private static Resource getPropertiesResource(InstanceInfo info)
-      throws InstanceInfoException {
-    Properties properties = (info.configMap == null)
-        ? new Properties() : PropertiesUtils.fromMap(info.configMap);
+  private static Resource getPropertiesResource(InstanceInfo info,
+      Map<String, String> configMap) throws InstanceInfoException {
+    Properties properties = (configMap == null)
+        ? new Properties() : PropertiesUtils.fromMap(configMap);
     try {
       return new ByteArrayResourceHack(
           PropertiesUtils.storeToString(properties, null).getBytes());
@@ -327,11 +326,8 @@ final class InstanceInfo {
    * configuration data, or null if no configuration is stored.
    */
   public Map<String, String> getConnectorConfig() {
-    if (configMap == null) {
-      Configuration config = store.getConnectorConfiguration(storeContext);
-      configMap = (config == null) ? null : config.getMap();
-    }
-    return configMap;
+    Configuration config = store.getConnectorConfiguration(storeContext);
+    return (config == null) ? null : config.getMap();
   }
 
   /**
@@ -342,7 +338,6 @@ final class InstanceInfo {
    *        configuration data, or null if no configuration is stored.
    */
   public void setConnectorConfig(Map<String, String> configMap) {
-    this.configMap = configMap;
     if (configMap == null) {
       store.removeConnectorConfiguration(storeContext);
     } else {
@@ -417,14 +412,13 @@ final class InstanceInfo {
   private static void upgradeConfigStore(InstanceInfo info) {
     if (legacyStores != null) {
       for (PersistentStore legacyStore : legacyStores) {
-        Configuration config = 
+        Configuration config =
             legacyStore.getConnectorConfiguration(info.storeContext);
         if (config != null) {
           LOGGER.config("Migrating configuration information for connector "
                         + info.connectorName + " from legacy storage "
                         + legacyStore.getClass().getName() + " to "
                         + store.getClass().getName());
-          info.configMap = config.getMap();
           store.storeConnectorConfiguration(info.storeContext, config);
           legacyStore.removeConnectorConfiguration(info.storeContext);
           return;
