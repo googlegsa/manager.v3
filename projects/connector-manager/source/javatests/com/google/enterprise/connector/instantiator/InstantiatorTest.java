@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2009 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class InstantiatorTest extends TestCase {
   private static final String TEST_CONFIG_FILE =
       "classpath*:config/connectorType.xml";
   private final File baseDirectory  = new File(TEST_DIR_NAME);
-  private Instantiator instantiator;
+  private SpringInstantiator instantiator;
 
   @Override
   protected void setUp() throws Exception {
@@ -389,8 +389,8 @@ public class InstantiatorTest extends TestCase {
     return false;
   }
 
-  private void updateConnectorTest(Instantiator instantiator, String name,
-      String typeName, String language, boolean update,
+  private void updateConnectorTest(SpringInstantiator instantiator,
+      String name, String typeName, String language, boolean update,
       String jsonConfigString) throws JSONException, InstantiatorException,
       ConnectorTypeNotFoundException, ConnectorNotFoundException,
       ConnectorExistsException {

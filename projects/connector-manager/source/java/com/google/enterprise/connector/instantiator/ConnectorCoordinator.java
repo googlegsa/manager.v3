@@ -1,4 +1,4 @@
-// Copyright (C) 2009 Google Inc.
+// Copyright 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.spi.AuthenticationManager;
@@ -47,7 +48,7 @@ import java.util.Map;
  * It is expected the caller will guarantee that each
  * {@link ConnectorCoordinator} in the system has a unique name.
  */
-public interface ConnectorCoordinator {
+interface ConnectorCoordinator {
   /**
    * Returns true if this {@link ConnectorCoordinator} holds a
    * configured usable connector instance. This function is for reporting
@@ -110,6 +111,7 @@ public interface ConnectorCoordinator {
    * @throws InstantiatorException if unable to instantiate the requested
    *         {@link Traverser}
    */
+  @VisibleForTesting
   public TraversalManager getTraversalManager()
       throws ConnectorNotFoundException, InstantiatorException;
 

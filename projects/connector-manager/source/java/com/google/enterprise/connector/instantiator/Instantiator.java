@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2009 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,12 +27,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Interface for instantiator component.
+ * Facade interface for instantiator package.
  */
 public interface Instantiator {
-
   /**
-   * gets an AuthenticationManager for a named connector.
+   * Gets an AuthenticationManager for a named connector.
    *
    * @param connectorName the String name of the connector for which to get the
    *        Traverser
@@ -46,7 +45,7 @@ public interface Instantiator {
       throws ConnectorNotFoundException, InstantiatorException;
 
   /**
-   * gets an AuthorizationManager for a named connector.
+   * Gets an AuthorizationManager for a named connector.
    *
    * @param connectorName the String name of the connector for which to get the
    *        Traverser
@@ -196,12 +195,14 @@ public interface Instantiator {
       throws ConnectorNotFoundException;
 
   /**
-   * Returns the named {@link ConnectorCoordinator}.
+   * Starts running a batch for a named connector if a batch is not
+   * already running.
    *
+   * @return {@code true} if this call started a batch
    * @throws ConnectorNotFoundException if the named connector is not found
    */
-  public ConnectorCoordinator getConnectorCoordinator(
-      String connectorName) throws ConnectorNotFoundException;
+  public void startBatch(String connectorName)
+      throws ConnectorNotFoundException;
 
   /**
    * Shutdown all the Connector instances.
