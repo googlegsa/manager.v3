@@ -1,4 +1,4 @@
-// Copyright (C) 2007 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,15 +45,12 @@ final class InstanceInfo {
 
   private static PersistentStore store;
 
-  private static Collection<PersistentStore> legacyStores;
-
   private final TypeInfo typeInfo;
   private final File connectorDir;
   private final String connectorName;
   private final StoreContext storeContext;
 
   private Connector connector;
-
 
   /** Private Constructor for use by Static Factory Methods, below. */
   private InstanceInfo(String connectorName, File connectorDir,
@@ -79,10 +76,6 @@ final class InstanceInfo {
 
   public static void setPersistentStore(PersistentStore store) {
     InstanceInfo.store = store;
-  }
-
-  public static void setLegacyStores(Collection<PersistentStore> stores) {
-    legacyStores = stores;
   }
 
   /**
@@ -132,39 +125,10 @@ final class InstanceInfo {
     Configuration config =
         store.getConnectorConfiguration(info.storeContext);
     Map<String, String> configMap = (config == null) ? null : config.getMap();
-
-    // Upgrade from Legacy Configuration Data Stores. This method is
-    // called to instantiate Connectors that were created by some
-    // other (possibly older) instance of the Connector Manager.
-    // If the various stored instance data is not found in the
-    // expected locations, the connector may have been previously
-    // created by an older version of the Connector Manager and may
-    // have its instance data stored in the older legacy locations.
-    // Move the data from the legacy stores to the expected locations
-    // before launching the connector instance.
     if (configMap == null) {
-      upgradeConfigStore(info);
-      if ((configMap = info.getConnectorConfig()) == null) {
-        throw new InstanceInfoException("Configuration not found for connector "
-                                        + connectorName);
-      }
+      throw new InstanceInfoException("Configuration not found for connector "
+          + connectorName);
     }
-    if (store.getConnectorSchedule(info.storeContext) == null) {
-      upgradeScheduleStore(info);
-      if (info.getConnectorSchedule() == null) {
-        // If there is no schedule, create a disabled schedule rather than
-        // logging "schedule not found" once a second for eternity.
-        LOGGER.warning("Traversal Schedule not found for connector "
-                       + connectorName + ", disabling traversal.");
-        Schedule schedule = new Schedule();
-        schedule.setConnectorName(connectorName);
-        info.setConnectorSchedule(schedule.toString());
-      }
-    }
-    if (store.getConnectorState(info.storeContext) == null) {
-      upgradeStateStore(info);
-    }
-
     info.connector = makeConnectorWithSpring(info, configMap);
     return info;
   }
@@ -399,100 +363,8 @@ final class InstanceInfo {
     return store.getConnectorState(storeContext);
   }
 
-  /**
-   * Upgrade ConnectorConfigStore.  If the ConnectorConfigStore has
-   * no stored configuration data for this connector, look in the
-   * Legacy stores (those used in earlier versions of the product).
-   * If a configuration was found in a Legacy store, move it to the
-   * new store.
-   *
-   * @param info a partially constructed InstanceInfo describing the
-   * connector.
-   */
-  private static void upgradeConfigStore(InstanceInfo info) {
-    if (legacyStores != null) {
-      for (PersistentStore legacyStore : legacyStores) {
-        Configuration config =
-            legacyStore.getConnectorConfiguration(info.storeContext);
-        if (config != null) {
-          LOGGER.config("Migrating configuration information for connector "
-                        + info.connectorName + " from legacy storage "
-                        + legacyStore.getClass().getName() + " to "
-                        + store.getClass().getName());
-          store.storeConnectorConfiguration(info.storeContext, config);
-          legacyStore.removeConnectorConfiguration(info.storeContext);
-          return;
-        }
-      }
-    }
-    LOGGER.config("Connector " + info.connectorName
-                  + " lacks saved configuration information, and none was"
-                  + " found in any LegacyConnectorConfigStores.");
-  }
 
-  /**
-   * Upgrade ConnectorScheduleStore.  If the ConnectorScheduleStore has
-   * no stored schedule data for this connector, look in the
-   * Legacy stores (those used in earlier versions of the product).
-   * If a schedule was found in a Legacy store, move it to the
-   * new store.
-   *
-   * @param info a partially constructed InstanceInfo describing the
-   * connector.
-   */
-  private static void upgradeScheduleStore(InstanceInfo info) {
-    if (legacyStores != null) {
-      for (PersistentStore legacyStore : legacyStores) {
-        Schedule schedule =
-            legacyStore.getConnectorSchedule(info.storeContext);
-        if (schedule != null) {
-          LOGGER.config("Migrating traversal schedule information for connector "
-                        + info.connectorName + " from legacy storage "
-                        + legacyStore.getClass().getName() + " to "
-                        + store.getClass().getName());
-          store.storeConnectorSchedule(info.storeContext, schedule);
-          legacyStore.removeConnectorSchedule(info.storeContext);
-          return;
-        }
-      }
-    }
-    LOGGER.config("Connector " + info.connectorName
-                  + " lacks saved traversal schedule information, and none"
-                  + " was found in any LegacyConnectorScheduleStores.");
-  }
-
-  /**
-   * Upgrade ConnectorStateStore.  If the ConnectorStateStore has
-   * no stored traversal state data for this connector, look in the
-   * Legacy stores (those used in earlier versions of the product).
-   * If a traversal state was found in a Legacy store, move it to the
-   * new store.
-   *
-   * @param info a partially constructed InstanceInfo describing the
-   * connector.
-   */
-  private static void upgradeStateStore(InstanceInfo info) {
-    if (legacyStores != null) {
-      for (PersistentStore legacyStore : legacyStores) {
-        String state = legacyStore.getConnectorState(info.storeContext);
-        if (state != null) {
-          LOGGER.config("Migrating traversal state information for connector "
-                        + info.connectorName + " from legacy storage "
-                        + legacyStore.getClass().getName() + " to "
-                        + store.getClass().getName());
-          store.storeConnectorState(info.storeContext, state);
-          legacyStore.removeConnectorState(info.storeContext);
-          return;
-        }
-      }
-    }
-    LOGGER.config("Connector " + info.connectorName
-                  + " lacks saved traversal state information, and none was"
-                  + " found in any LegacyConnectorStateStores.");
-  }
-
-
-  /* **** InstanceInfoExcepetions **** */
+  /* **** InstanceInfoExceptions **** */
 
   static class InstanceInfoException extends InstantiatorException {
     InstanceInfoException(String message, Throwable cause) {
