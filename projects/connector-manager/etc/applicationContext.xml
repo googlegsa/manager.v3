@@ -226,26 +226,16 @@
     </property>
   </bean>
 
-  <!-- Legacy ConnectorStateStore and ConnectorScheduleStore used for
-       upgrading existing connectors created by previous versions of
-       the Connector Manager.
+  <!-- Legacy stores are used for upgrading existing connectors
+       created by previous versions of the Connector Manager.
   -->
-  <bean id="LegacyStores" class="java.util.ArrayList">
-    <constructor-arg>
+  <bean id="StoreMigrator" class="com.google.enterprise.connector.persist.StoreMigrator">
+    <constructor-arg index="0" ref="PersistentStore"/>
+    <constructor-arg index="1">
       <list>
         <!-- No legacy store. -->
       </list>
     </constructor-arg>
-  </bean>
-
-  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-    <property name="staticMethod"
-              value="com.google.enterprise.connector.instantiator.InstanceInfo.setLegacyStores"/>
-    <property name="arguments">
-      <list>
-        <ref bean="LegacyStores"/>
-      </list>
-    </property>
   </bean>
 
   <bean id="ThreadPool"
