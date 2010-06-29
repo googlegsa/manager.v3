@@ -1,4 +1,4 @@
-// Copyright (C) 2009 Google Inc.
+// Copyright 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -153,7 +153,7 @@ class ConnectorCoordinatorImpl implements
    *
    * @return The name of this Connector.
    */
-  //@Override
+  /* @Override */
   public String getConnectorName() {
     return name;
   }
@@ -161,7 +161,7 @@ class ConnectorCoordinatorImpl implements
   /**
    * Returns {@code true} if an instance of this {@link Connector} exists.
    */
-  //@Override
+  /* @Override */
   public synchronized boolean exists() {
     return (instanceInfo != null);
   }
@@ -171,7 +171,7 @@ class ConnectorCoordinatorImpl implements
    * removes the Connector instance from the known connectors,
    * and removes the Connector's on-disk representation.
    */
-  //@Override
+  /* @Override */
   public synchronized void removeConnector() {
     resetBatch();
     instanceInfo.removeConnector(); // TODO: PStore Setter
@@ -209,7 +209,7 @@ class ConnectorCoordinatorImpl implements
    * @return an AuthenticationManager
    * @throws InstantiatorException
    */
-  //@Override
+  /* @Override */
   public synchronized AuthenticationManager getAuthenticationManager()
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorInterfaces().getAuthenticationManager();
@@ -222,7 +222,7 @@ class ConnectorCoordinatorImpl implements
    * @return an AuthorizationManager
    * @throws InstantiatorException
    */
-  //@Override
+  /* @Override */
   public synchronized AuthorizationManager getAuthorizationManager()
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorInterfaces().getAuthorizationManager();
@@ -235,7 +235,7 @@ class ConnectorCoordinatorImpl implements
    * @return a TraversalManager
    * @throws InstantiatorException
    */
-  //@Override
+  /* @Override */
   public synchronized TraversalManager getTraversalManager()
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorInterfaces().getTraversalManager();
@@ -251,7 +251,7 @@ class ConnectorCoordinatorImpl implements
    *         supplied data in the map.
    * @see ConnectorType#getPopulatedConfigForm(Map, Locale)
    */
-  //@Override
+  /* @Override */
   public synchronized ConfigureResponse getConfigForm(Locale locale)
       throws ConnectorNotFoundException, InstantiatorException {
     Map<String, String> configMap = getInstanceInfo().getConnectorConfig();
@@ -268,7 +268,7 @@ class ConnectorCoordinatorImpl implements
    * Halts any traversal in progress and removes any saved traversal state,
    * forcing the Connector to retraverse the Repository from its start.
    */
-  //@Override
+  /* @Override */
   public void restartConnectorTraversal() throws ConnectorNotFoundException {
     setConnectorState(null); // TODO: PStore eventual Setter
     // The rest of the work is handled by connectorCheckpointChanged().
@@ -296,7 +296,7 @@ class ConnectorCoordinatorImpl implements
    *        schedule.
    * @throws ConnectorNotFoundException if the connector is not found
    */
-  //@Override
+  /* @Override */
   public synchronized void setConnectorSchedule(String connectorSchedule)
       throws ConnectorNotFoundException {
     // Persistently store the new schedule.
@@ -335,7 +335,7 @@ class ConnectorCoordinatorImpl implements
    *         for this connector.
    * @throws ConnectorNotFoundException if the connector is not found
    */
-  //@Override
+  /* @Override */
   public synchronized String getConnectorSchedule()
       throws ConnectorNotFoundException {
     return getInstanceInfo().getConnectorSchedule();
@@ -349,7 +349,7 @@ class ConnectorCoordinatorImpl implements
    * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
    *         does not exist.
    */
-  //@Override
+  /* @Override */
   public synchronized void setConnectorState(String state)
       throws ConnectorNotFoundException {
     getInstanceInfo().setConnectorState(state);     // TODO: PStore Setter
@@ -400,7 +400,7 @@ class ConnectorCoordinatorImpl implements
    * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
    *         does not exist.
    */
-  //@Override
+  /* @Override */
   public synchronized String getConnectorState()
       throws ConnectorNotFoundException {
     return getInstanceInfo().getConnectorState();
@@ -410,7 +410,7 @@ class ConnectorCoordinatorImpl implements
    * Returns the name of the {@link ConnectorType} for this {@link Connector}
    * instance.
    */
-  //@Override
+  /* @Override */
   public synchronized String getConnectorTypeName()
       throws ConnectorNotFoundException {
     return getInstanceInfo().getTypeInfo().getConnectorTypeName();
@@ -421,7 +421,7 @@ class ConnectorCoordinatorImpl implements
    * {@link ConnectorCoordinator} supports persistence this will persist the new
    * configuration.
    */
-  //@Override
+  /* @Override */
   public synchronized ConfigureResponse setConnectorConfig(
       TypeInfo newTypeInfo, Map<String, String> configMap, Locale locale,
       boolean update) throws ConnectorNotFoundException,
@@ -458,7 +458,7 @@ class ConnectorCoordinatorImpl implements
     return response;
   }
 
-  //@Override
+  /* @Override */
   public synchronized Map<String, String> getConnectorConfig()
       throws ConnectorNotFoundException {
     return getInstanceInfo().getConnectorConfig();
@@ -563,11 +563,9 @@ class ConnectorCoordinatorImpl implements
    * not already running.
    *
    * @return true if this call started a batch
-   * @throws ConnectorNotFoundException if this {@link ConnectorCoordinator}
-   *         does not exist.
    */
-  //@Override
-  public synchronized boolean startBatch() throws ConnectorNotFoundException {
+  /* @Override */
+  public synchronized boolean startBatch() {
     if (!shouldRun()) {
       return false;
     }
@@ -609,7 +607,7 @@ class ConnectorCoordinatorImpl implements
    *
    * @param result a BatchResult
    */
-  //@Override
+  /* @Override */
   public synchronized void recordResult(BatchResult result) {
     loadManager.recordResult(result);
     delayTraversal(result.getDelayPolicy());
@@ -621,6 +619,7 @@ class ConnectorCoordinatorImpl implements
    * and discards the Connector instance.  Any on-disk representation of
    * the connector remains.
    */
+  /* @Override */
   public synchronized void shutdown() {
     resetBatch();
     shutdownConnector(false);

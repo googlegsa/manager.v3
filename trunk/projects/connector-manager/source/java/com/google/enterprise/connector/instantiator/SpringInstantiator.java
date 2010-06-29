@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2009 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -35,11 +36,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * {@link Instantiator} that supports Spring based connector instantiation and
+ * {@link Instantiator} that supports Spring-based connector instantiation and
  * persistent storage of connector configuration, schedule and traversal state.
  */
 public class SpringInstantiator implements Instantiator {
-
   private static final Logger LOGGER =
       Logger.getLogger(SpringInstantiator.class.getName());
 
@@ -121,6 +121,7 @@ public class SpringInstantiator implements Instantiator {
   /**
    * Shutdown all connector instances.
    */
+  /* @Override */
   public void shutdown(boolean interrupt, long timeoutMillis) {
     for (ConnectorCoordinator cc : coordinatorMap.values()) {
       cc.shutdown();
@@ -134,6 +135,7 @@ public class SpringInstantiator implements Instantiator {
     }
   }
 
+  /* @Override */
   public void removeConnector(String connectorName) {
     LOGGER.info("Dropping connector: " + connectorName);
     ConnectorCoordinator existing = coordinatorMap.get(connectorName);
@@ -142,13 +144,21 @@ public class SpringInstantiator implements Instantiator {
     }
   }
 
+  /* @Override */
   public AuthenticationManager getAuthenticationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorCoordinator(connectorName).getAuthenticationManager();
   }
 
-  public ConnectorCoordinator getConnectorCoordinator(
-      String connectorName) throws ConnectorNotFoundException {
+  /* @Override */
+  public void startBatch(String connectorName)
+      throws ConnectorNotFoundException {
+    getConnectorCoordinator(connectorName).startBatch();
+  }
+
+  @VisibleForTesting
+  ConnectorCoordinator getConnectorCoordinator(String connectorName)
+      throws ConnectorNotFoundException {
     ConnectorCoordinator connectorCoordinator =
       coordinatorMap.get(connectorName);
     if (connectorCoordinator == null) {
@@ -157,8 +167,8 @@ public class SpringInstantiator implements Instantiator {
     return connectorCoordinator;
   }
 
-  public ChangeHandler getChangeHandler(String connectorName) {
-      return (ChangeHandler) getOrAddConnectorCoordinator(connectorName);
+  ChangeHandler getChangeHandler(String connectorName) {
+    return (ChangeHandler) getOrAddConnectorCoordinator(connectorName);
   }
 
   private ConnectorCoordinator getOrAddConnectorCoordinator(
@@ -179,21 +189,25 @@ public class SpringInstantiator implements Instantiator {
     return connectorCoordinator;
   }
 
+  /* @Override */
   public AuthorizationManager getAuthorizationManager(String connectorName)
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorCoordinator(connectorName).getAuthorizationManager();
   }
 
+  /* @Override */
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String connectorTypeName, Locale locale)
       throws ConnectorNotFoundException, InstantiatorException {
     return getConnectorCoordinator(connectorName).getConfigForm(locale);
   }
 
+  /* @Override */
   public String getConnectorInstancePrototype(String connectorTypeName) {
     throw new UnsupportedOperationException();
   }
 
+  /* @Override */
   public synchronized ConnectorType getConnectorType(String typeName)
       throws ConnectorTypeNotFoundException {
     return getTypeInfo(typeName).getConnectorType();
@@ -209,16 +223,19 @@ public class SpringInstantiator implements Instantiator {
     return typeInfo;
   }
 
+  /* @Override */
   public synchronized Set<String> getConnectorTypeNames() {
     return Collections.unmodifiableSet(new TreeSet<String>(typeMap.keySet()));
   }
 
+  /* @Override */
   public void restartConnectorTraversal(String connectorName)
       throws ConnectorNotFoundException {
     LOGGER.info("Restarting traversal for Connector: " + connectorName);
     getConnectorCoordinator(connectorName).restartConnectorTraversal(); // TODO: PStore eventual Setter
   }
 
+  /* @Override */
   public Set<String> getConnectorNames() {
     Set<String> result = new TreeSet<String>();
     for (Map.Entry<String, ConnectorCoordinator> e :
@@ -230,11 +247,13 @@ public class SpringInstantiator implements Instantiator {
     return Collections.unmodifiableSet(result);
   }
 
+  /* @Override */
   public String getConnectorTypeName(String connectorName)
       throws ConnectorNotFoundException {
     return getConnectorCoordinator(connectorName).getConnectorTypeName();
   }
 
+  /* @Override */
   public ConfigureResponse setConnectorConfig(String connectorName,
       String connectorTypeName, Map<String, String> configMap, Locale locale,
       boolean update) throws ConnectorNotFoundException,
@@ -249,17 +268,20 @@ public class SpringInstantiator implements Instantiator {
     }
   }
 
+  /* @Override */
   public Map<String, String> getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException {
     return getConnectorCoordinator(connectorName).getConnectorConfig();
   }
 
+  /* @Override */
   public void setConnectorSchedule(String connectorName,
       String connectorSchedule) throws ConnectorNotFoundException {
     getConnectorCoordinator(connectorName).
         setConnectorSchedule(connectorSchedule);  // TODO: PStore eventual Setter
   }
 
+  /* @Override */
   public String getConnectorSchedule(String connectorName)
       throws ConnectorNotFoundException {
     return  getConnectorCoordinator(connectorName).getConnectorSchedule();

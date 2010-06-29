@@ -1,4 +1,4 @@
-// Copyright 2006-2009 Google Inc.  All Rights Reserved.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ public class TraversalScheduler implements Runnable {
     for (String connectorName : instantiator.getConnectorNames()) {
       NDC.pushAppend(connectorName);
       try {
-        instantiator.getConnectorCoordinator(connectorName).startBatch();
+        instantiator.startBatch(connectorName);
       } catch (ConnectorNotFoundException e) {
         // Looks like the connector just got deleted.  Don't schedule it.
       } finally {

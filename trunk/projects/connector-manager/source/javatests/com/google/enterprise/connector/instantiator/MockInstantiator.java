@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc.  All Rights Reserved.
+// Copyright 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -221,6 +221,11 @@ public class MockInstantiator implements Instantiator {
     return getConnectorCoordinator(connectorName).getAuthorizationManager();
   }
 
+  public void startBatch(String connectorName)
+      throws ConnectorNotFoundException {
+    getConnectorCoordinator(connectorName).startBatch();
+  }
+
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String connectorTypeName, Locale locale) {
     throw new UnsupportedOperationException();
@@ -273,7 +278,7 @@ public class MockInstantiator implements Instantiator {
     return getConnectorCoordinator(connectorName).getConnectorState();
   }
 
-  public ConnectorCoordinator getConnectorCoordinator(String connectorName)
+  private ConnectorCoordinator getConnectorCoordinator(String connectorName)
       throws ConnectorNotFoundException {
     if (connectorMap.containsKey(connectorName)) {
       return connectorMap.get(connectorName);
