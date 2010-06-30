@@ -1,4 +1,4 @@
-// Copyright (C) 2007-2009 Google Inc.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.importexport;
 
 import com.google.enterprise.connector.common.StringUtils;
+import com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Context;
@@ -57,6 +58,7 @@ public class ImportExport {
 
   /*
    * Exports a list of connectors.
+   *
    * @return a List of ImportExportConnectors
    */
   private static final List<ImportExportConnector> getConnectors(
@@ -83,17 +85,16 @@ public class ImportExport {
   }
 
   /*
-   * (non-Javadoc)
-   *
    * Imports a list of connectors.  Replaces the existing connectors with the
-   * connectors in <code>connectors</code>.  For each connector in
-   * <code>connectors</code>, update an existing connector if the
+   * connectors in {@code connectors}.  For each connector in
+   * {@code connectors}, update an existing connector if the
    * connector names match or create a new connector if it doesn't already
    * exist.  Remove any existing connectors which are not included in
-   * <code>connectors</code>.
-   * @param noRemove <code>setConnectors</code> removes previous connectors
-   * which are not included in <code>connectors</code> if and only if
-   * <code>noremove</code> is false.
+   * {@code connectors}.
+   *
+   * @param noRemove {@code setConnectors} removes previous connectors
+   *        which are not included in {@code connectors} if and only if
+   *        {@code noremove} is {@code false}.
    */
   private static final void setConnectors(Manager manager,
       List<ImportExportConnector> connectors, boolean noRemove)
@@ -160,6 +161,7 @@ public class ImportExport {
 
   /**
    * Deserializes connectors from XML.
+   *
    * @return a List of ImportExportConnectors
    */
   @SuppressWarnings("deprecation")
@@ -199,6 +201,7 @@ public class ImportExport {
 
   /**
    * Deserialializes connectors from XML string.
+   *
    * @return a List of ImportExportConnectors
    */
   public static List<ImportExportConnector> fromXmlString(String xmlString) {
@@ -210,6 +213,7 @@ public class ImportExport {
 
   /**
    * Serializes connectors to XML.
+   *
    * @param connectors a List of ImportExportConnectors
    */
   public static String asXmlString(List<ImportExportConnector> connectors) {
@@ -262,7 +266,8 @@ public class ImportExport {
   }
 
   /**
-   * read a list of connectors from an XML file.
+   * Reads a list of connectors from an XML file.
+   *
    * @return a List of ImportExportConnectors
    */
   public static List<ImportExportConnector> readFromFile(String filename)
@@ -273,7 +278,8 @@ public class ImportExport {
   }
 
   /**
-   * write a list of connectors to an XML file.
+   * Writes a list of connectors to an XML file.
+   *
    * @param connectors a List of ImportExportConnectors
    */
   public static void writeToFile(String filename,
@@ -286,13 +292,29 @@ public class ImportExport {
 
   /**
    * A utility to import/export connectors from/to an XML file.
-   * usage: <code>ImportExport (export|import|import-no-remove)
-   *        &lt;filename&gt;filename</code>
+   * <pre>
+   * usage: ImportExport (export|import|import-no-remove) &lt;filename&gt;
+   * </pre>
+   *
+   * <p>Use -Dkeystore.file=&lt;filename&gt; to set the keystore filename
+   * if the WebApp is not using the default value.
    */
   public static final void main(String[] args) throws Exception {
+    // Setup all the pathnames.
     Context context = Context.getInstance();
     context.setStandaloneContext("WEB-INF/applicationContext.xml",
-                                 new File("WEB-INF").getAbsolutePath());
+        new File("WEB-INF").getAbsolutePath());
+    String ksFilename = System.getProperty("keystore.file",
+        "connector_manager.keystore");
+    EncryptedPropertyPlaceholderConfigurer.setKeyStorePath(
+        new File("WEB-INF/" + ksFilename).getAbsolutePath());
+
+    // At this point the beans have been created, however, the
+    // SpringInstantiator attached to the ProductionManager has not been
+    // initialized.  Need to initialize before using the Manager.
+    context.setFeeding(false);
+    context.start();
+
     Manager manager = context.getManager();
 
     if (args.length == 2 && args[0].equals("export")) {
