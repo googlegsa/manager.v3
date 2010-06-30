@@ -1,4 +1,4 @@
-// Copyright 2006-2009 Google Inc.  All Rights Reserved.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import java.util.logging.Logger;
  *  Keeps track of the load for each connector instance as well as supplies
  *  batchHint to indicate how many docs to allow to be traversed by traverser.
  */
-//@NotThreadSafe
-//@GuardedBy("ConnectorCoordinatorImpl")
+/* @NotThreadSafe */
+/* @GuardedBy("ConnectorCoordinatorImpl") */
 public class HostLoadManager implements LoadManager {
   private static final Logger LOGGER =
       Logger.getLogger(HostLoadManager.class.getName());
@@ -77,6 +77,8 @@ public class HostLoadManager implements LoadManager {
    * Used when calculating low-memory conditions.
    */
   private final FileSizeLimitInfo fileSizeLimit;
+  private boolean gotLowMemory = false;
+  private long lastLowMemMessage = 0L;
 
   /**
    * Constructor used by {@link HostLoadManagerFactory} to create a
@@ -96,7 +98,7 @@ public class HostLoadManager implements LoadManager {
    *
    * @param load target load in documents per period.
    */
-  //@Override
+  /* @Override */
   public void setLoad(int load) {
     this.load = load;
   }
@@ -106,7 +108,7 @@ public class HostLoadManager implements LoadManager {
    *
    * @param periodInSeconds measurement period in seconds.
    */
-  //@Override
+  /* @Override */
   public void setPeriod(int periodInSeconds) {
     periodInMillis = periodInSeconds * 1000L;
   }
@@ -114,7 +116,7 @@ public class HostLoadManager implements LoadManager {
   /**
    * @param batchSize the target batchSize to set.
    */
-  //@Override
+  /* @Override */
   public void setBatchSize(int batchSize) {
     this.batchSize = batchSize;
   }
@@ -125,7 +127,7 @@ public class HostLoadManager implements LoadManager {
    *
    * @param batchResult a traversal BatchResult
    */
-  //@Override
+  /* @Override */
   public void recordResult(BatchResult batchResult) {
     if (batchResult.getCountProcessed() > 0) {
       batchResults.add(0, batchResult);
@@ -202,7 +204,7 @@ public class HostLoadManager implements LoadManager {
    * @return BatchSize hint and constraint to the number of documents traverser
    *         should traverse
    */
-  //@Override
+  /* @Override */
   public BatchSize determineBatchSize() {
     int maxDocsPerPeriod = load;
     RecentDocs traversed  = getNumDocsTraversedRecently();
@@ -240,7 +242,7 @@ public class HostLoadManager implements LoadManager {
    *
    * @return true if the connector should not run at this time
    */
-  //@Override
+  /* @Override */
   public boolean shouldDelay() {
     // Has the connector exceeded its maximum number of documents per minute?
     int maxDocsPerPeriod = load;
@@ -262,9 +264,23 @@ public class HostLoadManager implements LoadManager {
     // If the process is running low on memory, don't traverse.
     if (fileSizeLimit != null) {
       Runtime rt = Runtime.getRuntime();
-      if ((rt.maxMemory() - (rt.totalMemory() - rt.freeMemory())) <
-          fileSizeLimit.maxFeedSize()) {
+      long available = rt.maxMemory() - (rt.totalMemory() - rt.freeMemory());
+      if (available < fileSizeLimit.maxFeedSize()) {
+        Level level = (gotLowMemory) ? Level.FINE : Level.WARNING;
+        gotLowMemory = true;
+        long now = System.currentTimeMillis();
+        // Log message no more than once every minute.
+        if (now > (lastLowMemMessage + (60 * 1000))) {
+          lastLowMemMessage = now;
+          LOGGER.log(level, "Delaying traversal due to low memory condition: "
+                     + available / (1024 * 1024L) + " MB available");
+        }
         return true;
+      } else if (gotLowMemory) {
+          gotLowMemory = false;
+          lastLowMemMessage = 0L;
+          LOGGER.info("Resuming traversal after low memory condition abates: "
+                      + available / (1024 * 1024L) + " MB available");
       }
     }
 
