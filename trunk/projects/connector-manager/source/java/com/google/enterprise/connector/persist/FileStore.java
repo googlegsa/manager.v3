@@ -1,4 +1,4 @@
-// Copyright (C) 2008 Google Inc.
+// Copyright 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.instantiator.Configuration;
+import com.google.enterprise.connector.instantiator.TypeInfo;
 import com.google.enterprise.connector.scheduler.Schedule;
 
 import java.io.File;
@@ -55,7 +56,8 @@ public class FileStore implements PersistentStore {
   /* @Override */
   public Schedule getConnectorSchedule(StoreContext context) {
     testStoreContext(context);
-    String schedule = readStoreFile(context, schedName);
+    String schedule =
+        readStoreFile(context, getStoreFileName(context, schedName));
     if (schedule != null) {
       return new Schedule(schedule);
     } else {
@@ -78,7 +80,8 @@ public class FileStore implements PersistentStore {
       return;
     }
     testStoreContext(context);
-    writeStoreFile(context, schedName, connectorSchedule.toString());
+    writeStoreFile(context, getStoreFileName(context, schedName),
+                   connectorSchedule.toString());
   }
 
   /**
@@ -89,7 +92,7 @@ public class FileStore implements PersistentStore {
   /* @Override */
   public void removeConnectorSchedule(StoreContext context) {
     testStoreContext(context);
-    deleteStoreFile(context, schedName);
+    deleteStoreFile(context, getStoreFileName(context, schedName));
   }
 
   /**
@@ -101,7 +104,7 @@ public class FileStore implements PersistentStore {
   /* @Override */
   public String getConnectorState(StoreContext context) {
     testStoreContext(context);
-    return readStoreFile(context, stateName);
+    return readStoreFile(context, getStoreFileName(context, stateName));
   }
 
   /**
@@ -118,7 +121,8 @@ public class FileStore implements PersistentStore {
       return;
     }
     testStoreContext(context);
-    writeStoreFile(context, stateName, connectorState);
+    writeStoreFile(context, getStoreFileName(context, stateName),
+                   connectorState);
   }
 
   /**
@@ -129,7 +133,7 @@ public class FileStore implements PersistentStore {
   /* @Override */
   public void removeConnectorState(StoreContext context) {
     testStoreContext(context);
-    deleteStoreFile(context, stateName);
+    deleteStoreFile(context, getStoreFileName(context, stateName));
   }
 
 
@@ -143,15 +147,21 @@ public class FileStore implements PersistentStore {
   /* @Override */
   public Configuration getConnectorConfiguration(StoreContext context) {
     testStoreContext(context);
-    File propFile = getStoreFile(context, configName);
+    File propFile = getStoreFile(context, getStoreFileName(context, configName));
+    Properties props = null;
     if (propFile.exists()) {
       try {
-        Properties props = PropertiesUtils.loadFromFile(propFile);
-        return new Configuration(null, PropertiesUtils.toMap(props), null);
+        props = PropertiesUtils.loadFromFile(propFile);
       } catch (PropertiesException e) {
         LOGGER.log(Level.WARNING, "Failed to read connector configuration for "
                    + context.getConnectorName(), e);
+        return null;
       }
+    }
+    String xml = readStoreFile(context, TypeInfo.CONNECTOR_INSTANCE_XML);
+    if (props != null || xml != null) {
+      String typeName = context.getConnectorDir().getParentFile().getName();
+      return new Configuration(typeName, PropertiesUtils.toMap(props), xml);
     }
     return null;
   }
@@ -170,14 +180,26 @@ public class FileStore implements PersistentStore {
       return;
     }
     testStoreContext(context);
-    Properties properties = PropertiesUtils.fromMap(configuration.getMap());
-    File propFile = getStoreFile(context, configName);
-    String header = "Configuration for Connector " + context.getConnectorName();
-    try {
-      PropertiesUtils.storeToFile(properties, propFile, header);
-    } catch (PropertiesException e) {
-      LOGGER.log(Level.WARNING, "Failed to store connector configuration for "
-                 + context.getConnectorName(), e);
+    if (configuration.getXml() == null) {
+      deleteStoreFile(context, TypeInfo.CONNECTOR_INSTANCE_XML);
+    } else {
+      writeStoreFile(context, TypeInfo.CONNECTOR_INSTANCE_XML,
+                     configuration.getXml());
+    }
+    String propName = getStoreFileName(context, configName);
+    if (configuration.getMap() == null) {
+      deleteStoreFile(context, propName);
+    } else {
+      Properties properties = PropertiesUtils.fromMap(configuration.getMap());
+      File propFile = getStoreFile(context, propName);
+      String header = "Configuration for Connector "
+          + context.getConnectorName();
+      try {
+        PropertiesUtils.storeToFile(properties, propFile, header);
+      } catch (PropertiesException e) {
+        LOGGER.log(Level.WARNING, "Failed to store connector configuration for "
+            + context.getConnectorName(), e);
+      }
     }
   }
 
@@ -190,7 +212,8 @@ public class FileStore implements PersistentStore {
   /* @Override */
   public void removeConnectorConfiguration(StoreContext context) {
     testStoreContext(context);
-    deleteStoreFile(context, configName);
+    deleteStoreFile(context, getStoreFileName(context, configName));
+    deleteStoreFile(context, TypeInfo.CONNECTOR_INSTANCE_XML);
   }
 
   /**
@@ -202,11 +225,8 @@ public class FileStore implements PersistentStore {
     if (context == null) {
       throw new IllegalArgumentException("StoreContext may not be null.");
     }
-    String connectorName = context.getConnectorName();
-    if (connectorName == null || connectorName.length() < 1) {
-      throw new IllegalArgumentException(
-          "StoreContext.connectorName may not be null or empty.");
-    }
+    // The StoreContext ConnectorName is now checked on a Precondition on
+    // the constructor.
     File connectorDir = context.getConnectorDir();
     if (connectorDir == null) {
       throw new IllegalArgumentException(
@@ -219,24 +239,33 @@ public class FileStore implements PersistentStore {
   }
 
   /**
-   * Return a File object representing the on-disk store.
+   * Return a filename for the store file.
    *
    * @param context a StoreContext
    * @param suffix String to append to file name
    */
-  private static File getStoreFile(StoreContext context, String suffix) {
-    return new File(context.getConnectorDir(),
-                    context.getConnectorName() + suffix);
+  private static String getStoreFileName(StoreContext context, String suffix) {
+    return context.getConnectorName() + suffix;
+  }
+
+  /**
+   * Return a File object representing the on-disk store.
+   *
+   * @param context a StoreContext
+   * @param filename Filename of the on-disk store file.
+   */
+  private static File getStoreFile(StoreContext context, String filename) {
+    return new File(context.getConnectorDir(), filename);
   }
 
   /**
    * Delete a store file.
    *
    * @param context a StoreContext
-   * @param suffix String to append to file name
+   * @param filename Filename of the on-disk store file.
    */
-  private static void deleteStoreFile(StoreContext context, String suffix) {
-    getStoreFile(context, suffix).delete();
+  private static void deleteStoreFile(StoreContext context, String filename) {
+    getStoreFile(context, filename).delete();
   }
 
   /**
@@ -245,12 +274,12 @@ public class FileStore implements PersistentStore {
    * @param context a StoreContext
    * @param data to write to file
    */
-  private static void writeStoreFile(StoreContext context, String suffix,
+  private static void writeStoreFile(StoreContext context, String filename,
       String data) {
     FileOutputStream fos = null;
     File storeFile = null;
     try {
-      storeFile = getStoreFile(context, suffix);
+      storeFile = getStoreFile(context, filename);
       fos = new FileOutputStream(storeFile);
       fos.write(data.getBytes());
     } catch (IOException e) {
@@ -272,14 +301,14 @@ public class FileStore implements PersistentStore {
    * Read a store file, returning a String containing the contents.
    *
    * @param context a StoreContext
-   * @param suffix String to append to file name
+   * @param filename Filename of the on-disk store file
    * @return String containing store file contents or null if none exists.
    */
-  private static String readStoreFile(StoreContext context, String suffix) {
+  private static String readStoreFile(StoreContext context, String filename) {
     FileInputStream fis = null;
     File storeFile = null;
     try {
-      storeFile = getStoreFile(context, suffix);
+      storeFile = getStoreFile(context, filename);
       int length = (int) storeFile.length();
       if (length == 0) {
         return (storeFile.exists() ? "" : null);

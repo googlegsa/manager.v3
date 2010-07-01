@@ -254,7 +254,8 @@ class ConnectorCoordinatorImpl implements
   /* @Override */
   public synchronized ConfigureResponse getConfigForm(Locale locale)
       throws ConnectorNotFoundException, InstantiatorException {
-    Map<String, String> configMap = getInstanceInfo().getConnectorConfig();
+    Configuration config = getInstanceInfo().getConnectorConfiguration();
+    Map<String, String> configMap = (config == null) ? null : config.getMap();
     ConnectorType connectorType = typeInfo.getConnectorType();
     try {
       return connectorType.getPopulatedConfigForm(configMap, locale);
@@ -437,7 +438,11 @@ class ConnectorCoordinatorImpl implements
       if (newTypeInfo.getConnectorTypeName().equals(
           typeInfo.getConnectorTypeName())) {
         File connectorDir = instanceInfo.getConnectorDir();
-        response = resetConfig(connectorDir, typeInfo, configMap, locale);
+        Configuration oldConfig = instanceInfo.getConnectorConfiguration();
+        Configuration newConfig = new Configuration(
+            newTypeInfo.getConnectorTypeName(), configMap,
+            ((oldConfig != null) ? oldConfig.getXml() : null));
+        response = resetConfig(connectorDir, typeInfo, newConfig, locale);
       } else {
         // An existing connector is being given a new type - drop then add.
         removeConnector();
@@ -461,7 +466,11 @@ class ConnectorCoordinatorImpl implements
   /* @Override */
   public synchronized Map<String, String> getConnectorConfig()
       throws ConnectorNotFoundException {
-    return getInstanceInfo().getConnectorConfig();
+    Configuration config = getInstanceInfo().getConnectorConfiguration();
+    if (config != null) {
+      return config.getMap();
+    }
+    return null;
   }
 
   /**
@@ -716,7 +725,7 @@ class ConnectorCoordinatorImpl implements
 
   private ConfigureResponse createNewConnector(TypeInfo newTypeInfo,
       Map<String, String> config, Locale locale) throws InstantiatorException {
-    if (typeInfo != null) {
+    if (newTypeInfo == null) {
       throw new IllegalStateException(
           "Create new connector with no type specified.");
     }
@@ -726,8 +735,11 @@ class ConnectorCoordinatorImpl implements
     }
     File connectorDir = makeConnectorDirectory(name, newTypeInfo);
     try {
-      ConfigureResponse result = null;
-      result = resetConfig(connectorDir, newTypeInfo, config, locale);
+      String configXml = getConnectorInstancePrototype(name, newTypeInfo);
+      Configuration configuration = new Configuration(
+          newTypeInfo.getConnectorTypeName(), config, configXml);
+      ConfigureResponse result =
+          resetConfig(connectorDir, newTypeInfo, configuration, locale);
       if (result != null && result.getMessage() != null) {
         removeConnectorDirectory(name, connectorDir, newTypeInfo);
       }
@@ -739,116 +751,40 @@ class ConnectorCoordinatorImpl implements
   }
 
   /* @Override */
-  public void connectorAdded(TypeInfo typeInfo, Configuration configuration)
+  public void connectorAdded(TypeInfo newTypeInfo, Configuration configuration)
       throws InstantiatorException {
     if (instanceInfo != null) {
       throw new IllegalStateException(
           "Create new connector when one already exists.");
     }
-    File connectorDir = makeConnectorDirectory(name, typeInfo);
+    File connectorDir = makeConnectorDirectory(name, newTypeInfo);
     try {
-      connectorConfigurationChanged(typeInfo, configuration);
+      connectorConfigurationChanged(newTypeInfo, configuration);
     } catch (InstantiatorException ie) {
-      removeConnectorDirectory(name, connectorDir, typeInfo);
+      removeConnectorDirectory(name, connectorDir, newTypeInfo);
       throw (ie);
     }
   }
 
   private ConfigureResponse resetConfig(File connectorDir,
-      TypeInfo newTypeInfo, Map<String, String> proposedConfig, Locale locale)
+      TypeInfo newTypeInfo, Configuration config, Locale locale)
       throws InstantiatorException {
-
     // Copy the configuration map, adding a couple of additional
     // context properties. validateConfig() may also alter this map.
     Map<String, String> newConfig = new HashMap<String, String>();
-    newConfig.putAll(proposedConfig);
+    newConfig.putAll(config.getMap());
     newConfig.put(PropertiesUtils.GOOGLE_CONNECTOR_NAME, name);
     newConfig.put(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR, connectorDir
         .getPath());
     newConfig.put(PropertiesUtils.GOOGLE_WORK_DIR, Context.getInstance()
         .getCommonDirPath());
 
+    Configuration newConfiguration =
+        new Configuration(config.getTypeName(), newConfig, config.getXml());
+
     // Validate the configuration.
     ConfigureResponse response =
-        validateConfig(name, connectorDir, newTypeInfo, newConfig, locale);
-    if (response != null) {
-      return response;
-    }
-
-    // We have an apparently valid configuration. Create a connector instance
-    // with that configuration.
-    // TODO: try to avoid instantiating the connector 3 times.
-    InstanceInfo newInstanceInfo =
-        InstanceInfo.fromNewConfig(name, connectorDir, newTypeInfo, newConfig);
-    if (newInstanceInfo == null) {
-      // We don't expect this, because an InstantiatorException should have
-      // been thrown, but just in case.
-      throw new InstantiatorException("Failed to create connector " + name);
-    }
-
-    // Only after validateConfig and instantiation succeeds do we
-    // save the new configuration to persistent store.
-    newInstanceInfo.setConnectorConfig(newConfig);  // TODO: PStore Setter
-
-    connectorConfigurationChanged(newTypeInfo, new Configuration(newTypeInfo.getConnectorTypeName(), newConfig, null));  // TODO: Replace with kick ChangeDetector
-
-    return null;
-  }
-
-  /**
-   * Handles a change to a Connector's Configuration.  Shuts down any
-   * current instance of the Connector and starts up a new instance with
-   * the new Configuration.
-   *
-   * @param typeInfo the {@link TypeInfo} for this this Connector.
-   * @param config a new {@link Configuration} for this Connector.
-   */
-  /* @Override */
-  public void connectorConfigurationChanged(TypeInfo typeInfo,
-      Configuration config) throws InstantiatorException {
-    LOGGER.info("Configuration for connector " + name + " has changed.");
-
-    // We have an apparently valid configuration. Create a connector instance
-    // with that configuration.
-    InstanceInfo instanceInfo = InstanceInfo.fromNewConfig(name,
-        new File(config.getMap().get(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR)),
-        typeInfo, config.getMap());
-    if (instanceInfo == null) {
-      // We don't expect this, because an InstantiatorException should have
-      // been thrown, but just in case.
-      throw new InstantiatorException("Failed to create connector " + name);
-    }
-
-    // Tell old connector instance to shut down, as it is being replaced.
-    resetBatch();
-    shutdownConnector(false);
-
-    this.instanceInfo = instanceInfo;
-    this.typeInfo = typeInfo;
-
-    // The load value in a Schedule is docs/minute.
-    loadManager.setLoad(getSchedule().getLoad());
-
-    // Allow newly modified connector to resume traversals immediately.
-    delayTraversal(TraversalDelayPolicy.IMMEDIATE);
-  }
-
-  private static ConfigureResponse validateConfig(String name,
-      File connectorDir, TypeInfo newTypeInfo, Map<String, String> config,
-      Locale locale) throws InstantiatorException {
-    ConnectorInstanceFactory factory =
-        new ConnectorInstanceFactory(name, connectorDir, newTypeInfo, config);
-    ConfigureResponse response;
-    try {
-      response =
-          newTypeInfo.getConnectorType()
-              .validateConfig(config, locale, factory);
-    } catch (Exception e) {
-      throw new InstantiatorException("Unexpected validateConfig failure.", e);
-    } finally {
-      factory.shutdown();
-    }
-
+        validateConfig(name, connectorDir, newTypeInfo, newConfiguration, locale);
     if (response != null) {
       // If validateConfig() returns a non-null response with an error message.
       // or populated config form, then consider it an invalid config that
@@ -867,9 +803,93 @@ class ConnectorCoordinatorImpl implements
       if (response.getConfigData() != null) {
         LOGGER.config("A modified configuration for connector " + name
             + " was returned.");
-        config.clear();
-        config.putAll(response.getConfigData());
+        newConfiguration = new Configuration(config.getTypeName(),
+            response.getConfigData(), config.getXml());
       }
+    }
+
+    // We have an apparently valid configuration. Create a connector instance
+    // with that configuration.
+    // TODO: try to avoid instantiating the connector 3 times.
+    InstanceInfo newInstanceInfo = InstanceInfo.fromNewConfig(name,
+        connectorDir, newTypeInfo, newConfiguration);
+    if (newInstanceInfo == null) {
+      // We don't expect this, because an InstantiatorException should have
+      // been thrown, but just in case.
+      throw new InstantiatorException("Failed to create connector " + name);
+    }
+
+    // Only after validateConfig and instantiation succeeds do we
+    // save the new configuration to persistent store.
+    newInstanceInfo.setConnectorConfiguration(newConfiguration);  // TODO: PStore Setter
+
+    connectorConfigurationChanged(newTypeInfo, newConfiguration);  // TODO: Replace with kick ChangeDetector
+
+    return null;
+  }
+
+  /**
+   * Handles a change to a Connector's Configuration.  Shuts down any
+   * current instance of the Connector and starts up a new instance with
+   * the new Configuration.
+   *
+   * @param newTypeInfo the {@link TypeInfo} for this this Connector.
+   * @param config a new {@link Configuration} for this Connector.
+   */
+  /* @Override */
+  public void connectorConfigurationChanged(TypeInfo newTypeInfo,
+      Configuration config) throws InstantiatorException {
+    LOGGER.info("Configuration for connector " + name + " has changed.");
+
+    // We have an apparently valid configuration. Create a connector instance
+    // with that configuration.
+    InstanceInfo newInstanceInfo = InstanceInfo.fromNewConfig(name,
+        new File(config.getMap().get(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR)),
+        newTypeInfo, config);
+    if (newInstanceInfo == null) {
+      // We don't expect this, because an InstantiatorException should have
+      // been thrown, but just in case.
+      throw new InstantiatorException("Failed to create connector " + name);
+    }
+
+    // Tell old connector instance to shut down, as it is being replaced.
+    resetBatch();
+    shutdownConnector(false);
+
+    instanceInfo = newInstanceInfo;
+    typeInfo = newTypeInfo;
+
+    // The load value in a Schedule is docs/minute.
+    loadManager.setLoad(getSchedule().getLoad());
+
+    // Allow newly modified connector to resume traversals immediately.
+    delayTraversal(TraversalDelayPolicy.IMMEDIATE);
+  }
+
+  private static ConfigureResponse validateConfig(String name,
+      File connectorDir, TypeInfo typeInfo, Configuration config,
+      Locale locale) throws InstantiatorException {
+    ConnectorInstanceFactory factory =
+        new ConnectorInstanceFactory(name, connectorDir, typeInfo, config);
+    try {
+      return typeInfo.getConnectorType()
+          .validateConfig(config.getMap(), locale, factory);
+    } catch (Exception e) {
+      throw new InstantiatorException("Unexpected validateConfig failure.", e);
+    } finally {
+      factory.shutdown();
+    }
+  }
+
+  // Extract connectorInstance.xml from the Connector's jar file.
+  private static String getConnectorInstancePrototype(String name,
+      TypeInfo typeInfo) {
+    try {
+      return StringUtils.streamToStringAndThrow(
+          typeInfo.getConnectorInstancePrototype().getInputStream());
+    } catch (IOException ioe) {
+        LOGGER.log(Level.WARNING, "Failed to extract connectorInstance.xml "
+            + " for connector " + name, ioe);
     }
     return null;
   }
@@ -894,61 +914,18 @@ class ConnectorCoordinatorImpl implements
             + " for connector " + name);
       }
     }
-
-    // If connectorInstance.xml file does not exist, copy it out of the
-    // Connector's jar file.
-    File configXml = new File(connectorDir, TypeInfo.CONNECTOR_INSTANCE_XML);
-    if (!configXml.exists()) {  // TODO: PStore Setter
-      try {
-        InputStream in =
-            typeInfo.getConnectorInstancePrototype().getInputStream();
-        String config = StringUtils.streamToStringAndThrow(in);
-        FileOutputStream out = new FileOutputStream(configXml);
-        out.write(config.getBytes("UTF-8"));
-        out.close();
-      } catch (IOException ioe) {
-        LOGGER.log(Level.WARNING, "Failed to extract connectorInstance.xml "
-            + " to connector directory at " + connectorDir.getAbsolutePath()
-            + " for connector " + name, ioe);
-      }
-    }
     return connectorDir;
   }
 
   /**
    * Remove the on-disk {@link Connector} representation.  This removes
-   * many or all files in the {@code Connector}'s directory.  As a convenience,
-   * modified {@code connnectorInstance.xml} files are preserved at this time.
-   *
+   * many or all files in the {@code Connector}'s directory.
    */
   // TODO: Issue 87: Should we force the removal of files created by the
   // Connector implementation? ConnectorShutdownAware.delete() gives the
   // Connector an opportunity to delete these files in a cleaner fashion.
   private static void removeConnectorDirectory(String name, File connectorDir,    // TODO: PStore ConnectorDir
       TypeInfo typeInfo) {
-    // Remove the extracted connectorInstance.xml file, but only
-    // if it is unmodified.
-    // TODO: Remove this when fixing CM Issue 87?
-    File configXml = new File(connectorDir, TypeInfo.CONNECTOR_INSTANCE_XML);
-    if (configXml.exists()) {
-      try {
-        InputStream in1 =
-            typeInfo.getConnectorInstancePrototype().getInputStream();
-        FileInputStream in2 = new FileInputStream(configXml);
-        String conf1 = StringUtils.streamToStringAndThrow(in1);
-        String conf2 = StringUtils.streamToStringAndThrow(in2);
-        if (conf1.equals(conf2) && !configXml.delete()) {   // TODO: PStore Setter
-          LOGGER.log(Level.WARNING, "Failed to delete connectorInstance.xml"
-              + " from connector directory at "
-              + connectorDir.getAbsolutePath() + " for connector " + name);
-        }
-      } catch (IOException ioe) {
-        LOGGER.log(Level.WARNING, "Failed to delete connectorInstance.xml"
-            + " from connector directory at " + connectorDir.getAbsolutePath()
-            + " for connector " + name, ioe);
-      }
-    }
-
     if (connectorDir.exists()) {
       if (!connectorDir.delete()) {
         LOGGER.warning("Failed to delete connector directory "

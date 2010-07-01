@@ -214,7 +214,8 @@ public class ConnectorCoordinatorTest extends TestCase {
     assertEquals(instance.getConnectorName(), instanceInfo.getName());
 
     // The password will be decrypted in the InstanceInfo.
-    Map<String, String> instanceProps = instanceInfo.getConnectorConfig();
+    Map<String, String> instanceProps =
+        instanceInfo.getConnectorConfiguration().getMap();
     String instancePasswd = instanceProps.get("Password");
     String plainPasswd = config.get("Password");
     assertEquals(instancePasswd, plainPasswd);

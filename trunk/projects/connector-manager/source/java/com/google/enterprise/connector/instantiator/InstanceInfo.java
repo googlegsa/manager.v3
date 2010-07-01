@@ -125,11 +125,11 @@ final class InstanceInfo {
     Configuration config =
         store.getConnectorConfiguration(info.storeContext);
     Map<String, String> configMap = (config == null) ? null : config.getMap();
-    if (configMap == null) {
+    if (config == null || config.getMap() == null) {
       throw new InstanceInfoException("Configuration not found for connector "
           + connectorName);
     }
-    info.connector = makeConnectorWithSpring(info, configMap);
+    info.connector = makeConnectorWithSpring(info, config);
     return info;
   }
 
@@ -142,16 +142,16 @@ final class InstanceInfo {
    * @param connectorName the name of the Connector instance.
    * @param connectorDir the Connector's working directory.
    * @param typeInfo the Connector's prototype.
-   * @param configMap configuration properties.
+   * @param config connector Configuration.
    * @return new InstanceInfo representing the Connector instance.
    * @throws InstanceInfoException
    */
   public static InstanceInfo fromNewConfig(String connectorName,
-      File connectorDir, TypeInfo typeInfo, Map<String, String> configMap)
+      File connectorDir, TypeInfo typeInfo, Configuration config)
       throws InstanceInfoException {
     InstanceInfo info = new InstanceInfo(connectorName, connectorDir, typeInfo);
     // Don't write properties file to disk yet.
-    info.connector = makeConnectorWithSpring(info, configMap);
+    info.connector = makeConnectorWithSpring(info, config);
     return info;
   }
 
@@ -160,24 +160,16 @@ final class InstanceInfo {
    * and connectorDefaults bean definitions.
    *
    * @param info the InstanceInfo object under construction.
-   * @param configMap configuration properties.
+   * @param config connector Configuration.
    */
   private static Connector makeConnectorWithSpring(InstanceInfo info,
-      Map<String, String> configMap) throws InstanceInfoException {
+      Configuration config) throws InstanceInfoException {
     Context context = Context.getInstance();
     String name = info.connectorName;
     Resource prototype = null;
-    if (info.connectorDir != null) {
-      // If this file exists, we use this it in preference to the default
-      // prototype associated with the type. This allows customers to supply
-      // their own per-instance config xml.
-      File customPrototype =
-          new File(info.connectorDir, TypeInfo.CONNECTOR_INSTANCE_XML);
-      if (customPrototype.exists()) {
-        prototype = new FileSystemResource(customPrototype);
-        LOGGER.info("Using connector-specific xml config for connector "
-            + name + " at path " + customPrototype.getPath());
-      }
+    if (config.getXml() != null) {
+      prototype = new ByteArrayResourceHack(config.getXml().getBytes(),
+                                            TypeInfo.CONNECTOR_INSTANCE_XML);
     }
     if (prototype == null) {
       prototype = info.typeInfo.getConnectorInstancePrototype();
@@ -215,7 +207,7 @@ final class InstanceInfo {
     }
 
     try {
-      cfg.setLocation(getPropertiesResource(info, configMap));
+      cfg.setLocation(getPropertiesResource(name, config.getMap()));
       cfg.postProcessBeanFactory(factory);
     } catch (BeansException e) {
       throw new PropertyProcessingFailureException(e, prototype, name);
@@ -238,16 +230,17 @@ final class InstanceInfo {
    * Return a Spring Resource containing the InstanceInfo
    * configuration Properties.
    */
-  private static Resource getPropertiesResource(InstanceInfo info,
+  private static Resource getPropertiesResource(String connectorName,
       Map<String, String> configMap) throws InstanceInfoException {
     Properties properties = (configMap == null)
         ? new Properties() : PropertiesUtils.fromMap(configMap);
     try {
       return new ByteArrayResourceHack(
-          PropertiesUtils.storeToString(properties, null).getBytes());
+          PropertiesUtils.storeToString(properties, null).getBytes(),
+          connectorName + ".properties");
     } catch (PropertiesException e) {
       throw new PropertyProcessingInternalFailureException(e,
-          info.connectorName);
+          connectorName);
     }
   }
 
@@ -257,17 +250,18 @@ final class InstanceInfo {
    * in an attempt to determine whether to parse the properties as XML or
    * traditional syntax.  ByteArrayResource throws an exception when
    * getFilename() is called because there is no associated filename.
-   * This subclass returns a fake filename (without a .xml extension).
    * TODO: Remove this when Spring Framework SPR-5068 gets fixed:
    * http://jira.springframework.org/browse/SPR-5068
    */
   private static class ByteArrayResourceHack extends ByteArrayResource {
-    public ByteArrayResourceHack(byte[] byteArray) {
+    String filename;
+    public ByteArrayResourceHack(byte[] byteArray, String filename) {
       super(byteArray);
+      this.filename = filename;
     }
     @Override
     public String getFilename() {
-      return "ByteArrayResourceHasNoFilename";
+      return filename;
     }
   }
 
@@ -286,27 +280,25 @@ final class InstanceInfo {
   /**
    * Get the configuration data for this connector instance.
    *
-   * @return a Map&lt;String, String&gt; of its ConnectorType-specific
-   * configuration data, or null if no configuration is stored.
+   * @return the connector type specific configuration data, or {@code null}
+   *         if no configuration is stored
    */
-  public Map<String, String> getConnectorConfig() {
-    Configuration config = store.getConnectorConfiguration(storeContext);
-    return (config == null) ? null : config.getMap();
+  public Configuration getConnectorConfiguration() {
+    return store.getConnectorConfiguration(storeContext);
   }
 
   /**
    * Set the configuration data for this connector instance.
    * Writes the supplied configuration through to the persistent store.
    *
-   * @param configMap a Map&lt;String, String&gt; of its ConnectorType-specific
-   *        configuration data, or null if no configuration is stored.
+   * @param configuation the connector type specific configuration data,
+   *        or {@code null} to unset any existing configuration.
    */
-  public void setConnectorConfig(Map<String, String> configMap) {
-    if (configMap == null) {
+  public void setConnectorConfiguration(Configuration configuration) {
+    if (configuration == null) {
       store.removeConnectorConfiguration(storeContext);
     } else {
-      store.storeConnectorConfiguration(storeContext,
-          new Configuration(null, configMap, null));
+      store.storeConnectorConfiguration(storeContext, configuration);
     }
   }
 

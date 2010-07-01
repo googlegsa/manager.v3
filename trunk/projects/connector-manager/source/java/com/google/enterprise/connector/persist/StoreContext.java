@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 package com.google.enterprise.connector.persist;
+
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 import java.io.File;
 
@@ -30,8 +33,18 @@ public class StoreContext implements Comparable<StoreContext> {
   }
 
   public StoreContext(String connectorName, File connectorDir) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(connectorName),
+        "StoreContext.connectorName may not be null or empty.");
     this.connectorName = connectorName;
     this.connectorDir = connectorDir;
+  }
+
+  public String getConnectorName() {
+    return connectorName;
+  }
+
+  public File getConnectorDir() {
+    return connectorDir;
   }
 
   @Override
@@ -58,7 +71,7 @@ public class StoreContext implements Comparable<StoreContext> {
     return result;
   }
 
-  //@Override
+  /* @Override */
   public int compareTo(StoreContext other) {
     int diff = connectorName.compareTo(other.connectorName);
     if (diff != 0) {
@@ -70,28 +83,8 @@ public class StoreContext implements Comparable<StoreContext> {
         return -1;
       } else if (other.connectorDir == null) {
         return 1;
-      } else 
+      } else
         return connectorDir.compareTo(other.connectorDir);
     }
-  }
-
-  public void setConnectorName(String connectorName) {
-    this.connectorName = connectorName;
-  }
-
-  public void setConnectorDir(String connectorDir) {
-    setConnectorDir(new File(connectorDir));
-  }
-
-  public void setConnectorDir(File connectorDir) {
-    this.connectorDir = connectorDir;
-  }
-
-  public String getConnectorName() {
-    return connectorName;
-  }
-
-  public File getConnectorDir() {
-    return connectorDir;
   }
 }

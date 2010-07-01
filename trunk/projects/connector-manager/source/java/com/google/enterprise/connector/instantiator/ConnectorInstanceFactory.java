@@ -1,4 +1,4 @@
-// Copyright (C) 2009 Google Inc.
+// Copyright 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ class ConnectorInstanceFactory implements ConnectorFactory {
   final String connectorName;
   final File connectorDir;
   final TypeInfo typeInfo;
-  final Map<String, String> origConfig;
+  final Configuration origConfig;
   final List<Connector> connectors;
 
   /**
@@ -61,7 +61,7 @@ class ConnectorInstanceFactory implements ConnectorFactory {
    * @param config the configuration provided to {@code validateConfig}.
    */
   public ConnectorInstanceFactory(String connectorName, File connectorDir,
-      TypeInfo typeInfo, Map<String, String> config) {
+      TypeInfo typeInfo, Configuration config) {
     this.connectorName = connectorName;
     this.connectorDir = connectorDir;
     this.typeInfo = typeInfo;
@@ -76,14 +76,19 @@ class ConnectorInstanceFactory implements ConnectorFactory {
    *
    * @see com.google.enterprise.connector.spi.ConnectorFactory#makeConnector(Map)
    */
+  /* @Override */
   public Connector makeConnector(Map<String, String> config)
-    throws RepositoryException {
+      throws RepositoryException {
     try {
+      Configuration configuration = new Configuration(
+          typeInfo.getConnectorTypeName(),
+          ((config == null) ? origConfig.getMap() : config),
+          origConfig.getXml());
+
       // WARNING: This is a transient, in-memory Connector InstanceInfo.
       // Do not attempt to persist anything.
-      InstanceInfo info =
-        InstanceInfo.fromNewConfig(connectorName, connectorDir, typeInfo,
-                                   ((config == null) ? origConfig : config));
+      InstanceInfo info = InstanceInfo.fromNewConfig(connectorName,
+          connectorDir, typeInfo, configuration);
       Connector connector = info.getConnector();
       synchronized (this) {
         connectors.add(connector);

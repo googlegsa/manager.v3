@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.  All Rights Reserved.
+// Copyright 2010 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,7 +52,9 @@ public class JdbcStore implements PersistentStore {
   /* Property Names */
   static final String SCHEDULE = "schedule";
   static final String STATE = "checkpoint";
-  static final String CONFIGURATION = "configuration";
+  static final String TYPE = "configuration_type";
+  static final String MAP = "configuration_map";
+  static final String XML = "configuration_xml";
 
   private DataSource dataSource;
   private ConnectionPool connectionPool;
@@ -198,17 +200,20 @@ public class JdbcStore implements PersistentStore {
    */
   /* @Override */
   public Configuration getConnectorConfiguration(StoreContext context) {
-    String config = getField(context, CONFIGURATION);
-    if (config != null) {
-      try {
-        Properties props = PropertiesUtils.loadFromString(config);
-        return new Configuration(null, PropertiesUtils.toMap(props), null);
-      } catch (PropertiesException e) {
-        LOGGER.log(Level.WARNING, "Failed to read connector configuration for "
-                   + context.getConnectorName(), e);
-      }
+    String config = getField(context, MAP);
+    String configXml = getField(context, XML);
+    String type = getField(context, TYPE);
+    if (type == null && config == null && configXml == null) {
+      return null;
     }
-    return null;
+    try {
+      Properties props = PropertiesUtils.loadFromString(config);
+      return new Configuration(type, PropertiesUtils.toMap(props), configXml);
+    } catch (PropertiesException e) {
+      LOGGER.log(Level.WARNING, "Failed to read connector configuration for "
+                 + context.getConnectorName(), e);
+      return null;
+    }
   }
 
   /**
@@ -220,20 +225,24 @@ public class JdbcStore implements PersistentStore {
   /* @Override */
   public void storeConnectorConfiguration(StoreContext context,
       Configuration configuration) {
-    String config;
-    if (configuration == null) {
-      config = null;
-    } else {
+    String configMap = null;
+    String configXml = null;
+    String type = null;
+    if (configuration != null) {
       Properties properties = PropertiesUtils.fromMap(configuration.getMap());
       try {
-        config = PropertiesUtils.storeToString(properties, null);
+        configMap = PropertiesUtils.storeToString(properties, null);
       } catch (PropertiesException e) {
         LOGGER.log(Level.WARNING, "Failed to store connector configuration for "
                    + context.getConnectorName(), e);
         return;
       }
+      configXml = configuration.getXml();
+      type = configuration.getTypeName();
     }
-    setField(context, CONFIGURATION, config);
+    setField(context, TYPE, type);
+    setField(context, XML, configXml);
+    setField(context, MAP, configMap);
   }
 
   /**

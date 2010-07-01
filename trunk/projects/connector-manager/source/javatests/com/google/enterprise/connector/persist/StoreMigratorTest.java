@@ -108,8 +108,8 @@ public class StoreMigratorTest extends TestCase {
       store.storeConnectorState(context, new Date().toString());
     }
     if (isConfig) {
-      store.storeConnectorConfiguration(context, new Configuration(null,
-              Collections.<String, String>emptyMap(), null));
+      store.storeConnectorConfiguration(context, new Configuration(
+          "testType", Collections.<String, String>emptyMap(), null));
     }
     if (isSched) {
       store.storeConnectorSchedule(context,
@@ -161,7 +161,7 @@ public class StoreMigratorTest extends TestCase {
       // If there's an entry in the inventory, we should have at least
       // one object.
       assertTrue(Arrays.asList(
-              new Object[] { econfig, esched, echeckpoint }).toString(),
+          new Object[] { econfig, esched, echeckpoint }).toString(),
           econfig != null || esched != null || echeckpoint != null);
     }
   }
