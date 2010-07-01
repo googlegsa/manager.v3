@@ -1,4 +1,4 @@
-// Copyright (C) 2010 Google Inc.
+// Copyright 2010 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,6 +39,32 @@ public class StoreContextTest extends TestCase {
   private static final StoreContext[] RIGHT = getTestObjects();
 
   /**
+   * Tests if the exception is thrown correctly when the connector name is null.
+   */
+  public void testNullConnectorName() {
+    try {
+      new StoreContext(null, null);
+      fail("failed to throw exception");
+    } catch (IllegalArgumentException e) {
+      assertEquals("StoreContext.connectorName may not be null or empty.",
+                   e.getMessage());
+    }
+  }
+
+  /**
+   * Tests if the exception is thrown correctly if the connector name is empty.
+   */
+  public void testEmptyConnectorName() {
+    try {
+      new StoreContext("", null);
+      fail("failed to throw exception");
+    } catch (IllegalArgumentException e) {
+      assertEquals("StoreContext.connectorName may not be null or empty.",
+                   e.getMessage());
+    }
+  }
+
+  /**
    * Make sure our test arrays have distinct instances, so that an ==
    * comparison does not short-circuit the methods under test.
    */
@@ -67,7 +93,7 @@ public class StoreContextTest extends TestCase {
   public void testCompareTo() {
     for (int i = 0; i < LEFT.length; i++) {
       for (int j = 0; j < RIGHT.length; j++) {
-        assertEquals("Compare " + i + ", " + j + " => " 
+        assertEquals("Compare " + i + ", " + j + " => "
             + LEFT[i].compareTo(RIGHT[j]),
             sgn(i - j), sgn(LEFT[i].compareTo(RIGHT[j])));
       }

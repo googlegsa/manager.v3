@@ -32,10 +32,14 @@ import java.util.Map;
  */
 /* The strange name is to avoid having to change the build rules. */
 public abstract class PersistentStoreTestAbstract extends TestCase {
+  static final String TYPENAME = "TestType";
+  static final String CONFIG_XML =
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?><beans></beans>";
+
   /** Gets a new instance of Configuration. */
   protected static Configuration getConfiguration() {
-    return new Configuration(null, Collections.<String, String>emptyMap(),
-        null);
+    return new Configuration(TYPENAME, Collections.<String, String>emptyMap(),
+        CONFIG_XML);
   }
 
   /** Gets a new instance of Schedule. */
@@ -65,10 +69,25 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
   // Tests getting and setting for a valid connector name and schedule.
   public void testGetandSetConnectorSchedule() {
     String connectorName = "connectorA";
-    String expectedSchedule = connectorName + ":200:300000:0-0";
     StoreContext storeContext = new StoreContext(connectorName, storeDir);
+    String expectedSchedule = connectorName + ":200:300000:0-0";
     store.storeConnectorSchedule(storeContext, new Schedule(expectedSchedule));
     Schedule resultSchedule = store.getConnectorSchedule(storeContext);
+    assertEquals(expectedSchedule, resultSchedule.toString());
+  }
+
+  // Tests changing a schedule.
+  public void testChangeConnectorSchedule() {
+    String connectorName = "connectorB";
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
+    String expectedSchedule = connectorName + ":200:300000:0-0";
+    store.storeConnectorSchedule(storeContext, new Schedule(expectedSchedule));
+    Schedule resultSchedule = store.getConnectorSchedule(storeContext);
+    assertEquals(expectedSchedule, resultSchedule.toString());
+    // Now change it and make sure it sticks.
+    expectedSchedule = connectorName + ":1000:-1:0-0";
+    store.storeConnectorSchedule(storeContext, new Schedule(expectedSchedule));
+    resultSchedule = store.getConnectorSchedule(storeContext);
     assertEquals(expectedSchedule, resultSchedule.toString());
   }
 
@@ -82,10 +101,10 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
   // Tests schedule cannot be retrieved after removal.
   public void testRemoveConnectorSchedule() {
     String connectorName = "foo";
-    String connectorSchedule = connectorName + ":500:300000:18-0:0-6";
     StoreContext storeContext = new StoreContext(connectorName, storeDir);
     Schedule schedule = store.getConnectorSchedule(storeContext);
     assertNull(schedule);
+    String connectorSchedule = connectorName + ":500:300000:18-0:0-6";
     store.storeConnectorSchedule(storeContext,
         new Schedule(connectorSchedule));
     schedule = store.getConnectorSchedule(storeContext);
@@ -97,11 +116,26 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
 
   // Tests getting and setting for a valid connector name and state.
   public void testGetandSetConnectorState() {
-    String expectedState = "state of connectorA";
     String connectorName = "connectorA";
     StoreContext storeContext = new StoreContext(connectorName, storeDir);
+    String expectedState = "state of connectorA";
     store.storeConnectorState(storeContext, expectedState);
     String resultState = store.getConnectorState(storeContext);
+    assertEquals(expectedState, resultState);
+  }
+
+  // Tests changing connector state.
+  public void testChangeConnectorState() {
+    String connectorName = "connectorB";
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
+    String expectedState = "state of connectorB";
+    store.storeConnectorState(storeContext, expectedState);
+    String resultState = store.getConnectorState(storeContext);
+    assertEquals(expectedState, resultState);
+    // Now change the state and make sure it takes.
+    expectedState = "changed state of connectorB";
+    store.storeConnectorState(storeContext, expectedState);
+    resultState = store.getConnectorState(storeContext);
     assertEquals(expectedState, resultState);
   }
 
@@ -115,10 +149,10 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
   // Tests state cannot be retrieved after removal.
   public void testRemoveConnectorState() {
     String connectorName = "foo";
-    String connectorState = "foo's state";
     StoreContext storeContext = new StoreContext(connectorName, storeDir);
     String state = store.getConnectorState(storeContext);
     assertNull(state);
+    String connectorState = "foo's state";
     store.storeConnectorState(storeContext, connectorState);
     state = store.getConnectorState(storeContext);
     assertEquals(connectorState, state);
@@ -129,16 +163,43 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
 
   // Tests getting and setting for a valid connector name and config.
   public void testGetandSetConnectorConfiguration() {
+    String connectorName = "connectorA";
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
     Map<String, String> expectedConfig = new HashMap<String, String>();
     expectedConfig.put("property1", "value1");
     expectedConfig.put("property2", "2");
     expectedConfig.put("property3", "true");
-    String connectorName = "connectorA";
-    StoreContext storeContext = new StoreContext(connectorName, storeDir);
     store.storeConnectorConfiguration(storeContext,
-        new Configuration(null, expectedConfig, null));
+        new Configuration(TYPENAME, expectedConfig, CONFIG_XML));
     Configuration resultConfig = store.getConnectorConfiguration(storeContext);
     ConnectorTestUtils.compareMaps(expectedConfig, resultConfig.getMap());
+    assertEquals(TYPENAME, resultConfig.getTypeName());
+    assertEquals(CONFIG_XML, resultConfig.getXml());
+  }
+
+  // Tests changing a connector configuration.
+  public void testChangeConnectorConfiguration() {
+    String connectorName = "connectorB";
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
+    Map<String, String> expectedConfig = new HashMap<String, String>();
+    expectedConfig.put("property1", "value1");
+    expectedConfig.put("property2", "2");
+    expectedConfig.put("property3", "true");
+    store.storeConnectorConfiguration(storeContext,
+        new Configuration(TYPENAME, expectedConfig, CONFIG_XML));
+    Configuration resultConfig = store.getConnectorConfiguration(storeContext);
+    ConnectorTestUtils.compareMaps(expectedConfig, resultConfig.getMap());
+    assertEquals(TYPENAME, resultConfig.getTypeName());
+    assertEquals(CONFIG_XML, resultConfig.getXml());
+    // Now change the configuration and make sure it sticks.
+    expectedConfig.remove("property2");
+    expectedConfig.put("property4", "score");
+    store.storeConnectorConfiguration(storeContext,
+        new Configuration(TYPENAME, expectedConfig, null));
+    resultConfig = store.getConnectorConfiguration(storeContext);
+    ConnectorTestUtils.compareMaps(expectedConfig, resultConfig.getMap());
+    assertEquals(TYPENAME, resultConfig.getTypeName());
+    assertNull(resultConfig.getXml());
   }
 
   // Tests getting and setting a configuration that should encrypt
@@ -154,11 +215,11 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
     String connectorName = "connectorB";
     StoreContext storeContext = new StoreContext(connectorName, storeDir);
     store.storeConnectorConfiguration(storeContext,
-        new Configuration(null, expectedConfig, null));
+        new Configuration(TYPENAME, expectedConfig, null));
     Configuration resultConfig = store.getConnectorConfiguration(storeContext);
     ConnectorTestUtils.compareMaps(expectedConfig, resultConfig.getMap());
+    assertNull(resultConfig.getXml());
   }
-
 
   // Tests getting configuration for an unknown connector.
   public void testGetConnectorConfiguration1() {
@@ -179,7 +240,7 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
     Configuration config = store.getConnectorConfiguration(storeContext);
     assertNull(config);
     store.storeConnectorConfiguration(storeContext,
-        new Configuration(null, expectedConfig, null));
+        new Configuration(TYPENAME, expectedConfig, CONFIG_XML));
     config = store.getConnectorConfiguration(storeContext);
     ConnectorTestUtils.compareMaps(expectedConfig, config.getMap());
     store.removeConnectorConfiguration(storeContext);

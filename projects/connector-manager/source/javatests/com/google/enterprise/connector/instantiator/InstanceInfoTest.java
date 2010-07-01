@@ -1,4 +1,4 @@
-// Copyright 2007-2008 Google Inc.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -212,8 +212,8 @@ public class InstanceInfoTest extends TestCase {
     assertFalse(exceptionThrown);
 
     // Check properties
-    Properties instanceProps =
-       PropertiesUtils.fromMap(instanceInfo.getConnectorConfig());
+    Properties instanceProps = PropertiesUtils.fromMap(
+        instanceInfo.getConnectorConfiguration().getMap());
     assertEquals("password_test", instanceProps.getProperty("Password"));
     assertEquals("MockRepositoryEventLog3.txt",
         instanceProps.getProperty("RepositoryFile"));

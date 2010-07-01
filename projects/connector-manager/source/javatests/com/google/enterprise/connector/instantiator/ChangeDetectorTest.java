@@ -1,4 +1,4 @@
-// Copyright (C) 2010 Google Inc.
+// Copyright 2010 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -51,7 +51,8 @@ public class ChangeDetectorTest extends TestCase {
   /** Adds an instance to the store and records the action. */
   private void addConnector(String connectorName) {
     store.storeConnectorConfiguration(new StoreContext(connectorName),
-        new Configuration(null, Collections.<String, String>emptyMap(), null));
+        new Configuration("testType", Collections.<String, String>emptyMap(),
+                          null));
     expectedChanges.add(MockChangeListener.CONNECTOR_ADDED + connectorName);
   }
 
