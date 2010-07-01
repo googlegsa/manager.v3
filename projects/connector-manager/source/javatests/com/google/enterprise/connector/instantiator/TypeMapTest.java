@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import java.io.File;
 
 import com.google.enterprise.connector.instantiator.TypeInfo;
 import com.google.enterprise.connector.instantiator.TypeMap;
+import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.Assert;
@@ -52,16 +53,16 @@ public class TypeMapTest extends TestCase {
    * {@link com.google.enterprise.connector.instantiator.TypeMap
    * #getTypeInfo(java.lang.String)}.
    */
-  public final void testGetTypeInfo() {
+  public final void testGetTypeInfo() throws ConnectorTypeNotFoundException {
     TypeMap typeMap = new TypeMap("classpath*:config/connectorType.xml",
         TEST_DIR_NAME);
     verifyType(typeMap, "TestConnectorA");
     verifyType(typeMap, "TestConnectorB");
   }
 
-  private void verifyType(TypeMap typeMap, String typeName) {
+  private void verifyType(TypeMap typeMap, String typeName)
+      throws ConnectorTypeNotFoundException {
     TypeInfo typeInfo = typeMap.getTypeInfo(typeName);
-    Assert.assertNotNull(typeInfo);
     Assert.assertEquals(typeName, typeInfo.getConnectorTypeName());
   }
 

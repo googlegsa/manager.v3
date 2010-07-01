@@ -1,4 +1,4 @@
-// Copyright (C) 2009 Google Inc.
+// Copyright 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
+import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.scheduler.LoadManager;
 import com.google.enterprise.connector.scheduler.LoadManagerFactory;
@@ -200,13 +201,12 @@ public class ConnectorCoordinatorTest extends TestCase {
   private void updateConnectorTest(ConnectorCoordinatorImpl instance,
       String typeName, String language, boolean update, String jsonConfigString)
       throws JSONException, InstantiatorException, ConnectorNotFoundException,
-      ConnectorExistsException {
+      ConnectorExistsException, ConnectorTypeNotFoundException {
     Map<String, String> config =
         new JsonObjectAsMap(new JSONObject(jsonConfigString));
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
-    ConfigureResponse response =
-        instance.setConnectorConfig(typeMap.get(typeName), config, locale,
-            update);
+    ConfigureResponse response = instance.setConnectorConfig(
+        typeMap.getTypeInfo(typeName), config, locale, update);
     assertNull(response);
     InstanceInfo instanceInfo = instance.getInstanceInfo();
     File connectorDir = instanceInfo.getConnectorDir();

@@ -1,4 +1,4 @@
-// Copyright 2006-2009 Google Inc.  All Rights Reserved.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.scheduler;
 
 import com.google.enterprise.connector.common.I18NUtil;
+import com.google.enterprise.connector.instantiator.ConnectorCoordinatorMap;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.instantiator.MockInstantiator;
@@ -112,11 +113,17 @@ public class TraversalSchedulerTest extends TestCase {
   }
 
   private Instantiator createRealInstantiator() {
+    ThreadPool threadPool = new ThreadPool(5);
+
+    ConnectorCoordinatorMap ccm = new ConnectorCoordinatorMap();
+    ccm.setPusherFactory(new MockPusher());
+    ccm.setLoadManagerFactory(new MockLoadManagerFactory());
+    ccm.setThreadPool(threadPool);
+
     SpringInstantiator si = new SpringInstantiator();
-    si.setPusherFactory(new MockPusher());
-    si.setLoadManagerFactory(new MockLoadManagerFactory());
     si.setTypeMap(new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
-    si.setThreadPool(new ThreadPool(5));
+    si.setThreadPool(threadPool);
+    si.setConnectorCoordinatorMap(ccm);
     si.init();
 
     // Instantiate a couple of connectors.

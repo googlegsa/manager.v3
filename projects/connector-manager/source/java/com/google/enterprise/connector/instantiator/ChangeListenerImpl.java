@@ -1,4 +1,4 @@
-// Copyright (C) 2010 Google Inc.
+// Copyright 2010 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,17 +28,19 @@ class ChangeListenerImpl implements ChangeListener {
   private static final Logger LOGGER =
       Logger.getLogger(ChangeListenerImpl.class.getName());
 
-  private final SpringInstantiator instantiator;
+  private final TypeMap typeMap;
+  private final ConnectorCoordinatorMap coordinatorMap;
 
-  ChangeListenerImpl(SpringInstantiator instantiator) {
-    this.instantiator = instantiator;
+  ChangeListenerImpl(TypeMap typeMap, ConnectorCoordinatorMap coordinatorMap) {
+    this.typeMap = typeMap;
+    this.coordinatorMap = coordinatorMap;
   }
 
   /* @Override */
   public void connectorAdded(String instanceName, Configuration configuration) {
     try {
-      ChangeHandler handler = instantiator.getChangeHandler(instanceName);
-      TypeInfo type = instantiator.getTypeInfo(configuration.getTypeName());
+      ChangeHandler handler = coordinatorMap.getChangeHandler(instanceName);
+      TypeInfo type = typeMap.getTypeInfo(configuration.getTypeName());
       handler.connectorAdded(type, configuration);
     } catch (InstantiatorException e) {
       LOGGER.log(Level.WARNING, "Failed to handle addition of new connector "
@@ -52,7 +54,7 @@ class ChangeListenerImpl implements ChangeListener {
   /* @Override */
   public void connectorRemoved(String instanceName) {
     try {
-      instantiator.getChangeHandler(instanceName).connectorRemoved();
+      coordinatorMap.getChangeHandler(instanceName).connectorRemoved();
     } catch (InstantiatorException e) {
       LOGGER.log(Level.WARNING,
           "Failed to handle removal of connector " + instanceName, e);
@@ -63,7 +65,7 @@ class ChangeListenerImpl implements ChangeListener {
   public void connectorCheckpointChanged(String instanceName, String checkpoint)
   {
     try {
-      instantiator.getChangeHandler(instanceName)
+      coordinatorMap.getChangeHandler(instanceName)
           .connectorCheckpointChanged(checkpoint);
     } catch (InstantiatorException e) {
       LOGGER.log(Level.WARNING, "Failed to handle checkpoint change for "
@@ -74,7 +76,7 @@ class ChangeListenerImpl implements ChangeListener {
   /* @Override */
   public void connectorScheduleChanged(String instanceName, Schedule schedule) {
     try {
-      instantiator.getChangeHandler(instanceName)
+      coordinatorMap.getChangeHandler(instanceName)
           .connectorScheduleChanged(schedule);
     } catch (InstantiatorException e) {
       LOGGER.log(Level.WARNING, "Failed to handle schedule change for "
@@ -86,8 +88,8 @@ class ChangeListenerImpl implements ChangeListener {
   public void connectorConfigurationChanged(String instanceName,
                                             Configuration configuration) {
     try {
-      ChangeHandler handler = instantiator.getChangeHandler(instanceName);
-      TypeInfo type = instantiator.getTypeInfo(configuration.getTypeName());
+      ChangeHandler handler = coordinatorMap.getChangeHandler(instanceName);
+      TypeInfo type = typeMap.getTypeInfo(configuration.getTypeName());
       handler.connectorConfigurationChanged(type, configuration);
     } catch (InstantiatorException e) {
       LOGGER.log(Level.WARNING, "Failed to handle configuration change for "
