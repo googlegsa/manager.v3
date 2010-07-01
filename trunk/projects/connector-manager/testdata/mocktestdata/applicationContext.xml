@@ -44,10 +44,16 @@
     </property>
   </bean>
 
-  <bean id="Instantiator"
-        class="com.google.enterprise.connector.instantiator.SpringInstantiator">
+  <bean id="ConnectorCoordinatorMap"
+        class="com.google.enterprise.connector.instantiator.ConnectorCoordinatorMap">
     <property name="pusherFactory" ref="PusherFactory" />
     <property name="loadManagerFactory" ref="LoadManagerFactory"/>
+    <property name="threadPool" ref="ThreadPool" />
+  </bean>
+
+  <bean id="Instantiator"
+        class="com.google.enterprise.connector.instantiator.SpringInstantiator">
+    <property name="connectorCoordinatorMap" ref="ConnectorCoordinatorMap" />
     <property name="threadPool" ref="ThreadPool" />
   </bean>
 

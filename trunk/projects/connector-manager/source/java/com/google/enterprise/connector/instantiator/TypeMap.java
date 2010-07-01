@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2009 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,16 +14,21 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,13 +36,15 @@ import java.util.logging.Logger;
  * This class keeps track of the installed connector types and maintains a
  * corresponding directory structure.
  */
-public class TypeMap extends TreeMap<String, TypeInfo> {
-
+public class TypeMap {
   private static final String CONNECTOR_TYPE_PATTERN =
       "classpath*:config/connectorType.xml";
 
   private static final Logger LOGGER =
       Logger.getLogger(TypeMap.class.getName());
+
+  private final Map<String, TypeInfo> innerMap =
+      new TreeMap<String, TypeInfo>();
 
   public TypeMap() {
     initialize(CONNECTOR_TYPE_PATTERN, null);
@@ -87,7 +94,7 @@ public class TypeMap extends TreeMap<String, TypeInfo> {
         LOGGER.log(Level.WARNING, "Skipping " + r.getDescription());
         continue;
       }
-      this.put(typeInfo.getConnectorTypeName(), typeInfo);
+      innerMap.put(typeInfo.getConnectorTypeName(), typeInfo);
       LOGGER.info("Found connector type: " + typeInfo.getConnectorTypeName()
           + "  version: "
           + JarUtils.getJarVersion(typeInfo.getConnectorType().getClass()));
@@ -120,20 +127,16 @@ public class TypeMap extends TreeMap<String, TypeInfo> {
     }
   }
 
-  public TypeInfo getTypeInfo(String connectorTypeName) {
-    return this.get(connectorTypeName);
-  }
-
   private void initializeTypeDirectories() {
-    for (Iterator<String> iter = keySet().iterator(); iter.hasNext(); ) {
-      String typeName = iter.next();
-      TypeInfo typeInfo = getTypeInfo(typeName);
+    for (Map.Entry<String, TypeInfo> entry : innerMap.entrySet()) {
+      String typeName = entry.getKey();
+      TypeInfo typeInfo = entry.getValue();
       File connectorTypeDir = new File(typesDirectory, typeName);
       if (!connectorTypeDir.exists()) {
         if(!connectorTypeDir.mkdirs()) {
           LOGGER.warning("Type " + typeName
               + " has a valid definition but no type directory - skipping it");
-          iter.remove();
+          innerMap.remove(typeName);
           return;
         }
       }
@@ -141,12 +144,26 @@ public class TypeMap extends TreeMap<String, TypeInfo> {
         LOGGER.warning("Unexpected file " + connectorTypeDir.getPath()
             + " blocks creation of instances directory for type " + typeName
             + " - skipping it");
-        iter.remove();
+        innerMap.remove(typeName);
       } else {
         typeInfo.setConnectorTypeDir(connectorTypeDir);
         LOGGER.info("Connector type: " + typeInfo.getConnectorTypeName()
             + " has directory " + connectorTypeDir.getAbsolutePath());
       }
     }
+  }
+
+  Set<String> getConnectorTypeNames() {
+    return ImmutableSortedSet.copyOf(innerMap.keySet());
+  }
+
+  TypeInfo getTypeInfo(String connectorTypeName)
+      throws ConnectorTypeNotFoundException {
+    TypeInfo typeInfo = innerMap.get(connectorTypeName);
+    if (typeInfo == null) {
+      throw new ConnectorTypeNotFoundException("Connector Type not found: "
+          + connectorTypeName);
+    }
+    return typeInfo;
   }
 }

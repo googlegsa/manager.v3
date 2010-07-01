@@ -1,4 +1,4 @@
-// Copyright (C) 2009 Google Inc.
+// Copyright 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.logging.NDC;
+import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.scheduler.LoadManagerFactory;
 
@@ -37,48 +38,29 @@ class ConnectorCoordinatorMapHelper {
   }
 
   /**
-   * Initializes <b>instanceMap</b> to contain a {@link ConnectorCoordinator}
-   * for each connector defined in the provided {@link TypeMap}.
-   *
-   * @param pusherFactory creates instances of
-   *        {@link com.google.enterprise.connector.pusher.Pusher Pusher}
-   *        for pushing documents to the GSA.
-   * @param loadManagerFactory creates instances of
-   *  {@link com.google.enterprise.connector.scheduler.LoadManager LoadManager}
-   *        used for controlling feed rate.
-   * @param threadPool the {@link ThreadPool} for running traversals.
+   * Initializes <b>coordinatorMap</b> to contain a
+   * {@link ConnectorCoordinator} for each connector defined in the
+   * provided {@link TypeMap}.
    */
   static void fillFromTypes(TypeMap typeMap,
-      ConcurrentMap<String, ConnectorCoordinator> instanceMap,
-      PusherFactory pusherFactory, LoadManagerFactory loadManagerFactory,
-      ThreadPool threadPool) {
-    for (String typeName : typeMap.keySet()) {
-      TypeInfo typeInfo = typeMap.getTypeInfo(typeName);
-      if (typeInfo == null) {
+      ConnectorCoordinatorMap coordinatorMap) {
+    for (String typeName : typeMap.getConnectorTypeNames()) {
+      try {
+        TypeInfo typeInfo = typeMap.getTypeInfo(typeName);
+        processTypeDirectory(coordinatorMap, typeInfo);
+      } catch (ConnectorTypeNotFoundException e) {
         LOGGER.log(Level.WARNING, "Skipping " + typeName);
-        continue;
       }
-      processTypeDirectory(instanceMap, typeInfo, pusherFactory,
-                           loadManagerFactory, threadPool);
     }
   }
 
   /**
-   * Initializes <b>instanceMap</b> to contain a {@link ConnectorCoordinator}
-   * for each connector defined in the provided {@link TypeInfo}.
-   *
-   * @param pusherFactory creates instances of
-   *        {@link com.google.enterprise.connector.pusher.Pusher Pusher}
-   *        for pushing documents to the GSA.
-   * @param loadManagerFactory creates instances of
-   *  {@link com.google.enterprise.connector.scheduler.LoadManager LoadManager}
-   *        used for controlling feed rate.
-   * @param threadPool the {@link ThreadPool} for running traversals.
+   * Initializes <b>coordinatorMap</b> to contain a
+   * {@link ConnectorCoordinator} for each connector defined in the
+   * provided {@link TypeInfo}.
    */
   private static void processTypeDirectory(
-      ConcurrentMap<String, ConnectorCoordinator> instanceMap,
-      TypeInfo typeInfo, PusherFactory pusherFactory,
-      LoadManagerFactory loadManagerFactory, ThreadPool threadPool) {
+      ConnectorCoordinatorMap coordinatorMap, TypeInfo typeInfo) {
     File typeDirectory = typeInfo.getConnectorTypeDir();
 
     // Find the subdirectories.
@@ -103,16 +85,8 @@ class ConnectorCoordinatorMapHelper {
         InstanceInfo instanceInfo =
             InstanceInfo.fromDirectory(name, directory, typeInfo);
         if (instanceInfo != null) {
-          ConnectorCoordinator fromType = new ConnectorCoordinatorImpl(
-              instanceInfo, pusherFactory, loadManagerFactory, threadPool);
-          ConnectorCoordinator current =
-              instanceMap.putIfAbsent(name, fromType);
-          if (current != null) {
-            throw new IllegalStateException(
-                "Connector instance modified during initialization");
-          }
+          coordinatorMap.addFrom(instanceInfo);
         }
-
       } catch (InstantiatorException e) {
         LOGGER.log(Level.WARNING, "Problem creating connector instance", e);
       } finally {

@@ -61,11 +61,17 @@ public class InstantiatorTest extends TestCase {
   }
 
   private void createInstantiator() {
+    ThreadPool threadPool = new ThreadPool(5);
+
+    ConnectorCoordinatorMap ccm = new ConnectorCoordinatorMap();
+    ccm.setPusherFactory(new MockPusher());
+    ccm.setLoadManagerFactory(new MockLoadManagerFactory());
+    ccm.setThreadPool(threadPool);
+
     SpringInstantiator si = new SpringInstantiator();
-    si.setPusherFactory(new MockPusher());
-    si.setLoadManagerFactory(new MockLoadManagerFactory());
     si.setTypeMap(new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
-    si.setThreadPool(new ThreadPool(5));
+    si.setThreadPool(threadPool);
+    si.setConnectorCoordinatorMap(ccm);
     si.init();
     instantiator = si;
   }
