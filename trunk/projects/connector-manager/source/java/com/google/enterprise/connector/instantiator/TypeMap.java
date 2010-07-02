@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.manager.Context;
@@ -24,11 +25,9 @@ import org.springframework.core.io.Resource;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,28 +42,38 @@ public class TypeMap {
   private static final Logger LOGGER =
       Logger.getLogger(TypeMap.class.getName());
 
+  private final String connectorTypePattern;
+  private final String baseDirPath;
   private final Map<String, TypeInfo> innerMap =
       new TreeMap<String, TypeInfo>();
 
+  /**
+   * Constructs an empty type map with the default connector type
+   * pattern and base directory path.
+   */
   public TypeMap() {
-    initialize(CONNECTOR_TYPE_PATTERN, null);
+    this(CONNECTOR_TYPE_PATTERN, null);
   }
 
   /**
-   * For testing only. Either parameter may be null, in which case the default
-   * is used.
+   * Constructs an empty type map.
    *
    * @param connectorTypePattern used instead of normal default
-   * @param baseDirPath
+   * @param baseDirPath used instead of {@code connectors} directory
    */
+  @VisibleForTesting
   public TypeMap(String connectorTypePattern, String baseDirPath) {
-    initialize(connectorTypePattern, baseDirPath);
+    this.connectorTypePattern = connectorTypePattern;
+    this.baseDirPath = baseDirPath;
   }
 
-  private File baseDirectory = null;
   private File typesDirectory = null;
 
-  private void initialize(String connectorTypePattern, String baseDirPath) {
+  /**
+   * Initializes this map and the supporting directories from the
+   * types on the classpath.
+   */
+  void init() {
     initializeTypes(connectorTypePattern);
     initializeBaseDirectories(baseDirPath);
     initializeTypeDirectories();
@@ -101,14 +110,11 @@ public class TypeMap {
     }
   }
 
-  private void initializeDefaultBaseDirectory() {
-    String commonDirPath = Context.getInstance().getCommonDirPath();
-    baseDirectory = new File(commonDirPath);
-  }
-
   private void initializeBaseDirectories(String baseDirPath) {
+    File baseDirectory = null;
     if (baseDirPath == null) {
-      initializeDefaultBaseDirectory();
+      String commonDirPath = Context.getInstance().getCommonDirPath();
+      baseDirectory = new File(commonDirPath);
     } else {
       baseDirectory = new File(baseDirPath);
     }
@@ -153,11 +159,15 @@ public class TypeMap {
     }
   }
 
-  Set<String> getConnectorTypeNames() {
+  public File getTypesDirectory() {
+    return typesDirectory;
+  }
+
+  public Set<String> getConnectorTypeNames() {
     return ImmutableSortedSet.copyOf(innerMap.keySet());
   }
 
-  TypeInfo getTypeInfo(String connectorTypeName)
+  public TypeInfo getTypeInfo(String connectorTypeName)
       throws ConnectorTypeNotFoundException {
     TypeInfo typeInfo = innerMap.get(connectorTypeName);
     if (typeInfo == null) {

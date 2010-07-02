@@ -40,7 +40,6 @@ public class SpringInstantiator implements Instantiator {
   private static final Logger LOGGER =
       Logger.getLogger(SpringInstantiator.class.getName());
 
-
   // State that is filled in by setters from Spring.
   private ConnectorCoordinatorMap coordinatorMap;
   private ThreadPool threadPool;
@@ -91,9 +90,7 @@ public class SpringInstantiator implements Instantiator {
    */
   public synchronized void init() {
     LOGGER.info("Initializing instantiator");
-    if (typeMap == null) {
-      setTypeMap(new TypeMap());
-    }
+    typeMap.init();
     changeListener = new ChangeListenerImpl(typeMap, coordinatorMap);
     // TODO: create a ChangeDetector hooked up to this ChangeListener.
     ConnectorCoordinatorMapHelper.fillFromTypes(typeMap, coordinatorMap);

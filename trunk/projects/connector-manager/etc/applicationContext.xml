@@ -263,10 +263,14 @@
     <property name="threadPool" ref="ThreadPool" />
   </bean>
 
+  <bean id="TypeMap" 
+        class="com.google.enterprise.connector.instantiator.TypeMap"/>
+
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.SpringInstantiator">
     <property name="connectorCoordinatorMap" ref="ConnectorCoordinatorMap" />
     <property name="threadPool" ref="ThreadPool" />
+    <property name="typeMap" ref="TypeMap" />
   </bean>
 
   <bean id="Manager"
