@@ -19,15 +19,17 @@ import java.net.URL;
 public class CloudProvisionChecker implements ProvisionChecker {
   private final UserService userService;
   private final AppsGroupsService groupsService;
+  private final ProvisionedStateLRUCache userStates;
+  private final ProvisionedStateLRUCache groupStates;
   private final String domainName;
-  
+
   private static final String APPS_FEEDS_URL_BASE =
     "https://apps-apis.google.com/a/feeds/";
 
   private static final String SERVICE_VERSION = "2.0";
 
   static UserService newUserService(String adminEmail, String adminPassword,
-      String domainName, String applicationName) throws AuthenticationException, 
+      String domainName, String applicationName) throws AuthenticationException,
       ReportCaptchaException {
     try {
 
@@ -39,9 +41,9 @@ public class CloudProvisionChecker implements ProvisionChecker {
       throw  new ReportCaptchaException(domainName, cre);
     }
   }
-  
-  static AppsGroupsService newGroupsService(String adminEmail, 
-      String adminPassword, String domainName, String applicationName) 
+
+  static AppsGroupsService newGroupsService(String adminEmail,
+      String adminPassword, String domainName, String applicationName)
       throws AuthenticationException, ReportCaptchaException {
     try {
       return new AppsGroupsService(adminEmail, adminPassword, domainName,
@@ -51,21 +53,54 @@ public class CloudProvisionChecker implements ProvisionChecker {
       throw  new ReportCaptchaException(domainName, cre);
     }
   }
-  
-  public CloudProvisionChecker(UserService userService, 
-      AppsGroupsService groupService, String domainName) {
+
+  public CloudProvisionChecker(UserService userService,
+      AppsGroupsService groupService, String domainName,
+      ProvisionedStateLRUCache userStates,
+      ProvisionedStateLRUCache groupStates) {
     this.userService = userService;
     this.groupsService = groupService;
     this.domainName = domainName;
+    this.userStates = userStates;
+    this.groupStates = groupStates;
   }
-  
+
   private URL getUserUrl(String userEmail) throws MalformedURLException {
-     return new URL(APPS_FEEDS_URL_BASE + domainName + "/user/" 
+     return new URL(APPS_FEEDS_URL_BASE + domainName + "/user/"
         + SERVICE_VERSION + "/" + userEmail);
   }
-  
+
+  /**
+   * Fetches and returns if a user or group has been provisioned in the cloud
+   * by querying the cloud.
+   */
+  private interface StateFetcher {
+    public boolean fetch(String id) throws Exception;
+  }
+
+  private boolean getCachedValue(String id, StateFetcher fetcher,
+      ProvisionedStateLRUCache cache) throws Exception {
+    Boolean state = cache.getProvisionedState(id);
+    if (state == null) {
+     state = fetcher.fetch(id);
+     cache.setProvisionedState(id, state);
+     return state;
+    } else {
+      return state;
+    }
+  }
+
   @Override
   public boolean isGroupProvisioned(String groupId) throws Exception {
+    StateFetcher groupStateFetcher = new StateFetcher() {
+      public boolean fetch(final String groupId) throws Exception {
+        return fetchGroupState(groupId);
+      }
+    };
+    return getCachedValue(groupId, groupStateFetcher, groupStates);
+  }
+
+  private boolean fetchGroupState(String groupId) throws Exception {
     try {
       groupsService.retrieveGroup(groupId);
       return true;
@@ -81,7 +116,15 @@ public class CloudProvisionChecker implements ProvisionChecker {
 
   @Override
   public boolean isUserProvisioned(String userName) throws Exception {
-    // TODO Auto-generated method stub
+    StateFetcher userStateFetcher = new StateFetcher() {
+      public boolean fetch(final String userName) throws Exception {
+        return fetchUserState(userName);
+      }
+    };
+    return getCachedValue(userName, userStateFetcher, userStates);
+  }
+
+  private boolean fetchUserState(String userName) throws Exception {
     URL userUrl = getUserUrl(userName);
     try {
     UserEntry userEntry = userService.getEntry(userUrl, UserEntry.class);
@@ -95,9 +138,9 @@ public class CloudProvisionChecker implements ProvisionChecker {
       }
     }
   }
-  
+
   public static class ReportCaptchaException extends Exception {
-    ReportCaptchaException(String domainName, 
+    ReportCaptchaException(String domainName,
         GoogleService.CaptchaRequiredException cause){
       super(getMessage(domainName), cause);
     }
