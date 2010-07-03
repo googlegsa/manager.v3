@@ -47,7 +47,7 @@ public class DoclistPusher implements CloudPusher {
     this.convert = convert;
   }
 
-  public void pushDocument(Document document, FolderInfo parent, String owner, 
+  public void pushDocument(Document document, FolderInfo parent, String owner,
       AclAdjustments aclAdjustments, InputStream inputStream) throws Exception {
 
     DocumentListEntry dle = createDocument(
@@ -74,11 +74,11 @@ public class DoclistPusher implements CloudPusher {
       parentFolderContentUrl += "&convert=false";
     }
     URL feedUrl = new URL(parentFolderContentUrl);
-    System.out.println("**Create folder feedUrl="+feedUrl);
+    System.out.println("**Create document feedUrl="+feedUrl);
     return client.insert(feedUrl, newDocument);
   }
 
-  public String pushFolder(String folderName, FolderInfo parent, String owner, 
+  public String pushFolder(String folderName, FolderInfo parent, String owner,
       AclAdjustments aclAdjustments) throws Exception {
     DocumentListEntry dle = createFolder(
         getOauthUrl(DOCLIST_ROOT_CONTENT_URL,
@@ -112,7 +112,7 @@ public class DoclistPusher implements CloudPusher {
         + dle.getResourceId()
         + "?xoauth_requestor_id="
         + ownerId;
-    //TODO(strellis): is refresh to get newest etag needed/appropriate here?
+    //TODO(johnfelton): is refresh to get newest etag needed/appropriate here?
     dle = client.getEntry(new URL(dle.getSelfLink().getHref()),
         DocumentListEntry.class);
     client.delete(new URL(url), dle.getEtag());
