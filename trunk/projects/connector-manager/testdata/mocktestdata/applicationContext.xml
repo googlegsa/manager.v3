@@ -25,6 +25,7 @@
 
   <bean id="ConnectorConfigStore"
         class="com.google.enterprise.connector.persist.FileStore">
+    <property name="typeMap" ref="TypeMap" />
   </bean>
 
   <bean id="PersistentStore"
@@ -51,7 +52,7 @@
     <property name="threadPool" ref="ThreadPool" />
   </bean>
 
-  <bean id="TypeMap" 
+  <bean id="TypeMap"
         class="com.google.enterprise.connector.instantiator.TypeMap"/>
 
   <bean id="Instantiator"

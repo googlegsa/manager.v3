@@ -254,7 +254,7 @@ final class InstanceInfo {
    * http://jira.springframework.org/browse/SPR-5068
    */
   private static class ByteArrayResourceHack extends ByteArrayResource {
-    String filename;
+    private String filename;
     public ByteArrayResourceHack(byte[] byteArray, String filename) {
       super(byteArray);
       this.filename = filename;

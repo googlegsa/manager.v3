@@ -44,7 +44,6 @@ public class JdbcStoreTest extends PersistentStoreTestAbstract {
     ds.setPassword("sa");
     dataSource = ds;
 
-    storeDir = null;
     store = new JdbcStore();
     ((JdbcStore) store).setDataSource(dataSource);
   }

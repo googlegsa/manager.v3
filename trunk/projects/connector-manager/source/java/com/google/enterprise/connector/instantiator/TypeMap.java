@@ -73,7 +73,8 @@ public class TypeMap {
    * Initializes this map and the supporting directories from the
    * types on the classpath.
    */
-  void init() {
+  @VisibleForTesting
+  public void init() {
     initializeTypes(connectorTypePattern);
     initializeBaseDirectories(baseDirPath);
     initializeTypeDirectories();

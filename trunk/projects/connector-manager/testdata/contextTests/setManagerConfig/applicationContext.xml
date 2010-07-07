@@ -20,6 +20,7 @@
 
   <bean id="ConnectorConfigStore"
         class="com.google.enterprise.connector.persist.FileStore">
+    <property name="typeMap" ref="TypeMap" />
   </bean>
 
   <bean id="ConnectorScheduleStore"
@@ -36,6 +37,9 @@
     <constructor-arg index="1" ref="ConnectorScheduleStore"/>
     <constructor-arg index="2" ref="ConnectorStateStore"/>
   </bean>
+
+  <bean id="TypeMap"
+        class="com.google.enterprise.connector.instantiator.TypeMap"/>
 
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.MockInstantiator">

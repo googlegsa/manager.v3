@@ -18,7 +18,6 @@ public class MockPersistentStoreTest extends PersistentStoreTestAbstract {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    storeDir = null;
     store = new MockPersistentStore();
   }
 }
