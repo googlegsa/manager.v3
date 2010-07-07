@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.persist;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
@@ -38,6 +39,7 @@ public class MockPersistentStore implements PersistentStore {
     public final String property;
 
     public StoreKey(StoreContext context, String property) {
+      testStoreContext(context);
       this.context = context;
       this.property = property;
     }
@@ -161,5 +163,14 @@ public class MockPersistentStore implements PersistentStore {
   /* @Override */
   public void removeConnectorSchedule(StoreContext context) {
     removeObject(context, SCHEDULE);
+  }
+
+  /**
+   * Test the StoreContext to make sure it is sane.
+   *
+   * @param context a StoreContext
+   */
+  private static void testStoreContext(StoreContext context) {
+    Preconditions.checkNotNull(context, "StoreContext may not be null.");
   }
 }

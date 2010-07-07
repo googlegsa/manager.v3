@@ -14,14 +14,19 @@
 
 package com.google.enterprise.connector.persist;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
+
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.TypeInfo;
+import com.google.enterprise.connector.instantiator.TypeMap;
 import com.google.enterprise.connector.scheduler.Schedule;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -43,8 +48,105 @@ public class FileStore implements PersistentStore {
   private static final String stateName = "_state.txt";
   private static final String configName = ".properties";
 
+  private TypeMap typeMap;
+
+  public void setTypeMap(TypeMap typeMap) {
+    this.typeMap = typeMap;
+  }
+
+  /**
+   * Gets the version stamps of all persistent objects.
+   *
+   * @return an immutable map containing the version stamps; may be
+   * empty but not {@code null}
+   */
+  /* @Override */
   public ImmutableMap<StoreContext, ConnectorStamps> getInventory() {
-    throw new RuntimeException("TODO");
+    Preconditions.checkNotNull(typeMap, "FileStore requires a TypeMap");
+    ImmutableMap.Builder<StoreContext, ConnectorStamps> mapBuilder =
+        new ImmutableMap.Builder<StoreContext, ConnectorStamps>();
+    for (String typeName : typeMap.getConnectorTypeNames()) {
+      processTypeDir(typeName, mapBuilder);
+    }
+    return mapBuilder.build();
+  }
+
+  // Find the subdirectories.
+  static FileFilter CONNECTOR_TYPE_FILTER = new FileFilter() {
+    public boolean accept(File file) {
+      return file.isDirectory() && !file.getName().startsWith(".");
+    }
+  };
+
+  private void processTypeDir(String typeName,
+      ImmutableMap.Builder<StoreContext, ConnectorStamps> mapBuilder) {
+    File typeDirectory = new File(typeMap.getTypesDirectory(), typeName);
+    if (!typeDirectory.exists()) {
+      LOGGER.fine("No connectors of type " + typeName + " found.");
+      return;
+    }
+
+    File[] directories = typeDirectory.listFiles(CONNECTOR_TYPE_FILTER);
+    if (directories == null) {
+      // This means the directory is empty - no connector instances.
+      LOGGER.fine("No connectors of type " + typeName + " found.");
+      return;
+    }
+
+    // Process each connector store.
+    for (File directory : directories) {
+      String name = directory.getName();
+      StoreContext context = new StoreContext(name, directory);
+      FileStamp checkpointStamp =
+          getStamp(context, getStoreFileName(context, stateName));
+      FileStamp scheduleStamp =
+          getStamp(context, getStoreFileName(context, schedName));
+      FileStamp configurationStamp = new FileStamp(
+          // ConfigurationStamp is the sum of the map and xml timestamps.
+          getStoreFile(context, TypeInfo.CONNECTOR_INSTANCE_XML).lastModified()
+          + getStoreFile(context, getStoreFileName(context, configName))
+                .lastModified()
+          );
+      if (checkpointStamp.version != 0L || scheduleStamp.version != 0L
+          || configurationStamp.version != 0L) {
+        ConnectorStamps stamps = new ConnectorStamps(
+            checkpointStamp, configurationStamp, scheduleStamp);
+        mapBuilder.put(context, stamps);
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("Found connector: name = " + name + "  type = " + typeName
+                      + "  stamps = " + stamps);
+        }
+      }
+    }
+  }
+
+  private static FileStamp getStamp(StoreContext context, String filename) {
+    return new FileStamp(getStoreFile(context, filename).lastModified());
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * A version stamp based upon a {@code long File.lastModified()}.
+   */
+  private static class FileStamp implements Stamp {
+    final long version;
+
+    /** Constructs a File version stamp. */
+    FileStamp(long version) {
+      this.version = version;
+    }
+
+    /** {@inheritDoc} */
+    /* @Override */
+    public int compareTo(Stamp other) {
+      return (int) (version - ((FileStamp) other).version);
+    }
+
+    @Override
+    public String toString() {
+      return Long.toString(version);
+    }
   }
 
   /**
@@ -222,20 +324,15 @@ public class FileStore implements PersistentStore {
    * @param context a StoreContext
    */
   private static void testStoreContext(StoreContext context) {
-    if (context == null) {
-      throw new IllegalArgumentException("StoreContext may not be null.");
-    }
+    Preconditions.checkNotNull(context, "StoreContext may not be null.");
     // The StoreContext ConnectorName is now checked on a Precondition on
     // the constructor.
     File connectorDir = context.getConnectorDir();
-    if (connectorDir == null) {
-      throw new IllegalArgumentException(
-          "StoreContext.connectorDir may not be null.");
-    }
-    if (!connectorDir.exists() || !connectorDir.isDirectory()) {
-      throw new IllegalArgumentException(
-          "StoreContext.connectorDir directory must exist.");
-    }
+    Preconditions.checkNotNull(connectorDir,
+        "StoreContext.connectorDir may not be null.");
+    Preconditions.checkArgument(
+        (connectorDir.exists() && connectorDir.isDirectory()),
+        "StoreContext.connectorDir directory must exist.");
   }
 
   /**

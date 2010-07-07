@@ -32,4 +32,9 @@ class MockStamp implements Stamp {
   public int compareTo(Stamp other) {
     return (int) (version - ((MockStamp) other).version);
   }
+
+  @Override
+  public String toString() {
+    return Long.toString(version);
+  }
 }
