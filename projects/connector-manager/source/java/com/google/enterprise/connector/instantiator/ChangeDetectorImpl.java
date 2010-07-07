@@ -1,4 +1,4 @@
-// Copyright (C) 2010 Google Inc.
+// Copyright 2010 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.persist.ConnectorStamps;
 import com.google.enterprise.connector.persist.PersistentStore;
 import com.google.enterprise.connector.persist.Stamp;
@@ -63,8 +64,13 @@ class ChangeDetectorImpl implements ChangeDetector {
     SortedSet<StoreContext> persistentInstances =
         new TreeSet<StoreContext>(persistentInventory.keySet());
 
-    compareInventories(inMemoryInstances.iterator(),
-        persistentInstances.iterator(), persistentInventory);
+    NDC.push("Change");
+    try {
+      compareInventories(inMemoryInstances.iterator(),
+          persistentInstances.iterator(), persistentInventory);
+    } finally {
+      NDC.pop();
+    }
 
     inMemoryInstances = persistentInstances;
     inMemoryInventory = persistentInventory;
@@ -97,27 +103,42 @@ class ChangeDetectorImpl implements ChangeDetector {
     while (m != null && p != null) {
       // Compare instance names.
       int diff = m.getConnectorName().compareTo(p.getConnectorName());
-      if (diff == 0) {
-        compareInstances(m, p, inMemoryInventory.get(m),
-            persistentInventory.get(p));
-        m = getNext(mi);
-        p = getNext(pi);
-      } else if (diff < 0) {
-        listener.connectorRemoved(m.getConnectorName());
-        m = getNext(mi);
-      } else { // diff > 0
-        listener.connectorAdded(p.getConnectorName(),
-            store.getConnectorConfiguration(p));
-        p = getNext(pi);
+      NDC.pushAppend((diff < 0 ? m : p).getConnectorName());
+      try {
+        if (diff == 0) {
+          compareInstances(m, p, inMemoryInventory.get(m),
+              persistentInventory.get(p));
+          m = getNext(mi);
+          p = getNext(pi);
+        } else if (diff < 0) {
+          listener.connectorRemoved(m.getConnectorName());
+          m = getNext(mi);
+        } else { // diff > 0
+          listener.connectorAdded(p.getConnectorName(),
+              store.getConnectorConfiguration(p));
+          p = getNext(pi);
+        }
+      } finally {
+        NDC.pop();
       }
     }
     while (m != null) {
-      listener.connectorRemoved(m.getConnectorName());
+      NDC.pushAppend(m.getConnectorName());
+      try {
+        listener.connectorRemoved(m.getConnectorName());
+      } finally {
+        NDC.pop();
+      }
       m = getNext(mi);
     }
     while (p != null) {
-      listener.connectorAdded(p.getConnectorName(),
-          store.getConnectorConfiguration(p));
+      NDC.pushAppend(p.getConnectorName());
+      try {
+        listener.connectorAdded(p.getConnectorName(),
+            store.getConnectorConfiguration(p));
+      } finally {
+        NDC.pop();
+      }
       p = getNext(pi);
     }
   }

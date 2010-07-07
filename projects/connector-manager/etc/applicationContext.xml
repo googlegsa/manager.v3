@@ -263,14 +263,27 @@
     <property name="threadPool" ref="ThreadPool" />
   </bean>
 
-  <bean id="TypeMap" 
+  <bean id="TypeMap"
         class="com.google.enterprise.connector.instantiator.TypeMap"/>
+
+  <bean id="ChangeListener"
+        class="com.google.enterprise.connector.instantiator.ChangeListenerImpl">
+    <constructor-arg index="0" ref="TypeMap"/>
+    <constructor-arg index="1" ref="ConnectorCoordinatorMap"/>
+  </bean>
+
+  <bean id="ChangeDetector"
+        class="com.google.enterprise.connector.instantiator.ChangeDetectorImpl">
+    <constructor-arg index="0" ref="PersistentStore"/>
+    <constructor-arg index="1" ref="ChangeListener"/>
+  </bean>
 
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.SpringInstantiator">
     <property name="connectorCoordinatorMap" ref="ConnectorCoordinatorMap" />
     <property name="threadPool" ref="ThreadPool" />
     <property name="typeMap" ref="TypeMap" />
+    <property name="changeDetector" ref="ChangeDetector"/>
   </bean>
 
   <bean id="Manager"

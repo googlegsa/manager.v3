@@ -1,18 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 <beans>
-  <bean id="FeedConnection"
-        class="com.google.enterprise.connector.pusher.MockFeedConnection">
-  </bean>
-
   <bean id="PusherFactory"
-        class="com.google.enterprise.connector.pusher.DocPusherFactory">
-    <constructor-arg index="0" ref="FeedConnection" />
+        class="com.google.enterprise.connector.pusher.MockPusher">
   </bean>
 
   <bean id="LoadManagerFactory"
-        class="com.google.enterprise.connector.scheduler.HostLoadManagerFactory">
-    <property name="feedConnection" ref="FeedConnection"/>
+        class="com.google.enterprise.connector.scheduler.MockLoadManagerFactory">
   </bean>
 
   <bean id="ConnectorScheduleStore"
@@ -52,8 +46,13 @@
     <property name="threadPool" ref="ThreadPool" />
   </bean>
 
+  <!-- This is the reason for this XML file: initialize the TypeMap in
+       a test directory. -->
   <bean id="TypeMap"
-        class="com.google.enterprise.connector.instantiator.TypeMap"/>
+        class="com.google.enterprise.connector.instantiator.TypeMap">
+    <constructor-arg index="0" value="classpath*:config/connectorType.xml"/>
+    <constructor-arg index="1" value="testdata/tmp/InstantiatorTests"/>
+  </bean>
 
   <bean id="ChangeListener"
         class="com.google.enterprise.connector.instantiator.ChangeListenerImpl">
@@ -67,8 +66,10 @@
     <constructor-arg index="1" ref="ChangeListener"/>
   </bean>
 
+  <!-- This must not be a singleton, a test creates multiple instances. -->
   <bean id="Instantiator"
-        class="com.google.enterprise.connector.instantiator.SpringInstantiator">
+        class="com.google.enterprise.connector.instantiator.SpringInstantiator"
+        singleton="false">
     <property name="connectorCoordinatorMap" ref="ConnectorCoordinatorMap" />
     <property name="threadPool" ref="ThreadPool" />
     <property name="typeMap" ref="TypeMap" />
@@ -78,15 +79,5 @@
   <bean id="ThreadPool"
         class="com.google.enterprise.connector.instantiator.ThreadPool">
     <constructor-arg index="0" type="int" value="5"/>
-  </bean>
-
-  <bean id="Manager"
-        class="com.google.enterprise.connector.manager.ProductionManager">
-    <property name="instantiator" ref="Instantiator" />
-  </bean>
-
-  <bean id="TraversalScheduler"
-        class="com.google.enterprise.connector.scheduler.TraversalScheduler">
-    <constructor-arg index="0" ref="Instantiator" />
   </bean>
 </beans>

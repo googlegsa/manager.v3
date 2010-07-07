@@ -16,6 +16,7 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.manager.ConnectorManagerException;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -38,11 +39,18 @@ import org.json.JSONObject;
 import java.io.File;
 import java.util.Locale;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Unit test for {@link SpringInstantiator}.
  */
 public class InstantiatorTest extends TestCase {
+  private static final Logger LOGGER =
+      Logger.getLogger(InstantiatorTest.class.getName());
+
+  private static final String TEST_DIR =
+      "testdata/contextTests/instantiatorTests/";
+  private static final String APPLICATION_CONTEXT = "applicationContext.xml";
 
   private static final String TEST_DIR_NAME = "testdata/tmp/InstantiatorTests";
   private static final String TEST_CONFIG_FILE =
@@ -52,28 +60,25 @@ public class InstantiatorTest extends TestCase {
 
   @Override
   protected void setUp() throws Exception {
+    Context.refresh();
+    Context context = Context.getInstance();
+    context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
+        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
+
     assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
     // Then recreate it empty
     assertTrue(baseDirectory.mkdirs());
 
-    createInstantiator();
+    instantiator = createInstantiator();
     assertEquals(0, connectorCount());
   }
 
-  private void createInstantiator() {
-    ThreadPool threadPool = new ThreadPool(5);
-
-    ConnectorCoordinatorMap ccm = new ConnectorCoordinatorMap();
-    ccm.setPusherFactory(new MockPusher());
-    ccm.setLoadManagerFactory(new MockLoadManagerFactory());
-    ccm.setThreadPool(threadPool);
-
-    SpringInstantiator si = new SpringInstantiator();
-    si.setTypeMap(new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
-    si.setThreadPool(threadPool);
-    si.setConnectorCoordinatorMap(ccm);
+  private SpringInstantiator createInstantiator() {
+    Context context = Context.getInstance();
+    SpringInstantiator si = (SpringInstantiator) context.getRequiredBean(
+        "Instantiator", SpringInstantiator.class);
     si.init();
-    instantiator = si;
+    return si;
   }
 
   @Override
@@ -316,10 +321,11 @@ public class InstantiatorTest extends TestCase {
       instantiator.shutdown(true, 5000);
     }
 
-    createInstantiator();
+    SpringInstantiator newInstantiator = createInstantiator();
+    assertNotSame(instantiator, newInstantiator);
 
     {
-      String readTypeName = instantiator.getConnectorTypeName(name);
+      String readTypeName = newInstantiator.getConnectorTypeName(name);
       assertEquals(typeName, readTypeName);
     }
   }
@@ -333,7 +339,6 @@ public class InstantiatorTest extends TestCase {
    * @throws ConnectorNotFoundException
    */
   public final void testIssue63Synchronization() throws Exception {
-
     // Create a connector.
     String name = "connector1";
     String typeName = "TestConnectorA";

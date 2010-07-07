@@ -1,4 +1,4 @@
-// Copyright (C) 2010 Google Inc.
+// Copyright 2010 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,11 +18,15 @@ import com.google.enterprise.connector.scheduler.Schedule;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Accepts change notifications from a {@link ChangeDetector}.
  */
 class MockChangeListener implements ChangeListener {
+  private static final Logger LOGGER =
+      Logger.getLogger(MockChangeListener.class.getName());
+
   public static final String CONNECTOR_ADDED = "connectorAdded: ";
   public static final String CONNECTOR_REMOVED = "connectorRemoved: ";
   public static final String CHECKPOINT_CHANGED = "checkpointChanged: ";
@@ -40,32 +44,37 @@ class MockChangeListener implements ChangeListener {
     return changes;
   }
 
+  private void addChange(String change) {
+    changes.add(change);
+    LOGGER.info(change);
+  }
+
   /* @Override */
   public void connectorAdded(String connectorName,
       Configuration configuration) {
-    changes.add(CONNECTOR_ADDED + connectorName);
+    addChange(CONNECTOR_ADDED + connectorName);
   }
 
   /* @Override */
   public void connectorRemoved(String connectorName) {
-    changes.add(CONNECTOR_REMOVED + connectorName);
+    addChange(CONNECTOR_REMOVED + connectorName);
   }
 
   /* @Override */
   public void connectorCheckpointChanged(String connectorName,
       String checkpoint) {
-    changes.add(CHECKPOINT_CHANGED + connectorName);
+    addChange(CHECKPOINT_CHANGED + connectorName);
   }
 
   /* @Override */
   public void connectorConfigurationChanged(String connectorName,
       Configuration configuration) {
-    changes.add(CONFIGURATION_CHANGED + connectorName);
+    addChange(CONFIGURATION_CHANGED + connectorName);
   }
 
   /* @Override */
   public void connectorScheduleChanged(String connectorName,
       Schedule schedule) {
-    changes.add(SCHEDULE_CHANGED + connectorName);
+    addChange(SCHEDULE_CHANGED + connectorName);
   }
 }
