@@ -147,8 +147,7 @@ public class JdbcStore implements PersistentStore {
         // TODO: When StoreContext moves to TypeName.  Run two queries:
         //  1) SELECT connector_name, property_value WHERE (property_name =
         //     'configuration_type' AND property_value IS NOT NULL )
-        //  2) Build a sorted set of StoreContext with the connector names and
-        //     types (ordered by connector_name).
+        //  2) Build a set of StoreContext with the connector names and types.
         //  3) SELECT connector_name, modify_stamp, property_name
         //     WHERE ( property_name IN (checkpoint,schedule,configuration_map,
         //     configuration_xml) AND property_value IS NOT NULL ).
@@ -157,8 +156,7 @@ public class JdbcStore implements PersistentStore {
         //  5) Iterate over the list of StoreContexts, extracting the
         //     for the connector modify_stamps and adding ConnectorStamps
         //     to the inventory.
-        // This gets the typename and avoids ORDER_BY in the SQL queries
-        // (at the expense of doing a sort here in the CM).
+        // This gets the typename and avoids ORDER_BY in the SQL queries.
 
         Statement statement = connection.createStatement(
             ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
