@@ -1,4 +1,4 @@
-// Copyright (C) 2009 Google Inc.
+// Copyright 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ package com.google.enterprise.connector.spi;
  * It is the responsibility of the Connector to construct a checkpoint
  * that skips over the offending Document if DocumentList.checkpoint()
  * is called after SkippedDocumentException is thrown.
+ *
+ * @since 2.4
  */
 /* TODO (bmj): This is a temporary solution and should be replaced.
  * It uses Exceptions for non-exceptional cases.
