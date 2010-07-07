@@ -18,6 +18,7 @@ import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.instantiator.ConnectorCoordinatorMap;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
+import com.google.enterprise.connector.instantiator.MockChangeDetector;
 import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.instantiator.ThreadPool;
@@ -124,6 +125,7 @@ public class TraversalSchedulerTest extends TestCase {
     si.setTypeMap(new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
     si.setThreadPool(threadPool);
     si.setConnectorCoordinatorMap(ccm);
+    si.setChangeDetector(new MockChangeDetector());
     si.init();
 
     // Instantiate a couple of connectors.

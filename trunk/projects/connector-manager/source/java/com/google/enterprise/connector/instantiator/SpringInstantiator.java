@@ -43,10 +43,8 @@ public class SpringInstantiator implements Instantiator {
   // State that is filled in by setters from Spring.
   private ConnectorCoordinatorMap coordinatorMap;
   private ThreadPool threadPool;
-
-  // State that is filled in by init.
   private TypeMap typeMap;
-  private ChangeListener changeListener;
+  private ChangeDetector changeDetector;
 
   /**
    * Normal constructor.
@@ -86,14 +84,26 @@ public class SpringInstantiator implements Instantiator {
   }
 
   /**
+   * Sets the {@link ChangeDetector} instance.
+   *
+   * @param changeDetector a {@link ChangeDetector}.
+   */
+  public void setChangeDetector(ChangeDetector changeDetector) {
+    this.changeDetector = changeDetector;
+  }
+
+  /**
    * Initializes the Context, post bean construction.
    */
   public synchronized void init() {
     LOGGER.info("Initializing instantiator");
+    // typeMap must be initialized before changeDetector is called.
     typeMap.init();
-    changeListener = new ChangeListenerImpl(typeMap, coordinatorMap);
-    // TODO: create a ChangeDetector hooked up to this ChangeListener.
-    ConnectorCoordinatorMapHelper.fillFromTypes(typeMap, coordinatorMap);
+
+    // Run changeDetector to create connector instances from the
+    // persistent store.
+    // TODO: Run changeDetector in a TimerTask.
+    changeDetector.detect();
   }
 
   /**
