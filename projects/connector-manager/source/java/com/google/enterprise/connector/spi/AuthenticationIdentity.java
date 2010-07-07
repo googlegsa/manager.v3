@@ -1,4 +1,4 @@
-// Copyright (C) 2007-2009 Google Inc.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,20 +21,24 @@ package com.google.enterprise.connector.spi;
 public interface AuthenticationIdentity {
 
   /**
-   * Get the username
+   * Gets the username.
+   *
    * @return the username, as a String
    */
   public String getUsername();
 
   /**
-   * Get the password
+   * Gets the password.
+   *
    * @return the password, as a String
    */
   public String getPassword();
 
   /**
-   * Get the domain
+   * Gets the domain.
+   *
    * @return the domain, as a String
+   * @since 2.0
    */
   public String getDomain();
 }
