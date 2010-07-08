@@ -201,7 +201,9 @@
        Only one PersistentStore bean should be defined at this time.
   -->
   <bean id="PersistentStore"
-        class="com.google.enterprise.connector.persist.FileStore"/>
+        class="com.google.enterprise.connector.persist.FileStore">
+    <property name="typeMap" ref="TypeMap"/>
+  </bean>
 
   <!-- Persistent Store mechanism used to store the Connector Configuration,
        Connector Schedule, and Connector Traversal State.  This implementation
