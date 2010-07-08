@@ -25,6 +25,8 @@ import com.google.enterprise.connector.instantiator.InstanceInfo.NullTypeInfoExc
 import com.google.enterprise.connector.instantiator.InstanceInfo.PropertyProcessingFailureException;
 import com.google.enterprise.connector.instantiator.TypeInfo.TypeInfoException;
 import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.persist.FileStore;
+import com.google.enterprise.connector.persist.StoreContext;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.TestCase;
@@ -33,19 +35,35 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
 import java.io.File;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class InstanceInfoTest extends TestCase {
-
   private static final Logger LOGGER =
       Logger.getLogger(InstanceInfoTest.class.getName());
 
-  @Override
-  protected void setUp() throws Exception {
-    // Force initialization of test context.
-    Context.getInstance().getApplicationContext();
+  /* Only FileStore.getInventory needs a TypeMap, and we don't call that. */
+  private static final FileStore STORE = new FileStore();
+
+  /**
+   * Constructs a new Connector Instance based
+   * upon its on-disk persistently stored configuration.
+   *
+   * @param connectorName the name of the Connector instance.
+   * @param connectorDir the Connector's on-disk directory.
+   * @param typeInfo the Connector's prototype.
+   * @return new InstanceInfo representing the Connector instance.
+   * @throws InstanceInfoException
+   */
+  private InstanceInfo fromDirectory(String connectorName,
+      File connectorDir, TypeInfo typeInfo) throws InstanceInfoException {
+    Configuration config = STORE.getConnectorConfiguration(
+        new StoreContext(connectorName, connectorDir));
+    assertNotNull(config);
+    assertNotNull(config.getMap());
+    return new InstanceInfo(connectorName, connectorDir, typeInfo, config);
   }
 
   /**
@@ -61,7 +79,7 @@ public class InstanceInfoTest extends TestCase {
     TypeInfo typeInfo = makeValidTypeInfo(resourceName);
     boolean exceptionThrown = false;
     try {
-      InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
+      fromDirectory("fred", connectorDir, typeInfo);
     } catch (InstanceInfoException e) {
       exceptionThrown = true;
       LOGGER.log(Level.WARNING,
@@ -70,7 +88,7 @@ public class InstanceInfoTest extends TestCase {
     assertFalse(exceptionThrown);
   }
 
-  public final void testFromDirectoryNegative0() {
+  public final void testConstructorNegative0() {
     // test null directory argument
     String resourceName =
         "testdata/connectorTypeTests/positive/connectorType.xml";
@@ -78,7 +96,7 @@ public class InstanceInfoTest extends TestCase {
     InstanceInfo instanceInfo = null;
     boolean correctExceptionThrown = false;
     try {
-      instanceInfo = InstanceInfo.fromDirectory("fred", null, typeInfo);
+      instanceInfo = new InstanceInfo("fred", null, typeInfo, null);
     } catch (NullDirectoryException e) {
       correctExceptionThrown = true;
       LOGGER.log(Level.WARNING, "Null directory exception", e);
@@ -90,14 +108,13 @@ public class InstanceInfoTest extends TestCase {
     assertNull(instanceInfo);
   }
 
-  public final void testFromDirectoryNegative1() {
+  public final void testConstructorNegative1() {
     // test null TypeInfo argument
     InstanceInfo instanceInfo = null;
     File connectorDir = new File("testdata/connectorInstanceTests/positive");
     boolean correctExceptionThrown = false;
     try {
-      instanceInfo =
-          InstanceInfo.fromDirectory("fred", connectorDir, null);
+      instanceInfo = new InstanceInfo("fred", connectorDir, null, null);
     } catch (NullTypeInfoException e) {
       correctExceptionThrown = true;
       LOGGER.log(Level.WARNING, "Null directory exception", e);
@@ -109,7 +126,7 @@ public class InstanceInfoTest extends TestCase {
     assertNull(instanceInfo);
   }
 
-  public final void testFromDirectoryNegative2() {
+  public final void testConstructorNegative2() {
     // test null connector name argument
     String resourceName =
         "testdata/connectorTypeTests/positive/connectorType.xml";
@@ -118,8 +135,7 @@ public class InstanceInfoTest extends TestCase {
     File connectorDir = new File("testdata/connectorInstanceTests/positive");
     boolean correctExceptionThrown = false;
     try {
-      instanceInfo =
-          InstanceInfo.fromDirectory(null, connectorDir, typeInfo);
+      instanceInfo = new InstanceInfo(null, connectorDir, typeInfo, null);
     } catch (NullConnectorNameException e) {
       correctExceptionThrown = true;
       LOGGER.log(Level.WARNING, "Null directory exception", e);
@@ -140,8 +156,7 @@ public class InstanceInfoTest extends TestCase {
     File connectorDir = new File("testdata/connectorInstanceTests/negative3");
     boolean correctExceptionThrown = false;
     try {
-      instanceInfo =
-          InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
+      instanceInfo = fromDirectory("fred", connectorDir, typeInfo);
     } catch (PropertyProcessingFailureException e) {
       correctExceptionThrown = true;
       LOGGER.log(Level.WARNING, "Property processing exception", e);
@@ -162,8 +177,7 @@ public class InstanceInfoTest extends TestCase {
     File connectorDir = new File("testdata/connectorInstanceTests/positive");
     boolean correctExceptionThrown = false;
     try {
-      instanceInfo =
-          InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
+      instanceInfo = fromDirectory("fred", connectorDir, typeInfo);
     } catch (NoBeansFoundException e) {
       correctExceptionThrown = true;
       LOGGER.log(Level.WARNING, "Null directory exception", e);
@@ -198,8 +212,7 @@ public class InstanceInfoTest extends TestCase {
       File temp = new File(connectorDir + File.separator + "fred.properties");
       PropertiesUtils.storeToFile(props, temp, null);
 
-      instanceInfo =
-          InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
+      instanceInfo = fromDirectory("fred", connectorDir, typeInfo);
     } catch (InstanceInfoException e) {
       exceptionThrown = true;
       LOGGER.log(Level.WARNING,
@@ -245,8 +258,7 @@ public class InstanceInfoTest extends TestCase {
     InstanceInfo instanceInfo = null;
     boolean exceptionThrown = false;
     try {
-      instanceInfo =
-          InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
+      instanceInfo = fromDirectory("fred", connectorDir, typeInfo);
     } catch (InstanceInfoException e) {
       exceptionThrown = true;
       LOGGER.log(Level.WARNING,
@@ -267,7 +279,7 @@ public class InstanceInfoTest extends TestCase {
     TypeInfo typeInfo = makeValidTypeInfo(resourceName);
     boolean exceptionThrown = false;
     try {
-      InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
+      fromDirectory("fred", connectorDir, typeInfo);
     } catch (InstanceInfoException e) {
       exceptionThrown = true;
       assertTrue("Expected InstanceInfoException",
@@ -291,8 +303,7 @@ public class InstanceInfoTest extends TestCase {
     InstanceInfo instanceInfo = null;
     boolean exceptionThrown = false;
     try {
-      instanceInfo =
-          InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
+      instanceInfo = fromDirectory("fred", connectorDir, typeInfo);
     } catch (InstanceInfoException e) {
       exceptionThrown = true;
       LOGGER.log(Level.WARNING,
@@ -319,8 +330,7 @@ public class InstanceInfoTest extends TestCase {
     TypeInfo typeInfo = makeValidTypeInfo(resourceName);
     InstanceInfo instanceInfo = null;
     try {
-      instanceInfo =
-          InstanceInfo.fromDirectory("fred", connectorDir, typeInfo);
+      instanceInfo = fromDirectory("fred", connectorDir, typeInfo);
     } catch (InstanceInfoException e) {
       LOGGER.log(Level.WARNING,
           "unexpected exception during instance info creation", e);

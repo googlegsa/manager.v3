@@ -811,13 +811,8 @@ class ConnectorCoordinatorImpl implements
     // We have an apparently valid configuration. Create a connector instance
     // with that configuration.
     // TODO: try to avoid instantiating the connector 3 times.
-    InstanceInfo newInstanceInfo = InstanceInfo.fromNewConfig(name,
-        connectorDir, newTypeInfo, newConfiguration);
-    if (newInstanceInfo == null) {
-      // We don't expect this, because an InstantiatorException should have
-      // been thrown, but just in case.
-      throw new InstantiatorException("Failed to create connector " + name);
-    }
+    InstanceInfo newInstanceInfo = new InstanceInfo(name, connectorDir,
+        newTypeInfo, newConfiguration);
 
     // Only after validateConfig and instantiation succeeds do we
     // save the new configuration to persistent store.
@@ -843,14 +838,10 @@ class ConnectorCoordinatorImpl implements
 
     // We have an apparently valid configuration. Create a connector instance
     // with that configuration.
-    InstanceInfo newInstanceInfo = InstanceInfo.fromNewConfig(name,
-        new File(config.getMap().get(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR)),
-        newTypeInfo, config);
-    if (newInstanceInfo == null) {
-      // We don't expect this, because an InstantiatorException should have
-      // been thrown, but just in case.
-      throw new InstantiatorException("Failed to create connector " + name);
-    }
+    String connectorWorkDir =
+        config.getMap().get(PropertiesUtils.GOOGLE_CONNECTOR_WORK_DIR);
+    InstanceInfo newInstanceInfo = new InstanceInfo(name,
+        new File(connectorWorkDir), newTypeInfo, config);
 
     // Tell old connector instance to shut down, as it is being replaced.
     resetBatch();
@@ -870,7 +861,7 @@ class ConnectorCoordinatorImpl implements
       File connectorDir, TypeInfo typeInfo, Configuration config,
       Locale locale) throws InstantiatorException {
     ConnectorInstanceFactory factory =
-        new ConnectorInstanceFactory(name, connectorDir, typeInfo, config);
+        new ConnectorInstanceFactory(name, typeInfo, config);
     try {
       return typeInfo.getConnectorType()
           .validateConfig(config.getMap(), locale, factory);

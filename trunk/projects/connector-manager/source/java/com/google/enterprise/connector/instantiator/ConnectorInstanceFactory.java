@@ -46,7 +46,6 @@ class ConnectorInstanceFactory implements ConnectorFactory {
       Logger.getLogger(ConnectorInstanceFactory.class.getName());
 
   final String connectorName;
-  final File connectorDir;
   final TypeInfo typeInfo;
   final Configuration origConfig;
   final List<Connector> connectors;
@@ -56,14 +55,12 @@ class ConnectorInstanceFactory implements ConnectorFactory {
    * provided via {@code makeConnector}.
    *
    * @param connectorName the name of this connector instance.
-   * @param connectorDir the directory containing the connector prototype.
    * @param typeInfo the connector type.
    * @param config the configuration provided to {@code validateConfig}.
    */
-  public ConnectorInstanceFactory(String connectorName, File connectorDir,
-      TypeInfo typeInfo, Configuration config) {
+  public ConnectorInstanceFactory(String connectorName, TypeInfo typeInfo,
+      Configuration config) {
     this.connectorName = connectorName;
-    this.connectorDir = connectorDir;
     this.typeInfo = typeInfo;
     this.origConfig = config;
     this.connectors = new LinkedList<Connector>();
@@ -85,11 +82,8 @@ class ConnectorInstanceFactory implements ConnectorFactory {
           ((config == null) ? origConfig.getMap() : config),
           origConfig.getXml());
 
-      // WARNING: This is a transient, in-memory Connector InstanceInfo.
-      // Do not attempt to persist anything.
-      InstanceInfo info = InstanceInfo.fromNewConfig(connectorName,
-          connectorDir, typeInfo, configuration);
-      Connector connector = info.getConnector();
+      Connector connector = InstanceInfo.makeConnectorWithSpring(
+          connectorName, typeInfo, configuration);
       synchronized (this) {
         connectors.add(connector);
       }
