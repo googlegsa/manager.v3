@@ -49,12 +49,21 @@ final class InstanceInfo {
   private final File connectorDir;
   private final String connectorName;
   private final StoreContext storeContext;
+  private final Connector connector;
 
-  private Connector connector;
-
-  /** Private Constructor for use by Static Factory Methods, below. */
-  private InstanceInfo(String connectorName, File connectorDir,
-      TypeInfo typeInfo) throws InstanceInfoException {
+  /**
+   * Constructs a new Connector instance based upon the supplied
+   * configuration map.
+   *
+   * @param connectorName the name of the Connector instance
+   * @param connectorDir the Connector's working directory
+   * @param typeInfo the Connector's prototype
+   * @param config connector Configuration
+   * @return new InstanceInfo representing the Connector instance
+   * @throws InstanceInfoException
+   */
+  public InstanceInfo(String connectorName, File connectorDir,
+      TypeInfo typeInfo, Configuration config) throws InstanceInfoException {
     if (connectorName == null || connectorName.length() < 1) {
       throw new NullConnectorNameException();
     }
@@ -69,6 +78,7 @@ final class InstanceInfo {
     this.connectorDir = connectorDir;
     this.typeInfo = typeInfo;
     this.storeContext = new StoreContext(connectorName, connectorDir);
+    this.connector = makeConnectorWithSpring(connectorName, typeInfo, config);
   }
 
 
@@ -106,78 +116,30 @@ final class InstanceInfo {
     return connectorDir;
   }
 
-
-  /* **** Static Factory Methods used to Create Instances. **** */
-
-  /**
-   * Factory Method that Constructs a new Connector Instance based
-   * upon its on-disk persistently stored configuration.
-   *
-   * @param connectorName the name of the Connector instance.
-   * @param connectorDir the Connector's on-disk directory.
-   * @param typeInfo the Connector's prototype.
-   * @return new InstanceInfo representing the Connector instance.
-   * @throws InstanceInfoException
-   */
-  public static InstanceInfo fromDirectory(String connectorName,
-      File connectorDir, TypeInfo typeInfo) throws InstanceInfoException {
-    InstanceInfo info = new InstanceInfo(connectorName, connectorDir, typeInfo);
-    Configuration config =
-        store.getConnectorConfiguration(info.storeContext);
-    Map<String, String> configMap = (config == null) ? null : config.getMap();
-    if (config == null || config.getMap() == null) {
-      throw new InstanceInfoException("Configuration not found for connector "
-          + connectorName);
-    }
-    info.connector = makeConnectorWithSpring(info, config);
-    return info;
-  }
-
-  /**
-   * Factory Method that Constructs a new Connector Instance based
-   * upon the supplied configuration map.  This is typically done
-   * when creating new connectors from scratch.  It is also used
-   * by the ConnectorFactory.
-   *
-   * @param connectorName the name of the Connector instance.
-   * @param connectorDir the Connector's working directory.
-   * @param typeInfo the Connector's prototype.
-   * @param config connector Configuration.
-   * @return new InstanceInfo representing the Connector instance.
-   * @throws InstanceInfoException
-   */
-  public static InstanceInfo fromNewConfig(String connectorName,
-      File connectorDir, TypeInfo typeInfo, Configuration config)
-      throws InstanceInfoException {
-    InstanceInfo info = new InstanceInfo(connectorName, connectorDir, typeInfo);
-    // Don't write properties file to disk yet.
-    info.connector = makeConnectorWithSpring(info, config);
-    return info;
-  }
-
   /**
    * Construct a new Connector Instance based upon the connectorInstance
    * and connectorDefaults bean definitions.
    *
-   * @param info the InstanceInfo object under construction.
+   * @param connectorName the name of the Connector instance.
+   * @param typeInfo the Connector's prototype.
    * @param config connector Configuration.
    */
-  private static Connector makeConnectorWithSpring(InstanceInfo info,
-      Configuration config) throws InstanceInfoException {
+  static Connector makeConnectorWithSpring(String connectorName,
+      TypeInfo typeInfo, Configuration config) throws InstanceInfoException {
     Context context = Context.getInstance();
-    String name = info.connectorName;
+    String name = connectorName;
     Resource prototype = null;
     if (config.getXml() != null) {
       prototype = new ByteArrayResourceHack(config.getXml().getBytes(),
                                             TypeInfo.CONNECTOR_INSTANCE_XML);
     }
     if (prototype == null) {
-      prototype = info.typeInfo.getConnectorInstancePrototype();
+      prototype = typeInfo.getConnectorInstancePrototype();
     }
 
     DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
     XmlBeanDefinitionReader beanReader = new XmlBeanDefinitionReader(factory);
-    Resource defaults = info.typeInfo.getConnectorDefaultPrototype();
+    Resource defaults = typeInfo.getConnectorDefaultPrototype();
     try {
       beanReader.loadBeanDefinitions(prototype);
     } catch (BeansException e) {
