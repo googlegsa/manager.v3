@@ -53,8 +53,6 @@ public class InstantiatorTest extends TestCase {
   private static final String APPLICATION_CONTEXT = "applicationContext.xml";
 
   private static final String TEST_DIR_NAME = "testdata/tmp/InstantiatorTests";
-  private static final String TEST_CONFIG_FILE =
-      "classpath*:config/connectorType.xml";
   private final File baseDirectory  = new File(TEST_DIR_NAME);
   private SpringInstantiator instantiator;
 

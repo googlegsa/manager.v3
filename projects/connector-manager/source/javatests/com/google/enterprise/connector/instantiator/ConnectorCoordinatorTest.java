@@ -53,7 +53,7 @@ public class ConnectorCoordinatorTest extends TestCase {
   protected void setUp() throws Exception {
     assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
     assertTrue(baseDirectory.mkdirs());
-    typeMap = new TypeMap("classpath*:config/connectorType.xml", TEST_DIR_NAME);
+    typeMap = new TypeMap(TEST_DIR_NAME);
     typeMap.init();
     loadManagerFactory = new MockLoadManagerFactory();
   }
