@@ -45,8 +45,6 @@ import java.util.List;
 public class TraversalSchedulerTest extends TestCase {
 
   private static final String TEST_DIR_NAME = "testdata/tmp/SchedulerTests";
-  private static final String TEST_CONFIG_FILE =
-    "classpath*:config/connectorType.xml";
   private File baseDirectory;
 
   @Override
@@ -114,6 +112,7 @@ public class TraversalSchedulerTest extends TestCase {
   }
 
   private Instantiator createRealInstantiator() {
+    // TODO: We may need to convert this to use Spring.
     ThreadPool threadPool = new ThreadPool(5);
 
     ConnectorCoordinatorMap ccm = new ConnectorCoordinatorMap();
@@ -122,7 +121,7 @@ public class TraversalSchedulerTest extends TestCase {
     ccm.setThreadPool(threadPool);
 
     SpringInstantiator si = new SpringInstantiator();
-    si.setTypeMap(new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
+    si.setTypeMap(new TypeMap(TEST_DIR_NAME));
     si.setThreadPool(threadPool);
     si.setConnectorCoordinatorMap(ccm);
     si.setChangeDetector(new MockChangeDetector());

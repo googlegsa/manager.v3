@@ -24,8 +24,6 @@ import java.io.File;
  */
 public class FileStoreTest extends PersistentStoreTestAbstract {
   private static final String TEST_DIR_NAME = "testdata/tmp/FileStoreTests";
-  private static final String TEST_CONFIG_FILE =
-      "classpath*:config/connectorType.xml";
   private final File baseDirectory  = new File(TEST_DIR_NAME);
   private static final String NAME = "test";
 
@@ -35,7 +33,7 @@ public class FileStoreTest extends PersistentStoreTestAbstract {
   protected void setUp() throws Exception {
     super.setUp();
     assertTrue(baseDirectory.mkdirs());
-    typeMap = new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME);
+    typeMap = new TypeMap(TEST_DIR_NAME);
     typeMap.init();
     FileStore fileStore = new FileStore();
     fileStore.setTypeMap(typeMap);

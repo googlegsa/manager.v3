@@ -50,8 +50,7 @@
        a test directory. -->
   <bean id="TypeMap"
         class="com.google.enterprise.connector.instantiator.TypeMap">
-    <constructor-arg index="0" value="classpath*:config/connectorType.xml"/>
-    <constructor-arg index="1" value="testdata/tmp/InstantiatorTests"/>
+    <constructor-arg index="0" value="testdata/tmp/InstantiatorTests"/>
   </bean>
 
   <bean id="ChangeListener"

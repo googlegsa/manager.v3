@@ -54,8 +54,7 @@ public class TypeMapTest extends TestCase {
    * #getTypeInfo(java.lang.String)}.
    */
   public final void testGetTypeInfo() throws ConnectorTypeNotFoundException {
-    TypeMap typeMap = new TypeMap("classpath*:config/connectorType.xml",
-        TEST_DIR_NAME);
+    TypeMap typeMap = new TypeMap(TEST_DIR_NAME);
     typeMap.init();
     verifyType(typeMap, "TestConnectorA");
     verifyType(typeMap, "TestConnectorB");
