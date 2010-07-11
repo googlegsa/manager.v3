@@ -38,6 +38,8 @@ class ChangeListenerImpl implements ChangeListener {
 
   /* @Override */
   public void connectorAdded(String instanceName, Configuration configuration) {
+    LOGGER.config("Add connector " + instanceName + " of type "
+                  + configuration.getTypeName());
     try {
       ChangeHandler handler = coordinatorMap.getChangeHandler(instanceName);
       TypeInfo type = typeMap.getTypeInfo(configuration.getTypeName());
@@ -53,6 +55,7 @@ class ChangeListenerImpl implements ChangeListener {
 
   /* @Override */
   public void connectorRemoved(String instanceName) {
+    LOGGER.config("Remove connector " + instanceName);
     try {
       coordinatorMap.getChangeHandler(instanceName).connectorRemoved();
     } catch (InstantiatorException e) {
@@ -75,6 +78,8 @@ class ChangeListenerImpl implements ChangeListener {
 
   /* @Override */
   public void connectorScheduleChanged(String instanceName, Schedule schedule) {
+    LOGGER.config("Schedule changed for connector " + instanceName + ": "
+                  + schedule);
     try {
       coordinatorMap.getChangeHandler(instanceName)
           .connectorScheduleChanged(schedule);
@@ -87,6 +92,7 @@ class ChangeListenerImpl implements ChangeListener {
   /* @Override */
   public void connectorConfigurationChanged(String instanceName,
                                             Configuration configuration) {
+    LOGGER.config("Configuration changed for connector " + instanceName);
     try {
       ChangeHandler handler = coordinatorMap.getChangeHandler(instanceName);
       TypeInfo type = typeMap.getTypeInfo(configuration.getTypeName());

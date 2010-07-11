@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.scheduler;
 
 import com.google.enterprise.connector.common.I18NUtil;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.instantiator.ConnectorCoordinatorMap;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
@@ -44,16 +45,14 @@ import java.util.List;
  */
 public class TraversalSchedulerTest extends TestCase {
 
-  private static final String TEST_DIR_NAME = "testdata/tmp/SchedulerTests";
-  private File baseDirectory;
+  private static final String TEST_DIR = "testdata/mocktestdata/";
+  private static final String APPLICATION_CONTEXT = "applicationContext.xml";
+  private static final String TEST_DIR_NAME = TEST_DIR + "connectors";
+  private final File baseDirectory  = new File(TEST_DIR_NAME);
 
   @Override
   protected void setUp() throws Exception {
-    // Make sure that the test directory does not exist
-    baseDirectory = new File(TEST_DIR_NAME);
     assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
-    // Then recreate it empty
-    assertTrue(baseDirectory.mkdirs());
   }
 
   @Override
@@ -112,19 +111,12 @@ public class TraversalSchedulerTest extends TestCase {
   }
 
   private Instantiator createRealInstantiator() {
-    // TODO: We may need to convert this to use Spring.
-    ThreadPool threadPool = new ThreadPool(5);
-
-    ConnectorCoordinatorMap ccm = new ConnectorCoordinatorMap();
-    ccm.setPusherFactory(new MockPusher());
-    ccm.setLoadManagerFactory(new MockLoadManagerFactory());
-    ccm.setThreadPool(threadPool);
-
-    SpringInstantiator si = new SpringInstantiator();
-    si.setTypeMap(new TypeMap(TEST_DIR_NAME));
-    si.setThreadPool(threadPool);
-    si.setConnectorCoordinatorMap(ccm);
-    si.setChangeDetector(new MockChangeDetector());
+    Context.refresh();
+    Context context = Context.getInstance();
+    context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
+        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
+    SpringInstantiator si = (SpringInstantiator) context.getRequiredBean(
+        "Instantiator", SpringInstantiator.class);
     si.init();
 
     // Instantiate a couple of connectors.

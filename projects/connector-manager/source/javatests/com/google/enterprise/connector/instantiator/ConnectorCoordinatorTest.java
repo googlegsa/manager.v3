@@ -16,6 +16,7 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.common.PropertiesUtils;
+import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -42,20 +43,25 @@ import java.util.Map;
  */
 public class ConnectorCoordinatorTest extends TestCase {
   // TODO(strellis): Add tests for batch control operations.
-  private static final String TEST_DIR_NAME = "testdata/tempInstantiatorTests";
-  private final File baseDirectory = new File(TEST_DIR_NAME);
-  private TypeMap typeMap;
-  private LoadManagerFactory loadManagerFactory;
-  private final PusherFactory pusherFactory = null;
-  private final ThreadPool threadPool = null;
+  private static final String TEST_DIR =
+      "testdata/contextTests/instantiatorTests/";
+  private static final String APPLICATION_CONTEXT = "applicationContext.xml";
+
+  private static final String TEST_DIR_NAME = "testdata/tmp/InstantiatorTests";
+  private final File baseDirectory  = new File(TEST_DIR_NAME);
 
   @Override
   protected void setUp() throws Exception {
+    Context.refresh();
+    Context context = Context.getInstance();
+    context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
+        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
+
     assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    // Then recreate it empty
     assertTrue(baseDirectory.mkdirs());
-    typeMap = new TypeMap(TEST_DIR_NAME);
-    typeMap.init();
-    loadManagerFactory = new MockLoadManagerFactory();
+
+    getTypeMap().init();
   }
 
   @Override
@@ -63,10 +69,23 @@ public class ConnectorCoordinatorTest extends TestCase {
     assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
   }
 
+  private ConnectorCoordinatorImpl newCoordinator(String name) {
+    Context context = Context.getInstance();
+    ConnectorCoordinatorMap ccm =
+        (ConnectorCoordinatorMap) context.getRequiredBean(
+        "ConnectorCoordinatorMap", ConnectorCoordinatorMap.class);
+
+    return (ConnectorCoordinatorImpl) ccm.getOrAdd(name);
+  }
+
+  private TypeMap getTypeMap() {
+    Context context = Context.getInstance();
+    return (TypeMap) context.getRequiredBean("TypeMap", TypeMap.class);
+  }
+
   public void testCreateDestroy() throws Exception {
     final String name = "connector1";
-    final ConnectorCoordinatorImpl instance = new ConnectorCoordinatorImpl(
-        name, pusherFactory, loadManagerFactory, threadPool);
+    final ConnectorCoordinatorImpl instance = newCoordinator(name);
     assertFalse(instance.exists());
     /*
      * Test creation of a connector of type TestConnectorA. The type should
@@ -85,8 +104,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     final String typeName = "TestConnectorB";
     final String language = "en";
     final String name = "connector2";
-    final ConnectorCoordinatorImpl instance = new ConnectorCoordinatorImpl(
-        name, pusherFactory, loadManagerFactory, threadPool);
+    final ConnectorCoordinatorImpl instance = newCoordinator(name);
     assertFalse(instance.exists());
     {
       /*
@@ -116,8 +134,7 @@ public class ConnectorCoordinatorTest extends TestCase {
   public void testUpdateType() throws Exception {
     final String language = "en";
     final String name = "connector2";
-    final ConnectorCoordinatorImpl instance = new ConnectorCoordinatorImpl(
-        name, pusherFactory, loadManagerFactory, threadPool);
+    final ConnectorCoordinatorImpl instance = newCoordinator(name);
     assertFalse(instance.exists());
     {
       /*
@@ -154,8 +171,7 @@ public class ConnectorCoordinatorTest extends TestCase {
 
   public void testCreateExising() throws Exception {
     final String name = "connector1";
-    final ConnectorCoordinatorImpl instance = new ConnectorCoordinatorImpl(
-        name, pusherFactory, loadManagerFactory, threadPool);
+    final ConnectorCoordinatorImpl instance = newCoordinator(name);
     assertFalse(instance.exists());
     /*
      * Test creation of a connector of type TestConnectorA. The type should
@@ -179,8 +195,7 @@ public class ConnectorCoordinatorTest extends TestCase {
 
   public void testUpdateMissing() throws Exception {
     final String name = "connector1";
-    final ConnectorCoordinatorImpl instance = new ConnectorCoordinatorImpl(
-        name, pusherFactory, loadManagerFactory, threadPool);
+    final ConnectorCoordinatorImpl instance = newCoordinator(name);
     assertFalse(instance.exists());
     /*
      * Test creation of a connector of type TestConnectorA. The type should
@@ -207,7 +222,7 @@ public class ConnectorCoordinatorTest extends TestCase {
         new JsonObjectAsMap(new JSONObject(jsonConfigString));
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
     ConfigureResponse response = instance.setConnectorConfig(
-        typeMap.getTypeInfo(typeName), config, locale, update);
+        getTypeMap().getTypeInfo(typeName), config, locale, update);
     assertNull(response);
     InstanceInfo instanceInfo = instance.getInstanceInfo();
     File connectorDir = instanceInfo.getConnectorDir();

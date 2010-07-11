@@ -29,6 +29,7 @@ public class ConnectorCoordinatorMap {
   private PusherFactory pusherFactory;
   private LoadManagerFactory loadManagerFactory;
   private ThreadPool threadPool;
+  private ChangeDetector changeDetector;
 
   private final ConcurrentMap<String, ConnectorCoordinator> coordinatorMap;
 
@@ -68,6 +69,25 @@ public class ConnectorCoordinatorMap {
     this.threadPool = threadPool;
   }
 
+  /**
+   * Sets the {@link ChangeDetector} used for invoking the local
+   * {@link ChangeHandler} for connector configuration, schedule, and
+   * checkpoint changes that are initiated by this Manager instance.
+   *
+   * @param changeDetector a {@link ChangeDetector} implementation.
+   */
+  /* It should be noted that there is a circular dependency here.
+   * ConnectorCoordinatorMap -> ChangeDetector -> ChangeListener ->
+   * ConnectorCoordinatorMap.  ConnectorCoordinatorMap supplies the
+   * ChangeDetector to the ConnectorCoordinatorImpl where it is used
+   * to trigger calls to its ChangeHandler methods.
+   * ChangeListenerImpl needs the ConnectorCoordinatorMap to locate
+   * the appropriate ChangeHandler for a named connector.
+   */
+  public void setChangeDetector(ChangeDetector changeDetector) {
+    this.changeDetector = changeDetector;
+  }
+
   public void shutdown() {
     for (ConnectorCoordinator cc : coordinatorMap.values()) {
       cc.shutdown();
@@ -82,8 +102,8 @@ public class ConnectorCoordinatorMap {
     ConnectorCoordinator connectorCoordinator =
         coordinatorMap.get(connectorName);
     if (connectorCoordinator == null) {
-      ConnectorCoordinator ci = new ConnectorCoordinatorImpl(
-          connectorName, pusherFactory, loadManagerFactory, threadPool);
+      ConnectorCoordinator ci = new ConnectorCoordinatorImpl(connectorName,
+          pusherFactory, loadManagerFactory, threadPool, changeDetector);
       ConnectorCoordinator existing =
           coordinatorMap.putIfAbsent(connectorName, ci);
       connectorCoordinator = (existing == null) ? ci : existing;
@@ -95,8 +115,8 @@ public class ConnectorCoordinatorMap {
   // ConnectorCoordinatorMapHelper goes away when the startup uses
   // ChangeDetector.
   public void addFrom(InstanceInfo instanceInfo) {
-    ConnectorCoordinator fromType = new ConnectorCoordinatorImpl(
-        instanceInfo, pusherFactory, loadManagerFactory, threadPool);
+    ConnectorCoordinator fromType = new ConnectorCoordinatorImpl(instanceInfo,
+        pusherFactory, loadManagerFactory, threadPool, changeDetector);
     ConnectorCoordinator current =
         coordinatorMap.putIfAbsent(instanceInfo.getName(), fromType);
     if (current != null) {
