@@ -59,21 +59,21 @@ class ChangeDetectorImpl implements ChangeDetector {
 
   /* @Override */
   public synchronized void detect() {
-    ImmutableMap<StoreContext, ConnectorStamps> persistentInventory =
-        store.getInventory();
-    SortedSet<StoreContext> persistentInstances =
-        new TreeSet<StoreContext>(persistentInventory.keySet());
-
     NDC.push("Change");
     try {
+      ImmutableMap<StoreContext, ConnectorStamps> persistentInventory =
+          store.getInventory();
+      SortedSet<StoreContext> persistentInstances =
+          new TreeSet<StoreContext>(persistentInventory.keySet());
+
       compareInventories(inMemoryInstances.iterator(),
           persistentInstances.iterator(), persistentInventory);
+
+      inMemoryInstances = persistentInstances;
+      inMemoryInventory = persistentInventory;
     } finally {
       NDC.pop();
     }
-
-    inMemoryInstances = persistentInstances;
-    inMemoryInventory = persistentInventory;
   }
 
   /**

@@ -44,6 +44,7 @@
     <property name="pusherFactory" ref="PusherFactory" />
     <property name="loadManagerFactory" ref="LoadManagerFactory"/>
     <property name="threadPool" ref="ThreadPool" />
+    <property name="changeDetector" ref="ChangeDetector"/>
   </bean>
 
   <!-- This is the reason for this XML file: initialize the TypeMap in
@@ -65,10 +66,8 @@
     <constructor-arg index="1" ref="ChangeListener"/>
   </bean>
 
-  <!-- This must not be a singleton, a test creates multiple instances. -->
   <bean id="Instantiator"
-        class="com.google.enterprise.connector.instantiator.SpringInstantiator"
-        singleton="false">
+        class="com.google.enterprise.connector.instantiator.SpringInstantiator">
     <property name="connectorCoordinatorMap" ref="ConnectorCoordinatorMap" />
     <property name="threadPool" ref="ThreadPool" />
     <property name="typeMap" ref="TypeMap" />

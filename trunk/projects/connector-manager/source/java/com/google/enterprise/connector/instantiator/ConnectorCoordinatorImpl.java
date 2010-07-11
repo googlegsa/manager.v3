@@ -68,6 +68,7 @@ class ConnectorCoordinatorImpl implements
   private final String name;
   private final PusherFactory pusherFactory;
   private final ThreadPool threadPool;
+  private final ChangeDetector changeDetector;
 
   /**
    * Context set when an instance is created or configured and cleared when the
@@ -115,14 +116,18 @@ class ConnectorCoordinatorImpl implements
    * @param pusherFactory creates instances of
    *        {@link com.google.enterprise.connector.pusher.Pusher Pusher}
    *        for pushing documents to the GSA.
-   * @param loadManagerFactory the used to create instances of
-   *        {@link LoadManager} for controlling feed rate.
+   * @param loadManagerFactory  creates instances of
+   *        {@link LoadManager} for controlling the feed rate.
    * @param threadPool the {@link ThreadPool} for running traversals.
+   * @param changeDetector used to invoke the ChangeHandlers for changes
+   *        originiting within this Manager instance (or from the Servlets).
    */
   ConnectorCoordinatorImpl(String name, PusherFactory pusherFactory,
-        LoadManagerFactory loadManagerFactory, ThreadPool threadPool) {
+      LoadManagerFactory loadManagerFactory, ThreadPool threadPool,
+      ChangeDetector changeDetector) {
     this.name = name;
     this.threadPool = threadPool;
+    this.changeDetector = changeDetector;
     this.pusherFactory = pusherFactory;
     this.loadManager = loadManagerFactory.newLoadManager(name);
   }
@@ -135,14 +140,17 @@ class ConnectorCoordinatorImpl implements
    * @param pusherFactory creates instances of
    *        {@link com.google.enterprise.connector.pusher.Pusher Pusher}
    *        for pushing documents to the GSA.
-   * @param loadManagerFactory the used to create instances of
-   *        {@link LoadManager} for controlling feed rate.
+   * @param loadManagerFactory  creates instances of
+   *        {@link LoadManager} for controlling the feed rate.
    * @param threadPool the {@link ThreadPool} for running traversals.
+   * @param changeDetector used to invoke the ChangeHandlers for changes
+   *        originiting within this Manager instance (or from the Servlets).
    */
   ConnectorCoordinatorImpl(InstanceInfo instanceInfo,
         PusherFactory pusherFactory, LoadManagerFactory loadManagerFactory,
-        ThreadPool threadPool) {
-    this(instanceInfo.getName(), pusherFactory, loadManagerFactory, threadPool);
+        ThreadPool threadPool, ChangeDetector changeDetector) {
+    this(instanceInfo.getName(), pusherFactory, loadManagerFactory, threadPool,
+         changeDetector);
     this.instanceInfo = instanceInfo;
     this.typeInfo = instanceInfo.getTypeInfo();
     this.loadManager.setLoad(getSchedule().getLoad());
@@ -174,8 +182,8 @@ class ConnectorCoordinatorImpl implements
   /* @Override */
   public synchronized void removeConnector() {
     resetBatch();
-    instanceInfo.removeConnector(); // TODO: PStore Setter
-    connectorRemoved(); // TODO: Replace with call to kick ChangeDetector
+    instanceInfo.removeConnector();
+    changeDetector.detect();
   }
 
   /**
@@ -189,10 +197,9 @@ class ConnectorCoordinatorImpl implements
     try {
       resetBatch();
       if (instanceInfo != null) {
-        // TODO: revisit ConnectorDir.
         File connectorDir = instanceInfo.getConnectorDir();
         shutdownConnector(true);
-        removeConnectorDirectory(name, connectorDir, typeInfo);
+        removeConnectorDirectory(connectorDir);
       }
     } finally {
       instanceInfo = null;
@@ -271,7 +278,8 @@ class ConnectorCoordinatorImpl implements
    */
   /* @Override */
   public void restartConnectorTraversal() throws ConnectorNotFoundException {
-    setConnectorState(null); // TODO: PStore eventual Setter
+    resetBatch();             // Halt any traversal in progress.
+    setConnectorState(null);  // Discard any previous checkpoint.
     // The rest of the work is handled by connectorCheckpointChanged().
   }
 
@@ -301,9 +309,8 @@ class ConnectorCoordinatorImpl implements
   public synchronized void setConnectorSchedule(String connectorSchedule)
       throws ConnectorNotFoundException {
     // Persistently store the new schedule.
-    getInstanceInfo().setConnectorSchedule(connectorSchedule);    // TODO: PStore Setter
-
-    connectorScheduleChanged(new Schedule(connectorSchedule));  // TODO: replace with kick to ChangeDetector.
+    getInstanceInfo().setConnectorSchedule(connectorSchedule);
+    changeDetector.detect();
   }
 
   /**
@@ -316,8 +323,6 @@ class ConnectorCoordinatorImpl implements
   // some other CM, then I get the setSchedule?
   /* @Override */
   public synchronized void connectorScheduleChanged(Schedule schedule) {
-    LOGGER.info("Schedule for connector " + name + " has changed.");
-
     // Refresh the cached Schedule.
     traversalSchedule = schedule;
 
@@ -353,8 +358,8 @@ class ConnectorCoordinatorImpl implements
   /* @Override */
   public synchronized void setConnectorState(String state)
       throws ConnectorNotFoundException {
-    getInstanceInfo().setConnectorState(state);     // TODO: PStore Setter
-    connectorCheckpointChanged(state);  // TODO: replace with ChangeDetector kick.
+    getInstanceInfo().setConnectorState(state);
+    changeDetector.detect();
   }
 
   /**
@@ -370,11 +375,10 @@ class ConnectorCoordinatorImpl implements
 
     // If checkpoint has been nulled, then traverse the repository from scratch.
     if (checkpoint == null) {
-      LOGGER.info("Restarting traversal from beginning for connector " + name);
-
       // Halt any traversal in progress.
       resetBatch();
 
+      LOGGER.info("Restarting traversal from beginning for connector " + name);
       try {
         // If Schedule was 'run-once', re-enable it to run again.  But watch out -
         // empty disabled Schedules could look a bit like a run-once Schedule.
@@ -382,7 +386,7 @@ class ConnectorCoordinatorImpl implements
         if (schedule.isDisabled() && schedule.getRetryDelayMillis() == -1
             && !schedule.getTimeIntervals().isEmpty()) {
           schedule.setDisabled(false);
-          setConnectorSchedule(schedule.toString());  // TODO: PStore eventual setter
+          setConnectorSchedule(schedule.toString());
         } else {
           // Kick off a restart immediately.
           delayTraversal(TraversalDelayPolicy.IMMEDIATE);
@@ -497,7 +501,7 @@ class ConnectorCoordinatorImpl implements
               // traversal schedule.
               traversalDelayEnd = 0;
               schedule.setDisabled(true);
-              setConnectorSchedule(schedule.toString());  // TODO: PStore eventual Setter
+              setConnectorSchedule(schedule.toString());
               LOGGER.info("Traversal complete. Automatically pausing "
                   + "traversal for connector " + name);
             }
@@ -741,11 +745,11 @@ class ConnectorCoordinatorImpl implements
       ConfigureResponse result =
           resetConfig(connectorDir, newTypeInfo, configuration, locale);
       if (result != null && result.getMessage() != null) {
-        removeConnectorDirectory(name, connectorDir, newTypeInfo);
+        removeConnectorDirectory(connectorDir);
       }
       return result;
     } catch (InstantiatorException ie) {
-      removeConnectorDirectory(name, connectorDir, newTypeInfo);
+      removeConnectorDirectory(connectorDir);
       throw (ie);
     }
   }
@@ -757,11 +761,18 @@ class ConnectorCoordinatorImpl implements
       throw new IllegalStateException(
           "Create new connector when one already exists.");
     }
-    File connectorDir = makeConnectorDirectory(name, newTypeInfo);
+    File connectorDir = new File(newTypeInfo.getConnectorTypeDir(), name);
+    boolean didMakeConnectorDir = false;
+    if (!connectorDir.exists()) {
+      connectorDir = makeConnectorDirectory(name, newTypeInfo);
+      didMakeConnectorDir = true;
+    }
     try {
       connectorConfigurationChanged(newTypeInfo, configuration);
     } catch (InstantiatorException ie) {
-      removeConnectorDirectory(name, connectorDir, newTypeInfo);
+      if (didMakeConnectorDir) {
+        removeConnectorDirectory(connectorDir);
+      }
       throw (ie);
     }
   }
@@ -816,9 +827,8 @@ class ConnectorCoordinatorImpl implements
 
     // Only after validateConfig and instantiation succeeds do we
     // save the new configuration to persistent store.
-    newInstanceInfo.setConnectorConfiguration(newConfiguration);  // TODO: PStore Setter
-
-    connectorConfigurationChanged(newTypeInfo, newConfiguration);  // TODO: Replace with kick ChangeDetector
+    newInstanceInfo.setConnectorConfiguration(newConfiguration);
+    changeDetector.detect();
 
     return null;
   }
@@ -834,8 +844,6 @@ class ConnectorCoordinatorImpl implements
   /* @Override */
   public void connectorConfigurationChanged(TypeInfo newTypeInfo,
       Configuration config) throws InstantiatorException {
-    LOGGER.info("Configuration for connector " + name + " has changed.");
-
     // We have an apparently valid configuration. Create a connector instance
     // with that configuration.
     String connectorWorkDir =
@@ -885,7 +893,7 @@ class ConnectorCoordinatorImpl implements
     return null;
   }
 
-  private static File makeConnectorDirectory(String name, TypeInfo typeInfo)  // TODO: PStore ConnectorDir
+  private static File makeConnectorDirectory(String name, TypeInfo typeInfo)
       throws InstantiatorException {
     File connectorDir = new File(typeInfo.getConnectorTypeDir(), name);
     if (connectorDir.exists()) {
@@ -915,8 +923,7 @@ class ConnectorCoordinatorImpl implements
   // TODO: Issue 87: Should we force the removal of files created by the
   // Connector implementation? ConnectorShutdownAware.delete() gives the
   // Connector an opportunity to delete these files in a cleaner fashion.
-  private static void removeConnectorDirectory(String name, File connectorDir,    // TODO: PStore ConnectorDir
-      TypeInfo typeInfo) {
+  private static void removeConnectorDirectory(File connectorDir) {
     if (connectorDir.exists()) {
       if (!connectorDir.delete()) {
         LOGGER.warning("Failed to delete connector directory "

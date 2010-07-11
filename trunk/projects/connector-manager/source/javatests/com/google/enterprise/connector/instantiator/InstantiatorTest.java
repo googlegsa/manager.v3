@@ -58,11 +58,6 @@ public class InstantiatorTest extends TestCase {
 
   @Override
   protected void setUp() throws Exception {
-    Context.refresh();
-    Context context = Context.getInstance();
-    context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
-        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
-
     assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
     // Then recreate it empty
     assertTrue(baseDirectory.mkdirs());
@@ -71,19 +66,21 @@ public class InstantiatorTest extends TestCase {
     assertEquals(0, connectorCount());
   }
 
-  private SpringInstantiator createInstantiator() {
-    Context context = Context.getInstance();
-    SpringInstantiator si = (SpringInstantiator) context.getRequiredBean(
-        "Instantiator", SpringInstantiator.class);
-    si.init();
-    return si;
-  }
-
   @Override
   protected void tearDown() throws Exception {
     assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
   }
 
+  private SpringInstantiator createInstantiator() {
+    Context.refresh();
+    Context context = Context.getInstance();
+    context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
+        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
+    SpringInstantiator si = (SpringInstantiator) context.getRequiredBean(
+        "Instantiator", SpringInstantiator.class);
+    si.init();
+    return si;
+  }
 
   /**
    * Test method for adding, updating, deleting connectors.

@@ -263,6 +263,7 @@
     <property name="pusherFactory" ref="PusherFactory" />
     <property name="loadManagerFactory" ref="LoadManagerFactory"/>
     <property name="threadPool" ref="ThreadPool" />
+    <property name="changeDetector" ref="ChangeDetector"/>
   </bean>
 
   <bean id="TypeMap"

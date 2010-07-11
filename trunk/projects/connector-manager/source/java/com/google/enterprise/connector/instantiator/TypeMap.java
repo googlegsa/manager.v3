@@ -42,24 +42,38 @@ public class TypeMap {
   private static final Logger LOGGER =
       Logger.getLogger(TypeMap.class.getName());
 
+  private final String connectorTypePattern;
   private final String baseDirPath;
   private final Map<String, TypeInfo> innerMap =
       new TreeMap<String, TypeInfo>();
 
   /**
-   * Constructs an empty type map with the default base directory path.
+   * Constructs an empty type map with the default connector type
+   * pattern and base directory path.
    */
   public TypeMap() {
-    this(null);
+    this(CONNECTOR_TYPE_PATTERN, null);
   }
 
   /**
-   * Constructs an empty type map.
+   * Constructs an empty type map default connector type pattern.
    *
    * @param baseDirPath used instead of {@code connectors} directory
    */
   @VisibleForTesting
   public TypeMap(String baseDirPath) {
+    this(CONNECTOR_TYPE_PATTERN, baseDirPath);
+  }
+
+  /**
+   * Constructs an empty type map.
+   *
+   * @param connectorTypePattern used instead of normal default
+   * @param baseDirPath used instead of {@code connectors} directory
+   */
+  @VisibleForTesting
+  public TypeMap(String connectorTypePattern, String baseDirPath) {
+    this.connectorTypePattern = connectorTypePattern;
     this.baseDirPath = baseDirPath;
   }
 
@@ -81,10 +95,10 @@ public class TypeMap {
 
     Resource[] resourceArray;
     try {
-      resourceArray = ac.getResources(CONNECTOR_TYPE_PATTERN);
+      resourceArray = ac.getResources(connectorTypePattern);
     } catch (IOException e) {
       LOGGER.log(Level.WARNING, "IOException from Spring while getting "
-          + CONNECTOR_TYPE_PATTERN
+          + connectorTypePattern
           + " resources.  No connector types can be found", e);
       return;
     }

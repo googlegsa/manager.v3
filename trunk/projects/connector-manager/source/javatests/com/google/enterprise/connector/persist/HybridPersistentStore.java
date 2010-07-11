@@ -19,6 +19,7 @@ import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
 
 import java.util.Map;
+import java.util.HashSet;
 
 public class HybridPersistentStore implements PersistentStore {
  private final PersistentStore configurationStore;
@@ -32,21 +33,45 @@ public class HybridPersistentStore implements PersistentStore {
    this.stateStore = stateStore;
  }
 
-  private void addAll(
-      ImmutableMap.Builder<StoreContext, ConnectorStamps> builder,
-      Map<StoreContext, ConnectorStamps> inventory) {
-    for (StoreContext context : inventory.keySet()) {
-      builder.put(context, inventory.get(context));
-    }
-  }
-
   /* @Override */
   public ImmutableMap<StoreContext, ConnectorStamps> getInventory() {
+    ImmutableMap<StoreContext, ConnectorStamps> scheduleInventory =
+        scheduleStore.getInventory();
+    ImmutableMap<StoreContext, ConnectorStamps> stateInventory =
+        stateStore.getInventory();
+    ImmutableMap<StoreContext, ConnectorStamps> configurationInventory =
+        configurationStore.getInventory();
+
+    // TODO: This won't work for JdbcStore, as its StoreContext is
+    // missing connectorDir.  This will correct itself when StoreContext
+    // is changed to use ConnectorTypeName, rather than connectorDir.
+    HashSet<StoreContext> contexts = new HashSet<StoreContext>();
+    contexts.addAll(scheduleInventory.keySet());
+    contexts.addAll(stateInventory.keySet());
+    contexts.addAll(configurationInventory.keySet());
+
     ImmutableMap.Builder<StoreContext, ConnectorStamps> builder =
         ImmutableMap.builder();
-    addAll(builder, configurationStore.getInventory());
-    addAll(builder, scheduleStore.getInventory());
-    addAll(builder, stateStore.getInventory());
+
+    for (StoreContext context : contexts) {
+      Stamp configurationStamp = null;
+      Stamp checkpointStamp = null;
+      Stamp scheduleStamp = null;
+      ConnectorStamps stamps = configurationInventory.get(context);
+      if (stamps != null) {
+        configurationStamp = stamps.getConfigurationStamp();
+      }
+      stamps = scheduleInventory.get(context);
+      if (stamps != null) {
+        scheduleStamp = stamps.getScheduleStamp();
+      }
+      stamps = stateInventory.get(context);
+      if (stamps != null) {
+        checkpointStamp = stamps.getCheckpointStamp();
+      }
+      builder.put(context, new ConnectorStamps(
+          checkpointStamp, configurationStamp, scheduleStamp));
+    }
     return builder.build();
   }
 
