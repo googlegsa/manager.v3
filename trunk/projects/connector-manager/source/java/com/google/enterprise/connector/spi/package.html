@@ -3,7 +3,7 @@
 <head>
 <!--
 
-  Copyright (C) 2006 Google Inc.
+  Copyright 2006 Google Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -23,27 +23,6 @@
 
 <p>Defines the SPI for connector developers who wish to write
 plug-ins to the Google Search Appliance.</p>
-<p>All connectors written to this interface should be housed in an
-instance of the Connector Manager. The Connector Manager is java
-software intended to run in a servlet container such as Tomcat. An
-instance of the Connector Manager will be present (as of a future
-version number as yet undecided) by default on-board all Search
-Appliances-we call this the "internal" Connector Manager. In addition,
-the Google Search Appliance (as of that same version) will have the
-ability to interact with one or more Connector Managers installed
-outside the box-"external" connector managers.</p>
-<p>In principle, any connector that correctly implements this
-interface could be run in either an internal or external Connector
-Manager. However, Google has no present plan to permit 3rd-parties to
-upload connectors to an internal Connector Manager. Only connectors
-written and fully supported by Google can be run on-board. Thus,
-third-party developers should assume that their connectors will run in
-an external connector manager.</p>
-<p>The Connector Manager is an open-source project sponsored by
-Google. The project is hosted at <a
-	href="http://code.google.com/p/google-enterprise-connector-manager/">
-http://code.google.com/p/google-enterprise-connector-manager/</a>. See that
-web-site for further documentation and information.</p>
 
 <h2>Package Specification</h2>
 
@@ -51,7 +30,8 @@ web-site for further documentation and information.</p>
 	href="http://www.springframework.org/">Spring Framework</a> to
 instantiate two important interfaces of this package: {@link
 com.google.enterprise.connector.spi.ConnectorType} and
-{@link com.google.enterprise.connector.spi.Connector}. The implementor of this SPI must
+{@link com.google.enterprise.connector.spi.Connector}. 
+The implementor of this SPI must
 provide two Spring xml configuration files to notify the Connector
 Manager of the existence of their implementation and to describe how to
 instantiate their implementation. These two files must have these names:</p>
@@ -122,12 +102,6 @@ your Connector implementation, using the two properties files.</p>
 	<li><a
 		href="http://static.springframework.org/spring/docs/2.5.x/reference/index.html">Spring
 	Reference Manual, v2.5.6</a>
-</ul><h2>Related Documentation</h2>
-<p>For overviews, tutorials, examples, guides, and tool documentation,
-please see:</p><ul>
-	<li><a
-		href="http://code.google.com/p/google-enterprise-connector-manager/">
-	The Connector Manager Code Site</a>
 </ul>
 </body>
 </html>

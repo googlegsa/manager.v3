@@ -198,7 +198,6 @@ public interface Instantiator {
    * Starts running a batch for a named connector if a batch is not
    * already running.
    *
-   * @return {@code true} if this call started a batch
    * @throws ConnectorNotFoundException if the named connector is not found
    */
   public void startBatch(String connectorName)

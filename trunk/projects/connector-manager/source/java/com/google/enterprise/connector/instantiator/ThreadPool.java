@@ -157,7 +157,7 @@ public class ThreadPool {
   }
 
   /**
-   * Submit a {@Link Cancelable} for execution and return a
+   * Submit a {@link TimedCancelable} for execution and return a
    * {@link TaskHandle} for the running task or null if the task has not been
    * accepted. After {@link ThreadPool#shutdown(boolean, long)} returns this
    * will always return null.
