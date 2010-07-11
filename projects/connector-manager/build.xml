@@ -63,11 +63,14 @@
     <javadoc access="public" author="false" destdir="doc/javadoc/${version}"
              doctitle="Google Search Appliance Connector SPI"
              nodeprecated="false" nodeprecatedlist="true" noindex="false"
-             nonavbar="false" notree="false" source="${jvm.version}" sourcepath="${src}"
+             nonavbar="false" notree="false" source="${jvm.version}"
+             sourcepath="${src}" overview="${src}/overview.html"
              splitindex="true" use="true" version="true">
-      <fileset dir="${src}/com/google/enterprise/connector/spi">
-        <include name="*.java" />
-      </fileset>
+      <classpath>
+        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+      </classpath>
+      <package name="com.google.enterprise.connector.spi"/>
+      <package name="com.google.enterprise.connector.util"/>
     </javadoc>
   </target>
 
@@ -149,7 +152,7 @@
           description="Create production jars for the Connector SPI project">
     <tstamp />
     <jar jarfile="${spi.jarfile}">
-      <fileset dir="${classes}" includes="**/spi/**" excludes="**/javatests/**" />
+      <fileset dir="${classes}" includes="**/spi/**, **/util/**" excludes="**/javatests/**" />
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager SPI"/>
         <attribute name="Implementation-Version"
@@ -193,7 +196,7 @@
       </path>
     </pathconvert>
     <jar jarfile="${connector.jarfile}">
-      <fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**, **/logging/**"/>
+      <fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**, **/util/**, **/logging/**"/>
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager Impl"/>
         <attribute name="Implementation-Version"
