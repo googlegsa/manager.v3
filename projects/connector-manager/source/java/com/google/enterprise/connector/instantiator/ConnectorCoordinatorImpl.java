@@ -133,30 +133,6 @@ class ConnectorCoordinatorImpl implements
   }
 
   /**
-   * Constructs a ConnectorCoordinator for the named {@link Connector}
-   * that wraps an existing Connector instance.
-   *
-   * @param instanceInfo A Connector instance.
-   * @param pusherFactory creates instances of
-   *        {@link com.google.enterprise.connector.pusher.Pusher Pusher}
-   *        for pushing documents to the GSA.
-   * @param loadManagerFactory  creates instances of
-   *        {@link LoadManager} for controlling the feed rate.
-   * @param threadPool the {@link ThreadPool} for running traversals.
-   * @param changeDetector used to invoke the ChangeHandlers for changes
-   *        originiting within this Manager instance (or from the Servlets).
-   */
-  ConnectorCoordinatorImpl(InstanceInfo instanceInfo,
-        PusherFactory pusherFactory, LoadManagerFactory loadManagerFactory,
-        ThreadPool threadPool, ChangeDetector changeDetector) {
-    this(instanceInfo.getName(), pusherFactory, loadManagerFactory, threadPool,
-         changeDetector);
-    this.instanceInfo = instanceInfo;
-    this.typeInfo = instanceInfo.getTypeInfo();
-    this.loadManager.setLoad(getSchedule().getLoad());
-  }
-
-  /**
    * Returns the name of this {@link Connector}.
    *
    * @return The name of this Connector.
