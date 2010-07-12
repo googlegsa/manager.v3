@@ -111,20 +111,6 @@ public class ConnectorCoordinatorMap {
     return connectorCoordinator;
   }
 
-  // TODO: This is a temporary method, until
-  // ConnectorCoordinatorMapHelper goes away when the startup uses
-  // ChangeDetector.
-  public void addFrom(InstanceInfo instanceInfo) {
-    ConnectorCoordinator fromType = new ConnectorCoordinatorImpl(instanceInfo,
-        pusherFactory, loadManagerFactory, threadPool, changeDetector);
-    ConnectorCoordinator current =
-        coordinatorMap.putIfAbsent(instanceInfo.getName(), fromType);
-    if (current != null) {
-      throw new IllegalStateException(
-          "Connector instance modified during initialization");
-    }
-  }
-
   public ConnectorCoordinator get(String connectorName) {
     return coordinatorMap.get(connectorName);
   }
