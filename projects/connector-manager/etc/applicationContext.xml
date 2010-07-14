@@ -57,6 +57,14 @@
         <!-- This enables content Traversal and Feeding. -->
         <prop key="traversal.enabled">true</prop>
 
+        <!-- How often to look for configuration changes (in seconds).
+             Values <= 0 imply never.  For stand-alone deployments,
+             never or long intervals are probably sufficient.  For
+             clustered deployments with a shared configuration store,
+             60 - 300 seconds is probably sufficient.
+        -->
+        <prop key="config.change.detect.interval">0</prop>
+
         <!-- JDBC DataSource configuration. -->
         <prop key="jdbc.datasource.url">jdbc:h2:${catalina.base}/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager</prop>
         <prop key="jdbc.datasource.user">sa</prop>
@@ -281,12 +289,19 @@
     <constructor-arg index="1" ref="ChangeListener"/>
   </bean>
 
+  <bean id="ChangeDetectorTask"
+        class="com.google.enterprise.connector.instantiator.ChangeDetectorTask">
+    <constructor-arg index="0" ref="ChangeDetector"/>
+    <constructor-arg index="1" value="0"/>
+    <constructor-arg index="2" value="${config.change.detect.interval}"/>
+  </bean>
+
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.SpringInstantiator">
     <property name="connectorCoordinatorMap" ref="ConnectorCoordinatorMap" />
     <property name="threadPool" ref="ThreadPool" />
     <property name="typeMap" ref="TypeMap" />
-    <property name="changeDetector" ref="ChangeDetector"/>
+    <property name="changeDetectorTask" ref="ChangeDetectorTask" />
   </bean>
 
   <bean id="Manager"

@@ -68,12 +68,19 @@
     <constructor-arg index="1" ref="ChangeListener"/>
   </bean>
 
+  <bean id="ChangeDetectorTask"
+        class="com.google.enterprise.connector.instantiator.ChangeDetectorTask">
+    <constructor-arg index="0" ref="ChangeDetector"/>
+    <constructor-arg index="1" value="0"/>
+    <constructor-arg index="2" value="0"/>
+  </bean>
+
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.SpringInstantiator">
     <property name="connectorCoordinatorMap" ref="ConnectorCoordinatorMap" />
     <property name="threadPool" ref="ThreadPool" />
     <property name="typeMap" ref="TypeMap" />
-    <property name="changeDetector" ref="ChangeDetector"/>
+    <property name="changeDetectorTask" ref="ChangeDetectorTask" />
   </bean>
 
   <bean id="ThreadPool"
