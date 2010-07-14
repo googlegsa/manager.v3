@@ -265,30 +265,28 @@ final class InstanceInfo {
   }
 
   /**
-   * Sets the schedule for this connector instance.
+   * Sets the {@link Schedule} for this connector instance.
    * Writes the modified schedule through to the persistent store.
    *
-   * @param connectorSchedule String to store or null unset any existing
+   * @param connectorSchedule Schedule to store or null unset any existing
    * schedule.
    */
-  public void setConnectorSchedule(String connectorSchedule) {
+  public void setConnectorSchedule(Schedule connectorSchedule) {
     if (connectorSchedule == null) {
       store.removeConnectorSchedule(storeContext);
     } else {
-      store.storeConnectorSchedule(storeContext,
-          new Schedule(connectorSchedule));
+      store.storeConnectorSchedule(storeContext, connectorSchedule);
     }
   }
 
   /**
    * Gets the schedule for this connector instance.
    *
-   * @return the schedule String, or null to erase any previously set schedule.
+   * @return the Schedule, or null if there is no schedule.
    * for this connector
    */
-  public String getConnectorSchedule() {
-    Schedule schedule = store.getConnectorSchedule(storeContext);
-    return (schedule == null) ? null : schedule.toString();
+  public Schedule getConnectorSchedule() {
+    return store.getConnectorSchedule(storeContext);
   }
 
   /**

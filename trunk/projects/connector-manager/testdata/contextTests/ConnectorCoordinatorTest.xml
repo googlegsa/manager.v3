@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+  <bean id="PusherFactory"
+        class="com.google.enterprise.connector.pusher.MockPusher">
+  </bean>
+
+  <bean id="LoadManagerFactory"
+        class="com.google.enterprise.connector.scheduler.MockLoadManagerFactory">
+  </bean>
+
+  <bean id="PersistentStore"
+        class="com.google.enterprise.connector.persist.MockPersistentStore">
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.instantiator.InstanceInfo.setPersistentStore"/>
+    <property name="arguments">
+      <list>
+        <ref bean="PersistentStore"/>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="ConnectorCoordinatorMap"
+        class="com.google.enterprise.connector.instantiator.ConnectorCoordinatorMap">
+    <property name="pusherFactory" ref="PusherFactory" />
+    <property name="loadManagerFactory" ref="LoadManagerFactory"/>
+    <property name="threadPool" ref="ThreadPool" />
+    <property name="changeDetector" ref="ChangeDetector"/>
+  </bean>
+
+  <bean id="TypeMap"
+        class="com.google.enterprise.connector.instantiator.TypeMap">
+  </bean>
+
+  <bean id="ChangeListener"
+        class="com.google.enterprise.connector.instantiator.ChangeListenerImpl">
+    <constructor-arg index="0" ref="TypeMap"/>
+    <constructor-arg index="1" ref="ConnectorCoordinatorMap"/>
+  </bean>
+
+  <bean id="ChangeDetector"
+        class="com.google.enterprise.connector.instantiator.ChangeDetectorImpl">
+    <constructor-arg index="0" ref="PersistentStore"/>
+    <constructor-arg index="1" ref="ChangeListener"/>
+  </bean>
+
+  <bean id="ChangeDetectorTask"
+        class="com.google.enterprise.connector.instantiator.ChangeDetectorTask">
+    <constructor-arg index="0" ref="ChangeDetector"/>
+    <constructor-arg index="1" value="0"/>
+    <constructor-arg index="2" value="0"/>
+  </bean>
+
+  <bean id="Instantiator"
+        class="com.google.enterprise.connector.instantiator.SpringInstantiator">
+    <property name="connectorCoordinatorMap" ref="ConnectorCoordinatorMap" />
+    <property name="threadPool" ref="ThreadPool" />
+    <property name="typeMap" ref="TypeMap" />
+    <property name="changeDetectorTask" ref="ChangeDetectorTask" />
+  </bean>
+
+  <bean id="ThreadPool"
+        class="com.google.enterprise.connector.instantiator.ThreadPool">
+    <constructor-arg index="0" type="int" value="5"/>
+  </bean>
+</beans>

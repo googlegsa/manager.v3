@@ -65,8 +65,9 @@ class ChangeListenerImpl implements ChangeListener {
   }
 
   /* @Override */
-  public void connectorCheckpointChanged(String instanceName, String checkpoint)
-  {
+  public void connectorCheckpointChanged(String instanceName,
+      String checkpoint) {
+    LOGGER.finest("Checkpoint changed for connector " + instanceName);
     try {
       coordinatorMap.getChangeHandler(instanceName)
           .connectorCheckpointChanged(checkpoint);
