@@ -102,8 +102,8 @@ public class FileStoreTest extends PersistentStoreTestAbstract {
       store.getConnectorSchedule(storeContext);
       fail("failed to throw exception");
     } catch (IllegalArgumentException e) {
-      assertEquals("StoreContext.connectorDir directory must exist.",
-                   e.getMessage());
+      assertTrue(e.getMessage().startsWith(
+          "StoreContext.connectorDir directory must exist"));
     }
   }
 
@@ -116,8 +116,8 @@ public class FileStoreTest extends PersistentStoreTestAbstract {
       store.getConnectorState(storeContext);
       fail("failed to throw exception");
     } catch (IllegalArgumentException e) {
-      assertEquals("StoreContext.connectorDir directory must exist.",
-                   e.getMessage());
+      assertTrue(e.getMessage().startsWith(
+          "StoreContext.connectorDir directory must exist"));
     }
   }
 
@@ -130,8 +130,8 @@ public class FileStoreTest extends PersistentStoreTestAbstract {
       store.getConnectorConfiguration(storeContext);
       fail("failed to throw exception");
     } catch (IllegalArgumentException e) {
-      assertEquals("StoreContext.connectorDir directory must exist.",
-                   e.getMessage());
+      assertTrue(e.getMessage().startsWith(
+          "StoreContext.connectorDir directory must exist"));
     }
   }
 

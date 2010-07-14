@@ -332,7 +332,7 @@ public class FileStore implements PersistentStore {
         "StoreContext.connectorDir may not be null.");
     Preconditions.checkArgument(
         (connectorDir.exists() && connectorDir.isDirectory()),
-        "StoreContext.connectorDir directory must exist.");
+        "StoreContext.connectorDir directory must exist: " + connectorDir);
   }
 
   /**

@@ -28,6 +28,7 @@ import com.google.enterprise.connector.scheduler.MockLoadManagerFactory;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
+import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 
 import junit.framework.TestCase;
 
@@ -35,6 +36,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.util.Locale;
 import java.util.Map;
 
@@ -43,12 +47,9 @@ import java.util.Map;
  */
 public class ConnectorCoordinatorTest extends TestCase {
   // TODO(strellis): Add tests for batch control operations.
-  private static final String TEST_DIR =
-      "testdata/contextTests/instantiatorTests/";
-  private static final String APPLICATION_CONTEXT = "applicationContext.xml";
-
-  private static final String TEST_DIR_NAME = "testdata/tmp/InstantiatorTests";
-  private final File baseDirectory  = new File(TEST_DIR_NAME);
+  private static final String TEST_DIR = "testdata/contextTests/";
+  private static final String APPLICATION_CONTEXT =
+      "ConnectorCoordinatorTest.xml";
 
   @Override
   protected void setUp() throws Exception {
@@ -57,16 +58,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
         Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
 
-    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
-    // Then recreate it empty
-    assertTrue(baseDirectory.mkdirs());
-
     getTypeMap().init();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
   }
 
   private ConnectorCoordinatorImpl newCoordinator(String name) {
@@ -214,6 +206,171 @@ public class ConnectorCoordinatorTest extends TestCase {
     }
   }
 
+  public void testThreadDeadlock() throws Exception {
+    final String jsonConfigString =
+        "{Username:foo, Password:bar, Color:red, "
+        + "RepositoryFile:MockRepositoryEventLog3.txt}";
+    final ConnectorCoordinatorImpl instance1 =
+        createConnector("TestConnectorA", "connector1", jsonConfigString);
+    final ConnectorCoordinatorImpl instance2 =
+        createConnector("TestConnectorA", "connector2", jsonConfigString);
+
+    checkThreadDeadlock(new ConfigUpdater(instance1, 50),
+                        new ConfigUpdater(instance2, 50));
+    checkThreadDeadlock(new ScheduleUpdater(instance1, 100),
+                        new ScheduleUpdater(instance2, 100));
+    checkThreadDeadlock(new CheckpointUpdater(instance1, 100),
+                        new CheckpointUpdater(instance2, 100));
+    checkThreadDeadlock(new RestartUpdater(instance1, 100),
+                        new RestartUpdater(instance2, 100));
+    checkThreadDeadlock(new RunOnceUpdater(instance1, 100),
+                        new RunOnceUpdater(instance2, 100));
+    checkThreadDeadlock(new RestartUpdater(instance1, 100),
+                        new RunOnceUpdater(instance1, 100));
+  }
+
+  private void checkThreadDeadlock(Updater updater1, Updater updater2)
+      throws Exception {
+    // Start two threads that repeatedly update the connector instances.
+    Thread thread1 = new Thread(updater1, "Updater1");
+    Thread thread2 = new Thread(updater2, "Updater2");
+    thread1.start();
+    thread2.start();
+
+    // Check for thread deadlock and exit if it occurs.
+    // TODO: Can we clean up the deadlocked threads?
+    ThreadMXBean tmx = ManagementFactory.getThreadMXBean();
+    while (thread1.isAlive() && thread2.isAlive()) {
+      try { Thread.sleep(500); } catch (InterruptedException e) {}
+      long[] ids = tmx.findDeadlockedThreads();
+      if (ids != null) {
+        ThreadInfo[] infos = tmx.getThreadInfo(ids, true, true);
+        // TODO: Use logging instead?
+        System.out.println("The following threads are deadlocked:");
+        for (ThreadInfo ti : infos) {
+          System.out.println(ti);
+        }
+        throw new RuntimeException("Deadlock");
+      }
+    }
+
+    if (updater1.getException() != null)
+      throw updater1.getException();
+    if (updater2.getException() != null)
+      throw updater2.getException();
+  }
+
+  private abstract class Updater implements Runnable {
+    ConnectorCoordinatorImpl coordinator;
+    private int iterations;
+    private Exception exception;
+
+    public Updater(ConnectorCoordinatorImpl coordinator, int iterations) {
+      this.coordinator = coordinator;
+      this.iterations = iterations;
+    }
+
+    abstract void update() throws Exception;
+
+    public void run() {
+      try {
+        for (int i = 0; i < iterations; i++) {
+          update();
+        }
+      } catch (Exception e) {
+        e.printStackTrace(System.out);
+        exception = e;
+      }
+    }
+
+    public Exception getException() {
+      return exception;
+    }
+  }
+
+  private class ConfigUpdater extends Updater {
+    private static final String JSON_CONFIG =
+        "{Username:foo, Password:bar, Color:blue, "
+        + "RepositoryFile:MockRepositoryEventLog2.txt}";
+    private final Map<String, String> config;
+    private final TypeInfo typeInfo;
+
+    public ConfigUpdater(ConnectorCoordinatorImpl coordinator, int iterations)
+        throws Exception {
+      super(coordinator, iterations);
+      config = new JsonObjectAsMap(new JSONObject(JSON_CONFIG));
+      typeInfo = getTypeMap().getTypeInfo(coordinator.getConnectorTypeName());
+    }
+
+    void update() throws Exception {
+      coordinator.setConnectorConfig(typeInfo, config, Locale.ENGLISH, true);
+    }
+  }
+
+  private class ScheduleUpdater extends Updater {
+    private final String schedule;
+
+    public ScheduleUpdater(ConnectorCoordinatorImpl coordinator,
+                           int iterations) {
+      super(coordinator, iterations);
+      schedule = coordinator.getConnectorName() + ":0:-1:0-0";
+    }
+
+    void update() throws Exception {
+      coordinator.setConnectorSchedule(schedule);
+    }
+  }
+
+  private class CheckpointUpdater extends Updater {
+    public CheckpointUpdater(ConnectorCoordinatorImpl coordinator,
+                             int iterations) {
+      super(coordinator, iterations);
+    }
+
+    void update() throws Exception {
+      coordinator.setConnectorState("checkpoint");
+    }
+  }
+
+  private class RestartUpdater extends Updater {
+    public RestartUpdater(ConnectorCoordinatorImpl coordinator,
+                          int iterations) {
+      super(coordinator, iterations);
+    }
+
+    void update() throws Exception {
+      coordinator.restartConnectorTraversal();
+    }
+  }
+
+  private class RunOnceUpdater extends Updater {
+    private final String schedule;
+
+    public RunOnceUpdater(ConnectorCoordinatorImpl coordinator,
+                          int iterations) {
+      super(coordinator, iterations);
+      schedule = coordinator.getConnectorName() + ":0:-1:0-0";
+    }
+
+    void update() throws Exception {
+      coordinator.setConnectorSchedule(schedule);
+      coordinator.delayTraversal(TraversalDelayPolicy.POLL);
+    }
+  }
+
+  private ConnectorCoordinatorImpl createConnector(String typeName,
+      String name, String jsonConfigString)
+      throws JSONException, InstantiatorException, ConnectorNotFoundException,
+      ConnectorExistsException, ConnectorTypeNotFoundException {
+    final String language = "en";
+    final ConnectorCoordinatorImpl instance = newCoordinator(name);
+    assertFalse(instance.exists());
+
+    updateConnectorTest(instance, typeName, language, false,
+          jsonConfigString);
+    return instance;
+  }
+
   private void updateConnectorTest(ConnectorCoordinatorImpl instance,
       String typeName, String language, boolean update, String jsonConfigString)
       throws JSONException, InstantiatorException, ConnectorNotFoundException,
@@ -223,7 +380,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
     ConfigureResponse response = instance.setConnectorConfig(
         getTypeMap().getTypeInfo(typeName), config, locale, update);
-    assertNull(response);
+    assertNull((response == null) ? null : response.getMessage(), response);
     InstanceInfo instanceInfo = instance.getInstanceInfo();
     File connectorDir = instanceInfo.getConnectorDir();
     assertTrue(connectorDir.exists());

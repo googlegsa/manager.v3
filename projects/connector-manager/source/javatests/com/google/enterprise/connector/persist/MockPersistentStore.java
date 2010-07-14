@@ -82,23 +82,24 @@ public class MockPersistentStore implements PersistentStore {
   public MockPersistentStore() {
   }
 
+  /* @GuardedBy(getInventory) */
   private Stamp getStamp(StoreContext context, String property) {
     StoreEntry entry = storeMap.get(new StoreKey(context, property));
     return (entry == null) ? null : entry.stamp;
   }
 
-  private Object getObject(StoreContext context, String property) {
+  private synchronized Object getObject(StoreContext context, String property) {
     StoreEntry entry = storeMap.get(new StoreKey(context, property));
     return (entry == null) ? null : entry.object;
   }
 
-  private Object storeObject(StoreContext context, String property,
+  private synchronized Object storeObject(StoreContext context, String property,
       Object object) {
     return storeMap.put(new StoreKey(context, property),
         new StoreEntry(object, new MockStamp(stampValue++)));
   }
 
-  private void removeObject(StoreContext context, String property) {
+  private synchronized void removeObject(StoreContext context, String property) {
     storeMap.remove(new StoreKey(context, property));
   }
 
@@ -108,12 +109,14 @@ public class MockPersistentStore implements PersistentStore {
     ImmutableMap.Builder<StoreContext, ConnectorStamps> builder =
         ImmutableMap.builder();
     Set<StoreContext> instances = new HashSet<StoreContext>();
-    for (StoreKey key : storeMap.keySet()) {
-      instances.add(key.context);
-    }
-    for (StoreContext context : instances) {
-      builder.put(context, new ConnectorStamps(getStamp(context, CHECKPOINT),
-              getStamp(context, CONFIGURATION), getStamp(context, SCHEDULE)));
+    synchronized(this) {
+      for (StoreKey key : storeMap.keySet()) {
+        instances.add(key.context);
+      }
+      for (StoreContext context : instances) {
+        builder.put(context, new ConnectorStamps(getStamp(context, CHECKPOINT),
+            getStamp(context, CONFIGURATION), getStamp(context, SCHEDULE)));
+      }
     }
     return builder.build();
   }
