@@ -242,9 +242,9 @@ public class ConnectorCoordinatorTest extends TestCase {
     ThreadMXBean tmx = ManagementFactory.getThreadMXBean();
     while (thread1.isAlive() && thread2.isAlive()) {
       try { Thread.sleep(500); } catch (InterruptedException e) {}
-      long[] ids = tmx.findDeadlockedThreads();
+      long[] ids = tmx.findMonitorDeadlockedThreads();
       if (ids != null) {
-        ThreadInfo[] infos = tmx.getThreadInfo(ids, true, true);
+        ThreadInfo[] infos = tmx.getThreadInfo(ids);
         // TODO: Use logging instead?
         System.out.println("The following threads are deadlocked:");
         for (ThreadInfo ti : infos) {
