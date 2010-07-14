@@ -21,6 +21,12 @@ public class ScheduledTimerTest extends TestCase {
 
   @Override
   protected void setUp() {
+    // Try to wait for the timer thread to shutdown, but don't take
+    // too long. A test failure is better than a hanging test.
+    for (int i = 0; isThreadRunning() && i < 10; i++) {
+      try { Thread.sleep(20); } catch (InterruptedException e) {}
+    }
+
     assertFalse(isThreadRunning());
     timer = new ScheduledTimer();
   }
