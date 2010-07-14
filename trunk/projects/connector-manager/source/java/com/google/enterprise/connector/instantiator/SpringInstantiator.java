@@ -15,6 +15,8 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.enterprise.connector.common.ScheduledTimer;
+import com.google.enterprise.connector.common.ScheduledTimerTask;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -44,7 +46,9 @@ public class SpringInstantiator implements Instantiator {
   private ConnectorCoordinatorMap coordinatorMap;
   private ThreadPool threadPool;
   private TypeMap typeMap;
-  private ChangeDetector changeDetector;
+  private ChangeDetectorTask changeDetectorTask;
+
+  private final ScheduledTimer timer = new ScheduledTimer();
 
   /**
    * Normal constructor.
@@ -84,12 +88,12 @@ public class SpringInstantiator implements Instantiator {
   }
 
   /**
-   * Sets the {@link ChangeDetector} instance.
+   * Sets the {@link ChangeDetectorTask}.
    *
-   * @param changeDetector a {@link ChangeDetector}.
+   * @param changeDetectorTask a {@code ChangeDetector} task
    */
-  public void setChangeDetector(ChangeDetector changeDetector) {
-    this.changeDetector = changeDetector;
+  public void setChangeDetectorTask(ChangeDetectorTask changeDetectorTask) {
+    this.changeDetectorTask = changeDetectorTask;
   }
 
   /**
@@ -97,13 +101,13 @@ public class SpringInstantiator implements Instantiator {
    */
   public synchronized void init() {
     LOGGER.info("Initializing instantiator");
-    // typeMap must be initialized before changeDetector is called.
+    // typeMap must be initialized before the ChangeDetector task is run.
     typeMap.init();
 
-    // Run changeDetector to create connector instances from the
-    // persistent store.
-    // TODO: Run changeDetector in a TimerTask.
-    changeDetector.detect();
+    // Run the ChangeDetector periodically to update the internal
+    // state. The initial execution will create connector instances
+    // from the persistent store.
+    timer.schedule(changeDetectorTask);
   }
 
   /**
@@ -111,6 +115,7 @@ public class SpringInstantiator implements Instantiator {
    */
   /* @Override */
   public void shutdown(boolean interrupt, long timeoutMillis) {
+    timer.cancel();
     coordinatorMap.shutdown();
     try {
       if (threadPool != null) {

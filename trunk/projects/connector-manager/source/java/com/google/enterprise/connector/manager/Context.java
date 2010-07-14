@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -215,6 +215,15 @@ public class Context {
       + " configuring a Connector Manager deployment that only authorizes\n"
       + " search results.  Traversals are enabled by default.\n"
       + " traversal.enabled=false\n"
+      + "\n"
+      + " The 'config.change.detect.interval' property specifies how often\n"
+      + " (in seconds) to look for asynchronous configuration changes.\n"
+      + " Values <= 0 imply never.  For stand-alone deployments, long\n"
+      + " intervals or never are probably sufficient.  For clustered\n"
+      + " deployments with a shared configuration store, 60 to 300 seconds\n"
+      + " is probably sufficient.  The default configuration change\n"
+      + " detection interval is -1 (never).\n"
+      + " config.change.detect.interval=60\n"
       + "\n";
 
   private static final Logger LOGGER =
