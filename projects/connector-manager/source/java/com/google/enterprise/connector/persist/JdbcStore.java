@@ -26,7 +26,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.MessageFormat;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -73,10 +75,11 @@ public class JdbcStore implements PersistentStore {
    * {4} is PROPERTY_NAME
    * {5} is PROPERTY_VALUE
    */
-  private String createTableDdl = "CREATE TABLE IF NOT EXISTS {0} ( "
+  private List<String> createTableDdl = Collections.singletonList(
+      "CREATE TABLE IF NOT EXISTS {0} ( "
       + "{1} INT IDENTITY PRIMARY KEY NOT NULL, {2} INT, "
       + "{3} VARCHAR(64) NOT NULL, "
-      + "{4} VARCHAR(64) NOT NULL, {5} VARCHAR NULL )";
+      + "{4} VARCHAR(64) NOT NULL, {5} VARCHAR NULL )");
 
   private synchronized void init() {
     if (connectionPool == null) {
@@ -113,15 +116,40 @@ public class JdbcStore implements PersistentStore {
   }
 
   /**
-   * Sets the ddl statement used for creation of the connector instance table
+   * Sets the DDL statements used for creation of the connector instance table
    * in the database.  The syntax for table creation and data types might
    * vary slightly for different database vendors.
+   * <p>
+   * The Create Table DDL is in {@link java.text.MessageFormat} syntax.
+   * The placeholders will be filled in as follows:<pre>
+   *    {0} The name of the Connector Instance table that is created.
+   *    {1} Integer auto-incrementing primary key id for row.
+   *    {2} Integer modification stamp, updated when the value is changed.
+   *    {3} The connector name.  A string with maximum length of 64 characters.
+   *    {4} The property name of the configuration property.
+   *        A string with maximum length of 64 characters.
+   *    {5} The configuration property value.  This can theoretically be
+   *        an arbitrarily long String, although for Google-supplied
+   *        connectors, it ranges from tens of bytes to a few kilobytes.
+   *        The stored value may be NULL.
+   *</pre>
    *
-   * @param createTableDdl an SQL statement that creates the connector instance
-   * table.
+   * @param createTableDdl SQL statements that will be used to create the
+   *        connector instance table.  The {@code createTableDdl} may be
+   *        either a {@code String} or a {@code List<String>}.  If a List
+   *        of Strings is provided, each item is executed as a seperate SQL
+   *        statement.
    */
-  public void setCreateTableDdl(String createTableDdl) {
-    this.createTableDdl = createTableDdl;
+  @SuppressWarnings("unchecked")
+  public void setCreateTableDdl(Object createTableDdl) {
+    if (createTableDdl instanceof List) {
+      this.createTableDdl = (List<String>) createTableDdl;
+    } else if (createTableDdl instanceof String) {
+      this.createTableDdl = Collections.singletonList((String) createTableDdl);
+    } else {
+      throw new IllegalArgumentException("createTableDdl must be either a "
+                                         + "String or a List of Strings.");
+    }
   }
 
   /**
@@ -447,7 +475,7 @@ public class JdbcStore implements PersistentStore {
         originalAutoCommit = connection.getAutoCommit();
         connection.setAutoCommit(false);
 
-        String query = "SELECT * FROM " + TABLE_NAME
+        String query = "SELECT " + TABLE_NAME + ".* FROM " + TABLE_NAME
             + " WHERE ( " + CONNECTOR_NAME + " = '" + context.getConnectorName()
             + "' AND " + PROPERTY_NAME + " = '" + fieldName + "' )";
 
@@ -508,7 +536,6 @@ public class JdbcStore implements PersistentStore {
     Connection connection = null;
     boolean originalAutoCommit = true;
     try {
-      init();
       connection = connectionPool.getConnection();
       try {
         originalAutoCommit = connection.getAutoCommit();
@@ -520,26 +547,41 @@ public class JdbcStore implements PersistentStore {
 
         // Check to see if our connector instance table already exists.
         DatabaseMetaData metaData = connection.getMetaData();
-        ResultSet tables = metaData.getTables(null, null, TABLE_NAME, null);
+
+        // Oracle doesn't do case-insensitive table name searches.
+        String tablePattern;
+        if (metaData.storesUpperCaseIdentifiers()) {
+          tablePattern = TABLE_NAME.toUpperCase();
+        } else if (metaData.storesLowerCaseIdentifiers()) {
+          tablePattern = TABLE_NAME.toLowerCase();
+        } else {
+          tablePattern = TABLE_NAME;
+        }
+        // Now quote '-', a special character in search patterns.
+        tablePattern =
+            tablePattern.replace("_", metaData.getSearchStringEscape() + "_");
+        ResultSet tables = metaData.getTables(null, null, tablePattern, null);
         try {
           while (tables.next()) {
             if (TABLE_NAME.equalsIgnoreCase(tables.getString("TABLE_NAME"))) {
               LOGGER.config("Found Persistent Store table: " + TABLE_NAME );
-            return;
+              return;
             }
           }
         } finally {
           tables.close();
         }
 
-        // Our table was not found. Create it using the Create Table DDl.
+        // Our table was not found. Create it using the Create Table DDL.
         Statement stmt = connection.createStatement();
         try {
           Object[] params = { TABLE_NAME, ID, MODIFY_STAMP, CONNECTOR_NAME,
                               PROPERTY_NAME, PROPERTY_VALUE };
-          String update = MessageFormat.format(createTableDdl, params);
-          LOGGER.config("Creating Persistent Store table: \"" + update + "\"");
-          stmt.executeUpdate(update);
+          for (String ddlStatement : createTableDdl) {
+            String update = MessageFormat.format(ddlStatement, params);
+            LOGGER.config("Creating Persistent Store table: " + update);
+            stmt.executeUpdate(update);
+          }
           connection.commit();
         } finally {
           stmt.close();
