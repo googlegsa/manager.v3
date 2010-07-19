@@ -70,27 +70,6 @@
         <prop key="jdbc.datasource.user">sa</prop>
         <prop key="jdbc.datasource.password"></prop>
 
-        <!-- JDBC Persistent Store for maintaining Connector Configuration,
-             Schedules, and Traversal State.  This DDL statement is used to
-             create the Connector instance configuration table if it does not
-             already exist.
-             Table creation and datatype syntax varies by database vendor.
-             The Create Table DDL is in java.text.MessageFormat syntax.
-             The placeholders will be filled in as follows:
-             {0} The name of the Connector Instance table that is created.
-             {1} Integer auto-incrementing primary key id for row.
-             {2} Integer modification stamp, updated when the value is changed.
-             {3} The connector name.  A string with maximum length of
-                 64 characters.
-             {4} The property name of the configuration property.
-                 A string with maximum length of 64 characters.
-             {5} The configuration property value.  This can theoretically be
-                 an arbitrarily long String, although for Google-supplied
-                 connectors, it ranges from tens of bytes to a few kilobytes.
-                 The stored value may be NULL.
-        -->
-        <!-- Create Table DDL for H2 -->
-        <prop key="jdbcstore.createtable.ddl">CREATE TABLE IF NOT EXIST {0} ( {1} INT IDENTITY PRIMARY KEY NOT NULL, {2} INT, {3} VARCHAR(64) NOT NULL, {4} VARCHAR(64) NOT NULL, {5} VARCHAR NULL )</prop>
       </props>
     </property>
   </bean>
@@ -201,6 +180,85 @@
     <property name="user" value="${jdbc.datasource.user}"/>
     <property name="password" value="${jdbc.datasource.password}"/>
   </bean>
+  <bean id="JdbcStoreCreateTableDdl" class="java.lang.String">
+    <constructor-arg value="CREATE TABLE IF NOT EXIST {0} ( {1} INT IDENTITY PRIMARY KEY NOT NULL, {2} INT, {3} VARCHAR(64) NOT NULL, {4} VARCHAR(64) NOT NULL, {5} VARCHAR NULL )"/>
+  </bean>
+  -->
+
+  <!-- Microsoft SQL Server database configuration. -->
+  <!--
+  <bean id="JdbcDataSource"
+        class="com.microsoft.sqlserver.jdbc.SQLServerDataSource">
+    <property name="URL" value="${jdbc.datasource.url}"/>
+    <property name="user" value="${jdbc.datasource.user}"/>
+    <property name="password" value="${jdbc.datasource.password}"/>
+  </bean>
+  <bean id="JdbcStoreCreateTableDdl" class="java.lang.String">
+    <constructor-arg value="CREATE TABLE {0} ( {1} INT IDENTITY PRIMARY KEY NOT NULL, {2} INT, {3} VARCHAR(64) NOT NULL, {4} VARCHAR(64) NOT NULL, {5} VARCHAR(MAX) NULL )"/>
+  </bean>
+  -->
+
+  <!-- Oracle 9i, 10g, 11g database configuration. -->
+  <!-- Note that our implementation supports CLOB upto 32,765 bytes. -->
+  <!--
+  <bean id="JdbcDataSource"
+        class="oracle.jdbc.pool.OracleDataSource">
+    <property name="URL" value="${jdbc.datasource.url}"/>
+    <property name="user" value="${jdbc.datasource.user}"/>
+    <property name="password" value="${jdbc.datasource.password}"/>
+  </bean>
+  <bean id="JdbcStoreCreateTableDdl" class="org.springframework.beans.factory.config.ListFactoryBean">
+    <property name="sourceList">
+      <list>
+        <value>CREATE TABLE {0} ( {1} INT PRIMARY KEY NOT NULL, {2} INT, {3} VARCHAR(64) NOT NULL, {4} VARCHAR(64) NOT NULL, {5} CLOB NULL )</value>
+        <value>CREATE SEQUENCE {0}_id_sequence</value>
+        <value>CREATE OR REPLACE TRIGGER {0}_id_trigger BEFORE INSERT ON {0} FOR EACH ROW BEGIN SELECT {0}_id_sequence.nextval INTO :new.id FROM dual; END;</value>
+      </list>
+    </property>
+  </bean>
+  -->
+
+  <!-- MySQL database configuration. -->
+  <!-- Requires MySQL 5.0.3 or greater for support of VARCHAR upto 65,535 bytes. -->
+  <!--
+  <bean id="JdbcDataSource"
+        class="com.mysql.jdbc.jdbc2.optional.MysqlDataSource">
+    <property name="URL" value="${jdbc.datasource.url}"/>
+    <property name="user" value="${jdbc.datasource.user}"/>
+    <property name="password" value="${jdbc.datasource.password}"/>
+  </bean>
+  <bean id="JdbcStoreCreateTableDdl" class="java.lang.String">
+    <constructor-arg value="CREATE TABLE IF NOT EXISTS {0} ( {1} INT AUTO_INCREMENT PRIMARY KEY NOT NULL, {2} INT, {3} VARCHAR(64) NOT NULL, {4} VARCHAR(64) NOT NULL, {5} VARCHAR(65000) NULL )"/>
+  </bean>
+  -->
+
+  <!-- Persistent Store mechanism used to store the Connector Configuration,
+       Connector Schedule, and Connector Traversal State.  This implementation
+       stores the information in a JDBC accessible database.
+       Only one PersistentStore bean should be defined at this time.
+  -->
+  <!-- The DDL statement is used to create the Connector instance configuration
+       table if it does not already exist.
+       Table creation and datatype syntax varies by database vendor.
+       The Create Table DDL is in java.text.MessageFormat syntax.
+       The placeholders will be filled in as follows:
+       {0} The name of the Connector Instance table that is created.
+       {1} Integer auto-incrementing primary key id for each row.
+       {2} Integer modification stamp, updated when the value is changed.
+       {3} The connector name.  A string with maximum length of 64 characters.
+       {4} The property name of the configuration property.
+           A string with maximum length of 64 characters.
+       {5} The configuration property value.  This can theoretically be
+           an arbitrarily long String, although for Google-supplied
+           connectors, it ranges from tens of bytes to a few kilobytes.
+           The stored value may be NULL.
+  -->
+  <!--
+  <bean id="PersistentStore"
+        class="com.google.enterprise.connector.persist.JdbcStore">
+    <property name="dataSource" ref="JdbcDataSource"/>
+    <property name="createTableDdl" ref="JdbcStoreCreateTableDdl"/>
+  </bean>
   -->
 
   <!-- Persistent Store mechanism used to store the Connector Configuration,
@@ -212,19 +270,6 @@
         class="com.google.enterprise.connector.persist.FileStore">
     <property name="typeMap" ref="TypeMap"/>
   </bean>
-
-  <!-- Persistent Store mechanism used to store the Connector Configuration,
-       Connector Schedule, and Connector Traversal State.  This implementation
-       stores the information in a JDBC accessible database.
-       Only one PersistentStore bean should be defined at this time.
-  -->
-  <!--
-  <bean id="PersistentStore"
-        class="com.google.enterprise.connector.persist.JdbcStore">
-    <property name="dataSource" ref="JdbcDataSource"/>
-    <property name="createTableDdl" value="${jdbcstore.createtable.ddl}"/>
-  </bean>
-  -->
 
   <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
     <property name="staticMethod"
