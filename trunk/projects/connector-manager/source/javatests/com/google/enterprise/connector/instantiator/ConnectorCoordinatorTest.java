@@ -20,13 +20,7 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
-import com.google.enterprise.connector.pusher.PusherFactory;
-import com.google.enterprise.connector.scheduler.LoadManager;
-import com.google.enterprise.connector.scheduler.LoadManagerFactory;
-import com.google.enterprise.connector.scheduler.HostLoadManager;
-import com.google.enterprise.connector.scheduler.MockLoadManagerFactory;
 import com.google.enterprise.connector.spi.ConfigureResponse;
-import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 
@@ -47,15 +41,14 @@ import java.util.Map;
  */
 public class ConnectorCoordinatorTest extends TestCase {
   // TODO(strellis): Add tests for batch control operations.
-  private static final String TEST_DIR = "testdata/contextTests/";
   private static final String APPLICATION_CONTEXT =
-      "ConnectorCoordinatorTest.xml";
+      "testdata/contextTests/TestContext.xml";
 
   @Override
   protected void setUp() throws Exception {
     Context.refresh();
     Context context = Context.getInstance();
-    context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
+    context.setStandaloneContext(APPLICATION_CONTEXT,
         Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
 
     getTypeMap().init();

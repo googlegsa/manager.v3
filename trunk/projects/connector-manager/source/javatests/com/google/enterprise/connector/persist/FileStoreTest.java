@@ -32,6 +32,7 @@ public class FileStoreTest extends PersistentStoreTestAbstract {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
     assertTrue(baseDirectory.mkdirs());
     typeMap = new TypeMap(TEST_DIR_NAME);
     typeMap.init();

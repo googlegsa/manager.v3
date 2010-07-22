@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import java.io.File;
-
 import com.google.enterprise.connector.instantiator.TypeInfo;
 import com.google.enterprise.connector.instantiator.TypeMap;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
@@ -24,21 +22,23 @@ import com.google.enterprise.connector.test.ConnectorTestUtils;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import java.io.File;
+import java.util.Set;
+
 /**
- *
+ * Test for {@link TypeMap}
  */
 public class TypeMapTest extends TestCase {
 
-  private static final String TEST_DIR_NAME = "testdata/tempTypeMapTests";
-  private File baseDirectory;
+  private static final String TEST_DIR_NAME = "testdata/tmp/TypeMapTests";
+  private File baseDirectory = new File(TEST_DIR_NAME);
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    // Make sure that the test directory does not exist
-    baseDirectory = new File(TEST_DIR_NAME);
+    // Make sure that the test directory does not exist.
     Assert.assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
-    // Then recreate it empty
+    // Then recreate it empty.
     Assert.assertTrue(baseDirectory.mkdirs());
   }
 
@@ -50,8 +50,30 @@ public class TypeMapTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.enterprise.connector.instantiator.TypeMap
-   * #getTypeInfo(java.lang.String)}.
+   * {@link TypeMap#getTypesDirectory()};
+   */
+  public final void testTypesDirectory() {
+    TypeMap typeMap = new TypeMap(TEST_DIR_NAME);
+    typeMap.init();
+    assertEquals(new File(baseDirectory, "connectors"),
+                 typeMap.getTypesDirectory());
+  }
+
+  /**
+   * Test method for
+   * {@link TypeMap#getConnectorTypeNames()};
+   */
+  public final void testGetTypeNames() {
+    TypeMap typeMap = new TypeMap(TEST_DIR_NAME);
+    typeMap.init();
+    Set typeNames = typeMap.getConnectorTypeNames();
+    assertTrue(typeNames.contains("TestConnectorA"));
+    assertTrue(typeNames.contains("TestConnectorB"));
+  }
+
+  /**
+   * Test method for
+   * {@link TypeMap#getTypeInfo(java.lang.String)}.
    */
   public final void testGetTypeInfo() throws ConnectorTypeNotFoundException {
     TypeMap typeMap = new TypeMap(TEST_DIR_NAME);
@@ -65,5 +87,4 @@ public class TypeMapTest extends TestCase {
     TypeInfo typeInfo = typeMap.getTypeInfo(typeName);
     Assert.assertEquals(typeName, typeInfo.getConnectorTypeName());
   }
-
 }

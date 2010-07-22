@@ -20,15 +20,11 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
-import com.google.enterprise.connector.pusher.MockPusher;
-import com.google.enterprise.connector.scheduler.HostLoadManager;
-import com.google.enterprise.connector.scheduler.LoadManager;
-import com.google.enterprise.connector.scheduler.LoadManagerFactory;
-import com.google.enterprise.connector.scheduler.MockLoadManagerFactory;
+import com.google.enterprise.connector.persist.MockPersistentStore;
+import com.google.enterprise.connector.persist.PersistentStore;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.TraversalManager;
-import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
 
 import junit.framework.TestCase;
@@ -36,7 +32,6 @@ import junit.framework.TestCase;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -48,38 +43,42 @@ public class InstantiatorTest extends TestCase {
   private static final Logger LOGGER =
       Logger.getLogger(InstantiatorTest.class.getName());
 
-  private static final String TEST_DIR =
-      "testdata/contextTests/instantiatorTests/";
-  private static final String APPLICATION_CONTEXT = "applicationContext.xml";
+  private static final String APPLICATION_CONTEXT =
+      "testdata/contextTests/InstantiatorTest.xml";
 
-  private static final String TEST_DIR_NAME = "testdata/tmp/InstantiatorTests";
-  private final File baseDirectory  = new File(TEST_DIR_NAME);
+  private static final MockPersistentStore persistentStore =
+      new MockPersistentStore();
+
   private SpringInstantiator instantiator;
 
   @Override
   protected void setUp() throws Exception {
-    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
-    // Then recreate it empty
-    assertTrue(baseDirectory.mkdirs());
-
+    Context.refresh();
+    Context context = Context.getInstance();
+    context.setStandaloneContext(APPLICATION_CONTEXT,
+        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
+    persistentStore.clear();
     instantiator = createInstantiator();
     assertEquals(0, connectorCount());
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
   }
 
   private SpringInstantiator createInstantiator() {
     Context.refresh();
     Context context = Context.getInstance();
-    context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
+    context.setStandaloneContext(APPLICATION_CONTEXT,
         Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
     SpringInstantiator si = (SpringInstantiator) context.getRequiredBean(
         "Instantiator", SpringInstantiator.class);
     si.init();
     return si;
+  }
+
+  /**
+   * Returns the static MockPersistentStore instance.  Used by
+   * Spring to wire that static Persistent store into the context.
+   */
+  public static final PersistentStore getPersistentStore() {
+    return persistentStore;
   }
 
   /**
@@ -93,7 +92,6 @@ public class InstantiatorTest extends TestCase {
   public final void testAddUpdateDelete() throws JSONException,
       InstantiatorException, ConnectorTypeNotFoundException,
       ConnectorNotFoundException, ConnectorExistsException {
-
     {
       /*
        * Test creation of a connector of type TestConnectorA.
@@ -108,7 +106,6 @@ public class InstantiatorTest extends TestCase {
       updateConnectorTest(instantiator, name, typeName, language,
                           false, jsonConfigString);
     }
-
 
     {
       /*

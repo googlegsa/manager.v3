@@ -19,6 +19,7 @@ import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.TestCase;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -31,42 +32,45 @@ import java.util.Properties;
  */
 public class SetManagerConfigTest extends TestCase {
 
-  private static final String TEST_DIR =
-      "testdata/contextTests/setManagerConfig/";
-  private static final String APPLICATION_CONTEXT = "applicationContext.xml";
-  private static final String APPLICATION_PROPERTIES =
-      "applicationContext.properties";
-  private static final String TEST_PROPERTIES = "testContext.properties";
+  private static final String APPLICATION_CONTEXT =
+      "testdata/contextTests/SetManagerConfigTest.xml";
 
-  private String propFileName;
+  private static final String TEST_PROPERTIES = "testContext.properties";
+  private static final String TEST_DIR_NAME =
+      "testdata/tmp/SetManagerConfigTest";
+  private final File baseDirectory = new File(TEST_DIR_NAME);
+
+  private File propFile = new File(baseDirectory, TEST_PROPERTIES);
   private Context context;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    // Make a copy of the properties file first and work from it, so it
-    // doesn't appear that this file is modified every time the test runs.
-    String origFileName = TEST_DIR + APPLICATION_PROPERTIES;
-    this.propFileName = TEST_DIR + TEST_PROPERTIES;
-    ConnectorTestUtils.copyFile(origFileName, propFileName);
+    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    assertTrue(baseDirectory.mkdirs());
+
+    // Create an original set of properties.
+    Properties props = new Properties();
+    props.put(Context.GSA_FEED_HOST_PROPERTY_KEY, "fubar");
+    props.put(Context.GSA_FEED_PORT_PROPERTY_KEY, "25");
+    storeProperties(props, propFile, "Initial Props");
 
     Context.refresh();
     context = Context.getInstance();
-    context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
-                                 "testdata/mocktestdata/");
+    context.setStandaloneContext(APPLICATION_CONTEXT,
+        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
     context.setFeeding(false);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    Context.refresh();
-    ConnectorTestUtils.deleteFile(propFileName);
+    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
     super.tearDown();
   }
 
   public final void testGetConnectorManagerConfig() throws Exception {
     // Get the properties directly from the file.
-    Properties props = loadProperties(propFileName);
+    Properties props = loadProperties(propFile);
     String host = props.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
     int port = Integer.parseInt(props.getProperty(
         Context.GSA_FEED_PORT_PROPERTY_KEY, Context.GSA_FEED_PORT_DEFAULT));
@@ -92,7 +96,7 @@ public class SetManagerConfigTest extends TestCase {
 
   public final void testSetConnectorManagerConfig() throws InstantiatorException,
       IOException {
-    Properties props = loadProperties(propFileName);
+    Properties props = loadProperties(propFile);
     String host = props.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
     int port = Integer.parseInt(props.getProperty(
         Context.GSA_FEED_PORT_PROPERTY_KEY, Context.GSA_FEED_PORT_DEFAULT));
@@ -100,10 +104,10 @@ public class SetManagerConfigTest extends TestCase {
     assertEquals(25, port);
 
     context.setConnectorManagerConfig("shme", 14);
-    verifyPropsValues("shme", 14, propFileName);
+    verifyPropsValues("shme", 14, propFile);
 
     context.setConnectorManagerConfig(host, port);
-    verifyPropsValues(host, port, propFileName);
+    verifyPropsValues(host, port, propFile);
   }
 
   public final void testIsManagerLocked() throws Exception {
@@ -119,14 +123,14 @@ public class SetManagerConfigTest extends TestCase {
   }
 
   private void setLockedProperty(String isLocked) throws Exception {
-    Properties props = loadProperties(propFileName);
+    Properties props = loadProperties(propFile);
     props.setProperty(Context.MANAGER_LOCKED_PROPERTY_KEY, isLocked);
-    storeProperties(props, propFileName, "Updating lock");
+    storeProperties(props, propFile, "Updating lock");
   }
 
   private void verifyPropsValues(String expectedHost, int expectedPort,
-      String propFileName) throws IOException {
-    Properties props = loadProperties(propFileName);
+      File propFile) throws IOException {
+    Properties props = loadProperties(propFile);
     String actualHost = props.getProperty(Context.GSA_FEED_HOST_PROPERTY_KEY);
     int actualPort = Integer.valueOf(props.getProperty(
         Context.GSA_FEED_PORT_PROPERTY_KEY, Context.GSA_FEED_PORT_DEFAULT));
@@ -137,9 +141,9 @@ public class SetManagerConfigTest extends TestCase {
     assertEquals("Manager is locked", Boolean.TRUE.toString(), isManagerLocked);
   }
 
-  private Properties loadProperties(String propFileName) throws IOException {
+  private Properties loadProperties(File propFile) throws IOException {
     Properties props = new Properties();
-    InputStream inStream = new FileInputStream(propFileName);
+    InputStream inStream = new FileInputStream(propFile);
     try {
       props.load(inStream);
     } finally {
@@ -148,9 +152,9 @@ public class SetManagerConfigTest extends TestCase {
     return props;
   }
 
-  private void storeProperties(Properties props, String propFileName,
-      String comments) throws IOException {
-    OutputStream outStream = new FileOutputStream(propFileName);
+  private void storeProperties(Properties props, File propFile, String comments)
+      throws IOException {
+    OutputStream outStream = new FileOutputStream(propFile);
     try {
       props.store(outStream, comments);
     } finally {
