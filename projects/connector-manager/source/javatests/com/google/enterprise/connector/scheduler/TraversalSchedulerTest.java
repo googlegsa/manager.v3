@@ -16,19 +16,14 @@ package com.google.enterprise.connector.scheduler;
 
 import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.instantiator.ConnectorCoordinatorMap;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
-import com.google.enterprise.connector.instantiator.MockChangeDetector;
 import com.google.enterprise.connector.instantiator.MockInstantiator;
 import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.instantiator.ThreadPool;
-import com.google.enterprise.connector.instantiator.TypeMap;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
-import com.google.enterprise.connector.pusher.MockPusher;
-import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
 
 import junit.framework.TestCase;
@@ -36,7 +31,6 @@ import junit.framework.TestCase;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,20 +39,8 @@ import java.util.List;
  */
 public class TraversalSchedulerTest extends TestCase {
 
-  private static final String TEST_DIR = "testdata/mocktestdata/";
-  private static final String APPLICATION_CONTEXT = "applicationContext.xml";
-  private static final String TEST_DIR_NAME = TEST_DIR + "connectors";
-  private final File baseDirectory  = new File(TEST_DIR_NAME);
-
-  @Override
-  protected void setUp() throws Exception {
-    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
-  }
+  private static final String APPLICATION_CONTEXT =
+      "testdata/contextTests/TestContext.xml";
 
   private TraversalScheduler runWithSchedules(List<Schedule> schedules,
       Instantiator instantiator, boolean shutdown) {
@@ -113,7 +95,7 @@ public class TraversalSchedulerTest extends TestCase {
   private Instantiator createRealInstantiator() {
     Context.refresh();
     Context context = Context.getInstance();
-    context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
+    context.setStandaloneContext(APPLICATION_CONTEXT,
         Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
     SpringInstantiator si = (SpringInstantiator) context.getRequiredBean(
         "Instantiator", SpringInstantiator.class);

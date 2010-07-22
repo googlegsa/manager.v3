@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<!-- This is the base Context for use by most of the tests.  Any changes made
+     here will have global effect.  If you need to add, change, or override
+     something for a specific test, create a separate Spring context file,
+     import this one, then add your customizations.
+-->
 <beans>
   <bean id="PusherFactory"
         class="com.google.enterprise.connector.pusher.MockPusher">

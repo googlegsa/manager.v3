@@ -82,6 +82,11 @@ public class MockPersistentStore implements PersistentStore {
   public MockPersistentStore() {
   }
 
+  public void clear() {
+    storeMap.clear();
+    stampValue = 0;
+  }
+
   /* @GuardedBy(getInventory) */
   private Stamp getStamp(StoreContext context, String property) {
     StoreEntry entry = storeMap.get(new StoreKey(context, property));

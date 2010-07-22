@@ -62,9 +62,8 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   RecordingLoadManager recordingLoadManager;
   TypeInfo typeInfo;
 
-  private static final String TEST_DIR =
-      "testdata/contextTests/connectorCoordinatorBatch/";
-  private static final String APPLICATION_CONTEXT = "applicationContext.xml";
+  private static final String APPLICATION_CONTEXT =
+      "testdata/contextTests/ConnectorCoordinatorBatchTest.xml";
 
   private static final String TEST_DIR_NAME =
       "testdata/tmp/ConnectorCoordinatorBatchTests";
@@ -79,7 +78,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
 
     Context.refresh();
     Context context = Context.getInstance();
-    context.setStandaloneContext(TEST_DIR + APPLICATION_CONTEXT,
+    context.setStandaloneContext(APPLICATION_CONTEXT,
         Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
     SpringInstantiator si = (SpringInstantiator) context.getRequiredBean(
         "Instantiator", SpringInstantiator.class);
