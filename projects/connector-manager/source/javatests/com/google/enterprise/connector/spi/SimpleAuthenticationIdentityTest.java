@@ -24,8 +24,8 @@ public class SimpleAuthenticationIdentityTest extends TestCase {
   public void testGetUserPass() {
     String username = "foo";
     String password = "bar";
-    SimpleAuthenticationIdentity i = 
-      new SimpleAuthenticationIdentity(username, password);
+    SimpleAuthenticationIdentity i =
+        new SimpleAuthenticationIdentity(username, password);
     assertEquals(username, i.getUsername());
     assertEquals(password, i.getPassword());
     assertNull(i.getDomain());
@@ -35,8 +35,8 @@ public class SimpleAuthenticationIdentityTest extends TestCase {
     String username = "foo";
     String password = "bar";
     String domain = "baz";
-    SimpleAuthenticationIdentity i = 
-      new SimpleAuthenticationIdentity(username, password, domain);
+    SimpleAuthenticationIdentity i =
+        new SimpleAuthenticationIdentity(username, password, domain);
     assertEquals(domain, i.getDomain());
     assertEquals(username, i.getUsername());
     assertEquals(password, i.getPassword());
