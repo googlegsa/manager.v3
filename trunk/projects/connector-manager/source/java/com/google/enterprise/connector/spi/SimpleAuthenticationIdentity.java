@@ -43,7 +43,7 @@ public class SimpleAuthenticationIdentity implements AuthenticationIdentity {
 
   /**
    * Constructs a {@code SimpleAuthenticationIdentity} using just a user-name.
-   * 
+   *
    * @param username The user's name
    */
   public SimpleAuthenticationIdentity(final String username) {
@@ -53,23 +53,24 @@ public class SimpleAuthenticationIdentity implements AuthenticationIdentity {
   /**
    * Constructs a {@code SimpleAuthenticationIdentity} using only a user-name
    * and a password.
-   * 
+   *
    * @param username The user's name
    * @param password The password associated with the user's name
    */
-  public SimpleAuthenticationIdentity(final String username, 
+  public SimpleAuthenticationIdentity(final String username,
       final String password) {
     this(username, password, null);
   }
 
   /**
-   * Constructs a {@code SimpleAuthenticationIdentity} using user-name, 
+   * Constructs a {@code SimpleAuthenticationIdentity} using user-name,
    * and password and domain.
+   *
    * @param username The user's name
    * @param password The password associated with the user's name
    * @param domain The domain associated with this user
    */
-  public SimpleAuthenticationIdentity(final String username, 
+  public SimpleAuthenticationIdentity(final String username,
       final String password, final String domain) {
     this.domain = domain;
     this.username = username;
