@@ -65,7 +65,7 @@ public class JdbcStoreTest extends PersistentStoreTestAbstract {
     assertFalse(tableExists(connection, JdbcStore.TABLE_NAME));
 
     Schedule schedule =
-        store.getConnectorSchedule(new StoreContext("nonexist"));
+        store.getConnectorSchedule(getStoreContext("nonexist"));
     assertNull(schedule);
 
     /* TODO: Why does this fail for in-memory DBs?

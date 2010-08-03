@@ -27,8 +27,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.MessageFormat;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -59,10 +62,14 @@ public class JdbcStore implements PersistentStore {
   static final String MAP = "configuration_map";
   static final String XML = "configuration_xml";
 
+  static final String TYPES_QUERY =
+    "SELECT " + CONNECTOR_NAME + "," + PROPERTY_VALUE + " FROM " + TABLE_NAME
+    + " WHERE ( " + PROPERTY_NAME + "='" + TYPE + "' AND " + PROPERTY_VALUE
+    + " IS NOT NULL )";
+
   static final String INVENTORY_QUERY =
     "SELECT " + MODIFY_STAMP + "," + CONNECTOR_NAME + "," + PROPERTY_NAME
-    + " FROM " + TABLE_NAME + " WHERE ( " + PROPERTY_VALUE + " IS NOT NULL )"
-    + " ORDER BY " + CONNECTOR_NAME;
+    + " FROM " + TABLE_NAME + " WHERE ( " + PROPERTY_VALUE + " IS NOT NULL )";
 
   private DataSource dataSource;
   private ConnectionPool connectionPool;
@@ -171,28 +178,59 @@ public class JdbcStore implements PersistentStore {
         // TODO: We should consider using a PreparedStatement - however this
         // is non-trivial when using connection pools.  Try using
         // MapMaker.makeComputingMap() to map connections to PreparedStatements.
+        Map<String, Map<String, JdbcStamp>> stampAlbum =
+            new HashMap<String, Map<String, JdbcStamp>>();
 
-        // TODO: When StoreContext moves to TypeName.  Run two queries:
-        //  1) SELECT connector_name, property_value WHERE (property_name =
-        //     'configuration_type' AND property_value IS NOT NULL )
-        //  2) Build a set of StoreContext with the connector names and types.
-        //  3) SELECT connector_name, modify_stamp, property_name
-        //     WHERE ( property_name IN (checkpoint,schedule,configuration_map,
-        //     configuration_xml) AND property_value IS NOT NULL ).
-        //  4) Throw the results into a hashmap where modify_stamps are
-        //     keyed by connector_name,property_name.
-        //  5) Iterate over the list of StoreContexts, extracting the
-        //     for the connector modify_stamps and adding ConnectorStamps
-        //     to the inventory.
-        // This gets the typename and avoids ORDER_BY in the SQL queries.
-
+        // Collect the Stamps for the various interesting properties.
         Statement statement = connection.createStatement(
             ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
         try {
           ResultSet resultSet = statement.executeQuery(INVENTORY_QUERY);
-          if (resultSet.next()) {
-            while (processConnector(resultSet, mapBuilder))
-              ;
+          while (resultSet.next()) {
+            String connectorName = resultSet.getString(CONNECTOR_NAME);
+            Map<String, JdbcStamp> stamps = stampAlbum.get(connectorName);
+            if (stamps == null) {
+              stamps = new HashMap<String, JdbcStamp>();
+              stampAlbum.put(connectorName, stamps);
+            }
+            stamps.put(resultSet.getString(PROPERTY_NAME),
+                new JdbcStamp(resultSet.getLong(MODIFY_STAMP)));
+          }
+        } finally {
+          statement.close();
+        }
+
+        // Find all connectors with non-null Type, construct a StoreContext
+        // for the connector+type, and build an inventory of that connector's
+        // stamps from the previous query.
+        // (Connectors with no Type have been deleted.)
+        statement = connection.createStatement(
+            ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+        try {
+          ResultSet resultSet = statement.executeQuery(TYPES_QUERY);
+          while (resultSet.next()) {
+            String connectorName = resultSet.getString(CONNECTOR_NAME);
+            StoreContext storeContext = new StoreContext(connectorName,
+                resultSet.getString(PROPERTY_VALUE));
+            Map<String, JdbcStamp> stamps = stampAlbum.get(connectorName);
+            ConnectorStamps connectorStamps;
+            if (stamps == null) {
+              connectorStamps = new ConnectorStamps(null, null, null);
+            } else {
+              JdbcStamp mapStamp = stamps.get(MAP);
+              JdbcStamp xmlStamp = stamps.get(XML);
+              JdbcStamp configStamp = new JdbcStamp(
+                  ((mapStamp == null) ? 0L : mapStamp.version) +
+                  ((xmlStamp == null) ? 0L : xmlStamp.version));
+              connectorStamps = new ConnectorStamps(
+                  stamps.get(STATE), configStamp, stamps.get(SCHEDULE));
+            }
+            mapBuilder.put(storeContext, connectorStamps);
+            if (LOGGER.isLoggable(Level.FINE)) {
+              LOGGER.fine("Found connector: name = " + connectorName
+                          + "  type = " + storeContext.getTypeName()
+                          + "  stamps = " + connectorStamps);
+            }
           }
         } finally {
           statement.close();
@@ -203,55 +241,8 @@ public class JdbcStore implements PersistentStore {
     } catch (SQLException e) {
       LOGGER.log(Level.WARNING, "Failed to retrieve Connector Inventory", e);
     }
+      // Finally, construct the inventory.
     return mapBuilder.build();
-  }
-
-  /**
-   * Reads the MODIFY_STAMPS for all data pertaining to a connector instance,
-   *  then adds a ConnectorStamps entry for that connector to the supplied map.
-   *
-   * @param resultSet ResultSet from connector instance query, ordered by
-   *        connectorName.
-   * @param mapBuilder Builder for map of ConnectorStamps.
-   * @return true if resultSet contains more rows, false otherwise.
-   */
-  private boolean processConnector(ResultSet resultSet,
-      ImmutableMap.Builder<StoreContext, ConnectorStamps> mapBuilder)
-      throws SQLException {
-    boolean moreRows;
-    JdbcStamp scheduleStamp = null;
-    JdbcStamp checkpointStamp = null;
-    JdbcStamp configurationStamp = null;
-    String connectorName = resultSet.getString(CONNECTOR_NAME);
-    String type = null;
-    do {
-      String propName = resultSet.getString(PROPERTY_NAME);
-      if (SCHEDULE.equals(propName)) {
-        scheduleStamp = new JdbcStamp(resultSet.getLong(MODIFY_STAMP));
-      } else if (STATE.equals(propName)) {
-        checkpointStamp = new JdbcStamp(resultSet.getLong(MODIFY_STAMP));
-      } else if (MAP.equals(propName) || XML.equals(propName)) {
-        // ConfigurationStamp is sum of the MAP and XML MODIFY_STAMPs.
-        long version =
-            (configurationStamp == null) ? 0L : configurationStamp.version;
-        version += resultSet.getLong(MODIFY_STAMP);
-        configurationStamp = new JdbcStamp(version);
-      }
-    } while ((moreRows = resultSet.next()) == true  &&
-             connectorName.equals(resultSet.getString(CONNECTOR_NAME)));
-
-    if (checkpointStamp != null || scheduleStamp != null
-          || configurationStamp != null) {
-      ConnectorStamps stamps = new ConnectorStamps(
-          checkpointStamp, configurationStamp, scheduleStamp);
-      mapBuilder.put(new StoreContext(connectorName), stamps);
-
-      if (LOGGER.isLoggable(Level.FINE)) {
-        LOGGER.fine("Found connector: name = " + connectorName
-                    + "  stamps = " + stamps);
-      }
-    }
-    return moreRows;
   }
 
   /**

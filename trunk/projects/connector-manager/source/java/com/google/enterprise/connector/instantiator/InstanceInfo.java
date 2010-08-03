@@ -77,7 +77,8 @@ final class InstanceInfo {
     this.connectorName = connectorName;
     this.connectorDir = connectorDir;
     this.typeInfo = typeInfo;
-    this.storeContext = new StoreContext(connectorName, connectorDir);
+    this.storeContext =
+        new StoreContext(connectorName, typeInfo.getConnectorTypeName());
     this.connector = makeConnectorWithSpring(connectorName, typeInfo, config);
   }
 

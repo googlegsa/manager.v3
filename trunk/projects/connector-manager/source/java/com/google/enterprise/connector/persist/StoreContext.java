@@ -16,8 +16,6 @@ package com.google.enterprise.connector.persist;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
-import java.io.File;
-
 /**
  * Provide some basic context that might be useful for the various
  * persistent store implementations.  For example, most make use
@@ -25,26 +23,24 @@ import java.io.File;
  * connector work directory.
  */
 public class StoreContext implements Comparable<StoreContext> {
-  private String connectorName;
-  private File connectorDir;
+  private final String connectorName;
+  private final String typeName;
 
-  public StoreContext(String connectorName) {
-    this(connectorName, null);
-  }
-
-  public StoreContext(String connectorName, File connectorDir) {
+  public StoreContext(String connectorName, String typeName) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(connectorName),
         "StoreContext.connectorName may not be null or empty.");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(typeName),
+        "StoreContext.typeName may not be null or empty.");
     this.connectorName = connectorName;
-    this.connectorDir = connectorDir;
+    this.typeName = typeName;
   }
 
   public String getConnectorName() {
     return connectorName;
   }
 
-  public File getConnectorDir() {
-    return connectorDir;
+  public String getTypeName() {
+    return typeName;
   }
 
   @Override
@@ -52,13 +48,8 @@ public class StoreContext implements Comparable<StoreContext> {
     if (other == null || !(other instanceof StoreContext))
       return false;
     StoreContext context = (StoreContext) other;
-    if (!connectorName.equals(context.connectorName)) {
-      return false;
-    } else {
-      return (connectorDir == null)
-          ? context.connectorDir == null
-          : connectorDir.equals(context.connectorDir);
-    }
+    return (connectorName.equals(context.connectorName) &&
+            typeName.equals(context.typeName));
   }
 
   @Override
@@ -66,8 +57,7 @@ public class StoreContext implements Comparable<StoreContext> {
     // See Effective Java by Joshua Bloch, Item 8.
     int result = 131;
     result = 17 * result + connectorName.hashCode();
-    result = 17 * result
-        + (connectorDir == null ? 0 : connectorDir.hashCode());
+    result = 17 * result + typeName.hashCode();
     return result;
   }
 
@@ -77,14 +67,12 @@ public class StoreContext implements Comparable<StoreContext> {
     if (diff != 0) {
       return diff;
     } else {
-      if (connectorDir == null && other.connectorDir == null) {
-        return 0;
-      } else if (connectorDir == null) {
-        return -1;
-      } else if (other.connectorDir == null) {
-        return 1;
-      } else
-        return connectorDir.compareTo(other.connectorDir);
+      return typeName.compareTo(other.typeName);
     }
+  }
+
+  @Override
+  public String toString() {
+    return "{" + connectorName + ", " + typeName + "}";
   }
 }

@@ -23,12 +23,6 @@ class MockTraversalStateStore implements TraversalStateStore {
   private final StoreContext storeContext;
 
   MockTraversalStateStore(PersistentStore stateStore,
-      String connectorName) {
-    this.storeContext = new StoreContext(connectorName);
-    this.stateStore = stateStore;
-  }
-
-  MockTraversalStateStore(PersistentStore stateStore,
       StoreContext storeContext) {
     this.stateStore = stateStore;
     this.storeContext = storeContext;

@@ -53,93 +53,24 @@ public class FileStoreTest extends PersistentStoreTestAbstract {
   @Override
   protected StoreContext getStoreContext(String connectorName,
                                          String typeName) {
-    File typeDir = new File(typeMap.getTypesDirectory(), typeName);
-    File connectorDir = new File(typeDir, connectorName);
+    StoreContext context = new StoreContext(connectorName, typeName);
+    assertTrue(getConnectorDir(context).exists());
+    return context;
+  }
+
+  protected File getConnectorDir(StoreContext context) {
+    File typeDir = new File(typeMap.getTypesDirectory(), context.getTypeName());
+    File connectorDir = new File(typeDir, context.getConnectorName());
     if (!connectorDir.exists()) {
       assertTrue(connectorDir.mkdirs());
     }
-    return new StoreContext(connectorName, connectorDir);
-  }
-
-  // Tests if the exception is thrown correctly when the connectorDir is null.
-  public void testGetConnectorScheduleNullConnectorDir() {
-    try {
-      store.getConnectorSchedule(new StoreContext(NAME, null));
-      fail("failed to throw exception");
-    } catch (NullPointerException e) {
-      assertEquals("StoreContext.connectorDir may not be null.",
-                   e.getMessage());
-    }
-  }
-
-  // Tests if the exception is thrown correctly when the connectorDir is null.
-  public void testGetConnectorStateNullConnectorDir() {
-    try {
-      store.getConnectorState(new StoreContext(NAME, null));
-      fail("failed to throw exception");
-    } catch (NullPointerException e) {
-      assertEquals("StoreContext.connectorDir may not be null.",
-                   e.getMessage());
-    }
-  }
-
-  // Tests if the exception is thrown correctly when the connectorDir is null.
-  public void testGetConnectorConfigurationNullConnectorDir() {
-    try {
-      store.getConnectorConfiguration(new StoreContext(NAME, null));
-      fail("failed to throw exception");
-    } catch (NullPointerException e) {
-      assertEquals("StoreContext.connectorDir may not be null.",
-                   e.getMessage());
-    }
-  }
-
-  // Tests if the exception is thrown correctly when the connectorDir is
-  // nonexistent.
-  public void testGetConnectorScheduleNoConnectorDir() {
-    StoreContext storeContext =
-        new StoreContext(NAME, new File(baseDirectory, "nonexistent"));
-    try {
-      store.getConnectorSchedule(storeContext);
-      fail("failed to throw exception");
-    } catch (IllegalArgumentException e) {
-      assertTrue(e.getMessage().startsWith(
-          "StoreContext.connectorDir directory must exist"));
-    }
-  }
-
-  // Tests if the exception is thrown correctly when the connectorDir is
-  // nonexistent.
-  public void testGetConnectorStateNoConnectorDir() {
-    StoreContext storeContext =
-        new StoreContext(NAME, new File(baseDirectory, "nonexistent"));
-    try {
-      store.getConnectorState(storeContext);
-      fail("failed to throw exception");
-    } catch (IllegalArgumentException e) {
-      assertTrue(e.getMessage().startsWith(
-          "StoreContext.connectorDir directory must exist"));
-    }
-  }
-
-  // Tests if the exception is thrown correctly when the connectorDir is
-  // nonexistent.
-  public void testGetConnectorConfigurationNoConnectorDir() {
-    StoreContext storeContext =
-        new StoreContext(NAME, new File(baseDirectory, "nonexistent"));
-    try {
-      store.getConnectorConfiguration(storeContext);
-      fail("failed to throw exception");
-    } catch (IllegalArgumentException e) {
-      assertTrue(e.getMessage().startsWith(
-          "StoreContext.connectorDir directory must exist"));
-    }
+    return connectorDir;
   }
 
   // Tests connector removal leaves no files behind.
   public void testRemoveConnector() {
     StoreContext storeContext = getStoreContext(NAME, "xyzzy");
-    File connectorDir = storeContext.getConnectorDir();
+    File connectorDir = getConnectorDir(storeContext);
     assertTrue(connectorDir.list().length == 0);
     store.storeConnectorConfiguration(storeContext, getConfiguration());
     store.storeConnectorSchedule(storeContext, getSchedule());
