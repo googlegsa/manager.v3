@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.  All Rights Reserved.
+// Copyright 2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -66,7 +66,8 @@ public class GetConfig extends HttpServlet {
   private static final FilenameFilter fileFilter = new ConfigFilenameFilter();
 
   /**
-   * Retrieves the log files for a connector instance.
+   * Retrieves the Configuration files for the Connector Manager and all the
+   * Connector instances.
    *
    * @param req
    * @param res
