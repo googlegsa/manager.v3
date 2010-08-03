@@ -38,7 +38,12 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
 
   /** Gets a new instance of Configuration. */
   protected static Configuration getConfiguration() {
-    return new Configuration(TYPENAME, Collections.<String, String>emptyMap(),
+    return getConfiguration(TYPENAME);
+  }
+
+  /** Gets a new instance of Configuration. */
+  protected static Configuration getConfiguration(String typeName) {
+    return new Configuration(typeName, Collections.<String, String>emptyMap(),
         CONFIG_XML);
   }
 
@@ -60,12 +65,11 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
   }
 
   /**
-   * Gets a StoreContext.  Ignores the typeName, setting
-   * StoreContext.connectorDir to null.
+   * Gets a StoreContext.
    * May be overridden as needed by subclasses.
    */
   protected StoreContext getStoreContext(String connectorName, String typeName) {
-    return new StoreContext(connectorName);
+    return new StoreContext(connectorName, typeName);
   }
 
   protected PersistentStore store;
@@ -307,14 +311,13 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
   public void testInventoryOneObject() {
     StoreContext context = getStoreContext("name");
     checkIsEmpty(store);
-    store.storeConnectorState(context, checkpoint);
+    store.storeConnectorConfiguration(context, configuration);
     checkContains(store, context);
-
-    assertNull(store.getConnectorConfiguration(context));
+    compareConfigurations(configuration,
+                          store.getConnectorConfiguration(context));
+    assertNull(store.getConnectorState(context));
     assertNull(store.getConnectorSchedule(context));
-    assertEquals(checkpoint, store.getConnectorState(context));
-
-    store.removeConnectorState(context);
+    store.removeConnectorConfiguration(context);
     checkIsEmpty(store);
   }
 
@@ -335,9 +338,9 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
 
     store.removeConnectorState(context);
     checkContains(store, context);
-    store.removeConnectorConfiguration(context);
-    checkContains(store, context);
     store.removeConnectorSchedule(context);
+    checkContains(store, context);
+    store.removeConnectorConfiguration(context);
     checkIsEmpty(store);
   }
 
@@ -345,28 +348,28 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
   public void testInventoryMultipleInstances() {
     StoreContext one = getStoreContext("one");
     StoreContext two = getStoreContext("two");
-    String checkpointTwo = getCheckpoint();
-    assertNotSame(checkpoint, checkpointTwo);
+    Configuration configuration2 = getConfiguration();
+    assertNotSame(configuration, configuration2);
 
     checkIsEmpty(store);
-    store.storeConnectorState(one, checkpoint);
+    store.storeConnectorConfiguration(one, configuration);
     checkContains(store, one);
-    store.storeConnectorState(two, checkpointTwo);
+    store.storeConnectorConfiguration(two, configuration2);
     checkContains(store, one);
     checkContains(store, two);
 
-    assertEquals(checkpointTwo, store.getConnectorState(two));
-    assertEquals(checkpoint, store.getConnectorState(one));
+    compareConfigurations(configuration2, store.getConnectorConfiguration(two));
+    compareConfigurations(configuration, store.getConnectorConfiguration(one));
 
-    assertNull(store.getConnectorConfiguration(one));
+    assertNull(store.getConnectorState(one));
     assertNull(store.getConnectorSchedule(one));
-    assertNull(store.getConnectorConfiguration(two));
+    assertNull(store.getConnectorState(two));
     assertNull(store.getConnectorSchedule(two));
 
-    store.removeConnectorState(two);
+    store.removeConnectorConfiguration(two);
     // TODO: checkNotContains(store, two);
     checkContains(store, one);
-    store.removeConnectorState(one);
+    store.removeConnectorConfiguration(one);
     checkIsEmpty(store);
   }
 
@@ -374,28 +377,27 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
   public void testInventoryMultipleTypes() {
     StoreContext one = getStoreContext("one");
     StoreContext two = getStoreContext("two", "TestConnectorB");
-    String checkpointTwo = getCheckpoint();
-    assertNotSame(checkpoint, checkpointTwo);
+    Configuration configuration2 = getConfiguration("TestConnectorB");
 
     checkIsEmpty(store);
-    store.storeConnectorState(one, checkpoint);
+    store.storeConnectorConfiguration(one, configuration);
     checkContains(store, one);
-    store.storeConnectorState(two, checkpointTwo);
+    store.storeConnectorConfiguration(two, configuration2);
     checkContains(store, one);
     checkContains(store, two);
 
-    assertEquals(checkpointTwo, store.getConnectorState(two));
-    assertEquals(checkpoint, store.getConnectorState(one));
+    compareConfigurations(configuration2, store.getConnectorConfiguration(two));
+    compareConfigurations(configuration, store.getConnectorConfiguration(one));
 
-    assertNull(store.getConnectorConfiguration(one));
+    assertNull(store.getConnectorState(one));
     assertNull(store.getConnectorSchedule(one));
-    assertNull(store.getConnectorConfiguration(two));
+    assertNull(store.getConnectorState(two));
     assertNull(store.getConnectorSchedule(two));
 
-    store.removeConnectorState(two);
+    store.removeConnectorConfiguration(two);
     // TODO: checkNotContains(store, two);
     checkContains(store, one);
-    store.removeConnectorState(one);
+    store.removeConnectorConfiguration(one);
     checkIsEmpty(store);
   }
 
@@ -432,14 +434,14 @@ public abstract class PersistentStoreTestAbstract extends TestCase {
 
     store.removeConnectorState(one);
     checkContains(store, one);
-    store.removeConnectorConfiguration(one);
-    checkContains(store, one);
     store.removeConnectorSchedule(one);
+    checkContains(store, one);
+    store.removeConnectorConfiguration(one);
     // TODO: checkNotContains(store, one);
 
-    store.removeConnectorConfiguration(two);
-    checkContains(store, two);
     store.removeConnectorSchedule(two);
+    checkContains(store, two);
+    store.removeConnectorConfiguration(two);
     checkIsEmpty(store);
   }
 

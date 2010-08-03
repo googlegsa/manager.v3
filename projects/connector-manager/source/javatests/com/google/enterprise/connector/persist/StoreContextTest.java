@@ -26,12 +26,10 @@ public class StoreContextTest extends TestCase {
   /** Gets an array of test objects sorted by the natural ordering. */
   private static StoreContext[] getTestObjects() {
     return new StoreContext[] {
-      new StoreContext("alice", null),
-      new StoreContext("alice", new File("/alice")),
-      new StoreContext("alice", new File("/bob")),
-      new StoreContext("bob", null),
-      new StoreContext("bob", new File("/alice")),
-      new StoreContext("bob", new File("/bob")),
+      new StoreContext("alice", "aliceType"),
+      new StoreContext("alice", "bobType"),
+      new StoreContext("bob", "aliceType"),
+      new StoreContext("bob", "bobType"),
     };
   }
 
@@ -43,7 +41,7 @@ public class StoreContextTest extends TestCase {
    */
   public void testNullConnectorName() {
     try {
-      new StoreContext(null, null);
+      new StoreContext(null, "test");
       fail("failed to throw exception");
     } catch (IllegalArgumentException e) {
       assertEquals("StoreContext.connectorName may not be null or empty.",
@@ -56,10 +54,36 @@ public class StoreContextTest extends TestCase {
    */
   public void testEmptyConnectorName() {
     try {
-      new StoreContext("", null);
+      new StoreContext("", "test");
       fail("failed to throw exception");
     } catch (IllegalArgumentException e) {
       assertEquals("StoreContext.connectorName may not be null or empty.",
+                   e.getMessage());
+    }
+  }
+
+  /**
+   * Tests if the exception is thrown correctly when the type name is null.
+   */
+  public void testNullTypeName() {
+    try {
+      new StoreContext("test", null);
+      fail("failed to throw exception");
+    } catch (IllegalArgumentException e) {
+      assertEquals("StoreContext.typeName may not be null or empty.",
+                   e.getMessage());
+    }
+  }
+
+  /**
+   * Tests if the exception is thrown correctly if the type name is empty.
+   */
+  public void testEmptyTypeName() {
+    try {
+      new StoreContext("test", "");
+      fail("failed to throw exception");
+    } catch (IllegalArgumentException e) {
+      assertEquals("StoreContext.typeName may not be null or empty.",
                    e.getMessage());
     }
   }

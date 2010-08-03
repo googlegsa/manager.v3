@@ -105,6 +105,10 @@ public class MockInstantiator implements Instantiator {
     connectorMap.clear();
   }
 
+  private StoreContext getStoreContext(String name) {
+    return new StoreContext(name, "testType");
+  }
+
   /**
    * Creates and registers a suite of test connectors with this
    * {@link Instantiator}.
@@ -128,7 +132,15 @@ public class MockInstantiator implements Instantiator {
    * {@link Traverser} with this {@link Instantiator}.
    */
   public void setupTraverser(String traverserName, Traverser traverser) {
-    StoreContext storeContext = new StoreContext(traverserName);
+    setupTraverser(getStoreContext(traverserName), traverser);
+  }
+
+  /**
+   * Creates and registers a {@link Connector} for the provided
+   * {@link Traverser} with this {@link Instantiator}.
+   */
+  public void setupTraverser(StoreContext storeContext, Traverser traverser) {
+    String traverserName = storeContext.getConnectorName();
     ConnectorInterfaces interfaces =
         new ConnectorInterfaces(traverserName, null, nullAuthenticationManager,
             nullAuthorizationManager);
@@ -157,12 +169,13 @@ public class MockInstantiator implements Instantiator {
       e.printStackTrace();
       throw new RuntimeException();
     }
+    StoreContext storeContext = getStoreContext(connectorName);
     QueryTraverser queryTraverser =
         new QueryTraverser(new MockPusher(), traversalManager,
-            new MockTraversalStateStore(persistentStore, connectorName),
+            new MockTraversalStateStore(persistentStore, storeContext),
             connectorName, Context.getInstance().getTraversalContext());
 
-    setupTraverser(connectorName, queryTraverser);
+    setupTraverser(storeContext, queryTraverser);
   }
 
   public ConnectorType getConnectorType(String connectorTypeName) {
@@ -175,7 +188,8 @@ public class MockInstantiator implements Instantiator {
    * @return a new TraversalStateStore
    */
   public TraversalStateStore getTraversalStateStore(String connectorName) {
-    return new MockTraversalStateStore(persistentStore, connectorName);
+    return new MockTraversalStateStore(persistentStore,
+                                       getStoreContext(connectorName));
   }
 
   public void restartConnectorTraversal(String connectorName)

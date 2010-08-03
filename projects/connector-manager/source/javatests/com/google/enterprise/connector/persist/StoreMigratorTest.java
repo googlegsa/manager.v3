@@ -55,7 +55,7 @@ public class StoreMigratorTest extends TestCase {
     ArrayList<PersistentStore> singleStore;
     singleStore = new ArrayList<PersistentStore>();
     PersistentStore store = new MockPersistentStore();
-    StoreContext context = new StoreContext("name");
+    StoreContext context = new StoreContext("name", "type");
     storeObjects(store, context, true, true, true);
     singleStore.add(store);
 
@@ -76,7 +76,7 @@ public class StoreMigratorTest extends TestCase {
       for (int icp = 0; icp < isObjects.length; icp++) {
         for (int ic = 0; ic < isObjects.length; ic++) {
           for (int is = 0; is < isObjects.length; is++) {
-            context = new StoreContext("name" + i + icp + ic + is);
+            context = new StoreContext("name" + i + icp + ic + is, "type");
             storeObjects(store, context, isObjects[icp], isObjects[ic],
                 isObjects[is]);
           }

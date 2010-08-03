@@ -96,7 +96,7 @@ public class FileStore implements PersistentStore {
     // Process each connector store.
     for (File directory : directories) {
       String name = directory.getName();
-      StoreContext context = new StoreContext(name, directory);
+      StoreContext context = new StoreContext(name, typeName);
       FileStamp checkpointStamp =
           getStamp(context, getStoreFileName(context, stateName));
       FileStamp scheduleStamp =
@@ -120,7 +120,7 @@ public class FileStore implements PersistentStore {
     }
   }
 
-  private static FileStamp getStamp(StoreContext context, String filename) {
+  private FileStamp getStamp(StoreContext context, String filename) {
     return new FileStamp(getStoreFile(context, filename).lastModified());
   }
 
@@ -262,7 +262,7 @@ public class FileStore implements PersistentStore {
     }
     String xml = readStoreFile(context, TypeInfo.CONNECTOR_INSTANCE_XML);
     if (props != null || xml != null) {
-      String typeName = context.getConnectorDir().getParentFile().getName();
+      String typeName = context.getTypeName();
       return new Configuration(typeName, PropertiesUtils.toMap(props), xml);
     }
     return null;
@@ -323,16 +323,11 @@ public class FileStore implements PersistentStore {
    *
    * @param context a StoreContext
    */
-  private static void testStoreContext(StoreContext context) {
+  private void testStoreContext(StoreContext context) {
     Preconditions.checkNotNull(context, "StoreContext may not be null.");
-    // The StoreContext ConnectorName is now checked on a Precondition on
-    // the constructor.
-    File connectorDir = context.getConnectorDir();
-    Preconditions.checkNotNull(connectorDir,
-        "StoreContext.connectorDir may not be null.");
-    Preconditions.checkArgument(
-        (connectorDir.exists() && connectorDir.isDirectory()),
-        "StoreContext.connectorDir directory must exist: " + connectorDir);
+    Preconditions.checkNotNull(typeMap, "FileStore requires a TypeMap.");
+    // The StoreContext ConnectorName and TypeName are now checked as
+    // Preconditions on the StoreContext constructor.
   }
 
   /**
@@ -351,8 +346,11 @@ public class FileStore implements PersistentStore {
    * @param context a StoreContext
    * @param filename Filename of the on-disk store file.
    */
-  private static File getStoreFile(StoreContext context, String filename) {
-    return new File(context.getConnectorDir(), filename);
+  private File getStoreFile(StoreContext context, String filename) {
+    File typeDirectory =
+        new File(typeMap.getTypesDirectory(), context.getTypeName());
+    File connectorDir = new File(typeDirectory, context.getConnectorName());
+    return new File(connectorDir, filename);
   }
 
   /**
@@ -361,7 +359,7 @@ public class FileStore implements PersistentStore {
    * @param context a StoreContext
    * @param filename Filename of the on-disk store file.
    */
-  private static void deleteStoreFile(StoreContext context, String filename) {
+  private void deleteStoreFile(StoreContext context, String filename) {
     getStoreFile(context, filename).delete();
   }
 
@@ -371,12 +369,17 @@ public class FileStore implements PersistentStore {
    * @param context a StoreContext
    * @param data to write to file
    */
-  private static void writeStoreFile(StoreContext context, String filename,
+  private void writeStoreFile(StoreContext context, String filename,
       String data) {
     FileOutputStream fos = null;
     File storeFile = null;
     try {
       storeFile = getStoreFile(context, filename);
+      // Make sure the connectorDir exists.
+      File connectorDir = storeFile.getParentFile();
+      if (!connectorDir.exists()) {
+        connectorDir.mkdirs();
+      }
       fos = new FileOutputStream(storeFile);
       fos.write(data.getBytes());
     } catch (IOException e) {
@@ -401,7 +404,7 @@ public class FileStore implements PersistentStore {
    * @param filename Filename of the on-disk store file
    * @return String containing store file contents or null if none exists.
    */
-  private static String readStoreFile(StoreContext context, String filename) {
+  private String readStoreFile(StoreContext context, String filename) {
     FileInputStream fis = null;
     File storeFile = null;
     try {

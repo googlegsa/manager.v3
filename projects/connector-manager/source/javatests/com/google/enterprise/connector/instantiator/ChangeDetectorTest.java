@@ -50,7 +50,8 @@ public class ChangeDetectorTest extends TestCase {
 
   /** Adds an instance to the store and records the action. */
   private void addConnector(String connectorName) {
-    store.storeConnectorConfiguration(new StoreContext(connectorName),
+    store.storeConnectorConfiguration(
+        new StoreContext(connectorName, "testType"),
         new Configuration("testType", Collections.<String, String>emptyMap(),
                           null));
     expectedChanges.add(MockChangeListener.CONNECTOR_ADDED + connectorName);
@@ -58,7 +59,8 @@ public class ChangeDetectorTest extends TestCase {
 
   /** Deletes an instance from the store and records the action. */
   private void removeConnector(String connectorName) {
-    store.removeConnectorConfiguration(new StoreContext(connectorName));
+    store.removeConnectorConfiguration(
+        new StoreContext(connectorName, "testType"));
     expectedChanges.add(MockChangeListener.CONNECTOR_REMOVED + connectorName);
   }
 

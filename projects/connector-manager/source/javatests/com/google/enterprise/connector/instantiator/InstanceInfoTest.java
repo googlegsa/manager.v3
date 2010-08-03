@@ -16,6 +16,7 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.PropertiesUtils;
+import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.instantiator.InstanceInfo.FactoryCreationFailureException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.InstanceInfoException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.NoBeansFoundException;
@@ -26,7 +27,6 @@ import com.google.enterprise.connector.instantiator.InstanceInfo.PropertyProcess
 import com.google.enterprise.connector.instantiator.TypeInfo.TypeInfoException;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.FileStore;
-import com.google.enterprise.connector.persist.StoreContext;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.TestCase;
@@ -35,6 +35,8 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -43,9 +45,6 @@ import java.util.logging.Logger;
 public class InstanceInfoTest extends TestCase {
   private static final Logger LOGGER =
       Logger.getLogger(InstanceInfoTest.class.getName());
-
-  /* Only FileStore.getInventory needs a TypeMap, and we don't call that. */
-  private static final FileStore STORE = new FileStore();
 
   /**
    * Constructs a new Connector Instance based
@@ -59,11 +58,26 @@ public class InstanceInfoTest extends TestCase {
    */
   private InstanceInfo fromDirectory(String connectorName,
       File connectorDir, TypeInfo typeInfo) throws InstanceInfoException {
-    Configuration config = STORE.getConnectorConfiguration(
-        new StoreContext(connectorName, connectorDir));
-    assertNotNull(config);
-    assertNotNull(config.getMap());
-    return new InstanceInfo(connectorName, connectorDir, typeInfo, config);
+    try {
+      // Read the configuration from svn-controlled connectorDir.
+      // Note that this is not the test directory generally used for
+      // persistence, and it shouldn't be.  We want to avoid writing
+      // to svn-controlled directories when running the tests.
+      File propFile = new File(connectorDir, connectorName +".properties");
+      Properties props = PropertiesUtils.loadFromFile(propFile);
+      File xmlFile = new File(connectorDir, TypeInfo.CONNECTOR_INSTANCE_XML);
+      String xml = null;
+      if (xmlFile.exists()) {
+        xml = StringUtils.streamToStringAndThrow(new FileInputStream(xmlFile));
+      }
+      Configuration config = new Configuration(
+          typeInfo.getConnectorTypeName(), PropertiesUtils.toMap(props), xml);
+      return new InstanceInfo(connectorName, connectorDir, typeInfo, config);
+    } catch (IOException ioe) {
+      throw new InstanceInfoException("I/O error:", ioe);
+    } catch (PropertiesException pe) {
+      throw new InstanceInfoException("Properties error:", pe);
+    }
   }
 
   /**
@@ -189,30 +203,55 @@ public class InstanceInfoTest extends TestCase {
     assertNull(instanceInfo);
   }
 
-  public final void testFromDirectoryEncrypted() {
-    // test encrypted property
+  /** Retrieve the TypeMap from the Spring Context. */
+  private TypeMap getTypeMap() {
+    return (TypeMap) Context.getInstance().getRequiredBean(
+        "TypeMap", TypeMap.class);
+  }
+
+  /** Test encrypted property */
+  public final void testFromDirectoryEncrypted() throws Exception {
     String resourceName =
         "testdata/connectorTypeTests/positive/connectorType.xml";
-    TypeInfo typeInfo = makeValidTypeInfo(resourceName);
-    Properties props = new Properties();
-    props.setProperty("RepositoryFile", "MockRepositoryEventLog3.txt");
-    props.setProperty("Password", "password_test");
-    InstanceInfo instanceInfo = null;
-    boolean exceptionThrown = false;
+    String testDirName = "testdata/tmp/InstantiatorTests";
+    String connectorName = "fred";
+    String plainTextPassword = "password_test";
 
-    String testDirName = "testdata/tempInstantiatorTests";
+    // Create a TypeMap for our custom type.
+    TypeMap typeMap = new TypeMap(resourceName, testDirName);
+    typeMap.init();
+    TypeInfo typeInfo = typeMap.getTypeInfo(
+        typeMap.getConnectorTypeNames().iterator().next());
+
     // Make sure that the test directory does not exist
-    File connectorDir = new File(testDirName);
+    File connectorDir = new File(typeInfo.getConnectorTypeDir(), connectorName);
     assertTrue(ConnectorTestUtils.deleteAllFiles(connectorDir));
     // Then recreate it empty
     assertTrue(connectorDir.mkdirs());
 
+    // Force use of FileStore PersistentStore.
+    FileStore fileStore = new FileStore();
+    fileStore.setTypeMap(typeMap);
+    InstanceInfo.setPersistentStore(fileStore);
+
+    // Jam a properties file with encrypted passwords into the connector dir,
+    // making it look like it was persisted.
+    Properties props = new Properties();
+    props.setProperty("RepositoryFile", "MockRepositoryEventLog3.txt");
+    props.setProperty("Password", plainTextPassword);
+    InstanceInfo instanceInfo = null;
+    boolean exceptionThrown = false;
+    File propFile = new File(connectorDir, connectorName + ".properties");
     try {
       // Write properties out to temp file
-      File temp = new File(connectorDir + File.separator + "fred.properties");
-      PropertiesUtils.storeToFile(props, temp, null);
+      PropertiesUtils.storeToFile(props, propFile, null);
 
-      instanceInfo = fromDirectory("fred", connectorDir, typeInfo);
+      // Make sure the password does not occur in plain-text in the file.
+      String temp = StringUtils.streamToString(new FileInputStream(propFile));
+      assertFalse(temp.contains(plainTextPassword));
+
+      // Now instantiate the connector with those properties.
+      instanceInfo = fromDirectory(connectorName, connectorDir, typeInfo);
     } catch (InstanceInfoException e) {
       exceptionThrown = true;
       LOGGER.log(Level.WARNING,
@@ -224,15 +263,14 @@ public class InstanceInfoTest extends TestCase {
     }
     assertFalse(exceptionThrown);
 
-    // Check properties
-    Properties instanceProps = PropertiesUtils.fromMap(
-        instanceInfo.getConnectorConfiguration().getMap());
-    assertEquals("password_test", instanceProps.getProperty("Password"));
+    // Check that the password is decrypted properly in the configuration.
+    Configuration config = instanceInfo.getConnectorConfiguration();
+    assertEquals(plainTextPassword, config.getMap().get("Password"));
     assertEquals("MockRepositoryEventLog3.txt",
-        instanceProps.getProperty("RepositoryFile"));
+                 config.getMap().get("RepositoryFile"));
 
     // Clean up temp directory and files
-    assertTrue(ConnectorTestUtils.deleteAllFiles(connectorDir));
+    assertTrue(ConnectorTestUtils.deleteAllFiles(new File(testDirName)));
   }
 
   private TypeInfo makeValidTypeInfo(String resourceName) {
