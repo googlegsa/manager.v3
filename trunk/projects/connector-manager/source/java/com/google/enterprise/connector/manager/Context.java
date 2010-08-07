@@ -246,7 +246,7 @@ public class Context {
   private Manager manager = null;
   private TraversalScheduler traversalScheduler = null;
   private TraversalContext traversalContext = null;
-
+  private SpringInstantiator instantiator = null;
 
   // control variables for turning off normal functionality - testing only
   private String standaloneContextLocation;
@@ -373,20 +373,19 @@ public class Context {
    * Start up the Scheduler.
    */
   private void startScheduler() {
-    if (traversalScheduler != null) {
-      return;
-    }
     traversalScheduler =
         (TraversalScheduler) getRequiredBean("TraversalScheduler",
             TraversalScheduler.class);
-    traversalScheduler.init();
+    if (traversalScheduler != null) {
+      traversalScheduler.init();
+    }
   }
 
   /**
    * Start up the Instantiator.
    */
   private void startInstantiator() {
-    SpringInstantiator instantiator =
+    instantiator =
         (SpringInstantiator) getBean("Instantiator", SpringInstantiator.class);
     if (instantiator != null) {
       instantiator.init();
@@ -628,16 +627,19 @@ public class Context {
     return applicationContext;
   }
 
-  public void shutdown(boolean force) {
-    LOGGER.log(Level.INFO, "shutdown");
+  public synchronized void shutdown(boolean force) {
+    LOGGER.info("Shutdown initiated...");
     stopServices(force);
-    if (!isFeeding) {
-      started = false;
-    } else if (null != traversalScheduler) {
-      traversalScheduler.shutdown(force,
-          ThreadPool.DEFAULT_SHUTDOWN_TIMEOUT_MILLIS);
-      started = false;
+    if (null != traversalScheduler) {
+      traversalScheduler.shutdown();
+      traversalScheduler = null;
     }
+    if (null != instantiator) {
+      instantiator.shutdown(force,
+          ThreadPool.DEFAULT_SHUTDOWN_TIMEOUT_MILLIS);
+      instantiator = null;
+    }
+    started = false;
   }
 
   /**
