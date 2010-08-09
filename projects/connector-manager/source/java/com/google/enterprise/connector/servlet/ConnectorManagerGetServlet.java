@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,7 +30,6 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * An abstract class for Connector Manager GET servlets.
  * It contains an abstract method "processDoGet".
- *
  */
 public abstract class ConnectorManagerGetServlet extends HttpServlet {
 
@@ -79,8 +77,7 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
         lang = null;
       }
 
-      ServletContext servletContext = this.getServletContext();
-      Manager manager = Context.getInstance(servletContext).getManager();
+      Manager manager = Context.getInstance().getManager();
 
       processDoGet(connectorName, lang, manager, out);
     } finally {
@@ -107,7 +104,7 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
       ConnectorMessageCode status, ConfigureResponse configRes) {
     writeConfigureResponse(out, status, configRes, true);
   }
-  
+
   /**
    * Write connector configuration to XML response
    *
