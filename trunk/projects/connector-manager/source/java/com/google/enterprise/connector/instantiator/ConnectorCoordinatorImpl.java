@@ -298,20 +298,18 @@ class ConnectorCoordinatorImpl implements
   }
 
   /**
-   * Sets the stringified version of traversal {@link Schedule} for the
-   * {@link Connector}.
+   * Sets the traversal {@link Schedule} for the {@link Connector}.
    *
-   * @param connectorSchedule String to store or null unset any existing
-   *        schedule.
+   * @param connectorSchedule Schedule to store or null to unset any existing
+   *        Schedule.
    * @throws ConnectorNotFoundException if the connector is not found
    */
   /* @Override */
-  public void setConnectorSchedule(String connectorSchedule)
+  public void setConnectorSchedule(Schedule connectorSchedule)
       throws ConnectorNotFoundException {
     synchronized(this) {
       // Persistently store the new schedule.
-      getInstanceInfo().setConnectorSchedule(
-          (connectorSchedule == null) ? null : new Schedule(connectorSchedule));
+      getInstanceInfo().setConnectorSchedule(connectorSchedule);
     }
     // This must not be called while holding the lock.
     changeDetector.detect();
@@ -339,18 +337,18 @@ class ConnectorCoordinatorImpl implements
   }
 
   /**
-   * Fetches the stringified version of traversal {@link Schedule} for the
-   * {@link Connector}.
+   * Fetches the traversal {@link Schedule} for the {@link Connector}.
    *
-   * @return the schedule String, or null if there is no stored schedule
+   * @return the Schedule, or null if there is no stored Schedule
    *         for this connector.
    * @throws ConnectorNotFoundException if the connector is not found
    */
   /* @Override */
-  public synchronized String getConnectorSchedule()
+  public synchronized Schedule getConnectorSchedule()
       throws ConnectorNotFoundException {
+    // Fetch the Schedule and Update the cache while we're at it.
     traversalSchedule = getInstanceInfo().getConnectorSchedule();
-    return (traversalSchedule == null) ? null : traversalSchedule.toString();
+    return traversalSchedule;
   }
 
   /**
@@ -377,7 +375,7 @@ class ConnectorCoordinatorImpl implements
    * @param state a String representation of the traversal state.
    */
   /* @Override */
-  public synchronized void connectorCheckpointChanged(String checkpoint) {
+  public void connectorCheckpointChanged(String checkpoint) {
     // TODO: actually detect transition from non-null to null?
     // If checkpoint has been nulled, then traverse the repository from scratch.
     if (checkpoint == null) {
@@ -416,20 +414,19 @@ class ConnectorCoordinatorImpl implements
   }
 
   /**
-   * Sets the configuration for this {@link ConnectorCoordinator}. If this
-   * {@link ConnectorCoordinator} supports persistence this will persist the new
-   * configuration.
+   * Sets the {@link Configuration} for this {@link ConnectorCoordinator}.
+   * If this {@link ConnectorCoordinator} supports persistence this will
+   * persist the new Configuration.
    */
   /* @Override */
-  public ConfigureResponse setConnectorConfig(TypeInfo newTypeInfo,
-      Map<String, String> configMap, Locale locale, boolean update)
+  public ConfigureResponse setConnectorConfiguration(TypeInfo newTypeInfo,
+      Configuration configuration, Locale locale, boolean update)
       throws ConnectorNotFoundException, ConnectorExistsException,
       InstantiatorException {
     LOGGER.info("Configuring connector " + name);
     ConfigureResponse response = null;
     synchronized(this) {
       resetBatch();
-
       if (instanceInfo != null) {
         if (!update) {
           throw new ConnectorExistsException();
@@ -437,15 +434,11 @@ class ConnectorCoordinatorImpl implements
         if (newTypeInfo.getConnectorTypeName().equals(
             typeInfo.getConnectorTypeName())) {
           File connectorDir = instanceInfo.getConnectorDir();
-          Configuration oldConfig = instanceInfo.getConnectorConfiguration();
-          Configuration newConfig = new Configuration(
-              newTypeInfo.getConnectorTypeName(), configMap,
-              ((oldConfig != null) ? oldConfig.getXml() : null));
-          response = resetConfig(connectorDir, typeInfo, newConfig, locale);
+          response = resetConfig(connectorDir, typeInfo, configuration, locale);
         } else {
           // An existing connector is being given a new type - drop then add.
           removeConnector();
-          response = createNewConnector(newTypeInfo, configMap, locale);
+          response = createNewConnector(newTypeInfo, configuration, locale);
           if (response != null) {
             // TODO: We need to restore original Connector config. This is
             // necessary once we allow update a Connector with new ConnectorType.
@@ -457,7 +450,7 @@ class ConnectorCoordinatorImpl implements
         if (update) {
           throw new ConnectorNotFoundException();
         }
-        response = createNewConnector(newTypeInfo, configMap, locale);
+        response = createNewConnector(newTypeInfo, configuration, locale);
       }
     }
     if (response == null) {
@@ -468,13 +461,9 @@ class ConnectorCoordinatorImpl implements
   }
 
   /* @Override */
-  public synchronized Map<String, String> getConnectorConfig()
+  public synchronized Configuration getConnectorConfiguration()
       throws ConnectorNotFoundException {
-    Configuration config = getInstanceInfo().getConnectorConfiguration();
-    if (config != null) {
-      return config.getMap();
-    }
-    return null;
+    return getInstanceInfo().getConnectorConfiguration();
   }
 
   /**
@@ -731,7 +720,7 @@ class ConnectorCoordinatorImpl implements
   }
 
   private ConfigureResponse createNewConnector(TypeInfo newTypeInfo,
-      Map<String, String> config, Locale locale) throws InstantiatorException {
+      Configuration config, Locale locale) throws InstantiatorException {
     if (newTypeInfo == null) {
       throw new IllegalStateException(
           "Create new connector with no type specified.");
@@ -741,10 +730,11 @@ class ConnectorCoordinatorImpl implements
           "Create new connector when one already exists.");
     }
     File connectorDir = makeConnectorDirectory(name, newTypeInfo);
+    String configXml = (config.getXml() != null) ? config.getXml() :
+        getConnectorInstancePrototype(name, newTypeInfo);
+    Configuration configuration = new Configuration(
+        newTypeInfo.getConnectorTypeName(), config.getMap(), configXml);
     try {
-      String configXml = getConnectorInstancePrototype(name, newTypeInfo);
-      Configuration configuration = new Configuration(
-          newTypeInfo.getConnectorTypeName(), config, configXml);
       ConfigureResponse result =
           resetConfig(connectorDir, newTypeInfo, configuration, locale);
       if (result != null && result.getMessage() != null) {
