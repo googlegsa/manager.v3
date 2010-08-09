@@ -25,6 +25,7 @@ import com.google.enterprise.connector.persist.MockPersistentStore;
 import com.google.enterprise.connector.persist.PersistentStore;
 import com.google.enterprise.connector.persist.StoreContext;
 import com.google.enterprise.connector.pusher.MockPusher;
+import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
@@ -263,23 +264,28 @@ public class MockInstantiator implements Instantiator {
       throw new UnsupportedOperationException(
           "MockInstantiator does not support changing a connectors type");
     }
-    return cc.setConnectorConfig(null, configKeys, locale, update);
+    return cc.setConnectorConfiguration(null,
+        new Configuration(typeName, configKeys, null), locale, update);
   }
 
   public Map<String, String> getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException {
-    return getConnectorCoordinator(connectorName).getConnectorConfig();
+    Configuration configuration =
+        getConnectorCoordinator(connectorName).getConnectorConfiguration();
+    return (configuration == null) ? null : configuration.getMap();
   }
 
   public void setConnectorSchedule(String connectorName,
       String connectorSchedule) throws ConnectorNotFoundException {
     getConnectorCoordinator(connectorName).setConnectorSchedule(
-        connectorSchedule);
+        (connectorSchedule == null) ? null : new Schedule(connectorSchedule));
   }
 
   public String getConnectorSchedule(String connectorName)
       throws ConnectorNotFoundException {
-    return getConnectorCoordinator(connectorName).getConnectorSchedule();
+    Schedule schedule =
+        getConnectorCoordinator(connectorName).getConnectorSchedule();
+    return (schedule == null) ? null : schedule.toString();
   }
 
   public void setConnectorState(String connectorName, String state)

@@ -14,12 +14,13 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.common.PropertiesUtils;
+import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
+import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
@@ -28,6 +29,8 @@ import junit.framework.TestCase;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import org.springframework.core.io.Resource;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
@@ -77,17 +80,15 @@ public class ConnectorCoordinatorTest extends TestCase {
      * already have been created.
      */
     String typeName = "TestConnectorA";
-    String language = "en";
     String jsonConfigString =
         "{Username:foo, Password:bar, Color:red, "
             + "RepositoryFile:MockRepositoryEventLog3.txt}";
-    updateConnectorTest(instance, typeName, language, false, jsonConfigString);
+    updateConnectorTest(instance, typeName, false, jsonConfigString);
     removeConnector(instance);
   }
 
   public void testCreateUpdateDestroy() throws Exception {
     final String typeName = "TestConnectorB";
-    final String language = "en";
     final String name = "connector2";
     final ConnectorCoordinatorImpl instance = newCoordinator(name);
     assertFalse(instance.exists());
@@ -99,8 +100,7 @@ public class ConnectorCoordinatorTest extends TestCase {
       String jsonConfigString =
           "{Username:foo, Password:bar, Flavor:minty-fresh, "
               + "RepositoryFile:MockRepositoryEventLog3.txt}";
-      updateConnectorTest(instance, typeName, language, false,
-          jsonConfigString);
+      updateConnectorTest(instance, typeName, false, jsonConfigString);
     }
 
     {
@@ -111,13 +111,107 @@ public class ConnectorCoordinatorTest extends TestCase {
       String jsonConfigString =
           "{Username:foo, Password:bar, Flavor:butterscotch, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
-      updateConnectorTest(instance, typeName, language, true, jsonConfigString);
+      updateConnectorTest(instance, typeName, true, jsonConfigString);
     }
     removeConnector(instance);
   }
 
+
+  public void testCreateWithOutConfigXml() throws Exception {
+    final String name = "connector1";
+    final ConnectorCoordinatorImpl instance = newCoordinator(name);
+    assertFalse(instance.exists());
+
+    String typeName = "TestConnectorA";
+    String jsonConfigString =
+        "{Username:foo, Password:bar, Color:red, "
+            + "RepositoryFile:MockRepositoryEventLog3.txt}";
+    // Has knowledge that updateConnectorTest passes null for configXml.
+    updateConnectorTest(instance, typeName, false, jsonConfigString);
+
+    // Test that the Configuration.configXml returned either contains null or
+    // the connectorInstancePrototype for this connectorType.  Either is OK.
+    Configuration configuration = instance.getConnectorConfiguration();
+    if (configuration.getXml() != null) {
+      TypeInfo typeInfo = getTypeMap().getTypeInfo(typeName);
+      Resource resource = typeInfo.getConnectorInstancePrototype();
+      assertNotNull(resource);
+      assertEquals(configuration.getXml(),
+                   StringUtils.streamToString(resource.getInputStream()));
+    }
+
+    removeConnector(instance);
+  }
+
+  public void testCreateWithConfigXml() throws Exception {
+    final String name = "connector1";
+    final ConnectorCoordinatorImpl instance = newCoordinator(name);
+    assertFalse(instance.exists());
+
+    String typeName = "TestConnectorA";
+    String jsonConfigString =
+        "{Username:foo, Password:bar, Color:red, "
+            + "RepositoryFile:MockRepositoryEventLog3.txt}";
+
+    // Create a modified connectorInstance.xml.
+    TypeInfo typeInfo = getTypeMap().getTypeInfo(typeName);
+    Resource resource = typeInfo.getConnectorInstancePrototype();
+    String configXml = StringUtils.streamToString(resource.getInputStream());
+    configXml.replace("TestConnectorAInstance", "NewTestConnectorAInstance");
+
+    Configuration configuration = new Configuration(typeName,
+        new JsonObjectAsMap(new JSONObject(jsonConfigString)), configXml);
+
+    // This knows that updateConnectorTest passes null for configXml.
+    updateConnectorTest(instance, configuration, false);
+
+    // Test that the Configuration.configXml returned either contains null or
+    // the connectorInstancePrototype for this connectorType.  Either is OK.
+    Configuration storedConfiguration = instance.getConnectorConfiguration();
+    assertNotNull(storedConfiguration.getXml());
+    assertEquals(configuration.getXml(), storedConfiguration.getXml());
+
+    removeConnector(instance);
+  }
+
+  public void testUpdateWithConfigXml() throws Exception {
+    final String name = "connector1";
+    final ConnectorCoordinatorImpl instance = newCoordinator(name);
+    assertFalse(instance.exists());
+
+    String typeName = "TestConnectorA";
+    String jsonConfigString =
+        "{Username:foo, Password:bar, Color:red, "
+            + "RepositoryFile:MockRepositoryEventLog3.txt}";
+
+    Configuration configuration = new Configuration(typeName,
+        new JsonObjectAsMap(new JSONObject(jsonConfigString)), null);
+
+    // This knows that updateConnectorTest passes null for configXml.
+    updateConnectorTest(instance, configuration, false);
+
+    // Create a modified connectorInstance.xml.
+    TypeInfo typeInfo = getTypeMap().getTypeInfo(typeName);
+    Resource resource = typeInfo.getConnectorInstancePrototype();
+    String configXml = StringUtils.streamToString(resource.getInputStream());
+    configXml.replace("TestConnectorAInstance", "NewTestConnectorAInstance");
+
+    Configuration newConfiguration = new Configuration(typeName,
+        new JsonObjectAsMap(new JSONObject(jsonConfigString)), configXml);
+
+    // This knows that updateConnectorTest passes null for configXml.
+    updateConnectorTest(instance, newConfiguration, true);
+
+    // Test that the Configuration.configXml returned either contains null or
+    // the connectorInstancePrototype for this connectorType.  Either is OK.
+    Configuration storedConfiguration = instance.getConnectorConfiguration();
+    assertNotNull(storedConfiguration.getXml());
+    assertEquals(newConfiguration.getXml(), storedConfiguration.getXml());
+
+    removeConnector(instance);
+  }
+
   public void testUpdateType() throws Exception {
-    final String language = "en";
     final String name = "connector2";
     final ConnectorCoordinatorImpl instance = newCoordinator(name);
     assertFalse(instance.exists());
@@ -129,8 +223,7 @@ public class ConnectorCoordinatorTest extends TestCase {
       String jsonConfigString =
           "{Username:foo, Password:bar, Flavor:chocolate, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
-      updateConnectorTest(instance, typeName, language, false,
-          jsonConfigString);
+      updateConnectorTest(instance, typeName, false, jsonConfigString);
     }
 
     {
@@ -149,7 +242,7 @@ public class ConnectorCoordinatorTest extends TestCase {
       String jsonConfigString =
           "{Username:foo, Password:bar, Color:blue, "
               + "RepositoryFile:MockRepositoryEventLog2.txt}";
-      updateConnectorTest(instance, typeName, language, true, jsonConfigString);
+      updateConnectorTest(instance, typeName, true, jsonConfigString);
       assertFalse(originalConnectorDir.exists());
     }
   }
@@ -163,14 +256,12 @@ public class ConnectorCoordinatorTest extends TestCase {
      * already have been created.
      */
     String typeName = "TestConnectorA";
-    String language = "en";
     String jsonConfigString =
         "{Username:foo, Password:bar, Color:red, "
             + "RepositoryFile:MockRepositoryEventLog3.txt}";
-    updateConnectorTest(instance, typeName, language, false, jsonConfigString);
+    updateConnectorTest(instance, typeName, false, jsonConfigString);
     try {
-      updateConnectorTest(instance, typeName, language, false,
-          jsonConfigString);
+      updateConnectorTest(instance, typeName, false, jsonConfigString);
       fail("Exception expected.");
     } catch (ConnectorExistsException e) {
       // Expected.
@@ -187,12 +278,11 @@ public class ConnectorCoordinatorTest extends TestCase {
      * already have been created.
      */
     String typeName = "TestConnectorA";
-    String language = "en";
     String jsonConfigString =
         "{Username:foo, Password:bar, Color:red, "
             + "RepositoryFile:MockRepositoryEventLog3.txt}";
     try {
-      updateConnectorTest(instance, typeName, language, true, jsonConfigString);
+      updateConnectorTest(instance, typeName, true, jsonConfigString);
       fail("Exception expected.");
     } catch (ConnectorNotFoundException e) {
       // Expected.
@@ -285,28 +375,31 @@ public class ConnectorCoordinatorTest extends TestCase {
     private static final String JSON_CONFIG =
         "{Username:foo, Password:bar, Color:blue, "
         + "RepositoryFile:MockRepositoryEventLog2.txt}";
-    private final Map<String, String> config;
     private final TypeInfo typeInfo;
+    private final Configuration configuration;
 
     public ConfigUpdater(ConnectorCoordinatorImpl coordinator, int iterations)
         throws Exception {
       super(coordinator, iterations);
-      config = new JsonObjectAsMap(new JSONObject(JSON_CONFIG));
       typeInfo = getTypeMap().getTypeInfo(coordinator.getConnectorTypeName());
+      configuration = new Configuration(coordinator.getConnectorTypeName(),
+          new JsonObjectAsMap(new JSONObject(JSON_CONFIG)), null);
     }
 
     void update() throws Exception {
-      coordinator.setConnectorConfig(typeInfo, config, Locale.ENGLISH, true);
+      coordinator.setConnectorConfiguration(typeInfo, configuration,
+                                            Locale.ENGLISH, true);
     }
   }
 
   private class ScheduleUpdater extends Updater {
-    private final String schedule;
+    private final Schedule schedule;
 
     public ScheduleUpdater(ConnectorCoordinatorImpl coordinator,
                            int iterations) {
       super(coordinator, iterations);
-      schedule = coordinator.getConnectorName() + ":0:-1:0-0";
+      schedule = new Schedule(coordinator.getConnectorName(), false, 0, -1,
+                              "0-0");
     }
 
     void update() throws Exception {
@@ -337,12 +430,13 @@ public class ConnectorCoordinatorTest extends TestCase {
   }
 
   private class RunOnceUpdater extends Updater {
-    private final String schedule;
+    private final Schedule schedule;
 
     public RunOnceUpdater(ConnectorCoordinatorImpl coordinator,
                           int iterations) {
       super(coordinator, iterations);
-      schedule = coordinator.getConnectorName() + ":0:-1:0-0";
+      schedule = new Schedule(coordinator.getConnectorName(), false, 0, -1,
+                              "0-0");
     }
 
     void update() throws Exception {
@@ -355,24 +449,29 @@ public class ConnectorCoordinatorTest extends TestCase {
       String name, String jsonConfigString)
       throws JSONException, InstantiatorException, ConnectorNotFoundException,
       ConnectorExistsException, ConnectorTypeNotFoundException {
-    final String language = "en";
     final ConnectorCoordinatorImpl instance = newCoordinator(name);
     assertFalse(instance.exists());
 
-    updateConnectorTest(instance, typeName, language, false,
-          jsonConfigString);
+    updateConnectorTest(instance, typeName, false, jsonConfigString);
     return instance;
   }
 
   private void updateConnectorTest(ConnectorCoordinatorImpl instance,
-      String typeName, String language, boolean update, String jsonConfigString)
+      String typeName, boolean update, String jsonConfigString)
       throws JSONException, InstantiatorException, ConnectorNotFoundException,
       ConnectorExistsException, ConnectorTypeNotFoundException {
-    Map<String, String> config =
-        new JsonObjectAsMap(new JSONObject(jsonConfigString));
-    Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
-    ConfigureResponse response = instance.setConnectorConfig(
-        getTypeMap().getTypeInfo(typeName), config, locale, update);
+    Configuration configuration = new Configuration(typeName,
+        new JsonObjectAsMap(new JSONObject(jsonConfigString)), null);
+    updateConnectorTest(instance, configuration, update);
+  }
+
+  private void updateConnectorTest(ConnectorCoordinatorImpl instance,
+      Configuration configuration, boolean update)
+      throws InstantiatorException, ConnectorNotFoundException,
+      ConnectorExistsException, ConnectorTypeNotFoundException {
+    TypeInfo typeInfo = getTypeMap().getTypeInfo(configuration.getTypeName());
+    ConfigureResponse response = instance.setConnectorConfiguration(
+        typeInfo, configuration, Locale.ENGLISH, update);
     assertNull((response == null) ? null : response.getMessage(), response);
     InstanceInfo instanceInfo = instance.getInstanceInfo();
     File connectorDir = instanceInfo.getConnectorDir();
@@ -383,7 +482,7 @@ public class ConnectorCoordinatorTest extends TestCase {
     Map<String, String> instanceProps =
         instanceInfo.getConnectorConfiguration().getMap();
     String instancePasswd = instanceProps.get("Password");
-    String plainPasswd = config.get("Password");
+    String plainPasswd = configuration.getMap().get("Password");
     assertEquals(instancePasswd, plainPasswd);
 
     // Verify that the googleConnectorName property is intact.

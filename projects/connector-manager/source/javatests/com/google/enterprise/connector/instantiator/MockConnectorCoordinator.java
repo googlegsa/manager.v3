@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc.  All Rights Reserved.
+// Copyright 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,9 +32,7 @@ import com.google.enterprise.connector.traversal.BatchTimeout;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
 
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -102,18 +100,12 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     throw new UnsupportedOperationException();
   }
 
-   public synchronized Map<String, String> getConnectorConfig() {
-    Configuration config =
-        persistentStore.getConnectorConfiguration(storeContext);
-    if (config == null) {
-      return new HashMap<String, String>();
-    } else {
-      return config.getMap();
-    }
+   public synchronized Configuration getConnectorConfiguration() {
+    return persistentStore.getConnectorConfiguration(storeContext);
   }
 
-  public synchronized String getConnectorSchedule() {
-    return persistentStore.getConnectorSchedule(storeContext).toString();
+  public synchronized Schedule getConnectorSchedule() {
+    return persistentStore.getConnectorSchedule(storeContext);
   }
 
   public synchronized String getConnectorTypeName() {
@@ -136,17 +128,17 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     stateStore.storeTraversalState(null);
   }
 
-  public ConfigureResponse setConnectorConfig(TypeInfo newTypeInfo,
-      Map<String, String> configMap, Locale locale, boolean update) {
-    persistentStore.storeConnectorConfiguration(storeContext,
-        new Configuration(null, configMap, null));
+  public ConfigureResponse setConnectorConfiguration(TypeInfo newTypeInfo,
+      Configuration configuration, Locale locale, boolean update) {
+    persistentStore.storeConnectorConfiguration(storeContext, configuration);
     return null;
   }
 
-  public synchronized void setConnectorSchedule(String connectorSchedule) {
-    Schedule schedule = new Schedule(connectorSchedule);
+  public synchronized void setConnectorSchedule(Schedule schedule) {
     persistentStore.storeConnectorSchedule(storeContext, schedule);
-    hostLoadManager.setLoad(schedule.getLoad());
+    if (schedule != null) {
+      hostLoadManager.setLoad(schedule.getLoad());
+    }
   }
 
   public synchronized void shutdown() {

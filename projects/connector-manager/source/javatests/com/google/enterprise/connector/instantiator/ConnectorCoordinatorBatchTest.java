@@ -20,6 +20,7 @@ import com.google.enterprise.connector.pusher.Pusher;
 import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.scheduler.LoadManager;
 import com.google.enterprise.connector.scheduler.LoadManagerFactory;
+import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SimpleDocument;
@@ -40,7 +41,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -73,7 +73,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
-    // Then recreate it empty
+    // Then recreate it empty.
     assertTrue(baseDirectory.mkdirs());
 
     Context.refresh();
@@ -133,9 +133,10 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     recordingLoadManager =
         (RecordingLoadManager) getLoadManagerFactory().newLoadManager("c1");
     recordingLoadManager.reset();
-    Map<String, String> config = new HashMap<String, String>();
-    coordinator.setConnectorConfig(typeInfo, config, locale, false);
-    coordinator.setConnectorSchedule("c1:1000:0:0-0");
+    Configuration config = new Configuration(
+        typeInfo.getConnectorTypeName(), new HashMap<String, String>(), null);
+    coordinator.setConnectorConfiguration(typeInfo, config, locale, false);
+    coordinator.setConnectorSchedule(new Schedule("c1:1000:0:0-0"));
   }
 
   public void testCreateRunRemoveLoop() throws Exception {
@@ -220,7 +221,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   public void testDisabledTraversal() throws Exception {
     createPusherAndCoordinator();
     // Disable traversal schedule.  No batch should run.
-    coordinator.setConnectorSchedule("#c1:1000:0:0-0");
+    coordinator.setConnectorSchedule(new Schedule("#c1:1000:0:0-0"));
     assertFalse(coordinator.startBatch());
     assertNull(recordingLoadManager.getBatchResult());
   }
@@ -228,7 +229,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   public void testScheduledTraversal() throws Exception {
     createPusherAndCoordinator();
     // With no traversal intervals, no batch should run.
-    coordinator.setConnectorSchedule("c1:1000:0:");
+    coordinator.setConnectorSchedule(new Schedule("c1:1000:0:"));
     assertFalse(coordinator.startBatch());
     assertNull(recordingLoadManager.getBatchResult());
   }
@@ -236,7 +237,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   public void testTraversalDelayPolicy1() throws Exception {
     createPusherAndCoordinator();
     // Force a POLLING wait.
-    coordinator.setConnectorSchedule("c1:1000:250:0-0");
+    coordinator.setConnectorSchedule(new Schedule("c1:1000:250:0-0"));
     coordinator.delayTraversal(TraversalDelayPolicy.POLL);
     assertFalse(coordinator.startBatch());
     assertNull(recordingLoadManager.getBatchResult());
@@ -251,7 +252,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   public void testTraversalDelayPolicy2() throws Exception {
     createPusherAndCoordinator();
     // Force a POLLING wait.
-    coordinator.setConnectorSchedule("c1:1000:500:0-0");
+    coordinator.setConnectorSchedule(new Schedule("c1:1000:500:0-0"));
     coordinator.delayTraversal(TraversalDelayPolicy.POLL);
     assertFalse(coordinator.startBatch());
     assertNull(recordingLoadManager.getBatchResult());
@@ -297,9 +298,9 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     tracker.blockUntilTraversing();
     assertEquals(1, tracker.getStartTraversalCount());
 
-    Map<String, String> configMap = coordinator.getConnectorConfig();
-    configMap.put("hi", "mom");
-    coordinator.setConnectorConfig(typeInfo, configMap, locale, true);
+    Configuration config = coordinator.getConnectorConfiguration();
+    config.getMap().put("hi", "mom");
+    coordinator.setConnectorConfiguration(typeInfo, config, locale, true);
     tracker.blockUntilTraversingInterrupted();
     assertEquals(1, tracker.getLoginCount());
     assertEquals(1, tracker.getInterruptedCount());
