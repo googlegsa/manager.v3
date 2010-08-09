@@ -1,4 +1,4 @@
-// Copyright 2006-2009 Google Inc. All Rights Reserved.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -95,8 +94,7 @@ public class UpdateConnectorNoGSA extends HttpServlet {
       try {
         res.setContentType(ServletUtil.MIMETYPE_HTML);
 
-        ServletContext servletContext = this.getServletContext();
-        Manager manager = Context.getInstance(servletContext).getManager();
+        Manager manager = Context.getInstance().getManager();
         out.print(UpdateConnector.handleDoGet(manager, writer.getBuffer()
             .toString(), connectorName, language, req.getContextPath()));
       } finally {
@@ -133,8 +131,7 @@ public class UpdateConnectorNoGSA extends HttpServlet {
         configData.put(name, req.getParameter(name));
       }
 
-      ServletContext servletContext = this.getServletContext();
-      Manager manager = Context.getInstance(servletContext).getManager();
+      Manager manager = Context.getInstance().getManager();
       ConfigureResponse configRes = null;
       try {
         configRes = manager.setConnectorConfig(connectorName, connectorType,

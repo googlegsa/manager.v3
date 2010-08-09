@@ -91,7 +91,7 @@ public class GetConfig extends HttpServlet {
       throws IOException, FileNotFoundException {
     NDC.push("Support");
     try {
-      Context context = Context.getInstance(this.getServletContext());
+      Context context = Context.getInstance();
 
       // Only allow incoming connections from the GSA or localhost.
       if (!ServletUtil.allowedRemoteAddr(context.getGsaFeedHost(),
@@ -133,7 +133,7 @@ public class GetConfig extends HttpServlet {
   @Override
   protected void doTrace(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
-    ServletUtil.dumpServletRequest(req, res);
+    ServletDump.dumpServletRequest(req, res);
   }
 
   /**

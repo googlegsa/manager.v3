@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2009 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -43,8 +43,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -686,75 +684,6 @@ public class ServletUtil {
       }
     }
     return buf.toString();
-  }
-
-  /**
-   * For Debugging: Write out the HttpServletRequest information.
-   * This writes an XML stream to the response output that describes
-   * most of the data received in the request structure.  It returns
-   * true, so that you may call it from doGet() like:
-   * <code>  if (dumpServletRequest(req, res)) return;</code>
-   * without javac complaining about unreachable code with a straight
-   * return.
-   *
-   * @param req An HttpServletRequest
-   * @param res An HttpServletResponse
-   * @return true
-   */
-  public static boolean dumpServletRequest(HttpServletRequest req,
-      HttpServletResponse res) throws IOException {
-    res.setContentType(ServletUtil.MIMETYPE_XML);
-    PrintWriter out = res.getWriter();
-    ServletUtil.writeRootTag(out, false);
-    ServletUtil.writeXMLTag(out, 2, "HttpServletRequest", false);
-    ServletUtil.writeXMLElement(out, 3, "Method", req.getMethod());
-    ServletUtil.writeXMLElement(out, 3, "AuthType", req.getAuthType());
-    ServletUtil.writeXMLElement(out, 3, "ContextPath", req.getContextPath());
-    ServletUtil.writeXMLElement(out, 3, "PathInfo", req.getPathInfo());
-    ServletUtil.writeXMLElement(out, 3, "PathTranslated",
-                                req.getPathTranslated());
-    ServletUtil.writeXMLElement(out, 3, "QueryString", req.getQueryString());
-    ServletUtil.writeXMLElement(out, 3, "RemoteUser", req.getRemoteUser());
-    ServletUtil.writeXMLElement(out, 3, "RequestURI", req.getRequestURI());
-    ServletUtil.writeXMLElement(out, 3, "RequestURL",
-                                req.getRequestURL().toString());
-    ServletUtil.writeXMLElement(out, 3, "ServletPath", req.getServletPath());
-    ServletUtil.writeXMLTag(out, 3, "Headers", false);
-    for (Enumeration<?> names = req.getHeaderNames(); names.hasMoreElements(); ) {
-      String name = (String)(names.nextElement());
-      for (Enumeration<?> e = req.getHeaders(name); e.hasMoreElements(); )
-        ServletUtil.writeXMLElement(out, 4, name, (String)(e.nextElement()));
-    }
-    ServletUtil.writeXMLTag(out, 3, "Headers", true);
-    ServletUtil.writeXMLTag(out, 2, "HttpServletRequest", true);
-    ServletUtil.writeXMLTag(out, 2, "ServletRequest", false);
-    ServletUtil.writeXMLElement(out, 3, "Protocol", req.getProtocol());
-    ServletUtil.writeXMLElement(out, 3, "Scheme", req.getScheme());
-    ServletUtil.writeXMLElement(out, 3, "ServerName", req.getServerName());
-    ServletUtil.writeXMLElement(out, 3, "ServerPort",
-                                String.valueOf(req.getServerPort()));
-    ServletUtil.writeXMLElement(out, 3, "RemoteAddr", req.getRemoteAddr());
-    ServletUtil.writeXMLElement(out, 3, "RemoteHost", req.getRemoteHost());
-    Enumeration<?> names;
-    ServletUtil.writeXMLTag(out, 3, "Attributes", false);
-    for (names = req.getAttributeNames(); names.hasMoreElements(); ) {
-      String name = (String)(names.nextElement());
-      ServletUtil.writeXMLElement(out, 4, name,
-                                  req.getAttribute(name).toString());
-    }
-    ServletUtil.writeXMLTag(out, 3, "Attributes", true);
-    ServletUtil.writeXMLTag(out, 3, "Parameters", false);
-    for (names = req.getParameterNames(); names.hasMoreElements(); ) {
-      String name = (String)(names.nextElement());
-      String[] params = req.getParameterValues(name);
-      for (int i = 0; i < params.length; i++)
-        ServletUtil.writeXMLElement(out, 4, name, params[i]);
-    }
-    ServletUtil.writeXMLTag(out, 3, "Parameters", true);
-    ServletUtil.writeXMLTag(out, 2, "ServletRequest", true);
-    ServletUtil.writeRootTag(out, true);
-    out.close();
-    return true;
   }
 
   /**

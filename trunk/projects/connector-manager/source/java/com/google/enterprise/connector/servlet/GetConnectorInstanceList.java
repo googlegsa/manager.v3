@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2009 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -69,8 +68,7 @@ public class GetConnectorInstanceList extends HttpServlet {
     PrintWriter out = res.getWriter();
     NDC.push("Config Manager");
     try {
-      ServletContext servletContext = this.getServletContext();
-      Manager manager = Context.getInstance(servletContext).getManager();
+      Manager manager = Context.getInstance().getManager();
       handleDoPost(manager, out);
     } finally {
       out.close();
