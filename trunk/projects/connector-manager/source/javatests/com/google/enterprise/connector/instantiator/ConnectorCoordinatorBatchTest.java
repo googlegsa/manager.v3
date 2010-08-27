@@ -38,6 +38,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
 import java.io.File;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -226,12 +227,93 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     assertNull(recordingLoadManager.getBatchResult());
   }
 
-  public void testScheduledTraversal() throws Exception {
+  public void testLegacyDisabledTraversal() throws Exception {
+    createPusherAndCoordinator();
+    // Legacy disabled traversal schedule was interval of 1-1.
+    // No batch should run.
+    coordinator.setConnectorSchedule(new Schedule("c1:1000:0:1-1"));
+    assertFalse(coordinator.startBatch());
+    assertNull(recordingLoadManager.getBatchResult());
+  }
+
+  public void testNoTraversalIntervals() throws Exception {
     createPusherAndCoordinator();
     // With no traversal intervals, no batch should run.
     coordinator.setConnectorSchedule(new Schedule("c1:1000:0:"));
     assertFalse(coordinator.startBatch());
     assertNull(recordingLoadManager.getBatchResult());
+  }
+
+  public void testOutsideTraversalIntervals() throws Exception {
+    createPusherAndCoordinator();
+    // If current time is outside traversal intervals, no batch should run.
+    Calendar now = Calendar.getInstance();
+    int hour = now.get(Calendar.HOUR_OF_DAY);
+    String intervals;
+    if (hour < 2 ) {
+      intervals = (hour + 2) + "-24";
+    } else if (hour >= 22) {
+      intervals = "0-" + hour;
+    } else {
+      intervals = "0-" + hour + ":" + (hour + 2) + "-24";
+    }
+    Schedule schedule = new Schedule("c1:1000:0:" + intervals);
+    coordinator.setConnectorSchedule(schedule);
+    assertFalse(coordinator.startBatch());
+    assertNull(recordingLoadManager.getBatchResult());
+  }
+
+  public void testOutsideWrappedTraversalIntervals() throws Exception {
+    createPusherAndCoordinator();
+    // If current time is outside a traversal interval that wraps around
+    // midnight, no batch should run.
+    Calendar now = Calendar.getInstance();
+    int hour = now.get(Calendar.HOUR_OF_DAY);
+
+    // Can't test this if we are too close to midnight.
+    // TODO: Fix this when we have a Mockable Clock.
+    if (hour > 0 && hour < 22) {
+      String interval = (hour + 2) + "-" + hour;
+      Schedule schedule = new Schedule("c1:1000:0:" + interval);
+      coordinator.setConnectorSchedule(schedule);
+      assertFalse(coordinator.startBatch());
+      assertNull(recordingLoadManager.getBatchResult());
+    }
+  }
+
+  public void testTraversalIntervals() throws Exception {
+    createPusherAndCoordinator();
+    // If current time is inside traversal intervals, a batch should run.
+    Calendar now = Calendar.getInstance();
+    int hour = now.get(Calendar.HOUR_OF_DAY);
+    String intervals;
+    if (hour <= 2 ) {
+      intervals = hour + "-" + (hour + 2) + ":12-23";
+    } else if (hour >= 22) {
+      intervals = "0-20:" + hour + "-24";
+    } else {
+      intervals = "0-" + (hour - 2) + ":" + hour + "-" + (hour + 2);
+    }
+    Schedule schedule = new Schedule("c1:1000:0:" + intervals);
+    coordinator.setConnectorSchedule(schedule);
+    assertTrue(coordinator.startBatch());
+  }
+
+  public void testWrappedTraversalIntervals() throws Exception {
+    createPusherAndCoordinator();
+    // If current time is inside a traversal interval that wraps
+    // around midnight, a batch should run. Regression test for Issue 217.
+    Calendar now = Calendar.getInstance();
+    int hour = now.get(Calendar.HOUR_OF_DAY);
+    String interval;
+    if (hour >= 20) {
+      interval = "20-1";
+    } else {
+      interval = (hour + 3) + "-" + (hour + 1);
+    }
+    Schedule schedule = new Schedule("c1:1000:0:" + interval);
+    coordinator.setConnectorSchedule(schedule);
+    assertTrue(coordinator.startBatch());
   }
 
   public void testTraversalDelayPolicy1() throws Exception {
