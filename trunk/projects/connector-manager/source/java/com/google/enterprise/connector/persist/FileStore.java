@@ -65,8 +65,12 @@ public class FileStore implements PersistentStore {
     Preconditions.checkNotNull(typeMap, "FileStore requires a TypeMap");
     ImmutableMap.Builder<StoreContext, ConnectorStamps> mapBuilder =
         new ImmutableMap.Builder<StoreContext, ConnectorStamps>();
-    for (String typeName : typeMap.getConnectorTypeNames()) {
-      processTypeDir(typeName, mapBuilder);
+    File[] directories =
+        typeMap.getTypesDirectory().listFiles(CONNECTOR_TYPE_FILTER);
+    if (directories != null) {
+      for (File typeDirectory : directories) {
+        processTypeDir(typeDirectory, mapBuilder);
+      }
     }
     return mapBuilder.build();
   }
@@ -78,14 +82,9 @@ public class FileStore implements PersistentStore {
     }
   };
 
-  private void processTypeDir(String typeName,
+  private void processTypeDir(File typeDirectory,
       ImmutableMap.Builder<StoreContext, ConnectorStamps> mapBuilder) {
-    File typeDirectory = new File(typeMap.getTypesDirectory(), typeName);
-    if (!typeDirectory.exists()) {
-      LOGGER.fine("No connectors of type " + typeName + " found.");
-      return;
-    }
-
+    String typeName = typeDirectory.getName();
     File[] directories = typeDirectory.listFiles(CONNECTOR_TYPE_FILTER);
     if (directories == null) {
       // This means the directory is empty - no connector instances.
