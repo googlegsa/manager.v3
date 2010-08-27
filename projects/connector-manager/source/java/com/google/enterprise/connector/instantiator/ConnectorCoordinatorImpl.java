@@ -555,8 +555,16 @@ class ConnectorCoordinatorImpl implements
       if (0 == endHour) {
         endHour = 24;
       }
-      if ((hour >= startHour) && (hour < endHour)) {
-        return true;
+      if (endHour < startHour) {
+        // The traversal interval straddles midnight.
+        if ((hour >= startHour) || (hour < endHour)) {
+          return true;
+        }
+      } else {
+        // The traversal interval falls wholly within the day.
+        if ((hour >= startHour) && (hour < endHour)) {
+          return true;
+        }
       }
     }
 
