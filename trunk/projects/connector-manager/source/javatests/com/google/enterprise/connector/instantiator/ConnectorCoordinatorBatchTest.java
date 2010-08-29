@@ -115,6 +115,12 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
         "ConnectorCoordinatorMap", ConnectorCoordinatorMap.class);
   }
 
+  /** Retrieve the ConnectorCoordinatorFactory from the Spring Context. */
+  private ConnectorCoordinatorImplFactory getCoordinatorFactory() {
+    return (ConnectorCoordinatorImplFactory) Context.getInstance().getRequiredBean(
+        "ConnectorCoordinatorFactory", ConnectorCoordinatorImplFactory.class);
+  }
+
   /** Retrieve the PusherFactory from the Spring Context. */
   private RecordingPusherFactory getPusherFactory() {
     return (RecordingPusherFactory) Context.getInstance().getRequiredBean(
@@ -395,7 +401,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
 
   public void testTimeoutBatch() throws Exception {
     // Override the default ThreadPool timeout with a much shorter timeout.
-    getCoordinatorMap().setThreadPool(
+    getCoordinatorFactory().setThreadPool(
         new ThreadPool(SHORT_TRAVERSAL_TIME_LIMIT_SECS));
     createPusherAndCoordinator();
     coordinator.startBatch();

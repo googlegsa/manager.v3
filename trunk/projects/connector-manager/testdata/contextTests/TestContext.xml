@@ -28,12 +28,17 @@
     </property>
   </bean>
 
-  <bean id="ConnectorCoordinatorMap"
-        class="com.google.enterprise.connector.instantiator.ConnectorCoordinatorMap">
+  <bean id="ConnectorCoordinatorFactory"
+        class="com.google.enterprise.connector.instantiator.ConnectorCoordinatorImplFactory">
     <property name="pusherFactory" ref="PusherFactory" />
     <property name="loadManagerFactory" ref="LoadManagerFactory"/>
     <property name="threadPool" ref="ThreadPool" />
     <property name="changeDetector" ref="ChangeDetector"/>
+  </bean>
+
+  <bean id="ConnectorCoordinatorMap"
+        class="com.google.enterprise.connector.instantiator.ConnectorCoordinatorMap">
+    <property name="connectorCoordinatorFactory" ref="ConnectorCoordinatorFactory" />
   </bean>
 
   <bean id="TypeMap"

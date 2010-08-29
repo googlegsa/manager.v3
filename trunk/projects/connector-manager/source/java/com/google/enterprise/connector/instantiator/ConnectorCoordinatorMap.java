@@ -14,9 +14,6 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.pusher.PusherFactory;
-import com.google.enterprise.connector.scheduler.LoadManagerFactory;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -26,10 +23,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class ConnectorCoordinatorMap {
   // State that is filled in by Spring.
-  private PusherFactory pusherFactory;
-  private LoadManagerFactory loadManagerFactory;
-  private ThreadPool threadPool;
-  private ChangeDetector changeDetector;
+  private ConnectorCoordinatorFactory connectorCoordinatorFactory;
 
   private final ConcurrentMap<String, ConnectorCoordinator> coordinatorMap;
 
@@ -38,54 +32,9 @@ public class ConnectorCoordinatorMap {
     coordinatorMap = new ConcurrentHashMap<String, ConnectorCoordinator>();
   }
 
-  /**
-   * Sets the {@link PusherFactory} used to create instances of
-   * {@link com.google.enterprise.connector.pusher.Pusher Pusher}
-   * for pushing documents to the GSA.
-   *
-   * @param pusherFactory a {@link PusherFactory} implementation.
-   */
-  public void setPusherFactory(PusherFactory pusherFactory) {
-    this.pusherFactory = pusherFactory;
-  }
-
-  /**
-   * Sets the {@link LoadManagerFactory} used to create instances of
-   * {@link com.google.enterprise.connector.scheduler.LoadManager LoadManager}
-   * for controlling feed rate.
-   *
-   * @param loadManagerFactory a {@link LoadManagerFactory}.
-   */
-  public void setLoadManagerFactory(LoadManagerFactory loadManagerFactory) {
-    this.loadManagerFactory = loadManagerFactory;
-  }
-
-  /**
-   * Sets the {@link ThreadPool} used for running traversals.
-   *
-   * @param threadPool a {@link ThreadPool} implementation.
-   */
-  public void setThreadPool(ThreadPool threadPool) {
-    this.threadPool = threadPool;
-  }
-
-  /**
-   * Sets the {@link ChangeDetector} used for invoking the local
-   * {@link ChangeHandler} for connector configuration, schedule, and
-   * checkpoint changes that are initiated by this Manager instance.
-   *
-   * @param changeDetector a {@link ChangeDetector} implementation.
-   */
-  /* It should be noted that there is a circular dependency here.
-   * ConnectorCoordinatorMap -> ChangeDetector -> ChangeListener ->
-   * ConnectorCoordinatorMap.  ConnectorCoordinatorMap supplies the
-   * ChangeDetector to the ConnectorCoordinatorImpl where it is used
-   * to trigger calls to its ChangeHandler methods.
-   * ChangeListenerImpl needs the ConnectorCoordinatorMap to locate
-   * the appropriate ChangeHandler for a named connector.
-   */
-  public void setChangeDetector(ChangeDetector changeDetector) {
-    this.changeDetector = changeDetector;
+  public void setConnectorCoordinatorFactory(
+      ConnectorCoordinatorFactory factory) {
+    connectorCoordinatorFactory = factory;
   }
 
   public void shutdown() {
@@ -102,8 +51,8 @@ public class ConnectorCoordinatorMap {
     ConnectorCoordinator connectorCoordinator =
         coordinatorMap.get(connectorName);
     if (connectorCoordinator == null) {
-      ConnectorCoordinator ci = new ConnectorCoordinatorImpl(connectorName,
-          pusherFactory, loadManagerFactory, threadPool, changeDetector);
+      ConnectorCoordinator ci =
+          connectorCoordinatorFactory.newConnectorCoordinator(connectorName);
       ConnectorCoordinator existing =
           coordinatorMap.putIfAbsent(connectorName, ci);
       connectorCoordinator = (existing == null) ? ci : existing;
