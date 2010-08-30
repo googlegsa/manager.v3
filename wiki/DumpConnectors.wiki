@@ -42,7 +42,7 @@ Connector Manager web application directory:
 }}}
 If you have configured an external database, you will need to include
 its database driver JAR file in the Java classpath.
-For instance, if the Oracle JDBC driver is located in Tomcat/lib:
+For instance, if the Oracle JDBC driver is located in `Tomcat/lib`:
 {{{
 % java -jar WEB-INF/lib/connector.jar -cp ../../lib/ojdbc6.jar ~/connectors.xml
 }}}
