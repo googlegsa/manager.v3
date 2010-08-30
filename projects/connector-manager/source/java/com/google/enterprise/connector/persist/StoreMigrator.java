@@ -48,78 +48,97 @@ public class StoreMigrator {
         ? Collections.<PersistentStore>emptyList() : legacyStores;
   }
 
-  // TODO: StoreContext instances are not portable, because they
-  // contain a connectorDir, which the JdbcStore does not have. That
-  // means that we cannot migrate from JdbcStore to FileStore, which
-  // requires the connectorDir. For generality, we need to store
-  // something in all stores that is enough for FileStore, either the
-  // connectorDir directly or more abstractly the type name.
+  /**
+   * Migrates data from all legacy stores to the configured PersistentStore.
+   */
   public void migrate() {
     for (PersistentStore legacyStore : legacyStores) {
-      ImmutableMap<StoreContext, ConnectorStamps> inventory =
-          legacyStore.getInventory();
-      for (StoreContext context : inventory.keySet()) {
-        // This double assignment ensures that we check the same
-        // object type that we're storing.
-        Configuration config = store.getConnectorConfiguration(context);
-        if (config == null) {
-          config = legacyStore.getConnectorConfiguration(context);
-          if (config != null) {
-            logMigration(legacyStore, context, "configuration");
-            store.storeConnectorConfiguration(context, config);
-          }
-        }
+      migrate(legacyStore, store, false);
+    }
+    checkMissing(store);
+  }
 
-        Schedule sched = store.getConnectorSchedule(context);
-        if (sched == null) {
-          sched = legacyStore.getConnectorSchedule(context);
-          if (sched != null) {
-            logMigration(legacyStore, context, "traversal schedule");
-            store.storeConnectorSchedule(context, sched);
-          }
+  /**
+   * Migrates data from the {@code sourceStore} to the {@code destStore}.
+   *
+   * @param sourceStore source {@link PersistentStore}
+   * @param destStore destination {@link PersistentStore}
+   * @param force if {@code true} overwrite existing data in the
+   *        {@code destStore}.
+   */
+  public static void migrate(PersistentStore sourceStore,
+      PersistentStore destStore, boolean force) {
+    ImmutableMap<StoreContext, ConnectorStamps> inventory =
+          sourceStore.getInventory();
+    for (StoreContext context : inventory.keySet()) {
+      // This double assignment ensures that we check the same
+      // object type that we're storing.
+      Configuration config = destStore.getConnectorConfiguration(context);
+      if (force || config == null) {
+        config = sourceStore.getConnectorConfiguration(context);
+        if (config != null) {
+          logMigration(sourceStore, destStore, context, "configuration");
+          destStore.storeConnectorConfiguration(context, config);
         }
-
-        String state = store.getConnectorState(context);
-        if (state == null) {
-          state = legacyStore.getConnectorState(context);
-          if (state != null) {
-            logMigration(legacyStore, context, "traversal state");
-            store.storeConnectorState(context, state);
-          }
+      }
+      Schedule sched = destStore.getConnectorSchedule(context);
+      if (force || sched == null) {
+        sched = sourceStore.getConnectorSchedule(context);
+        if (sched != null) {
+          logMigration(sourceStore, destStore, context, "traversal schedule");
+          destStore.storeConnectorSchedule(context, sched);
+        }
+      }
+      String state = destStore.getConnectorState(context);
+      if (force || state == null) {
+        state = sourceStore.getConnectorState(context);
+        if (state != null) {
+          logMigration(sourceStore, destStore, context, "traversal state");
+          destStore.storeConnectorState(context, state);
         }
       }
     }
+  }
 
-    // Check for missing objects in the production store.
+  /**
+   * Checks for missing persistently stored data in the
+   * {@code persistentStore}.  If items are missing from the store,
+   * log a message.
+   *
+   * @param persistentStore PersistentStore to check.
+   */
+  public static void checkMissing(PersistentStore persistentStore) {
+    // Check for missing objects in the specified store.
     ImmutableMap<StoreContext, ConnectorStamps> inventory =
-        store.getInventory();
+        persistentStore.getInventory();
     for (StoreContext context : inventory.keySet()) {
-      if (store.getConnectorConfiguration(context) == null) {
+      if (persistentStore.getConnectorConfiguration(context) == null) {
         logMissing(context, "configuration");
       }
-      if (store.getConnectorSchedule(context) == null) {
+      if (persistentStore.getConnectorSchedule(context) == null) {
         logMissing(context, "traversal schedule");
       }
-      if (store.getConnectorState(context) == null) {
+      if (persistentStore.getConnectorState(context) == null) {
         logMissing(context, "traversal state");
       }
     }
   }
 
-  private void logMigration(PersistentStore legacyStore,
+  private static void logMigration(
+      PersistentStore sourceStore, PersistentStore destStore,
       StoreContext context, String objectType) {
-    if (LOGGER.isLoggable(Level.CONFIG)) {
-      LOGGER.config("Migrating " + objectType + " information for connector "
-          + context.getConnectorName() + " from legacy storage "
-          + legacyStore.getClass().getName() + " to "
-          + store.getClass().getName());
+    if (LOGGER.isLoggable(Level.INFO)) {
+      LOGGER.info("Migrating " + objectType + " information for connector "
+          + context.getConnectorName() + " from "
+          + sourceStore.getClass().getName() + " to "
+          + destStore.getClass().getName());
     }
   }
 
-  private void logMissing(StoreContext context,
+  private static void logMissing(StoreContext context,
       String objectType) {
-    if (LOGGER.isLoggable(Level.CONFIG)) {
-      LOGGER.config("Connector " + context.getConnectorName()
+    if (LOGGER.isLoggable(Level.INFO)) {
+      LOGGER.info("Connector " + context.getConnectorName()
           + " lacks saved " + objectType + ".");
     }
   }
