@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Manager;
+import com.google.enterprise.connector.scheduler.Schedule;
 
 import java.io.PrintWriter;
 import java.util.logging.Logger;
-
 
 /**
  * Admin servlet to get the connector status for a given connector.
@@ -85,8 +84,8 @@ public class GetConnectorStatus extends ConnectorManagerGetServlet {
         StringBuilder buffer = new StringBuilder();
         ServletUtil.writeXMLTagWithAttrs(buffer, 2,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
-            ServletUtil.ATTRIBUTE_VERSION + "3" + ServletUtil.QUOTE,
-            false);
+            ServletUtil.ATTRIBUTE_VERSION + Schedule.CURRENT_VERSION
+            + ServletUtil.QUOTE, false);
         buffer.append(schedule);
         ServletUtil.writeXMLTag(buffer, 0,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES, true);
