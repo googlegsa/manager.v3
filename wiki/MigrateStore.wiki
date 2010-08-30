@@ -47,7 +47,7 @@ If you do not include the source and destination Persistent
 Stores on the command line, you will be prompted to choose
 from the available stores.
 
-The MigrateStore utility is built into the Connector Manager's
+The !MigrateStore utility is built into the Connector Manager's
 `connector.jar` file and is run by executing the `connector.jar`
 file using the` java -jar` command  from the Connector Manager 
 web application directory:
