@@ -32,7 +32,7 @@ usage: DumpConnectors [-?] [-v] <output_filename>
        output_filename Name of output XML file.
 }}}
 
-The DumpConnectors utility is built into the Connector Manager's
+The !DumpConnectors utility is built into the Connector Manager's
 `connector.jar` file and is run by executing the `connector.jar`
 file using the `java -jar` command from the
 Connector Manager web application directory:
