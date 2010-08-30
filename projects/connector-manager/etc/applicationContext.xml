@@ -66,7 +66,7 @@
         <prop key="config.change.detect.interval">0</prop>
 
         <!-- JDBC DataSource configuration. -->
-        <prop key="jdbc.datasource.url">jdbc:h2:${catalina.base}/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager</prop>
+        <prop key="jdbc.datasource.url">jdbc:h2:${catalina.base}/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager;AUTO_SERVER=TRUE;TRACE_LEVEL_FILE=1</prop>
         <prop key="jdbc.datasource.user">sa</prop>
         <prop key="jdbc.datasource.password"></prop>
 
@@ -173,7 +173,6 @@
   </bean>
 
   <!-- H2 embedded database configuration. -->
-  <!-- TODO: restore when H2 jar is added to third-party/prod
   <bean id="JdbcDataSource"
         class="org.h2.jdbcx.JdbcDataSource">
     <property name="URL" value="${jdbc.datasource.url}"/>
@@ -181,9 +180,8 @@
     <property name="password" value="${jdbc.datasource.password}"/>
   </bean>
   <bean id="JdbcStoreCreateTableDdl" class="java.lang.String">
-    <constructor-arg value="CREATE TABLE IF NOT EXIST {0} ( {1} INT IDENTITY PRIMARY KEY NOT NULL, {2} INT, {3} VARCHAR(64) NOT NULL, {4} VARCHAR(64) NOT NULL, {5} VARCHAR NULL )"/>
+    <constructor-arg value="CREATE TABLE IF NOT EXISTS {0} ( {1} INT IDENTITY PRIMARY KEY NOT NULL, {2} INT, {3} VARCHAR(64) NOT NULL, {4} VARCHAR(64) NOT NULL, {5} VARCHAR NULL )"/>
   </bean>
-  -->
 
   <!-- Microsoft SQL Server database configuration. -->
   <!--
@@ -235,7 +233,8 @@
   <!-- Persistent Store mechanism used to store the Connector Configuration,
        Connector Schedule, and Connector Traversal State.  This implementation
        stores the information in a JDBC accessible database.
-       Only one PersistentStore bean should be defined at this time.
+       One and only one bean named "PersistentStore" should be defined at any
+       time.
   -->
   <!-- The DDL statement is used to create the Connector instance configuration
        table if it does not already exist.
@@ -253,20 +252,17 @@
            connectors, it ranges from tens of bytes to a few kilobytes.
            The stored value may be NULL.
   -->
-  <!--
-  <bean id="PersistentStore"
+  <bean id="JdbcPersistentStore" name="PersistentStore"
         class="com.google.enterprise.connector.persist.JdbcStore">
     <property name="dataSource" ref="JdbcDataSource"/>
     <property name="createTableDdl" ref="JdbcStoreCreateTableDdl"/>
   </bean>
-  -->
 
   <!-- Persistent Store mechanism used to store the Connector Configuration,
-       Connector Schedule, and Connector Traversal State.  By default, this
-       information is stored in files in the Connector instance directory.
-       Only one PersistentStore bean should be defined at this time.
+       Connector Schedule, and Connector Traversal State.  This implementation
+       stores the information in files in the Connector instance directory.
   -->
-  <bean id="PersistentStore"
+  <bean id="FilePersistentStore"
         class="com.google.enterprise.connector.persist.FileStore">
     <property name="typeMap" ref="TypeMap"/>
   </bean>
@@ -289,7 +285,7 @@
     <constructor-arg index="0" ref="PersistentStore"/>
     <constructor-arg index="1">
       <list>
-        <!-- No legacy store. -->
+        <ref bean="FilePersistentStore"/>
       </list>
     </constructor-arg>
   </bean>
