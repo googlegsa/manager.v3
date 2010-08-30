@@ -255,37 +255,33 @@ public class MockInstantiator implements Instantiator {
     return getConnectorCoordinator(connectorName).getConnectorTypeName();
   }
 
-  public ConfigureResponse setConnectorConfig(String connectorName,
-      String typeName, Map<String, String> configKeys, Locale locale,
-      boolean update) throws ConnectorNotFoundException,
-      ConnectorExistsException, InstantiatorException {
+  public ConfigureResponse setConnectorConfiguration(String connectorName,
+      Configuration configuration, Locale locale, boolean update)
+      throws ConnectorNotFoundException, ConnectorExistsException,
+      InstantiatorException {
     ConnectorCoordinator cc = getConnectorCoordinator(connectorName);
-    if (!cc.getConnectorTypeName().equals(typeName)) {
-      throw new UnsupportedOperationException(
-          "MockInstantiator does not support changing a connectors type");
+    if (update) {
+      if (!cc.getConnectorTypeName().equals(configuration.getTypeName())) {
+        throw new UnsupportedOperationException(
+            "MockInstantiator does not support changing a connectors type");
+      }
     }
-    return cc.setConnectorConfiguration(null,
-        new Configuration(typeName, configKeys, null), locale, update);
+    return cc.setConnectorConfiguration(null, configuration, locale, update);
   }
 
-  public Map<String, String> getConnectorConfig(String connectorName)
+  public Configuration getConnectorConfiguration(String connectorName)
       throws ConnectorNotFoundException {
-    Configuration configuration =
-        getConnectorCoordinator(connectorName).getConnectorConfiguration();
-    return (configuration == null) ? null : configuration.getMap();
+    return getConnectorCoordinator(connectorName).getConnectorConfiguration();
   }
 
   public void setConnectorSchedule(String connectorName,
-      String connectorSchedule) throws ConnectorNotFoundException {
-    getConnectorCoordinator(connectorName).setConnectorSchedule(
-        (connectorSchedule == null) ? null : new Schedule(connectorSchedule));
+      Schedule schedule) throws ConnectorNotFoundException {
+    getConnectorCoordinator(connectorName).setConnectorSchedule(schedule);
   }
 
-  public String getConnectorSchedule(String connectorName)
+  public Schedule getConnectorSchedule(String connectorName)
       throws ConnectorNotFoundException {
-    Schedule schedule =
-        getConnectorCoordinator(connectorName).getConnectorSchedule();
-    return (schedule == null) ? null : schedule.toString();
+    return getConnectorCoordinator(connectorName).getConnectorSchedule();
   }
 
   public void setConnectorState(String connectorName, String state)

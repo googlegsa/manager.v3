@@ -16,6 +16,7 @@ package com.google.enterprise.connector.scheduler;
 
 import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.manager.Context;
+import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.instantiator.MockInstantiator;
@@ -33,6 +34,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Tests the Scheduler.
@@ -76,9 +78,8 @@ public class TraversalSchedulerTest extends TestCase {
       Instantiator instantiator) {
     for (Schedule schedule : schedules) {
       String connectorName = schedule.getConnectorName();
-      String connectorSchedule = schedule.toString();
       try {
-        instantiator.setConnectorSchedule(connectorName, connectorSchedule);
+        instantiator.setConnectorSchedule(connectorName, schedule);
       } catch (ConnectorNotFoundException e) {
         fail("Connector " + connectorName + " Not Found: " + e.toString());
       }
@@ -115,8 +116,10 @@ public class TraversalSchedulerTest extends TestCase {
   private void addConnector(Instantiator instantiator,
       String name, String typeName, String configString) {
     try {
-      instantiator.setConnectorConfig(name, typeName,
-          new JsonObjectAsMap(new JSONObject(configString)),
+      Map<String, String> configMap =
+          new JsonObjectAsMap(new JSONObject(configString));
+      Configuration config = new Configuration(typeName, configMap, null);
+      instantiator.setConnectorConfiguration(name, config,
           I18NUtil.getLocaleFromStandardLocaleString("en"), false);
     } catch (ConnectorExistsException cee) {
       fail(cee.toString());

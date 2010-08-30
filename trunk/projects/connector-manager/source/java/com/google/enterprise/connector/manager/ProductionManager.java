@@ -14,12 +14,15 @@
 
 package com.google.enterprise.connector.manager;
 
+import com.google.common.collect.Maps;
 import com.google.enterprise.connector.common.I18NUtil;
+import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
+import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
@@ -162,9 +165,10 @@ public class ProductionManager implements Manager {
     String connectorTypeName = null;
     try {
       connectorTypeName = instantiator.getConnectorTypeName(connectorName);
-      String schedule = instantiator.getConnectorSchedule(connectorName);
+      Schedule schedule = instantiator.getConnectorSchedule(connectorName);
       // TODO: resolve the third parameter - we need to give status a meaning
-      return new ConnectorStatus(connectorName, connectorTypeName, 0, schedule);
+      return new ConnectorStatus(connectorName, connectorTypeName, 0,
+          ((schedule == null) ? null : schedule.toString()));
     } catch (ConnectorNotFoundException e) {
       // TODO: this should become part of the signature - so we should just
       // let this exception bubble up
@@ -196,12 +200,20 @@ public class ProductionManager implements Manager {
 
   /* @Override */
   public ConfigureResponse setConnectorConfig(String connectorName,
-      String connectorTypeName, Map<String, String> configData,
+      String connectorTypeName, Map<String, String> configMap,
       String language, boolean update) throws ConnectorNotFoundException,
       PersistentStoreException, InstantiatorException {
-    Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
-    return instantiator.setConnectorConfig(connectorName, connectorTypeName,
-        configData, locale, update);
+    String configXml = null;
+    if (update) {
+      Configuration configuration =
+          instantiator.getConnectorConfiguration(connectorName);
+      if (connectorTypeName.equals(configuration.getTypeName())) {
+        configXml = configuration.getXml();
+      }
+    }
+    return instantiator.setConnectorConfiguration(connectorName,
+        new Configuration(connectorTypeName, configMap, configXml),
+        I18NUtil.getLocaleFromStandardLocaleString(language), update);
   }
 
   /* @Override */
@@ -228,7 +240,8 @@ public class ProductionManager implements Manager {
   /* @Override */
   public void setSchedule(String connectorName, String schedule)
       throws ConnectorNotFoundException, PersistentStoreException {
-    instantiator.setConnectorSchedule(connectorName, schedule);
+    instantiator.setConnectorSchedule(connectorName,
+        ((schedule == null) ? null : new Schedule(schedule)));
   }
 
   /* @Override */
@@ -246,7 +259,13 @@ public class ProductionManager implements Manager {
   /* @Override */
   public Map<String, String> getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException {
-    return instantiator.getConnectorConfig(connectorName);
+    Configuration configuration =
+        instantiator.getConnectorConfiguration(connectorName);
+    if (configuration == null) {
+      return Maps.newHashMap();
+    } else {
+      return configuration.getMap();
+    }
   }
 
   /* @Override */
