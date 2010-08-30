@@ -15,7 +15,6 @@
 package com.google.enterprise.connector.instantiator;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
 import com.google.enterprise.connector.common.ScheduledTimer;
 import com.google.enterprise.connector.common.ScheduledTimerTask;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
@@ -218,55 +217,36 @@ public class SpringInstantiator implements Instantiator {
   }
 
   /* @Override */
-  public ConfigureResponse setConnectorConfig(String connectorName,
-      String typeName, Map<String, String> configMap, Locale locale,
-      boolean update) throws ConnectorNotFoundException,
-      ConnectorExistsException, InstantiatorException {
+  public ConfigureResponse setConnectorConfiguration(String connectorName,
+      Configuration configuration, Locale locale, boolean update)
+      throws ConnectorNotFoundException, ConnectorExistsException,
+      InstantiatorException {
     LOGGER.info("Configuring connector: " + connectorName);
     TypeInfo typeInfo;
     try {
-      typeInfo = typeMap.getTypeInfo(typeName);
+      typeInfo = typeMap.getTypeInfo(configuration.getTypeName());
     } catch (ConnectorTypeNotFoundException ctnf) {
       throw new ConnectorNotFoundException("Incorrect type", ctnf);
     }
-
     ConnectorCoordinator ci = getOrAddConnectorCoordinator(connectorName);
-    String configXml = null;
-    if (update) {
-      Configuration configuration = ci.getConnectorConfiguration();
-      if (typeName.equals(configuration.getTypeName())) {
-        configXml = configuration.getXml();
-      }
-    }
-
-    return ci.setConnectorConfiguration(typeInfo,
-        new Configuration(typeName, configMap, configXml), locale, update);
+    return ci.setConnectorConfiguration(typeInfo, configuration, locale, update);
   }
 
   /* @Override */
-  public Map<String, String> getConnectorConfig(String connectorName)
+  public Configuration getConnectorConfiguration(String connectorName)
       throws ConnectorNotFoundException {
-    Configuration configuration =
-        getConnectorCoordinator(connectorName).getConnectorConfiguration();
-    if (configuration == null) {
-      return Maps.newHashMap();
-    } else {
-      return configuration.getMap();
-    }
+    return getConnectorCoordinator(connectorName).getConnectorConfiguration();
   }
 
   /* @Override */
-  public void setConnectorSchedule(String connectorName,
-      String connectorSchedule) throws ConnectorNotFoundException {
-    getConnectorCoordinator(connectorName).setConnectorSchedule(
-        (connectorSchedule == null) ? null : new Schedule(connectorSchedule));
-  }
-
-  /* @Override */
-  public String getConnectorSchedule(String connectorName)
+  public void setConnectorSchedule(String connectorName, Schedule schedule)
       throws ConnectorNotFoundException {
-    Schedule schedule =
-        getConnectorCoordinator(connectorName).getConnectorSchedule();
-    return (schedule == null) ? null : schedule.toString();
+    getConnectorCoordinator(connectorName).setConnectorSchedule(schedule);
+  }
+
+  /* @Override */
+  public Schedule getConnectorSchedule(String connectorName)
+      throws ConnectorNotFoundException {
+    return getConnectorCoordinator(connectorName).getConnectorSchedule();
   }
 }

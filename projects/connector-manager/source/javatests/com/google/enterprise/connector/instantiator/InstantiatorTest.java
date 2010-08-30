@@ -403,10 +403,12 @@ public class InstantiatorTest extends TestCase {
           instantiator.getConnectorCoordinator(name).getTraversalManager();
     }
 
-    Map<String, String> config =
+    Map<String, String> configMap =
         new JsonObjectAsMap(new JSONObject(jsonConfigString));
+    Configuration config = new Configuration(typeName, configMap, null);
+
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
-    instantiator.setConnectorConfig(name, typeName, config, locale, update);
+    instantiator.setConnectorConfiguration(name, config, locale, update);
 
     // Make sure that this connector now exists.
     assertTrue(connectorExists(name));
@@ -430,9 +432,10 @@ public class InstantiatorTest extends TestCase {
       assertNotSame(oldTraversersalManager, traversalManager);
 
     // the password will be decrypted in the InstanceInfo
-    Map<String, String> instanceProps = instantiator.getConnectorConfig(name);
+    Map<String, String> instanceProps =
+        instantiator.getConnectorConfiguration(name).getMap();
     String instancePasswd = instanceProps.get("Password");
-    String plainPasswd = config.get("Password");
+    String plainPasswd = config.getMap().get("Password");
     assertEquals(instancePasswd, plainPasswd);
   }
 }
