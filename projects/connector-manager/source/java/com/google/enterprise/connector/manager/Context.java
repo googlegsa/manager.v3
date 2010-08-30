@@ -634,18 +634,20 @@ public class Context {
   }
 
   public synchronized void shutdown(boolean force) {
-    LOGGER.info("Shutdown initiated...");
-    stopServices(force);
-    if (null != traversalScheduler) {
-      traversalScheduler.shutdown();
-      traversalScheduler = null;
+    if (started) {
+      LOGGER.info("Shutdown initiated...");
+      stopServices(force);
+      if (null != traversalScheduler) {
+        traversalScheduler.shutdown();
+        traversalScheduler = null;
+      }
+      if (null != instantiator) {
+        instantiator.shutdown(force,
+            ThreadPool.DEFAULT_SHUTDOWN_TIMEOUT_MILLIS);
+        instantiator = null;
+      }
+      started = false;
     }
-    if (null != instantiator) {
-      instantiator.shutdown(force,
-          ThreadPool.DEFAULT_SHUTDOWN_TIMEOUT_MILLIS);
-      instantiator = null;
-    }
-    started = false;
   }
 
   /**

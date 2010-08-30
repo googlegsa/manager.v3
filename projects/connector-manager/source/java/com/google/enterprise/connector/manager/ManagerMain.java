@@ -15,8 +15,10 @@
 package com.google.enterprise.connector.manager;
 
 import com.google.enterprise.connector.common.JarUtils;
+import com.google.enterprise.connector.common.AbstractCommandLineApp;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.encryptpassword.EncryptPassword;
+import com.google.enterprise.connector.importexport.DumpConnectors;
 
 /**
  * Dump the Version info from the Manifest for the Connector Manager's JAR file.
@@ -25,12 +27,15 @@ import com.google.enterprise.connector.encryptpassword.EncryptPassword;
  *   java -jar /path/to/connector.jar
  */
 public class ManagerMain {
+
   public static void main(String[] args) throws Exception {
     if (args.length > 0) {
       // TODO: There should be a more general mechanism for invoking
       // command line apps.
       if ("EncryptPassword".equalsIgnoreCase(args[0])) {
         EncryptPassword.main(shift(args));
+      } else if ("DumpConnectors".equalsIgnoreCase(args[0])) {
+        DumpConnectors.main(shift(args));
       }
     }
     // The default behavior is to display the product version.
