@@ -49,7 +49,8 @@ import java.util.Locale;
  * It is expected the caller will guarantee that each
  * {@link ConnectorCoordinator} in the system has a unique name.
  */
-interface ConnectorCoordinator {
+@VisibleForTesting
+public interface ConnectorCoordinator {
   /**
    * Returns true if this {@link ConnectorCoordinator} holds a
    * configured usable connector instance. This function is for reporting
