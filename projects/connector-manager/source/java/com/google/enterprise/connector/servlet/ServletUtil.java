@@ -111,6 +111,8 @@ public class ServletUtil {
   public static final String XMLTAG_MESSAGE = "message";
   public static final String XMLTAG_FORM_SNIPPET = "FormSnippet";
 
+  public static final String XMLTAG_MANAGER = "Manager";
+  public static final String XMLTAG_MANAGER_CONFIG_XML = "ManagerConfigXml";
   public static final String XMLTAG_MANAGER_CONFIG = "ManagerConfig";
   public static final String XMLTAG_FEEDERGATE = "FeederGate";
   public static final String XMLTAG_FEEDERGATE_HOST = "host";
@@ -440,7 +442,17 @@ public class ServletUtil {
    * @param out where PrintWriter to be written to
    */
   public static void writeManagerSplash(PrintWriter out) {
-    writeXMLElement(out, 1, ServletUtil.XMLTAG_INFO, getManagerSplash());
+    writeManagerSplash(out, 1);
+  }
+
+  /**
+   * Write Connector Manager, OS, JVM version information.
+   *
+   * @param out where PrintWriter to be written to
+   * @param indent indent level for writing the INFO tag.
+   */
+  public static void writeManagerSplash(PrintWriter out, int indent) {
+    writeXMLElement(out, indent, ServletUtil.XMLTAG_INFO, getManagerSplash());
   }
 
   /**

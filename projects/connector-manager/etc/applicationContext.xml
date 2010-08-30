@@ -284,13 +284,20 @@
   <!-- Legacy stores are used for upgrading existing connectors
        created by previous versions of the Connector Manager.
   -->
-  <bean id="StoreMigrator" class="com.google.enterprise.connector.persist.StoreMigrator">
+  <bean id="StoreMigrator"
+        class="com.google.enterprise.connector.persist.StoreMigrator">
     <constructor-arg index="0" ref="PersistentStore"/>
     <constructor-arg index="1">
       <list>
         <!-- No legacy store. -->
       </list>
     </constructor-arg>
+  </bean>
+
+  <bean id="ExportConnectors"
+        class="com.google.enterprise.connector.importexport.ExportConnectors">
+    <constructor-arg index="0" ref="PersistentStore"/>
+    <constructor-arg index="1" ref="Manager"/>
   </bean>
 
   <bean id="ThreadPool"
