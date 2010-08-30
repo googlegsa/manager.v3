@@ -1,0 +1,51 @@
+#summary A utility that extracts Connector data from the Persistent Store into a local XML file.
+
+== Introduction ==
+
+The Connector Manager maintains a selection of important Connector
+related data in a Persistent Store.  The persistently stored data
+includes the Connector's configuration, traversal schedule, and
+portions of its traversal state.
+
+In early versions of Connector Manager, this information was kept
+in system preferences.  In recent versions, this information is
+kept in files in the file system of the computer hosting the
+Connector Manager.  In future versions, this information will be
+maintained in a database.
+
+Once this data resides in a database, it becomes less directly
+available to the developer or administrator for examination and
+troubleshooting.
+
+A new !DumpConnectors command line utility built into the Connector
+Manager allows the connector developer or administrator to dump
+the information stored in the database to a more easily readable
+XML file.
+
+
+== Usage ==
+
+{{{
+usage: DumpConnectors [-?] [-v] <output_filename>
+       -?, --help      Display this help.
+       -v, --version   Display version.
+       output_filename Name of output XML file.
+}}}
+
+The DumpConnectors utility is built into the Connector Manager's
+`connector.jar` file and is run by executing the `connector.jar`
+file using the `java -jar` command from the
+Connector Manager web application directory:
+{{{
+% cd /path/to/connector/installation/Tomcat/webapps/connector-manager
+% java -jar WEB-INF/lib/connector.jar DumpConnectors /tmp/connectors.xml
+}}}
+If you have configured an external database, you will need to include
+its database driver JAR file in the Java classpath.
+For instance, if the Oracle JDBC driver is located in Tomcat/lib:
+{{{
+% java -jar WEB-INF/lib/connector.jar -cp ../../lib/ojdbc6.jar ~/connectors.xml
+}}}
+This creates a XML file, `connectors.xml`, which contains the stored
+persistent state for all Connector instances, including configuration,
+traversal schedule, and traversal checkpoint.
