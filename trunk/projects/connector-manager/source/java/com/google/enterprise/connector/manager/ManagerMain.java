@@ -19,6 +19,7 @@ import com.google.enterprise.connector.common.AbstractCommandLineApp;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.encryptpassword.EncryptPassword;
 import com.google.enterprise.connector.importexport.DumpConnectors;
+import com.google.enterprise.connector.persist.MigrateStore;
 
 /**
  * Dump the Version info from the Manifest for the Connector Manager's JAR file.
@@ -36,6 +37,8 @@ public class ManagerMain {
         EncryptPassword.main(shift(args));
       } else if ("DumpConnectors".equalsIgnoreCase(args[0])) {
         DumpConnectors.main(shift(args));
+      } else if ("MigrateStore".equalsIgnoreCase(args[0])) {
+        MigrateStore.main(shift(args));
       }
     }
     // The default behavior is to display the product version.
