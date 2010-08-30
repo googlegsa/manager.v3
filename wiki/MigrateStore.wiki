@@ -37,7 +37,7 @@ usage: MigrateStore [-?] [-v] [-l] [source_name] [dest_name]
 }}}
 The `--list` option lists the available Persistent Stores as
 identified by Bean name in the Connector Manager's
-applicationContext.xml.
+`applicationContext.xml`.
 
 The `--force` option will allow data from the source store to
 overwrite any existing data in the destination store.  By
@@ -107,6 +107,4 @@ Stores itself).
 
 ==Migrating Connector Data between Database Persistent Stores==
 
-*TODO* (Describe dual JdbcPersistentStore configurations.)
-
-
+*TODO* (Describe dual !JdbcPersistentStore configurations.)
