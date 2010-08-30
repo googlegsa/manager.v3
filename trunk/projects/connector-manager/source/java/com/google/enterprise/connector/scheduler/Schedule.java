@@ -1,4 +1,4 @@
-// Copyright 2006-2009 Google Inc.  All Rights Reserved.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public class Schedule {
    *          no new content, then automatically disable.</li>
    *  </ul>
    */
+  public static final int CURRENT_VERSION = 3;
 
   /**
    * Signal to the Traverser that it should traverse the ECM repository

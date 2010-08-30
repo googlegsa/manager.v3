@@ -16,6 +16,7 @@ package com.google.enterprise.connector.manager;
 
 import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.PropertiesUtils;
+import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.instantiator.ThreadPool;
@@ -547,7 +548,7 @@ public class Context {
   }
 
   /**
-   * Gets the singleton Manager.
+   * Gets the singleton {@link Manager}.
    *
    * @return the Manager
    */
@@ -557,6 +558,20 @@ public class Context {
     }
     manager = (Manager) getRequiredBean("Manager", Manager.class);
     return manager;
+  }
+
+  /**
+   * Gets the singleton {@link Instantiator}.
+   *
+   * @return the Instantiator
+   */
+  public Instantiator getInstantiator() {
+    if (instantiator != null) {
+      return instantiator;
+    }
+    instantiator = (SpringInstantiator)
+        getRequiredBean("Instantiator", SpringInstantiator.class);
+    return instantiator;
   }
 
   /**

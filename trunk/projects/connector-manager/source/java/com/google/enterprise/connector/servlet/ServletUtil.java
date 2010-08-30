@@ -17,6 +17,7 @@ package com.google.enterprise.connector.servlet;
 import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
 
+import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -116,6 +117,7 @@ public class ServletUtil {
   public static final String XMLTAG_FEEDERGATE_PORT = "port";
 
   public static final String XMLTAG_CONNECTOR_CONFIG = "ConnectorConfig";
+  public static final String XMLTAG_CONNECTOR_CONFIG_XML = "ConnectorConfigXml";
   public static final String XMLTAG_UPDATE_CONNECTOR = "Update";
   public static final String XMLTAG_PARAMETERS = "Param";
 
@@ -145,6 +147,12 @@ public class ServletUtil {
   public static final String XMLTAG_LOAD = "load";
   public static final String XMLTAG_DELAY = "RetryDelayMillis";
   public static final String XMLTAG_TIME_INTERVALS = "TimeIntervals";
+
+  public static final String XMLTAG_CONNECTOR_CHECKPOINT =
+      "ConnectorCheckpoint";
+
+  public static final String XML_CDATA_START = "<![CDATA[";
+  public static final String XML_CDATA_END = "]]>";
 
   public static final String LOG_RESPONSE_EMPTY_REQUEST = "Empty request";
   public static final String LOG_RESPONSE_EMPTY_NODE = "Empty node";
@@ -184,6 +192,7 @@ public class ServletUtil {
   public static final String ATTRIBUTE_NAME = "name=\"";
   public static final String ATTRIBUTE_VALUE = " value=\"";
   public static final String ATTRIBUTE_VERSION = "version=\"";
+  public static final String ATTRIBUTE_CRYPT = "encryption=\"";
   public static final char QUOTE = '"';
 
   private static final String[] XMLIndent = {
@@ -370,6 +379,24 @@ public class ServletUtil {
       result.add(children.item(0).getNodeValue());
     }
     return result;
+  }
+
+  /**
+   * Extracts the first CDATA child from the given element.
+   *
+   * @param elem the parent element
+   * @return the String value of the CDATA section, or null if none found.
+   */
+  public static String getCdata(Element elem) {
+    NodeList nodes = elem.getChildNodes();
+    for (int i = 0; i < nodes.getLength(); i++) {
+      Node node = nodes.item(i);
+      if (node.getNodeType() == Node.CDATA_SECTION_NODE) {
+        CharacterData cdataNode = (CharacterData) node;
+         return cdataNode.getData();
+      }
+    }
+    return null;
   }
 
   /**
@@ -617,10 +644,13 @@ public class ServletUtil {
     return result;
   }
 
+  private static final String XML_GREATER_THAN = "&gt;";
   private static final Pattern CDATA_BEGIN_PATTERN =
       Pattern.compile("/*\\Q<![CDATA[\\E");
   private static final Pattern CDATA_END_PATTERN =
       Pattern.compile("/*\\Q]]>\\E");
+  private static final Pattern ESCAPED_CDATA_END_PATTERN =
+      Pattern.compile("/*\\Q]]&gt;\\E");
 
   /**
    * Removes any pairs of markers from the given snippet that are not allowed
@@ -668,8 +698,6 @@ public class ServletUtil {
     return result.toString();
   }
 
-  private static final String XML_GREATER_THAN = "&gt;";
-
   private static String escapeEndMarker(String endMarker) {
     StringBuilder buf = new StringBuilder();
     for (int i = 0; i < endMarker.length(); i++) {
@@ -684,6 +712,24 @@ public class ServletUtil {
       }
     }
     return buf.toString();
+  }
+
+  /**
+   * UnEscapes any end markers from the given snippet.
+   *
+   * @param formSnippet snippet of a form that may have escaped end markers
+   *        in it.
+   * @return the given formSnippet with all end markers restored.
+   */
+  public static String restoreEndMarkers(String formSnippet) {
+    StringBuffer result = new StringBuffer();
+    Matcher endMatcher = ESCAPED_CDATA_END_PATTERN.matcher(formSnippet);
+    while (endMatcher.find()) {
+      endMatcher.appendReplacement(result,
+          endMatcher.group().replace("]]&gt;", XML_CDATA_END));
+    }
+    endMatcher.appendTail(result);
+    return result.toString();
   }
 
   /**

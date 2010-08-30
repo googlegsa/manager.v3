@@ -137,8 +137,8 @@ public class GetConnectorInstanceList extends HttpServlet {
         // Put out new style Schedules element.
         ServletUtil.writeXMLTagWithAttrs(buffer, 3,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
-            ServletUtil.ATTRIBUTE_VERSION + "3" + ServletUtil.QUOTE,
-            false);
+            ServletUtil.ATTRIBUTE_VERSION + Schedule.CURRENT_VERSION
+            + ServletUtil.QUOTE, false);
         buffer.append(schedule);
         ServletUtil.writeXMLTag(buffer, 0,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES, true);
