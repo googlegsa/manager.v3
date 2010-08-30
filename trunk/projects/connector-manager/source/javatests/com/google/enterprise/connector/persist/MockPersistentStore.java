@@ -16,6 +16,7 @@ package com.google.enterprise.connector.persist;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
 
@@ -79,7 +80,15 @@ public class MockPersistentStore implements PersistentStore {
   private final Map<StoreKey, StoreEntry> storeMap =
       new HashMap<StoreKey, StoreEntry>();
 
+  // Sort Inventory for predictable test results.
+  private static boolean sortInventory;
+
   public MockPersistentStore() {
+    this(false);
+  }
+
+  public MockPersistentStore(boolean sortInventory) {
+    this.sortInventory = sortInventory;
   }
 
   public void clear() {
@@ -111,8 +120,12 @@ public class MockPersistentStore implements PersistentStore {
 
   /* @Override */
   public ImmutableMap<StoreContext, ConnectorStamps> getInventory() {
-    ImmutableMap.Builder<StoreContext, ConnectorStamps> builder =
-        ImmutableMap.builder();
+    ImmutableMap.Builder<StoreContext, ConnectorStamps> builder;
+    if (sortInventory) {
+      builder = ImmutableSortedMap.naturalOrder();
+    } else {
+      builder = ImmutableMap.builder();
+    }
     Set<StoreContext> instances = new HashSet<StoreContext>();
     synchronized(this) {
       for (StoreKey key : storeMap.keySet()) {
