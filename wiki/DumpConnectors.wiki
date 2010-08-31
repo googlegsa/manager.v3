@@ -49,3 +49,6 @@ For instance, if the Oracle JDBC driver is located in `Tomcat/lib`:
 This creates a XML file, `connectors.xml`, which contains the stored
 persistent state for all Connector instances, including configuration,
 traversal schedule, and traversal checkpoint.
+
+----
+New in Connector Manager v3.0
