@@ -60,7 +60,7 @@ public class MigrateStore extends AbstractCommandLineApp {
 
   @Override
   public String getCommandLineSyntax() {
-    return getCommandLineSyntax() + "[-l] [-f] [source_name] [dest_name]";
+    return super.getCommandLineSyntax() + "[-l] [-f] [source_name] [dest_name]";
   }
 
   @Override
