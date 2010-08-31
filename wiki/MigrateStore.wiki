@@ -108,3 +108,6 @@ Stores itself).
 ==Migrating Connector Data between Database Persistent Stores==
 
 *TODO* (Describe dual !JdbcPersistentStore configurations.)
+
+----
+New in Connector Manager v3.0
