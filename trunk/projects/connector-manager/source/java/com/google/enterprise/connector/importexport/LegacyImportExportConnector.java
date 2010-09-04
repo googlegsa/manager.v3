@@ -17,15 +17,10 @@ package com.google.enterprise.connector.importexport;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.servlet.ServletUtil;
-import com.google.enterprise.connector.spi.XmlUtils;
 
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import java.io.PrintWriter;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * An implementation of {@ImportExportConnector} that understands the
@@ -39,9 +34,8 @@ public class LegacyImportExportConnector extends ImportExportConnector {
 
   /**
    * @param name the connector's name
-   * @param type the connector's ConnectorType's name
-   * @param scheduleString the connector's schedule as a String
-   * @param config the connector's ConnectorType-specific configuration data
+   * @param schedule the connector's schedule
+   * @param configuration the connector's ConnectorType-specific configuration data
    */
   public LegacyImportExportConnector(String name, Configuration configuration,
        Schedule schedule, String checkpoint) {

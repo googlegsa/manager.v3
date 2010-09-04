@@ -19,9 +19,7 @@ import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.XmlUtils;
 
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -90,7 +88,7 @@ public class ImportExportConnector {
   /**
    * Sets the Connector's {@link Schedule}.
    *
-   * @param schedult the connector's Schedule.
+   * @param schedule the connector's Schedule.
    */
   public void setSchedule(Schedule schedule) {
     this.schedule = schedule;

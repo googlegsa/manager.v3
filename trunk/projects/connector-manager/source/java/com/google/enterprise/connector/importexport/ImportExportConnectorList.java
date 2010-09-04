@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,9 +15,7 @@
 package com.google.enterprise.connector.importexport;
 
 import com.google.enterprise.connector.servlet.ServletUtil;
-import com.google.enterprise.connector.spi.XmlUtils;
 
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -27,11 +25,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * A {@code List} of {@link ImportExportConnectors} that can be serialized
+ * A {@code List} of {@link ImportExportConnector}s that can be serialized
  * to and from XML.
  */
-public class ImportExportConnectorList extends ArrayList<ImportExportConnector>
-{
+public class ImportExportConnectorList extends ArrayList<ImportExportConnector> {
   private static final Logger LOGGER =
       Logger.getLogger(ImportExportConnectorList.class.getName());
 
@@ -39,8 +36,8 @@ public class ImportExportConnectorList extends ArrayList<ImportExportConnector>
    * Deserializes a List of ImportExportConnectors from XML.
    *
    * @param connectorsElement a ConnectorInstances XML Element.
-   * @param connectorFactory a Factory used to create ImportExportConnector
-   *        instances that are added to the List.
+   * @param connectorClass a class whose {@code newInstance()} method is used to
+   *        create ImportExportConnector instances that are added to the List.
    */
   public void fromXml(Element connectorsElement,
       Class<? extends ImportExportConnector> connectorClass) {

@@ -15,12 +15,10 @@
 package com.google.enterprise.connector.util;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.GeneralSecurityException;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -57,14 +55,12 @@ public class UrlValidator {
                     return null;
                 }
                 public void checkServerTrusted(
-                    X509Certificate[] certs, String authType)
-                    throws CertificateException {
+                    X509Certificate[] certs, String authType) {
                     return;
                 }
                 public void checkClientTrusted(
                     X509Certificate[] certs,
-                    String authType)
-                    throws CertificateException {
+                    String authType) {
                     return;
                 }
             }

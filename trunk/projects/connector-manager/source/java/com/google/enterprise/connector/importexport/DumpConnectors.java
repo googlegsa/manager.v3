@@ -17,16 +17,12 @@ package com.google.enterprise.connector.importexport;
 import com.google.enterprise.connector.common.AbstractCommandLineApp;
 import com.google.enterprise.connector.instantiator.TypeMap;
 import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
-import com.google.enterprise.connector.servlet.ServletUtil;
 
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
 
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
-import java.util.logging.Logger;
+import java.io.PrintWriter;
 
 /**
  * A utility to dump connector configuration to a file.
@@ -37,9 +33,6 @@ import java.util.logging.Logger;
  *        output_file     Destination file output.
  */
 public class DumpConnectors extends AbstractCommandLineApp {
-  private static final Logger LOGGER =
-      Logger.getLogger(DumpConnectors.class.getName());
-
   /** Retrieve the TypeMap from the Spring Context. */
   private TypeMap getTypeMap() {
     return (TypeMap) Context.getInstance().getRequiredBean(

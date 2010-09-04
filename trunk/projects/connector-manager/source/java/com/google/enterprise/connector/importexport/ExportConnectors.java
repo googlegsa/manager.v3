@@ -21,7 +21,6 @@ import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStore;
 import com.google.enterprise.connector.persist.StoreContext;
-import com.google.enterprise.connector.scheduler.Schedule;
 
 import java.util.Map;
 import java.util.Properties;
@@ -35,8 +34,8 @@ public class ExportConnectors {
   private static final Logger LOGGER =
       Logger.getLogger(ExportConnectors.class.getName());
 
-  private PersistentStore persistentStore;
-  private Manager manager;
+  private final PersistentStore persistentStore;
+  private final Manager manager;
 
   public ExportConnectors(PersistentStore persistentStore, Manager manager) {
     this.persistentStore = persistentStore;

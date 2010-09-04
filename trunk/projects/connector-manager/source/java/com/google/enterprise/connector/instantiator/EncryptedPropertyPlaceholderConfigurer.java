@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc.  All Rights Reserved.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,22 +21,33 @@ import com.google.enterprise.connector.common.SecurityUtils;
 
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 
-import java.io.*;
-import java.nio.ByteBuffer;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.logging.Logger;
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import java.security.*;
-import java.security.cert.CertificateException;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 
 /**
  * Extended version of {@link

@@ -29,22 +29,17 @@ import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 
-import org.apache.commons.cli.*;
-
+import org.apache.commons.cli.CommandLine;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Locale;
-import java.util.EnumSet;
+import java.io.PrintWriter;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;

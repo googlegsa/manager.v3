@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Context;
@@ -38,13 +39,8 @@ import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 import com.google.enterprise.connector.traversal.Traverser;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
@@ -90,7 +86,7 @@ class ConnectorCoordinatorImpl implements
    * LoadManager controls throughput to avoid overtaxing the Repository
    * or the GSA.
    */
-  private LoadManager loadManager;
+  private final LoadManager loadManager;
 
   /**
    * The current traversal Schedule.
@@ -372,7 +368,7 @@ class ConnectorCoordinatorImpl implements
    * that matters is a change from non-null to null.  This indicates that
    * the Repository should be retraversed from the beginning.
    *
-   * @param state a String representation of the traversal state.
+   * @param checkpoint a String representation of the traversal state.
    */
   /* @Override */
   public void connectorCheckpointChanged(String checkpoint) {

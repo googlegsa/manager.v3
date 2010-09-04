@@ -183,7 +183,7 @@ class ChangeDetectorImpl implements ChangeDetector {
    * @return a negative integer, zero, or a positive integer as the
    * in-memory stamp is less than, equal to, or greater than the
    * persistent stamp
-   * @see java.util.Comparator#compareTo
+   * @see java.util.Comparator#compare(Object, Object)
    */
   private int compareStamps(Stamp memoryStamp, Stamp persistentStamp) {
     if (memoryStamp == null && persistentStamp == null) {

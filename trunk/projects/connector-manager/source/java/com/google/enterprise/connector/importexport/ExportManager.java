@@ -23,12 +23,8 @@ import com.google.enterprise.connector.spi.XmlUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
-import java.io.IOException;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
 import java.util.Properties;
@@ -44,8 +40,8 @@ public class ExportManager {
   private static final Logger LOGGER =
       Logger.getLogger(ExportManager.class.getName());
 
-  private Properties properties;
-  private String[] configLocations;
+  private final Properties properties;
+  private final String[] configLocations;
 
   public ExportManager() {
     this(Context.getInstance().getConnectorManagerProperties(),

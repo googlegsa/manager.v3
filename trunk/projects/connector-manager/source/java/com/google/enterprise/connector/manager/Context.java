@@ -25,16 +25,15 @@ import com.google.enterprise.connector.scheduler.TraversalScheduler;
 import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.traversal.ProductionTraversalContext;
 
-import org.springframework.context.support.GoogleApplicationContextThunk;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.core.io.Resource;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.context.support.GoogleApplicationContextThunk;
+import org.springframework.core.io.Resource;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import java.io.File;
@@ -729,7 +728,7 @@ public class Context {
   /**
    * Returns a Properties containing just the GSA feed host and port properties.
    */
-  public Properties getConnectorManagerConfig() throws InstantiatorException {
+  public Properties getConnectorManagerConfig() {
     // Get the properties out of the CM properties file if present.
     Properties props = getConnectorManagerProperties();
     Properties result = new Properties();
