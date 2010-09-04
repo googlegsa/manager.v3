@@ -19,7 +19,6 @@ import com.google.enterprise.connector.manager.ConnectorManagerException;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.persist.MockPersistentStore;
 import com.google.enterprise.connector.persist.PersistentStore;
 import com.google.enterprise.connector.spi.AuthenticationManager;
@@ -34,15 +33,11 @@ import org.json.JSONObject;
 
 import java.util.Locale;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * Unit test for {@link SpringInstantiator}.
  */
 public class InstantiatorTest extends TestCase {
-  private static final Logger LOGGER =
-      Logger.getLogger(InstantiatorTest.class.getName());
-
   private static final String APPLICATION_CONTEXT =
       "testdata/contextTests/InstantiatorTest.xml";
 
@@ -90,8 +85,7 @@ public class InstantiatorTest extends TestCase {
    * @throws ConnectorNotFoundException
    */
   public final void testAddUpdateDelete() throws JSONException,
-      InstantiatorException, ConnectorTypeNotFoundException,
-      ConnectorNotFoundException, ConnectorExistsException {
+      InstantiatorException, ConnectorNotFoundException, ConnectorExistsException {
     {
       /*
        * Test creation of a connector of type TestConnectorA.
@@ -395,8 +389,7 @@ public class InstantiatorTest extends TestCase {
   private void updateConnectorTest(SpringInstantiator instantiator,
       String name, String typeName, String language, boolean update,
       String jsonConfigString) throws JSONException, InstantiatorException,
-      ConnectorTypeNotFoundException, ConnectorNotFoundException,
-      ConnectorExistsException {
+      ConnectorNotFoundException, ConnectorExistsException {
     TraversalManager oldTraversersalManager = null;
     if (update) {
       oldTraversersalManager =

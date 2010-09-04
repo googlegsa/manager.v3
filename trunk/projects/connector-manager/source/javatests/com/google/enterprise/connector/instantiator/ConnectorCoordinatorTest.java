@@ -29,7 +29,6 @@ import junit.framework.TestCase;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import org.springframework.core.io.Resource;
 
 import java.io.File;
@@ -345,7 +344,7 @@ public class ConnectorCoordinatorTest extends TestCase {
 
   private abstract class Updater implements Runnable {
     ConnectorCoordinatorImpl coordinator;
-    private int iterations;
+    private final int iterations;
     private Exception exception;
 
     public Updater(ConnectorCoordinatorImpl coordinator, int iterations) {
@@ -386,6 +385,7 @@ public class ConnectorCoordinatorTest extends TestCase {
           new JsonObjectAsMap(new JSONObject(JSON_CONFIG)), null);
     }
 
+    @Override
     void update() throws Exception {
       coordinator.setConnectorConfiguration(typeInfo, configuration,
                                             Locale.ENGLISH, true);
@@ -402,6 +402,7 @@ public class ConnectorCoordinatorTest extends TestCase {
                               "0-0");
     }
 
+    @Override
     void update() throws Exception {
       coordinator.setConnectorSchedule(schedule);
     }
@@ -413,6 +414,7 @@ public class ConnectorCoordinatorTest extends TestCase {
       super(coordinator, iterations);
     }
 
+    @Override
     void update() throws Exception {
       coordinator.setConnectorState("checkpoint");
     }
@@ -424,6 +426,7 @@ public class ConnectorCoordinatorTest extends TestCase {
       super(coordinator, iterations);
     }
 
+    @Override
     void update() throws Exception {
       coordinator.restartConnectorTraversal();
     }
@@ -439,6 +442,7 @@ public class ConnectorCoordinatorTest extends TestCase {
                               "0-0");
     }
 
+    @Override
     void update() throws Exception {
       coordinator.setConnectorSchedule(schedule);
       coordinator.delayTraversal(TraversalDelayPolicy.POLL);

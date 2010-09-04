@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2009 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -2427,21 +2427,6 @@ public class DocPusherTest extends TestCase {
         throw new IllegalArgumentException("Wrong kind of Exception");
       }
       badProperties.put(propertyName, exception);
-    }
-
-    /**
-     * Specify a properties to fail and how to fail them.
-     *
-     * @param propertyNames an Array of Property names.
-     * @param exception Class indicating which Exception to throw if accessed.
-     *        If null, findProperty() will return null rather than throw an
-     *        Exception.
-     */
-    public void failProperties(String[] propertyNames,
-                               Class<? extends Throwable> exception) {
-      for (int i = 0; i < propertyNames.length; i++) {
-        failProperty(propertyNames[i], exception);
-      }
     }
 
     /**

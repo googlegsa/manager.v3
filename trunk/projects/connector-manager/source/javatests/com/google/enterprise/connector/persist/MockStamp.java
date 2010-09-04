@@ -15,8 +15,6 @@
 package com.google.enterprise.connector.persist;
 
 /**
- * {@inheritDoc}
- *
  * A mock version stamp is a random {@code long}.
  */
 class MockStamp implements Stamp {

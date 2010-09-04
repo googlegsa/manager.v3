@@ -20,7 +20,6 @@ import com.google.enterprise.connector.persist.MockPersistentStore;
 import com.google.enterprise.connector.persist.PersistentStore;
 import com.google.enterprise.connector.persist.StoreContext;
 import com.google.enterprise.connector.scheduler.Schedule;
-import com.google.enterprise.connector.test.ConnectorTestUtils;
 
 import junit.framework.TestCase;
 
