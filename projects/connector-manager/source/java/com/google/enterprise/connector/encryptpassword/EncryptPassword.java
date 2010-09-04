@@ -88,18 +88,24 @@ public class EncryptPassword extends AbstractCommandLineApp {
     // Turn down the logging output to the console.
     Logger.getLogger("com.google.enterprise.connector").setLevel(Level.WARNING);
 
-    // At this time, the current directory *must* be the parent of the Connector
-    // Manager WEB-INF directory, or Spring instantiation fails.
-    File webInfDir = new File(System.getProperty("user.dir"), "WEB-INF");
-    if (!(webInfDir.exists() && webInfDir.isDirectory())) {
+    // Find the Connector Manager WEB-INF directory.
+    File webInfDir = locateWebInf();
+    if (webInfDir == null) {
       System.err.println(
-          "Current directory must be webapps/connector-manager/");
+          "Unable to locate the connector-manager webapp directory.");
+      System.err.println("Try changing to that directory, or use");
+      System.err.println("-Dmanager.dir=/path/to/webapps/connector-manager");
       System.exit(-1);
     }
 
     // Establish the webapp keystore configuration before initializing
     // the Context.
-    configureCryptor(webInfDir);
+    try {
+      configureCryptor(webInfDir);
+    } catch (IOException e) {
+      System.err.println("Failed to read keystore configuration: " + e);
+      System.exit(-1);
+    }
   }
 
   /**

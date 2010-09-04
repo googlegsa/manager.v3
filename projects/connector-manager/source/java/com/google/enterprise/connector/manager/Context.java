@@ -32,7 +32,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.context.support.GoogleApplicationContextThunk;
 import org.springframework.core.io.Resource;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
@@ -248,9 +247,8 @@ public class Context {
   private TraversalContext traversalContext = null;
   private SpringInstantiator instantiator = null;
 
-  // control variables for turning off normal functionality - testing only
   private String standaloneContextLocation;
-
+  private String standaloneContextBaseDir;
 
   private Boolean gsaAdminRequiresPrefix = null;
 
@@ -296,14 +294,19 @@ public class Context {
       standaloneContextLocation = DEFAULT_JUNIT_CONTEXT_LOCATION;
     }
 
+    if (standaloneContextBaseDir == null) {
+      standaloneContextBaseDir = System.getProperty("user.dir");
+    }
+
     if (commonDirPath == null) {
       commonDirPath = DEFAULT_JUNIT_COMMON_DIR_PATH;
     }
     LOGGER.info("context file: " + standaloneContextLocation);
+    LOGGER.info("context base directory: " + standaloneContextBaseDir);
     LOGGER.info("common dir path: " + commonDirPath);
 
-    applicationContext =
-        new FileSystemXmlApplicationContext(standaloneContextLocation);
+    applicationContext = new AnchoredFileSystemXmlApplicationContext(
+        standaloneContextBaseDir, standaloneContextLocation);
   }
 
   /**
@@ -316,7 +319,24 @@ public class Context {
    */
   public void setStandaloneContext(String contextLocation,
                                    String commonDirPath) {
+    setStandaloneContext(contextLocation, null, commonDirPath);
+  }
+
+  /**
+   * Establishes that we are operating within the standalone context. In
+   * this case, we use a FileSystemApplicationContext.
+   * @param contextLocation the name of the context XML file used for
+   * instantiation.
+   * @param contextBaseDirectory base directory for relative file paths in
+   * the contextLocation.
+   * @param commonDirPath the location of the common directory which contains
+   * ConnectorType and Connector instantiation configuration data.
+   */
+  public void setStandaloneContext(String contextLocation,
+                                   String contextBaseDir,
+                                   String commonDirPath) {
     this.standaloneContextLocation = contextLocation;
+    this.standaloneContextBaseDir = contextBaseDir;
     this.commonDirPath = commonDirPath;
     initializeStandaloneApplicationContext();
   }
@@ -627,8 +647,8 @@ public class Context {
       return ((XmlWebApplicationContext) applicationContext)
           .getConfigLocations();
     } else {
-      return GoogleApplicationContextThunk.getConfigLocations(
-          (FileSystemXmlApplicationContext) applicationContext);
+      return ((AnchoredFileSystemXmlApplicationContext) applicationContext)
+          .getConfigLocations();
     }
   }
 
