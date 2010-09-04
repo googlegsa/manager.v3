@@ -1,4 +1,4 @@
-// Copyright 2006-2009 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -217,13 +217,8 @@ public class ProductionManager implements Manager {
   }
 
   /* @Override */
-  public Properties getConnectorManagerConfig()
-      throws PersistentStoreException {
-    try {
-      return Context.getInstance().getConnectorManagerConfig();
-    } catch (InstantiatorException e) {
-      throw new PersistentStoreException(e);
-    }
+  public Properties getConnectorManagerConfig() {
+    return Context.getInstance().getConnectorManagerConfig();
   }
 
   /* @Override */

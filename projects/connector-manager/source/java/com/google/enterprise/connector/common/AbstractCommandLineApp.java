@@ -14,14 +14,17 @@
 
 package com.google.enterprise.connector.common;
 
-import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
 import com.google.enterprise.connector.servlet.ServletUtil;
 
-import org.apache.commons.cli.*;
-
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.PosixParser;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -29,11 +32,9 @@ import org.w3c.dom.NodeList;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,9 +42,6 @@ import java.util.logging.Logger;
  * An abstract superclass for building Connector Manager command line apps.
  */
 public abstract class AbstractCommandLineApp {
-  private static final Logger LOGGER =
-      Logger.getLogger(AbstractCommandLineApp.class.getName());
-
   /**
    * A couple of basic Options that all command line apps should support.
    * Note that user request for help and version is handled especially by
@@ -71,7 +69,7 @@ public abstract class AbstractCommandLineApp {
    *
    * @param commandLine a parsed {@code org.apache.commons.cli.CommandLine}.
    */
-  public abstract void run(CommandLine commenadLine) throws Exception;
+  public abstract void run(CommandLine commandLine) throws Exception;
 
   /**
    * Returns a Command Line Syntax as a String. This is used to generate
@@ -99,7 +97,7 @@ public abstract class AbstractCommandLineApp {
 
   /**
    * Initializes a standalone Connector Manager application context.  If the
-   * CommandLineApp starts a standalone context, it must call {@link shutdown()}
+   * CommandLineApp starts a standalone context, it must call {@link #shutdown()}
    * before exiting.
    *
    * @param doStart If {@code true}, start the Context via {@link Context#start}
@@ -226,8 +224,8 @@ public abstract class AbstractCommandLineApp {
    * Parses the supplied command line arguments according to the configured
    * {@code Options} generating a {@code CommandLine}.  If parsing the options
    * fails for any reason, or the user specifically requested help,
-   * then {@link printUsageAndExit(int)} is called. Similarly, if the user
-   * requests the product version, then {@link printVersionAndExit(int)}
+   * then {@link #printUsageAndExit(int)} is called. Similarly, if the user
+   * requests the product version, then {@link #printVersionAndExit(int)}
    *  is called.
    *
    * @param args String array of supplied command line arguments.

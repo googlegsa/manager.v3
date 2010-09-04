@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.spi.Connector;
+
 /**
  * Interface for Factories that construct ConnectorCoordinator instances.
  */

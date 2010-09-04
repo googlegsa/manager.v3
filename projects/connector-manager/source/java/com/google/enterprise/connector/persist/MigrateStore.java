@@ -14,20 +14,18 @@
 
 package com.google.enterprise.connector.persist;
 
-import com.google.common.collect.ImmutableMap;
-
 import com.google.enterprise.connector.common.AbstractCommandLineApp;
 import com.google.enterprise.connector.instantiator.TypeMap;
 import com.google.enterprise.connector.manager.Context;
 
-import org.apache.commons.cli.*;
-
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,9 +42,6 @@ import java.util.logging.Logger;
  *        dest_name       Name of destination PeristentStore (e.g. JdbcPersistentStore)
  */
 public class MigrateStore extends AbstractCommandLineApp {
-  private static final Logger LOGGER =
-      Logger.getLogger(MigrateStore.class.getName());
-
   /** Retrieve the TypeMap from the Spring Context. */
   private TypeMap getTypeMap() {
     return (TypeMap) Context.getInstance().getRequiredBean(

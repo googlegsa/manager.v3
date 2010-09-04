@@ -17,10 +17,16 @@ package com.google.enterprise.connector.encryptpassword;
 import com.google.enterprise.connector.common.AbstractCommandLineApp;
 import com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer;
 
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 
-import java.io.*;
-import java.lang.reflect.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,9 +40,6 @@ import java.util.logging.Logger;
  *        -p, --password  Encrypt the supplied password.
  */
 public class EncryptPassword extends AbstractCommandLineApp {
-  private static final Logger LOGGER =
-      Logger.getLogger(EncryptPassword.class.getName());
-
   /**
    * Encrypt password static method suitable for calling by the Installer.
    * As a side effect, the supplied plain-text password character array
@@ -193,7 +196,7 @@ public class EncryptPassword extends AbstractCommandLineApp {
         if (console == null) {
           throw new UnsupportedOperationException("No Console");
         }
-        Class[] paramTypes = new Class[] { String.class, Object[].class };
+        Class<?>[] paramTypes = new Class[] { String.class, Object[].class };
         readPassword = console.getClass().getMethod("readPassword", paramTypes);
       } catch (NoSuchMethodException e) {
         throw new UnsupportedOperationException("Not Java 6");

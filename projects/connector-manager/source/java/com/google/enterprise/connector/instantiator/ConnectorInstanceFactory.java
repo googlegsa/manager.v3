@@ -20,7 +20,6 @@ import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.RepositoryException;
 
-import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;

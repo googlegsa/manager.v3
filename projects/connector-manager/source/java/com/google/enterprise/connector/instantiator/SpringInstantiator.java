@@ -16,12 +16,9 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.enterprise.connector.common.ScheduledTimer;
-import com.google.enterprise.connector.common.ScheduledTimerTask;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
-import com.google.enterprise.connector.pusher.PusherFactory;
-import com.google.enterprise.connector.scheduler.LoadManagerFactory;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
@@ -29,10 +26,7 @@ import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.ConnectorType;
 
 import java.util.Locale;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

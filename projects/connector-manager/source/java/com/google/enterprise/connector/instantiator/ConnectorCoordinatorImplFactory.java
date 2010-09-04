@@ -16,6 +16,7 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.scheduler.LoadManagerFactory;
+import com.google.enterprise.connector.spi.Connector;
 
 /**
  * Factory for constructing ConnectorCoordinatorImpl instances.

@@ -16,10 +16,8 @@ package com.google.enterprise.connector.persist;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
-
-import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.PropertiesException;
+import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.instantiator.TypeInfo;
 import com.google.enterprise.connector.instantiator.TypeMap;
@@ -124,8 +122,6 @@ public class FileStore implements PersistentStore {
   }
 
   /**
-   * {@inheritDoc}
-   *
    * A version stamp based upon a {@code long File.lastModified()}.
    */
   private static class FileStamp implements Stamp {

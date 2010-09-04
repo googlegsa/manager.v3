@@ -26,23 +26,17 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Logger;
 
 /**
  * Container for info about a Connector Instance. Instantiable only through a
  * static factory that uses Spring.
  */
 final class InstanceInfo {
-  private static final Logger LOGGER =
-      Logger.getLogger(InstanceInfo.class.getName());
-
   private static PersistentStore store;
 
   private final TypeInfo typeInfo;
@@ -59,7 +53,6 @@ final class InstanceInfo {
    * @param connectorDir the Connector's working directory
    * @param typeInfo the Connector's prototype
    * @param config connector Configuration
-   * @return new InstanceInfo representing the Connector instance
    * @throws InstanceInfoException
    */
   public InstanceInfo(String connectorName, File connectorDir,
@@ -217,7 +210,7 @@ final class InstanceInfo {
    * http://jira.springframework.org/browse/SPR-5068
    */
   private static class ByteArrayResourceHack extends ByteArrayResource {
-    private String filename;
+    private final String filename;
     public ByteArrayResourceHack(byte[] byteArray, String filename) {
       super(byteArray);
       this.filename = filename;
@@ -254,7 +247,7 @@ final class InstanceInfo {
    * Set the configuration data for this connector instance.
    * Writes the supplied configuration through to the persistent store.
    *
-   * @param configuation the connector type specific configuration data,
+   * @param configuration the connector type specific configuration data,
    *        or {@code null} to unset any existing configuration.
    */
   public void setConnectorConfiguration(Configuration configuration) {

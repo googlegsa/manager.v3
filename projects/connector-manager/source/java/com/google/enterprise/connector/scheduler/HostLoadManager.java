@@ -15,12 +15,12 @@
 package com.google.enterprise.connector.scheduler;
 
 import com.google.enterprise.connector.pusher.FeedConnection;
-import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.BatchResult;
+import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 
-import java.util.ListIterator;
 import java.util.LinkedList;
+import java.util.ListIterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,7 +42,7 @@ public class HostLoadManager implements LoadManager {
    * calculate the optimum size for the next traversal batch to maintain the
    * configured host load.
    */
-  private LinkedList<BatchResult> batchResults = new LinkedList<BatchResult>();
+  private final LinkedList<BatchResult> batchResults = new LinkedList<BatchResult>();
 
   /**
    * The optimal number of documents for each Traversal to return.
@@ -139,7 +139,7 @@ public class HostLoadManager implements LoadManager {
    * batch during the specified period.
    *
    * @param r a BatchResult
-   * @param period the start of the time period in question.
+   * @param periodStart the start of the time period in question.
    * @return number of documents traversed in the minute.
    */
   private int getNumDocsTraversedInPeriod(BatchResult r, long periodStart) {
