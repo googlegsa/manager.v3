@@ -16,8 +16,6 @@ package com.google.enterprise.connector.persist;
 
 import junit.framework.TestCase;
 
-import java.io.File;
-
 /**
  * Tests the equality, hash codes, and natural ordering of {@link
  * StoreContext} objects.

@@ -29,8 +29,6 @@ import org.w3c.dom.NodeList;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
@@ -48,7 +46,7 @@ public class ExportManagerTest extends TestCase {
       "testdata/tmp/ExportManagerTest";
   private final File baseDirectory = new File(TEST_DIR_NAME);
 
-  private File propFile = new File(baseDirectory, TEST_PROPERTIES);
+  private final File propFile = new File(baseDirectory, TEST_PROPERTIES);
   private Context context;
 
   @Override
@@ -64,7 +62,7 @@ public class ExportManagerTest extends TestCase {
     super.tearDown();
   }
 
-  /** Test {@link ExportManger#toXml(PrintWriter, int)}. */
+  /** Test {@link ExportManager#toXml(PrintWriter, int)}. */
   public void testToXml() throws Exception {
     // Create a Connector Manager Context.
     Properties originalProps = getBaseProperties();

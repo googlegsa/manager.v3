@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.instantiator.TypeInfo;
-import com.google.enterprise.connector.instantiator.TypeMap;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
@@ -31,7 +29,7 @@ import java.util.Set;
 public class TypeMapTest extends TestCase {
 
   private static final String TEST_DIR_NAME = "testdata/tmp/TypeMapTests";
-  private File baseDirectory = new File(TEST_DIR_NAME);
+  private final File baseDirectory = new File(TEST_DIR_NAME);
 
   @Override
   protected void setUp() throws Exception {
@@ -66,7 +64,7 @@ public class TypeMapTest extends TestCase {
   public final void testGetTypeNames() {
     TypeMap typeMap = new TypeMap(TEST_DIR_NAME);
     typeMap.init();
-    Set typeNames = typeMap.getConnectorTypeNames();
+    Set<String> typeNames = typeMap.getConnectorTypeNames();
     assertTrue(typeNames.contains("TestConnectorA"));
     assertTrue(typeNames.contains("TestConnectorB"));
   }

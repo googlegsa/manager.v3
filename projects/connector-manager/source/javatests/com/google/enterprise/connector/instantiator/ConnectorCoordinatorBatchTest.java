@@ -34,9 +34,6 @@ import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-
 import java.io.File;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -45,15 +42,11 @@ import java.util.Locale;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 /**
  * Tests batch support in {@link ConnectorCoordinatorImpl}.
  */
 public class ConnectorCoordinatorBatchTest extends TestCase {
-  private static final Logger LOGGER =
-      Logger.getLogger(ConnectorCoordinatorBatchTest.class.getName());
-
   private static final Locale locale = Locale.ENGLISH;
 
   private static final int SHORT_TRAVERSAL_TIME_LIMIT_SECS = 1;
@@ -431,10 +424,6 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
       return document;
     }
 
-    public String getConnectorName() {
-      return connectorName;
-    }
-
     @Override
     public String toString() {
       return "PushedDocument connectorName = " + connectorName + " document = "
@@ -479,10 +468,6 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
 
     /* @Override */
     public void cancel() {
-    }
-
-    int getCountPending() {
-      return pushedDocuments.size();
     }
 
     PushedDocument poll() throws InterruptedException {

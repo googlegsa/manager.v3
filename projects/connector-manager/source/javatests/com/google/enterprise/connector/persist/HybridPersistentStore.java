@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.  All Rights Reserved.
+// Copyright 2010 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
 
-import java.util.Map;
 import java.util.HashSet;
 
 public class HybridPersistentStore implements PersistentStore {

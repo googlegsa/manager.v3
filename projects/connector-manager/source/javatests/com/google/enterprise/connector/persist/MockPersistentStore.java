@@ -81,7 +81,7 @@ public class MockPersistentStore implements PersistentStore {
       new HashMap<StoreKey, StoreEntry>();
 
   // Sort Inventory for predictable test results.
-  private static boolean sortInventory;
+  private final boolean sortInventory;
 
   public MockPersistentStore() {
     this(false);

@@ -25,7 +25,6 @@ import com.google.enterprise.connector.instantiator.InstanceInfo.NullDirectoryEx
 import com.google.enterprise.connector.instantiator.InstanceInfo.NullTypeInfoException;
 import com.google.enterprise.connector.instantiator.InstanceInfo.PropertyProcessingFailureException;
 import com.google.enterprise.connector.instantiator.TypeInfo.TypeInfoException;
-import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.FileStore;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
@@ -37,7 +36,6 @@ import org.springframework.core.io.Resource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -80,12 +78,6 @@ public class InstanceInfoTest extends TestCase {
     }
   }
 
-  /**
-   * Test method for
-   * {@link com.google.enterprise.connector.instantiator.InstanceInfo
-   * #fromDirectory(java.lang.String, java.io.File,
-   * com.google.enterprise.connector.instantiator.TypeInfo)}.
-   */
   public final void testFromDirectoryPositive() {
     String resourceName =
         "testdata/connectorTypeTests/positive/connectorType.xml";
@@ -201,12 +193,6 @@ public class InstanceInfoTest extends TestCase {
     }
     assertTrue(correctExceptionThrown);
     assertNull(instanceInfo);
-  }
-
-  /** Retrieve the TypeMap from the Spring Context. */
-  private TypeMap getTypeMap() {
-    return (TypeMap) Context.getInstance().getRequiredBean(
-        "TypeMap", TypeMap.class);
   }
 
   /** Test encrypted property */
@@ -326,12 +312,6 @@ public class InstanceInfoTest extends TestCase {
     assertTrue(exceptionThrown);
   }
 
-  /**
-   * Test method for
-   * {@link com.google.enterprise.connector.instantiator.InstanceInfo
-   * #fromDirectory(java.lang.String, java.io.File,
-   * com.google.enterprise.connector.instantiator.TypeInfo)}.
-   */
   public final void testOverspecifiedProperties() {
     String resourceName =
         "testdata/connectorTypeTests/positive/connectorType.xml";

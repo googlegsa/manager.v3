@@ -18,6 +18,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
 
+import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
