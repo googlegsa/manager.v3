@@ -35,6 +35,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -108,12 +109,13 @@ public abstract class AbstractCommandLineApp {
     // Turn down the logging output to the console.
     setLoggingLevels();
 
-    // At this time, the current directory *must* be the parent of the Connector
-    // Manager WEB-INF directory, or Spring instantiation fails.
-    File webInfDir = new File(System.getProperty("user.dir"), "WEB-INF");
-    if (!(webInfDir.exists() && webInfDir.isDirectory())) {
+    // Find the Connector Manager WEB-INF directory.
+    File webInfDir = locateWebInf();
+    if (webInfDir == null) {
       System.err.println(
-          "Current directory must be webapps/connector-manager/");
+          "Unable to locate the connector-manager webapp directory.");
+      System.err.println("Try changing to that directory, or use");
+      System.err.println("-Dmanager.dir=/path/to/webapps/connector-manager");
       System.exit(-1);
     }
 
@@ -130,18 +132,32 @@ public abstract class AbstractCommandLineApp {
 
     // Establish the webapp keystore configuration before initializing
     // the Context.
-    configureCryptor(webInfDir);
+    try {
+      configureCryptor(webInfDir);
+    } catch (IOException e) {
+      System.err.println("Failed to read keystore configuration: " + e);
+      System.exit(-1);
+    }
 
     // Setup the standalone application Context.
     Context context = Context.getInstance();
-    context.setStandaloneContext("WEB-INF/applicationContext.xml",
-                                 webInfDir.getAbsolutePath());
+    File contextLocation = new File(webInfDir, "applicationContext.xml");
+    try {
+      context.setStandaloneContext(
+           contextLocation.getAbsoluteFile().toURI().toURL().toString(),
+           webInfDir.getAbsoluteFile().getParent(),
+           webInfDir.getAbsolutePath());
 
-    // At this point the beans have been created, but the Connector Manager
-    // has not started up.
-    if (doStart) {
-      context.setFeeding(false);
-      context.start();
+      // At this point the beans have been created, but the Connector Manager
+      // has not started up.
+      if (doStart) {
+        context.setFeeding(false);
+        context.start();
+      }
+    } catch (Exception e) {
+      System.err.println(
+          "Failed to initialize standalone application context: " + e);
+      System.exit(-1);
     }
   }
 
@@ -289,18 +305,12 @@ public abstract class AbstractCommandLineApp {
    *
    * @param webInfDir {@code connector-manager/WEB-INF} directory.
    */
-  protected void configureCryptor(File webInfDir) {
+  protected void configureCryptor(File webInfDir) throws IOException {
     File webXml = new File(webInfDir, "web.xml");
-    try {
-      InputStream is = new BufferedInputStream(new FileInputStream(webXml));
-      getKeystoreContextParams(is);
-      is.close();
-    } catch (IOException e) {
-      System.err.println(
-          "Unable to read file: " + webXml.getAbsolutePath());
-      System.err.println(e.getMessage());
-      System.exit(-1);
-    }
+
+    InputStream is = new BufferedInputStream(new FileInputStream(webXml));
+    getKeystoreContextParams(is);
+    is.close();
 
     // Supply EncryptedPropertyPlaceholder with the keystore config.
     EncryptedPropertyPlaceholderConfigurer.setKeyStoreType(keystore_type);
@@ -314,5 +324,47 @@ public abstract class AbstractCommandLineApp {
     // See keystore configuration in the StartUp servlet for details.
     String keystorePath = new File(webInfDir, keystore_file).getAbsolutePath();
     EncryptedPropertyPlaceholderConfigurer.setKeyStorePath(keystorePath);
+  }
+
+  // Relative to a given directory name, where is WEB-INF?
+  private HashMap<String, String> cmDirsMap = new HashMap<String, String>() {{
+      put("tomcat", "webapps/connector-manager/WEB-INF");
+      put("webapps", "connector-manager/WEB-INF");
+      put("connector-manager", "WEB-INF");
+      put("web-inf", "");
+      put("local", "google/webapps/connector-manager/WEB-INF");
+      put("google", "webapps/connector-manager/WEB-INF");
+    }};
+
+  /**
+   * Locate the Connector Manager WEB-INF directory.
+   */
+  protected File locateWebInf() {
+    String cmdir = System.getProperty("manager.dir",
+        System.getProperty("catalina.base", System.getProperty("user.dir")));
+    File webinf = locateWebInf(new File(cmdir));
+    if (webinf == null) {
+      // Maybe we are at the root of the GCI installation.
+      webinf = locateWebInf(new File(cmdir, "Tomcat"));
+    }
+    if (webinf == null) {
+      // Maybe we are at the root of the GSA installation.
+      webinf = locateWebInf(new File(cmdir, "local"));
+    }
+    return webinf;
+  }
+
+  /**
+   * Locate the Connector Manager WEB-INF directory, relative to dir.
+   */
+  protected File locateWebInf(File dir) {
+    String path = cmDirsMap.get(dir.getName().toLowerCase());
+    if (path != null) {
+      File webinf = new File(dir, path);
+      if (webinf.exists() && webinf.isDirectory()) {
+        return webinf.getAbsoluteFile();
+      }
+    }
+    return null;
   }
 }
