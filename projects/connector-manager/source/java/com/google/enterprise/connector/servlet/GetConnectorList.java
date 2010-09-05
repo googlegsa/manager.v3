@@ -14,12 +14,12 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.spi.ConnectorType;
+import com.google.enterprise.connector.util.JarUtils;
 
 import java.io.IOException;
 import java.io.PrintWriter;

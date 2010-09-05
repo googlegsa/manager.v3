@@ -14,11 +14,11 @@
 
 package com.google.enterprise.connector.manager;
 
-import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.encryptpassword.EncryptPassword;
 import com.google.enterprise.connector.importexport.DumpConnectors;
 import com.google.enterprise.connector.persist.MigrateStore;
 import com.google.enterprise.connector.servlet.ServletUtil;
+import com.google.enterprise.connector.util.JarUtils;
 
 /**
  * Dump the Version info from the Manifest for the Connector Manager's JAR file.
