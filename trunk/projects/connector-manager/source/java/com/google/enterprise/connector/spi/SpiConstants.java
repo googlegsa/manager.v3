@@ -14,15 +14,19 @@
 
 package com.google.enterprise.connector.spi;
 
+import com.google.common.collect.ImmutableMap;
+
+import java.util.Map;
+
 /**
  * Non-instantiable class that holds constants used by the SPI and
  * documents their meanings.
  * <p>
  * All constants whose names begin with PROPNAME are reserved names for
- * properties that may be accessed from a Document returned as a query
- * result. The actual values of these property name constants all begin
- * with "google:". For future compatibility, all property names beginning
- * with "google:" are reserved.
+ * properties that may be accessed from a Document returned as a query result.
+ * The actual values of these property name constants all begin with "google:".
+ * For future compatibility, all property names beginning with "google:" are
+ * reserved.
  */
 public class SpiConstants {
   private SpiConstants() {
@@ -48,13 +52,16 @@ public class SpiConstants {
    * encouraged to implement this by using the natural ID in the foreign
    * repository.
    * <p>
+   * This property is persistable (it is one of the keys in the
+   * {@link #PERSISTABLE_ATTRIBUTES} map.
+   * <p>
    * Value: google:docid
    */
   public static final String PROPNAME_DOCID = "google:docid";
 
   /**
    * Identifies a single-valued, date property that gives the last modified
-   * date of a document.  This property is optional but strongly recommended in
+   * date of a document. This property is optional but strongly recommended in
    * order to associate a specific date to the document.
    * <p>
    * Value: google:lastmodify
@@ -80,18 +87,18 @@ public class SpiConstants {
 
   /**
    * Identifies a single-valued FeedType property that, if present, will be
-   * used to determine the feed type for this document.  It is strongly
+   * used to determine the feed type for this document. It is strongly
    * recommended that this property be set to explicitly determine the feed
    * type ('content' or 'web') for the document.
    * <p>
    * If this property is not set, the feed type will be determined as follows:
    * <ol>
-   * <li> If there is no {@link #PROPNAME_SEARCHURL} then the feed type will
-   *      default to 'content' feed using a fabricated URL derived from the
-   *      {@link #PROPNAME_DOCID}.
-   * <li> If there is a {@link #PROPNAME_SEARCHURL} then the feed type will
-   *      default to 'web' feed and use the {@link #PROPNAME_SEARCHURL} as the
-   *      document URL.
+   * <li>If there is no {@link #PROPNAME_SEARCHURL} then the feed type will
+   * default to 'content' feed using a fabricated URL derived from the
+   * {@link #PROPNAME_DOCID}.
+   * <li>If there is a {@link #PROPNAME_SEARCHURL} then the feed type will
+   * default to 'web' feed and use the {@link #PROPNAME_SEARCHURL} as the
+   * document URL.
    * </ol>
    * <p>
    * Value: google:feedtype
@@ -102,7 +109,7 @@ public class SpiConstants {
 
   /**
    * Identifies a single-valued Feed ID property that, if present, will be
-   * used to identify the feed file that contains a fed document.  All feed
+   * used to identify the feed file that contains a fed document. All feed
    * records in a single feed file will share a common google:feedid value.
    * <p>
    * Reserved for internal use.
@@ -192,30 +199,34 @@ public class SpiConstants {
    * To specify more than just RoleType.READER access to the document, the
    * Connector must add additional multi-value role properties to the document.
    * These entries are of the form:
+   *
    * <pre>
    *   Name = &lt;GROUP_ROLES_PROPNAME_PREFIX&gt; + &lt;scopeId&gt;
    *   Value = [RoleType[, ...]]
    * </pre>
+   *
    * where &lt;GROUP_ROLES_PROPNAME_PREFIX&gt; is the
    * {@link #GROUP_ROLES_PROPNAME_PREFIX}, &lt;scopeId&gt; is the group ACL
-   * Scope ID, and RoleType is one of the possible RoleType values.  User ACL
+   * Scope ID, and RoleType is one of the possible RoleType values. User ACL
    * Roles are of the form:
+   *
    * <pre>
    *   Name = &lt;USER_ROLES_PROPNAME_PREFIX&gt; + &lt;scopeId&gt;
    *   Value = [RoleType[, ...]]
    * </pre>
+   *
    * where the &lt;scopeId&gt; will be the user ACL Scope ID.
    * <p>
-   * If the PROPNAME_ISPUBLIC is missing or is true, then this property
-   * is ignored, since the document is public.
+   * If the PROPNAME_ISPUBLIC is missing or is true, then this property is
+   * ignored, since the document is public.
    * <p>
-   * If both the PROPNAME_ACLGROUPS and PROPNAME_ACLUSERS properties are
-   * null or empty, then the GSA will use the authorization SPI to grant
-   * or deny access to this document.
+   * If both the PROPNAME_ACLGROUPS and PROPNAME_ACLUSERS properties are null or
+   * empty, then the GSA will use the authorization SPI to grant or deny access
+   * to this document.
    * <p>
-   * The GSA may be configured to bypass on-board authorization, in which
-   * case these properties will be ignored, and the GSA will use the
-   * authorization SPI to grant or deny access to this document.
+   * The GSA may be configured to bypass on-board authorization, in which case
+   * these properties will be ignored, and the GSA will use the authorization
+   * SPI to grant or deny access to this document.
    * <p>
    * Value: google:aclgroups
    */
@@ -232,14 +243,17 @@ public class SpiConstants {
 
   /**
    * Prefix added to the front of the group ACL Scope ID when creating a group
-   * roles property name.  If the Connector wants to define specific roles
+   * roles property name. If the Connector wants to define specific roles
    * associated with a group ACL Scope ID related to a document they should be
    * stored in a multi-valued property named:
+   *
    * <pre>
    *   GROUP_ROLES_PROPNAME_PREFIX + &lt;scopeId&gt;
    * </pre>
+   *
    * For example, given a group ACL Entry of "eng=reader,writer" the roles for
    * "eng" would be stored in a property as follows:
+   *
    * <pre>
    * Name = "google:group:roles:eng"
    * Value = [reader, writer]
@@ -250,14 +264,17 @@ public class SpiConstants {
 
   /**
    * Prefix added to the front of the user ACL Scope ID when creating a user
-   * roles property name.  If the Connector wants to define specific roles
+   * roles property name. If the Connector wants to define specific roles
    * associated with a user ACL Scope ID related to a document they should be
    * stored in a multi-valued property named:
+   *
    * <pre>
    *   USER_ROLES_PROPNAME_PREFIX + &lt;scopeId&gt;
    * </pre>
+   *
    * For example, given a user ACL Entry of "joe=reader,writer" the roles for
    * "joe" would be stored in a property as follows:
+   *
    * <pre>
    * Name = "google:user:roles:joe"
    * Value = [reader, writer]
@@ -267,7 +284,7 @@ public class SpiConstants {
 
   /**
    * Identifies an optional, single-valued property that specifies the action
-   * associated with the document.  If not specified, then the system will
+   * associated with the document. If not specified, then the system will
    * not specify the action and the default behavior will be observed.
    * <p>
    * Value: google:action
@@ -281,11 +298,10 @@ public class SpiConstants {
    * repositories that link documents to multiple parent folders.
    * <p>
    * Examples:
+   *
    * <pre>
    *     /ENGINEERING/techdoc/pdfs
-   *
    *     Enterprise:Marketing:Press Releases
-   *
    *     https://sp.example.com/sites/mylist
    * </pre>
    * <p>
@@ -316,13 +332,14 @@ public class SpiConstants {
     public static final ActionType ADD = new ActionType("add");
     public static final ActionType DELETE = new ActionType("delete");
     public static final ActionType ERROR = new ActionType("error");
+    public static final ActionType SKIPPED = new ActionType("skipped");
 
     private static final ActionType[] PRIVATE_VALUES = {ADD, DELETE};
 
     private final String tag;
 
     ActionType(String m) {
-        tag = m;
+      tag = m;
     }
 
     @Override
@@ -332,23 +349,23 @@ public class SpiConstants {
 
     /**
      * @return The enum matching the given <code>tag</code>.
-     * <code>ActionType.ERROR</code> will be returned if the given
-     * <code>tag</code> does not match a known <code>ActionType</code>.
+     *         <code>ActionType.ERROR</code> will be returned if the given
+     *         <code>tag</code> does not match a known <code>ActionType</code>.
      */
     public static ActionType findActionType(String tag) {
-        if (tag == null) {
-          return ERROR;
-        }
-        for (int i = 0; i < PRIVATE_VALUES.length; i++) {
-          if (PRIVATE_VALUES[i].tag.equals(tag)) {
-            return PRIVATE_VALUES[i];
-          }
-        }
+      if (tag == null) {
         return ERROR;
       }
+      for (int i = 0; i < PRIVATE_VALUES.length; i++) {
+        if (PRIVATE_VALUES[i].tag.equals(tag)) {
+          return PRIVATE_VALUES[i];
+        }
+      }
+      return ERROR;
+    }
 
     public int compareTo(ActionType actionType) {
-        return ordinal - actionType.ordinal;
+      return ordinal - actionType.ordinal;
     }
 
     @Override
@@ -398,7 +415,7 @@ public class SpiConstants {
     private final String tag;
 
     RoleType(String m) {
-        tag = m;
+      tag = m;
     }
 
     @Override
@@ -408,23 +425,23 @@ public class SpiConstants {
 
     /**
      * @return The enum matching the given <code>tag</code>.
-     * <code>RoleType.ERROR</code> will be returned if the given
-     * <code>tag</code> does not match a known <code>RoleType</code>.
+     *         <code>RoleType.ERROR</code> will be returned if the given
+     *         <code>tag</code> does not match a known <code>RoleType</code>.
      */
     public static RoleType findRoleType(String tag) {
-        if (tag == null) {
-          return ERROR;
-        }
-        for (int i = 0; i < PRIVATE_VALUES.length; i++) {
-          if (PRIVATE_VALUES[i].tag.equals(tag)) {
-            return PRIVATE_VALUES[i];
-          }
-        }
+      if (tag == null) {
         return ERROR;
       }
+      for (int i = 0; i < PRIVATE_VALUES.length; i++) {
+        if (PRIVATE_VALUES[i].tag.equals(tag)) {
+          return PRIVATE_VALUES[i];
+        }
+      }
+      return ERROR;
+    }
 
     public int compareTo(RoleType roleType) {
-        return ordinal - roleType.ordinal;
+      return ordinal - roleType.ordinal;
     }
 
     @Override
@@ -452,5 +469,170 @@ public class SpiConstants {
       }
       return true;
     }
+  }
+
+  /**
+   * This enumeration identifies databases.
+   */
+  public enum DatabaseType {
+    OTHER("other"),
+    ORACLE("oracle"),
+    SQLSERVER("sqlserver"),
+    H2("h2"), ;
+
+    private final String name;
+
+    private DatabaseType(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public String toString() {
+      return name;
+    }
+  }
+
+  /**
+   * A map keyed by property names, giving corresponding column names. If a
+   * property name is a key in this map, then it can be persisted by the
+   * Connector
+   * Manager in its per-document store. The associated value gives the name that
+   * a connector implementor should use to read records from the
+   * per-document store using jdbc. However, implementors are encouraged to use
+   * {@link LocalDocumentStore} methods rather than jdbc if possible.
+   * <p/>
+   * At present, the persistable attributes are:
+   * <ul>
+   * <li>{@link #PROPNAME_CONNECTOR_INSTANCE}</li>
+   * <li>{@link #PROPNAME_CONNECTOR_TYPE}</li>
+   * <li>{@link #PROPNAME_DOCID}</li>
+   * <li>{@link #PROPNAME_FEEDID}</li>
+   * <li>{@link #PROPNAME_PRIMARY_FOLDER}</li>
+   * <li>{@link #PROPNAME_ACTION}</li>
+   * <li>{@link #PROPNAME_TIMESTAMP}</li>
+   * <li>{@link #PROPNAME_MESSAGE}</li>
+   * <li>{@link #PROPNAME_SNAPSHOT}</li>
+   * <li>{@link #PROPNAME_CONTAINER}</li>
+   * <li>{@link #PROPNAME_PERSISTED_CUSTOMDATA_1}</li>
+   * <li>{@link #PROPNAME_PERSISTED_CUSTOMDATA_2}</li>
+   * </ul>
+   */
+  public static final Map<String, String> PERSISTABLE_ATTRIBUTES;
+
+  /**
+   * Optional single-valued, boolean property that marks this document as one
+   * the Connector Manager should persist locally in its per-document store. If
+   * not present, this is assumed to be false. If true, then the Connector
+   * Manager will persist all attributes that are keys in the
+   * {@link #PERSISTABLE_ATTRIBUTES} map.
+   */
+  public static final String PROPNAME_MANAGER_SHOULD_PERSIST = "google:persist";
+
+  /**
+   * Reserved by the Connector Manager to indicate the connector instance
+   * that submitted this document. Should not be supplied by the
+   * connector developer, and if supplied, it will be ignored.
+   * <p>
+   * This property is persistable (it is one of the keys in the
+   * {@link #PERSISTABLE_ATTRIBUTES} map.
+   */
+  public static final String PROPNAME_CONNECTOR_INSTANCE = "google:connector_instance";
+
+  /**
+   * Reserved by the Connector Manager to indicate type of the connector
+   * that submitted this document. Should not be supplied by the
+   * connector developer, and if supplied, it will be ignored.
+   * <p>
+   * This property is persistable (it is one of the keys in the
+   * {@link #PERSISTABLE_ATTRIBUTES} map.
+   */
+  public static final String PROPNAME_CONNECTOR_TYPE = "google:connector_type";
+
+  /**
+   * Optional, single-valued property that gives the name primary folder in
+   * which this document lives. If not supplied, but the
+   * {@link #PROPNAME_FOLDER} property is supplied, then the first value of
+   * that multi-valued property will be used here. The primary use-case of this
+   * attribute is to be stored, so that a connector can later query to find
+   * all documents in a folder.
+   * <p>
+   * This property is persistable (it is one of the keys in the
+   * {@link #PERSISTABLE_ATTRIBUTES} map.
+   */
+  public static final String PROPNAME_PRIMARY_FOLDER = "google:primary_folder";
+
+  /**
+   * Reserved by the Connector Manager to indicate the time at which the
+   * Connector Manager handled this document. Should not be supplied by the
+   * connector developer, and if supplied, it will be ignored.
+   * <p>
+   * This property is persistable (it is one of the keys in the
+   * {@link #PERSISTABLE_ATTRIBUTES} map.
+   */
+  public static final String PROPNAME_TIMESTAMP = "google:timestamp";
+
+  /**
+   * Optional, single-valued property that gives a message from the connector
+   * instance about the state of this document.
+   * <p>
+   * This property is persistable (it is one of the keys in the
+   * {@link #PERSISTABLE_ATTRIBUTES} map.
+   */
+  public static final String PROPNAME_MESSAGE = "google:message";
+
+  /**
+   * Optional, single-valued property that gives a compact representation of a
+   * document's content and attributes, to enable a quick comparison with a
+   * foreign repository to see if the document has changed. For example, this
+   * attribute might contain a content hash. The primary use-case of this
+   * attribute is to be stored in the Connector Manager's per-document store. It
+   * will not be supplied when sending a document to the GSA for indexing.
+   * <p>
+   * This property is persistable (it is one of the keys in the
+   * {@link #PERSISTABLE_ATTRIBUTES} map.
+   */
+  public static final String PROPNAME_SNAPSHOT = "google:snapshot";
+
+  /**
+   * Optional, single-valued property that gives the name of the high-level
+   * container object
+   * in which the document lives. This may be an object such as a cabinet or
+   * list.
+   * The primary use-case of this
+   * attribute is to be stored, so that a connector can later query to find
+   * all documents in a container.
+   * <p>
+   * This property is persistable (it is one of the keys in the
+   * {@link #PERSISTABLE_ATTRIBUTES} map.
+   */
+  public static final String PROPNAME_CONTAINER = "google:container";
+
+  /**
+   * Optional, single-valued property the Connector Manager will persist in its
+   * per-document store. This property will not be supplied when sending a
+   * document to the GSA for indexing.
+   */
+  public static final String PROPNAME_PERSISTED_CUSTOMDATA_1 = "google:custom1";
+
+  /**
+   * Optional, single-valued property the Connector Manager will persist in its
+   * per-document store. This property will not be supplied when sending a
+   * document to the GSA for indexing.
+   */
+  public static final String PROPNAME_PERSISTED_CUSTOMDATA_2 = "google:custom2";
+
+  static {
+    PERSISTABLE_ATTRIBUTES = ImmutableMap.<String, String> builder().
+        put(PROPNAME_DOCID, "docid").
+        put(PROPNAME_FEEDID, "feedid").
+        put(PROPNAME_PRIMARY_FOLDER, "folderparent").
+        put(PROPNAME_ACTION, "action").
+        put(PROPNAME_TIMESTAMP, "timestamp").
+        put(PROPNAME_MESSAGE, "message").
+        put(PROPNAME_SNAPSHOT, "snapshot").
+        put(PROPNAME_CONTAINER, "container").
+        put(PROPNAME_PERSISTED_CUSTOMDATA_1, "custom1").
+        put(PROPNAME_PERSISTED_CUSTOMDATA_2, "custom2").
+        build();
   }
 }
