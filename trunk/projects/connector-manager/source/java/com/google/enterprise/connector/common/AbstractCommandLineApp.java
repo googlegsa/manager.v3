@@ -18,6 +18,7 @@ import com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholder
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
 import com.google.enterprise.connector.servlet.ServletUtil;
+import com.google.enterprise.connector.util.JarUtils;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;

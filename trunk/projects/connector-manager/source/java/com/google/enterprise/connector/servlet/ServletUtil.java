@@ -14,8 +14,8 @@
 
 package com.google.enterprise.connector.servlet;
 
-import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
+import com.google.enterprise.connector.util.JarUtils;
 
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
