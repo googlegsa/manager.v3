@@ -57,6 +57,7 @@ public abstract class AbstractCommandLineApp {
   protected static final Option VERSION_OPTION =
       new Option("v", "version", false, "Display version string.");
 
+  protected static final String NL = System.getProperty("line.separator");
 
   /** Parsed CommandLine. */
   protected CommandLine commandLine;
@@ -65,6 +66,11 @@ public abstract class AbstractCommandLineApp {
    * Returns the name of the command line application.
    */
   public abstract String getName();
+
+  /**
+   * Returns short description of the command line application.
+   */
+  public abstract String getDescription();
 
   /**
    * Executes the command line app.
@@ -210,17 +216,37 @@ public abstract class AbstractCommandLineApp {
   }
 
   /**
+   * Gets the header that is included in the {@code usage:} message.
+   * Subclasses my override this to add additional information
+   * before the display of options.
+   */
+  protected String getUsageHeader() {
+    return null;
+  }
+
+  /**
+   * Gets the footer to be added to the {@code usage:} message.
+   * Subclasses my override this to add additional informative help.
+   */
+  protected String getUsageFooter() {
+    return null;
+  }
+
+  /**
    * Displays the product usage.
    * invokes the app with "-?", "-h" or "--help" or required {@code Options}
    * are not supplied.  Subclasses may call this if the supplied command line
    * options are inconsistent with correct operation.
    **/
   protected void printUsage() {
-    printVersion();
     PrintWriter out = new PrintWriter(System.err, true);
+    out.println(getVersion());
+    out.println(getDescription());
+    out.println();
     HelpFormatter helper = new HelpFormatter();
-    helper.printHelp(out, 79, getCommandLineSyntax(), null,
-                     getOptions(), 7, 4, "\n");
+    helper.printHelp(out, 79, getCommandLineSyntax(), getUsageHeader(),
+                     getOptions(), 7, 4, getUsageFooter());
+    out.println();
   }
 
   /**
@@ -247,7 +273,7 @@ public abstract class AbstractCommandLineApp {
    *
    * @param args String array of supplied command line arguments.
    */
-  protected CommandLine parseArgs(String[] args) {
+  public CommandLine parseArgs(String[] args) {
     try {
       commandLine = new PosixParser().parse(getOptions(), args);
       if (commandLine.hasOption(HELP_OPTION.getLongOpt())) {

@@ -27,10 +27,12 @@ import java.io.PrintWriter;
 /**
  * A utility to dump connector configuration to a file.
  *
+ * <pre>
  * usage: DumpConnectors [-?] [-v] output_file
  *        -?, --help      Display this help.
  *        -v, --version   Display version.
  *        output_file     Destination file output.
+ * </pre>
  */
 public class DumpConnectors extends AbstractCommandLineApp {
   /** Retrieve the TypeMap from the Spring Context. */
@@ -51,8 +53,22 @@ public class DumpConnectors extends AbstractCommandLineApp {
   }
 
   @Override
+  public String getDescription() {
+    return "Dumps Connector configurations as XML to a file.";
+  }
+
+  @Override
   public String getCommandLineSyntax() {
-    return super.getCommandLineSyntax() + " output_file";
+    return super.getCommandLineSyntax() + "<output_file>";
+  }
+
+  @Override
+  protected String getUsageFooter() {
+    StringBuilder builder = new StringBuilder(NL);
+    builder.append(getName());
+    builder.append(" writes an XML representation of the configurations of ");
+    builder.append("all connector instances to the specified output_file.");
+    return builder.toString();
   }
 
   @Override
