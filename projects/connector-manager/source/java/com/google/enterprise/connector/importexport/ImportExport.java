@@ -184,6 +184,11 @@ public class ImportExport extends AbstractCommandLineApp {
   }
 
   @Override
+  public String getDescription() {
+    return "Imports and Exports Connector configurations.";
+  }
+
+  @Override
   public String getCommandLineSyntax() {
     return super.getCommandLineSyntax() + "(export|import|import-no-remove) <filename>";
   }

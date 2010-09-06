@@ -60,6 +60,11 @@ public class EncryptPassword extends AbstractCommandLineApp {
   }
 
   @Override
+  public String getDescription() {
+    return "Encrypts passwords using the Connector Manager keystore.";
+  }
+
+  @Override
   public String getCommandLineSyntax() {
     return super.getCommandLineSyntax() + "[-p password]";
   }
