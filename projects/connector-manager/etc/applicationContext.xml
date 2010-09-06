@@ -231,6 +231,10 @@
   </bean>
   -->
 
+  <bean id="JdbcDatabase" class="com.google.enterprise.connector.persist.JdbcDatabase">
+    <property name="dataSource" ref="JdbcDataSource" />
+  </bean>
+  
   <!-- Persistent Store mechanism used to store the Connector Configuration,
        Connector Schedule, and Connector Traversal State.  This implementation
        stores the information in a JDBC accessible database.
@@ -255,8 +259,8 @@
   -->
   <bean id="JdbcPersistentStore" name="PersistentStore"
         class="com.google.enterprise.connector.persist.JdbcStore">
-    <property name="dataSource" ref="JdbcDataSource"/>
     <property name="createTableDdl" ref="JdbcStoreCreateTableDdl"/>
+    <property name="database" ref="JdbcDatabase"/>
   </bean>
 
   <!-- Persistent Store mechanism used to store the Connector Configuration,

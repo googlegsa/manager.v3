@@ -19,17 +19,14 @@ import com.google.enterprise.connector.scheduler.Schedule;
 import org.h2.jdbcx.JdbcDataSource;
 
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+
 import javax.sql.DataSource;
 
 /**
  * Class to test JDBC persistent store.
  */
 public class JdbcStoreTest extends PersistentStoreTestAbstract {
-  private static final String dsName = "jdbc/testDataSourcName";
 
   protected DataSource dataSource;
 
@@ -43,15 +40,16 @@ public class JdbcStoreTest extends PersistentStoreTestAbstract {
     ds.setUser("sa");
     ds.setPassword("sa");
     dataSource = ds;
+    JdbcDatabase jdbcDatabase = new JdbcDatabase(ds);
 
     store = new JdbcStore();
-    ((JdbcStore) store).setDataSource(dataSource);
+    ((JdbcStore) store).setDatabase(jdbcDatabase);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      ((JdbcStore) store).finalize();
+      ((JdbcStore) store).getDatabase().finalize();
     } finally {
       super.tearDown();
     }
@@ -62,32 +60,14 @@ public class JdbcStoreTest extends PersistentStoreTestAbstract {
     // Connect to the database.
     Connection connection = dataSource.getConnection();
 
-    assertFalse(tableExists(connection, JdbcStore.TABLE_NAME));
+    assertFalse(JdbcDatabaseTest.tableExists(connection, JdbcStore.TABLE_NAME));
 
     Schedule schedule =
         store.getConnectorSchedule(getStoreContext("nonexist"));
     assertNull(schedule);
 
-    /* TODO: Why does this fail for in-memory DBs?
-    assertTrue(tableExists(connection, JdbcStore.TABLE_NAME));
-    */
+    JdbcDatabaseTest.assertTableExistsTodo(connection, JdbcStore.TABLE_NAME);
 
     connection.close();
-  }
-
-  private boolean tableExists(Connection connection, String tableName)
-      throws SQLException {
-    DatabaseMetaData metaData = connection.getMetaData();
-    ResultSet tables = metaData.getTables(null, null, tableName, null);
-    try {
-      while (tables.next()) {
-        if (tableName.equalsIgnoreCase(tables.getString("TABLE_NAME"))) {
-          return true;
-        }
-      }
-      return false;
-    } finally {
-      tables.close();
-    }
   }
 }
