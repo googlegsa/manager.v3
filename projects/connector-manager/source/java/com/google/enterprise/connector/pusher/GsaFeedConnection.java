@@ -15,6 +15,8 @@
 package com.google.enterprise.connector.pusher;
 
 import com.google.enterprise.connector.servlet.ServletUtil;
+import com.google.enterprise.connector.util.Clock;
+import com.google.enterprise.connector.util.SystemClock;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -85,6 +87,9 @@ public class GsaFeedConnection implements FeedConnection {
   // True if the feed is throttled back due to excessive backlog.
   private boolean isBacklogged = false;
 
+  // Clock used for backlog checks.
+  private Clock clock = new SystemClock();
+
   // Time of last backlog check.
   private long lastBacklogCheck;
 
@@ -105,6 +110,10 @@ public class GsaFeedConnection implements FeedConnection {
     contentEncodings = null;
     backlogUrl = new URL("http", host, port, "/getbacklogcount");
     lastBacklogCheck = 0L;
+  }
+
+  public void setClock(Clock clock) {
+    this.clock = clock;
   }
 
   /**
@@ -283,7 +292,7 @@ public class GsaFeedConnection implements FeedConnection {
   /* @Override */
   public synchronized boolean isBacklogged() {
     if (lastBacklogCheck != Long.MAX_VALUE) {
-      long now = System.currentTimeMillis();
+      long now = clock.getTimeMillis();
       if ((now - lastBacklogCheck) > backlogCheckInterval) {
         lastBacklogCheck = now;
         // If we got a feed error and the feed is still down, delay.

@@ -92,6 +92,7 @@
         class="com.google.enterprise.connector.pusher.GsaFeedConnection">
     <constructor-arg index="0" type="java.lang.String" value="${gsa.feed.host}"/>
     <constructor-arg index="1" type="int" value="${gsa.feed.port}"/>
+    <property name="clock" ref="Clock"/>
   </bean>
 
   <!-- This is used to throttle back the document feed if the GSA has fallen
@@ -296,9 +297,12 @@
     <constructor-arg index="1" ref="Manager"/>
   </bean>
 
+  <bean id="Clock" class="com.google.enterprise.connector.util.SystemClock" />
+
   <bean id="ThreadPool"
         class="com.google.enterprise.connector.instantiator.ThreadPool">
     <constructor-arg index="0" type="int" value="${traversal.time.limit}"/>
+    <constructor-arg index="1" ref="Clock"/>
   </bean>
 
   <bean id="PusherFactory"
@@ -312,6 +316,7 @@
     <property name="feedConnection" ref="FeedConnection"/>
     <property name="fileSizeLimitInfo" ref="FileSizeLimitInfo"/>
     <property name="batchSize" value="${traversal.batch.size}"/>
+    <property name="clock" ref="Clock"/>
   </bean>
 
   <bean id="ConnectorCoordinatorFactory"
@@ -320,6 +325,7 @@
     <property name="loadManagerFactory" ref="LoadManagerFactory"/>
     <property name="threadPool" ref="ThreadPool" />
     <property name="changeDetector" ref="ChangeDetector"/>
+    <property name="clock" ref="Clock"/>
   </bean>
 
   <bean id="ConnectorCoordinatorMap"

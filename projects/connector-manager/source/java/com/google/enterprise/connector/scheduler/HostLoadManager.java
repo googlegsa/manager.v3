@@ -18,6 +18,7 @@ import com.google.enterprise.connector.pusher.FeedConnection;
 import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
+import com.google.enterprise.connector.util.Clock;
 
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -69,6 +70,11 @@ public class HostLoadManager implements LoadManager {
   private int load = 1000;
 
   /**
+   * Used for timing throughput.
+   */
+  private final Clock clock;
+
+  /**
    * Used for determining feed backlog status.
    */
   private final FeedConnection feedConnection;
@@ -86,11 +92,13 @@ public class HostLoadManager implements LoadManager {
    *
    * @param feedConnection a {@link FeedConnection}.
    * @param fileSizeLimit a {@link FileSizeLimitInfo}.
+   * @param clock a {@link Clock}.
    */
   public HostLoadManager(FeedConnection feedConnection,
-                         FileSizeLimitInfo fileSizeLimit) {
+      FileSizeLimitInfo fileSizeLimit, Clock clock) {
     this.feedConnection = feedConnection;
     this.fileSizeLimit = fileSizeLimit;
+    this.clock = clock;
   }
 
   /**
@@ -179,7 +187,7 @@ public class HostLoadManager implements LoadManager {
   private RecentDocs getNumDocsTraversedRecently() {
     int numDocs = 0;
     int prevNumDocs = 0;
-    long thisPeriod = (System.currentTimeMillis() / periodInMillis) * periodInMillis;
+    long thisPeriod = (clock.getTimeMillis() / periodInMillis) * periodInMillis;
     long prevPeriod = thisPeriod - periodInMillis;
     if (batchResults.size() > 0) {
       ListIterator<BatchResult> iter = batchResults.listIterator();
@@ -268,7 +276,7 @@ public class HostLoadManager implements LoadManager {
       if (available < fileSizeLimit.maxFeedSize()) {
         Level level = (gotLowMemory) ? Level.FINE : Level.WARNING;
         gotLowMemory = true;
-        long now = System.currentTimeMillis();
+        long now = clock.getTimeMillis();
         // Log message no more than once every minute.
         if (now > (lastLowMemMessage + (60 * 1000))) {
           lastLowMemMessage = now;

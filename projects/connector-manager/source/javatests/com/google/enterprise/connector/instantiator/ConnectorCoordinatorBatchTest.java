@@ -30,6 +30,7 @@ import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
+import com.google.enterprise.connector.util.SystemClock;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -395,7 +396,8 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
   public void testTimeoutBatch() throws Exception {
     // Override the default ThreadPool timeout with a much shorter timeout.
     getCoordinatorFactory().setThreadPool(
-        new ThreadPool(SHORT_TRAVERSAL_TIME_LIMIT_SECS));
+        new ThreadPool(SHORT_TRAVERSAL_TIME_LIMIT_SECS,
+        new SystemClock() /* TODO: Use a mock clock */));
     createPusherAndCoordinator();
     coordinator.startBatch();
     SyncingConnector.Tracker tracker =

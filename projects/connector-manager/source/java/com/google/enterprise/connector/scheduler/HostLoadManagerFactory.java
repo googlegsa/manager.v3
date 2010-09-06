@@ -16,6 +16,8 @@ package com.google.enterprise.connector.scheduler;
 
 import com.google.enterprise.connector.pusher.FeedConnection;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
+import com.google.enterprise.connector.util.Clock;
+import com.google.enterprise.connector.util.SystemClock;
 
 /**
  * Interface for a factory that creates {@link HostLoadManager} instances
@@ -45,6 +47,11 @@ public class HostLoadManagerFactory implements LoadManagerFactory {
   private FileSizeLimitInfo fileSizeLimit;
 
   /**
+   * Clock used for timing througput.
+   */
+  private Clock clock = new SystemClock();
+
+  /**
    * Sets the {@link FeedConnection} used to determine distal feed backlogs.
    *
    * @param feedConnection a {@link FeedConnection}.
@@ -62,6 +69,15 @@ public class HostLoadManagerFactory implements LoadManagerFactory {
    */
   public void setFileSizeLimitInfo(FileSizeLimitInfo fileSizeLimitInfo) {
     this.fileSizeLimit = fileSizeLimitInfo;
+  }
+
+  /**
+   * Sets the {@link Clock} used to measure time periods.
+   *
+   * @param clock a {@link Clock}
+   */
+  public void setClock(Clock clock) {
+    this.clock = clock;
   }
 
   /**
@@ -91,7 +107,7 @@ public class HostLoadManagerFactory implements LoadManagerFactory {
    */
   //@Override
   public LoadManager newLoadManager(String connectorName) {
-    HostLoadManager hlm = new HostLoadManager(feedConnection, fileSizeLimit);
+    HostLoadManager hlm = new HostLoadManager(feedConnection, fileSizeLimit, clock);
     hlm.setPeriod(period);
     hlm.setBatchSize(batchSize);
     return hlm;

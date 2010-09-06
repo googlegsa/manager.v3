@@ -28,6 +28,7 @@ import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.spi.TraversalContextAware;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.util.Clock;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,6 +45,7 @@ public class QueryTraverser implements Traverser {
   private final TraversalStateStore stateStore;
   private final String connectorName;
   private final TraversalContext traversalContext;
+  private final Clock clock;
 
   // Synchronize access to cancelWork.
   private final Object cancelLock = new Object();
@@ -51,12 +53,13 @@ public class QueryTraverser implements Traverser {
 
   public QueryTraverser(PusherFactory pusherFactory,
       TraversalManager traversalManager, TraversalStateStore stateStore,
-      String connectorName, TraversalContext traversalContext) {
+      String connectorName, TraversalContext traversalContext, Clock clock) {
     this.pusherFactory = pusherFactory;
     this.queryTraversalManager = traversalManager;
     this.stateStore = stateStore;
     this.connectorName = connectorName;
     this.traversalContext = traversalContext;
+    this.clock = clock;
     if (queryTraversalManager instanceof TraversalContextAware) {
       TraversalContextAware contextAware =
           (TraversalContextAware)queryTraversalManager;
@@ -84,7 +87,7 @@ public class QueryTraverser implements Traverser {
 
   //@Override
   public BatchResult runBatch(BatchSize batchSize) {
-    final long startTime = System.currentTimeMillis();
+    final long startTime = clock.getTimeMillis();
     final long timeoutTime = startTime
       + traversalContext.traversalTimeLimitSeconds() * 1000;
 
@@ -152,7 +155,7 @@ public class QueryTraverser implements Traverser {
                       + " has been interrupted...breaking out of batch run.");
           break;
         }
-        if (System.currentTimeMillis() >= timeoutTime) {
+        if (clock.getTimeMillis() >= timeoutTime) {
           LOGGER.fine("Traversal for connector " + connectorName
               + " is completing due to time limit.");
           break;
@@ -268,7 +271,7 @@ public class QueryTraverser implements Traverser {
     }
     if (result == null) {
       result = new BatchResult(TraversalDelayPolicy.IMMEDIATE, counter,
-                               startTime, System.currentTimeMillis());
+                               startTime, clock.getTimeMillis());
     } else if (pusher != null) {
       // We are returning an error from this batch. Cancel any feed that
       // might be in progress.

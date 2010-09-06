@@ -17,6 +17,7 @@ package com.google.enterprise.connector.instantiator;
 import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.scheduler.LoadManagerFactory;
 import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.util.Clock;
 
 /**
  * Factory for constructing ConnectorCoordinatorImpl instances.
@@ -29,6 +30,7 @@ public class ConnectorCoordinatorImplFactory
   private LoadManagerFactory loadManagerFactory;
   private ThreadPool threadPool;
   private ChangeDetector changeDetector;
+  private Clock clock;
 
   /**
    * Sets the {@link PusherFactory} used to create instances of
@@ -62,6 +64,15 @@ public class ConnectorCoordinatorImplFactory
   }
 
   /**
+   * Sets the {@link Clock} used for timing traversals.
+   *
+   * @param clock a {@link Clock} implementation.
+   */
+  public void setClock(Clock clock) {
+    this.clock = clock;
+  }
+
+  /**
    * Sets the {@link ChangeDetector} used for invoking the local
    * {@link ChangeHandler} for connector configuration, schedule, and
    * checkpoint changes that are initiated by this Manager instance.
@@ -91,6 +102,6 @@ public class ConnectorCoordinatorImplFactory
   /* @Override */
   public ConnectorCoordinator newConnectorCoordinator(String connectorName) {
     return new ConnectorCoordinatorImpl(connectorName,
-        pusherFactory, loadManagerFactory, threadPool, changeDetector);
+        pusherFactory, loadManagerFactory, threadPool, changeDetector, clock);
   }
 }

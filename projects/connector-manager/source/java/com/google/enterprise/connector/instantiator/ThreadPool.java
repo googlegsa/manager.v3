@@ -14,6 +14,8 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.util.Clock;
+
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -76,6 +78,11 @@ public class ThreadPool {
   private final long maximumTaskLifeMillis;
 
   /**
+   * Clock used to time out threads.
+   */
+  private final Clock clock;
+
+  /**
    * ExecutorService for running submitted tasks. Tasks are only submitted
    * through completionService.
    */
@@ -123,8 +130,9 @@ public class ThreadPool {
   // mechanism to do arithmetic on configuration properties. Once we move to
   // Spring v3, the calculation should be done in the Spring XML definition
   // file rather than here.
-  public ThreadPool(int taskLifeSeconds) {
+  public ThreadPool(int taskLifeSeconds, Clock clock) {
     this.maximumTaskLifeMillis = taskLifeSeconds * 2 * 1000L;
+    this.clock = clock;
     completionExecutor.execute(new CompletionTask());
   }
 
@@ -179,7 +187,7 @@ public class ThreadPool {
     FutureTask<?> taskFuture =
         new FutureTask<Object>(cancelTimeoutRunnable, null);
     TaskHandle handle =
-        new TaskHandle(cancelable, taskFuture, System.currentTimeMillis());
+        new TaskHandle(cancelable, taskFuture, clock.getTimeMillis());
     timeoutTask.setTaskHandle(handle);
     try {
       // Schedule timeoutTask to run when 'cancelable's maximum run interval
