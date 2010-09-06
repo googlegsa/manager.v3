@@ -33,6 +33,8 @@ import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
+import com.google.enterprise.connector.util.Clock;
+import com.google.enterprise.connector.util.SystemClock;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -2285,12 +2287,13 @@ public class DocPusherTest extends TestCase {
    * A slow FeedConnection.
    */
   private static class SlowFeedConnection extends MockFeedConnection {
-    static long doneTime = System.currentTimeMillis() + 10000;
+    static Clock clock = new SystemClock(); // TODO: rewrite this to use a mock clock.
+    static long doneTime = clock.getTimeMillis() + 10000;
     @Override
     public String sendData(FeedData feedData)
         throws RepositoryException {
       try {
-        while (System.currentTimeMillis() < doneTime) {
+        while (clock.getTimeMillis() < doneTime) {
           Thread.sleep(250);
         }
       } catch (InterruptedException ie) {

@@ -14,6 +14,9 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.util.Clock;
+import com.google.enterprise.connector.util.SystemClock;
+
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
@@ -32,10 +35,13 @@ public class ThreadPoolTest extends TestCase {
    */
   public static final int DEFAULT_TASK_LIFE_SECS = 60;
 
+  private Clock clock = new SystemClock(); // TODO: use a mock clock?
+
   // TODO(strellis): Add test of cancel timer popping during submit - after the
   // timer is running and before the task is running.
   public void testRunOne() throws Exception {
-    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
     BlockingQueue<Object> runningQ = new ArrayBlockingQueue<Object>(10);
     BlockingQueue<Object> stoppingQ = new ArrayBlockingQueue<Object>(10);
     CancelableTask task = new BlockingQueueCancelable(runningQ, stoppingQ);
@@ -51,7 +57,8 @@ public class ThreadPoolTest extends TestCase {
 
   public void testRunMany() throws Exception {
     final int count = 103;
-    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(count);
     BlockingQueue<Object> taskStoppingQ = new ArrayBlockingQueue<Object>(count);
     List<CancelableTask> tasks = new ArrayList<CancelableTask>();
@@ -74,7 +81,8 @@ public class ThreadPoolTest extends TestCase {
     final int count = 103;
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(count);
     BlockingQueue<Object> taskCanceledQ = new ArrayBlockingQueue<Object>(count);
-    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
     List<CancelableTask> tasks = new ArrayList<CancelableTask>();
     List<TaskHandle> handles = new ArrayList<TaskHandle>();
     for (int ix = 0; ix < count; ix++) {
@@ -99,7 +107,8 @@ public class ThreadPoolTest extends TestCase {
 
   public void testTimeoutHung() throws Exception {
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(10);
-    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
     HangingCancelable task = new HangingCancelable(taskRunningQ);
     TaskHandle handle = threadPool.submit(task);
     take(1, taskRunningQ);
@@ -115,7 +124,8 @@ public class ThreadPoolTest extends TestCase {
     final int count = 9;
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(count);
     BlockingQueue<Object> taskCanceledQ = new ArrayBlockingQueue<Object>(count);
-    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
 
     List<CancelableTask> tasks = new ArrayList<CancelableTask>();
     List<TaskHandle> handles = new ArrayList<TaskHandle>();
@@ -136,7 +146,8 @@ public class ThreadPoolTest extends TestCase {
 
   public void testShutdownWithHung() throws Exception {
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(10);
-    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
     HangingCancelable task = new HangingCancelable(taskRunningQ);
     TaskHandle handle = threadPool.submit(task);
     take(1, taskRunningQ);
@@ -151,7 +162,8 @@ public class ThreadPoolTest extends TestCase {
   }
 
   public void testSubmitAfterShutdown() throws Exception {
-    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS);
+    ThreadPool threadPool = new ThreadPool(DEFAULT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
     threadPool.shutdown(true, 10);
     BlockingQueue<Object> runningQ = new ArrayBlockingQueue<Object>(10);
     BlockingQueue<Object> stoppingQ = new ArrayBlockingQueue<Object>(10);
@@ -164,7 +176,8 @@ public class ThreadPoolTest extends TestCase {
 
   public void testTimeToLiveWithHungBatch() throws Exception {
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(10);
-    ThreadPool threadPool = new ThreadPool(SHORT_TASK_LIFE_SECS);
+    ThreadPool threadPool = new ThreadPool(SHORT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
     HangingCancelable task = new HangingCancelable(taskRunningQ);
     TaskHandle taskHandel = threadPool.submit(task);
     take(1, taskRunningQ);
@@ -178,7 +191,8 @@ public class ThreadPoolTest extends TestCase {
     final int count = 2;
     BlockingQueue<Object> taskRunningQ = new ArrayBlockingQueue<Object>(count);
     BlockingQueue<Object> taskCanceledQ = new ArrayBlockingQueue<Object>(count);
-    ThreadPool threadPool = new ThreadPool(SHORT_TASK_LIFE_SECS);
+    ThreadPool threadPool = new ThreadPool(SHORT_TASK_LIFE_SECS,
+        clock /* TODO: Use mock clock? */);
 
     List<VerifyInterruptedCancelable> tasks =
         new ArrayList<VerifyInterruptedCancelable>();
@@ -200,8 +214,8 @@ public class ThreadPoolTest extends TestCase {
   private void assertIsExiting(boolean expect,
       List<VerifyInterruptedCancelable> tasks) throws InterruptedException{
     for (VerifyInterruptedCancelable task : tasks) {
-      long timeToGiveUp = System.currentTimeMillis() + 3000;
-      while (System.currentTimeMillis() < timeToGiveUp) {
+      long timeToGiveUp = clock.getTimeMillis() + 3000;
+      while (clock.getTimeMillis() < timeToGiveUp) {
         if (task.isExiting() == expect) {
           return;
         }
@@ -213,8 +227,8 @@ public class ThreadPoolTest extends TestCase {
 
   private void verifyCompleted(TaskHandle taskHandle)
       throws InterruptedException {
-    long timeToGiveUp = System.currentTimeMillis() + 3000;
-    while (System.currentTimeMillis() < timeToGiveUp) {
+    long timeToGiveUp = clock.getTimeMillis() + 3000;
+    while (clock.getTimeMillis() < timeToGiveUp) {
       if (taskHandle.isDone()) {
         return;
       }

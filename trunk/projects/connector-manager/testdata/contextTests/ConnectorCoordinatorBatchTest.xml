@@ -40,5 +40,6 @@
   <bean id="ThreadPool"
         class="com.google.enterprise.connector.instantiator.ThreadPool">
     <constructor-arg index="0" type="int" value="20"/>
+    <constructor-arg index="1" ref="Clock"/>
   </bean>
 </beans>

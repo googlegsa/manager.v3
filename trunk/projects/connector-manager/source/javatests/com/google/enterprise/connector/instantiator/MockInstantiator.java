@@ -44,6 +44,7 @@ import com.google.enterprise.connector.traversal.NoopQueryTraverser;
 import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
+import com.google.enterprise.connector.util.SystemClock;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -174,7 +175,8 @@ public class MockInstantiator implements Instantiator {
     QueryTraverser queryTraverser =
         new QueryTraverser(new MockPusher(), traversalManager,
             new MockTraversalStateStore(persistentStore, storeContext),
-            connectorName, Context.getInstance().getTraversalContext());
+            connectorName, Context.getInstance().getTraversalContext(),
+            new SystemClock() /* TODO: use a mock clock */);
 
     setupTraverser(storeContext, queryTraverser);
   }

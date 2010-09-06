@@ -38,6 +38,7 @@ import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 import com.google.enterprise.connector.traversal.Traverser;
+import com.google.enterprise.connector.util.Clock;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,6 +69,7 @@ class ConnectorCoordinatorImpl implements
   private final PusherFactory pusherFactory;
   private final ThreadPool threadPool;
   private final ChangeDetector changeDetector;
+  private final Clock clock;
 
   /**
    * Context set when an instance is created or configured and cleared when the
@@ -123,9 +125,10 @@ class ConnectorCoordinatorImpl implements
    */
   ConnectorCoordinatorImpl(String name, PusherFactory pusherFactory,
       LoadManagerFactory loadManagerFactory, ThreadPool threadPool,
-      ChangeDetector changeDetector) {
+      ChangeDetector changeDetector, Clock clock) {
     this.name = name;
     this.threadPool = threadPool;
+    this.clock = clock;
     this.changeDetector = changeDetector;
     this.pusherFactory = pusherFactory;
     this.loadManager = loadManagerFactory.newLoadManager(name);
@@ -494,7 +497,7 @@ class ConnectorCoordinatorImpl implements
                   + "traversal for connector " + name);
             }
           } else if (retryDelayMillis > 0) {
-            traversalDelayEnd = System.currentTimeMillis() + retryDelayMillis;
+            traversalDelayEnd = clock.getTimeMillis() + retryDelayMillis;
           }
         } catch (ConnectorNotFoundException cnfe) {
           // Connector was deleted while processing the batch.  Don't take any
@@ -504,7 +507,7 @@ class ConnectorCoordinatorImpl implements
 
       case ERROR:
         traversalDelayEnd =
-            System.currentTimeMillis() + Traverser.ERROR_WAIT_MILLIS;
+            clock.getTimeMillis() + Traverser.ERROR_WAIT_MILLIS;
         break;
     }
   }
@@ -526,7 +529,7 @@ class ConnectorCoordinatorImpl implements
     }
 
     // Don't run if we have postponed traversals.
-    if (System.currentTimeMillis() < traversalDelayEnd) {
+    if (clock.getTimeMillis() < traversalDelayEnd) {
       return false;
     }
 
@@ -594,7 +597,7 @@ class ConnectorCoordinatorImpl implements
       BatchCoordinator batchCoordinator = new BatchCoordinator(this);
       Traverser traverser = new QueryTraverser(pusherFactory,
           traversalManager, batchCoordinator, name,
-          Context.getInstance().getTraversalContext());
+          Context.getInstance().getTraversalContext(), clock);
       TimedCancelable batch =  new CancelableBatch(traverser, name,
           batchCoordinator, batchCoordinator, batchSize);
       taskHandle = threadPool.submit(batch);

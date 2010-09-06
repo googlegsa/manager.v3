@@ -19,6 +19,8 @@ import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
+import com.google.enterprise.connector.util.Clock;
+import com.google.enterprise.connector.util.SystemClock;
 
 import junit.framework.TestCase;
 
@@ -27,12 +29,14 @@ import junit.framework.TestCase;
  */
 public class HostLoadManagerTest extends TestCase {
 
+  static Clock clock = new SystemClock(); // TODO: use a mock clock;
+
   // Wait until the current time is between the minimum and maximum
   // milliseconds of a second.  This can help us avoid running accross
   // 1-second boundaries and splitting results between two periods.
   private void alignTime(int min, int max) {
     while (true) {
-      int now = (int)(System.currentTimeMillis() % 1000);
+      int now = (int)(clock.getTimeMillis() % 1000);
       if (now > min && now < max) {
         return;
       }
@@ -45,7 +49,7 @@ public class HostLoadManagerTest extends TestCase {
   }
 
   private HostLoadManager newHostLoadManager(int load) {
-    HostLoadManager hlm = new HostLoadManager(null, null);
+    HostLoadManager hlm = new HostLoadManager(null, null, clock);
     hlm.setLoad(load);
     alignTime(50, 750);
     return hlm;
@@ -56,7 +60,7 @@ public class HostLoadManagerTest extends TestCase {
   }
 
   private BatchResult newBatchResult(int numDocs, int duration) {
-    long now = System.currentTimeMillis();
+    long now = clock.getTimeMillis();
     return new BatchResult(TraversalDelayPolicy.IMMEDIATE, numDocs,
         now - duration, now);
   }
@@ -246,7 +250,7 @@ public class HostLoadManagerTest extends TestCase {
   public void testShouldDelayLowMemory() {
     Runtime rt = Runtime.getRuntime();
     FileSizeLimitInfo fsli = new FileSizeLimitInfo();
-    HostLoadManager hostLoadManager = new HostLoadManager(null, fsli);
+    HostLoadManager hostLoadManager = new HostLoadManager(null, fsli, clock);
 
     // OK to start a traversal if there is plenty of memory for a new feed.
     rt.gc();
@@ -264,7 +268,7 @@ public class HostLoadManagerTest extends TestCase {
    */
   public void testShouldDelayFeedBacklogged() {
     BacklogFeedConnection feedConnection = new BacklogFeedConnection();
-    HostLoadManager hostLoadManager = new HostLoadManager(feedConnection, null);
+    HostLoadManager hostLoadManager = new HostLoadManager(feedConnection, null, clock);
 
     // OK to start a traversal if feedConnection is not backlogged.
     feedConnection.setBacklogged(false);

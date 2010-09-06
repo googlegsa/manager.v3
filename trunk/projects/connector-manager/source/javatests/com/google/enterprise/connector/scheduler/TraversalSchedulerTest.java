@@ -26,6 +26,7 @@ import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
+import com.google.enterprise.connector.util.SystemClock;
 
 import junit.framework.TestCase;
 
@@ -87,7 +88,8 @@ public class TraversalSchedulerTest extends TestCase {
   }
 
   private Instantiator createMockInstantiator() {
-    ThreadPool threadPool = new ThreadPool(5);
+    ThreadPool threadPool = new ThreadPool(5,
+        new SystemClock() /* TODO: use mock clock? */);
     MockInstantiator instantiator = new MockInstantiator(threadPool);
     instantiator.setupTestTraversers();
     return instantiator;

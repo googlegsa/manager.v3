@@ -14,6 +14,9 @@
 
 package com.google.enterprise.connector.common;
 
+import com.google.enterprise.connector.util.Clock;
+import com.google.enterprise.connector.util.SystemClock;
+
 import junit.framework.TestCase;
 
 /**
@@ -181,10 +184,11 @@ public class Base64Test extends TestCase {
     System.arraycopy(input, 0, output, 0, input.length);
     System.arraycopy(input, 0, output, input.length,
                      output.length - input.length);
-    long start = System.currentTimeMillis();
+    Clock clock = new SystemClock();
+    long start = clock.getTimeMillis();
     Base64.encode(input, 0, input.length, output, 0, Base64.ALPHABET,
                   Integer.MAX_VALUE);
-    long duration = System.currentTimeMillis() - start;
+    long duration = clock.getTimeMillis() - start;
     System.out.println("testSpeed: " + duration + " millisecs");
     // OriginalBase64Encoder used to run 20x longer than this one.
     // TODO: This threshold is already 10x longer than this test

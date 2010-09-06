@@ -31,6 +31,7 @@ import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.BatchTimeout;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
+import com.google.enterprise.connector.util.SystemClock;
 
 import java.util.Locale;
 import java.util.logging.Level;
@@ -66,7 +67,7 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     this.name = name;
     this.interfaces = connectorInterfaces;
     this.traverser = traverser;
-    this.hostLoadManager = new HostLoadManager(null, null);
+    this.hostLoadManager = new HostLoadManager(null, null, new SystemClock());
     this.stateStore =
         new MockTraversalStateStore(persistentStore, storeContext);
     this.persistentStore = persistentStore;
