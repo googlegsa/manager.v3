@@ -11,30 +11,29 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package com.google.enterprise.connector.persist;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.PropertiesException;
+import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
 
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.MessageFormat;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.sql.DataSource;
 
 /**
@@ -71,8 +70,7 @@ public class JdbcStore implements PersistentStore {
     "SELECT " + MODIFY_STAMP + "," + CONNECTOR_NAME + "," + PROPERTY_NAME
     + " FROM " + TABLE_NAME + " WHERE ( " + PROPERTY_VALUE + " IS NOT NULL )";
 
-  private DataSource dataSource;
-  private ConnectionPool connectionPool;
+  private JdbcDatabase database = null;
 
   /* Connector Instance Create Table DDL
    * {0} is TABLE_NAME
@@ -89,37 +87,28 @@ public class JdbcStore implements PersistentStore {
       + "{4} VARCHAR(64) NOT NULL, {5} VARCHAR NULL )");
 
   private synchronized void init() {
-    if (connectionPool == null) {
-      if (dataSource == null) {
-        throw new IllegalStateException("Must set dataSource");
-      }
-
-      // Create a Pool of JDBC Connections.
-      connectionPool = new ConnectionPool(dataSource);
-
-      // Verify that the connector instances table exists.
-      verifyTableExists();
+    if (database == null) {
+      throw new IllegalStateException("Must set dataSource");
     }
-  }
-
-  @Override
-  public synchronized void finalize() throws Exception {
-    if (connectionPool != null) {
-      connectionPool.closeConnections();
-      connectionPool = null;
-    }
+    // Verify that the connector instances table exists.
+   Object[] params = { TABLE_NAME, ID, MODIFY_STAMP, CONNECTOR_NAME,
+        PROPERTY_NAME, PROPERTY_VALUE };
+    database.verifyTableExists(TABLE_NAME, params, createTableDdl);
   }
 
   /**
    * Sets the JDBC {@link DataSource} used to access the
    * {@code Connectors} table.
    *
-   * @param dataSource a JDBC {@link DataSource}
+   * @param dataBase a JDBC {@link DataSource}
    */
-  public void setDataSource(DataSource dataSource) {
-    this.dataSource = dataSource;
-    // TODO: Fetch the DataSource description property.
-    LOGGER.config("Using JDBC DataSource: " + dataSource.toString());
+  public void setDatabase(JdbcDatabase dataBase) {
+    this.database = dataBase;
+  }
+
+  @VisibleForTesting
+  public JdbcDatabase getDatabase() {
+    return database;
   }
 
   /**
@@ -173,7 +162,7 @@ public class JdbcStore implements PersistentStore {
         new ImmutableMap.Builder<StoreContext, ConnectorStamps>();
     try {
       init();
-      Connection connection = connectionPool.getConnection();
+      Connection connection = database.getConnectionPool().getConnection();
       try {
         // TODO: We should consider using a PreparedStatement - however this
         // is non-trivial when using connection pools.  Try using
@@ -236,7 +225,7 @@ public class JdbcStore implements PersistentStore {
           statement.close();
         }
       } finally {
-        connectionPool.releaseConnection(connection);
+        database.getConnectionPool().releaseConnection(connection);
       }
     } catch (SQLException e) {
       LOGGER.log(Level.WARNING, "Failed to retrieve Connector Inventory", e);
@@ -246,8 +235,6 @@ public class JdbcStore implements PersistentStore {
   }
 
   /**
-   * {@inheritDoc}
-   *
    * A version stamp based upon the MODIFY_STAMP database field.
    */
   private static class JdbcStamp implements Stamp {
@@ -423,7 +410,7 @@ public class JdbcStore implements PersistentStore {
     testStoreContext(context);
     try {
       init();
-      Connection connection = connectionPool.getConnection();
+      Connection connection = database.getConnectionPool().getConnection();
       try {
         String query = "SELECT " + PROPERTY_VALUE + " FROM " + TABLE_NAME
             + " WHERE ( " + CONNECTOR_NAME + " = '" + context.getConnectorName()
@@ -438,7 +425,7 @@ public class JdbcStore implements PersistentStore {
           stmt.close();
         }
       } finally {
-        connectionPool.releaseConnection(connection);
+        database.getConnectionPool().releaseConnection(connection);
       }
     } catch (SQLException e) {
       LOGGER.log(Level.WARNING, "Failed to retrieve " + fieldName
@@ -461,7 +448,7 @@ public class JdbcStore implements PersistentStore {
     boolean originalAutoCommit = true;
     try {
       init();
-      connection = connectionPool.getConnection();
+      connection = database.getConnectionPool().getConnection();
       try {
         originalAutoCommit = connection.getAutoCommit();
         connection.setAutoCommit(false);
@@ -511,7 +498,7 @@ public class JdbcStore implements PersistentStore {
         try {
           connection.setAutoCommit(originalAutoCommit);
         } catch (SQLException ignored) {}
-        connectionPool.releaseConnection(connection);
+        database.getConnectionPool().releaseConnection(connection);
       }
     } catch (SQLException e) {
       LOGGER.log(Level.WARNING, "Failed to store " + fieldName
@@ -519,138 +506,4 @@ public class JdbcStore implements PersistentStore {
     }
   }
 
-  /**
-   * Verify that the GOOGLE_CONNECTORS table exists in the DB.
-   * If not, create it.
-   */
-  private void verifyTableExists() {
-    Connection connection = null;
-    boolean originalAutoCommit = true;
-    try {
-      connection = connectionPool.getConnection();
-      try {
-        originalAutoCommit = connection.getAutoCommit();
-        connection.setAutoCommit(false);
-
-        // TODO: How can I make this more atomic? If two connectors start up
-        // at the same time and try to create the table, one wins and the other
-        // throws an exception.
-
-        // Check to see if our connector instance table already exists.
-        DatabaseMetaData metaData = connection.getMetaData();
-
-        // Oracle doesn't do case-insensitive table name searches.
-        String tablePattern;
-        if (metaData.storesUpperCaseIdentifiers()) {
-          tablePattern = TABLE_NAME.toUpperCase();
-        } else if (metaData.storesLowerCaseIdentifiers()) {
-          tablePattern = TABLE_NAME.toLowerCase();
-        } else {
-          tablePattern = TABLE_NAME;
-        }
-        // Now quote '-', a special character in search patterns.
-        tablePattern =
-            tablePattern.replace("_", metaData.getSearchStringEscape() + "_");
-        ResultSet tables = metaData.getTables(null, null, tablePattern, null);
-        try {
-          while (tables.next()) {
-            if (TABLE_NAME.equalsIgnoreCase(tables.getString("TABLE_NAME"))) {
-              LOGGER.config("Found Persistent Store table: " + TABLE_NAME );
-              return;
-            }
-          }
-        } finally {
-          tables.close();
-        }
-
-        // Our table was not found. Create it using the Create Table DDL.
-        Statement stmt = connection.createStatement();
-        try {
-          Object[] params = { TABLE_NAME, ID, MODIFY_STAMP, CONNECTOR_NAME,
-                              PROPERTY_NAME, PROPERTY_VALUE };
-          for (String ddlStatement : createTableDdl) {
-            String update = MessageFormat.format(ddlStatement, params);
-            LOGGER.config("Creating Persistent Store table: " + update);
-            stmt.executeUpdate(update);
-          }
-          connection.commit();
-        } finally {
-          stmt.close();
-        }
-      } catch (SQLException e) {
-        try {
-          connection.rollback();
-        } catch (SQLException ignored) {}
-        throw e;
-      } finally {
-        try {
-          connection.setAutoCommit(originalAutoCommit);
-        } catch (SQLException ignored) {}
-        connectionPool.releaseConnection(connection);
-      }
-    } catch (SQLException e) {
-      LOGGER.log(Level.WARNING, "Failed to create connector instance table "
-                 + TABLE_NAME, e);
-    }
-  }
-
-  // A Pool of JDBC Connections.
-  // TODO: Move this to a utility class?
-  private class ConnectionPool {
-    private DataSource dataSource;
-    private LinkedList<Connection> connections = new LinkedList<Connection>();
-
-    ConnectionPool(DataSource dataSource) {
-      this.dataSource = dataSource;
-    }
-
-    // Return a Connection from the ConnectionPool.  If the pool is empty,
-    // then get a new Connection from the DataSource.
-    synchronized Connection getConnection() throws SQLException {
-      Connection conn;
-      try {
-        // Get a cached connection, but check if it is still functional.
-        do {
-          conn = connections.remove(0);
-        } while (isDead(conn));
-      } catch (IndexOutOfBoundsException e) {
-        // Pool is empty.  Get a new connection from the dataSource.
-        conn =  dataSource.getConnection();
-      }
-      return conn;
-    }
-
-    // Release a Connection back to the pool.
-    synchronized void releaseConnection(Connection conn) {
-      connections.add(0, conn);
-    }
-
-    // Empty the Pool, closing all Connections.
-    synchronized void closeConnections() {
-      for (Connection conn : connections) {
-        close(conn);
-      }
-      connections.clear();
-    }
-
-    // Returns true if connection is dead, false if it appears to be OK.
-    private boolean isDead(Connection conn) {
-      try {
-        conn.getMetaData();
-        return false;
-      } catch (SQLException e) {
-        close(conn);
-        return true;
-      }
-    }
-
-    // Close the Connection silently.
-    private void close(Connection conn) {
-      try {
-        conn.close();
-      } catch (SQLException e) {
-        // Ignored.
-      }
-    }
-  }
 }

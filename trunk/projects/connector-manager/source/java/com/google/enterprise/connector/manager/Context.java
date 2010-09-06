@@ -30,7 +30,6 @@ import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
-import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.web.context.support.XmlWebApplicationContext;
@@ -327,7 +326,7 @@ public class Context {
    * this case, we use a FileSystemApplicationContext.
    * @param contextLocation the name of the context XML file used for
    * instantiation.
-   * @param contextBaseDirectory base directory for relative file paths in
+   * @param contextBaseDir base directory for relative file paths in
    * the contextLocation.
    * @param commonDirPath the location of the common directory which contains
    * ConnectorType and Connector instantiation configuration data.
