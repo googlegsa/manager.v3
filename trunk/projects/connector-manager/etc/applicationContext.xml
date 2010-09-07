@@ -232,9 +232,9 @@
   -->
 
   <bean id="JdbcDatabase" class="com.google.enterprise.connector.persist.JdbcDatabase">
-    <property name="dataSource" ref="JdbcDataSource" />
+    <constructor-arg ref="JdbcDataSource" />
   </bean>
-  
+
   <!-- Persistent Store mechanism used to store the Connector Configuration,
        Connector Schedule, and Connector Traversal State.  This implementation
        stores the information in a JDBC accessible database.
