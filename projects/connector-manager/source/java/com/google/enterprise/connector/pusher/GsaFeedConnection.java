@@ -1,4 +1,4 @@
-// Copyright 2006-2008 Google Inc.  All Rights Reserved.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class GsaFeedConnection implements FeedConnection {
    */
   public static final String INTERNAL_ERROR_RESPONSE = "Internal Error";
 
-  // multipart/form-data uploads require a boundary to delimit controls.
+  // Multipart/form-data uploads require a boundary to delimit controls.
   // Since we XML-escape or base64-encode all data provided by the connector,
   // the feed XML will never contain "<<".
   private static final String BOUNDARY = "<<";
@@ -140,7 +140,7 @@ public class GsaFeedConnection implements FeedConnection {
     builder.append(CRLF);
   }
 
-  //@Override
+  /* @Override */
   public String sendData(FeedData feedData)
       throws FeedException {
     try {
@@ -260,7 +260,7 @@ public class GsaFeedConnection implements FeedConnection {
     return buf.toString();
   }
 
-  //@Override
+  /* @Override */
   public synchronized String getContentEncodings() {
     if (contentEncodings == null) {
       String dtd = getDtd();
@@ -280,7 +280,7 @@ public class GsaFeedConnection implements FeedConnection {
     return contentEncodings;
   }
 
-  //@Override
+  /* @Override */
   public synchronized boolean isBacklogged() {
     if (lastBacklogCheck != Long.MAX_VALUE) {
       long now = System.currentTimeMillis();
@@ -303,13 +303,13 @@ public class GsaFeedConnection implements FeedConnection {
               // floor value, then we are no longer backlogged.
               if (backlogCount < backlogFloor) {
                 isBacklogged = false;
-                LOGGER.fine("Resuming traversal after feed backlog clears.");
+                LOGGER.info("Resuming traversal after feed backlog clears.");
               }
             } else if (backlogCount > backlogCeiling) {
               // If the backlogcount exceeds the ceiling value,
               // then we are definitely backlogged.
               isBacklogged = true;
-              LOGGER.fine("Pausing traversal due to excessive feed backlog.");
+              LOGGER.info("Pausing traversal due to excessive feed backlog.");
             }
           }
         } catch (UnsupportedOperationException e) {

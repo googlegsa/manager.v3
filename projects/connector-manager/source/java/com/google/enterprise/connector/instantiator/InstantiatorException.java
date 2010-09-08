@@ -48,8 +48,7 @@ public class InstantiatorException extends ConnectorManagerException {
    * @param rootCause root failure cause
    */
   public InstantiatorException(String message, Throwable rootCause) {
-    super(message);
-    this.rootCause = rootCause;
+    super(message, rootCause);
   }
 
   /**
@@ -58,8 +57,6 @@ public class InstantiatorException extends ConnectorManagerException {
    * @param rootCause root failure cause
    */
   public InstantiatorException(Throwable rootCause) {
-    super();
-    this.rootCause = rootCause;
+    super(rootCause);
   }
-
 }

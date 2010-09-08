@@ -76,7 +76,7 @@ public class TraversalSchedulerTest extends TestCase {
         ie.printStackTrace();
         fail(ie.toString());
       }
-      scheduler.shutdown(false, 5000);
+      scheduler.shutdown();
     }
 
     return scheduler;
