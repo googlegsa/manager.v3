@@ -300,14 +300,16 @@ public class ImportExport {
    * if the WebApp is not using the default value.
    */
   public static final void main(String[] args) throws Exception {
-    // Setup all the pathnames.
-    Context context = Context.getInstance();
-    context.setStandaloneContext("WEB-INF/applicationContext.xml",
-        new File("WEB-INF").getAbsolutePath());
+    // Establish keystore file name before initializing the Context.
     String ksFilename = System.getProperty("keystore.file",
         "connector_manager.keystore");
     EncryptedPropertyPlaceholderConfigurer.setKeyStorePath(
         new File("WEB-INF/" + ksFilename).getAbsolutePath());
+
+    // Setup all the pathnames.
+    Context context = Context.getInstance();
+    context.setStandaloneContext("WEB-INF/applicationContext.xml",
+        new File("WEB-INF").getAbsolutePath());
 
     // At this point the beans have been created, however, the
     // SpringInstantiator attached to the ProductionManager has not been
@@ -315,17 +317,21 @@ public class ImportExport {
     context.setFeeding(false);
     context.start();
 
-    Manager manager = context.getManager();
+    try {
+      Manager manager = context.getManager();
 
-    if (args.length == 2 && args[0].equals("export")) {
-      writeToFile(args[1], getConnectors(manager));
-    } else if (args.length == 2 && args[0].equals("import")) {
-      setConnectors(manager, readFromFile(args[1]), false);
-    } else if (args.length == 2 && args[0].equals("import-no-remove")) {
-      setConnectors(manager, readFromFile(args[1]), true);
-    } else {
-      System.err.println(
-          "usage: ImportExport (export|import|import-no-remove) <filename>");
+      if (args.length == 2 && args[0].equals("export")) {
+        writeToFile(args[1], getConnectors(manager));
+      } else if (args.length == 2 && args[0].equals("import")) {
+        setConnectors(manager, readFromFile(args[1]), false);
+      } else if (args.length == 2 && args[0].equals("import-no-remove")) {
+        setConnectors(manager, readFromFile(args[1]), true);
+      } else {
+        System.err.println(
+            "usage: ImportExport (export|import|import-no-remove) <filename>");
+      }
+    } finally {
+      context.shutdown(true);
     }
   }
 }

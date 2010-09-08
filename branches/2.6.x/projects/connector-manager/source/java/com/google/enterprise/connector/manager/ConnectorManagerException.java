@@ -20,11 +20,6 @@ package com.google.enterprise.connector.manager;
  */
 public class ConnectorManagerException extends Exception {
   /**
-   * Root failure cause
-   */
-  protected Throwable rootCause;
-
-  /**
    * Constructs a new ConnectorManagerException with no message and no root
    * cause.
    */
@@ -51,8 +46,7 @@ public class ConnectorManagerException extends Exception {
    * @param rootCause root failure cause
    */
   public ConnectorManagerException(String message, Throwable rootCause) {
-    super(message);
-    this.rootCause = rootCause;
+    super(message, rootCause);
   }
 
   /**
@@ -61,8 +55,9 @@ public class ConnectorManagerException extends Exception {
    * @param rootCause root failure cause
    */
   public ConnectorManagerException(Throwable rootCause) {
-    super();
-    this.rootCause = rootCause;
+    // The cause.toString is normally copied as the message, but we
+    // override getMessage differently.
+    super(null, rootCause);
   }
 
   /**
@@ -74,21 +69,12 @@ public class ConnectorManagerException extends Exception {
   @Override
   public String getMessage() {
     String s = super.getMessage();
+    Throwable rootCause = getCause();
     if (rootCause == null) {
       return s;
     } else {
       String s2 = rootCause.getMessage();
       return s == null ? s2 : s + ": " + s2;
     }
-  }
-
-  /**
-   * Returns the embedded cause (throwable) which may be null.
-   *
-   * @return the cause
-   */
-  @Override
-  public Throwable getCause() {
-    return rootCause;
   }
 }

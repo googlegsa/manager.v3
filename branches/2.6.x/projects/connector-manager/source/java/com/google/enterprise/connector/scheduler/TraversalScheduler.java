@@ -68,12 +68,10 @@ public class TraversalScheduler implements Runnable {
     new Thread(this, "TraversalScheduler").start();
   }
 
-  public synchronized void shutdown(boolean interrupt, long timeoutInMillis) {
-    LOGGER.info("Shutdown initiated...");
+  public synchronized void shutdown() {
     if (isShutdown) {
       return;
     }
-    instantiator.shutdown(interrupt, timeoutInMillis);
     isInitialized = false;
     isShutdown = true;
   }
