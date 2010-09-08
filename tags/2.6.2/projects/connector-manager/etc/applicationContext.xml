@@ -1,0 +1,591 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+
+  <bean id="ApplicationContextProperties" class="java.lang.String">
+    <constructor-arg value="/WEB-INF/applicationContext.properties"/>
+  </bean>
+
+  <bean id="EncryptedPropertyPlaceholderConfigurer"
+        class="com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer">
+    <property name="location" ref="ApplicationContextProperties"/>
+    <!-- Default values for some properties -->
+    <property name="properties">
+      <props>
+        <prop key="feedLoggingLevel">OFF</prop>
+
+        <!-- Default Feeder gate port on a GSA -->
+        <prop key="gsa.feed.port">19900</prop>
+
+        <!-- These are used to throttle back the document feed if the
+             GSA has fallen behind processing outstanding feed items.
+        -->
+        <!-- Stop feeding if the backlog exceeds this value. -->
+        <prop key="feed.backlog.ceiling">10000</prop>
+        <!-- Resume feeding if the backlog falls below this value. -->
+        <prop key="feed.backlog.floor">1000</prop>
+        <!-- How often to check for feed backlog (in seconds). -->
+        <prop key="feed.backlog.interval">900</prop>
+
+        <!-- The target size in bytes of an accumulated feed file. -->
+        <prop key="feed.file.size">10485760</prop>
+
+        <!-- The maximum allowed size in bytes of a Document's content. -->
+        <prop key="feed.document.size.limit">31457280</prop>
+
+        <!-- The default time zone for Date values of fed Documents. -->
+        <prop key="feed.timezone"></prop>
+
+        <!-- Feed logging configuration.
+             TODO: [Issue 163] These should be moved to logging.properties.
+        -->
+        <prop key="feed.logging.FileHandler.pattern">${catalina.base}/logs/google-connectors.feed%g.log</prop>
+        <prop key="feed.logging.FileHandler.limit">52428800</prop>
+        <prop key="feed.logging.FileHandler.count">10</prop>
+
+        <!-- The target number of items to be returned per traversal batch. -->
+        <prop key="traversal.batch.size">500</prop>
+
+        <!-- The number of seconds a Traversal may run before risking cancelation. -->
+        <prop key="traversal.time.limit">1800</prop>
+
+        <!-- This defines the number of seconds to wait after a Traversal
+             of the repository finds no new content before looking again.
+        -->
+        <prop key="traversal.poll.interval">300</prop>
+
+        <!-- This enables content Traversal and Feeding. -->
+        <prop key="traversal.enabled">true</prop>
+
+        <!-- JDBC DataSource configuration. -->
+        <prop key="jdbc.datasource.url">jdbc:h2:${catalina.base}/webapps/connector-manager/WEB-INF/connector_manager.dbstore/connector-manager</prop>
+        <prop key="jdbc.datasource.user">sa</prop>
+        <prop key="jdbc.datasource.password"></prop>
+
+        <!-- JDBC Persistent Store for maintaining Connector Configuration,
+             Schedules, and Traversal State.  This DDL statement is used to
+             create the Connector instance configuration table if it does not
+             already exist.
+             Table creation and datatype syntax varies by database vendor.
+             The Create Table DDL is in java.text.MessageFormat syntax.
+             The placeholders will be filled in as follows:
+             {0} The name of the Connector Instance table that is created.
+             {1} Integer auto-incrementing primary key id for row.
+             {2} Integer modification stamp, updated when the value is changed.
+             {3} The connector name.  A string with maximum length of
+                 64 characters.
+             {4} The property name of the configuration property.
+                 A string with maximum length of 64 characters.
+             {5} The configuration property value.  This can theoretically be
+                 an arbitrarily long String, although for Google-supplied
+                 connectors, it ranges from tens of bytes to a few kilobytes.
+                 The stored value may be NULL.
+        -->
+        <!-- Create Table DDL for H2 -->
+        <prop key="jdbcstore.createtable.ddl">CREATE TABLE IF NOT EXIST {0} ( {1} INT IDENTITY PRIMARY KEY NOT NULL, {2} INT, {3} VARCHAR(64) NOT NULL, {4} VARCHAR(64) NOT NULL, {5} VARCHAR NULL )</prop>
+      </props>
+    </property>
+  </bean>
+
+  <!-- Enables/Disables Traversal and Feeding for all Connector Instances. -->
+  <bean id="Context" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod" value="com.google.enterprise.connector.manager.Context.getInstance"/>
+  </bean>
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="targetObject" ref="Context"/>
+    <property name="targetMethod" value="setFeeding"/>
+    <property name="arguments">
+      <list>
+        <value>${traversal.enabled}</value>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="FeedConnection"
+        class="com.google.enterprise.connector.pusher.GsaFeedConnection">
+    <constructor-arg index="0" type="java.lang.String" value="${gsa.feed.host}"/>
+    <constructor-arg index="1" type="int" value="${gsa.feed.port}"/>
+  </bean>
+
+  <!-- This is used to throttle back the document feed if the GSA has fallen
+       behind processing outstanding feed items.  We periodically poll the
+       GSA, asking for the count of unprocessed feed items (the backlog count).
+       We also define a ceiling and a floor for the backlog count.  If the
+       backlog count exceeds the ceiling we pause the feed.  We resume the
+       feed once the backlog count drops down below the floor value.
+  -->
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="targetObject" ref="FeedConnection"/>
+    <property name="targetMethod" value="setBacklogCheck"/>
+    <property name="arguments">
+      <list>
+        <value>${feed.backlog.floor}</value>
+        <value>${feed.backlog.ceiling}</value>
+        <value>${feed.backlog.interval}</value>
+      </list>
+    </property>
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.spi.Value.setFeedTimeZone"/>
+    <property name="arguments">
+      <list>
+        <value>${feed.timezone}</value>
+      </list>
+    </property>
+  </bean>
+
+  <!-- Create a Handler for the Feed Logger and add it to the logger. -->
+  <bean id="FeedFormatter" class="java.util.logging.SimpleFormatter"/>
+
+  <bean id="FeedHandler"
+        class="com.google.enterprise.connector.pusher.FeedFileHandler">
+    <constructor-arg index="0" value="${feed.logging.FileHandler.pattern}"/>
+    <constructor-arg index="1" value="${feed.logging.FileHandler.limit}"/>
+    <constructor-arg index="2" value="${feed.logging.FileHandler.count}"/>
+    <property name="level" value="FINER"/>
+    <property name="encoding" value="UTF-8"/>
+    <property name="formatter" ref="FeedFormatter"/>
+  </bean>
+
+  <bean id="FeedWrapperLogger"
+        class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.pusher.DocPusher.getFeedLogger"/>
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="targetObject" ref="FeedWrapperLogger"/>
+    <property name="targetMethod" value="addHandler"/>
+    <property name="arguments">
+      <list>
+        <ref bean="FeedHandler"/>
+      </list>
+    </property>
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="targetObject" ref="FeedWrapperLogger"/>
+    <property name="targetMethod" value="setUseParentHandlers"/>
+    <property name="arguments">
+      <list>
+        <value>false</value>
+      </list>
+    </property>
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="targetObject" ref="FeedWrapperLogger"/>
+    <property name="targetMethod" value="setLevel"/>
+    <property name="arguments">
+      <list>
+        <value>${feedLoggingLevel}</value>
+      </list>
+    </property>
+  </bean>
+
+  <!-- H2 embedded database configuration. -->
+  <!-- TODO: restore when H2 jar is added to third-party/prod
+  <bean id="JdbcDataSource"
+        class="org.h2.jdbcx.JdbcDataSource">
+    <property name="URL" value="${jdbc.datasource.url}"/>
+    <property name="user" value="${jdbc.datasource.user}"/>
+    <property name="password" value="${jdbc.datasource.password}"/>
+  </bean>
+  -->
+
+  <!-- Persistent Store mechanism used to store the Connector Configuration,
+       Connector Schedule, and Connector Traversal State.  By default, this
+       information is stored in files in the Connector instance directory.
+       Only one PersistentStore bean should be defined at this time.
+  -->
+  <bean id="PersistentStore"
+        name="ConnectorConfigStore,ConnectorScheduleStore,ConnectorStateStore"
+        class="com.google.enterprise.connector.persist.FileStore"/>
+
+  <!-- Persistent Store mechanism used to store the Connector Configuration,
+       Connector Schedule, and Connector Traversal State.  This implementation
+       stores the information in a JDBC accessible database.
+       Only one PersistentStore bean should be defined at this time.
+  -->
+  <!--
+  <bean id="PersistentStore"
+        name="ConnectorConfigStore,ConnectorScheduleStore,ConnectorStateStore"
+        class="com.google.enterprise.connector.persist.JdbcStore">
+    <property name="dataSource" ref="JdbcDataSource"/>
+    <property name="createTableDdl" value="${jdbcstore.createtable.ddl}"/>
+  </bean>
+  -->
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.instantiator.InstanceInfo.setConnectorStores"/>
+    <property name="arguments">
+      <list>
+        <ref bean="ConnectorConfigStore"/>
+        <ref bean="ConnectorScheduleStore"/>
+        <ref bean="ConnectorStateStore"/>
+      </list>
+    </property>
+  </bean>
+
+  <!-- Legacy ConnectorStateStore and ConnectorScheduleStore used for
+       upgrading existing connectors created by previous versions of
+       the Connector Manager.
+  -->
+  <bean id="LegacyConnectorScheduleStores" class="java.util.ArrayList">
+    <constructor-arg>
+      <list>
+        <bean class="com.google.enterprise.connector.persist.PrefsStore"/>
+      </list>
+    </constructor-arg>
+  </bean>
+
+  <bean id="LegacyConnectorStateStores" class="java.util.ArrayList">
+    <constructor-arg>
+      <list>
+        <bean class="com.google.enterprise.connector.persist.PrefsStore"/>
+      </list>
+    </constructor-arg>
+  </bean>
+
+  <bean id="LegacyConnectorConfigStores" class="java.util.ArrayList">
+    <constructor-arg>
+      <list>
+        <!-- No Legacy ConnectorConfigStores at this time -->
+      </list>
+    </constructor-arg>
+  </bean>
+
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.instantiator.InstanceInfo.setLegacyStores"/>
+    <property name="arguments">
+      <list>
+        <ref bean="LegacyConnectorConfigStores"/>
+        <ref bean="LegacyConnectorScheduleStores"/>
+        <ref bean="LegacyConnectorStateStores"/>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="ThreadPool"
+        class="com.google.enterprise.connector.instantiator.ThreadPool">
+    <constructor-arg index="0" type="int" value="${traversal.time.limit}"/>
+  </bean>
+
+  <bean id="PusherFactory"
+        class="com.google.enterprise.connector.pusher.DocPusherFactory">
+    <constructor-arg index="0" ref="FeedConnection" />
+    <constructor-arg index="1" ref="FileSizeLimitInfo"/>
+  </bean>
+
+  <bean id="LoadManagerFactory"
+        class="com.google.enterprise.connector.scheduler.HostLoadManagerFactory">
+    <property name="feedConnection" ref="FeedConnection"/>
+    <property name="fileSizeLimitInfo" ref="FileSizeLimitInfo"/>
+    <property name="batchSize" value="${traversal.batch.size}"/>
+  </bean>
+
+  <bean id="Instantiator"
+        class="com.google.enterprise.connector.instantiator.SpringInstantiator">
+    <property name="pusherFactory" ref="PusherFactory" />
+    <property name="loadManagerFactory" ref="LoadManagerFactory"/>
+    <property name="threadPool" ref="ThreadPool" />
+  </bean>
+
+  <bean id="Manager"
+        class="com.google.enterprise.connector.manager.ProductionManager">
+    <property name="instantiator" ref="Instantiator"/>
+  </bean>
+
+  <bean id="TraversalScheduler"
+        class="com.google.enterprise.connector.scheduler.TraversalScheduler">
+    <constructor-arg index="0" ref="Instantiator"/>
+  </bean>
+
+  <!-- This defines the number of seconds to wait after a Traversal of the
+       repository finds no new content before looking again.  By default,
+       the Scheduler waits 5 minutes (300 seconds) before retraversing the
+       repository if no new content was found on the last attempt.
+  -->
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod"
+              value="com.google.enterprise.connector.scheduler.Schedule.setDefaultRetryDelaySecs"/>
+    <property name="arguments">
+      <list>
+        <value>${traversal.poll.interval}</value>
+      </list>
+    </property>
+  </bean>
+
+  <!-- The TraversalContext is supplied to the Connector's TraversalManager,
+       so that it may make more intelligent decisions about what types of
+       content to feed.
+  -->
+  <bean id="TraversalContext"
+        class="com.google.enterprise.connector.traversal.ProductionTraversalContext">
+    <property name="fileSizeLimitInfo" ref="FileSizeLimitInfo"/>
+    <property name="mimeTypeMap" ref="MimeTypeMap"/>
+    <property name="traversalTimeLimitSeconds" value="${traversal.time.limit}"/>
+  </bean>
+
+  <bean id="FileSizeLimitInfo"
+        class="com.google.enterprise.connector.traversal.FileSizeLimitInfo">
+    <!-- The maximum allowed size in bytes of a Document's content.
+         Documents whose content exceeds maxDocumentSize will still have
+         metadata indexed, however the content itself will not be fed.
+         Maximum file size accepted by the GSA is 30MB
+    -->
+    <property name="maxDocumentSize" value="${feed.document.size.limit}"/>
+
+    <!-- The target size in bytes of an accumulated feed file.  DocPusher tries
+         to collect many feed Documents into a single feed file to improve the
+         efficiency of sending feed data to the GSA.  Too many small feeds
+         may overrun the GSA's feed processor.  However, specifying too large
+         a feed size reduces concurrency and will likely result in OutOfMemory
+         errors in the Java VM, especially if using multiple Connector Instances.
+         The default feed size is 10MB.
+    -->
+    <property name="maxFeedSize" value="${feed.file.size}"/>
+  </bean>
+
+  <bean id="MimeTypeMap"
+        class="com.google.enterprise.connector.traversal.MimeTypeMap">
+    <!-- Setting unknownMimeTypeSupportLevel to a positive value will allow
+         the GSA to attempt to index the document contents of documents with
+         unrecognized content types.  Set unknownMimeTypeSupportLevel to zero
+         (or any other non-positive value) to disable sending document content
+         for unknown content types to the GSA.  See unsupportedMimeTypes below.
+         Note that unknownMimeTypeSupportLevel (from an earlier design) overlaps
+         in functionality with the content types (sans subtypes) entries in the
+         preferred/supported/unsupported mime types below.  This is only because
+         all of the IANA recognized content type classes are well represented
+         in the tables below, so very few mime types should end up as "unknown".
+         Removing content type (sans subtype) entries from the following sets
+         would force more mime types to become "unknown".
+         The default value of 1 ranks "unknown" mime types below supported
+         mime types (levels 2,3,4,5) and preferred mime types (levels 6,7,8,9),
+         but above unsupported mime types (0 and below).
+    -->
+    <property name="unknownMimeTypeSupportLevel" value="1"/>
+
+    <!-- These three properties group most known mime types into three broad
+         classes - preferred, supported, and unsupported.  Connectors may
+         use this information to optimize their feeds, supplying preferred
+         formats over simply supported formats (if both are available), and
+         skipping unsupported formats. The entries of each of these three
+         classes are a list of content types that may or may not include
+         subtypes.  Exact (case-insensitive) matches are attempted first.
+         If a match is not found, a match is attempted using just the base
+         type without the subtype.
+         For instance, suppose these properties were as follows:
+         preferredMimeTypes={} (empty), supportedMimeTypes={"foo/bar"},
+         unsupportedMimeTypes={"foo", "cat"}.  "Foo/Bar" matches (case-
+         insensitively) "foo/bar", so it would be considered supported.
+         "Foo/baz" does not have an exact match, but its content type
+         (sans subtype) "foo" does have a match in the unsupported table,
+         so it should be considered unsupported. Similarly, "cat/persian"
+         would be considered unsupported.  "Xyzzy/bar" lacks an exact
+         match, and its content type (sans subtype), "xyzzy", is also not
+         present, so it would be assigned the unknownMimeTypeSupportLevel.
+         Note that modifying entries in these properties may require
+         corresponding modifications to the Google Search Appliance Crawl
+         and Index administration page.  Similarly, modifications to the
+         Crawl and Index page may also require changes to these entries.
+    -->
+    <!-- Sets the preferred mime types to index.
+         These mime types require little or no preprocessing
+         or file format conversion to extract text and metadata.
+    -->
+    <property name="preferredMimeTypes">
+      <set>
+        <!-- Prefer plain text, html, sgml, & xml types  -->
+        <value>application/plain</value>
+        <value>application/rdf+xml</value>
+        <value>application/xhtml+xml</value>
+        <value>application/xml</value>
+        <value>text/calendar</value>
+        <value>text/csv</value>
+        <value>text/plain</value>
+        <value>text/html</value>
+        <value>text/sgml</value>
+        <value>text/x-sgml</value>
+        <value>text/tab-separated-values</value>
+        <value>text/xhtml</value>
+        <value>text/xml</value>
+        <value>message/http</value>
+        <value>message/s-http</value>
+        <value>message/news</value>
+      </set>
+    </property>
+
+    <!--  Sets the supported mime types to index.
+          These mime types may require some preprocessing or
+          file format conversion to extract text and metadata.
+          Some information may be lost or discarded.
+    -->
+    <property name="supportedMimeTypes">
+      <set>
+        <!-- Support various document formats -->
+        <value>text/richtext</value>
+        <value>text/rtf</value>
+        <value>application/rtf</value>
+        <value>application/x-rtf</value>
+        <value>text/troff</value>
+        <value>application/x-troff</value>
+        <value>application/pdf</value>
+        <value>application/postscript</value>
+        <value>application/vnd.framemaker</value>
+        <value>application/vnd.mif</value>
+        <value>application/vnd.kde.kpresenter</value>
+        <value>application/vnd.kde.kspread</value>
+        <value>application/vnd.kde.kword</value>
+        <value>application/vnd.lotus-1-2-3</value>
+        <value>application/vnd.lotus-freelance</value>
+        <value>application/x-freelance</value>
+        <value>application/vnd.lotus-notes</value>
+        <value>application/vnd.lotus-wordpro</value>
+        <value>application/excel</value>
+        <value>application/vnd.ms-excel</value>
+        <value>application/x-excel</value>
+        <value>application/x-msexcel</value>
+        <value>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</value>
+        <value>application/vnd.ms-excel.sheet.macroEnabled.12</value>
+        <value>application/vnd.ms-htmlhelp</value>
+        <value>application/mspowerpoint</value>
+        <value>application/powerpoint</value>
+        <value>application/vnd.ms-powerpoint</value>
+        <value>application/vnd.openxmlformats-officedocument.presentationml.presentation</value>
+        <value>application/vnd.ms-powerpoint.presentation.macroEnabled.12</value>
+        <value>application/vnd.ms-project</value>
+        <value>application/x-project</value>
+        <value>application/x-mspublisher</value>
+        <value>application/x-msschedule</value>
+        <value>application/msword</value>
+        <value>application/vnd.openxmlformats-officedocument.wordprocessingml.document</value>
+        <value>application/vnd.ms-word.document.macroEnabled.12</value>
+        <value>application/vnd.ms-works</value>
+        <value>application/mswrite</value>
+        <value>application/x-mswrite</value>
+        <value>application/vnd.ms-xpsdocument</value>
+        <value>application/vnd.oasis.opendocument.presentation</value>
+        <value>application/vnd.oasis.opendocument.presentation-template</value>
+        <value>application/vnd.oasis.opendocument.spreadsheet</value>
+        <value>application/vnd.oasis.opendocument.spreadsheet-template</value>
+        <value>application/vnd.oasis.opendocument.text</value>
+        <value>application/vnd.oasis.opendocument.text-master</value>
+        <value>application/vnd.oasis.opendocument.text-template</value>
+        <value>application/vnd.oasis.opendocument.text-web</value>
+        <value>application/vnd.quark.quarkxpress</value>
+        <value>application/vnd.scibus</value>
+        <value>application/vnd.wordperfect</value>
+        <value>application/wordperfect</value>
+        <value>application/wordperfect5.1</value>
+        <value>application/wordperfect60</value>
+        <value>application/wordperfect61</value>
+        <value>application/vnd.visio</value>
+        <value>application/x-visio</value>
+        <value>application/x-latex</value>
+        <value>application/x-tex</value>
+        <value>application/x-texinfo</value>
+        <value>application/x-pagemaker</value>
+        <!-- Support multipart files with possibly supported subparts -->
+        <value>mulitpart/appledouble</value>
+        <value>mulitpart/mixed</value>
+        <!-- Catch-all to support other text subtypes -->
+        <value>text</value>
+      </set>
+    </property>
+
+    <!-- Sets the unsupported mime types whose content should not be indexed.
+         These mime types provide little or no textual content, or are data
+         formats that are either unknown or do not have a format converter.
+         The connector may still provide meta-data describing the content,
+         but the content itself should not be pushed.
+         If even the indexing of meta-data for documents of certain types is
+         not desired, then move those types to the excludedMimeTypes set, below.
+    -->
+    <property name="unsupportedMimeTypes">
+      <set>
+        <!-- Don't feed non-text media types -->
+        <value>audio</value>
+        <value>image</value>
+        <value>music</value>
+        <value>x-music</value>
+        <value>video</value>
+        <!-- Don't feed binary executables -->
+        <value>application/octet-stream</value>
+        <value>application/macbinary</value>
+        <value>application/x-binary</value>
+        <!-- Don't feed compressed archives -->
+        <value>application/binhex</value>
+        <value>application/binhex4</value>
+        <value>application/gnutar</value>
+        <value>application/mac-binhex</value>
+        <value>application/mac-binhex40</value>
+        <value>application/sea</value>
+        <value>application/x-binhex</value>
+        <value>application/x-binhex40</value>
+        <value>application/x-bzip</value>
+        <value>application/x-bzip2</value>
+        <value>application/x-compressed</value>
+        <value>application/x-gtar</value>
+        <value>application/x-gzip</value>
+        <value>application/x-lzh</value>
+        <value>application/x-sea</value>
+        <value>application/x-sit</value>
+        <value>application/x-stuffit</value>
+        <value>application/x-tar</value>
+        <value>application/x-zip</value>
+        <value>application/x-zip-compressed</value>
+        <value>application/zip</value>
+        <value>multipart/x-zip</value>
+        <!-- Catch-all for media types that are not explicitly mentioned above. -->
+        <value>chemical</value>
+        <value>message</value>
+        <value>model</value>
+        <value>mulitpart</value>
+        <value>world</value>
+        <value>i-world</value>
+        <value>x-world</value>
+        <!-- Comment out the following if you want to classify other application
+             subtypes as 'unknown mime type' rather than 'unsupported mime type'.
+        -->
+        <value>application</value>
+      </set>
+    </property>
+
+    <!-- Sets the mime types whose document should not be indexed.
+         The connector should skip the document, providing neither meta-data,
+         nor the content.
+    -->
+    <property name="excludedMimeTypes">
+      <set>
+        <!-- Types explicitly excluded in the default GSA Crawl and Index form. -->
+        <value>application/annodex</value>
+        <value>application/internet-property-stream</value>
+        <value>application/mime</value>
+        <value>application/pgp-signature</value>
+        <value>application/solids</value>
+        <value>application/vnd.acucorp</value>
+        <value>application/vnd.koan</value>
+        <value>application/vnd.ibm.modcap</value>
+        <value>application/x-aim</value>
+        <value>application/x-koan</value>
+        <value>application/x-msaccess</value>
+        <value>application/x-msdownload</value>
+        <value>application/x-world</value>
+        <value>message/rfc822</value>
+        <value>text/asp</value>
+        <value>text/vnd.abc</value>
+        <value>text/x-audiosoft-intra</value>
+        <value>text/x-asm</value>
+        <!-- Catch-all for media types that are not explicitly mentioned above. -->
+        <value>example</value>
+      </set>
+    </property>
+  </bean>
+
+</beans>

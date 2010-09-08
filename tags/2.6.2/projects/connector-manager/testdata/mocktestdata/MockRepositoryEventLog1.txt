@@ -1,0 +1,7 @@
+# this is a comment
+{"timestamp":"10","type":"save","docid":"doc1","content":"now is the time"}
+{"timestamp":"20","type":"save","docid":"doc2","content":"now was the time"}
+{"timestamp":"30","type":"save","docid":"doc3","content":"now is the time","name":"foo"}
+{"timestamp":"40","type":"delete","docid":"doc3"}
+{"timestamp":"50","type":"save","docid":"doc3","content":"","name":"foo"}
+{"timestamp":"60","type":"save","docid":"doc4","name":"doc4"}
