@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2009 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -758,16 +758,39 @@ public class ServletUtil {
   }
 
   /**
-   * Verify the request originated from either the GSA or
-   * localhost.  Since the logs and the feed file may contain
-   * proprietary customer information, we don't want to serve
-   * them up to just anybody.
+   * This method is intended for use from GetConfig, GetConnectorLogs and any
+   * other servlet that we intend to be invoked from the admin user's browser.
+   *
+   * At present, external, off-board instanced secure these servlets, along with
+   * all other servlets, through a Tomcat RemoteAddrValve that only allows in
+   * the GSA feedhost and localhost. There is no valve installed on-board.
+   *
+   * So at present, we are only concerned with on-board deployments, since this code
+   * would never execute in off-board deployments, since the valve would have prevented
+   * access.
    *
    * @param gsaHost the GSA feed host
    * @param remoteAddr the IP address of the caller
    * @return true if request came from an acceptable IP address.
    */
-  public static boolean allowedRemoteAddr(String gsaHost, String remoteAddr) {
+  public static boolean allowedRemoteAddrPublicFacingServlet(String gsaHost, String remoteAddr) {
+    return true;
+  }
+
+  /**
+   * This method is intended for use from GetConfigForm and any other servlet
+   * that may return truly sensitive data. For these, we want to make sure that
+   * only the GSA (feedhost) is the requestor - or that the request comes from
+   * the localhost of the ConnectorManager instance, for debugging.
+   *
+   * Verify the request originated from either the GSA or
+   * localhost.
+   *
+   * @param gsaHost the GSA feed host
+   * @param remoteAddr the IP address of the caller
+   * @return true if request came from an acceptable IP address.
+   */
+  public static boolean allowedRemoteAddrGSAFacingServlet(String gsaHost, String remoteAddr) {
     try {
       InetAddress caller = InetAddress.getByName(remoteAddr);
       if (caller.isLoopbackAddress() ||
@@ -780,8 +803,11 @@ public class ServletUtil {
           return true;  // GSA is allowed access
         }
       }
+      LOGGER.warning("Denying caller:" + caller);
+      return false;
     } catch (UnknownHostException uhe) {
       // Unknown host - fall through to fail.
+      LOGGER.log(Level.WARNING, "Denying caller:" + remoteAddr, uhe);
     }
     return false;
   }

@@ -61,6 +61,14 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
+    Context context = Context.getInstance(this.getServletContext());
+    // Make sure this requester is OK
+    if (!ServletUtil.allowedRemoteAddrGSAFacingServlet(context.getGsaFeedHost(),
+                                       req.getRemoteAddr())) {
+      res.sendError(HttpServletResponse.SC_FORBIDDEN);
+      return;
+    }
+
     res.setContentType(ServletUtil.MIMETYPE_XML);
     res.setCharacterEncoding("UTF-8");
     PrintWriter out = res.getWriter();
@@ -107,7 +115,7 @@ public abstract class ConnectorManagerGetServlet extends HttpServlet {
       ConnectorMessageCode status, ConfigureResponse configRes) {
     writeConfigureResponse(out, status, configRes, true);
   }
-  
+
   /**
    * Write connector configuration to XML response
    *

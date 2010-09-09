@@ -19,8 +19,8 @@ import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
-import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
+import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.ConnectorType;
 
 import java.io.IOException;
@@ -65,6 +65,14 @@ public class GetConnectorInstanceList extends HttpServlet {
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
+    Context context = Context.getInstance(this.getServletContext());
+    // Make sure this requester is OK
+    if (!ServletUtil.allowedRemoteAddrGSAFacingServlet(context.getGsaFeedHost(),
+                                       req.getRemoteAddr())) {
+      res.sendError(HttpServletResponse.SC_FORBIDDEN);
+      return;
+    }
+
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
     NDC.push("Config Manager");
