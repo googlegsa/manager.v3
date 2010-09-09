@@ -15,6 +15,7 @@
 package com.google.enterprise.connector.servlet;
 
 import com.google.enterprise.connector.logging.NDC;
+import com.google.enterprise.connector.manager.Context;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -41,6 +42,14 @@ public class TestConnectivity extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
+    Context context = Context.getInstance(this.getServletContext());
+    // Make sure this requester is OK
+    if (!ServletUtil.allowedRemoteAddrGSAFacingServlet(context.getGsaFeedHost(),
+                                       req.getRemoteAddr())) {
+      res.sendError(HttpServletResponse.SC_FORBIDDEN);
+      return;
+    }
+
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
     NDC.push("Support Manager");

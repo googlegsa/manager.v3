@@ -17,15 +17,15 @@ package com.google.enterprise.connector.servlet;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.Context;
 
-import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FilenameFilter;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
@@ -91,9 +91,8 @@ public class GetConfig extends HttpServlet {
     NDC.push("Support");
     try {
       Context context = Context.getInstance(this.getServletContext());
-
-      // Only allow incoming connections from the GSA or localhost.
-      if (!ServletUtil.allowedRemoteAddr(context.getGsaFeedHost(),
+      // Make sure this requester is OK
+      if (!ServletUtil.allowedRemoteAddrPublicFacingServlet(context.getGsaFeedHost(),
                                          req.getRemoteAddr())) {
         res.sendError(HttpServletResponse.SC_FORBIDDEN);
         return;

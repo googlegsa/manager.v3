@@ -19,10 +19,12 @@ import com.google.enterprise.connector.manager.ConnectorManagerException;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.pusher.FeedFileHandler;
 
-import java.io.IOException;
+import org.springframework.beans.BeansException;
+
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
@@ -31,16 +33,14 @@ import java.util.logging.Formatter;
 import java.util.logging.LogManager;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
-import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
+import java.util.zip.ZipOutputStream;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.beans.BeansException;
 
 /**
  * <p>Admin servlet to retrieve the log files from the Connector Manager.
@@ -180,9 +180,8 @@ public class GetConnectorLogs extends HttpServlet {
     NDC.push("Support");
     try {
       Context context = Context.getInstance(this.getServletContext());
-
-      // Only allow incoming connections from the GSA or localhost.
-      if (!ServletUtil.allowedRemoteAddr(context.getGsaFeedHost(),
+      // Make sure this requester is OK
+      if (!ServletUtil.allowedRemoteAddrPublicFacingServlet(context.getGsaFeedHost(),
                                          req.getRemoteAddr())) {
         res.sendError(HttpServletResponse.SC_FORBIDDEN);
         return;
