@@ -46,7 +46,8 @@ public class ConnectorTypeNotFoundException extends PersistentStoreException {
    * @param rootCause root failure cause
    */
   public ConnectorTypeNotFoundException(String message, Throwable rootCause) {
-    super(message, rootCause);
+    super(message);
+    this.rootCause = rootCause;
   }
 
   /**
@@ -55,6 +56,8 @@ public class ConnectorTypeNotFoundException extends PersistentStoreException {
    * @param rootCause root failure cause
    */
   public ConnectorTypeNotFoundException(Throwable rootCause) {
-    super(rootCause);
+    super();
+    this.rootCause = rootCause;
   }
+
 }

@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,29 +11,22 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 package com.google.enterprise.connector.persist;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.PropertiesUtils;
-import com.google.enterprise.connector.instantiator.Configuration;
-import com.google.enterprise.connector.scheduler.Schedule;
+import com.google.enterprise.connector.common.PropertiesException;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.MessageFormat;
+import java.util.LinkedList;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import javax.sql.DataSource;
 
 /**
@@ -41,7 +34,8 @@ import javax.sql.DataSource;
  * for a named connector. The persistent store for these data items
  * are columns in a database table, accessed via JDBC.
  */
-public class JdbcStore implements PersistentStore {
+public class JdbcStore implements ConnectorScheduleStore,
+    ConnectorStateStore, ConnectorConfigStore {
 
   private static final Logger LOGGER =
       Logger.getLogger(JdbcStore.class.getName());
@@ -57,20 +51,10 @@ public class JdbcStore implements PersistentStore {
   /* Property Names */
   static final String SCHEDULE = "schedule";
   static final String STATE = "checkpoint";
-  static final String TYPE = "configuration_type";
-  static final String MAP = "configuration_map";
-  static final String XML = "configuration_xml";
+  static final String CONFIGURATION = "configuration";
 
-  static final String TYPES_QUERY =
-    "SELECT " + CONNECTOR_NAME + "," + PROPERTY_VALUE + " FROM " + TABLE_NAME
-    + " WHERE ( " + PROPERTY_NAME + "='" + TYPE + "' AND " + PROPERTY_VALUE
-    + " IS NOT NULL )";
-
-  static final String INVENTORY_QUERY =
-    "SELECT " + MODIFY_STAMP + "," + CONNECTOR_NAME + "," + PROPERTY_NAME
-    + " FROM " + TABLE_NAME + " WHERE ( " + PROPERTY_VALUE + " IS NOT NULL )";
-
-  private JdbcDatabase database = null;
+  private DataSource dataSource;
+  private ConnectionPool connectionPool;
 
   /* Connector Instance Create Table DDL
    * {0} is TABLE_NAME
@@ -80,181 +64,55 @@ public class JdbcStore implements PersistentStore {
    * {4} is PROPERTY_NAME
    * {5} is PROPERTY_VALUE
    */
-  private List<String> createTableDdl = Collections.singletonList(
-      "CREATE TABLE IF NOT EXISTS {0} ( "
+  private String createTableDdl = "CREATE TABLE IF NOT EXISTS {0} ( "
       + "{1} INT IDENTITY PRIMARY KEY NOT NULL, {2} INT, "
       + "{3} VARCHAR(64) NOT NULL, "
-      + "{4} VARCHAR(64) NOT NULL, {5} VARCHAR NULL )");
+      + "{4} VARCHAR(64) NOT NULL, {5} VARCHAR NULL )";
 
   private synchronized void init() {
-    if (database == null) {
-      throw new IllegalStateException("Must set dataSource");
+    if (connectionPool == null) {
+      if (dataSource == null) {
+        throw new IllegalStateException("Must set dataSource");
+      }
+
+      // Create a Pool of JDBC Connections.
+      connectionPool = new ConnectionPool(dataSource);
+
+      // Verify that the connector instances table exists.
+      verifyTableExists();
     }
-    // Verify that the connector instances table exists.
-   Object[] params = { TABLE_NAME, ID, MODIFY_STAMP, CONNECTOR_NAME,
-        PROPERTY_NAME, PROPERTY_VALUE };
-    database.verifyTableExists(TABLE_NAME, params, createTableDdl);
+  }
+
+  @Override
+  public synchronized void finalize() throws Exception {
+    if (connectionPool != null) {
+      connectionPool.closeConnections();
+      connectionPool = null;
+    }
   }
 
   /**
    * Sets the JDBC {@link DataSource} used to access the
    * {@code Connectors} table.
    *
-   * @param dataBase a JDBC {@link DataSource}
+   * @param dataSource a JDBC {@link DataSource}
    */
-  public void setDatabase(JdbcDatabase dataBase) {
-    this.database = dataBase;
-  }
-
-  @VisibleForTesting
-  public JdbcDatabase getDatabase() {
-    return database;
+  public void setDataSource(DataSource dataSource) {
+    this.dataSource = dataSource;
+    // TODO: Fetch the DataSource description property.
+    LOGGER.config("Using JDBC DataSource: " + dataSource.toString());
   }
 
   /**
-   * Sets the DDL statements used for creation of the connector instance table
+   * Sets the ddl statement used for creation of the connector instance table
    * in the database.  The syntax for table creation and data types might
    * vary slightly for different database vendors.
-   * <p>
-   * The Create Table DDL is in {@link java.text.MessageFormat} syntax.
-   * The placeholders will be filled in as follows:<pre>
-   *    {0} The name of the Connector Instance table that is created.
-   *    {1} Integer auto-incrementing primary key id for row.
-   *    {2} Integer modification stamp, updated when the value is changed.
-   *    {3} The connector name.  A string with maximum length of 64 characters.
-   *    {4} The property name of the configuration property.
-   *        A string with maximum length of 64 characters.
-   *    {5} The configuration property value.  This can theoretically be
-   *        an arbitrarily long String, although for Google-supplied
-   *        connectors, it ranges from tens of bytes to a few kilobytes.
-   *        The stored value may be NULL.
-   *</pre>
    *
-   * @param createTableDdl SQL statements that will be used to create the
-   *        connector instance table.  The {@code createTableDdl} may be
-   *        either a {@code String} or a {@code List<String>}.  If a List
-   *        of Strings is provided, each item is executed as a seperate SQL
-   *        statement.
+   * @param createTableDdl an SQL statement that creates the connector instance
+   * table.
    */
-  @SuppressWarnings("unchecked")
-  public void setCreateTableDdl(Object createTableDdl) {
-    if (createTableDdl instanceof List) {
-      this.createTableDdl = (List<String>) createTableDdl;
-    } else if (createTableDdl instanceof String) {
-      this.createTableDdl = Collections.singletonList((String) createTableDdl);
-    } else {
-      throw new IllegalArgumentException("createTableDdl must be either a "
-                                         + "String or a List of Strings.");
-    }
-  }
-
-  /**
-   * Gets the version stamps of all persistent objects.  Reads the entire
-   * connector instance table and extracts the MODIFY_STAMPS for all peristed
-   * data.
-   *
-   * @return an immutable map containing the version stamps; may be
-   * empty but not {@code null}
-   */
-  /* @Override */
-  public ImmutableMap<StoreContext, ConnectorStamps> getInventory() {
-    ImmutableMap.Builder<StoreContext, ConnectorStamps> mapBuilder =
-        new ImmutableMap.Builder<StoreContext, ConnectorStamps>();
-    try {
-      init();
-      Connection connection = database.getConnectionPool().getConnection();
-      try {
-        // TODO: We should consider using a PreparedStatement - however this
-        // is non-trivial when using connection pools.  Try using
-        // MapMaker.makeComputingMap() to map connections to PreparedStatements.
-        Map<String, Map<String, JdbcStamp>> stampAlbum =
-            new HashMap<String, Map<String, JdbcStamp>>();
-
-        // Collect the Stamps for the various interesting properties.
-        Statement statement = connection.createStatement(
-            ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-        try {
-          ResultSet resultSet = statement.executeQuery(INVENTORY_QUERY);
-          while (resultSet.next()) {
-            String connectorName = resultSet.getString(CONNECTOR_NAME);
-            Map<String, JdbcStamp> stamps = stampAlbum.get(connectorName);
-            if (stamps == null) {
-              stamps = new HashMap<String, JdbcStamp>();
-              stampAlbum.put(connectorName, stamps);
-            }
-            stamps.put(resultSet.getString(PROPERTY_NAME),
-                new JdbcStamp(resultSet.getLong(MODIFY_STAMP)));
-          }
-        } finally {
-          statement.close();
-        }
-
-        // Find all connectors with non-null Type, construct a StoreContext
-        // for the connector+type, and build an inventory of that connector's
-        // stamps from the previous query.
-        // (Connectors with no Type have been deleted.)
-        statement = connection.createStatement(
-            ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-        try {
-          ResultSet resultSet = statement.executeQuery(TYPES_QUERY);
-          while (resultSet.next()) {
-            String connectorName = resultSet.getString(CONNECTOR_NAME);
-            StoreContext storeContext = new StoreContext(connectorName,
-                resultSet.getString(PROPERTY_VALUE));
-            Map<String, JdbcStamp> stamps = stampAlbum.get(connectorName);
-            ConnectorStamps connectorStamps;
-            if (stamps == null) {
-              connectorStamps = new ConnectorStamps(null, null, null);
-            } else {
-              JdbcStamp mapStamp = stamps.get(MAP);
-              JdbcStamp xmlStamp = stamps.get(XML);
-              JdbcStamp configStamp = new JdbcStamp(
-                  ((mapStamp == null) ? 0L : mapStamp.version) +
-                  ((xmlStamp == null) ? 0L : xmlStamp.version));
-              connectorStamps = new ConnectorStamps(
-                  stamps.get(STATE), configStamp, stamps.get(SCHEDULE));
-            }
-            mapBuilder.put(storeContext, connectorStamps);
-            if (LOGGER.isLoggable(Level.FINE)) {
-              LOGGER.fine("Found connector: name = " + connectorName
-                          + "  type = " + storeContext.getTypeName()
-                          + "  stamps = " + connectorStamps);
-            }
-          }
-        } finally {
-          statement.close();
-        }
-      } finally {
-        database.getConnectionPool().releaseConnection(connection);
-      }
-    } catch (SQLException e) {
-      LOGGER.log(Level.WARNING, "Failed to retrieve Connector Inventory", e);
-    }
-      // Finally, construct the inventory.
-    return mapBuilder.build();
-  }
-
-  /**
-   * A version stamp based upon the MODIFY_STAMP database field.
-   */
-  private static class JdbcStamp implements Stamp {
-    final long version;
-
-    /** Constructs a File version stamp. */
-    JdbcStamp(long version) {
-      this.version = version;
-    }
-
-    /** {@inheritDoc} */
-    /* @Override */
-    public int compareTo(Stamp other) {
-      return (int) (version - ((JdbcStamp) other).version);
-    }
-
-    @Override
-    public String toString() {
-      return Long.toString(version);
-    }
+  public void setCreateTableDdl(String createTableDdl) {
+    this.createTableDdl = createTableDdl;
   }
 
   /**
@@ -263,10 +121,8 @@ public class JdbcStore implements PersistentStore {
    * @param context a StoreContext
    * @return connectorSchedule schedule of the corresponding connector.
    */
-  /* @Override */
-  public Schedule getConnectorSchedule(StoreContext context) {
-    String schedule = getField(context, SCHEDULE);
-    return (schedule == null) ? null : new Schedule(schedule);
+  public String getConnectorSchedule(StoreContext context) {
+    return getField(context, SCHEDULE);
   }
 
   /**
@@ -275,12 +131,9 @@ public class JdbcStore implements PersistentStore {
    * @param context a StoreContext
    * @param connectorSchedule schedule of the corresponding connector.
    */
-  /* @Override */
   public void storeConnectorSchedule(StoreContext context,
-      Schedule connectorSchedule) {
-    String schedule = (connectorSchedule == null)
-        ? null : connectorSchedule.toString();
-    setField(context, SCHEDULE, schedule);
+      String connectorSchedule) {
+    setField(context, SCHEDULE, connectorSchedule);
   }
 
   /**
@@ -288,7 +141,6 @@ public class JdbcStore implements PersistentStore {
    *
    * @param context a StoreContext
    */
-  /* @Override */
   public void removeConnectorSchedule(StoreContext context) {
     storeConnectorSchedule(context, null);
   }
@@ -299,7 +151,6 @@ public class JdbcStore implements PersistentStore {
    * @param context a StoreContext
    * @return the state, or null if no state has been stored for this connector.
    */
-  /* @Override */
   public String getConnectorState(StoreContext context) {
     return getField(context, STATE);
   }
@@ -310,7 +161,6 @@ public class JdbcStore implements PersistentStore {
    * @param context a StoreContext
    * @param connectorState state of the corresponding connector
    */
-  /* @Override */
   public void storeConnectorState(StoreContext context, String connectorState) {
     setField(context, STATE, connectorState);
   }
@@ -320,7 +170,6 @@ public class JdbcStore implements PersistentStore {
    *
    * @param context a StoreContext
    */
-  /* @Override */
   public void removeConnectorState(StoreContext context) {
     storeConnectorState(context, null);
   }
@@ -329,55 +178,44 @@ public class JdbcStore implements PersistentStore {
    * Gets the stored configuration of a named connector.
    *
    * @param context a StoreContext
-   * @return the configuration map, or null if no configuration
+   * @return the configuration Properties, or null if no configuration
    *         has been stored for this connector.
    */
-  /* @Override */
-  public Configuration getConnectorConfiguration(StoreContext context) {
-    String config = getField(context, MAP);
-    String configXml = getField(context, XML);
-    String type = getField(context, TYPE);
-    if (type == null && config == null && configXml == null) {
-      return null;
+  public Properties getConnectorConfiguration(StoreContext context) {
+    Properties props = null;
+    String config = getField(context, CONFIGURATION);
+    if (config != null) {
+      try {
+        props = PropertiesUtils.loadFromString(config);
+      } catch (PropertiesException e) {
+        LOGGER.log(Level.WARNING, "Failed to read connector configuration for "
+                   + context.getConnectorName(), e);
+      }
     }
-    try {
-      Properties props = PropertiesUtils.loadFromString(config);
-      return new Configuration(type, PropertiesUtils.toMap(props), configXml);
-    } catch (PropertiesException e) {
-      LOGGER.log(Level.WARNING, "Failed to read connector configuration for "
-                 + context.getConnectorName(), e);
-      return null;
-    }
+    return props;
   }
 
   /**
    * Stores the configuration of a named connector.
    *
    * @param context a StoreContext
-   * @param configuration map to store
+   * @param configuration Properties to store
    */
-  /* @Override */
   public void storeConnectorConfiguration(StoreContext context,
-      Configuration configuration) {
-    testStoreContext(context);
-    String configMap = null;
-    String configXml = null;
-    String type = null;
-    if (configuration != null) {
-      Properties properties = PropertiesUtils.fromMap(configuration.getMap());
+      Properties configuration) {
+    String config;
+    if (configuration == null) {
+      config = null;
+    } else {
       try {
-        configMap = PropertiesUtils.storeToString(properties, null);
+        config = PropertiesUtils.storeToString(configuration, null);
       } catch (PropertiesException e) {
         LOGGER.log(Level.WARNING, "Failed to store connector configuration for "
                    + context.getConnectorName(), e);
         return;
       }
-      configXml = configuration.getXml();
-      type = configuration.getTypeName();
     }
-    setField(context, TYPE, type);
-    setField(context, XML, configXml);
-    setField(context, MAP, configMap);
+    setField(context, CONFIGURATION, config);
   }
 
   /**
@@ -385,18 +223,8 @@ public class JdbcStore implements PersistentStore {
    *
    * @param context a StoreContext
    */
-  /* @Override */
   public void removeConnectorConfiguration(StoreContext context) {
     storeConnectorConfiguration(context, null);
-  }
-
-  /**
-   * Test the StoreContext to make sure it is sane.
-   *
-   * @param context a StoreContext
-   */
-  private static void testStoreContext(StoreContext context) {
-    Preconditions.checkNotNull(context, "StoreContext may not be null.");
   }
 
   /**
@@ -407,25 +235,21 @@ public class JdbcStore implements PersistentStore {
    * @return String value of the field, or {@code null} if not stored
    */
   private String getField(StoreContext context, String fieldName) {
-    testStoreContext(context);
     try {
       init();
-      Connection connection = database.getConnectionPool().getConnection();
+      Connection connection = connectionPool.getConnection();
+      String query = "SELECT " + PROPERTY_VALUE + " FROM " + TABLE_NAME
+          + " WHERE ( " + CONNECTOR_NAME + " = '" + context.getConnectorName()
+          + "' AND " + PROPERTY_NAME + " = '" + fieldName + "' )";
+      Statement stmt = connection.createStatement();
+      ResultSet rs = stmt.executeQuery(query);
       try {
-        String query = "SELECT " + PROPERTY_VALUE + " FROM " + TABLE_NAME
-            + " WHERE ( " + CONNECTOR_NAME + " = '" + context.getConnectorName()
-            + "' AND " + PROPERTY_NAME + " = '" + fieldName + "' )";
-        Statement stmt = connection.createStatement();
-        try {
-          ResultSet rs = stmt.executeQuery(query);
-          if (rs.next()) {
-            return rs.getString(PROPERTY_VALUE);
-          }
-        } finally {
-          stmt.close();
+        if (rs.next()) {
+          return rs.getString(PROPERTY_VALUE);
         }
       } finally {
-        database.getConnectionPool().releaseConnection(connection);
+        rs.close();
+        stmt.close();
       }
     } catch (SQLException e) {
       LOGGER.log(Level.WARNING, "Failed to retrieve " + fieldName
@@ -443,67 +267,184 @@ public class JdbcStore implements PersistentStore {
    */
   private void setField(StoreContext context,
                         String fieldName, String fieldValue) {
-    testStoreContext(context);
     Connection connection = null;
     boolean originalAutoCommit = true;
     try {
       init();
-      connection = database.getConnectionPool().getConnection();
-      try {
-        originalAutoCommit = connection.getAutoCommit();
-        connection.setAutoCommit(false);
+      connection = connectionPool.getConnection();
+      originalAutoCommit = connection.getAutoCommit();
+      connection.setAutoCommit(false);  // TODO: Does this really need to be a transaction?
 
-        String query = "SELECT " + TABLE_NAME + ".* FROM " + TABLE_NAME
-            + " WHERE ( " + CONNECTOR_NAME + " = '" + context.getConnectorName()
-            + "' AND " + PROPERTY_NAME + " = '" + fieldName + "' )";
+      String query = "SELECT * FROM " + TABLE_NAME
+          + " WHERE ( " + CONNECTOR_NAME + " = '" + context.getConnectorName()
+          + "' AND " + PROPERTY_NAME + " = '" + fieldName + "' )";
 
-        Statement stmt = connection.createStatement(
-            ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
-        try {
-          ResultSet rs = stmt.executeQuery(query);
-          if (rs.next()) {
-            // This connector property exists, update the property value.
-            if (fieldValue == null) {
-              rs.updateNull(PROPERTY_VALUE);
-            } else {
-              rs.updateString(PROPERTY_VALUE, fieldValue);
-            }
-            // Bump the ModifyStamp, so others may know the value has changed.
-            rs.updateInt(MODIFY_STAMP, rs.getInt(MODIFY_STAMP) + 1);
-            rs.updateRow();
-          } else {
-            // This connector property does not exist, insert it with new value.
-            rs.moveToInsertRow();
-            rs.updateInt(MODIFY_STAMP, 1); // Bootstrap the ModifyStamp
-            rs.updateString(CONNECTOR_NAME, context.getConnectorName());
-            rs.updateString(PROPERTY_NAME, fieldName);
-            if (fieldValue == null) {
-              rs.updateNull(PROPERTY_VALUE);
-            } else {
-              rs.updateString(PROPERTY_VALUE, fieldValue);
-            }
-            rs.insertRow();
-          }
-          connection.commit();
-          rs.close();
-        } finally {
-          stmt.close();
+      Statement stmt = connection.createStatement(
+          ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+      ResultSet rs = stmt.executeQuery(query);
+
+      if (rs.next()) {
+        // This connector property exists, update the property value.
+        if (fieldValue == null) {
+          rs.updateNull(PROPERTY_VALUE);
+        } else {
+          rs.updateString(PROPERTY_VALUE, fieldValue);
         }
-      } catch (SQLException e) {
+        // Bump the ModifyStamp, so others may know the value has changed.
+        rs.updateInt(MODIFY_STAMP, rs.getInt(MODIFY_STAMP) + 1);
+        rs.updateRow();
+      } else {
+        // This connector property does not exist, insert it with new value.
+        rs.moveToInsertRow();
+        rs.updateInt(MODIFY_STAMP, 1); // Bootstrap the ModifyStamp
+        rs.updateString(CONNECTOR_NAME, context.getConnectorName());
+        rs.updateString(PROPERTY_NAME, fieldName);
+        if (fieldValue == null) {
+          rs.updateNull(PROPERTY_VALUE);
+        } else {
+          rs.updateString(PROPERTY_VALUE, fieldValue);
+        }
+        rs.insertRow();
+      }
+      connection.commit();
+      rs.close();
+      stmt.close();
+
+    } catch (SQLException e) {
+      if (connection != null) {
         try {
           connection.rollback();
         } catch (SQLException ignored) {}
-        throw e;
-      } finally {
-        try {
-          connection.setAutoCommit(originalAutoCommit);
-        } catch (SQLException ignored) {}
-        database.getConnectionPool().releaseConnection(connection);
       }
-    } catch (SQLException e) {
       LOGGER.log(Level.WARNING, "Failed to store " + fieldName
           + " for connector " + context.getConnectorName(), e);
+
+    } finally {
+      if (connection != null) {
+        try {
+          connection.setAutoCommit(originalAutoCommit);
+          connectionPool.releaseConnection(connection);
+        } catch (SQLException ignored) {}
+      }
     }
   }
 
+  /**
+   * Verify that the GOOGLE_CONNECTORS table exists in the DB.
+   * If not, create it.
+   */
+  private void verifyTableExists() {
+    Connection connection = null;
+    boolean originalAutoCommit = true;
+    try {
+      init();
+      connection = connectionPool.getConnection();
+      originalAutoCommit = connection.getAutoCommit();
+      connection.setAutoCommit(false);
+
+      // TODO: How can I make this more atomic? If two connectors start up
+      // at the same time and try to create the table, one wins and the other
+      // throws an exception.
+
+      // Check to see if our connector instance table already exists.
+      DatabaseMetaData metaData = connection.getMetaData();
+      ResultSet tables = metaData.getTables(null, null, TABLE_NAME, null);
+      try {
+        while (tables.next()) {
+          if (TABLE_NAME.equalsIgnoreCase(tables.getString("TABLE_NAME"))) {
+            LOGGER.config("Found Persistent Store table: " + TABLE_NAME );
+            return;
+          }
+        }
+      } finally {
+        tables.close();
+      }
+
+      // Our table was not found. Create it using the Create Table DDl.
+      Statement stmt = connection.createStatement();
+      try {
+        Object[] params = { TABLE_NAME, ID, MODIFY_STAMP, CONNECTOR_NAME,
+                            PROPERTY_NAME, PROPERTY_VALUE };
+        String update = MessageFormat.format(createTableDdl, params);
+        LOGGER.config("Creating Persistent Store table: \"" + update + "\"");
+        stmt.executeUpdate(update);
+        connection.commit();
+      } finally {
+        stmt.close();
+      }
+    } catch (SQLException e) {
+      try {
+        connection.rollback();
+      } catch (SQLException ignored) {}
+      LOGGER.log(Level.WARNING, "Failed to create connector instance table "
+          + TABLE_NAME, e);
+    } finally {
+      if (connection != null) {
+        try {
+          connection.setAutoCommit(originalAutoCommit);
+          connectionPool.releaseConnection(connection);
+        } catch (SQLException ignored) {}
+      }
+    }
+  }
+
+  // A Pool of JDBC Connections.
+  // TODO: Move this to a utility class?
+  private class ConnectionPool {
+    private DataSource dataSource;
+    private LinkedList<Connection> connections = new LinkedList<Connection>();
+
+    ConnectionPool(DataSource dataSource) {
+      this.dataSource = dataSource;
+    }
+
+    // Return a Connection from the ConnectionPool.  If the pool is empty,
+    // then get a new Connection from the DataSource.
+    synchronized Connection getConnection() throws SQLException {
+      Connection conn;
+      try {
+        // Get a cached connection, but check if it is still functional.
+        do {
+          conn = connections.remove(0);
+        } while (isDead(conn));
+      } catch (IndexOutOfBoundsException e) {
+        // Pool is empty.  Get a new connection from the dataSource.
+        conn =  dataSource.getConnection();
+      }
+      return conn;
+    }
+
+    // Release a Connection back to the pool.
+    synchronized void releaseConnection(Connection conn) {
+      connections.add(0, conn);
+    }
+
+    // Empty the Pool, closing all Connections.
+    synchronized void closeConnections() {
+      for (Connection conn : connections) {
+        close(conn);
+      }
+      connections.clear();
+    }
+
+    // Returns true if connection is dead, false if it appears to be OK.
+    private boolean isDead(Connection conn) {
+      try {
+        conn.getMetaData();
+        return false;
+      } catch (SQLException e) {
+        close(conn);
+        return true;
+      }
+    }
+
+    // Close the Connection silently.
+    private void close(Connection conn) {
+      try {
+        conn.close();
+      } catch (SQLException e) {
+        // Ignored.
+      }
+    }
+  }
 }

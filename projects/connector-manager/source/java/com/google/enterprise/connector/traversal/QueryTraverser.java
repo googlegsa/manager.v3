@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.google.enterprise.connector.spi.TraversalContext;
 import com.google.enterprise.connector.spi.TraversalContextAware;
 import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
-import com.google.enterprise.connector.util.Clock;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,7 +44,6 @@ public class QueryTraverser implements Traverser {
   private final TraversalStateStore stateStore;
   private final String connectorName;
   private final TraversalContext traversalContext;
-  private final Clock clock;
 
   // Synchronize access to cancelWork.
   private final Object cancelLock = new Object();
@@ -53,13 +51,12 @@ public class QueryTraverser implements Traverser {
 
   public QueryTraverser(PusherFactory pusherFactory,
       TraversalManager traversalManager, TraversalStateStore stateStore,
-      String connectorName, TraversalContext traversalContext, Clock clock) {
+      String connectorName, TraversalContext traversalContext) {
     this.pusherFactory = pusherFactory;
     this.queryTraversalManager = traversalManager;
     this.stateStore = stateStore;
     this.connectorName = connectorName;
     this.traversalContext = traversalContext;
-    this.clock = clock;
     if (queryTraversalManager instanceof TraversalContextAware) {
       TraversalContextAware contextAware =
           (TraversalContextAware)queryTraversalManager;
@@ -87,7 +84,7 @@ public class QueryTraverser implements Traverser {
 
   //@Override
   public BatchResult runBatch(BatchSize batchSize) {
-    final long startTime = clock.getTimeMillis();
+    final long startTime = System.currentTimeMillis();
     final long timeoutTime = startTime
       + traversalContext.traversalTimeLimitSeconds() * 1000;
 
@@ -109,7 +106,7 @@ public class QueryTraverser implements Traverser {
         throw new IllegalStateException("null TraversalStateStore");
       }
     } catch (IllegalStateException ise) {
-      // We get here if the store for the connector is disabled.
+      // We get here if the ConnectorStateStore for connector is disabled.
       // That happens if the connector was deleted while we were asleep.
       // Our connector seems to have been deleted.  Don't process a batch.
       LOGGER.finer("Halting traversal..." + ise.getMessage());
@@ -155,7 +152,7 @@ public class QueryTraverser implements Traverser {
                       + " has been interrupted...breaking out of batch run.");
           break;
         }
-        if (clock.getTimeMillis() >= timeoutTime) {
+        if (System.currentTimeMillis() >= timeoutTime) {
           LOGGER.fine("Traversal for connector " + connectorName
               + " is completing due to time limit.");
           break;
@@ -271,7 +268,7 @@ public class QueryTraverser implements Traverser {
     }
     if (result == null) {
       result = new BatchResult(TraversalDelayPolicy.IMMEDIATE, counter,
-                               startTime, clock.getTimeMillis());
+                               startTime, System.currentTimeMillis());
     } else if (pusher != null) {
       // We are returning an error from this batch. Cancel any feed that
       // might be in progress.
@@ -306,7 +303,7 @@ public class QueryTraverser implements Traverser {
       }
       return connectorState;
     } catch (IllegalStateException ise) {
-      // We get here if the store for the connector is disabled.
+      // We get here if the ConnectorStateStore for connector is disabled.
       // That happens if the connector was deleted while we were working.
       // Our connector seems to have been deleted.  Don't save a checkpoint.
       LOGGER.finest("...checkpoint " + connectorState + " discarded.");

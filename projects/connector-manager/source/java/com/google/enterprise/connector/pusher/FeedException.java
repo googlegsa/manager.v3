@@ -21,6 +21,7 @@ import com.google.enterprise.connector.manager.ConnectorManagerException;
  * from the {@link FeedConnection}.
  */
 public class FeedException extends ConnectorManagerException {
+
   /**
    * Constructs a new <code>FeedException</code> with no message and no root
    * cause.
@@ -48,7 +49,8 @@ public class FeedException extends ConnectorManagerException {
    * @param rootCause root failure cause
    */
   public FeedException(String message, Throwable rootCause) {
-    super(message, rootCause);
+    super(message);
+    this.rootCause = rootCause;
   }
 
   /**
@@ -57,6 +59,7 @@ public class FeedException extends ConnectorManagerException {
    * @param rootCause root failure cause
    */
   public FeedException(Throwable rootCause) {
-    super(rootCause);
+    super();
+    this.rootCause = rootCause;
   }
 }

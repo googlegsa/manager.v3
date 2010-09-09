@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,10 +19,6 @@ import java.util.List;
 
 /**
  * A traversal schedule.
- */
-/*
- * TODO: Implement equals and hashCode, rather than forcing string
- * comparisons in the tests?
  */
 public class Schedule {
 
@@ -49,7 +45,6 @@ public class Schedule {
    *          no new content, then automatically disable.</li>
    *  </ul>
    */
-  public static final int CURRENT_VERSION = 3;
 
   /**
    * Signal to the Traverser that it should traverse the ECM repository

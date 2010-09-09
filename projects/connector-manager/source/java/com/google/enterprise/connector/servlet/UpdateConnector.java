@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -72,7 +73,8 @@ public class UpdateConnector extends HttpServlet {
         return;
       }
 
-      Manager manager = Context.getInstance().getManager();
+      ServletContext servletContext = this.getServletContext();
+      Manager manager = Context.getInstance(servletContext).getManager();
       out.print(handleDoGet(manager, xmlBody, connectorName, language,
                             req.getContextPath()));
     } finally {
@@ -108,7 +110,8 @@ public class UpdateConnector extends HttpServlet {
         configData.put(name, req.getParameter(name));
       }
 
-      Manager manager = Context.getInstance().getManager();
+      ServletContext servletContext = this.getServletContext();
+      Manager manager = Context.getInstance(servletContext).getManager();
       ConfigureResponse configRes = null;
       try {
         configRes = manager.setConnectorConfig(connectorName, connectorType,

@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.
+// Copyright 2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -179,7 +179,7 @@ public class GetConnectorLogs extends HttpServlet {
       throws IOException, FileNotFoundException {
     NDC.push("Support");
     try {
-      Context context = Context.getInstance();
+      Context context = Context.getInstance(this.getServletContext());
 
       // Only allow incoming connections from the GSA or localhost.
       if (!ServletUtil.allowedRemoteAddr(context.getGsaFeedHost(),
@@ -306,7 +306,7 @@ public class GetConnectorLogs extends HttpServlet {
   @Override
   protected void doTrace(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
-    ServletDump.dumpServletRequest(req, res);
+    ServletUtil.dumpServletRequest(req, res);
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.logging.Logger;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -99,7 +100,8 @@ public class SetScheduleNoGSA extends HttpServlet {
     LOG.info(writer.getBuffer().toString());
     res.setContentType(ServletUtil.MIMETYPE_XML);
     PrintWriter out = res.getWriter();
-    Manager manager = Context.getInstance().getManager();
+    ServletContext servletContext = this.getServletContext();
+    Manager manager = Context.getInstance(servletContext).getManager();
     ConnectorMessageCode status = SetSchedule.handleDoPost(writer.getBuffer().toString(),
         manager);
     ServletUtil.writeResponse(out, status);

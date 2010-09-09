@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,10 +14,8 @@
 
 package com.google.enterprise.connector.scheduler;
 
-import com.google.enterprise.connector.util.SystemClock;
-
 public class MockLoadManagerFactory implements LoadManagerFactory {
   public LoadManager newLoadManager(String ignored) {
-    return new HostLoadManager(null, null, new SystemClock());
+    return new HostLoadManager(null, null);
   }
 }

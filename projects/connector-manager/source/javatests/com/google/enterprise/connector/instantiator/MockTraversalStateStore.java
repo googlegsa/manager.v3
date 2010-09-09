@@ -14,15 +14,21 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.persist.PersistentStore;
+import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.StoreContext;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 
 class MockTraversalStateStore implements TraversalStateStore {
-  private final PersistentStore stateStore;
+  private final ConnectorStateStore stateStore;
   private final StoreContext storeContext;
 
-  MockTraversalStateStore(PersistentStore stateStore,
+  MockTraversalStateStore(ConnectorStateStore stateStore,
+      String connectorName) {
+    this.storeContext = new StoreContext(connectorName);
+    this.stateStore = stateStore;
+  }
+
+  MockTraversalStateStore(ConnectorStateStore stateStore,
       StoreContext storeContext) {
     this.stateStore = stateStore;
     this.storeContext = storeContext;

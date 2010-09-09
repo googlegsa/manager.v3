@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.
+// Copyright 2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,8 +13,7 @@
 // limitations under the License.
 package com.google.enterprise.connector.persist;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import java.io.File;
 
 /**
  * Provide some basic context that might be useful for the various
@@ -23,24 +22,16 @@ import com.google.common.base.Strings;
  * connector work directory.
  */
 public class StoreContext implements Comparable<StoreContext> {
-  private final String connectorName;
-  private final String typeName;
+  private String connectorName;
+  private File connectorDir;
 
-  public StoreContext(String connectorName, String typeName) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(connectorName),
-        "StoreContext.connectorName may not be null or empty.");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(typeName),
-        "StoreContext.typeName may not be null or empty.");
+  public StoreContext(String connectorName) {
+    this(connectorName, null);
+  }
+
+  public StoreContext(String connectorName, File connectorDir) {
     this.connectorName = connectorName;
-    this.typeName = typeName;
-  }
-
-  public String getConnectorName() {
-    return connectorName;
-  }
-
-  public String getTypeName() {
-    return typeName;
+    this.connectorDir = connectorDir;
   }
 
   @Override
@@ -48,8 +39,13 @@ public class StoreContext implements Comparable<StoreContext> {
     if (other == null || !(other instanceof StoreContext))
       return false;
     StoreContext context = (StoreContext) other;
-    return (connectorName.equals(context.connectorName) &&
-            typeName.equals(context.typeName));
+    if (!connectorName.equals(context.connectorName)) {
+      return false;
+    } else {
+      return (connectorDir == null)
+          ? context.connectorDir == null
+          : connectorDir.equals(context.connectorDir);
+    }
   }
 
   @Override
@@ -57,22 +53,45 @@ public class StoreContext implements Comparable<StoreContext> {
     // See Effective Java by Joshua Bloch, Item 8.
     int result = 131;
     result = 17 * result + connectorName.hashCode();
-    result = 17 * result + typeName.hashCode();
+    result = 17 * result
+        + (connectorDir == null ? 0 : connectorDir.hashCode());
     return result;
   }
 
-  /* @Override */
+  //@Override
   public int compareTo(StoreContext other) {
     int diff = connectorName.compareTo(other.connectorName);
     if (diff != 0) {
       return diff;
     } else {
-      return typeName.compareTo(other.typeName);
+      if (connectorDir == null && other.connectorDir == null) {
+        return 0;
+      } else if (connectorDir == null) {
+        return -1;
+      } else if (other.connectorDir == null) {
+        return 1;
+      } else 
+        return connectorDir.compareTo(other.connectorDir);
     }
   }
 
-  @Override
-  public String toString() {
-    return "{" + connectorName + ", " + typeName + "}";
+  public void setConnectorName(String connectorName) {
+    this.connectorName = connectorName;
+  }
+
+  public void setConnectorDir(String connectorDir) {
+    setConnectorDir(new File(connectorDir));
+  }
+
+  public void setConnectorDir(File connectorDir) {
+    this.connectorDir = connectorDir;
+  }
+
+  public String getConnectorName() {
+    return connectorName;
+  }
+
+  public File getConnectorDir() {
+    return connectorDir;
   }
 }

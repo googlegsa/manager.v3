@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright 2010 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,32 +14,66 @@
 
 package com.google.enterprise.connector.encryptpassword;
 
-import com.google.enterprise.connector.common.AbstractCommandLineApp;
+import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer;
+import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
+import com.google.enterprise.connector.servlet.ServletUtil;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.io.*;
+import java.lang.reflect.*;
 import java.util.Arrays;
-import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
 
 /**
  * A utility to encrypt passwords from the command line.
  *
- * usage: EncryptPassword [-?] [-v] [-p password]
- *        -?, --help      Display this help.
- *        -v, --version   Display version.
- *        -p, --password  Encrypt the supplied password.
+ * usage: EncryptPassword [-v] [-h] [-p password]");
+ *        -v, --version   Display version.");
+ *        -h, --help      Display this help.");
+ *        -p, --password  Encrypt the supplied password.");
  */
-public class EncryptPassword extends AbstractCommandLineApp {
+public class EncryptPassword {
+  private static final Logger LOGGER =
+      Logger.getLogger(EncryptPassword.class.getName());
+
+  private String webXmlPath = "";
+  private String webXmlName = "web.xml";
+
+  // This is the default keystore config from out-of-box web.xml.
+  private String keystore_type = "JCEKS";
+  private String keystore_crypto_algo = "AES";
+  private String keystore_passwd_file = "keystore_passwd";
+  private String keystore_file = "connector_manager.keystore";
+
+  // Arguments that may be specified on the command line.
+  private String password = null;
+
+  // The EncryptedPropertyPlaceholderConfigurer used to encrypt the password.
+  private EncryptedPropertyPlaceholderConfigurer cryptor;
+
+
+  /**
+   * Construct the EncryptPassword application.
+   */
+  private EncryptPassword() throws Exception {
+    configureCryptor();
+  }
+
+  /**
+   * Construct the EncryptPassword application.
+   *
+   * @param args supplied command line arguments
+   */
+  private EncryptPassword(String[] args) throws Exception {
+    getArgs(args);
+    configureCryptor();
+  }
+
   /**
    * Encrypt password static method suitable for calling by the Installer.
    * As a side effect, the supplied plain-text password character array
@@ -49,94 +83,160 @@ public class EncryptPassword extends AbstractCommandLineApp {
    * @return the encrypted password
    */
   public static final String encrypt(char[] password) throws Exception {
-    EncryptPassword app = new EncryptPassword();
-    app.initStandAloneContext(false);
-    return app.encryptPassword(password);
-  }
-
-  @Override
-  public String getName() {
-    return "EncryptPassword";
-  }
-
-  @Override
-  public String getDescription() {
-    return "Encrypts passwords using the Connector Manager keystore.";
-  }
-
-  @Override
-  public String getCommandLineSyntax() {
-    return super.getCommandLineSyntax() + "[-p password]";
-  }
-
-  @Override
-  public Options getOptions() {
-    Options options = super.getOptions();
-    Option option =
-        new Option("p", "password", true, "Encrypt the supplied password.");
-    option.setArgName("password");
-    options.addOption(option);
-    return options;
-  }
-
-  @Override
-  public void run(CommandLine commandLine) throws Exception {
-    initStandAloneContext(false);
-    char[] password = getPassword(commandLine.getOptionValue("password"));
-    if (password != null) {
-      System.out.println(encryptPassword(password));
-    }
-  }
-
-  @Override
-  protected void initStandAloneContext(boolean ignored) {
-    // Turn down the logging output to the console.
-    Logger.getLogger("com.google.enterprise.connector").setLevel(Level.WARNING);
-
-    // Find the Connector Manager WEB-INF directory.
-    File webInfDir = locateWebInf();
-    if (webInfDir == null) {
-      System.err.println(
-          "Unable to locate the connector-manager webapp directory.");
-      System.err.println("Try changing to that directory, or use");
-      System.err.println("-Dmanager.dir=/path/to/webapps/connector-manager");
-      System.exit(-1);
-    }
-
-    // Establish the webapp keystore configuration before initializing
-    // the Context.
-    try {
-      configureCryptor(webInfDir);
-    } catch (IOException e) {
-      System.err.println("Failed to read keystore configuration: " + e);
-      System.exit(-1);
-    }
+    return new EncryptPassword().encryptPassword(password);
   }
 
   /**
    * A command line utility to encrypt passwords.
    */
   public static final void main(String[] args) throws Exception {
-    EncryptPassword app = new EncryptPassword();
-    app.run(app.parseArgs(args));
+    EncryptPassword app = new EncryptPassword(args);
+    char[] password = app.getPassword();
+    if (password != null) {
+      System.out.println(app.encryptPassword(password));
+    }
     System.exit(0);
+  }
+
+  /**
+   * Extracts the keystore configuration from the web.xml.
+   *
+   * @param in an XML InputStream
+   */
+  private void getKeystoreContextParams(InputStream in) {
+    Document document = ServletUtil.parse(in, new SAXParseErrorHandler(),
+        new ServletUtil.LocalEntityResolver());
+    NodeList params = document.getElementsByTagName("context-param");
+    if (params == null) {
+      return;
+    }
+    for (int i = 0; i < params.getLength(); i++) {
+      Element param = (Element)params.item(i);
+      String name = ServletUtil.getFirstElementByTagName(param, "param-name");
+      String value = ServletUtil.getFirstElementByTagName(param, "param-value");
+      if (value != null) {
+        if ("keystore_type".equals(name)) {
+          keystore_type = value;
+        } else if ("keystore_crypto_algo".equals(name)) {
+          keystore_crypto_algo = value;
+        } else if ("keystore_passwd_file".equals(name)) {
+          keystore_passwd_file = value;
+        } else if ("keystore_file".equals(name)) {
+          keystore_file = value;
+        }
+      }
+    }
+  }
+
+  /**
+   * Opens and parses the web.xml file, extracting the keystore configuration
+   * parameters.
+   *
+   * @param webXml File for web.xml
+   */
+  private void parseWebXml(File webXml) {
+    try {
+      InputStream is = new BufferedInputStream(new FileInputStream(webXml));
+      getKeystoreContextParams(is);
+      is.close();
+    } catch (IOException e) {
+      System.err.println(
+          "Unable to read file: " + webXml.getAbsolutePath());
+      System.err.println(e.getMessage());
+      System.exit(-1);
+    }
+  }
+
+  /**
+   * Configure a EncryptedPropertyPlaceholderConfigurer.
+   */
+  private void configureCryptor() {
+    // Because of differences in ServletContext and StandaloneContext,
+    // we must be running from the WEB-INF directory.  See keystore
+    // configuration in the StartUp servlet for details.
+    File webXml = new File("web.xml");
+    if (!webXml.exists()) {
+      System.err.println("You must run EncryptPassword from the "
+                         + "connector-manager/WEB-INF directory.");
+      System.exit(-1);
+    }
+
+    // Extract the Connector Manager Keystore config from web.xml.
+    parseWebXml(webXml);
+
+    // Supply EncryptedPropertyPlaceholder with the keystore config.
+    cryptor = new EncryptedPropertyPlaceholderConfigurer();
+    cryptor.setKeyStoreType(keystore_type);
+    cryptor.setKeyStorePath(keystore_file);
+    cryptor.setKeyStorePasswdPath(keystore_passwd_file);
+    cryptor.setKeyStoreCryptoAlgo(keystore_crypto_algo);
+  }
+
+
+  /**
+   * Parses the command line arguments.
+   */
+  private void getArgs(String[] args) {
+    boolean showVersion = false;
+    boolean showHelp = false;
+
+    // Interpret the command line args.
+    for (int i = 0; i < args.length; i++) {
+      String arg = args[i];
+      if ("-h".equals(arg) || "-?".equals(arg) || "--help".equals(arg)) {
+        showHelp = true;
+      } else if ("-v".equalsIgnoreCase(arg) || "--version".equals(arg)) {
+        showVersion = true;
+      } else if (arg.startsWith("--password=")) {
+        password = arg.substring(arg.indexOf('=') + 1);
+      } else if ("-p".equals(arg) || "--password".equals(arg)) {
+        if (++i < args.length) {
+          password = args[i];
+        } else {
+          showHelp = true;
+        }
+      }
+    }
+
+    // If the user only asks for version or usage, do so then get out.
+    if (showVersion || showHelp) {
+      version();
+      if (showHelp) {
+        usage();
+      }
+      System.exit(0);
+    }
+  }
+
+  /** Displays the product version. */
+  private void version() {
+    System.err.println("EncryptPassword v"
+        + JarUtils.getJarVersion(EncryptPassword.class));
+    System.err.println("");
+  }
+
+  /** Displays the product usage. */
+  private void usage() {
+    System.err.println("usage: EncryptPassword [-v] [-h] [-p password]");
+    System.err.println("       -v, --version   Display version.");
+    System.err.println("       -h, --help      Display this help.");
+    System.err.println("       -p, --password  Encrypt the supplied password.");
   }
 
   /**
    * Returns the password to encrypt.  If a password was not supplied on the
    * command line, prompt for it.
    *
-   * @param password password option supplied on command line.
    * @return String password
    */
-  private char[] getPassword(String password) {
+  private char[] getPassword() {
     if (password != null) {
       // If password was supplied on command line, return it.
       return password.toCharArray();
     }
 
     // Since we will be prompting, might as well display the version.
-    printVersion();
+    version();
 
     // If we are running under Java 6, use Console.readPassword().
     // Otherwise, do masking in a background thread.
@@ -171,7 +271,7 @@ public class EncryptPassword extends AbstractCommandLineApp {
    */
   private String encryptPassword(char[] password) {
     try {
-      return EncryptedPropertyPlaceholderConfigurer.encryptChars(password);
+      return cryptor.encryptChars(password);
     } finally {
       Arrays.fill(password, '\0');
     }
@@ -207,7 +307,7 @@ public class EncryptPassword extends AbstractCommandLineApp {
         if (console == null) {
           throw new UnsupportedOperationException("No Console");
         }
-        Class<?>[] paramTypes = new Class[] { String.class, Object[].class };
+        Class[] paramTypes = new Class[] { String.class, Object[].class };
         readPassword = console.getClass().getMethod("readPassword", paramTypes);
       } catch (NoSuchMethodException e) {
         throw new UnsupportedOperationException("Not Java 6");
@@ -297,3 +397,4 @@ public class EncryptPassword extends AbstractCommandLineApp {
     }
   }
 }
+

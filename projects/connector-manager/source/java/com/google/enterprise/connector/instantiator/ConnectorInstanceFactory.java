@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc.
+// Copyright (C) 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.RepositoryException;
 
+import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -45,24 +46,27 @@ class ConnectorInstanceFactory implements ConnectorFactory {
       Logger.getLogger(ConnectorInstanceFactory.class.getName());
 
   final String connectorName;
+  final File connectorDir;
   final TypeInfo typeInfo;
-  final Configuration origConfig;
-  final List<Connector> connectors;
+  final Map<String, String> origConfig;
+  final List<InstanceInfo> connectors;
 
   /**
    * Constructor takes the items needed by {@code InstanceInfo}, but not
    * provided via {@code makeConnector}.
    *
    * @param connectorName the name of this connector instance.
+   * @param connectorDir the directory containing the connector prototype.
    * @param typeInfo the connector type.
    * @param config the configuration provided to {@code validateConfig}.
    */
-  public ConnectorInstanceFactory(String connectorName, TypeInfo typeInfo,
-      Configuration config) {
+  public ConnectorInstanceFactory(String connectorName, File connectorDir,
+      TypeInfo typeInfo, Map<String, String> config) {
     this.connectorName = connectorName;
+    this.connectorDir = connectorDir;
     this.typeInfo = typeInfo;
     this.origConfig = config;
-    this.connectors = new LinkedList<Connector>();
+    this.connectors = new LinkedList<InstanceInfo>();
   }
 
   /**
@@ -72,21 +76,19 @@ class ConnectorInstanceFactory implements ConnectorFactory {
    *
    * @see com.google.enterprise.connector.spi.ConnectorFactory#makeConnector(Map)
    */
-  /* @Override */
   public Connector makeConnector(Map<String, String> config)
-      throws RepositoryException {
+    throws RepositoryException {
     try {
-      Configuration configuration = new Configuration(
-          typeInfo.getConnectorTypeName(),
-          ((config == null) ? origConfig.getMap() : config),
-          origConfig.getXml());
-
-      Connector connector = InstanceInfo.makeConnectorWithSpring(
-          connectorName, typeInfo, configuration);
-      synchronized (this) {
-        connectors.add(connector);
+      InstanceInfo info =
+        InstanceInfo.fromNewConfig(connectorName, connectorDir, typeInfo,
+                                   ((config == null) ? origConfig : config));
+      if (info == null) {
+        return null;
       }
-      return connector;
+      synchronized (this) {
+        connectors.add(info);
+      }
+      return info.getConnector();
     } catch (InstantiatorException e) {
       throw new
           RepositoryException("ConnectorFactory failed to make connector.", e);
@@ -97,13 +99,14 @@ class ConnectorInstanceFactory implements ConnectorFactory {
    * Shutdown any connector instances created by the factory.
    */
   synchronized void shutdown() {
-    for (Connector connector : connectors) {
+    for (InstanceInfo info : connectors) {
+      Connector connector = info.getConnector();
       if (connector instanceof ConnectorShutdownAware) {
         try {
           ((ConnectorShutdownAware) connector).shutdown();
         } catch (Exception e) {
           LOGGER.log(Level.WARNING, "Failed to shutdown connector "
-              + connectorName + " created by validateConfig", e);
+              + info.getName() + " created by validateConfig", e);
         }
       }
     }

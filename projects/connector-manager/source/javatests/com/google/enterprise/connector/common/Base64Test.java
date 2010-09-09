@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc.
+// Copyright 2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,9 +13,6 @@
 // limitations under the License.
 
 package com.google.enterprise.connector.common;
-
-import com.google.enterprise.connector.util.Clock;
-import com.google.enterprise.connector.util.SystemClock;
 
 import junit.framework.TestCase;
 
@@ -184,11 +181,10 @@ public class Base64Test extends TestCase {
     System.arraycopy(input, 0, output, 0, input.length);
     System.arraycopy(input, 0, output, input.length,
                      output.length - input.length);
-    Clock clock = new SystemClock();
-    long start = clock.getTimeMillis();
+    long start = System.currentTimeMillis();
     Base64.encode(input, 0, input.length, output, 0, Base64.ALPHABET,
                   Integer.MAX_VALUE);
-    long duration = clock.getTimeMillis() - start;
+    long duration = System.currentTimeMillis() - start;
     System.out.println("testSpeed: " + duration + " millisecs");
     // OriginalBase64Encoder used to run 20x longer than this one.
     // TODO: This threshold is already 10x longer than this test

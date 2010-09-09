@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Context;
@@ -21,7 +22,6 @@ import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.util.JarUtils;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -68,7 +69,8 @@ public class GetConnectorInstanceList extends HttpServlet {
     PrintWriter out = res.getWriter();
     NDC.push("Config Manager");
     try {
-      Manager manager = Context.getInstance().getManager();
+      ServletContext servletContext = this.getServletContext();
+      Manager manager = Context.getInstance(servletContext).getManager();
       handleDoPost(manager, out);
     } finally {
       out.close();
@@ -137,8 +139,8 @@ public class GetConnectorInstanceList extends HttpServlet {
         // Put out new style Schedules element.
         ServletUtil.writeXMLTagWithAttrs(buffer, 3,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
-            ServletUtil.ATTRIBUTE_VERSION + Schedule.CURRENT_VERSION
-            + ServletUtil.QUOTE, false);
+            ServletUtil.ATTRIBUTE_VERSION + "3" + ServletUtil.QUOTE,
+            false);
         buffer.append(schedule);
         ServletUtil.writeXMLTag(buffer, 0,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES, true);

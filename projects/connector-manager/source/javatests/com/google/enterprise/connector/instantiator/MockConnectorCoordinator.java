@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc.
+// Copyright 2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,10 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.persist.PersistentStore;
+import com.google.enterprise.connector.common.PropertiesUtils;
+import com.google.enterprise.connector.persist.ConnectorConfigStore;
+import com.google.enterprise.connector.persist.ConnectorScheduleStore;
+import com.google.enterprise.connector.persist.ConnectorStateStore;
 import com.google.enterprise.connector.persist.StoreContext;
 import com.google.enterprise.connector.scheduler.HostLoadManager;
 import com.google.enterprise.connector.scheduler.Schedule;
@@ -31,9 +34,11 @@ import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.BatchTimeout;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
-import com.google.enterprise.connector.util.SystemClock;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -51,7 +56,8 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
   private final HostLoadManager hostLoadManager;
 
   private final TraversalStateStore stateStore;
-  private final PersistentStore persistentStore;
+  private final ConnectorConfigStore configStore;
+  private final ConnectorScheduleStore scheduleStore;
 
   private final StoreContext storeContext;
   private final ThreadPool threadPool;
@@ -62,15 +68,16 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
 
   MockConnectorCoordinator(String name,
       ConnectorInterfaces connectorInterfaces, Traverser traverser,
-      PersistentStore persistentStore, StoreContext storeContext,
+      ConnectorStateStore stateStore, ConnectorConfigStore configStore,
+      ConnectorScheduleStore scheduleStore, StoreContext storeContext,
       ThreadPool threadPool) {
     this.name = name;
     this.interfaces = connectorInterfaces;
     this.traverser = traverser;
-    this.hostLoadManager = new HostLoadManager(null, null, new SystemClock());
-    this.stateStore =
-        new MockTraversalStateStore(persistentStore, storeContext);
-    this.persistentStore = persistentStore;
+    this.hostLoadManager = new HostLoadManager(null, null);
+    this.stateStore = new MockTraversalStateStore(stateStore, storeContext);
+    this.configStore = configStore;
+    this.scheduleStore = scheduleStore;
     this.storeContext = storeContext;
     this.threadPool = threadPool;
   }
@@ -101,12 +108,17 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     throw new UnsupportedOperationException();
   }
 
-   public synchronized Configuration getConnectorConfiguration() {
-    return persistentStore.getConnectorConfiguration(storeContext);
+   public synchronized Map<String, String> getConnectorConfig() {
+    Properties props = configStore.getConnectorConfiguration(storeContext);
+    if (props == null) {
+      return new HashMap<String, String>();
+    } else {
+      return PropertiesUtils.toMap(props);
+    }
   }
 
-  public synchronized Schedule getConnectorSchedule() {
-    return persistentStore.getConnectorSchedule(storeContext);
+  public synchronized String getConnectorSchedule() {
+    return scheduleStore.getConnectorSchedule(storeContext);
   }
 
   public synchronized String getConnectorTypeName() {
@@ -120,8 +132,8 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
   public synchronized void removeConnector() {
     cancelBatch();
     stateStore.storeTraversalState(null);
-    persistentStore.removeConnectorSchedule(storeContext);
-    persistentStore.removeConnectorConfiguration(storeContext);
+    scheduleStore.removeConnectorSchedule(storeContext);
+    configStore.removeConnectorConfiguration(storeContext);
   }
 
   public synchronized void restartConnectorTraversal() {
@@ -129,17 +141,17 @@ class MockConnectorCoordinator implements ConnectorCoordinator {
     stateStore.storeTraversalState(null);
   }
 
-  public ConfigureResponse setConnectorConfiguration(TypeInfo newTypeInfo,
-      Configuration configuration, Locale locale, boolean update) {
-    persistentStore.storeConnectorConfiguration(storeContext, configuration);
+  public ConfigureResponse setConnectorConfig(TypeInfo newTypeInfo,
+      Map<String, String> configMap, Locale locale, boolean update) {
+    configStore.storeConnectorConfiguration(
+        storeContext, PropertiesUtils.fromMap(configMap));
     return null;
   }
 
-  public synchronized void setConnectorSchedule(Schedule schedule) {
-    persistentStore.storeConnectorSchedule(storeContext, schedule);
-    if (schedule != null) {
-      hostLoadManager.setLoad(schedule.getLoad());
-    }
+  public synchronized void setConnectorSchedule(String connectorSchedule) {
+    scheduleStore.storeConnectorSchedule(
+        storeContext, connectorSchedule);
+    hostLoadManager.setLoad((new Schedule(connectorSchedule)).getLoad());
   }
 
   public synchronized void shutdown() {
