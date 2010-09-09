@@ -26,6 +26,7 @@ import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.ConfigureResponse;
+import com.google.enterprise.connector.spi.XmlUtils;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -247,11 +248,16 @@ public class ImportExport {
           pw, 2, ServletUtil.XMLTAG_CONNECTOR_CONFIG, false);
       Map<String, String> sorted = new TreeMap<String, String>(config);
       for (Map.Entry<String, String> me : sorted.entrySet()) {
-        String attributeString = ServletUtil.ATTRIBUTE_NAME + me.getKey()
-            + ServletUtil.QUOTE + ServletUtil.ATTRIBUTE_VALUE
-            + me.getValue() + ServletUtil.QUOTE;
+        builder.setLength(0);
+        try {
+          builder.append(ServletUtil.ATTRIBUTE_NAME);
+          XmlUtils.xmlAppendAttrValue(me.getKey(), builder);
+          builder.append(ServletUtil.QUOTE).append(ServletUtil.ATTRIBUTE_VALUE);
+          XmlUtils.xmlAppendAttrValue(me.getValue(), builder);
+          builder.append(ServletUtil.QUOTE);
+        } catch (IOException e) { /* Can't happen with StringBuilder */ }
         ServletUtil.writeXMLTagWithAttrs(
-            pw, 3, ServletUtil.XMLTAG_PARAMETERS, attributeString, true);
+            pw, 3, ServletUtil.XMLTAG_PARAMETERS, builder.toString(), true);
       }
       ServletUtil.writeXMLTag(
           pw, 2, ServletUtil.XMLTAG_CONNECTOR_CONFIG, true);
