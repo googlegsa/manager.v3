@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2008 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.web.context.support.XmlWebApplicationContext;
 
 /**
  * The main purpose of this servlet is to have its "init" method called when the
@@ -81,7 +83,7 @@ public class StartUp extends HttpServlet {
     LOGGER.info("Connector Manager started.");
   }
 
-  public static void doConnectorManagerStartup(ServletContext servletContext) {
+  private void doConnectorManagerStartup(ServletContext servletContext) {
     LOGGER.info(ServletUtil.getManagerSplash());
 
     // read in and set initialization parameters
@@ -104,7 +106,14 @@ public class StartUp extends HttpServlet {
     String ka = servletContext.getInitParameter("keystore_crypto_algo");
     EncryptedPropertyPlaceholderConfigurer.setKeyStoreCryptoAlgo(ka);
 
-    Context context = Context.getInstance(servletContext);
+    // Note: default context location is /WEB-INF/applicationContext.xml
+    LOGGER.info("Making an XmlWebApplicationContext");
+    XmlWebApplicationContext ac = new XmlWebApplicationContext();
+    ac.setServletContext(servletContext);
+    ac.refresh();
+
+    Context context = Context.getInstance();
+    context.setServletContext(ac, servletContext.getRealPath("/WEB-INF"));
     context.start();
   }
 }
