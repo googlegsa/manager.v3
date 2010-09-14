@@ -13,6 +13,8 @@
 // limitations under the License.
 
 package com.google.enterprise.connector.util.diffing;
+import com.google.enterprise.connector.util.testing.diffing.TestDirectoryManager;
+
 import junit.framework.TestCase;
 
 import java.io.File;

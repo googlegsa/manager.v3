@@ -14,7 +14,7 @@
 
 package com.google.enterprise.connector.spiimpl;
 
-import com.google.enterprise.connector.common.EofFilterInputStream;
+import com.google.enterprise.connector.util.EofFilterInputStream;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;

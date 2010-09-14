@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.common;
+package com.google.enterprise.connector.util;
+
+import com.google.enterprise.connector.util.EofFilterInputStream;
 
 import java.io.ByteArrayInputStream;
 import java.io.FilterInputStream;
