@@ -18,6 +18,7 @@ import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
+import com.google.enterprise.connector.util.testing.diffing.TestDirectoryManager;
 
 import junit.framework.TestCase;
 

@@ -17,6 +17,7 @@
   <property name="dist" value="dist" />
   <property name="src" value="source/java" />
   <property name="classes" value="${prod}/classes" />
+  <property name="spi-classes" value="${prod}/spi-classes" />
   <property name="dtds" value="source/dtds" />
   <property name="webdocs" value="source/webdocs" />
   <property name="webcontent" value="source/html" />
@@ -79,6 +80,7 @@
     <mkdir dir="${prod}" />
     <mkdir dir="${dist}" />
     <mkdir dir="${classes}" />
+    <mkdir dir="${spi-classes}" />
     <mkdir dir="${tests.build}" />
     <mkdir dir="${tests.classes}" />
     <mkdir dir="${tests.todir}" />
@@ -86,73 +88,26 @@
     <mkdir dir="${jar.dir}" />
   </target>
 
-  <target name="compile" depends="init">
-    <!-- compile java source files -->
-    <javac srcdir="${src}" destdir="${classes}"
+  <target name="compile-spi" depends="init">
+    <!-- compile the spi java source files -->
+    <javac sourcepath="" srcdir="${src}" destdir="${spi-classes}"
+    	     includes="**/spi/**, **/spiimpl/**, **/util/**"
            debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
            target="${jvm.version}" source="${jvm.version}">
-      <classpath>
+    	<classpath>
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-      </classpath>
+        <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
+     </classpath>
       <compilerarg value="-Xlint"/>
       <compilerarg value="-Xlint:-serial"/>
     </javac>
   </target>
 
-  <target name="compile_tests" depends="init,compile">
-    <!-- compile java source files for tests -->
-    <javac srcdir="${tests.src}" destdir="${tests.classes}"
-           debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
-           target="${jvm.version}" source="${jvm.version}">
-      <classpath>
-        <pathelement location="${classes}" />
-        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-        <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
-      </classpath>
-      <compilerarg value="-Xlint"/>
-      <compilerarg value="-Xlint:-serial"/>
-      <compilerarg value="-Xlint:-deprecation"/>
-    </javac>
-  </target>
-
-  <target name="run_tests" depends="compile_tests">
-    <property name="test.suite" value="*"/>
-    <junit failureproperty="${ant.project.name}.failure" dir=".">
-      <classpath>
-        <pathelement location="${classes}" />
-        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-        <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
-        <pathelement location="${projects.dir}/test-connectorA/dist/jar/testconnectorA.jar" />
-        <pathelement location="${projects.dir}/test-connectorB/dist/jar/testconnectorB.jar" />
-        <pathelement location="${tests.classes}" />
-        <pathelement location="${dtds}" />
-        <pathelement path="${java.class.path}" />
-        <!-- Needed for those tests that must find resources on the classpath. -->
-        <pathelement location="${tests.src}" />
-      </classpath>
-      <jvmarg value="-Djava.util.logging.config.file=${junit.logging.properties}"/>
-      <formatter type="xml" />
-      <batchtest fork="yes" todir="${tests.todir}">
-        <fileset dir="${tests.src}" includes="**/${test.suite}Test.java" />
-      </batchtest>
-    </junit>
-    <junitreport todir="${tests.todir}">
-      <fileset dir="${tests.todir}">
-        <include name ="*.xml"/>
-      </fileset>
-      <report format="frames" todir="${tests.todir}"/>
-    </junitreport>
-    <fail if="${ant.project.name}.failure" message="Test failure"/>
-  </target>
-
-  <target name="jar" depends="jar-prod,jar-tests"
-          description="Create jars for the Connector SPI project"/>
-
-  <target name="jar-prod" depends="compile"
-          description="Create production jars for the Connector SPI project">
+  <target name="jar-spi" depends="compile-spi"
+          description="Create production spi jar">
     <tstamp />
     <jar jarfile="${spi.jarfile}">
-      <fileset dir="${classes}" includes="**/spi/**, **/util/**" excludes="**/javatests/**" />
+      <fileset dir="${spi-classes}"/>
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager SPI"/>
         <attribute name="Implementation-Version"
@@ -160,6 +115,26 @@
         <attribute name="Implementation-Vendor" value="Google Inc."/>
       </manifest>
     </jar>
+  </target>
+
+  <target name="compile" depends="init,jar-spi">
+    <!-- compile java source files -->
+    <javac sourcepath="" srcdir="${src}" destdir="${classes}"
+           excludes="**/spi/**, **/spiimpl/**, **/util/**"
+           debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
+           target="${jvm.version}" source="${jvm.version}">
+      <classpath>
+        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+        <pathelement location="${spi.jarfile}"/>
+     </classpath>
+      <compilerarg value="-Xlint"/>
+      <compilerarg value="-Xlint:-serial"/>
+    </javac>
+  </target>
+
+  <target name="jar-prod" depends="compile,jar-spi"
+          description="Create production jars for the Connector SPI project">
+    <tstamp />
     <jar jarfile="${logging.jarfile}">
       <fileset dir="${classes}" includes="**/logging/**" excludes="**/javatests/**" />
       <manifest>
@@ -210,6 +185,24 @@
     </jar>
   </target>
 
+  <target name="compile_tests" depends="init,jar-prod">
+    <!-- compile java source files for tests -->
+    <javac srcdir="${tests.src}" destdir="${tests.classes}"
+           debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
+           target="${jvm.version}" source="${jvm.version}">
+      <classpath>
+        <pathelement location="${spi.jarfile}"/>
+        <pathelement location="${connector.jarfile}"/>
+        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+        <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
+     </classpath>
+      <compilerarg value="-Xlint"/>
+      <compilerarg value="-Xlint:-serial"/>
+      <compilerarg value="-Xlint:-deprecation"/>
+      <compilerarg value="-Xlint:-path"/>
+    </javac>
+  </target>
+
   <target name="jar-tests" depends="compile,compile_tests"
           description="Create test jars for the Connector SPI project">
     <tstamp />
@@ -223,6 +216,40 @@
       </manifest>
     </jar>
   </target>
+
+  <target name="run_tests" depends="jar-tests">
+    <property name="test.suite" value="*"/>
+    <junit failureproperty="${ant.project.name}.failure" dir=".">
+      <classpath>
+        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+        <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
+        <pathelement location="${spi.jarfile}"/>
+        <pathelement location="${connector.jarfile}"/>
+        <pathelement location="${tests.jarfile}"/>
+        <pathelement location="${projects.dir}/test-connectorA/dist/jar/testconnectorA.jar" />
+        <pathelement location="${projects.dir}/test-connectorB/dist/jar/testconnectorB.jar" />
+        <pathelement location="${dtds}" />
+        <pathelement path="${java.class.path}" />
+        <!-- Needed for those tests that must find resources on the classpath. -->
+        <pathelement location="${tests.src}" />
+      </classpath>
+      <jvmarg value="-Djava.util.logging.config.file=${junit.logging.properties}"/>
+      <formatter type="xml" />
+      <batchtest fork="yes" todir="${tests.todir}">
+        <fileset dir="${tests.src}" includes="**/${test.suite}Test.java" />
+      </batchtest>
+    </junit>
+    <junitreport todir="${tests.todir}">
+      <fileset dir="${tests.todir}">
+        <include name ="*.xml"/>
+      </fileset>
+      <report format="frames" todir="${tests.todir}"/>
+    </junitreport>
+    <fail if="${ant.project.name}.failure" message="Test failure"/>
+  </target>
+
+  <target name="jar" depends="jar-prod,jar-tests"
+          description="Create jars for the Connector SPI project"/>
 
   <target name="clean" description="Deletes all build files.">
     <delete dir="${build}" />

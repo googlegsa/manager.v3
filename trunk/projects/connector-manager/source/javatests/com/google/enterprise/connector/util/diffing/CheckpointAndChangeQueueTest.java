@@ -21,6 +21,7 @@ import com.google.enterprise.connector.util.diffing.CheckpointAndChangeQueue;
 import com.google.enterprise.connector.util.diffing.DeleteDocumentHandleFactory;
 import com.google.enterprise.connector.util.diffing.DiffingConnectorCheckpoint;
 import com.google.enterprise.connector.util.diffing.MonitorCheckpoint;
+import com.google.enterprise.connector.util.testing.diffing.TestDirectoryManager;
 
 import junit.framework.TestCase;
 
