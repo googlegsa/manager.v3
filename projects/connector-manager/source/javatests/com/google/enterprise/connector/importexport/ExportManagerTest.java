@@ -17,9 +17,10 @@ package com.google.enterprise.connector.importexport;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
+import com.google.enterprise.connector.util.SAXParseErrorHandler;
+import com.google.enterprise.connector.util.XmlParseUtil;
 
 import junit.framework.TestCase;
 
@@ -73,7 +74,7 @@ public class ExportManagerTest extends TestCase {
 
     // Now parse that XML and see if it reflects some tiny bit of reality.
     Document document =
-        ServletUtil.parse(managerXml, new SAXParseErrorHandler(), null);
+        XmlParseUtil.parse(managerXml, new SAXParseErrorHandler(), null);
     Element managerElement = document.getDocumentElement();
 
     // Extract the manager configuration properties.
@@ -85,8 +86,8 @@ public class ExportManagerTest extends TestCase {
 
     // Read in the original application context file.
     String originalConfigXml = StringUtils.normalizeNewlines(
-         StringUtils.streamToStringAndThrow(
-         new FileInputStream(APPLICATION_CONTEXT)));
+        StringUtils.streamToStringAndThrow(
+        new FileInputStream(APPLICATION_CONTEXT)));
 
     // Now compare extracted XML to the original.
     assertEquals("configXml", originalConfigXml, configXml);
@@ -104,7 +105,7 @@ public class ExportManagerTest extends TestCase {
 
     // Now parse that XML and see if it reflects some tiny bit of reality.
     Document document =
-        ServletUtil.parse(managerXml, new SAXParseErrorHandler(), null);
+        XmlParseUtil.parse(managerXml, new SAXParseErrorHandler(), null);
     Element managerElement = document.getDocumentElement();
 
     // Extract the manager configuration properties.
@@ -125,7 +126,7 @@ public class ExportManagerTest extends TestCase {
   }
 
   /** Creates a new Context based upon the supplied properties. */
-  private void newContext(Properties properties)  throws Exception {
+  private void newContext(Properties properties) throws Exception {
     PropertiesUtils.storeToFile(properties, propFile, "Test Props");
     Context.refresh();
     context = Context.getInstance();
@@ -143,7 +144,7 @@ public class ExportManagerTest extends TestCase {
   private Properties readProperties(Element managerElement) {
     Element configElement = (Element) managerElement.getElementsByTagName(
         ServletUtil.XMLTAG_MANAGER_CONFIG).item(0);
-    Map<String, String> configMap = ServletUtil.getAllAttributes(
+    Map<String, String> configMap = XmlParseUtil.getAllAttributes(
         configElement, ServletUtil.XMLTAG_PARAMETERS);
     return PropertiesUtils.fromMap(configMap);
   }
@@ -162,7 +163,7 @@ public class ExportManagerTest extends TestCase {
     Element configElement = (Element) nodes.item(0);
     assertNotNull("configElement", configElement);
 
-    String configXml = ServletUtil.getCdata(configElement);
+    String configXml = XmlParseUtil.getCdata(configElement);
     assertNotNull("configXml", configXml);
     configXml = ServletUtil.restoreEndMarkers(configXml);
     return StringUtils.normalizeNewlines(configXml);

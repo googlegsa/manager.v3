@@ -20,9 +20,10 @@ import com.google.enterprise.connector.instantiator.ConnectorCoordinatorMap;
 import com.google.enterprise.connector.instantiator.TypeMap;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.scheduler.Schedule;
-import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.ConfigureResponse;
+import com.google.enterprise.connector.util.SAXParseErrorHandler;
+import com.google.enterprise.connector.util.XmlParseUtil;
 
 import junit.framework.TestCase;
 
@@ -37,12 +38,14 @@ import java.util.Set;
 public class ImportExportTest extends TestCase {
 
   private static final Map<String, String> CONFIG_MAP =
-      new HashMap<String, String>() {{
-        put("Username", "foo");
-        put("Password", "bar");
-        put("Color", "red");
-        put("RepositoryFile", "MockRepositoryEventLog3.txt");
-      }};
+      new HashMap<String, String>() {
+    {
+      put("Username", "foo");
+      put("Password", "bar");
+      put("Color", "red");
+      put("RepositoryFile", "MockRepositoryEventLog3.txt");
+    }
+  };
 
   private static final String APPLICATION_CONTEXT =
       "testdata/contextTests/TestContext.xml";
@@ -57,7 +60,7 @@ public class ImportExportTest extends TestCase {
     getTypeMap().init();
   }
 
-  private void refreshContext()  throws Exception {
+  private void refreshContext() throws Exception {
     Context.refresh();
     Context context = Context.getInstance();
     context.setStandaloneContext(APPLICATION_CONTEXT,
@@ -111,7 +114,7 @@ public class ImportExportTest extends TestCase {
     assertEquals("type", "TestConnectorA", connector.getTypeName());
     assertNull("checkpoint", connector.getCheckpoint());
     assertEquals("schedule", "connector-01:100:300000:0-0",
-                 connector.getScheduleString());
+        connector.getScheduleString());
     Map<String, String> config = connector.getConfigMap();
     ImportExportConnectorTest.assertContains(config, "Username", "foo");
     ImportExportConnectorTest.assertContains(config, "Password", "bar");
@@ -122,7 +125,7 @@ public class ImportExportTest extends TestCase {
     assertEquals("type", "TestConnectorA", connector.getTypeName());
     assertNull("checkpoint", connector.getCheckpoint());
     assertEquals("schedule", "connector-02:100:300000:0-0",
-                 connector.getScheduleString());
+        connector.getScheduleString());
     config = connector.getConfigMap();
     ImportExportConnectorTest.assertContains(config, "Username", "foo");
     ImportExportConnectorTest.assertContains(config, "Password", "bar");
@@ -145,19 +148,19 @@ public class ImportExportTest extends TestCase {
 
     // Make sure there are no checkpoints in the output.
     assertFalse("checkpoint in output",
-                exportXml.contains(ServletUtil.XMLTAG_CONNECTOR_CHECKPOINT));
+        exportXml.contains(ServletUtil.XMLTAG_CONNECTOR_CHECKPOINT));
 
     // Make sure there are no exploded schedules in the output.
     assertTrue("schedule in output",
-                exportXml.contains(ServletUtil.XMLTAG_CONNECTOR_SCHEDULES));
+        exportXml.contains(ServletUtil.XMLTAG_CONNECTOR_SCHEDULES));
     assertFalse("exploded schedule in output",
-                exportXml.contains(ServletUtil.XMLTAG_DISABLED));
+        exportXml.contains(ServletUtil.XMLTAG_DISABLED));
     assertFalse("exploded schedule in output",
-                exportXml.contains(ServletUtil.XMLTAG_LOAD));
+        exportXml.contains(ServletUtil.XMLTAG_LOAD));
     assertFalse("exploded schedule in output",
-                exportXml.contains(ServletUtil.XMLTAG_DELAY));
+        exportXml.contains(ServletUtil.XMLTAG_DELAY));
     assertFalse("exploded schedule in output",
-                exportXml.contains(ServletUtil.XMLTAG_TIME_INTERVALS));
+        exportXml.contains(ServletUtil.XMLTAG_TIME_INTERVALS));
 
     // Make sure passwords are in plain-text in the output.
     assertTrue(exportXml.contains("Param name=\"Password\" value=\"bar\""));
@@ -394,11 +397,11 @@ public class ImportExportTest extends TestCase {
 
   private static ImportExportConnectorList fromXmlString(String xmlString) {
     Document document =
-        ServletUtil.parse(xmlString, new SAXParseErrorHandler(), null);
+        XmlParseUtil.parse(xmlString, new SAXParseErrorHandler(), null);
     Element connectorsElement = document.getDocumentElement();
     ImportExportConnectorList connectors = new ImportExportConnectorList();
     connectors.fromXml(document.getDocumentElement(),
-                       LegacyImportExportConnector.class);
+        LegacyImportExportConnector.class);
     return connectors;
   }
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.servlet;
+package com.google.enterprise.connector.util;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXParseException;

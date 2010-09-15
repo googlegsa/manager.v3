@@ -25,9 +25,9 @@ import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.scheduler.Schedule;
-import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
-import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.ConfigureResponse;
+import com.google.enterprise.connector.util.SAXParseErrorHandler;
+import com.google.enterprise.connector.util.XmlParseUtil;
 
 import org.apache.commons.cli.CommandLine;
 import org.w3c.dom.Document;
@@ -156,11 +156,11 @@ public class ImportExport extends AbstractCommandLineApp {
     String xmlString =
         StringUtils.streamToStringAndThrow(new FileInputStream(filename));
     Document document =
-        ServletUtil.parse(xmlString, new SAXParseErrorHandler(), null);
+        XmlParseUtil.parse(xmlString, new SAXParseErrorHandler(), null);
     Element connectorsElement = document.getDocumentElement();
     ImportExportConnectorList connectors = new ImportExportConnectorList();
     connectors.fromXml(document.getDocumentElement(),
-                       LegacyImportExportConnector.class);
+        LegacyImportExportConnector.class);
     return connectors;
   }
 

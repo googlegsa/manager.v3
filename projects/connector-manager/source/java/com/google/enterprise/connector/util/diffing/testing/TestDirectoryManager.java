@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.util.testing.diffing;
+package com.google.enterprise.connector.util.diffing.testing;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;

@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.persist.PersistentStoreException;
 import com.google.enterprise.connector.scheduler.Schedule;
+import com.google.enterprise.connector.util.XmlParseUtil;
 
 import org.w3c.dom.Element;
 
@@ -55,14 +56,14 @@ public class SetSchedule extends ConnectorManagerServlet {
   public static ConnectorMessageCode handleDoPost(
       String xmlBody, Manager manager) {
     ConnectorMessageCode status = new ConnectorMessageCode();
-    Element root = ServletUtil.parseAndGetRootElement(
+    Element root = XmlParseUtil.parseAndGetRootElement(
         xmlBody, ServletUtil.XMLTAG_CONNECTOR_SCHEDULES);
     if (root == null) {
       status.setMessageId(ConnectorMessageCode.ERROR_PARSING_XML_REQUEST);
       return status;
     }
 
-    String connectorName = ServletUtil.getFirstElementByTagName(
+    String connectorName = XmlParseUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_CONNECTOR_NAME);
 
     NDC.pushAppend(connectorName);
@@ -78,17 +79,17 @@ public class SetSchedule extends ConnectorManagerServlet {
       }
     }
 
-    int load = Integer.parseInt(ServletUtil.getFirstElementByTagName(
+    int load = Integer.parseInt(XmlParseUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_LOAD));
-    boolean disabled = (ServletUtil.getFirstElementByTagName(root,
+    boolean disabled = (XmlParseUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_DISABLED) != null);
     int retryDelayMillis = Schedule.defaultRetryDelayMillis();
-    String delayStr = ServletUtil.getFirstElementByTagName(root,
+    String delayStr = XmlParseUtil.getFirstElementByTagName(root,
         ServletUtil.XMLTAG_DELAY);
     if (delayStr != null) {
       retryDelayMillis = Integer.parseInt(delayStr);
     }
-    String timeIntervals = ServletUtil.getFirstElementByTagName(
+    String timeIntervals = XmlParseUtil.getFirstElementByTagName(
         root, ServletUtil.XMLTAG_TIME_INTERVALS);
     Schedule schedule = new Schedule(connectorName, disabled, load,
         retryDelayMillis, timeIntervals);

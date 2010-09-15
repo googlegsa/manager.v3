@@ -17,8 +17,8 @@ package com.google.enterprise.connector.importexport;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
-import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
-import com.google.enterprise.connector.servlet.ServletUtil;
+import com.google.enterprise.connector.util.SAXParseErrorHandler;
+import com.google.enterprise.connector.util.XmlParseUtil;
 
 import junit.framework.TestCase;
 
@@ -98,7 +98,7 @@ public class ImportExportConnectorListTest extends TestCase {
     ImportExportConnectorTest.assertContains(config, "color", "red");
     assertTrue(config.size() == 0);
     assertEquals("configXml", ImportExportConnectorTest.CONFIG_XML,
-                 connector.getConfigXml());
+        connector.getConfigXml());
   }
 
   // Test Multiple Connector Instances
@@ -108,7 +108,7 @@ public class ImportExportConnectorListTest extends TestCase {
   }
 
   private final void checkMultipleConnectors(
-        ImportExportConnectorList connectors) {
+      ImportExportConnectorList connectors) {
     assertTrue(connectors.size() == 2);
     ImportExportConnector connector = connectors.remove(0);
     assertEquals("name", "connector-01", connector.getName());
@@ -155,7 +155,7 @@ public class ImportExportConnectorListTest extends TestCase {
     ImportExportConnectorList connectors = buildMultipleConnectors();
     String xmlResult = asXmlString(connectors);
     assertEquals(MULTIPLE_CONNECTORS,
-                 StringUtils.normalizeNewlines(xmlResult));
+        StringUtils.normalizeNewlines(xmlResult));
   }
 
   private final ImportExportConnectorList buildMultipleConnectors() {
@@ -167,7 +167,7 @@ public class ImportExportConnectorListTest extends TestCase {
 
     Schedule schedule = new Schedule("connector-02", false, 100, 300000, "0-0");
     Map<String, String> config =
-       new HashMap<String, String>(ImportExportConnectorTest.CONFIG_MAP);
+        new HashMap<String, String>(ImportExportConnectorTest.CONFIG_MAP);
     config.put("color", "blue");
     connector = new ImportExportConnector("connector-02",
         new Configuration("TestConnector", config, null), schedule, null);
@@ -184,12 +184,11 @@ public class ImportExportConnectorListTest extends TestCase {
 
   private static ImportExportConnectorList fromXmlString(String xmlString) {
     Document document =
-        ServletUtil.parse(xmlString, new SAXParseErrorHandler(), null);
+        XmlParseUtil.parse(xmlString, new SAXParseErrorHandler(), null);
     ImportExportConnector connector = new LegacyImportExportConnector();
     ImportExportConnectorList connectors = new ImportExportConnectorList();
     connectors.fromXml(document.getDocumentElement(),
-                       ImportExportConnector.class);
+        ImportExportConnector.class);
     return connectors;
   }
 }
-

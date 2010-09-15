@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.google.enterprise.connector.servlet;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.PersistentStoreException;
+import com.google.enterprise.connector.util.XmlParseUtil;
 
 import org.w3c.dom.Element;
 
@@ -33,8 +34,8 @@ public class SetManagerConfigHandler {
     Logger.getLogger(SetManagerConfigHandler.class.getName());
 
   private ConnectorMessageCode status;
-  private String feederGateHost;
-  private int feederGatePort;
+  private String feederGateHost = null;
+  private int feederGatePort = 0;
 
   /*
    * Reads from a request input XML string
@@ -44,7 +45,7 @@ public class SetManagerConfigHandler {
    */
   public SetManagerConfigHandler(Manager manager, String xmlBody) {
     this.status = new ConnectorMessageCode();
-    Element root = ServletUtil.parseAndGetRootElement(
+    Element root = XmlParseUtil.parseAndGetRootElement(
       xmlBody, ServletUtil.XMLTAG_MANAGER_CONFIG);
     if (root == null) {
       this.status = new ConnectorMessageCode(
@@ -53,10 +54,10 @@ public class SetManagerConfigHandler {
     }
 
     // Get settings from request.
-    this.feederGateHost = ServletUtil.getFirstAttribute(
+    this.feederGateHost = XmlParseUtil.getFirstAttribute(
         root, ServletUtil.XMLTAG_FEEDERGATE,
         ServletUtil.XMLTAG_FEEDERGATE_HOST);
-    this.feederGatePort = Integer.parseInt(ServletUtil.getFirstAttribute(
+    this.feederGatePort = Integer.parseInt(XmlParseUtil.getFirstAttribute(
         root, ServletUtil.XMLTAG_FEEDERGATE,
         ServletUtil.XMLTAG_FEEDERGATE_PORT));
 

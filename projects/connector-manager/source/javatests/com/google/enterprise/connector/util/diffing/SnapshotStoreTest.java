@@ -22,7 +22,7 @@ import com.google.enterprise.connector.util.diffing.SnapshotStore;
 import com.google.enterprise.connector.util.diffing.SnapshotStoreException;
 import com.google.enterprise.connector.util.diffing.SnapshotWriter;
 import com.google.enterprise.connector.util.diffing.SnapshotWriterException;
-import com.google.enterprise.connector.util.testing.diffing.TestDirectoryManager;
+import com.google.enterprise.connector.util.diffing.testing.TestDirectoryManager;
 
 import junit.framework.TestCase;
 
