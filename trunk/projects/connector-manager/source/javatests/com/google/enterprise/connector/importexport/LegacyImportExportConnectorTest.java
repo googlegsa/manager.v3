@@ -17,8 +17,8 @@ package com.google.enterprise.connector.importexport;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
-import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
-import com.google.enterprise.connector.servlet.ServletUtil;
+import com.google.enterprise.connector.util.SAXParseErrorHandler;
+import com.google.enterprise.connector.util.XmlParseUtil;
 
 import junit.framework.TestCase;
 
@@ -119,7 +119,7 @@ public class LegacyImportExportConnectorTest extends TestCase {
     ImportExportConnectorTest.assertContains(config, "password", "pwd");
     ImportExportConnectorTest.assertContains(config, "color", "red");
     assertTrue(config.size() == 0);
-    assertNull("checkpoint",connector.getCheckpoint());
+    assertNull("checkpoint", connector.getCheckpoint());
     assertNull("configXml", connector.getConfigXml());
   }
 
@@ -131,7 +131,7 @@ public class LegacyImportExportConnectorTest extends TestCase {
 
     String xmlResult = ImportExportConnectorTest.asXmlString(connector);
     assertEquals(ImportExportConnectorTest.NEW_FORMAT_EMPTY_SCHEDULE,
-                 StringUtils.normalizeNewlines(xmlResult));
+        StringUtils.normalizeNewlines(xmlResult));
   }
 
   // Test that schedules are written in new format.
@@ -144,7 +144,7 @@ public class LegacyImportExportConnectorTest extends TestCase {
 
     String xmlResult = ImportExportConnectorTest.asXmlString(connector);
     assertEquals(ImportExportConnectorTest.NEW_FORMAT_WITH_SCHEDULE,
-                 StringUtils.normalizeNewlines(xmlResult));
+        StringUtils.normalizeNewlines(xmlResult));
   }
 
   // Test that checkpoints are not included in the output.
@@ -157,12 +157,12 @@ public class LegacyImportExportConnectorTest extends TestCase {
 
     String xmlResult = ImportExportConnectorTest.asXmlString(connector);
     assertEquals(ImportExportConnectorTest.NEW_FORMAT_WITH_SCHEDULE,
-                 StringUtils.normalizeNewlines(xmlResult));
+        StringUtils.normalizeNewlines(xmlResult));
   }
 
   private ImportExportConnector fromXmlString(String xmlString) {
     Document document =
-        ServletUtil.parse(xmlString, new SAXParseErrorHandler(), null);
+        XmlParseUtil.parse(xmlString, new SAXParseErrorHandler(), null);
     ImportExportConnector connector = new LegacyImportExportConnector();
     connector.fromXml(document.getDocumentElement());
     return connector;

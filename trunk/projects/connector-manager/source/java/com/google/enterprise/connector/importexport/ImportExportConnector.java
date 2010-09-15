@@ -18,6 +18,7 @@ import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.XmlUtils;
+import com.google.enterprise.connector.util.XmlParseUtil;
 
 import org.w3c.dom.Element;
 
@@ -188,7 +189,7 @@ public class ImportExportConnector {
    * @param connectorElement an ConnectorInstance XML Element.
    */
   public void fromXml(Element connectorElement) {
-    setName(ServletUtil.getFirstElementByTagName(
+    setName(XmlParseUtil.getFirstElementByTagName(
         connectorElement, ServletUtil.XMLTAG_CONNECTOR_NAME));
 
     // Extract the Configuration
@@ -208,7 +209,7 @@ public class ImportExportConnector {
    * @return checkpoint as a String, or null if no checkpoint is encoded.
    */
   String readCheckpoint(Element connectorElement) {
-    return ServletUtil.getFirstElementByTagName(
+    return XmlParseUtil.getFirstElementByTagName(
         connectorElement, ServletUtil.XMLTAG_CONNECTOR_CHECKPOINT);
   }
 
@@ -219,7 +220,7 @@ public class ImportExportConnector {
    * @return a Schedule or null if no Schedule is encoded.
    */
   Schedule readSchedule(Element connectorElement) {
-    String scheduleString = ServletUtil.getFirstElementByTagName(
+    String scheduleString = XmlParseUtil.getFirstElementByTagName(
         connectorElement, ServletUtil.XMLTAG_CONNECTOR_SCHEDULES);
     if (scheduleString != null && scheduleString.trim().length() > 0) {
         return new Schedule(scheduleString);
@@ -229,15 +230,15 @@ public class ImportExportConnector {
           ServletUtil.XMLTAG_CONNECTOR_SCHEDULES).item(0);
       if (scheduleElement != null && scheduleElement.hasChildNodes()) {
         boolean disabled =
-            Boolean.parseBoolean(ServletUtil.getFirstElementByTagName(
+            Boolean.parseBoolean(XmlParseUtil.getFirstElementByTagName(
             scheduleElement, ServletUtil.XMLTAG_DISABLED));
-        int load = Integer.parseInt(ServletUtil.getFirstElementByTagName(
+        int load = Integer.parseInt(XmlParseUtil.getFirstElementByTagName(
             scheduleElement, ServletUtil.XMLTAG_LOAD));
-        String delay = ServletUtil.getFirstElementByTagName(
+        String delay = XmlParseUtil.getFirstElementByTagName(
             scheduleElement, ServletUtil.XMLTAG_DELAY);
         int retryDelayMillis = (delay != null) ? Integer.parseInt(delay) :
             Schedule.defaultRetryDelayMillis();
-        String timeIntervals = ServletUtil.getFirstElementByTagName(
+        String timeIntervals = XmlParseUtil.getFirstElementByTagName(
             scheduleElement,  ServletUtil.XMLTAG_TIME_INTERVALS);
         return new Schedule(name, disabled, load, retryDelayMillis,
             timeIntervals);
@@ -253,7 +254,7 @@ public class ImportExportConnector {
    * @return a Configuration
    */
   Configuration readConfiguration(Element connectorElement) {
-    String type = ServletUtil.getFirstElementByTagName(
+    String type = XmlParseUtil.getFirstElementByTagName(
         connectorElement, ServletUtil.XMLTAG_CONNECTOR_TYPE);
     if (type == null || type.length() == 0) {
       Element typeElement = (Element) connectorElement.getElementsByTagName(
@@ -263,14 +264,14 @@ public class ImportExportConnector {
     }
     Element configElement = (Element) connectorElement.getElementsByTagName(
         ServletUtil.XMLTAG_CONNECTOR_CONFIG).item(0);
-    Map<String, String> configMap = ServletUtil.getAllAttributes(
+    Map<String, String> configMap = XmlParseUtil.getAllAttributes(
         configElement, ServletUtil.XMLTAG_PARAMETERS);
     // TODO: Extract encryption status and preserve it.
     String configXml = null;
     configElement = (Element) connectorElement.getElementsByTagName(
         ServletUtil.XMLTAG_CONNECTOR_CONFIG_XML).item(0);
     if (configElement != null) {
-      configXml = ServletUtil.getCdata(configElement);
+      configXml = XmlParseUtil.getCdata(configElement);
       if (configXml != null) {
         configXml = ServletUtil.restoreEndMarkers(configXml);
       }

@@ -1,4 +1,4 @@
-// Copyright (C) 2009 Google Inc.
+// Copyright 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
 // limitations under the License.
 
 package com.google.enterprise.connector.servlet;
+
+import com.google.enterprise.connector.util.XmlParseUtil;
 
 import junit.framework.TestCase;
 
@@ -65,7 +67,7 @@ public class AuthorizationResourceTest extends TestCase {
     + NON_FAB_URL + "</" + ServletUtil.XMLTAG_RESOURCE + ">";
 
   public final void testGoodFabricated() {
-    Element root = ServletUtil.parseAndGetRootElement(GOOD_FAB_ONE_XML,
+    Element root = XmlParseUtil.parseAndGetRootElement(GOOD_FAB_ONE_XML,
         ServletUtil.XMLTAG_RESOURCE);
     AuthorizationResource resource = new AuthorizationResource(root);
     assertTrue(resource.isFabricated());
@@ -76,7 +78,7 @@ public class AuthorizationResourceTest extends TestCase {
   }
 
   public final void testNonFabricated() {
-    Element root = ServletUtil.parseAndGetRootElement(NON_FAB_XML,
+    Element root = XmlParseUtil.parseAndGetRootElement(NON_FAB_XML,
         ServletUtil.XMLTAG_RESOURCE);
     AuthorizationResource resource = new AuthorizationResource(root);
     assertFalse(resource.isFabricated());
@@ -88,21 +90,21 @@ public class AuthorizationResourceTest extends TestCase {
 
   public final void testBadFabricated() {
     // Bad connector name.
-    Element root = ServletUtil.parseAndGetRootElement(BAD_FAB_NO_CN_XML,
+    Element root = XmlParseUtil.parseAndGetRootElement(BAD_FAB_NO_CN_XML,
         ServletUtil.XMLTAG_RESOURCE);
     AuthorizationResource resource = new AuthorizationResource(root);
     assertEquals(ConnectorMessageCode.RESPONSE_NULL_CONNECTOR,
         resource.getStatus());
 
     // Bad docid.
-    root = ServletUtil.parseAndGetRootElement(BAD_FAB_NO_DOCID_XML,
+    root = XmlParseUtil.parseAndGetRootElement(BAD_FAB_NO_DOCID_XML,
         ServletUtil.XMLTAG_RESOURCE);
     resource = new AuthorizationResource(root);
     assertEquals(ConnectorMessageCode.RESPONSE_NULL_DOCID,
         resource.getStatus());
 
     // Using a good non-fabricated URL.
-    root = ServletUtil.parseAndGetRootElement(NON_FAB_XML,
+    root = XmlParseUtil.parseAndGetRootElement(NON_FAB_XML,
         ServletUtil.XMLTAG_RESOURCE);
     resource = new AuthorizationResource(root);
     assertEquals(ConnectorMessageCode.SUCCESS,
@@ -111,7 +113,7 @@ public class AuthorizationResourceTest extends TestCase {
 
   public final void testBadNonFabricated() {
     // Missing connector name.
-    Element root = ServletUtil.parseAndGetRootElement(BAD_NON_FAB_XML,
+    Element root = XmlParseUtil.parseAndGetRootElement(BAD_NON_FAB_XML,
         ServletUtil.XMLTAG_RESOURCE);
     AuthorizationResource resource = new AuthorizationResource(root);
     assertEquals(ConnectorMessageCode.RESPONSE_NULL_CONNECTOR,
@@ -119,11 +121,11 @@ public class AuthorizationResourceTest extends TestCase {
   }
 
   public final void testCompare() {
-    Element root = ServletUtil.parseAndGetRootElement(GOOD_FAB_ONE_XML,
+    Element root = XmlParseUtil.parseAndGetRootElement(GOOD_FAB_ONE_XML,
         ServletUtil.XMLTAG_RESOURCE);
     AuthorizationResource resourceOne = new AuthorizationResource(root);
     AuthorizationResource secondResourceOne = new AuthorizationResource(root);
-    root = ServletUtil.parseAndGetRootElement(GOOD_FAB_TWO_XML,
+    root = XmlParseUtil.parseAndGetRootElement(GOOD_FAB_TWO_XML,
         ServletUtil.XMLTAG_RESOURCE);
     AuthorizationResource resourceTwo = new AuthorizationResource(root);
     assertEquals(0, resourceOne.compareTo(secondResourceOne));

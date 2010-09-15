@@ -17,8 +17,8 @@ package com.google.enterprise.connector.importexport;
 import com.google.enterprise.connector.common.StringUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
-import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
-import com.google.enterprise.connector.servlet.ServletUtil;
+import com.google.enterprise.connector.util.SAXParseErrorHandler;
+import com.google.enterprise.connector.util.XmlParseUtil;
 
 import junit.framework.TestCase;
 
@@ -31,11 +31,13 @@ import java.util.Map;
 
 public class ImportExportConnectorTest extends TestCase {
   static final Map<String, String> CONFIG_MAP =
-      new HashMap<String, String>() {{
-        put("username", "name");
-        put("password", "pwd");
-        put("color", "red");
-      }};
+      new HashMap<String, String>() {
+    {
+      put("username", "name");
+      put("password", "pwd");
+      put("color", "red");
+    }
+  };
 
   static final String CONFIG_XML =
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -285,7 +287,7 @@ public class ImportExportConnectorTest extends TestCase {
     assertTrue(config.size() == 0);
 
     assertEquals("configXml", CONFIG_XML_WITH_CDATA,
-                 connector.getConfigXml());
+        connector.getConfigXml());
     assertNull("checkpoint", connector.getCheckpoint());
   }
 
@@ -312,7 +314,7 @@ public class ImportExportConnectorTest extends TestCase {
 
     String xmlResult = asXmlString(connector);
     assertEquals(NEW_FORMAT_WITH_EXPLODED_SCHEDULE,
-                 StringUtils.normalizeNewlines(xmlResult));
+        StringUtils.normalizeNewlines(xmlResult));
   }
 
   // Test that checkpoints are included in the output.
@@ -326,7 +328,7 @@ public class ImportExportConnectorTest extends TestCase {
     String xmlResult = asXmlString(connector);
     System.out.println("testWriteCheckpoint:\n" + xmlResult);
     assertEquals(NEW_FORMAT_WITH_CHECKPOINT,
-                 StringUtils.normalizeNewlines(xmlResult));
+        StringUtils.normalizeNewlines(xmlResult));
   }
 
   // Test that configuration XML is included in the output.
@@ -339,7 +341,7 @@ public class ImportExportConnectorTest extends TestCase {
 
     String xmlResult = asXmlString(connector);
     assertEquals(NEW_FORMAT_WITH_CONFIG_XML,
-                 StringUtils.normalizeNewlines(xmlResult));
+        StringUtils.normalizeNewlines(xmlResult));
   }
 
   // Test that configuration XML with embedded CDATA is properly escaped.
@@ -352,7 +354,7 @@ public class ImportExportConnectorTest extends TestCase {
 
     String xmlResult = asXmlString(connector);
     assertEquals(NEW_FORMAT_WITH_CONFIG_XML_CDATA,
-                 StringUtils.normalizeNewlines(xmlResult));
+        StringUtils.normalizeNewlines(xmlResult));
   }
 
   // Test that property values are properly escaped.
@@ -368,7 +370,7 @@ public class ImportExportConnectorTest extends TestCase {
   }
 
   static void assertContains(Map<String, String> config, String key, String value) {
-    for (Map.Entry<String,String> entry : config.entrySet()) {
+    for (Map.Entry<String, String> entry : config.entrySet()) {
       if (entry.getKey().equals(key) && entry.getValue().equals(value)) {
         config.remove(key);
         return;
@@ -386,10 +388,9 @@ public class ImportExportConnectorTest extends TestCase {
 
   private static ImportExportConnector fromXmlString(String xmlString) {
     Document document =
-        ServletUtil.parse(xmlString, new SAXParseErrorHandler(), null);
+        XmlParseUtil.parse(xmlString, new SAXParseErrorHandler(), null);
     ImportExportConnector connector = new ImportExportConnector();
     connector.fromXml(document.getDocumentElement());
     return connector;
   }
 }
-

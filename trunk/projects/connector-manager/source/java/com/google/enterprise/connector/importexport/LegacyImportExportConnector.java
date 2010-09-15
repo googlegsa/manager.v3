@@ -17,6 +17,7 @@ package com.google.enterprise.connector.importexport;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.servlet.ServletUtil;
+import com.google.enterprise.connector.util.XmlParseUtil;
 
 import org.w3c.dom.Element;
 
@@ -56,7 +57,7 @@ public class LegacyImportExportConnector extends ImportExportConnector {
     Schedule schedule = super.readSchedule(connectorElement);
     if (schedule == null) {
       // Could be dealing with old format.
-      String scheduleString = ServletUtil.getFirstElementByTagName(
+      String scheduleString = XmlParseUtil.getFirstElementByTagName(
            connectorElement, ServletUtil.XMLTAG_CONNECTOR_SCHEDULE);
       if (scheduleString != null && scheduleString.trim().length() > 0) {
         schedule =  new Schedule(scheduleString);

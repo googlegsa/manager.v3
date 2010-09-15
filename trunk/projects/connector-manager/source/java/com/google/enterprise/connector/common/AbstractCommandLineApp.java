@@ -16,9 +16,9 @@ package com.google.enterprise.connector.common;
 
 import com.google.enterprise.connector.instantiator.EncryptedPropertyPlaceholderConfigurer;
 import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
-import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.util.JarUtils;
+import com.google.enterprise.connector.util.SAXParseErrorHandler;
+import com.google.enterprise.connector.util.XmlParseUtil;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
@@ -300,16 +300,16 @@ public abstract class AbstractCommandLineApp {
    * @param in an XML InputStream
    */
   private void getKeystoreContextParams(InputStream in) {
-    Document document = ServletUtil.parse(in, new SAXParseErrorHandler(),
-        new ServletUtil.LocalEntityResolver());
+    Document document = XmlParseUtil.parse(in, new SAXParseErrorHandler(),
+        new XmlParseUtil.LocalEntityResolver());
     NodeList params = document.getElementsByTagName("context-param");
     if (params == null) {
       return;
     }
     for (int i = 0; i < params.getLength(); i++) {
       Element param = (Element)params.item(i);
-      String name = ServletUtil.getFirstElementByTagName(param, "param-name");
-      String value = ServletUtil.getFirstElementByTagName(param, "param-value");
+      String name = XmlParseUtil.getFirstElementByTagName(param, "param-name");
+      String value = XmlParseUtil.getFirstElementByTagName(param, "param-value");
       if (value != null) {
         if ("keystore_type".equals(name)) {
           keystore_type = value;
@@ -354,7 +354,7 @@ public abstract class AbstractCommandLineApp {
   }
 
   // Relative to a given directory name, where is WEB-INF?
-  private HashMap<String, String> cmDirsMap = new HashMap<String, String>() {{
+  private final HashMap<String, String> cmDirsMap = new HashMap<String, String>() {{
       put("tomcat", "webapps/connector-manager/WEB-INF");
       put("webapps", "connector-manager/WEB-INF");
       put("connector-manager", "WEB-INF");

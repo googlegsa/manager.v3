@@ -21,7 +21,6 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
-import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
@@ -34,7 +33,9 @@ import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 import com.google.enterprise.connector.util.Clock;
+import com.google.enterprise.connector.util.SAXParseErrorHandler;
 import com.google.enterprise.connector.util.SystemClock;
+import com.google.enterprise.connector.util.XmlParseUtil;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -852,7 +853,7 @@ public class DocPusherTest extends TestCase {
     // don't have the DTD.
     resultXML = resultXML.substring(resultXML.indexOf("<gsafeed>"));
     assertNotNull("Parse error",
-        ServletUtil.parse(resultXML, new FatalErrorHandler(), null));
+        XmlParseUtil.parse(resultXML, new FatalErrorHandler(), null));
 
     // Do this after the XML parsing, since that's the main test.
     assertStringContains(expected, resultXML);
