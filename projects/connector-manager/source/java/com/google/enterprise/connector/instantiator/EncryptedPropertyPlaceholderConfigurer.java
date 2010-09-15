@@ -14,10 +14,10 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.enterprise.connector.common.Base64;
-import com.google.enterprise.connector.common.Base64DecoderException;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
+import com.google.enterprise.connector.util.Base64;
+import com.google.enterprise.connector.util.Base64DecoderException;
 
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 

@@ -1,4 +1,4 @@
-// Copyright 2002, Google, Inc.
+// Copyright 2002 Google, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.common;
+package com.google.enterprise.connector.util;
 
 /**
  * Exception thrown when encountering an invalid Base64 input character.
- *
- * <p>This class may be used with the Google Web Toolkit (GWT).
  */
 public class Base64DecoderException extends Exception {
   public Base64DecoderException() {

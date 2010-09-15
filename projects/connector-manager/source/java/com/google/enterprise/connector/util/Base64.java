@@ -1,4 +1,4 @@
-// Portions copyright 2002-2009, Google, Inc.
+// Portions Copyright 2009, Google, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,31 +11,28 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-package com.google.enterprise.connector.common;
-
+//
 // This code was converted from code at http://iharder.sourceforge.net/base64/
-// Lots of extraneous features were removed.
-/* The original code said:
- * <p>
- * I am placing this code in the Public Domain. Do with it as you will.
- * This software comes with no guarantees or warranties but with
- * plenty of well-wishing instead!
- * Please visit
- * <a href="http://iharder.net/xmlizable">http://iharder.net/xmlizable</a>
- * periodically to check for updates or to contribute improvements.
- * </p>
- *
- * @author Robert Harder
- * @author rharder@usa.net
- * @version 1.3
- */
+// Many extraneous features were removed.
+// The original code said:
+//
+// I am placing this code in the Public Domain. Do with it as you will.
+// This software comes with no guarantees or warranties but with
+// plenty of well-wishing instead!
+// Please visit
+//     http://iharder.net/xmlizable
+// periodically to check for updates or to contribute improvements.
+//
+// @author Robert Harder
+// @author rharder@usa.net
+// @version 1.3
+
+package com.google.enterprise.connector.util;
 
 /**
  * Base64 converter class. This code is not a full-blown MIME encoder;
  * it simply converts binary data to base64 data and back.
  */
-
 public class Base64 {
   /** Specify encoding (value is {@code true}). */
   public final static boolean ENCODE = true;
