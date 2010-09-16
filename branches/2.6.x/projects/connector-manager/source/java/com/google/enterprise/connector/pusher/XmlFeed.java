@@ -1,4 +1,4 @@
-// Copyright (C) 2009 Google Inc.
+// Copyright 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import com.google.enterprise.connector.common.UuidGenerator;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
-import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
+import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
@@ -63,6 +63,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     propertySkipSet = new HashSet<String>();
     propertySkipSet.add(SpiConstants.PROPNAME_CONTENT);
     propertySkipSet.add(SpiConstants.PROPNAME_DOCID);
+    propertySkipSet.add(SpiConstants.PROPNAME_LOCK);
   }
 
   // Strings for XML tags.
@@ -84,7 +85,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
   private static final String XML_DISPLAY_URL = "displayurl";
   private static final String XML_MIMETYPE = "mimetype";
   private static final String XML_LAST_MODIFIED = "last-modified";
-  // private static final String XML_LOCK = "lock";
+  private static final String XML_LOCK = "lock";
   private static final String XML_AUTHMETHOD = "authmethod";
   private static final String XML_NAME = "name";
   private static final String XML_ENCODING = "encoding";
@@ -336,6 +337,11 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
         LOGGER.log(Level.WARNING, "Illegal tag used for ActionType: " + action);
         actionType = null;
       }
+    }
+
+    boolean lock = DocUtils.getOptionalBoolean(document, SpiConstants.PROPNAME_LOCK, false);
+    if (lock) {
+      XmlUtils.xmlAppendAttr(XML_LOCK, Value.getBooleanValue(true).toString(), prefix);
     }
 
     String mimetype =

@@ -266,6 +266,21 @@ public class SpiConstants {
   public static final String PROPNAME_ACTION = "google:action";
 
   /**
+   * Identifies an optional, single-valued boolean property that specifies
+   * whether the document should be locked, to prevent it from being evicted
+   * if the GSA reaches its license limit. Default: {@code false}.
+   * <p/>
+   * Note: this property will not be indexed, it only controls whether the GSA
+   * will lock the document.
+   * <p/>
+   * Value: google:lock
+   *
+   * @see "<a href='http://code.google.com/apis/searchappliance/documentation/62/feedsguide.html#defining_the_xml'>Defining the XML Record for a Document</a>"
+   *
+   */
+  public static final String PROPNAME_LOCK = "google:lock";
+
+  /**
    * Enum for the list of possible feed types.
    *
    * @since 2.4.2
