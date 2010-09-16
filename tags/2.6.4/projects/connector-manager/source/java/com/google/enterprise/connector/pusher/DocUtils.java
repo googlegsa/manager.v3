@@ -213,6 +213,28 @@ public class DocUtils {
   }
 
   /**
+   * Gets the boolean value for a given property.
+   */
+  public static boolean getOptionalBoolean(Document document, String name, boolean defaultBool) {
+    ValueImpl v = null;
+    try {
+      v = getValueAndThrow(document, name);
+    } catch (RepositoryException e) {
+      LOGGER.log(Level.WARNING, "Swallowing exception while accessing " + name,
+          e);
+      return defaultBool;
+    } catch (IllegalArgumentException e) {
+      LOGGER.log(Level.WARNING, "Swallowing exception while accessing " + name,
+          e);
+      return defaultBool;
+    }
+    if (v != null) {
+      return v.toBoolean();
+    }
+    return defaultBool;
+  }
+
+  /**
    * Return the appropriate feed type for the supplied Document.
    * <p>
    * To support legacy settings without change, the logic goes like this:
