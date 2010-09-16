@@ -1487,6 +1487,10 @@ public class DocPusherTest extends TestCase {
 
     assertStringNotContains("lock=\"true\"",
         resultXML);
+    // The GSA treats attribute as false if not present in the feed.
+    // We prefer to not specify it if the value is false (explicitly or
+    // implicitly) to minimize risk in a patch
+    // TODO(Max): change this to explicit in the trunk
     assertStringNotContains("lock=\"false\"",
         resultXML);
     assertStringNotContains("lock=",
