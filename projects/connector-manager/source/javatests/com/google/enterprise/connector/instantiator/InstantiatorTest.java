@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,14 +16,18 @@ package com.google.enterprise.connector.instantiator;
 
 import com.google.enterprise.connector.common.I18NUtil;
 import com.google.enterprise.connector.manager.ConnectorManagerException;
-import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.MockPersistentStore;
-import com.google.enterprise.connector.persist.PersistentStore;
+import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
+import com.google.enterprise.connector.pusher.MockPusher;
+import com.google.enterprise.connector.scheduler.HostLoadManager;
+import com.google.enterprise.connector.scheduler.LoadManager;
+import com.google.enterprise.connector.scheduler.LoadManagerFactory;
+import com.google.enterprise.connector.scheduler.MockLoadManagerFactory;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.TraversalManager;
+import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.test.JsonObjectAsMap;
 
 import junit.framework.TestCase;
@@ -31,6 +35,7 @@ import junit.framework.TestCase;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.Locale;
 import java.util.Map;
 
@@ -38,43 +43,38 @@ import java.util.Map;
  * Unit test for {@link SpringInstantiator}.
  */
 public class InstantiatorTest extends TestCase {
-  private static final String APPLICATION_CONTEXT =
-      "testdata/contextTests/InstantiatorTest.xml";
 
-  private static final MockPersistentStore persistentStore =
-      new MockPersistentStore();
-
-  private SpringInstantiator instantiator;
+  private static final String TEST_DIR_NAME = "testdata/tmp/InstantiatorTests";
+  private static final String TEST_CONFIG_FILE =
+      "classpath*:config/connectorType.xml";
+  private final File baseDirectory  = new File(TEST_DIR_NAME);
+  private Instantiator instantiator;
 
   @Override
   protected void setUp() throws Exception {
-    Context.refresh();
-    Context context = Context.getInstance();
-    context.setStandaloneContext(APPLICATION_CONTEXT,
-        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
-    persistentStore.clear();
-    instantiator = createInstantiator();
+    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
+    // Then recreate it empty
+    assertTrue(baseDirectory.mkdirs());
+
+    createInstantiator();
     assertEquals(0, connectorCount());
   }
 
-  private SpringInstantiator createInstantiator() {
-    Context.refresh();
-    Context context = Context.getInstance();
-    context.setStandaloneContext(APPLICATION_CONTEXT,
-        Context.DEFAULT_JUNIT_COMMON_DIR_PATH);
-    SpringInstantiator si = (SpringInstantiator) context.getRequiredBean(
-        "Instantiator", SpringInstantiator.class);
+  private void createInstantiator() {
+    SpringInstantiator si = new SpringInstantiator();
+    si.setPusherFactory(new MockPusher());
+    si.setLoadManagerFactory(new MockLoadManagerFactory());
+    si.setTypeMap(new TypeMap(TEST_CONFIG_FILE, TEST_DIR_NAME));
+    si.setThreadPool(new ThreadPool(5));
     si.init();
-    return si;
+    instantiator = si;
   }
 
-  /**
-   * Returns the static MockPersistentStore instance.  Used by
-   * Spring to wire that static Persistent store into the context.
-   */
-  public static final PersistentStore getPersistentStore() {
-    return persistentStore;
+  @Override
+  protected void tearDown() throws Exception {
+    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
   }
+
 
   /**
    * Test method for adding, updating, deleting connectors.
@@ -85,7 +85,9 @@ public class InstantiatorTest extends TestCase {
    * @throws ConnectorNotFoundException
    */
   public final void testAddUpdateDelete() throws JSONException,
-      InstantiatorException, ConnectorNotFoundException, ConnectorExistsException {
+      InstantiatorException, ConnectorTypeNotFoundException,
+      ConnectorNotFoundException, ConnectorExistsException {
+
     {
       /*
        * Test creation of a connector of type TestConnectorA.
@@ -100,6 +102,7 @@ public class InstantiatorTest extends TestCase {
       updateConnectorTest(instantiator, name, typeName, language,
                           false, jsonConfigString);
     }
+
 
     {
       /*
@@ -307,11 +310,10 @@ public class InstantiatorTest extends TestCase {
       instantiator.shutdown(true, 5000);
     }
 
-    SpringInstantiator newInstantiator = createInstantiator();
-    assertNotSame(instantiator, newInstantiator);
+    createInstantiator();
 
     {
-      String readTypeName = newInstantiator.getConnectorTypeName(name);
+      String readTypeName = instantiator.getConnectorTypeName(name);
       assertEquals(typeName, readTypeName);
     }
   }
@@ -325,6 +327,7 @@ public class InstantiatorTest extends TestCase {
    * @throws ConnectorNotFoundException
    */
   public final void testIssue63Synchronization() throws Exception {
+
     // Create a connector.
     String name = "connector1";
     String typeName = "TestConnectorA";
@@ -386,22 +389,21 @@ public class InstantiatorTest extends TestCase {
     return false;
   }
 
-  private void updateConnectorTest(SpringInstantiator instantiator,
-      String name, String typeName, String language, boolean update,
+  private void updateConnectorTest(Instantiator instantiator, String name,
+      String typeName, String language, boolean update,
       String jsonConfigString) throws JSONException, InstantiatorException,
-      ConnectorNotFoundException, ConnectorExistsException {
+      ConnectorTypeNotFoundException, ConnectorNotFoundException,
+      ConnectorExistsException {
     TraversalManager oldTraversersalManager = null;
     if (update) {
       oldTraversersalManager =
           instantiator.getConnectorCoordinator(name).getTraversalManager();
     }
 
-    Map<String, String> configMap =
+    Map<String, String> config =
         new JsonObjectAsMap(new JSONObject(jsonConfigString));
-    Configuration config = new Configuration(typeName, configMap, null);
-
     Locale locale = I18NUtil.getLocaleFromStandardLocaleString(language);
-    instantiator.setConnectorConfiguration(name, config, locale, update);
+    instantiator.setConnectorConfig(name, typeName, config, locale, update);
 
     // Make sure that this connector now exists.
     assertTrue(connectorExists(name));
@@ -425,10 +427,9 @@ public class InstantiatorTest extends TestCase {
       assertNotSame(oldTraversersalManager, traversalManager);
 
     // the password will be decrypted in the InstanceInfo
-    Map<String, String> instanceProps =
-        instantiator.getConnectorConfiguration(name).getMap();
+    Map<String, String> instanceProps = instantiator.getConnectorConfig(name);
     String instancePasswd = instanceProps.get("Password");
-    String plainPasswd = config.getMap().get("Password");
+    String plainPasswd = config.get("Password");
     assertEquals(instancePasswd, plainPasswd);
   }
 }

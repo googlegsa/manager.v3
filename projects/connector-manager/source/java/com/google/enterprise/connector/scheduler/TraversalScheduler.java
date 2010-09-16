@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -68,10 +68,12 @@ public class TraversalScheduler implements Runnable {
     new Thread(this, "TraversalScheduler").start();
   }
 
-  public synchronized void shutdown() {
+  public synchronized void shutdown(boolean interrupt, long timeoutInMillis) {
+    LOGGER.info("Shutdown initiated...");
     if (isShutdown) {
       return;
     }
+    instantiator.shutdown(interrupt, timeoutInMillis);
     isInitialized = false;
     isShutdown = true;
   }
@@ -90,7 +92,7 @@ public class TraversalScheduler implements Runnable {
     for (String connectorName : instantiator.getConnectorNames()) {
       NDC.pushAppend(connectorName);
       try {
-        instantiator.startBatch(connectorName);
+        instantiator.getConnectorCoordinator(connectorName).startBatch();
       } catch (ConnectorNotFoundException e) {
         // Looks like the connector just got deleted.  Don't schedule it.
       } finally {

@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,19 +14,15 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableSortedSet;
+import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.manager.Context;
-import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
-import com.google.enterprise.connector.util.JarUtils;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
+import java.util.Iterator;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,62 +31,39 @@ import java.util.logging.Logger;
  * This class keeps track of the installed connector types and maintains a
  * corresponding directory structure.
  */
-public class TypeMap {
+public class TypeMap extends TreeMap<String, TypeInfo> {
+
   private static final String CONNECTOR_TYPE_PATTERN =
       "classpath*:config/connectorType.xml";
 
   private static final Logger LOGGER =
       Logger.getLogger(TypeMap.class.getName());
 
-  private final String connectorTypePattern;
-  private final String baseDirPath;
-  private final Map<String, TypeInfo> innerMap =
-      new TreeMap<String, TypeInfo>();
-
-  /**
-   * Constructs an empty type map with the default connector type
-   * pattern and base directory path.
-   */
   public TypeMap() {
-    this(CONNECTOR_TYPE_PATTERN, null);
+    initialize(CONNECTOR_TYPE_PATTERN, null);
   }
 
   /**
-   * Constructs an empty type map default connector type pattern.
-   *
-   * @param baseDirPath used instead of {@code connectors} directory
-   */
-  @VisibleForTesting
-  public TypeMap(String baseDirPath) {
-    this(CONNECTOR_TYPE_PATTERN, baseDirPath);
-  }
-
-  /**
-   * Constructs an empty type map.
+   * For testing only. Either parameter may be null, in which case the default
+   * is used.
    *
    * @param connectorTypePattern used instead of normal default
-   * @param baseDirPath used instead of {@code connectors} directory
+   * @param baseDirPath
    */
-  @VisibleForTesting
   public TypeMap(String connectorTypePattern, String baseDirPath) {
-    this.connectorTypePattern = connectorTypePattern;
-    this.baseDirPath = baseDirPath;
+    initialize(connectorTypePattern, baseDirPath);
   }
 
+  private File baseDirectory = null;
   private File typesDirectory = null;
 
-  /**
-   * Initializes this map and the supporting directories from the
-   * types on the classpath.
-   */
-  @VisibleForTesting
-  public void init() {
-    initializeTypes();
+  private void initialize(String connectorTypePattern, String baseDirPath) {
+    initializeTypes(connectorTypePattern);
     initializeBaseDirectories(baseDirPath);
     initializeTypeDirectories();
   }
 
-  private void initializeTypes() {
+  private void initializeTypes(String connectorTypePattern) {
     ApplicationContext ac = Context.getInstance().getApplicationContext();
 
     Resource[] resourceArray;
@@ -114,18 +87,21 @@ public class TypeMap {
         LOGGER.log(Level.WARNING, "Skipping " + r.getDescription());
         continue;
       }
-      innerMap.put(typeInfo.getConnectorTypeName(), typeInfo);
+      this.put(typeInfo.getConnectorTypeName(), typeInfo);
       LOGGER.info("Found connector type: " + typeInfo.getConnectorTypeName()
           + "  version: "
           + JarUtils.getJarVersion(typeInfo.getConnectorType().getClass()));
     }
   }
 
+  private void initializeDefaultBaseDirectory() {
+    String commonDirPath = Context.getInstance().getCommonDirPath();
+    baseDirectory = new File(commonDirPath);
+  }
+
   private void initializeBaseDirectories(String baseDirPath) {
-    File baseDirectory = null;
     if (baseDirPath == null) {
-      String commonDirPath = Context.getInstance().getCommonDirPath();
-      baseDirectory = new File(commonDirPath);
+      initializeDefaultBaseDirectory();
     } else {
       baseDirectory = new File(baseDirPath);
     }
@@ -144,16 +120,20 @@ public class TypeMap {
     }
   }
 
+  public TypeInfo getTypeInfo(String connectorTypeName) {
+    return this.get(connectorTypeName);
+  }
+
   private void initializeTypeDirectories() {
-    for (Map.Entry<String, TypeInfo> entry : innerMap.entrySet()) {
-      String typeName = entry.getKey();
-      TypeInfo typeInfo = entry.getValue();
+    for (Iterator<String> iter = keySet().iterator(); iter.hasNext(); ) {
+      String typeName = iter.next();
+      TypeInfo typeInfo = getTypeInfo(typeName);
       File connectorTypeDir = new File(typesDirectory, typeName);
       if (!connectorTypeDir.exists()) {
         if(!connectorTypeDir.mkdirs()) {
           LOGGER.warning("Type " + typeName
               + " has a valid definition but no type directory - skipping it");
-          innerMap.remove(typeName);
+          iter.remove();
           return;
         }
       }
@@ -161,30 +141,12 @@ public class TypeMap {
         LOGGER.warning("Unexpected file " + connectorTypeDir.getPath()
             + " blocks creation of instances directory for type " + typeName
             + " - skipping it");
-        innerMap.remove(typeName);
+        iter.remove();
       } else {
         typeInfo.setConnectorTypeDir(connectorTypeDir);
         LOGGER.info("Connector type: " + typeInfo.getConnectorTypeName()
             + " has directory " + connectorTypeDir.getAbsolutePath());
       }
     }
-  }
-
-  public File getTypesDirectory() {
-    return typesDirectory;
-  }
-
-  public Set<String> getConnectorTypeNames() {
-    return ImmutableSortedSet.copyOf(innerMap.keySet());
-  }
-
-  public TypeInfo getTypeInfo(String connectorTypeName)
-      throws ConnectorTypeNotFoundException {
-    TypeInfo typeInfo = innerMap.get(connectorTypeName);
-    if (typeInfo == null) {
-      throw new ConnectorTypeNotFoundException("Connector Type not found: "
-          + connectorTypeName);
-    }
-    return typeInfo;
   }
 }

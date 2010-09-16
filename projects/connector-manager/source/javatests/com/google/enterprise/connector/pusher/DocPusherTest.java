@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
+import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
@@ -32,10 +33,6 @@ import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
-import com.google.enterprise.connector.util.Clock;
-import com.google.enterprise.connector.util.SAXParseErrorHandler;
-import com.google.enterprise.connector.util.SystemClock;
-import com.google.enterprise.connector.util.XmlParseUtil;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -853,7 +850,7 @@ public class DocPusherTest extends TestCase {
     // don't have the DTD.
     resultXML = resultXML.substring(resultXML.indexOf("<gsafeed>"));
     assertNotNull("Parse error",
-        XmlParseUtil.parse(resultXML, new FatalErrorHandler(), null));
+        ServletUtil.parse(resultXML, new FatalErrorHandler(), null));
 
     // Do this after the XML parsing, since that's the main test.
     assertStringContains(expected, resultXML);
@@ -1467,150 +1464,6 @@ public class DocPusherTest extends TestCase {
 
   private Map<String, Object> getTestDocumentConfig() {
     return ConnectorTestUtils.createSimpleDocumentBasicProperties("doc1");
-  }
-
-  /**
-   * Test Doc with lock unspecified.
-   */
-  public void testLockUnspecified() throws Exception {
-    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
-
-    assertStringNotContains("lock=\"true\"",
-        resultXML);
-    // The GSA treats attribute as false if not present in the feed.
-    // We prefer to not specify it if the value is false (explicitly or
-    // implicitly) to minimize risk in a patch
-    // TODO(Max): change this to explicit in the trunk
-    assertStringNotContains("lock=\"false\"",
-        resultXML);
-    assertStringNotContains("lock=",
-        resultXML);
-    assertStringNotContains("meta name=\"" + SpiConstants.PROPNAME_LOCK + "\"",
-        resultXML);
-    assertStringNotContains(SpiConstants.PROPNAME_LOCK,
-        resultXML);
-  }
-
-  /**
-   * Test Doc with lock specified false.
-   */
-  public void testLockExplicitFalse() throws Exception {
-    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + ",\"google:lock\":\"false\""
-        + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
-
-    assertStringNotContains("lock=\"true\"",
-        resultXML);
-    assertStringNotContains("lock=\"false\"",
-        resultXML);
-    assertStringNotContains("lock=",
-        resultXML);
-    assertStringNotContains("meta name=\"" + SpiConstants.PROPNAME_LOCK + "\"",
-        resultXML);
-    assertStringNotContains(SpiConstants.PROPNAME_LOCK,
-        resultXML);
-  }
-
-  /**
-   * Test Doc with lock specified true.
-   */
-  public void testLockExplicitTrue() throws Exception {
-    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + ",\"google:lock\":\"true\""
-        + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
-
-    assertStringContains("lock=\"true\"",
-        resultXML);
-    assertStringNotContains("lock=\"false\"",
-        resultXML);
-    assertStringNotContains("meta name=\"" + SpiConstants.PROPNAME_LOCK + "\"",
-        resultXML);
-    assertStringNotContains(SpiConstants.PROPNAME_LOCK,
-        resultXML);
-  }
-
-  /**
-   * Test Doc with lock specified with illegal value.
-   */
-  public void testLockIllegalValue() throws Exception {
-    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + ",\"google:lock\":\"xyzzy\""
-        + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
-
-    // should be silently treated as true
-    assertStringContains("lock=\"true\"",
-        resultXML);
-    assertStringNotContains("lock=\"false\"",
-        resultXML);
-    assertStringNotContains("meta name=\"" + SpiConstants.PROPNAME_LOCK + "\"",
-        resultXML);
-    assertStringNotContains(SpiConstants.PROPNAME_LOCK,
-        resultXML);
-  }
-
-  /**
-   * Test Doc with lock specified with empty value.
-   */
-  public void testLockEmptyValue() throws Exception {
-    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
-        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
-        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
-        + ",\"google:lock\":\"\""
-        + "}\r\n" + "";
-    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
-
-    MockFeedConnection mockFeedConnection = new MockFeedConnection();
-    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document);
-    dpusher.flush();
-    String resultXML = mockFeedConnection.getFeed();
-
-    // should be silently treated as true
-    assertStringContains("lock=\"true\"",
-        resultXML);
-    assertStringNotContains("lock=\"false\"",
-        resultXML);
-    assertStringNotContains("meta name=\"" + SpiConstants.PROPNAME_LOCK + "\"",
-        resultXML);
-    assertStringNotContains(SpiConstants.PROPNAME_LOCK,
-        resultXML);
   }
 
   /**
@@ -2432,13 +2285,12 @@ public class DocPusherTest extends TestCase {
    * A slow FeedConnection.
    */
   private static class SlowFeedConnection extends MockFeedConnection {
-    static Clock clock = new SystemClock(); // TODO: rewrite this to use a mock clock.
-    static long doneTime = clock.getTimeMillis() + 10000;
+    static long doneTime = System.currentTimeMillis() + 10000;
     @Override
     public String sendData(FeedData feedData)
         throws RepositoryException {
       try {
-        while (clock.getTimeMillis() < doneTime) {
+        while (System.currentTimeMillis() < doneTime) {
           Thread.sleep(250);
         }
       } catch (InterruptedException ie) {
@@ -2575,6 +2427,21 @@ public class DocPusherTest extends TestCase {
         throw new IllegalArgumentException("Wrong kind of Exception");
       }
       badProperties.put(propertyName, exception);
+    }
+
+    /**
+     * Specify a properties to fail and how to fail them.
+     *
+     * @param propertyNames an Array of Property names.
+     * @param exception Class indicating which Exception to throw if accessed.
+     *        If null, findProperty() will return null rather than throw an
+     *        Exception.
+     */
+    public void failProperties(String[] propertyNames,
+                               Class<? extends Throwable> exception) {
+      for (int i = 0; i < propertyNames.length; i++) {
+        failProperty(propertyNames[i], exception);
+      }
     }
 
     /**

@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc.
+// Copyright 2007 Google Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -107,7 +107,6 @@ public class XmlUtils {
    * @param buf the Appendable to which is appended the start tag.
    * @throws IOException from Appendable (but StringBuffer or
    *         StringBuilder will never actually throw IOException).
-   * @since 2.4
    */
   public static void xmlAppendStartTag(String tag, Appendable buf)
       throws IOException {
@@ -123,7 +122,6 @@ public class XmlUtils {
    * @param buf the Appedable to which is appended the end tag.
    * @throws IOException from Appendable (but StringBuffer or
    *         StringBuilder will never actually throw IOException).
-   * @since 2.4
    */
   public static void xmlAppendEndTag(String tag, Appendable buf)
       throws IOException {
@@ -146,7 +144,6 @@ public class XmlUtils {
    * @param buf the Appendable to which is appended the attribute value pair.
    * @throws IOException from Appendable (but StringBuffer or
    *         StringBuilder will never actually throw IOException).
-   * @since 2.4
    */
   public static void xmlAppendAttr(String attrName, String attrValue,
       Appendable buf) throws IOException {
@@ -183,7 +180,6 @@ public class XmlUtils {
    * @param buf the Appedable to which is appended the attribute value.
    * @throws IOException from Appendable (but StringBuffer or
    *         StringBuilder will never actually throw IOException).
-   * @since 2.4
    */
   public static void xmlAppendAttrValue(String attrValue, Appendable buf)
       throws IOException {

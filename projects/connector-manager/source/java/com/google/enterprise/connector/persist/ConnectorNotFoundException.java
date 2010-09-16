@@ -19,6 +19,7 @@ package com.google.enterprise.connector.persist;
  * found.
  */
 public class ConnectorNotFoundException extends PersistentStoreException {
+
   /**
    * Constructs a new ConnectorNotFoundException with no message and no root
    * cause.
@@ -46,7 +47,8 @@ public class ConnectorNotFoundException extends PersistentStoreException {
    * @param rootCause root failure cause
    */
   public ConnectorNotFoundException(String message, Throwable rootCause) {
-    super(message, rootCause);
+    super(message);
+    this.rootCause = rootCause;
   }
 
   /**
@@ -55,6 +57,8 @@ public class ConnectorNotFoundException extends PersistentStoreException {
    * @param rootCause root failure cause
    */
   public ConnectorNotFoundException(Throwable rootCause) {
-    super(rootCause);
+    super();
+    this.rootCause = rootCause;
   }
+
 }

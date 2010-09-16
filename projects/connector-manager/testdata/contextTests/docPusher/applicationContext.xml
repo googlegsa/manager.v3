@@ -20,31 +20,21 @@
 
   <bean id="ConnectorConfigStore"
         class="com.google.enterprise.connector.persist.FileStore">
-    <property name="typeMap" ref="TypeMap" />
   </bean>
 
   <bean id="ConnectorScheduleStore"
-        class="com.google.enterprise.connector.persist.MockPersistentStore">
+        class="com.google.enterprise.connector.persist.MockConnectorScheduleStore">
   </bean>
 
   <bean id="ConnectorStateStore"
-        class="com.google.enterprise.connector.persist.MockPersistentStore">
+        class="com.google.enterprise.connector.persist.MockConnectorStateStore">
   </bean>
-
-  <bean id="PersistentStore"
-        class="com.google.enterprise.connector.persist.HybridPersistentStore">
-    <constructor-arg index="0" ref="ConnectorConfigStore"/>
-    <constructor-arg index="1" ref="ConnectorScheduleStore"/>
-    <constructor-arg index="2" ref="ConnectorStateStore"/>
-  </bean>
-
-  <bean id="TypeMap"
-        class="com.google.enterprise.connector.instantiator.TypeMap"/>
 
   <bean id="Instantiator"
         class="com.google.enterprise.connector.instantiator.MockInstantiator">
-    <constructor-arg index="0" ref="PersistentStore" />
-    <constructor-arg index="1"><null/></constructor-arg>
+    <constructor-arg index="0" ref="ConnectorConfigStore" />
+    <constructor-arg index="1" ref="ConnectorScheduleStore" />
+    <constructor-arg index="2" ref="ConnectorStateStore" />
   </bean>
 
   <bean id="Manager"

@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@ package com.google.enterprise.connector.manager;
 
 import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.PropertiesUtils;
-import com.google.enterprise.connector.instantiator.Instantiator;
 import com.google.enterprise.connector.instantiator.InstantiatorException;
 import com.google.enterprise.connector.instantiator.SpringInstantiator;
 import com.google.enterprise.connector.instantiator.ThreadPool;
@@ -30,6 +29,7 @@ import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
+import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.web.context.support.XmlWebApplicationContext;
@@ -45,6 +45,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.servlet.ServletContext;
 
 /**
  * Static services for establishing the application context. This consists of
@@ -213,15 +215,6 @@ public class Context {
       + " configuring a Connector Manager deployment that only authorizes\n"
       + " search results.  Traversals are enabled by default.\n"
       + " traversal.enabled=false\n"
-      + "\n"
-      + " The 'config.change.detect.interval' property specifies how often\n"
-      + " (in seconds) to look for asynchronous configuration changes.\n"
-      + " Values <= 0 imply never.  For stand-alone deployments, long\n"
-      + " intervals or never are probably sufficient.  For clustered\n"
-      + " deployments with a shared configuration store, 60 to 300 seconds\n"
-      + " is probably sufficient.  The default configuration change\n"
-      + " detection interval is -1 (never).\n"
-      + " config.change.detect.interval=60\n"
       + "\n";
 
   private static final Logger LOGGER =
@@ -232,22 +225,23 @@ public class Context {
 
   private static Context INSTANCE = new Context();
 
+  private static ServletContext servletContext;
+
   private boolean started = false;
 
   private boolean isServletContext = false;
 
   private boolean isFeeding = true;
 
-  private String commonDirPath = null;
-
   // singletons
   private Manager manager = null;
   private TraversalScheduler traversalScheduler = null;
   private TraversalContext traversalContext = null;
-  private SpringInstantiator instantiator = null;
 
+
+  // control variables for turning off normal functionality - testing only
   private String standaloneContextLocation;
-  private String standaloneContextBaseDir;
+  private String standaloneCommonDirPath;
 
   private Boolean gsaAdminRequiresPrefix = null;
 
@@ -272,10 +266,15 @@ public class Context {
     return INSTANCE;
   }
 
+  public static Context getInstance(ServletContext servletContext) {
+    Context.servletContext = servletContext;
+    return INSTANCE;
+  }
+
   ApplicationContext applicationContext = null;
 
   private Context() {
-    // Private to ensure singleton.
+    // private to insure singleton
   }
 
   private void initializeStandaloneApplicationContext() {
@@ -293,19 +292,14 @@ public class Context {
       standaloneContextLocation = DEFAULT_JUNIT_CONTEXT_LOCATION;
     }
 
-    if (standaloneContextBaseDir == null) {
-      standaloneContextBaseDir = System.getProperty("user.dir");
-    }
-
-    if (commonDirPath == null) {
-      commonDirPath = DEFAULT_JUNIT_COMMON_DIR_PATH;
+    if (standaloneCommonDirPath == null) {
+      standaloneCommonDirPath = DEFAULT_JUNIT_COMMON_DIR_PATH;
     }
     LOGGER.info("context file: " + standaloneContextLocation);
-    LOGGER.info("context base directory: " + standaloneContextBaseDir);
-    LOGGER.info("common dir path: " + commonDirPath);
+    LOGGER.info("common dir path: " + standaloneCommonDirPath);
 
-    applicationContext = new AnchoredFileSystemXmlApplicationContext(
-        standaloneContextBaseDir, standaloneContextLocation);
+    applicationContext =
+        new FileSystemXmlApplicationContext(standaloneContextLocation);
   }
 
   /**
@@ -317,26 +311,9 @@ public class Context {
    * ConnectorType and Connector instantiation configuration data.
    */
   public void setStandaloneContext(String contextLocation,
-                                   String commonDirPath) {
-    setStandaloneContext(contextLocation, null, commonDirPath);
-  }
-
-  /**
-   * Establishes that we are operating within the standalone context. In
-   * this case, we use a FileSystemApplicationContext.
-   * @param contextLocation the name of the context XML file used for
-   * instantiation.
-   * @param contextBaseDir base directory for relative file paths in
-   * the contextLocation.
-   * @param commonDirPath the location of the common directory which contains
-   * ConnectorType and Connector instantiation configuration data.
-   */
-  public void setStandaloneContext(String contextLocation,
-                                   String contextBaseDir,
                                    String commonDirPath) {
     this.standaloneContextLocation = contextLocation;
-    this.standaloneContextBaseDir = contextBaseDir;
-    this.commonDirPath = commonDirPath;
+    this.standaloneCommonDirPath = commonDirPath;
     initializeStandaloneApplicationContext();
   }
 
@@ -344,11 +321,25 @@ public class Context {
    * Establishes that we are operating from a servlet context. In this case, we
    * use an XmlWebApplicationContext, which finds its config from the servlet
    * context - WEB-INF/applicationContext.xml.
+   *
    */
-  public void setServletContext(ApplicationContext servletApplicationContext,
-                                String commonDirPath) {
-    this.applicationContext = servletApplicationContext;
-    this.commonDirPath = commonDirPath;
+  public void setServletContext() {
+    if (applicationContext != null) {
+      // too late - someone else already established a context.
+      // This is normal. Either: another servlet got there first, or this is
+      // actually a test and the junit test case got there first and established
+      // a standalone context, but then a servlet came along and called this
+      // method
+      return;
+    }
+    applicationContext = genericApplicationContext; // avoid recursion
+
+    // Note: default context location is /WEB-INF/applicationContext.xml
+    LOGGER.info("Making an XmlWebApplicationContext");
+    XmlWebApplicationContext ac = new XmlWebApplicationContext();
+    ac.setServletContext(servletContext);
+    ac.refresh();
+    applicationContext = ac;
     isServletContext = true;
   }
 
@@ -358,7 +349,11 @@ public class Context {
    */
   private void initApplicationContext() {
     if (applicationContext == null) {
-      initializeStandaloneApplicationContext();
+      if (servletContext != null) {
+        setServletContext();
+      } else {
+        initializeStandaloneApplicationContext();
+      }
     }
     if (applicationContext == null) {
       throw new IllegalStateException("Spring failure - no application context");
@@ -369,19 +364,20 @@ public class Context {
    * Start up the Scheduler.
    */
   private void startScheduler() {
+    if (traversalScheduler != null) {
+      return;
+    }
     traversalScheduler =
         (TraversalScheduler) getRequiredBean("TraversalScheduler",
             TraversalScheduler.class);
-    if (traversalScheduler != null) {
-      traversalScheduler.init();
-    }
+    traversalScheduler.init();
   }
 
   /**
    * Start up the Instantiator.
    */
   private void startInstantiator() {
-    instantiator =
+    SpringInstantiator instantiator =
         (SpringInstantiator) getBean("Instantiator", SpringInstantiator.class);
     if (instantiator != null) {
       instantiator.init();
@@ -395,7 +391,9 @@ public class Context {
     if (started) {
       return;
     }
-    initApplicationContext();
+    if (applicationContext == null) {
+      setServletContext();
+    }
     startInstantiator();
     if (isFeeding) {
       startScheduler();
@@ -408,6 +406,7 @@ public class Context {
    * Starts any services declared as part of the application.
    */
   private void startServices() {
+    initApplicationContext();
     for (ContextService service : getServices()) {
       service.start();
     }
@@ -569,7 +568,7 @@ public class Context {
   }
 
   /**
-   * Gets the singleton {@link Manager}.
+   * Gets the singleton Manager.
    *
    * @return the Manager
    */
@@ -579,20 +578,6 @@ public class Context {
     }
     manager = (Manager) getRequiredBean("Manager", Manager.class);
     return manager;
-  }
-
-  /**
-   * Gets the singleton {@link Instantiator}.
-   *
-   * @return the Instantiator
-   */
-  public Instantiator getInstantiator() {
-    if (instantiator != null) {
-      return instantiator;
-    }
-    instantiator = (SpringInstantiator)
-        getRequiredBean("Instantiator", SpringInstantiator.class);
-    return instantiator;
   }
 
   /**
@@ -634,36 +619,14 @@ public class Context {
     return applicationContext;
   }
 
-  /**
-   * Retrieves the ApplicationContext configLocations,
-   * or null if none specified.
-   *
-   * @return String array of configLocations.
-   */
-  public String[] getConfigLocations() {
-    initApplicationContext();
-    if (isServletContext) {
-      return ((XmlWebApplicationContext) applicationContext)
-          .getConfigLocations();
-    } else {
-      return ((AnchoredFileSystemXmlApplicationContext) applicationContext)
-          .getConfigLocations();
-    }
-  }
-
-  public synchronized void shutdown(boolean force) {
-    if (started) {
-      LOGGER.info("Shutdown initiated...");
-      stopServices(force);
-      if (null != traversalScheduler) {
-        traversalScheduler.shutdown();
-        traversalScheduler = null;
-      }
-      if (null != instantiator) {
-        instantiator.shutdown(force,
-            ThreadPool.DEFAULT_SHUTDOWN_TIMEOUT_MILLIS);
-        instantiator = null;
-      }
+  public void shutdown(boolean force) {
+    LOGGER.log(Level.INFO, "shutdown");
+    stopServices(force);
+    if (!isFeeding) {
+      started = false;
+    } else if (null != traversalScheduler) {
+      traversalScheduler.shutdown(force,
+          ThreadPool.DEFAULT_SHUTDOWN_TIMEOUT_MILLIS);
       started = false;
     }
   }
@@ -688,7 +651,11 @@ public class Context {
    */
   public String getCommonDirPath() {
     initApplicationContext();
-    return commonDirPath;
+    if (isServletContext) {
+      return servletContext.getRealPath("/WEB-INF");
+    } else {
+      return standaloneCommonDirPath;
+    }
   }
 
   private String getPropFileName() throws InstantiatorException {
@@ -720,41 +687,23 @@ public class Context {
     return propFile;
   }
 
-  /**
-   * Returns the configuration Properties for the Connector Manager.
-   */
-  public Properties getConnectorManagerProperties() {
+  public Properties getConnectorManagerConfig() throws InstantiatorException {
     initApplicationContext();
-    try {
-      // Get the properties out of the CM properties file if present.
-      String propFileName = getPropFileName();
-      File propFile = getPropFile(propFileName);
-      try {
-        Properties props = PropertiesUtils.loadFromFile(propFile);
-        propertiesVersion = PropertiesUtils.getPropertiesVersion(props);
-        return props;
-      } catch (PropertiesException pe) {
-        LOGGER.log(Level.WARNING, "Unable to read application context"
-                   + " properties file " + propFileName, pe);
-      }
-    } catch (InstantiatorException ie) {
-      LOGGER.log(Level.WARNING, "Unable to read application context"
-                 + " properties", ie);
-    }
-    return new Properties();
-  }
-
-  /**
-   * Returns a Properties containing just the GSA feed host and port properties.
-   */
-  public Properties getConnectorManagerConfig() {
-    // Get the properties out of the CM properties file if present.
-    Properties props = getConnectorManagerProperties();
     Properties result = new Properties();
-    result.setProperty(GSA_FEED_HOST_PROPERTY_KEY,
-        props.getProperty(GSA_FEED_HOST_PROPERTY_KEY));
-    result.setProperty(GSA_FEED_PORT_PROPERTY_KEY,
-        props.getProperty(GSA_FEED_PORT_PROPERTY_KEY, GSA_FEED_PORT_DEFAULT));
+    // Get the properties out of the CM properties file if present.
+    String propFileName = getPropFileName();
+    File propFile = getPropFile(propFileName);
+    try {
+      Properties props = PropertiesUtils.loadFromFile(propFile);
+      result.setProperty(GSA_FEED_HOST_PROPERTY_KEY,
+          props.getProperty(GSA_FEED_HOST_PROPERTY_KEY));
+      result.setProperty(GSA_FEED_PORT_PROPERTY_KEY,
+          props.getProperty(GSA_FEED_PORT_PROPERTY_KEY, GSA_FEED_PORT_DEFAULT));
+    } catch (PropertiesException e) {
+      LOGGER.log(Level.WARNING, "Unable to read application context properties"
+          + " file " + propFileName,
+          e);
+    }
     return result;
   }
 
@@ -884,8 +833,22 @@ public class Context {
    * @param defaultValue if property does not exist
    */
   private String getProperty(String key, String defaultValue) {
-    Properties props = getConnectorManagerProperties();
-    return props.getProperty(key, defaultValue);
+    try {
+      String propFileName = getPropFileName();
+      File propFile = getPropFile(propFileName);
+      try {
+        Properties props = PropertiesUtils.loadFromFile(propFile);
+        propertiesVersion = PropertiesUtils.getPropertiesVersion(props);
+        return props.getProperty(key, defaultValue);
+      } catch (PropertiesException e) {
+        LOGGER.log(Level.WARNING, "Unable to read application context "
+                   + "properties file " + propFileName, e);
+      }
+    } catch (InstantiatorException ie) {
+      LOGGER.log(Level.WARNING, "Unable to read application context "
+                 + "properties file.", ie);
+    }
+    return defaultValue;
   }
 
   /**

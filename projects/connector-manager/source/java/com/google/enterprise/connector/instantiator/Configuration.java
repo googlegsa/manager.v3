@@ -1,4 +1,4 @@
-// Copyright 2010 Google Inc.
+// Copyright (C) 2010 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,13 +14,10 @@
 
 package com.google.enterprise.connector.instantiator;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-
 import java.util.Map;
 
 /**
- * Represents the peristent objects needed to instantiate a
+ * Represents the peristent objects needs to instantiator a
  * {@link com.google.enterprise.connector.spi.Connector} instance.
  */
 public class Configuration {
@@ -30,9 +27,6 @@ public class Configuration {
 
   public Configuration(String typeName, Map<String, String> configMap,
       String configXml) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(typeName));
-    Preconditions.checkNotNull(configMap);
-
     this.typeName = typeName;
     this.configMap = configMap;
     this.configXml = configXml;
@@ -59,7 +53,7 @@ public class Configuration {
   /**
    * Gets the connector instance XML document.
    *
-   * @return the connector instance XML document, which may be {@code null}
+   * @return the connector instance XML document
    */
   public String getXml() {
     return configXml;

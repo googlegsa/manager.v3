@@ -1,10 +1,10 @@
-// Copyright 2006 Google Inc.
+// Copyright 2006-2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,7 +22,6 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
 import com.google.enterprise.connector.spi.ConfigureResponse;
-import com.google.enterprise.connector.util.XmlParseUtil;
 
 import org.w3c.dom.Element;
 
@@ -35,6 +34,7 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -57,6 +57,14 @@ public class UpdateConnector extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
+    Context context = Context.getInstance(this.getServletContext());
+    // Make sure this requester is OK
+    if (!ServletUtil.allowedRemoteAddrGSAFacingServlet(context.getGsaFeedHost(),
+                                       req.getRemoteAddr())) {
+      res.sendError(HttpServletResponse.SC_FORBIDDEN);
+      return;
+    }
+
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
     PrintWriter out = res.getWriter();
     NDC.push("Config " + connectorName);
@@ -73,9 +81,10 @@ public class UpdateConnector extends HttpServlet {
         return;
       }
 
-      Manager manager = Context.getInstance().getManager();
+      ServletContext servletContext = this.getServletContext();
+      Manager manager = Context.getInstance(servletContext).getManager();
       out.print(handleDoGet(manager, xmlBody, connectorName, language,
-          req.getContextPath()));
+                            req.getContextPath()));
     } finally {
       out.close();
       NDC.clear();
@@ -92,6 +101,14 @@ public class UpdateConnector extends HttpServlet {
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
+    Context context = Context.getInstance(this.getServletContext());
+    // Make sure this requester is OK
+    if (!ServletUtil.allowedRemoteAddrGSAFacingServlet(context.getGsaFeedHost(),
+                                       req.getRemoteAddr())) {
+      res.sendError(HttpServletResponse.SC_FORBIDDEN);
+      return;
+    }
+
     ConnectorMessageCode status = new ConnectorMessageCode();
     String connectorName = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_NAME);
     String connectorType = req.getParameter(ServletUtil.XMLTAG_CONNECTOR_TYPE);
@@ -99,7 +116,7 @@ public class UpdateConnector extends HttpServlet {
     res.setCharacterEncoding("UTF-8");
     PrintWriter out = res.getWriter();
 
-    NDC.push("Config " + connectorType + " " + connectorName);
+    NDC.push("Config " +  connectorType + " " + connectorName);
     try {
       String lang = req.getParameter(ServletUtil.QUERY_PARAM_LANG);
       Map<String, String> configData = new TreeMap<String, String>();
@@ -109,11 +126,12 @@ public class UpdateConnector extends HttpServlet {
         configData.put(name, req.getParameter(name));
       }
 
-      Manager manager = Context.getInstance().getManager();
+      ServletContext servletContext = this.getServletContext();
+      Manager manager = Context.getInstance(servletContext).getManager();
       ConfigureResponse configRes = null;
       try {
         configRes = manager.setConnectorConfig(connectorName, connectorType,
-            configData, lang, true);
+                                               configData, lang, true);
       } catch (ConnectorManagerException e) {
         status = new ConnectorMessageCode(
             ConnectorMessageCode.EXCEPTION_CONNECTOR_EXISTS, connectorName);
@@ -133,8 +151,8 @@ public class UpdateConnector extends HttpServlet {
 
   public static String handleDoGet(Manager manager, String xmlBody,
       String connectorName, String language, String contextPath) {
-    Element root = XmlParseUtil.parseAndGetRootElement(
-        xmlBody, ServletUtil.XMLTAG_CONNECTOR_CONFIG);
+    Element root = ServletUtil.parseAndGetRootElement(
+      xmlBody, ServletUtil.XMLTAG_CONNECTOR_CONFIG);
     if (root == null) {
       return htmlErrorPage(ServletUtil.LOG_RESPONSE_EMPTY_NODE);
     }
@@ -155,28 +173,28 @@ public class UpdateConnector extends HttpServlet {
 
     StringBuilder sbuf =
         new StringBuilder(
-        "<HTML><HEAD><TITLE>Update Connector Config</TITLE></HEAD>\n"
-        + "<BODY><H3>Update Connector Config:</H3><HR>\n"
-        + "<FORM METHOD=POST ACTION=\""
-        + contextPath
-        + "/updateConnector?"
-        + ServletUtil.XMLTAG_CONNECTOR_NAME + "=" + connectorName + "&"
-        + ServletUtil.QUERY_PARAM_LANG + "=" + language + "\"><TABLE>"
-        + "<tr><td>Connector Name: " + connectorName
-        + "</td></tr><tr>\n");
+            "<HTML><HEAD><TITLE>Update Connector Config</TITLE></HEAD>\n"
+                + "<BODY><H3>Update Connector Config:</H3><HR>\n"
+                + "<FORM METHOD=POST ACTION=\""
+                + contextPath
+                + "/updateConnector?"
+                + ServletUtil.XMLTAG_CONNECTOR_NAME + "=" + connectorName + "&"
+                + ServletUtil.QUERY_PARAM_LANG + "=" + language + "\"><TABLE>"
+                + "<tr><td>Connector Name: " + connectorName
+                + "</td></tr><tr>\n");
     int beginQuote = 0;
     int endQuote = 0;
     String snip = formSnippet;
     String value = null;
     Map<String, String> configData =
-        XmlParseUtil.getAllAttributes(root, ServletUtil.XMLTAG_PARAMETERS);
+        ServletUtil.getAllAttributes(root, ServletUtil.XMLTAG_PARAMETERS);
     if (configData.isEmpty()) {
       return htmlErrorPage("Empty config data");
     }
 
     while ((beginQuote = snip.indexOf(ServletUtil.ATTRIBUTE_NAME)) != -1) {
       endQuote = snip.indexOf(ServletUtil.QUOTE, beginQuote
-          + ServletUtil.ATTRIBUTE_NAME.length());
+                              + ServletUtil.ATTRIBUTE_NAME.length());
       sbuf.append(snip.substring(0, endQuote + 1));
       String key = snip.substring(
           beginQuote + ServletUtil.ATTRIBUTE_NAME.length(), endQuote);

@@ -14,26 +14,40 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.common.SecurityUtils;
-import com.google.enterprise.connector.util.JarUtils;
-import com.google.enterprise.connector.util.SAXParseErrorHandler;
-import com.google.enterprise.connector.util.XmlParseUtil;
-import com.google.enterprise.connector.util.XmlParseUtil.LocalEntityResolver;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -98,15 +112,12 @@ public class ServletUtil {
   public static final String XMLTAG_MESSAGE = "message";
   public static final String XMLTAG_FORM_SNIPPET = "FormSnippet";
 
-  public static final String XMLTAG_MANAGER = "Manager";
-  public static final String XMLTAG_MANAGER_CONFIG_XML = "ManagerConfigXml";
   public static final String XMLTAG_MANAGER_CONFIG = "ManagerConfig";
   public static final String XMLTAG_FEEDERGATE = "FeederGate";
   public static final String XMLTAG_FEEDERGATE_HOST = "host";
   public static final String XMLTAG_FEEDERGATE_PORT = "port";
 
   public static final String XMLTAG_CONNECTOR_CONFIG = "ConnectorConfig";
-  public static final String XMLTAG_CONNECTOR_CONFIG_XML = "ConnectorConfigXml";
   public static final String XMLTAG_UPDATE_CONNECTOR = "Update";
   public static final String XMLTAG_PARAMETERS = "Param";
 
@@ -136,12 +147,6 @@ public class ServletUtil {
   public static final String XMLTAG_LOAD = "load";
   public static final String XMLTAG_DELAY = "RetryDelayMillis";
   public static final String XMLTAG_TIME_INTERVALS = "TimeIntervals";
-
-  public static final String XMLTAG_CONNECTOR_CHECKPOINT =
-      "ConnectorCheckpoint";
-
-  public static final String XML_CDATA_START = "<![CDATA[";
-  public static final String XML_CDATA_END = "]]>";
 
   public static final String LOG_RESPONSE_EMPTY_REQUEST = "Empty request";
   public static final String LOG_RESPONSE_EMPTY_NODE = "Empty node";
@@ -181,7 +186,6 @@ public class ServletUtil {
   public static final String ATTRIBUTE_NAME = "name=\"";
   public static final String ATTRIBUTE_VALUE = " value=\"";
   public static final String ATTRIBUTE_VERSION = "version=\"";
-  public static final String ATTRIBUTE_CRYPT = "encryption=\"";
   public static final char QUOTE = '"';
 
   private static final String[] XMLIndent = {
@@ -193,6 +197,182 @@ public class ServletUtil {
       "          ",
       "            ",
       "              "};
+
+  private static DocumentBuilderFactory factory =
+      DocumentBuilderFactory.newInstance();
+
+  /**
+   * Parse an XML String to a Document.
+   *
+   * @param fileContent the XML string
+   * @param errorHandler The error handle for SAX parser
+   * @param entityResolver The entity resolver to use
+   * @return A result Document object, null on error
+   */
+  public static Document parse(String fileContent,
+                               SAXParseErrorHandler errorHandler,
+                               EntityResolver entityResolver) {
+    InputStream in = stringToInputStream(fileContent);
+    return (in == null) ? null : parse(in, errorHandler, entityResolver);
+  }
+
+  /**
+   * Get a root element from the XML request body.
+   *
+   * @param xmlBody String the XML request body
+   * @param rootTagName String the root element tag name
+   * @return a result Element object if successful, null on error
+   */
+  public static Element parseAndGetRootElement(String xmlBody,
+                                               String rootTagName) {
+    InputStream in = stringToInputStream(xmlBody);
+    return (in == null) ? null : parseAndGetRootElement(in, rootTagName);
+  }
+
+  private static InputStream stringToInputStream(String fileContent) {
+    try {
+      return new ByteArrayInputStream(fileContent.getBytes("UTF-8"));
+    } catch (java.io.UnsupportedEncodingException uee) {
+      LOGGER.log(Level.SEVERE, "Really Unexpected", uee);
+      return null;
+    }
+  }
+
+  /**
+   * Parse an input stream to a Document.
+   *
+   * @param in the input stream
+   * @param errorHandler The error handle for SAX parser
+   * @param entityResolver The entity resolver to use
+   * @return A result Document object, null on error
+   */
+  public static Document parse(InputStream in,
+                               SAXParseErrorHandler errorHandler,
+                               EntityResolver entityResolver) {
+    try {
+      DocumentBuilder builder = factory.newDocumentBuilder();
+      builder.setErrorHandler(errorHandler);
+      builder.setEntityResolver(entityResolver);
+      Document document = builder.parse(in);
+      return document;
+    } catch (ParserConfigurationException pce) {
+      LOGGER.log(Level.SEVERE, "Parse exception", pce);
+    } catch (SAXException se) {
+      LOGGER.log(Level.SEVERE, "SAX Exception", se);
+    } catch (IOException ioe) {
+      LOGGER.log(Level.SEVERE, "IO Exception", ioe);
+    }
+    return null;
+  }
+
+  /**
+   * Get a root element from an XML input stream.
+   *
+   * @param in the input stream
+   * @param rootTagName String the root element tag name
+   * @return a result Element object if successful, null on error
+   */
+  public static Element parseAndGetRootElement(InputStream in,
+                                               String rootTagName) {
+    SAXParseErrorHandler errorHandler = new SAXParseErrorHandler();
+    Document document = ServletUtil.parse(in, errorHandler, null);
+    if (document == null) {
+      LOGGER.log(Level.WARNING, "XML parsing exception!");
+      return null;
+    }
+
+    NodeList nodeList =
+      document.getElementsByTagName(rootTagName);
+    if (nodeList == null || nodeList.getLength() == 0) {
+      LOGGER.log(Level.WARNING, "Empty node: " + rootTagName);
+      return null;
+    }
+
+    return (Element) nodeList.item(0);
+  }
+
+  /**
+   * Get the attribute value of a given attribute name for
+   * the first XML element of given name
+   *
+   * @param elem Element The parent XML element
+   * @param name String name of the child text element
+   * @param attrName String Attribute name
+   * @return String attribute value of named child element
+   */
+  public static String getFirstAttribute(Element elem, String name,
+                                         String attrName) {
+    NodeList nodeList = elem.getElementsByTagName(name);
+    if (nodeList.getLength() == 0) {
+      return null;
+    }
+
+    return (((Element)nodeList.item(0)).getAttribute(attrName));
+  }
+
+  /**
+   * Get the attribute values of a given name/value pair for
+   * the first XML element of given name
+   *
+   * @param elem Element The parent XML element
+   * @param name String name of the child text element
+   * @return attribute name and value map of named child element
+   */
+  public static Map<String, String> getAllAttributes(Element elem,
+                                                     String name) {
+    Map<String, String>attributes = new TreeMap<String, String>();
+    NodeList nodeList = elem.getElementsByTagName(name);
+    int length = nodeList.getLength();
+    for (int n = 0; n < length; ++n) {
+      attributes.put(((Element)nodeList.item(n)).getAttribute("name"),
+                     ((Element)nodeList.item(n)).getAttribute("value"));
+    }
+    return attributes;
+  }
+
+  /**
+   * Get text data of first XML element of given name
+   *
+   * @param elem Element The parent XML element
+   * @param name String name of the child text element
+   * @return text data of named child element
+   */
+  public static String getFirstElementByTagName(Element elem, String name) {
+    NodeList nodeList = elem.getElementsByTagName(name);
+    if (nodeList.getLength() == 0) {
+      return null;
+    }
+
+    NodeList children = nodeList.item(0).getChildNodes();
+    if (children.getLength() == 0 ||
+        children.item(0).getNodeType() != Node.TEXT_NODE) {
+      return null;
+    }
+    return children.item(0).getNodeValue();
+  }
+
+  /**
+   * Get a list of all child text element of given name directly
+   * under a given element
+   *
+   * @param elem the parent element
+   * @param name the given name of searched child elements
+   * @return a list of values of those child text elements
+   */
+  public static List<String> getAllElementsByTagName(Element elem, String name)
+  {
+    NodeList nodeList = elem.getElementsByTagName(name);
+    List<String> result = new ArrayList<String>();
+    for (int i = 0; i < nodeList.getLength(); ++i) {
+      NodeList children = nodeList.item(i).getChildNodes();
+      if (children.getLength() == 0 ||
+          children.item(0).getNodeType() != Node.TEXT_NODE) {
+        continue;
+      }
+      result.add(children.item(0).getNodeValue());
+    }
+    return result;
+  }
 
   /**
    * Write an XML response with only StatusId (int) to a PrintWriter.
@@ -235,17 +415,7 @@ public class ServletUtil {
    * @param out where PrintWriter to be written to
    */
   public static void writeManagerSplash(PrintWriter out) {
-    writeManagerSplash(out, 1);
-  }
-
-  /**
-   * Write Connector Manager, OS, JVM version information.
-   *
-   * @param out where PrintWriter to be written to
-   * @param indent indent level for writing the INFO tag.
-   */
-  public static void writeManagerSplash(PrintWriter out, int indent) {
-    writeXMLElement(out, indent, ServletUtil.XMLTAG_INFO, getManagerSplash());
+    writeXMLElement(out, 1, ServletUtil.XMLTAG_INFO, getManagerSplash());
   }
 
   /**
@@ -406,7 +576,7 @@ public class ServletUtil {
   }
 
   // A helper method to ident output string.
-  public static String indentStr(int level) {
+  static String indentStr(int level) {
     if (level < XMLIndent.length) {
       return XMLIndent[level];
     } else {
@@ -449,13 +619,10 @@ public class ServletUtil {
     return result;
   }
 
-  private static final String XML_GREATER_THAN = "&gt;";
   private static final Pattern CDATA_BEGIN_PATTERN =
       Pattern.compile("/*\\Q<![CDATA[\\E");
   private static final Pattern CDATA_END_PATTERN =
       Pattern.compile("/*\\Q]]>\\E");
-  private static final Pattern ESCAPED_CDATA_END_PATTERN =
-      Pattern.compile("/*\\Q]]&gt;\\E");
 
   /**
    * Removes any pairs of markers from the given snippet that are not allowed
@@ -503,6 +670,8 @@ public class ServletUtil {
     return result.toString();
   }
 
+  private static final String XML_GREATER_THAN = "&gt;";
+
   private static String escapeEndMarker(String endMarker) {
     StringBuilder buf = new StringBuilder();
     for (int i = 0; i < endMarker.length(); i++) {
@@ -520,34 +689,108 @@ public class ServletUtil {
   }
 
   /**
-   * UnEscapes any end markers from the given snippet.
+   * For Debugging: Write out the HttpServletRequest information.
+   * This writes an XML stream to the response output that describes
+   * most of the data received in the request structure.  It returns
+   * true, so that you may call it from doGet() like:
+   * <code>  if (dumpServletRequest(req, res)) return;</code>
+   * without javac complaining about unreachable code with a straight
+   * return.
    *
-   * @param formSnippet snippet of a form that may have escaped end markers
-   *        in it.
-   * @return the given formSnippet with all end markers restored.
+   * @param req An HttpServletRequest
+   * @param res An HttpServletResponse
+   * @return true
    */
-  public static String restoreEndMarkers(String formSnippet) {
-    StringBuffer result = new StringBuffer();
-    Matcher endMatcher = ESCAPED_CDATA_END_PATTERN.matcher(formSnippet);
-    while (endMatcher.find()) {
-      endMatcher.appendReplacement(result,
-          endMatcher.group().replace("]]&gt;", XML_CDATA_END));
+  public static boolean dumpServletRequest(HttpServletRequest req,
+      HttpServletResponse res) throws IOException {
+    res.setContentType(ServletUtil.MIMETYPE_XML);
+    PrintWriter out = res.getWriter();
+    ServletUtil.writeRootTag(out, false);
+    ServletUtil.writeXMLTag(out, 2, "HttpServletRequest", false);
+    ServletUtil.writeXMLElement(out, 3, "Method", req.getMethod());
+    ServletUtil.writeXMLElement(out, 3, "AuthType", req.getAuthType());
+    ServletUtil.writeXMLElement(out, 3, "ContextPath", req.getContextPath());
+    ServletUtil.writeXMLElement(out, 3, "PathInfo", req.getPathInfo());
+    ServletUtil.writeXMLElement(out, 3, "PathTranslated",
+                                req.getPathTranslated());
+    ServletUtil.writeXMLElement(out, 3, "QueryString", req.getQueryString());
+    ServletUtil.writeXMLElement(out, 3, "RemoteUser", req.getRemoteUser());
+    ServletUtil.writeXMLElement(out, 3, "RequestURI", req.getRequestURI());
+    ServletUtil.writeXMLElement(out, 3, "RequestURL",
+                                req.getRequestURL().toString());
+    ServletUtil.writeXMLElement(out, 3, "ServletPath", req.getServletPath());
+    ServletUtil.writeXMLTag(out, 3, "Headers", false);
+    for (Enumeration<?> names = req.getHeaderNames(); names.hasMoreElements(); ) {
+      String name = (String)(names.nextElement());
+      for (Enumeration<?> e = req.getHeaders(name); e.hasMoreElements(); )
+        ServletUtil.writeXMLElement(out, 4, name, (String)(e.nextElement()));
     }
-    endMatcher.appendTail(result);
-    return result.toString();
+    ServletUtil.writeXMLTag(out, 3, "Headers", true);
+    ServletUtil.writeXMLTag(out, 2, "HttpServletRequest", true);
+    ServletUtil.writeXMLTag(out, 2, "ServletRequest", false);
+    ServletUtil.writeXMLElement(out, 3, "Protocol", req.getProtocol());
+    ServletUtil.writeXMLElement(out, 3, "Scheme", req.getScheme());
+    ServletUtil.writeXMLElement(out, 3, "ServerName", req.getServerName());
+    ServletUtil.writeXMLElement(out, 3, "ServerPort",
+                                String.valueOf(req.getServerPort()));
+    ServletUtil.writeXMLElement(out, 3, "RemoteAddr", req.getRemoteAddr());
+    ServletUtil.writeXMLElement(out, 3, "RemoteHost", req.getRemoteHost());
+    Enumeration<?> names;
+    ServletUtil.writeXMLTag(out, 3, "Attributes", false);
+    for (names = req.getAttributeNames(); names.hasMoreElements(); ) {
+      String name = (String)(names.nextElement());
+      ServletUtil.writeXMLElement(out, 4, name,
+                                  req.getAttribute(name).toString());
+    }
+    ServletUtil.writeXMLTag(out, 3, "Attributes", true);
+    ServletUtil.writeXMLTag(out, 3, "Parameters", false);
+    for (names = req.getParameterNames(); names.hasMoreElements(); ) {
+      String name = (String)(names.nextElement());
+      String[] params = req.getParameterValues(name);
+      for (int i = 0; i < params.length; i++)
+        ServletUtil.writeXMLElement(out, 4, name, params[i]);
+    }
+    ServletUtil.writeXMLTag(out, 3, "Parameters", true);
+    ServletUtil.writeXMLTag(out, 2, "ServletRequest", true);
+    ServletUtil.writeRootTag(out, true);
+    out.close();
+    return true;
   }
 
   /**
-   * Verify the request originated from either the GSA or
-   * localhost.  Since the logs and the feed file may contain
-   * proprietary customer information, we don't want to serve
-   * them up to just anybody.
+   * This method is intended for use from GetConfig, GetConnectorLogs and any
+   * other servlet that we intend to be invoked from the admin user's browser.
+   *
+   * At present, external, off-board instanced secure these servlets, along with
+   * all other servlets, through a Tomcat RemoteAddrValve that only allows in
+   * the GSA feedhost and localhost. There is no valve installed on-board.
+   *
+   * So at present, we are only concerned with on-board deployments, since this code
+   * would never execute in off-board deployments, since the valve would have prevented
+   * access.
    *
    * @param gsaHost the GSA feed host
    * @param remoteAddr the IP address of the caller
    * @return true if request came from an acceptable IP address.
    */
-  public static boolean allowedRemoteAddr(String gsaHost, String remoteAddr) {
+  public static boolean allowedRemoteAddrPublicFacingServlet(String gsaHost, String remoteAddr) {
+    return true;
+  }
+
+  /**
+   * This method is intended for use from GetConfigForm and any other servlet
+   * that may return truly sensitive data. For these, we want to make sure that
+   * only the GSA (feedhost) is the requestor - or that the request comes from
+   * the localhost of the ConnectorManager instance, for debugging.
+   *
+   * Verify the request originated from either the GSA or
+   * localhost.
+   *
+   * @param gsaHost the GSA feed host
+   * @param remoteAddr the IP address of the caller
+   * @return true if request came from an acceptable IP address.
+   */
+  public static boolean allowedRemoteAddrGSAFacingServlet(String gsaHost, String remoteAddr) {
     try {
       InetAddress caller = InetAddress.getByName(remoteAddr);
       if (caller.isLoopbackAddress() ||
@@ -560,18 +803,90 @@ public class ServletUtil {
           return true;  // GSA is allowed access
         }
       }
+      LOGGER.warning("Denying caller:" + caller);
+      return false;
     } catch (UnknownHostException uhe) {
       // Unknown host - fall through to fail.
+      LOGGER.log(Level.WARNING, "Denying caller:" + remoteAddr, uhe);
     }
     return false;
   }
 
-  private static final String TEMP_ROOT_BEGIN_ELEMENT = "<filtered_root>";
-  private static final String TEMP_ROOT_END_ELEMENT = "</filtered_root>";
-
   private static final String DOCTYPE = "<!DOCTYPE html PUBLIC "
       + "\"-//W3C//DTD XHTML 1.0 Transitional//EN\" "
       + "\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">";
+
+  private static final String TEMP_ROOT_BEGIN_ELEMENT = "<filtered_root>";
+  private static final String TEMP_ROOT_END_ELEMENT = "</filtered_root>";
+
+  private static final String XHTML_DTD_URL =
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
+  private static final String XHTML_DTD_FILE = "/xhtml1-transitional.dtd";
+
+  private static final String HTML_LAT1_URL =
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml-lat1.ent";
+  private static final String HTML_LAT1_FILE = "/xhtml-lat1.ent";
+
+  private static final String HTML_SYMBOL_URL =
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml-symbol.ent";
+  private static final String HTML_SYMBOL_FILE = "/xhtml-symbol.ent";
+
+  private static final String HTML_SPECIAL_URL =
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml-special.ent";
+  private static final String HTML_SPECIAL_FILE = "/xhtml-special.ent";
+
+  private static final String WEBAPP_DTD_URL =
+      "http://java.sun.com/dtd/web-app_2_3.dtd";
+  private static final String WEBAPP_DTD_FILE = "/web-app_2_3.dtd";
+
+  public static class LocalEntityResolver implements EntityResolver {
+    public InputSource resolveEntity(String publicId, String systemId) {
+      URL url;
+      if (XHTML_DTD_URL.equals(systemId)) {
+        LOGGER.fine("publicId=" + publicId + "; systemId=" + systemId);
+        url = getClass().getResource(XHTML_DTD_FILE);
+        if (url != null) {
+          // Go with local resource.
+          LOGGER.fine("Resolving " + XHTML_DTD_URL + " to local entity");
+          return new InputSource(url.toString());
+        } else {
+          // Go with the HTTP URL.
+          LOGGER.fine("Unable to resolve " + XHTML_DTD_URL + " to local entity");
+          return null;
+        }
+      } else if (HTML_LAT1_URL.equals(systemId)) {
+        url = getClass().getResource(HTML_LAT1_FILE);
+        if (url != null) {
+          return new InputSource(url.toString());
+        } else {
+          return null;
+        }
+      } else if (HTML_SYMBOL_URL.equals(systemId)) {
+        url = getClass().getResource(HTML_SYMBOL_FILE);
+        if (url != null) {
+          return new InputSource(url.toString());
+        } else {
+          return null;
+        }
+      } else if (HTML_SPECIAL_URL.equals(systemId)) {
+        url = getClass().getResource(HTML_SPECIAL_FILE);
+        if (url != null) {
+          return new InputSource(url.toString());
+        } else {
+          return null;
+        }
+      } else if (WEBAPP_DTD_URL.equals(systemId)) {
+        url = getClass().getResource(WEBAPP_DTD_FILE);
+        if (url != null) {
+          return new InputSource(url.toString());
+        } else {
+          return null;
+        }
+      } else {
+        return null;
+      }
+    }
+  }
 
   /**
    * Utility function to scan the form snippet for any sensitive values and
@@ -592,7 +907,7 @@ public class ServletUtil {
 
     // Convert to DOM tree and obfuscated values if needed.
     Document document =
-      XmlParseUtil.parse(rootSnippet, new SAXParseErrorHandler(),
+        ServletUtil.parse(rootSnippet, new SAXParseErrorHandler(),
             new LocalEntityResolver());
     if (document == null) {
       LOGGER.log(Level.WARNING, "XML parsing exception!");
@@ -700,7 +1015,7 @@ public class ServletUtil {
     }
   }
 
-  public static String obfuscateValue(String value) {
+  protected static String obfuscateValue(String value) {
     return value.replaceAll(".", "*");
   }
 
@@ -711,7 +1026,7 @@ public class ServletUtil {
    * @param value the value to be checked.
    * @return true if the given value is obfuscated.
    */
-  public static boolean isObfuscated(String value) {
+  protected static boolean isObfuscated(String value) {
     Matcher matcher = OBFUSCATED_PATTERN.matcher(value);
     return matcher.matches();
   }

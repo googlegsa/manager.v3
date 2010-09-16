@@ -48,7 +48,8 @@ public class PushException extends ConnectorManagerException {
    * @param rootCause root failure cause
    */
   public PushException(String message, Throwable rootCause) {
-    super(message, rootCause);
+    super(message);
+    this.rootCause = rootCause;
   }
 
   /**
@@ -57,6 +58,7 @@ public class PushException extends ConnectorManagerException {
    * @param rootCause root failure cause
    */
   public PushException(Throwable rootCause) {
-    super(rootCause);
+    super();
+    this.rootCause = rootCause;
   }
 }

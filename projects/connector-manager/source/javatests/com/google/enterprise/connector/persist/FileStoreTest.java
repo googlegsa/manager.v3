@@ -1,4 +1,4 @@
-// Copyright 2008 Google Inc.
+// Copyright 2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,76 +11,189 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 package com.google.enterprise.connector.persist;
 
-import com.google.enterprise.connector.instantiator.TypeMap;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 
+import junit.framework.TestCase;
+
 import java.io.File;
+import java.util.Properties;
 
 /**
- * Class to test File System persistent store.
+ * Class to test File System persistent store for
+ * ConnectorStateStore, ConnectorScheduleStore,
+ * ConnectorConfigStore interfaces.
  */
-public class FileStoreTest extends PersistentStoreTestAbstract {
-  private static final String TEST_DIR_NAME = "testdata/tmp/FileStoreTests";
-  private final File baseDirectory  = new File(TEST_DIR_NAME);
-  private static final String NAME = "test";
+public class FileStoreTest extends TestCase {
 
-  private TypeMap typeMap;
+  protected FileStore store;
+  protected File storeDir;
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
-    assertTrue(baseDirectory.mkdirs());
-    typeMap = new TypeMap(TEST_DIR_NAME);
-    typeMap.init();
-    FileStore fileStore = new FileStore();
-    fileStore.setTypeMap(typeMap);
-    super.store = fileStore;
+  protected void setUp() {
+    storeDir = new File("testdata/tmp/filestore");
+    assertTrue(storeDir.mkdirs());
+    store = new FileStore();
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
+    assertTrue(ConnectorTestUtils.deleteAllFiles(storeDir));
+  }
+
+  // Tests getting and setting for a valid connector name and schedule.
+  public void testGetandSetConnectorSchedule() {
+    String expectedSchedule = "schedule of connectorA";
+    String connectorName = "connectorA";
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
+    store.storeConnectorSchedule(storeContext, expectedSchedule);
+    String resultSchedule = store.getConnectorSchedule(storeContext);
+    assertEquals(expectedSchedule, resultSchedule);
+  }
+
+  // Tests getting schedule for an unknown connector
+  public void testGetConnectorSchedule1() {
+    String schedule = store.getConnectorSchedule(
+        new StoreContext("some wierd connector name", storeDir));
+    assertNull(schedule);
+  }
+
+  // Tests if the exception is thrown correctly when the connector name is null.
+  public void testGetConnectorSchedule2() {
     try {
-      assertTrue(ConnectorTestUtils.deleteAllFiles(baseDirectory));
-    } finally {
-      super.tearDown();
+      store.getConnectorSchedule(new StoreContext(null, storeDir));
+      fail("failed to throw exception");
+    } catch (IllegalArgumentException e) {
+      assertEquals("StoreContext.connectorName may not be null or empty.",
+                   e.getMessage());
     }
   }
 
-  @Override
-  protected StoreContext getStoreContext(String connectorName,
-                                         String typeName) {
-    StoreContext context = new StoreContext(connectorName, typeName);
-    assertTrue(getConnectorDir(context).exists());
-    return context;
-  }
-
-  protected File getConnectorDir(StoreContext context) {
-    File typeDir = new File(typeMap.getTypesDirectory(), context.getTypeName());
-    File connectorDir = new File(typeDir, context.getConnectorName());
-    if (!connectorDir.exists()) {
-      assertTrue(connectorDir.mkdirs());
-    }
-    return connectorDir;
-  }
-
-  // Tests connector removal leaves no files behind.
-  public void testRemoveConnector() {
-    StoreContext storeContext = getStoreContext(NAME, "xyzzy");
-    File connectorDir = getConnectorDir(storeContext);
-    assertTrue(connectorDir.list().length == 0);
-    store.storeConnectorConfiguration(storeContext, getConfiguration());
-    store.storeConnectorSchedule(storeContext, getSchedule());
-    store.storeConnectorState(storeContext, getCheckpoint());
-    // This should have created several storage files.
-    assertTrue(connectorDir.list().length == 4);
-    store.removeConnectorState(storeContext);
+  // Tests schedule cannot be retrieved after removal.
+  public void testRemoveConnectorSchedule() {
+    String connectorName = "foo";
+    String connectorSchedule = "foo's schedule";
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
+    String schedule = store.getConnectorSchedule(storeContext);
+    assertNull(schedule);
+    store.storeConnectorSchedule(storeContext, connectorSchedule);
+    schedule = store.getConnectorSchedule(storeContext);
+    assertEquals(connectorSchedule, schedule);
     store.removeConnectorSchedule(storeContext);
+    schedule = store.getConnectorSchedule(storeContext);
+    assertNull(schedule);
+  }
+
+  // Tests getting and setting for a valid connector name and state.
+  public void testGetandSetConnectorState() {
+    String expectedState = "state of connectorA";
+    String connectorName = "connectorA";
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
+    store.storeConnectorState(storeContext, expectedState);
+    String resultState = store.getConnectorState(storeContext);
+    assertEquals(expectedState, resultState);
+  }
+
+  //Tests getting state for an unknown connector.
+  public void testGetConnectorState1() {
+    String state = store.getConnectorState(
+        new StoreContext("some wierd connector name", storeDir));
+    assertNull(state);
+  }
+
+  // Tests if the exception is thrown correctly when the connector name is null.
+  public void testGetConnectorState2() {
+    try {
+      store.getConnectorState(new StoreContext(null, storeDir));
+      fail("failed to throw exception");
+    } catch (IllegalArgumentException e) {
+      assertEquals("StoreContext.connectorName may not be null or empty.",
+                   e.getMessage());
+    }
+  }
+
+  // Tests state cannot be retrieved after removal.
+  public void testRemoveConnectorState() {
+    String connectorName = "foo";
+    String connectorState = "foo's state";
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
+    String state = store.getConnectorState(storeContext);
+    assertNull(state);
+    store.storeConnectorState(storeContext, connectorState);
+    state = store.getConnectorState(storeContext);
+    assertEquals(connectorState, state);
+    store.removeConnectorState(storeContext);
+    state = store.getConnectorState(storeContext);
+    assertNull(state);
+  }
+
+  // Tests getting and setting for a valid connector name and config.
+  public void testGetandSetConnectorConfiguration() {
+    Properties expectedConfig = new Properties();
+    expectedConfig.setProperty("property1", "value1");
+    expectedConfig.setProperty("property2", "2");
+    expectedConfig.setProperty("property3", "true");
+    String connectorName = "connectorA";
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
+    store.storeConnectorConfiguration(storeContext, expectedConfig);
+    Properties resultConfig = store.getConnectorConfiguration(storeContext);
+    ConnectorTestUtils.compareMaps(expectedConfig, resultConfig);
+  }
+
+  // Tests getting and setting a configuration that should encrypt
+  // some properties.
+  public void testEncryptedConnectorConfiguration() {
+    Properties expectedConfig = new Properties();
+    expectedConfig.setProperty("property1", "value1");
+    expectedConfig.setProperty("property2", "2");
+    expectedConfig.setProperty("property3", "true");
+    expectedConfig.setProperty("password", "fred");
+    expectedConfig.setProperty("PASSWORDS", "fred");
+    expectedConfig.setProperty("xyzpasswordzy", "fred");
+    String connectorName = "connectorB";
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
+    store.storeConnectorConfiguration(storeContext, expectedConfig);
+    Properties resultConfig = store.getConnectorConfiguration(storeContext);
+    ConnectorTestUtils.compareMaps(expectedConfig, resultConfig);
+  }
+
+
+  // Tests getting configuration for an unknown connector.
+  public void testGetConnectorConfiguration1() {
+    Properties config = store.getConnectorConfiguration(
+        new StoreContext("some wierd connector name", storeDir));
+    // Should return null, not an empty Properties object.
+    assertNull(config);
+  }
+
+  // Tests if the exception is thrown correctly when the connector name is null.
+  public void testGetConnectorConfiguration2() {
+    StoreContext storeContext = new StoreContext(null, storeDir);
+    try {
+      store.getConnectorConfiguration(storeContext);
+      fail("failed to throw exception");
+    } catch (IllegalArgumentException e) {
+      assertEquals("StoreContext.connectorName may not be null or empty.",
+                   e.getMessage());
+    }
+  }
+
+  // Tests configuration cannot be retrieved after removal.
+  public void testRemoveConnectorConfiguration() {
+    String connectorName = "foo";
+    Properties expectedConfig = new Properties();
+    expectedConfig.setProperty("property1", "value1");
+    expectedConfig.setProperty("property2", "2");
+    expectedConfig.setProperty("property3", "true");
+    StoreContext storeContext = new StoreContext(connectorName, storeDir);
+    Properties config = store.getConnectorConfiguration(storeContext);
+    assertNull(config);
+    store.storeConnectorConfiguration(storeContext, expectedConfig);
+    config = store.getConnectorConfiguration(storeContext);
+    ConnectorTestUtils.compareMaps(expectedConfig, config);
     store.removeConnectorConfiguration(storeContext);
-    // This should have deleted all the storage files.
-    assertTrue(connectorDir.list().length == 0);
+    config = store.getConnectorConfiguration(storeContext);
+    assertNull(config);
   }
 }
