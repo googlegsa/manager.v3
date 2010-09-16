@@ -1467,6 +1467,150 @@ public class DocPusherTest extends TestCase {
   }
 
   /**
+   * Test Doc with lock unspecified.
+   */
+  public void testLockUnspecified() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + "}\r\n" + "";
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
+
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
+    dpusher.take(document);
+    dpusher.flush();
+    String resultXML = mockFeedConnection.getFeed();
+
+    assertStringNotContains("lock=\"true\"",
+        resultXML);
+    // The GSA treats attribute as false if not present in the feed.
+    // We prefer to not specify it if the value is false (explicitly or
+    // implicitly) to minimize risk in a patch
+    // TODO(Max): change this to explicit in the trunk
+    assertStringNotContains("lock=\"false\"",
+        resultXML);
+    assertStringNotContains("lock=",
+        resultXML);
+    assertStringNotContains("meta name=\"" + SpiConstants.PROPNAME_LOCK + "\"",
+        resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_LOCK,
+        resultXML);
+  }
+
+  /**
+   * Test Doc with lock specified false.
+   */
+  public void testLockExplicitFalse() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:lock\":\"false\""
+        + "}\r\n" + "";
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
+
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
+    dpusher.take(document);
+    dpusher.flush();
+    String resultXML = mockFeedConnection.getFeed();
+
+    assertStringNotContains("lock=\"true\"",
+        resultXML);
+    assertStringNotContains("lock=\"false\"",
+        resultXML);
+    assertStringNotContains("lock=",
+        resultXML);
+    assertStringNotContains("meta name=\"" + SpiConstants.PROPNAME_LOCK + "\"",
+        resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_LOCK,
+        resultXML);
+  }
+
+  /**
+   * Test Doc with lock specified true.
+   */
+  public void testLockExplicitTrue() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:lock\":\"true\""
+        + "}\r\n" + "";
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
+
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
+    dpusher.take(document);
+    dpusher.flush();
+    String resultXML = mockFeedConnection.getFeed();
+
+    assertStringContains("lock=\"true\"",
+        resultXML);
+    assertStringNotContains("lock=\"false\"",
+        resultXML);
+    assertStringNotContains("meta name=\"" + SpiConstants.PROPNAME_LOCK + "\"",
+        resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_LOCK,
+        resultXML);
+  }
+
+  /**
+   * Test Doc with lock specified with illegal value.
+   */
+  public void testLockIllegalValue() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:lock\":\"xyzzy\""
+        + "}\r\n" + "";
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
+
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
+    dpusher.take(document);
+    dpusher.flush();
+    String resultXML = mockFeedConnection.getFeed();
+
+    // should be silently treated as true
+    assertStringContains("lock=\"true\"",
+        resultXML);
+    assertStringNotContains("lock=\"false\"",
+        resultXML);
+    assertStringNotContains("meta name=\"" + SpiConstants.PROPNAME_LOCK + "\"",
+        resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_LOCK,
+        resultXML);
+  }
+
+  /**
+   * Test Doc with lock specified with empty value.
+   */
+  public void testLockEmptyValue() throws Exception {
+    String json1 = "{\"timestamp\":\"10\",\"docid\":\"doc1\""
+        + ",\"content\":\"now is the time\"" + ",\"author\":\"ziff\""
+        + ",\"google:displayurl\":\"http://www.sometesturl.com/test\""
+        + ",\"google:lock\":\"\""
+        + "}\r\n" + "";
+    Document document = JcrDocumentTest.makeDocumentFromJson(json1);
+
+    MockFeedConnection mockFeedConnection = new MockFeedConnection();
+    DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
+    dpusher.take(document);
+    dpusher.flush();
+    String resultXML = mockFeedConnection.getFeed();
+
+    // should be silently treated as true
+    assertStringContains("lock=\"true\"",
+        resultXML);
+    assertStringNotContains("lock=\"false\"",
+        resultXML);
+    assertStringNotContains("meta name=\"" + SpiConstants.PROPNAME_LOCK + "\"",
+        resultXML);
+    assertStringNotContains(SpiConstants.PROPNAME_LOCK,
+        resultXML);
+  }
+
+  /**
    * Test that lack of a required metadata field, google:docid, throws
    * a RepositoryDocumentException.
    * Regression test for Issue 108.
