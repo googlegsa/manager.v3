@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.util;
 
+import com.google.common.collect.ImmutableMap;
 
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
@@ -70,59 +71,39 @@ public class XmlParseUtil {
       "http://java.sun.com/dtd/web-app_2_3.dtd";
   private static final String WEBAPP_DTD_FILE = "/web-app_2_3.dtd";
 
+  private static final String XHTML_STRICT_DTD_URL =
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd";
+  private static final String XHTML_STRICT_DTD_FILE = "/xhtml1-strict.dtd";
+
+  private static Map<String, String> LOCAL_DTDS =
+      ImmutableMap.<String, String> builder().
+      put(XHTML_DTD_URL, XHTML_DTD_FILE).
+      put(HTML_LAT1_URL, HTML_LAT1_FILE).
+      put(HTML_SYMBOL_URL, HTML_SYMBOL_FILE).
+      put(HTML_SPECIAL_URL, HTML_SPECIAL_FILE).
+      put(WEBAPP_DTD_URL, WEBAPP_DTD_FILE).
+      put(XHTML_STRICT_DTD_URL, XHTML_STRICT_DTD_FILE).
+      build();
+
   public static class LocalEntityResolver implements EntityResolver {
     public InputSource resolveEntity(String publicId, String systemId) {
-      URL url;
-      if (XHTML_DTD_URL.equals(systemId)) {
-        LOGGER.fine("publicId=" + publicId + "; systemId=" + systemId);
-        url = getClass().getResource(XHTML_DTD_FILE);
-        if (url != null) {
-          // Go with local resource.
-          LOGGER.fine("Resolving " + XHTML_DTD_URL + " to local entity");
-          return new InputSource(url.toString());
-        } else {
-          // Go with the HTTP URL.
-          LOGGER.fine("Unable to resolve " + XHTML_DTD_URL + " to local entity");
-          return null;
-        }
-      } else if (HTML_LAT1_URL.equals(systemId)) {
-        url = getClass().getResource(HTML_LAT1_FILE);
-        if (url != null) {
-          return new InputSource(url.toString());
-        } else {
-          return null;
-        }
-      } else if (HTML_SYMBOL_URL.equals(systemId)) {
-        url = getClass().getResource(HTML_SYMBOL_FILE);
-        if (url != null) {
-          return new InputSource(url.toString());
-        } else {
-          return null;
-        }
-      } else if (HTML_SPECIAL_URL.equals(systemId)) {
-        url = getClass().getResource(HTML_SPECIAL_FILE);
-        if (url != null) {
-          return new InputSource(url.toString());
-        } else {
-          return null;
-        }
-      } else if (WEBAPP_DTD_URL.equals(systemId)) {
-        url = getClass().getResource(WEBAPP_DTD_FILE);
-        if (url != null) {
-          return new InputSource(url.toString());
-        } else {
-          return null;
-        }
-      } else {
+      String filename = LOCAL_DTDS.get(systemId);
+      if (filename == null) {
         return null;
       }
+      URL url = getClass().getResource(filename);
+      if (url != null) {
+        return new InputSource(url.toString());
+      }
+      return null;
     }
   }
 
-  private static final String HTML_PREFIX =
+  private static final String STRICT_HTML_PREFIX =
       "<!DOCTYPE html PUBLIC "
-      + "\"-//W3C//DTD XHTML 1.0 Strict//EN\" "
-      + "\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">"
+      + "\"-//W3C//DTD XHTML 1.0 Strict//EN\" \""
+      + XHTML_STRICT_DTD_URL
+      + "\">"
       + "<html xmlns=\"http://www.w3.org/1999/xhtml\">"
       + "<head><title/></head><body><table>";
 
@@ -162,7 +143,7 @@ public class XmlParseUtil {
     builder.setEntityResolver(new LocalEntityResolver());
 
     System.out.println(formSnippet);
-    String html = HTML_PREFIX + formSnippet + HTML_SUFFIX;
+    String html = STRICT_HTML_PREFIX + formSnippet + HTML_SUFFIX;
     builder.parse(new ByteArrayInputStream(html.getBytes("UTF-8")));
   }
 
