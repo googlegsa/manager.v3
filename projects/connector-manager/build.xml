@@ -108,6 +108,10 @@
     <tstamp />
     <jar jarfile="${spi.jarfile}">
       <fileset dir="${spi-classes}"/>
+      <fileset dir="${dtds}">
+        <include name="*.dtd" />
+        <include name="*.ent" />
+      </fileset>
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager SPI"/>
         <attribute name="Implementation-Version"
@@ -149,10 +153,6 @@
         <include name="**/servlet/ConnectorMessageCode.class" />
         <include name="**/servlet/ServletUtil.class" />
         <include name="**/servlet/SAXParseErrorHandler.class" />
-      </fileset>
-      <fileset dir="${dtds}">
-        <include name="*.dtd" />
-        <include name="*.ent" />
       </fileset>
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager Utility"/>
