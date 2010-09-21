@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -86,8 +86,6 @@ public class SpiConstants {
    * </ol>
    * <p>
    * Value: google:feedtype
-   *
-   * @since 2.4.2
    */
   public static final String PROPNAME_FEEDTYPE = "google:feedtype";
 
@@ -99,8 +97,6 @@ public class SpiConstants {
    * Reserved for internal use.
    * <p>
    * Value: google:feedid
-   *
-   * @since 2.6
    */
   public static final String PROPNAME_FEEDID = "google:feedid";
 
@@ -282,8 +278,6 @@ public class SpiConstants {
 
   /**
    * Enum for the list of possible feed types.
-   *
-   * @since 2.4.2
    */
   public enum FeedType {
     CONTENT, WEB

@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc.
+// Copyright 2007-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,11 +30,9 @@ public class AuthorizationResponse {
    * denied. If a consumer receives this code, it may decide to try other means
    * to get a positive decision, permit or deny.</li>
    * </ul>
-   * Note: at present (Connector Manager 2.0, GSA 6.2 and earlier),
+   * Note: at present (Connector Manager 2.0, GSA 6.2 and earlier), 
    * the {@code INDETERMINATE} status is treated exactly the same as the
    * {@code DENY} status.  This is expected to change in the near future.
-   *
-   * @since 2.4
    */
   public enum Status {
     PERMIT, DENY, INDETERMINATE
@@ -66,7 +64,6 @@ public class AuthorizationResponse {
    * @param status the {@code Status} of this response
    * @param docid The docid for which authorization succeeded - should not be
    *        null or empty
-   * @since 2.4
    */
   public AuthorizationResponse(Status status, String docid) {
     if (docid == null) {
@@ -98,7 +95,6 @@ public class AuthorizationResponse {
    * Gets the status.
    *
    * @return status the {@code Status}
-   * @since 2.4
    */
   public Status getStatus() {
     return status;

@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright 2007-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -213,7 +213,6 @@ public abstract class Value {
    * <code>""</code> (empty string) to specify the default time zone
    * @see TimeZone#getTimeZone
    * @see TimeZone#getDefault
-   * @since 2.4.4
    */
   public static synchronized void setFeedTimeZone(String id) {
     TimeZone tz;
@@ -227,11 +226,7 @@ public abstract class Value {
     CALENDAR.setTimeZone(tz);
   }
 
-  /**
-   * Gets the time zone ID for the unit tests.
-   *
-   * @since 2.4.4
-   */
+  /** Gets the time zone ID for the unit tests. */
   static synchronized String getFeedTimeZone() {
     return CALENDAR.getTimeZone().getID();
   }
@@ -324,4 +319,5 @@ public abstract class Value {
     c.setTime(d);
     return c;
   }
+
 }

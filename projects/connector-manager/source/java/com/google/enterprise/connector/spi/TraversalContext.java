@@ -1,4 +1,4 @@
-// Copyright 2007 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@ import java.util.Set;
  * Connector Manager.  Thus, a connector developer does not need to
  * provide an implementation of this object.  However, for testing
  * purposes, the developer may want to provide a temporary implementation.
- *
- * @since 1.3
  */
 public interface TraversalContext {
   /**

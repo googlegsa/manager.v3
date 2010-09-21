@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2008 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import java.io.StringWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -55,7 +56,8 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
     PrintWriter out = res.getWriter();
     NDC.push("Config " + connectorTypeName);
     try {
-      Manager manager = Context.getInstance().getManager();
+      ServletContext servletContext = this.getServletContext();
+      Manager manager = Context.getInstance(servletContext).getManager();
       ConfigureResponse configResponse = null;
       try {
         configResponse = manager.getConfigForm(connectorTypeName, language);
@@ -137,7 +139,8 @@ public class SetConnectorConfigNoGSA extends HttpServlet {
       res.setContentType(ServletUtil.MIMETYPE_XML);
       PrintWriter out = res.getWriter();
       try {
-        Manager manager = Context.getInstance().getManager();
+        ServletContext servletContext = this.getServletContext();
+        Manager manager = Context.getInstance(servletContext).getManager();
         SetConnectorConfigHandler handler = new SetConnectorConfigHandler(
             writer.getBuffer().toString(), manager);
         ConfigureResponse configRes = handler.getConfigRes();
