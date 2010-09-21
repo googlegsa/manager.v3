@@ -46,7 +46,8 @@ public class PropertiesException extends ConnectorManagerException {
    * @param rootCause root failure cause
    */
   public PropertiesException(String message, Throwable rootCause) {
-    super(message, rootCause);
+    super(message);
+    this.rootCause = rootCause;
   }
 
   /**
@@ -55,6 +56,7 @@ public class PropertiesException extends ConnectorManagerException {
    * @param rootCause root failure cause
    */
   public PropertiesException(Throwable rootCause) {
-    super(rootCause);
+    super();
+    this.rootCause = rootCause;
   }
 }

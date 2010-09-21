@@ -32,6 +32,7 @@ import org.springframework.context.ApplicationEvent;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.Resource;
+import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,6 +45,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.servlet.ServletContext;
 
 /**
  * Static services for establishing the application context. This consists of
@@ -222,23 +225,23 @@ public class Context {
 
   private static Context INSTANCE = new Context();
 
+  private static ServletContext servletContext;
+
   private boolean started = false;
 
   private boolean isServletContext = false;
 
   private boolean isFeeding = true;
 
-  private String commonDirPath = null;
-
   // singletons
   private Manager manager = null;
   private TraversalScheduler traversalScheduler = null;
   private TraversalContext traversalContext = null;
-  private SpringInstantiator instantiator = null;
+
 
   // control variables for turning off normal functionality - testing only
   private String standaloneContextLocation;
-
+  private String standaloneCommonDirPath;
 
   private Boolean gsaAdminRequiresPrefix = null;
 
@@ -263,10 +266,15 @@ public class Context {
     return INSTANCE;
   }
 
+  public static Context getInstance(ServletContext servletContext) {
+    Context.servletContext = servletContext;
+    return INSTANCE;
+  }
+
   ApplicationContext applicationContext = null;
 
   private Context() {
-    // Private to ensure singleton.
+    // private to insure singleton
   }
 
   private void initializeStandaloneApplicationContext() {
@@ -284,11 +292,11 @@ public class Context {
       standaloneContextLocation = DEFAULT_JUNIT_CONTEXT_LOCATION;
     }
 
-    if (commonDirPath == null) {
-      commonDirPath = DEFAULT_JUNIT_COMMON_DIR_PATH;
+    if (standaloneCommonDirPath == null) {
+      standaloneCommonDirPath = DEFAULT_JUNIT_COMMON_DIR_PATH;
     }
     LOGGER.info("context file: " + standaloneContextLocation);
-    LOGGER.info("common dir path: " + commonDirPath);
+    LOGGER.info("common dir path: " + standaloneCommonDirPath);
 
     applicationContext =
         new FileSystemXmlApplicationContext(standaloneContextLocation);
@@ -305,7 +313,7 @@ public class Context {
   public void setStandaloneContext(String contextLocation,
                                    String commonDirPath) {
     this.standaloneContextLocation = contextLocation;
-    this.commonDirPath = commonDirPath;
+    this.standaloneCommonDirPath = commonDirPath;
     initializeStandaloneApplicationContext();
   }
 
@@ -313,11 +321,25 @@ public class Context {
    * Establishes that we are operating from a servlet context. In this case, we
    * use an XmlWebApplicationContext, which finds its config from the servlet
    * context - WEB-INF/applicationContext.xml.
+   *
    */
-  public void setServletContext(ApplicationContext servletApplicationContext,
-                                String commonDirPath) {
-    this.applicationContext = servletApplicationContext;
-    this.commonDirPath = commonDirPath;
+  public void setServletContext() {
+    if (applicationContext != null) {
+      // too late - someone else already established a context.
+      // This is normal. Either: another servlet got there first, or this is
+      // actually a test and the junit test case got there first and established
+      // a standalone context, but then a servlet came along and called this
+      // method
+      return;
+    }
+    applicationContext = genericApplicationContext; // avoid recursion
+
+    // Note: default context location is /WEB-INF/applicationContext.xml
+    LOGGER.info("Making an XmlWebApplicationContext");
+    XmlWebApplicationContext ac = new XmlWebApplicationContext();
+    ac.setServletContext(servletContext);
+    ac.refresh();
+    applicationContext = ac;
     isServletContext = true;
   }
 
@@ -327,7 +349,11 @@ public class Context {
    */
   private void initApplicationContext() {
     if (applicationContext == null) {
-      initializeStandaloneApplicationContext();
+      if (servletContext != null) {
+        setServletContext();
+      } else {
+        initializeStandaloneApplicationContext();
+      }
     }
     if (applicationContext == null) {
       throw new IllegalStateException("Spring failure - no application context");
@@ -338,19 +364,20 @@ public class Context {
    * Start up the Scheduler.
    */
   private void startScheduler() {
+    if (traversalScheduler != null) {
+      return;
+    }
     traversalScheduler =
         (TraversalScheduler) getRequiredBean("TraversalScheduler",
             TraversalScheduler.class);
-    if (traversalScheduler != null) {
-      traversalScheduler.init();
-    }
+    traversalScheduler.init();
   }
 
   /**
    * Start up the Instantiator.
    */
   private void startInstantiator() {
-    instantiator =
+    SpringInstantiator instantiator =
         (SpringInstantiator) getBean("Instantiator", SpringInstantiator.class);
     if (instantiator != null) {
       instantiator.init();
@@ -364,7 +391,9 @@ public class Context {
     if (started) {
       return;
     }
-    initApplicationContext();
+    if (applicationContext == null) {
+      setServletContext();
+    }
     startInstantiator();
     if (isFeeding) {
       startScheduler();
@@ -377,6 +406,7 @@ public class Context {
    * Starts any services declared as part of the application.
    */
   private void startServices() {
+    initApplicationContext();
     for (ContextService service : getServices()) {
       service.start();
     }
@@ -589,19 +619,16 @@ public class Context {
     return applicationContext;
   }
 
-  public synchronized void shutdown(boolean force) {
-    LOGGER.info("Shutdown initiated...");
+  public void shutdown(boolean force) {
+    LOGGER.log(Level.INFO, "shutdown");
     stopServices(force);
-    if (null != traversalScheduler) {
-      traversalScheduler.shutdown();
-      traversalScheduler = null;
-    }
-    if (null != instantiator) {
-      instantiator.shutdown(force,
+    if (!isFeeding) {
+      started = false;
+    } else if (null != traversalScheduler) {
+      traversalScheduler.shutdown(force,
           ThreadPool.DEFAULT_SHUTDOWN_TIMEOUT_MILLIS);
-      instantiator = null;
+      started = false;
     }
-    started = false;
   }
 
   /**
@@ -624,7 +651,11 @@ public class Context {
    */
   public String getCommonDirPath() {
     initApplicationContext();
-    return commonDirPath;
+    if (isServletContext) {
+      return servletContext.getRealPath("/WEB-INF");
+    } else {
+      return standaloneCommonDirPath;
+    }
   }
 
   private String getPropFileName() throws InstantiatorException {
