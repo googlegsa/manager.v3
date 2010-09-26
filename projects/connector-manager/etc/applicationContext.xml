@@ -231,7 +231,7 @@
   </bean>
   -->
 
-  <bean id="JdbcDatabase" class="com.google.enterprise.connector.persist.JdbcDatabase">
+  <bean id="JdbcDatabase" class="com.google.enterprise.connector.util.database.JdbcDatabase">
     <constructor-arg ref="JdbcDataSource" />
   </bean>
 

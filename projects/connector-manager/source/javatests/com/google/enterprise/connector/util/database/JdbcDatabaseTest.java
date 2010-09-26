@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.persist;
+package com.google.enterprise.connector.util.database;
 
 import com.google.common.collect.ImmutableList;
 

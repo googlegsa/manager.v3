@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.persist;
+package com.google.enterprise.connector.util.database;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -35,11 +35,11 @@ public class JdbcDatabase {
       Logger.getLogger(JdbcDatabase.class.getName());
 
   private final DataSource dataSource;
-  private final ConnectionPool connectionPool;
+  private final DatabaseConnectionPool connectionPool;
 
   public JdbcDatabase(DataSource dataSource) {
     this.dataSource = dataSource;
-    this.connectionPool = new ConnectionPool(dataSource);
+    this.connectionPool = new DatabaseConnectionPool(dataSource);
     // TODO: Fetch the DataSource description property.
     LOGGER.config("Using JDBC DataSource: " + dataSource.toString());
   }
@@ -48,7 +48,7 @@ public class JdbcDatabase {
     return dataSource;
   }
 
-  public ConnectionPool getConnectionPool() {
+  public DatabaseConnectionPool getConnectionPool() {
     return connectionPool;
   }
 
@@ -91,7 +91,9 @@ public class JdbcDatabase {
         } else {
           tablePattern = tableName;
         }
-        // Now quote '-', a special character in search patterns.
+        // Now quote '%' and '-', a special characters in search patterns.
+        tablePattern =
+            tablePattern.replace("%", metaData.getSearchStringEscape() + "%");
         tablePattern =
             tablePattern.replace("_", metaData.getSearchStringEscape() + "_");
         ResultSet tables = metaData.getTables(null, null, tablePattern, null);
@@ -134,65 +136,6 @@ public class JdbcDatabase {
     } catch (SQLException e) {
       LOGGER.log(Level.SEVERE, "Failed to create table "
           + tableName, e);
-    }
-  }
-
-  // A Pool of JDBC Connections.
-  public static class ConnectionPool {
-    private final DataSource dataSource;
-    private final LinkedList<Connection> connections = new LinkedList<Connection>();
-
-    ConnectionPool(DataSource dataSource) {
-      this.dataSource = dataSource;
-    }
-
-    // Return a Connection from the ConnectionPool.  If the pool is empty,
-    // then get a new Connection from the DataSource.
-    synchronized Connection getConnection() throws SQLException {
-      Connection conn;
-      try {
-        // Get a cached connection, but check if it is still functional.
-        do {
-          conn = connections.remove(0);
-        } while (isDead(conn));
-      } catch (IndexOutOfBoundsException e) {
-        // Pool is empty.  Get a new connection from the dataSource.
-        conn = dataSource.getConnection();
-      }
-      return conn;
-    }
-
-    // Release a Connection back to the pool.
-    synchronized void releaseConnection(Connection conn) {
-      connections.add(0, conn);
-    }
-
-    // Empty the Pool, closing all Connections.
-    synchronized void closeConnections() {
-      for (Connection conn : connections) {
-        close(conn);
-      }
-      connections.clear();
-    }
-
-    // Returns true if connection is dead, false if it appears to be OK.
-    private boolean isDead(Connection conn) {
-      try {
-        conn.getMetaData();
-        return false;
-      } catch (SQLException e) {
-        close(conn);
-        return true;
-      }
-    }
-
-    // Close the Connection silently.
-    private void close(Connection conn) {
-      try {
-        conn.close();
-      } catch (SQLException e) {
-        // Ignored.
-      }
     }
   }
 }

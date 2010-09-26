@@ -15,6 +15,8 @@
 package com.google.enterprise.connector.persist;
 
 import com.google.enterprise.connector.scheduler.Schedule;
+import com.google.enterprise.connector.util.database.JdbcDatabase;
+import com.google.enterprise.connector.util.database.JdbcDatabaseTest;
 
 import org.h2.jdbcx.JdbcDataSource;
 
