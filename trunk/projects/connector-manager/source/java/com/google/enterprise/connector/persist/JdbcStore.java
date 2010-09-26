@@ -21,6 +21,7 @@ import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
+import com.google.enterprise.connector.util.database.JdbcDatabase;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
