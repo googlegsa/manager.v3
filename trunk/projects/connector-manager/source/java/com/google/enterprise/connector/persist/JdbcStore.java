@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -94,7 +95,11 @@ public class JdbcStore implements PersistentStore {
     // Verify that the connector instances table exists.
    Object[] params = { TABLE_NAME, ID, MODIFY_STAMP, CONNECTOR_NAME,
         PROPERTY_NAME, PROPERTY_VALUE };
-    database.verifyTableExists(TABLE_NAME, params, createTableDdl);
+   String[] ddl = new String[createTableDdl.size()];
+   for (int i = 0; i < createTableDdl.size(); i++) {
+     ddl[i] = MessageFormat.format(createTableDdl.get(i), params);
+   }
+   database.verifyTableExists(TABLE_NAME, ddl);
   }
 
   /**
@@ -110,6 +115,10 @@ public class JdbcStore implements PersistentStore {
   @VisibleForTesting
   public JdbcDatabase getDatabase() {
     return database;
+  }
+
+  @VisibleForTesting
+  public void setResourceClassLoader(ClassLoader ignored) {
   }
 
   /**

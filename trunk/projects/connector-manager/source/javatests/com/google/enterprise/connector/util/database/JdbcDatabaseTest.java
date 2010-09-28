@@ -60,39 +60,23 @@ public class JdbcDatabaseTest extends TestCase {
   // Test creating a Table.
   public void testCreateTable() throws SQLException {
     // Connect to the database.
-    Connection connection = dataSource.getConnection();
+    Connection connection = database.getConnectionPool().getConnection();
     String tableName = "test_table";
-    assertFalse(tableExists(connection, tableName));
-    List<String> createTableDdl = ImmutableList.of(
-        "CREATE TABLE IF NOT EXISTS {0} ( "
-        + "{1} INT IDENTITY PRIMARY KEY NOT NULL)");
-    Object[] params = { tableName, "foo"};
-    database.verifyTableExists(tableName, params, createTableDdl);
 
-    assertTableExistsTodo(connection, tableName);
+    // Assert the table does not yet exist.
+    assertFalse(database.verifyTableExists(tableName, null));
+
+    String[] createTableDdl = {
+        "CREATE TABLE IF NOT EXISTS " + tableName
+        + " ( foo INT IDENTITY PRIMARY KEY NOT NULL)" };
+
+    // Verify that we can create the table.
+    assertTrue(database.verifyTableExists(tableName, createTableDdl));
+
+    // Assert the table does now exist.
+    assertTrue(database.verifyTableExists(tableName, null));
 
     connection.close();
-  }
-
-  public static void assertTableExistsTodo(Connection connection, String tableName) {
-    /* TODO: Why does this fail for in-memory DBs?
-    assertTrue(tableExists(connection, JdbcStore.TABLE_NAME));
-    */
-  }
-
-  public static boolean tableExists(Connection connection, String tableName)
-      throws SQLException {
-    DatabaseMetaData metaData = connection.getMetaData();
-    ResultSet tables = metaData.getTables(null, null, tableName, null);
-    try {
-      while (tables.next()) {
-        if (tableName.equalsIgnoreCase(tables.getString("TABLE_NAME"))) {
-          return true;
-        }
-      }
-      return false;
-    } finally {
-      tables.close();
-    }
+    database.getConnectionPool().releaseConnection(connection);
   }
 }

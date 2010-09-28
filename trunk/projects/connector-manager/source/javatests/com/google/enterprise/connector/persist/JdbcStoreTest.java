@@ -16,10 +16,12 @@ package com.google.enterprise.connector.persist;
 
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.util.database.JdbcDatabase;
-import com.google.enterprise.connector.util.database.JdbcDatabaseTest;
 
 import org.h2.jdbcx.JdbcDataSource;
 
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -29,8 +31,8 @@ import javax.sql.DataSource;
  * Class to test JDBC persistent store.
  */
 public class JdbcStoreTest extends PersistentStoreTestAbstract {
-
   protected DataSource dataSource;
+  protected JdbcDatabase jdbcDatabase;
 
   @Override
   protected void setUp() throws Exception {
@@ -42,34 +44,63 @@ public class JdbcStoreTest extends PersistentStoreTestAbstract {
     ds.setUser("sa");
     ds.setPassword("sa");
     dataSource = ds;
-    JdbcDatabase jdbcDatabase = new JdbcDatabase(ds);
+    jdbcDatabase = new JdbcDatabase(ds);
 
     store = new JdbcStore();
     ((JdbcStore) store).setDatabase(jdbcDatabase);
+    ((JdbcStore) store).setResourceClassLoader(new TestClassLoader());
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      ((JdbcStore) store).getDatabase().finalize();
+      jdbcDatabase.finalize();
     } finally {
       super.tearDown();
     }
   }
 
-  // Tests creating Connector Table.
+  // Tests creating Connector Table lazily.
   public void testCreateTable() throws SQLException {
-    // Connect to the database.
-    Connection connection = dataSource.getConnection();
+    Connection connection = jdbcDatabase.getConnectionPool().getConnection();
+    String tableName = "google_connectors";
 
-    assertFalse(JdbcDatabaseTest.tableExists(connection, JdbcStore.TABLE_NAME));
+    // Assert the table does not yet exist.
+    assertFalse(jdbcDatabase.verifyTableExists(tableName, null));
 
+    // Accessing the table should force its creation.
     Schedule schedule =
         store.getConnectorSchedule(getStoreContext("nonexist"));
     assertNull(schedule);
 
-    JdbcDatabaseTest.assertTableExistsTodo(connection, JdbcStore.TABLE_NAME);
+    // Assert the table does now exist.
+    assertTrue(jdbcDatabase.verifyTableExists(tableName, null));
 
     connection.close();
+    jdbcDatabase.getConnectionPool().releaseConnection(connection);
+  }
+
+  // A ClassLoader that looks for resources relative to the
+  // current working directory and the source/resources directory.
+  private class TestClassLoader extends ClassLoader {
+    private static final String RESOURCE_DIR = "source/resources/";
+
+    @Override
+    public URL getResource(String name) {
+      try {
+        File file = new File(name);
+        if (file.exists() && file.isFile()) {
+          return file.toURI().toURL();
+        } else {
+          file = new File(RESOURCE_DIR + name);
+          if (file.exists() && file.isFile()) {
+            return file.toURI().toURL();
+          }
+        }
+      } catch (MalformedURLException e) {
+        // Fall through and look on classpath.
+      }
+      return this.getClass().getClassLoader().getResource(name);
+    }
   }
 }
