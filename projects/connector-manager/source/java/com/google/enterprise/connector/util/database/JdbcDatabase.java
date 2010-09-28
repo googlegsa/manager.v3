@@ -14,12 +14,13 @@
 
 package com.google.enterprise.connector.util.database;
 
+import com.google.enterprise.connector.spi.SpiConstants.DatabaseType;
+
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.MessageFormat;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -36,6 +37,8 @@ public class JdbcDatabase {
 
   private final DataSource dataSource;
   private final DatabaseConnectionPool connectionPool;
+  private DatabaseType databaseType;
+  private DatabaseInfo databaseInfo;
 
   public JdbcDatabase(DataSource dataSource) {
     this.dataSource = dataSource;
@@ -52,6 +55,76 @@ public class JdbcDatabase {
     return connectionPool;
   }
 
+  public DatabaseInfo getDatabaseInfo() {
+    getInfo();
+    return databaseInfo;
+  }
+
+  public DatabaseType getDatabaseType() {
+    getInfo();
+    return databaseType;
+  }
+
+  private void getInfo() {
+    if (databaseInfo != null) {
+      return;
+    }
+    // TODO: Support Manual Configuration of this information,
+    // which would override this detection.
+    try {
+      Connection connection = getConnectionPool().getConnection();
+      try {
+        DatabaseMetaData metaData = connection.getMetaData();
+        int majorVersion = metaData.getDatabaseMajorVersion();
+        int minorVersion = metaData.getDatabaseMinorVersion();
+        String productName = metaData.getDatabaseProductName();
+        String productVersion = metaData.getDatabaseProductVersion();
+        LOGGER.config("JDBC Database ProductName: " + productName);
+        LOGGER.config("JDBC Database ProductVersion: " + productVersion);
+        LOGGER.config("JDBC Database MajorVersion: " + majorVersion);
+        LOGGER.config("JDBC Database MinorVersion: " + minorVersion);
+
+        String description = productName + " " + productVersion;
+        productName = DatabaseInfo.sanitize(productName);
+        if (productName.equals(DatabaseType.ORACLE.toString())) {
+          // Oracle already has a really long description string.
+          description = productVersion.replace("\n", " ");
+        } else if (productName.equals("microsoft-sql-server")) {
+          // If it looks like "Microsoft SQL Server", shorten name.
+          productName = DatabaseType.SQLSERVER.toString();
+        } else if (productName.startsWith("db2")) {
+          // IBM embellishes the DB2 productName with extra platform info.
+          productName = "db2";
+        } else if (productName.indexOf("derby") >= 0) {
+          productName = "derby";
+        } else if (productName.indexOf("firebird") >= 0) {
+          productName = "firebird";
+        } else if (productName.indexOf("informix") >= 0) {
+          // Like anyone still uses this.
+          productName = "informix";
+        } else if (productName.indexOf("sybase") >= 0) {
+          // Both Microsoft and Sybase products are called "SQL Server".
+          productName = "sybase";
+        }
+        // Most of the others have simple, one-word product names.
+
+        databaseType = DatabaseType.findDatabaseType(productName);
+        databaseInfo =
+            new DatabaseInfo(productName, Integer.toString(majorVersion),
+            Integer.toString(minorVersion), description);
+        return;
+      } finally {
+        getConnectionPool().releaseConnection(connection);
+      }
+    } catch (SQLException e) {
+      LOGGER.log(Level.SEVERE, "Failed to retrieve DatabaseMetaData", e);
+    }
+
+    // Fallback in case we can't get anything from DatabaseMetaData.
+    databaseType = DatabaseType.OTHER;
+    databaseInfo = new DatabaseInfo(null, null, null, "Unknown Database");
+  }
+
   @Override
   public synchronized void finalize() throws Exception {
     if (getConnectionPool() != null) {
@@ -60,13 +133,18 @@ public class JdbcDatabase {
   }
 
   /**
-   * Verify that a table exists in the DB.
-   * If not, create it.
+   * Verify that a table named {@code tableName} exists in the database.
+   * If not, create it, using the supplied DDL statements.
    *
-   * @param tableName
-   * @param createTableDdl
+   * @param tableName the name of the table to find in the database.
+   * @param createTableDdl DDL statements that may be used to create the
+   *        table if it does not exist.  If {@code null}, no attempt will
+   *        be made to create the table.
+   *
+   * @return {@code true} if the table exists or was successfully created,
+   *         {@code false} if the table does not exist.
    */
-  public void verifyTableExists(String tableName, Object[] params, List<String> createTableDdl) {
+  public boolean verifyTableExists(String tableName, String[] createTableDdl) {
     Connection connection = null;
     boolean originalAutoCommit = true;
     try {
@@ -101,25 +179,30 @@ public class JdbcDatabase {
           while (tables.next()) {
             if (tableName.equalsIgnoreCase(tables.getString("TABLE_NAME"))) {
               LOGGER.config("Found table: " + tableName);
-              return;
+              return true;
             }
           }
         } finally {
           tables.close();
         }
 
-        // Our table was not found. Create it using the Create Table DDL.
+        // Our table was not found.
+        if (createTableDdl == null) {
+          return false;
+        }
+
+        // Create the table using the supplied Create Table DDL.
         Statement stmt = connection.createStatement();
         try {
           for (String ddlStatement : createTableDdl) {
-            String update = MessageFormat.format(ddlStatement, params);
-            LOGGER.config("Creating table " + tableName + ": " + update);
-            stmt.executeUpdate(update);
+            LOGGER.config("Creating table " + tableName + ": " + ddlStatement);
+            stmt.executeUpdate(ddlStatement);
           }
           connection.commit();
         } finally {
           stmt.close();
         }
+        return true;
       } catch (SQLException e) {
         try {
           connection.rollback();
@@ -134,8 +217,8 @@ public class JdbcDatabase {
         getConnectionPool().releaseConnection(connection);
       }
     } catch (SQLException e) {
-      LOGGER.log(Level.SEVERE, "Failed to create table "
-          + tableName, e);
+      LOGGER.log(Level.SEVERE, "Failed to create table " + tableName, e);
+      return false;
     }
   }
 }

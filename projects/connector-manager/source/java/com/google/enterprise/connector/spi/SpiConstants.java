@@ -493,17 +493,31 @@ public class SpiConstants {
     OTHER("other"),
     ORACLE("oracle"),
     SQLSERVER("sqlserver"),
-    H2("h2"), ;
+    H2("h2"),
+    MYSQL("mysql"), ;
 
-    private final String name;
+    private final String tag;
 
-    private DatabaseType(String name) {
-      this.name = name;
+    private DatabaseType(String tag) {
+      this.tag = tag;
+    }
+
+    /**
+     * @return The enum matching the given {@code tag}, or
+     *         {@code OTHER} if a match is not found.
+     */
+    public static DatabaseType findDatabaseType(String tag) {
+      try {
+        return Enum.valueOf(DatabaseType.class, tag.toUpper());
+      } catch (IllegalArgumentException e) {
+        // Not found, return OTHER.
+        return OTHER;
+      }
     }
 
     @Override
     public String toString() {
-      return name;
+      return tag;
     }
   }
 
