@@ -508,7 +508,7 @@ public class SpiConstants {
      */
     public static DatabaseType findDatabaseType(String tag) {
       try {
-        return Enum.valueOf(DatabaseType.class, tag.toUpper());
+        return Enum.valueOf(DatabaseType.class, tag.toUpperCase());
       } catch (IllegalArgumentException e) {
         // Not found, return OTHER.
         return OTHER;
