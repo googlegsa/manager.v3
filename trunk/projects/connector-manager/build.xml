@@ -18,6 +18,7 @@
   <property name="src" value="source/java" />
   <property name="classes" value="${prod}/classes" />
   <property name="spi-classes" value="${prod}/spi-classes" />
+  <property name="resources" value="source/resources" />
   <property name="dtds" value="source/dtds" />
   <property name="webdocs" value="source/webdocs" />
   <property name="webcontent" value="source/html" />
@@ -172,6 +173,7 @@
     </pathconvert>
     <jar jarfile="${connector.jarfile}">
       <fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**, **/util/**, **/logging/**"/>
+      <fileset dir="${resources}" includes="**"/>
       <manifest>
         <attribute name="Implementation-Title" value="Connector Manager Impl"/>
         <attribute name="Implementation-Version"
