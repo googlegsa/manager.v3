@@ -21,7 +21,10 @@ import com.google.enterprise.connector.common.PropertiesException;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.instantiator.Configuration;
 import com.google.enterprise.connector.scheduler.Schedule;
+import com.google.enterprise.connector.spi.DatabaseResourceBundle;
 import com.google.enterprise.connector.util.database.JdbcDatabase;
+import com.google.enterprise.connector.util.database.DatabaseInfo;
+import com.google.enterprise.connector.util.database.DatabaseResourceBundleManager;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -48,14 +51,6 @@ public class JdbcStore implements PersistentStore {
   private static final Logger LOGGER =
       Logger.getLogger(JdbcStore.class.getName());
 
-  /* SQL Table and Column names */
-  static final String TABLE_NAME = "google_connectors";
-  static final String ID = "id";
-  static final String MODIFY_STAMP = "modify_stamp";
-  static final String CONNECTOR_NAME = "connector_name";
-  static final String PROPERTY_NAME = "property_name";
-  static final String PROPERTY_VALUE = "property_value";
-
   /* Property Names */
   static final String SCHEDULE = "schedule";
   static final String STATE = "checkpoint";
@@ -63,43 +58,59 @@ public class JdbcStore implements PersistentStore {
   static final String MAP = "configuration_map";
   static final String XML = "configuration_xml";
 
-  static final String TYPES_QUERY =
-    "SELECT " + CONNECTOR_NAME + "," + PROPERTY_VALUE + " FROM " + TABLE_NAME
-    + " WHERE ( " + PROPERTY_NAME + "='" + TYPE + "' AND " + PROPERTY_VALUE
-    + " IS NOT NULL )";
+  static final String RESOURCE_BUNDLE_NAME = "sql.connector-manager.JdbcStore";
+  private DatabaseResourceBundle resourceBundle = null;
 
-  static final String INVENTORY_QUERY =
-    "SELECT " + MODIFY_STAMP + "," + CONNECTOR_NAME + "," + PROPERTY_NAME
-    + " FROM " + TABLE_NAME + " WHERE ( " + PROPERTY_VALUE + " IS NOT NULL )";
+  // Classloader tailored to test environment.
+  private ClassLoader classLoader = null;
 
   private JdbcDatabase database = null;
 
-  /* Connector Instance Create Table DDL
-   * {0} is TABLE_NAME
-   * {1} is ID (PRIMARY KEY)
-   * {2} is MODIFY_STAMP
-   * {3} is CONNECTOR_NAME
-   * {4} is PROPERTY_NAME
-   * {5} is PROPERTY_VALUE
-   */
-  private List<String> createTableDdl = Collections.singletonList(
-      "CREATE TABLE IF NOT EXISTS {0} ( "
-      + "{1} INT IDENTITY PRIMARY KEY NOT NULL, {2} INT, "
-      + "{3} VARCHAR(64) NOT NULL, "
-      + "{4} VARCHAR(64) NOT NULL, {5} VARCHAR NULL )");
+  /* Cached SQL Resources */
+  private String inventoryStampsQuery;
+  private String inventoryTypesQuery;
+  private String getValueQuery;
+  private String setValueQuery;
+  private String connectorNameColumn;
+  private String modifyStampColumn;
+  private String propertyNameColumn;
+  private String propertyValueColumn;
 
   private synchronized void init() {
     if (database == null) {
-      throw new IllegalStateException("Must set dataSource");
+      throw new IllegalStateException("Must set JdbcDatabase");
     }
-    // Verify that the connector instances table exists.
-   Object[] params = { TABLE_NAME, ID, MODIFY_STAMP, CONNECTOR_NAME,
-        PROPERTY_NAME, PROPERTY_VALUE };
-   String[] ddl = new String[createTableDdl.size()];
-   for (int i = 0; i < createTableDdl.size(); i++) {
-     ddl[i] = MessageFormat.format(createTableDdl.get(i), params);
+
+    // Locate our SQL DatabaseResourceBundle.
+    DatabaseResourceBundleManager mgr = new DatabaseResourceBundleManager();
+    DatabaseInfo dbInfo = database.getDatabaseInfo();
+    resourceBundle = mgr.getResourceBundle(RESOURCE_BUNDLE_NAME, dbInfo, classLoader);
+    if (resourceBundle == null) {
+      // TODO: PersistentStore interface methods should be able to throw PersistentStoreExceptions.
+      throw new RuntimeException("Failed to load SQL ResourceBundle "
+                                 + RESOURCE_BUNDLE_NAME);
    }
-   database.verifyTableExists(TABLE_NAME, ddl);
+
+    // Verify that the connector instance table exists.
+    String tableName = getResource("table.name");
+    if (!database.verifyTableExists(tableName,
+         resourceBundle.getStringArray("table.create.ddl"))) {
+      // TODO: PersistentStore interface methods should be able to throw PersistentStoreExceptions.
+      throw new RuntimeException("Persistent Store Table does not exist "
+                                 + tableName);
+    }
+
+    // Cache some SQL resources.
+    // TODO: These queries should really be PreparedStatements.
+    inventoryStampsQuery = getResource("getinventory.stamps.query");
+    inventoryTypesQuery = getResource("getinventory.types.query");
+    getValueQuery = getResource("getvalue.query");
+    setValueQuery = getResource("setvalue.query");
+
+    connectorNameColumn = getResource("column.connector_name");
+    modifyStampColumn = getResource("column.modify_stamp");
+    propertyNameColumn = getResource("column.property_name");
+    propertyValueColumn = getResource("column.property_value");
   }
 
   /**
@@ -117,45 +128,21 @@ public class JdbcStore implements PersistentStore {
     return database;
   }
 
+  /* Sets the ClassLoader that will be used to locate SQL Resources. */
   @VisibleForTesting
-  public void setResourceClassLoader(ClassLoader ignored) {
+  void setResourceClassLoader(ClassLoader classLoader) {
+    this.classLoader = classLoader;
   }
 
   /**
-   * Sets the DDL statements used for creation of the connector instance table
-   * in the database.  The syntax for table creation and data types might
-   * vary slightly for different database vendors.
-   * <p>
-   * The Create Table DDL is in {@link java.text.MessageFormat} syntax.
-   * The placeholders will be filled in as follows:<pre>
-   *    {0} The name of the Connector Instance table that is created.
-   *    {1} Integer auto-incrementing primary key id for row.
-   *    {2} Integer modification stamp, updated when the value is changed.
-   *    {3} The connector name.  A string with maximum length of 64 characters.
-   *    {4} The property name of the configuration property.
-   *        A string with maximum length of 64 characters.
-   *    {5} The configuration property value.  This can theoretically be
-   *        an arbitrarily long String, although for Google-supplied
-   *        connectors, it ranges from tens of bytes to a few kilobytes.
-   *        The stored value may be NULL.
-   *</pre>
-   *
-   * @param createTableDdl SQL statements that will be used to create the
-   *        connector instance table.  The {@code createTableDdl} may be
-   *        either a {@code String} or a {@code List<String>}.  If a List
-   *        of Strings is provided, each item is executed as a seperate SQL
-   *        statement.
+   * Returns the SQL resource for the supplied key.
    */
-  @SuppressWarnings("unchecked")
-  public void setCreateTableDdl(Object createTableDdl) {
-    if (createTableDdl instanceof List) {
-      this.createTableDdl = (List<String>) createTableDdl;
-    } else if (createTableDdl instanceof String) {
-      this.createTableDdl = Collections.singletonList((String) createTableDdl);
-    } else {
-      throw new IllegalArgumentException("createTableDdl must be either a "
-                                         + "String or a List of Strings.");
+  private String getResource(String key) {
+    String value = resourceBundle.getString(key);
+    if (value == null) {
+      LOGGER.log(Level.WARNING, "Failed to resolve SQL resource " + key);
     }
+    return value;
   }
 
   /**
@@ -184,16 +171,16 @@ public class JdbcStore implements PersistentStore {
         Statement statement = connection.createStatement(
             ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
         try {
-          ResultSet resultSet = statement.executeQuery(INVENTORY_QUERY);
+          ResultSet resultSet = statement.executeQuery(inventoryStampsQuery);
           while (resultSet.next()) {
-            String connectorName = resultSet.getString(CONNECTOR_NAME);
+            String connectorName = resultSet.getString(connectorNameColumn);
             Map<String, JdbcStamp> stamps = stampAlbum.get(connectorName);
             if (stamps == null) {
               stamps = new HashMap<String, JdbcStamp>();
               stampAlbum.put(connectorName, stamps);
             }
-            stamps.put(resultSet.getString(PROPERTY_NAME),
-                new JdbcStamp(resultSet.getLong(MODIFY_STAMP)));
+            stamps.put(resultSet.getString(propertyNameColumn),
+                       new JdbcStamp(resultSet.getLong(modifyStampColumn)));
           }
         } finally {
           statement.close();
@@ -206,11 +193,13 @@ public class JdbcStore implements PersistentStore {
         statement = connection.createStatement(
             ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
         try {
-          ResultSet resultSet = statement.executeQuery(TYPES_QUERY);
+          Object[] params = { quoteValue(TYPE) };
+          String query = MessageFormat.format(inventoryTypesQuery, params);
+          ResultSet resultSet = statement.executeQuery(query);
           while (resultSet.next()) {
-            String connectorName = resultSet.getString(CONNECTOR_NAME);
+            String connectorName = resultSet.getString(connectorNameColumn);
             StoreContext storeContext = new StoreContext(connectorName,
-                resultSet.getString(PROPERTY_VALUE));
+                resultSet.getString(propertyValueColumn));
             Map<String, JdbcStamp> stamps = stampAlbum.get(connectorName);
             ConnectorStamps connectorStamps;
             if (stamps == null) {
@@ -410,6 +399,22 @@ public class JdbcStore implements PersistentStore {
   }
 
   /**
+   * Quotes the supplied value using single qoutes.  MessageFormat
+   * considers embedded single-quotes special, and doesn't do
+   * substitutions within them.  Unfortunately, this is exactly
+   * where we want to use substitutions: in SQL queries like:
+   * {@code ... WHERE ( connector_name='{0}' ...}.
+   * <p>
+   * One solution is to add the quote characters to the value being
+   * substituted in (the purpose of this method).  Another solution would
+   * be to avoid MessageFormat, possibly trying PreparedStatement syntax.
+   */
+  // TODO: Use PreparedStatements.
+  private String quoteValue(String value) {
+    return "'" + value.replace("'", "''") + "'";
+  }
+
+  /**
    * Retrieve a database field value.
    *
    * @param context a StoreContext
@@ -422,14 +427,14 @@ public class JdbcStore implements PersistentStore {
       init();
       Connection connection = database.getConnectionPool().getConnection();
       try {
-        String query = "SELECT " + PROPERTY_VALUE + " FROM " + TABLE_NAME
-            + " WHERE ( " + CONNECTOR_NAME + " = '" + context.getConnectorName()
-            + "' AND " + PROPERTY_NAME + " = '" + fieldName + "' )";
+        Object[] params =
+            { quoteValue(context.getConnectorName()), quoteValue(fieldName) };
+        String query = MessageFormat.format(getValueQuery, params);
         Statement stmt = connection.createStatement();
         try {
           ResultSet rs = stmt.executeQuery(query);
           if (rs.next()) {
-            return rs.getString(PROPERTY_VALUE);
+            return rs.getString(propertyValueColumn);
           }
         } finally {
           stmt.close();
@@ -463,10 +468,9 @@ public class JdbcStore implements PersistentStore {
         originalAutoCommit = connection.getAutoCommit();
         connection.setAutoCommit(false);
 
-        String query = "SELECT " + TABLE_NAME + ".* FROM " + TABLE_NAME
-            + " WHERE ( " + CONNECTOR_NAME + " = '" + context.getConnectorName()
-            + "' AND " + PROPERTY_NAME + " = '" + fieldName + "' )";
-
+        Object[] params =
+            { quoteValue(context.getConnectorName()), quoteValue(fieldName) };
+        String query = MessageFormat.format(setValueQuery, params);
         Statement stmt = connection.createStatement(
             ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
         try {
@@ -474,23 +478,23 @@ public class JdbcStore implements PersistentStore {
           if (rs.next()) {
             // This connector property exists, update the property value.
             if (fieldValue == null) {
-              rs.updateNull(PROPERTY_VALUE);
+              rs.updateNull(propertyValueColumn);
             } else {
-              rs.updateString(PROPERTY_VALUE, fieldValue);
+              rs.updateString(propertyValueColumn, fieldValue);
             }
             // Bump the ModifyStamp, so others may know the value has changed.
-            rs.updateInt(MODIFY_STAMP, rs.getInt(MODIFY_STAMP) + 1);
+            rs.updateInt(modifyStampColumn, rs.getInt(modifyStampColumn) + 1);
             rs.updateRow();
           } else {
             // This connector property does not exist, insert it with new value.
             rs.moveToInsertRow();
-            rs.updateInt(MODIFY_STAMP, 1); // Bootstrap the ModifyStamp
-            rs.updateString(CONNECTOR_NAME, context.getConnectorName());
-            rs.updateString(PROPERTY_NAME, fieldName);
+            rs.updateInt(modifyStampColumn, 1); // Bootstrap the ModifyStamp
+            rs.updateString(connectorNameColumn, context.getConnectorName());
+            rs.updateString(propertyNameColumn, fieldName);
             if (fieldValue == null) {
-              rs.updateNull(PROPERTY_VALUE);
+              rs.updateNull(propertyValueColumn);
             } else {
-              rs.updateString(PROPERTY_VALUE, fieldValue);
+              rs.updateString(propertyValueColumn, fieldValue);
             }
             rs.insertRow();
           }
@@ -515,5 +519,4 @@ public class JdbcStore implements PersistentStore {
           + " for connector " + context.getConnectorName(), e);
     }
   }
-
 }
