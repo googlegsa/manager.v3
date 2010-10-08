@@ -77,6 +77,9 @@ public class JdbcStore implements PersistentStore {
   private String propertyValueColumn;
 
   private synchronized void init() {
+    if (resourceBundle != null) {
+      return;
+    }
     if (database == null) {
       throw new IllegalStateException("Must set JdbcDatabase");
     }
