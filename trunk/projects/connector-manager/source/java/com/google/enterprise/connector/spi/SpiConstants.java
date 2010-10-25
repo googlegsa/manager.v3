@@ -337,29 +337,15 @@ public class SpiConstants {
   }
 
   /**
-   * Ordinal-base typesafe enum for action types.
+   * Enum for action types.
    */
-  // TODO: Change this to an Enum.
-  public static class ActionType implements Comparable<ActionType> {
-    private static int nextOrdinal = 0;
-    private final int ordinal = nextOrdinal++;
-
-    public static final ActionType ADD = new ActionType("add");
-    public static final ActionType DELETE = new ActionType("delete");
-    public static final ActionType ERROR = new ActionType("error");
-    public static final ActionType SKIPPED = new ActionType("skipped");
-
-    private static final ActionType[] PRIVATE_VALUES = {ADD, DELETE};
+  public enum ActionType {
+    ADD("add"), DELETE("delete"), ERROR("error"), SKIPPED("skipped");
 
     private final String tag;
 
     ActionType(String m) {
       tag = m;
-    }
-
-    @Override
-    public String toString() {
-      return tag;
     }
 
     /**
@@ -368,74 +354,31 @@ public class SpiConstants {
      *         <code>tag</code> does not match a known <code>ActionType</code>.
      */
     public static ActionType findActionType(String tag) {
-      if (tag == null) {
+      try {
+        return Enum.valueOf(ActionType.class, tag.toUpperCase());
+      } catch (IllegalArgumentException e) {
+        // Not found, return ERROR.
         return ERROR;
       }
-      for (int i = 0; i < PRIVATE_VALUES.length; i++) {
-        if (PRIVATE_VALUES[i].tag.equals(tag)) {
-          return PRIVATE_VALUES[i];
-        }
-      }
-      return ERROR;
-    }
-
-    public int compareTo(ActionType actionType) {
-      return ordinal - actionType.ordinal;
-    }
-
-    @Override
-    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ordinal;
-      return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null) {
-        return false;
-      }
-      if (getClass() != obj.getClass()) {
-        return false;
-      }
-      ActionType other = (ActionType) obj;
-      if (ordinal != other.ordinal) {
-        return false;
-      }
-      return true;
-    }
-  }
-
-  /**
-   * Ordinal-base typesafe enum for known role types.
-   */
-  // TODO: Change this to an Enum.
-  public static class RoleType implements Comparable<RoleType> {
-    private static int nextOrdinal = 0;
-    private final int ordinal = nextOrdinal++;
-
-    public static final RoleType PEEKER = new RoleType("peeker");
-    public static final RoleType READER = new RoleType("reader");
-    public static final RoleType WRITER = new RoleType("writer");
-    public static final RoleType OWNER = new RoleType("owner");
-    public static final RoleType ERROR = new RoleType("error");
-
-    private static final RoleType[] PRIVATE_VALUES =
-        {PEEKER, READER, WRITER, OWNER};
-
-    private final String tag;
-
-    RoleType(String m) {
-      tag = m;
     }
 
     @Override
     public String toString() {
       return tag;
+    }
+  }
+
+  /**
+   * Enum for known role types.
+   */
+  public enum RoleType {
+    PEEKER("peeker"), READER("reader"), WRITER("writer"), OWNER("owner"),
+    ERROR("error");
+
+    private final String tag;
+
+    RoleType(String m) {
+      tag = m;
     }
 
     /**
@@ -444,45 +387,17 @@ public class SpiConstants {
      *         <code>tag</code> does not match a known <code>RoleType</code>.
      */
     public static RoleType findRoleType(String tag) {
-      if (tag == null) {
+      try {
+        return Enum.valueOf(RoleType.class, tag.toUpperCase());
+      } catch (IllegalArgumentException e) {
+        // Not found, return ERROR.
         return ERROR;
       }
-      for (int i = 0; i < PRIVATE_VALUES.length; i++) {
-        if (PRIVATE_VALUES[i].tag.equals(tag)) {
-          return PRIVATE_VALUES[i];
-        }
-      }
-      return ERROR;
-    }
-
-    public int compareTo(RoleType roleType) {
-      return ordinal - roleType.ordinal;
     }
 
     @Override
-    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ordinal;
-      return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null) {
-        return false;
-      }
-      if (getClass() != obj.getClass()) {
-        return false;
-      }
-      RoleType other = (RoleType) obj;
-      if (ordinal != other.ordinal) {
-        return false;
-      }
-      return true;
+    public String toString() {
+      return tag;
     }
   }
 
