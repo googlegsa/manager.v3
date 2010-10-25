@@ -57,8 +57,7 @@ public class MigrateStore extends AbstractCommandLineApp {
 
   @Override
   public String getDescription() {
-    return "Migrates Connector configurations from one Persistent Store "
-           + "to another.";
+    return "Migrates Connector configurations between Persistent Stores.";
   }
 
   @Override

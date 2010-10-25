@@ -355,6 +355,7 @@ public abstract class AbstractCommandLineApp {
 
   // Relative to a given directory name, where is WEB-INF?
   private final HashMap<String, String> cmDirsMap = new HashMap<String, String>() {{
+      put("scripts", "../Tomcat/webapps/connector-manager/WEB-INF");
       put("tomcat", "webapps/connector-manager/WEB-INF");
       put("webapps", "connector-manager/WEB-INF");
       put("connector-manager", "WEB-INF");
