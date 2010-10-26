@@ -57,11 +57,11 @@ import javax.sql.DataSource;
  * <li>getting a {@link DataSource} object by calling
  * {@link LocalDatabase#getDataSource()}
  * </li>
- * <li>constructing SQL queries and submitting them through jdbc
+ * <li>constructing SQL queries and submitting them through JDBC
  * </li>
  * </ul>
  * The connector implementor should not create records in this table through
- * jdbc.
+ * JDBC.
  */
 public interface LocalDocumentStore {
 
@@ -77,13 +77,13 @@ public interface LocalDocumentStore {
   public Document findDocument(String docid);
 
   /**
-   * Returns an iterator of all documents in the store created by this connector
-   * instance, in sorted order by docid.
+   * Returns an iterator of all documents in the store created by this
+   * connector instance, in sorted order by docid.
    * The result iterator is read-only. It will not support
    * {@link Iterator#remove()}.
    * <p/>
-   * The documents returned will be non-null and will contain only the persisted
-   * attributes. See {@link SpiConstants#PERSISTABLE_ATTRIBUTES}.
+   * The documents returned will be non-null and will contain only the
+   * persisted attributes. See {@link SpiConstants#PERSISTABLE_ATTRIBUTES}.
    *
    * @return an {@link Iterator} of all documents created by this connector
    *         instance, in order by docid.
@@ -91,26 +91,25 @@ public interface LocalDocumentStore {
   public Iterator<Document> getDocumentIterator();
 
   /**
-   * Returns an iterator of all documents in the store created by this connector
-   * instance, in sorted order by docid, starting with
-   * documents with docid {@code >=} the specified docid
+   * Returns an iterator of all documents in the store created by this
+   * connector instance whose docids are {@code > } the specified docid,
+   * in sorted order by docid.
    * The result iterator is read-only. It will not support
    * {@link Iterator#remove()}.
    * <p/>
-   * The documents returned will be non-null and will contain only the persisted
-   * attributes. See {@link SpiConstants#PERSISTABLE_ATTRIBUTES}.
+   * The documents returned will be non-null and will contain only the
+   * persisted attributes. See {@link SpiConstants#PERSISTABLE_ATTRIBUTES}.
    *
-   * @param docid the docid at which to start the iteration
+   * @param docid the docid after which to start the iteration, if {@code null}
+   *        or empty, all documents created by this connector are returned.
    * @return an {@link Iterator} of all documents created by this connector
-   *         instance, in order by docid,
-   *         starting with the specified docid.
+   *         instance whose docid exceeds the supplied docid, in order by docid.
    */
   public Iterator<Document> getDocumentIterator(String docid);
 
-
   /**
-   * Persists information about a document. Any attributes that are not keys in the
-   * {@link SpiConstants#PERSISTABLE_ATTRIBUTES} table will be ignored.
+   * Persists information about a document. Any attributes that are not keys in
+   * the {@link SpiConstants#PERSISTABLE_ATTRIBUTES} table will be ignored.
    *
    * @param document a {@link Document}
    */
@@ -125,11 +124,11 @@ public interface LocalDocumentStore {
   public void flush();
 
   /**
-   * Returns the table name of the underlying implementation table. The connector developer
-   * should not use this to do operations that could be done directly through
-   * this {@code LocalDocumentStore} object. We expect this to be used to
-   * do queries with non-updatable cursors, involving joins between this table
-   * and other tables independently managed by the connector.
+   * Returns the table name of the underlying implementation table.
+   * The connector developer should not use this to do operations that could be
+   * done directly through this {@code LocalDocumentStore} object. We expect
+   * this to be used to do queries with non-updatable cursors, involving joins
+   * between this table and other tables independently managed by the connector.
    *
    * @return the table name of the underlying table.
    */
