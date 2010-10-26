@@ -288,10 +288,16 @@
     <property name="clock" ref="Clock"/>
   </bean>
 
+  <bean id="ConnectorPersistentStoreFactory"
+        class="com.google.enterprise.connector.database.ConnectorPersistentStoreFactory">
+    <constructor-arg  ref="JdbcDatabase"/>
+  </bean>
+
   <bean id="ConnectorCoordinatorFactory"
         class="com.google.enterprise.connector.instantiator.ConnectorCoordinatorImplFactory">
     <property name="pusherFactory" ref="PusherFactory" />
     <property name="loadManagerFactory" ref="LoadManagerFactory"/>
+    <property name="connectorPersistentStoreFactory" ref="ConnectorPersistentStoreFactory"/>
     <property name="threadPool" ref="ThreadPool" />
     <property name="changeDetector" ref="ChangeDetector"/>
     <property name="clock" ref="Clock"/>

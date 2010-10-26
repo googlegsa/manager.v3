@@ -17,6 +17,7 @@ package com.google.enterprise.connector.instantiator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.enterprise.connector.common.PropertiesUtils;
 import com.google.enterprise.connector.common.StringUtils;
+import com.google.enterprise.connector.database.ConnectorPersistentStoreFactory;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
@@ -29,6 +30,8 @@ import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthorizationManager;
 import com.google.enterprise.connector.spi.ConfigureResponse;
 import com.google.enterprise.connector.spi.Connector;
+import com.google.enterprise.connector.spi.ConnectorPersistentStore;
+import com.google.enterprise.connector.spi.ConnectorPersistentStoreAware;
 import com.google.enterprise.connector.spi.ConnectorShutdownAware;
 import com.google.enterprise.connector.spi.ConnectorType;
 import com.google.enterprise.connector.spi.TraversalManager;
@@ -67,6 +70,7 @@ class ConnectorCoordinatorImpl implements
    */
   private final String name;
   private final PusherFactory pusherFactory;
+  private final ConnectorPersistentStoreFactory connectorPersistentStoreFactory;
   private final ThreadPool threadPool;
   private final ChangeDetector changeDetector;
   private final Clock clock;
@@ -119,19 +123,24 @@ class ConnectorCoordinatorImpl implements
    *        for pushing documents to the GSA.
    * @param loadManagerFactory  creates instances of
    *        {@link LoadManager} for controlling the feed rate.
+   * @param connectorPersistentStoreFactory creates instances of
+   *        {@link ConnectorPersistentStore} for Connectors that request
+   *        database access.
    * @param threadPool the {@link ThreadPool} for running traversals.
    * @param changeDetector used to invoke the ChangeHandlers for changes
    *        originiting within this Manager instance (or from the Servlets).
    */
   ConnectorCoordinatorImpl(String name, PusherFactory pusherFactory,
-      LoadManagerFactory loadManagerFactory, ThreadPool threadPool,
-      ChangeDetector changeDetector, Clock clock) {
+      LoadManagerFactory loadManagerFactory,
+      ConnectorPersistentStoreFactory connectorPersistentStoreFactory,
+      ThreadPool threadPool, ChangeDetector changeDetector, Clock clock) {
     this.name = name;
     this.threadPool = threadPool;
     this.clock = clock;
     this.changeDetector = changeDetector;
     this.pusherFactory = pusherFactory;
     this.loadManager = loadManagerFactory.newLoadManager(name);
+    this.connectorPersistentStoreFactory = connectorPersistentStoreFactory;
   }
 
   /**
@@ -825,6 +834,9 @@ class ConnectorCoordinatorImpl implements
     InstanceInfo newInstanceInfo = new InstanceInfo(name, connectorDir,
         newTypeInfo, newConfiguration);
 
+    // Set up connector database access.
+    setDatabaseAccess(newInstanceInfo);
+
     // Only after validateConfig and instantiation succeeds do we
     // save the new configuration to persistent store.
     newInstanceInfo.setConnectorConfiguration(newConfiguration);
@@ -854,6 +866,7 @@ class ConnectorCoordinatorImpl implements
     resetBatch();
     shutdownConnector(false);
 
+    setDatabaseAccess(newInstanceInfo);
     instanceInfo = newInstanceInfo;
     typeInfo = newTypeInfo;
 
@@ -862,6 +875,20 @@ class ConnectorCoordinatorImpl implements
 
     // Allow newly modified connector to resume traversals immediately.
     delayTraversal(TraversalDelayPolicy.IMMEDIATE);
+  }
+
+  private void setDatabaseAccess(InstanceInfo instanceInfo) {
+    if (connectorPersistentStoreFactory != null) {
+      Connector connector = instanceInfo.getConnector();
+      if (connector instanceof ConnectorPersistentStoreAware) {
+        ConnectorPersistentStore pstore =
+            connectorPersistentStoreFactory.newConnectorPersistentStore(
+               instanceInfo.getName(),
+               instanceInfo.getTypeInfo().getConnectorTypeName(),
+               instanceInfo.getTypeInfo().getConnectorType());
+        ((ConnectorPersistentStoreAware) connector).setDatabaseAccess(pstore);
+      }
+    }
   }
 
   private static ConfigureResponse validateConfig(String name,

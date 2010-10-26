@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.instantiator;
 
+import com.google.enterprise.connector.database.ConnectorPersistentStoreFactory;
 import com.google.enterprise.connector.pusher.PusherFactory;
 import com.google.enterprise.connector.scheduler.LoadManagerFactory;
 import com.google.enterprise.connector.spi.Connector;
@@ -28,6 +29,7 @@ public class ConnectorCoordinatorImplFactory
   // State that is filled in by Spring.
   private PusherFactory pusherFactory;
   private LoadManagerFactory loadManagerFactory;
+  private ConnectorPersistentStoreFactory connectorPersistentStoreFactory;
   private ThreadPool threadPool;
   private ChangeDetector changeDetector;
   private Clock clock;
@@ -52,6 +54,19 @@ public class ConnectorCoordinatorImplFactory
    */
   public void setLoadManagerFactory(LoadManagerFactory loadManagerFactory) {
     this.loadManagerFactory = loadManagerFactory;
+  }
+
+  /**
+   * Sets the {@link ConnectorPersistentStoreFactory} used to create instances
+   * of {@link com.google.enterprise.connector.spi.ConnectorPersistentStore}
+   * for providing database access to Connectors that request it.
+   *
+   * @param connectorPersistentStoreFactory a
+   *        {@link ConnectorPersistentStoreFactory} implementation.
+   */
+  public void setConnectorPersistentStoreFactory(
+        ConnectorPersistentStoreFactory connectorPersistentStoreFactory) {
+    this.connectorPersistentStoreFactory = connectorPersistentStoreFactory;
   }
 
   /**
@@ -102,6 +117,7 @@ public class ConnectorCoordinatorImplFactory
   /* @Override */
   public ConnectorCoordinator newConnectorCoordinator(String connectorName) {
     return new ConnectorCoordinatorImpl(connectorName,
-        pusherFactory, loadManagerFactory, threadPool, changeDetector, clock);
+        pusherFactory, loadManagerFactory, connectorPersistentStoreFactory,
+        threadPool, changeDetector, clock);
   }
 }
