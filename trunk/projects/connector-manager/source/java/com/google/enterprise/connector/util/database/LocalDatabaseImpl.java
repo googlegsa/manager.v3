@@ -57,7 +57,7 @@ public class LocalDatabaseImpl implements LocalDatabase {
   public LocalDatabaseImpl(JdbcDatabase jdbcDatabase, String connectorTypeName,
                            ConnectorType connectorType) {
     // TODO: Does this restrict resource lookup to the JAR file containing
-    // the ConnectorType?  This may or may not be desireable.
+    // the ConnectorType?  This may or may not be desirable.
     this(jdbcDatabase, connectorTypeName, (connectorType == null) ? null :
          connectorType.getClass().getClassLoader());
   }
