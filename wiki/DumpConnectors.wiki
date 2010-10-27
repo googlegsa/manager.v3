@@ -37,7 +37,7 @@ The !DumpConnectors utility is built into the Connector Manager's
 script found in the Connector installation's `Scripts` folder:
 {{{
 % cd /path/to/connector/installation/Scripts
-% Manager DumpConnectors /tmp/connectors.xml
+% ./Manager DumpConnectors /tmp/connectors.xml
 }}}
 
 This creates a XML file, `connectors.xml`, which contains the stored
