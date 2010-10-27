@@ -26,26 +26,20 @@ XML file.
 == Usage ==
 
 {{{
-usage: DumpConnectors [-?] [-v] <output_filename>
+usage: Manager DumpConnectors [-?] [-v] <output_filename>
        -?, --help      Display this help.
        -v, --version   Display version.
        output_filename Name of output XML file.
 }}}
 
 The !DumpConnectors utility is built into the Connector Manager's
-`connector.jar` file and is run by executing the `connector.jar`
-file using the `java -jar` command from the
-Connector Manager web application directory:
+`connector.jar` file and is run by executing the `Manager`
+script found in the Connector installation's `Scripts` folder:
 {{{
-% cd /path/to/connector/installation/Tomcat/webapps/connector-manager
-% java -jar WEB-INF/lib/connector.jar DumpConnectors /tmp/connectors.xml
+% cd /path/to/connector/installation/Scripts
+% Manager DumpConnectors /tmp/connectors.xml
 }}}
-If you have configured an external database, you will need to include
-its database driver JAR file in the Java classpath.
-For instance, if the Oracle JDBC driver is located in `Tomcat/lib`:
-{{{
-% java -jar WEB-INF/lib/connector.jar -cp ../../lib/ojdbc6.jar DumpConnectors ~/connectors.xml
-}}}
+
 This creates a XML file, `connectors.xml`, which contains the stored
 persistent state for all Connector instances, including configuration,
 traversal schedule, and traversal checkpoint.
