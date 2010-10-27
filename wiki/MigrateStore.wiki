@@ -1,4 +1,4 @@
-#summary OA utility that migrates persistently stored connector data from one persistent store location to another.
+#summary A utility that migrates persistently stored connector data from one persistent store location to another.
 
 == Introduction ==
 
@@ -27,7 +27,7 @@ embedded database to an external corporate database.
 == Usage ==
 
 {{{
-usage: MigrateStore [-?] [-v] [-l] [source_name] [dest_name]
+usage: Manager MigrateStore [-?] [-v] [-l] [source_name] [dest_name]
        -?, --help      Display this help.
        -v, --version   Display version.
        -l, --list      List available PersistentStores.
@@ -48,12 +48,11 @@ Stores on the command line, you will be prompted to choose
 from the available stores.
 
 The !MigrateStore utility is built into the Connector Manager's
-`connector.jar` file and is run by executing the `connector.jar`
-file using the` java -jar` command  from the Connector Manager 
-web application directory:
+`connector.jar` file and is run by executing the `Manager`
+script found in the Connector installation `Scripts` folder:
 {{{
-% cd /path/to/connector/installation/Tomcat/webapps/connector-manager
-% java -jar WEB-INF/lib/connector.jar MigrateStore FilePersistentStore JdbcPersistentStore
+% cd /path/to/connector/installation/Scripts
+% ./Manager MigrateStore FilePersistentStore JdbcPersistentStore
 }}}
 
 ==Upgrading Existing Connector Deployments==
@@ -73,18 +72,10 @@ already be configured to use an internal, embedded database.
 ==Migrating Connector Data using !MigrateStore==
 
 On the Connector deployment machine, change directory to the
-Connector Manager web application directory and run !MigrateStore
-using `java -jar`:
+Connector installation `Scripts` directory and run !MigrateStore:
 {{{
-% cd /path/to/connector/installation/Tomcat/webapps/connector-manager
-% java -jar WEB-INF/lib/connector.jar MigrateStore FilePersistentStore JdbcPersistentStore
-}}}
-
-If migrating to an external database, you will need to include
-its database driver JAR file in the Java classpath.
-For instance, if the Oracle JDBC driver is located in `Tomcat/lib`:
-{{{
-% java -jar WEB-INF/lib/connector.jar -cp ../../lib/ojdbc6.jar MigrateStore FilePersistentStore JdbcPersistentStore
+% cd /path/to/connector/installation/Scripts
+% ./Manager MigrateStore FilePersistentStore JdbcPersistentStore
 }}}
 
 This copies the data from the existing file system persistent store
