@@ -1,4 +1,4 @@
-// Copyright (C) 2009 Google Inc.
+// Copyright 2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ public class XmlUtilsTest extends TestCase {
     StringBuilder builder = new StringBuilder();
     String xmlString = "one&two<three>four'five\"";
     XmlUtils.xmlAppendAttrValue(xmlString, builder);
-    assertEquals("one&amp;two&lt;three>four&apos;five&quot;",
+    assertEquals("one&amp;two&lt;three>four&#39;five&quot;",
         builder.toString());
     // Clear the builder.
     builder.setLength(0);

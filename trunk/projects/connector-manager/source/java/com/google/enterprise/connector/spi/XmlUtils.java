@@ -25,7 +25,9 @@ public class XmlUtils {
   private static final String XML_LESS_THAN = "&lt;";
   private static final String XML_AMPERSAND = "&amp;";
   private static final String XML_QUOTE = "&quot;";
-  private static final String XML_APOSTROPHE = "&apos;";
+
+  /** Preferred over &apos; according to http://www.w3.org/TR/xhtml1/#C_16 */
+  private static final String XML_APOSTROPHE = "&#39;";
 
   private XmlUtils() {
     // prevents instantiation

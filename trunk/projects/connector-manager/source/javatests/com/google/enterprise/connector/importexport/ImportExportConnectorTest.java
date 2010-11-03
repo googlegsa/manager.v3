@@ -366,7 +366,7 @@ public class ImportExportConnectorTest extends TestCase {
 
     String xmlResult = asXmlString(connector);
     assertTrue("attribute values", xmlResult.contains("Param name=\"uglyvalue\""
-        + " value=\"one&amp;two&lt;three>four&apos;five&quot;\""));
+        + " value=\"one&amp;two&lt;three>four&#39;five&quot;\""));
   }
 
   static void assertContains(Map<String, String> config, String key, String value) {
