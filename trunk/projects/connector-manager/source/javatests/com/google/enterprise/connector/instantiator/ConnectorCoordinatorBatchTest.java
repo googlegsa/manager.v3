@@ -31,6 +31,7 @@ import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchSize;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 import com.google.enterprise.connector.util.SystemClock;
+import com.google.enterprise.connector.util.database.DocumentStore;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -459,7 +460,7 @@ public class ConnectorCoordinatorBatchTest extends TestCase {
     }
 
     /* @Override */
-    public boolean take(Document document) {
+    public boolean take(Document document, DocumentStore ignored) {
       pushedDocuments.add(new PushedDocument(document, connectorName));
       return true;
     }

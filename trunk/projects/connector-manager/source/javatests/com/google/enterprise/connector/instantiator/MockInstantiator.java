@@ -176,7 +176,7 @@ public class MockInstantiator implements Instantiator {
         new QueryTraverser(new MockPusher(), traversalManager,
             new MockTraversalStateStore(persistentStore, storeContext),
             connectorName, Context.getInstance().getTraversalContext(),
-            new SystemClock() /* TODO: use a mock clock */);
+            new SystemClock() /* TODO: use a mock clock */, null);
 
     setupTraverser(storeContext, queryTraverser);
   }
