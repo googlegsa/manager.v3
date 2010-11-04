@@ -32,7 +32,7 @@ import java.net.URL;
 public class TestResourceClassLoader extends ClassLoader {
   private final File resourceDir;
 
-  TestResourceClassLoader(File resourceDir) {
+  public TestResourceClassLoader(File resourceDir) {
     this.resourceDir = (resourceDir == null) ?
         new File(System.getProperty("user.dir")) : resourceDir;
   }
