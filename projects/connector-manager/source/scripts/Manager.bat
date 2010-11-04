@@ -26,12 +26,6 @@ rem
 rem  To get help for a command, specify the command along with -? or --help
 rem  For instance:
 rem    Manager MigrateStore --help
-rem
-rem  If your Connector requires JAR files not included in the Connector
-rem  installation (for instance Documentum DFC JAR files), then you should
-rem  specify those JAR files in the CLASSPATH environment variable.
-rem  For instance:
-rem    set CLASSPATH="%CLASSPATH%";"%DOCUMENTUM_SHARED%"\dfc\dfc.jar;"%DOCUMENTUM_SHARED%"\config
 
 :start
 setlocal
@@ -44,6 +38,19 @@ rem The Windows equivalent of dirname and basename only work in FOR and CALL.
 for %%i in ( "%pwd%" ) do set pwdname=%%~nxi
 for %%i in ( "%pwd%" ) do set parentdir=%%~dpi
 if "%parentdir:~-1%" == "\" set parentdir=%parentdir:~0,-1%
+
+rem  If there is a setenv file in the same directory as my script, then invoke
+rem  it to set certain environment variables appropriate to this installation.
+rem  For instance, JAVA_HOME or CLASSPATH.
+rem  If the Connector requires JAR files not included in the Connector
+rem  installation (for instance Documentum DFC JAR files), then you should
+rem  specify those JAR files in the CLASSPATH environment variable.
+rem  For instance:
+rem    set CLASSPATH="%CLASSPATH%";"%DOCUMENTUM_SHARED%"\dfc\dfc.jar;"%DOCUMENTUM_SHARED%"\config
+for %%i in ( "%0" ) do set scriptdir=%%~dpi
+if exist "%scriptdir%\setenv.bat" (
+  call "%scriptdir%\setenv.bat"
+)
 
 rem  Locate a Java runtime. The Connector Manager requires Java 5 or better.
 if "%JAVA_HOME%" == "" (

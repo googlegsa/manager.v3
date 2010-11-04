@@ -27,12 +27,6 @@
 # For instance:
 # % Manager MigrateStore --help
 
-# If your Connector requires JAR files not included in the Connector
-# installation (for instance Documentum DFC JAR files), then you should
-# specify those JAR files in the CLASSPATH environment variable.
-# For instance:
-# % export CLASSPATH="$CLASSPATH":"$DOCUMENTUM_SHARED"/dfc/dfc.jar:"$DOCUMENTUM_SHARED"/config
-
 # The Connector Manager main class.
 classname=com.google.enterprise.connector.manager.ManagerMain
 
@@ -40,6 +34,19 @@ pwd=`pwd`
 pwdname=`basename "${pwd}"`
 parentdir=`dirname "${pwd}"`
 parentname=`basename "${parentdir}"`
+
+# If there is a setenv file in the same directory as my script, then invoke
+# it to set certain environment variables appropriate to this installation.
+# For instance, JAVA_HOME or CLASSPATH.
+# If the Connector requires JAR files not included in the Connector
+# installation (for instance Documentum DFC JAR files), then you should
+# specify those JAR files in the CLASSPATH environment variable.
+# For instance:
+# % export CLASSPATH="$CLASSPATH":"$DOCUMENTUM_SHARED"/dfc/dfc.jar:"$DOCUMENTUM_SHARED"/config
+setenv=`dirname $0`/setenv
+if [ -f "$setenv" ] ; then
+  . "$setenv"
+fi
 
 # Locate a Java runtime. The Connector Manager requires Java 5 or better.
 java=
