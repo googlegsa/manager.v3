@@ -55,7 +55,7 @@
     <ant dir="${connector-manager.dir}" target="spi-javadoc">
       <property name="version" value="${version}" />
     </ant>
-  </target>    
+  </target>
 
   <target name="make-install-dir">
     <mkdir dir="${install.dir}" />
@@ -90,6 +90,8 @@
         <include name="README"/>
         <include name="RELEASE_NOTES"/>
       </tarfileset>
+      <tarfileset dir="${connector-manager.dir}/source/scripts" includes="*"
+         prefix="connector-manager-${version}/Scripts"/>
     </tar>
     <gzip zipfile="${downloads.dir}/connector-manager-${version}.tar.gz"
       src="${downloads.dir}/connector-manager-${version}.tar"/>
@@ -99,6 +101,8 @@
         prefix="connector-manager-${version}"/>
       <zipfileset dir="${trunk.dir}" includes="LICENSE,README,RELEASE_NOTES"
         prefix="connector-manager-${version}"/>
+      <zipfileset dir="${connector-manager.dir}/source/scripts" includes="*"
+        prefix="connector-manager-${version}/Scripts"/>
     </zip>
     <checksum file="${downloads.dir}/connector-manager-${version}.tar.gz"/>
     <checksum file="${downloads.dir}/connector-manager-${version}.zip"/>
