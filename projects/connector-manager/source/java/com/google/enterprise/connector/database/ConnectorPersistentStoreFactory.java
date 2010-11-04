@@ -20,6 +20,7 @@ import com.google.enterprise.connector.spi.LocalDatabase;
 import com.google.enterprise.connector.spi.LocalDocumentStore;
 import com.google.enterprise.connector.util.database.JdbcDatabase;
 import com.google.enterprise.connector.util.database.LocalDatabaseImpl;
+import com.google.enterprise.connector.util.database.LocalDocumentStoreImpl;
 
 /**
  * Factory used to construct {@link ConnectorPersistentStore} instances for
@@ -52,7 +53,7 @@ public class ConnectorPersistentStoreFactory {
       ConnectorType connectorType) {
     return new ConnectorPersistentStoreImpl(
         new LocalDatabaseImpl(jdbcDatabase, connectorTypeName, connectorType),
-        (LocalDocumentStore) null /* TODO: LocalDocumentStore */);
+        new LocalDocumentStoreImpl(jdbcDatabase, connectorName));
   }
 
   private class ConnectorPersistentStoreImpl

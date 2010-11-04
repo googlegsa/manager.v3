@@ -22,6 +22,7 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
 import com.google.enterprise.connector.util.Base64FilterInputStream;
+import com.google.enterprise.connector.util.database.DocumentStore;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +47,8 @@ public class MockPusher implements Pusher, PusherFactory {
     return this;
   }
 
-  public boolean take(Document document) throws RepositoryException {
+  public boolean take(Document document, DocumentStore ignored)
+      throws RepositoryException {
     printStream.println("<document>");
 
     // first take care of some special attributes

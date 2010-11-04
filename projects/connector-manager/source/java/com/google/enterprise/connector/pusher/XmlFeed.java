@@ -21,7 +21,6 @@ import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.RepositoryException;
-import com.google.enterprise.connector.spi.SimpleProperty;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.XmlUtils;
@@ -433,11 +432,7 @@ public class XmlFeed extends ByteArrayOutputStream implements FeedData {
     XmlUtils.xmlAppendStartTag(XML_METADATA, buf);
     buf.append("\n");
 
-    // Tag each document with the ID of its feed file.
-    wrapOneProperty(buf, SpiConstants.PROPNAME_FEEDID,
-        new SimpleProperty(Value.getStringValue(feedId)));
-
-    // Now add all the metadata supplied by the Connector.
+    // Add all the metadata supplied by the Connector.
     Set<String> propertyNames = document.getPropertyNames();
     if ((propertyNames == null) || propertyNames.isEmpty()) {
       LOGGER.log(Level.WARNING, "Property names set is empty");

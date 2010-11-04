@@ -42,6 +42,7 @@ import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.TraversalDelayPolicy;
 import com.google.enterprise.connector.traversal.Traverser;
 import com.google.enterprise.connector.util.Clock;
+import com.google.enterprise.connector.util.database.DocumentStore;
 
 import java.io.File;
 import java.io.IOException;
@@ -113,7 +114,12 @@ class ConnectorCoordinatorImpl implements
   private TaskHandle taskHandle;
   Object currentBatchKey;
 
-   /**
+  /**
+   * DocumentStore for the Pusher.
+   */
+  private DocumentStore documentStore;
+
+  /**
    * Constructs a ConnectorCoordinator for the named {@link Connector}.
    * The {@code Connector} may not yet have a concrete instance.
    *
@@ -141,6 +147,7 @@ class ConnectorCoordinatorImpl implements
     this.pusherFactory = pusherFactory;
     this.loadManager = loadManagerFactory.newLoadManager(name);
     this.connectorPersistentStoreFactory = connectorPersistentStoreFactory;
+    this.documentStore = null;
   }
 
   /**
@@ -190,6 +197,11 @@ class ConnectorCoordinatorImpl implements
         File connectorDir = instanceInfo.getConnectorDir();
         shutdownConnector(true);
         removeConnectorDirectory(connectorDir);
+      }
+
+      // Discard all content from the LocalDocumentStore for this connector.
+      if (documentStore != null) {
+        documentStore.reset();
       }
     } finally {
       instanceInfo = null;
@@ -390,6 +402,12 @@ class ConnectorCoordinatorImpl implements
       synchronized(this) {
         // Halt any traversal in progress.
         resetBatch();
+
+        // Discard all content from the LocalDocumentStore for this connector.
+        if (documentStore != null) {
+          documentStore.reset();
+        }
+
         // Kick off a restart immediately.
         delayTraversal(TraversalDelayPolicy.IMMEDIATE);
       }
@@ -606,7 +624,7 @@ class ConnectorCoordinatorImpl implements
       BatchCoordinator batchCoordinator = new BatchCoordinator(this);
       Traverser traverser = new QueryTraverser(pusherFactory,
           traversalManager, batchCoordinator, name,
-          Context.getInstance().getTraversalContext(), clock);
+          Context.getInstance().getTraversalContext(), clock, documentStore);
       TimedCancelable batch =  new CancelableBatch(traverser, name,
           batchCoordinator, batchCoordinator, batchSize);
       taskHandle = threadPool.submit(batch);
@@ -877,6 +895,7 @@ class ConnectorCoordinatorImpl implements
     delayTraversal(TraversalDelayPolicy.IMMEDIATE);
   }
 
+  @SuppressWarnings("unchecked")
   private void setDatabaseAccess(InstanceInfo instanceInfo) {
     if (connectorPersistentStoreFactory != null) {
       Connector connector = instanceInfo.getConnector();
@@ -886,6 +905,7 @@ class ConnectorCoordinatorImpl implements
                instanceInfo.getName(),
                instanceInfo.getTypeInfo().getConnectorTypeName(),
                instanceInfo.getTypeInfo().getConnectorType());
+        documentStore = (DocumentStore) pstore.getLocalDocumentStore();
         ((ConnectorPersistentStoreAware) connector).setDatabaseAccess(pstore);
       }
     }

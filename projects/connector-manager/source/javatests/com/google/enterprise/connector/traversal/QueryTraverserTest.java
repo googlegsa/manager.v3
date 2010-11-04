@@ -33,6 +33,7 @@ import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.util.SystemClock;
+import com.google.enterprise.connector.util.database.DocumentStore;
 
 import junit.framework.TestCase;
 
@@ -119,7 +120,7 @@ public class QueryTraverserTest extends TestCase {
     Traverser traverser = new QueryTraverser(new MockPusher(System.out), qtm,
         instantiator.getTraversalStateStore(connectorName), connectorName,
         Context.getInstance().getTraversalContext(),
-        new SystemClock() /* TODO: use a mock clock? */);
+        new SystemClock() /* TODO: use a mock clock? */, null);
 
     instantiator.setupTraverser(connectorName, traverser);
     return traverser;
@@ -185,7 +186,7 @@ public class QueryTraverserTest extends TestCase {
     context.setTraversalTimeLimitSeconds(1);
     QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
         stateStore, CONNECTOR_NAME, context,
-        new SystemClock() /* TODO: use a mock clock */);
+        new SystemClock() /* TODO: use a mock clock */, null);
 
     BatchResult result = queryTraverser.runBatch(new BatchSize(100, 100));
     assertTrue(result.getCountProcessed() > 0);
@@ -205,7 +206,7 @@ public class QueryTraverserTest extends TestCase {
     ProductionTraversalContext context = new ProductionTraversalContext();
     context.setTraversalTimeLimitSeconds(1);
     QueryTraverser queryTraverser = new QueryTraverser(pusher, traversalManager,
-        stateStore, CONNECTOR_NAME, context, new SystemClock());
+        stateStore, CONNECTOR_NAME, context, new SystemClock(), null);
 
     BatchResult result = queryTraverser.runBatch(new BatchSize(10, 20));
     assertTrue(result.getCountProcessed() > 10);
@@ -289,7 +290,7 @@ public class QueryTraverserTest extends TestCase {
 
   /**
    * A {@link Pusher} that performs validations
-   * @see ValidatingPusher#take(Document) for details.
+   * @see ValidatingPusher#take(Document, DocumentStore) for details.
    */
   private static class ValidatingPusher implements Pusher, PusherFactory {
     private final String connectorName;
@@ -319,10 +320,11 @@ public class QueryTraverserTest extends TestCase {
      * matches the number of documents pushed (formatted as a {@link String}).
      * </OL>
      */
-    public boolean take(Document document) throws RepositoryException{
+    public boolean take(Document document, DocumentStore ignored)
+        throws RepositoryException {
       String expectId = Long.toString(pushCount);
       String gotId =
-        Value.getSingleValueString(document, SpiConstants.PROPNAME_DOCID);
+          Value.getSingleValueString(document, SpiConstants.PROPNAME_DOCID);
       assertEquals(expectId, gotId);
       pushCount++;
       return true;
@@ -358,6 +360,5 @@ public class QueryTraverserTest extends TestCase {
     public void storeTraversalState(String state) {
       this.state = state;
     }
-
   }
 }
