@@ -1,4 +1,4 @@
-// Copyright (C) 2010 Google Inc.
+// Copyright 2010 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.enterprise.connector.common;
+package com.google.enterprise.connector.util;
 
 /**
- * A {@link UniqueIdGenerator} implementation backed by java.util.UUID.
+ * Interface for providers of a unique String ID.
  */
-public class UuidGenerator implements UniqueIdGenerator {
-  //@Override
-  public String uniqueId() {
-    return java.util.UUID.randomUUID().toString().replace("-", "");
-  }
+public interface UniqueIdGenerator {
+  /**
+   * Generates a reasonably unique ID string on each call.
+   */
+  public String uniqueId();
 }

@@ -15,8 +15,6 @@
 package com.google.enterprise.connector.util.database;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.enterprise.connector.common.UniqueIdGenerator;
-import com.google.enterprise.connector.common.UuidGenerator;
 import com.google.enterprise.connector.common.AbstractCommandLineApp;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.spi.Document;
@@ -28,6 +26,8 @@ import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.util.database.JdbcDatabase;
+import com.google.enterprise.connector.util.UniqueIdGenerator;
+import com.google.enterprise.connector.util.UuidGenerator;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;

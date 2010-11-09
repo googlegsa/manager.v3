@@ -14,8 +14,6 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.common.UniqueIdGenerator;
-import com.google.enterprise.connector.common.UuidGenerator;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
@@ -26,6 +24,8 @@ import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spi.XmlUtils;
 import com.google.enterprise.connector.spi.SpiConstants.ActionType;
 import com.google.enterprise.connector.spiimpl.ValueImpl;
+import com.google.enterprise.connector.util.UniqueIdGenerator;
+import com.google.enterprise.connector.util.UuidGenerator;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
