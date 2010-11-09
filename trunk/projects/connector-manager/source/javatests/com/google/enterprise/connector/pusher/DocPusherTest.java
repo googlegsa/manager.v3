@@ -14,7 +14,6 @@
 
 package com.google.enterprise.connector.pusher;
 
-import com.google.enterprise.connector.common.UniqueIdGenerator;
 import com.google.enterprise.connector.jcr.JcrDocumentTest;
 import com.google.enterprise.connector.jcr.JcrTraversalManager;
 import com.google.enterprise.connector.manager.Context;
@@ -35,6 +34,7 @@ import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
 import com.google.enterprise.connector.util.Clock;
 import com.google.enterprise.connector.util.SAXParseErrorHandler;
 import com.google.enterprise.connector.util.SystemClock;
+import com.google.enterprise.connector.util.UniqueIdGenerator;
 import com.google.enterprise.connector.util.XmlParseUtil;
 
 import junit.framework.Assert;
