@@ -145,80 +145,103 @@ public class JdbcDatabase {
    *         {@code false} if the table does not exist.
    */
   public boolean verifyTableExists(String tableName, String[] createTableDdl) {
-    Connection connection = null;
-    boolean originalAutoCommit = true;
     try {
-      connection = getConnectionPool().getConnection();
+      // Try to create table.
+      return verifyTableAndThrow(tableName, createTableDdl);
+    } catch (SQLException e1) {
+      // If that fails, we may have multiple clients trying to create the table
+      // at the same time; wait a bit, then try again.
+      System.out.println("verifyTableExists is trying again"); //DEBUGGING
+      try { Thread.sleep(30000); } catch (InterruptedException ignored) {}
       try {
-        originalAutoCommit = connection.getAutoCommit();
-        connection.setAutoCommit(false);
-
-        // TODO: How can I make this more atomic? If two connectors start up
-        // at the same time and try to create the table, one wins and the other
-        // throws an exception.
-
-        // Check to see if the table already exists.
-        DatabaseMetaData metaData = connection.getMetaData();
-
-        // Oracle doesn't do case-insensitive table name searches.
-        String tablePattern;
-        if (metaData.storesUpperCaseIdentifiers()) {
-          tablePattern = tableName.toUpperCase();
-        } else if (metaData.storesLowerCaseIdentifiers()) {
-          tablePattern = tableName.toLowerCase();
-        } else {
-          tablePattern = tableName;
-        }
-        // Now quote '%' and '-', a special characters in search patterns.
-        tablePattern =
-            tablePattern.replace("%", metaData.getSearchStringEscape() + "%");
-        tablePattern =
-            tablePattern.replace("_", metaData.getSearchStringEscape() + "_");
-        ResultSet tables = metaData.getTables(null, null, tablePattern, null);
-        try {
-          while (tables.next()) {
-            if (tableName.equalsIgnoreCase(tables.getString("TABLE_NAME"))) {
-              LOGGER.config("Found table: " + tableName);
-              return true;
-            }
-          }
-        } finally {
-          tables.close();
-        }
-
-        // Our table was not found.
-        if (createTableDdl == null) {
-          return false;
-        }
-
-        // Create the table using the supplied Create Table DDL.
-        Statement stmt = connection.createStatement();
-        try {
-          for (String ddlStatement : createTableDdl) {
-            LOGGER.config("Creating table " + tableName + ": " + ddlStatement);
-            stmt.executeUpdate(ddlStatement);
-          }
-          connection.commit();
-        } finally {
-          stmt.close();
-        }
-        return true;
-      } catch (SQLException e) {
-        try {
-          connection.rollback();
-        } catch (SQLException ignored) {
-        }
-        throw e;
-      } finally {
-        try {
-          connection.setAutoCommit(originalAutoCommit);
-        } catch (SQLException ignored) {
-        }
-        getConnectionPool().releaseConnection(connection);
+        return verifyTableAndThrow(tableName, createTableDdl);
+      } catch (SQLException e2) {
+        LOGGER.log(Level.SEVERE, "Failed to create table " + tableName, e2);
+        return false;
       }
+    }
+  }
+
+  /**
+   * Verify that a table named {@code tableName} exists in the database.
+   * If not, create it, using the supplied DDL statements.
+   *
+   * @param tableName the name of the table to find in the database.
+   * @param createTableDdl DDL statements that may be used to create the
+   *        table if it does not exist.  If {@code null}, no attempt will
+   *        be made to create the table.
+   *
+   * @return {@code true} if the table exists or was successfully created,
+   *         {@code false} if the table does not exist.
+   * @throws SQLException if table existence could not be determined or if
+   *         table creation fails.
+   */
+  private boolean verifyTableAndThrow(String tableName, String[] createTableDdl)
+      throws SQLException {
+    boolean originalAutoCommit = true;
+    Connection connection = getConnectionPool().getConnection();
+    try {
+      originalAutoCommit = connection.getAutoCommit();
+      connection.setAutoCommit(false);
+
+      // Check to see if the table already exists.
+      DatabaseMetaData metaData = connection.getMetaData();
+
+      // Oracle doesn't do case-insensitive table name searches.
+      String tablePattern;
+      if (metaData.storesUpperCaseIdentifiers()) {
+        tablePattern = tableName.toUpperCase();
+      } else if (metaData.storesLowerCaseIdentifiers()) {
+        tablePattern = tableName.toLowerCase();
+      } else {
+        tablePattern = tableName;
+      }
+      // Now quote '%' and '-', a special characters in search patterns.
+      tablePattern =
+          tablePattern.replace("%", metaData.getSearchStringEscape() + "%");
+      tablePattern =
+          tablePattern.replace("_", metaData.getSearchStringEscape() + "_");
+      ResultSet tables = metaData.getTables(null, null, tablePattern, null);
+      try {
+        while (tables.next()) {
+          if (tableName.equalsIgnoreCase(tables.getString("TABLE_NAME"))) {
+            LOGGER.config("Found table: " + tableName);
+            return true;
+          }
+        }
+      } finally {
+        tables.close();
+      }
+
+      // Our table was not found.
+      if (createTableDdl == null) {
+        return false;
+      }
+
+      // Create the table using the supplied Create Table DDL.
+      Statement stmt = connection.createStatement();
+      try {
+        for (String ddlStatement : createTableDdl) {
+          LOGGER.config("Creating table " + tableName + ": " + ddlStatement);
+          stmt.executeUpdate(ddlStatement);
+        }
+        connection.commit();
+      } finally {
+        stmt.close();
+      }
+      return true;
     } catch (SQLException e) {
-      LOGGER.log(Level.SEVERE, "Failed to create table " + tableName, e);
-      return false;
+      try {
+        connection.rollback();
+      } catch (SQLException ignored) {
+      }
+      throw e;
+    } finally {
+      try {
+        connection.setAutoCommit(originalAutoCommit);
+      } catch (SQLException ignored) {
+      }
+      getConnectionPool().releaseConnection(connection);
     }
   }
 }

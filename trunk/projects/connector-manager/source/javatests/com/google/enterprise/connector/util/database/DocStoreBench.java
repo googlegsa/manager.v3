@@ -118,7 +118,6 @@ public class DocStoreBench extends AbstractCommandLineApp {
   }
 
   private DataSource getDataSource() throws Exception {
-
     // Setup H2 JDBC DataSource.
     org.h2.jdbcx.JdbcDataSource dataSource = new org.h2.jdbcx.JdbcDataSource();
     dataSource.setURL("jdbc:h2:" + TEST_DIR_NAME + "DocStore;MVCC=TRUE;CACHE_SIZE=131072");
@@ -143,6 +142,7 @@ public class DocStoreBench extends AbstractCommandLineApp {
     baseDirectory.mkdirs();
 
     jdbcDatabase = new JdbcDatabase(getDataSource());
+    System.out.println(jdbcDatabase.getDatabaseInfo().getDescription());
 
     // Create a set of plausible Parent IDs.
     parents = new String[10000];
@@ -269,7 +269,7 @@ public class DocStoreBench extends AbstractCommandLineApp {
    * BenchMark concurrent Storing and Retrieving
    */
   private class StoreRetrieveBenchMark extends TimedBenchMark {
-    final int runTime = 15 * 60;
+    final int runTime = 10 * 60;
     final BenchMark storeBench;
     final BenchMark retrieveBench;
 
@@ -695,7 +695,7 @@ public class DocStoreBench extends AbstractCommandLineApp {
     /* @Override */
     public void run() {
       do {
-        lastDocid = "";
+        lastDocid = " ";
         int numRows;
         do {
           numRows = runMaxRowsQuery();
@@ -760,7 +760,7 @@ public class DocStoreBench extends AbstractCommandLineApp {
     /* @Override */
     public void run() {
       do {
-        lastDocid = "";
+        lastDocid = " ";
         int numRows;
         do {
           numRows = runMaxRowsQuery();
