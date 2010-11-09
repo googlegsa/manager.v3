@@ -284,7 +284,7 @@ public class LocalDocumentStoreImpl implements DocumentStore {
    *         instance whose docid exceeds the supplied docid, in order by docid.
    */
   public Iterator<Document> getDocumentIterator(String docid) {
-    return new DocumentIterator(Strings.nullToEmpty(docid));
+    return new DocumentIterator(docid);
   }
 
   /**
@@ -301,10 +301,12 @@ public class LocalDocumentStoreImpl implements DocumentStore {
 
     public DocumentIterator(String docid) {
       init();
-      lastDocid = docid;
       documents = new Document[BATCH_SIZE];
       currentDoc = 0;
       numDocs = 0;
+      // Oracle considers empty-string to be NULL and therefore not comparable;
+      // so our minimum comparable docid is a single space.
+      lastDocid = (Strings.isNullOrEmpty(docid)) ? " " : docid;
     }
 
     /* @Override */
@@ -341,7 +343,8 @@ public class LocalDocumentStoreImpl implements DocumentStore {
 
       try {
         connection = database.getConnectionPool().getConnection();
-        statement = connection.prepareStatement(manyDocumentsQuery);
+        statement = connection.prepareStatement(manyDocumentsQuery,
+            ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY);
         statement.setQueryTimeout(15 * 60); // TODO: make this configurable.
         statement.setMaxRows(documents.length);
         statement.setString(1, connectorName);
