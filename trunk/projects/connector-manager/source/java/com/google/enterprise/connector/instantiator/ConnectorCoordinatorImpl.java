@@ -631,10 +631,11 @@ class ConnectorCoordinatorImpl implements
       return true;
     } catch (ConnectorNotFoundException cnfe) {
       LOGGER.log(Level.WARNING, "Connector not found - this is normal if you "
-          + " recently reconfigured your connector instance." + cnfe);
+          + " recently reconfigured your connector instance: " + cnfe);
     } catch (InstantiatorException ie) {
-      LOGGER.log(Level.WARNING, "Connector not found - this is normal if you "
-          + " recently reconfigured your connector instance." + ie);
+      LOGGER.log(Level.WARNING,
+          "Failed to perform connector content traversal.", ie);
+      delayTraversal(TraversalDelayPolicy.ERROR);
     }
     return false;
   }
