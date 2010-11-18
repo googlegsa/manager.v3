@@ -493,8 +493,16 @@ class ConnectorCoordinatorImpl implements
       if (0 == endHour) {
         endHour = 24;
       }
-      if ((hour >= startHour) && (hour < endHour)) {
-        return true;
+      if (endHour < startHour) {
+        // The traversal interval straddles midnight.
+        if ((hour >= startHour) || (hour < endHour)) {
+          return true;
+        }
+      } else {
+        // The traversal interval falls wholly within the day.
+        if ((hour >= startHour) && (hour < endHour)) {
+          return true;
+        }
       }
     }
 
@@ -536,10 +544,11 @@ class ConnectorCoordinatorImpl implements
       return true;
     } catch (ConnectorNotFoundException cnfe) {
       LOGGER.log(Level.WARNING, "Connector not found - this is normal if you "
-          + " recently reconfigured your connector instance." + cnfe);
+          + " recently reconfigured your connector instance: " + cnfe);
     } catch (InstantiatorException ie) {
-      LOGGER.log(Level.WARNING, "Connector not found - this is normal if you "
-          + " recently reconfigured your connector instance." + ie);
+      LOGGER.log(Level.WARNING,
+          "Failed to perform connector content traversal.", ie);
+      delayTraversal(TraversalDelayPolicy.ERROR);
     }
     return false;
   }
