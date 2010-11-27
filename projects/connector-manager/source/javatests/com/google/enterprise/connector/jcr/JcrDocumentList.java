@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright 2006-2008 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.google.enterprise.connector.spi.DocumentList;
 import com.google.enterprise.connector.spi.RepositoryException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
-import com.google.enterprise.connector.spiimpl.DateValue;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -62,9 +61,8 @@ public class JcrDocumentList implements DocumentList {
   public static String checkpoint(Document document) throws RepositoryException {
     String uuid = Value.getSingleValueString(document,
         SpiConstants.PROPNAME_DOCID);
-    DateValue dateValue = (DateValue) Value.getSingleValue(document,
+    String dateString = Value.getSingleValueString(document,
         SpiConstants.PROPNAME_LASTMODIFIED);
-    String dateString = dateValue.toIso8601();
     String result = null;
     try {
       JSONObject jo = new JSONObject();

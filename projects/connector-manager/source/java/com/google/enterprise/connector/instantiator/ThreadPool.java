@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc.
+// Copyright 2009 Google Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,8 +13,6 @@
 // limitations under the License.
 
 package com.google.enterprise.connector.instantiator;
-
-import com.google.enterprise.connector.util.Clock;
 
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
@@ -78,11 +76,6 @@ public class ThreadPool {
   private final long maximumTaskLifeMillis;
 
   /**
-   * Clock used to time out threads.
-   */
-  private final Clock clock;
-
-  /**
    * ExecutorService for running submitted tasks. Tasks are only submitted
    * through completionService.
    */
@@ -130,9 +123,8 @@ public class ThreadPool {
   // mechanism to do arithmetic on configuration properties. Once we move to
   // Spring v3, the calculation should be done in the Spring XML definition
   // file rather than here.
-  public ThreadPool(int taskLifeSeconds, Clock clock) {
+  public ThreadPool(int taskLifeSeconds) {
     this.maximumTaskLifeMillis = taskLifeSeconds * 2 * 1000L;
-    this.clock = clock;
     completionExecutor.execute(new CompletionTask());
   }
 
@@ -165,7 +157,7 @@ public class ThreadPool {
   }
 
   /**
-   * Submit a {@link TimedCancelable} for execution and return a
+   * Submit a {@Link Cancelable} for execution and return a
    * {@link TaskHandle} for the running task or null if the task has not been
    * accepted. After {@link ThreadPool#shutdown(boolean, long)} returns this
    * will always return null.
@@ -187,7 +179,7 @@ public class ThreadPool {
     FutureTask<?> taskFuture =
         new FutureTask<Object>(cancelTimeoutRunnable, null);
     TaskHandle handle =
-        new TaskHandle(cancelable, taskFuture, clock.getTimeMillis());
+        new TaskHandle(cancelable, taskFuture, System.currentTimeMillis());
     timeoutTask.setTaskHandle(handle);
     try {
       // Schedule timeoutTask to run when 'cancelable's maximum run interval

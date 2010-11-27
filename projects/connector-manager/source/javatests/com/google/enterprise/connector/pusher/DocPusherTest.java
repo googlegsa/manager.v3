@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,12 +14,14 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.enterprise.connector.common.UniqueIdGenerator;
 import com.google.enterprise.connector.jcr.JcrDocumentTest;
 import com.google.enterprise.connector.jcr.JcrTraversalManager;
 import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrQueryManager;
+import com.google.enterprise.connector.servlet.SAXParseErrorHandler;
 import com.google.enterprise.connector.servlet.ServletUtil;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.DocumentList;
@@ -31,11 +33,6 @@ import com.google.enterprise.connector.spi.TraversalManager;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.test.ConnectorTestUtils;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
-import com.google.enterprise.connector.util.Clock;
-import com.google.enterprise.connector.util.SAXParseErrorHandler;
-import com.google.enterprise.connector.util.SystemClock;
-import com.google.enterprise.connector.util.UniqueIdGenerator;
-import com.google.enterprise.connector.util.XmlParseUtil;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -370,7 +367,7 @@ public class DocPusherTest extends TestCase {
 
     Document document = null;
     while ((document = documentList.nextDocument()) != null) {
-      dpusher.take(document, null);
+      dpusher.take(document);
     }
     dpusher.flush();
     String resultXML = feedConnection.getFeed();
@@ -446,7 +443,7 @@ public class DocPusherTest extends TestCase {
       System.out.println("Test " + i + " output");
       Assert.assertFalse(i == expectedXml.length);
       DocPusher dpusher = new DocPusher(feedConnection, "junit", fsli);
-      dpusher.take(document, null);
+      dpusher.take(document);
       dpusher.flush();
       System.out.println("Test " + i + " assertions");
       String resultXML = feedConnection.getFeed();
@@ -470,7 +467,7 @@ public class DocPusherTest extends TestCase {
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
@@ -479,6 +476,7 @@ public class DocPusherTest extends TestCase {
     assertStringContains("<meta name=\"author\" content=\"ziff\"/>", resultXML);
     assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
         + ServletUtil.DOCID + "doc1\"", resultXML);
+
   }
 
   /**
@@ -552,7 +550,7 @@ public class DocPusherTest extends TestCase {
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
@@ -582,7 +580,7 @@ public class DocPusherTest extends TestCase {
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
@@ -607,7 +605,7 @@ public class DocPusherTest extends TestCase {
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
@@ -640,7 +638,7 @@ public class DocPusherTest extends TestCase {
     Document document = JcrDocumentTest.makeDocumentFromJson(json1);
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
@@ -654,7 +652,7 @@ public class DocPusherTest extends TestCase {
     // Content feed with searchurl.
     document = JcrDocumentTest.makeDocumentFromJson(json2);
     dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     resultXML = mockFeedConnection.getFeed();
 
@@ -690,7 +688,7 @@ public class DocPusherTest extends TestCase {
     Document document = JcrDocumentTest.makeDocumentFromJson(json1);
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
@@ -704,7 +702,7 @@ public class DocPusherTest extends TestCase {
     // Web feed without searchurl.
     document = JcrDocumentTest.makeDocumentFromJson(json2);
     dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     resultXML = mockFeedConnection.getFeed();
 
@@ -718,7 +716,7 @@ public class DocPusherTest extends TestCase {
     // Content feed without searchurl and without content.
     document = JcrDocumentTest.makeDocumentFromJson(json3);
     dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     resultXML = mockFeedConnection.getFeed();
 
@@ -743,7 +741,7 @@ public class DocPusherTest extends TestCase {
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
@@ -765,14 +763,14 @@ public class DocPusherTest extends TestCase {
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
     assertStringContains("<meta name=\"special\" " +
     // only single escapes here, because this is not a json string
         // but xml-sensitive characters have been replaced with entities
-        "content=\"`~!@#$%^&amp;*()_+-={}[]|\\:&quot;;&#39;&lt;>?,./\"/>",
+        "content=\"`~!@#$%^&amp;*()_+-={}[]|\\:&quot;;&apos;&lt;>?,./\"/>",
         resultXML);
 
     assertStringContains("<meta name=\"japanese\" " +
@@ -784,6 +782,7 @@ public class DocPusherTest extends TestCase {
     // only single escapes here, because this is not a json string
         // but xml-sensitive characters have been replaced with entities
         "content=\"\u5317\u4eac\u5e02\"/>", resultXML);
+
   }
 
   /**
@@ -843,7 +842,7 @@ public class DocPusherTest extends TestCase {
       throws Exception {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
@@ -851,7 +850,7 @@ public class DocPusherTest extends TestCase {
     // don't have the DTD.
     resultXML = resultXML.substring(resultXML.indexOf("<gsafeed>"));
     assertNotNull("Parse error",
-        XmlParseUtil.parse(resultXML, new FatalErrorHandler(), null));
+        ServletUtil.parse(resultXML, new FatalErrorHandler(), null));
 
     // Do this after the XML parsing, since that's the main test.
     assertStringContains(expected, resultXML);
@@ -884,7 +883,7 @@ public class DocPusherTest extends TestCase {
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
@@ -907,7 +906,7 @@ public class DocPusherTest extends TestCase {
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
@@ -921,7 +920,7 @@ public class DocPusherTest extends TestCase {
       + "}\r\n" + "";
 
     document = JcrDocumentTest.makeDocumentFromJson(addActionJson);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     resultXML = mockFeedConnection.getFeed();
 
@@ -935,7 +934,7 @@ public class DocPusherTest extends TestCase {
       + "}\r\n" + "";
 
     document = JcrDocumentTest.makeDocumentFromJson(deleteActionJson);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     resultXML = mockFeedConnection.getFeed();
 
@@ -949,7 +948,7 @@ public class DocPusherTest extends TestCase {
       + "}\r\n" + "";
 
     document = JcrDocumentTest.makeDocumentFromJson(bogusActionJson);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     resultXML = mockFeedConnection.getFeed();
 
@@ -1199,7 +1198,7 @@ public class DocPusherTest extends TestCase {
   private String feedDocument(Document document) throws Exception {
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     return mockFeedConnection.getFeed();
   }
@@ -1241,7 +1240,7 @@ public class DocPusherTest extends TestCase {
               + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
               + "}\r\n" + "";
       document = JcrDocumentTest.makeDocumentFromJson(jsonIncremental);
-      dpusher.take(document, null);
+      dpusher.take(document);
       dpusher.flush();
       resultXML = mockFeedConnection.getFeed();
       assertFeedInLog(resultXML, TEST_LOG_FILE);
@@ -1255,7 +1254,7 @@ public class DocPusherTest extends TestCase {
               + ", \"google:lastmodified\":\"Tue, 15 Nov 1994 12:45:26 GMT\""
               + "}\r\n" + "";
       document = JcrDocumentTest.makeDocumentFromJson(jsonMetaAndUrl);
-      dpusher.take(document, null);
+      dpusher.take(document);
       dpusher.flush();
       resultXML = mockFeedConnection.getFeed();
       assertFeedInLog(resultXML, TEST_LOG_FILE);
@@ -1270,7 +1269,7 @@ public class DocPusherTest extends TestCase {
               + ",\"google:contenturl\":\"http://www.sometesturl.com/test\""
               + "}\r\n" + "";
       document = JcrDocumentTest.makeDocumentFromJson(jsonMsWord);
-      dpusher.take(document, null);
+      dpusher.take(document);
       dpusher.flush();
       resultXML = mockFeedConnection.getFeed();
       assertFeedInLog(resultXML, TEST_LOG_FILE);
@@ -1403,14 +1402,14 @@ public class DocPusherTest extends TestCase {
       // Create DocPusher and send feed.
       MockFeedConnection mockFeedConnection = new MockFeedConnection();
       DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-      dpusher.take(document, null);
+      dpusher.take(document);
       dpusher.flush();
       String resultXML = mockFeedConnection.getFeed();
       assertFeedTeed(resultXML, tffName);
 
       // Now send the feed again and compare with existing teed feed file.
       dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-      dpusher.take(document, null);
+      dpusher.take(document);
       dpusher.flush();
       String secondResultXML = mockFeedConnection.getFeed();
       assertFeedTeed(resultXML + secondResultXML, tffName);
@@ -1479,7 +1478,7 @@ public class DocPusherTest extends TestCase {
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
@@ -1512,7 +1511,7 @@ public class DocPusherTest extends TestCase {
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
@@ -1541,7 +1540,7 @@ public class DocPusherTest extends TestCase {
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
@@ -1568,7 +1567,7 @@ public class DocPusherTest extends TestCase {
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
@@ -1596,7 +1595,7 @@ public class DocPusherTest extends TestCase {
 
     MockFeedConnection mockFeedConnection = new MockFeedConnection();
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", fsli);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     String resultXML = mockFeedConnection.getFeed();
 
@@ -2162,7 +2161,7 @@ public class DocPusherTest extends TestCase {
     limit.setMaxDocumentSize(1024 * 1024); // 1 MB
     limit.setMaxFeedSize(64 * 1024); // 64 KB
     DocPusher dpusher = new DocPusher(mockFeedConnection, "junit", limit);
-    dpusher.take(document, null);
+    dpusher.take(document);
     dpusher.flush();
     return mockFeedConnection.getFeed();
   }
@@ -2264,7 +2263,7 @@ public class DocPusherTest extends TestCase {
     try {
       FeedConnection badFeedConnection = new BadFeedConnection1();
       DocPusher dpusher = new DocPusher(badFeedConnection, "junit", fsli);
-      dpusher.take(document, null);
+      dpusher.take(document);
       dpusher.flush();
       fail("Expected FeedException, but got none.");
     } catch (FeedException expected) {
@@ -2283,7 +2282,7 @@ public class DocPusherTest extends TestCase {
     try {
       FeedConnection badFeedConnection = new BadFeedConnection2();
       DocPusher dpusher = new DocPusher(badFeedConnection, "junit", fsli);
-      dpusher.take(document, null);
+      dpusher.take(document);
       dpusher.flush();
       fail("Expected PushException, but got none.");
     } catch (PushException expected) {
@@ -2310,7 +2309,7 @@ public class DocPusherTest extends TestCase {
     SlowFeedConnection slowFeedConnection = new SlowFeedConnection();
     DocPusher dpusher = new DocPusher(slowFeedConnection, "junit", limit);
     int count;
-    for (count = 0; dpusher.take(document, null) && count < 30; count++) ;
+    for (count = 0; dpusher.take(document) && count < 30; count++) continue;
     assertTrue(count >= 10); // Min. 10 feeds must be waiting to be a backlog.
     assertTrue(count < 30);  // But we should have detected the backlog by now.
     // dpusher.flush();      // Let the sleeping threads lie.
@@ -2330,9 +2329,9 @@ public class DocPusherTest extends TestCase {
     limit.setMaxDocumentSize(64 * 1024);
 
     DocPusher dpusher = new DocPusher(backlogFeedConnection, "junit", limit);
-    assertTrue(dpusher.take(document, null));
+    assertTrue(dpusher.take(document));
     backlogFeedConnection.setBacklogged(true);
-    assertFalse(dpusher.take(document, null));
+    assertFalse(dpusher.take(document));
     dpusher.flush();
   }
 
@@ -2353,7 +2352,7 @@ public class DocPusherTest extends TestCase {
     // If plenty of memory is available, DocPusher should indicate it is
     // OK to feed more (return true).
     DocPusher dpusher = new DocPusher(feedConnection, "junit", limit);
-    assertTrue(dpusher.take(document, null));
+    assertTrue(dpusher.take(document));
     dpusher.flush();
   }
 
@@ -2377,7 +2376,7 @@ public class DocPusherTest extends TestCase {
     config.put(SpiConstants.PROPNAME_CONTENT,
                new HugeInputStream(freeMemory/4 - 10));
     Document bigDocument = ConnectorTestUtils.createSimpleDocument(config);
-    boolean result = dpusher.take(bigDocument, null);
+    boolean result = dpusher.take(bigDocument);
     assertFalse(result);
     dpusher.flush();
     assertFalse(feedConnection.isBacklogged());
@@ -2430,13 +2429,12 @@ public class DocPusherTest extends TestCase {
    * A slow FeedConnection.
    */
   private static class SlowFeedConnection extends MockFeedConnection {
-    static Clock clock = new SystemClock(); // TODO: rewrite this to use a mock clock.
-    static long doneTime = clock.getTimeMillis() + 10000;
+    static long doneTime = System.currentTimeMillis() + 10000;
     @Override
     public String sendData(FeedData feedData)
         throws RepositoryException {
       try {
-        while (clock.getTimeMillis() < doneTime) {
+        while (System.currentTimeMillis() < doneTime) {
           Thread.sleep(250);
         }
       } catch (InterruptedException ie) {
@@ -2573,6 +2571,21 @@ public class DocPusherTest extends TestCase {
         throw new IllegalArgumentException("Wrong kind of Exception");
       }
       badProperties.put(propertyName, exception);
+    }
+
+    /**
+     * Specify a properties to fail and how to fail them.
+     *
+     * @param propertyNames an Array of Property names.
+     * @param exception Class indicating which Exception to throw if accessed.
+     *        If null, findProperty() will return null rather than throw an
+     *        Exception.
+     */
+    public void failProperties(String[] propertyNames,
+                               Class<? extends Throwable> exception) {
+      for (int i = 0; i < propertyNames.length; i++) {
+        failProperty(propertyNames[i], exception);
+      }
     }
 
     /**

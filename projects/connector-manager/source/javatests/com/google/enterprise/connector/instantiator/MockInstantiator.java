@@ -1,4 +1,4 @@
-// Copyright 2009 Google Inc.
+// Copyright 2009 Google Inc.  All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,13 +19,16 @@ import com.google.enterprise.connector.manager.Context;
 import com.google.enterprise.connector.mock.MockRepository;
 import com.google.enterprise.connector.mock.MockRepositoryEventList;
 import com.google.enterprise.connector.mock.jcr.MockJcrRepository;
+import com.google.enterprise.connector.persist.ConnectorConfigStore;
 import com.google.enterprise.connector.persist.ConnectorExistsException;
 import com.google.enterprise.connector.persist.ConnectorNotFoundException;
-import com.google.enterprise.connector.persist.MockPersistentStore;
-import com.google.enterprise.connector.persist.PersistentStore;
+import com.google.enterprise.connector.persist.ConnectorScheduleStore;
+import com.google.enterprise.connector.persist.ConnectorStateStore;
+import com.google.enterprise.connector.persist.MockConnectorConfigStore;
+import com.google.enterprise.connector.persist.MockConnectorScheduleStore;
+import com.google.enterprise.connector.persist.MockConnectorStateStore;
 import com.google.enterprise.connector.persist.StoreContext;
 import com.google.enterprise.connector.pusher.MockPusher;
-import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.AuthenticationManager;
 import com.google.enterprise.connector.spi.AuthenticationResponse;
@@ -44,7 +47,6 @@ import com.google.enterprise.connector.traversal.NoopQueryTraverser;
 import com.google.enterprise.connector.traversal.QueryTraverser;
 import com.google.enterprise.connector.traversal.TraversalStateStore;
 import com.google.enterprise.connector.traversal.Traverser;
-import com.google.enterprise.connector.util.SystemClock;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -86,16 +88,29 @@ public class MockInstantiator implements Instantiator {
       };
 
   private final Map<String, ConnectorCoordinator> connectorMap;
-  private final PersistentStore persistentStore;
+  private final ConnectorConfigStore configStore;
+  private final ConnectorScheduleStore scheduleStore;
+  private final ConnectorStateStore stateStore;
   private final ThreadPool threadPool;
 
   public MockInstantiator(ThreadPool threadPool) {
-    this(new MockPersistentStore(), threadPool);
+    this(new MockConnectorConfigStore(), new MockConnectorScheduleStore(),
+         new MockConnectorStateStore(), threadPool);
   }
 
-  public MockInstantiator(PersistentStore persistentStore,
+  // TODO(strellis): Figure out how to get spring to call the below
+  //   constructor with a null ThreadPool and remove this constructor.
+  public MockInstantiator(ConnectorConfigStore configStore,
+      ConnectorScheduleStore schedStore, ConnectorStateStore stateStore) {
+    this(configStore, schedStore, stateStore, null);
+  }
+
+  private MockInstantiator(ConnectorConfigStore configStore,
+      ConnectorScheduleStore schedStore, ConnectorStateStore stateStore,
       ThreadPool threadPool) {
-    this.persistentStore = persistentStore;
+    this.configStore = configStore;
+    this.scheduleStore = schedStore;
+    this.stateStore = stateStore;
     this.connectorMap = new HashMap<String, ConnectorCoordinator>();
     this.threadPool = threadPool;
   }
@@ -105,10 +120,6 @@ public class MockInstantiator implements Instantiator {
       e.getValue().shutdown();
     }
     connectorMap.clear();
-  }
-
-  private StoreContext getStoreContext(String name) {
-    return new StoreContext(name, "testType");
   }
 
   /**
@@ -134,21 +145,13 @@ public class MockInstantiator implements Instantiator {
    * {@link Traverser} with this {@link Instantiator}.
    */
   public void setupTraverser(String traverserName, Traverser traverser) {
-    setupTraverser(getStoreContext(traverserName), traverser);
-  }
-
-  /**
-   * Creates and registers a {@link Connector} for the provided
-   * {@link Traverser} with this {@link Instantiator}.
-   */
-  public void setupTraverser(StoreContext storeContext, Traverser traverser) {
-    String traverserName = storeContext.getConnectorName();
+    StoreContext storeContext = new StoreContext(traverserName);
     ConnectorInterfaces interfaces =
         new ConnectorInterfaces(traverserName, null, nullAuthenticationManager,
             nullAuthorizationManager);
     ConnectorCoordinator cc =
         new MockConnectorCoordinator(traverserName, interfaces, traverser,
-            persistentStore, storeContext, threadPool);
+            stateStore, configStore, scheduleStore, storeContext, threadPool);
     connectorMap.put(traverserName, cc);
   }
 
@@ -171,14 +174,12 @@ public class MockInstantiator implements Instantiator {
       e.printStackTrace();
       throw new RuntimeException();
     }
-    StoreContext storeContext = getStoreContext(connectorName);
     QueryTraverser queryTraverser =
         new QueryTraverser(new MockPusher(), traversalManager,
-            new MockTraversalStateStore(persistentStore, storeContext),
-            connectorName, Context.getInstance().getTraversalContext(),
-            new SystemClock() /* TODO: use a mock clock */, null);
+            new MockTraversalStateStore(stateStore, connectorName),
+            connectorName, Context.getInstance().getTraversalContext());
 
-    setupTraverser(storeContext, queryTraverser);
+    setupTraverser(connectorName, queryTraverser);
   }
 
   public ConnectorType getConnectorType(String connectorTypeName) {
@@ -191,8 +192,7 @@ public class MockInstantiator implements Instantiator {
    * @return a new TraversalStateStore
    */
   public TraversalStateStore getTraversalStateStore(String connectorName) {
-    return new MockTraversalStateStore(persistentStore,
-                                       getStoreContext(connectorName));
+    return new MockTraversalStateStore(stateStore, connectorName);
   }
 
   public void restartConnectorTraversal(String connectorName)
@@ -238,11 +238,6 @@ public class MockInstantiator implements Instantiator {
     return getConnectorCoordinator(connectorName).getAuthorizationManager();
   }
 
-  public void startBatch(String connectorName)
-      throws ConnectorNotFoundException {
-    getConnectorCoordinator(connectorName).startBatch();
-  }
-
   public ConfigureResponse getConfigFormForConnector(String connectorName,
       String connectorTypeName, Locale locale) {
     throw new UnsupportedOperationException();
@@ -257,31 +252,30 @@ public class MockInstantiator implements Instantiator {
     return getConnectorCoordinator(connectorName).getConnectorTypeName();
   }
 
-  public ConfigureResponse setConnectorConfiguration(String connectorName,
-      Configuration configuration, Locale locale, boolean update)
-      throws ConnectorNotFoundException, ConnectorExistsException,
-      InstantiatorException {
+  public ConfigureResponse setConnectorConfig(String connectorName,
+      String typeName, Map<String, String> configKeys, Locale locale,
+      boolean update) throws ConnectorNotFoundException,
+      ConnectorExistsException, InstantiatorException {
     ConnectorCoordinator cc = getConnectorCoordinator(connectorName);
-    if (update) {
-      if (!cc.getConnectorTypeName().equals(configuration.getTypeName())) {
-        throw new UnsupportedOperationException(
-            "MockInstantiator does not support changing a connectors type");
-      }
+    if (!cc.getConnectorTypeName().equals(typeName)) {
+      throw new UnsupportedOperationException(
+          "MockInstantiator does not support changing a connectors type");
     }
-    return cc.setConnectorConfiguration(null, configuration, locale, update);
+    return cc.setConnectorConfig(null, configKeys, locale, update);
   }
 
-  public Configuration getConnectorConfiguration(String connectorName)
+  public Map<String, String> getConnectorConfig(String connectorName)
       throws ConnectorNotFoundException {
-    return getConnectorCoordinator(connectorName).getConnectorConfiguration();
+    return getConnectorCoordinator(connectorName).getConnectorConfig();
   }
 
   public void setConnectorSchedule(String connectorName,
-      Schedule schedule) throws ConnectorNotFoundException {
-    getConnectorCoordinator(connectorName).setConnectorSchedule(schedule);
+      String connectorSchedule) throws ConnectorNotFoundException {
+    getConnectorCoordinator(connectorName).setConnectorSchedule(
+        connectorSchedule);
   }
 
-  public Schedule getConnectorSchedule(String connectorName)
+  public String getConnectorSchedule(String connectorName)
       throws ConnectorNotFoundException {
     return getConnectorCoordinator(connectorName).getConnectorSchedule();
   }
@@ -296,7 +290,7 @@ public class MockInstantiator implements Instantiator {
     return getConnectorCoordinator(connectorName).getConnectorState();
   }
 
-  private ConnectorCoordinator getConnectorCoordinator(String connectorName)
+  public ConnectorCoordinator getConnectorCoordinator(String connectorName)
       throws ConnectorNotFoundException {
     if (connectorMap.containsKey(connectorName)) {
       return connectorMap.get(connectorName);

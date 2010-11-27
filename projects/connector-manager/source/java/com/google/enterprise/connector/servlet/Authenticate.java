@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,16 +19,15 @@ import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.spi.AuthenticationIdentity;
 import com.google.enterprise.connector.spi.SimpleAuthenticationIdentity;
-import com.google.enterprise.connector.util.XmlParseUtil;
-
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 /**
  * Admin servlet for Authenticate
@@ -56,7 +55,7 @@ public class Authenticate extends ConnectorManagerServlet {
    */
   public static void handleDoPost(
       String xmlBody, Manager manager, PrintWriter out) {
-    Element root = XmlParseUtil.parseAndGetRootElement(
+    Element root = ServletUtil.parseAndGetRootElement(
         xmlBody, ServletUtil.XMLTAG_AUTHN_REQUEST);
     if (root == null) {
       ServletUtil.writeResponse(
@@ -89,13 +88,13 @@ public class Authenticate extends ConnectorManagerServlet {
     ServletUtil.writeRootTag(out, false);
     ServletUtil.writeXMLTag(out, 1, ServletUtil.XMLTAG_AUTHN_RESPONSE, false);
 
-    String username = XmlParseUtil.getFirstElementByTagName(
+    String username = ServletUtil.getFirstElementByTagName(
       (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_USERNAME);
     NDC.pushAppend(username);
 
-    String password = XmlParseUtil.getFirstElementByTagName(
+    String password = ServletUtil.getFirstElementByTagName(
         (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_PASSWORD);
-    String domain = XmlParseUtil.getFirstElementByTagName(
+    String domain = ServletUtil.getFirstElementByTagName(
         (Element) credList.item(0), ServletUtil.XMLTAG_AUTHN_DOMAIN);
     for (ConnectorStatus connector : manager.getConnectorStatuses()) {
       String connectorName = connector.getName();

@@ -15,13 +15,12 @@
 package com.google.enterprise.connector.scheduler;
 
 import com.google.enterprise.connector.pusher.FeedConnection;
-import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.BatchSize;
+import com.google.enterprise.connector.traversal.BatchResult;
 import com.google.enterprise.connector.traversal.FileSizeLimitInfo;
-import com.google.enterprise.connector.util.Clock;
 
-import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,7 +42,7 @@ public class HostLoadManager implements LoadManager {
    * calculate the optimum size for the next traversal batch to maintain the
    * configured host load.
    */
-  private final LinkedList<BatchResult> batchResults = new LinkedList<BatchResult>();
+  private LinkedList<BatchResult> batchResults = new LinkedList<BatchResult>();
 
   /**
    * The optimal number of documents for each Traversal to return.
@@ -70,11 +69,6 @@ public class HostLoadManager implements LoadManager {
   private int load = 1000;
 
   /**
-   * Used for timing throughput.
-   */
-  private final Clock clock;
-
-  /**
    * Used for determining feed backlog status.
    */
   private final FeedConnection feedConnection;
@@ -92,13 +86,11 @@ public class HostLoadManager implements LoadManager {
    *
    * @param feedConnection a {@link FeedConnection}.
    * @param fileSizeLimit a {@link FileSizeLimitInfo}.
-   * @param clock a {@link Clock}.
    */
   public HostLoadManager(FeedConnection feedConnection,
-      FileSizeLimitInfo fileSizeLimit, Clock clock) {
+                         FileSizeLimitInfo fileSizeLimit) {
     this.feedConnection = feedConnection;
     this.fileSizeLimit = fileSizeLimit;
-    this.clock = clock;
   }
 
   /**
@@ -147,7 +139,7 @@ public class HostLoadManager implements LoadManager {
    * batch during the specified period.
    *
    * @param r a BatchResult
-   * @param periodStart the start of the time period in question.
+   * @param period the start of the time period in question.
    * @return number of documents traversed in the minute.
    */
   private int getNumDocsTraversedInPeriod(BatchResult r, long periodStart) {
@@ -187,7 +179,7 @@ public class HostLoadManager implements LoadManager {
   private RecentDocs getNumDocsTraversedRecently() {
     int numDocs = 0;
     int prevNumDocs = 0;
-    long thisPeriod = (clock.getTimeMillis() / periodInMillis) * periodInMillis;
+    long thisPeriod = (System.currentTimeMillis() / periodInMillis) * periodInMillis;
     long prevPeriod = thisPeriod - periodInMillis;
     if (batchResults.size() > 0) {
       ListIterator<BatchResult> iter = batchResults.listIterator();
@@ -276,7 +268,7 @@ public class HostLoadManager implements LoadManager {
       if (available < fileSizeLimit.maxFeedSize()) {
         Level level = (gotLowMemory) ? Level.FINE : Level.WARNING;
         gotLowMemory = true;
-        long now = clock.getTimeMillis();
+        long now = System.currentTimeMillis();
         // Log message no more than once every minute.
         if (now > (lastLowMemMessage + (60 * 1000))) {
           lastLowMemMessage = now;

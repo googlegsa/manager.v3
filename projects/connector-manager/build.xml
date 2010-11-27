@@ -17,8 +17,6 @@
   <property name="dist" value="dist" />
   <property name="src" value="source/java" />
   <property name="classes" value="${prod}/classes" />
-  <property name="spi-classes" value="${prod}/spi-classes" />
-  <property name="resources" value="source/resources" />
   <property name="dtds" value="source/dtds" />
   <property name="webdocs" value="source/webdocs" />
   <property name="webcontent" value="source/html" />
@@ -65,14 +63,11 @@
     <javadoc access="public" author="false" destdir="doc/javadoc/${version}"
              doctitle="Google Search Appliance Connector SPI"
              nodeprecated="false" nodeprecatedlist="true" noindex="false"
-             nonavbar="false" notree="false" source="${jvm.version}"
-             sourcepath="${src}" overview="${src}/overview.html"
+             nonavbar="false" notree="false" source="${jvm.version}" sourcepath="${src}"
              splitindex="true" use="true" version="true">
-      <classpath>
-        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-      </classpath>
-      <package name="com.google.enterprise.connector.spi"/>
-      <package name="com.google.enterprise.connector.util"/>
+      <fileset dir="${src}/com/google/enterprise/connector/spi">
+        <include name="*.java" />
+      </fileset>
     </javadoc>
   </target>
 
@@ -81,7 +76,6 @@
     <mkdir dir="${prod}" />
     <mkdir dir="${dist}" />
     <mkdir dir="${classes}" />
-    <mkdir dir="${spi-classes}" />
     <mkdir dir="${tests.build}" />
     <mkdir dir="${tests.classes}" />
     <mkdir dir="${tests.todir}" />
@@ -89,147 +83,45 @@
     <mkdir dir="${jar.dir}" />
   </target>
 
-  <target name="compile-spi" depends="init">
-    <!-- compile the spi java source files -->
-    <javac sourcepath="" srcdir="${src}" destdir="${spi-classes}"
-    	     includes="**/spi/**, **/spiimpl/**, **/util/**"
-           debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
-           target="${jvm.version}" source="${jvm.version}">
-    	<classpath>
-        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-        <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
-     </classpath>
-      <compilerarg value="-Xlint"/>
-      <compilerarg value="-Xlint:-serial"/>
-    </javac>
-  </target>
-
-  <target name="jar-spi" depends="compile-spi"
-          description="Create production spi jar">
-    <tstamp />
-    <jar jarfile="${spi.jarfile}">
-      <fileset dir="${spi-classes}"/>
-      <fileset dir="${dtds}">
-        <include name="*.dtd" />
-        <include name="*.ent" />
-      </fileset>
-      <manifest>
-        <attribute name="Implementation-Title" value="Connector Manager SPI"/>
-        <attribute name="Implementation-Version"
-                   value="${version} (build ${svnversion}  ${TODAY})"/>
-        <attribute name="Implementation-Vendor" value="Google Inc."/>
-      </manifest>
-    </jar>
-  </target>
-
-  <target name="compile" depends="init,jar-spi">
+  <target name="compile" depends="init">
     <!-- compile java source files -->
-    <javac sourcepath="" srcdir="${src}" destdir="${classes}"
-           excludes="**/spi/**, **/spiimpl/**, **/util/**"
+    <javac srcdir="${src}" destdir="${classes}"
            debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
            target="${jvm.version}" source="${jvm.version}">
       <classpath>
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-        <pathelement location="${spi.jarfile}"/>
-     </classpath>
+      </classpath>
       <compilerarg value="-Xlint"/>
       <compilerarg value="-Xlint:-serial"/>
     </javac>
   </target>
 
-  <target name="jar-prod" depends="compile,jar-spi"
-          description="Create production jars for the Connector SPI project">
-    <tstamp />
-    <jar jarfile="${logging.jarfile}">
-      <fileset dir="${classes}" includes="**/logging/**" excludes="**/javatests/**" />
-      <manifest>
-        <attribute name="Implementation-Title" value="Connector Manager Logging"/>
-        <attribute name="Implementation-Version"
-                   value="${version} (build ${svnversion}  ${TODAY})"/>
-        <attribute name="Implementation-Vendor" value="Google Inc."/>
-      </manifest>
-    </jar>
-    <jar jarfile="${util.jarfile}">
-      <fileset dir="${classes}">
-        <include name="**/servlet/ConnectorMessageCode.class" />
-        <include name="**/servlet/ServletUtil.class" />
-        <include name="**/servlet/SAXParseErrorHandler.class" />
-      </fileset>
-      <manifest>
-        <attribute name="Implementation-Title" value="Connector Manager Utility"/>
-        <attribute name="Implementation-Version"
-                   value="${version} (build ${svnversion}  ${TODAY})"/>
-        <attribute name="Implementation-Vendor" value="Google Inc."/>
-      </manifest>
-    </jar>
-    <pathconvert property="connector.jar.manifest.classpath" pathsep=" ">
-      <flattenmapper/>
-      <path id="manifest.classpath">
-        <pathelement location="${spi.jarfile}" />
-        <pathelement location="${logging.jarfile}" />
-        <pathelement location="${util.jarfile}" />
-        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-      </path>
-    </pathconvert>
-    <jar jarfile="${connector.jarfile}">
-      <fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**, **/util/**, **/logging/**"/>
-      <fileset dir="${resources}" includes="**"/>
-      <manifest>
-        <attribute name="Implementation-Title" value="Connector Manager Impl"/>
-        <attribute name="Implementation-Version"
-                   value="${version} (build ${svnversion}  ${TODAY})"/>
-        <attribute name="Implementation-Vendor" value="Google Inc."/>
-        <attribute name="Main-Class"
-                   value="com.google.enterprise.connector.manager.ManagerMain" />
-        <attribute name="Class-Path"
-                   value="${connector.jar.manifest.classpath}" />
-      </manifest>
-    </jar>
-  </target>
-
-  <target name="compile_tests" depends="init,jar-prod">
+  <target name="compile_tests" depends="init,compile">
     <!-- compile java source files for tests -->
     <javac srcdir="${tests.src}" destdir="${tests.classes}"
            debug="${COMPILE_DEBUG_FLAG}" debuglevel="${COMPILE_DEBUG_LEVEL}"
            target="${jvm.version}" source="${jvm.version}">
       <classpath>
-        <pathelement location="${spi.jarfile}"/>
-        <pathelement location="${connector.jarfile}"/>
+        <pathelement location="${classes}" />
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
         <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
-     </classpath>
+      </classpath>
       <compilerarg value="-Xlint"/>
       <compilerarg value="-Xlint:-serial"/>
       <compilerarg value="-Xlint:-deprecation"/>
-      <compilerarg value="-Xlint:-path"/>
     </javac>
   </target>
 
-  <target name="jar-tests" depends="compile,compile_tests"
-          description="Create test jars for the Connector SPI project">
-    <tstamp />
-    <jar jarfile="${tests.jarfile}">
-      <fileset dir="${tests.classes}" includes="**/*.class" />
-      <manifest>
-        <attribute name="Implementation-Title" value="Connector Manager Tests"/>
-        <attribute name="Implementation-Version"
-                   value="${version} (build ${svnversion}  ${TODAY})"/>
-        <attribute name="Implementation-Vendor" value="Google Inc."/>
-      </manifest>
-    </jar>
-  </target>
-
-  <target name="run_tests" depends="jar-tests">
+  <target name="run_tests" depends="compile_tests">
     <property name="test.suite" value="*"/>
     <junit failureproperty="${ant.project.name}.failure" dir=".">
       <classpath>
+        <pathelement location="${classes}" />
         <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
         <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
-        <pathelement location="${spi.jarfile}"/>
-        <pathelement location="${connector.jarfile}"/>
-        <pathelement location="${tests.jarfile}"/>
         <pathelement location="${projects.dir}/test-connectorA/dist/jar/testconnectorA.jar" />
         <pathelement location="${projects.dir}/test-connectorB/dist/jar/testconnectorB.jar" />
+        <pathelement location="${tests.classes}" />
         <pathelement location="${dtds}" />
         <pathelement path="${java.class.path}" />
         <!-- Needed for those tests that must find resources on the classpath. -->
@@ -250,31 +142,84 @@
     <fail if="${ant.project.name}.failure" message="Test failure"/>
   </target>
 
-  <target name="doc_store_bench" depends="jar-tests">
-    <java fork="true" maxmemory="1024m"
-          classname="com.google.enterprise.connector.util.database.DocStoreBench">
-      <!-- Specify the command line args to DocStoreBench with -Dargs
-           For example: -Dargs="-b 500 -t 5"
-      -->
-      <arg line="${args}" />
-      <jvmarg value="-Xshare:off"/>
-      <jvmarg value="-Djava.util.logging.config.file=${junit.logging.properties}"/>
-      <classpath>
-        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
-        <fileset dir="${thirdparty.tests.jars}" includes="**/*.jar" />
-        <pathelement location="${spi.jarfile}"/>
-        <pathelement location="${connector.jarfile}"/>
-        <pathelement location="${tests.jarfile}"/>
-        <pathelement location="${dtds}" />
-        <pathelement path="${java.class.path}" />
-        <!-- Needed for those tests that must find resources on the classpath. -->
-        <pathelement location="${tests.src}" />
-      </classpath>
-    </java>
-  </target>
-
   <target name="jar" depends="jar-prod,jar-tests"
           description="Create jars for the Connector SPI project"/>
+
+  <target name="jar-prod" depends="compile"
+          description="Create production jars for the Connector SPI project">
+    <tstamp />
+    <jar jarfile="${spi.jarfile}">
+      <fileset dir="${classes}" includes="**/spi/**" excludes="**/javatests/**" />
+      <manifest>
+        <attribute name="Implementation-Title" value="Connector Manager SPI"/>
+        <attribute name="Implementation-Version"
+                   value="${version} (build ${svnversion}  ${TODAY})"/>
+        <attribute name="Implementation-Vendor" value="Google Inc."/>
+      </manifest>
+    </jar>
+    <jar jarfile="${logging.jarfile}">
+      <fileset dir="${classes}" includes="**/logging/**" excludes="**/javatests/**" />
+      <manifest>
+        <attribute name="Implementation-Title" value="Connector Manager Logging"/>
+        <attribute name="Implementation-Version"
+                   value="${version} (build ${svnversion}  ${TODAY})"/>
+        <attribute name="Implementation-Vendor" value="Google Inc."/>
+      </manifest>
+    </jar>
+    <jar jarfile="${util.jarfile}">
+      <fileset dir="${classes}">
+        <include name="**/servlet/ConnectorMessageCode.class" />
+        <include name="**/servlet/ServletUtil.class" />
+        <include name="**/servlet/SAXParseErrorHandler.class" />
+      </fileset>
+      <fileset dir="${dtds}">
+        <include name="*.dtd" />
+        <include name="*.ent" />
+      </fileset>
+      <manifest>
+        <attribute name="Implementation-Title" value="Connector Manager Utility"/>
+        <attribute name="Implementation-Version"
+                   value="${version} (build ${svnversion}  ${TODAY})"/>
+        <attribute name="Implementation-Vendor" value="Google Inc."/>
+      </manifest>
+    </jar>
+    <pathconvert property="connector.jar.manifest.classpath" pathsep=" ">
+      <flattenmapper/>
+      <path id="manifest.classpath">
+        <pathelement location="${spi.jarfile}" />
+        <pathelement location="${logging.jarfile}" />
+        <pathelement location="${util.jarfile}" />
+        <fileset dir="${thirdparty.prod.jars}" includes="**/*.jar" />
+      </path>
+    </pathconvert>
+    <jar jarfile="${connector.jarfile}">
+      <fileset dir="${classes}" includes="**/*.class" excludes="**/spi/**, **/logging/**"/>
+      <manifest>
+        <attribute name="Implementation-Title" value="Connector Manager Impl"/>
+        <attribute name="Implementation-Version"
+                   value="${version} (build ${svnversion}  ${TODAY})"/>
+        <attribute name="Implementation-Vendor" value="Google Inc."/>
+        <attribute name="Main-Class"
+                   value="com.google.enterprise.connector.manager.ManagerMain" />
+        <attribute name="Class-Path"
+                   value="${connector.jar.manifest.classpath}" />
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="jar-tests" depends="compile,compile_tests"
+          description="Create test jars for the Connector SPI project">
+    <tstamp />
+    <jar jarfile="${tests.jarfile}">
+      <fileset dir="${tests.classes}" includes="**/*.class" />
+      <manifest>
+        <attribute name="Implementation-Title" value="Connector Manager Tests"/>
+        <attribute name="Implementation-Version"
+                   value="${version} (build ${svnversion}  ${TODAY})"/>
+        <attribute name="Implementation-Vendor" value="Google Inc."/>
+      </manifest>
+    </jar>
+  </target>
 
   <target name="clean" description="Deletes all build files.">
     <delete dir="${build}" />

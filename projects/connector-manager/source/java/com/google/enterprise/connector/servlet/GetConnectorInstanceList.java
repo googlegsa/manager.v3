@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.servlet;
 
+import com.google.enterprise.connector.common.JarUtils;
 import com.google.enterprise.connector.logging.NDC;
 import com.google.enterprise.connector.manager.ConnectorStatus;
 import com.google.enterprise.connector.manager.Context;
@@ -21,7 +22,6 @@ import com.google.enterprise.connector.manager.Manager;
 import com.google.enterprise.connector.scheduler.Schedule;
 import com.google.enterprise.connector.persist.ConnectorTypeNotFoundException;
 import com.google.enterprise.connector.spi.ConnectorType;
-import com.google.enterprise.connector.util.JarUtils;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -137,8 +137,8 @@ public class GetConnectorInstanceList extends HttpServlet {
         // Put out new style Schedules element.
         ServletUtil.writeXMLTagWithAttrs(buffer, 3,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES,
-            ServletUtil.ATTRIBUTE_VERSION + Schedule.CURRENT_VERSION
-            + ServletUtil.QUOTE, false);
+            ServletUtil.ATTRIBUTE_VERSION + "3" + ServletUtil.QUOTE,
+            false);
         buffer.append(schedule);
         ServletUtil.writeXMLTag(buffer, 0,
             ServletUtil.XMLTAG_CONNECTOR_SCHEDULES, true);

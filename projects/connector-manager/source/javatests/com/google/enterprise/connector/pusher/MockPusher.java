@@ -1,4 +1,4 @@
-// Copyright 2006 Google Inc.
+// Copyright (C) 2006-2009 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 package com.google.enterprise.connector.pusher;
 
+import com.google.enterprise.connector.common.Base64FilterInputStream;
 import com.google.enterprise.connector.spi.Document;
 import com.google.enterprise.connector.spi.Property;
 import com.google.enterprise.connector.spi.RepositoryException;
@@ -21,8 +22,6 @@ import com.google.enterprise.connector.spi.RepositoryDocumentException;
 import com.google.enterprise.connector.spi.SpiConstants;
 import com.google.enterprise.connector.spi.Value;
 import com.google.enterprise.connector.spiimpl.BinaryValue;
-import com.google.enterprise.connector.util.Base64FilterInputStream;
-import com.google.enterprise.connector.util.database.DocumentStore;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,8 +46,7 @@ public class MockPusher implements Pusher, PusherFactory {
     return this;
   }
 
-  public boolean take(Document document, DocumentStore ignored)
-      throws RepositoryException {
+  public boolean take(Document document) throws RepositoryException {
     printStream.println("<document>");
 
     // first take care of some special attributes
