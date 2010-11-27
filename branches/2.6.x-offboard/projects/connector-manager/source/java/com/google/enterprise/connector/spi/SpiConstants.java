@@ -30,6 +30,15 @@ public class SpiConstants {
   }
 
   /**
+   * The prefix for the reserved property names.
+   * <p>
+   * Value: "google:"
+   *
+   * @since 2.6.6
+   */
+  public static final String RESERVED_PROPNAME_PREFIX = "google:";
+
+  /**
    * Identifies a single-valued, string property that uniquely identifies a
    * document to this connector. The internal structure of this string is
    * opaque to the Search Appliance. Only printable, non-whitespace, ASCII
@@ -266,6 +275,28 @@ public class SpiConstants {
   public static final String PROPNAME_ACTION = "google:action";
 
   /**
+   * Identifies an optional, multi-valued property that specifies the
+   * folder path of the document. The document name should not be
+   * included in the path. Multiple values are permitted to support
+   * repositories that link documents to multiple parent folders.
+   * <p>
+   * Examples:
+   * <pre>
+   *     /ENGINEERING/techdoc/pdfs
+   *
+   *     Enterprise:Marketing:Press Releases
+   *
+   *     https://sp.example.com/sites/mylist
+   * </pre>
+   * <p>
+   * Value: google:folder
+   *
+   * @see "RFC 3986: Uniform Resource Identifier (URI): Generic Syntax"
+   * @since 2.6.6
+   */
+  public static final String PROPNAME_FOLDER = "google:folder";
+
+  /**
    * Identifies an optional, single-valued boolean property that specifies
    * whether the document should be locked, to prevent it from being evicted
    * if the GSA reaches its license limit. Default: {@code false}.
@@ -275,8 +306,8 @@ public class SpiConstants {
    * <p/>
    * Value: google:lock
    *
-   * @see "<a href='http://code.google.com/apis/searchappliance/documentation/62/feedsguide.html#defining_the_xml'>Defining the XML Record for a Document</a>"
-   *
+   * @see <a href='http://code.google.com/apis/searchappliance/documentation/62/feedsguide.html#defining_the_xml'>Defining the XML Record for a Document</a>
+   * @since 2.6.6
    */
   public static final String PROPNAME_LOCK = "google:lock";
 
