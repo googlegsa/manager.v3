@@ -1,4 +1,4 @@
-// Copyright 2007-2008 Google Inc.
+// Copyright 2007 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ import java.util.Map;
 
 /**
  * This factory provides a mechanism by which
- * {@link ConnectorType#validateConfig(Map, Locale, ConnectorFactory)}
- * may create instances of the connector for the purpose of validation.
- * {@link Connector} instances created by the factory are not added to
- * the Connector Manager's list of running connectors and do not have
- * an on-disk representation.
+ * {@link ConnectorType#validateConfig(Map, Locale, ConnectorFactory)
+ * validateConfig} may create instances of the connector for the
+ * purpose of validation. {@link Connector} instances created by the
+ * factory are not added to the Connector Manager's list of running
+ * connectors and do not have an on-disk representation.
  */
 public interface ConnectorFactory {
   /**

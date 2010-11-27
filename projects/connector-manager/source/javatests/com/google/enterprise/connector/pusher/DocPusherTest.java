@@ -476,7 +476,6 @@ public class DocPusherTest extends TestCase {
     assertStringContains("<meta name=\"author\" content=\"ziff\"/>", resultXML);
     assertStringContains("url=\"" + ServletUtil.PROTOCOL + "junit.localhost"
         + ServletUtil.DOCID + "doc1\"", resultXML);
-
   }
 
   /**
@@ -770,7 +769,7 @@ public class DocPusherTest extends TestCase {
     assertStringContains("<meta name=\"special\" " +
     // only single escapes here, because this is not a json string
         // but xml-sensitive characters have been replaced with entities
-        "content=\"`~!@#$%^&amp;*()_+-={}[]|\\:&quot;;&apos;&lt;>?,./\"/>",
+        "content=\"`~!@#$%^&amp;*()_+-={}[]|\\:&quot;;&#39;&lt;>?,./\"/>",
         resultXML);
 
     assertStringContains("<meta name=\"japanese\" " +
@@ -782,7 +781,6 @@ public class DocPusherTest extends TestCase {
     // only single escapes here, because this is not a json string
         // but xml-sensitive characters have been replaced with entities
         "content=\"\u5317\u4eac\u5e02\"/>", resultXML);
-
   }
 
   /**

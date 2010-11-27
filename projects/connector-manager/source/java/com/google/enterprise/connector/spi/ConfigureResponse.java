@@ -1,4 +1,4 @@
-// Copyright (C) 2006 Google Inc.
+// Copyright 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ package com.google.enterprise.connector.spi;
 import java.util.Map;
 
 /**
- * The response for most configuration methods, such as @link{ConnectorType}.getConfigForm()
- * and @link{ConnectorType}.validateConfig().
+ * The response for most configuration methods, such as
+ * {@code getConfigForm} and {@code validateConfig}.
  *
+ * @see ConnectorType
  */
 public class ConfigureResponse {
-
   private final String message;
   private final String formSnippet;
   private final Map<String, String> configData;
