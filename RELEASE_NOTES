@@ -10,6 +10,48 @@ issues and work-arounds.
 
 Web Site: http://code.google.com/p/google-enterprise-connector-manager/
 
+Release 2.6.6,  7 December 2010
+===============================
+
+Introduction
+------------
+This is a patch release that fixes a few small problems discovered in the
+the previous release. New additions have been made to the connector SPI.
+Users of the previous release are encouraged to upgrade.
+
+Summary of Changes
+------------------
+   * Issue 217 - Schedule intervals that include midnight were treated as
+     empty and ignored.
+
+   * Issue 224 - Fixes a potential loss of information about exceptions in
+     the connector logs.
+
+   * Issue 225 - Fixes a series of problems with the ImportExport utility.
+
+   * Issue 227 - Use &#39; instead of &apos; when escaping single quotes,
+     for HTML compatibility. The use of &apos; could lead to errors when
+     configuring connector instances using Internet Explorer.
+
+   * Improved log messages when free memory is low, when the feeds are
+     paused due to a backlog on the GSA, and when constructing a new
+     connector instance throws an exception while starting a new traversal
+     batch.
+
+   * New additions to the SPI:
+
+        o SpiConstants.RESERVED_PROPNAME_PREFIX
+        o SpiConstants.PROPNAME_FOLDER
+        o SpiConstants.PROPNAME_LOCK
+        o UrlValidator class
+        o UrlValidatorException class
+
+     The UrlValidator class is in a new com.google.enterprise.connector.util
+     package. This package will be used for utility classes that are not
+     part of or related to the spi package, but which connector
+     implementers might find useful.
+
+
 Release 2.6.0,  14 June 2010
 ============================
 
